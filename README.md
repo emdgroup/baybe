@@ -74,7 +74,7 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
       </li>
       <li>Choose between different <b>target types</b>, including <a href="https://emdgroup.github.io/baybe/stable/userguide/targets.html#numericaltarget">numerical targets</a> (e.g., experimental outcome values) and <a href="https://emdgroup.github.io/baybe/stable/_autosummary/baybe.targets.binary.BinaryTarget.html">binary targets</a> (e.g., good/bad classification of experimental results).</li>
       <li>Specify <b>how favourable individual target values</b> are (e.g., for matching to a specific value or saturation behaviour) via <a href="https://emdgroup.github.io/baybe/stable/userguide/transformations.html">target transformations</a>.</li>
-      <li>Optimize <b>multiple targets</b> at once (e.g., via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Target/Multi_Target.html">Pareto optimization or desirability scalarization</a>).</li>
+      <li>Optimize <b>multiple targets</b> at once (e.g., via <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#paretoobjective">Pareto optimization</a> or <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#desirabilityobjective">desirability scalarization</a>).</li>
     </ul>
   </div>
 </details>
@@ -86,8 +86,8 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
     <ul>
       <li>Capture <b>relationships between categories</b> by <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#customdiscreteparameter">encoding categorical</a> data.</li>
       <li>Use built-in <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#substanceparameter">chemical encodings</a> for <b>chemistry-related use cases</b>.</li>
-      <li><b>Built-in mechanistic</b> process understanding via <a href="https://emdgroup.github.io/baybe/stable/examples/Custom_Surrogates/Custom_Surrogates.html">custom surrogate</a> models.</li>
-      <li>Leverage <b>additional data</b> from similar campaigns to accelerate optimization via <a href="https://emdgroup.github.io/baybe/stable/examples/Transfer_Learning/basic_transfer_learning.html">transfer learning</a>.</li>
+      <li><b>Built-in mechanistic</b> process understanding via <a href="https://emdgroup.github.io/baybe/stable/userguide/surrogates.html#using-custom-models">custom surrogate</a> models.</li>
+      <li>Leverage <b>additional data</b> from similar campaigns to accelerate optimization via <a href="https://emdgroup.github.io/baybe/stable/userguide/transfer_learning.html">transfer learning</a>.</li>
     </ul>
   </div>
 </details>
@@ -109,7 +109,7 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
   <div style="padding: 10px;">
     <ul>
       <li>Gain <a href="https://emdgroup.github.io/baybe/stable/userguide/insights.html">insights</a> about the optimization campaigns by <b>analyzing model behavior</b> and feature importance.</li>
-      <li>Conduct <b>benchmarks</b> to select between different Bayesian optimization settings via <a href="https://emdgroup.github.io/baybe/stable/examples/Backtesting/Backtesting.html">backtesting</a>.</li>
+      <li>Conduct <b>benchmarks</b> to select between different Bayesian optimization settings via <a href="https://emdgroup.github.io/baybe/stable/userguide/simulation.html">backtesting</a>.</li>
     </ul>
   </div>
 </details>
