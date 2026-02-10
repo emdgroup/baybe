@@ -27,6 +27,7 @@ baybe.utils.basic
       compose_two
       convert_to_float
       find_subclass
+      flatten
       get_baseclasses
       get_subclasses
       group_duplicate_values

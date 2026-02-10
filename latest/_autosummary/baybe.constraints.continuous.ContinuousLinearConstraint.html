@@ -310,6 +310,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Constraints_Continuous/Constraints_Continuous.html">Constraints Continuous</a><input aria-label="Toggle navigation of Constraints Continuous" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/interpoint.html">Interpoint</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/linear_constraints.html">Linear</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/hybrid_space.html">Hybrid Space</a></li>
 </ul>
@@ -922,6 +923,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.compose_two.html">baybe.utils.basic.compose_two</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.convert_to_float.html">baybe.utils.basic.convert_to_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.flatten.html">baybe.utils.basic.flatten</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
@@ -1121,7 +1123,7 @@ in-/equality constraints over a continuous parameter space.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.summary" title="baybe.constraints.continuous.ContinuousLinearConstraint.summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summary</span></code></a>()</p></td>
 <td><p>Return a custom summarization of the constraint.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch" title="baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch</span></code></a>(parameters[, idx_offset])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch" title="baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch</span></code></a>(parameters[, idx_offset, ...])</p></td>
 <td><p>Cast the constraint in a format required by botorch.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.to_dict" title="baybe.constraints.continuous.ContinuousLinearConstraint.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
@@ -1146,28 +1148,31 @@ in-/equality constraints over a continuous parameter space.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.rhs" title="baybe.constraints.continuous.ContinuousLinearConstraint.rhs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rhs</span></code></a></p></td>
 <td><p>Right-hand side value of the in-/equality.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_augmentation" title="baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_augmentation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_augmentation</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_interpoint" title="baybe.constraints.continuous.ContinuousLinearConstraint.is_interpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_interpoint</span></code></a></p></td>
+<td><p>Flag for defining an interpoint constraint.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_augmentation" title="baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_augmentation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_augmentation</span></code></a></p></td>
 <td><p>Class variable encoding whether the constraint could be considered during data augmentation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_creation" title="baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_creation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_creation</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_creation" title="baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_creation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_creation</span></code></a></p></td>
 <td><p>Class variable encoding whether the condition is evaluated during creation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_modeling" title="baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_modeling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_modeling</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_modeling" title="baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_modeling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_modeling</span></code></a></p></td>
 <td><p>Class variable encoding whether the condition is evaluated during modeling.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_continuous" title="baybe.constraints.continuous.ContinuousLinearConstraint.is_continuous"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_continuous</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_continuous" title="baybe.constraints.continuous.ContinuousLinearConstraint.is_continuous"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_continuous</span></code></a></p></td>
 <td><p>Boolean indicating if this is a constraint over continuous parameters.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_discrete" title="baybe.constraints.continuous.ContinuousLinearConstraint.is_discrete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_discrete</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_discrete" title="baybe.constraints.continuous.ContinuousLinearConstraint.is_discrete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_discrete</span></code></a></p></td>
 <td><p>Boolean indicating if this is a constraint over discrete parameters.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_eq" title="baybe.constraints.continuous.ContinuousLinearConstraint.is_eq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_eq</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_eq" title="baybe.constraints.continuous.ContinuousLinearConstraint.is_eq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_eq</span></code></a></p></td>
 <td><p>Whether this constraint models an equality (assumed inequality otherwise).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.numerical_only" title="baybe.constraints.continuous.ContinuousLinearConstraint.numerical_only"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numerical_only</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.numerical_only" title="baybe.constraints.continuous.ContinuousLinearConstraint.numerical_only"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numerical_only</span></code></a></p></td>
 <td><p>Class variable encoding whether the constraint is valid only for numerical parameters.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.parameters" title="baybe.constraints.continuous.ContinuousLinearConstraint.parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.parameters" title="baybe.constraints.continuous.ContinuousLinearConstraint.parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code></a></p></td>
 <td><p>The list of parameters used for the constraint.</p></td>
 </tr>
 </tbody>
@@ -1175,7 +1180,7 @@ in-/equality constraints over a continuous parameter space.</p>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.constraints.continuous.ContinuousLinearConstraint.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.continuous.ContinuousLinearConstraint.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.continuous.ContinuousLinearConstraint.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Method generated by attrs for class ContinuousLinearConstraint.</p>
 <p>For details on the parameters, see <strong>Public attributes and properties</strong>.</p>
 <dl class="field-list simple">
@@ -1238,22 +1243,35 @@ in-/equality constraints over a continuous parameter space.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch">
-<span class="sig-name descname"><span class="pre">to_botorch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="baybe.parameters.numerical.NumericalContinuousParameter.html#baybe.parameters.numerical.NumericalContinuousParameter" title="baybe.parameters.numerical.NumericalContinuousParameter"><span class="pre">NumericalContinuousParameter</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/constraints/continuous.html#ContinuousLinearConstraint.to_botorch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">to_botorch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="baybe.parameters.numerical.NumericalContinuousParameter.html#baybe.parameters.numerical.NumericalContinuousParameter" title="baybe.parameters.numerical.NumericalContinuousParameter"><span class="pre">NumericalContinuousParameter</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flatten</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/constraints/continuous.html#ContinuousLinearConstraint.to_botorch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch" title="Link to this definition">¶</a></dt>
 <dd><p>Cast the constraint in a format required by botorch.</p>
 <p>Used in calling <code class="docutils literal notranslate"><span class="pre">optimize_acqf_*</span></code> functions, for details see
-<a class="reference external" href="https://botorch.readthedocs.io/en/latest/optim.html#botorch.optim.optimize.optimize_acqf" title="(in BoTorch v0.1.dev1+gd043f05a5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">botorch.optim.optimize.optimize_acqf()</span></code></a></p>
+<a class="reference external" href="https://botorch.readthedocs.io/en/latest/optim.html#botorch.optim.optimize.optimize_acqf" title="(in BoTorch v0.1.dev1+g747107733)"><code class="xref py py-func docutils literal notranslate"><span class="pre">botorch.optim.optimize.optimize_acqf()</span></code></a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><span class="target" id="baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch.params.parameters"></span><strong>parameters</strong> (<span class="sphinx_autodoc_typehints-type">Sequence[NumericalContinuousParameter]</span>) – The parameter objects of the continuous space.</p></li>
-<li><p><span class="target" id="baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch.params.idx_offset"></span><strong>idx_offset</strong> (<span class="sphinx_autodoc_typehints-type">int</span>) – Offset to the provided parameter indices.</p></li>
+<li><p><span class="target" id="baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch.params.parameters"></span><strong>parameters</strong> (<span class="sphinx_autodoc_typehints-type">Iterable[NumericalContinuousParameter]</span>) – The parameter objects of the continuous space.</p></li>
+<li><p><span class="target" id="baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch.params.idx_offset"></span><strong>idx_offset</strong> (<span class="sphinx_autodoc_typehints-type">int</span>) – An offset added to the provided parameter indices. This is
+useful when the parameters are represented as part of a larger input
+tensor and do not start at index zero.</p></li>
+<li><p><span class="target" id="baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch.params.batch_size"></span><strong>batch_size</strong> (<span class="sphinx_autodoc_typehints-type">int | None</span>) – The batch size used for the recommendation. Necessary
+for interpoint constraints and flattened representation, where the
+indices need to be created for all elements of the batch.</p></li>
+<li><p><span class="target" id="baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch.params.flatten"></span><strong>flatten</strong> (<span class="sphinx_autodoc_typehints-type">bool</span>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the constraint is returned in a “flattened” format,
+where each element of the batch is assumed to be represented via its own
+dimension in an augmented input tensor. This is useful for routines
+that do not natively support batch dimensions, such as
+<a class="reference external" href="https://botorch.readthedocs.io/en/latest/utils.html#botorch.utils.sampling.get_polytope_samples" title="(in BoTorch v0.1.dev1+g747107733)"><code class="xref py py-func docutils literal notranslate"><span class="pre">botorch.utils.sampling.get_polytope_samples()</span></code></a>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type">tuple[Tensor, Tensor, float]</span></p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – When a batch size is provided but not required, or vice versa.</p>
 </dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The tuple required by botorch.</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">list[ConstraintTuple]</span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A collection of tuples representing the constraint in BoTorch format.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1346,6 +1364,17 @@ augmentation.</p>
 <dt class="sig sig-object py" id="baybe.constraints.continuous.ContinuousLinearConstraint.is_eq">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_eq</span></span><a class="headerlink" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_eq" title="Link to this definition">¶</a></dt>
 <dd><p>Whether this constraint models an equality (assumed inequality otherwise).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="baybe.constraints.continuous.ContinuousLinearConstraint.is_interpoint">
+<span class="sig-name descname"><span class="pre">is_interpoint</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_interpoint" title="Link to this definition">¶</a></dt>
+<dd><p>Flag for defining an interpoint constraint.</p>
+<p>While intrapoint constraints impose conditions on each individual point of a batch,
+interpoint constraints do so <strong>across</strong> the points of the batch. That is, an
+interpoint constraint of the form <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">&lt;=</span> <span class="pre">100</span></code> encodes that the sum of the values
+of the parameter <code class="docutils literal notranslate"><span class="pre">x</span></code> across all points in the batch must be less than or equal to
+<code class="docutils literal notranslate"><span class="pre">100</span></code>.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1449,6 +1478,7 @@ coefficients for <cite>&lt;=</cite>.</p>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_continuous"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.is_continuous</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_discrete"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.is_discrete</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_eq"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.is_eq</span></code></a></li>
+<li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_interpoint"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.is_interpoint</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.numerical_only"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.numerical_only</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.operator"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.operator</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.parameters"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.parameters</span></code></a></li>

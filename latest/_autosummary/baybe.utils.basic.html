@@ -310,6 +310,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Constraints_Continuous/Constraints_Continuous.html">Constraints Continuous</a><input aria-label="Toggle navigation of Constraints Continuous" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/interpoint.html">Interpoint</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/linear_constraints.html">Linear</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/hybrid_space.html">Hybrid Space</a></li>
 </ul>
@@ -922,6 +923,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.compose_two.html">baybe.utils.basic.compose_two</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.convert_to_float.html">baybe.utils.basic.convert_to_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.flatten.html">baybe.utils.basic.flatten</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
@@ -1128,31 +1130,34 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.find_subclass.html#baybe.utils.basic.find_subclass" title="baybe.utils.basic.find_subclass"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_subclass</span></code></a>(base, name_or_abbr, /)</p></td>
 <td><p>Retrieve a specific subclass of a base class via its name or abbreviation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.get_baseclasses.html#baybe.utils.basic.get_baseclasses" title="baybe.utils.basic.get_baseclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_baseclasses</span></code></a>(cls[, recursive, abstract])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.flatten.html#baybe.utils.basic.flatten" title="baybe.utils.basic.flatten"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flatten</span></code></a>(x)</p></td>
+<td><p>Flatten one level of nesting of a given iterable.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.get_baseclasses.html#baybe.utils.basic.get_baseclasses" title="baybe.utils.basic.get_baseclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_baseclasses</span></code></a>(cls[, recursive, abstract])</p></td>
 <td><p>Return a list of base classes for the given class.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.get_subclasses.html#baybe.utils.basic.get_subclasses" title="baybe.utils.basic.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_subclasses</span></code></a>(cls[, recursive, abstract])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.get_subclasses.html#baybe.utils.basic.get_subclasses" title="baybe.utils.basic.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_subclasses</span></code></a>(cls[, recursive, abstract])</p></td>
 <td><p>Return a list of subclasses for the given class.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.group_duplicate_values.html#baybe.utils.basic.group_duplicate_values" title="baybe.utils.basic.group_duplicate_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_duplicate_values</span></code></a>(dictionary)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.group_duplicate_values.html#baybe.utils.basic.group_duplicate_values" title="baybe.utils.basic.group_duplicate_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_duplicate_values</span></code></a>(dictionary)</p></td>
 <td><p>Identify groups of keys that have the same value.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.hilberts_factory.html#baybe.utils.basic.hilberts_factory" title="baybe.utils.basic.hilberts_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hilberts_factory</span></code></a>(factory)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.hilberts_factory.html#baybe.utils.basic.hilberts_factory" title="baybe.utils.basic.hilberts_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hilberts_factory</span></code></a>(factory)</p></td>
 <td><p>Provide an infinite stream of the factory's products.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.is_all_instance.html#baybe.utils.basic.is_all_instance" title="baybe.utils.basic.is_all_instance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_all_instance</span></code></a>(x, t, /)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.is_all_instance.html#baybe.utils.basic.is_all_instance" title="baybe.utils.basic.is_all_instance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_all_instance</span></code></a>(x, t, /)</p></td>
 <td><p>Typeguard to check if all elements in a collection are of a certain type.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.match_attributes.html#baybe.utils.basic.match_attributes" title="baybe.utils.basic.match_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_attributes</span></code></a>(object, callable_, /[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.match_attributes.html#baybe.utils.basic.match_attributes" title="baybe.utils.basic.match_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_attributes</span></code></a>(object, callable_, /[, ...])</p></td>
 <td><p>Find the attributes of an object that match with a given callable signature.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.refers_to.html#baybe.utils.basic.refers_to" title="baybe.utils.basic.refers_to"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refers_to</span></code></a>(cls, name_or_abbr, /)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.refers_to.html#baybe.utils.basic.refers_to" title="baybe.utils.basic.refers_to"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refers_to</span></code></a>(cls, name_or_abbr, /)</p></td>
 <td><p>Check if the given name or abbreviation refers to the specified class.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.register_hooks.html#baybe.utils.basic.register_hooks" title="baybe.utils.basic.register_hooks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_hooks</span></code></a>(target[, pre_hooks, post_hooks])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.register_hooks.html#baybe.utils.basic.register_hooks" title="baybe.utils.basic.register_hooks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_hooks</span></code></a>(target[, pre_hooks, post_hooks])</p></td>
 <td><p>Register custom hooks with a given target callable.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.to_tuple.html#baybe.utils.basic.to_tuple" title="baybe.utils.basic.to_tuple"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_tuple</span></code></a>(x)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.to_tuple.html#baybe.utils.basic.to_tuple" title="baybe.utils.basic.to_tuple"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_tuple</span></code></a>(x)</p></td>
 <td><p>Convert any (finite-length) iterable into a tuple.</p></td>
 </tr>
 </tbody>

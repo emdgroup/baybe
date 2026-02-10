@@ -308,6 +308,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="examples/Constraints_Continuous/Constraints_Continuous.html">Constraints Continuous</a><input aria-label="Toggle navigation of Constraints Continuous" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/Constraints_Continuous/interpoint.html">Interpoint</a></li>
 <li class="toctree-l3"><a class="reference internal" href="examples/Constraints_Continuous/linear_constraints.html">Linear</a></li>
 <li class="toctree-l3"><a class="reference internal" href="examples/Constraints_Continuous/hybrid_space.html">Hybrid Space</a></li>
 </ul>
@@ -920,6 +921,7 @@
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.basic.compose_two.html">baybe.utils.basic.compose_two</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.basic.convert_to_float.html">baybe.utils.basic.convert_to_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.basic.flatten.html">baybe.utils.basic.flatten</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
@@ -2149,6 +2151,8 @@
           <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.recommend.params.batch_size">(baybe.campaign.Campaign.recommend parameter)</a>, <a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.recommend.params.batch_size">[1]</a>
 </li>
           <li><a href="_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html#baybe.constraints.continuous.ContinuousCardinalityConstraint.sample_inactive_parameters.params.batch_size">(baybe.constraints.continuous.ContinuousCardinalityConstraint.sample_inactive_parameters parameter)</a>, <a href="_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html#baybe.constraints.continuous.ContinuousCardinalityConstraint.sample_inactive_parameters.params.batch_size">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.constraints.continuous.ContinuousLinearConstraint.html#baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch.params.batch_size">(baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch parameter)</a>, <a href="_autosummary/baybe.constraints.continuous.ContinuousLinearConstraint.html#baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch.params.batch_size">[1]</a>
 </li>
           <li><a href="_autosummary/baybe.recommenders.base.RecommenderProtocol.html#baybe.recommenders.base.RecommenderProtocol.recommend.params.batch_size">(baybe.recommenders.base.RecommenderProtocol.recommend parameter)</a>, <a href="_autosummary/baybe.recommenders.base.RecommenderProtocol.html#baybe.recommenders.base.RecommenderProtocol.recommend.params.batch_size">[1]</a>
 </li>
@@ -4472,6 +4476,10 @@
 </li>
         <li><a href="_autosummary/baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.html#baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.fit_transform">fit_transform() (baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids method)</a>
 </li>
+        <li><a href="_autosummary/baybe.constraints.continuous.ContinuousLinearConstraint.html#baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch.params.flatten">flatten (baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch parameter)</a>, <a href="_autosummary/baybe.constraints.continuous.ContinuousLinearConstraint.html#baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch.params.flatten">[1]</a>
+</li>
+        <li><a href="_autosummary/baybe.utils.basic.flatten.html#baybe.utils.basic.flatten">flatten() (in module baybe.utils.basic)</a>
+</li>
         <li><a href="_autosummary/baybe.objectives.botorch.ChainedMCObjective.html#baybe.objectives.botorch.ChainedMCObjective.float">float() (baybe.objectives.botorch.ChainedMCObjective method)</a>
 </li>
         <li><a href="_autosummary/baybe.objectives.botorch.ChainedMCObjective.html#baybe.objectives.botorch.ChainedMCObjective.apply.params.fn">fn (baybe.objectives.botorch.ChainedMCObjective.apply parameter)</a>, <a href="_autosummary/baybe.objectives.botorch.ChainedMCObjective.html#baybe.objectives.botorch.ChainedMCObjective.apply.params.fn">[1]</a>
@@ -5340,6 +5348,8 @@
           <li><a href="_autosummary/baybe.utils.dataframe.handle_missing_values.html#baybe.utils.dataframe.handle_missing_values">(in module baybe.utils.dataframe)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/baybe.searchspace.continuous.SubspaceContinuous.html#baybe.searchspace.continuous.SubspaceContinuous.has_interpoint_constraints">has_interpoint_constraints (baybe.searchspace.continuous.SubspaceContinuous property)</a>
+</li>
         <li><a href="_autosummary/baybe.utils.conversion.html#baybe.utils.conversion.to_string.params.header">header (baybe.utils.conversion.to_string parameter)</a>, <a href="_autosummary/baybe.utils.conversion.to_string.html#baybe.utils.conversion.to_string.params.header">[1]</a>
 </li>
         <li><a href="_autosummary/baybe.utils.basic.hilberts_factory.html#baybe.utils.basic.hilberts_factory">hilberts_factory() (in module baybe.utils.basic)</a>
@@ -5612,6 +5622,14 @@
 </li>
         <li><a href="_autosummary/baybe.constraints.utils.is_cardinality_fulfilled.html#baybe.constraints.utils.is_cardinality_fulfilled">is_cardinality_fulfilled() (in module baybe.constraints.utils)</a>
 </li>
+        <li><a href="_autosummary/baybe.searchspace.continuous.SubspaceContinuous.html#baybe.searchspace.continuous.SubspaceContinuous.is_constrained">is_constrained (baybe.searchspace.continuous.SubspaceContinuous property)</a>
+
+        <ul>
+          <li><a href="_autosummary/baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.is_constrained">(baybe.searchspace.core.SearchSpace property)</a>
+</li>
+          <li><a href="_autosummary/baybe.searchspace.discrete.SubspaceDiscrete.html#baybe.searchspace.discrete.SubspaceDiscrete.is_constrained">(baybe.searchspace.discrete.SubspaceDiscrete property)</a>
+</li>
+        </ul></li>
         <li><a href="_autosummary/baybe.constraints.base.CardinalityConstraint.html#baybe.constraints.base.CardinalityConstraint.is_continuous">is_continuous (baybe.constraints.base.CardinalityConstraint property)</a>
 
         <ul>
@@ -5757,6 +5775,8 @@
 </li>
         </ul></li>
         <li><a href="_autosummary/baybe.parameters.utils.is_inactive.html#baybe.parameters.utils.is_inactive">is_inactive() (in module baybe.parameters.utils)</a>
+</li>
+        <li><a href="_autosummary/baybe.constraints.continuous.ContinuousLinearConstraint.html#baybe.constraints.continuous.ContinuousLinearConstraint.is_interpoint">is_interpoint (baybe.constraints.continuous.ContinuousLinearConstraint attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.utils.interval.Interval.html#baybe.utils.interval.Interval.is_left_bounded">is_left_bounded (baybe.utils.interval.Interval property)</a>
 </li>

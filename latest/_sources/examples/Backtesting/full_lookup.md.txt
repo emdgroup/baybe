@@ -216,6 +216,8 @@ results = simulate_scenarios(
 
     
 
+    
+
 
 Let's visualize the results. As you can see, the type of encoding has a tremendous
 impact on the outcome, with chemical encodings performing much better than

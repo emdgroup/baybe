@@ -45,6 +45,7 @@ SubspaceDiscrete
       ~SubspaceDiscrete.comp_rep
       ~SubspaceDiscrete.comp_rep_bounds
       ~SubspaceDiscrete.comp_rep_columns
+      ~SubspaceDiscrete.is_constrained
       ~SubspaceDiscrete.is_empty
       ~SubspaceDiscrete.metadata
       ~SubspaceDiscrete.parameter_names

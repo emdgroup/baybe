@@ -310,6 +310,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Constraints_Continuous/Constraints_Continuous.html">Constraints Continuous</a><input aria-label="Toggle navigation of Constraints Continuous" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/interpoint.html">Interpoint</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/linear_constraints.html">Linear</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/hybrid_space.html">Hybrid Space</a></li>
 </ul>
@@ -922,6 +923,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.compose_two.html">baybe.utils.basic.compose_two</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.convert_to_float.html">baybe.utils.basic.convert_to_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.flatten.html">baybe.utils.basic.flatten</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
@@ -1183,16 +1185,19 @@ parameter views.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.comp_rep_columns" title="baybe.searchspace.discrete.SubspaceDiscrete.comp_rep_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comp_rep_columns</span></code></a></p></td>
 <td><p>The columns spanning the computational representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.is_empty" title="baybe.searchspace.discrete.SubspaceDiscrete.is_empty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_empty</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.is_constrained" title="baybe.searchspace.discrete.SubspaceDiscrete.is_constrained"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_constrained</span></code></a></p></td>
+<td><p>Boolean indicating if the subspace has any constraints.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.is_empty" title="baybe.searchspace.discrete.SubspaceDiscrete.is_empty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_empty</span></code></a></p></td>
 <td><p>Return whether this subspace is empty.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.metadata" title="baybe.searchspace.discrete.SubspaceDiscrete.metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">metadata</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.metadata" title="baybe.searchspace.discrete.SubspaceDiscrete.metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">metadata</span></code></a></p></td>
 <td><p>Deprecated!</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.parameter_names" title="baybe.searchspace.discrete.SubspaceDiscrete.parameter_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameter_names</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.parameter_names" title="baybe.searchspace.discrete.SubspaceDiscrete.parameter_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameter_names</span></code></a></p></td>
 <td><p>Return tuple of parameter names.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.scaling_bounds" title="baybe.searchspace.discrete.SubspaceDiscrete.scaling_bounds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scaling_bounds</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.scaling_bounds" title="baybe.searchspace.discrete.SubspaceDiscrete.scaling_bounds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scaling_bounds</span></code></a></p></td>
 <td><p>The bounds used for scaling the surrogate model input.</p></td>
 </tr>
 </tbody>
@@ -1532,6 +1537,12 @@ from <code class="docutils literal notranslate"><span class="pre">exp_rep</span>
 </dd></dl>
 
 <dl class="py property">
+<dt class="sig sig-object py" id="baybe.searchspace.discrete.SubspaceDiscrete.is_constrained">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_constrained</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#baybe.searchspace.discrete.SubspaceDiscrete.is_constrained" title="Link to this definition">¶</a></dt>
+<dd><p>Boolean indicating if the subspace has any constraints.</p>
+</dd></dl>
+
+<dl class="py property">
 <dt class="sig sig-object py" id="baybe.searchspace.discrete.SubspaceDiscrete.is_empty">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_empty</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#baybe.searchspace.discrete.SubspaceDiscrete.is_empty" title="Link to this definition">¶</a></dt>
 <dd><p>Return whether this subspace is empty.</p>
@@ -1643,6 +1654,7 @@ from <code class="docutils literal notranslate"><span class="pre">exp_rep</span>
 <li><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.constraints"><code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete.constraints</span></code></a></li>
 <li><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.empty_encoding"><code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete.empty_encoding</span></code></a></li>
 <li><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.exp_rep"><code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete.exp_rep</span></code></a></li>
+<li><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.is_constrained"><code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete.is_constrained</span></code></a></li>
 <li><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.is_empty"><code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete.is_empty</span></code></a></li>
 <li><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.metadata"><code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete.metadata</span></code></a></li>
 <li><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.parameter_names"><code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete.parameter_names</span></code></a></li>

@@ -310,6 +310,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Constraints_Continuous/Constraints_Continuous.html">Constraints Continuous</a><input aria-label="Toggle navigation of Constraints Continuous" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Constraints_Continuous/interpoint.html">Interpoint</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Constraints_Continuous/linear_constraints.html">Linear</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Constraints_Continuous/hybrid_space.html">Hybrid Space</a></li>
 </ul>
@@ -922,6 +923,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.compose_two.html">baybe.utils.basic.compose_two</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.convert_to_float.html">baybe.utils.basic.convert_to_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.flatten.html">baybe.utils.basic.flatten</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
@@ -1131,16 +1133,16 @@ Let us draw some samples from it and verify that they are within the bounds:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>        x_1       x_2       x_3       x_4
-0  0.224836 -0.953106 -0.161121 -0.963756
-1  0.300720  0.216056 -0.443371 -0.059806
-2 -0.846252  0.449344  0.055267 -0.699056
-3  0.171604  0.506021  0.559381  0.496046
-4  0.407581  0.927385 -0.237792  0.297344
-5  0.340087  0.796977  0.480662  0.544987
-6 -0.961812 -0.670471  0.377514  0.655748
-7 -0.480536  0.131860 -0.800578 -0.809407
-8 -0.413485 -0.392761  0.082794 -0.955967
-9  0.039703 -0.878801  0.614994 -0.951917
+0  0.057256 -0.472790 -0.530043 -0.426451
+1 -0.217875 -0.281803 -0.690337  0.695067
+2 -0.134154  0.767566  0.545730 -0.307732
+3 -0.065426  0.412431 -0.074105 -0.318176
+4  0.584224 -0.768336 -0.349655 -0.755022
+5  0.626981 -0.279788  0.364393  0.845094
+6 -0.601421  0.168055  0.971269  0.048935
+7  0.734199 -0.543537 -0.766716  0.696139
+8  0.876653  0.111068  0.232524 -0.681726
+9  0.600746  0.239251  0.323660 -0.758672
 </pre></div>
 </div>
 <p>There are several ways we can turn the above objects into a search space.

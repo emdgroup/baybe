@@ -47,6 +47,8 @@ SubspaceContinuous
       ~SubspaceContinuous.comp_rep_columns
       ~SubspaceContinuous.constraints_cardinality
       ~SubspaceContinuous.full_factorial
+      ~SubspaceContinuous.has_interpoint_constraints
+      ~SubspaceContinuous.is_constrained
       ~SubspaceContinuous.is_empty
       ~SubspaceContinuous.n_inactive_parameter_combinations
       ~SubspaceContinuous.parameter_names
