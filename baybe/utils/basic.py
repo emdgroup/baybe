@@ -8,7 +8,7 @@ import inspect
 import itertools
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar, get_origin
 
 import cattrs
 from attrs import asdict, has
@@ -77,6 +77,9 @@ def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> l
         A list of subclasses for the given class.
     """
     from baybe.utils.boolean import is_abstract
+
+    # Handle generics
+    cls = get_origin(cls) or cls
 
     subclasses = []
     for subclass in cls.__subclasses__():
