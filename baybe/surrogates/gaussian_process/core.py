@@ -12,9 +12,9 @@ from typing_extensions import override
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
+from baybe.surrogates.gaussian_process.components import to_component_factory
 from baybe.surrogates.gaussian_process.kernel_factory import (
     KernelFactory,
-    to_kernel_factory,
 )
 from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
@@ -104,7 +104,7 @@ class GaussianProcessSurrogate(Surrogate):
     kernel_factory: KernelFactory = field(
         alias="kernel_or_factory",
         factory=DefaultKernelFactory,
-        converter=to_kernel_factory,
+        converter=to_component_factory,
     )
     """The factory used to create the kernel of the Gaussian process.
 
