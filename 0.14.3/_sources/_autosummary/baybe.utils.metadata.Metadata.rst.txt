@@ -1,0 +1,35 @@
+Metadata
+========
+
+.. currentmodule:: baybe.utils.metadata
+
+.. autoclass:: Metadata
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Metadata.__init__
+      ~Metadata.from_dict
+      ~Metadata.from_json
+      ~Metadata.to_dict
+      ~Metadata.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Metadata.description
+      ~Metadata.misc
+      ~Metadata.is_empty
+   
+   

@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="169.9mm"
+   height="84.885mm"
+   version="1.1"
+   viewBox="0 0 84.949 42.442"
+   id="svg19"
+   sodipodi:docname="clamping.svg"
+   inkscape:version="1.3.1 (91b66b0, 2023-11-16)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview19"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.0167833"
+     inkscape:cx="327.5034"
+     inkscape:cy="45.732457"
+     inkscape:window-width="1512"
+     inkscape:window-height="916"
+     inkscape:window-x="0"
+     inkscape:window-y="38"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg19" />
+  <defs
+     id="defs1">
+    <marker
+       id="ArrowWide"
+       overflow="visible"
+       markerHeight="1"
+       markerWidth="1"
+       orient="auto-start-reverse"
+       preserveAspectRatio="xMidYMid"
+       viewBox="0 0 1 1">
+      <path
+         transform="rotate(180 .125 0)"
+         d="m3-3-3 3 3 3"
+         fill="none"
+         stroke="context-stroke"
+         id="path1" />
+    </marker>
+  </defs>
+  <g
+     transform="translate(-115.57 -127.35)"
+     id="g19">
+    <path
+       d="m115.57 127.35h42.474v42.442h-42.474z"
+       fill="#0f69af"
+       id="path2" />
+    <g
+       fill="none"
+       id="g4">
+      <path
+         d="m127.89 167.38v-36.952"
+         marker-end="url(#ArrowWide)"
+         stroke="#fff"
+         stroke-width=".21167"
+         id="path3" />
+      <path
+         d="m117.35 156.9h37.425"
+         marker-end="url(#ArrowWide)"
+         stroke="#fff"
+         stroke-width=".21167"
+         id="path4" />
+    </g>
+    <g
+       id="g9">
+      <text
+         x="147.68906"
+         y="154.22128"
+         fill="#abdfdb"
+         font-size="3.37594px"
+         stroke="#ffffff"
+         stroke-width="0.0805638"
+         xml:space="preserve"
+         id="text6"><tspan
+           x="147.68906"
+           y="154.22128"
+           fill="#abdfdb"
+           font-family="Arial"
+           font-size="3.37594px"
+           stroke="none"
+           stroke-width="0.0805638"
+           id="tspan6"><tspan
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Classical Serif';-inkscape-font-specification:'CMU Classical Serif';stroke-width:0.0805638"
+             id="tspan23">c</tspan><tspan
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.19437px;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete';baseline-shift:sub;stroke-width:0.0805638"
+             id="tspan26">max</tspan></tspan></text>
+      <path
+         d="m 153.27898,138.58138 h -6.71692 L 124.991,159.862 h -7.2879"
+         fill="none"
+         stroke="#ffdcb9"
+         stroke-width=".37042"
+         id="path7"
+         style="stroke-width:0.463015;stroke-dasharray:none"
+         sodipodi:nodetypes="cccc" />
+      <text
+         x="120.55336"
+         y="154.24474"
+         fill="#abdfdb"
+         font-size="3.37594px"
+         stroke="#ffffff"
+         stroke-width="0.0805638"
+         xml:space="preserve"
+         id="text9"><tspan
+           x="120.55336"
+           y="154.24474"
+           fill="#abdfdb"
+           font-family="Arial"
+           font-size="3.37594px"
+           stroke="none"
+           stroke-width="0.0805638"
+           id="tspan9"><tspan
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Classical Serif';-inkscape-font-specification:'CMU Classical Serif';stroke-width:0.0805638"
+             id="tspan24">c</tspan><tspan
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.19437px;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete';baseline-shift:sub;stroke-width:0.0805638"
+             id="tspan25">min</tspan></tspan></text>
+    </g>
+    <path
+       d="m124.93 156.9v2.9905"
+       fill="none"
+       stroke="#abdfdb"
+       stroke-dasharray="0.211667, 0.423332"
+       stroke-dashoffset=".381"
+       stroke-width=".21167"
+       id="path9" />
+    <path
+       d="M 146.46199,138.86004 V 156.907"
+       fill="none"
+       stroke="#abdfdb"
+       stroke-dasharray="0.211667, 0.423332"
+       stroke-width="0.211669"
+       id="path10" />
+    <path
+       d="m158.04 127.35h42.474v42.442h-42.474z"
+       fill="#0f69af"
+       id="path11" />
+    <g
+       fill="none"
+       id="g13">
+      <path
+         d="m170.36 167.38v-36.952"
+         marker-end="url(#ArrowWide)"
+         stroke="#fff"
+         stroke-width=".21167"
+         id="path12" />
+      <path
+         d="m159.82 156.9h37.425"
+         marker-end="url(#ArrowWide)"
+         stroke="#fff"
+         stroke-width=".21167"
+         id="path13" />
+    </g>
+    <g
+       id="g18">
+      <text
+         x="182.80238"
+         y="154.22243"
+         fill="#abdfdb"
+         font-size="3.37594px"
+         stroke="#ffffff"
+         stroke-width="0.0805638"
+         xml:space="preserve"
+         id="text15"><tspan
+           x="182.80238"
+           y="154.22243"
+           fill="#abdfdb"
+           font-family="Arial"
+           font-size="3.37594px"
+           stroke="none"
+           stroke-width="0.0805638"
+           id="tspan15"><tspan
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Classical Serif';-inkscape-font-specification:'CMU Classical Serif';stroke-width:0.0805638"
+             id="tspan22">c</tspan><tspan
+             baseline-shift="sub"
+             fill="#abdfdb"
+             font-size="2.19436px"
+             stroke-width="0.0805638"
+             id="tspan14"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete'">max</tspan></tspan></text>
+      <path
+         d="m 162.09,164.43 28.88399,-26.37999 h 5.14231"
+         fill="none"
+         stroke="#ffdcb9"
+         stroke-width=".37042"
+         id="path16"
+         style="stroke-width:0.463015;stroke-dasharray:none"
+         sodipodi:nodetypes="ccc" />
+      <text
+         x="175.23119"
+         y="163.59859"
+         fill="#abdfdb"
+         font-size="3.37594px"
+         stroke="#ffffff"
+         stroke-width="0.0805638"
+         xml:space="preserve"
+         id="text18"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Serif Upright Italic';-inkscape-font-specification:'CMU Serif Upright Italic, '"><tspan
+           x="175.23119"
+           y="163.59859"
+           fill="#abdfdb"
+           font-family="Arial"
+           font-size="3.37594px"
+           stroke="none"
+           stroke-width="0.0805638"
+           id="tspan18"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Classical Serif';-inkscape-font-specification:'CMU Classical Serif'">c<tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete';stroke-width:0.0805638"
+   id="tspan20"><tspan
+   style="font-size:2.19437px;baseline-shift:sub;stroke-width:0.0805638"
+   id="tspan21">min</tspan> = None</tspan></tspan></text>
+    </g>
+    <path
+       d="M 190.94398,138.33297 V 156.914"
+       fill="none"
+       stroke="#abdfdb"
+       stroke-dasharray="0.211667, 0.423332"
+       stroke-width="0.21167"
+       id="path18" />
+  </g>
+</svg>

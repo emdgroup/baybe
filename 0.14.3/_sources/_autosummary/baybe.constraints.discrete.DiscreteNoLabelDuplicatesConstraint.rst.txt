@@ -1,0 +1,43 @@
+DiscreteNoLabelDuplicatesConstraint
+===================================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteNoLabelDuplicatesConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteNoLabelDuplicatesConstraint.__init__
+      ~DiscreteNoLabelDuplicatesConstraint.from_dict
+      ~DiscreteNoLabelDuplicatesConstraint.from_json
+      ~DiscreteNoLabelDuplicatesConstraint.get_invalid
+      ~DiscreteNoLabelDuplicatesConstraint.get_invalid_polars
+      ~DiscreteNoLabelDuplicatesConstraint.get_valid
+      ~DiscreteNoLabelDuplicatesConstraint.summary
+      ~DiscreteNoLabelDuplicatesConstraint.to_dict
+      ~DiscreteNoLabelDuplicatesConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteNoLabelDuplicatesConstraint.eval_during_augmentation
+      ~DiscreteNoLabelDuplicatesConstraint.eval_during_creation
+      ~DiscreteNoLabelDuplicatesConstraint.eval_during_modeling
+      ~DiscreteNoLabelDuplicatesConstraint.is_continuous
+      ~DiscreteNoLabelDuplicatesConstraint.is_discrete
+      ~DiscreteNoLabelDuplicatesConstraint.numerical_only
+      ~DiscreteNoLabelDuplicatesConstraint.parameters
+   
+   

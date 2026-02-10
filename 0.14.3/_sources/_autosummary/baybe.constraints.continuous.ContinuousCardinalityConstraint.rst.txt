@@ -1,0 +1,47 @@
+ContinuousCardinalityConstraint
+===============================
+
+.. currentmodule:: baybe.constraints.continuous
+
+.. autoclass:: ContinuousCardinalityConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ContinuousCardinalityConstraint.__init__
+      ~ContinuousCardinalityConstraint.from_dict
+      ~ContinuousCardinalityConstraint.from_json
+      ~ContinuousCardinalityConstraint.get_absolute_thresholds
+      ~ContinuousCardinalityConstraint.inactive_parameter_combinations
+      ~ContinuousCardinalityConstraint.sample_inactive_parameters
+      ~ContinuousCardinalityConstraint.summary
+      ~ContinuousCardinalityConstraint.to_dict
+      ~ContinuousCardinalityConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ContinuousCardinalityConstraint.relative_threshold
+      ~ContinuousCardinalityConstraint.eval_during_augmentation
+      ~ContinuousCardinalityConstraint.eval_during_creation
+      ~ContinuousCardinalityConstraint.eval_during_modeling
+      ~ContinuousCardinalityConstraint.is_continuous
+      ~ContinuousCardinalityConstraint.is_discrete
+      ~ContinuousCardinalityConstraint.max_cardinality
+      ~ContinuousCardinalityConstraint.min_cardinality
+      ~ContinuousCardinalityConstraint.n_inactive_parameter_combinations
+      ~ContinuousCardinalityConstraint.numerical_only
+      ~ContinuousCardinalityConstraint.parameters
+   
+   

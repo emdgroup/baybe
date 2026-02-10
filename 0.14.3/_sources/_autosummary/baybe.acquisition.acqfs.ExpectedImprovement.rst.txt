@@ -1,0 +1,36 @@
+ExpectedImprovement
+===================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: ExpectedImprovement
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ExpectedImprovement.__init__
+      ~ExpectedImprovement.evaluate
+      ~ExpectedImprovement.from_dict
+      ~ExpectedImprovement.from_json
+      ~ExpectedImprovement.to_botorch
+      ~ExpectedImprovement.to_dict
+      ~ExpectedImprovement.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ExpectedImprovement.abbreviation
+      ~ExpectedImprovement.supports_multi_output
+   
+   

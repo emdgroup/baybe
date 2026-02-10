@@ -1,0 +1,6 @@
+baybe.exceptions.IncompatibilityError
+=====================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: IncompatibilityError

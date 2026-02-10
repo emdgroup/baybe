@@ -1,0 +1,38 @@
+baybe.objectives.base
+=====================
+
+.. automodule:: baybe.objectives.base
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      to_objective
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      Objective
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,37 @@
+PiecewisePolynomialKernel
+=========================
+
+.. currentmodule:: baybe.kernels.basic
+
+.. autoclass:: PiecewisePolynomialKernel
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PiecewisePolynomialKernel.__init__
+      ~PiecewisePolynomialKernel.from_dict
+      ~PiecewisePolynomialKernel.from_json
+      ~PiecewisePolynomialKernel.to_dict
+      ~PiecewisePolynomialKernel.to_factory
+      ~PiecewisePolynomialKernel.to_gpytorch
+      ~PiecewisePolynomialKernel.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PiecewisePolynomialKernel.q
+      ~PiecewisePolynomialKernel.lengthscale_prior
+      ~PiecewisePolynomialKernel.lengthscale_initial_value
+   
+   

@@ -1,0 +1,35 @@
+FPSRecommender
+==============
+
+.. currentmodule:: baybe.recommenders.pure.nonpredictive.sampling
+
+.. autoclass:: FPSRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~FPSRecommender.__init__
+      ~FPSRecommender.recommend
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~FPSRecommender.initialization
+      ~FPSRecommender.random_tie_break
+      ~FPSRecommender.allow_recommending_already_measured
+      ~FPSRecommender.allow_recommending_pending_experiments
+      ~FPSRecommender.allow_repeated_recommendations
+      ~FPSRecommender.compatibility
+   
+   

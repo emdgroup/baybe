@@ -1,0 +1,6 @@
+baybe.parameters.utils.sort\_parameters
+=======================================
+
+.. currentmodule:: baybe.parameters.utils
+
+.. autofunction:: sort_parameters

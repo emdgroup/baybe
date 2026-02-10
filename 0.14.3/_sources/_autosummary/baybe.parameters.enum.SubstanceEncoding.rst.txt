@@ -1,0 +1,59 @@
+SubstanceEncoding
+=================
+
+.. currentmodule:: baybe.parameters.enum
+
+.. autoclass:: SubstanceEncoding
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SubstanceEncoding.ATOMPAIR
+      ~SubstanceEncoding.AUTOCORR
+      ~SubstanceEncoding.AVALON
+      ~SubstanceEncoding.BCUT2D
+      ~SubstanceEncoding.E3FP
+      ~SubstanceEncoding.ECFP
+      ~SubstanceEncoding.ELECTROSHAPE
+      ~SubstanceEncoding.MORGAN_FP
+      ~SubstanceEncoding.ERG
+      ~SubstanceEncoding.ESTATE
+      ~SubstanceEncoding.FUNCTIONALGROUPS
+      ~SubstanceEncoding.GETAWAY
+      ~SubstanceEncoding.GHOSECRIPPEN
+      ~SubstanceEncoding.KLEKOTAROTH
+      ~SubstanceEncoding.LAGGNER
+      ~SubstanceEncoding.LAYERED
+      ~SubstanceEncoding.LINGO
+      ~SubstanceEncoding.MACCS
+      ~SubstanceEncoding.MAP
+      ~SubstanceEncoding.MHFP
+      ~SubstanceEncoding.MORSE
+      ~SubstanceEncoding.MQNS
+      ~SubstanceEncoding.MORDRED
+      ~SubstanceEncoding.PATTERN
+      ~SubstanceEncoding.PHARMACOPHORE
+      ~SubstanceEncoding.PHYSIOCHEMICALPROPERTIES
+      ~SubstanceEncoding.PUBCHEM
+      ~SubstanceEncoding.RDF
+      ~SubstanceEncoding.RDKIT
+      ~SubstanceEncoding.RDKITFINGERPRINT
+      ~SubstanceEncoding.RDKIT2DDESCRIPTORS
+      ~SubstanceEncoding.SECFP
+      ~SubstanceEncoding.TOPOLOGICALTORSION
+      ~SubstanceEncoding.USR
+      ~SubstanceEncoding.USRCAT
+      ~SubstanceEncoding.VSA
+      ~SubstanceEncoding.WHIM
+   
+   

@@ -1,0 +1,6 @@
+baybe.utils.dataframe.fuzzy\_row\_match
+=======================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: fuzzy_row_match

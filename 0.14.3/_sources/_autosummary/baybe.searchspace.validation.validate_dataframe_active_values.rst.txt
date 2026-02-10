@@ -1,0 +1,6 @@
+baybe.searchspace.validation.validate\_dataframe\_active\_values
+================================================================
+
+.. currentmodule:: baybe.searchspace.validation
+
+.. autofunction:: validate_dataframe_active_values

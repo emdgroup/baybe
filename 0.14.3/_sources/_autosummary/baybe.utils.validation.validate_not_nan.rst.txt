@@ -1,0 +1,6 @@
+baybe.utils.validation.validate\_not\_nan
+=========================================
+
+.. currentmodule:: baybe.utils.validation
+
+.. autofunction:: validate_not_nan

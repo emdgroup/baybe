@@ -1,0 +1,6 @@
+baybe.simulation.core.simulate\_experiment
+==========================================
+
+.. currentmodule:: baybe.simulation.core
+
+.. autofunction:: simulate_experiment

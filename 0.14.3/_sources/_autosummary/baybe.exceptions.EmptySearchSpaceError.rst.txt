@@ -1,0 +1,6 @@
+baybe.exceptions.EmptySearchSpaceError
+======================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: EmptySearchSpaceError

@@ -1,0 +1,23 @@
+KernelFactory
+=============
+
+.. currentmodule:: baybe.surrogates.gaussian_process.kernel_factory
+
+.. autoclass:: KernelFactory
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~KernelFactory.__init__
+   
+   
+
+   
+   
+   

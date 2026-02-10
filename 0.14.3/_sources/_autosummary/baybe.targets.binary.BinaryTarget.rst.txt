@@ -1,0 +1,41 @@
+BinaryTarget
+============
+
+.. currentmodule:: baybe.targets.binary
+
+.. autoclass:: BinaryTarget
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BinaryTarget.__init__
+      ~BinaryTarget.from_dict
+      ~BinaryTarget.from_json
+      ~BinaryTarget.summary
+      ~BinaryTarget.to_dict
+      ~BinaryTarget.to_json
+      ~BinaryTarget.to_objective
+      ~BinaryTarget.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~BinaryTarget.success_value
+      ~BinaryTarget.failure_value
+      ~BinaryTarget.description
+      ~BinaryTarget.metadata
+      ~BinaryTarget.name
+      ~BinaryTarget.unit
+   
+   

@@ -1,0 +1,34 @@
+MemorySize
+==========
+
+.. currentmodule:: baybe.searchspace.discrete
+
+.. autoclass:: MemorySize
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~MemorySize.__init__
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~MemorySize.exp_rep_bytes
+      ~MemorySize.exp_rep_shape
+      ~MemorySize.comp_rep_bytes
+      ~MemorySize.comp_rep_shape
+      ~MemorySize.comp_rep_human_readable
+      ~MemorySize.exp_rep_human_readable
+   
+   

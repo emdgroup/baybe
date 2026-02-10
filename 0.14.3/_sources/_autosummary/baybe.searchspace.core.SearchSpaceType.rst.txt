@@ -1,0 +1,26 @@
+SearchSpaceType
+===============
+
+.. currentmodule:: baybe.searchspace.core
+
+.. autoclass:: SearchSpaceType
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SearchSpaceType.DISCRETE
+      ~SearchSpaceType.CONTINUOUS
+      ~SearchSpaceType.EITHER
+      ~SearchSpaceType.HYBRID
+   
+   

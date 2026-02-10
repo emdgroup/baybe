@@ -1,0 +1,45 @@
+DiscreteCardinalityConstraint
+=============================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteCardinalityConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteCardinalityConstraint.__init__
+      ~DiscreteCardinalityConstraint.from_dict
+      ~DiscreteCardinalityConstraint.from_json
+      ~DiscreteCardinalityConstraint.get_invalid
+      ~DiscreteCardinalityConstraint.get_invalid_polars
+      ~DiscreteCardinalityConstraint.get_valid
+      ~DiscreteCardinalityConstraint.summary
+      ~DiscreteCardinalityConstraint.to_dict
+      ~DiscreteCardinalityConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteCardinalityConstraint.eval_during_augmentation
+      ~DiscreteCardinalityConstraint.eval_during_creation
+      ~DiscreteCardinalityConstraint.eval_during_modeling
+      ~DiscreteCardinalityConstraint.is_continuous
+      ~DiscreteCardinalityConstraint.is_discrete
+      ~DiscreteCardinalityConstraint.max_cardinality
+      ~DiscreteCardinalityConstraint.min_cardinality
+      ~DiscreteCardinalityConstraint.numerical_only
+      ~DiscreteCardinalityConstraint.parameters
+   
+   

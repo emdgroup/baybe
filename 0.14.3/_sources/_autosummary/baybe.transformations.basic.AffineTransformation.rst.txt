@@ -1,0 +1,48 @@
+AffineTransformation
+====================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: AffineTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~AffineTransformation.__init__
+      ~AffineTransformation.abs
+      ~AffineTransformation.chain
+      ~AffineTransformation.clamp
+      ~AffineTransformation.from_dict
+      ~AffineTransformation.from_json
+      ~AffineTransformation.from_values_mapped_to_unit_interval
+      ~AffineTransformation.get_codomain
+      ~AffineTransformation.get_image
+      ~AffineTransformation.hold_output_left_from
+      ~AffineTransformation.hold_output_outside
+      ~AffineTransformation.hold_output_right_from
+      ~AffineTransformation.hshift
+      ~AffineTransformation.negate
+      ~AffineTransformation.to_botorch_objective
+      ~AffineTransformation.to_botorch_posterior_transform
+      ~AffineTransformation.to_dict
+      ~AffineTransformation.to_json
+      ~AffineTransformation.vshift
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~AffineTransformation.factor
+      ~AffineTransformation.shift
+   
+   

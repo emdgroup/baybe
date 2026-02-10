@@ -1,0 +1,6 @@
+baybe.exceptions.InputDataTypeWarning
+=====================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: InputDataTypeWarning

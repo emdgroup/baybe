@@ -1,0 +1,45 @@
+DiscreteExcludeConstraint
+=========================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteExcludeConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteExcludeConstraint.__init__
+      ~DiscreteExcludeConstraint.from_dict
+      ~DiscreteExcludeConstraint.from_json
+      ~DiscreteExcludeConstraint.get_invalid
+      ~DiscreteExcludeConstraint.get_invalid_polars
+      ~DiscreteExcludeConstraint.get_valid
+      ~DiscreteExcludeConstraint.summary
+      ~DiscreteExcludeConstraint.to_dict
+      ~DiscreteExcludeConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteExcludeConstraint.conditions
+      ~DiscreteExcludeConstraint.combiner
+      ~DiscreteExcludeConstraint.eval_during_augmentation
+      ~DiscreteExcludeConstraint.eval_during_creation
+      ~DiscreteExcludeConstraint.eval_during_modeling
+      ~DiscreteExcludeConstraint.is_continuous
+      ~DiscreteExcludeConstraint.is_discrete
+      ~DiscreteExcludeConstraint.numerical_only
+      ~DiscreteExcludeConstraint.parameters
+   
+   

@@ -1,0 +1,43 @@
+DiscreteLinkedParametersConstraint
+==================================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteLinkedParametersConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteLinkedParametersConstraint.__init__
+      ~DiscreteLinkedParametersConstraint.from_dict
+      ~DiscreteLinkedParametersConstraint.from_json
+      ~DiscreteLinkedParametersConstraint.get_invalid
+      ~DiscreteLinkedParametersConstraint.get_invalid_polars
+      ~DiscreteLinkedParametersConstraint.get_valid
+      ~DiscreteLinkedParametersConstraint.summary
+      ~DiscreteLinkedParametersConstraint.to_dict
+      ~DiscreteLinkedParametersConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteLinkedParametersConstraint.eval_during_augmentation
+      ~DiscreteLinkedParametersConstraint.eval_during_creation
+      ~DiscreteLinkedParametersConstraint.eval_during_modeling
+      ~DiscreteLinkedParametersConstraint.is_continuous
+      ~DiscreteLinkedParametersConstraint.is_discrete
+      ~DiscreteLinkedParametersConstraint.numerical_only
+      ~DiscreteLinkedParametersConstraint.parameters
+   
+   

@@ -1,0 +1,41 @@
+baybe.searchspace.discrete
+==========================
+
+.. automodule:: baybe.searchspace.discrete
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      parameter_cartesian_prod_pandas
+      parameter_cartesian_prod_polars
+      validate_simplex_subspace_from_config
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      MemorySize
+      SubspaceDiscrete
+   
+   
+
+   
+   
+   
+
+
+

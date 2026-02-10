@@ -1,0 +1,6 @@
+baybe.exceptions.IncompatibleSurrogateError
+===========================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: IncompatibleSurrogateError

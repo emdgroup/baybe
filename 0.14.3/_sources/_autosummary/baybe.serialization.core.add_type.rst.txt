@@ -1,0 +1,6 @@
+baybe.serialization.core.add\_type
+==================================
+
+.. currentmodule:: baybe.serialization.core
+
+.. autofunction:: add_type

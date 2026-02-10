@@ -1,0 +1,46 @@
+DiscreteDependenciesConstraint
+==============================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteDependenciesConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteDependenciesConstraint.__init__
+      ~DiscreteDependenciesConstraint.from_dict
+      ~DiscreteDependenciesConstraint.from_json
+      ~DiscreteDependenciesConstraint.get_invalid
+      ~DiscreteDependenciesConstraint.get_invalid_polars
+      ~DiscreteDependenciesConstraint.get_valid
+      ~DiscreteDependenciesConstraint.summary
+      ~DiscreteDependenciesConstraint.to_dict
+      ~DiscreteDependenciesConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteDependenciesConstraint.conditions
+      ~DiscreteDependenciesConstraint.affected_parameters
+      ~DiscreteDependenciesConstraint.permutation_invariant
+      ~DiscreteDependenciesConstraint.eval_during_augmentation
+      ~DiscreteDependenciesConstraint.eval_during_creation
+      ~DiscreteDependenciesConstraint.eval_during_modeling
+      ~DiscreteDependenciesConstraint.is_continuous
+      ~DiscreteDependenciesConstraint.is_discrete
+      ~DiscreteDependenciesConstraint.numerical_only
+      ~DiscreteDependenciesConstraint.parameters
+   
+   

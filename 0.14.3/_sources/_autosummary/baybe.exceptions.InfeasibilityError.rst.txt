@@ -1,0 +1,6 @@
+baybe.exceptions.InfeasibilityError
+===================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: InfeasibilityError

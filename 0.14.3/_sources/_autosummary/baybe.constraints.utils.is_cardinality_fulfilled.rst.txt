@@ -1,0 +1,6 @@
+baybe.constraints.utils.is\_cardinality\_fulfilled
+==================================================
+
+.. currentmodule:: baybe.constraints.utils
+
+.. autofunction:: is_cardinality_fulfilled

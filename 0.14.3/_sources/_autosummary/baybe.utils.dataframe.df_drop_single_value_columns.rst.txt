@@ -1,0 +1,6 @@
+baybe.utils.dataframe.df\_drop\_single\_value\_columns
+======================================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: df_drop_single_value_columns

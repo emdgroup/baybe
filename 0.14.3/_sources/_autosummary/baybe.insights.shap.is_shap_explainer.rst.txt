@@ -1,0 +1,6 @@
+baybe.insights.shap.is\_shap\_explainer
+=======================================
+
+.. currentmodule:: baybe.insights.shap
+
+.. autofunction:: is_shap_explainer

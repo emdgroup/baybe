@@ -1,0 +1,30 @@
+baybe.simulation.transfer\_learning
+===================================
+
+.. automodule:: baybe.simulation.transfer_learning
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      simulate_transfer_learning
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

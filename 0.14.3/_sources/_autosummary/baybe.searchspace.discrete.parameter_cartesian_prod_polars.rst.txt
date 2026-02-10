@@ -1,0 +1,6 @@
+baybe.searchspace.discrete.parameter\_cartesian\_prod\_polars
+=============================================================
+
+.. currentmodule:: baybe.searchspace.discrete
+
+.. autofunction:: parameter_cartesian_prod_polars

@@ -1,0 +1,35 @@
+NaiveHybridSpaceRecommender
+===========================
+
+.. currentmodule:: baybe.recommenders.naive
+
+.. autoclass:: NaiveHybridSpaceRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~NaiveHybridSpaceRecommender.__init__
+      ~NaiveHybridSpaceRecommender.recommend
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~NaiveHybridSpaceRecommender.disc_recommender
+      ~NaiveHybridSpaceRecommender.cont_recommender
+      ~NaiveHybridSpaceRecommender.allow_recommending_already_measured
+      ~NaiveHybridSpaceRecommender.allow_recommending_pending_experiments
+      ~NaiveHybridSpaceRecommender.allow_repeated_recommendations
+      ~NaiveHybridSpaceRecommender.compatibility
+   
+   

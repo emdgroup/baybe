@@ -1,0 +1,44 @@
+DiscretePermutationInvarianceConstraint
+=======================================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscretePermutationInvarianceConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscretePermutationInvarianceConstraint.__init__
+      ~DiscretePermutationInvarianceConstraint.from_dict
+      ~DiscretePermutationInvarianceConstraint.from_json
+      ~DiscretePermutationInvarianceConstraint.get_invalid
+      ~DiscretePermutationInvarianceConstraint.get_invalid_polars
+      ~DiscretePermutationInvarianceConstraint.get_valid
+      ~DiscretePermutationInvarianceConstraint.summary
+      ~DiscretePermutationInvarianceConstraint.to_dict
+      ~DiscretePermutationInvarianceConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscretePermutationInvarianceConstraint.dependencies
+      ~DiscretePermutationInvarianceConstraint.eval_during_augmentation
+      ~DiscretePermutationInvarianceConstraint.eval_during_creation
+      ~DiscretePermutationInvarianceConstraint.eval_during_modeling
+      ~DiscretePermutationInvarianceConstraint.is_continuous
+      ~DiscretePermutationInvarianceConstraint.is_discrete
+      ~DiscretePermutationInvarianceConstraint.numerical_only
+      ~DiscretePermutationInvarianceConstraint.parameters
+   
+   

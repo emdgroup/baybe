@@ -1,0 +1,35 @@
+LogNormalPrior
+==============
+
+.. currentmodule:: baybe.priors.basic
+
+.. autoclass:: LogNormalPrior
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~LogNormalPrior.__init__
+      ~LogNormalPrior.from_dict
+      ~LogNormalPrior.from_json
+      ~LogNormalPrior.to_dict
+      ~LogNormalPrior.to_gpytorch
+      ~LogNormalPrior.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~LogNormalPrior.loc
+      ~LogNormalPrior.scale
+   
+   

@@ -1,6 +1,0 @@
-baybe.utils.basic.cache\_to\_disk
-=================================
-
-.. currentmodule:: baybe.utils.basic
-
-.. autofunction:: cache_to_disk

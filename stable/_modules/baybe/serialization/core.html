@@ -1090,6 +1090,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">NoReturn</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">get_type_hints</span>
@@ -1233,8 +1234,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">select_constructor_hook</span><span class="p">(</span><span class="n">specs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Use the constructor specified in the &#39;constructor&#39; field for deserialization.&quot;&quot;&quot;</span>
     <span class="c1"># If a constructor is specified, use it</span>
-    <span class="n">specs</span> <span class="o">=</span> <span class="n">specs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">constructor_name</span> <span class="o">:=</span> <span class="n">specs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;constructor&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># Drop potentially existing type field</span>
+        <span class="c1"># (The type is already fully determined in this execution branch)</span>
+        <span class="n">specs</span> <span class="o">=</span> <span class="n">specs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">specs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">_TYPE_FIELD</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># Extract the constructor callable</span>
         <span class="n">constructor</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">constructor_name</span><span class="p">)</span>
 
         <span class="c1"># If given a non-attrs class, simply call the constructor</span>
@@ -1243,9 +1249,14 @@
 
         <span class="c1"># Extract the constructor parameter types and deserialize the arguments</span>
         <span class="n">type_hints</span> <span class="o">=</span> <span class="n">get_type_hints</span><span class="p">(</span><span class="n">constructor</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">specs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">:</span>
             <span class="n">annotation</span> <span class="o">=</span> <span class="n">type_hints</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-            <span class="n">specs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">specs</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">annotation</span><span class="p">)</span>
+
+            <span class="c1"># For some types (e.g. unions), there might not be a registered structure</span>
+            <span class="c1"># hook. In this case, the constructor will accept the raw value, so we</span>
+            <span class="c1"># simply pass it through.</span>
+            <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="n">cattrs</span><span class="o">.</span><span class="n">StructureHandlerNotFoundError</span><span class="p">):</span>
+                <span class="n">specs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">specs</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">annotation</span><span class="p">)</span>
 
         <span class="c1"># Call the constructor with the deserialized arguments</span>
         <span class="k">return</span> <span class="n">constructor</span><span class="p">(</span><span class="o">**</span><span class="n">specs</span><span class="p">)</span>

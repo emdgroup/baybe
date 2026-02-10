@@ -1,0 +1,6 @@
+baybe.surrogates.validation.validate\_custom\_architecture\_cls
+===============================================================
+
+.. currentmodule:: baybe.surrogates.validation
+
+.. autofunction:: validate_custom_architecture_cls

@@ -1,0 +1,39 @@
+BayesianRecommender
+===================
+
+.. currentmodule:: baybe.recommenders.pure.bayesian.base
+
+.. autoclass:: BayesianRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BayesianRecommender.__init__
+      ~BayesianRecommender.acquisition_values
+      ~BayesianRecommender.get_acquisition_function
+      ~BayesianRecommender.get_surrogate
+      ~BayesianRecommender.joint_acquisition_value
+      ~BayesianRecommender.recommend
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~BayesianRecommender.acquisition_function
+      ~BayesianRecommender.allow_recommending_already_measured
+      ~BayesianRecommender.allow_recommending_pending_experiments
+      ~BayesianRecommender.allow_repeated_recommendations
+      ~BayesianRecommender.surrogate_model
+      ~BayesianRecommender.compatibility
+   
+   

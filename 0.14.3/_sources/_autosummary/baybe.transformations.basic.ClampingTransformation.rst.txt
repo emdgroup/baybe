@@ -1,0 +1,45 @@
+ClampingTransformation
+======================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: ClampingTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ClampingTransformation.__init__
+      ~ClampingTransformation.abs
+      ~ClampingTransformation.chain
+      ~ClampingTransformation.clamp
+      ~ClampingTransformation.from_dict
+      ~ClampingTransformation.from_json
+      ~ClampingTransformation.get_codomain
+      ~ClampingTransformation.get_image
+      ~ClampingTransformation.hold_output_left_from
+      ~ClampingTransformation.hold_output_outside
+      ~ClampingTransformation.hold_output_right_from
+      ~ClampingTransformation.hshift
+      ~ClampingTransformation.negate
+      ~ClampingTransformation.to_botorch_objective
+      ~ClampingTransformation.to_dict
+      ~ClampingTransformation.to_json
+      ~ClampingTransformation.vshift
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ClampingTransformation.cutoffs
+   
+   

@@ -1,0 +1,45 @@
+PowerTransformation
+===================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: PowerTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PowerTransformation.__init__
+      ~PowerTransformation.abs
+      ~PowerTransformation.chain
+      ~PowerTransformation.clamp
+      ~PowerTransformation.from_dict
+      ~PowerTransformation.from_json
+      ~PowerTransformation.get_codomain
+      ~PowerTransformation.get_image
+      ~PowerTransformation.hold_output_left_from
+      ~PowerTransformation.hold_output_outside
+      ~PowerTransformation.hold_output_right_from
+      ~PowerTransformation.hshift
+      ~PowerTransformation.negate
+      ~PowerTransformation.to_botorch_objective
+      ~PowerTransformation.to_dict
+      ~PowerTransformation.to_json
+      ~PowerTransformation.vshift
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PowerTransformation.exponent
+   
+   

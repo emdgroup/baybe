@@ -1,0 +1,37 @@
+qUpperConfidenceBound
+=====================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: qUpperConfidenceBound
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~qUpperConfidenceBound.__init__
+      ~qUpperConfidenceBound.evaluate
+      ~qUpperConfidenceBound.from_dict
+      ~qUpperConfidenceBound.from_json
+      ~qUpperConfidenceBound.to_botorch
+      ~qUpperConfidenceBound.to_dict
+      ~qUpperConfidenceBound.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~qUpperConfidenceBound.beta
+      ~qUpperConfidenceBound.abbreviation
+      ~qUpperConfidenceBound.supports_multi_output
+   
+   

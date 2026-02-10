@@ -1,0 +1,6 @@
+baybe.acquisition.utils.make\_partitioning
+==========================================
+
+.. currentmodule:: baybe.acquisition.utils
+
+.. autofunction:: make_partitioning

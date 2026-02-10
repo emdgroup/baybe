@@ -1,0 +1,32 @@
+KMedoids
+========
+
+.. currentmodule:: baybe.utils.clustering_algorithms.third_party.kmedoids
+
+.. autoclass:: KMedoids
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~KMedoids.__init__
+      ~KMedoids.fit
+      ~KMedoids.fit_predict
+      ~KMedoids.fit_transform
+      ~KMedoids.get_metadata_routing
+      ~KMedoids.get_params
+      ~KMedoids.predict
+      ~KMedoids.set_output
+      ~KMedoids.set_params
+      ~KMedoids.transform
+   
+   
+
+   
+   
+   

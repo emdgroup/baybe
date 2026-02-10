@@ -1,0 +1,193 @@
+# Example for validation of a config file
+
+This example shows how to load and validate a user defined configuration file.
+We use the two configuration dictionaries.
+The first one represents a valid configuration, the second does not.
+
+## Necessary imports
+
+
+```python
+from cattrs import ClassValidationError
+```
+
+
+```python
+from baybe import Campaign
+```
+
+## Defining config dictionaries
+
+Note that the following explicit call `str()` is not strictly necessary.
+It is included since our method of converting this example to a markdown file does not
+interpret this part of the code as `python` code if we do not include this call.
+
+
+```python
+CONFIG = str(
+    """
+{
+    "searchspace": {
+        "constructor": "from_product",
+        "parameters": [
+            {
+                "type": "CategoricalParameter",
+                "name": "Granularity",
+                "values": [
+                    "coarse",
+                    "fine",
+                    "ultra-fine"
+                ],
+                "encoding": "OHE"
+            },
+            {
+                "type": "NumericalDiscreteParameter",
+                "name": "Pressure[bar]",
+                "values": [
+                    1,
+                    5,
+                    10
+                ],
+                "tolerance": 0.2
+            },
+            {
+                "type": "SubstanceParameter",
+                "name": "Solvent",
+                "data": {
+                    "Solvent A": "COC",
+                    "Solvent B": "CCCCC",
+                    "Solvent C": "COCOC",
+                    "Solvent D": "CCOCCOCCN"
+                },
+                "decorrelate": true,
+                "encoding": "MORDRED"
+            }
+        ],
+        "constraints": []
+    },
+    "objective": {
+        "type": "SingleTargetObjective",
+        "target":
+            {
+                "type": "NumericalTarget",
+                "name": "Yield"
+            }
+    },
+    "recommender": {
+        "type": "TwoPhaseMetaRecommender",
+        "initial_recommender": {
+            "type": "FPSRecommender"
+        },
+        "recommender": {
+            "type": "BotorchRecommender",
+            "surrogate_model": {
+                "type": "GaussianProcessSurrogate"
+            },
+            "acquisition_function": "qEI"
+        },
+        "switch_after": 1
+    },
+    "allow_recommending_already_recommended": false,
+    "allow_recommending_already_measured": false
+}
+"""
+)
+```
+
+
+```python
+INVALID_CONFIG = str(
+    """
+{
+    "searchspace": {
+        "constructor": "from_product",
+        "parameters": [
+            {
+                "type": "INVALID_TYPE",
+                "name": "Granularity",
+                "values": [
+                    "coarse",
+                    "fine",
+                    "ultra-fine"
+                ],
+                "encoding": "OHE"
+            },
+            {
+                "type": "NumericalDiscreteParameter",
+                "name": "Pressure[bar]",
+                "values": [
+                    1,
+                    5,
+                    10
+                ],
+                "tolerance": 0.2
+            },
+            {
+                "type": "SubstanceParameter",
+                "name": "Solvent",
+                "data": {
+                    "Solvent A": "COC",
+                    "Solvent B": "CCCCC",
+                    "Solvent C": "COCOC",
+                    "Solvent D": "CCOCCOCCN"
+                },
+                "decorrelate": true,
+                "encoding": "MORDRED"
+            }
+        ],
+        "constraints": []
+    },
+    "objective": {
+        "type": "SingleTargetObjective",
+        "target":
+            {
+                "type": "NumericalTarget",
+                "name": "Yield"
+            }
+    },
+    "recommender": {
+        "type": "TwoPhaseMetaRecommender",
+        "initial_recommender": {
+            "type": "FPSRecommender"
+        },
+        "recommender": {
+            "type": "BotorchRecommender",
+            "surrogate_model": {
+                "type": "GaussianProcessSurrogate"
+            },
+            "acquisition_function": "qEI",
+            "allow_recommending_already_recommended": false,
+            "allow_recommending_already_measured": false
+        }
+    }
+}
+"""
+)
+```
+
+## Verification of the two dictionaries
+
+The first validation should work.
+
+
+```python
+Campaign.validate_config(CONFIG)
+print("The first config seems valid.")
+```
+
+    The first config seems valid.
+
+
+This should fail.
+
+
+```python
+try:
+    Campaign.validate_config(INVALID_CONFIG)
+    campaign = Campaign.from_config(INVALID_CONFIG)
+except ClassValidationError:
+    print("Something is wrong with the second config, which is what we expected!")
+```
+
+    Something is wrong with the second config, which is what we expected!
+

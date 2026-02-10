@@ -1,0 +1,6 @@
+baybe.utils.sampling\_algorithms.sample\_numerical\_df
+======================================================
+
+.. currentmodule:: baybe.utils.sampling_algorithms
+
+.. autofunction:: sample_numerical_df

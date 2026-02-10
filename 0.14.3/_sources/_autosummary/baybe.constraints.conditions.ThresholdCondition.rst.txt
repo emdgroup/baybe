@@ -1,0 +1,37 @@
+ThresholdCondition
+==================
+
+.. currentmodule:: baybe.constraints.conditions
+
+.. autoclass:: ThresholdCondition
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ThresholdCondition.__init__
+      ~ThresholdCondition.evaluate
+      ~ThresholdCondition.from_dict
+      ~ThresholdCondition.from_json
+      ~ThresholdCondition.to_dict
+      ~ThresholdCondition.to_json
+      ~ThresholdCondition.to_polars
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ThresholdCondition.threshold
+      ~ThresholdCondition.operator
+      ~ThresholdCondition.tolerance
+   
+   

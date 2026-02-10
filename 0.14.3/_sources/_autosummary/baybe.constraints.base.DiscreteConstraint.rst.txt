@@ -1,0 +1,43 @@
+DiscreteConstraint
+==================
+
+.. currentmodule:: baybe.constraints.base
+
+.. autoclass:: DiscreteConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteConstraint.__init__
+      ~DiscreteConstraint.from_dict
+      ~DiscreteConstraint.from_json
+      ~DiscreteConstraint.get_invalid
+      ~DiscreteConstraint.get_invalid_polars
+      ~DiscreteConstraint.get_valid
+      ~DiscreteConstraint.summary
+      ~DiscreteConstraint.to_dict
+      ~DiscreteConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteConstraint.eval_during_augmentation
+      ~DiscreteConstraint.eval_during_creation
+      ~DiscreteConstraint.eval_during_modeling
+      ~DiscreteConstraint.is_continuous
+      ~DiscreteConstraint.is_discrete
+      ~DiscreteConstraint.numerical_only
+      ~DiscreteConstraint.parameters
+   
+   

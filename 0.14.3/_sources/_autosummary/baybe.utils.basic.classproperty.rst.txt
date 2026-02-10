@@ -1,0 +1,23 @@
+classproperty
+=============
+
+.. currentmodule:: baybe.utils.basic
+
+.. autoclass:: classproperty
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~classproperty.__init__
+   
+   
+
+   
+   
+   

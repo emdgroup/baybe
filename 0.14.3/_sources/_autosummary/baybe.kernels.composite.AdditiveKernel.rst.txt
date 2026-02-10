@@ -1,0 +1,35 @@
+AdditiveKernel
+==============
+
+.. currentmodule:: baybe.kernels.composite
+
+.. autoclass:: AdditiveKernel
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~AdditiveKernel.__init__
+      ~AdditiveKernel.from_dict
+      ~AdditiveKernel.from_json
+      ~AdditiveKernel.to_dict
+      ~AdditiveKernel.to_factory
+      ~AdditiveKernel.to_gpytorch
+      ~AdditiveKernel.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~AdditiveKernel.base_kernels
+   
+   

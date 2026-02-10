@@ -1104,7 +1104,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncompatibilityError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerialMixin</span><span class="p">,</span> <span class="n">converter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_constructor_hook</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">_TYPE_FIELD</span><span class="p">,</span> <span class="n">select_constructor_hook</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets._deprecated</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_VALID_TRANSFORMATIONS</span><span class="p">,</span>
     <span class="n">TargetMode</span><span class="p">,</span>
@@ -1930,12 +1930,16 @@
 
 
 
+<span class="c1"># Collect leftover original slotted classes processed by `attrs.define`</span>
+<span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+
 <span class="n">converter</span><span class="o">.</span><span class="n">register_unstructure_hook</span><span class="p">(</span>
     <span class="n">NumericalTarget</span><span class="p">,</span>
     <span class="n">cattrs</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">make_dict_unstructure_fn</span><span class="p">(</span>
         <span class="n">NumericalTarget</span><span class="p">,</span> <span class="n">converter</span><span class="p">,</span> <span class="n">_constructor_info</span><span class="o">=</span><span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">omit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="p">),</span>
 <span class="p">)</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">register_structure_hook</span><span class="p">(</span><span class="n">NumericalTarget</span><span class="p">,</span> <span class="n">select_constructor_hook</span><span class="p">)</span>
 
 
 <span class="c1"># &gt;&gt;&gt; Deprecation &gt;&gt;&gt; #</span>
@@ -1944,29 +1948,14 @@
 
 
 <span class="nd">@converter</span><span class="o">.</span><span class="n">register_structure_hook</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="n">dct</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NumericalTarget</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_enable_legacy_target_deserialization</span><span class="p">(</span><span class="n">dct</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NumericalTarget</span><span class="p">:</span>
     <span class="k">if</span> <span class="s2">&quot;mode&quot;</span> <span class="ow">in</span> <span class="n">dct</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_hook</span><span class="p">(</span><span class="o">*</span><span class="n">dct</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">select_constructor_hook</span><span class="p">(</span><span class="n">dct</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>
-
-
-<span class="n">_hook</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">get_structure_hook</span><span class="p">(</span><span class="n">NumericalTarget</span><span class="p">)</span>
-
-
-<span class="nd">@converter</span><span class="o">.</span><span class="n">register_structure_hook</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_structure_legacy_target_arguments</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NumericalTarget</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accept legacy target argument for backward compatibility.&quot;&quot;&quot;</span>
-    <span class="n">x</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_hook</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># type: ignore[return-value]</span>
+        <span class="n">dct</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">_TYPE_FIELD</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="o">**</span><span class="n">dct</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_hook</span><span class="p">(</span><span class="n">dct</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>
 
 
 <span class="c1"># &lt;&lt;&lt; Deprecation &lt;&lt;&lt; #</span>
-
-
-<span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 </pre></div>
         </article>
       </div>

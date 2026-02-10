@@ -1619,9 +1619,11 @@
             <span class="p">)</span>
             <span class="n">pending_experiments</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">=</span> <span class="n">_ValidatedDataFrame</span>
 
+        <span class="c1"># TODO: Proper fix for the allow_* flags required</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">pending_experiments</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="p">(</span><span class="n">cache</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_recommendation</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_already_recommended</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">UNSPECIFIED</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_already_recommended</span>
             <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span> <span class="o">==</span> <span class="n">batch_size</span>
         <span class="p">):</span>

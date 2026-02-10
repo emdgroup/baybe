@@ -1,0 +1,6 @@
+baybe.constraints.deprecation.ContinuousLinearInequalityConstraint
+==================================================================
+
+.. currentmodule:: baybe.constraints.deprecation
+
+.. autofunction:: ContinuousLinearInequalityConstraint

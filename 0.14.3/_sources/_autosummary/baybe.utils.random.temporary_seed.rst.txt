@@ -1,0 +1,6 @@
+baybe.utils.random.temporary\_seed
+==================================
+
+.. currentmodule:: baybe.utils.random
+
+.. autofunction:: temporary_seed

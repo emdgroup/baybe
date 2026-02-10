@@ -1,7 +1,0 @@
-baybe.settings.active\_settings
-===============================
-
-.. currentmodule:: baybe.settings
-
-
-.. autodata:: active_settings

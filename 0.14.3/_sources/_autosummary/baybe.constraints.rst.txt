@@ -1,0 +1,45 @@
+baybe.constraints
+=================
+
+.. automodule:: baybe.constraints
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+
+   base
+
+   conditions
+
+   continuous
+
+   deprecation
+
+   discrete
+
+   utils
+
+   validation
+

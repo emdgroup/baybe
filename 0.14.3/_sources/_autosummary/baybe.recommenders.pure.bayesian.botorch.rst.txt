@@ -1,0 +1,31 @@
+baybe.recommenders.pure.bayesian.botorch
+========================================
+
+.. automodule:: baybe.recommenders.pure.bayesian.botorch
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      BotorchRecommender
+   
+   
+
+   
+   
+   
+
+
+

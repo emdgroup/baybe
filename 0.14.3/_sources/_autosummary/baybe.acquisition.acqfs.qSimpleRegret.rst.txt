@@ -1,0 +1,36 @@
+qSimpleRegret
+=============
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: qSimpleRegret
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~qSimpleRegret.__init__
+      ~qSimpleRegret.evaluate
+      ~qSimpleRegret.from_dict
+      ~qSimpleRegret.from_json
+      ~qSimpleRegret.to_botorch
+      ~qSimpleRegret.to_dict
+      ~qSimpleRegret.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~qSimpleRegret.abbreviation
+      ~qSimpleRegret.supports_multi_output
+   
+   

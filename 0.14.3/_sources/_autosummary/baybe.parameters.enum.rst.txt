@@ -1,0 +1,34 @@
+baybe.parameters.enum
+=====================
+
+.. automodule:: baybe.parameters.enum
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      CategoricalEncoding
+      CustomEncoding
+      ParameterEncoding
+      SubstanceEncoding
+   
+   
+
+   
+   
+   
+
+
+

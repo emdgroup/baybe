@@ -1,0 +1,40 @@
+qNegIntegratedPosteriorVariance
+===============================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: qNegIntegratedPosteriorVariance
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~qNegIntegratedPosteriorVariance.__init__
+      ~qNegIntegratedPosteriorVariance.evaluate
+      ~qNegIntegratedPosteriorVariance.from_dict
+      ~qNegIntegratedPosteriorVariance.from_json
+      ~qNegIntegratedPosteriorVariance.get_integration_points
+      ~qNegIntegratedPosteriorVariance.to_botorch
+      ~qNegIntegratedPosteriorVariance.to_dict
+      ~qNegIntegratedPosteriorVariance.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~qNegIntegratedPosteriorVariance.sampling_n_points
+      ~qNegIntegratedPosteriorVariance.sampling_fraction
+      ~qNegIntegratedPosteriorVariance.sampling_method
+      ~qNegIntegratedPosteriorVariance.abbreviation
+      ~qNegIntegratedPosteriorVariance.supports_multi_output
+   
+   

@@ -1,0 +1,37 @@
+qThompsonSampling
+=================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: qThompsonSampling
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~qThompsonSampling.__init__
+      ~qThompsonSampling.evaluate
+      ~qThompsonSampling.from_dict
+      ~qThompsonSampling.from_json
+      ~qThompsonSampling.to_botorch
+      ~qThompsonSampling.to_dict
+      ~qThompsonSampling.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~qThompsonSampling.n_mc_samples
+      ~qThompsonSampling.abbreviation
+      ~qThompsonSampling.supports_multi_output
+   
+   

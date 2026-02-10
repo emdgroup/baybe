@@ -1,6 +1,0 @@
-baybe.exceptions.NotAllowedError
-================================
-
-.. currentmodule:: baybe.exceptions
-
-.. autoexception:: NotAllowedError

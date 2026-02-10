@@ -1,0 +1,7 @@
+baybe.utils.numerical.DTypeFloatNumpy
+=====================================
+
+.. currentmodule:: baybe.utils.numerical
+
+
+.. autoclass:: DTypeFloatNumpy
