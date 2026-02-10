@@ -5,14 +5,14 @@ from __future__ import annotations
 import gc
 import json
 import warnings
-from collections.abc import Callable, Collection, Sequence
+from collections.abc import Collection, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import Attribute, Factory, define, evolve, field, fields
+from attrs import Attribute, define, evolve, field, fields
 from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
@@ -42,8 +42,8 @@ from baybe.serialization import SerialMixin, converter
 from baybe.settings import Settings, active_settings
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.targets.base import Target
-from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
-from baybe.utils.boolean import eq_dataframe
+from baybe.utils.basic import is_all_instance
+from baybe.utils.boolean import AutoBool, eq_dataframe
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import filter_df, fuzzy_row_match
 from baybe.utils.validation import (
@@ -67,20 +67,6 @@ _EXCLUDED = "excluded"
 _METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
 
 
-def _make_allow_flag_default_factory(
-    default: bool,
-) -> Callable[[Campaign], bool | UnspecifiedType]:
-    """Make a default factory for allow_* flags."""
-
-    def default_allow_flag(campaign: Campaign) -> bool | UnspecifiedType:
-        """Attrs-compatible default factory for allow_* flags."""
-        if campaign.searchspace.type is SearchSpaceType.DISCRETE:
-            return default
-        return UNSPECIFIED
-
-    return default_allow_flag
-
-
 def _set_with_cache_cleared(instance: Campaign, attribute: Attribute, value: _T) -> _T:
     """Attrs-compatible hook to clear the cache when changing an attribute."""
     if value != getattr(instance, attribute.name):
@@ -88,22 +74,20 @@ def _set_with_cache_cleared(instance: Campaign, attribute: Attribute, value: _T)
     return value
 
 
-def _validate_allow_flag(campaign: Campaign, attribute: Attribute, value: Any) -> None:
+def _validate_allow_flag(
+    campaign: Campaign, attribute: Attribute, value: AutoBool
+) -> None:
     """Attrs-compatible validator for context-aware validation of allow_* flags."""
-    match campaign.searchspace.type:
-        case SearchSpaceType.DISCRETE:
-            if not isinstance(value, bool):
-                raise ValueError(
-                    f"For search spaces of '{SearchSpaceType.DISCRETE}', "
-                    f"'{attribute.name}' must be a Boolean."
-                )
-        case _:
-            if value is not UNSPECIFIED:
-                raise ValueError(
-                    f"For search spaces of type other than "
-                    f"'{SearchSpaceType.DISCRETE}', '{attribute.name}' cannot be set "
-                    f"since the flag is meaningless in such contexts.",
-                )
+    if campaign.searchspace.type is SearchSpaceType.DISCRETE:
+        return
+
+    if value is AutoBool.FALSE:
+        raise IncompatibilityError(
+            f"For search spaces involving a continuous subspace, the flag "
+            f"'{attribute.alias}' cannot be set to 'False' for algorithmic reasons. "
+            f"Either let the value be automatically determined by not setting it "
+            f"explicitly / setting it to 'auto' or explicitly set it to 'True'."
+        )
 
 
 @define
@@ -151,38 +135,35 @@ class Campaign(SerialMixin):
     )
     """The employed recommender"""
 
-    allow_recommending_already_measured: bool | UnspecifiedType = field(
-        default=Factory(
-            _make_allow_flag_default_factory(default=True), takes_self=True
-        ),
+    _allow_recommending_already_measured: AutoBool = field(
+        alias="allow_recommending_already_measured",
+        default=AutoBool.AUTO,
+        converter=AutoBool.from_unstructured,
         validator=_validate_allow_flag,
         on_setattr=_set_with_cache_cleared,
         kw_only=True,
     )
-    """Allow to recommend experiments that were already measured earlier.
-    Can only be set for discrete search spaces."""
+    """Allow recommending experiments that have already been measured."""
 
-    allow_recommending_already_recommended: bool | UnspecifiedType = field(
-        default=Factory(
-            _make_allow_flag_default_factory(default=False), takes_self=True
-        ),
+    _allow_recommending_already_recommended: AutoBool = field(
+        alias="allow_recommending_already_recommended",
+        default=AutoBool.AUTO,
+        converter=AutoBool.from_unstructured,
         validator=_validate_allow_flag,
         on_setattr=_set_with_cache_cleared,
         kw_only=True,
     )
-    """Allow to recommend experiments that were already recommended earlier.
-    Can only be set for discrete search spaces."""
+    """Allow recommending experiments that have already been recommended."""
 
-    allow_recommending_pending_experiments: bool | UnspecifiedType = field(
-        default=Factory(
-            _make_allow_flag_default_factory(default=False), takes_self=True
-        ),
+    _allow_recommending_pending_experiments: AutoBool = field(
+        alias="allow_recommending_pending_experiments",
+        default=AutoBool.AUTO,
+        converter=AutoBool.from_unstructured,
         validator=_validate_allow_flag,
         on_setattr=_set_with_cache_cleared,
         kw_only=True,
     )
-    """Allow pending experiments to be part of the recommendations.
-    Can only be set for discrete search spaces."""
+    """Allow recommending pending experiments."""
 
     # Metadata
     _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
@@ -263,6 +244,27 @@ class Campaign(SerialMixin):
     def targets(self) -> tuple[Target, ...]:
         """The targets of the underlying objective."""
         return self.objective.targets if self.objective is not None else ()
+
+    @property
+    def allow_recommending_already_measured(self) -> bool:
+        """Allow recommending experiments that have already been measured."""
+        if self._allow_recommending_already_measured is AutoBool.AUTO:
+            return self.searchspace.type is SearchSpaceType.DISCRETE
+        return bool(self._allow_recommending_already_measured)
+
+    @property
+    def allow_recommending_already_recommended(self) -> bool:
+        """Allow recommending experiments that have already been recommended."""
+        if self._allow_recommending_already_recommended is AutoBool.AUTO:
+            return False
+        return bool(self._allow_recommending_already_recommended)
+
+    @property
+    def allow_recommending_pending_experiments(self) -> bool:
+        """Allow recommending pending experiments."""
+        if self._allow_recommending_pending_experiments is AutoBool.AUTO:
+            return False
+        return bool(self._allow_recommending_pending_experiments)
 
     @classmethod
     def from_config(cls, config_json: str) -> Campaign:

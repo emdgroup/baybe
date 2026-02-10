@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `identify_non_dominated_configurations` method to `Campaign` and `Objective`
   for determining the Pareto front
 
+### Changed
+- The `Campaign.allow_*` flag mechanism is now based on `AutoBool` logic, providing
+  well-defined Boolean values at query time while exposing the `AUTO` option to the user
+
+### Fixed
+- Broken cache validation for certain `Campaign.recommend` cases
+
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
   can now be conveniently controlled via the new `Settings` mechanism
