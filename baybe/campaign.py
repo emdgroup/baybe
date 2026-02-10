@@ -580,9 +580,9 @@ class Campaign(SerialMixin):
             ok_m = self.allow_recommending_already_measured
             ok_r = self.allow_recommending_already_recommended
             ok_p = self.allow_recommending_pending_experiments
-            ok_m_name = f.allow_recommending_already_measured.name
-            ok_r_name = f.allow_recommending_already_recommended.name
-            ok_p_name = f.allow_recommending_pending_experiments.name
+            ok_m_name = f._allow_recommending_already_measured.alias
+            ok_r_name = f._allow_recommending_already_recommended.alias
+            ok_p_name = f._allow_recommending_pending_experiments.alias
             no_blocked_pending_points = ok_p or (pending_experiments is None)
 
             # If there are no candidate restrictions to be relaxed
