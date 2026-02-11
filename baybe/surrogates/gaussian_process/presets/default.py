@@ -10,12 +10,14 @@ from typing_extensions import override
 
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
+from baybe.surrogates.gaussian_process.mean_factory import MeanFactory
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOKernelFactory,
     _smoothed_edbo_noise_factory,
 )
 
 if TYPE_CHECKING:
+    from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
     from baybe.kernels.base import Kernel
@@ -31,6 +33,19 @@ class DefaultKernelFactory(KernelFactory):
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         return SmoothedEDBOKernelFactory()(searchspace, train_x, train_y)
+
+
+@define
+class DefaultMeanFactory(MeanFactory):
+    """A factory providing the default mean function for Gaussian process surrogates."""
+
+    @override
+    def __call__(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> GPyTorchMean:
+        from gpytorch.means import ConstantMean
+
+        return ConstantMean()
 
 
 def _default_noise_factory(

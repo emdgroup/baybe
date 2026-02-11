@@ -17,12 +17,14 @@ from baybe.surrogates.gaussian_process.components import to_component_factory
 from baybe.surrogates.gaussian_process.kernel_factory import (
     KernelFactory,
 )
+from baybe.surrogates.gaussian_process.mean_factory import MeanFactory
 from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
     make_gp_from_preset,
 )
 from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
+    DefaultMeanFactory,
     _default_noise_factory,
 )
 from baybe.utils.conversion import to_string
@@ -114,6 +116,12 @@ class GaussianProcessSurrogate(Surrogate):
     When passing a :class:`baybe.kernels.base.Kernel`, it gets automatically wrapped
     into a :class:`.kernel_factory.PlainKernelFactory`."""
 
+    mean_factory: MeanFactory = field(
+        alias="mean_or_factory",
+        factory=DefaultMeanFactory,
+        converter=to_component_factory,
+    )
+
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
@@ -165,7 +173,7 @@ class GaussianProcessSurrogate(Surrogate):
         outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
         ### Mean
-        mean_module = gpytorch.means.ConstantMean()
+        mean = self.mean_factory(context.searchspace, train_x, train_y)
 
         ### Kernel
         kernel = self.kernel_factory(context.searchspace, train_x, train_y)
@@ -197,7 +205,7 @@ class GaussianProcessSurrogate(Surrogate):
             train_y,
             input_transform=input_transform,
             outcome_transform=outcome_transform,
-            mean_module=mean_module,
+            mean_module=mean,
             covar_module=kernel,
             likelihood=likelihood,
         )
