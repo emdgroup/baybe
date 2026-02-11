@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from baybe.kernels.base import Kernel
-from baybe.surrogates.gaussian_process.components import (
+from baybe.surrogates.gaussian_process.components.generic import (
     ComponentFactory,
     PlainComponentFactory,
 )

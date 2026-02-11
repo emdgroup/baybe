@@ -8,7 +8,7 @@ from attrs import define
 from typing_extensions import override
 
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.mean_factory import MeanFactory
+from baybe.surrogates.gaussian_process.components.mean import MeanFactory
 
 if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean

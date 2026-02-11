@@ -13,12 +13,12 @@ from baybe.kernels.base import Kernel
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.gaussian_process.components import to_component_factory
-from baybe.surrogates.gaussian_process.kernel_factory import (
+from baybe.surrogates.gaussian_process.components.generic import to_component_factory
+from baybe.surrogates.gaussian_process.components.kernel import (
     KernelFactory,
 )
-from baybe.surrogates.gaussian_process.likelihoods import LikelihoodFactory
-from baybe.surrogates.gaussian_process.mean_factory import MeanFactory
+from baybe.surrogates.gaussian_process.components.likelihood import LikelihoodFactory
+from baybe.surrogates.gaussian_process.components.mean import MeanFactory
 from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
     make_gp_from_preset,

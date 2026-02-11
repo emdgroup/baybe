@@ -16,8 +16,8 @@ from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
 from baybe.searchspace.discrete import SubspaceDiscrete
-from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
-from baybe.surrogates.gaussian_process.likelihoods import LikelihoodFactory
+from baybe.surrogates.gaussian_process.components.kernel import KernelFactory
+from baybe.surrogates.gaussian_process.components.likelihood import LikelihoodFactory
 from baybe.surrogates.gaussian_process.presets.utils import LazyConstantMeanFactory
 
 if TYPE_CHECKING:

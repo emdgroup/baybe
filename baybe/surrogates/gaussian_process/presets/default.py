@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 from attrs import define
 from typing_extensions import override
 
-from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
-from baybe.surrogates.gaussian_process.likelihoods import LikelihoodFactory
-from baybe.surrogates.gaussian_process.mean_factory import MeanFactory
+from baybe.surrogates.gaussian_process.components.kernel import KernelFactory
+from baybe.surrogates.gaussian_process.components.likelihood import LikelihoodFactory
+from baybe.surrogates.gaussian_process.components.mean import MeanFactory
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOKernelFactory,
     SmoothedEDBOLikelihoodFactory,
