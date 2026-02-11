@@ -80,8 +80,12 @@ def make_base_unstructure_hook(base: type[_T]):
             # For parameterized generics (e.g., BaseClass[Type]), we use its type
             # information when unstructuring, not just the plain runtime class
             concrete_cls = obj.__class__
-            parameterized_cls = concrete_cls[type_args]
-            hook = converter.get_unstructure_hook(parameterized_cls)
+            try:
+                parameterized_cls = concrete_cls[type_args]
+                hook = converter.get_unstructure_hook(parameterized_cls)
+            except TypeError:
+                # Non-generic classes do not support parameterization
+                hook = converter.get_unstructure_hook(concrete_cls)
         else:
             hook = converter.get_unstructure_hook(obj.__class__)
 
