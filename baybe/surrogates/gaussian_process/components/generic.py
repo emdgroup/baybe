@@ -15,10 +15,16 @@ from baybe.serialization.core import block_serialization_hook, converter
 from baybe.serialization.mixin import SerialMixin
 
 if TYPE_CHECKING:
+    from gpytorch.kernels import Kernel as GPyTorchKernel
+    from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
+    from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
+    Component = Kernel | GPyTorchKernel | GPyTorchMean | GPyTorchLikelihood
+else:
+    # At runtime, we use only the BayBE types for serialization compatibility
+    Component = Kernel
 
-Component = Kernel
 _T = TypeVar("_T", bound=Component)
 
 
