@@ -9,6 +9,7 @@ from attrs import define, field
 from attrs.validators import instance_of
 from typing_extensions import override
 
+from baybe.kernels.base import Kernel
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -168,18 +169,20 @@ class GaussianProcessSurrogate(Surrogate):
 
         ### Kernel
         kernel = self.kernel_factory(context.searchspace, train_x, train_y)
-        kernel_num_dims = train_x.shape[-1] - context.n_task_dimensions
-        covar_module = kernel.to_gpytorch(
-            ard_num_dims=kernel_num_dims,
-            active_dims=context.numerical_indices,
-        )
+        if isinstance(kernel, Kernel):
+            kernel_num_dims = train_x.shape[-1] - context.n_task_dimensions
+            kernel = kernel.to_gpytorch(
+                ard_num_dims=kernel_num_dims,
+                active_dims=context.numerical_indices,
+            )
+
         if context.is_multitask:
-            task_covar_module = gpytorch.kernels.IndexKernel(
+            task_kernel = gpytorch.kernels.IndexKernel(
                 num_tasks=context.n_tasks,
                 active_dims=context.task_idx,
                 rank=context.n_tasks,  # TODO: make controllable
             )
-            covar_module = covar_module * task_covar_module
+            kernel = kernel * task_kernel
 
         ### Likelihood
         noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
@@ -195,7 +198,7 @@ class GaussianProcessSurrogate(Surrogate):
             input_transform=input_transform,
             outcome_transform=outcome_transform,
             mean_module=mean_module,
-            covar_module=covar_module,
+            covar_module=kernel,
             likelihood=likelihood,
         )
 

@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, Generic, Protocol, TypeVar
+import sys
+from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
 
-from attrs import define, field
-from attrs.validators import instance_of
+from attrs import Attribute, define, field
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
+from baybe.serialization.core import block_serialization_hook, converter
 from baybe.serialization.mixin import SerialMixin
 
 if TYPE_CHECKING:
@@ -19,6 +20,27 @@ if TYPE_CHECKING:
 
 Component = Kernel
 _T = TypeVar("_T", bound=Component)
+
+
+def _is_gpytorch_kernel(obj) -> bool:
+    """Check if an object is a GPyTorch kernel using lazy loading."""
+    if sys.modules.get("gpytorch") is None:
+        return False
+    from gpytorch.kernels import Kernel as GPyTorchKernel
+
+    return isinstance(obj, GPyTorchKernel)
+
+
+def _validate_component(instance, attribute: Attribute, value: Any):
+    """Validate that an object is a BayBE or a GPyTorch GP component."""
+    if isinstance(value, Kernel) or _is_gpytorch_kernel(value):
+        return
+
+    raise TypeError(
+        f"The object provided for '{attribute.alias}' of "
+        f"'{instance.__class__.__name__}' must be a BayBE or a GPyTorch GP component. "
+        f"Got: {type(value)}"
+    )
 
 
 class ComponentFactory(Protocol, Generic[_T]):
@@ -34,7 +56,7 @@ class ComponentFactory(Protocol, Generic[_T]):
 class PlainComponentFactory(ComponentFactory[_T], SerialMixin):
     """A trivial factory that returns a fixed pre-defined component upon request."""
 
-    component: _T = field(validator=instance_of(Component))
+    component: _T = field(validator=_validate_component)
     """The fixed component to be returned by the factory."""
 
     @override
@@ -46,7 +68,16 @@ class PlainComponentFactory(ComponentFactory[_T], SerialMixin):
 
 def to_component_factory(x: Component | ComponentFactory, /) -> ComponentFactory:
     """Wrap a component into a plain component factory (with factory passthrough)."""
-    return x.to_factory() if isinstance(x, Component) else x
+    if isinstance(x, Component) or _is_gpytorch_kernel(x):
+        return PlainComponentFactory(x)
+    return x
+
+
+# Block serialization of GPyTorch kernel classes since not yet supported
+converter.register_unstructure_hook_factory(
+    lambda x: _is_gpytorch_kernel(type(x)),
+    lambda _: block_serialization_hook,
+)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
