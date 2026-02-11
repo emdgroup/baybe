@@ -5,6 +5,7 @@ from enum import Enum
 import hypothesis.strategies as st
 
 from baybe.kernels.basic import (
+    IndexKernel,
     LinearKernel,
     MaternKernel,
     PeriodicKernel,
@@ -89,6 +90,15 @@ rq_kernels = st.builds(
 )
 """A strategy that generates rational quadratic (RQ) kernels."""
 
+
+@st.composite
+def index_kernels(draw: st.DrawFn):
+    """A strategy that generates index kernels."""
+    num_tasks = draw(st.integers(min_value=2, max_value=5))
+    rank = draw(st.integers(min_value=1, max_value=num_tasks))
+    return IndexKernel(num_tasks=num_tasks, rank=rank)
+
+
 base_kernels = st.one_of(
     [
         matern_kernels,  # on top because it is the default for many use cases
@@ -96,6 +106,7 @@ base_kernels = st.one_of(
         rbf_kernels,
         rq_kernels,
         rff_kernels,
+        index_kernels(),
         piecewise_polynomial_kernels,
         polynomial_kernels,
         periodic_kernels,
