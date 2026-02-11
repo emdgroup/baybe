@@ -15,6 +15,7 @@ from baybe.parameters import TaskParameter
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
 from baybe.surrogates.gaussian_process.likelihoods import LikelihoodFactory
+from baybe.surrogates.gaussian_process.presets.utils import LazyConstantMeanFactory
 
 if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihhood
@@ -68,6 +69,10 @@ class SmoothedEDBOKernelFactory(KernelFactory):
             outputscale_prior=outputscale_prior,
             outputscale_initial_value=outputscale_initial_value,
         )
+
+
+SmoothedEDBOMeanFactory = LazyConstantMeanFactory
+"""A factory providing mean functions for the smoothed EDBO preset."""
 
 
 @define

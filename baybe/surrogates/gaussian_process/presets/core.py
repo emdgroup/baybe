@@ -25,17 +25,35 @@ class GaussianProcessPreset(Enum):
 def make_gp_from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
     """Create a :class:`GaussianProcessSurrogate` from a :class:`GaussianProcessPreset."""  # noqa: E501
     from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
-    from baybe.surrogates.gaussian_process.presets.edbo import EDBOKernelFactory
-    from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
-        SmoothedEDBOKernelFactory,
-    )
 
-    # TODO: Pass mean and likelihood settings once possible
     if preset is GaussianProcessPreset.BAYBE:
         return GaussianProcessSurrogate()
-    if preset is GaussianProcessPreset.EDBO:
-        return GaussianProcessSurrogate(kernel_or_factory=EDBOKernelFactory())
-    if preset is GaussianProcessPreset.EDBO_SMOOTHED:
-        return GaussianProcessSurrogate(kernel_or_factory=SmoothedEDBOKernelFactory())
 
-    assert_never(preset)
+    if preset is GaussianProcessPreset.EDBO:
+        from baybe.surrogates.gaussian_process.presets.edbo import (
+            EDBOKernelFactory as PresetKernelFactory,
+        )
+        from baybe.surrogates.gaussian_process.presets.edbo import (
+            EDBOLikelihoodFactory as PresetLikelihoodFactory,
+        )
+        from baybe.surrogates.gaussian_process.presets.edbo import (
+            EDBOMeanFactory as PresetMeanFactory,
+        )
+
+    elif preset is GaussianProcessPreset.EDBO_SMOOTHED:
+        from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
+            SmoothedEDBOKernelFactory as PresetKernelFactory,
+        )
+        from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
+            SmoothedEDBOLikelihoodFactory as PresetLikelihoodFactory,
+        )
+        from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
+            SmoothedEDBOMeanFactory as PresetMeanFactory,
+        )
+
+    else:
+        assert_never(preset)
+
+    return GaussianProcessSurrogate(
+        PresetKernelFactory(), PresetMeanFactory(), PresetLikelihoodFactory()
+    )
