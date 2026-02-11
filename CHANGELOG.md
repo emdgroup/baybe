@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings option for random seed control
 - `identify_non_dominated_configurations` method to `Campaign` and `Objective`
   for determining the Pareto front
+- Support for GPyTorch objects (kernels, means, likelihood) as Gaussian process
+  components, enabling full low-level customization
+- `EDBO` and `SMOOTHED_EDBO` presets for `GaussianProcessSurrogate`
 - Interpoint constraints for continuous search spaces
 
 ### Breaking Changes
