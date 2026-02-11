@@ -17,8 +17,10 @@ from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
+from baybe.surrogates.gaussian_process.likelihoods import LikelihoodFactory
 
 if TYPE_CHECKING:
+    from gpytorch.likelihoods import Likelihood as GPyTorchLikelihhood
     from torch import Tensor
 
     from baybe.kernels.base import Kernel
@@ -46,7 +48,7 @@ _EDBO_ENCODINGS = (
 
 @define
 class EDBOKernelFactory(KernelFactory):
-    """A factory providing the kernel for Gaussian process surrogates adapted from EDBO.
+    """A factory providing EDBO kernels.
 
     References:
         * https://github.com/b-shields/edbo/blob/master/edbo/bro.py#L664
@@ -104,41 +106,53 @@ class EDBOKernelFactory(KernelFactory):
         )
 
 
-def _edbo_noise_factory(
-    searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-) -> tuple[GammaPrior, float]:
-    """Create the default noise settings for the Gaussian process surrogate.
-
-    The logic is adapted from EDBO (Experimental Design via Bayesian Optimization).
+@define
+class EDBOLikelihoodFactory(LikelihoodFactory):
+    """A factory providing EDBO likelihoods.
 
     References:
         * https://github.com/b-shields/edbo/blob/master/edbo/bro.py#L664
         * https://doi.org/10.1038/s41586-021-03213-y
     """
-    # TODO: Replace this function with a proper likelihood factory
-    effective_dims = train_x.shape[-1] - len(
-        [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
-    )
 
-    switching_condition = _contains_encoding(
-        searchspace.discrete, _EDBO_ENCODINGS
-    ) and (effective_dims >= 50)
+    @override
+    def __call__(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> GPyTorchLikelihhood:
+        import torch
+        from gpytorch.likelihoods import GaussianLikelihood
 
-    # low D priors
-    if effective_dims < 5:
-        return (GammaPrior(1.05, 0.5), 0.1)
+        effective_dims = train_x.shape[-1] - len(
+            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+        )
 
-    # DFT optimized priors
-    elif switching_condition and effective_dims < 100:
-        return (GammaPrior(1.5, 0.1), 5.0)
+        switching_condition = _contains_encoding(
+            searchspace.discrete, _EDBO_ENCODINGS
+        ) and (effective_dims >= 50)
 
-    # Mordred optimized priors
-    elif switching_condition:
-        return (GammaPrior(1.5, 0.1), 5.0)
+        # low D priors
+        if effective_dims < 5:
+            prior = GammaPrior(1.05, 0.5)
+            initial_value = 0.1
 
-    # OHE optimized priors
-    else:
-        return (GammaPrior(1.5, 0.1), 5.0)
+        # DFT optimized priors
+        elif switching_condition and effective_dims < 100:
+            prior = GammaPrior(1.5, 0.1)
+            initial_value = 5.0
+
+        # Mordred optimized priors
+        elif switching_condition:
+            prior = GammaPrior(1.5, 0.1)
+            initial_value = 5.0
+
+        # OHE optimized priors
+        else:
+            prior = GammaPrior(1.5, 0.1)
+            initial_value = 5.0
+
+        likelihood = GaussianLikelihood(prior.to_gpytorch())
+        likelihood.noise = torch.tensor([initial_value])
+        return likelihood
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

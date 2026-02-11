@@ -14,8 +14,10 @@ from baybe.kernels.composite import ScaleKernel
 from baybe.parameters import TaskParameter
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
+from baybe.surrogates.gaussian_process.likelihoods import LikelihoodFactory
 
 if TYPE_CHECKING:
+    from gpytorch.likelihoods import Likelihood as GPyTorchLikelihhood
     from torch import Tensor
 
     from baybe.kernels.base import Kernel
@@ -28,7 +30,7 @@ _DIM_LIMITS = (8, 75)
 
 @define
 class SmoothedEDBOKernelFactory(KernelFactory):
-    """A factory providing the a smoothed verions of the EDBO kernels.
+    """A factory providing smoothed versions of EDBO kernels.
 
     Takes the low and high dimensional limits of
     :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`
@@ -43,9 +45,9 @@ class SmoothedEDBOKernelFactory(KernelFactory):
             [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
         )
 
-        # Interpolate prior moments linearly between low D and high D regime
-        # The high D regime itself is the average of the EDBO OHE and Mordred regime
-        # Values outside the dimension limits will get the border value assigned
+        # Interpolate prior moments linearly between low D and high D regime.
+        # The high D regime itself is the average of the EDBO OHE and Mordred regime.
+        # Values outside the dimension limits will get the border value assigned.
         lengthscale_prior = GammaPrior(
             np.interp(effective_dims, _DIM_LIMITS, [1.2, 2.5]),
             np.interp(effective_dims, _DIM_LIMITS, [1.1, 0.55]),
@@ -68,30 +70,38 @@ class SmoothedEDBOKernelFactory(KernelFactory):
         )
 
 
-def _smoothed_edbo_noise_factory(
-    searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-) -> tuple[GammaPrior, float]:
-    """Create smoothed EDBO noise settings for the Gaussian process surrogate.
+@define
+class SmoothedEDBOLikelihoodFactory(LikelihoodFactory):
+    """A factory providing smoothed versions of EDBO likelihoods.
 
     Takes the low and high dimensional limits of
     :func:`baybe.surrogates.gaussian_process.presets.edbo._edbo_noise_factory`
     and interpolates the prior moments linearly in between.
     """
-    # TODO: Replace this function with a proper likelihood factory
 
-    # Interpolate prior moments linearly between low D and high D regime
-    # The high D regime itself is the average of the EDBO OHE and Mordred regime
-    # Values outside the dimension limits will get the border value assigned
-    effective_dims = train_x.shape[-1] - len(
-        [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
-    )
-    return (
-        GammaPrior(
+    @override
+    def __call__(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> GPyTorchLikelihhood:
+        import torch
+        from gpytorch.likelihoods import GaussianLikelihood
+
+        # Interpolate prior moments linearly between low D and high D regime.
+        # The high D regime itself is the average of the EDBO OHE and Mordred regime.
+        # Values outside the dimension limits will get the border value assigned.
+        effective_dims = train_x.shape[-1] - len(
+            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+        )
+
+        prior = GammaPrior(
             np.interp(effective_dims, _DIM_LIMITS, [1.05, 1.5]),
             np.interp(effective_dims, _DIM_LIMITS, [0.5, 0.1]),
-        ),
-        np.interp(effective_dims, _DIM_LIMITS, [0.1, 5.0]).item(),
-    )
+        )
+        initial_value = np.interp(effective_dims, _DIM_LIMITS, [0.1, 5.0]).item()
+
+        likelihood = GaussianLikelihood(prior.to_gpytorch())
+        likelihood.noise = torch.tensor([initial_value])
+        return likelihood
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

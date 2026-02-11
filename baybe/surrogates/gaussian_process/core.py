@@ -17,6 +17,7 @@ from baybe.surrogates.gaussian_process.components import to_component_factory
 from baybe.surrogates.gaussian_process.kernel_factory import (
     KernelFactory,
 )
+from baybe.surrogates.gaussian_process.likelihoods import LikelihoodFactory
 from baybe.surrogates.gaussian_process.mean_factory import MeanFactory
 from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
@@ -24,8 +25,8 @@ from baybe.surrogates.gaussian_process.presets import (
 )
 from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
+    DefaultLikelihoodFactory,
     DefaultMeanFactory,
-    _default_noise_factory,
 )
 from baybe.utils.conversion import to_string
 
@@ -122,6 +123,12 @@ class GaussianProcessSurrogate(Surrogate):
         converter=to_component_factory,
     )
 
+    likelihood_factory: LikelihoodFactory = field(
+        alias="likelihood_or_factory",
+        factory=DefaultLikelihoodFactory,
+        converter=to_component_factory,
+    )
+
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
@@ -158,7 +165,6 @@ class GaussianProcessSurrogate(Surrogate):
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         import botorch
         import gpytorch
-        import torch
 
         assert self._searchspace is not None  # provided by base class
         context = _ModelContext(self._searchspace)
@@ -193,11 +199,7 @@ class GaussianProcessSurrogate(Surrogate):
             kernel = kernel * task_kernel
 
         ### Likelihood
-        noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
-        likelihood = gpytorch.likelihoods.GaussianLikelihood(
-            noise_prior=noise_prior[0].to_gpytorch()
-        )
-        likelihood.noise = torch.tensor([noise_prior[1]])
+        likelihood = self.likelihood_factory(context.searchspace, train_x, train_y)
 
         ### Model construction and fitting
         self._model = botorch.models.SingleTaskGP(
