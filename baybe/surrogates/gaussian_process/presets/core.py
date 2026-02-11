@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, assert_never
+from typing import TYPE_CHECKING
+
+from typing_extensions import assert_never
 
 from baybe.surrogates.gaussian_process.components import KernelFactory
 
