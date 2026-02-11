@@ -122,7 +122,11 @@ def make_base_structure_hook(base: type[_T]):
         # If class is a parameterized generic (e.g., BaseClass[Type]),
         # apply the same parameters to subclass (e.g., SubClass[Kernel])
         if type_args := get_args(cls):
-            subclass = subclass[type_args]
+            try:
+                subclass = subclass[type_args]
+            except TypeError:
+                # Subclass is not a generic class --> use it as is
+                pass
 
         # Call the structure hook of the concrete class
         fn = converter.get_structure_hook(subclass)
