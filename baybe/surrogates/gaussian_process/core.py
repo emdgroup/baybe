@@ -110,24 +110,37 @@ class GaussianProcessSurrogate(Surrogate):
         factory=DefaultKernelFactory,
         converter=to_component_factory,
     )
-    """The factory used to create the kernel of the Gaussian process.
+    """The factory used to create the kernel for the Gaussian process.
 
-    Accepts either a :class:`baybe.kernels.base.Kernel` or a
-    :class:`.kernel_factory.KernelFactory`.
-    When passing a :class:`baybe.kernels.base.Kernel`, it gets automatically wrapped
-    into a :class:`.kernel_factory.PlainKernelFactory`."""
+    Accepts:
+        * :class:`baybe.kernels.base.Kernel`
+        * :class:`.kernel_factory.KernelFactory`
+        * :class:`gpytorch.kernels.Kernel`
+    """
 
     mean_factory: MeanFactory = field(
         alias="mean_or_factory",
         factory=DefaultMeanFactory,
         converter=to_component_factory,
     )
+    """The factory used to create the mean function for the Gaussian process.
+
+    Accepts:
+        * :class:`.mean_factory.MeanFactory`
+        * :class:`gpytorch.means.Mean`
+    """
 
     likelihood_factory: LikelihoodFactory = field(
         alias="likelihood_or_factory",
         factory=DefaultLikelihoodFactory,
         converter=to_component_factory,
     )
+    """The factory used to create the likelihood for the Gaussian process.
+
+    Accepts:
+        * :class:`.likelihood_factory.LikelihoodFactory`
+        * :class:`gpytorch.likelihoods.Likelihood`
+    """
 
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
