@@ -232,6 +232,33 @@ acq_values = campaign.acquisition_values(rec, UCB())
 joint_acq_value = campaign.joint_acquisition_value(rec, qPSTD())
 ```
 
+## Identifying Non-Dominated Configurations
+While iterating your {class}`~baybe.campaign.Campaign`, you may be interested in
+monitoring the *non-dominated* configurations you have found along the way, to observe
+how the corresponding Pareto front evolves over successive experimentation rounds.
+{ref}`Like for objectives <userguide/objectives:Identifying Non-Dominated
+Configurations>`, the
+{meth}`~baybe.campaign.Campaign.identify_non_dominated_configurations` method offers an
+easy interface for this purpose:
+
+```python
+is_non_dominated = campaign.identify_non_dominated_configurations()
+```
+
+By default, the method looks at the taken measurements of the campaign, identifying all
+*optimal* configurations you have found so far. Alternatively, you can provide an
+explicit set of target configurations as input. In this case, you can choose whether the
+campaign's measurements should be used as reference points when *evaluating* which of
+the passed target configurations are non-dominated (i.e. the campaign measurements
+themselves will not be reflected in the returned mask):
+
+~~~python
+is_non_dominated = campaign.identify_non_dominated_configurations(
+    configurations, consider_campaign_measurements=True
+)
+~~~
+
+
 ## Serialization
 
 Like other BayBE objects, [`Campaigns`](baybe.campaign.Campaign) can be (de-)serialized 

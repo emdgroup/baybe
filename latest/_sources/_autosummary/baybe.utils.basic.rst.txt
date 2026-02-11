@@ -22,10 +22,12 @@ baybe.utils.basic
    .. autosummary::
       :toctree:                                       
    
+      cache_to_disk
       compose
       compose_two
       convert_to_float
       find_subclass
+      flatten
       get_baseclasses
       get_subclasses
       group_duplicate_values
@@ -47,7 +49,6 @@ baybe.utils.basic
       :template: custom-class-template.rst              
    
       Dummy
-      UncertainBool
       UnspecifiedType
       classproperty
    

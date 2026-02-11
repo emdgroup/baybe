@@ -53,6 +53,8 @@
 
    serialization
 
+   settings
+
    simulation
 
    surrogates

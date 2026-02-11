@@ -1,0 +1,42 @@
+Settings
+========
+
+.. currentmodule:: baybe.settings
+
+.. autoclass:: Settings
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Settings.__init__
+      ~Settings.activate
+      ~Settings.overwrite
+      ~Settings.restore_previous
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Settings.cache_campaign_recommendations
+      ~Settings.cache_directory
+      ~Settings.parallelize_simulation_runs
+      ~Settings.preprocess_dataframes
+      ~Settings.random_seed
+      ~Settings.use_single_precision_numpy
+      ~Settings.use_single_precision_torch
+      ~Settings.DTypeFloatNumpy
+      ~Settings.DTypeFloatTorch
+      ~Settings.use_fpsample
+      ~Settings.use_polars_for_constraints
+   
+   

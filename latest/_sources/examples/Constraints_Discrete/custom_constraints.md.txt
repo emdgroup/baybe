@@ -129,7 +129,7 @@ constraint = DiscreteCustomConstraint(
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 ```
 
-    /home/runner/work/baybe/baybe/baybe/utils/chemistry.py:126: DeprecationWarning:
+    /home/runner/work/baybe/baybe/baybe/utils/chemistry.py:109: DeprecationWarning:
 Substance encoding 'RDKIT' is deprecated and will be disabled in a future version. Use
 'RDKIT2DDESCRIPTORS' instead.
       warnings.warn(
@@ -284,6 +284,8 @@ for kIter in range(N_ITERATIONS):
     Number of entries with water, temp > 120 and concentration > 5:       0
     Number of entries with C2, temp > 180 and concentration > 3:          0
     Number of entries with C3, temp > 150 and concentration > 3:          0
+
+
     
     
     #### ITERATION 2 ####

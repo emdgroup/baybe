@@ -27,6 +27,7 @@ baybe.utils.validation
       finite_float
       non_inf_float
       non_nan_float
+      preprocess_dataframe
       validate_not_nan
       validate_object_names
       validate_objective_input

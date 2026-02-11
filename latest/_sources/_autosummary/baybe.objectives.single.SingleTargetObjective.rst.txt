@@ -18,6 +18,7 @@ SingleTargetObjective
       ~SingleTargetObjective.from_dict
       ~SingleTargetObjective.from_json
       ~SingleTargetObjective.handle_missing_values
+      ~SingleTargetObjective.identify_non_dominated_configurations
       ~SingleTargetObjective.to_botorch
       ~SingleTargetObjective.to_botorch_posterior_transform
       ~SingleTargetObjective.to_dict

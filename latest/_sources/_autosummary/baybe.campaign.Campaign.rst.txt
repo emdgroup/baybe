@@ -23,6 +23,7 @@ Campaign
       ~Campaign.from_json
       ~Campaign.get_acquisition_function
       ~Campaign.get_surrogate
+      ~Campaign.identify_non_dominated_configurations
       ~Campaign.joint_acquisition_value
       ~Campaign.posterior
       ~Campaign.posterior_stats
