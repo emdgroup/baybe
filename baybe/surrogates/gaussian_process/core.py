@@ -12,6 +12,7 @@ from attrs.validators import instance_of
 from typing_extensions import Self, override
 
 from baybe.kernels.base import Kernel
+from baybe.kernels.basic import IndexKernel
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -231,13 +232,11 @@ class GaussianProcessSurrogate(Surrogate):
                 ard_num_dims=kernel_num_dims,
                 active_dims=context.numerical_indices,
             )
-
         if context.is_multitask:
-            task_kernel = gpytorch.kernels.IndexKernel(
+            task_kernel = IndexKernel(
                 num_tasks=context.n_tasks,
-                active_dims=context.task_idx,
                 rank=context.n_tasks,  # TODO: make controllable
-            )
+            ).to_gpytorch(active_dims=context.task_idx)
             kernel = kernel * task_kernel
 
         ### Likelihood
