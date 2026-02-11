@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 from abc import ABC
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 from attrs import define
@@ -37,7 +38,7 @@ class Kernel(ABC, SerialMixin):
         *,
         ard_num_dims: int | None = None,
         batch_shape: torch.Size | None = None,
-        active_dims: tuple[int, ...] | None = None,
+        active_dims: Sequence[int] | None = None,
     ):
         """Create the gpytorch representation of the kernel."""
         import gpytorch.kernels

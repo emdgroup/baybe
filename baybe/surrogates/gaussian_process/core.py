@@ -184,12 +184,12 @@ class GaussianProcessSurrogate(Surrogate):
 
         ### Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
-        input_transform = botorch.models.transforms.Normalize(
+        input_transform = botorch.models.transforms.Normalize(  # type: ignore[attr-defined]
             train_x.shape[-1],
             bounds=context.parameter_bounds,
             indices=context.numerical_indices,
         )
-        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
+        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])  # type: ignore[attr-defined]
 
         ### Mean
         mean = self.mean_factory(context.searchspace, train_x, train_y)

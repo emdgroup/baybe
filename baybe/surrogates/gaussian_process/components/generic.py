@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 import sys
-from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeAlias, TypeVar
 
 from attrs import Attribute, define, field
 from typing_extensions import override
@@ -20,12 +20,12 @@ if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
-    Component = Kernel | GPyTorchKernel | GPyTorchMean | GPyTorchLikelihood
+    Component: TypeAlias = Kernel | GPyTorchKernel | GPyTorchMean | GPyTorchLikelihood
 else:
     # At runtime, we use only the BayBE types for serialization compatibility
-    Component = Kernel
+    Component: TypeAlias = Kernel
 
-_T = TypeVar("_T", bound=Component)
+_T_co = TypeVar("_T_co", bound=Component, covariant=True)
 
 
 def _is_gpytorch_kernel_class(obj) -> bool:
@@ -49,26 +49,26 @@ def _validate_component(instance, attribute: Attribute, value: Any):
     )
 
 
-class ComponentFactory(Protocol, Generic[_T]):
+class ComponentFactory(Protocol, Generic[_T_co]):
     """A protocol defining the interface expected for GP component factories."""
 
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> _T:
+    ) -> _T_co:
         """Create a GP component for the given recommendation context."""
 
 
 @define(frozen=True)
-class PlainComponentFactory(ComponentFactory[_T], SerialMixin):
+class PlainComponentFactory(ComponentFactory[_T_co], SerialMixin):
     """A trivial factory that returns a fixed pre-defined component upon request."""
 
-    component: _T = field(validator=_validate_component)
+    component: _T_co = field(validator=_validate_component)
     """The fixed component to be returned by the factory."""
 
     @override
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> _T:
+    ) -> _T_co:
         return self.component
 
 

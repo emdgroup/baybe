@@ -5,6 +5,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, assert_never
 
+from baybe.surrogates.gaussian_process.components import KernelFactory
+
 if TYPE_CHECKING:
     from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 
@@ -28,6 +30,10 @@ def make_gp_from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurroga
 
     if preset is GaussianProcessPreset.BAYBE:
         return GaussianProcessSurrogate()
+
+    PresetKernelFactory: type[KernelFactory]
+    PresetMeanFactory: type[KernelFactory]
+    PresetLikelihoodFactory: type[KernelFactory]
 
     if preset is GaussianProcessPreset.EDBO:
         from baybe.surrogates.gaussian_process.presets.edbo import (
