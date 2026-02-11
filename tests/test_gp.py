@@ -1,5 +1,6 @@
 """Tests for the Gaussian Process surrogate."""
 
+import pytest
 from gpytorch.kernels import MaternKernel as GPyTorchMaternKernel
 from gpytorch.kernels import RBFKernel as GPyTorchRBFKernel
 from gpytorch.kernels import ScaleKernel as GPyTorchScaleKernel
@@ -28,3 +29,9 @@ def test_gpytorch_kernel():
     posterior1 = gp1.posterior_stats(measurements)
     posterior2 = gp2.posterior_stats(measurements)
     assert_frame_equal(posterior1, posterior2)
+
+
+def test_gpytorch_kernel_serialization():
+    """An error is raised when attempting to serialize a GP with a GPyTorch kernel."""
+    with pytest.raises(NotImplementedError, match=".MaternKernel' is not supported."):
+        GaussianProcessSurrogate(GPyTorchMaternKernel()).to_dict()

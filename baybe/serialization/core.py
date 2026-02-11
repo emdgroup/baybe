@@ -156,15 +156,22 @@ def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
     return base64.b64encode(pickled_df).decode("utf-8")
 
 
+def _expand_non_baybe_path(cls: type) -> str:
+    """Expand the class path for non-BayBE classes to include the module."""
+    if cls.__module__.startswith("baybe."):
+        return cls.__name__
+    else:
+        return f"{cls.__module__}.{cls.__name__}"
+
+
 def block_serialization_hook(obj: Any) -> NoReturn:  # noqa: DOC101, DOC103
     """Prevent serialization of the passed object.
 
     Raises:
         NotImplementedError: Always.
     """
-    raise NotImplementedError(
-        f"Serializing objects of type '{obj.__class__.__name__}' is not supported."
-    )
+    name = _expand_non_baybe_path(obj.__class__)
+    raise NotImplementedError(f"Serializing objects of type '{name}' is not supported.")
 
 
 def block_deserialization_hook(_: Any, cls: type) -> NoReturn:  # noqa: DOC101, DOC103
@@ -173,9 +180,8 @@ def block_deserialization_hook(_: Any, cls: type) -> NoReturn:  # noqa: DOC101, 
     Raises:
         NotImplementedError: Always.
     """
-    raise NotImplementedError(
-        f"Deserialization into '{cls.__name__}' is not supported."
-    )
+    name = _expand_non_baybe_path(cls)
+    raise NotImplementedError(f"Deserialization into '{name}' is not supported.")
 
 
 def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:

@@ -22,18 +22,18 @@ Component = Kernel
 _T = TypeVar("_T", bound=Component)
 
 
-def _is_gpytorch_kernel(obj) -> bool:
-    """Check if an object is a GPyTorch kernel using lazy loading."""
+def _is_gpytorch_kernel_class(obj) -> bool:
+    """Check if a class is a GPyTorch kernel class using lazy loading."""
     if sys.modules.get("gpytorch") is None:
         return False
     from gpytorch.kernels import Kernel as GPyTorchKernel
 
-    return isinstance(obj, GPyTorchKernel)
+    return issubclass(obj, GPyTorchKernel)
 
 
 def _validate_component(instance, attribute: Attribute, value: Any):
     """Validate that an object is a BayBE or a GPyTorch GP component."""
-    if isinstance(value, Kernel) or _is_gpytorch_kernel(value):
+    if isinstance(value, Kernel) or _is_gpytorch_kernel_class(type(value)):
         return
 
     raise TypeError(
@@ -68,14 +68,14 @@ class PlainComponentFactory(ComponentFactory[_T], SerialMixin):
 
 def to_component_factory(x: Component | ComponentFactory, /) -> ComponentFactory:
     """Wrap a component into a plain component factory (with factory passthrough)."""
-    if isinstance(x, Component) or _is_gpytorch_kernel(x):
+    if isinstance(x, Component) or _is_gpytorch_kernel_class(type(x)):
         return PlainComponentFactory(x)
     return x
 
 
 # Block serialization of GPyTorch kernel classes since not yet supported
 converter.register_unstructure_hook_factory(
-    lambda x: _is_gpytorch_kernel(type(x)),
+    _is_gpytorch_kernel_class,
     lambda _: block_serialization_hook,
 )
 
