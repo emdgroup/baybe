@@ -11,7 +11,7 @@ from baybe.kernels.base import Kernel
 from baybe.kernels.composite import ProductKernel
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.generic import (
-    GPComponentFactory,
+    GPComponentFactoryProtocol,
     PlainGPComponentFactory,
 )
 
@@ -19,29 +19,29 @@ if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
     from torch import Tensor
 
-    KernelFactory = GPComponentFactory[Kernel | GPyTorchKernel]
+    KernelFactoryProtocol = GPComponentFactoryProtocol[Kernel | GPyTorchKernel]
     PlainKernelFactory = PlainGPComponentFactory[Kernel | GPyTorchKernel]
 else:
     # At runtime, we use only the BayBE type for serialization compatibility
-    KernelFactory = GPComponentFactory[Kernel]
+    KernelFactoryProtocol = GPComponentFactoryProtocol[Kernel]
     PlainKernelFactory = PlainGPComponentFactory[Kernel]
 
 
 @define
-class ICMKernelFactory(KernelFactory):
+class ICMKernelFactory(KernelFactoryProtocol):
     """A kernel factory that constructs an ICM kernel for transfer learning.
 
     ICM: Intrinsic model of coregionalization
     """
 
-    base_kernel_factory: KernelFactory = field(alias="base_kernel_or_factory")
+    base_kernel_factory: KernelFactoryProtocol = field(alias="base_kernel_or_factory")
     """The factory for the base kernel operating on numerical input features."""
 
-    task_kernel_factory: KernelFactory = field(alias="task_kernel_or_factory")
+    task_kernel_factory: KernelFactoryProtocol = field(alias="task_kernel_or_factory")
     """The factory for the task kernel operating on the task indices."""
 
     @base_kernel_factory.default
-    def _default_base_kernel_factory(self) -> KernelFactory:
+    def _default_base_kernel_factory(self) -> KernelFactoryProtocol:
         from baybe.surrogates.gaussian_process.presets.baybe import (
             BayBENumericalKernelFactory,
         )
@@ -49,7 +49,7 @@ class ICMKernelFactory(KernelFactory):
         return BayBENumericalKernelFactory()
 
     @task_kernel_factory.default
-    def _default_task_kernel_factory(self) -> KernelFactory:
+    def _default_task_kernel_factory(self) -> KernelFactoryProtocol:
         from baybe.surrogates.gaussian_process.presets.baybe import (
             BayBETaskKernelFactory,
         )
