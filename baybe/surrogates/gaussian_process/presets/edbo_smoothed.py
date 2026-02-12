@@ -13,8 +13,12 @@ from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters import TaskParameter
 from baybe.priors.basic import GammaPrior
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactory
-from baybe.surrogates.gaussian_process.components.likelihood import LikelihoodFactory
+from baybe.surrogates.gaussian_process.components.kernel import (
+    KernelFactoryProtocol,
+)
+from baybe.surrogates.gaussian_process.components.likelihood import (
+    LikelihoodFactoryProtocol,
+)
 from baybe.surrogates.gaussian_process.presets.factories import LazyConstantMeanFactory
 
 if TYPE_CHECKING:
@@ -30,7 +34,7 @@ _DIM_LIMITS = (8, 75)
 
 
 @define
-class SmoothedEDBOKernelFactory(KernelFactory):
+class SmoothedEDBOKernelFactory(KernelFactoryProtocol):
     """A factory providing smoothed versions of EDBO kernels.
 
     Takes the low and high dimensional limits of
@@ -76,7 +80,7 @@ SmoothedEDBOMeanFactory = LazyConstantMeanFactory
 
 
 @define
-class SmoothedEDBOLikelihoodFactory(LikelihoodFactory):
+class SmoothedEDBOLikelihoodFactory(LikelihoodFactoryProtocol):
     """A factory providing smoothed versions of EDBO likelihoods.
 
     Takes the low and high dimensional limits of

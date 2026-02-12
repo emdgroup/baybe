@@ -51,7 +51,7 @@ def _validate_component(instance, attribute: Attribute, value: Any):
     )
 
 
-class ComponentFactory(Protocol, Generic[_T_co]):
+class ComponentFactoryProtocol(Protocol, Generic[_T_co]):
     """A protocol defining the interface expected for GP component factories."""
 
     def __call__(
@@ -61,7 +61,7 @@ class ComponentFactory(Protocol, Generic[_T_co]):
 
 
 @define(frozen=True)
-class PlainComponentFactory(ComponentFactory[_T_co], SerialMixin):
+class PlainComponentFactory(ComponentFactoryProtocol[_T_co], SerialMixin):
     """A trivial factory that returns a fixed pre-defined component upon request."""
 
     component: _T_co = field(validator=_validate_component)
@@ -74,7 +74,9 @@ class PlainComponentFactory(ComponentFactory[_T_co], SerialMixin):
         return self.component
 
 
-def to_component_factory(x: Component | ComponentFactory, /) -> ComponentFactory:
+def to_component_factory(
+    x: Component | ComponentFactoryProtocol, /
+) -> ComponentFactoryProtocol:
     """Wrap a component into a plain component factory (with factory passthrough)."""
     if isinstance(x, Component) or _is_gpytorch_component_class(type(x)):
         return PlainComponentFactory(x)

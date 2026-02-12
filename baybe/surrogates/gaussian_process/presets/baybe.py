@@ -10,7 +10,7 @@ from typing_extensions import override
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactory
+from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOKernelFactory,
     SmoothedEDBOLikelihoodFactory,
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 @define
-class DefaultKernelFactory(KernelFactory):
+class DefaultKernelFactory(KernelFactoryProtocol):
     """The default kernel factory for Gaussian process surrogates."""
 
     @override
@@ -41,7 +41,7 @@ DefaultNumericalKernelFactory = SmoothedEDBOKernelFactory
 
 
 @define
-class DefaultTaskKernelFactory(KernelFactory):
+class DefaultTaskKernelFactory(KernelFactoryProtocol):
     """The factory providing the default task kernel for Gaussian process surrogates."""
 
     @override

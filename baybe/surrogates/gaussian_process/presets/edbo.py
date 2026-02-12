@@ -16,8 +16,12 @@ from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
 from baybe.searchspace.discrete import SubspaceDiscrete
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactory
-from baybe.surrogates.gaussian_process.components.likelihood import LikelihoodFactory
+from baybe.surrogates.gaussian_process.components.kernel import (
+    KernelFactoryProtocol,
+)
+from baybe.surrogates.gaussian_process.components.likelihood import (
+    LikelihoodFactoryProtocol,
+)
 from baybe.surrogates.gaussian_process.presets.factories import LazyConstantMeanFactory
 
 if TYPE_CHECKING:
@@ -48,7 +52,7 @@ _EDBO_ENCODINGS = (
 
 
 @define
-class EDBOKernelFactory(KernelFactory):
+class EDBOKernelFactory(KernelFactoryProtocol):
     """A factory providing EDBO kernels.
 
     References:
@@ -112,7 +116,7 @@ EDBOMeanFactory = LazyConstantMeanFactory
 
 
 @define
-class EDBOLikelihoodFactory(LikelihoodFactory):
+class EDBOLikelihoodFactory(LikelihoodFactoryProtocol):
     """A factory providing EDBO likelihoods.
 
     References:

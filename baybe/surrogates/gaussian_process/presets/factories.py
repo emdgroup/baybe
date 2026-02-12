@@ -8,7 +8,7 @@ from attrs import define
 from typing_extensions import override
 
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.components.mean import MeanFactory
+from baybe.surrogates.gaussian_process.components.mean import MeanFactoryProtocol
 
 if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @define
-class LazyConstantMeanFactory(MeanFactory):
+class LazyConstantMeanFactory(MeanFactoryProtocol):
     """A factory providing constant mean functions using lazy loading."""
 
     @override
