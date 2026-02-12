@@ -12,7 +12,6 @@ from attrs.validators import instance_of
 from typing_extensions import Self, override
 
 from baybe.kernels.base import Kernel
-from baybe.kernels.basic import IndexKernel
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -226,19 +225,13 @@ class GaussianProcessSurrogate(Surrogate):
 
         ### Kernel
         kernel = self.kernel_factory(context.searchspace, train_x, train_y)
+        raise NotImplementedError("The active dimensions are not yet implemented!")
         if isinstance(kernel, Kernel):
             kernel_num_dims = train_x.shape[-1] - context.n_task_dimensions
             kernel = kernel.to_gpytorch(
                 ard_num_dims=kernel_num_dims,
                 active_dims=context.numerical_indices,
             )
-        if context.is_multitask:
-            assert context.task_idx is not None
-            task_kernel = IndexKernel(
-                num_tasks=context.n_tasks,
-                rank=context.n_tasks,  # TODO: make controllable
-            ).to_gpytorch(active_dims=[context.task_idx])
-            kernel = kernel * task_kernel
 
         ### Likelihood
         likelihood = self.likelihood_factory(context.searchspace, train_x, train_y)
