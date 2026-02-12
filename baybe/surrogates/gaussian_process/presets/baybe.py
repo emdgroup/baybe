@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define
 from typing_extensions import override
@@ -10,7 +10,10 @@ from typing_extensions import override
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
+from baybe.surrogates.gaussian_process.components.kernel import (
+    KernelFactory,
+    KernelFactoryProtocol,
+)
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOKernelFactory,
     SmoothedEDBOLikelihoodFactory,
@@ -41,14 +44,21 @@ DefaultNumericalKernelFactory = SmoothedEDBOKernelFactory
 
 
 @define
-class DefaultTaskKernelFactory(KernelFactoryProtocol):
+class DefaultTaskKernelFactory(KernelFactory):
     """The factory providing the default task kernel for Gaussian process surrogates."""
+
+    _uses_parameter_names: ClassVar[bool] = True
+    # See base class.
 
     @override
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        return IndexKernel(num_tasks=searchspace.n_tasks, rank=searchspace.n_tasks)
+        return IndexKernel(
+            num_tasks=searchspace.n_tasks,
+            rank=searchspace.n_tasks,
+            parameter_names=self.get_parameter_names(searchspace),
+        )
 
 
 DefaultMeanFactory = LazyConstantMeanFactory

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 from collections.abc import Collection
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define
 from typing_extensions import override
@@ -16,9 +16,7 @@ from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
 from baybe.searchspace.discrete import SubspaceDiscrete
-from baybe.surrogates.gaussian_process.components.kernel import (
-    KernelFactoryProtocol,
-)
+from baybe.surrogates.gaussian_process.components.kernel import KernelFactory
 from baybe.surrogates.gaussian_process.components.likelihood import (
     LikelihoodFactoryProtocol,
 )
@@ -52,13 +50,16 @@ _EDBO_ENCODINGS = (
 
 
 @define
-class EDBOKernelFactory(KernelFactoryProtocol):
+class EDBOKernelFactory(KernelFactory):
     """A factory providing EDBO kernels.
 
     References:
         * https://github.com/b-shields/edbo/blob/master/edbo/bro.py#L664
         * https://doi.org/10.1038/s41586-021-03213-y
     """
+
+    _uses_parameter_names: ClassVar[bool] = True
+    # See base class.
 
     @override
     def __call__(
@@ -105,6 +106,7 @@ class EDBOKernelFactory(KernelFactoryProtocol):
                 nu=2.5,
                 lengthscale_prior=lengthscale_prior,
                 lengthscale_initial_value=lengthscale_initial_value,
+                parameter_names=self.get_parameter_names(searchspace),
             ),
             outputscale_prior=outputscale_prior,
             outputscale_initial_value=outputscale_initial_value,
