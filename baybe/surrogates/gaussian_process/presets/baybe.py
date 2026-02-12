@@ -34,7 +34,7 @@ class BayBEKernelFactory(KernelFactoryProtocol):
     ) -> Kernel:
         from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
 
-        is_multitask = searchspace.n_tasks > 0
+        is_multitask = searchspace.task_idx is not None
         factory = ICMKernelFactory if is_multitask else BayBENumericalKernelFactory
         return factory()(searchspace, train_x, train_y)
 
