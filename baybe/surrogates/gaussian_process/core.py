@@ -4,18 +4,22 @@ from __future__ import annotations
 
 import gc
 import importlib
+import os
 from typing import TYPE_CHECKING, ClassVar
 
-from attrs import define, field
+from attrs import Converter, define, field
+from attrs.converters import pipe
 from attrs.validators import instance_of
 from typing_extensions import Self, override
 
+from baybe.exceptions import DeprecationError
 from baybe.kernels.base import Kernel
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.generic import to_component_factory
 from baybe.surrogates.gaussian_process.components.kernel import (
+    ICMKernelFactory,
     KernelFactoryProtocol,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -30,6 +34,7 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     DefaultLikelihoodFactory,
     DefaultMeanFactory,
 )
+from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -88,6 +93,17 @@ class _ModelContext:
         ]
 
 
+def _mark_custom_kernel(
+    value: Kernel | KernelFactoryProtocol | None, self: GaussianProcessSurrogate
+) -> Kernel | KernelFactoryProtocol:
+    """Mark the surrogate as using a custom kernel (for deprecation purposes)."""
+    if value is None:
+        return DefaultKernelFactory()
+
+    self._custom_kernel = True
+    return value
+
+
 @define
 class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model."""
@@ -110,10 +126,15 @@ class GaussianProcessSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = True
     # See base class.
 
+    _custom_kernel: bool = field(init=False, default=False, repr=False, eq=False)
+    # For deprecation only!
+
     kernel_factory: KernelFactoryProtocol = field(
         alias="kernel_or_factory",
-        factory=DefaultKernelFactory,
-        converter=to_component_factory,
+        default=None,
+        converter=pipe(
+            Converter(_mark_custom_kernel, takes_self=True), to_component_factory
+        ),
     )
     """The factory used to create the kernel for the Gaussian process.
 
@@ -210,6 +231,24 @@ class GaussianProcessSurrogate(Surrogate):
 
         assert self._searchspace is not None  # provided by base class
         context = _ModelContext(self._searchspace)
+
+        if (
+            context.is_multitask
+            and self._custom_kernel
+            and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
+        ):
+            raise DeprecationError(
+                f"We noticed that you are using a custom kernel architecture on a "
+                f"search space that includes a task parameter. Please note that the "
+                f"kernel logic of '{GaussianProcessSurrogate.__name__}' has changed: "
+                f"the task kernel is no longer automatically added and must now be "
+                f"explicitly included in your kernel (factory). "
+                f"The '{ICMKernelFactory.__name__}' provides a suitable interface "
+                f"for this purpose. If you are aware of this breaking change and wish "
+                f"to proceed with your current kernel architecture, you can disable "
+                f"this error by setting the 'BAYBE_DISABLE_CUSTOM_KERNEL_WARNING' "
+                f"environment variable to a truthy value."
+            )
 
         ### Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
