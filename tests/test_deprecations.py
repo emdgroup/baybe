@@ -2,6 +2,7 @@
 
 import os
 import warnings
+from contextlib import nullcontext
 from itertools import pairwise
 from pathlib import Path
 from unittest.mock import patch
@@ -21,8 +22,10 @@ from baybe.constraints import (
 )
 from baybe.constraints.base import Constraint
 from baybe.exceptions import DeprecationError
+from baybe.kernels.basic import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
+from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
@@ -32,9 +35,11 @@ from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace.core import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.settings import Settings
+from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.targets import NumericalTarget as ModernTarget
 from baybe.targets._deprecated import (
@@ -45,6 +50,7 @@ from baybe.targets._deprecated import (
 )
 from baybe.targets.binary import BinaryTarget
 from baybe.transformations.basic import AffineTransformation
+from baybe.utils.dataframe import create_fake_input
 from baybe.utils.random import set_random_seed, temporary_seed
 
 
@@ -557,3 +563,34 @@ def test_deprecated_cache_environment_variables(monkeypatch, value: str, expecte
         DeprecationWarning, match="'BAYBE_CACHE_DIR' has been deprecated"
     ):
         assert Settings(restore_environment=True).cache_directory == expected
+
+
+@pytest.mark.parametrize("custom", [False, True], ids=["default", "custom"])
+@pytest.mark.parametrize("env", [False, True], ids=["no_env", "env"])
+@pytest.mark.parametrize(
+    "task",
+    [False, True],
+)
+def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task: bool):
+    """Providing a custom kernel in a transfer learning context raises a deprecation
+    error unless explicitly disabled via environment variable."""  # noqa
+    parameters = [NumericalDiscreteParameter("p", [0, 1])]
+    if task:
+        parameters.append(TaskParameter("task", ["a", "b"]))
+    searchspace = SearchSpace.from_product(parameters)
+    objective = NumericalTarget("t").to_objective()
+    measurements = create_fake_input(
+        searchspace.parameters, objective.targets, n_rows=2
+    )
+    kernel = MaternKernel() if custom else None
+
+    if env:
+        monkeypatch.setenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "True")
+
+    context = (
+        pytest.raises(DeprecationError)
+        if task and custom and not env
+        else nullcontext()
+    )
+    with context:
+        GaussianProcessSurrogate(kernel).fit(searchspace, objective, measurements)
