@@ -232,13 +232,8 @@ class GaussianProcessSurrogate(Surrogate):
 
         ### Kernel
         kernel = self.kernel_factory(context.searchspace, train_x, train_y)
-        raise NotImplementedError("The active dimensions are not yet implemented!")
         if isinstance(kernel, Kernel):
-            kernel_num_dims = train_x.shape[-1] - context.n_task_dimensions
-            kernel = kernel.to_gpytorch(
-                ard_num_dims=kernel_num_dims,
-                active_dims=context.numerical_indices,
-            )
+            kernel = kernel.to_gpytorch(searchspace=context.searchspace)
 
         ### Likelihood
         likelihood = self.likelihood_factory(context.searchspace, train_x, train_y)
