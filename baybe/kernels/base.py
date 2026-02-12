@@ -3,21 +3,22 @@
 from __future__ import annotations
 
 import gc
-from abc import ABC
+from abc import ABC, abstractmethod
 from itertools import chain
 from typing import TYPE_CHECKING, Any
 
-from attrs import define, field, fields
+from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import deep_iterable, instance_of
 from attrs.validators import optional as optional_v
+from typing_extensions import override
 
 from baybe.exceptions import UnmatchedAttributeError
 from baybe.priors.base import Prior
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization.mixin import SerialMixin
 from baybe.settings import active_settings
-from baybe.utils.basic import get_baseclasses, match_attributes
+from baybe.utils.basic import classproperty, get_baseclasses, match_attributes
 
 if TYPE_CHECKING:
     import torch
@@ -29,13 +30,10 @@ if TYPE_CHECKING:
 class Kernel(ABC, SerialMixin):
     """Abstract base class for all kernels."""
 
-    parameter_names: tuple[str, ...] | None = field(
-        default=None,
-        converter=optional_c(tuple),
-        validator=optional_v(deep_iterable(member_validator=instance_of(str))),
-        kw_only=True,
-    )
-    """An optional set of names specifiying the parameters the kernel should act on."""
+    @classproperty
+    def _whitelisted_attributes(cls) -> frozenset[str]:
+        """Attribute names to exclude from gpytorch matching."""
+        return frozenset()
 
     def to_factory(self) -> PlainKernelFactory:
         """Wrap the kernel in a :class:`baybe.surrogates.gaussian_process.components.PlainKernelFactory`."""  # noqa: E501
@@ -44,6 +42,10 @@ class Kernel(ABC, SerialMixin):
         )
 
         return PlainKernelFactory(self)
+
+    @abstractmethod
+    def _get_dimensions(self, searchspace: SearchSpace) -> tuple[tuple[int, ...], int]:
+        """Get the active dimensions and the number of ARD dimensions."""
 
     def to_gpytorch(
         self,
@@ -55,28 +57,7 @@ class Kernel(ABC, SerialMixin):
         import botorch.models.kernels.positive_index
         import gpytorch.kernels
 
-        # Extract the active dimensions for the gpytorch kernel
-        if self.parameter_names is not None:
-            active_dims = list(
-                chain(
-                    *[
-                        searchspace.get_comp_rep_parameter_indices(name)
-                        for name in self.parameter_names
-                    ]
-                )
-            )
-        else:
-            active_dims = None
-
-        # We use automatic relevance determination for all (non-composite) kernels
-        if isinstance(self, CompositeKernel):
-            ard_num_dims = None
-        else:
-            ard_num_dims = (
-                len(active_dims)
-                if active_dims is not None
-                else len(searchspace.comp_rep_columns)
-            )
+        active_dims, ard_num_dims = self._get_dimensions(searchspace)
 
         # Extract keywords with non-default values. This is required since gpytorch
         # makes use of kwargs, i.e. differentiates if certain keywords are explicitly
@@ -110,8 +91,7 @@ class Kernel(ABC, SerialMixin):
         # in the gpytorch kernel (otherwise, the BayBE kernel class is misconfigured).
         # Exception: initial values are not used during construction but are set
         # on the created object (see code at the end of the method).
-        exclude = {fields(Kernel).parameter_names.name}
-        missing = set(unmatched) - set(kernel_attrs) - exclude
+        missing = set(unmatched) - set(kernel_attrs) - self._whitelisted_attributes
         if leftover := {m for m in missing if not m.endswith("_initial_value")}:
             raise UnmatchedAttributeError(leftover)
 
@@ -155,10 +135,47 @@ class Kernel(ABC, SerialMixin):
 class BasicKernel(Kernel, ABC):
     """Abstract base class for all basic kernels."""
 
+    parameter_names: tuple[str, ...] | None = field(
+        default=None,
+        converter=optional_c(tuple),
+        validator=optional_v(deep_iterable(member_validator=instance_of(str))),
+        kw_only=True,
+    )
+    """An optional set of names specifiying the parameters the kernel should act on."""
+
+    @override
+    @classproperty
+    def _whitelisted_attributes(cls) -> frozenset[str]:
+        return frozenset({"parameter_names"})
+
+    def _get_dimensions(self, searchspace):
+        if self.parameter_names is None:
+            active_dims = None
+        else:
+            active_dims = list(
+                chain(
+                    *[
+                        searchspace.get_comp_rep_parameter_indices(name)
+                        for name in self.parameter_names
+                    ]
+                )
+            )
+
+        # We use automatic relevance determination for all kernels
+        ard_num_dims = (
+            len(active_dims)
+            if active_dims is not None
+            else len(searchspace.comp_rep_columns)
+        )
+        return active_dims, ard_num_dims
+
 
 @define(frozen=True)
 class CompositeKernel(Kernel, ABC):
     """Abstract base class for all composite kernels."""
+
+    def _get_dimensions(self, searchspace):
+        return None, None
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
