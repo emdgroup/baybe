@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
 import pandas as pd
-from attrs import Attribute, define, field
+from attrs import Attribute, define, evolve, field
 from attrs.validators import ge, instance_of, optional
 
 from baybe.campaign import Campaign
@@ -112,6 +112,12 @@ def simulate_scenarios(
     A wrapper function around :func:`baybe.simulation.core.simulate_experiment` that
     allows to specify multiple simulation settings at once.
 
+    Campaigns without an objective (e.g. using
+    :class:`~baybe.recommenders.pure.nonpredictive.sampling.RandomRecommender`) are
+    supported as long as at least one other campaign in the ``scenarios`` dict provides
+    an objective. The objective is then automatically propagated to the campaigns that
+    lack one, enabling target tracking during simulation.
+
     Args:
         scenarios: A dictionary mapping scenario identifiers to DOE specifications.
         lookup: See :func:`baybe.simulation.core.simulate_experiment`.
@@ -202,6 +208,20 @@ def simulate_scenarios(
 
         # Concatenate all results into a single dataframe
         return pd.concat(dfs, ignore_index=True)
+
+    # For campaigns without objectives, infer the objective from other campaigns
+    # so that target tracking works during simulation (e.g. RandomRecommender
+    # campaigns that don't need an objective for recommendations).
+    _ref_objective = next(
+        (c.objective for c in scenarios.values() if c.objective is not None), None
+    )
+    if _ref_objective is not None:
+        scenarios = {
+            key: evolve(campaign, objective=_ref_objective)
+            if campaign.objective is None
+            else campaign
+            for key, campaign in scenarios.items()
+        }
 
     # Collect the settings to be simulated
     rollouts = _Rollouts(
