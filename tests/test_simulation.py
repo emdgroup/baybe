@@ -10,10 +10,15 @@ import pandas as pd
 import pytest
 from pytest import param
 
+from baybe.campaign import Campaign
+from baybe.objectives import SingleTargetObjective
+from baybe.parameters import NumericalContinuousParameter
+from baybe.recommenders import RandomRecommender
+from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
 from baybe.simulation.scenarios import _Rollouts
-from baybe.targets.numerical import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
 
 pytestmark = pytest.mark.skipif(
@@ -146,3 +151,50 @@ def test_simulate_scenarios_structure(
 
     groupby_cols = ["Scenario", "Random_Seed", "Initial_Data"]
     result.groupby(groupby_cols).apply(_validate_target_data, targets=campaign.targets)
+
+
+@Settings(parallelize_simulation_runs=False)
+def test_simulate_scenarios_campaign_without_objective():
+    """Test simulations where only one campaign has an objective."""
+    searchspace = SearchSpace.from_product(
+        parameters=[NumericalContinuousParameter(name="x", bounds=(0.0, 1.0))]
+    )
+    objective = SingleTargetObjective(target=NumericalTarget(name="t"))
+
+    scenarios = {
+        "NoObj": Campaign(searchspace=searchspace, recommender=RandomRecommender()),
+        "WithObj": Campaign(searchspace=searchspace, objective=objective),
+    }
+
+    result = simulate_scenarios(
+        scenarios,
+        lambda df: df.assign(t=0.5),
+        batch_size=1,
+        n_doe_iterations=2,
+        n_mc_iterations=1,
+    )
+
+    assert set(result["Scenario"].unique()) == {"NoObj", "WithObj"}
+    assert "t_CumBest" in result.columns
+
+
+@Settings(parallelize_simulation_runs=False)
+def test_simulate_scenarios_all_campaigns_without_objective():
+    """Test that simulate_scenarios fails when no campaign has an objective."""
+    searchspace = SearchSpace.from_product(
+        parameters=[NumericalContinuousParameter(name="x", bounds=(0.0, 1.0))]
+    )
+
+    scenarios = {
+        "A": Campaign(searchspace=searchspace, recommender=RandomRecommender()),
+        "B": Campaign(searchspace=searchspace, recommender=RandomRecommender()),
+    }
+
+    with pytest.raises(ValueError, match="no objective defined"):
+        simulate_scenarios(
+            scenarios,
+            lambda df: df.assign(t=0.5),
+            batch_size=1,
+            n_doe_iterations=2,
+            n_mc_iterations=1,
+        )
