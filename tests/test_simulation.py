@@ -12,7 +12,7 @@ from pytest import param
 
 from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
-from baybe.parameters import NumericalContinuousParameter
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
@@ -154,10 +154,21 @@ def test_simulate_scenarios_structure(
 
 
 @Settings(parallelize_simulation_runs=False)
-def test_simulate_scenarios_campaign_without_objective():
-    """Test simulations where only one campaign has an objective."""
+@pytest.mark.parametrize(
+    "lookup_fn",
+    [
+        param(None, id="None"),
+        param(lambda df: df.assign(t=0.5), id="callabe"),
+        param(
+            pd.DataFrame({"x": [0.0, 0.5, 1.0], "t": [0.0, 0.5, 1.0]}),
+            id="dataframe",
+        ),
+    ],
+)
+def test_simulate_scenarios_campaign_without_objective(lookup_fn):
+    """Test that campaigns without an objective are simulated with a warning."""
     searchspace = SearchSpace.from_product(
-        parameters=[NumericalContinuousParameter(name="x", bounds=(0.0, 1.0))]
+        parameters=[NumericalDiscreteParameter(name="x", values=[0.0, 0.5, 1.0])],
     )
     objective = SingleTargetObjective(target=NumericalTarget(name="t"))
 
@@ -166,35 +177,19 @@ def test_simulate_scenarios_campaign_without_objective():
         "WithObj": Campaign(searchspace=searchspace, objective=objective),
     }
 
-    result = simulate_scenarios(
-        scenarios,
-        lambda df: df.assign(t=0.5),
-        batch_size=1,
-        n_doe_iterations=2,
-        n_mc_iterations=1,
-    )
-
-    assert set(result["Scenario"].unique()) == {"NoObj", "WithObj"}
-    assert "t_CumBest" in result.columns
-
-
-@Settings(parallelize_simulation_runs=False)
-def test_simulate_scenarios_all_campaigns_without_objective():
-    """Test that simulate_scenarios fails when no campaign has an objective."""
-    searchspace = SearchSpace.from_product(
-        parameters=[NumericalContinuousParameter(name="x", bounds=(0.0, 1.0))]
-    )
-
-    scenarios = {
-        "A": Campaign(searchspace=searchspace, recommender=RandomRecommender()),
-        "B": Campaign(searchspace=searchspace, recommender=RandomRecommender()),
-    }
-
-    with pytest.raises(ValueError, match="no objective defined"):
-        simulate_scenarios(
+    with pytest.warns(UserWarning, match="without an objective"):
+        result = simulate_scenarios(
             scenarios,
-            lambda df: df.assign(t=0.5),
+            lookup_fn,
             batch_size=1,
             n_doe_iterations=2,
             n_mc_iterations=1,
         )
+
+    # Both scenarios should be present in the results
+    assert set(result["Scenario"].unique()) == {"NoObj", "WithObj"}
+    # Target columns exist (from WithObj campaign)
+    assert "t_CumBest" in result.columns
+    # NoObj rows have NaN for target columns
+    no_obj_rows = result[result["Scenario"] == "NoObj"]
+    assert no_obj_rows["t_CumBest"].isna().all()
