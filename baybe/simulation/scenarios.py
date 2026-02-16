@@ -207,10 +207,11 @@ def simulate_scenarios(
         # Concatenate all results into a single dataframe
         return pd.concat(dfs, ignore_index=True)
 
-    # Warn about campaigns without objectives
+    # Identify campaigns without objectives (warnings will be caught and aggregated)
     _no_obj_keys = [
         key for key, campaign in scenarios.items() if campaign.objective is None
     ]
+    # Emit a combined warning for all scenarios without objectives
     if _no_obj_keys:
         warnings.warn(
             f"The following scenario(s) have campaigns without an objective "
@@ -235,10 +236,16 @@ def simulate_scenarios(
     batch_simulator = make_xyzpy_callable(result_variable)
 
     with warnings.catch_warnings():
+        # Suppress warnings from individual simulations that will be aggregated
         warnings.filterwarnings(
             "ignore",
             category=UnusedObjectWarning,
             module="baybe.recommenders.pure.nonpredictive.base",
+        )
+        warnings.filterwarnings(
+            "ignore",
+            category=UserWarning,
+            message="Simulating a campaign without an objective",
         )
         da_results = batch_simulator.run_cases(
             cases, parallel=active_settings.parallelize_simulation_runs
@@ -322,16 +329,26 @@ def _simulate_groupby(
 
         # Run the group simulation
         try:
-            df_group = simulate_experiment(
-                campaign_group,
-                lookup,
-                batch_size=batch_size,
-                n_doe_iterations=n_doe_iterations,
-                initial_data=initial_data,
-                random_seed=random_seed,
-                impute_mode=impute_mode,
-                noise_percent=noise_percent,
-            )
+            # Suppress individual warnings that will be aggregated later.
+            # This is necessary for parallel execution where the warning filter
+            # context from simulate_scenarios doesn't propagate to worker processes.
+            # Without this, individual warnings would leak to stderr in parallel mode.
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    category=UserWarning,
+                    message="Simulating a campaign without an objective",
+                )
+                df_group = simulate_experiment(
+                    campaign_group,
+                    lookup,
+                    batch_size=batch_size,
+                    n_doe_iterations=n_doe_iterations,
+                    initial_data=initial_data,
+                    random_seed=random_seed,
+                    impute_mode=impute_mode,
+                    noise_percent=noise_percent,
+                )
         except NothingToSimulateError:
             continue
 
