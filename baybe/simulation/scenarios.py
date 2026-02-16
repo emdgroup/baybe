@@ -212,6 +212,10 @@ def simulate_scenarios(
         key for key, campaign in scenarios.items() if campaign.objective is None
     ]
     # Emit a combined warning for all scenarios without objectives
+    # NOTE: This "re-computes" the warning message from scratch and does not use the
+    # individual warnings from the calls of `simulate_experiment`. Using those is not
+    # possible due to the issues with parallel execution which does not allow to catch
+    # warnings from worker processes.
     if _no_obj_keys:
         warnings.warn(
             f"The following scenario(s) have campaigns without an objective "
