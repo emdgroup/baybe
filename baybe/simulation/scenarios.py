@@ -242,11 +242,6 @@ def simulate_scenarios(
             category=UnusedObjectWarning,
             module="baybe.recommenders.pure.nonpredictive.base",
         )
-        warnings.filterwarnings(
-            "ignore",
-            category=UserWarning,
-            message="Simulating a campaign without an objective",
-        )
         da_results = batch_simulator.run_cases(
             cases, parallel=active_settings.parallelize_simulation_runs
         )[result_variable]
