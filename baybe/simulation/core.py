@@ -90,7 +90,6 @@ def simulate_experiment(
     """
     # TODO: Use a `will_terminate` campaign property to decide if the campaign will
     #   run indefinitely or not, and allow omitting `n_doe_iterations` for the latter.
-    # Warn if campaign has no objective
     if campaign.objective is None:
         warnings.warn(
             "Simulating a campaign without an objective. No target tracking will "

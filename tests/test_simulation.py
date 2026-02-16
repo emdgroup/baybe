@@ -17,6 +17,7 @@ from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
+from baybe.simulation.core import simulate_experiment
 from baybe.simulation.scenarios import _Rollouts
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
@@ -193,3 +194,77 @@ def test_simulate_scenarios_campaign_without_objective(lookup_fn):
     # NoObj rows have NaN for target columns
     no_obj_rows = result[result["Scenario"] == "NoObj"]
     assert no_obj_rows["t_CumBest"].isna().all()
+
+
+@pytest.mark.parametrize(
+    "parallelize",
+    [
+        param(False, id="serial"),
+        param(True, id="parallel"),
+    ],
+)
+def test_simulate_scenarios_aggregated_warning(parallelize):
+    """Test that campaigns without objectives produce an aggregated warning."""
+    searchspace = SearchSpace.from_product(
+        parameters=[NumericalDiscreteParameter(name="x", values=[0.0, 0.5, 1.0])],
+    )
+
+    # Create multiple scenarios without objectives
+    scenarios = {
+        "NoObj1": Campaign(searchspace=searchspace, recommender=RandomRecommender()),
+        "NoObj2": Campaign(searchspace=searchspace, recommender=RandomRecommender()),
+    }
+
+    # The aggregated warning should list all scenarios
+    with (
+        Settings(parallelize_simulation_runs=parallelize),
+        pytest.warns(
+            UserWarning,
+            match=r"following scenario\(s\) have campaigns without an objective",
+        ) as record,
+    ):
+        simulate_scenarios(
+            scenarios,
+            lambda df: df.assign(t=0.5),
+            batch_size=1,
+            n_doe_iterations=1,
+            n_mc_iterations=1,
+        )
+
+    # Verify that individual warnings were suppressed (not emitted)
+    individual_warnings = [
+        w
+        for w in record
+        if "Simulating a campaign without an objective" in str(w.message)
+    ]
+    assert len(individual_warnings) == 0, (
+        f"Expected no individual warnings, but got {len(individual_warnings)}"
+    )
+
+
+def test_simulate_experiment_campaign_without_objective():
+    """Test that simulate_experiment emits a warning for campaigns without objective."""
+    searchspace = SearchSpace.from_product(
+        parameters=[NumericalDiscreteParameter(name="x", values=[0.0, 0.5, 1.0])],
+    )
+    campaign = Campaign(searchspace=searchspace, recommender=RandomRecommender())
+
+    # Should emit exactly one warning
+    with pytest.warns(
+        UserWarning,
+        match="Simulating a campaign without an objective",
+    ) as record:
+        result = simulate_experiment(
+            campaign,
+            lambda df: df.assign(t=0.5),
+            batch_size=1,
+            n_doe_iterations=1,
+        )
+
+    # Should have exactly one warning
+    assert len(record) == 1, f"Expected 1 warning, got {len(record)}"
+
+    # Result should not contain target columns
+    assert "t_CumBest" not in result.columns
+    assert "t_IterBest" not in result.columns
+    assert "t_Measurements" not in result.columns
