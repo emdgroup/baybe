@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - `simulate_scenarios` now works with campaigns that have no objective (e.g., campaigns
   using `RandomRecommender`). A warning is emitted for campaigns without objectives,
-  and those campaigns are simulated without target tracking.
+  and those campaigns are simulated without target tracking
 
 ### Deprecations
 - `set_random_seed` and `temporary_seed` utility functions
