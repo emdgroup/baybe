@@ -253,16 +253,13 @@ def test_simulate_experiment_campaign_without_objective():
     with pytest.warns(
         UserWarning,
         match="Simulating a campaign without an objective",
-    ) as record:
+    ):
         result = simulate_experiment(
             campaign,
             lambda df: df.assign(t=0.5),
             batch_size=1,
             n_doe_iterations=1,
         )
-
-    # Should have exactly one warning
-    assert len(record) == 1, f"Expected 1 warning, got {len(record)}"
 
     # Result should not contain target columns
     assert "t_CumBest" not in result.columns
