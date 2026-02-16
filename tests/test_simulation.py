@@ -158,7 +158,7 @@ def test_simulate_scenarios_structure(
     "lookup_fn",
     [
         param(None, id="None"),
-        param(lambda df: df.assign(t=0.5), id="callabe"),
+        param(lambda df: df.assign(t=0.5), id="callable"),
         param(
             pd.DataFrame({"x": [0.0, 0.5, 1.0], "t": [0.0, 0.5, 1.0]}),
             id="dataframe",
