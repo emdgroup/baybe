@@ -162,3 +162,8 @@ class EDBOLikelihoodFactory(LikelihoodFactory):
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
+
+# Aliases for generic preset imports
+PresetKernelFactory = EDBOKernelFactory
+PresetMeanFactory = EDBOMeanFactory
+PresetLikelihoodFactory = EDBOLikelihoodFactory

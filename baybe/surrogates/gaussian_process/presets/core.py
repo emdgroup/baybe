@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
+import importlib
 from enum import Enum
 from typing import TYPE_CHECKING
-
-from typing_extensions import assert_never
-
-from baybe.surrogates.gaussian_process.components import KernelFactory
 
 if TYPE_CHECKING:
     from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
@@ -33,34 +30,12 @@ def make_gp_from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurroga
     if preset is GaussianProcessPreset.BAYBE:
         return GaussianProcessSurrogate()
 
-    PresetKernelFactory: type[KernelFactory]
-    PresetMeanFactory: type[KernelFactory]
-    PresetLikelihoodFactory: type[KernelFactory]
+    module_name = f"baybe.surrogates.gaussian_process.presets.{preset.value.lower()}"
+    module = importlib.import_module(module_name)
 
-    if preset is GaussianProcessPreset.EDBO:
-        from baybe.surrogates.gaussian_process.presets.edbo import (
-            EDBOKernelFactory as PresetKernelFactory,
-        )
-        from baybe.surrogates.gaussian_process.presets.edbo import (
-            EDBOLikelihoodFactory as PresetLikelihoodFactory,
-        )
-        from baybe.surrogates.gaussian_process.presets.edbo import (
-            EDBOMeanFactory as PresetMeanFactory,
-        )
-
-    elif preset is GaussianProcessPreset.EDBO_SMOOTHED:
-        from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
-            SmoothedEDBOKernelFactory as PresetKernelFactory,
-        )
-        from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
-            SmoothedEDBOLikelihoodFactory as PresetLikelihoodFactory,
-        )
-        from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
-            SmoothedEDBOMeanFactory as PresetMeanFactory,
-        )
-
-    else:
-        assert_never(preset)
+    PresetKernelFactory = getattr(module, "PresetKernelFactory")
+    PresetMeanFactory = getattr(module, "PresetMeanFactory")
+    PresetLikelihoodFactory = getattr(module, "PresetLikelihoodFactory")
 
     return GaussianProcessSurrogate(
         PresetKernelFactory(), PresetMeanFactory(), PresetLikelihoodFactory()

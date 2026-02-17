@@ -111,3 +111,8 @@ class SmoothedEDBOLikelihoodFactory(LikelihoodFactory):
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
+
+# Aliases for generic preset imports
+PresetKernelFactory = SmoothedEDBOKernelFactory
+PresetMeanFactory = SmoothedEDBOMeanFactory
+PresetLikelihoodFactory = SmoothedEDBOLikelihoodFactory
