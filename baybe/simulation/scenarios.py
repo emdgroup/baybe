@@ -328,11 +328,11 @@ def _simulate_groupby(
 
         # Run the group simulation
         try:
-            # Suppress individual warnings that will be aggregated later.
-            # This is necessary for parallel execution where the warning filter
-            # context from simulate_scenarios doesn't propagate to worker processes.
-            # Without this, individual warnings would leak to stderr in parallel mode.
             with warnings.catch_warnings():
+                # Suppress individual warnings that will be re-calculated later. This is
+                # necessary for parallel execution where the warning filter context
+                # from simulate_scenarios doesn't propagate to worker processes. Without
+                # this, individual warnings would leak to stderr in parallel mode.
                 warnings.filterwarnings(
                     "ignore",
                     category=UserWarning,
