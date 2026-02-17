@@ -240,7 +240,6 @@ def simulate_scenarios(
     batch_simulator = make_xyzpy_callable(result_variable)
 
     with warnings.catch_warnings():
-        # Suppress warnings from individual simulations that will be aggregated
         warnings.filterwarnings(
             "ignore",
             category=UnusedObjectWarning,
