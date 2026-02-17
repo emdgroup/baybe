@@ -148,7 +148,7 @@ def test_setting_allow_flags(flag, space_type, value, discrete_value):
     if expect_error:
         return
 
-    fallback = discrete_value if space_type is SearchSpaceType.DISCRETE else False
+    fallback = discrete_value if space_type is SearchSpaceType.DISCRETE else True
     resolved = value if isinstance(value, bool) else fallback
     assert getattr(campaign, flag) == resolved
 

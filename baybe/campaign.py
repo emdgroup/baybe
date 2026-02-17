@@ -249,21 +249,21 @@ class Campaign(SerialMixin):
     def allow_recommending_already_measured(self) -> bool:
         """Allow recommending experiments that have already been measured."""
         if self._allow_recommending_already_measured is AutoBool.AUTO:
-            return self.searchspace.type is SearchSpaceType.DISCRETE
+            return True
         return bool(self._allow_recommending_already_measured)
 
     @property
     def allow_recommending_already_recommended(self) -> bool:
         """Allow recommending experiments that have already been recommended."""
         if self._allow_recommending_already_recommended is AutoBool.AUTO:
-            return False
+            return self.searchspace.type is not SearchSpaceType.DISCRETE
         return bool(self._allow_recommending_already_recommended)
 
     @property
     def allow_recommending_pending_experiments(self) -> bool:
         """Allow recommending pending experiments."""
         if self._allow_recommending_pending_experiments is AutoBool.AUTO:
-            return False
+            return self.searchspace.type is not SearchSpaceType.DISCRETE
         return bool(self._allow_recommending_pending_experiments)
 
     @classmethod
