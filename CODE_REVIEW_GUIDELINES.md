@@ -2,8 +2,8 @@
 
 These guidelines define the standards an AI code review agent must enforce when
 reviewing contributions to the BayBE repository. Every review must evaluate code
-against three pillars: **adherence to codebase conventions**, **passing all CI
-quality gates**, and **general code quality**.
+against four pillars: **functional correctness**, **adherence to codebase
+conventions**, **passing all CI quality gates**, and **general code quality**.
 
 ---
 
@@ -55,7 +55,7 @@ Reviewers must verify:
 - Serialization hooks use `cattrs`. Custom converters must be registered at
   module level after the class definition.
 - Roundtrip serialization consistency must be covered by tests (see
-  §3.3 on hypothesis strategies).
+  §4.3 on hypothesis strategies).
 
 ### 1.3 Method Overrides
 
@@ -238,9 +238,42 @@ Reviewers must ensure:
 
 ---
 
-## 3. Code Quality Standards
+## 3. Functional Correctness
 
-### 3.1 Docstrings
+Before evaluating style, conventions, or CI compliance, reviewers must verify
+that the contribution actually achieves what it claims to do.
+
+### 3.1 Issue and PR Description Alignment
+
+- The code changes **must resolve the issue** described in the PR description or
+  linked ticket. A contribution that passes all quality gates but does not
+  address the stated problem is incomplete.
+- Reviewers must read the PR description and any linked issues, then verify that
+  the implementation matches the described intent.
+- If the PR description is vague or missing, request clarification before
+  approving.
+- Partial fixes must be explicitly called out — a PR should not be approved as
+  resolving an issue if it only addresses a subset of the requirements without
+  acknowledgment.
+
+### 3.2 Test Coverage for New Features
+
+- **Every new feature must include tests** that demonstrate the feature works as
+  intended. A feature without tests is not considered complete, regardless of
+  code quality.
+- Tests must cover:
+  - The **primary use case** (happy path).
+  - Relevant **edge cases** and **boundary conditions**.
+  - **Error handling paths** where the feature is expected to reject invalid
+    input or degrade gracefully.
+- For bug fixes, at least one test must be added that **would have failed**
+  before the fix and passes after it, to prevent regressions.
+
+---
+
+## 4. Code Quality Standards
+
+### 4.1 Docstrings
 
 Follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html):
 
@@ -253,7 +286,7 @@ Follow the [Google Python Style Guide](https://google.github.io/styleguide/pygui
 - Use double backticks for literal values: ``` ``True`` ```, ``` ``None`` ```.
 - `attrs` validators that raise exceptions should have a `Raises:` section.
 
-### 3.2 Type Annotations
+### 4.2 Type Annotations
 
 - All function signatures (parameters and return types) must be annotated.
 - Use `from __future__ import annotations` for forward references and modern
@@ -268,7 +301,7 @@ Follow the [Google Python Style Guide](https://google.github.io/styleguide/pygui
 - Use `typing_extensions` for features not yet in `typing` for the minimum
   supported Python version (3.10).
 
-### 3.3 Testing Patterns
+### 4.3 Testing Patterns
 
 #### Property-Based Testing (Hypothesis)
 
@@ -316,7 +349,7 @@ Follow the [Google Python Style Guide](https://google.github.io/styleguide/pygui
   )
   ```
 
-### 3.4 Import Conventions
+### 4.4 Import Conventions
 
 - Standard library, then third-party, then local — enforced by `ruff` isort.
 - Use `from __future__ import annotations` in modules that need forward
@@ -325,7 +358,7 @@ Follow the [Google Python Style Guide](https://google.github.io/styleguide/pygui
   be lazy or behind `TYPE_CHECKING`.
 - Public modules re-export through `__init__.py` with `__all__`.
 
-### 3.5 Error Handling
+### 4.5 Error Handling
 
 - Use specific custom exceptions from `baybe.exceptions` where applicable.
 - Error messages should be user-friendly, explaining what went wrong and
@@ -338,7 +371,7 @@ Follow the [Google Python Style Guide](https://google.github.io/styleguide/pygui
   )
   ```
 
-### 3.6 Private vs Public API
+### 4.6 Private vs Public API
 
 - Private attributes and methods use a leading underscore (`_`).
 - `attrs` fields that expose a different public interface use `alias`:
@@ -347,7 +380,7 @@ Follow the [Google Python Style Guide](https://google.github.io/styleguide/pygui
   ```
 - Private utility functions at module level also use leading underscores.
 
-### 3.7 Dependency and Feature Flags
+### 4.7 Dependency and Feature Flags
 
 - Optional features are gated through `baybe._optional.info` (e.g.,
   `CHEM_INSTALLED`, `POLARS_INSTALLED`).
@@ -358,7 +391,7 @@ Follow the [Google Python Style Guide](https://google.github.io/styleguide/pygui
   - Have an `_optional/info` check.
   - Raise `OptionalImportError` with a helpful installation message.
 
-### 3.8 Numerical Considerations
+### 4.8 Numerical Considerations
 
 - The codebase supports configurable floating-point precision via
   `active_settings.DTypeFloatNumpy` and `active_settings.DTypeFloatTorch`.
@@ -370,9 +403,18 @@ Follow the [Google Python Style Guide](https://google.github.io/styleguide/pygui
 
 ---
 
-## 4. Review Checklist
+## 5. Review Checklist
 
 For every pull request, verify each of the following:
+
+### Functional Correctness
+- [ ] Changes actually resolve the issue described in the PR description or
+  linked ticket
+- [ ] Implementation matches the stated intent — no gaps or unaddressed
+  requirements
+- [ ] New features include tests covering the primary use case, edge cases, and
+  error paths
+- [ ] Bug fixes include a regression test that fails without the fix
 
 ### Structure and Design
 - [ ] New classes use `@define` (or `@define(frozen=True, slots=False)` for
@@ -426,7 +468,7 @@ For every pull request, verify each of the following:
 
 ---
 
-## 5. Common Pitfalls
+## 6. Common Pitfalls
 
 These are patterns that frequently cause CI failures or review rejections:
 
