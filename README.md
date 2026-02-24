@@ -234,6 +234,7 @@ optimization (from [Shields, B.J. et al.](https://doi.org/10.1038/s41586-021-032
 chemical encodings compared to one-hot and a random baseline:
 ![Substance Encoding Example](./examples/Backtesting/full_lookup_light.svg)
 
+<a id="installation"></a>
 (installation)=
 ## 💻 Installation
 ### From Package Index
