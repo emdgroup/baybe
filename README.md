@@ -14,6 +14,8 @@
 
 [![Logo](https://raw.githubusercontent.com/emdgroup/baybe/main/docs/_static/banner2.svg)](https://github.com/emdgroup/baybe/)
 
+
+
 &nbsp;
 <a href="https://emdgroup.github.io/baybe/">Homepage<a/>
 &nbsp;•&nbsp;
@@ -29,6 +31,9 @@
 
 The **Bay**esian **B**ack **E**nd (**BayBE**) is a general-purpose toolbox for Bayesian Design
 of Experiments, focusing on additions that enable real-world experimental campaigns.
+
+
+<img src="docs/_static/landscape.svg" alt="Complex Search Space" width="80%" />
 
 ## 🔋 Batteries Included
 Besides its core functionality to perform a typical recommend-measure loop, BayBE
