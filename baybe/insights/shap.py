@@ -113,7 +113,7 @@ def make_explainer_for_surrogate(
                 raise IncompatibilityError(
                     "SHAP explainers require a posterior that allows mean computation."
                 )
-            return posterior.mean.numpy()
+            return posterior.mean.numpy().squeeze(-1)
 
     else:
 
@@ -125,7 +125,7 @@ def make_explainer_for_surrogate(
                 raise IncompatibilityError(
                     "SHAP explainers require a posterior that allows mean computation."
                 )
-            return posterior.mean.numpy()
+            return posterior.mean.numpy().squeeze(-1)
 
     # Handle special settings: Lime default mode is otherwise set to "classification"
     kwargs = {"mode": "regression"} if explainer_cls.__name__ == "LimeTabular" else {}
