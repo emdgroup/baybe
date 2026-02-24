@@ -1,5 +1,4 @@
-# Example for full simulation loop using a table-based lookup mechanism with incomplete
-data
+# Example for full simulation loop using a table-based lookup mechanism with incomplete data
 
 This example shows a simulation for a direct arylation where not all combinations were
 measured.
