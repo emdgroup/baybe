@@ -343,7 +343,7 @@ class SHAPInsight:
             except IndexError as ex:
                 if not (
                     isinstance(explanation.base_values, float)
-                    or explanation.base_values.shape[1] == 1
+                    or explanation.base_values.ndim < 2
                 ):
                     raise TypeError("Unexpected explanation format.") from ex
         explanation.feature_names = [explanation.feature_names[i] for i in idx]
