@@ -25,11 +25,8 @@ if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
     from baybe.searchspace.discrete import SubspaceDiscrete
 
-# TODO: Reactive slots in all classes once cached_property is supported:
-#   https://github.com/python-attrs/attrs/issues/164
 
-
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class Parameter(ABC, SerialMixin):
     """Abstract base class for all parameters.
 
@@ -103,7 +100,7 @@ class Parameter(ABC, SerialMixin):
         return self.metadata.unit
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class DiscreteParameter(Parameter, ABC):
     """Abstract class for discrete parameters."""
 
@@ -178,7 +175,7 @@ class DiscreteParameter(Parameter, ABC):
         return param_dict
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
     """Abstract class for discrete label-like parameters.
 
@@ -240,7 +237,7 @@ class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
         return {**super().summary(), "nActiveValues": len(self.active_values)}
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class ContinuousParameter(Parameter):
     """Abstract class for continuous parameters."""
 

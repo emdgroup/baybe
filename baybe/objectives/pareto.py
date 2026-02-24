@@ -15,7 +15,7 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class ParetoObjective(Objective):
     """An objective handling multiple targets in a Pareto sense."""
 

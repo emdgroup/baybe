@@ -31,7 +31,7 @@ def _validate_label_min_len(self, attr, value) -> None:
         )
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class CategoricalParameter(_DiscreteLabelLikeParameter):
     """Parameter class for categorical parameters."""
 
@@ -83,7 +83,7 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
         return comp_df
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class TaskParameter(CategoricalParameter):
     """Parameter class for task parameters."""
 

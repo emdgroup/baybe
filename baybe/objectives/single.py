@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     )
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class SingleTargetObjective(Objective):
     """An objective focusing on a single target."""
 

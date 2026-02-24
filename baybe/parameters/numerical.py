@@ -18,7 +18,7 @@ from baybe.settings import active_settings
 from baybe.utils.interval import InfiniteIntervalError, Interval
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class NumericalDiscreteParameter(DiscreteParameter):
     """Class for discrete numerical parameters (a.k.a. setpoints)."""
 
@@ -102,7 +102,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
         )
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class NumericalContinuousParameter(ContinuousParameter):
     """Class for continuous numerical parameters."""
 
@@ -151,7 +151,7 @@ class NumericalContinuousParameter(ContinuousParameter):
         return param_dict
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class _FixedNumericalContinuousParameter(ContinuousParameter):
     """Parameter class for fixed numerical parameters."""
 

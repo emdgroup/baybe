@@ -18,7 +18,7 @@ from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import df_uncorrelated_features
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class CustomDiscreteParameter(_DiscreteLabelLikeParameter):
     """Custom parameters.
 

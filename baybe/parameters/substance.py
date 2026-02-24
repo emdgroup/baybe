@@ -28,7 +28,7 @@ Smiles = str
 """Type alias for SMILES strings."""
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class SubstanceParameter(_DiscreteLabelLikeParameter):
     """Generic substances that are treated with cheminformatics descriptors.
 

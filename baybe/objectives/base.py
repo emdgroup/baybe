@@ -25,11 +25,7 @@ if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 
 
-# TODO: Reactive slots in all classes once cached_property is supported:
-#   https://github.com/python-attrs/attrs/issues/164
-
-
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class Objective(ABC, SerialMixin):
     """Abstract base class for all objectives."""
 

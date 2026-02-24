@@ -70,7 +70,7 @@ def _geometric_mean(x: Tensor, /, weights: Tensor, dim: int = -1) -> Tensor:
     return torch.exp(weighted_log_sum)
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class DesirabilityObjective(Objective):
     """An objective scalarizing multiple targets using desirability values."""
 
