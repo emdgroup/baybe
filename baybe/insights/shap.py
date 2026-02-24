@@ -317,11 +317,13 @@ class SHAPInsight:
             # Return attributions for non-SHAP explainers
             if explainer.__module__.endswith("maple"):
                 # Additional argument for maple to increase comparability to SHAP
-                attributions = explainer.attributions(
-                    df_aligned, multiply_by_input=True
-                )[0]
+                raw_attr = explainer.attributions(df_aligned, multiply_by_input=True)
             else:
-                attributions = explainer.attributions(df_aligned)[0]
+                raw_attr = explainer.attributions(df_aligned)
+            # Non-SHAP explainers return a list of arrays (one per output) when
+            # the model has multi-dimensional output, or a single array when
+            # the model has scalar output. Extract accordingly.
+            attributions = raw_attr[0] if isinstance(raw_attr, list) else raw_attr
 
             explanation = shap.Explanation(
                 values=attributions,
