@@ -30,7 +30,7 @@ keywords = [
 ]
 dynamic = ['version']
 dependencies = [
-    "attrs>=25.4.0",
+    "attrs @ git+https://github.com/clayote/attrs.git@sphinx-attr-getter-ext",
     "botorch>=0.13.0,<1",
     "cattrs>=25.2.0",
     "exceptiongroup",
