@@ -33,7 +33,9 @@ The **Bay**esian **B**ack **E**nd (**BayBE**) is a general-purpose toolbox for B
 of Experiments, focusing on additions that enable real-world experimental campaigns.
 
 
+<div align="center">
 <img src="docs/_static/landscape.svg" alt="Complex Search Space" width="80%" />
+</div>
 
 ## 🔋 Batteries Included
 Besides its core functionality to perform a typical recommend-measure loop, BayBE
