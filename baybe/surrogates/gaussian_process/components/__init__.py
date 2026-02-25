@@ -2,7 +2,7 @@
 
 from baybe.surrogates.gaussian_process.components.kernel import (
     KernelFactory,
-    PlainComponentFactory,
+    PlainKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
     LikelihoodFactory,
@@ -16,7 +16,7 @@ from baybe.surrogates.gaussian_process.components.mean import (
 __all__ = [
     # Kernel
     "KernelFactory",
-    "PlainComponentFactory",
+    "PlainKernelFactory",
     # Likelihood
     "LikelihoodFactory",
     "PlainLikelihoodFactory",
