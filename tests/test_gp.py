@@ -15,6 +15,7 @@ from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import AdditiveKernel, ScaleKernel
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
 
@@ -79,3 +80,11 @@ def test_gpytorch_component_serialization(component):
     msg = f"{type(obj).__name__}' is not supported"
     with pytest.raises(NotImplementedError, match=msg):
         GaussianProcessSurrogate(**component).to_dict()
+
+
+@pytest.mark.parametrize("preset", list(GaussianProcessPreset), ids=lambda p: p.name)
+def test_presets(preset: GaussianProcessPreset):
+    """Presets can be loaded and their defaults can be overridden."""
+    GaussianProcessSurrogate.from_preset(
+        preset, GPyTorchMaternKernel(), ConstantMean(), GaussianLikelihood()
+    )
