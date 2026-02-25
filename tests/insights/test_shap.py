@@ -159,10 +159,11 @@ def test_shap_explainers(ongoing_campaign, explainer_cls, use_comp_rep):
             cls,
             marks=mark.xfail(
                 condition=(
-                    cls == "Maple" and np.lib.NumpyVersion(np.__version__) >= "2.0.0"
+                    cls == "Maple" and np.lib.NumpyVersion(np.__version__) >= "2.4.0"
                 ),
-                reason="Maple is broken with numpy>=2.0 (upstream shap bug: "
-                "shap/explainers/other/_maple.py assigns array to scalar slot)",
+                reason="Maple is broken with numpy>=2.4 (upstream shap bug: "
+                "shap/explainers/other/_maple.py assigns array to scalar slot, "
+                "deprecated since numpy 1.25, hard error since numpy 2.4.0)",
                 strict=True,
             ),
         )
