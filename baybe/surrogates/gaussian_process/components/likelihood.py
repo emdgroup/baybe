@@ -15,6 +15,6 @@ if TYPE_CHECKING:
     LikelihoodFactory = ComponentFactory[GPyTorchLikelihood]
     PlainLikelihoodFactory = PlainComponentFactory[GPyTorchLikelihood]
 else:
-    # At runtime, we use only the BayBE type for serialization compatibility
+    # At runtime, we avoid loading GPyTorch eagerly for performance reasons
     LikelihoodFactory = ComponentFactory[Any]
     PlainLikelihoodFactory = PlainComponentFactory[Any]

@@ -15,6 +15,6 @@ if TYPE_CHECKING:
     MeanFactory = ComponentFactory[GPyTorchMean]
     PlainMeanFactory = PlainComponentFactory[GPyTorchMean]
 else:
-    # At runtime, we use only the BayBE type for serialization compatibility
+    # At runtime, we avoid loading GPyTorch eagerly for performance reasons
     MeanFactory = ComponentFactory[Any]
     PlainMeanFactory = PlainComponentFactory[Any]
