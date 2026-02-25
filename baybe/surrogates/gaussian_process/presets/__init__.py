@@ -1,14 +1,14 @@
 """Gaussian process surrogate presets."""
 
-# Core
-from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
-
 # Default preset
-from baybe.surrogates.gaussian_process.presets.default import (
+from baybe.surrogates.gaussian_process.presets.baybe import (
     DefaultKernelFactory,
     DefaultLikelihoodFactory,
     DefaultMeanFactory,
 )
+
+# Core
+from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
 
 # EDBO preset
 from baybe.surrogates.gaussian_process.presets.edbo import (

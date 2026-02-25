@@ -23,7 +23,7 @@ from baybe.surrogates.gaussian_process.components.mean import MeanFactory
 from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
 )
-from baybe.surrogates.gaussian_process.presets.default import (
+from baybe.surrogates.gaussian_process.presets.baybe import (
     DefaultKernelFactory,
     DefaultLikelihoodFactory,
     DefaultMeanFactory,
@@ -151,9 +151,6 @@ class GaussianProcessSurrogate(Surrogate):
     def from_preset(cls, preset: GaussianProcessPreset | str) -> Self:
         """Create a Gaussian process surrogate from one of the defined presets."""
         preset = GaussianProcessPreset(preset)
-
-        if preset is GaussianProcessPreset.BAYBE:
-            return GaussianProcessSurrogate()
 
         module_name = (
             f"baybe.surrogates.gaussian_process.presets.{preset.value.lower()}"
