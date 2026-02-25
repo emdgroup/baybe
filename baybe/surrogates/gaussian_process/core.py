@@ -35,6 +35,9 @@ if TYPE_CHECKING:
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import Posterior
+    from gpytorch.kernels import Kernel as GPyTorchKernel
+    from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
+    from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
 
@@ -148,7 +151,13 @@ class GaussianProcessSurrogate(Surrogate):
     """The actual model."""
 
     @classmethod
-    def from_preset(cls, preset: GaussianProcessPreset | str) -> Self:
+    def from_preset(
+        cls,
+        preset: GaussianProcessPreset | str,
+        kernel_or_factory: KernelFactory | Kernel | GPyTorchKernel | None = None,
+        mean_or_factory: MeanFactory | GPyTorchMean | None = None,
+        likelihood_or_factory: LikelihoodFactory | GPyTorchLikelihood | None = None,
+    ) -> Self:
         """Create a Gaussian process surrogate from one of the defined presets."""
         preset = GaussianProcessPreset(preset)
 
@@ -157,13 +166,13 @@ class GaussianProcessSurrogate(Surrogate):
         )
         module = importlib.import_module(module_name)
 
-        PresetKernelFactory = getattr(module, "PresetKernelFactory")
-        PresetMeanFactory = getattr(module, "PresetMeanFactory")
-        PresetLikelihoodFactory = getattr(module, "PresetLikelihoodFactory")
-
-        return cls(
-            PresetKernelFactory(), PresetMeanFactory(), PresetLikelihoodFactory()
+        kernel = kernel_or_factory or getattr(module, "PresetKernelFactory")()
+        mean = mean_or_factory or getattr(module, "PresetMeanFactory")()
+        likelihood = (
+            likelihood_or_factory or getattr(module, "PresetLikelihoodFactory")()
         )
+
+        return cls(kernel, mean, likelihood)
 
     @override
     def to_botorch(self) -> GPyTorchModel:
