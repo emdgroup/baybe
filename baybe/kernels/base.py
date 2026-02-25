@@ -26,7 +26,7 @@ class Kernel(ABC, SerialMixin):
     """Abstract base class for all kernels."""
 
     def to_factory(self) -> PlainKernelFactory:
-        """Wrap the kernel in a :class:`baybe.surrogates.gaussian_process.kernel_factory.PlainKernelFactory`."""  # noqa: E501
+        """Wrap the kernel in a :class:`baybe.surrogates.gaussian_process.components.PlainKernelFactory`."""  # noqa: E501
         from baybe.surrogates.gaussian_process.components.kernel import (
             PlainKernelFactory,
         )

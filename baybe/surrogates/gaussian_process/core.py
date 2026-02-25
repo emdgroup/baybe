@@ -117,7 +117,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     Accepts:
         * :class:`baybe.kernels.base.Kernel`
-        * :class:`.kernel_factory.KernelFactory`
+        * :class:`.components.kernel.KernelFactory`
         * :class:`gpytorch.kernels.Kernel`
     """
 
@@ -129,7 +129,7 @@ class GaussianProcessSurrogate(Surrogate):
     """The factory used to create the mean function for the Gaussian process.
 
     Accepts:
-        * :class:`.mean_factory.MeanFactory`
+        * :class:`.components.mean.MeanFactory`
         * :class:`gpytorch.means.Mean`
     """
 
@@ -141,7 +141,7 @@ class GaussianProcessSurrogate(Surrogate):
     """The factory used to create the likelihood for the Gaussian process.
 
     Accepts:
-        * :class:`.likelihood_factory.LikelihoodFactory`
+        * :class:`.components.likelihood.LikelihoodFactory`
         * :class:`gpytorch.likelihoods.Likelihood`
     """
 
