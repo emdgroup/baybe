@@ -148,8 +148,10 @@ class GaussianProcessSurrogate(Surrogate):
     """The actual model."""
 
     @classmethod
-    def from_preset(cls, preset: GaussianProcessPreset) -> Self:
+    def from_preset(cls, preset: GaussianProcessPreset | str) -> Self:
         """Create a Gaussian process surrogate from one of the defined presets."""
+        preset = GaussianProcessPreset(preset)
+
         if preset is GaussianProcessPreset.BAYBE:
             return GaussianProcessSurrogate()
 
