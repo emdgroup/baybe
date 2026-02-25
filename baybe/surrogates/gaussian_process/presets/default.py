@@ -6,7 +6,7 @@ from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOKernelFactory,
     SmoothedEDBOLikelihoodFactory,
 )
-from baybe.surrogates.gaussian_process.presets.utils import LazyConstantMeanFactory
+from baybe.surrogates.gaussian_process.presets.factories import LazyConstantMeanFactory
 
 DefaultKernelFactory = SmoothedEDBOKernelFactory
 """The factory providing the default kernel for Gaussian process surrogates."""

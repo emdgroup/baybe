@@ -1,4 +1,4 @@
-"""Preset utilities."""
+"""Preset component factories."""
 
 from __future__ import annotations
 
