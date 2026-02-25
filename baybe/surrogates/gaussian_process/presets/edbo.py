@@ -21,7 +21,7 @@ from baybe.surrogates.gaussian_process.components.likelihood import LikelihoodFa
 from baybe.surrogates.gaussian_process.presets.factories import LazyConstantMeanFactory
 
 if TYPE_CHECKING:
-    from gpytorch.likelihoods import Likelihood as GPyTorchLikelihhood
+    from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from torch import Tensor
 
     from baybe.kernels.base import Kernel
@@ -123,7 +123,7 @@ class EDBOLikelihoodFactory(LikelihoodFactory):
     @override
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> GPyTorchLikelihhood:
+    ) -> GPyTorchLikelihood:
         import torch
         from gpytorch.likelihoods import GaussianLikelihood
 
