@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
   can now be conveniently controlled via the new `Settings` mechanism
+- `make_gp_from_preset` utility function, since the same functionality is offered by
+  `GaussianProcessSurrogate.from_preset` 
 
 ### Deprecations
 - `set_random_seed` and `temporary_seed` utility functions

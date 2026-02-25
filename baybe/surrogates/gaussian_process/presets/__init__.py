@@ -1,10 +1,7 @@
 """Gaussian process surrogate presets."""
 
 # Core
-from baybe.surrogates.gaussian_process.presets.core import (
-    GaussianProcessPreset,
-    make_gp_from_preset,
-)
+from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
 
 # Default preset
 from baybe.surrogates.gaussian_process.presets.default import (
@@ -30,7 +27,6 @@ from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
 __all__ = [
     # Core
     "GaussianProcessPreset",
-    "make_gp_from_preset",
     # Default preset
     "DefaultKernelFactory",
     "DefaultLikelihoodFactory",

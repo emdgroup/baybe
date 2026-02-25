@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import gc
+import importlib
 from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
 from attrs.validators import instance_of
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from baybe.kernels.base import Kernel
 from baybe.parameters.base import Parameter
@@ -21,7 +22,6 @@ from baybe.surrogates.gaussian_process.components.likelihood import LikelihoodFa
 from baybe.surrogates.gaussian_process.components.mean import MeanFactory
 from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
-    make_gp_from_preset,
 )
 from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
@@ -147,10 +147,24 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
-    @staticmethod
-    def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
+    @classmethod
+    def from_preset(cls, preset: GaussianProcessPreset) -> Self:
         """Create a Gaussian process surrogate from one of the defined presets."""
-        return make_gp_from_preset(preset)
+        if preset is GaussianProcessPreset.BAYBE:
+            return GaussianProcessSurrogate()
+
+        module_name = (
+            f"baybe.surrogates.gaussian_process.presets.{preset.value.lower()}"
+        )
+        module = importlib.import_module(module_name)
+
+        PresetKernelFactory = getattr(module, "PresetKernelFactory")
+        PresetMeanFactory = getattr(module, "PresetMeanFactory")
+        PresetLikelihoodFactory = getattr(module, "PresetLikelihoodFactory")
+
+        return cls(
+            PresetKernelFactory(), PresetMeanFactory(), PresetLikelihoodFactory()
+        )
 
     @override
     def to_botorch(self) -> GPyTorchModel:
