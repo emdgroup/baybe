@@ -7,6 +7,9 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEMeanFactory,
 )
 
+# Chen preset
+from baybe.surrogates.gaussian_process.presets.chen import CHENKernelFactory
+
 # Core
 from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
 
@@ -31,6 +34,8 @@ __all__ = [
     "BayBEKernelFactory",
     "BayBELikelihoodFactory",
     "BayBEMeanFactory",
+    # Chen preset
+    "CHENKernelFactory",
     # EDBO preset
     "EDBOKernelFactory",
     "EDBOLikelihoodFactory",
