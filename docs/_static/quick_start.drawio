@@ -25,7 +25,7 @@
                 <mxCell id="28" value="&lt;b&gt;&lt;font style=&quot;color: light-dark(rgb(153, 153, 153), rgb(153, 153, 153));&quot;&gt;Parameter search space&lt;/font&gt;&lt;/b&gt; defining allowed parameter configurations" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=light-dark(#999999,#999999);" parent="1" vertex="1">
                     <mxGeometry x="236.5" y="393" width="140" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="32" value="" style="group" parent="1" vertex="1" connectable="0">
+                <mxCell id="32" value="" style="group;fillColor=none;strokeColor=none;" parent="1" vertex="1" connectable="0">
                     <mxGeometry x="489.5" y="381.25" width="60" height="73.5" as="geometry"/>
                 </mxCell>
                 <mxCell id="31" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#999999,#999999);" parent="32" vertex="1">

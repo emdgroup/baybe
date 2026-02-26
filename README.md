@@ -123,7 +123,7 @@ To inform the next recommendation cycle, the newly generated measurements can be
 
 <div align="center">
 
-![Quick Start](https://raw.githubusercontent.com/Hrovatin/baybe/docs/easy_access/docs/_static/quick_start_automatic.svg)
+![Quick Start](https://raw.githubusercontent.com/Hrovatin/baybe/docs/easy_access/docs/_static/quick_start.svg)
 
 </div>
 
