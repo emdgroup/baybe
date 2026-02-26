@@ -40,3 +40,9 @@
   Transfer learning regression benchmarks infrastructure
 - Myra Zmarsly (Merck Life Science KGaA, Darmstadt, Germany):\
   Identification of non-dominated parameter configurations
+- Thijs Stuyver (PSL University, Paris, France):\  
+  Adaptive hyper-prior tailored for reaction yield optimization tasks
+- Maximilian Fleck (PSL University, Paris, France):\
+  Adaptive hyper-prior tailored for reaction yield optimization tasks
+- Guanming Chen (PSL University, Paris, France):\
+  Adaptive hyper-prior tailored for reaction yield optimization tasks
