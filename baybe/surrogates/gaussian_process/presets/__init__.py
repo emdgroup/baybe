@@ -6,10 +6,12 @@ from baybe.surrogates.gaussian_process.presets.core import (
 )
 from baybe.surrogates.gaussian_process.presets.default import DefaultKernelFactory
 from baybe.surrogates.gaussian_process.presets.edbo import EDBOKernelFactory
+from baybe.surrogates.gaussian_process.presets.chen import CHENKernelFactory
 
 __all__ = [
     "DefaultKernelFactory",
     "EDBOKernelFactory",
     "make_gp_from_preset",
     "GaussianProcessPreset",
+    "CHENKernelFactory",
 ]
