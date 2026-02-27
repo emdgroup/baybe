@@ -13,10 +13,14 @@ import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
 from attrs import AttrsInstance, define, field, fields
-from attrs.validators import gt, instance_of, le
+from attrs.validators import deep_iterable, deep_mapping, ge, gt, instance_of, le
 from typing_extensions import override
 
 from baybe.acquisition.base import AcquisitionFunction
+from baybe.parameters.validation import (
+    validate_contains_exactly_one,
+    validate_dict_shape,
+)
 from baybe.searchspace import SearchSpace
 from baybe.utils.basic import classproperty, convert_to_float
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod, sample_numerical_df
@@ -156,6 +160,22 @@ class qKnowledgeGradient(AcquisitionFunction):
     memory footprint and wall time."""
 
 
+@define(frozen=True)
+class qMultiFidelityKnowledgeGradient(AcquisitionFunction):
+    """Monte Carlo based knowledge gradient.
+
+    This acquisition function currently only supports purely continuous spaces.
+    """
+
+    abbreviation: ClassVar[str] = "qMFKG"
+
+    num_fantasies: int = field(validator=[instance_of(int), gt(0)], default=128)
+    """Number of fantasies to draw for approximating the knowledge gradient.
+
+    More samples result in a better approximation, at the expense of both increased
+    memory footprint and wall time."""
+
+
 ########################################################################################
 ### Posterior Statistics
 @define(frozen=True)
@@ -287,6 +307,84 @@ class qUpperConfidenceBound(AcquisitionFunction):
 
     beta: float = field(converter=float, validator=finite_float, default=0.2)
     """See :paramref:`UpperConfidenceBound.beta`."""
+
+
+@define(frozen=True)
+class MultiFidelityUpperConfidenceBound(AcquisitionFunction):
+    """Two stage acquisition function of Kandasamy et al (2016).
+
+    Stage 1: Choose design features based on argmax_x (softmin_m (UCB_m(x) + zeta_m)).
+
+    Stage 2: Choose cheapest fidelity satisfying a cost-aware informativeness threshold.
+    """
+
+    abbreviation: ClassVar[str] = "MFUCB"
+
+    # Jordan MHS TODO: add validator for data type.
+    fidelities: dict[int, tuple[float, ...]] = field(
+        validator=deep_mapping(
+            key_validator=instance_of(int),
+            value_validator=deep_iterable(
+                member_validator=instance_of(float),
+                iterable_validator=instance_of(tuple),
+            ),
+            mapping_validator=instance_of(dict),
+        )
+    )
+    """Fidelity column(s) with integer encoding of allowed values.
+    """
+
+    # Jordan MHS note to self: Check whether validate_contains_exactly_one is
+    # appropriate for values that are tuples within an attribute instead of the
+    # whole attribute.
+    # Jordan MHS note to self: validation used here should not come from
+    # parameters/validation.py but a more general validation file or one in acquisition.
+    costs: dict[int, tuple[float, ...]] = field(
+        validator=deep_mapping(
+            key_validator=instance_of(int),
+            value_validator=deep_iterable(
+                member_validator=(instance_of(float), ge(0.0)),
+                iterable_validator=(
+                    instance_of(tuple),
+                    validate_contains_exactly_one(0.0),
+                ),
+            ),
+            mapping_validator=(instance_of(dict), validate_dict_shape("fidelities")),
+        )
+    )
+    """Costs of each fidelity value, multiple columns are summed."""
+
+    softmin_temperature: float = field(
+        converter=float, validator=finite_float, default=1e-2
+    )
+    """Softmin smoothing parameter."""
+
+    # Jordan MHS note to self: check whether we need to validate that zeros are in
+    # same positions as in costs.
+    zetas: dict[int, tuple[float, ...]] | None = field(
+        validator=deep_mapping(
+            key_validator=instance_of(int),
+            value_validator=deep_iterable(
+                member_validator=(instance_of(float), ge(0.0)),
+                iterable_validator=(
+                    instance_of(tuple),
+                    validate_contains_exactly_one(0.0),
+                ),
+            ),
+            mapping_validator=(instance_of(dict), validate_dict_shape("fidelities")),
+        )
+    )
+    """Maximum discrepancy in objective function between
+    the target fidelity and each fidelity value.
+    """
+
+    beta: float = field(converter=float, validator=finite_float, default=0.2)
+    """See :paramref:`UpperConfidenceBound.beta`."""
+
+    @override
+    @classproperty
+    def supports_batching(cls) -> bool:
+        return False
 
 
 ########################################################################################
