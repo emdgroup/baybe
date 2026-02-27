@@ -31,6 +31,7 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
     selection of design points). The model must be single-outcome.
     """
 
+    # Jordan MHS TODO: Initialize via attrs and not __init__.
     def __init__(
         self,
         model: Model,
