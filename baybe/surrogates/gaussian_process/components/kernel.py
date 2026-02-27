@@ -19,6 +19,7 @@ from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import _ParameterKind
+from baybe.parameters.fidelity import CategoricalFidelityParameter
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
@@ -32,6 +33,7 @@ from baybe.surrogates.gaussian_process.components.generic import (
     PlainGPComponentFactory,
     to_component_factory,
 )
+from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
@@ -262,7 +264,10 @@ class ICMKernelFactory(_MetaKernelFactory):
         )
 
         return _BayBENumericalKernelFactory(
-            TypeSelector((TaskParameter,), exclude=True)
+            TypeSelector(
+                (TaskParameter, CategoricalFidelityParameter),
+                exclude=True,
+            )
         )
 
     @task_kernel_factory.default
@@ -271,7 +276,11 @@ class ICMKernelFactory(_MetaKernelFactory):
             _BayBETaskKernelFactory,
         )
 
-        return _BayBETaskKernelFactory()
+        return _BayBETaskKernelFactory(
+            TypeSelector(
+                (TaskParameter, CategoricalFidelityParameter)
+            )
+        )
 
     @base_kernel_factory.validator
     def _validate_base_kernel_factory(self, _, factory: KernelFactoryProtocol):
