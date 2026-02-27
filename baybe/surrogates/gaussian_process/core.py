@@ -116,7 +116,7 @@ class _ModelContext:
         return [
             i
             for i in range(len(self.searchspace.comp_rep_columns))
-            if i != self.task_idx
+            if i not in (self.task_idx, self.fidelity_idx)
         ]
 
 
