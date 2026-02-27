@@ -13,7 +13,7 @@ from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.core import (
     _ModelContext,
 )
-from baybe.surrogates.gaussian_process.presets import (
+from baybe.surrogates.gaussian_process.presets.core import (
     GaussianProcessPreset,
     make_gp_from_preset,
 )
@@ -77,25 +77,18 @@ class GaussianProcessSurrogateSTMF(Surrogate):
 
         context = _ModelContext(self._searchspace)
 
-        numerical_design_idxs = context.get_numerical_indices(train_x.shape[-1])
-
         assert context.is_multi_fidelity, (
             "GaussianProcessSurrogateSTMF can only "
             "be fit on multi fidelity searchspaces."
         )
 
-        if context.is_multi_fidelity:
-            numerical_design_idxs = tuple(
-                idx for idx in numerical_design_idxs if idx != context.fidelity_idx
-            )
-
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        input_transform = botorch.models.transforms.Normalize(
+        input_transform = botorch.models.transforms.Normalize(  # type: ignore[attr-defined]
             train_x.shape[-1],
             bounds=context.parameter_bounds,
-            indices=list(numerical_design_idxs),
+            indices=context.numerical_indices,
         )
-        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
+        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])  # type: ignore[attr-defined]
 
         # construct and fit the Gaussian process
         self._model = botorch.models.SingleTaskMultiFidelityGP(
