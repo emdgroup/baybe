@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Page-1" id="6k2zMYyjilEWwxgVp3P2">
-        <mxGraphModel dx="1193" dy="415" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="860" pageHeight="800" math="0" shadow="0">
+        <mxGraphModel dx="114" dy="131" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="860" pageHeight="800" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -92,7 +92,7 @@
                     </mxGeometry>
                 </mxCell>
                 <UserObject label="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Recommender&lt;/font&gt;" link="https://emdgroup.github.io/baybe/stable/userguide/recommenders.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-12">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=light-dark(#F5F5F5,#1A1A1A);fontColor=#333333;" parent="1" vertex="1">
                         <mxGeometry x="610" y="195" width="140" height="107" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -160,7 +160,7 @@
                     </mxGeometry>
                 </mxCell>
                 <UserObject label="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Constraint&lt;/font&gt;" link="https://emdgroup.github.io/baybe/stable/userguide/constraints.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-36">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=light-dark(#F5F5F5,#1A1A1A);fontColor=#333333;" parent="1" vertex="1">
                         <mxGeometry x="190" y="60" width="140" height="100" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -168,7 +168,7 @@
                     <mxGeometry y="30" width="140" height="70" as="geometry"/>
                 </mxCell>
                 <UserObject label="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Insights&lt;/font&gt;" link="https://emdgroup.github.io/baybe/stable/userguide/insights.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-39">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#36393d;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=light-dark(#F5F5F5,#1A1A1A);fontColor=#333333;" parent="1" vertex="1">
                         <mxGeometry x="360" y="690" width="140" height="70" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -220,7 +220,7 @@
                     </mxGeometry>
                 </mxCell>
                 <UserObject label="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Surrogate&lt;/font&gt;" link="https://emdgroup.github.io/baybe/stable/userguide/surrogates.html" linkTarget="_blank" id="2T1Zwf7EH5pKQzEgwhFY-18">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=light-dark(#F5F5F5,#1A1A1A);fontColor=#333333;" parent="1" vertex="1">
                         <mxGeometry x="530" y="60" width="140" height="80" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -228,7 +228,7 @@
                     <mxGeometry y="30" width="140" height="50" as="geometry"/>
                 </mxCell>
                 <UserObject label="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Acquisition Function&lt;/font&gt;" link="https://emdgroup.github.io/baybe/stable/examples/Basics/recommenders.html#acquisition-function" linkTarget="_blank" id="2T1Zwf7EH5pKQzEgwhFY-20">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=light-dark(#F5F5F5,#1A1A1A);fontColor=#333333;" parent="1" vertex="1">
                         <mxGeometry x="690" y="60" width="140" height="90" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -245,16 +245,16 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="2T1Zwf7EH5pKQzEgwhFY-23" value="Optional" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#36393d;arcSize=0;" parent="1" vertex="1">
+                <mxCell id="2T1Zwf7EH5pKQzEgwhFY-23" value="Optional" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=light-dark(#F5F5F5,#1A1A1A);arcSize=0;" parent="1" vertex="1">
                     <mxGeometry x="900" y="213" width="130" height="35" as="geometry"/>
                 </mxCell>
-                <mxCell id="2T1Zwf7EH5pKQzEgwhFY-24" value="To be configured" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#b1ddf0, #1069af);strokeColor=light-dark(#96D7D2,#0F69AF);arcSize=0;" parent="1" vertex="1">
+                <mxCell id="2T1Zwf7EH5pKQzEgwhFY-24" value="To be configured" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#96D7D2,#0F69AF);strokeColor=light-dark(#96D7D2,#0F69AF);arcSize=0;" parent="1" vertex="1">
                     <mxGeometry x="900" y="126" width="130" height="35" as="geometry"/>
                 </mxCell>
                 <mxCell id="2T1Zwf7EH5pKQzEgwhFY-25" value="Legend" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="935" y="85" width="60" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="2T1Zwf7EH5pKQzEgwhFY-30" value="&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Input/output data&lt;/font&gt;&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#fff2cc, #ce742b);strokeColor=light-dark(#FFDCB9,#CE742A);fontStyle=1;arcSize=0;" parent="1" vertex="1">
+                <mxCell id="2T1Zwf7EH5pKQzEgwhFY-30" value="&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Input/output data&lt;/font&gt;&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#FFDCB9,#CE742A);strokeColor=light-dark(#FFDCB9,#CE742A);fontStyle=1;arcSize=0;" parent="1" vertex="1">
                     <mxGeometry x="900" y="170" width="130" height="35" as="geometry"/>
                 </mxCell>
             </root>
