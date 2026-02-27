@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Page-1" id="6k2zMYyjilEWwxgVp3P2">
-        <mxGraphModel dx="567" dy="652" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="860" pageHeight="800" math="0" shadow="0">
+        <mxGraphModel dx="1094" dy="1257" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="860" pageHeight="800" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -34,7 +34,7 @@
                     </mxGeometry>
                 </mxCell>
                 <UserObject label="Searchspace" link="https://emdgroup.github.io/baybe/stable/userguide/searchspace.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-3">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#96D7D2,#0F69AF);strokeColor=light-dark(#96D7D2,#0F69AF);gradientDirection=radial;strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#96D7D2,#0F69AF);strokeColor=light-dark(#96D7D2,#0F69AF);gradientDirection=radial;strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="110" y="230" width="140" height="100" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -58,7 +58,7 @@
                     </mxGeometry>
                 </mxCell>
                 <UserObject label="&lt;b&gt;Campaign&lt;/b&gt;" link="https://emdgroup.github.io/baybe/stable/userguide/campaigns.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-7">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#96D7D2,#0F69AF);strokeColor=light-dark(#96D7D2,#0F69AF);gradientDirection=radial;strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#96D7D2,#0F69AF);strokeColor=light-dark(#96D7D2,#0F69AF);gradientDirection=radial;strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="360" y="435" width="140" height="70" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -75,7 +75,7 @@
                     </mxGeometry>
                 </mxCell>
                 <UserObject label="Objective" link="https://emdgroup.github.io/baybe/stable/userguide/objectives.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-10">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#96D7D2,#0F69AF);strokeColor=light-dark(#96D7D2,#0F69AF);gradientDirection=radial;strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#96D7D2,#0F69AF);strokeColor=light-dark(#96D7D2,#0F69AF);gradientDirection=radial;strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="360" y="260" width="140" height="70" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -92,7 +92,7 @@
                     </mxGeometry>
                 </mxCell>
                 <UserObject label="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Recommender&lt;/font&gt;" link="https://emdgroup.github.io/baybe/stable/userguide/recommenders.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-12">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#CCCCCC;strokeColor=#CCCCCC;fontColor=#333333;strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#CCCCCC;strokeColor=#CCCCCC;fontColor=#333333;strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="610" y="195" width="140" height="107" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -100,7 +100,7 @@
                     <mxGeometry y="30" width="140" height="77" as="geometry"/>
                 </mxCell>
                 <UserObject label="Measurements" link="https://emdgroup.github.io/baybe/stable/userguide/campaigns.html#adding-measurements" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-17">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#FFDCB9,#CE742A);strokeColor=light-dark(#FFDCB9,#CE742A);strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#FFDCB9,#CE742A);strokeColor=light-dark(#FFDCB9,#CE742A);strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="180" y="435" width="140" height="80" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -119,7 +119,7 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <UserObject label="Recommendations" link="https://emdgroup.github.io/baybe/stable/userguide/getting_recommendations.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-23">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#FFDCB9,#CE742A);strokeColor=light-dark(#FFDCB9,#CE742A);strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#FFDCB9,#CE742A);strokeColor=light-dark(#FFDCB9,#CE742A);strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="540" y="435" width="140" height="80" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -129,7 +129,7 @@
                 <mxCell id="TgQTEoghcz0UxrAVnRUr-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" parent="1" source="lGFxbz3i8dvHrvGvqf7d-29" target="lGFxbz3i8dvHrvGvqf7d-17" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="lGFxbz3i8dvHrvGvqf7d-29" value="Lab Outcomes / Oracle" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#FFDCB9,#CE742A);strokeColor=light-dark(#FFDCB9,#CE742A);strokeWidth=2;" parent="1" vertex="1">
+                <mxCell id="lGFxbz3i8dvHrvGvqf7d-29" value="Lab Outcomes / Oracle" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#FFDCB9,#CE742A);strokeColor=light-dark(#FFDCB9,#CE742A);strokeWidth=1;" parent="1" vertex="1">
                     <mxGeometry x="350" y="545" width="160" height="80" as="geometry"/>
                 </mxCell>
                 <mxCell id="lGFxbz3i8dvHrvGvqf7d-30" value="Outcomes for recommendations" style="text;strokeColor=none;fillColor=default;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="lGFxbz3i8dvHrvGvqf7d-29" vertex="1">
@@ -144,7 +144,7 @@
                     </mxGeometry>
                 </mxCell>
                 <UserObject label="Parameter" link="https://emdgroup.github.io/baybe/stable/userguide/parameters.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-33">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#96D7D2,#0F69AF);strokeColor=light-dark(#96D7D2,#0F69AF);gradientDirection=radial;strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#96D7D2,#0F69AF);strokeColor=light-dark(#96D7D2,#0F69AF);gradientDirection=radial;strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="30" y="60" width="140" height="100" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -160,7 +160,7 @@
                     </mxGeometry>
                 </mxCell>
                 <UserObject label="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Constraint&lt;/font&gt;" link="https://emdgroup.github.io/baybe/stable/userguide/constraints.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-36">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#CCCCCC;strokeColor=#CCCCCC;fontColor=#333333;strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#CCCCCC;strokeColor=#CCCCCC;fontColor=#333333;strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="190" y="60" width="140" height="100" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -168,7 +168,7 @@
                     <mxGeometry y="30" width="140" height="70" as="geometry"/>
                 </mxCell>
                 <UserObject label="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Insights&lt;/font&gt;" link="https://emdgroup.github.io/baybe/stable/userguide/insights.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-39">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#CCCCCC;strokeColor=#CCCCCC;fontColor=#333333;strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#CCCCCC;strokeColor=#CCCCCC;fontColor=#333333;strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="360" y="690" width="140" height="70" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -184,7 +184,7 @@
                     </mxGeometry>
                 </mxCell>
                 <UserObject label="Target" link="https://emdgroup.github.io/baybe/stable/userguide/targets.html" linkTarget="_blank" id="lGFxbz3i8dvHrvGvqf7d-42">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#96D7D2,#0F69AF);strokeColor=light-dark(#96D7D2,#0F69AF);gradientDirection=radial;strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#96D7D2,#0F69AF);strokeColor=light-dark(#96D7D2,#0F69AF);gradientDirection=radial;strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="360" y="160" width="140" height="70" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -220,7 +220,7 @@
                     </mxGeometry>
                 </mxCell>
                 <UserObject label="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Surrogate&lt;/font&gt;" link="https://emdgroup.github.io/baybe/stable/userguide/surrogates.html" linkTarget="_blank" id="2T1Zwf7EH5pKQzEgwhFY-18">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#CCCCCC;strokeColor=#CCCCCC;fontColor=#333333;strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#CCCCCC;strokeColor=#CCCCCC;fontColor=#333333;strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="530" y="60" width="140" height="80" as="geometry"/>
                     </mxCell>
                 </UserObject>
@@ -228,7 +228,7 @@
                     <mxGeometry y="30" width="140" height="50" as="geometry"/>
                 </mxCell>
                 <UserObject label="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Acquisition Function&lt;/font&gt;" link="https://emdgroup.github.io/baybe/stable/examples/Basics/recommenders.html#acquisition-function" linkTarget="_blank" id="2T1Zwf7EH5pKQzEgwhFY-20">
-                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#CCCCCC;strokeColor=#CCCCCC;fontColor=#333333;strokeWidth=2;" parent="1" vertex="1">
+                    <mxCell style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#CCCCCC;strokeColor=#CCCCCC;fontColor=#333333;strokeWidth=1;" parent="1" vertex="1">
                         <mxGeometry x="690" y="60" width="140" height="90" as="geometry"/>
                     </mxCell>
                 </UserObject>
