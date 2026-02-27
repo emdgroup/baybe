@@ -10,6 +10,7 @@ from typing_extensions import override
 from baybe.kernels.base import Kernel
 from baybe.kernels.composite import ProductKernel
 from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.fidelity import CategoricalFidelityParameter
 from baybe.parameters.selector import (
     ParameterSelectorProtocol,
     TypeSelector,
@@ -19,6 +20,7 @@ from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
     PlainGPComponentFactory,
 )
+from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
@@ -79,7 +81,15 @@ class ICMKernelFactory(KernelFactoryProtocol):
             BayBENumericalKernelFactory,
         )
 
-        return BayBENumericalKernelFactory(TypeSelector((TaskParameter,), exclude=True))
+        return BayBENumericalKernelFactory(
+            TypeSelector(
+                (
+                    TaskParameter,
+                    CategoricalFidelityParameter,
+                ),
+                exclude=True,
+            )
+        )
 
     @task_kernel_factory.default
     def _default_task_kernel_factory(self) -> KernelFactoryProtocol:
@@ -87,7 +97,14 @@ class ICMKernelFactory(KernelFactoryProtocol):
             BayBETaskKernelFactory,
         )
 
-        return BayBETaskKernelFactory(TypeSelector((TaskParameter,)))
+        return BayBETaskKernelFactory(
+            TypeSelector(
+                (
+                    TaskParameter,
+                    CategoricalFidelityParameter,
+                )
+            )
+        )
 
     @override
     def __call__(

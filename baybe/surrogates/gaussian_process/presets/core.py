@@ -8,8 +8,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from baybe.surrogates.base import Surrogate
 
-from surrogates.gaussian_process.core import GaussianProcessSurrogate
-
 
 class GaussianProcessPreset(Enum):
     """Available Gaussian process surrogate presets."""
@@ -29,17 +27,9 @@ class GaussianProcessPreset(Enum):
 
 def make_gp_from_preset(preset: GaussianProcessPreset) -> Surrogate:
     """Create a :class:`GaussianProcessSurrogate` from a :class:`GaussianProcessPreset."""  # noqa: E501
-    from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
     from baybe.surrogates.gaussian_process.multi_fidelity import (
         GaussianProcessSurrogateSTMF,
-        MultiFidelityGaussianProcessSurrogate,
     )
-
-    if preset is GaussianProcessPreset.BAYBE:
-        return GaussianProcessSurrogate()
-
-    if preset is GaussianProcessPreset.MFGP:
-        return MultiFidelityGaussianProcessSurrogate()
 
     if preset is GaussianProcessPreset.BOTORCH_STMF:
         return GaussianProcessSurrogateSTMF()
