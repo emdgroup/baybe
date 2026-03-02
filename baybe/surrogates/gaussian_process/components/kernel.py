@@ -8,7 +8,6 @@ from attrs import define, field
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
-from baybe.kernels.composite import ProductKernel
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.selector import (
     ParameterSelectorProtocol,
@@ -18,6 +17,7 @@ from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.generic import (
     ComponentFactoryProtocol,
     PlainComponentFactory,
+    to_component_factory,
 )
 
 if TYPE_CHECKING:
@@ -67,10 +67,14 @@ class ICMKernelFactory(KernelFactoryProtocol):
     ICM: Intrinsic model of coregionalization
     """
 
-    base_kernel_factory: KernelFactoryProtocol = field(alias="base_kernel_or_factory")
+    base_kernel_factory: KernelFactoryProtocol = field(
+        alias="base_kernel_or_factory", converter=to_component_factory
+    )
     """The factory for the base kernel operating on numerical input features."""
 
-    task_kernel_factory: KernelFactoryProtocol = field(alias="task_kernel_or_factory")
+    task_kernel_factory: KernelFactoryProtocol = field(
+        alias="task_kernel_or_factory", converter=to_component_factory
+    )
     """The factory for the task kernel operating on the task indices."""
 
     @base_kernel_factory.default
@@ -97,4 +101,8 @@ class ICMKernelFactory(KernelFactoryProtocol):
     ) -> Kernel:
         base_kernel = self.base_kernel_factory(searchspace, train_x, train_y)
         task_kernel = self.task_kernel_factory(searchspace, train_x, train_y)
-        return ProductKernel([base_kernel, task_kernel])
+        if isinstance(base_kernel, Kernel):
+            base_kernel = base_kernel.to_gpytorch(searchspace)
+        if isinstance(task_kernel, Kernel):
+            task_kernel = task_kernel.to_gpytorch(searchspace)
+        return base_kernel * task_kernel
