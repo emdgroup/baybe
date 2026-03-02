@@ -1,6 +1,11 @@
 """Tests for the Gaussian Process surrogate."""
 
+import pandas as pd
 import pytest
+import torch
+from botorch.fit import fit_gpytorch_mll
+from botorch.models import SingleTaskGP
+from botorch.models.transforms import Normalize, Standardize
 from gpytorch.kernels import MaternKernel as GPyTorchMaternKernel
 from gpytorch.kernels import RBFKernel as GPyTorchRBFKernel
 from gpytorch.kernels import ScaleKernel as GPyTorchScaleKernel
@@ -8,9 +13,11 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.means import Mean as GPyTorchMean
+from gpytorch.mlls import ExactMarginalLogLikelihood
 from pandas.testing import assert_frame_equal
 from pytest import param
 
+from baybe import active_settings
 from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.numerical import NumericalContinuousParameter
@@ -19,7 +26,7 @@ from baybe.surrogates.gaussian_process.components.generic import PlainGPComponen
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.dataframe import create_fake_input
+from baybe.utils.dataframe import create_fake_input, to_tensor
 
 searchspace = NumericalContinuousParameter("p", (0, 1)).to_searchspace()
 objective = NumericalTarget("t").to_objective()
@@ -35,6 +42,34 @@ def _dummy_mean_factory(*args, **kwargs) -> GPyTorchMean:
 
 def _dummy_likelihood_factory(*args, **kwargs) -> GPyTorchLikelihood:
     return GaussianLikelihood()
+
+
+def _posterior_stats_botorch():
+    """The essential BoTorch steps to produce posterior estimates."""
+    train_X = to_tensor(searchspace.transform(measurements, allow_extra=True))
+    train_Y = to_tensor(objective.transform(measurements, allow_extra=True))
+
+    # >>>>> Code taken from BoTorch landing page: https://botorch.org/ >>>>>
+    # NOTE: We normalize according to the searchspace bounds to ensure consistency with
+    #       the BayBE GP implementation.
+    gp = SingleTaskGP(
+        train_X=train_X,
+        train_Y=train_Y,
+        input_transform=Normalize(
+            d=len(searchspace.comp_rep_columns),
+            bounds=to_tensor(searchspace.scaling_bounds),
+        ),
+        outcome_transform=Standardize(m=1),
+    )
+    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+    fit_gpytorch_mll(mll)
+    # <<<<<<<<<<
+
+    with torch.no_grad():
+        posterior = gp.posterior(train_X)
+    mean = posterior.mean
+    std = posterior.variance.sqrt()
+    return pd.DataFrame({"t_mean": mean.numpy().ravel(), "t_std": std.numpy().ravel()})
 
 
 @pytest.mark.parametrize(
@@ -130,3 +165,16 @@ def test_invalid_components():
         )
     with pytest.raises(TypeError, match="Component must be one of"):
         GaussianProcessSurrogate(criterion_or_factory=MaternKernel())
+
+
+def test_botorch_preset():
+    """The BoTorch preset exactly mimics BoTorch's behavior."""
+    active_settings.random_seed = 1337
+    gp = GaussianProcessSurrogate.from_preset("BOTORCH")
+    gp.fit(searchspace, objective, measurements)
+    posterior1 = gp.posterior_stats(measurements)
+
+    active_settings.random_seed = 1337
+    posterior2 = _posterior_stats_botorch()
+
+    assert_frame_equal(posterior1, posterior2)
