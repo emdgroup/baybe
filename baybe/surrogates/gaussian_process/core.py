@@ -259,6 +259,12 @@ class GaussianProcessSurrogate(Surrogate):
         )
         outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])  # type: ignore[attr-defined]
 
+        # outcome_transform = botorch.models.transforms.outcome.StratifiedStandardize(
+        #     context.task_idx,
+        #     torch.tensor(train_x[:, context.task_idx]).to(int).unique(),
+        #     torch.tensor(range(context.n_tasks)),
+        # )  # type: ignore[attr-defined]
+
         ### Mean
         mean = self.mean_factory(context.searchspace, train_x, train_y)
 
@@ -280,18 +286,7 @@ class GaussianProcessSurrogate(Surrogate):
             covar_module=kernel,
             likelihood=likelihood,
         )
-
-        # TODO: This is still a temporary workaround to avoid overfitting seen in
-        #  low-dimensional TL cases. More robust settings are being researched.
-        if context.n_task_dimensions > 0:
-            mll = gpytorch.mlls.LeaveOneOutPseudoLikelihood(
-                self._model.likelihood, self._model
-            )
-        else:
-            mll = gpytorch.ExactMarginalLogLikelihood(
-                self._model.likelihood, self._model
-            )
-
+        mll = gpytorch.ExactMarginalLogLikelihood(self._model.likelihood, self._model)
         botorch.fit.fit_gpytorch_mll(mll)
 
     @override
