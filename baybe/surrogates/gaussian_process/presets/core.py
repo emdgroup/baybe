@@ -11,6 +11,9 @@ class GaussianProcessPreset(Enum):
     BAYBE = "BAYBE"
     """The default BayBE settings of the Gaussian process surrogate class."""
 
+    BOTORCH = "BOTORCH"
+    """The BoTorch settings."""
+
     EDBO = "EDBO"
     """The EDBO settings."""
 

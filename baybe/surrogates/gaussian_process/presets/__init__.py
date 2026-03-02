@@ -7,6 +7,13 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     DefaultMeanFactory,
 )
 
+# BoTorch preset
+from baybe.surrogates.gaussian_process.presets.botorch import (
+    BotorchKernelFactory,
+    BotorchLikelihoodFactory,
+    BotorchMeanFactory,
+)
+
 # Core
 from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
 
@@ -31,6 +38,10 @@ __all__ = [
     "DefaultKernelFactory",
     "DefaultLikelihoodFactory",
     "DefaultMeanFactory",
+    # BoTorch preset
+    "BotorchKernelFactory",
+    "BotorchLikelihoodFactory",
+    "BotorchMeanFactory",
     # EDBO preset
     "EDBOKernelFactory",
     "EDBOLikelihoodFactory",
