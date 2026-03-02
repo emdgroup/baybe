@@ -14,9 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for determining the Pareto front
 - Support for GPyTorch objects (kernels, means, likelihood) as Gaussian process
   components, enabling full low-level customization
-- `EDBO` and `EDBO_SMOOTHED` presets for `GaussianProcessSurrogate`
+- `BOTORCH`, `EDBO` and `EDBO_SMOOTHED` presets for `GaussianProcessSurrogate`
 - Interpoint constraints for continuous search spaces
 - `IndexKernel` and `PositiveIndexKernel` classes
+
+### Changed
+- Gaussian processes no longer invoke leave-one-out training for multitask scenarios but 
+  can now rely on improved model priors for good generalization
 
 ### Breaking Changes
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
