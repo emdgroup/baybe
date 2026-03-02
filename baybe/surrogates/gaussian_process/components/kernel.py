@@ -105,4 +105,32 @@ class ICMKernelFactory(KernelFactoryProtocol):
             base_kernel = base_kernel.to_gpytorch(searchspace)
         if isinstance(task_kernel, Kernel):
             task_kernel = task_kernel.to_gpytorch(searchspace)
+
+        assert searchspace.task_idx is not None
+        all_idcs = set(range(len(searchspace.comp_rep_columns)))
+        expected_task_idcs = {searchspace.task_idx}
+        expected_base_idcs = all_idcs - expected_task_idcs
+
+        base_idcs = (
+            set(dims)
+            if (dims := base_kernel.active_dims.tolist()) is not None
+            else None
+        )
+        task_idcs = (
+            set(dims)
+            if (dims := task_kernel.active_dims.tolist()) is not None
+            else None
+        )
+
+        if base_idcs != expected_base_idcs:
+            raise ValueError(
+                f"The base kernel's 'active_dims' {base_idcs} does not match "
+                f"the non-task indices {expected_base_idcs}."
+            )
+        if task_idcs != expected_task_idcs:
+            raise ValueError(
+                f"The task kernel's 'active_dims' {task_idcs} does not match "
+                f"the task index {expected_task_idcs}."
+            )
+
         return base_kernel * task_kernel
