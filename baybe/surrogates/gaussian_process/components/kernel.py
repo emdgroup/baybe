@@ -171,10 +171,43 @@ class ICMKernelFactory(_MetaKernelFactory):
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
+        if searchspace.task_idx is None:
+            raise IncompatibleSearchSpaceError(
+                f"'{type(self).__name__}' can only be used with a searchspace that "
+                f"contains a '{TaskParameter.__name__}'."
+            )
+
         base_kernel = self.base_kernel_factory(searchspace, train_x, train_y)
         task_kernel = self.task_kernel_factory(searchspace, train_x, train_y)
         if isinstance(base_kernel, Kernel):
             base_kernel = base_kernel.to_gpytorch(searchspace)
         if isinstance(task_kernel, Kernel):
             task_kernel = task_kernel.to_gpytorch(searchspace)
+
+        # Ensure correct partitioning between base and task kernels active dimensions
+        all_idcs = set(range(len(searchspace.comp_rep_columns)))
+        allowed_task_idcs = {searchspace.task_idx}
+        allowed_base_idcs = all_idcs - allowed_task_idcs
+        base_idcs = (
+            set(dims)
+            if (dims := base_kernel.active_dims.tolist()) is not None
+            else None
+        )
+        task_idcs = (
+            set(dims)
+            if (dims := task_kernel.active_dims.tolist()) is not None
+            else None
+        )
+
+        if base_idcs > allowed_base_idcs:
+            raise ValueError(
+                f"The base kernel's 'active_dims' {base_idcs} must be a subset of "
+                f"the non-task indices {allowed_base_idcs}."
+            )
+        if task_idcs != allowed_task_idcs:
+            raise ValueError(
+                f"The task kernel's 'active_dims' {task_idcs} does not match "
+                f"the task index {allowed_task_idcs}."
+            )
+
         return base_kernel * task_kernel
