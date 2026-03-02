@@ -19,11 +19,12 @@ from baybe import active_settings
 from baybe.acquisition import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import IncompatibleSurrogateError
-from baybe.parameters import NumericalDiscreteParameter
+from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
+from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
 
@@ -90,13 +91,36 @@ def main():
     }
     acquisition_function_names = list(acquisition_function_classes.keys())
 
-    # Streamlit simulation parameters
+    # >>>>> Sidebar options >>>>>
+    # Domain
     st.sidebar.markdown("# Domain")
+    st_enable_multitask = st.sidebar.toggle("Multi-task")
+    st_n_tasks = 2 if st_enable_multitask else 1
     st_random_seed = int(st.sidebar.number_input("Random seed", value=1337))
     st_function_name = st.sidebar.selectbox(
         "Test function", list(test_functions.keys())
     )
     st_minimize = st.sidebar.checkbox("Minimize")
+
+    # Training data
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("# Training Data")
+    st_n_training_points = st.sidebar.slider(
+        "Number of training points",
+        0 if st_enable_multitask else 1,
+        20,
+        0 if st_enable_multitask else 5,
+    )
+    if st_enable_multitask:
+        st_n_training_points_other = st.sidebar.slider(
+            "Number of off-task training points", 0, 20, 5
+        )
+        st_offtask_scale = st.sidebar.slider("Off-task scale factor", -20.0, 20.0, 1.0)
+        st_offtask_offset_factor = st.sidebar.slider(
+            "Off-task offset", -100.0, 100.0, 0.0
+        )
+
+    # Model
     st.sidebar.markdown("---")
     st.sidebar.markdown("# Model")
     st_surrogate_name = st.sidebar.selectbox(
@@ -104,13 +128,26 @@ def main():
         surrogate_model_names,
         surrogate_model_names.index(GaussianProcessSurrogate.__name__),
     )
+
+    st_gp_preset = None
+    st_transfer_learning = False
+    if st_surrogate_name == GaussianProcessSurrogate.__name__:
+        preset_names = [preset.value for preset in GaussianProcessPreset]
+        st_gp_preset = st.sidebar.selectbox(
+            "GP Preset",
+            preset_names,
+            index=preset_names.index(GaussianProcessPreset.BAYBE.value),
+        )
+        if st_enable_multitask:
+            st_transfer_learning = st.sidebar.checkbox("Transfer learning", value=True)
     st_acqf_name = st.sidebar.selectbox(
         "Acquisition function",
         acquisition_function_names,
         acquisition_function_names.index(qLogExpectedImprovement.__name__),
     )
-    st_n_training_points = st.sidebar.slider("Number of training points", 1, 20, 5)
     st_n_recommendations = st.sidebar.slider("Number of recommendations", 1, 20, 5)
+
+    # Surrogate consistency validation
     st.sidebar.markdown("---")
     st.sidebar.markdown("# Validation")
     st.sidebar.markdown(
@@ -127,6 +164,10 @@ def main():
     )
     st_function_amplitude = st.sidebar.slider("Function amplitude", 1.0, 100.0, 1.0)
     st_function_bias = st.sidebar.slider("Function bias", -100.0, 100.0, 0.0)
+    # <<<<< Sidebar options <<<<<
+
+    # Derived settings
+    st_use_separate_gps = st_n_tasks > 1 and not st_transfer_learning
 
     # Set the chosen random seed
     active_settings.random_seed = st_random_seed
@@ -140,68 +181,184 @@ def main():
         bias=st_function_bias,
     )
 
-    # Create the training data
-    train_x = np.random.uniform(
-        st_lower_parameter_limit, st_upper_parameter_limit, st_n_training_points
-    )
-    train_y = fun(train_x)
-    measurements = pd.DataFrame({"x": train_x, "y": train_y})
+    # Generate task-specific transforms (scale and offset for each task)
+    task_names = ["on-task", "off-task"] if st_n_tasks > 1 else ["on-task"]
+    task_transforms = {}
+    for task_idx in range(st_n_tasks):
+        task_name = task_names[task_idx]
+        if task_idx == 0:
+            # On-task: use original function values
+            task_transforms[task_name] = {"scale": 1.0, "offset": 0.0}
+        else:
+            # Off-task: use user-specified scale and offset
+            scale = st_offtask_scale
+            offset = st_offtask_offset_factor * st_function_amplitude
+            task_transforms[task_name] = {"scale": scale, "offset": offset}
+
+    # Create training data
+    measurements_list = []
+    for task_idx in range(st_n_tasks):
+        task_name = task_names[task_idx]
+        transform = task_transforms[task_name]
+        n_points = st_n_training_points if task_idx == 0 else st_n_training_points_other
+        train_x = np.random.uniform(
+            st_lower_parameter_limit, st_upper_parameter_limit, n_points
+        )
+        task_measurements = pd.DataFrame(
+            {
+                "x": train_x,
+                "task": task_name,
+                "y": fun(train_x) * transform["scale"] + transform["offset"],
+            }
+        )
+        measurements_list.append(task_measurements)
+    measurements = pd.concat(measurements_list, ignore_index=True)
 
     # Create the plotting grid and corresponding target values
     test_x = np.linspace(
         st_lower_parameter_limit, st_upper_parameter_limit, N_PARAMETER_VALUES
     )
-    test_y = fun(test_x)
-    candidates = pd.DataFrame({"x": test_x, "y": test_y})
+    candidates_list = []
+    test_ys = {}
+    for task_idx in range(st_n_tasks):
+        task_name = task_names[task_idx]
+        transform = task_transforms[task_name]
+        test_ys[task_name] = fun(test_x) * transform["scale"] + transform["offset"]
+        task_candidates = pd.DataFrame(
+            {"x": test_x, "task": task_name, "y": test_ys[task_name]}
+        )
+        candidates_list.append(task_candidates)
+    candidates = pd.concat(candidates_list, ignore_index=True)
 
     # Create the searchspace and objective
-    parameter = NumericalDiscreteParameter(
-        name="x",
-        values=np.linspace(
-            st_lower_parameter_limit, st_upper_parameter_limit, N_PARAMETER_VALUES
-        ),
-    )
-    searchspace = SearchSpace.from_product(parameters=[parameter])
+    parameters = [
+        NumericalDiscreteParameter(
+            name="x",
+            values=np.linspace(
+                st_lower_parameter_limit, st_upper_parameter_limit, N_PARAMETER_VALUES
+            ),
+        )
+    ]
+    if st_transfer_learning:
+        parameters.append(
+            TaskParameter(
+                name="task",
+                values=task_names,
+                active_values=["on-task"],
+            )
+        )
+    searchspace = SearchSpace.from_product(parameters=parameters)
     objective = NumericalTarget(name="y", minimize=st_minimize).to_objective()
 
-    # Create the acquisition function and the recommender
+    # Create the acquisition function
     acqf_cls = acquisition_function_classes[st_acqf_name]
     try:
         acqf = acqf_cls(maximize=not st_minimize)
     except TypeError:
         acqf = acqf_cls()
-    recommender = BotorchRecommender(
-        surrogate_model=surrogate_model_classes[st_surrogate_name](),
-        acquisition_function=acqf,
-    )
 
-    # Get the recommendations and extract the posterior mean / standard deviation
-    try:
-        recommendations = recommender.recommend(
-            st_n_recommendations, searchspace, objective, measurements
+    def make_surrogate():
+        if st_surrogate_name == GaussianProcessSurrogate.__name__:
+            assert st_gp_preset is not None
+            return GaussianProcessSurrogate.from_preset(
+                preset=GaussianProcessPreset[st_gp_preset]
+            )
+        return surrogate_model_classes[st_surrogate_name]()
+
+    if st_use_separate_gps:
+        # One independent GP per task, each trained without the task column
+        stats_by_task = {}
+        for task_name in task_names:
+            task_meas = measurements[measurements["task"] == task_name][
+                ["x", "y"]
+            ].reset_index(drop=True)
+            task_recommender = BotorchRecommender(
+                surrogate_model=make_surrogate(),
+                acquisition_function=acqf,
+            )
+            if task_name == "on-task":
+                try:
+                    recommendations = task_recommender.recommend(
+                        st_n_recommendations, searchspace, objective, task_meas
+                    )
+                except IncompatibleSurrogateError:
+                    st.error(
+                        f"You requested {st_n_recommendations} recommendations but "
+                        f"the selected surrogate class does not support recommending "
+                        f"more than one candidate at a time."
+                    )
+                    st.stop()
+            task_surrogate = task_recommender.get_surrogate(
+                searchspace, objective, task_meas
+            )
+            stats_by_task[task_name] = task_surrogate.posterior_stats(
+                pd.DataFrame({"x": test_x})
+            )
+    else:
+        # Single recommender (single task, or multi-task with transfer learning)
+        recommender = BotorchRecommender(
+            surrogate_model=make_surrogate(),
+            acquisition_function=acqf,
         )
-    except IncompatibleSurrogateError:
-        st.error(
-            f"You requested {st_n_recommendations} recommendations but the selected "
-            f"surrogate class does not support recommending more than one candidate "
-            f"at a time."
-        )
-        st.stop()
-    surrogate = recommender.get_surrogate(searchspace, objective, measurements)
-    stats = surrogate.posterior_stats(candidates)
-    mean, std = stats["y_mean"], stats["y_std"]
+        try:
+            recommendations = recommender.recommend(
+                st_n_recommendations, searchspace, objective, measurements
+            )
+        except IncompatibleSurrogateError:
+            st.error(
+                f"You requested {st_n_recommendations} recommendations but the "
+                f"selected surrogate class does not support recommending more than "
+                f"one candidate at a time."
+            )
+            st.stop()
+        surrogate = recommender.get_surrogate(searchspace, objective, measurements)
+        stats = surrogate.posterior_stats(candidates)
 
     # Visualize the test function, training points, model predictions, recommendations
-    fig = plt.figure()
-    plt.plot(test_x, test_y, color="tab:blue", label="Test function")
-    plt.plot(train_x, train_y, "o", color="tab:blue")
-    plt.plot(test_x, mean, color="tab:red", label="Surrogate model")
-    plt.fill_between(test_x, mean - std, mean + std, alpha=0.2, color="tab:red")
-    plt.vlines(
-        recommendations, *plt.gca().get_ylim(), color="k", label="Recommendations"
-    )
-    plt.legend()
-    st.pyplot(fig)
+    if st_n_tasks > 1:
+        cols = st.columns(st_n_tasks)
+
+    for task_idx in range(st_n_tasks):
+        task_name = task_names[task_idx]
+        task_mask = candidates["task"] == task_name if st_n_tasks > 1 else slice(None)
+
+        if st_use_separate_gps:
+            task_stats = stats_by_task[task_name]
+            mean = task_stats["y_mean"].values
+            std = task_stats["y_std"].values
+        elif st_n_tasks > 1:
+            mean = stats["y_mean"][task_mask].values
+            std = stats["y_std"][task_mask].values
+        else:
+            mean = stats["y_mean"].values
+            std = stats["y_std"].values
+
+        test_y = test_ys[task_name]
+        train_mask = (
+            measurements["task"] == task_name if st_n_tasks > 1 else slice(None)
+        )
+        train_y = measurements[train_mask]["y"].values
+        task_train_x = measurements[train_mask]["x"].values
+
+        fig = plt.figure()
+        plt.plot(test_x, test_y, color="tab:blue", label="Test function")
+        plt.plot(task_train_x, train_y, "o", color="tab:blue")
+        plt.plot(test_x, mean, color="tab:red", label="Surrogate model")
+        plt.fill_between(test_x, mean - std, mean + std, alpha=0.2, color="tab:red")
+        if task_name == "on-task":
+            plt.vlines(
+                recommendations["x"] if st_n_tasks > 1 else recommendations,
+                *plt.gca().get_ylim(),
+                color="k",
+                label="Recommendations",
+            )
+        plt.legend()
+        if st_n_tasks > 1:
+            plt.title(task_name.capitalize())
+            with cols[task_idx]:
+                st.pyplot(fig)
+        else:
+            st.pyplot(fig)
 
 
 if __name__ == "__main__":
