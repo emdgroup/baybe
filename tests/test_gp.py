@@ -75,8 +75,18 @@ def _posterior_stats_botorch(
         )
     else:
         assert searchspace.task_idx is not None
+        non_task_idcs = [
+            i for i in range(train_X.shape[-1]) if i != searchspace.task_idx
+        ]
         gp = MultiTaskGP(
-            train_X=train_X, train_Y=train_Y, task_feature=searchspace.task_idx
+            train_X=train_X,
+            train_Y=train_Y,
+            task_feature=searchspace.task_idx,
+            input_transform=Normalize(
+                d=len(searchspace.comp_rep_columns),
+                indices=non_task_idcs,
+                bounds=to_tensor(searchspace.scaling_bounds),
+            ),
         )
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
     fit_gpytorch_mll(mll)
