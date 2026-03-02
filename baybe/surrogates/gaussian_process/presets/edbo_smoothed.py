@@ -80,7 +80,7 @@ class SmoothedEDBOLikelihoodFactory(LikelihoodFactory):
     """A factory providing smoothed versions of EDBO likelihoods.
 
     Takes the low and high dimensional limits of
-    :func:`baybe.surrogates.gaussian_process.presets.edbo._edbo_noise_factory`
+    :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOLikelihoodFactory`
     and interpolates the prior moments linearly in between.
     """
 
