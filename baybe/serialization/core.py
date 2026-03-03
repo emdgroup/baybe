@@ -5,7 +5,14 @@ from __future__ import annotations
 import base64
 import pickle
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, get_type_hints
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    NoReturn,
+    TypeVar,
+    get_args,
+    get_type_hints,
+)
 
 import attrs
 import cattrs
@@ -54,15 +61,54 @@ def unstructure_with_type(x: Any, /) -> dict[str, Any]:
     return add_type(converter.get_unstructure_hook(x.__class__))(x)
 
 
+def make_base_unstructure_hook(base: type[_T]):
+    """Create a hook for unstructuring subclasses using annotations of their base class.
+
+    For generic base classes, the created hook preserves the generic type parameters
+    when unstructuring fields. For example, if a field is annotated as a parameterized
+    generic (e.g., ``BaseClass[Type]``), the field value will be unstructured using
+    that parameterized type rather than just the runtime concrete subclass.
+    """
+    if not is_abstract(base):
+        raise ValueError(
+            f"Registering base class hooks is intended for abstract classes "
+            f"only. Given: '{base.__name__}' (which is not abstract).",
+        )
+
+    def unstructure_base(obj: Any) -> dict[str, Any]:
+        if type_args := get_args(base):
+            # For parameterized generics (e.g., BaseClass[Type]), we use its type
+            # information when unstructuring, not just the plain runtime class
+            concrete_cls = obj.__class__
+            try:
+                parameterized_cls = concrete_cls[type_args]
+                hook = converter.get_unstructure_hook(parameterized_cls)
+            except TypeError:
+                # Non-generic classes do not support parameterization
+                hook = converter.get_unstructure_hook(concrete_cls)
+        else:
+            hook = converter.get_unstructure_hook(obj.__class__)
+
+        dct = hook(obj)
+        return _add_type_to_dict(dct, obj.__class__.__name__)
+
+    return unstructure_base
+
+
 def make_base_structure_hook(base: type[_T]):
     """Create a hook for structuring subclasses using annotations of their base class.
 
     Reads the ``type`` information from the given input to retrieve the correct
     subclass and then calls the existing structure hook of the that class.
+
+    For generic base classes, this hook preserves the generic type parameters when
+    dispatching to concrete subclasses. For example, if structuring with
+    ``BaseClass[Type]``, the concrete subclass will be called as ``ConcreteClass[Type]``
+    rather than just the plain ``ConcreteClass``.
     """
     if not is_abstract(base):
         raise ValueError(
-            f"Registering base class structuring is intended for abstract classes "
+            f"Registering base class hooks is intended for abstract classes "
             f"only. Given: '{base.__name__}' (which is not abstract).",
         )
 
@@ -70,11 +116,21 @@ def make_base_structure_hook(base: type[_T]):
         # Extract the type information from the given input and find
         # the corresponding class in the hierarchy
         type_ = val if isinstance(val, str) else val.pop(_TYPE_FIELD)
-        concrete_cls = find_subclass(base, type_)
+        subclass = find_subclass(base, type_)
+
+        # Preserve generic type parameters from the abstract base class:
+        # If class is a parameterized generic (e.g., BaseClass[Type]),
+        # apply the same parameters to subclass (e.g., SubClass[Kernel])
+        if type_args := get_args(cls):
+            try:
+                subclass = subclass[type_args]
+            except TypeError:
+                # Subclass is not a generic class --> use it as is
+                pass
 
         # Call the structure hook of the concrete class
-        fn = converter.get_structure_hook(concrete_cls)
-        return fn({} if isinstance(val, str) else val, concrete_cls)
+        fn = converter.get_structure_hook(subclass)
+        return fn({} if isinstance(val, str) else val, subclass)
 
     return structure_base
 
@@ -104,15 +160,22 @@ def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
     return base64.b64encode(pickled_df).decode("utf-8")
 
 
+def _expand_non_baybe_path(cls: type) -> str:
+    """Expand the class path for non-BayBE classes to include the module."""
+    if cls.__module__.startswith("baybe."):
+        return cls.__name__
+    else:
+        return f"{cls.__module__}.{cls.__name__}"
+
+
 def block_serialization_hook(obj: Any) -> NoReturn:  # noqa: DOC101, DOC103
     """Prevent serialization of the passed object.
 
     Raises:
         NotImplementedError: Always.
     """
-    raise NotImplementedError(
-        f"Serializing objects of type '{obj.__class__.__name__}' is not supported."
-    )
+    name = _expand_non_baybe_path(obj.__class__)
+    raise NotImplementedError(f"Serializing objects of type '{name}' is not supported.")
 
 
 def block_deserialization_hook(_: Any, cls: type) -> NoReturn:  # noqa: DOC101, DOC103
@@ -121,9 +184,8 @@ def block_deserialization_hook(_: Any, cls: type) -> NoReturn:  # noqa: DOC101, 
     Raises:
         NotImplementedError: Always.
     """
-    raise NotImplementedError(
-        f"Deserialization into '{cls.__name__}' is not supported."
-    )
+    name = _expand_non_baybe_path(cls)
+    raise NotImplementedError(f"Deserialization into '{name}' is not supported.")
 
 
 def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
@@ -152,9 +214,9 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
 
 # Register custom (un-)structure hooks
 configure_union_passthrough(bool | int | float | str, converter)
-converter.register_unstructure_hook_func(
+converter.register_unstructure_hook_factory(
     lambda cls: is_abstract(cls) and cls.__module__.startswith("baybe."),
-    unstructure_with_type,
+    make_base_unstructure_hook,
 )
 
 converter.register_structure_hook_factory(

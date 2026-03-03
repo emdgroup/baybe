@@ -12,7 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings option for random seed control
 - `identify_non_dominated_configurations` method to `Campaign` and `Objective`
   for determining the Pareto front
+- Support for GPyTorch objects (kernels, means, likelihood) as Gaussian process
+  components, enabling full low-level customization
+- `BOTORCH`, `EDBO` and `EDBO_SMOOTHED` presets for `GaussianProcessSurrogate`
 - Interpoint constraints for continuous search spaces
+- `IndexKernel` and `PositiveIndexKernel` classes
+
+### Changed
+- Gaussian processes no longer invoke leave-one-out training for multitask scenarios but 
+  can now rely on improved model priors for good generalization
 
 ### Breaking Changes
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
@@ -21,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
   can now be conveniently controlled via the new `Settings` mechanism
+- `make_gp_from_preset` utility function, since the same functionality is offered by
+  `GaussianProcessSurrogate.from_preset` 
 
 ### Deprecations
 - `set_random_seed` and `temporary_seed` utility functions

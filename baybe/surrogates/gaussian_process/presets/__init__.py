@@ -1,15 +1,53 @@
 """Gaussian process surrogate presets."""
 
-from baybe.surrogates.gaussian_process.presets.core import (
-    GaussianProcessPreset,
-    make_gp_from_preset,
+# Default preset
+from baybe.surrogates.gaussian_process.presets.baybe import (
+    DefaultKernelFactory,
+    DefaultLikelihoodFactory,
+    DefaultMeanFactory,
 )
-from baybe.surrogates.gaussian_process.presets.default import DefaultKernelFactory
-from baybe.surrogates.gaussian_process.presets.edbo import EDBOKernelFactory
+
+# BoTorch preset
+from baybe.surrogates.gaussian_process.presets.botorch import (
+    BotorchKernelFactory,
+    BotorchLikelihoodFactory,
+    BotorchMeanFactory,
+)
+
+# Core
+from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
+
+# EDBO preset
+from baybe.surrogates.gaussian_process.presets.edbo import (
+    EDBOKernelFactory,
+    EDBOLikelihoodFactory,
+    EDBOMeanFactory,
+)
+
+# Smoothed EDBO preset
+from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
+    SmoothedEDBOKernelFactory,
+    SmoothedEDBOLikelihoodFactory,
+    SmoothedEDBOMeanFactory,
+)
 
 __all__ = [
-    "DefaultKernelFactory",
-    "EDBOKernelFactory",
-    "make_gp_from_preset",
+    # Core
     "GaussianProcessPreset",
+    # Default preset
+    "DefaultKernelFactory",
+    "DefaultLikelihoodFactory",
+    "DefaultMeanFactory",
+    # BoTorch preset
+    "BotorchKernelFactory",
+    "BotorchLikelihoodFactory",
+    "BotorchMeanFactory",
+    # EDBO preset
+    "EDBOKernelFactory",
+    "EDBOLikelihoodFactory",
+    "EDBOMeanFactory",
+    # Smoothed EDBO preset
+    "SmoothedEDBOKernelFactory",
+    "SmoothedEDBOLikelihoodFactory",
+    "SmoothedEDBOMeanFactory",
 ]
