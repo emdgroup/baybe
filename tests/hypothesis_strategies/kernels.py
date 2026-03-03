@@ -11,6 +11,7 @@ from baybe.kernels.basic import (
     PeriodicKernel,
     PiecewisePolynomialKernel,
     PolynomialKernel,
+    PositiveIndexKernel,
     RBFKernel,
     RFFKernel,
     RQKernel,
@@ -96,6 +97,8 @@ def index_kernels(draw: st.DrawFn):
     """A strategy that generates index kernels."""
     num_tasks = draw(st.integers(min_value=2, max_value=5))
     rank = draw(st.integers(min_value=1, max_value=num_tasks))
+    if draw(st.booleans()):
+        return PositiveIndexKernel(num_tasks=num_tasks, rank=rank)
     return IndexKernel(num_tasks=num_tasks, rank=rank)
 
 
