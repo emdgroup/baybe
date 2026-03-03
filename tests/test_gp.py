@@ -90,13 +90,16 @@ def test_presets(preset: GaussianProcessPreset):
     mean = ConstantMean()
     likelihood = GaussianLikelihood()
 
+    # Works without overrides ...
+    GaussianProcessSurrogate.from_preset(preset)
+
+    # ... and with overrides
     gp = GaussianProcessSurrogate.from_preset(
         preset,
         kernel_or_factory=kernel,
         mean_or_factory=mean,
         likelihood_or_factory=likelihood,
     )
-
     assert isinstance(gp.kernel_factory, PlainComponentFactory)
     assert gp.kernel_factory.component is kernel
     assert isinstance(gp.mean_factory, PlainComponentFactory)
