@@ -14,6 +14,7 @@ from pytest import param
 from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import AdditiveKernel, ScaleKernel
 from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.surrogates.gaussian_process.components.generic import PlainComponentFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
 from baybe.targets.numerical import NumericalTarget
@@ -85,6 +86,20 @@ def test_gpytorch_component_serialization(component):
 @pytest.mark.parametrize("preset", list(GaussianProcessPreset), ids=lambda p: p.name)
 def test_presets(preset: GaussianProcessPreset):
     """Presets can be loaded and their defaults can be overridden."""
-    GaussianProcessSurrogate.from_preset(
-        preset, GPyTorchMaternKernel(), ConstantMean(), GaussianLikelihood()
+    kernel = GPyTorchMaternKernel()
+    mean = ConstantMean()
+    likelihood = GaussianLikelihood()
+
+    gp = GaussianProcessSurrogate.from_preset(
+        preset,
+        kernel_or_factory=kernel,
+        mean_or_factory=mean,
+        likelihood_or_factory=likelihood,
     )
+
+    assert isinstance(gp.kernel_factory, PlainComponentFactory)
+    assert gp.kernel_factory.component is kernel
+    assert isinstance(gp.mean_factory, PlainComponentFactory)
+    assert gp.mean_factory.component is mean
+    assert isinstance(gp.likelihood_factory, PlainComponentFactory)
+    assert gp.likelihood_factory.component is likelihood
