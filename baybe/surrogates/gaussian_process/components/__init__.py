@@ -1,6 +1,7 @@
 """Gaussian process surrogate components."""
 
 from baybe.surrogates.gaussian_process.components.kernel import (
+    KernelFactory,
     KernelFactoryProtocol,
     PlainKernelFactory,
 )
@@ -15,6 +16,7 @@ from baybe.surrogates.gaussian_process.components.mean import (
 
 __all__ = [
     # Kernel
+    "KernelFactory",
     "KernelFactoryProtocol",
     "PlainKernelFactory",
     # Likelihood
