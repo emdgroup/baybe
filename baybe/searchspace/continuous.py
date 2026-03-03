@@ -202,18 +202,18 @@ class SubspaceContinuous(SerialMixin):
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         constraints = constraints or []
         return SubspaceContinuous(
-            parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]
-            constraints_lin_eq=[  # type:ignore[attr-misc]
+            parameters=[p for p in parameters if p.is_continuous],
+            constraints_lin_eq=[
                 c
                 for c in constraints
                 if (isinstance(c, ContinuousLinearConstraint) and c.is_eq)
             ],
-            constraints_lin_ineq=[  # type:ignore[attr-misc]
+            constraints_lin_ineq=[
                 c
                 for c in constraints
                 if (isinstance(c, ContinuousLinearConstraint) and not c.is_eq)
             ],
-            constraints_nonlin=[  # type:ignore[attr-misc]
+            constraints_nonlin=[
                 c for c in constraints if isinstance(c, ContinuousNonlinearConstraint)
             ],
         )
