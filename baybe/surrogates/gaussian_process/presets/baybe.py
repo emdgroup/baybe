@@ -11,10 +11,13 @@ from baybe.surrogates.gaussian_process.presets.factories import LazyConstantMean
 DefaultKernelFactory = SmoothedEDBOKernelFactory
 """The factory providing the default kernel for Gaussian process surrogates."""
 
-
 DefaultMeanFactory = LazyConstantMeanFactory
 """The factory providing the default mean function for Gaussian process surrogates."""
 
-
 DefaultLikelihoodFactory = SmoothedEDBOLikelihoodFactory
 """The factory providing the default likelihood for Gaussian process surrogates."""
+
+# Aliases for generic preset imports
+PresetKernelFactory = DefaultKernelFactory
+PresetMeanFactory = DefaultMeanFactory
+PresetLikelihoodFactory = DefaultLikelihoodFactory
