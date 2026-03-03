@@ -234,5 +234,10 @@ class IndexKernel(BasicKernel):
             )
 
 
+@define(frozen=True)
+class PositiveIndexKernel(IndexKernel):
+    """A positive index kernel for transfer learning across tasks."""
+
+
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
