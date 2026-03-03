@@ -233,10 +233,11 @@ class GaussianProcessSurrogate(Surrogate):
                 active_dims=context.numerical_indices,
             )
         if context.is_multitask:
+            assert context.task_idx is not None
             task_kernel = IndexKernel(
                 num_tasks=context.n_tasks,
                 rank=context.n_tasks,  # TODO: make controllable
-            ).to_gpytorch(active_dims=context.task_idx)
+            ).to_gpytorch(active_dims=[context.task_idx])
             kernel = kernel * task_kernel
 
         ### Likelihood
