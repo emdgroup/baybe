@@ -200,18 +200,19 @@ class GaussianProcessSurrogate(Surrogate):
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         import botorch
         import gpytorch
+        from botorch.models.transforms import Normalize, Standardize
 
         assert self._searchspace is not None  # provided by base class
         context = _ModelContext(self._searchspace)
 
         ### Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
-        input_transform = botorch.models.transforms.Normalize(  # type: ignore[attr-defined]
+        input_transform = Normalize(
             train_x.shape[-1],
             bounds=context.parameter_bounds,
             indices=context.numerical_indices,
         )
-        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])  # type: ignore[attr-defined]
+        outcome_transform = Standardize(train_y.shape[-1])
 
         ### Mean
         mean = self.mean_factory(context.searchspace, train_x, train_y)
