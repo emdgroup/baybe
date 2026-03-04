@@ -28,7 +28,7 @@ else:
 _T_co = TypeVar("_T_co", bound=Component, covariant=True)
 
 
-def _is_gpytorch_component_class(obj) -> bool:
+def _is_gpytorch_component_class(obj: Any, /) -> bool:
     """Check if a class is a GPyTorch component class using lazy loading."""
     if sys.modules.get("gpytorch") is None:
         return False
@@ -39,7 +39,7 @@ def _is_gpytorch_component_class(obj) -> bool:
     return issubclass(obj, (GPyTorchKernel, GPyTorchMean, GPyTorchLikelihood))
 
 
-def _validate_component(instance, attribute: Attribute, value: Any):
+def _validate_component(instance: Any, attribute: Attribute, value: Any) -> None:
     """Validate that an object is a BayBE or a GPyTorch GP component."""
     if isinstance(value, Kernel) or _is_gpytorch_component_class(type(value)):
         return
