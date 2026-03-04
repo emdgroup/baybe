@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
   instead of a single tuple (needed for interpoint constraints)
 
+### Fixed
+- `SHAPInsight` breaking with `numpy>=2.4` due to no longer accepted implicit array to 
+  scalar conversion
+
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
   can now be conveniently controlled via the new `Settings` mechanism
