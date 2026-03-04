@@ -64,7 +64,7 @@ class KernelFactory(KernelFactoryProtocol):
 class ICMKernelFactory(KernelFactoryProtocol):
     """A kernel factory that constructs an ICM kernel for transfer learning.
 
-    ICM: Intrinsic model of coregionalization
+    ICM: Intrinsic Coregionalization Model :cite:p:`NIPS2007_66368270`
     """
 
     base_kernel_factory: KernelFactoryProtocol = field(alias="base_kernel_or_factory")
