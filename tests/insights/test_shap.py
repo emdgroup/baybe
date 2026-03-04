@@ -154,20 +154,7 @@ def test_shap_explainers(ongoing_campaign, explainer_cls, use_comp_rep):
 
 @mark.parametrize(
     "explainer_cls",
-    [
-        param(
-            cls,
-            marks=mark.xfail(
-                condition=(
-                    cls == "Maple" and np.lib.NumpyVersion(np.__version__) >= "2.4.0"
-                ),
-                reason="Maple in the shap package is broken with numpy>=2.4, see "
-                "https://github.com/shap/shap/issues/4280 ",
-                strict=True,
-            ),
-        )
-        for cls in sorted(NON_SHAP_EXPLAINERS)
-    ],
+    [cls for cls in sorted(NON_SHAP_EXPLAINERS)],
 )
 def test_non_shap_explainers(ongoing_campaign, explainer_cls):
     """Test the non-SHAP explainers in computational representation."""
