@@ -136,7 +136,7 @@ class GaussianProcessSurrogate(Surrogate):
     kernel_factory: KernelFactoryProtocol = field(
         alias="kernel_or_factory",
         converter=pipe(  # type: ignore[misc]
-            Converter(_mark_custom_kernel, takes_self=True),
+            Converter(_mark_custom_kernel, takes_self=True),  # type: ignore[call-overload]
             partial(to_component_factory, component_type=GPComponentType.KERNEL),
         ),
         factory=BayBEKernelFactory,
