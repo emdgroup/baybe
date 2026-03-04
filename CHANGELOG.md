@@ -15,13 +15,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gaussian process component factories
 - Support for GPyTorch objects (kernels, means, likelihood) as Gaussian process
   components, enabling full low-level customization
+- Factories for all Gaussian process components
 - `EDBO` and `EDBO_SMOOTHED` presets for `GaussianProcessSurrogate`
-- Interpoint constraints for continuous search spaces
+- `parameters/selector.py` module enabling convenient parameter subselection
+- `parameter_names` attribute to basic kernels for controlling the considered parameters
 - `IndexKernel` and `PositiveIndexKernel` classes
+- Interpoint constraints for continuous search spaces
 
 ### Breaking Changes
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
   instead of a single tuple (needed for interpoint constraints)
+- `Kernel.to_gpytorch` now takes a `SearchSpace` instead of explicit `ard_num_dims`,
+  `batch_shape` and `active_dims` arguments, as kernels now automatically adjust this
+  configuration to the given search space
+- `GaussianProcessSurrogate` no longer automatically adds a task kernel in multi-task
+  scenarios. Custom kernel architectures must now explicitly include the task kernel,
+  e.g. via `ICMKernelFactory`
 
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
@@ -30,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `GaussianProcessSurrogate.from_preset` 
 
 ### Deprecations
+- Using a custom kernel with `GaussianProcessSurrogate` in a multi-task context now
+  raises a `DeprecationError` to alert users about the changed kernel logic. This can
+  be suppressed by setting the `BAYBE_DISABLE_CUSTOM_KERNEL_WARNING` environment
+  variable to a truthy value
 - `set_random_seed` and `temporary_seed` utility functions
 - The environment variables
   `BAYBE_NUMPY_USE_SINGLE_PRECISION`/`BAYBE_TORCH_USE_SINGLE_PRECISION` have been
