@@ -230,7 +230,7 @@ class IndexKernel(BasicKernel):
         if rank > self.num_tasks:
             raise ValueError(
                 f"The rank of the task covariance matrix must be smaller than "
-                f"the number of tasks. Got rank {rank} >= {self.num_tasks} tasks."
+                f"the number of tasks. Got rank {rank} > {self.num_tasks} tasks."
             )
 
 
