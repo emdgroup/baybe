@@ -10,10 +10,10 @@ Constraints Continuous<Constraints_Continuous/Constraints_Continuous>
 Multi Target<Multi_Target/Multi_Target>
 Serialization<Serialization/Serialization>
 Custom Surrogates<Custom_Surrogates/Custom_Surrogates>
+Transformations<Transformations/Transformations>
+Custom Hooks<Custom_Hooks/Custom_Hooks>
 Backtesting<Backtesting/Backtesting>
 Multi Armed Bandit<Multi_Armed_Bandit/Multi_Armed_Bandit>
 Transfer Learning<Transfer_Learning/Transfer_Learning>
-Transformations<Transformations/Transformations>
 Mixtures<Mixtures/Mixtures>
-Custom Hooks<Custom_Hooks/Custom_Hooks>
 ```

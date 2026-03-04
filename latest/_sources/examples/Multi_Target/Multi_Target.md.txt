@@ -5,6 +5,6 @@ These examples demonstrate BayBE's
 ```{toctree}
 :maxdepth: 1
 
-Pareto<pareto>
 Desirability<desirability>
+Pareto<pareto>
 ```
