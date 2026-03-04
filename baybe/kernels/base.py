@@ -18,7 +18,7 @@ from baybe.priors.base import Prior
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization.mixin import SerialMixin
 from baybe.settings import active_settings
-from baybe.utils.basic import classproperty, get_baseclasses, match_attributes
+from baybe.utils.basic import classproperty, get_baseclasses, match_attributes, to_tuple
 
 if TYPE_CHECKING:
     import torch
@@ -44,7 +44,9 @@ class Kernel(ABC, SerialMixin):
         return PlainKernelFactory(self)
 
     @abstractmethod
-    def _get_dimensions(self, searchspace: SearchSpace) -> tuple[tuple[int, ...], int]:
+    def _get_dimensions(
+        self, searchspace: SearchSpace
+    ) -> tuple[tuple[int, ...] | None, int | None]:
         """Get the active dimensions and the number of ARD dimensions."""
 
     def to_gpytorch(
@@ -138,8 +140,13 @@ class BasicKernel(Kernel, ABC):
 
     parameter_names: tuple[str, ...] | None = field(
         default=None,
-        converter=optional_c(tuple),
-        validator=optional_v(deep_iterable(member_validator=instance_of(str))),
+        converter=optional_c(to_tuple),
+        validator=optional_v(
+            deep_iterable(
+                iterable_validator=instance_of(tuple),
+                member_validator=instance_of(str),
+            )
+        ),
         kw_only=True,
     )
     """An optional set of names specifiying the parameters the kernel should act on."""
@@ -149,11 +156,14 @@ class BasicKernel(Kernel, ABC):
     def _whitelisted_attributes(cls) -> frozenset[str]:
         return frozenset({"parameter_names"})
 
-    def _get_dimensions(self, searchspace):
+    @override
+    def _get_dimensions(
+        self, searchspace: SearchSpace
+    ) -> tuple[tuple[int, ...] | None, int | None]:
         if self.parameter_names is None:
             active_dims = None
         else:
-            active_dims = list(
+            active_dims = tuple(
                 chain(
                     *[
                         searchspace.get_comp_rep_parameter_indices(name)
@@ -175,7 +185,10 @@ class BasicKernel(Kernel, ABC):
 class CompositeKernel(Kernel, ABC):
     """Abstract base class for all composite kernels."""
 
-    def _get_dimensions(self, searchspace):
+    @override
+    def _get_dimensions(
+        self, searchspace: SearchSpace
+    ) -> tuple[tuple[int, ...] | None, int | None]:
         return None, None
 
 

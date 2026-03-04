@@ -8,6 +8,7 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
+from baybe.utils.basic import to_tuple
 
 
 class ParameterSelectorProtocol(Protocol):
@@ -39,7 +40,7 @@ class ParameterSelector(ParameterSelectorProtocol):
 class TypeSelector(ParameterSelector):
     """Select parameters by type."""
 
-    parameter_types: tuple[type[Parameter], ...] = field(converter=tuple)
+    parameter_types: tuple[type[Parameter], ...] = field(converter=to_tuple)
     """The parameter types to be selected."""
 
     @override
