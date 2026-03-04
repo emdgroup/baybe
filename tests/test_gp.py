@@ -22,7 +22,7 @@ from baybe.utils.dataframe import create_fake_input
 
 searchspace = NumericalContinuousParameter("p", (0, 1)).to_searchspace()
 objective = NumericalTarget("t").to_objective()
-measurements = create_fake_input(searchspace.parameters, objective.targets)
+measurements = create_fake_input(searchspace.parameters, objective.targets, n_rows=100)
 
 baybe_kernel = ScaleKernel(AdditiveKernel([MaternKernel(), RBFKernel()]))
 gpytorch_kernel = GPyTorchScaleKernel(GPyTorchMaternKernel() + GPyTorchRBFKernel())
@@ -106,3 +106,4 @@ def test_presets(preset: GaussianProcessPreset):
     assert gp.mean_factory.component is mean
     assert isinstance(gp.likelihood_factory, PlainComponentFactory)
     assert gp.likelihood_factory.component is likelihood
+    gp.fit(searchspace, objective, measurements)
