@@ -41,7 +41,6 @@ class Kernel(ABC, SerialMixin):
         active_dims: Sequence[int] | None = None,
     ):
         """Create the gpytorch representation of the kernel."""
-        import botorch.models.kernels.positive_index
         import gpytorch.kernels
 
         # Extract keywords with non-default values. This is required since gpytorch
@@ -57,6 +56,8 @@ class Kernel(ABC, SerialMixin):
         try:
             kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
         except AttributeError:
+            import botorch.models.kernels.positive_index
+
             kernel_cls = getattr(
                 botorch.models.kernels.positive_index, self.__class__.__name__
             )
