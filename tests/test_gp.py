@@ -56,7 +56,7 @@ def _dummy_likelihood_factory(*args, **kwargs) -> GPyTorchLikelihood:
         ),
     ],
 )
-def test_gpytorch_kernel(component_1, component_2):
+def test_gpytorch_components(component_1, component_2):
     """The GP accepts GPyTorch components and produces consistent results."""
     gp1 = GaussianProcessSurrogate(**component_1)
     gp2 = GaussianProcessSurrogate(**component_2)
