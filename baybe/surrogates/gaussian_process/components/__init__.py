@@ -9,6 +9,7 @@ from baybe.surrogates.gaussian_process.components.likelihood import (
     PlainLikelihoodFactory,
 )
 from baybe.surrogates.gaussian_process.components.mean import (
+    LazyConstantMeanFactory,
     MeanFactory,
     PlainMeanFactory,
 )
@@ -21,6 +22,7 @@ __all__ = [
     "LikelihoodFactory",
     "PlainLikelihoodFactory",
     # Mean
+    "LazyConstantMeanFactory",
     "MeanFactory",
     "PlainMeanFactory",
 ]
