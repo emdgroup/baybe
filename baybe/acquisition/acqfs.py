@@ -19,12 +19,11 @@ from typing_extensions import override
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.parameters.validation import (
     validate_contains_exactly_one,
-    validate_dict_shape,
 )
 from baybe.searchspace import SearchSpace
 from baybe.utils.basic import classproperty, convert_to_float
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod, sample_numerical_df
-from baybe.utils.validation import finite_float
+from baybe.utils.validation import finite_float, validate_dict_shape
 
 
 ########################################################################################
