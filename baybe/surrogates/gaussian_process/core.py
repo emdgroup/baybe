@@ -265,6 +265,8 @@ class GaussianProcessSurrogate(Surrogate):
     def __str__(self) -> str:
         fields = [
             to_string("Kernel factory", self.kernel_factory, single_line=True),
+            to_string("Mean factory", self.mean_factory, single_line=True),
+            to_string("Likelihood factory", self.likelihood_factory, single_line=True),
         ]
         return to_string(super().__str__(), *fields)
 
