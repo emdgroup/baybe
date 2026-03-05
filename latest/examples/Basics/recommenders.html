@@ -1306,15 +1306,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent               Base                        Ligand  \
-72     Butyl Ester  Potassium acetate  Di-tert-butylphenylphosphine   
-156  Butyornitrile    Cesium pivalate  Di-tert-butylphenylphosphine   
-161  Butyornitrile    Cesium pivalate  Di-tert-butylphenylphosphine   
+           Solvent                Base         Ligand  Temperature  \
+270           DMAc   Potassium acetate  (t-Bu)PhCPhos         90.0   
+205  Butyornitrile  Potassium pivalate      BrettPhos        120.0   
+247           DMAc     Cesium pivalate  (t-Bu)PhCPhos        105.0   
 
-     Temperature  Concentration  
-72          90.0          0.057  
-156        105.0          0.057  
-161        120.0          0.153  
+     Concentration  
+270          0.057  
+205          0.100  
+247          0.100  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1323,15 +1323,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base                        Ligand  \
-72     Butyl Ester  Potassium acetate  Di-tert-butylphenylphosphine   
-156  Butyornitrile    Cesium pivalate  Di-tert-butylphenylphosphine   
-161  Butyornitrile    Cesium pivalate  Di-tert-butylphenylphosphine   
+           Solvent                Base         Ligand  Temperature  \
+270           DMAc   Potassium acetate  (t-Bu)PhCPhos         90.0   
+205  Butyornitrile  Potassium pivalate      BrettPhos        120.0   
+247           DMAc     Cesium pivalate  (t-Bu)PhCPhos        105.0   
 
-     Temperature  Concentration      yield  
-72          90.0          0.057 -77.729759  
-156        105.0          0.057 -78.803231  
-161        120.0          0.153  35.796266  
+     Concentration      yield  
+270          0.057  45.821256  
+205          0.100 -36.392456  
+247          0.100  37.716957  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
