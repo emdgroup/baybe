@@ -6,16 +6,16 @@ from typing import TYPE_CHECKING
 
 from baybe.kernels.base import Kernel
 from baybe.surrogates.gaussian_process.components.generic import (
-    ComponentFactory,
-    PlainComponentFactory,
+    GPComponentFactory,
+    PlainGPComponentFactory,
 )
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
 
-    KernelFactory = ComponentFactory[Kernel | GPyTorchKernel]
-    PlainKernelFactory = PlainComponentFactory[Kernel | GPyTorchKernel]
+    KernelFactory = GPComponentFactory[Kernel | GPyTorchKernel]
+    PlainKernelFactory = PlainGPComponentFactory[Kernel | GPyTorchKernel]
 else:
     # At runtime, we use only the BayBE type for serialization compatibility
-    KernelFactory = ComponentFactory[Kernel]
-    PlainKernelFactory = PlainComponentFactory[Kernel]
+    KernelFactory = GPComponentFactory[Kernel]
+    PlainKernelFactory = PlainGPComponentFactory[Kernel]

@@ -14,7 +14,7 @@ from pytest import param
 from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import AdditiveKernel, ScaleKernel
 from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.surrogates.gaussian_process.components.generic import PlainComponentFactory
+from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
 from baybe.targets.numerical import NumericalTarget
@@ -100,10 +100,10 @@ def test_presets(preset: GaussianProcessPreset):
         mean_or_factory=mean,
         likelihood_or_factory=likelihood,
     )
-    assert isinstance(gp.kernel_factory, PlainComponentFactory)
+    assert isinstance(gp.kernel_factory, PlainGPComponentFactory)
     assert gp.kernel_factory.component is kernel
-    assert isinstance(gp.mean_factory, PlainComponentFactory)
+    assert isinstance(gp.mean_factory, PlainGPComponentFactory)
     assert gp.mean_factory.component is mean
-    assert isinstance(gp.likelihood_factory, PlainComponentFactory)
+    assert isinstance(gp.likelihood_factory, PlainGPComponentFactory)
     assert gp.likelihood_factory.component is likelihood
     gp.fit(searchspace, objective, measurements)
