@@ -14,7 +14,12 @@ import pandas as pd
 from cattrs.strategies import configure_union_passthrough
 
 from baybe.utils.basic import find_subclass
-from baybe.utils.boolean import is_abstract
+from baybe.utils.boolean import (
+    AutoBool,
+    is_abstract,
+    structure_autobool,
+    unstructure_autobool,
+)
 
 if TYPE_CHECKING:
     from cattrs.dispatch import UnstructureHook
@@ -180,3 +185,5 @@ converter.register_unstructure_hook(timedelta, lambda x: f"{x.total_seconds()}s"
 converter.register_structure_hook(
     timedelta, lambda x, _: timedelta(seconds=float(x.removesuffix("s")))
 )
+converter.register_unstructure_hook(AutoBool, unstructure_autobool)
+converter.register_structure_hook(AutoBool, structure_autobool)

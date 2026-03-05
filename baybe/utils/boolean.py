@@ -221,3 +221,15 @@ class AutoBool(enum.Enum):
                     pass
 
         raise ValueError(f"Cannot convert '{value}' to '{cls.__name__}'.")
+
+
+def unstructure_autobool(value: AutoBool, /) -> bool | str:
+    """Unstructure an :class:`AutoBool`."""
+    if value is AutoBool.AUTO:
+        return AutoBool.AUTO.value
+    return bool(value)
+
+
+def structure_autobool(value: bool | str, _, /) -> AutoBool:
+    """Structure an :class:`AutoBool`."""
+    return AutoBool.from_unstructured(value)

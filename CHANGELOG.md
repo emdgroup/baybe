@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SHAPInsight` breaking with `numpy>=2.4` due to no longer accepted implicit array to 
   scalar conversion
 
+### Changed
+- The `Campaign.allow_*` flag mechanism is now based on `AutoBool` logic, providing
+  well-defined Boolean values at query time while exposing the `AUTO` option to the user
+
+### Fixed
+- Broken cache validation for certain `Campaign.recommend` cases
+
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
   can now be conveniently controlled via the new `Settings` mechanism
