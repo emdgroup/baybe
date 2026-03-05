@@ -29,7 +29,8 @@ from baybe.acquisition.acqfs import (
     qThompsonSampling,
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
-from baybe.acquisition.utils import make_partitioning
+from baybe.acquisition.custom_acqfs import MultiFidelityUpperConfidenceBound
+from baybe.acquisition.utils import make_MFUCB_dicts, make_partitioning
 from baybe.exceptions import (
     IncompatibilityError,
     IncompleteMeasurementsError,
@@ -206,6 +207,7 @@ class BotorchAcquisitionFunctionBuilder:
         self._set_partitioning()
         self._set_current_value()
         self._set_project()
+        self._set_MFUCB_dicts()
 
         botorch_acqf = self._botorch_acqf_cls(**self._args.collect())
         self.set_default_sample_shape(botorch_acqf)
@@ -322,6 +324,17 @@ class BotorchAcquisitionFunctionBuilder:
             return project_to_target_fidelity(X, target_fidelities, num_dims)
 
         self._args.project = target_fidelity_projection
+
+    def _set_MFUCB_dicts(self) -> None:
+        """Set value, fidelities and cost dictionaries for MFUCB."""
+        if not isinstance(self.acqf, MultiFidelityUpperConfidenceBound):
+            return
+
+        fidelities_dict, costs_dict, zetas_dict = make_MFUCB_dicts(self.searchspace)
+
+        self._args.fidelities_dict = fidelities_dict
+        self._args.costs_dict = costs_dict
+        self._args.zetas_dict = zetas_dict
 
     def set_default_sample_shape(self, acqf: BoAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""
