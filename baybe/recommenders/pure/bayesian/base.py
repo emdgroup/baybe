@@ -12,15 +12,17 @@ from attrs import define, field, fields
 from attrs.converters import optional
 from typing_extensions import override
 
-from baybe.acquisition import qLogEI, qLogNEHVI
+from baybe.acquisition import qLogEI, qLogNEHVI, qMFKG
 from baybe.acquisition.base import AcquisitionFunction
+from baybe.acquisition.custom_acqfs import MFUCB
 from baybe.acquisition.utils import convert_acqf
 from baybe.exceptions import (
     IncompatibleAcquisitionFunctionError,
 )
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
-from baybe.searchspace import SearchSpace
+from baybe.recommenders.pure.bayesian.utils import restricted_fidelity_searchspace
+from baybe.searchspace import SearchSpace, SearchSpaceTaskType
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import (
@@ -90,6 +92,12 @@ class BayesianRecommender(PureRecommender, ABC):
     def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
         if self.acquisition_function is None:
+            if self.searchspace.task_type == SearchSpaceTaskType.NUMERICALFIDELITY:
+                return qMFKG()
+
+            elif self.SearchSpaceTaskType == SearchSpaceTaskType.CATEGORICALTASK:
+                return MFUCB()
+
             return qLogNEHVI() if objective.is_multi_output else qLogEI()
         return self.acquisition_function
 
@@ -189,7 +197,19 @@ class BayesianRecommender(PureRecommender, ABC):
 
         try:
             with Settings(preprocess_dataframes=False):
-                return super().recommend(
+                acqf = self._get_acquisition_function(objective)
+                if isinstance(acqf, MFUCB):
+                    searchspace = restricted_fidelity_searchspace(searchspace)
+
+                    return self._recommend_two_stage(
+                        batch_size=batch_size,
+                        searchspace=searchspace,
+                        objective=objective,
+                        measurements=measurements,
+                        pending_experiments=pending_experiments,
+                    )
+
+                recommendation = super().recommend(
                     batch_size=batch_size,
                     searchspace=searchspace,
                     objective=objective,
@@ -215,6 +235,12 @@ class BayesianRecommender(PureRecommender, ABC):
                 ) from ex
             else:
                 raise
+
+        return (
+            recommendation
+            if not isinstance(acqf, MFUCB)
+            else self._botorch_acqf.optimize_stage_two(recommendation)
+        )
 
     def acquisition_values(
         self,
