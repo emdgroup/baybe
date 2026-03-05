@@ -92,36 +92,3 @@ def validate_equal_length(
             )
 
     return validator
-
-
-def validate_dict_shape(
-    reference_name: str, /
-) -> Callable[[Parameter, Attribute, Collection[Any]], None]:
-    """Make validator to check attribute keys/lengths against a reference attribute."""
-
-    def validator(obj: Any, attribute: Attribute, value: Collection[Any]) -> None:  # noqa: DOC101, DOC103
-        """Validate that the input has the same keys/lengths as the reference attribute.
-
-        Raises:
-            ValueError: If the keys of the two attributes mismatch.
-            ValueError: If the tuple lengths of the two attributes mismatch at any key.
-        """
-        other_attr = fields_dict(type(obj))[reference_name]
-        other_instance = getattr(obj, reference_name)
-
-        if set(value.keys()) != set(other_instance.keys()):
-            raise ValueError(
-                f"{attribute.name} must have the same keys as {other_attr.alias} in "
-                f"{obj.name}."
-            )
-
-        for k, tup in value.items():
-            other_tup = other_instance[k]
-
-            if len(tup) != len(other_tup):
-                raise ValueError(
-                    f"The lengths of the attributes '{other_attr.alias}' and "
-                    f"'{attribute.alias}' do not match for '{obj.name}' at the key {k}."
-                    f"Length of '{other_attr.alias}' at key {k}: {len(other_tup)}. "
-                    f"Length of '{attribute.alias}' at key {k}: {len(tup)}."
-                )
