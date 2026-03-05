@@ -115,7 +115,7 @@ def make_base_structure_hook(base: type[_T]):
         subclass = find_subclass(base, type_)
 
         # Preserve generic type parameters from the abstract base class:
-        # If class is a parameterized generic (e.g., BaseClass[Type]),
+        # If cls is a parameterized generic (e.g., BaseClass[Kernel]),
         # apply the same parameters to subclass (e.g., SubClass[Kernel])
         if type_args := get_args(cls):
             try:
