@@ -14,18 +14,21 @@ from baybe.searchspace import SearchSpace
 from baybe.serialization.core import block_serialization_hook, converter
 from baybe.serialization.mixin import SerialMixin
 
+BayBEGPComponent: TypeAlias = Kernel
+
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
-    Component: TypeAlias = Kernel | GPyTorchKernel | GPyTorchMean | GPyTorchLikelihood
+    GPyTorchGPComponent: TypeAlias = GPyTorchKernel | GPyTorchMean | GPyTorchLikelihood
+    GPComponent: TypeAlias = BayBEGPComponent | GPyTorchGPComponent
 else:
     # At runtime, we use only the BayBE types for serialization compatibility
-    Component: TypeAlias = Kernel
+    GPComponent: TypeAlias = BayBEGPComponent
 
-_T_co = TypeVar("_T_co", bound=Component, covariant=True)
+_T_co = TypeVar("_T_co", bound=GPComponent, covariant=True)
 
 
 def _is_gpytorch_component_class(obj: Any, /) -> bool:
@@ -74,9 +77,9 @@ class PlainGPComponentFactory(GPComponentFactory[_T_co], SerialMixin):
         return self.component
 
 
-def to_component_factory(x: Component | GPComponentFactory, /) -> GPComponentFactory:
+def to_component_factory(x: GPComponent | GPComponentFactory, /) -> GPComponentFactory:
     """Wrap a component into a plain component factory (with factory passthrough)."""
-    if isinstance(x, Component) or _is_gpytorch_component_class(type(x)):
+    if isinstance(x, BayBEGPComponent) or _is_gpytorch_component_class(type(x)):
         return PlainGPComponentFactory(x)
     return x
 
