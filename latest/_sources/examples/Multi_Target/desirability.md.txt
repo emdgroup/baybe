@@ -113,9 +113,9 @@ print(recommendations)
 ```
 
        parameter
-    0   0.871480
-    1   0.596613
-    2   0.192478
+    0   0.279557
+    1   0.396665
+    2   0.406665
 
 
 ## Accessing Desirability Values
@@ -139,7 +139,7 @@ print(pd.concat([recommendations, desirability], axis=1))
 ```
 
        parameter  target_max  target_min  target_match  Desirability
-    0   0.871480          65          -8            55      0.653918
-    1   0.596613          35          -3            25      0.130002
-    2   0.192478          87          -5            48      0.827870
+    0   0.279557          65          -8            55      0.653918
+    1   0.396665          35          -3            25      0.130002
+    2   0.406665          87          -5            48      0.827870
 

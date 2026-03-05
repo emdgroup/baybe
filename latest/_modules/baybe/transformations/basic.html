@@ -1656,7 +1656,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">anchors</span> <span class="o">=</span> <span class="n">cattrs</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span>
                 <span class="n">anchors</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
-            <span class="p">)</span>  <span class="c1"># type: ignore[call-arg]</span>
+            <span class="p">)</span>
         <span class="k">except</span> <span class="n">cattrs</span><span class="o">.</span><span class="n">IterableValidationError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;The specified anchor point argument must be convertible to two &quot;</span>

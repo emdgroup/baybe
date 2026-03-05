@@ -1312,18 +1312,18 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;See :class:`baybe.searchspace.core.SearchSpace`.&quot;&quot;&quot;</span>
         <span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span> <span class="ow">or</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="n">SubspaceContinuous</span><span class="p">(</span>
-            <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_continuous</span><span class="p">],</span>  <span class="c1"># type:ignore[misc]</span>
-            <span class="n">constraints_lin_eq</span><span class="o">=</span><span class="p">[</span>  <span class="c1"># type:ignore[attr-misc]</span>
+            <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_continuous</span><span class="p">],</span>
+            <span class="n">constraints_lin_eq</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">c</span>
                 <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span>
                 <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">ContinuousLinearConstraint</span><span class="p">)</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">is_eq</span><span class="p">)</span>
             <span class="p">],</span>
-            <span class="n">constraints_lin_ineq</span><span class="o">=</span><span class="p">[</span>  <span class="c1"># type:ignore[attr-misc]</span>
+            <span class="n">constraints_lin_ineq</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">c</span>
                 <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span>
                 <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">ContinuousLinearConstraint</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">c</span><span class="o">.</span><span class="n">is_eq</span><span class="p">)</span>
             <span class="p">],</span>
-            <span class="n">constraints_nonlin</span><span class="o">=</span><span class="p">[</span>  <span class="c1"># type:ignore[attr-misc]</span>
+            <span class="n">constraints_nonlin</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">ContinuousNonlinearConstraint</span><span class="p">)</span>
             <span class="p">],</span>
         <span class="p">)</span></div>

@@ -1557,7 +1557,7 @@
         <span class="c1"># Prepare all considered discrete configurations in the</span>
         <span class="c1"># List[Dict[int, float]] format expected by BoTorch.</span>
         <span class="n">num_comp_columns</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates_comp</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-        <span class="n">candidates_comp</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_comp_columns</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
+        <span class="n">candidates_comp</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_comp_columns</span><span class="p">))</span>
         <span class="n">fixed_features_list</span> <span class="o">=</span> <span class="n">candidates_comp</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s2">&quot;records&quot;</span><span class="p">)</span>
 
         <span class="c1"># Actual call of the BoTorch optimization routine</span>
