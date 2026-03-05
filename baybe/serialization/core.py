@@ -76,18 +76,14 @@ def make_base_unstructure_hook(base: type[_T]):
         )
 
     def unstructure_base(obj: Any) -> dict[str, Any]:
+        hook = converter.get_unstructure_hook(obj.__class__)
         if type_args := get_args(base):
             # For parameterized generics (e.g., BaseClass[Type]), we use its type
             # information when unstructuring, not just the plain runtime class
-            concrete_cls = obj.__class__
             try:
-                parameterized_cls = concrete_cls[type_args]
-                hook = converter.get_unstructure_hook(parameterized_cls)
+                hook = converter.get_unstructure_hook(obj.__class__[type_args])
             except TypeError:
-                # Non-generic classes do not support parameterization
-                hook = converter.get_unstructure_hook(concrete_cls)
-        else:
-            hook = converter.get_unstructure_hook(obj.__class__)
+                pass
 
         dct = hook(obj)
         return _add_type_to_dict(dct, obj.__class__.__name__)
