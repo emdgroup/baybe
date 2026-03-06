@@ -76,10 +76,19 @@ def make_base_unstructure_hook(base: type[_T]):
         )
 
     def unstructure_base(obj: Any) -> dict[str, Any]:
+        # We can encounter three cases:
+        # 1. Both classes are non-generic --> use plain hook
+        # 2. Both classes are generic --> use the parameterized type for unstructuring
+        # 3. Base class is generic but subclass is not
+        #    --> use plain hook (i.e. same as 1) since subclass accepts no parameter
+
+        # Extract the plain hook
         hook = converter.get_unstructure_hook(obj.__class__)
+
         if type_args := get_args(base):
-            # For parameterized generics (e.g., BaseClass[Type]), we use its type
-            # information when unstructuring, not just the plain runtime class
+            # Here, we are in case 2 or 3. Let's attempt to use the parametrized type:
+            # * If successful --> case 2
+            # * If unsuccessful --> case 3 and we fall back to the plain hook
             try:
                 hook = converter.get_unstructure_hook(obj.__class__[type_args])
             except TypeError:
