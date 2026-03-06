@@ -2,27 +2,29 @@
 
 from baybe.surrogates.gaussian_process.components.kernel import (
     KernelFactory,
+    KernelFactoryProtocol,
     PlainKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
-    LikelihoodFactory,
+    LikelihoodFactoryProtocol,
     PlainLikelihoodFactory,
 )
 from baybe.surrogates.gaussian_process.components.mean import (
     LazyConstantMeanFactory,
-    MeanFactory,
+    MeanFactoryProtocol,
     PlainMeanFactory,
 )
 
 __all__ = [
     # Kernel
     "KernelFactory",
+    "KernelFactoryProtocol",
     "PlainKernelFactory",
     # Likelihood
-    "LikelihoodFactory",
+    "LikelihoodFactoryProtocol",
     "PlainLikelihoodFactory",
     # Mean
     "LazyConstantMeanFactory",
-    "MeanFactory",
+    "MeanFactoryProtocol",
     "PlainMeanFactory",
 ]

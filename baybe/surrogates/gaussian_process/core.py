@@ -4,15 +4,17 @@ from __future__ import annotations
 
 import gc
 import importlib
+import os
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
-from attrs import define, field
+from attrs import Converter, define, field
+from attrs.converters import pipe
 from attrs.validators import instance_of
 from typing_extensions import Self, override
 
+from baybe.exceptions import DeprecationError
 from baybe.kernels.base import Kernel
-from baybe.kernels.basic import IndexKernel
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -21,10 +23,13 @@ from baybe.surrogates.gaussian_process.components.generic import (
     to_component_factory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
-    KernelFactory,
+    ICMKernelFactory,
+    KernelFactoryProtocol,
 )
-from baybe.surrogates.gaussian_process.components.likelihood import LikelihoodFactory
-from baybe.surrogates.gaussian_process.components.mean import MeanFactory
+from baybe.surrogates.gaussian_process.components.likelihood import (
+    LikelihoodFactoryProtocol,
+)
+from baybe.surrogates.gaussian_process.components.mean import MeanFactoryProtocol
 from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
 )
@@ -33,6 +38,7 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBELikelihoodFactory,
     BayBEMeanFactory,
 )
+from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -91,6 +97,17 @@ class _ModelContext:
         ]
 
 
+def _mark_custom_kernel(
+    value: Kernel | KernelFactoryProtocol | None, self: GaussianProcessSurrogate
+) -> Kernel | KernelFactoryProtocol:
+    """Mark the surrogate as using a custom kernel (for deprecation purposes)."""
+    if value is None:
+        return BayBEKernelFactory()
+
+    self._custom_kernel = True
+    return value
+
+
 @define
 class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model."""
@@ -113,10 +130,16 @@ class GaussianProcessSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = True
     # See base class.
 
-    kernel_factory: KernelFactory = field(
+    _custom_kernel: bool = field(init=False, default=False, repr=False, eq=False)
+    # For deprecation only!
+
+    kernel_factory: KernelFactoryProtocol = field(
         alias="kernel_or_factory",
+        converter=pipe(  # type: ignore[misc]
+            Converter(_mark_custom_kernel, takes_self=True),  # type: ignore[call-overload]
+            partial(to_component_factory, component_type=GPComponentType.KERNEL),
+        ),
         factory=BayBEKernelFactory,
-        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),  # type: ignore[misc]
     )
     """The factory used to create the kernel for the Gaussian process.
 
@@ -126,7 +149,7 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`gpytorch.kernels.Kernel`
     """
 
-    mean_factory: MeanFactory = field(
+    mean_factory: MeanFactoryProtocol = field(
         alias="mean_or_factory",
         factory=BayBEMeanFactory,
         converter=partial(to_component_factory, component_type=GPComponentType.MEAN),  # type: ignore[misc]
@@ -138,7 +161,7 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`gpytorch.means.Mean`
     """
 
-    likelihood_factory: LikelihoodFactory = field(
+    likelihood_factory: LikelihoodFactoryProtocol = field(
         alias="likelihood_or_factory",
         factory=BayBELikelihoodFactory,
         converter=partial(  # type: ignore[misc]
@@ -161,9 +184,14 @@ class GaussianProcessSurrogate(Surrogate):
     def from_preset(
         cls,
         preset: GaussianProcessPreset | str,
-        kernel_or_factory: KernelFactory | Kernel | GPyTorchKernel | None = None,
-        mean_or_factory: MeanFactory | GPyTorchMean | None = None,
-        likelihood_or_factory: LikelihoodFactory | GPyTorchLikelihood | None = None,
+        kernel_or_factory: KernelFactoryProtocol
+        | Kernel
+        | GPyTorchKernel
+        | None = None,
+        mean_or_factory: MeanFactoryProtocol | GPyTorchMean | None = None,
+        likelihood_or_factory: LikelihoodFactoryProtocol
+        | GPyTorchLikelihood
+        | None = None,
     ) -> Self:
         """Create a Gaussian process surrogate from one of the defined presets."""
         preset = GaussianProcessPreset(preset)
@@ -212,6 +240,24 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._searchspace is not None  # provided by base class
         context = _ModelContext(self._searchspace)
 
+        if (
+            context.is_multitask
+            and self._custom_kernel
+            and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
+        ):
+            raise DeprecationError(
+                f"We noticed that you are using a custom kernel architecture on a "
+                f"search space that includes a task parameter. Please note that the "
+                f"kernel logic of '{GaussianProcessSurrogate.__name__}' has changed: "
+                f"the task kernel is no longer automatically added and must now be "
+                f"explicitly included in your kernel (factory). "
+                f"The '{ICMKernelFactory.__name__}' provides a suitable interface "
+                f"for this purpose. If you are aware of this breaking change and wish "
+                f"to proceed with your current kernel architecture, you can disable "
+                f"this error by setting the 'BAYBE_DISABLE_CUSTOM_KERNEL_WARNING' "
+                f"environment variable to a truthy value."
+            )
+
         ### Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
         input_transform = Normalize(
@@ -227,18 +273,7 @@ class GaussianProcessSurrogate(Surrogate):
         ### Kernel
         kernel = self.kernel_factory(context.searchspace, train_x, train_y)
         if isinstance(kernel, Kernel):
-            kernel_num_dims = train_x.shape[-1] - context.n_task_dimensions
-            kernel = kernel.to_gpytorch(
-                ard_num_dims=kernel_num_dims,
-                active_dims=context.numerical_indices,
-            )
-        if context.is_multitask:
-            assert context.task_idx is not None
-            task_kernel = IndexKernel(
-                num_tasks=context.n_tasks,
-                rank=context.n_tasks,  # TODO: make controllable
-            ).to_gpytorch(active_dims=[context.task_idx])
-            kernel = kernel * task_kernel
+            kernel = kernel.to_gpytorch(searchspace=context.searchspace)
 
         ### Likelihood
         likelihood = self.likelihood_factory(context.searchspace, train_x, train_y)
