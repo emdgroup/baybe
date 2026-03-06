@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, gt, instance_of
 from typing_extensions import override
@@ -32,6 +32,7 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
+from baybe.utils.basic import flatten
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.sampling_algorithms import (
@@ -348,6 +349,19 @@ class BotorchRecommender(BayesianRecommender):
             if isinstance(p, _FixedNumericalContinuousParameter)
         }
 
+        # TODO: Add option for automatic choice once the "settings" PR is merged,
+        #   which ships the necessary machinery
+        if (
+            self.sequential_continuous
+            and subspace_continuous.has_interpoint_constraints
+        ):
+            raise IncompatibilityError(
+                f"Setting the "
+                f"'{fields(BotorchRecommender).sequential_continuous.name}' "
+                f"flag to ``True`` while interpoint constraints are present in the "
+                f"continuous subspace is not supported. "
+            )
+
         # NOTE: The explicit `or None` conversion is added as an additional safety net
         #   because it is unclear if the corresponding presence checks for these
         #   arguments is correctly implemented in all invoked BoTorch subroutines.
@@ -359,15 +373,21 @@ class BotorchRecommender(BayesianRecommender):
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
             fixed_features=fixed_parameters or None,
-            equality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
+            equality_constraints=flatten(
+                c.to_botorch(
+                    subspace_continuous.parameters,
+                    batch_size=batch_size if c.is_interpoint else None,
+                )
                 for c in subspace_continuous.constraints_lin_eq
-            ]
+            )
             or None,
-            inequality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
+            inequality_constraints=flatten(
+                c.to_botorch(
+                    subspace_continuous.parameters,
+                    batch_size=batch_size if c.is_interpoint else None,
+                )
                 for c in subspace_continuous.constraints_lin_ineq
-            ]
+            )
             or None,
             sequential=self.sequential_continuous,
         )
@@ -407,6 +427,13 @@ class BotorchRecommender(BayesianRecommender):
             The recommended points.
         """
         assert self._objective is not None
+
+        # Interpoint constraints cannot be used with optimize_acqf_mixed, see
+        # https://github.com/meta-pytorch/botorch/issues/2996
+        if searchspace.continuous.has_interpoint_constraints:
+            raise IncompatibilityError(
+                "Interpoint constraints are not available in hybrid spaces."
+            )
         if (
             batch_size > 1
             and not self._get_acquisition_function(self._objective).supports_batching
@@ -449,21 +476,23 @@ class BotorchRecommender(BayesianRecommender):
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
             fixed_features_list=fixed_features_list,  # type: ignore[arg-type]
-            equality_constraints=[
+            equality_constraints=flatten(
                 c.to_botorch(
                     searchspace.continuous.parameters,
                     idx_offset=len(candidates_comp.columns),
+                    batch_size=batch_size if c.is_interpoint else None,
                 )
                 for c in searchspace.continuous.constraints_lin_eq
-            ]
+            )
             or None,
-            inequality_constraints=[
+            inequality_constraints=flatten(
                 c.to_botorch(
                     searchspace.continuous.parameters,
                     idx_offset=num_comp_columns,
+                    batch_size=batch_size if c.is_interpoint else None,
                 )
                 for c in searchspace.continuous.constraints_lin_ineq
-            ]
+            )
             or None,
         )
 

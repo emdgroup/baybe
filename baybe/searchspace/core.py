@@ -208,6 +208,11 @@ class SearchSpace(SerialMixin):
         )
 
     @property
+    def is_constrained(self) -> bool:
+        """Boolean indicating if the search space has any constraints."""
+        return self.discrete.is_constrained or self.continuous.is_constrained
+
+    @property
     def type(self) -> SearchSpaceType:
         """Return the type of the search space."""
         if self.discrete.is_empty and not self.continuous.is_empty:
@@ -244,14 +249,22 @@ class SearchSpace(SerialMixin):
         return self.discrete.parameter_names + self.continuous.parameter_names
 
     @property
+    def _task_parameter(self) -> TaskParameter | None:
+        """The (single) task parameter of the space, if it exists."""
+        # Currently private since only a temporary solution (--> extension to multiple
+        # task parameters needed)
+        params = [p for p in self.parameters if isinstance(p, TaskParameter)]
+
+        if not params:
+            return None
+
+        assert len(params) == 1  # currently ensured by parameter validation step
+        return params[0]
+
+    @property
     def task_idx(self) -> int | None:
         """The column index of the task parameter in computational representation."""
-        try:
-            # TODO [16932]: Redesign metadata handling
-            task_param = next(
-                p for p in self.parameters if isinstance(p, TaskParameter)
-            )
-        except StopIteration:
+        if (task_param := self._task_parameter) is None:
             return None
         # TODO[11611]: The current approach has three limitations:
         #   1.  It matches by column name and thus assumes that the parameter name
@@ -269,15 +282,10 @@ class SearchSpace(SerialMixin):
         #  multiple task parameters, we need to align what the output should even
         #  represent (e.g. number of combinatorial task combinations, number of
         #  tasks per task parameter, etc).
-        try:
-            task_param = next(
-                p for p in self.parameters if isinstance(p, TaskParameter)
-            )
-            return len(task_param.values)
-
-        # When there are no task parameters, we effectively have a single task
-        except StopIteration:
+        if (task_param := self._task_parameter) is None:
+            # When there are no task parameters, we effectively have a single task
             return 1
+        return len(task_param.values)
 
     def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
         """Find a parameter's column indices in the computational representation.

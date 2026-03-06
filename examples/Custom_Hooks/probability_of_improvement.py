@@ -23,7 +23,8 @@ from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import gaussian_kde
 
-from baybe.acquisition.acqfs import ProbabilityOfImprovement
+from baybe import active_settings
+from baybe.acquisition import ProbabilityOfImprovement
 from baybe.campaign import Campaign
 from baybe.objectives.base import Objective
 from baybe.parameters import NumericalDiscreteParameter
@@ -37,7 +38,6 @@ from baybe.surrogates import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
 from baybe.utils.dataframe import arrays_to_dataframes
-from baybe.utils.random import set_random_seed
 from examples.utils import create_example_plots
 
 ### Settings
@@ -53,7 +53,7 @@ POINTS_PER_DIM = 2 if SMOKE_TEST else 4
 
 # We also fix the random seed to create a consistent plot:
 
-set_random_seed(1337)
+active_settings.random_seed = 1337
 
 ### Defining the Hook
 

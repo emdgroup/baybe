@@ -417,3 +417,83 @@ def test_task_parameter_active_values_validation():
     )
     assert len(searchspace.discrete.exp_rep) == 1
     assert all(searchspace.discrete.exp_rep["task"] == "target")
+
+
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+@pytest.mark.parametrize(
+    ("constraint_names", "calculation", "assertion_func"),
+    [
+        (
+            ["InterConstraint_3"],
+            lambda samples: samples["Conti_finite1"].sum()
+            + 2 * samples["Conti_finite2"].sum(),
+            lambda result: np.isclose(result, 0.3, atol=1e-6),
+        ),
+        (
+            ["InterConstraint_4"],
+            lambda samples: 2 * samples["Conti_finite1"].sum()
+            - samples["Conti_finite2"].sum(),
+            lambda result: result >= 0.3 - 1e-6,
+        ),
+    ],
+    ids=["equality", "inequality"],
+)
+def test_sample_from_polytope_with_interpoint_constraints(
+    searchspace, calculation, assertion_func
+):
+    """Test _sample_from_polytope method with interpoint constraints."""
+    subspace = searchspace.continuous
+
+    assert subspace.has_interpoint_constraints
+
+    # Test batch_size=1 and batch_size>1 as those the first one is a special case
+    for batch_size in [1, 42]:
+        bounds = subspace.comp_rep_bounds.values
+        samples = subspace._sample_from_polytope(batch_size, bounds)
+
+        constraint_result = calculation(samples)
+        assert assertion_func(constraint_result)
+
+
+def test_sample_from_polytope_mixed_constraints_with_interpoint():
+    """Test _sample_from_polytope method with regular and interpoint constraints."""
+    # NOTE: This test does not use our fixtures as those seem to create an infeasible
+    # space
+    parameters = [
+        NumericalContinuousParameter("Conti_finite1", (0, 1)),
+        NumericalContinuousParameter("Conti_finite2", (-1, 0)),
+    ]
+
+    regular_constraint = ContinuousLinearConstraint(
+        parameters=["Conti_finite2"],
+        operator=">=",
+        coefficients=[1.0],
+        rhs=-0.8,
+    )
+    interpoint_constraint = ContinuousLinearConstraint(
+        parameters=["Conti_finite1"],
+        operator="=",
+        coefficients=[1],
+        rhs=0.6,
+        interpoint=True,
+    )
+
+    subspace = SubspaceContinuous(
+        parameters=parameters,
+        constraints_lin_ineq=[regular_constraint],
+        constraints_lin_eq=[interpoint_constraint],
+    )
+
+    assert subspace.has_interpoint_constraints
+
+    # Test batch size of 1 as well as one small and one large batch size
+    for batch_size in [1, 2, 42]:
+        bounds = subspace.comp_rep_bounds.values
+        samples = subspace._sample_from_polytope(batch_size, bounds)
+
+        # Verify regular constraint is satisfied for each row
+        assert (samples["Conti_finite2"] >= -0.8 - 1e-6).all()
+
+        # Verify interpoint constraint is satisfied across the batch
+        interpoint_constraint_result = samples["Conti_finite1"].sum()
+        assert np.isclose(interpoint_constraint_result, 0.6, atol=1e-6)

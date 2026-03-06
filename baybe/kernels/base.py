@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 from abc import ABC
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 from attrs import define
@@ -11,12 +12,13 @@ from attrs import define
 from baybe.exceptions import UnmatchedAttributeError
 from baybe.priors.base import Prior
 from baybe.serialization.mixin import SerialMixin
+from baybe.settings import active_settings
 from baybe.utils.basic import get_baseclasses, match_attributes
 
 if TYPE_CHECKING:
     import torch
 
-    from baybe.surrogates.gaussian_process.kernel_factory import PlainKernelFactory
+    from baybe.surrogates.gaussian_process.components.kernel import PlainKernelFactory
 
 
 @define(frozen=True)
@@ -24,8 +26,10 @@ class Kernel(ABC, SerialMixin):
     """Abstract base class for all kernels."""
 
     def to_factory(self) -> PlainKernelFactory:
-        """Wrap the kernel in a :class:`baybe.surrogates.gaussian_process.kernel_factory.PlainKernelFactory`."""  # noqa: E501
-        from baybe.surrogates.gaussian_process.kernel_factory import PlainKernelFactory
+        """Wrap the kernel in a :class:`baybe.surrogates.gaussian_process.components.PlainKernelFactory`."""  # noqa: E501
+        from baybe.surrogates.gaussian_process.components.kernel import (
+            PlainKernelFactory,
+        )
 
         return PlainKernelFactory(self)
 
@@ -34,7 +38,7 @@ class Kernel(ABC, SerialMixin):
         *,
         ard_num_dims: int | None = None,
         batch_shape: torch.Size | None = None,
-        active_dims: tuple[int, ...] | None = None,
+        active_dims: Sequence[int] | None = None,
     ):
         """Create the gpytorch representation of the kernel."""
         import gpytorch.kernels
@@ -49,7 +53,14 @@ class Kernel(ABC, SerialMixin):
         kw = {k: v for k, v in kw.items() if v is not None}
 
         # Get corresponding gpytorch kernel class and its base classes
-        kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
+        try:
+            kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
+        except AttributeError:
+            import botorch.models.kernels.positive_index
+
+            kernel_cls = getattr(
+                botorch.models.kernels.positive_index, self.__class__.__name__
+            )
         base_classes = get_baseclasses(kernel_cls, abstract=True)
 
         # Fetch the necessary gpytorch constructor parameters of the kernel.
@@ -95,8 +106,6 @@ class Kernel(ABC, SerialMixin):
         if kernel_cls.has_lengthscale:
             import torch
 
-            from baybe.utils.torch import DTypeFloatTorch
-
             # We can ignore mypy here and simply assume that the corresponding BayBE
             # kernel class has the necessary lengthscale attribute defined. This is
             # safer than using a `hasattr` check in the above if-condition since for
@@ -104,7 +113,7 @@ class Kernel(ABC, SerialMixin):
             # attribute to a new kernel class / misspelling it.
             if (initial_value := self.lengthscale_initial_value) is not None:  # type: ignore[attr-defined]
                 gpytorch_kernel.lengthscale = torch.tensor(
-                    initial_value, dtype=DTypeFloatTorch
+                    initial_value, dtype=active_settings.DTypeFloatTorch
                 )
 
         return gpytorch_kernel

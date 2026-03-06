@@ -11,6 +11,7 @@ line-length = 88 # Maximum line length
         # In the documentation, imperative mood can be a bit too restrictive
         "D401",
 ]
+"baybe/__init__.py" = ["E402"]
 "baybe/utils/__init__.py" = ["F401","F403"]
 "baybe/strategies/__init__.py" = ["F401"]
 # Exclude errors for the exception file as enforcing short summaries and similar 

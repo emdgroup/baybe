@@ -6,11 +6,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Support for Python 3.14
+- `Settings` class for unified and streamlined settings management
+- Settings options to (de-)activate recommendation caching / dataframe preprocessing
+- Settings option for random seed control
+- `identify_non_dominated_configurations` method to `Campaign` and `Objective`
+  for determining the Pareto front
+- Gaussian process component factories
+- Support for GPyTorch objects (kernels, means, likelihood) as Gaussian process
+  components, enabling full low-level customization
+- `EDBO` and `EDBO_SMOOTHED` presets for `GaussianProcessSurrogate`
+- Interpoint constraints for continuous search spaces
+- `IndexKernel` and `PositiveIndexKernel` classes
 - `CategoricalFidelityParameter` and `NumericalDiscreteFidelityParameter` classes
+
+### Breaking Changes
+- `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
+  instead of a single tuple (needed for interpoint constraints)
+
+### Removed
+- `parallel_runs` argument from `simulate_scenarios`, since parallelization
+  can now be conveniently controlled via the new `Settings` mechanism
+- `make_gp_from_preset` utility function, since the same functionality is offered by
+  `GaussianProcessSurrogate.from_preset` 
+
+### Deprecations
+- `set_random_seed` and `temporary_seed` utility functions
+- The environment variables
+  `BAYBE_NUMPY_USE_SINGLE_PRECISION`/`BAYBE_TORCH_USE_SINGLE_PRECISION` have been
+  replaced with the variables
+  `BAYBE_USE_SINGLE_PRECISION_NUMPY`/`BAYBE_USE_SINGLE_PRECISION_TORCH` linked to the
+  corresponding `use_single_precision_numpy`/`use_single_precision_torch` attributes of
+  the new `Settings` class
+- The environment variable `BAYBE_DEACTIVATE_POLARS` has been replaced with
+  `BAYBE_USE_POLARS` linked to the `use_polars` attribute of the new `Settings` class
+- The environment variable `BAYBE_PARALLEL_SIMULATION_RUNS` has been replaced with
+  `BAYBE_PARALLELIZE_SIMULATION_RUNS` linked to the `parallelize_simulation_runs`
+  attribute of the new `Settings` class
 
 ## [0.14.2] - 2026-01-14
 ### Added
-- Support for Python 3.14
 - `NumericalTarget.match_*` constructors now accept a `mismatch_instead` argument. If 
   set to `True`, targets seek to avoid the given `match_value` instead of matching it
 - `NumericalTarget.match_*` constructors now accept a `match_mode` argument. While `"="`

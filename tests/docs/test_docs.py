@@ -7,6 +7,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from baybe._optional.info import CHEM_INSTALLED, LINT_INSTALLED
+from baybe.utils.dataframe import create_fake_input
 from tests.docs.utils import extract_code_blocks
 
 doc_files = list(map(str, [Path("README.md"), *Path("docs/userguide/").rglob("*.md")]))
@@ -51,6 +52,7 @@ def test_pseudocode_executability(file: Path, searchspace, objective, recommende
 
     Blocks surrounded with "triple-backticks" are included.
     """
+    configurations = create_fake_input(searchspace.parameters, objective.targets, 2)  # noqa: F841
     userguide_pseudocode = "\n".join(extract_code_blocks(file, include_tilde=True))
     exec(userguide_pseudocode)
 

@@ -10,6 +10,7 @@ from typing_extensions import override
 
 from baybe.kernels.base import BasicKernel
 from baybe.priors.base import Prior
+from baybe.settings import active_settings
 from baybe.utils.conversion import fraction_to_float
 from baybe.utils.validation import finite_float
 
@@ -34,12 +35,10 @@ class LinearKernel(BasicKernel):
     def to_gpytorch(self, *args, **kwargs):
         import torch
 
-        from baybe.utils.torch import DTypeFloatTorch
-
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
         if (initial_value := self.variance_initial_value) is not None:
             gpytorch_kernel.variance = torch.tensor(
-                initial_value, dtype=DTypeFloatTorch
+                initial_value, dtype=active_settings.DTypeFloatTorch
             )
         return gpytorch_kernel
 
@@ -101,14 +100,12 @@ class PeriodicKernel(BasicKernel):
     def to_gpytorch(self, *args, **kwargs):
         import torch
 
-        from baybe.utils.torch import DTypeFloatTorch
-
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
         # lengthscale is handled by the base class
 
         if (initial_value := self.period_length_initial_value) is not None:
             gpytorch_kernel.period_length = torch.tensor(
-                initial_value, dtype=DTypeFloatTorch
+                initial_value, dtype=active_settings.DTypeFloatTorch
             )
         return gpytorch_kernel
 
@@ -156,11 +153,11 @@ class PolynomialKernel(BasicKernel):
     def to_gpytorch(self, *args, **kwargs):
         import torch
 
-        from baybe.utils.torch import DTypeFloatTorch
-
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
         if (initial_value := self.offset_initial_value) is not None:
-            gpytorch_kernel.offset = torch.tensor(initial_value, dtype=DTypeFloatTorch)
+            gpytorch_kernel.offset = torch.tensor(
+                initial_value, dtype=active_settings.DTypeFloatTorch
+            )
         return gpytorch_kernel
 
 
@@ -216,6 +213,30 @@ class RQKernel(BasicKernel):
         validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
+
+
+@define(frozen=True)
+class IndexKernel(BasicKernel):
+    """An index kernel for transfer learning across tasks."""
+
+    num_tasks: int = field(validator=[instance_of(int), ge(2)])
+    """The number of tasks."""
+
+    rank: int = field(validator=[instance_of(int), ge(1)])
+    """The rank of the task covariance matrix."""
+
+    @rank.validator
+    def _validate_rank(self, _, rank: int):
+        if rank > self.num_tasks:
+            raise ValueError(
+                f"The rank of the task covariance matrix must be smaller than "
+                f"the number of tasks. Got rank {rank} > {self.num_tasks} tasks."
+            )
+
+
+@define(frozen=True)
+class PositiveIndexKernel(IndexKernel):
+    """A positive index kernel for transfer learning across tasks."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

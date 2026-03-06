@@ -19,6 +19,7 @@ from baybe.utils.dataframe import (
     handle_missing_values as df_handle_missing_values,
 )
 from baybe.utils.metadata import Metadata, to_metadata
+from baybe.utils.validation import validate_target_input
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
@@ -252,6 +253,37 @@ class Objective(ABC, SerialMixin):
         return pd.DataFrame(
             transformed.numpy(), columns=self.output_names, index=df.index
         )
+
+    def identify_non_dominated_configurations(
+        self, configurations: pd.DataFrame, /
+    ) -> pd.Series:
+        """Create a Boolean mask indicating non-dominated target configurations.
+
+        In case of duplicated non-dominated points, all duplicates are marked as
+        non-dominated.
+
+        Note:
+            Non-dominated configurations can be computed for any objective type, not
+            just for :class:`~baybe.objectives.pareto.ParetoObjective`.
+            For more details, have a look at the corresponding
+            :ref:`user guide section <userguide/objectives:Identifying Non-Dominated
+            Configurations>`.
+
+        Args:
+            configurations: The target configurations for which the non-dominated subset
+                is identified.
+
+        Returns:
+            A Boolean series indicating which configurations are non-dominated.
+        """
+        from botorch.utils.multi_objective.pareto import is_non_dominated
+
+        validate_target_input(configurations, self.targets)
+
+        targets = self.transform(configurations)
+        non_dominated = is_non_dominated(Y=to_tensor(targets), deduplicate=False)
+
+        return pd.Series(non_dominated.numpy(), name="is_non_dominated")
 
 
 def to_objective(x: Target | Objective, /) -> Objective:

@@ -8,6 +8,7 @@ from attrs import asdict, has
 from hypothesis import given
 
 from baybe.kernels.base import BasicKernel, Kernel
+from baybe.kernels.basic import IndexKernel
 from tests.hypothesis_strategies.kernels import kernels
 
 # TODO: Consider deprecating these attribute names to avoid inconsistencies
@@ -40,12 +41,28 @@ def validate_gpytorch_kernel_components(obj: Any, mapped: Any, **kwargs) -> None
         # Resolve attribute naming differences
         mapped_name = _RENAME_DICT.get(name, name)
 
-        # If the attribute does not exist in the GPyTorch version, it must be an
-        # initial value. Because setting initial values involves going through
-        # constraint transformations on GPyTorch side (i.e., difference between
-        # `<attr>` and `raw_<attr>`), the numerical values will not be exact, so
-        # we check only for approximate matches.
+        # If the attribute does not exist in the GPyTorch version, ...
         if (mapped_component := getattr(mapped, mapped_name, None)) is None:
+            # ... it must have some special handling on the GPyTorch side
+            # >>>>>
+            # TODO: this will be refactored in #748, which requires changes to the
+            #   test logic anyways
+            if isinstance(obj, IndexKernel) and name == "num_tasks":
+                # Special case for IndexKernel.num_tasks, which is not an actual
+                # attribute of the GPyTorch kernel
+                assert mapped.covar_factor.shape[-2] == component
+                continue
+            elif isinstance(obj, IndexKernel) and name == "rank":
+                # Special case for IndexKernel.rank, which is not an actual attribute of
+                # the GPyTorch kernel
+                assert mapped.covar_factor.shape[-1] == component
+                continue
+            # <<<<<
+
+            # ... or it must be an initial value. Because setting initial values
+            # involves going through constraint transformations on GPyTorch side (i.e.,
+            # difference between `<attr>` and `raw_<attr>`), the numerical values will
+            # not be exact, so we check only for approximate matches.
             assert name.endswith("_initial_value")
             assert np.allclose(
                 component,

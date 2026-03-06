@@ -5,12 +5,14 @@ from __future__ import annotations
 import enum
 import functools
 import inspect
+import itertools
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar, get_origin
 
 import cattrs
 from attrs import asdict, has
+from joblib import Memory
 from typing_extensions import override
 
 from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
@@ -38,30 +40,6 @@ class UnspecifiedType(enum.Enum):
 
 UNSPECIFIED = UnspecifiedType.UNSPECIFIED
 """Sentinel indicating an unspecified value when `None` is ambiguous."""
-
-
-class UncertainBool(enum.Enum):
-    """Enum for representing uncertain Boolean values."""
-
-    TRUE = "TRUE"
-    FALSE = "FALSE"
-    UNKNOWN = "UNKNOWN"
-
-    def __bool__(self):
-        if self is UncertainBool.TRUE:
-            return True
-        elif self is UncertainBool.FALSE:
-            return False
-        else:
-            raise TypeError(f"'{UncertainBool.UNKNOWN}' has no Boolean representation.")
-
-    @classmethod
-    def from_erroneous_callable(cls, callable_: Callable, /) -> UncertainBool:
-        """Create an uncertain Boolean from a potentially erroneous Boolean call."""
-        try:
-            return cls.TRUE if callable_() else cls.FALSE
-        except Exception:
-            return cls.UNKNOWN
 
 
 @dataclass(frozen=True, repr=False)
@@ -99,6 +77,9 @@ def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> l
         A list of subclasses for the given class.
     """
     from baybe.utils.boolean import is_abstract
+
+    # Handle generics
+    cls = get_origin(cls) or cls
 
     subclasses = []
     for subclass in cls.__subclasses__():
@@ -389,3 +370,35 @@ def compose_two(f: Callable, g: Callable, /) -> Callable:
 def compose(*fs: Callable) -> Callable:
     """Compose an arbitrary number of functions (first function is applied first)."""
     return functools.reduce(compose_two, fs)
+
+
+def cache_to_disk(func: Callable, /) -> Callable:
+    """Cache a callable to the filesystem using :class:`joblib.Memory`.
+
+    Allows for persistent caching across different Python sessions.
+    The cache directory is retrieved on-the-fly from the global settings configuration.
+
+    Args:
+        func: The callable to be cached.
+
+    Returns:
+        A wrapped version of the function with filesystem caching enabled.
+    """
+    from baybe import active_settings
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # The path resolution must happen here inside the wrapper since otherwise
+        # settings changes would not take effect
+        if (dir := active_settings.cache_directory) is not None:
+            f = Memory(dir, verbose=0).cache(func)
+        else:
+            f = func
+        return f(*args, **kwargs)
+
+    return wrapper
+
+
+def flatten(x: Iterable[Iterable[_T]]) -> list[_T]:
+    """Flatten one level of nesting of a given iterable."""
+    return list(itertools.chain.from_iterable(item for item in x))

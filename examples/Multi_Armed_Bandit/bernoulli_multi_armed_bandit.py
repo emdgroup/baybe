@@ -14,7 +14,7 @@ from typing import NamedTuple
 import numpy as np
 from scipy.stats import bernoulli
 
-from baybe import Campaign
+from baybe import Campaign, active_settings
 from baybe.acquisition import PosteriorStandardDeviation, qThompsonSampling
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.parameters import CategoricalParameter
@@ -25,7 +25,6 @@ from baybe.recommenders import (
 )
 from baybe.surrogates import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.targets import BinaryTarget
-from baybe.utils.random import set_random_seed
 
 ### An Imaginary Use Case
 
@@ -64,7 +63,7 @@ class MultiArmedBandit:
 
 # Setting a random seed for reproducibility.
 
-set_random_seed(42)
+active_settings.random_seed = 42
 
 # For our example, we use a system with a fixed collection of win rates, which we
 # assume are unknown to us:

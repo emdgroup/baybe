@@ -13,7 +13,7 @@ import numpy as np
 from attrs import define, field
 
 from baybe.serialization import SerialMixin, converter
-from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.settings import active_settings
 from baybe.utils.validation import non_nan_float
 
 if TYPE_CHECKING:
@@ -136,15 +136,15 @@ class Interval(SerialMixin):
 
     def to_ndarray(self) -> np.ndarray:
         """Transform the interval to a :class:`numpy.ndarray`."""
-        return np.array([self.lower, self.upper], dtype=DTypeFloatNumpy)
+        return np.array([self.lower, self.upper], dtype=active_settings.DTypeFloatNumpy)
 
     def to_tensor(self) -> Tensor:
         """Transform the interval to a :class:`torch.Tensor`."""
         import torch
 
-        from baybe.utils.torch import DTypeFloatTorch
-
-        return torch.tensor([self.lower, self.upper], dtype=DTypeFloatTorch)
+        return torch.tensor(
+            [self.lower, self.upper], dtype=active_settings.DTypeFloatTorch
+        )
 
     def contains(self, number: float) -> bool:
         """Check whether the interval contains a given number.
