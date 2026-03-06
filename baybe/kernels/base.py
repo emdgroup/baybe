@@ -53,7 +53,14 @@ class Kernel(ABC, SerialMixin):
         kw = {k: v for k, v in kw.items() if v is not None}
 
         # Get corresponding gpytorch kernel class and its base classes
-        kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
+        try:
+            kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
+        except AttributeError:
+            import botorch.models.kernels.positive_index
+
+            kernel_cls = getattr(
+                botorch.models.kernels.positive_index, self.__class__.__name__
+            )
         base_classes = get_baseclasses(kernel_cls, abstract=True)
 
         # Fetch the necessary gpytorch constructor parameters of the kernel.
