@@ -9,7 +9,7 @@ from typing_extensions import override
 
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.generic import (
-    GPComponentFactory,
+    GPComponentFactoryProtocol,
     PlainGPComponentFactory,
 )
 
@@ -17,16 +17,16 @@ if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
-    MeanFactory = GPComponentFactory[GPyTorchMean]
+    MeanFactoryProtocol = GPComponentFactoryProtocol[GPyTorchMean]
     PlainMeanFactory = PlainGPComponentFactory[GPyTorchMean]
 else:
     # At runtime, we avoid loading GPyTorch eagerly for performance reasons
-    MeanFactory = GPComponentFactory[Any]
+    MeanFactoryProtocol = GPComponentFactoryProtocol[Any]
     PlainMeanFactory = PlainGPComponentFactory[Any]
 
 
 @define
-class LazyConstantMeanFactory(MeanFactory):
+class LazyConstantMeanFactory(MeanFactoryProtocol):
     """A factory providing constant mean functions using lazy loading."""
 
     @override
