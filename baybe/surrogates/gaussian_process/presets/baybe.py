@@ -8,16 +8,16 @@ from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOLikelihoodFactory,
 )
 
-DefaultKernelFactory = SmoothedEDBOKernelFactory
+BayBEKernelFactory = SmoothedEDBOKernelFactory
 """The factory providing the default kernel for Gaussian process surrogates."""
 
-DefaultMeanFactory = LazyConstantMeanFactory
+BayBEMeanFactory = LazyConstantMeanFactory
 """The factory providing the default mean function for Gaussian process surrogates."""
 
-DefaultLikelihoodFactory = SmoothedEDBOLikelihoodFactory
+BayBELikelihoodFactory = SmoothedEDBOLikelihoodFactory
 """The factory providing the default likelihood for Gaussian process surrogates."""
 
 # Aliases for generic preset imports
-PresetKernelFactory = DefaultKernelFactory
-PresetMeanFactory = DefaultMeanFactory
-PresetLikelihoodFactory = DefaultLikelihoodFactory
+PresetKernelFactory = BayBEKernelFactory
+PresetMeanFactory = BayBEMeanFactory
+PresetLikelihoodFactory = BayBELikelihoodFactory

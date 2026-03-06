@@ -2,9 +2,9 @@
 
 # Default preset
 from baybe.surrogates.gaussian_process.presets.baybe import (
-    DefaultKernelFactory,
-    DefaultLikelihoodFactory,
-    DefaultMeanFactory,
+    BayBEKernelFactory,
+    BayBELikelihoodFactory,
+    BayBEMeanFactory,
 )
 
 # Core
@@ -27,10 +27,10 @@ from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
 __all__ = [
     # Core
     "GaussianProcessPreset",
-    # Default preset
-    "DefaultKernelFactory",
-    "DefaultLikelihoodFactory",
-    "DefaultMeanFactory",
+    # Default BayBE preset
+    "BayBEKernelFactory",
+    "BayBELikelihoodFactory",
+    "BayBEMeanFactory",
     # EDBO preset
     "EDBOKernelFactory",
     "EDBOLikelihoodFactory",

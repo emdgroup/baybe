@@ -28,9 +28,9 @@ from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
 )
 from baybe.surrogates.gaussian_process.presets.baybe import (
-    DefaultKernelFactory,
-    DefaultLikelihoodFactory,
-    DefaultMeanFactory,
+    BayBEKernelFactory,
+    BayBELikelihoodFactory,
+    BayBEMeanFactory,
 )
 from baybe.utils.conversion import to_string
 
@@ -114,7 +114,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     kernel_factory: KernelFactory = field(
         alias="kernel_or_factory",
-        factory=DefaultKernelFactory,
+        factory=BayBEKernelFactory,
         converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),  # type: ignore[misc]
     )
     """The factory used to create the kernel for the Gaussian process.
@@ -127,7 +127,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     mean_factory: MeanFactory = field(
         alias="mean_or_factory",
-        factory=DefaultMeanFactory,
+        factory=BayBEMeanFactory,
         converter=partial(to_component_factory, component_type=GPComponentType.MEAN),  # type: ignore[misc]
     )
     """The factory used to create the mean function for the Gaussian process.
@@ -139,7 +139,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     likelihood_factory: LikelihoodFactory = field(
         alias="likelihood_or_factory",
-        factory=DefaultLikelihoodFactory,
+        factory=BayBELikelihoodFactory,
         converter=partial(  # type: ignore[misc]
             to_component_factory, component_type=GPComponentType.LIKELIHOOD
         ),
