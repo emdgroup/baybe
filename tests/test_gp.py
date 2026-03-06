@@ -107,3 +107,13 @@ def test_presets(preset: GaussianProcessPreset):
     assert isinstance(gp.likelihood_factory, PlainGPComponentFactory)
     assert gp.likelihood_factory.component is likelihood
     gp.fit(searchspace, objective, measurements)
+
+
+def test_invalid_components():
+    """Passing invalid component types raises errors."""
+    with pytest.raises(TypeError, match="Component must be one of"):
+        GaussianProcessSurrogate(kernel_or_factory=ConstantMean())
+    with pytest.raises(TypeError, match="Component must be one of"):
+        GaussianProcessSurrogate(mean_or_factory=GaussianLikelihood())
+    with pytest.raises(TypeError, match="Component must be one of"):
+        GaussianProcessSurrogate(likelihood_or_factory=MaternKernel())

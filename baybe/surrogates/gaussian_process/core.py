@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import importlib
+from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
@@ -14,7 +15,10 @@ from baybe.kernels.base import Kernel
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.gaussian_process.components.generic import to_component_factory
+from baybe.surrogates.gaussian_process.components.generic import (
+    GPComponentType,
+    to_component_factory,
+)
 from baybe.surrogates.gaussian_process.components.kernel import (
     KernelFactory,
 )
@@ -111,7 +115,7 @@ class GaussianProcessSurrogate(Surrogate):
     kernel_factory: KernelFactory = field(
         alias="kernel_or_factory",
         factory=DefaultKernelFactory,
-        converter=to_component_factory,
+        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),
     )
     """The factory used to create the kernel for the Gaussian process.
 
@@ -124,7 +128,7 @@ class GaussianProcessSurrogate(Surrogate):
     mean_factory: MeanFactory = field(
         alias="mean_or_factory",
         factory=DefaultMeanFactory,
-        converter=to_component_factory,
+        converter=partial(to_component_factory, component_type=GPComponentType.MEAN),
     )
     """The factory used to create the mean function for the Gaussian process.
 
@@ -136,7 +140,9 @@ class GaussianProcessSurrogate(Surrogate):
     likelihood_factory: LikelihoodFactory = field(
         alias="likelihood_or_factory",
         factory=DefaultLikelihoodFactory,
-        converter=to_component_factory,
+        converter=partial(
+            to_component_factory, component_type=GPComponentType.LIKELIHOOD
+        ),
     )
     """The factory used to create the likelihood for the Gaussian process.
 

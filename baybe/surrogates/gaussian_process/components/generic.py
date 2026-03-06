@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import sys
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeAlias, TypeVar
 
 from attrs import Attribute, define, field
@@ -29,6 +30,41 @@ else:
     GPComponent: TypeAlias = BayBEGPComponent
 
 _T_co = TypeVar("_T_co", bound=GPComponent, covariant=True)
+
+
+class GPComponentType(Enum):
+    """Enum for Gaussian process component types."""
+
+    KERNEL = "KERNEL"
+    MEAN = "MEAN"
+    LIKELIHOOD = "LIKELIHOOD"
+
+    def get_types(self) -> tuple[type, ...]:
+        """Get the accepted BayBE and GPyTorch types for this component."""
+        types = []
+
+        # Add BayBE type if applicable
+        if self is GPComponentType.KERNEL:
+            from baybe.kernels.base import Kernel
+
+            types.append(Kernel)
+
+        # Add GPyTorch type if available
+        if sys.modules.get("gpytorch") is not None:
+            if self is GPComponentType.KERNEL:
+                from gpytorch.kernels import Kernel as GPyTorchKernel
+
+                types.append(GPyTorchKernel)
+            elif self is GPComponentType.MEAN:
+                from gpytorch.means import Mean as GPyTorchMean
+
+                types.append(GPyTorchMean)
+            elif self is GPComponentType.LIKELIHOOD:
+                from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
+
+                types.append(GPyTorchLikelihood)
+
+        return tuple(types)
 
 
 def _is_gpytorch_component_class(obj: Any, /) -> bool:
@@ -77,11 +113,34 @@ class PlainGPComponentFactory(GPComponentFactory[_T_co], SerialMixin):
         return self.component
 
 
-def to_component_factory(x: GPComponent | GPComponentFactory, /) -> GPComponentFactory:
-    """Wrap a component into a plain component factory (with factory passthrough)."""
-    if isinstance(x, BayBEGPComponent) or _is_gpytorch_component_class(type(x)):
-        return PlainGPComponentFactory(x)
-    return x
+def to_component_factory(
+    obj: GPComponent | GPComponentFactory,
+    /,
+    *,
+    component_type: GPComponentType | None = None,
+) -> GPComponentFactory:
+    """Wrap a component into a plain component factory (with factory passthrough).
+
+    Args:
+        obj: The component or factory to convert.
+        component_type: An optional restriction on the allowed component type.
+
+    Returns:
+        A component factory.
+
+    Raises:
+        TypeError: If the given component does not match the allowed types.
+    """
+    if isinstance(obj, BayBEGPComponent) or _is_gpytorch_component_class(type(obj)):
+        if component_type is not None:
+            allowed_types = component_type.get_types()
+            if not isinstance(obj, allowed_types):
+                raise TypeError(
+                    f"Component must be one of {allowed_types}. Got: {type(obj)}"
+                )
+        return PlainGPComponentFactory(obj)
+
+    return obj
 
 
 # Block serialization of GPyTorch kernel classes since not yet supported
