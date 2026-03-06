@@ -52,6 +52,8 @@ if TYPE_CHECKING:
     from torch import Tensor
 
 
+# TODO Jordan MHS: _ModelContext is used by fidelity surrogate models now so may deserve
+# its own file.
 @define
 class _ModelContext:
     """Model context for :class:`GaussianProcessSurrogate`."""
@@ -81,6 +83,27 @@ class _ModelContext:
         return self.searchspace.n_tasks
 
     @property
+    def n_fidelity_dimensions(self) -> int:
+        """The number of fidelity dimensions."""
+        # Possible TODO: Generalize to multiple fidelity dimensions
+        return 1 if self.searchspace.fidelity_idx is not None else 0
+
+    @property
+    def is_multi_fidelity(self) -> bool:
+        """Are there any fidelity dimensions?"""
+        return self.n_fidelity_dimensions > 0
+
+    @property
+    def fidelity_idx(self) -> int | None:
+        """The computational column index of the task parameter, if available."""
+        return self.searchspace.fidelity_idx
+
+    @property
+    def n_fidelities(self) -> int:
+        """The number of fidelities."""
+        return self.searchspace.n_fidelities
+
+    @property
     def parameter_bounds(self) -> Tensor:
         """Get the search space parameter bounds in BoTorch Format."""
         import torch
@@ -93,7 +116,7 @@ class _ModelContext:
         return [
             i
             for i in range(len(self.searchspace.comp_rep_columns))
-            if i != self.task_idx
+            if i not in (self.task_idx, self.fidelity_idx)
         ]
 
 

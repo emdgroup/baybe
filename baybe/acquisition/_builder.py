@@ -22,12 +22,15 @@ from torch import Tensor
 from baybe.acquisition.acqfs import (
     _ExpectedHypervolumeImprovement,
     qExpectedHypervolumeImprovement,
+    qKnowledgeGradient,
     qLogExpectedHypervolumeImprovement,
+    qMultiFidelityKnowledgeGradient,
     qNegIntegratedPosteriorVariance,
     qThompsonSampling,
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
-from baybe.acquisition.utils import make_partitioning
+from baybe.acquisition.custom_acqfs import MultiFidelityUpperConfidenceBound
+from baybe.acquisition.utils import make_MFUCB_dicts, make_partitioning
 from baybe.exceptions import (
     IncompatibilityError,
     IncompleteMeasurementsError,
@@ -202,6 +205,9 @@ class BotorchAcquisitionFunctionBuilder:
         self._set_mc_points()
         self._set_ref_point()
         self._set_partitioning()
+        self._set_current_value()
+        self._set_project()
+        self._set_MFUCB_dicts()
 
         botorch_acqf = self._botorch_acqf_cls(**self._args.collect())
         self.set_default_sample_shape(botorch_acqf)
@@ -263,6 +269,72 @@ class BotorchAcquisitionFunctionBuilder:
                 self._args.best_f = self._posterior_mean_comp.max().item()
             case _:
                 raise NotImplementedError("This line should be impossible to reach.")
+
+    def _set_current_value(self) -> None:
+        """Set current value maximising posterior mean, used in, e.g., qKG."""
+        if not isinstance(
+            self.acqf, (qKnowledgeGradient, qMultiFidelityKnowledgeGradient)
+        ):
+            return
+
+        from botorch.optim import optimize_acqf_mixed
+
+        if isinstance(self.acqf, qMultiFidelityKnowledgeGradient):
+            from botorch.acquisition import PosteriorMean
+            from botorch.acquisition.fixed_feature import (
+                FixedFeatureAcquisitionFunction,
+            )
+
+            curr_val_acqf = FixedFeatureAcquisitionFunction(
+                acq_function=PosteriorMean(self._botorch_surrogate),
+                d=7,
+                columns=self.searchspace.fidelity_idx,
+                values=[
+                    1.0,
+                ],
+            )
+
+            # Possible TODO. Align num_restarts and raw_samples with that defined by the
+            # user for the main acquisition function.
+            _, current_value = optimize_acqf_mixed(
+                acq_function=curr_val_acqf,
+                bounds=torch.from_numpy(self.searchspace.comp_rep_bounds.values),
+                q=1,
+                num_restarts=10,
+                raw_samples=64,
+            )
+
+        else:
+            current_value = self._posterior_mean_comp.max().item()
+
+        self._args.current_value = current_value
+
+    def _set_project(self) -> None:
+        """Set projection to the target fidelity for qMFKG."""
+        if not isinstance(self.acqf, (qMultiFidelityKnowledgeGradient)):
+            return
+
+        target_fidelities = {self.searchspace.fidelity_idx: 1.0}
+
+        num_dims = len(self.searchspace.parameters)
+
+        def target_fidelity_projection(X: Callable[[Tensor], Tensor]):
+            from botorch.acquisition.utils import project_to_target_fidelity
+
+            return project_to_target_fidelity(X, target_fidelities, num_dims)
+
+        self._args.project = target_fidelity_projection
+
+    def _set_MFUCB_dicts(self) -> None:
+        """Set value, fidelities and cost dictionaries for MFUCB."""
+        if not isinstance(self.acqf, MultiFidelityUpperConfidenceBound):
+            return
+
+        fidelities_dict, costs_dict, zetas_dict = make_MFUCB_dicts(self.searchspace)
+
+        self._args.fidelities_dict = fidelities_dict
+        self._args.costs_dict = costs_dict
+        self._args.zetas_dict = zetas_dict
 
     def set_default_sample_shape(self, acqf: BoAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""

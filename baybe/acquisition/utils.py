@@ -5,12 +5,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from baybe.acquisition.base import AcquisitionFunction
+from baybe.parameters import CategoricalFidelityParameter
 
 if TYPE_CHECKING:
     from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
         BoxDecomposition,
     )
     from torch import Tensor
+
+    from baybe.searchspace import SearchSpace
 
 
 def str_to_acqf(name: str, /) -> AcquisitionFunction:
@@ -82,3 +85,35 @@ def make_partitioning(
         return FastNondominatedPartitioning(ref_point=ref_point, Y=predictions)
 
     return NondominatedPartitioning(ref_point=ref_point, Y=predictions, alpha=alpha)
+
+
+def make_MFUCB_dicts(
+    searchspace: SearchSpace, /
+) -> tuple[dict[int, float], dict[int, float], dict[int, float]]:
+    """Construct column indices and values of costs, fidelities and values for MFUCB."""
+    fidelities_dict = {
+        i: p.values
+        for i, p in enumerate(searchspace.parameters)
+        if isinstance(p, CategoricalFidelityParameter)
+    }
+
+    costs_dict = {
+        i: p.costs
+        if getattr(p, "costs", None) is not None
+        else tuple(0 for _ in p.values)
+        for i, p in enumerate(searchspace.parameters)
+        if isinstance(p, CategoricalFidelityParameter)
+    }
+
+    zetas_dict = {
+        i: p.zetas
+        if getattr(p, "zetas", None) is not None
+        else tuple(0 for _ in p.values)
+        for i, p in enumerate(searchspace.parameters)
+        if isinstance(
+            p,
+            CategoricalFidelityParameter,
+        )
+    }
+
+    return fidelities_dict, costs_dict, zetas_dict
