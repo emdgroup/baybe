@@ -33,7 +33,6 @@ from baybe.surrogates.gaussian_process.components.generic import (
     PlainGPComponentFactory,
     to_component_factory,
 )
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
