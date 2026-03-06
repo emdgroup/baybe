@@ -50,7 +50,7 @@ from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
 from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
-    DefaultKernelFactory,
+    BayBEKernelFactory,
     EDBOKernelFactory,
 )
 from baybe.surrogates.linear import BayesianLinearSurrogate
@@ -232,7 +232,7 @@ valid_kernels = valid_base_kernels + valid_scale_kernels + valid_composite_kerne
 
 
 valid_kernel_factories = [
-    param(DefaultKernelFactory(), id="Default"),
+    param(BayBEKernelFactory(), id="Default"),
     param(EDBOKernelFactory(), id="EDBO"),
 ]
 

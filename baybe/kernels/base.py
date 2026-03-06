@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 from abc import ABC
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 from attrs import define
@@ -17,7 +18,7 @@ from baybe.utils.basic import get_baseclasses, match_attributes
 if TYPE_CHECKING:
     import torch
 
-    from baybe.surrogates.gaussian_process.kernel_factory import PlainKernelFactory
+    from baybe.surrogates.gaussian_process.components.kernel import PlainKernelFactory
 
 
 @define(frozen=True)
@@ -25,8 +26,10 @@ class Kernel(ABC, SerialMixin):
     """Abstract base class for all kernels."""
 
     def to_factory(self) -> PlainKernelFactory:
-        """Wrap the kernel in a :class:`baybe.surrogates.gaussian_process.kernel_factory.PlainKernelFactory`."""  # noqa: E501
-        from baybe.surrogates.gaussian_process.kernel_factory import PlainKernelFactory
+        """Wrap the kernel in a :class:`baybe.surrogates.gaussian_process.components.PlainKernelFactory`."""  # noqa: E501
+        from baybe.surrogates.gaussian_process.components.kernel import (
+            PlainKernelFactory,
+        )
 
         return PlainKernelFactory(self)
 
@@ -35,7 +38,7 @@ class Kernel(ABC, SerialMixin):
         *,
         ard_num_dims: int | None = None,
         batch_shape: torch.Size | None = None,
-        active_dims: tuple[int, ...] | None = None,
+        active_dims: Sequence[int] | None = None,
     ):
         """Create the gpytorch representation of the kernel."""
         import gpytorch.kernels

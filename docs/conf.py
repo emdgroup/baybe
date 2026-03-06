@@ -149,6 +149,7 @@ nitpick_ignore_regex = [
     ("py:class", "baybe.parameters.base._DiscreteLabelLikeParameter"),
     ("py:class", "baybe.acquisition.acqfs._ExpectedHypervolumeImprovement"),
     ("py:class", "baybe.settings._SlottedContextDecorator"),
+    ("py:class", "baybe.surrogates.gaussian_process.components.PlainKernelFactory"),
     # Deprecation
     ("py:.*", "baybe.targets._deprecated.*"),
 ]
