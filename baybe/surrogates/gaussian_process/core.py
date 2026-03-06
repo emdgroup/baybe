@@ -115,7 +115,7 @@ class GaussianProcessSurrogate(Surrogate):
     kernel_factory: KernelFactory = field(
         alias="kernel_or_factory",
         factory=DefaultKernelFactory,
-        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),
+        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),  # type: ignore[misc]
     )
     """The factory used to create the kernel for the Gaussian process.
 
@@ -128,7 +128,7 @@ class GaussianProcessSurrogate(Surrogate):
     mean_factory: MeanFactory = field(
         alias="mean_or_factory",
         factory=DefaultMeanFactory,
-        converter=partial(to_component_factory, component_type=GPComponentType.MEAN),
+        converter=partial(to_component_factory, component_type=GPComponentType.MEAN),  # type: ignore[misc]
     )
     """The factory used to create the mean function for the Gaussian process.
 
@@ -140,7 +140,7 @@ class GaussianProcessSurrogate(Surrogate):
     likelihood_factory: LikelihoodFactory = field(
         alias="likelihood_or_factory",
         factory=DefaultLikelihoodFactory,
-        converter=partial(
+        converter=partial(  # type: ignore[misc]
             to_component_factory, component_type=GPComponentType.LIKELIHOOD
         ),
     )
