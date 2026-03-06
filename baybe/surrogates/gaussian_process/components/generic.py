@@ -36,8 +36,13 @@ class GPComponentType(Enum):
     """Enum for Gaussian process component types."""
 
     KERNEL = "KERNEL"
+    """Gaussian process kernel."""
+
     MEAN = "MEAN"
+    """Gaussian process mean function."""
+
     LIKELIHOOD = "LIKELIHOOD"
+    """Gaussian process likelihood."""
 
     def get_types(self) -> tuple[type, ...]:
         """Get the accepted BayBE and GPyTorch types for this component."""
