@@ -5,6 +5,8 @@ from __future__ import annotations
 from itertools import product as iter_product
 
 import torch
+from attrs import define, field
+from attrs.validators import deep_iterable, deep_mapping, ge, instance_of
 from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
@@ -13,10 +15,14 @@ from botorch.utils.transforms import (
 )
 from torch import Tensor
 
+from baybe.parameters.validation import validate_contains_exactly_one
+from baybe.utils.validation import finite_float, validate_dict_shape
+
 _neg_inv_sqrt2 = -0.7071067811865476
 _log_sqrt_pi_div_2 = 0.2257913526447274
 
 
+@define
 class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
     r"""Two-stage Multi Fidelity Upper Confidence Bound (UCB).
 
@@ -31,63 +37,106 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
     selection of design points). The model must be single-outcome.
     """
 
-    # Jordan MHS TODO: Initialize via attrs and not __init__.
-    def __init__(
-        self,
-        model: Model,
-        beta: float | Tensor,
-        fidelities: dict[int, tuple[float, ...]],
-        costs: dict[int, tuple[float, ...]],
-        zetas: dict[int, tuple[float, ...]],
-        softmin_temperature: float = 1e-2,
-        posterior_transform: PosteriorTransform | None = None,
-        maximize: bool = True,
-    ) -> None:
-        r"""Single-outcome Upper Confidence Bound.
+    model: Model = field(validator=instance_of(Model))
+    """A fitted single-outcome GP model.
+    """
 
-        Args:
-            model: A fitted single-outcome GP model (must be in batch mode if
-                candidate sets X will be)
-            beta: Either a scalar or a one-dim tensor with `b` elements (batch mode)
-                representing the trade-off parameter between mean and covariance
-            fidelities: Computational representation of fidelity values.
-            costs: Cost of querying each . Has structure {fidelity_col_idx, costs}.
-            zetas: maximum absolute discrepancy between each fidelity and the higest
-                fidelity output.
-            softmin_temperature: smoothing parameter for gradient based optimization
-                of design.
-            posterior_transform: A PosteriorTransform. If using a multi-output model,
-                a PosteriorTransform that transforms the multi-output posterior into a
-                single-output posterior is required.
-            maximize: If True, consider the problem a maximization problem.
-        """
-        super().__init__(model=model, posterior_transform=posterior_transform)
-        self.register_buffer("beta", torch.as_tensor(beta))
+    beta: float | Tensor = field(validator=[instance_of(float), ge(0.0)])
+    """Trade-off parameter between mean and covariance.
+    """
+
+    fidelities: dict[int, tuple[float, ...]] = field(
+        validator=deep_mapping(
+            key_validator=instance_of(int),
+            value_validator=deep_iterable(
+                member_validator=instance_of(float),
+                iterable_validator=instance_of(tuple),
+            ),
+            mapping_validator=instance_of(dict),
+        )
+    )
+    """Computational representation of fidelity values.
+    """
+
+    costs: dict[int, tuple[float, ...]] = field(
+        validator=deep_mapping(
+            key_validator=instance_of(int),
+            value_validator=deep_iterable(
+                member_validator=(instance_of(float), ge(0.0)),
+                iterable_validator=(
+                    instance_of(tuple),
+                    validate_contains_exactly_one(0.0),
+                ),
+            ),
+            mapping_validator=(instance_of(dict), validate_dict_shape("fidelities")),
+        )
+    )
+    """Cost of querying each fidelity parameter at each fidelity. Costs between
+    fidelity parameters are summed.
+    """
+
+    zetas: dict[int, tuple[float, ...]] | None = field(
+        validator=deep_mapping(
+            key_validator=instance_of(int),
+            value_validator=deep_iterable(
+                member_validator=(instance_of(float), ge(0.0)),
+                iterable_validator=(
+                    instance_of(tuple),
+                    validate_contains_exactly_one(0.0),
+                ),
+            ),
+            mapping_validator=(instance_of(dict), validate_dict_shape("fidelities")),
+        )
+    )
+    """Maximum absolute discrepancy between each fidelity and the
+    highest fidelity output.
+    """
+
+    softmin_temperature: float = field(
+        converter=float, validator=[finite_float, ge(0.0)], default=1e-2
+    )
+    """Smoothing parameter for gradient-based optimization of the design.
+    """
+
+    posterior_transform: PosteriorTransform | None = field(default=None)
+    """PosteriorTransform used to convert multi-output posteriors to
+    single-output posteriors if necessary.
+    """
+
+    maximize: bool = field(default=True)
+    """If True, treat the problem as a maximization problem.
+    """
+
+    def __post_attrs_init__(self) -> None:
+        super().__init__(model=self.model, posterior_transform=self.posterior_transform)
+
+        self.register_buffer("beta", torch.as_tensor(self.beta))
+
         self.register_buffer(
-            "softmin_temperature", torch.as_tensor(softmin_temperature)
+            "softmin_temperature", torch.as_tensor(self.softmin_temperature)
         )
 
-        fidelity_indices = torch.tensor(list(fidelities.keys()), dtype=torch.long)
-
-        fidelity_combos_product = list(iter_product(*fidelities.values()))
-        fidelity_combos_tensor = torch.tensor(
-            fidelity_combos_product, dtype=torch.double
+        self.register_buffer(
+            "fidelity_columns",
+            torch.tensor(list(self.fidelities.keys()), dtype=torch.long),
         )
 
-        self.register_buffer("fidelity_columns", fidelity_indices)
-        self.register_buffer("fidelities_comb", fidelity_combos_tensor)
+        self.register_buffer(
+            "fidelities_comb",
+            torch.tensor(
+                list(iter_product(*self.fidelities.values())), dtype=torch.double
+            ),
+        )
 
-        zetas_product = list(iter_product(*zetas.values()))
-        zetas_tensor = torch.tensor(zetas_product, dtype=torch.double)
+        self.register_buffer(
+            "zetas_comb",
+            torch.tensor(list(iter_product(*self.zetas.values())), dtype=torch.double),
+        )
 
-        self.register_buffer("zetas_comb", torch.as_tensor(zetas_tensor))
-
-        costs_product = list(iter_product(*costs.values()))
-        costs_tensor = torch.tensor(costs_product, dtype=torch.double)
-
-        self.register_buffer("costs_comb", torch.as_tensor(costs_tensor))
-
-        self.maximize = maximize
+        self.register_buffer(
+            "costs_comb",
+            torch.tensor(list(iter_product(*self.costs.values())), dtype=torch.double),
+        )
 
     @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
