@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from collections.abc import Callable, Collection, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -298,10 +298,10 @@ def validate_unique_values(  # noqa: DOC101, DOC103
 
 def validate_dict_shape(
     reference_name: str, /
-) -> Callable[[Parameter, Attribute, Collection[Any]], None]:
+) -> Callable[[Any, Attribute, Mapping[Any, Any]], None]:
     """Make validator to check attribute keys/lengths against a reference attribute."""
 
-    def validator(obj: Any, attribute: Attribute, value: Collection[Any]) -> None:  # noqa: DOC101, DOC103
+    def validator(obj: Any, attribute: Attribute, value: Mapping[Any, Any]) -> None:  # noqa: DOC101, DOC103
         """Validate that the input has the same keys/lengths as the reference attribute.
 
         Raises:
@@ -327,3 +327,5 @@ def validate_dict_shape(
                     f"Length of '{other_attr.alias}' at key {k}: {len(other_tup)}. "
                     f"Length of '{attribute.alias}' at key {k}: {len(tup)}."
                 )
+
+    return validator
