@@ -1,6 +1,6 @@
 """Custom acquisition functions."""
 
-from baybe.acquisition.custom_botorch_acqfs.two_stage import (
+from baybe.acquisition.custom_acqfs.two_stage import (
     MultiFidelityUpperConfidenceBound,
 )
 

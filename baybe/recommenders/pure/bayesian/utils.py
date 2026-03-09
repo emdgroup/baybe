@@ -1,13 +1,9 @@
 """Utils for bayesian recommenders."""
 
-from typing import TYPE_CHECKING
-
 from attrs import evolve
 
 from baybe.parameters import CategoricalFidelityParameter
-
-if TYPE_CHECKING:
-    from baybe.searchspace import SearchSpace
+from baybe.searchspace import SearchSpace
 
 
 def restricted_fidelity_searchspace(searchspace: SearchSpace, /) -> SearchSpace:

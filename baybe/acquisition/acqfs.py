@@ -319,7 +319,6 @@ class MultiFidelityUpperConfidenceBound(AcquisitionFunction):
 
     abbreviation: ClassVar[str] = "MFUCB"
 
-    # Jordan MHS TODO: add validator for data type.
     fidelities: dict[int, tuple[float, ...]] = field(
         validator=deep_mapping(
             key_validator=instance_of(int),
@@ -333,11 +332,6 @@ class MultiFidelityUpperConfidenceBound(AcquisitionFunction):
     """Fidelity column(s) with integer encoding of allowed values.
     """
 
-    # Jordan MHS note to self: Check whether validate_contains_exactly_one is
-    # appropriate for values that are tuples within an attribute instead of the
-    # whole attribute.
-    # Jordan MHS note to self: validation used here should not come from
-    # parameters/validation.py but a more general validation file or one in acquisition.
     costs: dict[int, tuple[float, ...]] = field(
         validator=deep_mapping(
             key_validator=instance_of(int),
@@ -352,11 +346,6 @@ class MultiFidelityUpperConfidenceBound(AcquisitionFunction):
         )
     )
     """Costs of each fidelity value, multiple columns are summed."""
-
-    softmin_temperature: float = field(
-        converter=float, validator=finite_float, default=1e-2
-    )
-    """Softmin smoothing parameter."""
 
     # Jordan MHS note to self: check whether we need to validate that zeros are in
     # same positions as in costs.
@@ -376,6 +365,11 @@ class MultiFidelityUpperConfidenceBound(AcquisitionFunction):
     """Maximum discrepancy in objective function between
     the target fidelity and each fidelity value.
     """
+
+    softmin_temperature: float = field(
+        converter=float, validator=[finite_float, ge(0.0)], default=1e-2
+    )
+    """Softmin smoothing parameter."""
 
     beta: float = field(converter=float, validator=finite_float, default=0.2)
     """See :paramref:`UpperConfidenceBound.beta`."""
