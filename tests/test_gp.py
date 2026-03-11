@@ -12,7 +12,7 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe.kernels.basic import MaternKernel, RBFKernel
-from baybe.kernels.composite import ScaleKernel, SumKernel
+from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
@@ -24,7 +24,7 @@ searchspace = NumericalContinuousParameter("p", (0, 1)).to_searchspace()
 objective = NumericalTarget("t").to_objective()
 measurements = create_fake_input(searchspace.parameters, objective.targets, n_rows=100)
 
-baybe_kernel = ScaleKernel(SumKernel([MaternKernel(), RBFKernel()]))
+baybe_kernel = ScaleKernel(MaternKernel() + RBFKernel())
 gpytorch_kernel = GPyTorchScaleKernel(GPyTorchMaternKernel() + GPyTorchRBFKernel())
 
 
