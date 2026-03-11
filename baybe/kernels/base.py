@@ -26,11 +26,17 @@ class Kernel(ABC, SerialMixin):
     """Abstract base class for all kernels."""
 
     def __add__(self, other: Any) -> Kernel:
-        """Create a sum kernel from two kernels."""
+        """Create a sum kernel from two kernels.
+
+        Flattens nested sums so that ``(a + b) + c`` yields
+        ``SumKernel([a, b, c])`` instead of ``SumKernel([SumKernel([a, b]), c])``.
+        """
         if isinstance(other, Kernel):
             from baybe.kernels.composite import SumKernel
 
-            return SumKernel([self, other])
+            left = self.base_kernels if isinstance(self, SumKernel) else (self,)
+            right = other.base_kernels if isinstance(other, SumKernel) else (other,)
+            return SumKernel([*left, *right])
         return NotImplemented
 
     def __radd__(self, other: Any) -> Kernel:
@@ -40,14 +46,17 @@ class Kernel(ABC, SerialMixin):
     def __mul__(self, other: Any) -> Kernel:
         """Create a product kernel or scale kernel.
 
-        When multiplied with another kernel, a product kernel is created. When
-        multiplied with a numeric constant, a scale kernel with a fixed (non-trainable)
-        output scale is created.
+        When multiplied with another kernel, a product kernel is created. Nested
+        products are flattened so that ``(a * b) * c`` yields
+        ``ProductKernel([a, b, c])``. When multiplied with a numeric constant, a scale
+        kernel with a fixed (non-trainable) output scale is created.
         """
         if isinstance(other, Kernel):
             from baybe.kernels.composite import ProductKernel
 
-            return ProductKernel([self, other])
+            left = self.base_kernels if isinstance(self, ProductKernel) else (self,)
+            right = other.base_kernels if isinstance(other, ProductKernel) else (other,)
+            return ProductKernel([*left, *right])
         if isinstance(other, (int, float)):
             from baybe.kernels.composite import ScaleKernel
 
