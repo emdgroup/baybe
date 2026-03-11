@@ -25,7 +25,7 @@ from baybe.kernels.basic import (
     RFFKernel,
     RQKernel,
 )
-from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
+from baybe.kernels.composite import ProductKernel, ScaleKernel, SumKernel
 from baybe.objectives.pareto import ParetoObjective
 from baybe.priors import (
     GammaPrior,
@@ -214,16 +214,16 @@ valid_scale_kernels = [
 ]
 
 valid_composite_kernels = [
-    AdditiveKernel([MaternKernel(1.5), MaternKernel(2.5)]),
-    AdditiveKernel([PolynomialKernel(1), PolynomialKernel(2), PolynomialKernel(3)]),
-    AdditiveKernel([RBFKernel(), RQKernel(), PolynomialKernel(1)]),
+    SumKernel([MaternKernel(1.5), MaternKernel(2.5)]),
+    SumKernel([PolynomialKernel(1), PolynomialKernel(2), PolynomialKernel(3)]),
+    SumKernel([RBFKernel(), RQKernel(), PolynomialKernel(1)]),
     ProductKernel([MaternKernel(1.5), MaternKernel(2.5)]),
     ProductKernel([RBFKernel(), RQKernel(), PolynomialKernel(1)]),
     ProductKernel([PolynomialKernel(1), PolynomialKernel(2), PolynomialKernel(3)]),
-    AdditiveKernel(
+    SumKernel(
         [
             ProductKernel([MaternKernel(1.5), MaternKernel(2.5)]),
-            AdditiveKernel([MaternKernel(1.5), MaternKernel(2.5)]),
+            SumKernel([MaternKernel(1.5), MaternKernel(2.5)]),
         ]
     ),
 ]

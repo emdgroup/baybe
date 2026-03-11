@@ -4,7 +4,7 @@ import pytest
 from pytest import param
 
 from baybe.kernels.basic import MaternKernel
-from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
+from baybe.kernels.composite import ProductKernel, ScaleKernel, SumKernel
 
 base_kernel = MaternKernel()
 
@@ -27,7 +27,7 @@ def test_scale_kernel_validation(
         ScaleKernel(base_kernel, outputscale_prior, outputscale_initial_value)
 
 
-@pytest.mark.parametrize("kernel_cls", [AdditiveKernel, ProductKernel])
+@pytest.mark.parametrize("kernel_cls", [SumKernel, ProductKernel])
 @pytest.mark.parametrize(
     ("base_kernels", "error"),
     [
