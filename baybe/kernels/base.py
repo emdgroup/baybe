@@ -77,10 +77,14 @@ class Kernel(ABC, SerialMixin):
 
         # Sanity check: all attributes of the BayBE kernel need a corresponding match
         # in the gpytorch kernel (otherwise, the BayBE kernel class is misconfigured).
-        # Exception: initial values are not used during construction but are set
-        # on the created object (see code at the end of the method).
+        # Exceptions: initial values and trainability flags are not used during
+        # construction but are set on the created object after construction.
         missing = set(unmatched) - set(kernel_attrs)
-        if leftover := {m for m in missing if not m.endswith("_initial_value")}:
+        if leftover := {
+            m
+            for m in missing
+            if not m.endswith("_initial_value") and not m.endswith("_trainable")
+        }:
             raise UnmatchedAttributeError(leftover)
 
         # Convert specified priors to gpytorch, if provided
