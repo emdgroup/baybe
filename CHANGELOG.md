@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `EDBO` and `EDBO_SMOOTHED` presets for `GaussianProcessSurrogate`
 - Interpoint constraints for continuous search spaces
 - `IndexKernel` and `PositiveIndexKernel` classes
+- Addition and multiplication operators for kernel objects, enabling kernel
+  composition via `+` (sum) and `*` (product), as well as `constant * kernel`
+  for creating a `ScaleKernel` with a fixed output scale
 
 ### Breaking Changes
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
@@ -42,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The environment variable `BAYBE_PARALLEL_SIMULATION_RUNS` has been replaced with
   `BAYBE_PARALLELIZE_SIMULATION_RUNS` linked to the `parallelize_simulation_runs`
   attribute of the new `Settings` class
+- `AdditiveKernel` has been replaced with `SumKernel`
 
 ## [0.14.2] - 2026-01-14
 ### Added
