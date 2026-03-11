@@ -21,10 +21,10 @@ jobs:
     name: Build & Verify Package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
       - name: Clean
@@ -73,7 +73,7 @@ jobs:
     if: github.repository_owner == 'emdgroup' && github.event.action == 'published'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         id: setup-python
         with:
           python-version: '3.14'
