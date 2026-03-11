@@ -25,6 +25,43 @@ if TYPE_CHECKING:
 class Kernel(ABC, SerialMixin):
     """Abstract base class for all kernels."""
 
+    def __add__(self, other: Any) -> Kernel:
+        """Create a sum kernel from two kernels."""
+        if isinstance(other, Kernel):
+            from baybe.kernels.composite import SumKernel
+
+            return SumKernel([self, other])
+        return NotImplemented
+
+    def __radd__(self, other: Any) -> Kernel:
+        """Support right-hand addition for kernel objects."""
+        return self.__add__(other)
+
+    def __mul__(self, other: Any) -> Kernel:
+        """Create a product kernel or scale kernel.
+
+        When multiplied with another kernel, a product kernel is created. When
+        multiplied with a numeric constant, a scale kernel with a fixed (non-trainable)
+        output scale is created.
+        """
+        if isinstance(other, Kernel):
+            from baybe.kernels.composite import ProductKernel
+
+            return ProductKernel([self, other])
+        if isinstance(other, (int, float)):
+            from baybe.kernels.composite import ScaleKernel
+
+            return ScaleKernel(
+                base_kernel=self,
+                outputscale_initial_value=float(other),
+                outputscale_trainable=False,
+            )
+        return NotImplemented
+
+    def __rmul__(self, other: Any) -> Kernel:
+        """Support right-hand multiplication, enabling ``constant * kernel``."""
+        return self.__mul__(other)
+
     def to_factory(self) -> PlainKernelFactory:
         """Wrap the kernel in a :class:`baybe.surrogates.gaussian_process.components.PlainKernelFactory`."""  # noqa: E501
         from baybe.surrogates.gaussian_process.components.kernel import (
