@@ -228,34 +228,33 @@ class BotorchRecommender(BayesianRecommender):
     ) -> tuple[Tensor, Tensor]:
         """Dispatcher selecting the continuous optimization routine."""
         if subspace_continuous.constraints_subspaces:
-            return self._recommend_continuous_with_cardinality_constraints(
+            return self._recommend_continuous_with_subspaces(
                 subspace_continuous, batch_size
             )
         else:
-            return self._recommend_continuous_without_cardinality_constraints(
+            return self._recommend_continuous_without_subspaces(
                 subspace_continuous, batch_size
             )
 
-    def _recommend_continuous_with_cardinality_constraints(
+    def _recommend_continuous_with_subspaces(
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
     ) -> tuple[Tensor, Tensor]:
-        """Recommend from a continuous search space with cardinality constraints.
+        """Recommend from a continuous space with subspace-generating constraints.
 
-        This is achieved by considering the individual restricted subspaces that can be
-        obtained by splitting the parameters into sets of active and inactive
-        parameters, according to what is allowed by the cardinality constraints.
+        Optimizes the acquisition function across subspaces defined by constraints
+        (currently only cardinality constraints) and returns the best result.
 
         The specific collection of subspaces considered by the recommender is obtained
         as either the full combinatorial set of possible parameter splits or a random
         selection thereof, depending on the upper bound specified by the corresponding
         recommender attribute.
 
-        In each of these spaces, the (in)activity assignment is fixed, so that the
-        cardinality constraints can be removed and a regular optimization can be
-        performed. The recommendation is then constructed from the combined optimization
-        results of the unconstrained spaces.
+        In each subspace, the constraint-imposed configuration is fixed, so that the
+        constraints can be removed and a regular optimization can be performed. The
+        recommendation is then constructed from the combined optimization results of the
+        unconstrained spaces.
 
         Args:
             subspace_continuous: The continuous subspace from which to generate
@@ -266,11 +265,12 @@ class BotorchRecommender(BayesianRecommender):
             The recommendations and corresponding acquisition values.
 
         Raises:
-            ValueError: If the continuous search space has no cardinality constraints.
+            ValueError: If the continuous search space has no subspace-generating
+                constraints.
         """
         if not subspace_continuous.constraints_subspaces:
             raise ValueError(
-                f"'{self._recommend_continuous_with_cardinality_constraints.__name__}' "
+                f"'{self._recommend_continuous_with_subspaces.__name__}' "
                 f"expects a subspace with constraints of type "
                 f"'{ContinuousCardinalityConstraint.__name__}'. "
             )
@@ -312,12 +312,12 @@ class BotorchRecommender(BayesianRecommender):
 
         return points, acqf_value
 
-    def _recommend_continuous_without_cardinality_constraints(
+    def _recommend_continuous_without_subspaces(
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
     ) -> tuple[Tensor, Tensor]:
-        """Recommend from a continuous search space without cardinality constraints.
+        """Recommend from a continuous search space without subspace decomposition.
 
         Args:
             subspace_continuous: The continuous subspace from which to generate
@@ -328,14 +328,15 @@ class BotorchRecommender(BayesianRecommender):
             The recommendations and corresponding acquisition values.
 
         Raises:
-            ValueError: If the continuous search space has cardinality constraints.
+            ValueError: If the continuous search space has subspace-generating
+                constraints.
         """
         import torch
         from botorch.optim import optimize_acqf
 
         if subspace_continuous.constraints_subspaces:
             raise ValueError(
-                f"'{self._recommend_continuous_without_cardinality_constraints.__name__}' "  # noqa: E501
+                f"'{self._recommend_continuous_without_subspaces.__name__}' "
                 f"expects a subspace without constraints of type "
                 f"'{ContinuousCardinalityConstraint.__name__}'. "
             )
