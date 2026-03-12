@@ -3,12 +3,15 @@
 from typing import Any
 
 import numpy as np
+import pytest
 import torch
 from attrs import asdict, has
 from hypothesis import given
+from pytest import param
 
 from baybe.kernels.base import BasicKernel, Kernel
-from baybe.kernels.basic import IndexKernel
+from baybe.kernels.basic import IndexKernel, MaternKernel, RBFKernel
+from baybe.kernels.composite import ProductKernel, ScaleKernel, SumKernel
 from tests.hypothesis_strategies.kernels import kernels
 
 # TODO: Consider deprecating these attribute names to avoid inconsistencies
@@ -59,6 +62,11 @@ def validate_gpytorch_kernel_components(obj: Any, mapped: Any, **kwargs) -> None
                 continue
             # <<<<<
 
+            # ... or it must be a trainability flag, which is a BayBE-only concept
+            # applied after GPyTorch kernel construction.
+            if name.endswith("_trainable"):
+                continue
+
             # ... or it must be an initial value. Because setting initial values
             # involves going through constraint transformations on GPyTorch side (i.e.,
             # difference between `<attr>` and `raw_<attr>`), the numerical values will
@@ -98,3 +106,77 @@ def test_kernel_assembly(kernel: Kernel):
 
     k = kernel.to_gpytorch(**kwargs)
     validate_gpytorch_kernel_components(kernel, k, **kwargs)
+
+
+def test_add_produces_sum_kernel():
+    """Adding two kernels produces a SumKernel."""
+    result = MaternKernel() + RBFKernel()
+    assert isinstance(result, SumKernel)
+    assert len(result.base_kernels) == 2
+    assert isinstance(result.base_kernels[0], MaternKernel)
+    assert isinstance(result.base_kernels[1], RBFKernel)
+
+
+def test_add_chain_flattens():
+    """Chaining additions flattens into a single SumKernel."""
+    result = MaternKernel() + RBFKernel() + MaternKernel(0.5)
+    assert isinstance(result, SumKernel)
+    assert len(result.base_kernels) == 3
+
+
+def test_mul_produces_product_kernel():
+    """Multiplying two kernels produces a ProductKernel."""
+    result = MaternKernel() * RBFKernel()
+    assert isinstance(result, ProductKernel)
+    assert len(result.base_kernels) == 2
+
+
+def test_mul_chain_flattens():
+    """Chaining multiplications flattens into a single ProductKernel."""
+    result = MaternKernel() * RBFKernel() * MaternKernel(0.5)
+    assert isinstance(result, ProductKernel)
+    assert len(result.base_kernels) == 3
+
+
+@pytest.mark.parametrize(
+    ("left", "right"),
+    [
+        param(MaternKernel(), 3.0, id="kernel_times_float"),
+        param(MaternKernel(), 5, id="kernel_times_int"),
+        param(3.0, MaternKernel(), id="float_times_kernel"),
+    ],
+)
+def test_mul_constant_produces_constant_scale_kernel(left, right):
+    """Multiplying a kernel with a numeric constant produces a fixed ScaleKernel."""
+    result = left * right
+    gpytorch_kernel = result.to_gpytorch()
+    initial_outputscale = gpytorch_kernel.outputscale.item()
+
+    assert isinstance(result, ScaleKernel)
+    assert result.outputscale_trainable is False
+    expected_outputscale = left if isinstance(right, Kernel) else right
+    assert initial_outputscale == expected_outputscale
+    assert not result.to_gpytorch().raw_outputscale.requires_grad
+
+    # Create a dummy input and compute a loss through the kernel to assert training
+    # does not affect the output scale
+    x = torch.randn(5, 1)
+    loss = gpytorch_kernel(x).evaluate().sum()
+    loss.backward()
+    optimizer = torch.optim.SGD(gpytorch_kernel.parameters(), lr=0.1)
+    optimizer.step()
+    assert gpytorch_kernel.outputscale.item() == initial_outputscale
+
+
+@pytest.mark.parametrize(
+    ("expression", "error"),
+    [
+        param(lambda: MaternKernel() + "string", TypeError, id="add_string"),
+        param(lambda: MaternKernel() * "string", TypeError, id="mul_string"),
+        param(lambda: 1 + MaternKernel(), TypeError, id="radd_int"),
+    ],
+)
+def test_operator_unsupported_type(expression, error):
+    """Using operators with unsupported types raises TypeError."""
+    with pytest.raises(error):
+        expression()

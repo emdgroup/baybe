@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from abc import ABC
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
@@ -11,6 +12,7 @@ from attrs import define
 
 from baybe.exceptions import UnmatchedAttributeError
 from baybe.priors.base import Prior
+from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
 from baybe.settings import active_settings
 from baybe.utils.basic import get_baseclasses, match_attributes
@@ -24,6 +26,52 @@ if TYPE_CHECKING:
 @define(frozen=True)
 class Kernel(ABC, SerialMixin):
     """Abstract base class for all kernels."""
+
+    def __add__(self, other: Any) -> Kernel:
+        """Create a sum kernel from two kernels.
+
+        Flattens nested sums so that ``(a + b) + c`` yields
+        ``SumKernel([a, b, c])`` instead of ``SumKernel([SumKernel([a, b]), c])``.
+        """
+        if isinstance(other, Kernel):
+            from baybe.kernels.composite import SumKernel
+
+            left = self.base_kernels if isinstance(self, SumKernel) else (self,)
+            right = other.base_kernels if isinstance(other, SumKernel) else (other,)
+            return SumKernel([*left, *right])
+        return NotImplemented
+
+    def __radd__(self, other: Any) -> Kernel:
+        """Support right-hand addition for kernel objects."""
+        return self.__add__(other)
+
+    def __mul__(self, other: Any) -> Kernel:
+        """Create a product kernel or scale kernel.
+
+        When multiplied with another kernel, a product kernel is created. Nested
+        products are flattened so that ``(a * b) * c`` yields
+        ``ProductKernel([a, b, c])``. When multiplied with a numeric constant, a scale
+        kernel with a fixed (non-trainable) output scale is created.
+        """
+        if isinstance(other, Kernel):
+            from baybe.kernels.composite import ProductKernel
+
+            left = self.base_kernels if isinstance(self, ProductKernel) else (self,)
+            right = other.base_kernels if isinstance(other, ProductKernel) else (other,)
+            return ProductKernel([*left, *right])
+        if isinstance(other, (int, float)):
+            from baybe.kernels.composite import ScaleKernel
+
+            return ScaleKernel(
+                base_kernel=self,
+                outputscale_initial_value=float(other),
+                outputscale_trainable=False,
+            )
+        return NotImplemented
+
+    def __rmul__(self, other: Any) -> Kernel:
+        """Support right-hand multiplication, enabling ``constant * kernel``."""
+        return self.__mul__(other)
 
     def to_factory(self) -> PlainKernelFactory:
         """Wrap the kernel in a :class:`baybe.surrogates.gaussian_process.components.PlainKernelFactory`."""  # noqa: E501
@@ -77,10 +125,14 @@ class Kernel(ABC, SerialMixin):
 
         # Sanity check: all attributes of the BayBE kernel need a corresponding match
         # in the gpytorch kernel (otherwise, the BayBE kernel class is misconfigured).
-        # Exception: initial values are not used during construction but are set
-        # on the created object (see code at the end of the method).
+        # Exceptions: initial values and trainability flags are not used during
+        # construction but are set on the created object after construction.
         missing = set(unmatched) - set(kernel_attrs)
-        if leftover := {m for m in missing if not m.endswith("_initial_value")}:
+        if leftover := {
+            m
+            for m in missing
+            if not m.endswith("_initial_value") and not m.endswith("_trainable")
+        }:
             raise UnmatchedAttributeError(leftover)
 
         # Convert specified priors to gpytorch, if provided
@@ -127,6 +179,29 @@ class BasicKernel(Kernel, ABC):
 @define(frozen=True)
 class CompositeKernel(Kernel, ABC):
     """Abstract base class for all composite kernels."""
+
+
+# >>>>> Deprecation handling
+_hook = converter.get_structure_hook(Kernel)
+
+
+def _deprecate_legacy_kernel_classes(dct: dict[str, Any], _) -> Kernel:
+    """Enable kernel configs using legacy class names."""
+    if dct["type"] == "AdditiveKernel":
+        warnings.warn(
+            "The use of `AdditiveKernel` is deprecated and will be "
+            "removed in a future version. Use `SumKernel` instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        dct["type"] = "SumKernel"
+    return _hook(dct, _)
+
+
+converter.register_structure_hook_func(
+    lambda c: c is Kernel, _deprecate_legacy_kernel_classes
+)
+# <<<<< Deprecation handling
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

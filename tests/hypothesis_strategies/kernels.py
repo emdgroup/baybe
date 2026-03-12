@@ -16,7 +16,7 @@ from baybe.kernels.basic import (
     RFFKernel,
     RQKernel,
 )
-from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
+from baybe.kernels.composite import ProductKernel, ScaleKernel, SumKernel
 from tests.hypothesis_strategies.basic import positive_finite_floats
 from tests.hypothesis_strategies.priors import priors
 
@@ -145,6 +145,6 @@ def kernels(draw: st.DrawFn):
 
     base_kernels = draw(st.lists(single_kernels(), min_size=2))
     if kernel_type is KernelType.ADDITIVE:
-        return AdditiveKernel(base_kernels)
+        return SumKernel(base_kernels)
     if kernel_type is KernelType.PRODUCT:
         return ProductKernel(base_kernels)
