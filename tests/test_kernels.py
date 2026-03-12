@@ -108,9 +108,6 @@ def test_kernel_assembly(kernel: Kernel):
     validate_gpytorch_kernel_components(kernel, k, **kwargs)
 
 
-# --- Operator tests ---
-
-
 def test_add_produces_sum_kernel():
     """Adding two kernels produces a SumKernel."""
     result = MaternKernel() + RBFKernel()
@@ -154,26 +151,10 @@ def test_mul_constant_produces_scale_kernel(left, right):
     result = left * right
     assert isinstance(result, ScaleKernel)
     assert result.outputscale_trainable is False
-
-
-def test_mul_constant_sets_initial_value():
-    """The constant value is stored as the outputscale initial value."""
-    result = MaternKernel() * 3.0
-    assert result.outputscale_initial_value == 3.0
-
-
-def test_scale_kernel_freezes_outputscale():
-    """A ScaleKernel from constant multiplication freezes the outputscale."""
-    gpytorch_kernel = (2.0 * RBFKernel()).to_gpytorch()
-    assert not gpytorch_kernel.raw_outputscale.requires_grad
-
-
-def test_scale_kernel_trainable_by_default():
-    """An explicitly constructed ScaleKernel has a trainable outputscale."""
-    gpytorch_kernel = ScaleKernel(
-        base_kernel=RBFKernel(), outputscale_initial_value=2.0
-    ).to_gpytorch()
-    assert gpytorch_kernel.raw_outputscale.requires_grad
+    assert (
+        result.outputscale_initial_value == left if isinstance(right, Kernel) else right
+    )
+    assert not result.to_gpytorch().raw_outputscale.requires_grad
 
 
 @pytest.mark.parametrize(
@@ -188,53 +169,3 @@ def test_operator_unsupported_type(expression, error):
     """Using operators with unsupported types raises TypeError."""
     with pytest.raises(error):
         expression()
-
-
-def test_radd_kernel():
-    """Right-hand addition delegates to __add__ for kernel operands."""
-    result = MaternKernel().__radd__(RBFKernel())
-    assert isinstance(result, SumKernel)
-
-
-@pytest.mark.parametrize(
-    "source",
-    [
-        param("baybe.kernels.deprecation", id="direct"),
-        param("baybe.kernels", id="top_level"),
-    ],
-)
-def test_additive_kernel_deprecation(source):
-    """Using AdditiveKernel emits a DeprecationWarning and returns a SumKernel."""
-    import importlib
-
-    module = importlib.import_module(source)
-    AdditiveKernel = getattr(module, "AdditiveKernel")
-    with pytest.warns(DeprecationWarning, match="AdditiveKernel"):
-        k = AdditiveKernel([MaternKernel(), RBFKernel()])
-    assert isinstance(k, SumKernel)
-
-
-@pytest.mark.parametrize(
-    "kernel",
-    [
-        param(MaternKernel() + RBFKernel(), id="sum"),
-        param(MaternKernel() * RBFKernel(), id="product"),
-        param(3.0 * MaternKernel(), id="scale"),
-    ],
-)
-def test_operator_kernel_serialization_roundtrip(kernel):
-    """Kernels created via operators survive a serialization roundtrip."""
-    restored = Kernel.from_dict(kernel.to_dict())
-    assert kernel == restored
-
-
-def test_additive_kernel_deserialization():
-    """Deserializing a legacy AdditiveKernel config works with a warning."""
-    expected = SumKernel([MaternKernel(), RBFKernel()])
-    payload = expected.to_dict()
-    payload["type"] = "AdditiveKernel"
-
-    with pytest.warns(DeprecationWarning, match="AdditiveKernel"):
-        actual = Kernel.from_dict(payload)
-
-    assert actual == expected

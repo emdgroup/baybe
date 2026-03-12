@@ -21,6 +21,8 @@ from baybe.constraints import (
 )
 from baybe.constraints.base import Constraint
 from baybe.exceptions import DeprecationError
+from baybe.kernels import AdditiveKernel, MaternKernel, RBFKernel, SumKernel
+from baybe.kernels.base import Kernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.enum import SubstanceEncoding
@@ -557,3 +559,18 @@ def test_deprecated_cache_environment_variables(monkeypatch, value: str, expecte
         DeprecationWarning, match="'BAYBE_CACHE_DIR' has been deprecated"
     ):
         assert Settings(restore_environment=True).cache_directory == expected
+
+
+def test_additive_kernel():
+    """Creating and deserializing an AdditiveKernel config works with a warning."""
+    with pytest.warns(DeprecationWarning, match="AdditiveKernel"):
+        AdditiveKernel([MaternKernel(), RBFKernel()])
+
+    expected = SumKernel([MaternKernel(), RBFKernel()])
+    serialized = expected.to_dict()
+    serialized["type"] = "AdditiveKernel"
+
+    with pytest.warns(DeprecationWarning, match="AdditiveKernel"):
+        deserialized = Kernel.from_dict(serialized)
+
+    assert deserialized == expected
