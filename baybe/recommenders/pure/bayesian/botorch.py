@@ -91,11 +91,10 @@ class BotorchRecommender(BayesianRecommender):
     """
 
     max_n_subspaces: int = field(default=10, validator=[instance_of(int), ge(1)])
-    """Threshold defining the maximum number of subspaces to consider for exhaustive
-    search in the presence of cardinality constraints. If the combinatorial number of
-    groupings into active and inactive parameters dictated by the constraints is greater
-    than this number, that many randomly selected combinations are selected for
-    optimization."""
+    """Maximum number of subspaces to evaluate when subspace-generating constraints are
+    present (e.g., continuous cardinality constraints). If the total number of subspaces
+    exceeds this limit, a random subset of that size is sampled for optimization instead
+    of performing an exhaustive search."""
 
     @sampling_percentage.validator
     def _validate_percentage(  # noqa: DOC101, DOC103
