@@ -154,7 +154,8 @@ def test_mul_constant_produces_constant_scale_kernel(left, right):
 
     assert isinstance(result, ScaleKernel)
     assert result.outputscale_trainable is False
-    assert initial_outputscale == left if isinstance(right, Kernel) else right
+    expected_outputscale = left if isinstance(right, Kernel) else right
+    assert initial_outputscale == expected_outputscale
     assert not result.to_gpytorch().raw_outputscale.requires_grad
 
     # Create a dummy input and compute a loss through the kernel to assert training
