@@ -226,3 +226,15 @@ def test_operator_kernel_serialization_roundtrip(kernel):
     """Kernels created via operators survive a serialization roundtrip."""
     restored = Kernel.from_dict(kernel.to_dict())
     assert kernel == restored
+
+
+def test_additive_kernel_deserialization():
+    """Deserializing a legacy AdditiveKernel config works with a warning."""
+    expected = SumKernel([MaternKernel(), RBFKernel()])
+    payload = expected.to_dict()
+    payload["type"] = "AdditiveKernel"
+
+    with pytest.warns(DeprecationWarning, match="AdditiveKernel"):
+        actual = Kernel.from_dict(payload)
+
+    assert actual == expected

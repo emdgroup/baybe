@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from abc import ABC
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
@@ -11,6 +12,7 @@ from attrs import define
 
 from baybe.exceptions import UnmatchedAttributeError
 from baybe.priors.base import Prior
+from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
 from baybe.settings import active_settings
 from baybe.utils.basic import get_baseclasses, match_attributes
@@ -177,6 +179,29 @@ class BasicKernel(Kernel, ABC):
 @define(frozen=True)
 class CompositeKernel(Kernel, ABC):
     """Abstract base class for all composite kernels."""
+
+
+# >>>>> Deprecation handling
+_hook = converter.get_structure_hook(Kernel)
+
+
+def _deprecate_legacy_kernel_classes(dct: dict[str, Any], _) -> Kernel:
+    """Enable kernel configs using legacy class names."""
+    if dct["type"] == "AdditiveKernel":
+        warnings.warn(
+            "The use of `AdditiveKernel` is deprecated and will be "
+            "removed in a future version. Use `SumKernel` instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        dct["type"] = "SumKernel"
+    return _hook(dct, _)
+
+
+converter.register_structure_hook_func(
+    lambda c: c is Kernel, _deprecate_legacy_kernel_classes
+)
+# <<<<< Deprecation handling
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
