@@ -108,8 +108,8 @@ class SubspaceContinuous(SerialMixin):
         return to_string(self.__class__.__name__, *fields)
 
     @property
-    def constraints_cardinality(self) -> tuple[ContinuousCardinalityConstraint, ...]:
-        """Cardinality constraints."""
+    def constraints_subspaces(self) -> tuple[ContinuousCardinalityConstraint, ...]:
+        """Constraints generating subspaces for separate optimization."""
         return tuple(
             c
             for c in self.constraints_nonlin
@@ -143,18 +143,18 @@ class SubspaceContinuous(SerialMixin):
             )
 
     @property
-    def n_inactive_parameter_combinations(self) -> int:
-        """The number of possible inactive parameter combinations."""
+    def n_subspaces(self) -> int:
+        """The number of possible subspace configurations."""
         return math.prod(
-            c.n_inactive_parameter_combinations for c in self.constraints_cardinality
+            c.n_inactive_parameter_combinations for c in self.constraints_subspaces
         )
 
-    def inactive_parameter_combinations(self) -> Iterator[frozenset[str]]:
-        """Get an iterator over all possible combinations of inactive parameters."""
+    def subspace_configurations(self) -> Iterator[frozenset[str]]:
+        """Get an iterator over all possible subspace configurations."""
         for combination in product(
             *[
                 con.inactive_parameter_combinations()
-                for con in self.constraints_cardinality
+                for con in self.constraints_subspaces
             ]
         ):
             yield frozenset(chain(*combination))
@@ -163,11 +163,9 @@ class SubspaceContinuous(SerialMixin):
     def _validate_constraints_nonlin(self, _, __) -> None:
         """Validate nonlinear constraints."""
         # Note: The passed constraints are accessed indirectly through the property
-        validate_cardinality_constraints_are_nonoverlapping(
-            self.constraints_cardinality
-        )
+        validate_cardinality_constraints_are_nonoverlapping(self.constraints_subspaces)
 
-        for con in self.constraints_cardinality:
+        for con in self.constraints_subspaces:
             validate_cardinality_constraint_parameter_bounds(con, self.parameters)
 
     def to_searchspace(self) -> SearchSpace:
@@ -306,9 +304,9 @@ class SubspaceContinuous(SerialMixin):
         return tuple(chain.from_iterable(p.comp_rep_columns for p in self.parameters))
 
     @property
-    def parameter_names_in_cardinality_constraints(self) -> frozenset[str]:
-        """The names of all parameters affected by cardinality constraints."""
-        names_per_constraint = (c.parameters for c in self.constraints_cardinality)
+    def parameter_names_in_subspace_constraints(self) -> frozenset[str]:
+        """The names of all parameters affected by subspace-generating constraints."""
+        names_per_constraint = (c.parameters for c in self.constraints_subspaces)
         return frozenset(chain(*names_per_constraint))
 
     @property
@@ -386,7 +384,7 @@ class SubspaceContinuous(SerialMixin):
         """
         # Extract active parameters involved in cardinality constraints
         active_parameter_names = (
-            self.parameter_names_in_cardinality_constraints.difference(
+            self.parameter_names_in_subspace_constraints.difference(
                 inactive_parameter_names
             )
         )
@@ -400,7 +398,7 @@ class SubspaceContinuous(SerialMixin):
 
             elif p.name in active_parameter_names:
                 constraints = [
-                    c for c in self.constraints_cardinality if p.name in c.parameters
+                    c for c in self.constraints_subspaces if p.name in c.parameters
                 ]
 
                 # Constraint validation should have ensured that each parameter can
@@ -476,7 +474,7 @@ class SubspaceContinuous(SerialMixin):
         if not self.is_constrained:
             return self._sample_from_bounds(batch_size, self.comp_rep_bounds.values)
 
-        if len(self.constraints_cardinality) == 0:
+        if len(self.constraints_subspaces) == 0:
             return self._sample_from_polytope(batch_size, self.comp_rep_bounds.values)
 
         return self._sample_from_polytope_with_cardinality_constraints(batch_size)
@@ -562,7 +560,7 @@ class SubspaceContinuous(SerialMixin):
         self, batch_size: int
     ) -> pd.DataFrame:
         """Draw random samples from a polytope with cardinality constraints."""
-        if not self.constraints_cardinality:
+        if not self.constraints_subspaces:
             raise RuntimeError(
                 f"This method should not be called without any constraints of type "
                 f"'{ContinuousCardinalityConstraint.__name__}' in place. "
@@ -579,7 +577,7 @@ class SubspaceContinuous(SerialMixin):
 
         while len(samples) < batch_size:
             # Randomly set some parameters inactive
-            inactive_params_sample = self._sample_inactive_parameters(1)[0]
+            inactive_params_sample = self._sample_subspace_configurations(1)[0]
 
             # Remove the inactive parameters from the search space. In the first
             # step, the active parameters get activated and inactive parameters are
@@ -617,11 +615,11 @@ class SubspaceContinuous(SerialMixin):
             .fillna(0.0)
         )
 
-    def _sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
-        """Sample inactive parameters according to the given cardinality constraints."""
+    def _sample_subspace_configurations(self, batch_size: int = 1) -> list[set[str]]:
+        """Sample subspace configurations according to the given constraints."""
         inactives_per_constraint = [
             con.sample_inactive_parameters(batch_size)
-            for con in self.constraints_cardinality
+            for con in self.constraints_subspaces
         ]
         return [set(chain(*x)) for x in zip(*inactives_per_constraint)]
 

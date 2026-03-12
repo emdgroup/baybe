@@ -227,7 +227,7 @@ class BotorchRecommender(BayesianRecommender):
         self, subspace_continuous: SubspaceContinuous, batch_size: int
     ) -> tuple[Tensor, Tensor]:
         """Dispatcher selecting the continuous optimization routine."""
-        if subspace_continuous.constraints_cardinality:
+        if subspace_continuous.constraints_subspaces:
             return self._recommend_continuous_with_cardinality_constraints(
                 subspace_continuous, batch_size
             )
@@ -268,7 +268,7 @@ class BotorchRecommender(BayesianRecommender):
         Raises:
             ValueError: If the continuous search space has no cardinality constraints.
         """
-        if not subspace_continuous.constraints_cardinality:
+        if not subspace_continuous.constraints_subspaces:
             raise ValueError(
                 f"'{self._recommend_continuous_with_cardinality_constraints.__name__}' "
                 f"expects a subspace with constraints of type "
@@ -276,17 +276,14 @@ class BotorchRecommender(BayesianRecommender):
             )
 
         # Determine search scope based on number of inactive parameter combinations
-        exhaustive_search = (
-            subspace_continuous.n_inactive_parameter_combinations
-            <= self.max_n_subspaces
-        )
+        exhaustive_search = subspace_continuous.n_subspaces <= self.max_n_subspaces
         iterator: Iterable[Collection[str]]
         if exhaustive_search:
             # If manageable, evaluate all combinations of inactive parameters
-            iterator = subspace_continuous.inactive_parameter_combinations()
+            iterator = subspace_continuous.subspace_configurations()
         else:
             # Otherwise, draw a random subset of inactive parameter combinations
-            iterator = subspace_continuous._sample_inactive_parameters(
+            iterator = subspace_continuous._sample_subspace_configurations(
                 self.max_n_subspaces
             )
 
@@ -336,7 +333,7 @@ class BotorchRecommender(BayesianRecommender):
         import torch
         from botorch.optim import optimize_acqf
 
-        if subspace_continuous.constraints_cardinality:
+        if subspace_continuous.constraints_subspaces:
             raise ValueError(
                 f"'{self._recommend_continuous_without_cardinality_constraints.__name__}' "  # noqa: E501
                 f"expects a subspace without constraints of type "
