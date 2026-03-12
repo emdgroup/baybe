@@ -146,15 +146,25 @@ def test_mul_chain_flattens():
         param(3.0, MaternKernel(), id="float_times_kernel"),
     ],
 )
-def test_mul_constant_produces_scale_kernel(left, right):
+def test_mul_constant_produces_constant_scale_kernel(left, right):
     """Multiplying a kernel with a numeric constant produces a fixed ScaleKernel."""
     result = left * right
+    gpytorch_kernel = result.to_gpytorch()
+    initial_outputscale = gpytorch_kernel.outputscale.item()
+
     assert isinstance(result, ScaleKernel)
     assert result.outputscale_trainable is False
-    assert (
-        result.outputscale_initial_value == left if isinstance(right, Kernel) else right
-    )
+    assert initial_outputscale == left if isinstance(right, Kernel) else right
     assert not result.to_gpytorch().raw_outputscale.requires_grad
+
+    # Create a dummy input and compute a loss through the kernel to assert training
+    # does not affect the output scale
+    x = torch.randn(5, 1)
+    loss = gpytorch_kernel(x).evaluate().sum()
+    loss.backward()
+    optimizer = torch.optim.SGD(gpytorch_kernel.parameters(), lr=0.1)
+    optimizer.step()
+    assert gpytorch_kernel.outputscale.item() == initial_outputscale
 
 
 @pytest.mark.parametrize(
