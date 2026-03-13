@@ -13,17 +13,14 @@ import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
 from attrs import AttrsInstance, define, field, fields
-from attrs.validators import deep_iterable, deep_mapping, ge, gt, instance_of, le
+from attrs.validators import ge, gt, instance_of, le
 from typing_extensions import override
 
 from baybe.acquisition.base import AcquisitionFunction
-from baybe.parameters.validation import (
-    validate_contains_exactly_one,
-)
 from baybe.searchspace import SearchSpace
 from baybe.utils.basic import classproperty, convert_to_float
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod, sample_numerical_df
-from baybe.utils.validation import finite_float, validate_dict_shape
+from baybe.utils.validation import finite_float
 
 
 ########################################################################################
@@ -318,53 +315,6 @@ class MultiFidelityUpperConfidenceBound(AcquisitionFunction):
     """
 
     abbreviation: ClassVar[str] = "MFUCB"
-
-    fidelities: dict[int, tuple[float, ...]] = field(
-        validator=deep_mapping(
-            key_validator=instance_of(int),
-            value_validator=deep_iterable(
-                member_validator=instance_of(float),
-                iterable_validator=instance_of(tuple),
-            ),
-            mapping_validator=instance_of(dict),
-        )
-    )
-    """Fidelity column(s) with integer encoding of allowed values.
-    """
-
-    costs: dict[int, tuple[float, ...]] = field(
-        validator=deep_mapping(
-            key_validator=instance_of(int),
-            value_validator=deep_iterable(
-                member_validator=(instance_of(float), ge(0.0)),
-                iterable_validator=(
-                    instance_of(tuple),
-                    validate_contains_exactly_one(0.0),
-                ),
-            ),
-            mapping_validator=(instance_of(dict), validate_dict_shape("fidelities")),
-        )
-    )
-    """Costs of each fidelity value, multiple columns are summed."""
-
-    # Jordan MHS note to self: check whether we need to validate that zeros are in
-    # same positions as in costs.
-    zetas: dict[int, tuple[float, ...]] | None = field(
-        validator=deep_mapping(
-            key_validator=instance_of(int),
-            value_validator=deep_iterable(
-                member_validator=(instance_of(float), ge(0.0)),
-                iterable_validator=(
-                    instance_of(tuple),
-                    validate_contains_exactly_one(0.0),
-                ),
-            ),
-            mapping_validator=(instance_of(dict), validate_dict_shape("fidelities")),
-        )
-    )
-    """Maximum discrepancy in objective function between
-    the target fidelity and each fidelity value.
-    """
 
     softmin_temperature: float = field(
         converter=float, validator=[finite_float, ge(0.0)], default=1e-2
