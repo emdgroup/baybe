@@ -65,9 +65,12 @@ def _validate_cardinality_constrained_batch(
     # We thus include this check as a safety net for catching regressions. If it
     # turns out the check fails because we observe degenerate batches as actual
     # recommendations, we need to invent something smarter.
-    max_cardinalities = [
-        c.max_cardinality for c in subspace_continuous.constraints_subspace_generating
+    cardinality_constraints = [
+        c
+        for c in subspace_continuous.constraints_subspace_generating
+        if isinstance(c, ContinuousCardinalityConstraint)
     ]
+    max_cardinalities = [c.max_cardinality for c in cardinality_constraints]
     if len(unique_row := batch.drop_duplicates()) == 1:
         assert (unique_row.iloc[0] == 0.0).all() and all(
             max_cardinality == 0 for max_cardinality in max_cardinalities
