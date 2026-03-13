@@ -12,16 +12,14 @@ from attrs import define, field, fields
 from attrs.converters import optional
 from typing_extensions import override
 
-from baybe.acquisition import qLogEI, qLogNEHVI, qMFKG
+from baybe.acquisition import MFUCB, qLogEI, qLogNEHVI, qMFKG
 from baybe.acquisition.base import AcquisitionFunction
-from baybe.acquisition.custom_acqfs import MFUCB
 from baybe.acquisition.utils import convert_acqf
 from baybe.exceptions import (
     IncompatibleAcquisitionFunctionError,
 )
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
-from baybe.recommenders.pure.bayesian.utils import restricted_fidelity_searchspace
 from baybe.searchspace import SearchSpace, SearchSpaceTaskType
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
@@ -198,16 +196,6 @@ class BayesianRecommender(PureRecommender, ABC):
         try:
             with Settings(preprocess_dataframes=False):
                 acqf = self._get_acquisition_function(objective)
-                if isinstance(acqf, MFUCB):
-                    searchspace = restricted_fidelity_searchspace(searchspace)
-
-                    return self._recommend_two_stage(
-                        batch_size=batch_size,
-                        searchspace=searchspace,
-                        objective=objective,
-                        measurements=measurements,
-                        pending_experiments=pending_experiments,
-                    )
 
                 recommendation = super().recommend(
                     batch_size=batch_size,
