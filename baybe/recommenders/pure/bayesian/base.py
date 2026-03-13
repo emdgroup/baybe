@@ -69,13 +69,15 @@ class BayesianRecommender(PureRecommender, ABC):
     _botorch_acqf = field(default=None, init=False, eq=False)
     """The induced BoTorch acquisition function."""
 
-    def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
+    def _get_acquisition_function(
+        self, objective: Objective, searchspace: SearchSpace
+    ) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
         if self.acquisition_function is None:
-            if self.searchspace.task_type == SearchSpaceTaskType.NUMERICALFIDELITY:
+            if searchspace.task_type == SearchSpaceTaskType.NUMERICALFIDELITY:
                 return qMFKG()
 
-            elif self.SearchSpaceTaskType == SearchSpaceTaskType.CATEGORICALTASK:
+            elif searchspace.task_type == SearchSpaceTaskType.CATEGORICALTASK:
                 return MFUCB()
 
             return qLogNEHVI() if objective.is_multi_output else qLogEI()
@@ -104,7 +106,7 @@ class BayesianRecommender(PureRecommender, ABC):
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
         self._objective = objective
-        acqf = self._get_acquisition_function(objective)
+        acqf = self._get_acquisition_function(objective, searchspace)
 
         if objective.is_multi_output and not acqf.supports_multi_output:
             raise IncompatibleAcquisitionFunctionError(
@@ -180,7 +182,7 @@ class BayesianRecommender(PureRecommender, ABC):
 
         try:
             with Settings(preprocess_dataframes=False):
-                acqf = self._get_acquisition_function(objective)
+                acqf = self._get_acquisition_function(objective, searchspace)
 
                 recommendation = super().recommend(
                     batch_size=batch_size,
@@ -244,7 +246,9 @@ class BayesianRecommender(PureRecommender, ABC):
             A series of individual acquisition values, one for each candidate.
         """
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        acqf = acquisition_function or self._get_acquisition_function(objective)
+        acqf = acquisition_function or self._get_acquisition_function(
+            objective, searchspace
+        )
         return acqf.evaluate(
             candidates,
             surrogate,
@@ -272,7 +276,9 @@ class BayesianRecommender(PureRecommender, ABC):
             The joint acquisition value of the batch.
         """
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        acqf = acquisition_function or self._get_acquisition_function(objective)
+        acqf = acquisition_function or self._get_acquisition_function(
+            objective, searchspace
+        )
         return acqf.evaluate(
             candidates,
             surrogate,

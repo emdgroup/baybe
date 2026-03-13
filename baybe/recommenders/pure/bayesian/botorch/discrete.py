@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
-from baybe.searchspace import SubspaceDiscrete
+from baybe.searchspace import SearchSpace, SubspaceDiscrete
 from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
@@ -106,7 +106,8 @@ def recommend_discrete_without_subsets(
     )
 
     assert recommender._objective is not None
-    acqf = recommender._get_acquisition_function(recommender._objective)
+    searchspace = SearchSpace(discrete=subspace_discrete)
+    acqf = recommender._get_acquisition_function(recommender._objective, searchspace)
     if batch_size > 1 and not acqf.supports_batching:
         raise IncompatibleAcquisitionFunctionError(
             f"The '{recommender.__class__.__name__}' only works with Monte Carlo "
