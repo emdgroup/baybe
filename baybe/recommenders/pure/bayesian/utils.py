@@ -9,7 +9,12 @@ from baybe.searchspace import SearchSpace
 def restricted_fidelity_searchspace(searchspace: SearchSpace, /) -> SearchSpace:
     """Evolve a multi-fidelity searchspace so the fidelity is fixed to the highest."""
     discrete_parameters_fixed_fidelities = tuple(
-        evolve(p, values=(p.to_index((1.0,)).item(),))
+        evolve(
+            p,
+            values=(p.highest_fidelity,),
+            costs=(p.highest_fidelity_cost,),
+            zeta=(0.0,),
+        )
         if isinstance(p, CategoricalFidelityParameter)
         else p
         for p in searchspace.discrete.parameters
