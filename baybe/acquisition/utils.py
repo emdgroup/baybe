@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.parameters import CategoricalFidelityParameter
@@ -87,33 +87,39 @@ def make_partitioning(
     return NondominatedPartitioning(ref_point=ref_point, Y=predictions, alpha=alpha)
 
 
+# Jordan MHS TODO: typing for fidelities_dict awkward since integer values in
+# comp_df not explicitly typed. Seek help here.
 def make_MFUCB_dicts(
     searchspace: SearchSpace, /
-) -> tuple[dict[int, float], dict[int, float], dict[int, float]]:
+) -> tuple[
+    dict[Any, tuple[Any, ...]],
+    dict[int, tuple[float, ...]],
+    dict[int, tuple[float, ...]],
+]:
     """Construct column indices and values of costs, fidelities and values for MFUCB."""
-    fidelities_dict = {
-        i: p.values
+    fidelity_params = {
+        p
         for i, p in enumerate(searchspace.parameters)
         if isinstance(p, CategoricalFidelityParameter)
+    }
+
+    # Jordan MHS TODO: typing awkward since integer values in comp_df not explicitly
+    # typed. Seek help here.
+    fidelities_dict = {
+        i: tuple(p.comp_df.iloc[:, 0]) for i, p in enumerate(fidelity_params)
     }
 
     costs_dict = {
         i: p.costs
         if getattr(p, "costs", None) is not None
         else tuple(0 for _ in p.values)
-        for i, p in enumerate(searchspace.parameters)
-        if isinstance(p, CategoricalFidelityParameter)
+        for i, p in enumerate(fidelity_params)
     }
 
     zetas_dict = {
-        i: p.zetas
-        if getattr(p, "zetas", None) is not None
+        i: p.zeta
+        if getattr(p, "zeta", None) is not None
         else tuple(0 for _ in p.values)
-        for i, p in enumerate(searchspace.parameters)
-        if isinstance(
-            p,
-            CategoricalFidelityParameter,
-        )
+        for i, p in enumerate(fidelity_params)
     }
-
     return fidelities_dict, costs_dict, zetas_dict
