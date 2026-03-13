@@ -16,7 +16,6 @@ from attrs.validators import ge, gt, instance_of
 from typing_extensions import override
 
 from baybe.acquisition.acqfs import qThompsonSampling
-from baybe.constraints import ContinuousCardinalityConstraint
 from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import (
     IncompatibilityError,
@@ -298,8 +297,7 @@ class BotorchRecommender(BayesianRecommender):
         if not subspace_continuous.constraints_subspaces:
             raise ValueError(
                 f"'{self._recommend_continuous_with_subspaces.__name__}' "
-                f"expects a subspace with constraints of type "
-                f"'{ContinuousCardinalityConstraint.__name__}'. "
+                f"expects a subspace with subspace-generating constraints."
             )
 
         # Determine search scope based on number of subspace configurations
@@ -376,8 +374,7 @@ class BotorchRecommender(BayesianRecommender):
         if subspace_continuous.constraints_subspaces:
             raise ValueError(
                 f"'{self._recommend_continuous_without_subspaces.__name__}' "
-                f"expects a subspace without constraints of type "
-                f"'{ContinuousCardinalityConstraint.__name__}'. "
+                f"expects a subspace without subspace-generating constraints."
             )
 
         fixed_parameters = {
