@@ -253,7 +253,7 @@ class BotorchRecommender(BayesianRecommender):
         self, subspace_continuous: SubspaceContinuous, batch_size: int
     ) -> tuple[Tensor, Tensor]:
         """Dispatcher selecting the continuous optimization routine."""
-        if subspace_continuous.constraints_subspaces:
+        if subspace_continuous.constraints_subspace_generating:
             return self._recommend_continuous_with_subspaces(
                 subspace_continuous, batch_size
             )
@@ -294,7 +294,7 @@ class BotorchRecommender(BayesianRecommender):
             ValueError: If the continuous search space has no subspace-generating
                 constraints.
         """
-        if not subspace_continuous.constraints_subspaces:
+        if not subspace_continuous.constraints_subspace_generating:
             raise ValueError(
                 f"'{self._recommend_continuous_with_subspaces.__name__}' "
                 f"expects a subspace with subspace-generating constraints."
@@ -371,7 +371,7 @@ class BotorchRecommender(BayesianRecommender):
         import torch
         from botorch.optim import optimize_acqf
 
-        if subspace_continuous.constraints_subspaces:
+        if subspace_continuous.constraints_subspace_generating:
             raise ValueError(
                 f"'{self._recommend_continuous_without_subspaces.__name__}' "
                 f"expects a subspace without subspace-generating constraints."
@@ -448,7 +448,7 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The recommended points.
         """
-        if searchspace.continuous.constraints_subspaces:
+        if searchspace.continuous.constraints_subspace_generating:
             return self._recommend_hybrid_with_subspaces(
                 searchspace, candidates_exp, batch_size
             )

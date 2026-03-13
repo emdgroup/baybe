@@ -25,7 +25,7 @@ def is_cardinality_fulfilled(
     Returns:
         ``True`` if all cardinality constraints are fulfilled, ``False`` otherwise.
     """
-    for c in subspace_continuous.constraints_subspaces:
+    for c in subspace_continuous.constraints_subspace_generating:
         # Get the activity thresholds for all parameters
         cols = df[c.parameters]
         thresholds = {

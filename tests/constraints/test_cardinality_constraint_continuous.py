@@ -66,7 +66,7 @@ def _validate_cardinality_constrained_batch(
     # turns out the check fails because we observe degenerate batches as actual
     # recommendations, we need to invent something smarter.
     max_cardinalities = [
-        c.max_cardinality for c in subspace_continuous.constraints_subspaces
+        c.max_cardinality for c in subspace_continuous.constraints_subspace_generating
     ]
     if len(unique_row := batch.drop_duplicates()) == 1:
         assert (unique_row.iloc[0] == 0.0).all() and all(
