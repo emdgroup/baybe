@@ -3,6 +3,7 @@
 from baybe.acquisition.acqfs import (
     ExpectedImprovement,
     LogExpectedImprovement,
+    MultiFidelityUpperConfidenceBound,
     PosteriorMean,
     PosteriorStandardDeviation,
     ProbabilityOfImprovement,
@@ -40,6 +41,7 @@ qLogNEI = qLogNoisyExpectedImprovement
 PI = ProbabilityOfImprovement
 qPI = qProbabilityOfImprovement
 UCB = UpperConfidenceBound
+MFUCB = MultiFidelityUpperConfidenceBound
 qUCB = qUpperConfidenceBound
 qTS = qThompsonSampling
 qNEHVI = qNoisyExpectedHypervolumeImprovement
@@ -70,6 +72,7 @@ __all__ = [
     # Upper Confidence Bound
     "UpperConfidenceBound",
     "qUpperConfidenceBound",
+    "MultiFidelityUpperConfidenceBound",
     # Thompson Sampling
     "qThompsonSampling",
     # Hypervolume Improvement
@@ -101,6 +104,7 @@ __all__ = [
     # Upper Confidence Bound
     "UCB",
     "qUCB",
+    "MFUCB",
     # Thompson Sampling
     "qTS",
     # Hypervolume Improvement

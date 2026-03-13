@@ -165,11 +165,14 @@ def _get_botorch_acqf_class(
     """Extract the BoTorch acquisition class for the given BayBE acquisition class."""
     import botorch
 
+    from baybe.acquisition import custom_acqfs
+
     for cls in baybe_acqf_cls.mro():
         if (
             acqf_cls := getattr(botorch.acquisition, cls.__name__, False)
             or getattr(botorch.acquisition.multi_objective, cls.__name__, False)
             or getattr(botorch.acquisition.multi_objective.parego, cls.__name__, False)
+            or getattr(custom_acqfs, cls.__name__, False)
         ):
             if is_abstract(acqf_cls):
                 continue
