@@ -155,7 +155,7 @@ class NumericalContinuousParameter(ContinuousParameter):
 class _FixedNumericalContinuousParameter(ContinuousParameter):
     """Parameter class for fixed numerical parameters."""
 
-    is_numeric: ClassVar[bool] = True
+    is_numerical: ClassVar[bool] = True
     # See base class.
 
     value: float = field(converter=float)
