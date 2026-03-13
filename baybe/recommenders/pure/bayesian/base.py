@@ -20,6 +20,7 @@ from baybe.exceptions import (
 )
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.utils import restricted_fidelity_searchspace
 from baybe.searchspace import SearchSpace, SearchSpaceTaskType
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
@@ -194,10 +195,12 @@ class BayesianRecommender(PureRecommender, ABC):
         self._setup_botorch_acqf(
             searchspace, objective, measurements, pending_experiments
         )
+        acqf = self._get_acquisition_function(objective, searchspace)
 
         try:
             with Settings(preprocess_dataframes=False):
-                acqf = self._get_acquisition_function(objective, searchspace)
+                if isinstance(acqf, MFUCB):
+                    searchspace = restricted_fidelity_searchspace(searchspace)
 
                 recommendation = super().recommend(
                     batch_size=batch_size,
