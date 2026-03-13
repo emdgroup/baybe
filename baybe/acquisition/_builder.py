@@ -22,7 +22,6 @@ from torch import Tensor
 from baybe.acquisition.acqfs import (
     _ExpectedHypervolumeImprovement,
     qExpectedHypervolumeImprovement,
-    qKnowledgeGradient,
     qLogExpectedHypervolumeImprovement,
     qMultiFidelityKnowledgeGradient,
     qNegIntegratedPosteriorVariance,
@@ -78,12 +77,14 @@ class BotorchAcquisitionArgs:
     # Optional, depending on the specific acquisition function being used
     best_f: float | None = _OPT_FIELD
     beta: float | None = _OPT_FIELD
+    current_value: Tensor | None = _OPT_FIELD
     maximize: bool | None = _OPT_FIELD
     mc_points: Tensor | None = _OPT_FIELD
     num_fantasies: int | None = _OPT_FIELD
     objective: MCAcquisitionObjective | None = _OPT_FIELD
     partitioning: BoxDecomposition | None = _OPT_FIELD
     posterior_transform: PosteriorTransform | None = _OPT_FIELD
+    project: Callable[[Tensor], Tensor] | None = _OPT_FIELD
     prune_baseline: bool | None = _OPT_FIELD
     ref_point: Tensor | None = _OPT_FIELD
     X_baseline: Tensor | None = _OPT_FIELD
@@ -271,10 +272,8 @@ class BotorchAcquisitionFunctionBuilder:
                 raise NotImplementedError("This line should be impossible to reach.")
 
     def _set_current_value(self) -> None:
-        """Set current value maximising posterior mean, used in, e.g., qKG."""
-        if not isinstance(
-            self.acqf, (qKnowledgeGradient, qMultiFidelityKnowledgeGradient)
-        ):
+        """Set current value maximising posterior mean in qMFKG."""
+        if not isinstance(self.acqf, qMultiFidelityKnowledgeGradient):
             return
 
         from botorch.optim import optimize_acqf_mixed
@@ -285,27 +284,39 @@ class BotorchAcquisitionFunctionBuilder:
                 FixedFeatureAcquisitionFunction,
             )
 
+            # Jordan MHS TODO: check where fidelity--acqf compatibility logic should be.
+            assert self.searchspace.fidelity_idx is not None, "Unreachable error."
+
             curr_val_acqf = FixedFeatureAcquisitionFunction(
                 acq_function=PosteriorMean(self._botorch_surrogate),
                 d=7,
-                columns=self.searchspace.fidelity_idx,
+                columns=[
+                    self.searchspace.fidelity_idx,
+                ],
                 values=[
                     1.0,
                 ],
             )
+
+            # Jordan MHS NOTE: This is fast-and-loose use of mixed space optimization.
+            # Changes will be made with the next PR which uses a notion of wrapped acqfs
+            # for setting a current value but also for defining cost aware wrappers.
+
+            candidates_comp = self.searchspace.discrete.comp_rep
+            num_comp_columns = len(candidates_comp.columns)
+            candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
+            candidates_comp_dict = candidates_comp.to_dict("records")
 
             # Possible TODO. Align num_restarts and raw_samples with that defined by the
             # user for the main acquisition function.
             _, current_value = optimize_acqf_mixed(
                 acq_function=curr_val_acqf,
                 bounds=torch.from_numpy(self.searchspace.comp_rep_bounds.values),
+                fixed_features_list=candidates_comp_dict,  # type: ignore[arg-type]
                 q=1,
                 num_restarts=10,
                 raw_samples=64,
             )
-
-        else:
-            current_value = self._posterior_mean_comp.max().item()
 
         self._args.current_value = current_value
 
@@ -314,11 +325,14 @@ class BotorchAcquisitionFunctionBuilder:
         if not isinstance(self.acqf, (qMultiFidelityKnowledgeGradient)):
             return
 
+        # Jordan MHS TODO: check where fidelity--acqf compatibility logic should be.
+        assert self.searchspace.fidelity_idx is not None, "Unreachable error."
+
         target_fidelities = {self.searchspace.fidelity_idx: 1.0}
 
         num_dims = len(self.searchspace.parameters)
 
-        def target_fidelity_projection(X: Callable[[Tensor], Tensor]):
+        def target_fidelity_projection(X: Tensor) -> Tensor:
             from botorch.acquisition.utils import project_to_target_fidelity
 
             return project_to_target_fidelity(X, target_fidelities, num_dims)
