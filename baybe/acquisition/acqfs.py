@@ -13,7 +13,7 @@ import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
 from attrs import AttrsInstance, define, field, fields
-from attrs.validators import gt, instance_of, le
+from attrs.validators import ge, gt, instance_of, le
 from typing_extensions import override
 
 from baybe.acquisition.base import AcquisitionFunction
@@ -156,6 +156,22 @@ class qKnowledgeGradient(AcquisitionFunction):
     memory footprint and wall time."""
 
 
+@define(frozen=True)
+class qMultiFidelityKnowledgeGradient(AcquisitionFunction):
+    """Monte Carlo based knowledge gradient.
+
+    This acquisition function currently only supports purely continuous spaces.
+    """
+
+    abbreviation: ClassVar[str] = "qMFKG"
+
+    num_fantasies: int = field(validator=[instance_of(int), gt(0)], default=128)
+    """Number of fantasies to draw for approximating the knowledge gradient.
+
+    More samples result in a better approximation, at the expense of both increased
+    memory footprint and wall time."""
+
+
 ########################################################################################
 ### Posterior Statistics
 @define(frozen=True)
@@ -287,6 +303,31 @@ class qUpperConfidenceBound(AcquisitionFunction):
 
     beta: float = field(converter=float, validator=finite_float, default=0.2)
     """See :paramref:`UpperConfidenceBound.beta`."""
+
+
+@define(frozen=True)
+class MultiFidelityUpperConfidenceBound(AcquisitionFunction):
+    """Two stage acquisition function of Kandasamy et al (2016).
+
+    Stage 1: Choose design features based on argmax_x (softmin_m (UCB_m(x) + zeta_m)).
+
+    Stage 2: Choose cheapest fidelity satisfying a cost-aware informativeness threshold.
+    """
+
+    abbreviation: ClassVar[str] = "MFUCB"
+
+    softmin_temperature: float = field(
+        converter=float, validator=[finite_float, ge(0.0)], default=1e-2
+    )
+    """Softmin smoothing parameter."""
+
+    beta: float = field(converter=float, validator=finite_float, default=0.2)
+    """See :paramref:`UpperConfidenceBound.beta`."""
+
+    @override
+    @classproperty
+    def supports_batching(cls) -> bool:
+        return False
 
 
 ########################################################################################

@@ -21,8 +21,8 @@ from baybe.parameters.validation import (
     validate_is_finite,
     validate_unique_values,
 )
+from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple
-from baybe.utils.numerical import DTypeFloatNumpy
 
 
 def _convert_zeta(
@@ -88,7 +88,7 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
           discrepancy ``zeta``, 2 * ``zeta``, and so on."""
 
     def __attrs_post_init__(self) -> None:
-        """Sort attribute values according to lexographic fidelity values."""
+        """Sort attribute values according to lexicographic fidelity values."""
         # Because categories can be str or bool, we sort by (type, value)
         idx = sorted(
             range(len(self._values)),
@@ -103,11 +103,35 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
     def values(self) -> tuple[str | bool, ...]:
         return self._values
 
+    @property
+    def highest_fidelity(self) -> str:
+        """The fidelity with discrepancy value of zero."""
+        highest_fid = next(
+            value for value, zeta in zip(self.values, self.zeta) if zeta == 0
+        )
+
+        assert isinstance(highest_fid, str), "Error should be unreachable."
+
+        return highest_fid
+
+    @property
+    def highest_fidelity_cost(self) -> int:
+        """Cost of querying the fidelity with discrepancy value of zero."""
+        highest_fid = next(
+            cost for cost, zeta in zip(self.costs, self.zeta) if zeta == 0
+        )
+
+        assert isinstance(highest_fid, int), "Error should be unreachable."
+
+        return highest_fid
+
     @override
     @cached_property
     def comp_df(self) -> pd.DataFrame:
         return pd.DataFrame(
-            range(len(self.values)), dtype=DTypeFloatNumpy, columns=[self.name]
+            range(len(self.values)),
+            dtype=active_settings.DTypeFloatNumpy,
+            columns=[self.name],
         )
 
 
@@ -159,5 +183,7 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
     @cached_property
     def comp_df(self) -> pd.DataFrame:
         return pd.DataFrame(
-            {self.name: self.values}, index=self.values, dtype=DTypeFloatNumpy
+            {self.name: self.values},
+            index=self.values,
+            dtype=active_settings.DTypeFloatNumpy,
         )
