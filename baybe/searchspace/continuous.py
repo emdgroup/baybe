@@ -624,13 +624,15 @@ class SubspaceContinuous(SerialMixin):
             .fillna(0.0)
         )
 
-    def _sample_subspace_configurations(self, batch_size: int = 1) -> list[set[str]]:
+    def _sample_subspace_configurations(
+        self, batch_size: int = 1
+    ) -> list[frozenset[str]]:
         """Sample subspace configurations according to the given constraints."""
         inactives_per_constraint = [
             con.sample_inactive_parameters(batch_size)
             for con in self.constraints_subspace_generating
         ]
-        return [set(chain(*x)) for x in zip(*inactives_per_constraint)]
+        return [frozenset(chain(*x)) for x in zip(*inactives_per_constraint)]
 
     def sample_from_full_factorial(self, batch_size: int = 1) -> pd.DataFrame:
         """Draw parameter configurations from the full factorial of the space.
