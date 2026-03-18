@@ -62,6 +62,9 @@ class BotorchRecommender(BayesianRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
+    supports_discrete_subspace_constraints: ClassVar[bool] = True
+    # See base class.
+
     # Object variables
     sequential_continuous: bool = field(default=True)
     """Flag defining whether to apply sequential greedy or batch optimization in
@@ -137,9 +140,7 @@ class BotorchRecommender(BayesianRecommender):
         """Generate recommendations from a discrete search space.
 
         Dispatches to the appropriate optimization routine depending on whether
-        subspace-generating constraints are present. Currently, no discrete
-        constraints generate subspaces, so this always routes to
-        ``_recommend_discrete_without_subspaces``.
+        subspace-generating constraints are present.
 
         Args:
             subspace_discrete: The discrete subspace from which to generate
@@ -152,9 +153,68 @@ class BotorchRecommender(BayesianRecommender):
             The dataframe indices of the recommended points in the provided
             experimental representation.
         """
+        if subspace_discrete.constraints_subspace_generating:
+            return self._recommend_discrete_with_subspaces(
+                subspace_discrete, candidates_exp, batch_size
+            )
         return self._recommend_discrete_without_subspaces(
             subspace_discrete, candidates_exp, batch_size
         )
+
+    def _recommend_discrete_with_subspaces(
+        self,
+        subspace_discrete: SubspaceDiscrete,
+        candidates_exp: pd.DataFrame,
+        batch_size: int,
+    ) -> pd.Index:
+        """Recommend from a discrete space with subspace-generating constraints.
+
+        Partitions the candidate set according to subspace-generating constraints,
+        runs optimization on each feasible partition, and returns the batch with
+        the highest joint acquisition value. Subspaces with fewer candidates
+        than ``batch_size`` are skipped with a warning.
+
+        Args:
+            subspace_discrete: The discrete subspace from which to generate
+                recommendations.
+            candidates_exp: The experimental representation of candidates.
+            batch_size: The size of the recommendation batch.
+
+        Returns:
+            The dataframe indices of the recommended points.
+        """
+        import torch
+
+        masks: Iterable[np.ndarray]
+        if subspace_discrete.n_theoretical_subspaces <= self.max_n_subspaces:
+            masks = subspace_discrete.subspace_masks(
+                candidates_exp, min_candidates=batch_size
+            )
+        else:
+            masks = subspace_discrete.sample_subspace_masks(
+                candidates_exp, self.max_n_subspaces, min_candidates=batch_size
+            )
+
+        def make_callable(
+            mask: np.ndarray,
+        ) -> Callable[[], tuple[pd.Index, Tensor]]:
+            def optimize() -> tuple[pd.Index, Tensor]:
+                subset = candidates_exp.loc[mask]
+
+                idxs = self._recommend_discrete_without_subspaces(
+                    subspace_discrete, subset, batch_size
+                )
+
+                comp = subspace_discrete.transform(candidates_exp.loc[idxs])
+                with torch.no_grad():
+                    acqf_value = self._botorch_acqf(to_tensor(comp).unsqueeze(0))
+                return idxs, acqf_value
+
+            return optimize
+
+        callables = (make_callable(m) for m in masks)
+        best_idxs, _ = self._optimize_over_subspaces(callables)
+        return best_idxs
 
     def _recommend_discrete_without_subspaces(
         self,
@@ -438,7 +498,7 @@ class BotorchRecommender(BayesianRecommender):
         """Generate recommendations from a hybrid search space.
 
         Dispatches to the appropriate optimization routine depending on whether
-        the continuous part contains subspace-generating constraints.
+        subspace-generating constraints are present.
 
         Args:
             searchspace: The search space in which the recommendations should be made.
@@ -449,7 +509,10 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The recommended points.
         """
-        if searchspace.continuous.constraints_subspace_generating:
+        if (
+            searchspace.discrete.constraints_subspace_generating
+            or searchspace.continuous.constraints_subspace_generating
+        ):
             return self._recommend_hybrid_with_subspaces(
                 searchspace, candidates_exp, batch_size
             )
@@ -593,9 +656,10 @@ class BotorchRecommender(BayesianRecommender):
     ) -> pd.DataFrame:
         """Recommend from a hybrid space with subspace-generating constraints.
 
-        Creates subspaces by enumerating/sampling inactive parameter configurations
-        for the continuous part, then runs hybrid optimization per subspace via
-        ``_recommend_hybrid_without_subspaces``.
+        Uses ``SearchSpace.subspace_configurations()`` to enumerate the Cartesian
+        product of discrete and continuous subspace configurations, capped at
+        ``max_n_subspaces`` total. Discrete subspaces with fewer candidates than
+        ``batch_size`` are pre-filtered.
 
         Args:
             searchspace: The search space in which the recommendations should be made.
@@ -610,39 +674,51 @@ class BotorchRecommender(BayesianRecommender):
 
         subspace_c = searchspace.continuous
 
-        # Determine exhaustive vs. sampling
-        configs: Iterable[frozenset[str]]
-        if subspace_c.n_theoretical_subspaces <= self.max_n_subspaces:
-            configs = subspace_c.subspace_configurations()
+        # Get combined configurations, capped at max_n_subspaces
+        # NOTE: No min_discrete_candidates filtering in hybrid spaces because
+        # optimize_acqf_mixed can produce multiple recommendations from a single
+        # discrete candidate by varying continuous parameters.
+        combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
+        if searchspace.n_theoretical_subspaces <= self.max_n_subspaces:
+            combined_masks = searchspace.subspace_masks(candidates_exp)
         else:
-            configs = subspace_c._sample_subspace_configurations(self.max_n_subspaces)
+            combined_masks = searchspace.sample_subspace_masks(
+                candidates_exp, self.max_n_subspaces
+            )
 
         def make_callable(
-            inactive_params: Collection[str],
+            d_mask: np.ndarray,
+            c_inactive_params: frozenset[str],
         ) -> Callable[[], tuple[pd.DataFrame, Tensor]]:
             def optimize() -> tuple[pd.DataFrame, Tensor]:
                 import torch
 
-                modified_cont = subspace_c._enforce_cardinality_constraints(
-                    inactive_params
-                )
-                modified_searchspace = evolve(searchspace, continuous=modified_cont)
+                subset = candidates_exp.loc[d_mask]
+
+                if c_inactive_params:
+                    mod_cont = subspace_c._enforce_cardinality_constraints(
+                        c_inactive_params
+                    )
+                else:
+                    mod_cont = subspace_c
+                mod_searchspace = evolve(searchspace, continuous=mod_cont)
+
                 rec = self._recommend_hybrid_without_subspaces(
-                    modified_searchspace, candidates_exp, batch_size
+                    mod_searchspace, subset, batch_size
                 )
-                # Evaluate joint acquisition value on the recommended points
-                comp = modified_searchspace.transform(rec)
+
+                comp = mod_searchspace.transform(rec)
                 with torch.no_grad():
                     acqf_value = self._botorch_acqf(to_tensor(comp.values).unsqueeze(0))
                 return rec, acqf_value
 
             return optimize
 
-        callables = (make_callable(ip) for ip in configs)
+        callables = (make_callable(d_mask, c_ip) for d_mask, c_ip in combined_masks)
         best_rec, _ = self._optimize_over_subspaces(callables)
 
         # Post-check minimum cardinality on continuous columns
-        if not is_cardinality_fulfilled(
+        if subspace_c.constraints_subspace_generating and not is_cardinality_fulfilled(
             best_rec[list(subspace_c.parameter_names)],
             subspace_c,
             check_maximum=False,
@@ -652,7 +728,8 @@ class BotorchRecommender(BayesianRecommender):
                 "This may occur when parameter ranges extend beyond zero in both "
                 "directions, making the feasible region non-convex. For such "
                 "parameters, minimum cardinality constraints are currently not "
-                "enforced due to the complexity of the resulting optimization problem.",
+                "enforced due to the complexity of the resulting optimization "
+                "problem.",
                 MinimumCardinalityViolatedWarning,
             )
 

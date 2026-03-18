@@ -11,7 +11,11 @@ from attrs import define, field
 from cattrs.gen import make_dict_unstructure_fn
 from typing_extensions import override
 
-from baybe.exceptions import DeprecationError, NotEnoughPointsLeftError
+from baybe.exceptions import (
+    DeprecationError,
+    IncompatibilityError,
+    NotEnoughPointsLeftError,
+)
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.searchspace import SearchSpace
@@ -37,6 +41,10 @@ class PureRecommender(ABC, RecommenderProtocol):
 
     compatibility: ClassVar[SearchSpaceType]
     """Class variable reflecting the search space compatibility."""
+
+    supports_discrete_subspace_constraints: ClassVar[bool] = False
+    """Class variable indicating whether the recommender supports discrete
+    subspace-generating constraints."""
 
     _deprecated_allow_repeated_recommendations: bool = field(
         alias="allow_repeated_recommendations",
@@ -258,6 +266,21 @@ class PureRecommender(ABC, RecommenderProtocol):
                 recommendation than requested.
         """
         is_hybrid_space = searchspace.type is SearchSpaceType.HYBRID
+
+        # Check subspace-generating constraint support
+        if (
+            searchspace.discrete.constraints_subspace_generating
+            and not self.supports_discrete_subspace_constraints
+        ):
+            constraint_types = {
+                type(c).__name__
+                for c in searchspace.discrete.constraints_subspace_generating
+            }
+            raise IncompatibilityError(
+                f"'{self.__class__.__name__}' does not support discrete "
+                f"subspace-generating constraints. The search space contains: "
+                f"{constraint_types}."
+            )
 
         # Get discrete candidates
         candidates_exp, _ = searchspace.discrete.get_candidates()
