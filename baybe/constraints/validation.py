@@ -6,6 +6,7 @@ from itertools import combinations
 from baybe.constraints.base import Constraint
 from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.constraints.discrete import (
+    DiscreteBatchConstraint,
     DiscreteDependenciesConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter
@@ -27,6 +28,7 @@ def validate_constraints(  # noqa: DOC101, DOC103
             :class:`baybe.constraints.discrete.DiscreteDependenciesConstraint` declared.
         ValueError: If any two continuous cardinality constraints have an overlapping
             parameter set.
+        ValueError: If multiple batch constraints reference the same parameter.
         ValueError: If any constraint contains an invalid parameter name.
         ValueError: If any continuous constraint includes a discrete parameter.
         ValueError: If any discrete constraint includes a continuous parameter.
@@ -44,6 +46,16 @@ def validate_constraints(  # noqa: DOC101, DOC103
     validate_cardinality_constraints_are_nonoverlapping(
         [con for con in constraints if isinstance(con, ContinuousCardinalityConstraint)]
     )
+
+    batch_param_names = [
+        c.parameters[0] for c in constraints if isinstance(c, DiscreteBatchConstraint)
+    ]
+    if duplicates := {n for n in batch_param_names if batch_param_names.count(n) > 1}:
+        raise ValueError(
+            f"Multiple '{DiscreteBatchConstraint.__name__}' instances reference "
+            f"the same parameter(s): {duplicates}. Each parameter can have at "
+            f"most one batch constraint."
+        )
 
     param_names_all = [p.name for p in parameters]
     param_names_discrete = [p.name for p in parameters if p.is_discrete]

@@ -7,6 +7,8 @@ from collections.abc import Callable
 from functools import reduce
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from attrs.validators import in_, min_len
@@ -422,6 +424,78 @@ class DiscreteCustomConstraint(DiscreteConstraint):
         mask_bad = ~self.validator(df[self.parameters])
 
         return df.index[mask_bad]
+
+
+@define
+class DiscreteBatchConstraint(DiscreteConstraint):
+    """Constraint ensuring all batch recommendations share the same parameter value.
+
+    When this constraint is active, the recommender internally partitions the
+    candidate set into subspaces — one for each unique value of the constrained
+    parameter — obtains a full batch recommendation from each subspace, and
+    returns the batch with the highest joint acquisition value.
+
+    This constraint is only effective with Bayesian recommenders that have access
+    to an acquisition function for comparing batches. It is not applied during
+    search space creation (all parameter values remain in the search space).
+
+    Example:
+        If parameter ``Temperature`` has values ``[50, 100, 150]`` and a batch of
+        10 is requested, the recommender will generate three candidate batches
+        (one all-50, one all-100, one all-150) and return the best one.
+    """
+
+    # Class variables
+    eval_during_creation: ClassVar[bool] = False
+    eval_during_modeling: ClassVar[bool] = True
+
+    numerical_only: ClassVar[bool] = False
+    # See base class.
+
+    def __attrs_post_init__(self):
+        """Validate that exactly one parameter is specified."""
+        if len(self.parameters) != 1:
+            raise ValueError(
+                f"'{self.__class__.__name__}' requires exactly one parameter, "
+                f"but {len(self.parameters)} were provided: {self.parameters}."
+            )
+
+    @override
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
+        """Get the indices of invalid rows.
+
+        Always returns an empty index because this constraint operates at the
+        batch level, not the row level. Individual rows are never invalid; the
+        constraint is enforced at recommendation time by partitioning candidates
+        into subspaces.
+
+        Args:
+            data: A dataframe where each row represents a parameter configuration.
+
+        Returns:
+            An empty index.
+        """
+        return pd.Index([])
+
+    def subspace_masks(
+        self, candidates_exp: pd.DataFrame
+    ) -> list[npt.NDArray[np.bool_]]:
+        """Return boolean masks defining the subspaces for this constraint.
+
+        Each mask selects the rows in ``candidates_exp`` that belong to one
+        subspace, i.e. share the same value for the constrained parameter.
+
+        Args:
+            candidates_exp: The experimental representation of candidate points.
+
+        Returns:
+            A list of boolean masks, one per unique value of the constrained
+            parameter.
+        """
+        param = self.parameters[0]
+        return [
+            (candidates_exp[param] == v).values for v in candidates_exp[param].unique()
+        ]
 
 
 @define
