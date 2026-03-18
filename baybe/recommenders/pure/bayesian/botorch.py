@@ -302,7 +302,7 @@ class BotorchRecommender(BayesianRecommender):
 
         # Determine search scope based on number of subspace configurations
         configs: Iterable[frozenset[str]]
-        if subspace_continuous.n_subspaces <= self.max_n_subspaces:
+        if subspace_continuous.n_theoretical_subspaces <= self.max_n_subspaces:
             configs = subspace_continuous.subspace_configurations()
         else:
             configs = subspace_continuous._sample_subspace_configurations(
@@ -612,7 +612,7 @@ class BotorchRecommender(BayesianRecommender):
 
         # Determine exhaustive vs. sampling
         configs: Iterable[frozenset[str]]
-        if subspace_c.n_subspaces <= self.max_n_subspaces:
+        if subspace_c.n_theoretical_subspaces <= self.max_n_subspaces:
             configs = subspace_c.subspace_configurations()
         else:
             configs = subspace_c._sample_subspace_configurations(self.max_n_subspaces)

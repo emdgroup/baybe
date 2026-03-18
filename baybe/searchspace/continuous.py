@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import gc
 import math
+import random
 from collections.abc import Collection, Iterator, Sequence
-from itertools import chain, product
+from itertools import chain
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -146,22 +147,62 @@ class SubspaceContinuous(SerialMixin):
             )
 
     @property
-    def n_subspaces(self) -> int:
-        """The number of possible subspace configurations."""
+    def n_theoretical_subspaces(self) -> int:
+        """The theoretical number of possible subspace configurations.
+
+        Returns 0 if no subspace-generating constraints exist, indicating that
+        no decomposition is needed.
+        """
+        if not self.constraints_subspace_generating:
+            return 0
         return math.prod(
             c.n_inactive_parameter_combinations
             for c in self.constraints_subspace_generating
         )
 
-    def subspace_configurations(self) -> Iterator[frozenset[str]]:
-        """Get an iterator over all possible subspace configurations."""
-        for combination in product(
-            *[
-                con.inactive_parameter_combinations()
-                for con in self.constraints_subspace_generating
-            ]
-        ):
-            yield frozenset(chain(*combination))
+    def subspace_configurations(  # noqa: DOC404
+        self,
+        *,
+        shuffle: bool = False,
+        replace: bool = False,
+    ) -> Iterator[frozenset[str]]:
+        """Get an iterator over all possible subspace configurations.
+
+        Args:
+            shuffle: If ``True``, iterate in uniformly shuffled order.
+                Has no effect when ``replace=True``.
+            replace: If ``True``, sample with replacement, producing an
+                infinite iterator where each draw is independent.
+
+        Yields:
+            A frozenset of inactive parameter names for the subspace.
+        """
+        per_constraint = [
+            list(con.inactive_parameter_combinations())
+            for con in self.constraints_subspace_generating
+        ]
+
+        total = math.prod(len(v) for v in per_constraint)
+
+        def _resolve_flat_idx(flat_idx: int) -> frozenset[str]:
+            combo = []
+            remaining = flat_idx
+            for values in per_constraint:
+                remaining, idx = divmod(remaining, len(values))
+                combo.append(values[idx])
+            return frozenset(chain(*combo))
+
+        if replace:
+            candidates = list(range(total))
+            while candidates:
+                idx_pos = random.randint(0, len(candidates) - 1)
+                yield _resolve_flat_idx(candidates[idx_pos])
+        else:
+            order = list(range(total))
+            if shuffle:
+                random.shuffle(order)
+            for flat_idx in order:
+                yield _resolve_flat_idx(flat_idx)
 
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:
