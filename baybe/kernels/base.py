@@ -43,7 +43,12 @@ class Kernel(ABC, SerialMixin):
 
     def __radd__(self, other: Any) -> Kernel:
         """Support right-hand addition for kernel objects."""
-        return self.__add__(other)
+        # Enable use with built-in sum(), which starts with 0 + first_element.
+        if other == 0:
+            return self
+        if isinstance(other, Kernel):
+            return self.__add__(other)
+        return NotImplemented
 
     def __mul__(self, other: Any) -> Kernel:
         """Create a product kernel or scale kernel.
