@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import gc
+import random
 import warnings
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Iterator, Sequence
+from itertools import islice
 from math import prod
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from cattrs import IterableValidationError
@@ -16,6 +19,7 @@ from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
+from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import DeprecationError
 from baybe.parameters import (
     CategoricalEncoding,
@@ -571,6 +575,125 @@ class SubspaceDiscrete(SerialMixin):
             exp_rep_shape=(n_rows, n_cols_exp),
             comp_rep_bytes=comp_rep_bytes,
             comp_rep_shape=(n_rows, n_cols_comp),
+        )
+
+    @property
+    def constraints_subspace_generating(
+        self,
+    ) -> tuple[DiscreteBatchConstraint, ...]:
+        """Constraints generating subspaces for separate optimization."""
+        return tuple(
+            c for c in self.constraints if isinstance(c, DiscreteBatchConstraint)
+        )
+
+    @property
+    def n_theoretical_subspaces(self) -> int:
+        """The theoretical number of possible subspace configurations.
+
+        Returns 0 if no subspace-generating constraints exist, indicating that
+        no decomposition is needed.
+        """
+        if not self.constraints_subspace_generating:
+            return 0
+        return prod(
+            len(self.get_parameters_by_name([c.parameters[0]])[0].active_values)
+            for c in self.constraints_subspace_generating
+        )
+
+    def subspace_masks(  # noqa: DOC404
+        self,
+        candidates_exp: pd.DataFrame,
+        min_candidates: int | None = None,
+        *,
+        shuffle: bool = False,
+        replace: bool = False,
+    ) -> Iterator[npt.NDArray[np.bool_]]:
+        r"""Get an iterator over all possible subspace masks.
+
+        Collects masks from each subspace-generating constraint, iterates the
+        Cartesian product, AND-reduces each combination, and yields feasible
+        combined masks.
+
+        Args:
+            candidates_exp: The experimental representation of candidate points.
+            min_candidates: If provided, combined masks selecting fewer rows
+                are silently skipped.
+            shuffle: If ``True``, iterate in uniformly shuffled order.
+                Has no effect when ``replace=True``.
+            replace: If ``True``, sample with replacement, producing an
+                infinite iterator where each draw is independent. Infeasible
+                indices are permanently excluded from the sampling pool.
+
+        Yields:
+            A boolean mask selecting the subspace's rows.
+        """
+        constraints = self.constraints_subspace_generating
+        if not constraints:
+            per_constraint: list[list[npt.NDArray[np.bool_]]] = [
+                [np.ones(len(candidates_exp), dtype=bool)]
+            ]
+        else:
+            per_constraint = [c.subspace_masks(candidates_exp) for c in constraints]
+
+        total = prod(len(masks) for masks in per_constraint)
+
+        def _resolve_flat_idx(flat_idx: int) -> npt.NDArray[np.bool_]:
+            # Decompose flat index into per-constraint indices.
+            # Example with 3 constraints of subspace lengths [3, 2, 4]:
+            #   flat_idx=11 -> divmod(11,3)=(3,2) -> A[2]
+            #                  divmod(3,2)=(1,1)  -> B[1]
+            #                  divmod(1,4)=(0,1)  -> C[1]
+            #   Result: masks A[2] AND B[1] AND C[1]
+            masks = []
+            remaining = flat_idx
+            for constraint_masks in per_constraint:
+                remaining, idx = divmod(remaining, len(constraint_masks))
+                masks.append(constraint_masks[idx])
+            return np.logical_and.reduce(masks)
+
+        if replace:
+            candidates = list(range(total))
+            while candidates:
+                idx_pos = random.randint(0, len(candidates) - 1)
+                flat_idx = candidates[idx_pos]
+                combined = _resolve_flat_idx(flat_idx)
+                if min_candidates is not None and combined.sum() < min_candidates:
+                    candidates[idx_pos] = candidates[-1]
+                    candidates.pop()
+                    continue
+                yield combined
+        else:
+            order = list(range(total))
+            if shuffle:
+                random.shuffle(order)
+            for flat_idx in order:
+                combined = _resolve_flat_idx(flat_idx)
+                if min_candidates is not None and combined.sum() < min_candidates:
+                    continue
+                yield combined
+
+    def sample_subspace_masks(
+        self,
+        candidates_exp: pd.DataFrame,
+        n: int,
+        min_candidates: int | None = None,
+    ) -> list[npt.NDArray[np.bool_]]:
+        """Sample subspace masks.
+
+        Args:
+            candidates_exp: The experimental representation of candidate points.
+            n: Number of masks to sample.
+            min_candidates: If provided, subspaces with fewer matching
+                candidates are skipped.
+
+        Returns:
+            A list of boolean masks.
+        """
+        return list(
+            islice(
+                self.subspace_masks(candidates_exp, min_candidates, shuffle=True),
+                n,
+            )
         )
 
     def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:
