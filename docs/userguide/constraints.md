@@ -533,3 +533,50 @@ Due to the arbitrary nature of code and dependencies that can be used in the
 using a `DiscreteCustomConstraint` results in an error if you attempt to serialize
 the corresponding object or higher-level objects containing it.
 ```
+
+### DiscreteBatchConstraint
+Unlike the other discrete constraints described above, the
+{class}`~baybe.constraints.discrete.DiscreteBatchConstraint` does not filter candidates
+from the search space. Instead, it controls how recommendations are generated at
+batch level: it ensures that **all experiments in a recommended batch share the same
+value** for the constrained parameter.
+
+This is useful, for example, when experiments in a batch must be run under shared
+conditions. Consider a well plate experiment where each plate holds multiple samples
+but only one temperature can be set per plate. If the optimizer recommends a batch of
+experiments to fill one plate, all of them must use the same temperature. The
+`DiscreteBatchConstraint` enforces this by internally partitioning the candidate space
+into subspaces (one per temperature value), optimizing each subspace independently, and
+selecting the batch with the highest expected utility.
+
+```python
+from baybe.constraints import DiscreteBatchConstraint
+
+DiscreteBatchConstraint(
+    parameters=["Temperature"],  # all batch entries will share the same temperature
+)
+```
+
+Multiple batch constraints on different parameters can be combined. For instance, if
+both the temperature and the solvent must be fixed across the plate, two constraints
+can be specified:
+
+```python
+DiscreteBatchConstraint(parameters=["Temperature"])
+DiscreteBatchConstraint(parameters=["Solvent"])
+```
+
+In this case, each recommended batch will share both the same temperature and the same
+solvent. The optimizer evaluates the Cartesian product of possible value combinations
+and selects the best one.
+
+```{admonition} Recommender Compatibility
+:class: warning
+The `DiscreteBatchConstraint` is only effective with recommenders that can compare
+batch-level outcomes, such as
+{class}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender` and
+{class}`~baybe.recommenders.pure.nonpredictive.sampling.RandomRecommender`.
+Other recommenders will raise an
+{class}`~baybe.exceptions.IncompatibilityError` if a search space with batch
+constraints is used.
+```
