@@ -10,10 +10,6 @@ from typing_extensions import override
 
 from baybe.parameters.base import Parameter
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.gaussian_process.presets.core import (
-    GaussianProcessPreset,
-    make_gp_from_preset,
-)
 from baybe.surrogates.gaussian_process.utils import _ModelContext
 
 if TYPE_CHECKING:
@@ -38,11 +34,6 @@ class GaussianProcessSurrogateSTMF(Surrogate):
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
-
-    @staticmethod
-    def from_preset(preset: GaussianProcessPreset) -> Surrogate:
-        """Create a Gaussian process surrogate from one of the defined presets."""
-        return make_gp_from_preset(preset)
 
     @override
     def to_botorch(self) -> GPyTorchModel:

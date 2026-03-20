@@ -7,9 +7,6 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEMeanFactory,
 )
 
-# Core
-from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
-
 # EDBO preset
 from baybe.surrogates.gaussian_process.presets.edbo import (
     EDBOKernelFactory,
