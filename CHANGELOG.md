@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scalar conversion
 - Using `np.isclose` for assessing equality of `Interval` bounds instead of hard
   equality check
+- `DiscretePermutationInvarianceConstraint` no longer erroneously removes diagonal
+  points (e.g., where all permuted parameters have the same value)
 
 ### Changed
 - The `Campaign.allow_*` flag mechanism is now based on `AutoBool` logic, providing

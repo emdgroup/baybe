@@ -294,9 +294,7 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     """Constraint class for declaring that a set of parameters is permutation invariant.
 
     More precisely, this means that, ``(val_from_param1, val_from_param2)`` is
-    equivalent to ``(val_from_param2, val_from_param1)``. Since it does not make sense
-    to have this constraint with duplicated labels, this implementation also internally
-    applies the :class:`baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`.
+    equivalent to ``(val_from_param2, val_from_param1)``.
 
     *Note:* This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
@@ -308,15 +306,6 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
 
     @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # Get indices of entries with duplicate label entries. These will also be
-        # dropped by this constraint.
-        mask_duplicate_labels = pd.Series(False, index=data.index)
-        mask_duplicate_labels[
-            DiscreteNoLabelDuplicatesConstraint(parameters=self.parameters).get_invalid(
-                data
-            )
-        ] = True
-
         # Merge a permutation invariant representation of all affected parameters with
         # the other parameters and indicate duplicates. This ensures that variation in
         # other parameters is also accounted for.
@@ -327,20 +316,14 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
                 data[self.parameters].apply(cast(Callable, frozenset), axis=1),
             ],
             axis=1,
-        ).loc[
-            ~mask_duplicate_labels  # only consider label-duplicate-free part
-        ]
+        )
         mask_duplicate_permutations = df_eval.duplicated(keep="first")
 
-        # Indices of entries with label-duplicates
-        inds_duplicate_labels = data.index[mask_duplicate_labels]
-
-        # Indices of duplicate permutations in the (already label-duplicate-free) data
-        inds_duplicate_permutations = df_eval.index[mask_duplicate_permutations]
+        # Indices of duplicate permutations
+        inds_invalid = data.index[mask_duplicate_permutations]
 
         # If there are dependencies connected to the invariant parameters evaluate them
         # here and remove resulting duplicates with a DependenciesConstraint
-        inds_invalid = inds_duplicate_labels.union(inds_duplicate_permutations)
         if self.dependencies:
             self.dependencies.permutation_invariant = True
             inds_duplicate_independency_adjusted = self.dependencies.get_invalid(
