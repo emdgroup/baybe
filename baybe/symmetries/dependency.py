@@ -45,7 +45,7 @@ class DependencySymmetry(Symmetry):
         converter=Converter(  # type: ignore[misc,call-overload]  # mypy: Converter
             normalize_convertible2str_sequence, takes_self=True, takes_field=True
         ),
-        validator=(  # type: ignore
+        validator=(
             validate_unique_values,
             deep_iterable(
                 member_validator=instance_of(str), iterable_validator=min_len(1)

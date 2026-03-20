@@ -35,7 +35,7 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
         converter=Converter(  # type: ignore[misc,call-overload]  # mypy: Converter
             normalize_convertible2str_sequence, takes_self=True, takes_field=True
         ),
-        validator=(
+        validator=(  # type: ignore[arg-type]  # mypy: validator tuple
             validate_unique_values,
             deep_iterable(
                 member_validator=(instance_of((str, bool)), _validate_label_min_len),
