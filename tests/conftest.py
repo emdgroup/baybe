@@ -242,7 +242,7 @@ def fixture_parameters(
         NumericalDiscreteParameter(
             name="Fraction_1",
             values=tuple(np.linspace(0, 100, n_grid_points)),
-            tolerance=0.2,
+            tolerance=0.5,
         ),
         NumericalDiscreteParameter(
             name="Fraction_2",
