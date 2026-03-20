@@ -42,6 +42,18 @@ def nonstring_to_tuple(x: Sequence[_T], self: type, field: Attribute) -> tuple[_
     return tuple(x)
 
 
+def normalize_convertible2str_sequence(
+    value: Sequence[str | bool], self: type, field: Attribute
+) -> tuple[str | bool, ...]:
+    """Sort and convert values for a sequence of string-convertible types.
+
+    If the sequence is a string itself, this is blocked to avoid unintended iteration
+    over its characters.
+    """
+    value = nonstring_to_tuple(value, self, field)
+    return tuple(sorted(value, key=lambda x: (str(type(x)), x)))
+
+
 def _indent(text: str, amount: int = 3, ch: str = " ") -> str:
     """Indent a given text by a certain amount."""
     padding = amount * ch
