@@ -6,6 +6,7 @@ the utilization of custom models. All surrogate models are based upon the genera
 [`Surrogate`](baybe.surrogates.base.Surrogate) class. Some models even support transfer
 learning, as indicated by the `supports_transfer_learning` attribute.
 
+
 ## Available Models
 
 BayBE provides a comprehensive selection of surrogate models, empowering you to choose
@@ -93,7 +94,6 @@ A noticeable difference to the replication approach is that manual assembly requ
 the exact set of target variables to be known at the time the object is created.
 
 
-
 ## Extracting the Model for Advanced Study
 
 In principle, the surrogate model does not need to be a persistent object during
@@ -116,6 +116,22 @@ explainer = shap.Explainer(model, data)
 shap_values = explainer(data)
 shap.plots.bar(shap_values)
 ~~~
+
+
+(surrogate_data_augmentation)=
+## Data Augmentation
+In certain situations like [mixture modeling](/examples/Mixtures/slot_based),
+symmetries are present. Data augmentation is a model-agnostic way of enabling the 
+surrogate model to learn such symmetries effectively, which might result in a better 
+performance, similar as e.g. for image classification models. BayBE 
+`Surrogate`[baybe.surrogates.base.Surrogate] models automatically perform data 
+augmentation if 
+{attr}`~baybe.surrogates.base.Surrogate.symmetries` with 
+`use_data_augmentation=True` are present. This means you can add a data point in
+any acceptable representation and BayBE will train the model on this point plus 
+augmented points that can be generated from it. To see the effect in practice, refer to 
+[this example](/examples/Symmetries/permutation).
+
 
 ## Using Custom Models
 
