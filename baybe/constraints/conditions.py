@@ -95,7 +95,7 @@ class Condition(ABC, SerialMixin):
     """Abstract base class for all conditions.
 
     Conditions always evaluate an expression regarding a single parameter.
-    Conditions are part of constraints, a constraint can have multiple conditions.
+    Conditions are part of constraints and symmetries.
     """
 
     @abstractmethod
