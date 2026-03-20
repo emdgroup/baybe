@@ -1,6 +1,7 @@
 """Validation tests for symmetry."""
 
 import numpy as np
+import pandas as pd
 import pytest
 from pytest import param
 
@@ -121,6 +122,55 @@ valid_config_dep = {
             r"Entries appearing multiple times: \['a1'\].",
             id="dep_affected_not_unique",
         ),
+        param(
+            PermutationSymmetry,
+            {"permutation_groups": "abc"},
+            ValueError,
+            "must be a sequence of sequences, not a string",
+            id="perm_groups_bare_string",
+        ),
+        param(
+            PermutationSymmetry,
+            {"permutation_groups": ["abc", "def"]},
+            ValueError,
+            "must be a sequence of parameter names, not a string",
+            id="perm_groups_inner_bare_string",
+        ),
+        param(
+            MirrorSymmetry,
+            {"parameter_name": 123},
+            TypeError,
+            "must be <class 'str'>",
+            id="mirror_param_not_str",
+        ),
+        param(
+            DependencySymmetry,
+            valid_config_dep | {"n_discretization_points": 3.5},
+            TypeError,
+            "must be <class 'int'>",
+            id="dep_n_discretization_not_int",
+        ),
+        param(
+            DependencySymmetry,
+            valid_config_dep | {"n_discretization_points": 1},
+            ValueError,
+            "must be >= 2",
+            id="dep_n_discretization_too_small",
+        ),
+        param(
+            DependencySymmetry,
+            valid_config_dep | {"affected_parameter_names": "abc"},
+            ValueError,
+            "must be a sequence but cannot be a string",
+            id="dep_affected_bare_string",
+        ),
+        param(
+            PermutationSymmetry,
+            {"permutation_groups": [["a", "b"]], "use_data_augmentation": 1},
+            TypeError,
+            "must be <class 'bool'>",
+            id="use_aug_not_bool",
+        ),
     ],
 )
 def test_configuration(cls, config, error, msg):
@@ -225,3 +275,17 @@ def test_searchspace_context(searchspace, symmetry, error, msg):
         recommender.recommend(
             1, searchspace, t.to_objective(), measurements=measurements
         )
+
+
+def test_dependency_augmentation_requires_parameters():
+    """DependencySymmetry.augment_measurements raises when parameters is None."""
+    s = DependencySymmetry(**valid_config_dep)
+    df = pd.DataFrame({"n1": [0], "n2": [1], "cat1": ["a"]})
+    with pytest.raises(ValueError, match="requires parameter objects"):
+        s.augment_measurements(df)
+
+
+def test_surrogate_rejects_non_symmetry():
+    """Surrogate.symmetries rejects non-Symmetry members."""
+    with pytest.raises(TypeError, match="must be <class"):
+        GaussianProcessSurrogate(symmetries=("not_a_symmetry",))
