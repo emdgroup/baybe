@@ -10,13 +10,11 @@ from typing_extensions import override
 
 from baybe.parameters.base import Parameter
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.gaussian_process.core import (
-    _ModelContext,
-)
 from baybe.surrogates.gaussian_process.presets.core import (
     GaussianProcessPreset,
     make_gp_from_preset,
 )
+from baybe.surrogates.gaussian_process.utils import _ModelContext
 
 if TYPE_CHECKING:
     from botorch.models.gpytorch import GPyTorchModel

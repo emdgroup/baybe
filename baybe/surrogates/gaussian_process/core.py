@@ -46,6 +46,7 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBELikelihoodFactory,
     BayBEMeanFactory,
 )
+from baybe.surrogates.gaussian_process.utils import _ModelContext
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 
@@ -58,80 +59,6 @@ if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
-
-
-# TODO Jordan MHS: _ModelContext is used by fidelity surrogate models now so may deserve
-# its own file.
-@define
-class _ModelContext:
-    """Model context for :class:`GaussianProcessSurrogate`."""
-
-    searchspace: SearchSpace = field(validator=instance_of(SearchSpace))
-    """The search space the model is trained on."""
-
-    objective: Objective = field(validator=instance_of(Objective))
-    """The objective for which the model is trained."""
-
-    measurements: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
-    """The training data in experimental representation."""
-
-    @property
-    def task_idx(self) -> int | None:
-        """The computational column index of the task parameter, if available."""
-        return self.searchspace.task_idx
-
-    @property
-    def is_multitask(self) -> bool:
-        """Indicates if model is to be operated in a multi-task context."""
-        return self.n_task_dimensions > 0
-
-    @property
-    def n_task_dimensions(self) -> int:
-        """The number of task dimensions."""
-        # TODO: Generalize to multiple task parameters
-        return 1 if self.task_idx is not None else 0
-
-    @property
-    def n_tasks(self) -> int:
-        """The number of tasks."""
-        return self.searchspace.n_tasks
-
-    @property
-    def n_fidelity_dimensions(self) -> int:
-        """The number of fidelity dimensions."""
-        # Possible TODO: Generalize to multiple fidelity dimensions
-        return 1 if self.searchspace.fidelity_idx is not None else 0
-
-    @property
-    def is_multi_fidelity(self) -> bool:
-        """Are there any fidelity dimensions?"""
-        return self.n_fidelity_dimensions > 0
-
-    @property
-    def fidelity_idx(self) -> int | None:
-        """The computational column index of the task parameter, if available."""
-        return self.searchspace.fidelity_idx
-
-    @property
-    def n_fidelities(self) -> int:
-        """The number of fidelities."""
-        return self.searchspace.n_fidelities
-
-    @property
-    def parameter_bounds(self) -> Tensor:
-        """Get the search space parameter bounds in BoTorch Format."""
-        import torch
-
-        return torch.from_numpy(self.searchspace.scaling_bounds.to_numpy(copy=True))
-
-    @property
-    def numerical_indices(self) -> list[int]:
-        """The indices of the regular numerical model inputs."""
-        return [
-            i
-            for i in range(len(self.searchspace.comp_rep_columns))
-            if i not in (self.task_idx, self.fidelity_idx)
-        ]
 
 
 def _mark_custom_kernel(
