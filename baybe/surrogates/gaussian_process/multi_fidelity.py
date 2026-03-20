@@ -30,8 +30,6 @@ class GaussianProcessSurrogateSTMF(Surrogate):
     supports_multi_fidelity: ClassVar[bool] = True
     # See base class.
 
-    # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
-    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
@@ -44,7 +42,6 @@ class GaussianProcessSurrogateSTMF(Surrogate):
     def _make_parameter_scaler_factory(
         parameter: Parameter,
     ) -> type[InputTransform] | None:
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         return None
 
     @override
@@ -66,9 +63,8 @@ class GaussianProcessSurrogateSTMF(Surrogate):
 
         context = _ModelContext(self._searchspace)
 
-        assert context.is_multi_fidelity, (
-            "GaussianProcessSurrogateSTMF can only "
-            "be fit on multi fidelity searchspaces."
+        assert context.n_fidelity_dimensions > 0, (
+            f"{self.__class__.__name__} can only be fit on multi fidelity searchspaces."
         )
 
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
@@ -96,7 +92,12 @@ class GaussianProcessSurrogateSTMF(Surrogate):
 
     @override
     def __str__(self) -> str:
-        return "SingleTaskMultiFidelityGP with Botorch defaults."
+        return (
+            "Wrapper for a"
+            ":class:`~botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP`,"
+            "used as the default GP for discrete numerical fidelity parameters in,"
+            "e.g., multi fidelity knowledge gradient."
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

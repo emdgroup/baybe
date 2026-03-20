@@ -46,13 +46,8 @@ class _ModelContext:
         return 1 if self.searchspace.fidelity_idx is not None else 0
 
     @property
-    def is_multi_fidelity(self) -> bool:
-        """Are there any fidelity dimensions?"""
-        return self.n_fidelity_dimensions > 0
-
-    @property
     def fidelity_idx(self) -> int | None:
-        """The computational column index of the task parameter, if available."""
+        """The computational column index of the fidelity parameter, if available."""
         return self.searchspace.fidelity_idx
 
     @property

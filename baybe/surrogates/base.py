@@ -82,11 +82,11 @@ class SurrogateProtocol(Protocol):
 class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Abstract base class for all surrogate models."""
 
-    supports_transfer_learning: ClassVar[bool]
+    supports_transfer_learning: ClassVar[bool] = False
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
-    supports_multi_fidelity: ClassVar[bool]
+    supports_multi_fidelity: ClassVar[bool] = False
     """Class variable encoding whether or not the surrogate supports multi fidelity
     Bayesian optimization."""
 
