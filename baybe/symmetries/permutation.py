@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 from collections.abc import Iterable, Sequence
 from itertools import combinations
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from attrs import define, field
@@ -132,10 +132,8 @@ class PermutationSymmetry(Symmetry):
             searchspace: The searchspace to validate against.
 
         Raises:
-            TypeError: If parameters within a permutation group do not have the
-                same type.
-            ValueError: If parameters within a permutation group do not have a
-                compatible set of values.
+            ValueError: If parameters within a permutation group are not
+                equivalent (i.e., differ in type or specification).
         """
         super().validate_searchspace_context(searchspace)
 
@@ -145,33 +143,14 @@ class PermutationSymmetry(Symmetry):
         # parameters they are being permuted with.
         for group in self.permutation_groups:
             params = searchspace.get_parameters_by_name(group)
-
-            # All parameters in a group must be of the same type
-            if len(types := {type(p).__name__ for p in params}) != 1:
-                raise TypeError(
-                    f"In a '{self.__class__.__name__}', all parameters being "
-                    f"permuted with each other must have the same type. "
-                    f"However, the following multiple types were found in the "
-                    f"permutation group {group}: {types}."
-                )
-
-            # All parameters in a group must have the same values. Numerical
-            # parameters are not considered here since technically for them
-            # this restriction is not required as all numbers can be added if
-            # the tolerance is configured accordingly.
-            if all(p.is_discrete and not p.is_numerical for p in params):
-                from baybe.parameters.base import DiscreteParameter
-
-                ref_vals = set(cast(DiscreteParameter, params[0]).values)
-                if any(
-                    set(cast(DiscreteParameter, p).values) != ref_vals
-                    for p in params[1:]
-                ):
+            ref = params[0]
+            for p in params[1:]:
+                if not ref.is_equivalent(p):
                     raise ValueError(
-                        f"The parameter group {group} contains "
-                        f"parameters with different values. All "
-                        f"parameters in a group must have the same "
-                        f"specification."
+                        f"In a '{self.__class__.__name__}', all parameters "
+                        f"within a permutation group must be equivalent. "
+                        f"However, '{ref.name}' and '{p.name}' differ in "
+                        f"their specification."
                     )
 
 
