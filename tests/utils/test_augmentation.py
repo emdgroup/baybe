@@ -22,7 +22,7 @@ from baybe.utils.augmentation import (
                 },
                 "index": [0, 1],
             },
-            [["A"], ["B"]],
+            [["A", "B"]],
             {
                 "data": {
                     "A": [1, 2, 1, 2],
@@ -41,7 +41,7 @@ from baybe.utils.augmentation import (
                 },
                 "index": [0, 1],
             },
-            [["A"], ["B"]],
+            [["A", "B"]],
             {
                 "data": {
                     "A": [1, 2, 1, 2],
@@ -60,7 +60,7 @@ from baybe.utils.augmentation import (
                 },
                 "index": [0, 1],
             },
-            [["A"], ["B"]],
+            [["A", "B"]],
             {
                 "data": {
                     "A": [1, 2, 1, 2],
@@ -80,7 +80,7 @@ from baybe.utils.augmentation import (
                 },
                 "index": [0, 1],
             },
-            [["A"], ["B"]],
+            [["A", "B"]],
             {
                 "data": {
                     "A": [1, 2, 1, 2],
@@ -91,7 +91,7 @@ from baybe.utils.augmentation import (
             },
             id="2inv+degen_target+degen",
         ),
-        param(  # 3 invariant groups with 1 entry each
+        param(  # 3 invariant cols in one group
             {
                 "data": {
                     "A": [1, 1],
@@ -101,7 +101,7 @@ from baybe.utils.augmentation import (
                 },
                 "index": [0, 1],
             },
-            [["A"], ["B"], ["C"]],
+            [["A", "B", "C"]],
             {
                 "data": {
                     "A": [1, 1, 2, 2, 3, 3, 1, 1, 4, 4, 5, 5],
@@ -113,7 +113,7 @@ from baybe.utils.augmentation import (
             },
             id="3inv_1add",
         ),
-        param(  # 2 groups with 2 entries each, 2 additional columns
+        param(  # 2 lockstep groups with 2 entries each, 2 additional columns
             {
                 "data": {
                     "Slot1": ["s1", "s2"],
@@ -125,7 +125,7 @@ from baybe.utils.augmentation import (
                 },
                 "index": [0, 1],
             },
-            [["Slot1", "Frac1"], ["Slot2", "Frac2"]],
+            [["Slot1", "Slot2"], ["Frac1", "Frac2"]],
             {
                 "data": {
                     "Slot1": ["s1", "s2", "s2", "s4"],
@@ -139,7 +139,7 @@ from baybe.utils.augmentation import (
             },
             id="2inv_2dependent_2add",
         ),
-        param(  # 2 groups with 3 entries each, 1 additional column
+        param(  # 3 lockstep groups with 2 entries each, 1 additional column
             {
                 "data": {
                     "Slot1": ["s1", "s2"],
@@ -152,7 +152,7 @@ from baybe.utils.augmentation import (
                 },
                 "index": [0, 1],
             },
-            [["Slot1", "Frac1", "Temp1"], ["Slot2", "Frac2", "Temp2"]],
+            [["Slot1", "Slot2"], ["Frac1", "Frac2"], ["Temp1", "Temp2"]],
             {
                 "data": {
                     "Slot1": ["s1", "s2", "s2", "s4"],
@@ -187,10 +187,9 @@ def test_df_permutation_aug(content, col_groups, content_expected):
 @pytest.mark.parametrize(
     ("col_groups", "msg"),
     [
-        param([], "at least two column sequences", id="no_groups"),
-        param([["A"]], "at least two column sequences", id="just_one_group"),
-        param([["A"], ["B", "C"]], "the amount of columns in", id="different_lengths"),
-        param([[], []], "each column group has", id="empty_group"),
+        param([], "at least one group", id="no_groups"),
+        param([["A"]], "at least two entries", id="group_too_small"),
+        param([["A", "B"], ["C"]], "same number of entries", id="different_lengths"),
     ],
 )
 def test_df_permutation_aug_invalid(col_groups, msg):

@@ -8,24 +8,29 @@ import pandas as pd
 
 def df_apply_permutation_augmentation(
     df: pd.DataFrame,
-    column_groups: Sequence[Sequence[str]],
+    permutation_groups: Sequence[Sequence[str]],
 ) -> pd.DataFrame:
     """Augment a dataframe if permutation invariant columns are present.
 
+    Each group in ``permutation_groups`` contains the names of columns that are
+    permuted in lockstep. All groups must have the same length, and that length
+    must be at least 2 (otherwise there is nothing to permute).
+
     Args:
         df: The dataframe that should be augmented.
-        column_groups: Sequences of permutation invariant columns. The n'th column in
-            each group will be permuted together with each n'th column in the other
-            groups.
+        permutation_groups: Groups of column names that are permuted in lockstep.
+            For example, ``[["A1", "A2"], ["B1", "B2"]]`` means that the columns
+            ``A1`` and ``A2`` are permuted, and ``B1`` and ``B2`` are permuted
+            in the same way.
 
     Returns:
         The augmented dataframe containing the original one. Augmented row indices are
         identical with the index of their original row.
 
     Raises:
-        ValueError: If less than two column groups are given.
-        ValueError: If a column group is empty.
-        ValueError: If the column groups have differing amounts of entries.
+        ValueError: If no permutation groups are given.
+        ValueError: If any permutation group has fewer than two entries.
+        ValueError: If the permutation groups have differing amounts of entries.
 
     Examples:
         >>> df = pd.DataFrame({'A1':[1,2],'A2':[3,4], 'B1': [5, 6], 'B2': [7, 8]})
@@ -34,8 +39,8 @@ def df_apply_permutation_augmentation(
         0   1   3   5   7
         1   2   4   6   8
 
-        >>> column_groups = [['A1'], ['A2']]
-        >>> dfa = df_apply_permutation_augmentation(df, column_groups)
+        >>> groups = [['A1', 'A2']]
+        >>> dfa = df_apply_permutation_augmentation(df, groups)
         >>> dfa
            A1  A2  B1  B2
         0   1   3   5   7
@@ -43,8 +48,8 @@ def df_apply_permutation_augmentation(
         1   2   4   6   8
         1   4   2   6   8
 
-        >>> column_groups = [['A1', 'B1'], ['A2', 'B2']]
-        >>> dfa = df_apply_permutation_augmentation(df, column_groups)
+        >>> groups = [['A1', 'A2'], ['B1', 'B2']]
+        >>> dfa = df_apply_permutation_augmentation(df, groups)
         >>> dfa
            A1  A2  B1  B2
         0   1   3   5   7
@@ -53,36 +58,35 @@ def df_apply_permutation_augmentation(
         1   4   2   8   6
     """
     # Validation
-    if len(column_groups) < 2:
+    if len(permutation_groups) < 1:
+        raise ValueError("Permutation augmentation requires at least one group.")
+
+    if len({len(seq) for seq in permutation_groups}) != 1:
         raise ValueError(
-            "When augmenting permutation invariance, at least two column sequences "
-            "must be given."
+            "Permutation augmentation can only work if all groups have the same "
+            "number of entries."
         )
 
-    if len({len(seq) for seq in column_groups}) != 1:
+    if len(permutation_groups[0]) < 2:
         raise ValueError(
-            "Permutation augmentation can only work if the amount of columns in each "
-            "sequence is the same."
-        )
-    elif len(column_groups[0]) < 1:
-        raise ValueError(
-            "Permutation augmentation can only work if each column group has at "
-            "least one entry."
+            "Permutation augmentation can only work if each group has at "
+            "least two entries."
         )
 
     # Augmentation Loop
+    n_positions = len(permutation_groups[0])
     new_rows: list[pd.DataFrame] = []
-    idx_permutation = list(permutations(range(len(column_groups))))
+    idx_permutation = list(permutations(range(n_positions)))
     for _, row in df.iterrows():
         # For each row in the original df, collect all its permutations
         to_add = []
         for perm in idx_permutation:
             new_row = row.copy()
 
-            # Permute columns, this is done separately for each tuple of columns that
-            # belong together
-            for deps in map(list, zip(*column_groups)):
-                new_row[deps] = row[[deps[k] for k in perm]]
+            # Permute columns within each group according to the permutation
+            for group in permutation_groups:
+                cols = list(group)
+                new_row[cols] = row[[cols[k] for k in perm]]
 
             to_add.append(new_row)
 
