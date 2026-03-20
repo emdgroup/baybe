@@ -36,7 +36,7 @@ valid_config_dep = {
             MirrorSymmetry,
             valid_config_mirror | {"mirror_point": np.inf},
             ValueError,
-            "values containing infinity/nan to attribute 'mirror_point': inf",
+            "values containing infinity/nan to 'mirror_point': inf",
             id="mirror_nonfinite",
         ),
         param(
