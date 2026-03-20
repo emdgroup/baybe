@@ -62,8 +62,8 @@ class SearchSpaceType(Enum):
 class SearchSpaceTaskType(Enum):
     """Enum class for different types of task and/or fidelity subspaces."""
 
-    SINGLETASK = "SINGLETASK"
-    """Flag for search spaces with no task parameters."""
+    NOTASK = "NOTASK"
+    """Flag for search spaces with a single task, meaning no task parameter."""
 
     CATEGORICALTASK = "CATEGORICALTASK"
     """Flag for search spaces with a categorical task parameter."""
@@ -311,9 +311,8 @@ class SearchSpace(SerialMixin):
 
     @property
     def fidelity_idx(self) -> int | None:
-        """The column index of the task parameter in computational representation."""
+        """Column index of the fidelity parameter in computational representation."""
         try:
-            # See TODO [16932] and TODO [11611]
             fidelity_param = next(
                 p
                 for p in self.parameters
@@ -341,8 +340,7 @@ class SearchSpace(SerialMixin):
 
     @property
     def n_fidelities(self) -> int:
-        """The number of tasks encoded in the search space."""
-        # See TODO [16932]
+        """The number of fidelities encoded in the search space."""
         try:
             fidelity_param = next(
                 p
@@ -362,20 +360,23 @@ class SearchSpace(SerialMixin):
     def n_task_dimensions(self) -> int:
         """The number of task dimensions."""
         try:
-            # See TODO [16932]
-            fidelity_param = next(
-                p for p in self.parameters if isinstance(p, (TaskParameter,))
+            task_param = next(
+                p
+                for p in self.parameters
+                if isinstance(
+                    p,
+                    (TaskParameter),
+                )
             )
         except StopIteration:
-            fidelity_param = None
+            task_param = None
 
-        return 1 if fidelity_param is not None else 0
+        return 1 if task_param is not None else 0
 
     @property
     def n_fidelity_dimensions(self) -> int:
         """The number of fidelity dimensions."""
         try:
-            # See TODO [16932]
             fidelity_param = next(
                 p
                 for p in self.parameters
@@ -394,8 +395,8 @@ class SearchSpace(SerialMixin):
         """Return the task type of the search space.
 
         Raises:
-            ValueError: If searchspace contains more than one task/fidelity parameter.
-            ValueError: An unrecognised fidelity parameter type is in SearchSpace.
+            ValueError: If search space contains more than one task/fidelity parameter.
+            ValueError: An unrecognised fidelity parameter type is in search space.
         """
         task_like_parameters = (
             TaskParameter,
@@ -408,14 +409,14 @@ class SearchSpace(SerialMixin):
         )
 
         if n_task_like_parameters == 0:
-            return SearchSpaceTaskType.SINGLETASK
+            return SearchSpaceTaskType.NOTASK
         elif n_task_like_parameters > 1:
             # TODO: commute this validation further downstream.
             # In case of user-defined custom models which allow for multiple task
             # parameters, this should be later in recommender logic.
             #  * Should this be an IncompatibilityError?
             raise ValueError(
-                "SearchSpace must not contain more than one task/fidelity parameter."
+                "Search space must not contain more than one task/fidelity parameter."
             )
             return SearchSpaceTaskType.MULTIPLETASKPARAMETER
 
@@ -660,7 +661,7 @@ class SearchSpace(SerialMixin):
 
     @property
     def constraints_augmentable(self) -> tuple[Constraint, ...]:
-        """The searchspace constraints that can be considered during augmentation."""
+        """The search space constraints that can be considered during augmentation."""
         return tuple(c for c in self.constraints if c.eval_during_augmentation)
 
     def get_parameters_by_name(self, names: Sequence[str]) -> tuple[Parameter, ...]:
