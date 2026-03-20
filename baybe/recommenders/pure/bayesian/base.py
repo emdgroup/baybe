@@ -114,6 +114,10 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"{len(objective.targets)}-target multi-output context."
             )
 
+        # Perform data augmentation if configured
+        if hasattr(s := self._surrogate_model, "augment_measurements"):
+            measurements = s.augment_measurements(measurements, searchspace.parameters)
+
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = acqf.to_botorch(
             surrogate,
@@ -156,6 +160,12 @@ class BayesianRecommender(PureRecommender, ABC):
 
         validate_object_names(searchspace.parameters + objective.targets)
 
+        # Validate compatibility of surrogate symmetries with searchspace
+        if hasattr(self._surrogate_model, "symmetries"):
+            for s in self._surrogate_model.symmetries:
+                s.validate_searchspace_context(searchspace)
+
+        # Experimental input validation
         if (measurements is None) or measurements.empty:
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "

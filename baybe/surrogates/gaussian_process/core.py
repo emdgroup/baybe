@@ -142,7 +142,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
-        import botorch
+        import botorch.models.transforms
         import gpytorch
         import torch
         from botorch.models.transforms import Normalize, Standardize
