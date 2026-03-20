@@ -13,7 +13,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-from baybe import Campaign
+from baybe import Campaign, Settings
 from baybe.constraints import DiscretePermutationInvarianceConstraint
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import (
@@ -24,11 +24,10 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.surrogates import NGBoostSurrogate
 from baybe.targets import NumericalTarget
-from baybe.utils.random import set_random_seed
 
 # ## Settings
 
-set_random_seed(1337)
+Settings(random_seed=1337).activate()
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 100
 N_DOE_ITERATIONS = 2 if SMOKE_TEST else 50
