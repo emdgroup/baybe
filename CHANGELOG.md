@@ -15,10 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interpoint constraints for continuous search spaces
 - Transfer learning benchmarks for shifted and inverted Hartmann functions
 - Coding convention instructions for agentic developers (`AGENTS.md`, `CLAUDE.md`)
+- Symmetry classes (`PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry`)
+  for expressing invariances and configuring surrogate data augmentation
+- `Parameter.is_equivalent` method for structural parameter comparison
 
 ### Breaking Changes
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
   instead of a single tuple (needed for interpoint constraints)
+- `df_apply_permutation_augmentation` has a different interface and now expects
+  permutation groups instead of column groups
 
 ### Fixed
 - `SHAPInsight` breaking with `numpy>=2.4` due to no longer accepted implicit array to 
