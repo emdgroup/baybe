@@ -97,14 +97,10 @@ def make_MFUCB_dicts(
     dict[int, tuple[float, ...]],
 ]:
     """Construct column indices and values of costs, fidelities and values for MFUCB."""
-    fidelity_params = {
-        p
-        for i, p in enumerate(searchspace.parameters)
-        if isinstance(p, CategoricalFidelityParameter)
-    }
+    fidelity_params = (
+        p for p in searchspace.parameters if isinstance(p, CategoricalFidelityParameter)
+    )
 
-    # Jordan MHS TODO: typing awkward since integer values in comp_df not explicitly
-    # typed. Seek help here.
     fidelities_dict = {
         i: tuple(p.comp_df.iloc[:, 0]) for i, p in enumerate(fidelity_params)
     }
@@ -122,4 +118,5 @@ def make_MFUCB_dicts(
         else tuple(0 for _ in p.values)
         for i, p in enumerate(fidelity_params)
     }
+
     return fidelities_dict, costs_dict, zetas_dict
