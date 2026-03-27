@@ -62,24 +62,24 @@ class SearchSpaceType(Enum):
 class SearchSpaceTaskType(Enum):
     """Enum class for different types of task and/or fidelity subspaces."""
 
-    NOTASK = "NOTASK"
+    SINGLETASK = "SINGLETASK"
     """Flag for search spaces with a single task, meaning no task parameter."""
 
-    CATEGORICALTASK = "CATEGORICALTASK"
+    CATEGORICALMULTITASK = "CATEGORICALMULTITASK"
     """Flag for search spaces with a categorical task parameter."""
 
-    NUMERICALFIDELITY = "NUMERICALFIDELITY"
+
+class SearchSpaceFidelityType(Enum):
+    """Enum class for different types of task and/or fidelity subspaces."""
+
+    SINGLEFIDELITY = "SINGLEFIDELITY"
+    """Flag for search spaces with a single fidelity, meaning no fidelity parameter."""
+
+    NUMERICALDISCRETEMULTIFIDELITY = "NUMERICALDISCRETEMULTIFIDELITY"
     """Flag for search spaces with a discrete numerical (ordered) fidelity parameter."""
 
-    CATEGORICALFIDELITY = "CATEGORICALFIDELITY"
+    CATEGORICALMULTIFIDELITY = "CATEGORICALMULTIFIDELITY"
     """Flag for search spaces with a categorical (unordered) fidelity parameter."""
-
-    # TODO: Distinguish between multiple task parameter and mixed task parameter types.
-    # In future versions, multiple task/fidelity parameters may be allowed. For now,
-    # they are disallowed, whether the task-like parameters are different or the same
-    # class.
-    MULTIPLETASKPARAMETER = "MULTIPLETASKPARAMETER"
-    """Flag for search spaces with mixed task and fidelity parameters."""
 
 
 @define
@@ -292,15 +292,32 @@ class SearchSpace(SerialMixin):
         if not params:
             return None
 
-        assert len(params) == 1  # currently ensured by parameter validation step
+        return params[0]
+
+    @property
+    def _fidelity_parameter(
+        self,
+    ) -> NumericalDiscreteFidelityParameter | CategoricalFidelityParameter | None:
+        """The (single) fidelity parameter of the space, if it exists."""
+        # Currently private, see comment above
+        fidelity_parameters = (
+            NumericalDiscreteFidelityParameter,
+            CategoricalFidelityParameter,
+        )
+
+        params = [p for p in self.parameters if isinstance(p, fidelity_parameters)]
+
+        if not params:
+            return None
+
         return params[0]
 
     @property
     def task_idx(self) -> int | None:
-        """The column index of the task parameter in computational representation."""
+        """Column index of the task parameter in computational representation."""
         if (task_param := self._task_parameter) is None:
             return None
-        # TODO[11611]: The current approach has three limitations:
+        # TODO [11611]: The current approach has three limitations:
         #   1.  It matches by column name and thus assumes that the parameter name
         #       is used as the column name.
         #   2.  It relies on the current implementation detail that discrete parameters
@@ -312,18 +329,9 @@ class SearchSpace(SerialMixin):
     @property
     def fidelity_idx(self) -> int | None:
         """Column index of the fidelity parameter in computational representation."""
-        try:
-            fidelity_param = next(
-                p
-                for p in self.parameters
-                if isinstance(
-                    p,
-                    (CategoricalFidelityParameter, NumericalDiscreteFidelityParameter),
-                )
-            )
-        except StopIteration:
+        if (fidelity_param := self._fidelity_parameter) is None:
             return None
-
+        # See TODO [11611] above
         return cast(int, self.discrete.comp_rep.columns.get_loc(fidelity_param.name))
 
     @property
@@ -341,103 +349,50 @@ class SearchSpace(SerialMixin):
     @property
     def n_fidelities(self) -> int:
         """The number of fidelities encoded in the search space."""
-        try:
-            fidelity_param = next(
-                p
-                for p in self.parameters
-                if isinstance(
-                    p,
-                    (CategoricalFidelityParameter, NumericalDiscreteFidelityParameter),
-                )
-            )
-            return len(fidelity_param.values)
-
-        # When there are no fidelity parameters, we effectively have a single fidelity
-        except StopIteration:
+        # See TODO [16932] above
+        if (fidelity_param := self._fidelity_parameter) is None:
+            # When there are no task parameters, we effectively have a single task
             return 1
-
-    @property
-    def n_task_dimensions(self) -> int:
-        """The number of task dimensions."""
-        try:
-            task_param = next(
-                p
-                for p in self.parameters
-                if isinstance(
-                    p,
-                    (TaskParameter),
-                )
-            )
-        except StopIteration:
-            task_param = None
-
-        return 1 if task_param is not None else 0
-
-    @property
-    def n_fidelity_dimensions(self) -> int:
-        """The number of fidelity dimensions."""
-        try:
-            fidelity_param = next(
-                p
-                for p in self.parameters
-                if isinstance(
-                    p,
-                    (CategoricalFidelityParameter, NumericalDiscreteFidelityParameter),
-                )
-            )
-        except StopIteration:
-            fidelity_param = None
-
-        return 1 if fidelity_param is not None else 0
+        return len(fidelity_param.values)
 
     @property
     def task_type(self) -> SearchSpaceTaskType:
-        """Return the task type of the search space.
+        """Return the task type of the search space."""
+        task_parameters = (p for p in self.parameters if isinstance(p, TaskParameter))
 
-        Raises:
-            ValueError: If search space contains more than one task/fidelity parameter.
-            ValueError: An unrecognised fidelity parameter type is in search space.
-        """
-        task_like_parameters = (
-            TaskParameter,
+        if len(task_parameters) == 0:
+            return SearchSpaceTaskType.SINGLETASK
+        elif len(task_parameters) == 1:
+            return SearchSpaceTaskType.CATEGORICALMULTITASK
+        else:
+            raise NotImplementedError(
+                "BayBE does not currently support search"
+                "spaces with multiple task parameters."
+            )
+
+    def fidelity_type(self) -> SearchSpaceFidelityType:
+        """Return the fidelity type of the search space."""
+        fidelity_parameters = (
             CategoricalFidelityParameter,
             NumericalDiscreteFidelityParameter,
         )
 
-        n_task_like_parameters = sum(
-            isinstance(p, (task_like_parameters)) for p in self.parameters
+        fidelity_parameters = (
+            p for p in self.parameters if isinstance(p, fidelity_parameters)
         )
 
-        if n_task_like_parameters == 0:
-            return SearchSpaceTaskType.NOTASK
-        elif n_task_like_parameters > 1:
-            # TODO: commute this validation further downstream.
-            # In case of user-defined custom models which allow for multiple task
-            # parameters, this should be later in recommender logic.
-            #  * Should this be an IncompatibilityError?
-            raise ValueError(
-                "Search space must not contain more than one task/fidelity parameter."
+        if len(fidelity_parameters) == 0:
+            return SearchSpaceFidelityType.SINGLEFIDELITY
+        elif len(fidelity_parameters) == 1:
+            if isinstance(fidelity_parameters[0], CategoricalFidelityParameter):
+                return SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+            if isinstance(fidelity_parameters[0], NumericalDiscreteFidelityParameter):
+                return SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+        else:
+            raise NotImplementedError(
+                "BayBE does not currently support search"
+                "spaces with multiple fidelity parameters."
             )
-            return SearchSpaceTaskType.MULTIPLETASKPARAMETER
-
-        if self.n_task_dimensions == 1:
-            return SearchSpaceTaskType.CATEGORICALTASK
-
-        if self.n_fidelity_dimensions == 1:
-            n_categorical_fidelity_dims = sum(
-                isinstance(p, CategoricalFidelityParameter) for p in self.parameters
-            )
-            if n_categorical_fidelity_dims == 1:
-                return SearchSpaceTaskType.CATEGORICALFIDELITY
-
-            n_numerical_disc_fidelity_dims = sum(
-                isinstance(p, NumericalDiscreteFidelityParameter)
-                for p in self.parameters
-            )
-            if n_numerical_disc_fidelity_dims == 1:
-                return SearchSpaceTaskType.NUMERICALFIDELITY
-
-        raise RuntimeError("This line should be impossible to reach.")
 
     @property
     def n_subsets(self) -> int:
