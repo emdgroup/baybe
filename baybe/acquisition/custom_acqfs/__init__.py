@@ -5,7 +5,6 @@ from baybe.acquisition.custom_acqfs.two_stage import (
 )
 
 __all__ = [
-    ######################### Acquisition functions
-    # Upper Confidence Bound
+    # Multi fidelity acquisition functions
     "MultiFidelityUpperConfidenceBound",
 ]

@@ -8,7 +8,7 @@ from typing import cast
 
 import torch
 from attrs import define, field
-from attrs.validators import deep_iterable, deep_mapping, ge, instance_of
+from attrs.validators import deep_iterable, deep_mapping, ge, instance_of, or_
 from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
@@ -42,19 +42,17 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
     selection of design points). The model must be single-outcome.
     """
 
-    # Jordan MHS NOTE: typing awkward here since register_buffer does not declare attr.
+    # Declaring attribute types for variables defined via _register_buffer.
     fidelity_columns: Tensor
     fidelities_comb: Tensor
     zetas_comb: Tensor
     costs_comb: Tensor
 
     model: Model = field(validator=instance_of(Model))
-    """A fitted single-outcome GP model.
-    """
+    """A fitted single-outcome GP model."""
 
-    beta: float | Tensor = field(validator=[instance_of(float), ge(0.0)])
-    """Trade-off parameter between mean and covariance.
-    """
+    beta: float | Tensor = field(validator=or_(instance_of(float), instance_of(Tensor)))
+    """Trade-off parameter between mean and covariance."""
 
     fidelities: dict[int, tuple[float, ...]] = field(
         validator=deep_mapping(
@@ -66,8 +64,7 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
             mapping_validator=instance_of(dict),
         )
     )
-    """Computational representation of fidelity values.
-    """
+    """Computational representation of fidelity values."""
 
     costs: dict[int, tuple[float, ...]] = field(
         validator=deep_mapping(
@@ -106,8 +103,7 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
     softmin_temperature: float = field(
         converter=float, validator=[finite_float, ge(0.0)], default=1e-2
     )
-    """Smoothing parameter for gradient-based optimization of the design.
-    """
+    """Smoothing parameter for gradient-based optimization of the design."""
 
     posterior_transform: PosteriorTransform | None = field(default=None)
     """PosteriorTransform used to convert multi-output posteriors to
@@ -115,8 +111,7 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
     """
 
     maximize: bool = field(default=True)
-    """If True, treat the problem as a maximization problem.
-    """
+    """If True, treat the problem as a maximization problem."""
 
     def __post_attrs_init__(self) -> None:
         super().__init__(model=self.model, posterior_transform=self.posterior_transform)

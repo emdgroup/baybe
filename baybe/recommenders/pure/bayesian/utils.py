@@ -1,4 +1,4 @@
-"""Utils for bayesian recommenders."""
+"""Utils for Bayesian recommenders."""
 
 from attrs import evolve
 
