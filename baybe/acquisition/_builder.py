@@ -77,7 +77,9 @@ class BotorchAcquisitionArgs:
     # Optional, depending on the specific acquisition function being used
     best_f: float | None = _OPT_FIELD
     beta: float | None = _OPT_FIELD
+    costs_dict: dict[Any, tuple[float, ...]] = _OPT_FIELD
     current_value: Tensor | None = _OPT_FIELD
+    fidelities_dict: dict[Any, tuple[Any, ...]] = _OPT_FIELD
     maximize: bool | None = _OPT_FIELD
     mc_points: Tensor | None = _OPT_FIELD
     num_fantasies: int | None = _OPT_FIELD
@@ -89,6 +91,7 @@ class BotorchAcquisitionArgs:
     ref_point: Tensor | None = _OPT_FIELD
     X_baseline: Tensor | None = _OPT_FIELD
     X_pending: Tensor | None = _OPT_FIELD
+    zetas_dict: dict[Any, tuple[float, ...]] = _OPT_FIELD
 
     def collect(self) -> dict[str, Any]:
         """Collect the assigned arguments into a dictionary."""
@@ -284,12 +287,9 @@ class BotorchAcquisitionFunctionBuilder:
                 FixedFeatureAcquisitionFunction,
             )
 
-            # Jordan MHS TODO: check where fidelity--acqf compatibility logic should be.
-            assert self.searchspace.fidelity_idx is not None, "Unreachable error."
-
             curr_val_acqf = FixedFeatureAcquisitionFunction(
                 acq_function=PosteriorMean(self._botorch_surrogate),
-                d=7,
+                d=len(self.searchspace.parameters),
                 columns=[
                     self.searchspace.fidelity_idx,
                 ],
