@@ -78,7 +78,7 @@ class BayesianRecommender(PureRecommender, ABC):
             if searchspace.task_type == SearchSpaceTaskType.NUMERICALFIDELITY:
                 return qMFKG()
 
-            elif searchspace.task_type == SearchSpaceTaskType.CATEGORICALTASK:
+            elif searchspace.task_type == SearchSpaceTaskType.CATEGORICALFIDELITY:
                 return MFUCB()
 
             return qLogNEHVI() if objective.is_multi_output else qLogEI()
