@@ -27,7 +27,6 @@ how the results can be post-analysed.
 :class: only-light
 ```
 
-
 Detailed examples of how to use individual API components can be found below:
 
 ```{toctree}
