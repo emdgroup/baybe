@@ -246,7 +246,7 @@ For each development, ensure `tox -e mypy-py310` runs without problems.
 - CHANGELOG.md updated in every PR (CI enforced). Specific entries, complete
   sentences. Commit named "Update CHANGELOG" as last commit.
 - Use imperative in commit header, e.g. "Add", "Fix", "Rework", "Handle", "Adjust", etc.
-- Keep commit body short and informative. Do not add commit body of it has no
+- Keep commit body short and informative. Do not add commit body if it has no
   additional info compared to the header.
 - Pre-commit must pass. Clean history: squash add/revert pairs, no debug prints.
 - Create a separate commit for logical steps, neither per-file nor one giant commit.
