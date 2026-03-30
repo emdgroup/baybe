@@ -7,7 +7,7 @@ from typing import Any
 
 
 def AdditiveKernel(*args: Any, **kwargs: Any):
-    """Return the renamed SumKernel class."""
+    """Return an instance of the renamed SumKernel."""
     warnings.warn(
         "The use of `AdditiveKernel` is deprecated and will be "
         "removed in a future version. Use `SumKernel` instead.",
