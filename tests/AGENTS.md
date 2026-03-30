@@ -32,8 +32,8 @@
   ```
 - Tests can override by parametrizing `*_names` fixtures:
   `@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])`
-- Prefer local fixtures** over adding to conftest. Autouse `reset_settings` fixture 
-  restores global state before every test. Only one `conftest.py` ex(top-level).
+- **Prefer local fixtures** over adding to `conftest.py`. The autouse `reset_settings` fixture 
+  restores global state before every test. Only one top-level `conftest.py` exists.
 
 ## Parametrization
 - Avoid creating multiple test functions with similar content. Generalize content
