@@ -1,5 +1,6 @@
 """Kernel tests."""
 
+import math
 from typing import Any
 
 import numpy as np
@@ -115,6 +116,7 @@ def test_add_produces_additive_kernel():
     assert len(result.base_kernels) == 2
     assert isinstance(result.base_kernels[0], MaternKernel)
     assert isinstance(result.base_kernels[1], RBFKernel)
+    assert sum([MaternKernel(), RBFKernel()]) == result
 
 
 def test_add_chain_flattens():
@@ -129,6 +131,9 @@ def test_mul_produces_product_kernel():
     result = MaternKernel() * RBFKernel()
     assert isinstance(result, ProductKernel)
     assert len(result.base_kernels) == 2
+    assert isinstance(result.base_kernels[0], MaternKernel)
+    assert isinstance(result.base_kernels[1], RBFKernel)
+    assert math.prod([MaternKernel(), RBFKernel()]) == result
 
 
 def test_mul_chain_flattens():
