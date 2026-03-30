@@ -1,7 +1,7 @@
 # AGENTS.md — BayBE Testing Conventions
 
 ## Framework
-**pytest exclusively.** No `unittest.TestCase`. Us `assert`, `pytest.raises`,
+**pytest exclusively.** No `unittest.TestCase`. Use `assert`, `pytest.raises`,
 `pytest.warns`, `pytest.mark.*`. Config in `pytest.ini`: `--doctest-modules`,
 `xfail_strict=True`.
 
