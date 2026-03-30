@@ -17,9 +17,11 @@ Config in `docs/conf.py`.
 - Contains explanations for high-level concepts
 - Provides runnable code snippets, uses admonitions, links to relevant examples. Keep
   the snippets very concise 
-- Use "```" admonitions for runnable code that is also tested in the doc tests
-- Use "~~~" admonitions for code examples that cannot be tested, e.g. if they
-  reference objects that do not exist within the snippet or the test fixtures
+- Use fenced code blocks with triple backticks (e.g. ```python) for runnable code that
+  is also tested in the doc tests
+- Use fenced code blocks with tildes (e.g. ~~~python) for code examples that cannot be
+  tested, e.g. if they reference objects that do not exist within the snippet or the
+  test fixtures
 
 ## MyST Syntax Reference
 - Cross-refs: "{class}`~baybe.campaign.Campaign`",
