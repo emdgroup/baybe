@@ -35,7 +35,11 @@ experimental design. It targets Python 3.10+.
   factory classmethods (`from_product`, `from_dataframe`, `from_parameter`) instead of
   if-else chains
 - Explicit over implicit: No silent errors — raise immediately. Validate eagerly
-  at construction time. Side effects after validation only
+  at construction time. Side effects after validation only. Never fall back to
+  degraded or "best effort" mode — if a dependency is missing, data is malformed,
+  or a precondition is not met, abort. Fail before expensive downstream
+  computation (surrogate fitting, acquisition optimization) when prerequisites
+  are not satisfied
 - Separation of concerns: Target transformation ("what/how to transform") is
   separate from objective ("how to combine targets"). Surrogate owns data
   scaling/transformation; recommender owns recommendation logic.
@@ -171,6 +175,8 @@ Custom `@classproperty` from `baybe.utils.basic` for class-level computed proper
 - Custom errors and warnings can be found in `baybe/exceptions.py`.
 - f-strings with self-documenting expressions: `f"{batch_size=}"`.
 - Always chain exceptions: `raise ... from ex`.
+- No partial results: Either the full operation succeeds or it raises. Invalid
+  inputs must not produce partial or silently degraded outputs.
 - Warnings originate at source level. Use specific warning classes, not bare `Warning`.
 
 ## 9. Serialization
@@ -264,6 +270,8 @@ For each development, ensure `tox -e mypy-py310` runs without problems.
 - No private field names in user-facing messages — use public alias.
 - No hardcoded class names in repr/errors — use `self.__class__.__name__`.
 - No silent errors. No mutation of caller-provided dicts.
+- No silent defaults or "best effort" fallbacks — if input is invalid, raise.
+- No proceeding past failed preconditions into expensive computation.
 - No stale cross-references. No inconsistent terminology in docstrings.
 - No conftest pollution — prefer local fixtures.
 - Tests must test what they claim. No duplicated test logic — parametrize.
