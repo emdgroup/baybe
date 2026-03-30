@@ -1182,28 +1182,10 @@ In addition, BayBE can also be installed with its optional <code class="docutils
 </section>
 <section id="reproducibility">
 <h2>Reproducibility<a class="headerlink" href="#reproducibility" title="Link to this heading">¶</a></h2>
-<p>In some scenarios, for instance when testing your code setup, it can be useful to fix
-the random seeds for all relevant engines to generate reproducible results. BayBE offers
-the <a class="reference internal" href="../_autosummary/baybe.utils.random.set_random_seed.html#baybe.utils.random.set_random_seed" title="baybe.utils.random.set_random_seed"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">set_random_seed</span></code></span></a> utility for this purpose:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_random_seed</span>
-
-<span class="c1"># Set the global random seed for all relevant engines</span>
-<span class="n">set_random_seed</span><span class="p">(</span><span class="mi">1337</span><span class="p">)</span>
-
-<span class="c1"># Assuming we have a prepared campaign</span>
-<span class="n">campaign</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Setting the global random seed can be undesirable if there are other packages in your
-setup that might unintentionally be influenced by this. For this, BayBE offers
-<a class="reference internal" href="../_autosummary/baybe.utils.random.temporary_seed.html#baybe.utils.random.temporary_seed" title="baybe.utils.random.temporary_seed"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">temporary_seed</span></code></span></a>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">temporary_seed</span>
-
-<span class="c1"># Set the random seed for all relevant engines temporarily within the context</span>
-<span class="k">with</span> <span class="n">temporary_seed</span><span class="p">(</span><span class="mi">1337</span><span class="p">):</span>
-    <span class="n">campaign</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-</pre></div>
-</div>
+<p>The <a class="reference internal" href="../_autosummary/baybe.utils.random.set_random_seed.html#baybe.utils.random.set_random_seed" title="baybe.utils.random.set_random_seed"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">set_random_seed</span></code></span></a> and
+<a class="reference internal" href="../_autosummary/baybe.utils.random.temporary_seed.html#baybe.utils.random.temporary_seed" title="baybe.utils.random.temporary_seed"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">temporary_seed</span></code></span></a> utilities are deprecated
+and users should instead use the
+<a class="reference internal" href="settings.html#random-seed-control"><span class="std std-ref">Settings</span></a> mechanism for random seed control.</p>
 </section>
 <section id="adding-fake-target-measurements-and-parameter-noise">
 <h2>Adding Fake Target Measurements and Parameter Noise<a class="headerlink" href="#adding-fake-target-measurements-and-parameter-noise" title="Link to this heading">¶</a></h2>

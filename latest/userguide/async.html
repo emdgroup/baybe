@@ -1166,8 +1166,8 @@ and start the next recommendation, marking the other half pending:</p>
 <span class="n">rec</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
 <span class="c1"># Split recommendations into two parts</span>
-<span class="n">rec_finished</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
-<span class="n">rec_pending</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">5</span><span class="p">:]</span>
+<span class="n">rec_finished</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">rec_pending</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">5</span><span class="p">:]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
 <span class="c1"># Add target measurements to the finished part. Here we add fake results</span>
 <span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">rec_finished</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>

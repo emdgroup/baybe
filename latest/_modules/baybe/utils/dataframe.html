@@ -1892,8 +1892,8 @@
             <span class="n">obj</span><span class="p">,</span> <span class="n">NumericalTarget</span>
         <span class="p">)</span>
 
-    <span class="c1"># Find columns that are not of float dtype but should be</span>
-    <span class="n">wrong_cols</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># Find columns that need conversion to float</span>
+    <span class="n">cols_to_convert</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">o</span><span class="o">.</span><span class="n">name</span>
         <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">objects</span>
         <span class="k">if</span> <span class="n">needs_float_dtype</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
@@ -1901,18 +1901,22 @@
         <span class="ow">and</span> <span class="ow">not</span> <span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_float_dtype</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
     <span class="p">]</span>
 
-    <span class="c1"># If there are no issues, return the original</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">wrong_cols</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cols_to_convert</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">df</span>
 
-    <span class="c1"># Make a copy of the dataframe and convert problematic column data types</span>
-    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;The following columns have unexpected data types: </span><span class="si">{</span><span class="n">wrong_cols</span><span class="si">}</span><span class="s2">. &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;Converting to float internally.&quot;</span><span class="p">,</span>
-        <span class="n">InputDataTypeWarning</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="c1"># Warn only about truly problematic types (not integers)</span>
+    <span class="n">warn_cols</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols_to_convert</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_integer_dtype</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">warn_cols</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;The following columns have unexpected data types: </span><span class="si">{</span><span class="n">warn_cols</span><span class="si">}</span><span class="s2">. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Converting to float internally.&quot;</span><span class="p">,</span>
+            <span class="n">InputDataTypeWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+
     <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">wrong_cols</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols_to_convert</span><span class="p">:</span>
         <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">active_settings</span><span class="o">.</span><span class="n">DTypeFloatNumpy</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">df</span></div>
 

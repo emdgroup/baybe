@@ -71,8 +71,8 @@ from baybe.utils.dataframe import add_fake_measurements
 rec = campaign.recommend(batch_size=10)
 
 # Split recommendations into two parts
-rec_finished = rec.iloc[:5]
-rec_pending = rec.iloc[5:]
+rec_finished = rec.iloc[:5].copy()
+rec_pending = rec.iloc[5:].copy()
 
 # Add target measurements to the finished part. Here we add fake results
 add_fake_measurements(rec_finished, campaign.targets)

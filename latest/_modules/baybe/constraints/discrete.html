@@ -1399,18 +1399,17 @@
         <span class="n">other_params</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">all_affected_params</span><span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="p">)</span>
-        <span class="n">df_eval</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">censored_data</span><span class="p">[</span><span class="n">other_params</span><span class="p">],</span>
-                <span class="n">censored_data</span><span class="p">[</span><span class="n">all_affected_params</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
-                    <span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">permutation_invariant</span>
-                    <span class="k">else</span> <span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">),</span>
-                    <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                <span class="p">),</span>
-            <span class="p">],</span>
+        <span class="n">invariant_indicator</span> <span class="o">=</span> <span class="n">censored_data</span><span class="p">[</span><span class="n">all_affected_params</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">permutation_invariant</span>
+            <span class="k">else</span> <span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">),</span>
             <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="c1"># Only include the other_params DataFrame if it is non-empty to avoid</span>
+        <span class="c1"># pandas FutureWarning about concatenation with empty entries</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">censored_data</span><span class="p">[</span><span class="n">other_params</span><span class="p">]]</span> <span class="k">if</span> <span class="n">other_params</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">invariant_indicator</span><span class="p">)</span>
+        <span class="n">df_eval</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">inds_bad</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">df_eval</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="s2">&quot;first&quot;</span><span class="p">)]</span>
 
         <span class="k">return</span> <span class="n">inds_bad</span></div>

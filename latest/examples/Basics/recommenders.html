@@ -1306,15 +1306,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent             Base                        Ligand  \
-354       p-Xylene  Cesium pivalate                 (t-Bu)PhCPhos   
-126  Butyornitrile   Cesium acetate  Di-tert-butylphenylphosphine   
-353       p-Xylene  Cesium pivalate                 (t-Bu)PhCPhos   
+           Solvent                Base                        Ligand  \
+169  Butyornitrile   Potassium acetate                 (t-Bu)PhCPhos   
+428       p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
+351       p-Xylene     Cesium pivalate                 (t-Bu)PhCPhos   
 
      Temperature  Concentration  
-354        105.0          0.057  
-126         90.0          0.057  
-353         90.0          0.153  
+169        120.0          0.100  
+428        105.0          0.153  
+351         90.0          0.057  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1323,15 +1323,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent             Base                        Ligand  \
-354       p-Xylene  Cesium pivalate                 (t-Bu)PhCPhos   
-126  Butyornitrile   Cesium acetate  Di-tert-butylphenylphosphine   
-353       p-Xylene  Cesium pivalate                 (t-Bu)PhCPhos   
+           Solvent                Base                        Ligand  \
+169  Butyornitrile   Potassium acetate                 (t-Bu)PhCPhos   
+428       p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
+351       p-Xylene     Cesium pivalate                 (t-Bu)PhCPhos   
 
      Temperature  Concentration      yield  
-354        105.0          0.057  59.823214  
-126         90.0          0.057  24.820606  
-353         90.0          0.153 -88.948368  
+169        120.0          0.100   5.526492  
+428        105.0          0.153  98.141801  
+351         90.0          0.057  19.788653  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
