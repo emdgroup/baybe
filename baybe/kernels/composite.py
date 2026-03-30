@@ -37,8 +37,10 @@ class ScaleKernel(CompositeKernel):
     """An optional initial value for the output scale."""
 
     outputscale_trainable: bool = field(default=True, validator=instance_of(bool))
-    """Whether the output scale parameter is trainable. If ``False``, the output scale
-    is frozen at its initial value and excluded from optimization."""
+    """Boolean flag indicating whether the output scale is trainable.
+
+    If ``False``, the output scale is frozen at its initial value and excluded from
+    optimization."""
 
     @override
     def to_gpytorch(self, *args, **kwargs):
