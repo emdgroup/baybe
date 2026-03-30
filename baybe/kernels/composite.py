@@ -57,7 +57,7 @@ class ScaleKernel(CompositeKernel):
 
 
 @define(frozen=True)
-class SumKernel(CompositeKernel):
+class AdditiveKernel(CompositeKernel):
     """A kernel representing the sum of a collection of base kernels."""
 
     base_kernels: tuple[Kernel, ...] = field(

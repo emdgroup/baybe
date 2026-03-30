@@ -11,7 +11,7 @@ from pytest import param
 
 from baybe.kernels.base import BasicKernel, Kernel
 from baybe.kernels.basic import IndexKernel, MaternKernel, RBFKernel
-from baybe.kernels.composite import ProductKernel, ScaleKernel, SumKernel
+from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from tests.hypothesis_strategies.kernels import kernels
 
 # TODO: Consider deprecating these attribute names to avoid inconsistencies
@@ -108,19 +108,19 @@ def test_kernel_assembly(kernel: Kernel):
     validate_gpytorch_kernel_components(kernel, k, **kwargs)
 
 
-def test_add_produces_sum_kernel():
-    """Adding two kernels produces a SumKernel."""
+def test_add_produces_additive_kernel():
+    """Adding two kernels produces an AdditiveKernel."""
     result = MaternKernel() + RBFKernel()
-    assert isinstance(result, SumKernel)
+    assert isinstance(result, AdditiveKernel)
     assert len(result.base_kernels) == 2
     assert isinstance(result.base_kernels[0], MaternKernel)
     assert isinstance(result.base_kernels[1], RBFKernel)
 
 
 def test_add_chain_flattens():
-    """Chaining additions flattens into a single SumKernel."""
+    """Chaining additions flattens into a single AdditiveKernel."""
     result = MaternKernel() + RBFKernel() + MaternKernel(0.5)
-    assert isinstance(result, SumKernel)
+    assert isinstance(result, AdditiveKernel)
     assert len(result.base_kernels) == 3
 
 

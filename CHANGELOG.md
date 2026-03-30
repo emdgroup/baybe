@@ -45,7 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The environment variable `BAYBE_PARALLEL_SIMULATION_RUNS` has been replaced with
   `BAYBE_PARALLELIZE_SIMULATION_RUNS` linked to the `parallelize_simulation_runs`
   attribute of the new `Settings` class
-- `AdditiveKernel` has been replaced with `SumKernel`
 
 ## [0.14.2] - 2026-01-14
 ### Added

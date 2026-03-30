@@ -14,8 +14,7 @@ from baybe.kernels.basic import (
     RFFKernel,
     RQKernel,
 )
-from baybe.kernels.composite import ProductKernel, ScaleKernel, SumKernel
-from baybe.kernels.deprecation import AdditiveKernel
+from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 
 __all__ = [
     "AdditiveKernel",
@@ -29,5 +28,4 @@ __all__ = [
     "RFFKernel",
     "RQKernel",
     "ScaleKernel",
-    "SumKernel",
 ]
