@@ -114,7 +114,7 @@ jobs:
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
-      - name: Run pip-audit
+      - name: Run uv audit
         run: |
           pip install tox-uv
           tox -e audit-${{ matrix.py-version.tox }}

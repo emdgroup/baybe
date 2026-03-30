@@ -56,7 +56,7 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 
 # AUDIT NOTE: The marked packages are secondary dependencies but their versions are
 # set explicitly because the otherwise installed default versions have been flagged
-# for vulnerabilities by pip-audit
+# for vulnerabilities by uv audit
 
 [project.optional-dependencies]
 extras = [
@@ -93,7 +93,6 @@ dev = [
     "baybe[mypy]",
     "baybe[test]",
     "baybe[benchmarking]",
-    "pip-audit>=2.5.5",
     "setuptools-scm>=7.1.0",
     "tox-uv>=1.7.0",
     "uv>=0.11.3",

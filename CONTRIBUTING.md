@@ -117,7 +117,7 @@ If you have questions or problems, simply ask for advice.
 | [pytest](https://docs.pytest.org/)                                                              | testing                                   |
 | [pytest-cov](https://pytest-cov.readthedocs.io/)                                                | measuring test coverage                   |
 | [sphinx](https://www.sphinx-doc.org/)                                                           | generating our documentation              |
-| [pip-audit](https://github.com/pypa/pip-audit)                                                  | detecting vulnerabilities in dependencies |
+| [uv audit](https://docs.astral.sh/uv/reference/cli/#uv-audit)                                   | detecting vulnerabilities in dependencies |
 | [tox](https://tox.wiki/)                                                                        | orchestrating all the above               |
 
 Executing a specific one of these tools is easiest by using the corresponding
