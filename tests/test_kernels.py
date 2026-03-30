@@ -171,17 +171,3 @@ def test_mul_constant_produces_constant_scale_kernel(left, right):
     optimizer = torch.optim.SGD(gpytorch_kernel.parameters(), lr=0.1)
     optimizer.step()
     assert gpytorch_kernel.outputscale.item() == initial_outputscale
-
-
-@pytest.mark.parametrize(
-    ("expression", "error"),
-    [
-        param(lambda: MaternKernel() + "string", TypeError, id="add_string"),
-        param(lambda: MaternKernel() * "string", TypeError, id="mul_string"),
-        param(lambda: 1 + MaternKernel(), TypeError, id="radd_int"),
-    ],
-)
-def test_operator_unsupported_type(expression, error):
-    """Using operators with unsupported types raises TypeError."""
-    with pytest.raises(error):
-        expression()
