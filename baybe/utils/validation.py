@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Sequence
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
-from attrs import Attribute, fields_dict
+from attrs import Attribute
 
 from baybe.exceptions import IncompleteMeasurementsError
 from baybe.settings import active_settings
@@ -294,38 +294,3 @@ def validate_unique_values(  # noqa: DOC101, DOC103
             f"Entries appearing multiple times: {duplicates}. "
             f"All entries of '{attribute.alias}' must be unique."
         )
-
-
-def validate_dict_shape(
-    reference_name: str, /
-) -> Callable[[Any, Attribute, Mapping[Any, Any]], None]:
-    """Make validator to check attribute keys/lengths against a reference attribute."""
-
-    def validator(obj: Any, attribute: Attribute, value: Mapping[Any, Any]) -> None:  # noqa: DOC101, DOC103
-        """Validate that the input has the same keys/lengths as the reference attribute.
-
-        Raises:
-            ValueError: If the keys of the two attributes mismatch.
-            ValueError: If the tuple lengths of the two attributes mismatch at any key.
-        """
-        other_attr = fields_dict(type(obj))[reference_name]
-        other_instance = getattr(obj, reference_name)
-
-        if set(value.keys()) != set(other_instance.keys()):
-            raise ValueError(
-                f"{attribute.name} must have the same keys as {other_attr.alias} in "
-                f"{obj.name}."
-            )
-
-        for k, tup in value.items():
-            other_tup = other_instance[k]
-
-            if len(tup) != len(other_tup):
-                raise ValueError(
-                    f"The lengths of the attributes '{other_attr.alias}' and "
-                    f"'{attribute.alias}' do not match for '{obj.name}' at the key {k}."
-                    f"Length of '{other_attr.alias}' at key {k}: {len(other_tup)}. "
-                    f"Length of '{attribute.alias}' at key {k}: {len(tup)}."
-                )
-
-    return validator
