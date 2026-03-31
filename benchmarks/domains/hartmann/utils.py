@@ -37,12 +37,12 @@ class CustomHartmann(Hartmann):
         self.shift = shift if shift is not None else [0.0] * bounds.shape[0]
 
         # Shift the bounds
-        # Explanation: To obtain the function value of a shifted function,
-        # the underlying function is profiled at a shifted location.
-        # Thus, an input x+shift is passed into the base Hartmann function.
-        # To ensure that the shifted input x+shift remains within the bounds,
-        # we need to adjust the bounds accordingly.
-        # If shift is negative, the lower bound must be adapted, else the upper one.
+        # The original Hartmann function throws an error if it is called outside of its
+        # bounds ([0,1] by default). However, it is technically feasible to evaluate it
+        # outside of the default unit interval. To enable passing of the validation for
+        # our shifted variant, we simply expand the bounds by an appropriate amount
+        # that depends on ``shift``. The bounds used in the benchmark search space
+        # remain unchanged.
         bounds = list(
             map(
                 tuple,
