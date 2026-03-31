@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any
 
 from attrs import define, field
 from typing_extensions import override
@@ -28,12 +28,6 @@ if TYPE_CHECKING:
 @define
 class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
     """A multi-armed bandit model with Bernoulli likelihood and beta prior."""
-
-    supports_transfer_learning: ClassVar[bool] = False
-    # See base class.
-
-    supports_multi_fidelity: ClassVar[bool] = False
-    # See base class.
 
     prior: BetaPrior = field(factory=lambda: BetaPrior(1, 1))
     """The beta prior for the win rates of the bandit arms. Uniform by default."""
