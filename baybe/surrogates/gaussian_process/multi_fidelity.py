@@ -24,9 +24,6 @@ if TYPE_CHECKING:
 class GaussianProcessSurrogateSTMF(Surrogate):
     """Botorch's single task multi fidelity Gaussian process."""
 
-    supports_transfer_learning: ClassVar[bool] = False
-    # See base class.
-
     supports_multi_fidelity: ClassVar[bool] = True
     # See base class.
 

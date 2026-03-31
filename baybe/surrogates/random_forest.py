@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection
-from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypedDict
+from typing import TYPE_CHECKING, Literal, Protocol, TypedDict
 
 import numpy as np
 import numpy.typing as npt
@@ -60,12 +60,6 @@ class _Predictor(Protocol):
 @define
 class RandomForestSurrogate(Surrogate):
     """A random forest surrogate model."""
-
-    supports_transfer_learning: ClassVar[bool] = False
-    # See base class.
-
-    supports_multi_fidelity: ClassVar[bool] = False
-    # See base class.
 
     model_params: _RandomForestRegressorParams = field(
         factory=dict,
