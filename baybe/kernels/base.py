@@ -66,6 +66,9 @@ class Kernel(ABC, SerialMixin):
             right = other.base_kernels if isinstance(other, ProductKernel) else (other,)
             return ProductKernel([*left, *right])
         if isinstance(other, (int, float)):
+            if other == 1:
+                return self
+
             from baybe.kernels.composite import ScaleKernel
 
             return ScaleKernel(
