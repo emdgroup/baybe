@@ -30,10 +30,6 @@ class CustomHartmann(Hartmann):
     ) -> None:
         # Get botorch defaults if not specified
         bounds = np.array(kwargs.get("bounds", Hartmann(**kwargs).bounds.T))
-        if bounds.shape[1] != 2:
-            raise ValueError(
-                "Bounds shape is invalid, it should be tuple (min,max) per dim."
-            )
 
         # Process the shifts
         if shift is not None and len(shift) != bounds.shape[0]:
