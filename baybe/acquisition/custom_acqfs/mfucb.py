@@ -1,13 +1,14 @@
-"""BayBE two-stage acquisition functions."""
+"""Custom Botorch AnalyticAcquisitionFunction for multi-fidelity optimization."""
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from itertools import pairwise as iter_pairwise
 from itertools import product as iter_product
-from typing import cast
+from typing import Any
 
 import torch
-from attrs import define, field
+from attrs import Attribute, define, field, fields_dict
 from attrs.validators import deep_iterable, deep_mapping, ge, instance_of, or_
 from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch.acquisition.objective import PosteriorTransform
@@ -21,10 +22,49 @@ from torch import Tensor
 from typing_extensions import override
 
 from baybe.parameters.validation import validate_contains_exactly_one
-from baybe.utils.validation import finite_float, validate_dict_shape
+from baybe.utils.validation import finite_float
 
 _neg_inv_sqrt2 = -0.7071067811865476
 _log_sqrt_pi_div_2 = 0.2257913526447274
+
+
+def validate_dict_shape(
+    reference_name: str, /
+) -> Callable[[Any, Attribute, Mapping[Any, Any]], None]:
+    """Make validator to check attribute keys/lengths against a reference attribute."""
+
+    def validator(obj: Any, attribute: Attribute, value: Mapping[Any, Any]) -> None:  # noqa: DOC101, DOC103
+        """Validate that the input has the same keys/lengths as the reference attribute.
+
+        Raises:
+            ValueError: If the keys of the two attributes mismatch.
+            ValueError: If the tuple lengths of the two attributes mismatch at any key.
+        """
+        other_attr = fields_dict(type(obj))[reference_name]
+        other_instance = getattr(obj, reference_name)
+
+        if not (
+            different_keys := set(value.keys()).symmetric_difference(
+                set(other_instance.keys())
+            )
+        ):
+            raise ValueError(
+                f"{attribute.name} and {other_attr.alias} differ in keys in "
+                f"{obj.name}, with the following {different_keys} in only one."
+            )
+
+        for k, tup in value.items():
+            other_tup = other_instance[k]
+
+            if len(tup) != len(other_tup):
+                raise ValueError(
+                    f"The lengths of the attributes '{other_attr.alias}' and "
+                    f"'{attribute.alias}' do not match for '{obj.name}' at the key {k}."
+                    f"Length of '{other_attr.alias}' at key {k}: {len(other_tup)}. "
+                    f"Length of '{attribute.alias}' at key {k}: {len(tup)}."
+                )
+
+    return validator
 
 
 @define
@@ -44,7 +84,7 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
 
     # Declaring attribute types for variables defined via _register_buffer.
     fidelity_columns: Tensor
-    fidelities_comb: Tensor
+    fidelity_combinations: Tensor
     zetas_comb: Tensor
     costs_comb: Tensor
 
@@ -128,7 +168,7 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
         )
 
         self.register_buffer(
-            "fidelities_comb",
+            "fidelity_combinations",
             torch.tensor(
                 list(iter_product(*self.fidelities.values())), dtype=torch.double
             ),
@@ -161,10 +201,10 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
         """
         batch_size, q, d = X.shape
 
-        n_comb, k = self.fidelities_comb.shape
+        n_comb, k = self.fidelity_combinations.shape
 
         X_extended = X.clone().unsqueeze(1).repeat(1, n_comb, 1, 1)
-        X_extended[..., :, self.fidelity_columns] = self.fidelities_comb.view(
+        X_extended[..., :, self.fidelity_columns] = self.fidelity_combinations.view(
             1, n_comb, 1, k
         )
 
@@ -201,12 +241,10 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
 
     def optimize_stage_two(self, X: Tensor) -> Tensor:
         r"""Second optimisation stage: choose optimal fidelity to query."""
-        # Jordan MHS NOTE: casting here because botorch model likelihood is too
-        # broadly typed. Check best practice in case likelihood does not have noise.
-        likelihood = cast(GaussianLikelihood, self.model.likelihood)
-
-        # Possible TODO: consider heteroskedastic noise between fidelities.
-        aleatoric_uncertainty = torch.sqrt(likelihood.noise)
+        if isinstance(self.model.likelihood, GaussianLikelihood):
+            aleatoric_uncertainty = torch.sqrt(self.model.likelihood.noise)
+        else:
+            aleatoric_uncertainty = torch.tensor(0.0)
 
         found_suitable_lower_fid = False
 
@@ -214,7 +252,7 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
         increasing_cost_order = torch.argsort(total_costs_comb)
 
         for prev_i, curr_i in iter_pairwise(increasing_cost_order):
-            prev_fid = self.fidelities_comb[prev_i].clone()
+            prev_fid = self.fidelity_combinations[prev_i].clone()
             prev_cost = self.costs_comb.sum(dim=-1)[prev_i]
             curr_cost = self.costs_comb.sum(dim=-1)[curr_i]
             prev_zeta = self.zetas_comb.sum(dim=-1)[prev_i]
@@ -238,7 +276,7 @@ class MultiFidelityUpperConfidenceBound(AnalyticAcquisitionFunction):
 
         if not found_suitable_lower_fid:
             optimal_X = X.clone()
-            last_fid = self.fidelities_comb[curr_i].clone()
+            last_fid = self.fidelity_combinations[curr_i].clone()
             optimal_X[:, self.fidelity_columns] = last_fid
 
         return optimal_X

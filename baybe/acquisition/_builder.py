@@ -210,7 +210,7 @@ class BotorchAcquisitionFunctionBuilder:
         self._set_ref_point()
         self._set_partitioning()
         self._set_current_value()
-        self._set_project()
+        self._set_projection()
         self._set_MFUCB_dicts()
 
         botorch_acqf = self._botorch_acqf_cls(**self._args.collect())
@@ -320,13 +320,12 @@ class BotorchAcquisitionFunctionBuilder:
 
         self._args.current_value = current_value
 
-    def _set_project(self) -> None:
+    def _set_projection(self) -> None:
         """Set projection to the target fidelity for qMFKG."""
         if not isinstance(self.acqf, (qMultiFidelityKnowledgeGradient)):
             return
 
-        # Jordan MHS TODO: check where fidelity--acqf compatibility logic should be.
-        assert self.searchspace.fidelity_idx is not None, "Unreachable error."
+        assert self.searchspace.fidelity_idx is not None  # for mypy
 
         target_fidelities = {self.searchspace.fidelity_idx: 1.0}
 
