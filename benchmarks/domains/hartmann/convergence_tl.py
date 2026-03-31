@@ -135,7 +135,7 @@ def _make_hartmann_tl_benchmark(
         # Convert coordinates to a PyTorch tensor
         initial_data_tensor = torch.tensor(initial_data[coord_columns].values)
 
-        with temporary_seed(settings.random_seed):
+        with Settings(random_seed=settings.random_seed):
             target_values_tensor = source_function(
                 initial_data_tensor
             )  # Randomness from source function
@@ -149,7 +149,7 @@ def _make_hartmann_tl_benchmark(
         )(target_function)
 
         initial_data_samples = {}
-        with temporary_seed(settings.random_seed):
+        with Settings(random_seed=settings.random_seed):
             for p in percentages:
                 initial_data_samples[p] = [
                     initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
