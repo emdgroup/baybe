@@ -110,20 +110,20 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
             value for value, zeta in zip(self.values, self.zeta) if zeta == 0
         )
 
-        assert isinstance(highest_fid, str), "Error should be unreachable."
+        assert isinstance(highest_fid, str)  # for mypy
 
         return highest_fid
 
     @property
     def highest_fidelity_cost(self) -> int:
         """Cost of querying the fidelity with discrepancy value of zero."""
-        highest_fid = next(
+        highest_cost = next(
             cost for cost, zeta in zip(self.costs, self.zeta) if zeta == 0
         )
 
-        assert isinstance(highest_fid, int), "Error should be unreachable."
+        assert isinstance(highest_cost, int)  # for mypy
 
-        return highest_fid
+        return highest_cost
 
     @override
     @cached_property
