@@ -77,6 +77,38 @@ class _SlottedContextDecorator:
         return inner
 
 
+def _make_default_factory(fld: Attribute, /) -> Any:
+    """Make the default factory for the given attribute."""
+
+    def get_default_value(self: Settings) -> Any:
+        """Dynamically retrieve the default value for the field.
+
+        Depending on the control flags, the value is retrieved either from the
+        field specification itself, from the corresponding environment variable,
+        or from the active settings object.
+        """
+        if self._restore_defaults:
+            default = fld.default
+        else:
+            # Here, the active settings value is used as default, to
+            # enable updating settings one attribute at a time (the fallback to
+            # the default happens when the active settings object is itself
+            # being created)
+            default = getattr(active_settings, fld.name, fld.default)
+
+        if self._restore_environment:
+            # If enabled, the environment values take precedence for the default
+            env_name = f"BAYBE_{fld.alias.upper()}"
+            value = os.getenv(env_name, default)
+            if fld.type == "bool":
+                value = to_bool(value)
+            return value
+
+        return default
+
+    return Factory(get_default_value, takes_self=True)
+
+
 def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attribute]:
     """Replace default values with the appropriate source, controlled via flags."""
     results = []
@@ -87,38 +119,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
 
         # We use a factory here because the environment variables should be looked up
         # at instantiation time, not at class definition time
-        def make_default_factory(fld: Attribute) -> Any:
-            """Make the default factory for the given attribute."""
-
-            def get_default_value(self: Settings) -> Any:
-                """Dynamically retrieve the default value for the field.
-
-                Depending on the control flags, the value is retrieved either from the
-                field specification itself, from the corresponding environment variable,
-                or from the active settings object.
-                """
-                if self._restore_defaults:
-                    default = fld.default
-                else:
-                    # Here, the active settings value is used as default, to
-                    # enable updating settings one attribute at a time (the fallback to
-                    # the default happens when the active settings object is itself
-                    # being created)
-                    default = getattr(active_settings, fld.name, fld.default)
-
-                if self._restore_environment:
-                    # If enabled, the environment values take precedence for the default
-                    env_name = f"BAYBE_{fld.alias.upper()}"
-                    value = os.getenv(env_name, default)
-                    if fld.type == "bool":
-                        value = to_bool(value)
-                    return value
-
-                return default
-
-            return Factory(get_default_value, takes_self=True)
-
-        results.append(fld.evolve(default=make_default_factory(fld)))
+        results.append(fld.evolve(default=_make_default_factory(fld)))
 
     return results
 
