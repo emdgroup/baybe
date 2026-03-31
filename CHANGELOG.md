@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `identify_non_dominated_configurations` method to `Campaign` and `Objective`
   for determining the Pareto front
 - Interpoint constraints for continuous search spaces
+- Transfer learning benchmarks for shifted and inverted Hartmann functions
 
 ### Breaking Changes
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
