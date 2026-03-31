@@ -49,12 +49,12 @@ class CustomHartmann(Hartmann):
                 np.array(
                     [
                         [
-                            low if shift >= 0 else low + shift
-                            for low, shift in zip(bounds[:, 0], self.shift)
+                            low if shift_bound >= 0 else low + shift_bound
+                            for low, shift_bound in zip(bounds[:, 0], self.shift)
                         ],
                         [
-                            high if shift <= 0 else high + shift
-                            for high, shift in zip(bounds[:, 1], self.shift)
+                            high if shift_bound <= 0 else high + shift_bound
+                            for high, shift_bound in zip(bounds[:, 1], self.shift)
                         ],
                     ]
                 ).T,
