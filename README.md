@@ -272,7 +272,9 @@ In particular, available measurements can be submitted at any time and also seve
 times before querying the next recommendations.
 
 ```python
-df = campaign.recommend(batch_size=3) # Recommend three experimental configurations to test
+df = campaign.recommend(
+    batch_size=3
+)  # Recommend three experimental configurations to test
 print(df)
 ```
 
@@ -290,7 +292,11 @@ After having conducted the recommended experiments, we can add the newly measure
 target information to the campaign:
 
 ```python
-df["Yield"] = [79.8, 54.1, 59.4] # Measured yields for the three recommended parameter configurations
+df["Yield"] = [
+    79.8,
+    54.1,
+    59.4,
+]  # Measured yields for the three recommended parameter configurations
 campaign.add_measurements(df)
 ```
 
