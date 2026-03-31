@@ -3,6 +3,7 @@
 import numpy as np
 import torch
 from botorch.test_functions.synthetic import Hartmann
+from typing_extensions import override
 
 
 class CustomHartmann(Hartmann):
@@ -29,12 +30,12 @@ class CustomHartmann(Hartmann):
         **kwargs,
     ) -> None:
         # Get botorch defaults if not specified
-        bounds = np.array(kwargs.get("bounds", Hartmann(**kwargs).bounds.T))
+        bounds_array = np.array(kwargs.get("bounds", Hartmann(**kwargs).bounds.T))
 
         # Process the shifts
-        if shift is not None and len(shift) != bounds.shape[0]:
+        if shift is not None and len(shift) != bounds_array.shape[0]:
             raise ValueError("Shift shape does not match used dimensions.")
-        self.shift = shift if shift is not None else [0.0] * bounds.shape[0]
+        self.shift = shift if shift is not None else [0.0] * bounds_array.shape[0]
 
         # Shift the bounds
         # The original Hartmann function throws an error if it is called outside of its
@@ -50,11 +51,11 @@ class CustomHartmann(Hartmann):
                     [
                         [
                             low if shift_bound >= 0 else low + shift_bound
-                            for low, shift_bound in zip(bounds[:, 0], self.shift)
+                            for low, shift_bound in zip(bounds_array[:, 0], self.shift)
                         ],
                         [
                             high if shift_bound <= 0 else high + shift_bound
-                            for high, shift_bound in zip(bounds[:, 1], self.shift)
+                            for high, shift_bound in zip(bounds_array[:, 1], self.shift)
                         ],
                     ]
                 ).T,
@@ -65,6 +66,7 @@ class CustomHartmann(Hartmann):
 
         super().__init__(**kwargs)
 
+    @override
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         """Evaluate the shifted Hartmann function.
 
