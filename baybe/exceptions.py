@@ -175,5 +175,9 @@ class NotAllowedError(Exception):
     """An operation was attempted that is not allowed in the current context."""
 
 
+class UnsupportedEarlyFilteringError(Exception):
+    """A constraint does not support early filtering with the given parameters."""
+
+
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
