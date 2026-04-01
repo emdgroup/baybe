@@ -7,6 +7,8 @@ from baybe._optional.info import POLARS_INSTALLED
 from baybe.searchspace.discrete import (
     _apply_constraint_filter_pandas,
     _apply_constraint_filter_polars,
+)
+from baybe.searchspace.utils import (
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )

@@ -29,7 +29,7 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
-from baybe.searchspace.discrete import (
+from baybe.searchspace.utils import (
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )
