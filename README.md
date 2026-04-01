@@ -154,7 +154,7 @@ target = NumericalTarget(name="Yield")
 objective = SingleTargetObjective(target=target)
 ```
 In cases where we are confronted with multiple (potentially conflicting) targets 
-(e.g., yield vs cost),
+(e.g., yield vs selectivity),
 the `ParetoObjective` or `DesirabilityObjective` can be used to define how the targets should be balanced.
 For more details, see the
 [objectives section](https://emdgroup.github.io/baybe/stable/userguide/objectives.html)
