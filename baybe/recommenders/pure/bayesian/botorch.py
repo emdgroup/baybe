@@ -172,7 +172,7 @@ class BotorchRecommender(BayesianRecommender):
         Partitions the candidate set according to subspace-generating constraints,
         runs optimization on each feasible partition, and returns the batch with
         the highest joint acquisition value. Subspaces with fewer candidates
-        than ``batch_size`` are skipped with a warning.
+        than ``batch_size`` are skipped.
 
         Args:
             subspace_discrete: The discrete subspace from which to generate
@@ -656,10 +656,10 @@ class BotorchRecommender(BayesianRecommender):
     ) -> pd.DataFrame:
         """Recommend from a hybrid space with subspace-generating constraints.
 
-        Uses ``SearchSpace.subspace_configurations()`` to enumerate the Cartesian
+        Uses ``SearchSpace.subspaces()`` to enumerate the Cartesian
         product of discrete and continuous subspace configurations, capped at
-        ``max_n_subspaces`` total. Discrete subspaces with fewer candidates than
-        ``batch_size`` are pre-filtered.
+        ``max_n_subspaces`` total. In purely discrete search spaces, subspaces
+        with fewer candidates than ``batch_size`` are pre-filtered.
 
         Args:
             searchspace: The search space in which the recommendations should be made.

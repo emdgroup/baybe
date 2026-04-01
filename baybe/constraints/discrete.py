@@ -435,8 +435,7 @@ class DiscreteBatchConstraint(DiscreteConstraint):
     parameter — obtains a full batch recommendation from each subspace, and
     returns the batch with the highest joint acquisition value.
 
-    This constraint is only effective with Bayesian recommenders that have access
-    to an acquisition function for comparing batches. It is not applied during
+    This constraint is not supported by all recommenders. It is not applied during
     search space creation (all parameter values remain in the search space).
 
     Example:
