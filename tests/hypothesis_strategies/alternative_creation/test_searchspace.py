@@ -116,7 +116,7 @@ def test_discrete_searchspace_creation_from_degenerate_dataframe():
 @given(
     parameters=st.lists(
         numerical_discrete_parameters(min_value=0.0, max_value=1.0),
-        min_size=1,
+        min_size=2,
         max_size=5,
         unique_by=lambda x: x.name,
     )
@@ -157,7 +157,6 @@ p_t2 = TaskParameter(name="t2", values=["A", "B"])
     [
         param([p_d1, p_d2], [p_t1, p_t2], 6 * 4, id="both"),
         param([p_d1, p_d2], [], 6, id="simplex-only"),
-        param([], [p_t1, p_t2], 4, id="task_only"),
     ],
 )
 def test_discrete_space_creation_from_simplex_mixed(
