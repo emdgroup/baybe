@@ -21,8 +21,6 @@ from baybe.settings import active_settings
 from baybe.utils.basic import classproperty, get_baseclasses, match_attributes, to_tuple
 
 if TYPE_CHECKING:
-    import torch
-
     from baybe.surrogates.gaussian_process.components.kernel import PlainKernelFactory
 
 
@@ -49,12 +47,7 @@ class Kernel(ABC, SerialMixin):
     ) -> tuple[tuple[int, ...] | None, int | None]:
         """Get the active dimensions and the number of ARD dimensions."""
 
-    def to_gpytorch(
-        self,
-        searchspace: SearchSpace,
-        *,
-        batch_shape: torch.Size | None = None,
-    ):
+    def to_gpytorch(self, searchspace: SearchSpace):
         """Create the gpytorch representation of the kernel."""
         import gpytorch.kernels
 
@@ -64,7 +57,7 @@ class Kernel(ABC, SerialMixin):
         # makes use of kwargs, i.e. differentiates if certain keywords are explicitly
         # passed or not. For instance, `ard_num_dims = kwargs.get("ard_num_dims", 1)`
         # fails if we explicitly pass `ard_num_dims=None`.
-        kw: dict[str, Any] = dict(batch_shape=batch_shape, active_dims=active_dims)
+        kw: dict[str, Any] = dict(active_dims=active_dims)
         kw = {k: v for k, v in kw.items() if v is not None}
 
         # Get corresponding gpytorch kernel class and its base classes
