@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gc
-from collections import Counter
 from collections.abc import Iterable, Iterator, Sequence
 from enum import Enum
 from itertools import product
@@ -367,22 +366,31 @@ class SearchSpace(SerialMixin):
             shuffle=True, replace=True
         )
 
-        counts: Counter[int] = Counter()
+        seen: set[tuple[bytes, frozenset[str]]] = set()
         results: list[tuple[npt.NDArray[np.bool_], frozenset[str]]] = []
+        rejections = 0
 
         for d_mask, c_config in zip(d_iter, c_iter):
-            key = hash((tuple(d_mask), c_config))
-            counts[key] += 1
-            if counts[key] > max_rejections + 1:
-                raise InfeasibilityError(
-                    f"Not enough unique subspace configurations available. "
-                    f"Requested {n} but only {len(results)} could be found."
-                )
-            if counts[key] > 1:
+            key = (d_mask.tobytes(), c_config)
+            if key in seen:
+                rejections += 1
+                if rejections > max_rejections:
+                    raise InfeasibilityError(
+                        f"Not enough unique subspace configurations available. "
+                        f"Requested {n} but only {len(results)} could be found."
+                    )
                 continue
+            seen.add(key)
+            rejections = 0
             results.append((d_mask, c_config))
             if len(results) >= n:
                 break
+
+        if len(results) < n:
+            raise InfeasibilityError(
+                f"Not enough unique subspace configurations available. "
+                f"Requested {n} but only {len(results)} could be found."
+            )
 
         return results
 
