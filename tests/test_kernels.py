@@ -48,7 +48,7 @@ def _collect_parameter_names(kernel: Kernel) -> set[str]:
     return parameter_names
 
 
-def validate_gpytorch_kernel_components(
+def validate_gpytorch_kernel_components(  # noqa: DOC501
     obj: Any, mapped: Any, searchspace: SearchSpace
 ) -> None:
     """Validate that all kernel components are correctly translated to GPyTorch.
@@ -83,33 +83,33 @@ def validate_gpytorch_kernel_components(
         # Resolve attribute naming differences
         mapped_name = _RENAME_DICT.get(name, name)
 
-        # If the attribute does not exist in the GPyTorch version, ...
+        # If the attribute does not exist in the GPyTorch version, it must have some
+        # special handling on the GPyTorch side ...
         if (mapped_component := getattr(mapped, mapped_name, None)) is None:
-            # ... it must have some special handling on the GPyTorch side
-            # >>>>>
-            # TODO: this will be refactored in #748, which requires changes to the
-            #   test logic anyways
+            # The number of tasks is reflected by the the constructed covariance matrix
             if isinstance(obj, IndexKernel) and name == "num_tasks":
-                # Special case for IndexKernel.num_tasks, which is not an actual
-                # attribute of the GPyTorch kernel
                 assert mapped.covar_factor.shape[-2] == component
                 continue
+
+            # The rank is reflected by the the constructed covariance matrix
             elif isinstance(obj, IndexKernel) and name == "rank":
-                # Special case for IndexKernel.rank, which is not an actual attribute of
-                # the GPyTorch kernel
                 assert mapped.covar_factor.shape[-1] == component
                 continue
-            # <<<<<
 
-            # ... or it must be an initial value. Because setting initial values
+            # Initial values are directly applied. Because setting initial values
             # involves going through constraint transformations on GPyTorch side (i.e.,
             # difference between `<attr>` and `raw_<attr>`), the numerical values will
             # not be exact, so we check only for approximate matches.
-            assert name.endswith("_initial_value")
-            assert np.allclose(
-                component,
-                getattr(mapped, name.removesuffix("_initial_value")).detach().numpy(),
-            )
+            elif name.endswith("_initial_value"):
+                assert np.allclose(
+                    component,
+                    getattr(mapped, name.removesuffix("_initial_value"))
+                    .detach()
+                    .numpy(),
+                )
+                continue
+
+            raise AssertionError(f"Kernel component not correctly mapped: {name}")
 
         # If the component is itself another attrs object, recurse
         elif has(component):
