@@ -62,7 +62,7 @@ class BotorchRecommender(BayesianRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
-    supports_discrete_subspace_constraints: ClassVar[bool] = True
+    supports_discrete_batch_constraints: ClassVar[bool] = True
     # See base class.
 
     # Object variables
@@ -153,7 +153,7 @@ class BotorchRecommender(BayesianRecommender):
             The dataframe indices of the recommended points in the provided
             experimental representation.
         """
-        if subspace_discrete.constraints_subspace_generating:
+        if subspace_discrete.constraints_batch:
             return self._recommend_discrete_with_subspaces(
                 subspace_discrete, candidates_exp, batch_size
             )
@@ -313,24 +313,24 @@ class BotorchRecommender(BayesianRecommender):
         self, subspace_continuous: SubspaceContinuous, batch_size: int
     ) -> tuple[Tensor, Tensor]:
         """Dispatcher selecting the continuous optimization routine."""
-        if subspace_continuous.constraints_subspace_generating:
-            return self._recommend_continuous_with_subspaces(
+        if subspace_continuous.constraints_cardinality:
+            return self._recommend_continuous_with_cardinality_constraints(
                 subspace_continuous, batch_size
             )
         else:
-            return self._recommend_continuous_without_subspaces(
+            return self._recommend_continuous_without_cardinality_constraints(
                 subspace_continuous, batch_size
             )
 
-    def _recommend_continuous_with_subspaces(
+    def _recommend_continuous_with_cardinality_constraints(
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
     ) -> tuple[Tensor, Tensor]:
-        """Recommend from a continuous space with subspace-generating constraints.
+        """Recommend from a continuous space with cardinality constraints.
 
-        Optimizes the acquisition function across subspaces defined by constraints
-        (currently only cardinality constraints) and returns the best result.
+        Optimizes the acquisition function across subspaces defined by cardinality
+        constraints and returns the best result.
 
         The specific collection of subspaces considered by the recommender is obtained
         as either the full combinatorial set of possible parameter splits or a random
@@ -351,21 +351,21 @@ class BotorchRecommender(BayesianRecommender):
             The recommendations and corresponding acquisition values.
 
         Raises:
-            ValueError: If the continuous search space has no subspace-generating
+            ValueError: If the continuous search space has no cardinality
                 constraints.
         """
-        if not subspace_continuous.constraints_subspace_generating:
+        if not subspace_continuous.constraints_cardinality:
             raise ValueError(
-                f"'{self._recommend_continuous_with_subspaces.__name__}' "
-                f"expects a subspace with subspace-generating constraints."
+                f"'{self._recommend_continuous_with_cardinality_constraints.__name__}' "
+                f"expects a subspace with cardinality constraints."
             )
 
         # Determine search scope based on number of subspace configurations
         configs: Iterable[frozenset[str]]
         if subspace_continuous.n_theoretical_subspaces <= self.max_n_subspaces:
-            configs = subspace_continuous.subspace_configurations()
+            configs = subspace_continuous.inactive_parameter_combinations()
         else:
-            configs = subspace_continuous._sample_subspace_configurations(
+            configs = subspace_continuous._sample_inactive_parameters(
                 self.max_n_subspaces
             )
 
@@ -410,12 +410,12 @@ class BotorchRecommender(BayesianRecommender):
 
         return points, acqf_value
 
-    def _recommend_continuous_without_subspaces(
+    def _recommend_continuous_without_cardinality_constraints(
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
     ) -> tuple[Tensor, Tensor]:
-        """Recommend from a continuous search space without subspace decomposition.
+        """Recommend from a continuous search space without cardinality constraints.
 
         Args:
             subspace_continuous: The continuous subspace from which to generate
@@ -426,16 +426,16 @@ class BotorchRecommender(BayesianRecommender):
             The recommendations and corresponding acquisition values.
 
         Raises:
-            ValueError: If the continuous search space has subspace-generating
-                constraints.
+            ValueError: If the continuous search space has cardinality constraints.
         """
         import torch
         from botorch.optim import optimize_acqf
 
-        if subspace_continuous.constraints_subspace_generating:
+        if subspace_continuous.constraints_cardinality:
+            method = self._recommend_continuous_without_cardinality_constraints
             raise ValueError(
-                f"'{self._recommend_continuous_without_subspaces.__name__}' "
-                f"expects a subspace without subspace-generating constraints."
+                f"'{method.__name__}' expects a subspace "
+                f"without cardinality constraints."
             )
 
         fixed_parameters = {
@@ -510,8 +510,8 @@ class BotorchRecommender(BayesianRecommender):
             The recommended points.
         """
         if (
-            searchspace.discrete.constraints_subspace_generating
-            or searchspace.continuous.constraints_subspace_generating
+            searchspace.discrete.constraints_batch
+            or searchspace.continuous.constraints_cardinality
         ):
             return self._recommend_hybrid_with_subspaces(
                 searchspace, candidates_exp, batch_size
@@ -680,9 +680,9 @@ class BotorchRecommender(BayesianRecommender):
         # discrete candidate by varying continuous parameters.
         combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
         if searchspace.n_theoretical_subspaces <= self.max_n_subspaces:
-            combined_masks = searchspace.subspace_masks(candidates_exp)
+            combined_masks = searchspace.subspaces(candidates_exp)
         else:
-            combined_masks = searchspace.sample_subspace_masks(
+            combined_masks = searchspace.sample_subspaces(
                 candidates_exp, self.max_n_subspaces
             )
 
@@ -718,7 +718,7 @@ class BotorchRecommender(BayesianRecommender):
         best_rec, _ = self._optimize_over_subspaces(callables)
 
         # Post-check minimum cardinality on continuous columns
-        if subspace_c.constraints_subspace_generating and not is_cardinality_fulfilled(
+        if subspace_c.constraints_cardinality and not is_cardinality_fulfilled(
             best_rec[list(subspace_c.parameter_names)],
             subspace_c,
             check_maximum=False,

@@ -3,7 +3,6 @@
 import numpy as np
 import pandas as pd
 
-from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.parameters.utils import is_inactive
 from baybe.searchspace import SubspaceContinuous
 
@@ -26,12 +25,7 @@ def is_cardinality_fulfilled(
     Returns:
         ``True`` if all cardinality constraints are fulfilled, ``False`` otherwise.
     """
-    cardinality_constraints = [
-        c
-        for c in subspace_continuous.constraints_subspace_generating
-        if isinstance(c, ContinuousCardinalityConstraint)
-    ]
-    for c in cardinality_constraints:
+    for c in subspace_continuous.constraints_cardinality:
         # Get the activity thresholds for all parameters
         cols = df[c.parameters]
         thresholds = {

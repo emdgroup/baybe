@@ -578,10 +578,10 @@ class SubspaceDiscrete(SerialMixin):
         )
 
     @property
-    def constraints_subspace_generating(
+    def constraints_batch(
         self,
     ) -> tuple[DiscreteBatchConstraint, ...]:
-        """Constraints generating subspaces for separate optimization."""
+        """The batch constraints of the subspace."""
         return tuple(
             c for c in self.constraints if isinstance(c, DiscreteBatchConstraint)
         )
@@ -590,14 +590,14 @@ class SubspaceDiscrete(SerialMixin):
     def n_theoretical_subspaces(self) -> int:
         """The theoretical number of possible subspace configurations.
 
-        Returns 0 if no subspace-generating constraints exist, indicating that
+        Returns 0 if no batch constraints exist, indicating that
         no decomposition is needed.
         """
-        if not self.constraints_subspace_generating:
+        if not self.constraints_batch:
             return 0
         return prod(
             len(self.get_parameters_by_name([c.parameters[0]])[0].active_values)
-            for c in self.constraints_subspace_generating
+            for c in self.constraints_batch
         )
 
     def subspace_masks(  # noqa: DOC404
@@ -610,7 +610,7 @@ class SubspaceDiscrete(SerialMixin):
     ) -> Iterator[npt.NDArray[np.bool_]]:
         r"""Get an iterator over all possible subspace masks.
 
-        Collects masks from each subspace-generating constraint, iterates the
+        Collects masks from each batch constraint, iterates the
         Cartesian product, AND-reduces each combination, and yields feasible
         combined masks.
 
@@ -627,7 +627,7 @@ class SubspaceDiscrete(SerialMixin):
         Yields:
             A boolean mask selecting the subspace's rows.
         """
-        constraints = self.constraints_subspace_generating
+        constraints = self.constraints_batch
         if not constraints:
             per_constraint: list[list[npt.NDArray[np.bool_]]] = [
                 [np.ones(len(candidates_exp), dtype=bool)]

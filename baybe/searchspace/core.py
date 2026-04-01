@@ -303,7 +303,7 @@ class SearchSpace(SerialMixin):
             return 0
         return max(d, 1) * max(c, 1)
 
-    def subspace_masks(  # noqa: DOC404
+    def subspaces(  # noqa: DOC404
         self,
         candidates_exp: pd.DataFrame,
         min_discrete_candidates: int | None = None,
@@ -325,10 +325,10 @@ class SearchSpace(SerialMixin):
             self.discrete.subspace_masks(
                 candidates_exp, min_candidates=min_discrete_candidates
             ),
-            self.continuous.subspace_configurations(),
+            self.continuous.inactive_parameter_combinations(),
         )
 
-    def sample_subspace_masks(
+    def sample_subspaces(
         self,
         candidates_exp: pd.DataFrame,
         n: int,
@@ -363,7 +363,9 @@ class SearchSpace(SerialMixin):
             shuffle=True,
             replace=True,
         )
-        c_iter = self.continuous.subspace_configurations(shuffle=True, replace=True)
+        c_iter = self.continuous.inactive_parameter_combinations(
+            shuffle=True, replace=True
+        )
 
         counts: Counter[int] = Counter()
         results: list[tuple[npt.NDArray[np.bool_], frozenset[str]]] = []
