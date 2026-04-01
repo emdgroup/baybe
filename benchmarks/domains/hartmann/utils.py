@@ -30,41 +30,46 @@ class ShiftedHartmann(Hartmann):
         **kwargs,
     ) -> None:
         # Get botorch defaults if not specified
-        bounds_array = np.array(kwargs.get("bounds", Hartmann(**kwargs).bounds.T))
+        bounds = np.array(kwargs.get("bounds", Hartmann(**kwargs).bounds.T))
 
         # Process the shifts
-        if shift is not None and len(shift) != bounds_array.shape[0]:
+        if shift is not None and len(shift) != bounds.shape[0]:
             raise ValueError("Shift shape does not match used dimensions.")
-        self.shift = shift if shift is not None else [0.0] * bounds_array.shape[0]
+        self.shift = shift if shift is not None else [0.0] * bounds.shape[0]
 
-        # Shift the bounds
+        # Extend the bounds
         # The original Hartmann function throws an error if it is called outside of its
         # bounds ([0,1] by default). However, it is technically feasible to evaluate it
         # outside of the default unit interval. To enable passing of the validation for
         # our shifted variant, we simply expand the bounds by an appropriate amount
         # that depends on ``shift``. The bounds used in the benchmark search space
         # remain unchanged.
-        bounds = list(
+        # Note: We can not only shift the upper and lower bounds as that leads to the
+        # optimal value (``_optimizer``) being excluded from bounds. As this is
+        # hard-coded in the Hartmann class init, we can not override it before it is
+        # evaluated.
+        shifted_bounds = bounds + np.array(self.shift)[:, None]
+        bounds_extended = list(
             map(
                 tuple,
-                np.array(
+                np.stack(
                     [
-                        [
-                            low if shift_bound >= 0 else low + shift_bound
-                            for low, shift_bound in zip(bounds_array[:, 0], self.shift)
-                        ],
-                        [
-                            high if shift_bound <= 0 else high + shift_bound
-                            for high, shift_bound in zip(bounds_array[:, 1], self.shift)
-                        ],
-                    ]
-                ).T,
+                        np.minimum(bounds[:, 0], shifted_bounds[:, 0]),
+                        np.maximum(bounds[:, 1], shifted_bounds[:, 1]),
+                    ],
+                    axis=1,
+                ),
             )
         )
 
-        kwargs["bounds"] = bounds
+        kwargs["bounds"] = bounds_extended
 
         super().__init__(**kwargs)
+        # Remove optimizers as they are incorrect if shift is used
+        # They are anyway only set for 3D and 6D hartman in the parent class
+        if self._optimizers is not None:
+            self._optimizers = None
+            self.optimizers = None
 
     @override
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
