@@ -98,11 +98,11 @@ class _ModelContext:
 
 
 def _mark_custom_kernel(
-    value: Kernel | KernelFactoryProtocol | None, self: GaussianProcessSurrogate
+    value: Kernel | KernelFactoryProtocol, self: GaussianProcessSurrogate
 ) -> Kernel | KernelFactoryProtocol:
     """Mark the surrogate as using a custom kernel (for deprecation purposes)."""
-    if value is None:
-        return BayBEKernelFactory()
+    if type(value) is BayBEKernelFactory:
+        return value
 
     self._custom_kernel = True
     return value
