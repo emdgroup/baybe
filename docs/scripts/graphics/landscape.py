@@ -6,12 +6,14 @@ from matplotlib.colors import LinearSegmentedColormap
 
 N_POINTS = 50  # Reduce for SVG size
 COLORS = ["#1a0033", "#3498db", "#316E91", "#f39c12", "#9e2a1d"]
-# Colors:
-# 1a0033 – dark indigo
-# 3498db – light blue
-# 316E91 – teal blue
-# f39c12 – amber
-# 9e2a1d – brick red
+"""
+Colors:
+1a0033 – dark indigo
+3498db – light blue
+316E91 – teal blue
+f39c12 – amber
+9e2a1d – brick red
+"""
 N_COLOR_BINS = 256
 
 
@@ -40,7 +42,6 @@ surf = ax.plot_surface(
     Y,
     Z,
     cmap=fancy_cmap,
-    # edgecolor="k", linewidth=0.03
     linewidth=0.0,  # Remove edge lines for SVG
 )
 ax.view_init(elev=20, azim=-120)
@@ -48,33 +49,6 @@ ax.set_box_aspect([1, 1, 0.5])
 
 # Option used for figure without axes
 plt.axis("off")
-
-# Options used for figure with line-only axes
-
-# # Remove tick marks
-# ax.set_xticks([])
-# ax.set_yticks([])
-# ax.set_zticks([])
-#
-# # Make axis lines light gray
-# ax.xaxis.line.set_color("gray")
-# ax.yaxis.line.set_color("gray")
-# ax.zaxis.line.set_color("gray")
-#
-# # Set axis line width
-# ax.xaxis.line.set_linewidth(5)
-# ax.yaxis.line.set_linewidth(5)
-# ax.zaxis.line.set_linewidth(5)
-#
-# # Set axis line caps to round
-# ax.xaxis.line.set_solid_capstyle("round")
-# ax.yaxis.line.set_solid_capstyle("round")
-# ax.zaxis.line.set_solid_capstyle("round")
-#
-# # Set pane alpha to 0 to make them transparent
-# ax.xaxis.pane.set_alpha(0)
-# ax.yaxis.pane.set_alpha(0)
-# ax.zaxis.pane.set_alpha(0)
 
 plt.tight_layout(pad=0)
 plt.savefig(

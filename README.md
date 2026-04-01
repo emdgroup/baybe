@@ -53,7 +53,7 @@ and exploration of unknown regions.
 
 BayBE provides a **general-purpose toolbox** for Bayesian Design of Experiments, 
 focusing on making this procedure easily accessible for real-world experiments.
-Its utility was already shown in a variety of real-world experimental campaigns in both industry and academia.
+Its utility was already shown in a variety of [real-world experimental campaigns](#citation) in both industry and academia.
 
 ## 🔋 Batteries Included
 BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
@@ -73,7 +73,7 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
         </ul>
       </li>
       <li>Define the optimal target value via <a href="https://emdgroup.github.io/baybe/stable/userguide/transformations.html">target transformations</a>.</li>
-      <li>Optimize multiple targets at once via <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#paretoobjective">Pareto optimization</a> or <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#desirabilityobjective">desirability scalarization</a>.</li>
+      <li>Optimize multiple targets at the same time via <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#paretoobjective">Pareto optimization</a> or <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#desirabilityobjective">desirability scalarization</a>.</li>
     </ul>
   </div>
 </details>
@@ -288,8 +288,7 @@ measure the reaction yield.
 29        fine            5.0  Solvent B
 ```
 
-After having conducted the recommended experiments, we can add the newly measured
-target information to the campaign:
+Next, we need to conduct the recommended experiments and record the corresponding `Target` values.
 
 ```python
 df["Yield"] = [
@@ -297,11 +296,23 @@ df["Yield"] = [
     54.1,
     59.4,
 ]  # Measured yields for the three recommended parameter configurations
+print(df)
+```
+```none
+   Granularity  Pressure[bar]    Solvent  Yield
+15      medium            1.0  Solvent D   79.8
+10      coarse           10.0  Solvent C   54.1
+29        fine            5.0  Solvent B   59.4
+```
+
+Now, we can add the newly measured `Target` values to the `Campaign`:
+
+```python
 campaign.add_measurements(df)
 ```
 
 With the newly provided data, BayBE can produce a refined recommendation for the next iteration.
-This loop typically continues until a desired target value is achieved in the experiment.
+This loop typically continues until a desired `Target` value is achieved in the experiment.
 
 ### Inspect the Progress of the Experimental Configuration Optimization
 
@@ -315,9 +326,12 @@ Different lines show outcomes of `Campaigns` with different designs.
 
 ![Substance Encoding Example](./examples/Backtesting/full_lookup_automatic.svg)
 
-In particular, the five `Campaigns` differ in how molecules are encoded within each chemical `Parameter`.
+In particular, the five `Campaigns` differ in how molecules are encoded within 
+each chemical `Parameter`. Instead of simply one-hot encoding each SMILES string,
+`SubstanceParameter` can be used to directly compute chemical fingerprints from 
+the input SMILES.
 We can see that optimization is more efficient when 
-using chemical encodings (e.g., *MORDRED*) rather than encoding categories with *one-hot* encoding or *random* features.
+using chemical encodings (e.g., *MORDRED*) rather than encoding categories with *one-hot* encoding. The latter is, in fact, no better than *randomly* suggesting parameter configurations at each experimental iteration.
 
 <a id="installation"></a>
 (installation)=
@@ -397,6 +411,8 @@ The available groups are:
 ## 📡 Telemetry
 Telemetry was fully and permanently removed in version 0.14.0.
 
+<a id="citation"></a>
+(citation)=
 ## 📖 Citation
 If you find BayBE useful, please consider citing [our paper](https://doi.org/10.1039/D5DD00050E):
 
