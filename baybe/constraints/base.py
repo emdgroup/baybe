@@ -113,13 +113,42 @@ class DiscreteConstraint(Constraint, ABC):
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """Get the indices of dataframe entries that are invalid under the constraint.
 
+        When the dataframe contains only a subset of the constraint's
+        parameters, constraints that support incremental filtering will
+        eliminate invalid rows based on the available subset. Constraints
+        that require the complete set of parameters raise
+        :class:`baybe.exceptions.UnsupportedEarlyFilteringError`.
+
         Args:
-            data: A dataframe where each row represents a parameter configuration.
+            data: A dataframe where each row represents a parameter
+                configuration. May contain all or a subset of the constraint's
+                parameters.
 
         Returns:
             The dataframe indices of rows that violate the constraint.
+
+        Raises:
+            UnsupportedEarlyFilteringError: If the constraint cannot perform
+                filtering with the available subset of parameters.
         """
         # TODO: Should switch backends (pandas/polars/...) behind the scenes
+
+    @property
+    def _required_filtering_parameters(self) -> set[str]:
+        """All parameter names needed for full constraint evaluation.
+
+        For most constraints, this is simply the ``parameters`` attribute.
+        Constraints with additional parameter references (e.g., affected
+        parameters in dependency constraints) override this to include those.
+        """
+        return set(self.parameters)
+
+    @property
+    def has_polars_implementation(self) -> bool:
+        """Whether this constraint has a Polars implementation."""
+        return (
+            type(self).get_invalid_polars is not DiscreteConstraint.get_invalid_polars
+        )
 
     def get_invalid_polars(self) -> pl.Expr:
         """Translate the constraint to Polars expression identifying undesired rows.
