@@ -6,8 +6,8 @@ from botorch.test_functions.synthetic import Hartmann
 from typing_extensions import override
 
 
-class CustomHartmann(Hartmann):
-    """Custom Hartmann function with support for shifting input dimensions.
+class ShiftedHartmann(Hartmann):
+    """Hartmann function with support for shifting input dimensions.
 
     Extends the Hartmann test function to support shifting input dimensions
     (and adjusting bounds accordingly). Other parameters like bounds, dim,

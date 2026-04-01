@@ -23,7 +23,7 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.definition.base import RunMode
-from benchmarks.domains.hartmann.utils import CustomHartmann
+from benchmarks.domains.hartmann.utils import ShiftedHartmann
 
 
 def _make_hartmann_tl_benchmark(
@@ -72,7 +72,7 @@ def _make_hartmann_tl_benchmark(
         bounds = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]).T
 
         # Create source function with specified parameters
-        source_function = CustomHartmann(
+        source_function = ShiftedHartmann(
             bounds=bounds,
             shift=source_shift,
             dim=3,
