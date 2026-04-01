@@ -322,7 +322,7 @@ by tuning the solvent, base and ligand
 Each line shows the best target value that was cumulatively achieved after a given number of experimental iterations.
 
 
-Different lines show outcomes of `Campaigns` with different designs.
+Different lines show outcomes of `Campaigns` with different settings.
 
 ![Substance Encoding Example](./examples/Backtesting/full_lookup_automatic.svg)
 
