@@ -1,4 +1,4 @@
-"""Tests for subspace-generating constraints in hybrid search spaces."""
+"""Tests for partitioning constraints in hybrid search spaces."""
 
 import pytest
 from pytest import param
@@ -85,8 +85,8 @@ _all_params = [*_discrete_params, *_continuous_params]
         ),
     ],
 )
-def test_subspace_constraints_hybrid(constraints):
-    """Subspace-generating constraints are respected in hybrid search spaces."""
+def test_partition_constraints_hybrid(constraints):
+    """Partitioning constraints are respected in hybrid search spaces."""
     searchspace = SearchSpace.from_product(_all_params, constraints)
     measurements = create_fake_input(_all_params, [TARGET], n_rows=3)
 

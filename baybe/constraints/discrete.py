@@ -431,8 +431,8 @@ class DiscreteBatchConstraint(DiscreteConstraint):
     """Constraint ensuring all batch recommendations share the same parameter value.
 
     When this constraint is active, the recommender internally partitions the
-    candidate set into subspaces — one for each unique value of the constrained
-    parameter — obtains a full batch recommendation from each subspace, and
+    candidate set into partitions — one for each unique value of the constrained
+    parameter — obtains a full batch recommendation from each partition, and
     returns the batch with the highest joint acquisition value.
 
     This constraint is not supported by all recommenders. It is not applied during
@@ -466,7 +466,7 @@ class DiscreteBatchConstraint(DiscreteConstraint):
         Always returns an empty index because this constraint operates at the
         batch level, not the row level. Individual rows are never invalid; the
         constraint is enforced at recommendation time by partitioning candidates
-        into subspaces.
+        into partitions.
 
         Args:
             data: A dataframe where each row represents a parameter configuration.
@@ -476,13 +476,13 @@ class DiscreteBatchConstraint(DiscreteConstraint):
         """
         return pd.Index([])
 
-    def subspace_masks(
+    def partition_masks(
         self, candidates_exp: pd.DataFrame
     ) -> list[npt.NDArray[np.bool_]]:
-        """Return boolean masks defining the subspaces for this constraint.
+        """Return boolean masks defining the partitions for this constraint.
 
         Each mask selects the rows in ``candidates_exp`` that belong to one
-        subspace, i.e. share the same value for the constrained parameter.
+        partition, i.e. share the same value for the constrained parameter.
 
         Args:
             candidates_exp: The experimental representation of candidate points.

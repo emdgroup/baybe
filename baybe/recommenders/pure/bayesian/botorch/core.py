@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -22,12 +23,12 @@ from baybe.recommenders.pure.bayesian.botorch.continuous import (
     recommend_continuous_torch,
 )
 from baybe.recommenders.pure.bayesian.botorch.discrete import (
-    recommend_discrete_with_subspaces,
-    recommend_discrete_without_subspaces,
+    recommend_discrete_with_partitions,
+    recommend_discrete_without_partitions,
 )
 from baybe.recommenders.pure.bayesian.botorch.hybrid import (
-    recommend_hybrid_with_subspaces,
-    recommend_hybrid_without_subspaces,
+    recommend_hybrid_with_partitions,
+    recommend_hybrid_without_partitions,
 )
 from baybe.searchspace import (
     SearchSpace,
@@ -91,11 +92,34 @@ class BotorchRecommender(BayesianRecommender):
     optimization. **Does not affect purely discrete optimization**.
     """
 
-    max_n_subspaces: int = field(default=10, validator=[instance_of(int), ge(1)])
-    """Maximum number of subspaces to evaluate when subspace-generating constraints are
-    present (e.g., continuous cardinality constraints). If the total number of subspaces
+    max_n_partitions: int = field(default=10, validator=[instance_of(int), ge(1)])
+    """Maximum number of partitions to evaluate when partitioning constraints are
+    present (e.g., continuous cardinality constraints). If the total number of
+    partitions
     exceeds this limit, a random subset of that size is sampled for optimization instead
     of performing an exhaustive search."""
+
+    @property
+    def max_n_subspaces(self) -> int:
+        """Deprecated! Use ``max_n_partitions`` instead."""
+        warnings.warn(
+            "'max_n_subspaces' has been renamed to 'max_n_partitions' and will "
+            "be removed in a future version.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.max_n_partitions
+
+    @max_n_subspaces.setter
+    def max_n_subspaces(self, value: int) -> None:
+        """Deprecated! Use ``max_n_partitions`` instead."""  # noqa: D401
+        warnings.warn(
+            "'max_n_subspaces' has been renamed to 'max_n_partitions' and will "
+            "be removed in a future version.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self.max_n_partitions = value
 
     @sampling_percentage.validator
     def _validate_percentage(  # noqa: DOC101, DOC103
@@ -153,10 +177,10 @@ class BotorchRecommender(BayesianRecommender):
             experimental representation.
         """
         if subspace_discrete.constraints_batch:
-            return recommend_discrete_with_subspaces(
+            return recommend_discrete_with_partitions(
                 self, subspace_discrete, candidates_exp, batch_size
             )
-        return recommend_discrete_without_subspaces(
+        return recommend_discrete_without_partitions(
             self, subspace_discrete, candidates_exp, batch_size
         )
 
@@ -204,7 +228,7 @@ class BotorchRecommender(BayesianRecommender):
         """Generate recommendations from a hybrid search space.
 
         Dispatches to the appropriate optimization routine depending on whether
-        subspace-generating constraints are present.
+        partitioning constraints are present.
 
         Args:
             searchspace: The search space in which the recommendations should be made.
@@ -219,41 +243,41 @@ class BotorchRecommender(BayesianRecommender):
             searchspace.discrete.constraints_batch
             or searchspace.continuous.constraints_cardinality
         ):
-            return recommend_hybrid_with_subspaces(
+            return recommend_hybrid_with_partitions(
                 self, searchspace, candidates_exp, batch_size
             )
-        return recommend_hybrid_without_subspaces(
+        return recommend_hybrid_without_partitions(
             self, searchspace, candidates_exp, batch_size
         )
 
-    def _optimize_over_subspaces(
+    def _optimize_over_partitions(
         self,
-        subspace_callables: Iterable[Callable[[], tuple[Any, Tensor]]],
+        partition_callables: Iterable[Callable[[], tuple[Any, Tensor]]],
     ) -> tuple[Any, Tensor]:
-        """Optimize across subspaces and return the result with the best acqf value.
+        """Optimize across partitions and return the result with the best acqf value.
 
-        Each callable performs optimization for one subspace configuration and returns
-        a ``(result, acquisition_value)`` tuple. Subspaces that raise
+        Each callable performs optimization for one partition configuration and returns
+        a ``(result, acquisition_value)`` tuple. Partitions that raise
         ``InfeasibilityError`` are silently skipped.
 
         Args:
-            subspace_callables: An iterable of zero-argument callables. Each callable
-                runs the optimization for one subspace and returns
+            partition_callables: An iterable of zero-argument callables. Each callable
+                runs the optimization for one partition and returns
                 ``(result, acqf_value)``. It may raise ``InfeasibilityError`` if the
-                subspace is infeasible.
+                partition is infeasible.
 
         Raises:
-            InfeasibilityError: If none of the subspaces has a feasible solution.
+            InfeasibilityError: If none of the partitions has a feasible solution.
 
         Returns:
-            The result and acquisition value of the best subspace.
+            The result and acquisition value of the best partition.
         """
         from botorch.exceptions.errors import InfeasibilityError as BoInfeasibilityError
 
         results_all: list = []
         acqf_values_all: list[Tensor] = []
 
-        for optimize_fn in subspace_callables:
+        for optimize_fn in partition_callables:
             try:
                 result, acqf_value = optimize_fn()
                 results_all.append(result)

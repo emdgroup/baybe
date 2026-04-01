@@ -107,22 +107,22 @@ def test_batch_constraint_validation_duplicate():
         ),
     ],
 )
-def test_batch_constraint_n_theoretical_subspaces(constraints, expected):
-    """The n_theoretical_subspaces property returns the correct count."""
+def test_batch_constraint_n_theoretical_partitions(constraints, expected):
+    """The n_theoretical_partitions property returns the correct count."""
     assert (
-        SearchSpace.from_product(_params, constraints).discrete.n_theoretical_subspaces
+        SearchSpace.from_product(_params, constraints).discrete.n_theoretical_partitions
         == expected
     )
 
 
-def test_batch_constraint_all_subspaces_too_small():
-    """All subspaces infeasible raises InfeasibilityError."""
+def test_batch_constraint_all_partitions_too_small():
+    """All partitions infeasible raises InfeasibilityError."""
     searchspace = SearchSpace.from_product(
         _params, [DiscreteBatchConstraint(parameters=["d0"])]
     )
     measurements = create_fake_input(_params, [TARGET], n_rows=2)
 
-    # Each d0 subspace has 3 candidates, batch_size=4 exceeds all
+    # Each d0 partition has 3 candidates, batch_size=4 exceeds all
     with pytest.raises(InfeasibilityError):
         BotorchRecommender().recommend(
             4, searchspace, TARGET.to_objective(), measurements
@@ -137,13 +137,13 @@ def test_batch_constraint_all_subspaces_too_small():
         param(3, 3, id="all_retained"),
     ],
 )
-def test_subspace_masks_min_candidates(min_candidates, expected_count):
-    """Subspace mask filtering by min_candidates."""
+def test_partition_masks_min_candidates(min_candidates, expected_count):
+    """Partition mask filtering by min_candidates."""
     searchspace = SearchSpace.from_product(
         _params, [DiscreteBatchConstraint(parameters=["d0"])]
     )
     masks = list(
-        searchspace.discrete.subspace_masks(
+        searchspace.discrete.partition_masks(
             searchspace.discrete.exp_rep, min_candidates=min_candidates
         )
     )

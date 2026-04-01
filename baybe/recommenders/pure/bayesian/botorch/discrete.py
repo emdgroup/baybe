@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
 
 
-def recommend_discrete_with_subspaces(
+def recommend_discrete_with_partitions(
     recommender: BotorchRecommender,
     subspace_discrete: SubspaceDiscrete,
     candidates_exp: pd.DataFrame,
@@ -27,7 +27,7 @@ def recommend_discrete_with_subspaces(
 
     Partitions the candidate set according to batch constraints,
     runs optimization on each feasible partition, and returns the batch with
-    the highest joint acquisition value. Subspaces with fewer candidates
+    the highest joint acquisition value. Partitions with fewer candidates
     than ``batch_size`` are skipped.
 
     Args:
@@ -43,13 +43,13 @@ def recommend_discrete_with_subspaces(
     import torch
 
     masks: Iterable[np.ndarray]
-    if subspace_discrete.n_theoretical_subspaces <= recommender.max_n_subspaces:
-        masks = subspace_discrete.subspace_masks(
+    if subspace_discrete.n_theoretical_partitions <= recommender.max_n_partitions:
+        masks = subspace_discrete.partition_masks(
             candidates_exp, min_candidates=batch_size
         )
     else:
-        masks = subspace_discrete.sample_subspace_masks(
-            candidates_exp, recommender.max_n_subspaces, min_candidates=batch_size
+        masks = subspace_discrete.sample_partition_masks(
+            candidates_exp, recommender.max_n_partitions, min_candidates=batch_size
         )
 
     def make_callable(
@@ -58,7 +58,7 @@ def recommend_discrete_with_subspaces(
         def optimize() -> tuple[pd.Index, Tensor]:
             subset = candidates_exp.loc[mask]
 
-            idxs = recommend_discrete_without_subspaces(
+            idxs = recommend_discrete_without_partitions(
                 recommender, subspace_discrete, subset, batch_size
             )
 
@@ -70,11 +70,11 @@ def recommend_discrete_with_subspaces(
         return optimize
 
     callables = (make_callable(m) for m in masks)
-    best_idxs, _ = recommender._optimize_over_subspaces(callables)
+    best_idxs, _ = recommender._optimize_over_partitions(callables)
     return best_idxs
 
 
-def recommend_discrete_without_subspaces(
+def recommend_discrete_without_partitions(
     recommender: BotorchRecommender,
     subspace_discrete: SubspaceDiscrete,
     candidates_exp: pd.DataFrame,

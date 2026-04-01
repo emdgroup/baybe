@@ -587,8 +587,8 @@ class SubspaceDiscrete(SerialMixin):
         )
 
     @property
-    def n_theoretical_subspaces(self) -> int:
-        """The theoretical number of possible subspace configurations.
+    def n_theoretical_partitions(self) -> int:
+        """The theoretical number of possible partition configurations.
 
         Returns 0 if no batch constraints exist, indicating that
         no decomposition is needed.
@@ -600,7 +600,7 @@ class SubspaceDiscrete(SerialMixin):
             for c in self.constraints_batch
         )
 
-    def subspace_masks(  # noqa: DOC404
+    def partition_masks(  # noqa: DOC404
         self,
         candidates_exp: pd.DataFrame,
         min_candidates: int | None = None,
@@ -608,7 +608,7 @@ class SubspaceDiscrete(SerialMixin):
         shuffle: bool = False,
         replace: bool = False,
     ) -> Iterator[npt.NDArray[np.bool_]]:
-        r"""Get an iterator over all possible subspace masks.
+        r"""Get an iterator over all possible partition masks.
 
         Collects masks from each batch constraint, iterates the
         Cartesian product, AND-reduces each combination, and yields feasible
@@ -625,7 +625,7 @@ class SubspaceDiscrete(SerialMixin):
                 indices are permanently excluded from the sampling pool.
 
         Yields:
-            A boolean mask selecting the subspace's rows.
+            A boolean mask selecting the partition's rows.
         """
         constraints = self.constraints_batch
         if not constraints:
@@ -633,13 +633,13 @@ class SubspaceDiscrete(SerialMixin):
                 [np.ones(len(candidates_exp), dtype=bool)]
             ]
         else:
-            per_constraint = [c.subspace_masks(candidates_exp) for c in constraints]
+            per_constraint = [c.partition_masks(candidates_exp) for c in constraints]
 
         total = prod(len(masks) for masks in per_constraint)
 
         def _resolve_flat_idx(flat_idx: int) -> npt.NDArray[np.bool_]:
             # Decompose flat index into per-constraint indices.
-            # Example with 3 constraints of subspace lengths [3, 2, 4]:
+            # Example with 3 constraints of partition lengths [3, 2, 4]:
             #   flat_idx=11 -> divmod(11,3)=(3,2) -> A[2]
             #                  divmod(3,2)=(1,1)  -> B[1]
             #                  divmod(1,4)=(0,1)  -> C[1]
@@ -672,18 +672,18 @@ class SubspaceDiscrete(SerialMixin):
                     continue
                 yield combined
 
-    def sample_subspace_masks(
+    def sample_partition_masks(
         self,
         candidates_exp: pd.DataFrame,
         n: int,
         min_candidates: int | None = None,
     ) -> list[npt.NDArray[np.bool_]]:
-        """Sample subspace masks.
+        """Sample partition masks.
 
         Args:
             candidates_exp: The experimental representation of candidate points.
             n: Number of masks to sample.
-            min_candidates: If provided, subspaces with fewer matching
+            min_candidates: If provided, partitions with fewer matching
                 candidates are skipped.
 
         Returns:
@@ -691,7 +691,7 @@ class SubspaceDiscrete(SerialMixin):
         """
         return list(
             islice(
-                self.subspace_masks(candidates_exp, min_candidates, shuffle=True),
+                self.partition_masks(candidates_exp, min_candidates, shuffle=True),
                 n,
             )
         )
