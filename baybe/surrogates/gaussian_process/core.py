@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from attrs import Converter, define, field
 from attrs.converters import pipe
-from attrs.validators import instance_of
+from attrs.validators import instance_of, is_callable
 from typing_extensions import Self, override
 
 from baybe.exceptions import DeprecationError
@@ -140,6 +140,7 @@ class GaussianProcessSurrogate(Surrogate):
             partial(to_component_factory, component_type=GPComponentType.KERNEL),
         ),
         factory=BayBEKernelFactory,
+        validator=is_callable(),
     )
     """The factory used to create the kernel for the Gaussian process.
 
@@ -153,6 +154,7 @@ class GaussianProcessSurrogate(Surrogate):
         alias="mean_or_factory",
         factory=BayBEMeanFactory,
         converter=partial(to_component_factory, component_type=GPComponentType.MEAN),  # type: ignore[misc]
+        validator=is_callable(),
     )
     """The factory used to create the mean function for the Gaussian process.
 
@@ -167,6 +169,7 @@ class GaussianProcessSurrogate(Surrogate):
         converter=partial(  # type: ignore[misc]
             to_component_factory, component_type=GPComponentType.LIKELIHOOD
         ),
+        validator=is_callable(),
     )
     """The factory used to create the likelihood for the Gaussian process.
 

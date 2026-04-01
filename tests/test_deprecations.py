@@ -582,7 +582,7 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
     measurements = create_fake_input(
         searchspace.parameters, objective.targets, n_rows=2
     )
-    kernel = MaternKernel() if custom else None
+    args = (MaternKernel(),) if custom else ()
 
     if env:
         monkeypatch.setenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "True")
@@ -593,4 +593,4 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
         else nullcontext()
     )
     with context:
-        GaussianProcessSurrogate(kernel).fit(searchspace, objective, measurements)
+        GaussianProcessSurrogate(*args).fit(searchspace, objective, measurements)
