@@ -130,7 +130,7 @@ to be aware of:
 - BayBE does not support to use both interpoint and cardinality constraints
 within the same search space.
 - When using interpoint constraints, candidate generation cannot be done
-{attr}`sequentially <baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.sequential_continuous>`,
+{attr}`sequentially <baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.sequential_continuous>`,
 and an error is raised when attempted.
 - Interpoint constraints are only supported in purely continuous spaces and are not
 available in hybrid spaces.
@@ -169,8 +169,8 @@ settings, searching an optimal parameter configuration can quickly become infeas
 creating the need for approximation schemes:
 
 * The
-  {paramref}`BotorchRecommender.max_n_subspaces <baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.max_n_subspaces>`
-  attribute can be used to limit the number of subspaces considered during optimization.
+  {paramref}`BotorchRecommender.max_n_partitions <baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.max_n_partitions>`
+  attribute can be used to limit the number of partitions considered during optimization.
 * When the ranges of cardinality-constrained parameters cover both positive and negative
   values, minimal cardinality requirements cannot always be guaranteed, potentially
   resulting in a {class}`~baybe.exceptions.MinimumCardinalityViolatedWarning`.
@@ -574,7 +574,7 @@ and selects the best one.
 :class: warning
 The `DiscreteBatchConstraint` is only effective with recommenders that can compare
 batch-level outcomes, such as
-{class}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender` and
+{class}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender` and
 {class}`~baybe.recommenders.pure.nonpredictive.sampling.RandomRecommender`.
 Other recommenders will raise an
 {class}`~baybe.exceptions.IncompatibilityError` if a search space with batch
