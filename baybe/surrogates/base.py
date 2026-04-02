@@ -134,8 +134,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         Args:
             measurements: A dataframe with measurements.
-            parameters: Parameter objects carrying additional information (might
-                not be needed by all augmentation implementations).
+            parameters: Optional parameter objects carrying additional information.
+                Only required by specific augmentation implementations.
 
         Returns:
             A dataframe with the augmented measurements, including the original
