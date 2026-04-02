@@ -81,8 +81,6 @@ class Kernel(ABC, SerialMixin):
     def __rmul__(self, other: Any) -> Kernel:
         """Support right-hand multiplication, enabling ``constant * kernel``."""
         # Enable use with math.prod(), which starts with 1 * first_element.
-        if other == 1:
-            return self
         return self.__mul__(other)
 
     def to_factory(self) -> PlainKernelFactory:
