@@ -1,6 +1,38 @@
 """Parameter-related enumerations."""
 
-from enum import Enum
+from __future__ import annotations
+
+from enum import Enum, Flag, auto
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from baybe.parameters.base import Parameter
+
+
+class ParameterKind(Flag):
+    """Flag enum encoding the kind of a parameter.
+
+    Can be used to express compatibility (e.g. Gaussian process kernel factories)
+    with different parameter types via bitwise combination of flags.
+    """
+
+    REGULAR = auto()
+    """Regular parameter undergoing no special treatment."""
+
+    TASK = auto()
+    """Task parameter for transfer learning."""
+
+    FIDELITY = auto()
+    """Fidelity parameter for multi-fidelity modelling."""
+
+    @staticmethod
+    def from_parameter(parameter: Parameter) -> ParameterKind:
+        """Determine the kind of a parameter from its type."""
+        from baybe.parameters.categorical import TaskParameter
+
+        if isinstance(parameter, TaskParameter):
+            return ParameterKind.TASK
+        return ParameterKind.REGULAR
 
 
 class ParameterEncoding(Enum):
