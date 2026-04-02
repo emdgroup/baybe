@@ -60,9 +60,7 @@ class SmoothedEDBOKernelFactory(_KernelFactory):
     def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        effective_dims = train_x.shape[-1] - len(
-            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
-        )
+        effective_dims = train_x.shape[-1]
 
         # Interpolate prior moments linearly between low D and high D regime.
         # The high D regime itself is the average of the EDBO OHE and Mordred regime.
