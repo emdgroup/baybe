@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import pandas as pd
 from attrs import define, field
+from attrs.validators import deep_iterable, instance_of
 from cattrs import IterableValidationError
 from typing_extensions import override
 
@@ -87,11 +88,14 @@ class SubspaceDiscrete(SerialMixin):
 
     parameters: tuple[DiscreteParameter, ...] = field(
         converter=sort_parameters,
-        validator=lambda _, __, x: validate_parameter_names(x),
+        validator=[
+            deep_iterable(member_validator=instance_of(DiscreteParameter)),
+            lambda _, __, x: validate_parameter_names(x),
+        ],
     )
     """The parameters spanning the subspace."""
 
-    exp_rep: pd.DataFrame = field(eq=eq_dataframe)
+    exp_rep: pd.DataFrame = field(validator=instance_of(pd.DataFrame), eq=eq_dataframe)
     """The experimental representation of the subspace."""
 
     constraints: tuple[DiscreteConstraint, ...] = field(
