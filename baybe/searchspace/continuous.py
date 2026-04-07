@@ -67,49 +67,39 @@ class SubspaceContinuous(SerialMixin):
     )
     """Optional constraints filtering the subspace."""
 
-    _constraints_lin_eq: tuple[ContinuousLinearConstraint, ...] | None = field(
-        alias="constraints_lin_eq", default=None
-    )
-    """Ignore! For backward compatibility only. Use `constraints` instead."""
+    def __init__(
+        self,
+        parameters: Sequence[NumericalContinuousParameter] | None = None,
+        constraints: Sequence[ContinuousConstraint] | None = None,
+        constraints_lin_eq: Sequence[ContinuousLinearConstraint] | None = None,
+        constraints_lin_ineq: Sequence[ContinuousLinearConstraint] | None = None,
+        constraints_nonlin: Sequence[ContinuousNonlinearConstraint] | None = None,
+    ):
+        parameters = list(parameters) if parameters is not None else []
+        constraints = list(constraints) if constraints is not None else []
 
-    _constraints_lin_ineq: tuple[ContinuousLinearConstraint, ...] | None = field(
-        alias="constraints_lin_ineq", default=None
-    )
-    """Ignore! For backward compatibility only. Use `constraints` instead."""
-
-    _constraints_nonlin: tuple[ContinuousNonlinearConstraint, ...] | None = field(
-        alias="constraints_nonlin", default=None
-    )
-    """Ignore! For backward compatibility only. Use `constraints` instead."""
-
-    def __attrs_post_init__(self) -> None:
-        constraints = list(self.constraints)
         n_constraints = len(constraints)
-        if self._constraints_lin_eq is not None:
-            constraints.extend(self._constraints_lin_eq)
-            self._constraints_lin_eq = None
-        if self._constraints_lin_ineq is not None:
-            constraints.extend(self._constraints_lin_ineq)
-            self._constraints_lin_ineq = None
-        if self._constraints_nonlin is not None:
-            constraints.extend(self._constraints_nonlin)
-            self._constraints_nonlin = None
+        if constraints_lin_eq is not None:
+            constraints.extend(constraints_lin_eq)
+        if constraints_lin_ineq is not None:
+            constraints.extend(constraints_lin_ineq)
+        if constraints_nonlin is not None:
+            constraints.extend(constraints_nonlin)
 
-        if len(constraints) == n_constraints:
-            return
+        if len(constraints) != n_constraints:
+            warnings.warn(
+                "You are using the deprecated `constraints_lin_eq`, "
+                "`constraints_lin_ineq` and/or `constraints_nonlin` arguments to "
+                "specify constraints. For backward compatibility, we have "
+                "automatically merged their content into the `constraints` attribute. "
+                "However, please update your code to directly use the `constraints` "
+                "argument instead since the deprecated arguments will be removed in "
+                "a future version.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
-        warnings.warn(
-            "You are using the deprecated `constraints_lin_eq`, "
-            "`constraints_lin_ineq` and/or `constraints_nonlin` arguments to "
-            "specify constraints. For backward compatibility, we have "
-            "automatically merged their content into the `constraints` attribute. "
-            "However, please update your code to directly use the `constraints` "
-            "argument instead since the deprecated arguments will be removed in "
-            "a future version.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.constraints = constraints
+        self.__attrs_init__(parameters, constraints)
 
     @override
     def __str__(self) -> str:
