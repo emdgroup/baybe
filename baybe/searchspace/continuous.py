@@ -51,16 +51,15 @@ _MAX_CARDINALITY_SAMPLING_ATTEMPTS = 10_000
 class SubspaceContinuous(SerialMixin):
     """Class for managing continuous subspaces.
 
-    Builds the subspace from parameter definitions, keeps
-    track of search metadata, and provides access to candidate sets and different
-    parameter views.
+    Builds the subspace from parameter definitions and optional constraints,
+    and provides access to candidate sets and different parameter views.
     """
 
     parameters: tuple[NumericalContinuousParameter, ...] = field(
         converter=sort_parameters,
         validator=lambda _, __, x: validate_parameter_names(x),
     )
-    """The parameters of the subspace."""
+    """The parameters spanning the subspace."""
 
     constraints: tuple[ContinuousConstraint, ...] = field(
         converter=to_tuple, factory=tuple
