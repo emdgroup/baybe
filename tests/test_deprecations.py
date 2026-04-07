@@ -20,11 +20,13 @@ from baybe.constraints import (
     ContinuousLinearInequalityConstraint,
 )
 from baybe.constraints.base import Constraint
+from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.exceptions import DeprecationError
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
@@ -32,6 +34,7 @@ from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.settings import Settings
@@ -575,3 +578,35 @@ def test_deprecated_cache_environment_variables(monkeypatch, value: str, expecte
         DeprecationWarning, match="'BAYBE_CACHE_DIR' has been deprecated"
     ):
         assert Settings(restore_environment=True).cache_directory == expected
+
+
+@pytest.mark.parametrize("positional", [True, False])
+def test_deprecated_constraints_arguments(positional):
+    """Using the deprecated subspace constraint arguments raises a warning."""
+    p = NumericalContinuousParameter("p", (0, 1))
+    c = ContinuousLinearConstraint(["p"], "=", [0], 0)
+    c_lin_eq = ContinuousLinearConstraint(["p"], "=", [1], 0)
+    c_lin_ineq = ContinuousLinearConstraint(["p"], ">=", [1], 0)
+    c_nonlin = ContinuousCardinalityConstraint(["p"], 1)
+
+    with pytest.warns(DeprecationWarning):
+        if positional:
+            subspace = SubspaceContinuous(
+                parameters=(p,),
+                constraints=(c,),
+                constraints_lin_eq=(c_lin_eq,),
+                constraints_lin_ineq=(c_lin_ineq,),
+                constraints_nonlin=(c_nonlin,),
+            )
+        else:
+            subspace = SubspaceContinuous(
+                (p,),
+                (c, c_lin_eq),
+                (c_lin_ineq,),
+                (c_nonlin,),
+            )
+
+    assert c in subspace.constraints
+    assert c_lin_eq in subspace.constraints
+    assert c_lin_ineq in subspace.constraints
+    assert c_nonlin in subspace.constraints
