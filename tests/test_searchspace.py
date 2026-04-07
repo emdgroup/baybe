@@ -118,24 +118,6 @@ def test_discrete_from_dataframe_dtype_consistency():
     assert pd.api.types.is_float_dtype(subspace.exp_rep["C"])
 
 
-def test_invalid_simplex_creating_with_overlapping_parameters():
-    """Creating a simplex searchspace with overlapping simplex and product parameters
-    raises an error."""  # noqa
-    parameters = [NumericalDiscreteParameter(name="x_1", values=(0, 1, 2))]
-
-    with pytest.raises(
-        ValueError,
-        match="'simplex_parameters' and 'product_parameters' must be disjoint",
-    ):
-        SearchSpace(
-            SubspaceDiscrete.from_simplex(
-                max_sum=1.0,
-                simplex_parameters=parameters,
-                product_parameters=parameters,
-            )
-        )
-
-
 def test_continuous_searchspace_creation_from_bounds():
     """A purely continuous search space is created from example bounds."""
     parameters = (
@@ -314,14 +296,16 @@ def test_task_parameter_active_values_validation():
     [
         (
             ["InterConstraint_3"],
-            lambda samples: samples["Conti_finite1"].sum()
-            + 2 * samples["Conti_finite2"].sum(),
+            lambda samples: (
+                samples["Conti_finite1"].sum() + 2 * samples["Conti_finite2"].sum()
+            ),
             lambda result: np.isclose(result, 0.3, atol=1e-6),
         ),
         (
             ["InterConstraint_4"],
-            lambda samples: 2 * samples["Conti_finite1"].sum()
-            - samples["Conti_finite2"].sum(),
+            lambda samples: (
+                2 * samples["Conti_finite1"].sum() - samples["Conti_finite2"].sum()
+            ),
             lambda result: result >= 0.3 - 1e-6,
         ),
     ],

@@ -16,7 +16,7 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.searchspace import SearchSpace, SubspaceContinuous
+from baybe.searchspace import SearchSpace, SubspaceContinuous, SubspaceDiscrete
 from baybe.utils.dataframe import get_transform_objects
 
 parameters = [NumericalDiscreteParameter("d1", [0, 1])]
@@ -197,4 +197,22 @@ def test_continuous_subspace_constraint_with_nonexistent_params(constraint_param
         SubspaceContinuous(
             parameters=parameters,
             constraints=[ContinuousLinearConstraint(constraint_params, "=")],
+        )
+
+
+def test_invalid_simplex_creation_with_overlapping_parameters():
+    """Creating a simplex searchspace with overlapping simplex and product parameters
+    raises an error."""  # noqa
+    parameters = [NumericalDiscreteParameter(name="x_1", values=(0, 1, 2))]
+
+    with pytest.raises(
+        ValueError,
+        match="'simplex_parameters' and 'product_parameters' must be disjoint",
+    ):
+        SearchSpace(
+            SubspaceDiscrete.from_simplex(
+                max_sum=1.0,
+                simplex_parameters=parameters,
+                product_parameters=parameters,
+            )
         )
