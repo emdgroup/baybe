@@ -610,3 +610,31 @@ def test_deprecated_constraints_arguments(positional):
     assert c_lin_eq in subspace.constraints
     assert c_lin_ineq in subspace.constraints
     assert c_nonlin in subspace.constraints
+
+
+def test_deprecated_constraints_arguments_deserialization():
+    """Deserialization from legacy JSON with deprecated constraint attributes works."""
+    p1 = NumericalContinuousParameter("p", (0, 1))
+    c_lin_eq = ContinuousLinearConstraint(["p"], "=", [1], 1)
+    c_lin_ineq = ContinuousLinearConstraint(["p"], ">=", [1], 0)
+    c_nonlin = ContinuousCardinalityConstraint(["p"], 1)
+
+    # Construct the expected object using the modern interface
+    expected = SubspaceContinuous(
+        parameters=(p1,),
+        constraints=(c_lin_eq, c_lin_ineq, c_nonlin),
+    )
+
+    # Build a legacy dict with the deprecated constraint field names
+    legacy_dict = {
+        "type": "SubspaceContinuous",
+        "parameters": [p1.to_dict()],
+        "constraints_lin_eq": [c_lin_eq.to_dict()],
+        "constraints_lin_ineq": [c_lin_ineq.to_dict()],
+        "constraints_nonlin": [c_nonlin.to_dict()],
+    }
+
+    with pytest.warns(DeprecationWarning):
+        actual = SubspaceContinuous.from_dict(legacy_dict)
+
+    assert actual == expected

@@ -9,6 +9,7 @@ from collections.abc import Collection, Iterator, Sequence
 from itertools import chain, product
 from typing import TYPE_CHECKING, Any, cast
 
+import cattrs.gen
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field
@@ -666,8 +667,66 @@ class SubspaceContinuous(SerialMixin):
         return tuple(p for p in self.parameters if p.name in names)
 
 
-# Register deserialization hook
-converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)
-
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
+
+# Uncomment when removing the deprecation:
+# converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)
+
+# >>>>> Deprecation
+_hook = cattrs.gen.make_dict_structure_fn(SubspaceContinuous, converter)
+
+
+def _structure_hook(specs: dict, cls: type) -> SubspaceContinuous:
+    """Structure hook that supports both constructor dispatch and legacy fields."""
+    if "constructor" in specs:
+        return select_constructor_hook(specs, cls)
+
+    specs = specs.copy()
+    specs.pop("type", None)
+
+    # Check if any deprecated constraint fields are present
+    deprecated_keys = {
+        "constraints_lin_eq",
+        "constraints_lin_ineq",
+        "constraints_nonlin",
+    }
+    if deprecated_keys & specs.keys():
+        from baybe.constraints.base import (
+            ContinuousConstraint,
+            ContinuousNonlinearConstraint,
+        )
+
+        kwargs: dict[str, Any] = {}
+        if "parameters" in specs:
+            kwargs["parameters"] = [
+                converter.structure(p, NumericalContinuousParameter)
+                for p in specs["parameters"]
+            ]
+        if "constraints" in specs:
+            kwargs["constraints"] = [
+                converter.structure(c, ContinuousConstraint)
+                for c in specs["constraints"]
+            ]
+        if "constraints_lin_eq" in specs:
+            kwargs["constraints_lin_eq"] = [
+                converter.structure(c, ContinuousLinearConstraint)
+                for c in specs["constraints_lin_eq"]
+            ]
+        if "constraints_lin_ineq" in specs:
+            kwargs["constraints_lin_ineq"] = [
+                converter.structure(c, ContinuousLinearConstraint)
+                for c in specs["constraints_lin_ineq"]
+            ]
+        if "constraints_nonlin" in specs:
+            kwargs["constraints_nonlin"] = [
+                converter.structure(c, ContinuousNonlinearConstraint)
+                for c in specs["constraints_nonlin"]
+            ]
+        return SubspaceContinuous(**kwargs)
+
+    return _hook(specs, cls)
+
+
+converter.register_structure_hook(SubspaceContinuous, _structure_hook)
+# <<<<< Deprecation
