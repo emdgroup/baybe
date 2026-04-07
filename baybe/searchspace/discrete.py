@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from collections.abc import Collection, Sequence
 from functools import cached_property
 from itertools import compress
@@ -46,12 +47,21 @@ if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
 
 
-def _reject_argument(self, attribute, value):
-    if value is not None:
-        raise DeprecationError(
-            f"Providing '{attribute.alias}' to '{self.__class__.__name__}' is no "
-            f"longer supported. To proceed, simply drop the argument."
-        )
+def _deprecate_argument(error: bool):
+    """Helper for deprecating legacy arguments."""  # noqa: D401
+
+    def validator(self, attribute, value):
+        if value is not None:
+            msg = (
+                f"Providing '{attribute.alias}' to '{self.__class__.__name__}' is no "
+                f"longer supported. To proceed, simply drop the argument."
+            )
+            if error:
+                raise DeprecationError(msg)
+            else:
+                warnings.warn(msg, DeprecationWarning, stacklevel=3)
+
+    return validator
 
 
 @define(kw_only=True)
@@ -108,7 +118,7 @@ class SubspaceDiscrete(SerialMixin):
     """The experimental representation of the subspace."""
 
     _empty_encoding: Annotated[bool, cattrs.override(omit=True)] = field(
-        alias="empty_encoding", default=None, validator=_reject_argument
+        alias="empty_encoding", default=None, validator=_deprecate_argument(error=False)
     )
 
     constraints: tuple[DiscreteConstraint, ...] = field(
@@ -117,7 +127,7 @@ class SubspaceDiscrete(SerialMixin):
     """Optional constraints filtering the subspace."""
 
     _comp_rep: Annotated[pd.DataFrame, cattrs.override(omit=True)] = field(
-        alias="comp_rep", default=None, validator=_reject_argument
+        alias="comp_rep", default=None, validator=_deprecate_argument(error=True)
     )
 
     @override
