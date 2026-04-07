@@ -117,6 +117,9 @@ def test_candidate_toggling(constraints, exclude, complement):
     assert all(target == exclude)  # must contain the updated values
     assert all(other != exclude)  # must contain the original values
 
+    # Assert that recommendation with toggled candidates still works
+    campaign.recommend(1)
+
 
 @pytest.mark.parametrize(
     "flag",
