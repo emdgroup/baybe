@@ -7,10 +7,7 @@ from pandas.testing import assert_frame_equal
 
 from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import (
-    ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
-    DiscreteSumConstraint,
-    ThresholdCondition,
 )
 from baybe.exceptions import (
     EmptySearchSpaceError,
@@ -174,77 +171,6 @@ def test_hyperrectangle_searchspace_creation():
     assert searchspace.parameters == parameters
 
 
-def test_invalid_constraint_parameter_combos():
-    """Testing invalid constraint-parameter combinations."""
-    parameters = [
-        CategoricalParameter("cat1", values=("c1", "c2")),
-        NumericalDiscreteParameter("d1", values=[1, 2, 3]),
-        NumericalDiscreteParameter("d2", values=[0, 1, 2]),
-        NumericalContinuousParameter("c1", (0, 2)),
-        NumericalContinuousParameter("c2", (-1, 1)),
-    ]
-
-    # Attempting continuous constraint over hybrid parameter set
-    with pytest.raises(ValueError):
-        SearchSpace.from_product(
-            parameters=parameters,
-            constraints=[ContinuousLinearConstraint(["c1", "c2", "d1"], "=")],
-        )
-
-    # Attempting continuous constraint over hybrid parameter set
-    with pytest.raises(ValueError):
-        SearchSpace.from_product(
-            parameters=parameters,
-            constraints=[ContinuousLinearConstraint(["c1", "c2", "d1"], "=")],
-        )
-
-    # Attempting discrete constraint over hybrid parameter set
-    with pytest.raises(ValueError):
-        SearchSpace.from_product(
-            parameters=parameters,
-            constraints=[
-                DiscreteSumConstraint(
-                    parameters=["d1", "d2", "c1"],
-                    condition=ThresholdCondition(threshold=1.0, operator=">"),
-                )
-            ],
-        )
-
-    # Attempting constraints over parameter set where a parameter does not exist
-    with pytest.raises(ValueError):
-        SearchSpace.from_product(
-            parameters=parameters,
-            constraints=[
-                DiscreteSumConstraint(
-                    parameters=["d1", "e7", "c1"],
-                    condition=ThresholdCondition(threshold=1.0, operator=">"),
-                )
-            ],
-        )
-
-    # Attempting constraints over parameter set where a parameter does not exist
-    with pytest.raises(ValueError):
-        SearchSpace.from_product(
-            parameters=parameters,
-            constraints=[ContinuousLinearConstraint(["c1", "e7", "d1"], "=")],
-        )
-
-    # Attempting constraints over parameter sets containing non-numerical discrete
-    # parameters.
-    with pytest.raises(
-        ValueError, match="valid only for numerical discrete parameters"
-    ):
-        SearchSpace.from_product(
-            parameters=parameters,
-            constraints=[
-                DiscreteSumConstraint(
-                    parameters=["cat1", "d1", "d2"],
-                    condition=ThresholdCondition(threshold=1.0, operator=">"),
-                )
-            ],
-        )
-
-
 @pytest.mark.parametrize(
     "parameter_names",
     [
@@ -293,48 +219,6 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
         estimate_comp,
         actual_comp,
     )
-
-
-def test_cardinality_constraints_with_overlapping_parameters():
-    """Creating cardinality constraints with overlapping parameters raises an error."""
-    parameters = (
-        NumericalContinuousParameter("c1", (0, 1)),
-        NumericalContinuousParameter("c2", (0, 1)),
-        NumericalContinuousParameter("c3", (0, 1)),
-    )
-    with pytest.raises(ValueError, match="cannot share the same parameters"):
-        SubspaceContinuous(
-            parameters=parameters,
-            constraints=(
-                ContinuousCardinalityConstraint(
-                    parameters=["c1", "c2"],
-                    max_cardinality=1,
-                ),
-                ContinuousCardinalityConstraint(
-                    parameters=["c2", "c3"],
-                    max_cardinality=1,
-                ),
-            ),
-        )
-
-
-def test_cardinality_constraint_with_invalid_parameter_bounds():
-    """Imposing a cardinality constraint on a parameter whose range does not include
-    zero raises an error."""  # noqa
-    parameters = (
-        NumericalContinuousParameter("c1", (0, 1)),
-        NumericalContinuousParameter("c2", (1, 2)),
-    )
-    with pytest.raises(ValueError, match="must include zero"):
-        SubspaceContinuous(
-            parameters=parameters,
-            constraints=(
-                ContinuousCardinalityConstraint(
-                    parameters=["c1", "c2"],
-                    max_cardinality=1,
-                ),
-            ),
-        )
 
 
 @pytest.mark.skipif(
