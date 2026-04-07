@@ -10,6 +10,7 @@ from baybe.constraints import (
     DiscreteSumConstraint,
     ThresholdCondition,
 )
+from baybe.constraints.discrete import DiscreteLinkedParametersConstraint
 from baybe.exceptions import IncompatibilityError
 from baybe.parameters import (
     CategoricalParameter,
@@ -215,4 +216,35 @@ def test_invalid_simplex_creation_with_overlapping_parameters():
                 simplex_parameters=parameters,
                 product_parameters=parameters,
             )
+        )
+
+
+def test_discrete_subspace_with_duplicate_parameter_names():
+    """Creating a discrete subspace with duplicate parameter names raises an error."""
+    with pytest.raises(ValueError, match="unique names"):
+        SubspaceDiscrete.from_product(
+            parameters=[
+                NumericalDiscreteParameter("d1", values=[0, 1]),
+                NumericalDiscreteParameter("d1", values=[0, 1, 2]),
+            ],
+        )
+
+
+@pytest.mark.parametrize(
+    "constraint_params",
+    [
+        param(["nonexistent"], id="all_nonexistent"),
+        param(["d1", "nonexistent"], id="partially_nonexistent"),
+    ],
+)
+def test_discrete_subspace_constraint_with_nonexistent_params(constraint_params):
+    """Using constraints referencing nonexistent parameters raises an error."""
+    parameters = [
+        NumericalDiscreteParameter("d1", values=[0, 1]),
+        NumericalDiscreteParameter("d2", values=[0, 1]),
+    ]
+    with pytest.raises(IncompatibilityError, match="not part of the subspace"):
+        SubspaceDiscrete.from_product(
+            parameters=parameters,
+            constraints=[DiscreteLinkedParametersConstraint(constraint_params)],
         )
