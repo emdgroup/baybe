@@ -170,35 +170,51 @@ def test_cardinality_constraint_with_invalid_parameter_bounds():
         )
 
 
-def test_continuous_subspace_with_duplicate_parameter_names():
-    """Creating a continuous subspace with duplicate parameter names raises an error."""
-    with pytest.raises(ValueError, match="unique names"):
-        SubspaceContinuous(
-            parameters=[
-                NumericalContinuousParameter("c1", (0, 1)),
-                NumericalContinuousParameter("c1", (0, 2)),
-            ]
-        )
+p_cont = NumericalContinuousParameter("p", (0, 1))
+p_disc = NumericalDiscreteParameter("p", (0, 1))
 
 
 @pytest.mark.parametrize(
-    "constraint_params",
+    ("p1", "p2", "space"),
     [
-        param(["nonexistent"], id="all_nonexistent"),
-        param(["c1", "nonexistent"], id="partially_nonexistent"),
+        param(p_cont, p_cont, SubspaceContinuous, id="continuous"),
+        param(p_disc, p_disc, SubspaceDiscrete, id="discrete"),
+        param(p_cont, p_disc, SearchSpace, id="hybrid"),
     ],
 )
-def test_continuous_subspace_constraint_with_nonexistent_params(constraint_params):
+def test_subspace_with_duplicate_parameter_names(p1, p2, space):
+    """Creating a search space with duplicate parameter names raises an error."""
+    with pytest.raises(ValueError, match="unique names"):
+        space.from_product(parameters=[p1, p2])
+
+
+@pytest.mark.parametrize("discrete", [True, False])
+@pytest.mark.parametrize(
+    "referenced",
+    [
+        param(["nonexistent"], id="all_nonexistent"),
+        param(["p1", "nonexistent"], id="partially_nonexistent"),
+    ],
+)
+def test_continuous_subspace_constraint_with_nonexistent_params(referenced, discrete):
     """Using constraints referencing nonexistent parameters raises an error."""
-    parameters = [
-        NumericalContinuousParameter("c1", (0, 1)),
-        NumericalContinuousParameter("c2", (0, 1)),
-    ]
+    if discrete:
+        parameters = [
+            NumericalDiscreteParameter("p1", (0, 1)),
+            NumericalDiscreteParameter("p2", (0, 1)),
+        ]
+        space = SubspaceDiscrete
+        constraint = DiscreteLinkedParametersConstraint(referenced)
+    else:
+        parameters = [
+            NumericalContinuousParameter("p1", (0, 1)),
+            NumericalContinuousParameter("p2", (0, 1)),
+        ]
+        space = SubspaceContinuous
+        constraint = ContinuousLinearConstraint(referenced, "=")
+
     with pytest.raises(IncompatibilityError, match="not part of the subspace"):
-        SubspaceContinuous(
-            parameters=parameters,
-            constraints=[ContinuousLinearConstraint(constraint_params, "=")],
-        )
+        space.from_product(parameters=parameters, constraints=[constraint])
 
 
 def test_invalid_simplex_creation_with_overlapping_parameters():
@@ -216,35 +232,4 @@ def test_invalid_simplex_creation_with_overlapping_parameters():
                 simplex_parameters=parameters,
                 product_parameters=parameters,
             )
-        )
-
-
-def test_discrete_subspace_with_duplicate_parameter_names():
-    """Creating a discrete subspace with duplicate parameter names raises an error."""
-    with pytest.raises(ValueError, match="unique names"):
-        SubspaceDiscrete.from_product(
-            parameters=[
-                NumericalDiscreteParameter("d1", values=[0, 1]),
-                NumericalDiscreteParameter("d1", values=[0, 1, 2]),
-            ],
-        )
-
-
-@pytest.mark.parametrize(
-    "constraint_params",
-    [
-        param(["nonexistent"], id="all_nonexistent"),
-        param(["d1", "nonexistent"], id="partially_nonexistent"),
-    ],
-)
-def test_discrete_subspace_constraint_with_nonexistent_params(constraint_params):
-    """Using constraints referencing nonexistent parameters raises an error."""
-    parameters = [
-        NumericalDiscreteParameter("d1", values=[0, 1]),
-        NumericalDiscreteParameter("d2", values=[0, 1]),
-    ]
-    with pytest.raises(IncompatibilityError, match="not part of the subspace"):
-        SubspaceDiscrete.from_product(
-            parameters=parameters,
-            constraints=[DiscreteLinkedParametersConstraint(constraint_params)],
         )
