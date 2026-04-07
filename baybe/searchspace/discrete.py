@@ -81,16 +81,15 @@ class MemorySize:
 class SubspaceDiscrete(SerialMixin):
     """Class for managing discrete subspaces.
 
-    Builds the subspace from parameter definitions and optional constraints, keeps
-    track of search metadata, and provides access to candidate sets and different
-    parameter views.
+    Builds the subspace from parameter definitions and optional constraints,
+    and provides access to candidate sets and different parameter views.
     """
 
     parameters: tuple[DiscreteParameter, ...] = field(
         converter=sort_parameters,
         validator=lambda _, __, x: validate_parameter_names(x),
     )
-    """The list of parameters of the subspace."""
+    """The parameters spanning the subspace."""
 
     exp_rep: pd.DataFrame = field(eq=eq_dataframe)
     """The experimental representation of the subspace."""
@@ -98,7 +97,7 @@ class SubspaceDiscrete(SerialMixin):
     constraints: tuple[DiscreteConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
-    """A list of constraints for restricting the space."""
+    """Optional constraints filtering the subspace."""
 
     @override
     def __str__(self) -> str:
