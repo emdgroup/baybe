@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 from collections.abc import Collection, Sequence
+from functools import cached_property
 from itertools import compress
 from math import prod
 from typing import TYPE_CHECKING, Any
@@ -99,12 +100,6 @@ class SubspaceDiscrete(SerialMixin):
     )
     """A list of constraints for restricting the space."""
 
-    comp_rep: pd.DataFrame = field(eq=eq_dataframe)
-    """The computational representation of the space. Technically not required but added
-    as an optional initializer argument to allow ingestion from e.g. serialized objects
-    and thereby speed up construction. If not provided, the default hook will derive it
-    from ``exp_rep``."""
-
     @override
     def __str__(self) -> str:
         if self.is_empty:
@@ -141,11 +136,6 @@ class SubspaceDiscrete(SerialMixin):
                 "The index of this search space contains duplicates. "
                 "This is not allowed, as it can lead to hard-to-detect bugs."
             )
-
-    @comp_rep.default
-    def _default_comp_rep(self) -> pd.DataFrame:
-        """Create the default computational representation."""
-        return self.transform(self.exp_rep)
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no continuous part."""
@@ -501,6 +491,11 @@ class SubspaceDiscrete(SerialMixin):
     def parameter_names(self) -> tuple[str, ...]:
         """Return tuple of parameter names."""
         return tuple(p.name for p in self.parameters)
+
+    @cached_property
+    def comp_rep(self) -> pd.DataFrame:
+        """The computational representation of the subspace."""
+        return self.transform(self.exp_rep)
 
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:
