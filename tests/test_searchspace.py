@@ -305,7 +305,7 @@ def test_cardinality_constraints_with_overlapping_parameters():
     with pytest.raises(ValueError, match="cannot share the same parameters"):
         SubspaceContinuous(
             parameters=parameters,
-            constraints_nonlin=(
+            constraints=(
                 ContinuousCardinalityConstraint(
                     parameters=["c1", "c2"],
                     max_cardinality=1,
@@ -328,7 +328,7 @@ def test_cardinality_constraint_with_invalid_parameter_bounds():
     with pytest.raises(ValueError, match="must include zero"):
         SubspaceContinuous(
             parameters=parameters,
-            constraints_nonlin=(
+            constraints=(
                 ContinuousCardinalityConstraint(
                     parameters=["c1", "c2"],
                     max_cardinality=1,
@@ -485,8 +485,7 @@ def test_sample_from_polytope_mixed_constraints_with_interpoint():
 
     subspace = SubspaceContinuous(
         parameters=parameters,
-        constraints_lin_ineq=[regular_constraint],
-        constraints_lin_eq=[interpoint_constraint],
+        constraints=[regular_constraint, interpoint_constraint],
     )
 
     assert subspace.has_interpoint_constraints

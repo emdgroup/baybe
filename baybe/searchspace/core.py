@@ -195,9 +195,7 @@ class SearchSpace(SerialMixin):
         """Return the constraints of the search space."""
         return (
             *self.discrete.constraints,
-            *self.continuous.constraints_lin_eq,
-            *self.continuous.constraints_lin_ineq,
-            *self.continuous.constraints_nonlin,
+            *self.continuous.constraints,
         )
 
     @property

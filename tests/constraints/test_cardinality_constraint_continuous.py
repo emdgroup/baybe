@@ -104,9 +104,7 @@ def test_sampling_cardinality_constraint(cardinality_bounds: tuple[int, int]):
         ),
     )
 
-    subspace_continous = SubspaceContinuous(
-        parameters=parameters, constraints_nonlin=constraints
-    )
+    subspace_continous = SubspaceContinuous(parameters, constraints)
 
     with warnings.catch_warnings(record=True) as w:
         samples = subspace_continous.sample_uniform(BATCH_SIZE)

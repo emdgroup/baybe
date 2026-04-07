@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
-from attrs import define, evolve, field, fields
+from attrs import define, evolve, field
 from typing_extensions import override
 
 from baybe.constraints import (
@@ -62,20 +62,10 @@ class SubspaceContinuous(SerialMixin):
     )
     """The parameters of the subspace."""
 
-    constraints_lin_eq: tuple[ContinuousLinearConstraint, ...] = field(
+    constraints: tuple[ContinuousConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
-    """Linear equality constraints."""
-
-    constraints_lin_ineq: tuple[ContinuousLinearConstraint, ...] = field(
-        converter=to_tuple, factory=tuple
-    )
-    """Linear inequality constraints."""
-
-    constraints_nonlin: tuple[ContinuousNonlinearConstraint, ...] = field(
-        converter=to_tuple, factory=tuple
-    )
-    """Nonlinear constraints."""
+    """Optional constraints filtering the subspace."""
 
     @override
     def __str__(self) -> str:
@@ -108,39 +98,38 @@ class SubspaceContinuous(SerialMixin):
         return to_string(self.__class__.__name__, *fields)
 
     @property
+    def constraints_lin_eq(self) -> tuple[ContinuousLinearConstraint, ...]:
+        """Linear equality constraints."""
+        return tuple(
+            c
+            for c in self.constraints
+            if isinstance(c, ContinuousLinearConstraint) and c.is_eq
+        )
+
+    @property
+    def constraints_lin_ineq(self) -> tuple[ContinuousLinearConstraint, ...]:
+        """Linear inequality constraints."""
+        return tuple(
+            c
+            for c in self.constraints
+            if isinstance(c, ContinuousLinearConstraint) and not c.is_eq
+        )
+
+    @property
+    def constraints_nonlin(self) -> tuple[ContinuousNonlinearConstraint, ...]:
+        """Nonlinear constraints."""
+        return tuple(
+            c for c in self.constraints if isinstance(c, ContinuousNonlinearConstraint)
+        )
+
+    @property
     def constraints_cardinality(self) -> tuple[ContinuousCardinalityConstraint, ...]:
         """Cardinality constraints."""
         return tuple(
             c
-            for c in self.constraints_nonlin
+            for c in self.constraints
             if isinstance(c, ContinuousCardinalityConstraint)
         )
-
-    @constraints_lin_eq.validator
-    def _validate_constraints_lin_eq(
-        self, _, lst: list[ContinuousLinearConstraint]
-    ) -> None:
-        """Validate linear equality constraints."""
-        # TODO Remove once eq and ineq constraints are consolidated into one list
-        if not all(c.is_eq for c in lst):
-            raise ValueError(
-                f"The list '{fields(self.__class__).constraints_lin_eq.name}' of "
-                f"{self.__class__.__name__} only accepts equality constraints, i.e. "
-                f"the 'operator' for all list items should be '='."
-            )
-
-    @constraints_lin_ineq.validator
-    def _validate_constraints_lin_ineq(
-        self, _, lst: list[ContinuousLinearConstraint]
-    ) -> None:
-        """Validate linear inequality constraints."""
-        # TODO Remove once eq and ineq constraints are consolidated into one list
-        if any(c.is_eq for c in lst):
-            raise ValueError(
-                f"The list '{fields(self.__class__).constraints_lin_ineq.name}' of "
-                f"{self.__class__.__name__} only accepts inequality constraints, i.e. "
-                f"the 'operator' for all list items should be '>=' or '<='."
-            )
 
     @property
     def n_inactive_parameter_combinations(self) -> int:
@@ -159,10 +148,9 @@ class SubspaceContinuous(SerialMixin):
         ):
             yield frozenset(chain(*combination))
 
-    @constraints_nonlin.validator
-    def _validate_constraints_nonlin(self, _, __) -> None:
-        """Validate nonlinear constraints."""
-        # Note: The passed constraints are accessed indirectly through the property
+    @constraints.validator
+    def _validate_constraints(self, _, __) -> None:
+        """Validate constraints."""
         validate_cardinality_constraints_are_nonoverlapping(
             self.constraints_cardinality
         )
@@ -201,22 +189,7 @@ class SubspaceContinuous(SerialMixin):
     ) -> SubspaceContinuous:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         constraints = constraints or []
-        return SubspaceContinuous(
-            parameters=[p for p in parameters if p.is_continuous],
-            constraints_lin_eq=[
-                c
-                for c in constraints
-                if (isinstance(c, ContinuousLinearConstraint) and c.is_eq)
-            ],
-            constraints_lin_ineq=[
-                c
-                for c in constraints
-                if (isinstance(c, ContinuousLinearConstraint) and not c.is_eq)
-            ],
-            constraints_nonlin=[
-                c for c in constraints if isinstance(c, ContinuousNonlinearConstraint)
-            ],
-        )
+        return SubspaceContinuous(parameters, constraints)
 
     @classmethod
     def from_bounds(cls, bounds: pd.DataFrame) -> SubspaceContinuous:
@@ -336,28 +309,17 @@ class SubspaceContinuous(SerialMixin):
         """
         return SubspaceContinuous(
             parameters=[p for p in self.parameters if p.name not in parameter_names],
-            constraints_lin_eq=[
+            constraints=[
                 c._drop_parameters(parameter_names)
-                for c in self.constraints_lin_eq
-                if set(c.parameters) - set(parameter_names)
-            ],
-            constraints_lin_ineq=[
-                c._drop_parameters(parameter_names)
-                for c in self.constraints_lin_ineq
-                if set(c.parameters) - set(parameter_names)
+                for c in self.constraints
+                if (set(c.parameters) - set(parameter_names))
             ],
         )
 
     @property
     def is_constrained(self) -> bool:
         """Boolean indicating if the subspace is constrained in any way."""
-        return any(
-            (
-                self.constraints_lin_eq,
-                self.constraints_lin_ineq,
-                self.constraints_nonlin,
-            )
-        )
+        return bool(self.constraints)
 
     @property
     def has_interpoint_constraints(self) -> bool:
@@ -424,9 +386,9 @@ class SubspaceContinuous(SerialMixin):
         return evolve(
             self,
             parameters=adjusted_parameters,
-            constraints_nonlin=[
+            constraints=[
                 c
-                for c in self.constraints_nonlin
+                for c in self.constraints
                 if not isinstance(c, ContinuousCardinalityConstraint)
             ],
         )
