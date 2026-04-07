@@ -100,7 +100,6 @@ class SearchSpace(SerialMixin):
         cls,
         parameters: Sequence[Parameter],
         constraints: Sequence[Constraint] | None = None,
-        empty_encoding: bool = False,
     ) -> SearchSpace:
         """Create a search space from a cartesian product.
 
@@ -114,11 +113,6 @@ class SearchSpace(SerialMixin):
             parameters: The parameters spanning the search space.
             constraints: An optional set of constraints restricting the valid parameter
                 space.
-            empty_encoding: If ``True``, uses an "empty" encoding for all parameters.
-                This is useful, for instance, in combination with random search
-                strategies that do not read the actual parameter values, since it avoids
-                the (potentially costly) transformation of the parameter values to their
-                computational representation.
 
         Returns:
             The constructed search space.
@@ -136,7 +130,6 @@ class SearchSpace(SerialMixin):
         discrete = SubspaceDiscrete.from_product(
             parameters=[p for p in parameters if p.is_discrete],  # type:ignore[misc]
             constraints=[c for c in constraints if c.is_discrete],  # type:ignore[misc]
-            empty_encoding=empty_encoding,
         )
         continuous = SubspaceContinuous.from_product(
             parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]

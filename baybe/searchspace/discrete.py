@@ -94,9 +94,6 @@ class SubspaceDiscrete(SerialMixin):
     exp_rep: pd.DataFrame = field(eq=eq_dataframe)
     """The experimental representation of the subspace."""
 
-    empty_encoding: bool = field(default=False)
-    """Flag encoding whether an empty encoding is used."""
-
     constraints: tuple[DiscreteConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
@@ -178,7 +175,6 @@ class SubspaceDiscrete(SerialMixin):
         cls,
         parameters: Sequence[DiscreteParameter],
         constraints: Sequence[DiscreteConstraint] | None = None,
-        empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         # Set defaults and order constraints
@@ -203,10 +199,7 @@ class SubspaceDiscrete(SerialMixin):
         _apply_constraint_filter_pandas(df, list(compress(constraints, mask_missing)))
 
         return SubspaceDiscrete(
-            parameters=parameters,
-            constraints=constraints,
-            exp_rep=df,
-            empty_encoding=empty_encoding,
+            parameters=parameters, constraints=constraints, exp_rep=df
         )
 
     @classmethod
@@ -214,7 +207,6 @@ class SubspaceDiscrete(SerialMixin):
         cls,
         df: pd.DataFrame,
         parameters: Sequence[DiscreteParameter] | None = None,
-        empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """Create a discrete subspace with a specified set of configurations.
 
@@ -231,7 +223,6 @@ class SubspaceDiscrete(SerialMixin):
                 fallback. For both types, default values are used for their optional
                 arguments. For more details, see
                 :func:`baybe.parameters.utils.get_parameters_from_dataframe`.
-            empty_encoding: See :func:`baybe.searchspace.core.SearchSpace.from_product`.
 
         Returns:
             The created discrete subspace.
@@ -267,7 +258,7 @@ class SubspaceDiscrete(SerialMixin):
         # Ensure dtype consistency
         df = normalize_input_dtypes(df, parameters)
 
-        return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)
+        return cls(parameters=parameters, exp_rep=df)
 
     @classmethod
     def from_simplex(
@@ -600,10 +591,6 @@ class SubspaceDiscrete(SerialMixin):
         parameters = get_transform_objects(
             df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
-
-        # If the transformed values are not required, return an empty dataframe
-        if self.empty_encoding or len(df) < 1:
-            return pd.DataFrame(index=df.index)
 
         # Transform the parameters
         dfs = []
