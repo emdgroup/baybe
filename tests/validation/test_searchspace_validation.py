@@ -10,6 +10,7 @@ from baybe.constraints import (
     DiscreteSumConstraint,
     ThresholdCondition,
 )
+from baybe.exceptions import IncompatibilityError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -165,4 +166,35 @@ def test_cardinality_constraint_with_invalid_parameter_bounds():
                     max_cardinality=1,
                 ),
             ),
+        )
+
+
+def test_continuous_subspace_with_duplicate_parameter_names():
+    """Creating a continuous subspace with duplicate parameter names raises an error."""
+    with pytest.raises(ValueError, match="unique names"):
+        SubspaceContinuous(
+            parameters=[
+                NumericalContinuousParameter("c1", (0, 1)),
+                NumericalContinuousParameter("c1", (0, 2)),
+            ]
+        )
+
+
+@pytest.mark.parametrize(
+    "constraint_params",
+    [
+        param(["nonexistent"], id="all_nonexistent"),
+        param(["c1", "nonexistent"], id="partially_nonexistent"),
+    ],
+)
+def test_continuous_subspace_constraint_with_nonexistent_params(constraint_params):
+    """Using constraints referencing nonexistent parameters raises an error."""
+    parameters = [
+        NumericalContinuousParameter("c1", (0, 1)),
+        NumericalContinuousParameter("c2", (0, 1)),
+    ]
+    with pytest.raises(IncompatibilityError, match="not part of the subspace"):
+        SubspaceContinuous(
+            parameters=parameters,
+            constraints=[ContinuousLinearConstraint(constraint_params, "=")],
         )
