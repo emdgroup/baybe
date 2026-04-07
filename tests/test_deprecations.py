@@ -673,3 +673,17 @@ def test_deprecated_empty_encoding_from_dataframe():
             df=pd.DataFrame({"p": [0, 1]}),
             empty_encoding=True,
         )
+
+
+def test_deprecated_discrete_subspace_deserialization():
+    """Deserialization from legacy JSON with `empty_encoding`/`comp_rep` works."""
+    p = NumericalDiscreteParameter("p", [0, 1])
+    expected = SubspaceDiscrete.from_product(parameters=[p])
+
+    # Build a legacy dict containing the deprecated fields
+    legacy_dict = expected.to_dict()
+    legacy_dict["empty_encoding"] = False
+    legacy_dict["comp_rep"] = legacy_dict["exp_rep"]
+
+    actual = SubspaceDiscrete.from_dict(legacy_dict)
+    assert actual == expected
