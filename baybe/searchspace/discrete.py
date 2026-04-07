@@ -7,8 +7,9 @@ from collections.abc import Collection, Sequence
 from functools import cached_property
 from itertools import compress
 from math import prod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
+import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
@@ -43,6 +44,14 @@ if TYPE_CHECKING:
     import polars as pl
 
     from baybe.searchspace.core import SearchSpace
+
+
+def _reject_argument(self, attribute, value):
+    if value is not None:
+        raise DeprecationError(
+            f"Providing '{attribute.alias}' to '{self.__class__.__name__}' is no "
+            f"longer supported. To proceed, simply drop the argument."
+        )
 
 
 @define(kw_only=True)
@@ -98,10 +107,18 @@ class SubspaceDiscrete(SerialMixin):
     exp_rep: pd.DataFrame = field(validator=instance_of(pd.DataFrame), eq=eq_dataframe)
     """The experimental representation of the subspace."""
 
+    _empty_encoding: Annotated[bool, cattrs.override(omit=True)] = field(
+        alias="empty_encoding", default=None, validator=_reject_argument
+    )
+
     constraints: tuple[DiscreteConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
     """Optional constraints filtering the subspace."""
+
+    _comp_rep: Annotated[pd.DataFrame, cattrs.override(omit=True)] = field(
+        alias="comp_rep", default=None, validator=_reject_argument
+    )
 
     @override
     def __str__(self) -> str:
@@ -168,6 +185,7 @@ class SubspaceDiscrete(SerialMixin):
         cls,
         parameters: Sequence[DiscreteParameter],
         constraints: Sequence[DiscreteConstraint] | None = None,
+        empty_encoding: bool | None = None,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         # Set defaults and order constraints
@@ -192,7 +210,10 @@ class SubspaceDiscrete(SerialMixin):
         _apply_constraint_filter_pandas(df, list(compress(constraints, mask_missing)))
 
         return SubspaceDiscrete(
-            parameters=parameters, constraints=constraints, exp_rep=df
+            parameters=parameters,
+            constraints=constraints,
+            exp_rep=df,
+            empty_encoding=empty_encoding,
         )
 
     @classmethod
@@ -200,6 +221,7 @@ class SubspaceDiscrete(SerialMixin):
         cls,
         df: pd.DataFrame,
         parameters: Sequence[DiscreteParameter] | None = None,
+        empty_encoding: bool | None = None,
     ) -> SubspaceDiscrete:
         """Create a discrete subspace with a specified set of configurations.
 
@@ -216,6 +238,7 @@ class SubspaceDiscrete(SerialMixin):
                 fallback. For both types, default values are used for their optional
                 arguments. For more details, see
                 :func:`baybe.parameters.utils.get_parameters_from_dataframe`.
+            empty_encoding: Ignore! For backwards compatibility only.
 
         Returns:
             The created discrete subspace.
@@ -251,7 +274,7 @@ class SubspaceDiscrete(SerialMixin):
         # Ensure dtype consistency
         df = normalize_input_dtypes(df, parameters)
 
-        return cls(parameters=parameters, exp_rep=df)
+        return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)
 
     @classmethod
     def from_simplex(
