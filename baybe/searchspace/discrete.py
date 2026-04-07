@@ -536,9 +536,6 @@ class SubspaceDiscrete(SerialMixin):
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:
         """The columns spanning the computational representation."""
-        # We go via `comp_rep` here instead of using the columns of the individual
-        # parameters because the search space potentially uses only a subset of the
-        # columns due to decorrelation
         return tuple(self.comp_rep.columns)
 
     @property
@@ -628,15 +625,7 @@ class SubspaceDiscrete(SerialMixin):
         for param in parameters:
             comp_df = param.transform(df[param.name])
             dfs.append(comp_df)
-        comp_rep = pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
-
-        # If the computational representation has already been built (with potentially
-        # removing some columns, e.g. due to decorrelation or dropping constant ones),
-        # any subsequent transformation should yield the same columns.
-        try:
-            return comp_rep[self.comp_rep.columns]
-        except AttributeError:
-            return comp_rep
+        return pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
     def get_parameters_by_name(
         self, names: Sequence[str]
