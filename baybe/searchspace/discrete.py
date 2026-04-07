@@ -120,6 +120,7 @@ class SubspaceDiscrete(SerialMixin):
     _empty_encoding: Annotated[bool, cattrs.override(omit=True)] = field(
         alias="empty_encoding", default=None, validator=_deprecate_argument(error=False)
     )
+    "Ignore! For backwards compatibility only."
 
     constraints: tuple[DiscreteConstraint, ...] = field(
         converter=to_tuple, factory=tuple
@@ -129,6 +130,7 @@ class SubspaceDiscrete(SerialMixin):
     _comp_rep: Annotated[pd.DataFrame, cattrs.override(omit=True)] = field(
         alias="comp_rep", default=None, validator=_deprecate_argument(error=True)
     )
+    "Ignore! For backwards compatibility only."
 
     @override
     def __str__(self) -> str:
