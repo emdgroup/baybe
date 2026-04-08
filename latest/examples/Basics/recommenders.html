@@ -942,7 +942,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.check_if_in.html">baybe.utils.boolean.check_if_in</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.is_abstract.html">baybe.utils.boolean.is_abstract</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.strtobool.html">baybe.utils.boolean.strtobool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.structure_autobool.html">baybe.utils.boolean.structure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.to_bool.html">baybe.utils.boolean.to_bool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.unstructure_autobool.html">baybe.utils.boolean.unstructure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.AutoBool.html">AutoBool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.UncertainBool.html">UncertainBool</a></li>
 </ul>
@@ -1307,14 +1309,14 @@ as follows.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
            Solvent                Base                        Ligand  \
-251           DMAc     Cesium pivalate                 (t-Bu)PhCPhos   
-163  Butyornitrile   Potassium acetate                 (t-Bu)PhCPhos   
-104    Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+408       p-Xylene  Potassium pivalate                 (t-Bu)PhCPhos   
+318           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+175  Butyornitrile   Potassium acetate                     BrettPhos   
 
      Temperature  Concentration  
-251        120.0          0.153  
-163         90.0          0.100  
-104        105.0          0.153  
+408        105.0          0.057  
+318        105.0          0.057  
+175        105.0          0.100  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1324,14 +1326,14 @@ as follows.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
            Solvent                Base                        Ligand  \
-251           DMAc     Cesium pivalate                 (t-Bu)PhCPhos   
-163  Butyornitrile   Potassium acetate                 (t-Bu)PhCPhos   
-104    Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+408       p-Xylene  Potassium pivalate                 (t-Bu)PhCPhos   
+318           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+175  Butyornitrile   Potassium acetate                     BrettPhos   
 
      Temperature  Concentration      yield  
-251        120.0          0.153  33.545606  
-163         90.0          0.100 -39.008113  
-104        105.0          0.153 -59.468137  
+408        105.0          0.057  56.657802  
+318        105.0          0.057 -67.908595  
+175        105.0          0.100  43.236127  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

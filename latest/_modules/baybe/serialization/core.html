@@ -941,7 +941,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.check_if_in.html">baybe.utils.boolean.check_if_in</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.is_abstract.html">baybe.utils.boolean.is_abstract</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.strtobool.html">baybe.utils.boolean.strtobool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.structure_autobool.html">baybe.utils.boolean.structure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.to_bool.html">baybe.utils.boolean.to_bool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.unstructure_autobool.html">baybe.utils.boolean.unstructure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.AutoBool.html">AutoBool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.UncertainBool.html">UncertainBool</a></li>
 </ul>
@@ -1108,7 +1110,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">cattrs.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_union_passthrough</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_subclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.boolean</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_abstract</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.boolean</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AutoBool</span><span class="p">,</span>
+    <span class="n">is_abstract</span><span class="p">,</span>
+    <span class="n">structure_autobool</span><span class="p">,</span>
+    <span class="n">unstructure_autobool</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">cattrs.dispatch</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnstructureHook</span>
@@ -1292,6 +1299,8 @@
 <span class="n">converter</span><span class="o">.</span><span class="n">register_structure_hook</span><span class="p">(</span>
     <span class="n">timedelta</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">removesuffix</span><span class="p">(</span><span class="s2">&quot;s&quot;</span><span class="p">)))</span>
 <span class="p">)</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">register_unstructure_hook</span><span class="p">(</span><span class="n">AutoBool</span><span class="p">,</span> <span class="n">unstructure_autobool</span><span class="p">)</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">register_structure_hook</span><span class="p">(</span><span class="n">AutoBool</span><span class="p">,</span> <span class="n">structure_autobool</span><span class="p">)</span>
 </pre></div>
         </article>
       </div>

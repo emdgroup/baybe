@@ -942,7 +942,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.check_if_in.html">baybe.utils.boolean.check_if_in</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.is_abstract.html">baybe.utils.boolean.is_abstract</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.strtobool.html">baybe.utils.boolean.strtobool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.structure_autobool.html">baybe.utils.boolean.structure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.to_bool.html">baybe.utils.boolean.to_bool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.unstructure_autobool.html">baybe.utils.boolean.unstructure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.AutoBool.html">AutoBool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.UncertainBool.html">UncertainBool</a></li>
 </ul>
@@ -1189,13 +1191,9 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-           Solvent               Base         Ligand  Temperature  \
-378       p-Xylene  Potassium acetate  (t-Bu)PhCPhos         90.0   
-117  Butyornitrile     Cesium acetate      BrettPhos         90.0   
-
-     Concentration  
-378          0.057  
-117          0.057  
+      Solvent               Base         Ligand  Temperature  Concentration
+356  p-Xylene    Cesium pivalate  (t-Bu)PhCPhos        105.0          0.153
+284      DMAc  Potassium acetate      BrettPhos        105.0          0.153
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1208,13 +1206,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base         Ligand  Temperature  \
-378       p-Xylene  Potassium acetate  (t-Bu)PhCPhos         90.0   
-117  Butyornitrile     Cesium acetate      BrettPhos         90.0   
+      Solvent               Base         Ligand  Temperature  Concentration  \
+356  p-Xylene    Cesium pivalate  (t-Bu)PhCPhos        105.0          0.153   
+284      DMAc  Potassium acetate      BrettPhos        105.0          0.153   
 
-     Concentration      yield  
-378          0.057  83.864768  
-117          0.057 -50.609475  
+         yield  
+356  84.040525  
+284 -92.113285  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

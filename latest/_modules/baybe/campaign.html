@@ -941,7 +941,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.check_if_in.html">baybe.utils.boolean.check_if_in</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.is_abstract.html">baybe.utils.boolean.is_abstract</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.strtobool.html">baybe.utils.boolean.strtobool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.structure_autobool.html">baybe.utils.boolean.structure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.to_bool.html">baybe.utils.boolean.to_bool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.unstructure_autobool.html">baybe.utils.boolean.unstructure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.AutoBool.html">AutoBool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.UncertainBool.html">UncertainBool</a></li>
 </ul>
@@ -1099,14 +1101,14 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">cattrs</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">Attribute</span><span class="p">,</span> <span class="n">Factory</span><span class="p">,</span> <span class="n">define</span><span class="p">,</span> <span class="n">evolve</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">Attribute</span><span class="p">,</span> <span class="n">define</span><span class="p">,</span> <span class="n">evolve</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">setters</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs.converters</span><span class="w"> </span><span class="kn">import</span> <span class="n">optional</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">instance_of</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
@@ -1136,8 +1138,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Settings</span><span class="p">,</span> <span class="n">active_settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorStatistic</span><span class="p">,</span> <span class="n">SurrogateProtocol</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Target</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">UNSPECIFIED</span><span class="p">,</span> <span class="n">UnspecifiedType</span><span class="p">,</span> <span class="n">is_all_instance</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.boolean</span><span class="w"> </span><span class="kn">import</span> <span class="n">eq_dataframe</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_all_instance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.boolean</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoBool</span><span class="p">,</span> <span class="n">eq_dataframe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.conversion</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_string</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="n">filter_df</span><span class="p">,</span> <span class="n">fuzzy_row_match</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.validation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -1161,20 +1163,6 @@
 <span class="n">_METADATA_COLUMNS</span> <span class="o">=</span> <span class="p">[</span><span class="n">_RECOMMENDED</span><span class="p">,</span> <span class="n">_MEASURED</span><span class="p">,</span> <span class="n">_EXCLUDED</span><span class="p">]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_make_allow_flag_default_factory</span><span class="p">(</span>
-    <span class="n">default</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Campaign</span><span class="p">],</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">UnspecifiedType</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a default factory for allow_* flags.&quot;&quot;&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">default_allow_flag</span><span class="p">(</span><span class="n">campaign</span><span class="p">:</span> <span class="n">Campaign</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">UnspecifiedType</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attrs-compatible default factory for allow_* flags.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">default</span>
-        <span class="k">return</span> <span class="n">UNSPECIFIED</span>
-
-    <span class="k">return</span> <span class="n">default_allow_flag</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_set_with_cache_cleared</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n">Campaign</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="n">Attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">_T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Attrs-compatible hook to clear the cache when changing an attribute.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">attribute</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
@@ -1182,22 +1170,26 @@
     <span class="k">return</span> <span class="n">value</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_validate_allow_flag</span><span class="p">(</span><span class="n">campaign</span><span class="p">:</span> <span class="n">Campaign</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="n">Attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="n">_convert_validate_and_clear_cache</span> <span class="o">=</span> <span class="n">setters</span><span class="o">.</span><span class="n">pipe</span><span class="p">(</span>
+    <span class="n">setters</span><span class="o">.</span><span class="n">convert</span><span class="p">,</span> <span class="n">setters</span><span class="o">.</span><span class="n">validate</span><span class="p">,</span> <span class="n">_set_with_cache_cleared</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Attrs on_setattr hook that converts, validates, and clears the cache on changes.&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_allow_flag</span><span class="p">(</span>
+    <span class="n">campaign</span><span class="p">:</span> <span class="n">Campaign</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="n">Attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">AutoBool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Attrs-compatible validator for context-aware validation of allow_* flags.&quot;&quot;&quot;</span>
-    <span class="k">match</span> <span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
-        <span class="k">case</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;For search spaces of &#39;</span><span class="si">{</span><span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="si">}</span><span class="s2">&#39;, &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">attribute</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; must be a Boolean.&quot;</span>
-                <span class="p">)</span>
-        <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">UNSPECIFIED</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;For search spaces of type other than &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="si">}</span><span class="s2">&#39;, &#39;</span><span class="si">{</span><span class="n">attribute</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; cannot be set &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;since the flag is meaningless in such contexts.&quot;</span><span class="p">,</span>
-                <span class="p">)</span>
+    <span class="k">if</span> <span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">AutoBool</span><span class="o">.</span><span class="n">FALSE</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">IncompatibilityError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;For search spaces involving a continuous subspace, the flag &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">attribute</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">&#39; cannot be set to &#39;False&#39; for algorithmic reasons. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Either let the value be automatically determined by not setting it &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;explicitly / setting it to &#39;auto&#39; or explicitly set it to &#39;True&#39;.&quot;</span>
+        <span class="p">)</span>
 
 
 <div class="viewcode-block" id="Campaign">
@@ -1243,42 +1235,39 @@
     <span class="n">recommender</span><span class="p">:</span> <span class="n">RecommenderProtocol</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">factory</span><span class="o">=</span><span class="n">TwoPhaseMetaRecommender</span><span class="p">,</span>
         <span class="n">validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="n">RecommenderProtocol</span><span class="p">),</span>
-        <span class="n">on_setattr</span><span class="o">=</span><span class="n">_set_with_cache_cleared</span><span class="p">,</span>
+        <span class="n">on_setattr</span><span class="o">=</span><span class="n">_convert_validate_and_clear_cache</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The employed recommender&quot;&quot;&quot;</span>
 
-    <span class="n">allow_recommending_already_measured</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">UnspecifiedType</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">Factory</span><span class="p">(</span>
-            <span class="n">_make_allow_flag_default_factory</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">takes_self</span><span class="o">=</span><span class="kc">True</span>
-        <span class="p">),</span>
+    <span class="n">_allow_recommending_already_measured</span><span class="p">:</span> <span class="n">AutoBool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;allow_recommending_already_measured&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">AutoBool</span><span class="o">.</span><span class="n">AUTO</span><span class="p">,</span>
+        <span class="n">converter</span><span class="o">=</span><span class="n">AutoBool</span><span class="o">.</span><span class="n">from_unstructured</span><span class="p">,</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="n">validator</span><span class="o">=</span><span class="n">_validate_allow_flag</span><span class="p">,</span>
-        <span class="n">on_setattr</span><span class="o">=</span><span class="n">_set_with_cache_cleared</span><span class="p">,</span>
+        <span class="n">on_setattr</span><span class="o">=</span><span class="n">_convert_validate_and_clear_cache</span><span class="p">,</span>
         <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow to recommend experiments that were already measured earlier.</span>
-<span class="sd">    Can only be set for discrete search spaces.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow recommending experiments that have already been measured.&quot;&quot;&quot;</span>
 
-    <span class="n">allow_recommending_already_recommended</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">UnspecifiedType</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">Factory</span><span class="p">(</span>
-            <span class="n">_make_allow_flag_default_factory</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">takes_self</span><span class="o">=</span><span class="kc">True</span>
-        <span class="p">),</span>
+    <span class="n">_allow_recommending_already_recommended</span><span class="p">:</span> <span class="n">AutoBool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;allow_recommending_already_recommended&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">AutoBool</span><span class="o">.</span><span class="n">AUTO</span><span class="p">,</span>
+        <span class="n">converter</span><span class="o">=</span><span class="n">AutoBool</span><span class="o">.</span><span class="n">from_unstructured</span><span class="p">,</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="n">validator</span><span class="o">=</span><span class="n">_validate_allow_flag</span><span class="p">,</span>
-        <span class="n">on_setattr</span><span class="o">=</span><span class="n">_set_with_cache_cleared</span><span class="p">,</span>
+        <span class="n">on_setattr</span><span class="o">=</span><span class="n">_convert_validate_and_clear_cache</span><span class="p">,</span>
         <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow to recommend experiments that were already recommended earlier.</span>
-<span class="sd">    Can only be set for discrete search spaces.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow recommending experiments that have already been recommended.&quot;&quot;&quot;</span>
 
-    <span class="n">allow_recommending_pending_experiments</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">UnspecifiedType</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">Factory</span><span class="p">(</span>
-            <span class="n">_make_allow_flag_default_factory</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">takes_self</span><span class="o">=</span><span class="kc">True</span>
-        <span class="p">),</span>
+    <span class="n">_allow_recommending_pending_experiments</span><span class="p">:</span> <span class="n">AutoBool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;allow_recommending_pending_experiments&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">AutoBool</span><span class="o">.</span><span class="n">AUTO</span><span class="p">,</span>
+        <span class="n">converter</span><span class="o">=</span><span class="n">AutoBool</span><span class="o">.</span><span class="n">from_unstructured</span><span class="p">,</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="n">validator</span><span class="o">=</span><span class="n">_validate_allow_flag</span><span class="p">,</span>
-        <span class="n">on_setattr</span><span class="o">=</span><span class="n">_set_with_cache_cleared</span><span class="p">,</span>
+        <span class="n">on_setattr</span><span class="o">=</span><span class="n">_convert_validate_and_clear_cache</span><span class="p">,</span>
         <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow pending experiments to be part of the recommendations.</span>
-<span class="sd">    Can only be set for discrete search spaces.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow recommending pending experiments.&quot;&quot;&quot;</span>
 
     <span class="c1"># Metadata</span>
     <span class="n">_searchspace_metadata</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="n">eq_dataframe</span><span class="p">)</span>
@@ -1359,6 +1348,45 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">targets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Target</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The targets of the underlying objective.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">targets</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allow_recommending_already_measured</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Allow recommending experiments that have already been measured.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_recommending_already_measured</span> <span class="ow">is</span> <span class="n">AutoBool</span><span class="o">.</span><span class="n">AUTO</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_allow_recommending_already_measured</span><span class="p">)</span>
+
+    <span class="nd">@allow_recommending_already_measured</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allow_recommending_already_measured</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set candidate flag for already measured experiments.&quot;&quot;&quot;</span>
+        <span class="c1"># Note: uses attrs converter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_allow_recommending_already_measured</span> <span class="o">=</span> <span class="n">value</span>  <span class="c1"># type: ignore[assignment]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allow_recommending_already_recommended</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Allow recommending experiments that have already been recommended.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_recommending_already_recommended</span> <span class="ow">is</span> <span class="n">AutoBool</span><span class="o">.</span><span class="n">AUTO</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_allow_recommending_already_recommended</span><span class="p">)</span>
+
+    <span class="nd">@allow_recommending_already_recommended</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allow_recommending_already_recommended</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set candidate flag for already recommended experiments.&quot;&quot;&quot;</span>
+        <span class="c1"># Note: uses attrs converter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_allow_recommending_already_recommended</span> <span class="o">=</span> <span class="n">value</span>  <span class="c1"># type: ignore[assignment]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allow_recommending_pending_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Allow recommending pending experiments.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_recommending_pending_experiments</span> <span class="ow">is</span> <span class="n">AutoBool</span><span class="o">.</span><span class="n">AUTO</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_allow_recommending_pending_experiments</span><span class="p">)</span>
+
+    <span class="nd">@allow_recommending_pending_experiments</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allow_recommending_pending_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set candidate flag for pending experiments.&quot;&quot;&quot;</span>
+        <span class="c1"># Note: uses attrs converter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_allow_recommending_pending_experiments</span> <span class="o">=</span> <span class="n">value</span>  <span class="c1"># type: ignore[assignment]</span>
 
 <div class="viewcode-block" id="Campaign.from_config">
 <a class="viewcode-back" href="../../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.from_config">[docs]</a>
@@ -1625,7 +1653,6 @@
             <span class="n">active_settings</span><span class="o">.</span><span class="n">cache_campaign_recommendations</span>
             <span class="ow">and</span> <span class="p">(</span><span class="n">cache</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_recommendation</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="n">pending_experiments</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_already_recommended</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">UNSPECIFIED</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_already_recommended</span>
             <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span> <span class="o">==</span> <span class="n">batch_size</span>
         <span class="p">):</span>
@@ -1696,9 +1723,9 @@
             <span class="n">ok_m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_already_measured</span>
             <span class="n">ok_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_already_recommended</span>
             <span class="n">ok_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_pending_experiments</span>
-            <span class="n">ok_m_name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">allow_recommending_already_measured</span><span class="o">.</span><span class="n">name</span>
-            <span class="n">ok_r_name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">allow_recommending_already_recommended</span><span class="o">.</span><span class="n">name</span>
-            <span class="n">ok_p_name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">allow_recommending_pending_experiments</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">ok_m_name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">_allow_recommending_already_measured</span><span class="o">.</span><span class="n">alias</span>
+            <span class="n">ok_r_name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">_allow_recommending_already_recommended</span><span class="o">.</span><span class="n">alias</span>
+            <span class="n">ok_p_name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">_allow_recommending_pending_experiments</span><span class="o">.</span><span class="n">alias</span>
             <span class="n">no_blocked_pending_points</span> <span class="o">=</span> <span class="n">ok_p</span> <span class="ow">or</span> <span class="p">(</span><span class="n">pending_experiments</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
 
             <span class="c1"># If there are no candidate restrictions to be relaxed</span>

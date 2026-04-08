@@ -942,7 +942,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.check_if_in.html">baybe.utils.boolean.check_if_in</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.is_abstract.html">baybe.utils.boolean.is_abstract</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.strtobool.html">baybe.utils.boolean.strtobool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.structure_autobool.html">baybe.utils.boolean.structure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.to_bool.html">baybe.utils.boolean.to_bool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.unstructure_autobool.html">baybe.utils.boolean.unstructure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.AutoBool.html">AutoBool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.UncertainBool.html">UncertainBool</a></li>
 </ul>
@@ -1239,20 +1241,60 @@ experimentation is feasible in the first place, or whether the given time budget
 even allows for sequential runs.</p>
 </div>
 </section>
-<section id="candidate-control-in-discrete-spaces">
-<h3>Candidate Control in Discrete Spaces<a class="headerlink" href="#candidate-control-in-discrete-spaces" title="Link to this heading">¶</a></h3>
-<p>For discrete search spaces, campaigns provide additional control over how the candidate
-set of recommendable points is built based on the trajectory the campaign has taken so
-far. This is done by setting the following Boolean flags:</p>
+<section id="candidate-control-flags">
+<h3>Candidate Control Flags<a class="headerlink" href="#candidate-control-flags" title="Link to this heading">¶</a></h3>
+<p>Due to their sequential nature, campaigns provide some unique mechanisms to dynamically
+adjust the set of recommendable candidates based on the specific trajectory they have
+taken so far. This is done by setting the following optional
+<a class="reference internal" href="../_autosummary/baybe.utils.boolean.AutoBool.html#baybe.utils.boolean.AutoBool" title="baybe.utils.boolean.AutoBool"><code class="xref py py-class docutils literal notranslate"><span class="pre">AutoBool</span></code></a> flags:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">allow_recommending_already_measured</span></code>:  Controls whether points that have already been
-measured can be recommended.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">allow_recommending_already_recommended</span></code>: Controls whether previously recommended points can
-be recommended again.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">allow_recommending_pending_experiments</span></code>: Controls whether points marked as
-<code class="docutils literal notranslate"><span class="pre">pending_experiments</span></code> can be recommended (see <a class="reference internal" href="async.html#pending-experiments"><span class="std std-ref">asynchronous
-workflows</span></a>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">allow_recommending_already_measured</span></code>: Controls whether candidates that have already
+been measured can be recommended.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">allow_recommending_already_recommended</span></code>: Controls whether previously recommended
+candidates can be recommended again.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">allow_recommending_pending_experiments</span></code>: Controls whether candidates marked as
+<code class="docutils literal notranslate"><span class="pre">pending_experiments</span></code> can be recommended
+(see <a class="reference internal" href="async.html#pending-experiments"><span class="std std-ref">asynchronous workflows</span></a>).</p></li>
 </ul>
+<p>When set to <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>/<a class="reference internal" href="../_autosummary/baybe.utils.boolean.AutoBool.html#baybe.utils.boolean.AutoBool.AUTO" title="baybe.utils.boolean.AutoBool.AUTO"><code class="xref py py-attr docutils literal notranslate"><span class="pre">AUTO</span></code></a>, the effective flag
+value is resolved based on the type of the configured search space:</p>
+<div class="table-wrapper colwidths-auto docutils container" id="id1">
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Resolved values when flags are set to <a class="reference internal" href="../_autosummary/baybe.utils.boolean.AutoBool.html#baybe.utils.boolean.AutoBool.AUTO" title="baybe.utils.boolean.AutoBool.AUTO"><code class="xref py py-attr docutils literal notranslate"><span class="pre">AUTO</span></code></a></span><a class="headerlink" href="#id1" title="Link to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Flag</p></th>
+<th class="head text-center"><p>Discrete</p></th>
+<th class="head text-center"><p>Continuous</p></th>
+<th class="head text-center"><p>Hybrid</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p><a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.allow_recommending_already_measured" title="baybe.campaign.Campaign.allow_recommending_already_measured"><code class="xref py py-attr docutils literal notranslate"><span class="pre">allow_recommending_already_measured</span></code></a></p></td>
+<td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.allow_recommending_already_recommended" title="baybe.campaign.Campaign.allow_recommending_already_recommended"><code class="xref py py-attr docutils literal notranslate"><span class="pre">allow_recommending_already_recommended</span></code></a></p></td>
+<td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.allow_recommending_pending_experiments" title="baybe.campaign.Campaign.allow_recommending_pending_experiments"><code class="xref py py-attr docutils literal notranslate"><span class="pre">allow_recommending_pending_experiments</span></code></a></p></td>
+<td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="note admonition">
+<p class="admonition-title">Non-Discrete Search Spaces</p>
+<p>For search spaces that involve a continuous subspace (i.e., continuous or hybrid),
+setting any of the above flags to <code class="docutils literal notranslate"><span class="pre">False</span></code>/<a class="reference internal" href="../_autosummary/baybe.utils.boolean.AutoBool.html#baybe.utils.boolean.AutoBool.FALSE" title="baybe.utils.boolean.AutoBool.FALSE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">FALSE</span></code></a> is
+not supported for algorithmic reasons (continuous spaces have infinite candidate sets)
+and will raise an error. Use <code class="docutils literal notranslate"><span class="pre">True</span></code>/<a class="reference internal" href="../_autosummary/baybe.utils.boolean.AutoBool.html#baybe.utils.boolean.AutoBool.TRUE" title="baybe.utils.boolean.AutoBool.TRUE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TRUE</span></code></a> or
+<code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>/<a class="reference internal" href="../_autosummary/baybe.utils.boolean.AutoBool.html#baybe.utils.boolean.AutoBool.AUTO" title="baybe.utils.boolean.AutoBool.AUTO"><code class="xref py py-attr docutils literal notranslate"><span class="pre">AUTO</span></code></a> in those cases.</p>
+</div>
 </section>
 <section id="caching-of-recommendations">
 <h3>Caching of Recommendations<a class="headerlink" href="#caching-of-recommendations" title="Link to this heading">¶</a></h3>
@@ -1567,7 +1609,7 @@ to have a look at the most suitable example.</p>
 </li>
 <li><a class="reference internal" href="#getting-recommendations">Getting Recommendations</a><ul>
 <li><a class="reference internal" href="#basics">Basics</a></li>
-<li><a class="reference internal" href="#candidate-control-in-discrete-spaces">Candidate Control in Discrete Spaces</a></li>
+<li><a class="reference internal" href="#candidate-control-flags">Candidate Control Flags</a></li>
 <li><a class="reference internal" href="#caching-of-recommendations">Caching of Recommendations</a></li>
 </ul>
 </li>

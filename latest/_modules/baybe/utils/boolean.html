@@ -941,7 +941,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.check_if_in.html">baybe.utils.boolean.check_if_in</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.is_abstract.html">baybe.utils.boolean.is_abstract</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.strtobool.html">baybe.utils.boolean.strtobool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.structure_autobool.html">baybe.utils.boolean.structure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.to_bool.html">baybe.utils.boolean.to_bool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.unstructure_autobool.html">baybe.utils.boolean.unstructure_autobool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.AutoBool.html">AutoBool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.boolean.UncertainBool.html">UncertainBool</a></li>
 </ul>
@@ -1341,6 +1343,24 @@
 
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot convert &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39; to &#39;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span></div>
 </div>
+
+
+
+<div class="viewcode-block" id="unstructure_autobool">
+<a class="viewcode-back" href="../../../_autosummary/baybe.utils.boolean.unstructure_autobool.html#baybe.utils.boolean.unstructure_autobool">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unstructure_autobool</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">AutoBool</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unstructure an :class:`AutoBool`.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">AutoBool</span><span class="o">.</span><span class="n">AUTO</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">AutoBool</span><span class="o">.</span><span class="n">AUTO</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="structure_autobool">
+<a class="viewcode-back" href="../../../_autosummary/baybe.utils.boolean.structure_autobool.html#baybe.utils.boolean.structure_autobool">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">structure_autobool</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AutoBool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Structure an :class:`AutoBool`.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">AutoBool</span><span class="o">.</span><span class="n">from_unstructured</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
 </pre></div>
         </article>
