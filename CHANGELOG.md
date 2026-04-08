@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for determining the Pareto front
 - Interpoint constraints for continuous search spaces
 
+### Changed
+- Switched from `pip-audit` to `uv audit`, checking only direct dependencies
+
 ### Breaking Changes
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
   instead of a single tuple (needed for interpoint constraints)
