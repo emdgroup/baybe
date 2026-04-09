@@ -44,8 +44,7 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
 
     @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        cols = set(data.columns)
-        pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in cols]
+        pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in data]
         if not pairs:
             raise UnsupportedEarlyFilteringError(
                 f"'{self.__class__.__name__}' has no available parameters "
@@ -58,10 +57,7 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
                 f"'{self.__class__.__name__}' with combiner "
                 f"'{self.combiner}' requires all parameters for filtering."
             )
-        params_list = [p for p, _ in pairs]
-        conds_list = [c for _, c in pairs]
-
-        satisfied = [cond.evaluate(data[p]) for p, cond in zip(params_list, conds_list)]
+       satisfied = [cond.evaluate(data[p]) for p, cond in pairs]
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
         return data.index[res]
 
@@ -172,7 +168,7 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
 
     @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        params = [p for p in self.parameters if p in set(data.columns)]
+        params = [p for p in self.parameters if p in data]
         if len(params) < 2:
             raise UnsupportedEarlyFilteringError(
                 f"'{self.__class__.__name__}' requires at least 2 available "
