@@ -431,8 +431,8 @@ class DiscreteBatchConstraint(DiscreteConstraint):
     """Constraint ensuring all batch recommendations share the same parameter value.
 
     When this constraint is active, the recommender internally partitions the
-    candidate set into partitions — one for each unique value of the constrained
-    parameter — obtains a full batch recommendation from each partition, and
+    candidate set into partitions (one for each unique value of the constrained
+    parameter), obtains a full batch recommendation from each partition, and
     returns the batch with the highest joint acquisition value.
 
     This constraint is not supported by all recommenders. It is not applied during

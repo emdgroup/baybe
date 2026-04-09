@@ -608,7 +608,7 @@ class SubspaceDiscrete(SerialMixin):
         shuffle: bool = False,
         replace: bool = False,
     ) -> Iterator[npt.NDArray[np.bool_]]:
-        r"""Get an iterator over all possible partition masks.
+        """Get an iterator over all possible partition masks.
 
         Collects masks from each batch constraint, iterates the
         Cartesian product, AND-reduces each combination, and yields feasible
