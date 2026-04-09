@@ -6,6 +6,7 @@ from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from baybe.searchspace import SubspaceDiscrete
@@ -42,7 +43,7 @@ def recommend_discrete_with_partitions(
     """
     import torch
 
-    masks: Iterable[np.ndarray]
+    masks: Iterable[npt.NDArray[np.bool_]]
     if subspace_discrete.n_theoretical_partitions <= recommender.max_n_partitions:
         masks = subspace_discrete.partition_masks(
             candidates_exp, min_candidates=batch_size
