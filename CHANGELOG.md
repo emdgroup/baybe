@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `UnsupportedEarlyFilteringError` exception
 
 ### Breaking Changes
+- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
+  from `baybe.searchspace.discrete` to `baybe.searchspace.utils`
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
   instead of a single tuple (needed for interpoint constraints)
 
