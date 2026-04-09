@@ -202,7 +202,7 @@ class SubspaceDiscrete(SerialMixin):
             # Determine which parameters are needed by Polars-capable constraints
             polars_param_names: set[str] = set()
             for c in polars_constraints:
-                polars_param_names.update(c._required_filtering_parameters)
+                polars_param_names.update(c._required_parameters)
             polars_params = [p for p in parameters if p.name in polars_param_names]
             remaining_params = [
                 p for p in parameters if p.name not in polars_param_names

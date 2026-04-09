@@ -135,10 +135,11 @@ class DiscreteConstraint(Constraint, ABC):
         # TODO: Should switch backends (pandas/polars/...) behind the scenes
 
     @property
-    def _required_filtering_parameters(self) -> set[str]:
+    def _required_parameters(self) -> set[str]:
         """All parameter names needed for full constraint evaluation.
 
-        For most constraints, this is simply the ``parameters`` attribute.
+        For most constraints, this is simply the set of names from
+        :attr:`~baybe.constraints.base.Constraint.parameters`.
         Constraints with additional parameter references (e.g., affected
         parameters in dependency constraints) override this to include those.
         """

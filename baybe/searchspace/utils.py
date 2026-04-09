@@ -37,7 +37,7 @@ def compute_parameter_order(
         return list(parameters)
 
     # Compute which parameter names each constraint needs
-    constraint_params = [c._required_filtering_parameters for c in constraints]
+    constraint_params = [c._required_parameters for c in constraints]
 
     # Separate constrained from unconstrained parameters
     all_constrained_names = set().union(*constraint_params)
@@ -169,7 +169,7 @@ def parameter_cartesian_prod_pandas_constrained(
 
     # Determine which parameter names each constraint needs for completion
     pending: list[tuple[DiscreteConstraint, set[str]]] = [
-        (c, c._required_filtering_parameters) for c in filtering_constraints
+        (c, c._required_parameters) for c in filtering_constraints
     ]
 
     # Initialize the dataframe

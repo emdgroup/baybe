@@ -50,6 +50,7 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
                 f"'{self.__class__.__name__}' has no available parameters "
                 f"for filtering."
             )
+
         # Only the OR combiner supports incremental filtering: a single
         # true condition is sufficient to mark a row as invalid.
         if self.combiner != "OR" and len(pairs) < len(self.parameters):
@@ -57,8 +58,9 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
                 f"'{self.__class__.__name__}' with combiner "
                 f"'{self.combiner}' requires all parameters for filtering."
             )
-       satisfied = [cond.evaluate(data[p]) for p, cond in pairs]
+        satisfied = [cond.evaluate(data[p]) for p, cond in pairs]
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
+
         return data.index[res]
 
     @override
@@ -270,7 +272,7 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
     @property
     @override
-    def _required_filtering_parameters(self) -> set[str]:
+    def _required_parameters(self) -> set[str]:
         """See base class."""
         params = set(self.parameters)
         for group in self.affected_parameters:
@@ -279,7 +281,7 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
     @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        if not self._required_filtering_parameters <= set(data.columns):
+        if not self._required_parameters <= set(data.columns):
             raise UnsupportedEarlyFilteringError(
                 f"'{self.__class__.__name__}' requires all parameters and "
                 f"affected parameters for filtering."
@@ -349,11 +351,11 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
 
     @property
     @override
-    def _required_filtering_parameters(self) -> set[str]:
+    def _required_parameters(self) -> set[str]:
         """See base class."""
         params = set(self.parameters)
         if self.dependencies:
-            params.update(self.dependencies._required_filtering_parameters)
+            params.update(self.dependencies._required_parameters)
         return params
 
     @override
@@ -370,7 +372,7 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         # which permutations are equivalent. In this case, only the
         # label-dedup part (which is always safe incrementally) is applied.
         if self.dependencies:
-            if not self._required_filtering_parameters <= cols:
+            if not self._required_parameters <= cols:
                 return DiscreteNoLabelDuplicatesConstraint(
                     parameters=params
                 ).get_invalid(data)
