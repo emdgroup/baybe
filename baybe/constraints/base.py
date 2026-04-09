@@ -20,6 +20,7 @@ from baybe.serialization import (
 from baybe.serialization.core import (
     converter,
 )
+from baybe.utils.basic import classproperty
 
 if TYPE_CHECKING:
     import polars as pl
@@ -143,12 +144,10 @@ class DiscreteConstraint(Constraint, ABC):
         """
         return set(self.parameters)
 
-    @property
-    def has_polars_implementation(self) -> bool:
-        """Whether this constraint has a Polars implementation."""
-        return (
-            type(self).get_invalid_polars is not DiscreteConstraint.get_invalid_polars
-        )
+    @classproperty
+    def has_polars_implementation(cls) -> bool:
+        """Whether this constraint class has a Polars implementation."""
+        return cls.get_invalid_polars is not DiscreteConstraint.get_invalid_polars
 
     def get_invalid_polars(self) -> pl.Expr:
         """Translate the constraint to Polars expression identifying undesired rows.
