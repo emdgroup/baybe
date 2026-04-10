@@ -53,13 +53,6 @@ class Kernel(ABC, SerialMixin):
 
         active_dims, ard_num_dims = self._get_dimensions(searchspace)
 
-        # Extract keywords with non-default values. This is required since gpytorch
-        # makes use of kwargs, i.e. differentiates if certain keywords are explicitly
-        # passed or not. For instance, `ard_num_dims = kwargs.get("ard_num_dims", 1)`
-        # fails if we explicitly pass `ard_num_dims=None`.
-        kw: dict[str, Any] = dict(active_dims=active_dims)
-        kw = {k: v for k, v in kw.items() if v is not None}
-
         # Get corresponding gpytorch kernel class and its base classes
         try:
             kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
@@ -102,7 +95,7 @@ class Kernel(ABC, SerialMixin):
 
         # Convert specified inner kernels to gpytorch, if provided
         kernel_dict = {
-            key: value.to_gpytorch(searchspace, **kw)
+            key: value.to_gpytorch(searchspace)
             for key, value in kernel_attrs.items()
             if isinstance(value, Kernel)
         }
@@ -110,7 +103,9 @@ class Kernel(ABC, SerialMixin):
         # Create the kernel with all its inner gpytorch objects
         kernel_attrs.update(kernel_dict)
         kernel_attrs.update(prior_dict)
-        gpytorch_kernel = kernel_cls(**kernel_attrs, ard_num_dims=ard_num_dims, **kw)
+        gpytorch_kernel = kernel_cls(
+            **kernel_attrs, ard_num_dims=ard_num_dims, active_dims=active_dims
+        )
 
         # If the kernel has a lengthscale, set its initial value
         if kernel_cls.has_lengthscale:
