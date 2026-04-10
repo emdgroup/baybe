@@ -40,7 +40,9 @@ class Symmetry(SerialMixin, ABC):
     def summary(self) -> dict:
         """Return a custom summarization of the symmetry."""
         symmetry_dict = dict(
-            Type=self.__class__.__name__, Affected_Parameters=self.parameter_names
+            Type=self.__class__.__name__,
+            Affected_Parameters=self.parameter_names,
+            Data_Augmentation=self.use_data_augmentation,
         )
         return symmetry_dict
 
