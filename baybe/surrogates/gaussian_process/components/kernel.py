@@ -10,10 +10,7 @@ from typing_extensions import override
 from baybe.kernels.base import Kernel
 from baybe.kernels.composite import ProductKernel
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.selector import (
-    ParameterSelectorProtocol,
-    TypeSelector,
-)
+from baybe.parameters.selectors import ParameterSelectorProtocol, TypeSelector
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
