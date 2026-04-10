@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
+from attrs.validators import is_callable
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
@@ -15,7 +17,9 @@ from baybe.parameters.selectors import ParameterSelectorProtocol, TypeSelector
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
+    GPComponentType,
     PlainGPComponentFactory,
+    to_component_factory,
 )
 
 if TYPE_CHECKING:
@@ -72,10 +76,18 @@ class ICMKernelFactory(KernelFactoryProtocol):
     ICM: Intrinsic Coregionalization Model :cite:p:`NIPS2007_66368270`
     """
 
-    base_kernel_factory: KernelFactoryProtocol = field(alias="base_kernel_or_factory")
+    base_kernel_factory: KernelFactoryProtocol = field(
+        alias="base_kernel_or_factory",
+        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),
+        validator=is_callable(),
+    )
     """The factory for the base kernel operating on numerical input features."""
 
-    task_kernel_factory: KernelFactoryProtocol = field(alias="task_kernel_or_factory")
+    task_kernel_factory: KernelFactoryProtocol = field(
+        alias="task_kernel_or_factory",
+        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),
+        validator=is_callable(),
+    )
     """The factory for the task kernel operating on the task indices."""
 
     @base_kernel_factory.default
