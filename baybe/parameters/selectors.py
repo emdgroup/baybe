@@ -155,7 +155,11 @@ class _ParameterSelectorMixin:
         )
 
     def __attrs_post_init__(self):
-        # This helps to ensure that new subclasses actually use the parameter selector
-        # by requiring the developer to explicitly set the flag to `True`
-        if self.parameter_selector is not None:
-            assert self._uses_parameter_names
+        if self.parameter_selector is not None and not self._uses_parameter_names:
+            raise AssertionError(
+                f"A `parameter_selector` was provided to "
+                f"`{type(self).__name__}`, but the class does not set "
+                f"`_uses_parameter_names = True`. Subclasses that accept a "
+                f"parameter selector must explicitly set this flag to confirm "
+                f"they actually use the selected parameter names."
+            )
