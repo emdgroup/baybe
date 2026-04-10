@@ -1,6 +1,6 @@
 """Parameter selectors."""
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Protocol
 
 from attrs import define, field
@@ -19,7 +19,7 @@ class ParameterSelectorProtocol(Protocol):
 
 
 @define
-class ParameterSelector(ParameterSelectorProtocol):
+class ParameterSelector(ParameterSelectorProtocol, ABC):
     """Base class for parameter selectors."""
 
     exclude: bool = field(default=False, validator=instance_of(bool), kw_only=True)
