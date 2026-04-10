@@ -4,12 +4,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from attrs import define
+from attrs import define, field
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel
-from baybe.parameters.selectors import _ParameterSelectorMixin
+from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.selectors import (
+    ParameterSelectorProtocol,
+    _ParameterSelectorMixin,
+    to_parameter_selector,
+)
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
 from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
@@ -47,6 +52,11 @@ class BayBETaskKernelFactory(_ParameterSelectorMixin):
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
+
+    parameter_selector: ParameterSelectorProtocol | None = field(
+        default=TaskParameter, converter=to_parameter_selector
+    )
+    # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
     def __call__(

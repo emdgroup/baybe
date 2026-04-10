@@ -6,13 +6,18 @@ import gc
 from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
-from attrs import define
+from attrs import define, field
 from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters import TaskParameter
-from baybe.parameters.selectors import _ParameterSelectorMixin
+from baybe.parameters.selectors import (
+    ParameterSelectorProtocol,
+    TypeSelector,
+    _ParameterSelectorMixin,
+    to_parameter_selector,
+)
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.components.likelihood import (
     LikelihoodFactoryProtocol,
@@ -42,6 +47,12 @@ class SmoothedEDBOKernelFactory(_ParameterSelectorMixin):
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
+
+    parameter_selector: ParameterSelectorProtocol | None = field(
+        factory=lambda: TypeSelector([TaskParameter], exclude=True),
+        converter=to_parameter_selector,
+    )
+    # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
     def __call__(

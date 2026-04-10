@@ -6,14 +6,19 @@ import gc
 from collections.abc import Collection
 from typing import TYPE_CHECKING, ClassVar
 
-from attrs import define
+from attrs import define, field
 from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters import TaskParameter
 from baybe.parameters.enum import SubstanceEncoding
-from baybe.parameters.selectors import _ParameterSelectorMixin
+from baybe.parameters.selectors import (
+    ParameterSelectorProtocol,
+    TypeSelector,
+    _ParameterSelectorMixin,
+    to_parameter_selector,
+)
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
 from baybe.searchspace.discrete import SubspaceDiscrete
@@ -60,6 +65,12 @@ class EDBOKernelFactory(_ParameterSelectorMixin):
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
+
+    parameter_selector: ParameterSelectorProtocol | None = field(
+        factory=lambda: TypeSelector([TaskParameter], exclude=True),
+        converter=to_parameter_selector,
+    )
+    # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
     def __call__(
