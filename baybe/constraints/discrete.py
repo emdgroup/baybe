@@ -47,16 +47,19 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
         pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in data]
         if not pairs:
             raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' has no available parameters "
-                f"for filtering."
+                f"'{self.__class__.__name__}' requires at least one of "
+                f"{self.parameters} but the dataframe only contains "
+                f"{list(data.columns)}."
             )
 
         # Only the OR combiner supports incremental filtering: a single
         # true condition is sufficient to mark a row as invalid.
         if self.combiner != "OR" and len(pairs) < len(self.parameters):
+            missing = set(self.parameters) - set(data.columns)
             raise UnsupportedEarlyFilteringError(
                 f"'{self.__class__.__name__}' with combiner "
-                f"'{self.combiner}' requires all parameters for filtering."
+                f"'{self.combiner}' requires columns {missing} which are "
+                f"missing from the dataframe."
             )
         satisfied = [cond.evaluate(data[p]) for p, cond in pairs]
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
@@ -92,13 +95,14 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
     @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        if not set(self.parameters) <= set(data.columns):
+        if missing := set(self.parameters) - set(data.columns):
             # IMPROVE: Look-ahead filtering would be possible if parameter
             # value ranges (min/max) were available to the constraint, allowing
             # bound-based pruning of partial sums before all parameters are
             # present.
             raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires all parameters for filtering."
+                f"'{self.__class__.__name__}' requires columns {missing} "
+                f"which are missing from the dataframe."
             )
         evaluate_data = data[self.parameters].sum(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
@@ -128,13 +132,14 @@ class DiscreteProductConstraint(DiscreteConstraint):
 
     @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        if not set(self.parameters) <= set(data.columns):
+        if missing := set(self.parameters) - set(data.columns):
             # IMPROVE: Look-ahead filtering would be possible if parameter
             # value ranges (min/max) were available to the constraint, allowing
             # bound-based pruning of partial products before all parameters are
             # present.
             raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires all parameters for filtering."
+                f"'{self.__class__.__name__}' requires columns {missing} "
+                f"which are missing from the dataframe."
             )
         evaluate_data = data[self.parameters].prod(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
@@ -173,8 +178,8 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
         params = [p for p in self.parameters if p in data]
         if len(params) < 2:
             raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires at least 2 available "
-                f"parameters for filtering but got {len(params)}."
+                f"'{self.__class__.__name__}' requires at least 2 of "
+                f"{self.parameters} in the dataframe but found only {params}."
             )
         mask_bad = data[params].nunique(axis=1) != len(params)
 
@@ -208,8 +213,8 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
         params = [p for p in self.parameters if p in set(data.columns)]
         if len(params) < 2:
             raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires at least 2 available "
-                f"parameters for filtering but got {len(params)}."
+                f"'{self.__class__.__name__}' requires at least 2 of "
+                f"{self.parameters} in the dataframe but found only {params}."
             )
         mask_bad = data[params].nunique(axis=1) != 1
 
@@ -281,10 +286,10 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
     @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        if not self._required_parameters <= set(data.columns):
+        if missing := self._required_parameters - set(data.columns):
             raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires all parameters and "
-                f"affected parameters for filtering."
+                f"'{self.__class__.__name__}' requires columns {missing} "
+                f"which are missing from the dataframe."
             )
         # Create data copy and mark entries where the dependency conditions are negative
         # with a dummy value to cause degeneracy.
@@ -364,8 +369,8 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         params = [p for p in self.parameters if p in cols]
         if len(params) < 2:
             raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires at least 2 available "
-                f"parameters for filtering but got {len(params)}."
+                f"'{self.__class__.__name__}' requires at least 2 of "
+                f"{self.parameters} in the dataframe but found only {params}."
             )
         # When dependencies exist, permutation dedup on a partial set of
         # parameters is not safe because the dependency logic can change
@@ -430,9 +435,10 @@ class DiscreteCustomConstraint(DiscreteConstraint):
 
     @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        if not set(self.parameters) <= set(data.columns):
+        if missing := set(self.parameters) - set(data.columns):
             raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires all parameters for filtering."
+                f"'{self.__class__.__name__}' requires columns {missing} "
+                f"which are missing from the dataframe."
             )
         mask_bad = ~self.validator(data[self.parameters])
 
