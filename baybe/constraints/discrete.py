@@ -271,9 +271,23 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
         return inds_bad
 
     def to_symmetries(
-        self, use_data_augmentation=True
+        self, use_data_augmentation: bool = True
     ) -> tuple[DependencySymmetry, ...]:
-        """Convert to a :class:`~baybe.symmetries.dependency.DependencySymmetry`."""
+        """Convert to :class:`~baybe.symmetries.dependency.DependencySymmetry` objects.
+
+        Create one symmetry object per dependency relationship, i.e., per
+        (parameter, condition, affected_parameters) triple.
+
+        Args:
+            use_data_augmentation: Flag indicating whether the resulting symmetry
+                objects should apply data augmentation. ``True`` means that
+                measurement augmentation will be performed by replacing inactive
+                affected parameter values with all possible values.
+
+        Returns:
+            A tuple of dependency symmetries, one for each dependency in the
+            constraint.
+        """
         from baybe.symmetries.dependency import DependencySymmetry
 
         return tuple(
@@ -333,8 +347,22 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
 
         return inds_invalid
 
-    def to_symmetry(self, use_data_augmentation=True) -> PermutationSymmetry:
-        """Convert to a :class:`~baybe.symmetries.permutation.PermutationSymmetry`."""
+    def to_symmetry(self, use_data_augmentation: bool = True) -> PermutationSymmetry:
+        """Convert to a :class:`~baybe.symmetries.permutation.PermutationSymmetry`.
+
+        The constraint's parameters form the primary permutation group. If
+        dependencies are attached, their parameters are added as an additional
+        group that is permuted in lockstep.
+
+        Args:
+            use_data_augmentation: Flag indicating whether the resulting symmetry
+                object should apply data augmentation. ``True`` means that
+                measurement augmentation will be performed by generating all
+                permutations of parameter values within each group.
+
+        Returns:
+            The corresponding permutation symmetry.
+        """
         from baybe.symmetries.permutation import PermutationSymmetry
 
         groups = [self.parameters]
