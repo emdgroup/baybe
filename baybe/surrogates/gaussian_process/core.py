@@ -16,6 +16,7 @@ from typing_extensions import Self, override
 from baybe.exceptions import DeprecationError
 from baybe.kernels.base import Kernel
 from baybe.parameters.base import Parameter
+from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.generic import (
@@ -249,10 +250,10 @@ class GaussianProcessSurrogate(Surrogate):
         ):
             raise DeprecationError(
                 f"We noticed that you are using a custom kernel architecture on a "
-                f"search space that includes a task parameter. Please note that the "
-                f"kernel logic of '{GaussianProcessSurrogate.__name__}' has changed: "
-                f"the task kernel is no longer automatically added and must now be "
-                f"explicitly included in your kernel (factory). "
+                f"search space that includes a '{TaskParameter.__name__}'. Please note "
+                f"that the kernel logic of '{GaussianProcessSurrogate.__name__}' has "
+                f"changed: the task kernel is no longer automatically added and must "
+                f"now be explicitly included in your kernel (factory). "
                 f"The '{ICMKernelFactory.__name__}' provides a suitable interface "
                 f"for this purpose. If you are aware of this breaking change and wish "
                 f"to proceed with your current kernel architecture, you can disable "
