@@ -156,6 +156,7 @@ class BasicKernel(Kernel, ABC):
         self, searchspace: SearchSpace
     ) -> tuple[tuple[int, ...] | None, int | None]:
         if self.parameter_names is None:
+            # `None` is gpytorch's default indicating that all dimensions are active
             active_dims = None
         else:
             active_dims = tuple(
