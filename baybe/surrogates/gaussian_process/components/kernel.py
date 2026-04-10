@@ -7,13 +7,18 @@ from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
+from attrs.converters import optional
 from attrs.validators import is_callable
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
 from baybe.kernels.composite import ProductKernel
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.selectors import ParameterSelectorProtocol, TypeSelector
+from baybe.parameters.selectors import (
+    ParameterSelectorProtocol,
+    TypeSelector,
+    to_parameter_selector,
+)
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
@@ -43,7 +48,9 @@ class KernelFactory(KernelFactoryProtocol, ABC):
     # TODO: Perhaps we can find a more elegant way to enforce this by design
     _uses_parameter_names: ClassVar[bool] = False
 
-    parameter_selector: ParameterSelectorProtocol | None = field(default=None)
+    parameter_selector: ParameterSelectorProtocol | None = field(
+        default=None, converter=optional(to_parameter_selector)
+    )
     """An optional selector to specify which parameters are considered by the kernel."""
 
     def get_parameter_names(self, searchspace: SearchSpace) -> tuple[str, ...] | None:

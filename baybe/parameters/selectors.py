@@ -2,6 +2,7 @@
 
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Collection
 from typing import Protocol
 
 from attrs import Converter, define, field
@@ -71,3 +72,58 @@ class NameSelector(ParameterSelector):
         if self.regex:
             return any(re.fullmatch(p, parameter.name) for p in self.parameter_names)
         return parameter.name in self.parameter_names
+
+
+def to_parameter_selector(
+    x: (
+        str
+        | type[Parameter]
+        | Collection[str]
+        | Collection[type[Parameter]]
+        | ParameterSelectorProtocol
+    ),
+    /,
+) -> ParameterSelectorProtocol:
+    """Convert shorthand notations to parameter selectors.
+
+    Convenience converter that allows users to specify parameter selectors using
+    simpler types:
+
+    * A callable (i.e., an existing selector or any object satisfying
+      :class:`ParameterSelectorProtocol`) is passed through unchanged.
+    * A single string is interpreted as a parameter name and wrapped into a
+      :class:`NameSelector`.
+    * A single :class:`~baybe.parameters.base.Parameter` subclass is wrapped into a
+      :class:`TypeSelector`.
+    * A collection of strings is converted to a :class:`NameSelector`.
+    * A collection of :class:`~baybe.parameters.base.Parameter` subclasses is converted
+      to a :class:`TypeSelector`.
+
+    Args:
+        x: The object to convert.
+
+    Returns:
+        The corresponding parameter selector.
+
+    Raises:
+        TypeError: If the input cannot be converted to a parameter selector.
+    """
+    if isinstance(x, str):
+        return NameSelector([x])
+
+    if isinstance(x, type) and issubclass(x, Parameter):
+        return TypeSelector([x])
+
+    if callable(x):
+        return x
+
+    # At this point, x should be a collection of strings or parameter types
+    items = tuple(x)
+
+    if all(isinstance(item, str) for item in items):
+        return NameSelector(items)
+
+    if all(isinstance(item, type) and issubclass(item, Parameter) for item in items):
+        return TypeSelector(items)
+
+    raise TypeError(f"Cannot convert {x!r} to a parameter selector.")
