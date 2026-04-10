@@ -1,5 +1,6 @@
 """Parameter selectors."""
 
+import re
 from abc import ABC, abstractmethod
 from typing import Protocol
 
@@ -46,3 +47,20 @@ class TypeSelector(ParameterSelector):
     @override
     def _is_match(self, parameter: Parameter) -> bool:
         return isinstance(parameter, self.parameter_types)
+
+
+@define
+class NameSelector(ParameterSelector):
+    """Select parameters by name."""
+
+    parameter_names: tuple[str, ...] = field(converter=to_tuple)
+    """The parameter names to be matched against."""
+
+    regex: bool = field(default=False, validator=instance_of(bool), kw_only=True)
+    """If ``True``, the provided names are interpreted as regular expressions."""
+
+    @override
+    def _is_match(self, parameter: Parameter) -> bool:
+        if self.regex:
+            return any(re.fullmatch(p, parameter.name) for p in self.parameter_names)
+        return parameter.name in self.parameter_names
