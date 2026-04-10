@@ -153,7 +153,7 @@ def base_kernels(parameter_names: Sequence[str] | None = None):
             rbf_kernels(parameter_names),
             rq_kernels(parameter_names),
             rff_kernels(parameter_names),
-            index_kernels(parameter_names=parameter_names),
+            index_kernels(parameter_names),
             piecewise_polynomial_kernels(parameter_names),
             polynomial_kernels(parameter_names),
             periodic_kernels(parameter_names),
