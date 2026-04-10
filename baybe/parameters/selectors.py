@@ -4,7 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import Protocol
 
-from attrs import define, field
+from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
@@ -55,7 +55,7 @@ class NameSelector(ParameterSelector):
     """Select parameters by name."""
 
     parameter_names: tuple[str, ...] = field(
-        converter=nonstring_to_tuple,
+        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
         validator=[
             min_len(1),
             deep_iterable(member_validator=instance_of(str)),
