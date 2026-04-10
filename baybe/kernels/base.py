@@ -159,11 +159,9 @@ class BasicKernel(Kernel, ABC):
             active_dims = None
         else:
             active_dims = tuple(
-                chain(
-                    *[
-                        searchspace.get_comp_rep_parameter_indices(name)
-                        for name in self.parameter_names
-                    ]
+                chain.from_iterable(
+                    searchspace.get_comp_rep_parameter_indices(name)
+                    for name in self.parameter_names
                 )
             )
 
