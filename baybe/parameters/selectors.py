@@ -3,13 +3,15 @@
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Collection
-from typing import Protocol
+from typing import ClassVar, Protocol
 
 from attrs import Converter, define, field
+from attrs.converters import optional
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
+from baybe.searchspace.core import SearchSpace
 from baybe.utils.basic import to_tuple
 from baybe.utils.conversion import nonstring_to_tuple
 
@@ -127,3 +129,33 @@ def to_parameter_selector(
         return TypeSelector(items)
 
     raise TypeError(f"Cannot convert {x!r} to a parameter selector.")
+
+
+@define
+class _ParameterSelectorMixin:
+    """A mixin class to enable parameter selection."""
+
+    # For internal use only: sanity check mechanism to remind developers of new
+    # subclasses to actually use the parameter selector when it is provided
+    # TODO: Perhaps we can find a more elegant way to enforce this by design
+    _uses_parameter_names: ClassVar[bool] = False
+
+    parameter_selector: ParameterSelectorProtocol | None = field(
+        default=None, converter=optional(to_parameter_selector), kw_only=True
+    )
+    """An optional selector to specify which parameters are to be considered."""
+
+    def get_parameter_names(self, searchspace: SearchSpace) -> tuple[str, ...] | None:
+        """Get the names of the parameters to be considered."""
+        if self.parameter_selector is None:
+            return None
+
+        return tuple(
+            p.name for p in searchspace.parameters if self.parameter_selector(p)
+        )
+
+    def __attrs_post_init__(self):
+        # This helps to ensure that new subclasses actually use the parameter selector
+        # by requiring the developer to explicitly set the flag to `True`
+        if self.parameter_selector is not None:
+            assert self._uses_parameter_names

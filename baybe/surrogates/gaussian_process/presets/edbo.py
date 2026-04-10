@@ -13,10 +13,10 @@ from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters import TaskParameter
 from baybe.parameters.enum import SubstanceEncoding
+from baybe.parameters.selectors import _ParameterSelectorMixin
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
 from baybe.searchspace.discrete import SubspaceDiscrete
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactory
 from baybe.surrogates.gaussian_process.components.likelihood import (
     LikelihoodFactoryProtocol,
 )
@@ -50,7 +50,7 @@ _EDBO_ENCODINGS = (
 
 
 @define
-class EDBOKernelFactory(KernelFactory):
+class EDBOKernelFactory(_ParameterSelectorMixin):
     """A factory providing EDBO kernels.
 
     References:

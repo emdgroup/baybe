@@ -9,11 +9,9 @@ from typing_extensions import override
 
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel
+from baybe.parameters.selectors import _ParameterSelectorMixin
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.components.kernel import (
-    KernelFactory,
-    KernelFactoryProtocol,
-)
+from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
 from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOKernelFactory,
@@ -44,7 +42,7 @@ BayBENumericalKernelFactory = SmoothedEDBOKernelFactory
 
 
 @define
-class BayBETaskKernelFactory(KernelFactory):
+class BayBETaskKernelFactory(_ParameterSelectorMixin):
     """The factory providing the default task kernel for Gaussian process surrogates."""
 
     _uses_parameter_names: ClassVar[bool] = True

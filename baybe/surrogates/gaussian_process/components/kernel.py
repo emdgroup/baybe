@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from functools import partial
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from attrs import define, field
-from attrs.converters import optional
 from attrs.validators import is_callable
 from typing_extensions import override
 
@@ -15,9 +13,7 @@ from baybe.kernels.base import Kernel
 from baybe.kernels.composite import ProductKernel
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.selectors import (
-    ParameterSelectorProtocol,
     TypeSelector,
-    to_parameter_selector,
 )
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.generic import (
@@ -37,43 +33,6 @@ else:
     # At runtime, we use only the BayBE type for serialization compatibility
     KernelFactoryProtocol = GPComponentFactoryProtocol[Kernel]
     PlainKernelFactory = PlainGPComponentFactory[Kernel]
-
-
-@define
-class KernelFactory(KernelFactoryProtocol, ABC):
-    """Base class for kernel factories."""
-
-    # For internal use only: sanity check mechanism to remind developers of new
-    # factories to actually use the parameter selector when it is provided
-    # TODO: Perhaps we can find a more elegant way to enforce this by design
-    _uses_parameter_names: ClassVar[bool] = False
-
-    parameter_selector: ParameterSelectorProtocol | None = field(
-        default=None, converter=optional(to_parameter_selector)
-    )
-    """An optional selector to specify which parameters are considered by the kernel."""
-
-    def get_parameter_names(self, searchspace: SearchSpace) -> tuple[str, ...] | None:
-        """Get the names of the parameters to be considered by the kernel."""
-        if self.parameter_selector is None:
-            return None
-
-        return tuple(
-            p.name for p in searchspace.parameters if self.parameter_selector(p)
-        )
-
-    def __attrs_post_init__(self):
-        # This helps to ensure that new factories actually use the parameter selector
-        # by requiring the developer to explicitly set the flag to `True`
-        if self.parameter_selector is not None:
-            assert self._uses_parameter_names
-
-    @override
-    @abstractmethod
-    def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel | GPyTorchKernel:
-        pass
 
 
 @define
