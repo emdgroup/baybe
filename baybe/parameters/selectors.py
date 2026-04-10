@@ -5,11 +5,12 @@ from abc import ABC, abstractmethod
 from typing import Protocol
 
 from attrs import define, field
-from attrs.validators import instance_of
+from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
 from baybe.utils.basic import to_tuple
+from baybe.utils.conversion import nonstring_to_tuple
 
 
 class ParameterSelectorProtocol(Protocol):
@@ -53,7 +54,13 @@ class TypeSelector(ParameterSelector):
 class NameSelector(ParameterSelector):
     """Select parameters by name."""
 
-    parameter_names: tuple[str, ...] = field(converter=to_tuple)
+    parameter_names: tuple[str, ...] = field(
+        converter=nonstring_to_tuple,
+        validator=[
+            min_len(1),
+            deep_iterable(member_validator=instance_of(str)),
+        ],
+    )
     """The parameter names to be matched against."""
 
     regex: bool = field(default=False, validator=instance_of(bool), kw_only=True)
