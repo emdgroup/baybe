@@ -7,6 +7,6 @@ can be applied to continuous and hybrid search spaces.
 :maxdepth: 1
 
 Interpoint<interpoint>
-Linear <linear_constraints>
 Hybrid Space<hybrid_space>
+Linear <linear_constraints>
 ```
