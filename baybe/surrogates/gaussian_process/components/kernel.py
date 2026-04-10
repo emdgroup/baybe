@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
@@ -30,7 +31,7 @@ else:
 
 
 @define
-class KernelFactory(KernelFactoryProtocol):
+class KernelFactory(KernelFactoryProtocol, ABC):
     """Base class for kernel factories."""
 
     # For internal use only: sanity check mechanism to remind developers of new
@@ -55,6 +56,13 @@ class KernelFactory(KernelFactoryProtocol):
         # by requiring the developer to explicitly set the flag to `True`
         if self.parameter_selector is not None:
             assert self._uses_parameter_names
+
+    @override
+    @abstractmethod
+    def __call__(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> Kernel | GPyTorchKernel:
+        pass
 
 
 @define
