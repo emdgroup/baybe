@@ -570,6 +570,13 @@ In this case, each recommended batch will share both the same temperature and th
 solvent. The optimizer evaluates the Cartesian product of possible value combinations
 and selects the best one.
 
+```{admonition} Computational Expense
+:class: warning
+This constraint can lead to overhead in the computation. If there are multiple
+partition-generating constraints active, this can drastically increase the
+computational cost due to the combinatorial explosion.
+```
+
 ```{admonition} Recommender Compatibility
 :class: warning
 The `DiscreteBatchConstraint` is only effective with recommenders that can compare

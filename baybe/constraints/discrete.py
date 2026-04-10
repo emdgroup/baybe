@@ -442,6 +442,12 @@ class DiscreteBatchConstraint(DiscreteConstraint):
         If parameter ``Temperature`` has values ``[50, 100, 150]`` and a batch of
         10 is requested, the recommender will generate three candidate batches
         (one all-50, one all-100, one all-150) and return the best one.
+
+    Notes:
+        This constraint can lead to overhead in the computation since optimization
+        results in individual optimizations over several partitions. If there are
+        multiple partition-generating constraints active, this can drastically increase
+        the computational cost due to the combinatorial explosion.
     """
 
     # Class variables

@@ -203,7 +203,14 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 class ContinuousCardinalityConstraint(
     CardinalityConstraint, ContinuousNonlinearConstraint
 ):
-    """Class for continuous cardinality constraints."""
+    """Class for continuous cardinality constraints.
+
+    Notes:
+        This constraint can lead to overhead in the computation since optimization
+        results in individual optimizations over several partitions. If there are
+        multiple partition-generating constraints active, this can drastically increase
+        the computational cost due to the combinatorial explosion.
+    """
 
     relative_threshold: float = field(
         default=1e-3, converter=float, validator=[gt(0.0), lt(1.0)]
