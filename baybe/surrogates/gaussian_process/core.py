@@ -142,9 +142,10 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
-        import botorch.models.transforms
         import gpytorch
         import torch
+        from botorch.fit import fit_gpytorch_mll
+        from botorch.models import SingleTaskGP
         from botorch.models.transforms import Normalize, Standardize
 
         # FIXME[typing]: It seems there is currently no better way to inform the type
@@ -197,7 +198,7 @@ class GaussianProcessSurrogate(Surrogate):
         likelihood.noise = torch.tensor([noise_prior[1]])
 
         # construct and fit the Gaussian process
-        self._model = botorch.models.SingleTaskGP(
+        self._model = SingleTaskGP(
             train_x,
             train_y,
             input_transform=input_transform,
@@ -218,7 +219,7 @@ class GaussianProcessSurrogate(Surrogate):
                 self._model.likelihood, self._model
             )
 
-        botorch.fit.fit_gpytorch_mll(mll)
+        fit_gpytorch_mll(mll)
 
     @override
     def __str__(self) -> str:
