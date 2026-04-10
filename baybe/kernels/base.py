@@ -87,7 +87,9 @@ class Kernel(ABC, SerialMixin):
         # in the gpytorch kernel (otherwise, the BayBE kernel class is misconfigured).
         # Exception: initial values are not used during construction but are set
         # on the created object (see code at the end of the method).
-        missing = set(unmatched) - set(kernel_attrs) - self._whitelisted_attributes
+        missing = (
+            set(unmatched_attrs) - set(kernel_attrs) - self._whitelisted_attributes
+        )
         if leftover := {m for m in missing if not m.endswith("_initial_value")}:
             raise UnmatchedAttributeError(leftover)
 
