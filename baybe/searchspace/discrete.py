@@ -610,7 +610,7 @@ class SubspaceDiscrete(SerialMixin):
     ) -> Iterator[npt.NDArray[np.bool_]]:
         """Get an iterator over all possible partition masks.
 
-        Collects masks from each batch constraint, iterates the
+        Collect masks from each batch constraint, iterates the
         Cartesian product, AND-reduces each combination, and yields feasible
         combined masks.
 
@@ -678,7 +678,7 @@ class SubspaceDiscrete(SerialMixin):
         n: int,
         min_candidates: int | None = None,
     ) -> list[npt.NDArray[np.bool_]]:
-        """Sample partition masks.
+        """Sample partition masks (without replacement).
 
         Args:
             candidates_exp: The experimental representation of candidate points.
