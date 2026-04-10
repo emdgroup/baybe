@@ -101,10 +101,9 @@ def _mark_custom_kernel(
     value: Kernel | KernelFactoryProtocol, self: GaussianProcessSurrogate
 ) -> Kernel | KernelFactoryProtocol:
     """Mark the surrogate as using a custom kernel (for deprecation purposes)."""
-    if type(value) is BayBEKernelFactory:
-        return value
+    if type(value) is not BayBEKernelFactory:
+        self._custom_kernel = True
 
-    self._custom_kernel = True
     return value
 
 
