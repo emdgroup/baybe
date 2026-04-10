@@ -567,10 +567,7 @@ def test_deprecated_cache_environment_variables(monkeypatch, value: str, expecte
 
 @pytest.mark.parametrize("custom", [False, True], ids=["default", "custom"])
 @pytest.mark.parametrize("env", [False, True], ids=["no_env", "env"])
-@pytest.mark.parametrize(
-    "task",
-    [False, True],
-)
+@pytest.mark.parametrize("task", [False, True], ids=["no_task", "task"])
 def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task: bool):
     """Providing a custom kernel in a transfer learning context raises a deprecation
     error unless explicitly disabled via environment variable."""  # noqa
