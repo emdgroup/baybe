@@ -324,7 +324,7 @@ Each line shows the best target value that was cumulatively achieved after a giv
 
 Different lines show outcomes of `Campaigns` with different settings.
 
-![Substance Encoding Example](./examples/Backtesting/full_lookup_automatic.svg)
+![Substance Encoding Example](./examples/Backtesting/full_lookup_light.svg)
 
 In particular, the five `Campaigns` differ in how molecules are encoded within 
 each chemical `Parameter`. Instead of simply one-hot encoding each SMILES string,
