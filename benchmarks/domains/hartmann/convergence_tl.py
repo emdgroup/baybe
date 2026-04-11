@@ -36,7 +36,7 @@ def _make_hartmann_tl_benchmark(
     """Return a named Hartmann transfer-learning benchmark callable.
 
     The benchmark operates on Hartmann function in 3D.
-    It compares two versions of Hartmann function:
+    It compares two discretized versions of the Hartmann function:
       - Target: standard Hartmann
       - Source: Hartmann with optional changes (noise, shifting, or negation)
     - Uses 20 points per dimension
@@ -45,7 +45,7 @@ def _make_hartmann_tl_benchmark(
       - 10% of source data
       - 20% of source data
 
-    The callable requires argument:
+    The callable requires one argument:
         settings: Configuration settings for the convergence benchmark.
     The callable returns:
         DataFrame containing benchmark results.
@@ -60,7 +60,7 @@ def _make_hartmann_tl_benchmark(
         The callable returning the benchmark results.
 
     Raises:
-        ValueError: If source_shift is provided but does not have length 3.
+        ValueError: If ``source_shift`` is provided but does not have length 3.
     """
     if source_shift is not None and len(source_shift) != 3:
         raise ValueError("Shift list must have length 3 for 3D Hartmann function.")
