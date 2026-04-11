@@ -49,18 +49,13 @@ class ShiftedHartmann(Hartmann):
         # hard-coded in the Hartmann class init, we can not override it before it is
         # evaluated.
         shifted_bounds = bounds + np.array(self.shift)[:, None]
-        bounds_extended = list(
-            map(
-                tuple,
-                np.stack(
-                    [
-                        np.minimum(bounds[:, 0], shifted_bounds[:, 0]),
-                        np.maximum(bounds[:, 1], shifted_bounds[:, 1]),
-                    ],
-                    axis=1,
-                ),
+        bounds_extended = [
+            (
+                min([bounds[row, 0], shifted_bounds[row, 0]]),
+                max([bounds[row, 1], shifted_bounds[row, 1]]),
             )
-        )
+            for row in range(bounds.shape[0])
+        ]
 
         kwargs["bounds"] = bounds_extended
 

@@ -30,7 +30,7 @@ def _make_hartmann_tl_benchmark(
     name: str,
     *,
     source_noise_std: float,
-    source_shift: list[float] | None,
+    source_shift: tuple[float, float, float] | None,
     source_negate: bool,
 ) -> Callable[[ConvergenceBenchmarkSettings], pd.DataFrame]:
     """Return a named Hartmann transfer-learning benchmark callable.
