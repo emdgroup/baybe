@@ -75,6 +75,19 @@ class SearchSpaceTaskType(Enum):
     """Flag for search spaces with mixed task and fidelity parameters."""
 
 
+class SearchSpaceCostType(Enum):
+    """Enum class for different types of task and/or fidelity subspaces."""
+
+    NOCOSTADJUSTMENT = "NOCOSTADJUSTMENT"
+    """Flag for searchspace with no cost model adjustment."""
+
+    FIXEDDISCRETECOSTS = "FIXEDDISCRETECOSTS"
+    """Flag for single-fidelity searchspace with discrete parameters of known cost."""
+
+    MULTIFIDELITY = "MULTIFIDELITY"
+    """Flag for searchspaces with a fidelity parameter."""
+
+
 @define
 class SearchSpace(SerialMixin):
     """Class for managing the overall search space.
@@ -383,6 +396,13 @@ class SearchSpace(SerialMixin):
         return 1 if fidelity_param is not None else 0
 
     @property
+    def is_design_cost_aware(self):
+        """Boolean indicating whether cost-aware parameters present."""
+        params = [p for p in self.parameters if p.is_costly]
+
+        return params is not None
+
+    @property
     def task_type(self) -> SearchSpaceTaskType:
         """Return the task type of the search space.
 
@@ -430,6 +450,27 @@ class SearchSpace(SerialMixin):
                 return SearchSpaceTaskType.NUMERICALFIDELITY
 
         raise RuntimeError("This line should be impossible to reach.")
+
+    def cost_type(self):
+        """Type of cost adjustment associated with the SearchSpace."""
+        fidelity_task_types = (
+            SearchSpaceTaskType.CATEGORICALFIDELITY,
+            SearchSpaceTaskType.NUMERICALFIDELITY,
+        )
+
+        if self.task_type in fidelity_task_types:
+            if self.is_design_cost_aware:
+                raise ValueError(
+                    "Search space must not contain costly design"
+                    "parameters and fidelity parameters."
+                )
+            else:
+                return SearchSpaceCostType.MULTIFIDELITY
+
+        if self.is_design_cost_aware:
+            return SearchSpaceCostType.FIXEDDISCRETECOSTS
+        else:
+            return SearchSpaceCostType.NOCOSTADJUSTMENT
 
     def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
         """Find a parameter's column indices in the computational representation.
