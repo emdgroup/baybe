@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `parameter_names` attribute to basic kernels for controlling the considered parameters
 - `IndexKernel` and `PositiveIndexKernel` classes
 - Interpoint constraints for continuous search spaces
+- `IndexKernel` and `PositiveIndexKernel` classes
+- Addition and multiplication operators for kernel objects, enabling kernel
+  composition via `+` (sum) and `*` (product), as well as `constant * kernel`
+  for creating a `ScaleKernel` with a fixed output scale
 
 ### Breaking Changes
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
