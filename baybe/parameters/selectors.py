@@ -55,25 +55,25 @@ class TypeSelector(ParameterSelector):
 
 @define
 class NameSelector(ParameterSelector):
-    """Select parameters by name."""
+    """Select parameters by name patterns."""
 
-    parameter_names: tuple[str, ...] = field(
+    patterns: tuple[str, ...] = field(
         converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
         validator=[
             min_len(1),
             deep_iterable(member_validator=instance_of(str)),
         ],
     )
-    """The parameter names to be matched against."""
+    """The patterns to be matched against."""
 
-    regex: bool = field(default=False, validator=instance_of(bool), kw_only=True)
-    """If ``True``, the provided names are interpreted as regular expressions."""
+    regex: bool = field(default=True, validator=instance_of(bool), kw_only=True)
+    """If ``False``, the provided patterns are interpreted as literal strings."""
 
     @override
     def _is_match(self, parameter: Parameter) -> bool:
         if self.regex:
-            return any(re.fullmatch(p, parameter.name) for p in self.parameter_names)
-        return parameter.name in self.parameter_names
+            return any(re.fullmatch(p, parameter.name) for p in self.patterns)
+        return parameter.name in self.patterns
 
 
 def to_parameter_selector(
