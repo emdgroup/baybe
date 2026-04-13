@@ -366,13 +366,9 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         # the other parameters and indicate duplicates. This ensures that variation in
         # other parameters is also accounted for.
         other_params = data.columns.drop(params).tolist()
-        df_eval = pd.concat(
-            [
-                data[other_params].copy(),
-                data[params].apply(cast(Callable, frozenset), axis=1),
-            ],
-            axis=1,
-        ).loc[
+        frozen = data[params].apply(cast(Callable, frozenset), axis=1)
+        parts = [data[other_params].copy(), frozen] if other_params else [frozen]
+        df_eval = pd.concat(parts, axis=1).loc[
             ~mask_duplicate_labels  # only consider label-duplicate-free part
         ]
         mask_duplicate_permutations = df_eval.duplicated(keep="first")
