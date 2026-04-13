@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   components, enabling full low-level customization
 - Factories for all Gaussian process components
 - `EDBO` and `EDBO_SMOOTHED` presets for `GaussianProcessSurrogate`
-- `parameters/selector.py` module enabling convenient parameter subselection
+- `TypeSelector` and `NameSelector` classes for parameter selection in kernel factories
 - `parameter_names` attribute to basic kernels for controlling the considered parameters
 - `IndexKernel` and `PositiveIndexKernel` classes
 - Interpoint constraints for continuous search spaces
