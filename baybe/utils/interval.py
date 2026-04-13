@@ -10,7 +10,7 @@ from functools import singledispatchmethod
 from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
-from attrs import define, field
+from attrs import cmp_using, define, field
 
 from baybe.serialization import SerialMixin, converter
 from baybe.settings import active_settings
@@ -39,6 +39,7 @@ class Interval(SerialMixin):
         default=float("-inf"),
         converter=lambda x: float("-inf") if x is None else float(x),
         validator=non_nan_float,
+        eq=cmp_using(eq=np.isclose),  # type: ignore
     )
     """The lower end of the interval."""
 
@@ -46,6 +47,7 @@ class Interval(SerialMixin):
         default=float("inf"),
         converter=lambda x: float("inf") if x is None else float(x),
         validator=non_nan_float,
+        eq=cmp_using(eq=np.isclose),  # type: ignore
     )
     """The upper end of the interval."""
 
