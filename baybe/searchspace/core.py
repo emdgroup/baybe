@@ -82,6 +82,19 @@ class SearchSpaceFidelityType(Enum):
     """Flag for search spaces with a categorical (unordered) fidelity parameter."""
 
 
+class SearchSpaceCostType(Enum):
+    """Enum class for different types of task and/or fidelity subspaces."""
+
+    NOCOSTADJUSTMENT = "NOCOSTADJUSTMENT"
+    """Flag for searchspace with no cost model adjustment."""
+
+    FIXEDDISCRETECOSTS = "FIXEDDISCRETECOSTS"
+    """Flag for single-fidelity searchspace with discrete parameters of known cost."""
+
+    MULTIFIDELITY = "MULTIFIDELITY"
+    """Flag for searchspaces with a fidelity parameter."""
+
+
 @define
 class SearchSpace(SerialMixin):
     """Class for managing the overall search space.
@@ -359,6 +372,13 @@ class SearchSpace(SerialMixin):
         return len(fidelity_param.values)
 
     @property
+    def is_design_cost_aware(self):
+        """Boolean indicating whether cost-aware parameters present."""
+        params = [p for p in self.parameters if p.is_costly]
+
+        return params is not None
+
+    @property
     def task_type(self) -> SearchSpaceTaskType:
         """Return the task type of the search space."""
         if self._task_parameter is None:
@@ -375,6 +395,27 @@ class SearchSpace(SerialMixin):
         if isinstance(fidelity_param, NumericalDiscreteFidelityParameter):
             return SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
         raise RuntimeError("This line should be impossible to reach.")
+
+    def cost_type(self):
+        """Type of cost adjustment associated with the SearchSpace."""
+        fidelity_task_types = (
+            SearchSpaceTaskType.CATEGORICALFIDELITY,
+            SearchSpaceTaskType.NUMERICALFIDELITY,
+        )
+
+        if self.task_type in fidelity_task_types:
+            if self.is_design_cost_aware:
+                raise ValueError(
+                    "Search space must not contain costly design"
+                    "parameters and fidelity parameters."
+                )
+            else:
+                return SearchSpaceCostType.MULTIFIDELITY
+
+        if self.is_design_cost_aware:
+            return SearchSpaceCostType.FIXEDDISCRETECOSTS
+        else:
+            return SearchSpaceCostType.NOCOSTADJUSTMENT
 
     @property
     def n_subsets(self) -> int:

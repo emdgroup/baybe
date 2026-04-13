@@ -3,15 +3,22 @@
 import gc
 from functools import cached_property
 
+import cattrs
 import numpy as np
 import pandas as pd
 from attrs import Converter, define, field
-from attrs.validators import deep_iterable, instance_of, min_len
+from attrs.converters import optional as optional_c
+from attrs.validators import deep_iterable, ge, instance_of, min_len
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.parameters.base import _DiscreteLabelLikeParameter
 from baybe.parameters.enum import CategoricalEncoding
-from baybe.parameters.validation import validate_unique_values
+from baybe.parameters.validation import (
+    validate_equal_length,
+    validate_is_finite,
+    validate_unique_values,
+)
 from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple
 
@@ -54,11 +61,29 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
     )
     # See base class.
 
+    costs: tuple[float, ...] | None = field(
+        converter=optional_c(lambda x: cattrs.structure(x, tuple[float, ...])),
+        validator=optional_v(
+            [
+                validate_equal_length("_values"),
+                validate_is_finite,
+                deep_iterable(member_validator=ge(0.0)),
+            ]
+        ),
+    )
+    """Fixed cost of querying the parameter at each value."""
+
     @override
     @property
     def values(self) -> tuple:
         """The values of the parameter."""
         return self._values
+
+    @override
+    @property
+    def is_costly(self) -> bool:
+        """Does the parameter have costs specified for each value."""
+        return self.costs is not None
 
     @override
     @cached_property

@@ -86,6 +86,14 @@ class Parameter(ABC, SerialMixin):
         return _ParameterKind.from_parameter(self)
 
     @property
+    def is_costly(self) -> bool:
+        """Does the parameter have costs specified for each value.
+
+        Used only for design parameters, not fidelity parameters.
+        """
+        return False
+
+    @property
     @abstractmethod
     def comp_rep_columns(self) -> tuple[str, ...]:
         """The columns spanning the computational representation."""

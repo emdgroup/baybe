@@ -8,12 +8,18 @@ import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from attrs.validators import min_len
+from attrs.converters import optional as optional_c
+from attrs.validators import deep_iterable, ge, min_len
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
-from baybe.parameters.validation import validate_is_finite, validate_unique_values
+from baybe.parameters.validation import (
+    validate_equal_length,
+    validate_is_finite,
+    validate_unique_values,
+)
 from baybe.settings import active_settings
 from baybe.utils.interval import InfiniteIntervalError, Interval
 
@@ -40,6 +46,18 @@ class NumericalDiscreteParameter(DiscreteParameter):
         ],
     )
     """The values the parameter can take."""
+
+    costs: tuple[float, ...] | None = field(
+        converter=optional_c(lambda x: cattrs.structure(x, tuple[float, ...])),
+        validator=optional_v(
+            [
+                validate_equal_length("_values"),
+                validate_is_finite,
+                deep_iterable(member_validator=ge(0.0)),
+            ]
+        ),
+    )
+    """Fixed cost of querying the parameter at each value."""
 
     tolerance: float = field(default=0.0)
     """The absolute tolerance used for deciding whether a value is in range. A tolerance
@@ -88,6 +106,12 @@ class NumericalDiscreteParameter(DiscreteParameter):
     @property
     def values(self) -> tuple:
         return tuple(active_settings.DTypeFloatNumpy(itm) for itm in self._values)
+
+    @override
+    @property
+    def is_costly(self) -> bool:
+        """Does the parameter have costs specified for each value."""
+        return self.costs is not None
 
     @override
     @cached_property
