@@ -44,14 +44,14 @@ class ICMKernelFactory(KernelFactoryProtocol):
 
     base_kernel_factory: KernelFactoryProtocol = field(
         alias="base_kernel_or_factory",
-        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),
+        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),  # type: ignore[misc]
         validator=is_callable(),
     )
     """The factory for the base kernel operating on numerical input features."""
 
     task_kernel_factory: KernelFactoryProtocol = field(
         alias="task_kernel_or_factory",
-        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),
+        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),  # type: ignore[misc]
         validator=is_callable(),
     )
     """The factory for the task kernel operating on the task indices."""

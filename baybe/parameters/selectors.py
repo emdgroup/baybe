@@ -58,7 +58,9 @@ class NameSelector(ParameterSelector):
     """Select parameters by name patterns."""
 
     patterns: tuple[str, ...] = field(
-        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
+        converter=Converter(  # type: ignore
+            nonstring_to_tuple, takes_self=True, takes_field=True
+        ),
         validator=[
             min_len(1),
             deep_iterable(member_validator=instance_of(str)),

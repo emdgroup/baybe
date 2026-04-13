@@ -12,6 +12,7 @@ from baybe.kernels.basic import IndexKernel
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
+    TypeSelector,
     _ParameterSelectorMixin,
     to_parameter_selector,
 )
@@ -47,14 +48,15 @@ BayBENumericalKernelFactory = SmoothedEDBOKernelFactory
 
 
 @define
-class BayBETaskKernelFactory(_ParameterSelectorMixin):
+class BayBETaskKernelFactory(KernelFactoryProtocol, _ParameterSelectorMixin):
     """The factory providing the default task kernel for Gaussian process surrogates."""
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
     parameter_selector: ParameterSelectorProtocol | None = field(
-        default=TaskParameter, converter=to_parameter_selector
+        factory=lambda: TypeSelector([TaskParameter]),
+        converter=to_parameter_selector,
     )
     # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
