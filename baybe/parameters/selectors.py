@@ -45,12 +45,12 @@ class ParameterSelector(ParameterSelectorProtocol, ABC):
 class TypeSelector(ParameterSelector):
     """Select parameters by type."""
 
-    parameter_types: tuple[type[Parameter], ...] = field(converter=to_tuple)
+    types: tuple[type[Parameter], ...] = field(converter=to_tuple)
     """The parameter types to be selected."""
 
     @override
     def _is_match(self, parameter: Parameter) -> bool:
-        return isinstance(parameter, self.parameter_types)
+        return isinstance(parameter, self.types)
 
 
 @define
