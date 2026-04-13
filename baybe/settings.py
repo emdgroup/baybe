@@ -20,7 +20,7 @@ from attrs.validators import optional as optional_v
 from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
 from baybe.exceptions import NotAllowedError, OptionalImportError
 from baybe.utils.basic import classproperty
-from baybe.utils.boolean import AutoBool, to_bool
+from baybe.utils.boolean import AutoBool, strtobool, to_bool
 from baybe.utils.random import _RandomState
 
 if TYPE_CHECKING:
@@ -50,6 +50,16 @@ def _validate_whitelist_env_vars(vars: dict[str, str], /) -> None:
                 f"Allowed values for 'BAYBE_TEST_ENV' are "
                 f"'CORETEST', 'FULLTEST', and 'GPUTEST'. Given: '{value}'"
             )
+
+    if (value := vars.pop("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", None)) is not None:
+        try:
+            strtobool(value)
+        except ValueError as ex:
+            raise ValueError(
+                f"Invalid value for 'BAYBE_DISABLE_CUSTOM_KERNEL_WARNING'. "
+                f"Expected a truthy value to disable the error, but got '{value}'."
+            ) from ex
+
     if vars:
         raise RuntimeError(f"Unknown 'BAYBE_*' environment variables: {set(vars)}")
 

@@ -5,16 +5,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from baybe.surrogates.gaussian_process.components.generic import (
-    GPComponentFactory,
+    GPComponentFactoryProtocol,
     PlainGPComponentFactory,
 )
 
 if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
 
-    LikelihoodFactory = GPComponentFactory[GPyTorchLikelihood]
+    LikelihoodFactoryProtocol = GPComponentFactoryProtocol[GPyTorchLikelihood]
     PlainLikelihoodFactory = PlainGPComponentFactory[GPyTorchLikelihood]
 else:
     # At runtime, we avoid loading GPyTorch eagerly for performance reasons
-    LikelihoodFactory = GPComponentFactory[Any]
+    LikelihoodFactoryProtocol = GPComponentFactoryProtocol[Any]
     PlainLikelihoodFactory = PlainGPComponentFactory[Any]

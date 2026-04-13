@@ -3,18 +3,26 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
-from attrs import define
+from attrs import define, field
 from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters import TaskParameter
+from baybe.parameters.selectors import (
+    ParameterSelectorProtocol,
+    TypeSelector,
+    _ParameterSelectorMixin,
+    to_parameter_selector,
+)
 from baybe.priors.basic import GammaPrior
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactory
-from baybe.surrogates.gaussian_process.components.likelihood import LikelihoodFactory
+from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
+from baybe.surrogates.gaussian_process.components.likelihood import (
+    LikelihoodFactoryProtocol,
+)
 from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
 
 if TYPE_CHECKING:
@@ -30,13 +38,22 @@ _DIM_LIMITS = (8, 75)
 
 
 @define
-class SmoothedEDBOKernelFactory(KernelFactory):
+class SmoothedEDBOKernelFactory(KernelFactoryProtocol, _ParameterSelectorMixin):
     """A factory providing smoothed versions of EDBO kernels.
 
     Takes the low and high dimensional limits of
     :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`
     and interpolates the prior moments linearly in between.
     """
+
+    _uses_parameter_names: ClassVar[bool] = True
+    # See base class.
+
+    parameter_selector: ParameterSelectorProtocol | None = field(
+        factory=lambda: TypeSelector([TaskParameter], exclude=True),
+        converter=to_parameter_selector,
+    )
+    # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
     def __call__(
@@ -65,6 +82,7 @@ class SmoothedEDBOKernelFactory(KernelFactory):
                 nu=2.5,
                 lengthscale_prior=lengthscale_prior,
                 lengthscale_initial_value=lengthscale_initial_value,
+                parameter_names=self.get_parameter_names(searchspace),
             ),
             outputscale_prior=outputscale_prior,
             outputscale_initial_value=outputscale_initial_value,
@@ -76,7 +94,7 @@ SmoothedEDBOMeanFactory = LazyConstantMeanFactory
 
 
 @define
-class SmoothedEDBOLikelihoodFactory(LikelihoodFactory):
+class SmoothedEDBOLikelihoodFactory(LikelihoodFactoryProtocol):
     """A factory providing smoothed versions of EDBO likelihoods.
 
     Takes the low and high dimensional limits of

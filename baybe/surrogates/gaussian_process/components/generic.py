@@ -95,7 +95,7 @@ def _validate_component(instance: Any, attribute: Attribute, value: Any) -> None
     )
 
 
-class GPComponentFactory(Protocol, Generic[_T_co]):
+class GPComponentFactoryProtocol(Protocol, Generic[_T_co]):
     """A protocol defining the interface expected for GP component factories."""
 
     def __call__(
@@ -105,7 +105,7 @@ class GPComponentFactory(Protocol, Generic[_T_co]):
 
 
 @define(frozen=True)
-class PlainGPComponentFactory(GPComponentFactory[_T_co], SerialMixin):
+class PlainGPComponentFactory(GPComponentFactoryProtocol[_T_co], SerialMixin):
     """A trivial factory that returns a fixed pre-defined component upon request."""
 
     component: _T_co = field(validator=_validate_component)
@@ -119,11 +119,11 @@ class PlainGPComponentFactory(GPComponentFactory[_T_co], SerialMixin):
 
 
 def to_component_factory(
-    obj: GPComponent | GPComponentFactory,
+    obj: GPComponent | GPComponentFactoryProtocol,
     /,
     *,
     component_type: GPComponentType | None = None,
-) -> GPComponentFactory:
+) -> GPComponentFactoryProtocol:
     """Wrap a component into a plain component factory (with factory passthrough).
 
     Args:
