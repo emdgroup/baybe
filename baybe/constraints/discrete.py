@@ -19,7 +19,6 @@ from baybe.constraints.conditions import (
     _threshold_operators,
     _valid_logic_combiners,
 )
-from baybe.exceptions import UnsupportedEarlyFilteringError
 from baybe.serialization import (
     block_deserialization_hook,
     block_serialization_hook,
@@ -43,24 +42,16 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
     """Operator encoding how to combine the individual conditions."""
 
     @override
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
         pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in data]
         if not pairs:
-            raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires at least one of "
-                f"{self.parameters} but the dataframe only contains "
-                f"{list(data.columns)}."
-            )
+            return pd.Index([])
 
         # Only the OR combiner supports incremental filtering: a single
         # true condition is sufficient to mark a row as invalid.
         if self.combiner != "OR" and len(pairs) < len(self.parameters):
-            missing = set(self.parameters) - set(data.columns)
-            raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' with combiner "
-                f"'{self.combiner}' requires columns {missing} which are "
-                f"missing from the dataframe."
-            )
+            return pd.Index([])
+
         satisfied = [cond.evaluate(data[p]) for p, cond in pairs]
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
 
@@ -94,16 +85,13 @@ class DiscreteSumConstraint(DiscreteConstraint):
     """The condition modeled by this constraint."""
 
     @override
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        if missing := set(self.parameters) - set(data.columns):
-            # IMPROVE: Look-ahead filtering would be possible if parameter
-            # value ranges (min/max) were available to the constraint, allowing
-            # bound-based pruning of partial sums before all parameters are
-            # present.
-            raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires columns {missing} "
-                f"which are missing from the dataframe."
-            )
+    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
+        # IMPROVE: Look-ahead filtering would be possible if parameter
+        # value ranges (min/max) were available to the constraint, allowing
+        # bound-based pruning of partial sums before all parameters are
+        # present.
+        if not set(self.parameters) <= set(data.columns):
+            return pd.Index([])
         evaluate_data = data[self.parameters].sum(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
 
@@ -131,16 +119,13 @@ class DiscreteProductConstraint(DiscreteConstraint):
     """The condition that is used for this constraint."""
 
     @override
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        if missing := set(self.parameters) - set(data.columns):
-            # IMPROVE: Look-ahead filtering would be possible if parameter
-            # value ranges (min/max) were available to the constraint, allowing
-            # bound-based pruning of partial products before all parameters are
-            # present.
-            raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires columns {missing} "
-                f"which are missing from the dataframe."
-            )
+    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
+        # IMPROVE: Look-ahead filtering would be possible if parameter
+        # value ranges (min/max) were available to the constraint, allowing
+        # bound-based pruning of partial products before all parameters are
+        # present.
+        if not set(self.parameters) <= set(data.columns):
+            return pd.Index([])
         evaluate_data = data[self.parameters].prod(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
 
@@ -174,13 +159,10 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
     """
 
     @override
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
         params = [p for p in self.parameters if p in data]
         if len(params) < 2:
-            raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires at least 2 of "
-                f"{self.parameters} in the dataframe but found only {params}."
-            )
+            return pd.Index([])
         mask_bad = data[params].nunique(axis=1) != len(params)
 
         return data.index[mask_bad]
@@ -209,13 +191,10 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
     """
 
     @override
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
         params = [p for p in self.parameters if p in set(data.columns)]
         if len(params) < 2:
-            raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires at least 2 of "
-                f"{self.parameters} in the dataframe but found only {params}."
-            )
+            return pd.Index([])
         mask_bad = data[params].nunique(axis=1) != 1
 
         return data.index[mask_bad]
@@ -285,12 +264,9 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
         return params
 
     @override
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        if missing := self._required_parameters - set(data.columns):
-            raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires columns {missing} "
-                f"which are missing from the dataframe."
-            )
+    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
+        if not self._required_parameters <= set(data.columns):
+            return pd.Index([])
         # Create data copy and mark entries where the dependency conditions are negative
         # with a dummy value to cause degeneracy.
         censored_data = data.copy()
@@ -364,14 +340,11 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         return params
 
     @override
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
         cols = set(data.columns)
         params = [p for p in self.parameters if p in cols]
         if len(params) < 2:
-            raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires at least 2 of "
-                f"{self.parameters} in the dataframe but found only {params}."
-            )
+            return pd.Index([])
         # When dependencies exist, permutation dedup on a partial set of
         # parameters is not safe because the dependency logic can change
         # which permutations are equivalent. In this case, only the
@@ -434,12 +407,9 @@ class DiscreteCustomConstraint(DiscreteConstraint):
     you want to keep/remove."""
 
     @override
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        if missing := set(self.parameters) - set(data.columns):
-            raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' requires columns {missing} "
-                f"which are missing from the dataframe."
-            )
+    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
+        if not set(self.parameters) <= set(data.columns):
+            return pd.Index([])
         mask_bad = ~self.validator(data[self.parameters])
 
         return data.index[mask_bad]
@@ -454,14 +424,11 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteConstraint):
     # See base class.
 
     @override
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
         cols = set(data.columns)
         params = [p for p in self.parameters if p in cols]
         if not params:
-            raise UnsupportedEarlyFilteringError(
-                f"'{self.__class__.__name__}' has no available parameters "
-                f"for filtering."
-            )
+            return pd.Index([])
         all_present = len(params) == len(self.parameters)
 
         non_zeros = (data[params] != 0.0).sum(axis=1)

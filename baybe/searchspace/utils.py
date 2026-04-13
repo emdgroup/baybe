@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from baybe.constraints.base import DiscreteConstraint
-from baybe.exceptions import UnsupportedEarlyFilteringError
 from baybe.parameters.base import DiscreteParameter
 
 if TYPE_CHECKING:
@@ -195,11 +194,8 @@ def parameter_cartesian_prod_pandas_constrained(
         still_pending: list[tuple[DiscreteConstraint, set[str]]] = []
 
         for constraint, all_params in pending:
-            try:
-                idxs = constraint.get_invalid(df)
-                df.drop(index=idxs, inplace=True)
-            except UnsupportedEarlyFilteringError:
-                pass
+            idxs = constraint.get_invalid(df, allow_missing=True)
+            df.drop(index=idxs, inplace=True)
 
             if not (all_params <= available):
                 still_pending.append((constraint, all_params))

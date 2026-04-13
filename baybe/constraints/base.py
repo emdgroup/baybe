@@ -98,27 +98,62 @@ class DiscreteConstraint(Constraint, ABC):
     eval_during_modeling: ClassVar[bool] = False
     # See base class.
 
-    def get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+    def get_valid(
+        self, df: pd.DataFrame, /, *, allow_missing: bool = False
+    ) -> pd.Index:
         """Get the indices of dataframe entries that are valid under the constraint.
 
         Args:
             df: A dataframe where each row represents a parameter configuration.
+            allow_missing: If ``False``, a :class:`ValueError` is raised when
+                the dataframe is missing required parameter columns. If
+                ``True``, the constraint performs partial filtering on the
+                available columns.
 
         Returns:
             The dataframe indices of rows that fulfill the constraint.
         """
-        invalid = self.get_invalid(df)
+        invalid = self.get_invalid(df, allow_missing=allow_missing)
         return df.index.drop(invalid)
 
-    @abstractmethod
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
+    def get_invalid(
+        self, data: pd.DataFrame, /, *, allow_missing: bool = False
+    ) -> pd.Index:
         """Get the indices of dataframe entries that are invalid under the constraint.
 
+        Args:
+            data: A dataframe where each row represents a parameter
+                configuration.
+            allow_missing: If ``False``, a :class:`ValueError` is raised when
+                the dataframe is missing required parameter columns. If
+                ``True``, the constraint performs partial filtering on the
+                available columns, returning an empty index when insufficient
+                columns are present.
+
+        Raises:
+            ValueError: If ``allow_missing`` is ``False`` and the dataframe
+                is missing required parameter columns.
+
+        Returns:
+            The dataframe indices of rows that violate the constraint.
+        """
+        # TODO: Should switch backends (pandas/polars/...) behind the scenes
+        if not allow_missing:
+            if missing := self._required_parameters - set(data.columns):
+                raise ValueError(
+                    f"'{self.__class__.__name__}' requires columns {missing} "
+                    f"which are missing from the dataframe."
+                )
+        return self._get_invalid(data)
+
+    @abstractmethod
+    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
+        """Get the indices of invalid entries (implementation for subclasses).
+
+        Subclasses implement this method with their specific filtering logic.
         When the dataframe contains only a subset of the constraint's
-        parameters, constraints that support incremental filtering will
-        eliminate invalid rows based on the available subset. Constraints
-        that require the complete set of parameters raise
-        :class:`baybe.exceptions.UnsupportedEarlyFilteringError`.
+        parameters, implementations should return an empty index if they
+        cannot perform useful filtering.
 
         Args:
             data: A dataframe where each row represents a parameter
@@ -127,12 +162,7 @@ class DiscreteConstraint(Constraint, ABC):
 
         Returns:
             The dataframe indices of rows that violate the constraint.
-
-        Raises:
-            UnsupportedEarlyFilteringError: If the constraint cannot perform
-                filtering with the available subset of parameters.
         """
-        # TODO: Should switch backends (pandas/polars/...) behind the scenes
 
     @property
     def _required_parameters(self) -> set[str]:
