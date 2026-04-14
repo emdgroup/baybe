@@ -39,7 +39,7 @@ class Interval(SerialMixin):
         default=float("-inf"),
         converter=lambda x: float("-inf") if x is None else float(x),
         validator=non_nan_float,
-        eq=cmp_using(eq=np.isclose),  # type: ignore
+        eq=cmp_using(eq=np.isclose),  # type: ignore[arg-type]
     )
     """The lower end of the interval."""
 
@@ -47,7 +47,7 @@ class Interval(SerialMixin):
         default=float("inf"),
         converter=lambda x: float("inf") if x is None else float(x),
         validator=non_nan_float,
-        eq=cmp_using(eq=np.isclose),  # type: ignore
+        eq=cmp_using(eq=np.isclose),  # type: ignore[arg-type]
     )
     """The upper end of the interval."""
 
