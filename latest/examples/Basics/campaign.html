@@ -1191,9 +1191,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-           Solvent            Base         Ligand  Temperature  Concentration
-3      Butyl Ester  Cesium acetate  (t-Bu)PhCPhos        105.0          0.057
-114  Butyornitrile  Cesium acetate  (t-Bu)PhCPhos        120.0          0.057
+         Solvent             Base                        Ligand  Temperature  \
+266         DMAc  Cesium pivalate  Di-tert-butylphenylphosphine        105.0   
+45   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine         90.0   
+
+     Concentration  
+266          0.153  
+45           0.057  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1206,13 +1210,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent            Base         Ligand  Temperature  Concentration  \
-3      Butyl Ester  Cesium acetate  (t-Bu)PhCPhos        105.0          0.057   
-114  Butyornitrile  Cesium acetate  (t-Bu)PhCPhos        120.0          0.057   
+         Solvent             Base                        Ligand  Temperature  \
+266         DMAc  Cesium pivalate  Di-tert-butylphenylphosphine        105.0   
+45   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine         90.0   
 
-         yield  
-3    45.197548  
-114  44.004686  
+     Concentration      yield  
+266          0.153  78.636874  
+45           0.057  98.123716  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

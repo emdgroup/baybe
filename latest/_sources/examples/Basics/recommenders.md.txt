@@ -247,15 +247,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-          Solvent               Base                        Ligand  Temperature  \
-    262      DMAc    Cesium pivalate  Di-tert-butylphenylphosphine         90.0   
-    387  p-Xylene  Potassium acetate                     BrettPhos         90.0   
-    279      DMAc  Potassium acetate                     BrettPhos         90.0   
+             Solvent               Base                        Ligand  \
+    391     p-Xylene  Potassium acetate                     BrettPhos   
+    235         DMAc     Cesium acetate  Di-tert-butylphenylphosphine   
+    5    Butyl Ester     Cesium acetate                 (t-Bu)PhCPhos   
     
-         Concentration  
-    262          0.100  
-    387          0.057  
-    279          0.057  
+         Temperature  Concentration  
+    391        105.0          0.100  
+    235         90.0          0.100  
+    5          105.0          0.153  
 
 
 
@@ -268,15 +268,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-          Solvent               Base                        Ligand  Temperature  \
-    262      DMAc    Cesium pivalate  Di-tert-butylphenylphosphine         90.0   
-    387  p-Xylene  Potassium acetate                     BrettPhos         90.0   
-    279      DMAc  Potassium acetate                     BrettPhos         90.0   
+             Solvent               Base                        Ligand  \
+    391     p-Xylene  Potassium acetate                     BrettPhos   
+    235         DMAc     Cesium acetate  Di-tert-butylphenylphosphine   
+    5    Butyl Ester     Cesium acetate                 (t-Bu)PhCPhos   
     
-         Concentration      yield  
-    262          0.100  14.705539  
-    387          0.057 -26.986578  
-    279          0.057  59.290213  
+         Temperature  Concentration      yield  
+    391        105.0          0.100 -54.827234  
+    235         90.0          0.100 -27.360401  
+    5          105.0          0.153 -61.850194  
 
 
 
