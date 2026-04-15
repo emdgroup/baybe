@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - `SHAPInsight` breaking with `numpy>=2.4` due to no longer accepted implicit array to 
   scalar conversion
+- Using `np.isclose` for assessing equality of `Interval` bounds instead of hard
+  equality check
 
 ### Changed
 - The `Campaign.allow_*` flag mechanism is now based on `AutoBool` logic, providing
