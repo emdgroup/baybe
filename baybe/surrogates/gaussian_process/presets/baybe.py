@@ -10,16 +10,14 @@ from typing_extensions import override
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel
 from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.enum import ParameterKind
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
     to_parameter_selector,
 )
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.components.kernel import (
-    KernelFactoryProtocol,
-    _KernelFactory,
-)
+from baybe.surrogates.gaussian_process.components.kernel import _KernelFactory
 from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOKernelFactory,
@@ -31,11 +29,16 @@ if TYPE_CHECKING:
 
 
 @define
-class BayBEKernelFactory(KernelFactoryProtocol):
+class BayBEKernelFactory(_KernelFactory):
     """The default kernel factory for Gaussian process surrogates."""
 
+    supported_parameter_kinds: ClassVar[ParameterKind] = (
+        ParameterKind.REGULAR | ParameterKind.TASK
+    )
+    # See base class.
+
     @override
-    def __call__(
+    def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
@@ -56,6 +59,9 @@ class BayBETaskKernelFactory(_KernelFactory):
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
+    supported_parameter_kinds: ClassVar[ParameterKind] = ParameterKind.TASK
+    # See base class.
+
     parameter_selector: ParameterSelectorProtocol | None = field(
         factory=lambda: TypeSelector([TaskParameter]),
         converter=to_parameter_selector,
@@ -63,7 +69,7 @@ class BayBETaskKernelFactory(_KernelFactory):
     # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
-    def __call__(
+    def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         return IndexKernel(

@@ -75,7 +75,7 @@ class EDBOKernelFactory(_KernelFactory):
     # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
-    def __call__(
+    def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         effective_dims = train_x.shape[-1] - len(
