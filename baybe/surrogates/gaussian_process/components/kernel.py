@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
+from attrs.converters import optional
 from attrs.validators import is_callable
 from typing_extensions import override
 
@@ -13,7 +14,9 @@ from baybe.kernels.base import Kernel
 from baybe.kernels.composite import ProductKernel
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.selectors import (
+    ParameterSelectorProtocol,
     TypeSelector,
+    to_parameter_selector,
 )
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.generic import (
@@ -33,6 +36,40 @@ else:
     # At runtime, we use only the BayBE type for serialization compatibility
     KernelFactoryProtocol = GPComponentFactoryProtocol[Kernel]
     PlainKernelFactory = PlainGPComponentFactory[Kernel]
+
+
+@define
+class _ParameterSelectorMixin:
+    """A mixin class to enable parameter selection."""
+
+    # For internal use only: sanity check mechanism to remind developers of new
+    # subclasses to actually use the parameter selector when it is provided
+    # TODO: Perhaps we can find a more elegant way to enforce this by design
+    _uses_parameter_names: ClassVar[bool] = False
+
+    parameter_selector: ParameterSelectorProtocol | None = field(
+        default=None, converter=optional(to_parameter_selector), kw_only=True
+    )
+    """An optional selector to specify which parameters are to be considered."""
+
+    def get_parameter_names(self, searchspace: SearchSpace) -> tuple[str, ...] | None:
+        """Get the names of the parameters to be considered."""
+        if self.parameter_selector is None:
+            return None
+
+        return tuple(
+            p.name for p in searchspace.parameters if self.parameter_selector(p)
+        )
+
+    def __attrs_post_init__(self):
+        if self.parameter_selector is not None and not self._uses_parameter_names:
+            raise AssertionError(
+                f"A `parameter_selector` was provided to "
+                f"`{type(self).__name__}`, but the class does not set "
+                f"`_uses_parameter_names = True`. Subclasses that accept a "
+                f"parameter selector must explicitly set this flag to confirm "
+                f"they actually use the selected parameter names."
+            )
 
 
 @define

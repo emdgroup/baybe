@@ -16,13 +16,15 @@ from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
-    _ParameterSelectorMixin,
     to_parameter_selector,
 )
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
 from baybe.searchspace.discrete import SubspaceDiscrete
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
+from baybe.surrogates.gaussian_process.components.kernel import (
+    KernelFactoryProtocol,
+    _ParameterSelectorMixin,
+)
 from baybe.surrogates.gaussian_process.components.likelihood import (
     LikelihoodFactoryProtocol,
 )

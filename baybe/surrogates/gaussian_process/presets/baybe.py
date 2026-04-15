@@ -13,11 +13,13 @@ from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
-    _ParameterSelectorMixin,
     to_parameter_selector,
 )
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
+from baybe.surrogates.gaussian_process.components.kernel import (
+    KernelFactoryProtocol,
+    _ParameterSelectorMixin,
+)
 from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOKernelFactory,
