@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
@@ -39,21 +40,21 @@ else:
 
 
 @define
-class _ParameterSelectorMixin:
-    """A mixin class to enable parameter selection."""
+class _KernelFactory(KernelFactoryProtocol, ABC):
+    """Base class for kernel factories."""
 
     # For internal use only: sanity check mechanism to remind developers of new
-    # subclasses to actually use the parameter selector when it is provided
+    # factories to actually use the parameter selector when it is provided
     # TODO: Perhaps we can find a more elegant way to enforce this by design
     _uses_parameter_names: ClassVar[bool] = False
 
     parameter_selector: ParameterSelectorProtocol | None = field(
-        default=None, converter=optional(to_parameter_selector), kw_only=True
+        default=None, converter=optional(to_parameter_selector)
     )
-    """An optional selector to specify which parameters are to be considered."""
+    """An optional selector to specify which parameters are considered by the kernel."""
 
     def get_parameter_names(self, searchspace: SearchSpace) -> tuple[str, ...] | None:
-        """Get the names of the parameters to be considered."""
+        """Get the names of the parameters to be considered by the kernel."""
         if self.parameter_selector is None:
             return None
 
@@ -70,6 +71,13 @@ class _ParameterSelectorMixin:
                 f"parameter selector must explicitly set this flag to confirm "
                 f"they actually use the selected parameter names."
             )
+
+    @override
+    @abstractmethod
+    def __call__(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> Kernel | GPyTorchKernel:
+        pass
 
 
 @define

@@ -19,8 +19,7 @@ from baybe.parameters.selectors import (
 )
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.components.kernel import (
-    KernelFactoryProtocol,
-    _ParameterSelectorMixin,
+    _KernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
     LikelihoodFactoryProtocol,
@@ -40,7 +39,7 @@ _DIM_LIMITS = (8, 75)
 
 
 @define
-class SmoothedEDBOKernelFactory(KernelFactoryProtocol, _ParameterSelectorMixin):
+class SmoothedEDBOKernelFactory(_KernelFactory):
     """A factory providing smoothed versions of EDBO kernels.
 
     Takes the low and high dimensional limits of
