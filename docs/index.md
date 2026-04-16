@@ -40,6 +40,7 @@ Contribute <misc/contributing_link>
 Contributors <misc/contributors_link>
 Known Issues <known_issues>
 Changelog <misc/changelog_link>
+References <misc/references>
 Github <https://github.com/emdgroup/baybe/>
 License <misc/license_link>
 ```
