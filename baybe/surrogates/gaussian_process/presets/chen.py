@@ -1,7 +1,4 @@
-"""Adaptive Prior proposed in the paper:
-Guanming Chen, Maximilian Fleck, Thijs Stuyver. Leveraging Hidden-Space Representations Effectively in Bayesian Optimization for Experiment Design through Dimension-Aware Hyperpriors. ChemRxiv. 09 February 2026.
-DOI: https://doi.org/10.26434/chemrxiv.10001986/v2
-"""  # noqa
+"""Preset for adaptive kernel hyperpriors proposed by :cite:p:`Chen2026`."""
 
 from __future__ import annotations
 
@@ -38,10 +35,7 @@ if TYPE_CHECKING:
 
 @define
 class CHENKernelFactory(_PureKernelFactory):
-    """Surrogate model with an adaptive hyperprior proposed in the paper:
-    Guanming Chen, Maximilian Fleck, Thijs Stuyver. Leveraging Hidden-Space Representations Effectively in Bayesian Optimization for Experiment Design through Dimension-Aware Hyperpriors. ChemRxiv. 09 February 2026.
-    DOI: https://doi.org/10.26434/chemrxiv.10001986/v2
-    """  # noqa
+    """A factory providing adaptive hyperprior kernels as proposed by :cite:p:`Chen2026`."""  # noqa: E501
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.

@@ -1,4 +1,4 @@
-"""Smoothed EDBO preset for Gaussian process surrogates."""
+"""Smoothed EDBO preset (adapted from :cite:p:`Shields2021`)."""
 
 from __future__ import annotations
 
@@ -40,12 +40,12 @@ _DIM_LIMITS = (8, 75)
 
 @define
 class SmoothedEDBOKernelFactory(_PureKernelFactory):
-    """A factory providing smoothed versions of EDBO kernels.
+    """A factory providing smoothed versions of EDBO kernels (adapted from :cite:p:`Shields2021`).
 
     Takes the low and high dimensional limits of
     :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`
     and interpolates the prior moments linearly in between.
-    """
+    """  # noqa: E501
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
@@ -94,12 +94,12 @@ SmoothedEDBOMeanFactory = LazyConstantMeanFactory
 
 @define
 class SmoothedEDBOLikelihoodFactory(LikelihoodFactoryProtocol):
-    """A factory providing smoothed versions of EDBO likelihoods.
+    """A factory providing smoothed versions of EDBO likelihoods (adapted from :cite:p:`Shields2021`).
 
     Takes the low and high dimensional limits of
     :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOLikelihoodFactory`
     and interpolates the prior moments linearly in between.
-    """
+    """  # noqa: E501
 
     @override
     def __call__(
