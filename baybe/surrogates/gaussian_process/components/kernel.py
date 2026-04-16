@@ -14,7 +14,6 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.kernels.base import Kernel
-from baybe.kernels.composite import ProductKernel
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import ParameterKind
 from baybe.parameters.selectors import (
@@ -161,4 +160,8 @@ class ICMKernelFactory(KernelFactoryProtocol):
     ) -> Kernel:
         base_kernel = self.base_kernel_factory(searchspace, train_x, train_y)
         task_kernel = self.task_kernel_factory(searchspace, train_x, train_y)
-        return ProductKernel([base_kernel, task_kernel])
+        if isinstance(base_kernel, Kernel):
+            base_kernel = base_kernel.to_gpytorch(searchspace)
+        if isinstance(task_kernel, Kernel):
+            task_kernel = task_kernel.to_gpytorch(searchspace)
+        return base_kernel * task_kernel
