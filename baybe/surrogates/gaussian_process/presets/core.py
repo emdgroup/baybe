@@ -11,8 +11,11 @@ class GaussianProcessPreset(Enum):
     BAYBE = "BAYBE"
     """The default BayBE settings of the Gaussian process surrogate class."""
 
+    CHEN = "CHEN"
+    """The adaptive kernel hyperprior settings proposed by :cite:p:`Chen2026`."""
+
     EDBO = "EDBO"
-    """The EDBO settings."""
+    """The EDBO settings proposed by :cite:p:`Shields2021`."""
 
     EDBO_SMOOTHED = "EDBO_SMOOTHED"
-    """A smoothed version of the EDBO settings."""
+    """A smoothed version of the EDBO settings (adapted from :cite:p:`Shields2021`)."""
