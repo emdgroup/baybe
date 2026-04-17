@@ -102,7 +102,7 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
     @override
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
+    ) -> Kernel | GPyTorchKernel:
         """Construct the kernel, validating parameter kinds before construction."""
         if self.parameter_selector is not None:
             params = [p for p in searchspace.parameters if self.parameter_selector(p)]
@@ -115,7 +115,7 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
     @abstractmethod
     def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
+    ) -> Kernel | GPyTorchKernel:
         """Construct the kernel."""
 
 
