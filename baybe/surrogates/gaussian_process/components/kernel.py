@@ -199,7 +199,7 @@ class ICMKernelFactory(_MetaKernelFactory):
             else None
         )
 
-        if base_idcs > allowed_base_idcs:
+        if base_idcs is not None and (base_idcs > allowed_base_idcs):
             raise ValueError(
                 f"The base kernel's 'active_dims' {base_idcs} must be a subset of "
                 f"the non-task indices {allowed_base_idcs}."
