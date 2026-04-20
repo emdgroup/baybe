@@ -243,6 +243,7 @@ def test_target_deprecation_helpers():
         NumericalTarget.from_modern_interface("t", minimize=True)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_target_legacy_deserialization():
     """Deserialization also works from legacy arguments."""
     actual = NumericalTarget.from_dict({"name": "t", "mode": "MATCH", "bounds": (1, 2)})
@@ -259,6 +260,7 @@ def series() -> pd.Series:
     return sample_input()
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 @pytest.mark.parametrize("mode", ["MAX", "MIN"])
 def test_constructor_equivalence_min_max(mode):
     """
@@ -300,6 +302,7 @@ def test_constructor_equivalence_min_max(mode):
             assert t1 == t2
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 @pytest.mark.parametrize("transformation", ["TRIANGULAR", "BELL"])
 def test_constructor_equivalence_match(transformation):
     """
@@ -491,6 +494,7 @@ def test_target_transformation(
     assert_series_equal(modern.transform(series), expected)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_deserialization_using_constructor():
     """Deserialization using the 'constructor' field works despite having other
     deprecation mechanisms in place."""  # noqa
