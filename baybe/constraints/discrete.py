@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from collections.abc import Callable
 from functools import reduce
 from typing import TYPE_CHECKING, Any, ClassVar, cast
@@ -233,13 +234,18 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
         # Create data copy and mark entries where the dependency conditions are negative
         # with a dummy value to cause degeneracy.
         censored_data = data.copy()
-        for k, _ in enumerate(self.parameters):
-            # .loc assignments are not supported by mypy + pandas-stubs yet
-            # See https://github.com/pandas-dev/pandas-stubs/issues/572
-            censored_data.loc[  # type: ignore[call-overload]
-                ~self.conditions[k].evaluate(data[self.parameters[k]]),
-                self.affected_parameters[k],
-            ] = Dummy()
+        with warnings.catch_warnings():
+            # Suppress pandas FutureWarning about setting incompatible dtype.
+            # TODO: Needs proper fix for pandas 3.0 compatibility.
+            warnings.simplefilter("ignore", FutureWarning)
+
+            for k, _ in enumerate(self.parameters):
+                # .loc assignments are not supported by mypy + pandas-stubs yet
+                # See https://github.com/pandas-dev/pandas-stubs/issues/572
+                censored_data.loc[  # type: ignore[call-overload]
+                    ~self.conditions[k].evaluate(data[self.parameters[k]]),
+                    self.affected_parameters[k],
+                ] = Dummy()
 
         # Create an invariant indicator: pair each value of an affected parameter with
         # the corresponding value of the parameter it depends on. These indicators
