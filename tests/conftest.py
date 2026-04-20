@@ -83,6 +83,13 @@ from baybe.utils.dataframe import (
     create_fake_input,
 )
 
+# TODO: Remove when https://github.com/cornellius-gp/linear_operator/pull/129 is ready
+warnings.filterwarnings(
+    "ignore",
+    message=".*torch.jit.script.*is deprecated",
+    category=DeprecationWarning,
+)
+
 # Hypothesis settings
 hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
 if strtobool(os.getenv("CI", "false")):
