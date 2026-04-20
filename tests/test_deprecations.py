@@ -340,9 +340,13 @@ def test_constructor_equivalence_match(transformation):
         assert t1 == t2
 
 
-@pytest.mark.parametrize(
-    ("legacy", "deprecation", "modern", "expected"),
-    [
+# NOTE: The parametrize values below use the deprecated legacy interface of
+# ModernTarget (e.g. ModernTarget("t", "MAX")), which emits DeprecationWarning.
+# Since these are evaluated at module/collection time, we suppress the warning here
+# to avoid failures when running with `-W error`.
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    _target_transformation_params = [
         param(
             LegacyTarget("t", "MAX"),
             ModernTarget("t", "MAX"),
@@ -464,7 +468,12 @@ def test_constructor_equivalence_match(transformation):
             triangular_transform(sample_input(), 2, 6),
             id="match_triangular_scaled_shifted",
         ),
-    ],
+    ]
+
+
+@pytest.mark.parametrize(
+    ("legacy", "deprecation", "modern", "expected"),
+    _target_transformation_params,
 )
 def test_target_transformation(
     series,
