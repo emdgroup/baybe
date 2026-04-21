@@ -925,7 +925,7 @@ def fixture_default_onnx_str() -> bytes:
 
     # Train sklearn model
     train_x = torch.arange(10).view(-1, 1)
-    train_y = torch.arange(10).view(-1, 1)
+    train_y = torch.arange(10)
     model = BayesianRidge()
     model.fit(train_x, train_y)
 
