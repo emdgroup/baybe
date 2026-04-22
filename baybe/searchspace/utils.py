@@ -14,11 +14,11 @@ if TYPE_CHECKING:
     import polars as pl
 
 
-def compute_parameter_order(
+def optimize_parameter_order(
     parameters: Sequence[DiscreteParameter],
     constraints: Sequence[DiscreteConstraint],
 ) -> list[DiscreteParameter]:
-    """Compute an optimal parameter ordering for incremental space construction.
+    """Determine a heuristic parameter ordering for incremental space construction.
 
     Parameters involved in constraints are placed first, ordered so that the
     parameters completing the most constraints come earliest. Parameters not
@@ -164,7 +164,7 @@ def parameter_cartesian_prod_pandas_constrained(
         return parameter_cartesian_prod_pandas(parameters)
 
     # Compute optimal parameter order
-    ordered_params = compute_parameter_order(parameters, filtering_constraints)
+    ordered_params = optimize_parameter_order(parameters, filtering_constraints)
 
     # Determine which parameter names each constraint needs for completion
     pending: list[tuple[DiscreteConstraint, set[str]]] = [
