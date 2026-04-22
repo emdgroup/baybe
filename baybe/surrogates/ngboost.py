@@ -98,7 +98,7 @@ class NGBoostSurrogate(IndependentGaussianSurrogate):
         import torch
 
         # Get predictions
-        dists = self._model.pred_dist(candidates_comp_scaled)
+        dists = self._model.pred_dist(candidates_comp_scaled.detach().numpy())
 
         # Split into posterior mean and variance
         mean = torch.from_numpy(dists.mean())
