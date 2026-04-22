@@ -60,6 +60,16 @@ class _KernelFactory(KernelFactoryProtocol, ABC):
     )
     """An optional selector to specify which parameters are considered by the kernel."""
 
+    def __attrs_post_init__(self):
+        if self.parameter_selector is not None and not self._uses_parameter_names:
+            raise AssertionError(
+                f"A `parameter_selector` was provided to "
+                f"`{type(self).__name__}`, but the class does not set "
+                f"`_uses_parameter_names = True`. Subclasses that accept a "
+                f"parameter selector must explicitly set this flag to confirm "
+                f"they actually use the selected parameter names."
+            )
+
     def get_parameter_names(self, searchspace: SearchSpace) -> tuple[str, ...] | None:
         """Get the names of the parameters to be considered by the kernel."""
         if self.parameter_selector is None:
@@ -105,16 +115,6 @@ class _KernelFactory(KernelFactoryProtocol, ABC):
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         """Construct the kernel."""
-
-    def __attrs_post_init__(self):
-        if self.parameter_selector is not None and not self._uses_parameter_names:
-            raise AssertionError(
-                f"A `parameter_selector` was provided to "
-                f"`{type(self).__name__}`, but the class does not set "
-                f"`_uses_parameter_names = True`. Subclasses that accept a "
-                f"parameter selector must explicitly set this flag to confirm "
-                f"they actually use the selected parameter names."
-            )
 
 
 @define
