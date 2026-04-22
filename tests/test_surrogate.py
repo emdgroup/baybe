@@ -185,7 +185,7 @@ def test_invalid_model_params(model_cls, params):
 )
 def test_continuous_incompatibility(campaign):
     """Using surrogates without gradients on continuous spaces fails expectedly."""
-    data = create_fake_input(campaign.parameters, campaign.targets)
+    data = create_fake_input(campaign.parameters, campaign.targets, n_rows=3)
     campaign.add_measurements(data)
 
     skip = False
