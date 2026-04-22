@@ -54,29 +54,30 @@ def validate_constraints(  # noqa: DOC101, DOC103
     ]
 
     for constraint in constraints:
-        if not all(p in param_names_all for p in constraint.parameters):
+        if not all(p in param_names_all for p in constraint._required_parameters):
             raise ValueError(
                 f"You are trying to create a constraint with at least one parameter "
                 f"name that does not exist in the list of defined parameters. "
-                f"Parameter list of the affected constraint: {constraint.parameters}"
+                f"Parameter list of the affected constraint: "
+                f"{constraint._required_parameters}"
             )
 
         if constraint.is_continuous and any(
-            p in param_names_discrete for p in constraint.parameters
+            p in param_names_discrete for p in constraint._required_parameters
         ):
             raise ValueError(
                 f"You are trying to initialize a continuous constraint over a "
                 f"parameter that is discrete. Parameter list of the affected "
-                f"constraint: {constraint.parameters}"
+                f"constraint: {constraint._required_parameters}"
             )
 
         if constraint.is_discrete and any(
-            p in param_names_continuous for p in constraint.parameters
+            p in param_names_continuous for p in constraint._required_parameters
         ):
             raise ValueError(
                 f"You are trying to initialize a discrete constraint over a parameter "
                 f"that is continuous. Parameter list of the affected constraint: "
-                f"{constraint.parameters}"
+                f"{constraint._required_parameters}"
             )
 
         if constraint.numerical_only and any(
