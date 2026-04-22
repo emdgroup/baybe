@@ -958,9 +958,6 @@ def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate:
             match=r".*Expected value argument.*to be within the support.*"
         ),
     ),
-    before_sleep=lambda x: warnings.warn(
-        f"Retrying iteration test due to '{x.outcome.exception()}'"
-    ),
 )
 def run_iterations(
     campaign: Campaign, n_iterations: int, batch_size: int, add_noise: bool = True
