@@ -163,6 +163,10 @@ def test_invalid_model_params(model_cls, params):
         model_cls(model_params=params)
 
 
+@pytest.mark.skipif(
+    os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
+    reason="Most surrogates are only available in FULLTEST environment.",
+)
 @pytest.mark.parametrize(
     "target_names",
     [["Target_max"], ["Target_max_bounded", "Target_min_bounded"]],
