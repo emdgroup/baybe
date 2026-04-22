@@ -139,6 +139,35 @@ def test_invalid_simplex_creating_with_overlapping_parameters():
         )
 
 
+@pytest.mark.parametrize(
+    ("simplex_parameters", "expected_len"),
+    [
+        pytest.param([], 3, id="zero_simplex"),
+        pytest.param(
+            [NumericalDiscreteParameter("x", values=[0.0, 0.5, 1.0, 1.5, 2.0])],
+            9,
+            id="one_simplex",
+        ),
+    ],
+)
+def test_from_simplex_with_degenerate_parameter_count(simplex_parameters, expected_len):
+    """Calling from_simplex with less than 2 simplex parameters emits a warning."""
+    product_parameters = [CategoricalParameter(name="C", values=["a", "b", "c"])]
+
+    with pytest.warns(UserWarning, match="less than 2 simplex parameters"):
+        subspace = SubspaceDiscrete.from_simplex(
+            max_sum=1.0,
+            simplex_parameters=simplex_parameters,
+            product_parameters=product_parameters,
+        )
+
+    assert len(subspace.exp_rep) == expected_len
+
+    if simplex_parameters:
+        simplex_cols = [p.name for p in simplex_parameters]
+        assert all(subspace.exp_rep[simplex_cols].sum(axis=1) <= 1.0)
+
+
 def test_continuous_searchspace_creation_from_bounds():
     """A purely continuous search space is created from example bounds."""
     parameters = (

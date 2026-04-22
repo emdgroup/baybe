@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from collections.abc import Collection, Sequence
 from itertools import compress
 from math import prod
@@ -385,12 +386,16 @@ class SubspaceDiscrete(SerialMixin):
                 f"parameters: {overlap}."
             )
 
-        # Validate minimum number of simplex parameters
+        # Handle degenerate simplex cases
         if len(simplex_parameters) < 2:
-            raise ValueError(
-                f"'{cls.from_simplex.__name__}' requires at least 2 simplex "
-                f"parameters but got {len(simplex_parameters)}."
+            warnings.warn(
+                f"'{cls.from_simplex.__name__}' was called with less than 2 "
+                f"simplex parameters, so smart simplex construction has no effect."
+                f"Consider using '{cls.from_product.__name__}' instead.",
+                UserWarning,
             )
+            if len(simplex_parameters) < 1:
+                return cls.from_product(product_parameters, constraints)
 
         # Validate non-negativity
         min_values = [min(p.values) for p in simplex_parameters]
