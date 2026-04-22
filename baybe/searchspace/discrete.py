@@ -5,7 +5,6 @@ from __future__ import annotations
 import gc
 import warnings
 from collections.abc import Collection, Sequence
-from itertools import compress
 from math import prod
 from typing import TYPE_CHECKING, Any
 
@@ -212,14 +211,10 @@ class SubspaceDiscrete(SerialMixin):
             if polars_params:
                 # Build Polars product only for relevant parameters and filter
                 lazy_df = parameter_cartesian_prod_polars(polars_params)
-                lazy_df, mask_missing = _apply_constraint_filter_polars(
+                lazy_df, _ = _apply_constraint_filter_polars(
                     lazy_df, polars_constraints
                 )
                 initial_df = lazy_df.collect().to_pandas()
-                # Apply Polars constraints that failed back via pandas
-                _apply_constraint_filter_pandas(
-                    initial_df, list(compress(polars_constraints, mask_missing))
-                )
             else:
                 initial_df = None
 
