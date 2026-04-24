@@ -146,11 +146,9 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.utils.boolean.UncertainBool.*"),
     ("py:obj", "baybe.targets.botorch.*"),
     ("py:obj", "baybe.objectives.botorch.*"),
-    ("py:class", "baybe.parameters.base._DiscreteLabelLikeParameter"),
-    ("py:class", "baybe.acquisition.acqfs._ExpectedHypervolumeImprovement"),
-    ("py:class", "baybe.settings._SlottedContextDecorator"),
     ("py:class", "baybe.surrogates.gaussian_process.components.PlainKernelFactory"),
-    ("py:class", "baybe.surrogates.gaussian_process.components.kernel._KernelFactory"),
+    # Private classes
+    (r"py:class", r"baybe\..*\._.*"),
     # Deprecation
     ("py:.*", "baybe.targets._deprecated.*"),
 ]
