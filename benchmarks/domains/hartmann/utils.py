@@ -60,12 +60,21 @@ class ShiftedHartmann(Hartmann):
         kwargs["bounds"] = bounds_extended
 
         super().__init__(**kwargs)
-        # Remove optimizers as they are incorrect if shift is used
-        # They are anyway only set for 3D and 6D hartman in the parent class
+        # Recompute optimizer coordinates for the shifted input space (x_opt - shift).
+        # Both _optimizers (list) and the "optimizers" buffer must be set
+        # independently since .optimizers reads from the buffer.
         if self._optimizers is not None:
-            self._optimizers = None
-        if hasattr(self, "optimizers"):
-            self.register_buffer("optimizers", None)
+            self._optimizers = [
+                tuple(x - s for x, s in zip(opt, self.shift))
+                for opt in self._optimizers
+            ]
+        if "optimizers" in self._buffers:
+            self.register_buffer(
+                "optimizers",
+                torch.tensor(self._optimizers, dtype=torch.double)
+                if self._optimizers is not None
+                else None,
+            )
 
     @override
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
