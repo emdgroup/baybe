@@ -14,7 +14,7 @@ from attrs import define, field
 from cattrs import IterableValidationError
 from typing_extensions import override
 
-from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
+from baybe.constraints import validate_constraints
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import DeprecationError
 from baybe.parameters import (
@@ -24,10 +24,7 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
-from baybe.searchspace.utils import (
-    parameter_cartesian_prod_pandas_constrained,
-    parameter_cartesian_prod_polars,
-)
+from baybe.searchspace.utils import build_constrained_product
 from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
@@ -42,8 +39,6 @@ from baybe.utils.dataframe import (
 from baybe.utils.memory import bytes_to_human_readable
 
 if TYPE_CHECKING:
-    import polars as pl
-
     from baybe.searchspace.core import SearchSpace
 
 
@@ -185,45 +180,9 @@ class SubspaceDiscrete(SerialMixin):
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
-        # Set defaults and order constraints
         constraints = constraints or []
-        constraints = sorted(
-            constraints,
-            key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
-        )
 
-        if active_settings.use_polars_for_constraints:
-            # Partition constraints by Polars support
-            polars_constraints = [c for c in constraints if c.has_polars_implementation]
-            pandas_constraints = [
-                c for c in constraints if not c.has_polars_implementation
-            ]
-
-            # Determine which parameters are needed by Polars-capable constraints
-            polars_param_names: set[str] = set()
-            for c in polars_constraints:
-                polars_param_names.update(c._required_parameters)
-            polars_params = [p for p in parameters if p.name in polars_param_names]
-            remaining_params = [
-                p for p in parameters if p.name not in polars_param_names
-            ]
-
-            if polars_params:
-                # Build Polars product only for relevant parameters and filter
-                lazy_df = parameter_cartesian_prod_polars(polars_params)
-                lazy_df, _ = _apply_constraint_filter_polars(
-                    lazy_df, polars_constraints
-                )
-                initial_df = lazy_df.collect().to_pandas()
-            else:
-                initial_df = None
-
-            # Merge remaining parameters with pandas-only constraint filtering
-            df = parameter_cartesian_prod_pandas_constrained(
-                remaining_params, pandas_constraints, initial_df=initial_df
-            )
-        else:
-            df = parameter_cartesian_prod_pandas_constrained(parameters, constraints)
+        df = build_constrained_product(parameters, constraints)
 
         return SubspaceDiscrete(
             parameters=parameters,
@@ -501,7 +460,7 @@ class SubspaceDiscrete(SerialMixin):
             drop_invalid(exp_rep, max_sum, boundary_only=True)
 
         # Merge product parameters and apply constraints incrementally
-        exp_rep = parameter_cartesian_prod_pandas_constrained(
+        exp_rep = build_constrained_product(
             product_parameters, constraints, initial_df=exp_rep
         )
 
@@ -659,60 +618,6 @@ class SubspaceDiscrete(SerialMixin):
             The named parameters.
         """
         return tuple(p for p in self.parameters if p.name in names)
-
-
-def _apply_constraint_filter_pandas(
-    df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
-) -> pd.DataFrame:
-    """Remove discrete search space entries based on constraints.
-
-    The filtering is done inplace, but the modified object is still returned.
-
-    Args:
-        df: The data in experimental representation to be modified inplace.
-        constraints: List of discrete constraints.
-
-    Returns:
-        The filtered dataframe.
-    """
-    # Remove entries that violate parameter constraints:
-    for constraint in (c for c in constraints if c.eval_during_creation):
-        idxs = constraint.get_invalid(df)
-        df.drop(index=idxs, inplace=True)
-    df.reset_index(inplace=True, drop=True)
-
-    return df
-
-
-def _apply_constraint_filter_polars(
-    ldf: pl.LazyFrame,
-    constraints: Sequence[DiscreteConstraint],
-) -> tuple[pl.LazyFrame, list[bool]]:
-    """Remove discrete search space entries based on constraints.
-
-    Note:
-        This will silently skip constraints that have no Polars implementation.
-
-    Args:
-        ldf: The data in experimental representation to be filtered.
-        constraints: Collection of discrete constraints.
-
-    Returns:
-        A tuple containing
-            * The Polars lazyframe with undesired rows removed
-            * A Boolean mask indicating which constraints have **not** been applied
-    """
-    mask_missing = []
-
-    for c in constraints:
-        try:
-            to_keep = c.get_invalid_polars().not_()
-            ldf = ldf.filter(to_keep)
-            mask_missing.append(False)
-        except NotImplementedError:
-            mask_missing.append(True)
-
-    return ldf, mask_missing
 
 
 def validate_simplex_subspace_from_config(specs: dict, _) -> None:

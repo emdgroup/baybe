@@ -23,8 +23,8 @@ from baybe.constraints import (
 from baybe.constraints.base import DiscreteConstraint
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.parameters.base import DiscreteParameter
-from baybe.searchspace.discrete import _apply_constraint_filter_pandas
 from baybe.searchspace.utils import (
+    _apply_constraint_filter_pandas,
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_pandas_constrained,
 )
