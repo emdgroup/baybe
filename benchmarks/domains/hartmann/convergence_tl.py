@@ -64,7 +64,6 @@ def _make_hartmann_tl_benchmark(
     """
     if source_shift is not None and len(source_shift) != 3:
         raise ValueError("Shift list must have length 3 for 3D Hartmann function.")
-    source_shift = source_shift.copy() if source_shift is not None else None
 
     def benchmark_fn(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         """Execute a Hartmann transfer-learning benchmark variant."""
@@ -74,7 +73,7 @@ def _make_hartmann_tl_benchmark(
         # Create source function with specified parameters
         source_function = ShiftedHartmann(
             bounds=bounds,
-            shift=source_shift,
+            shift=list(source_shift) if source_shift is not None else None,
             dim=3,
             noise_std=source_noise_std,
             negate=source_negate,
@@ -230,7 +229,7 @@ hartmann_tl_shift_3_20_15_benchmark = ConvergenceBenchmark(
     function=_make_hartmann_tl_benchmark(
         "hartmann_tl_shift_3_20_15",
         source_noise_std=0.15,
-        source_shift=[0.2, 0, 0],
+        source_shift=(0.2, 0, 0),
         source_negate=False,
     ),
     optimal_target_values={"Target": -3.8324342572721695},
