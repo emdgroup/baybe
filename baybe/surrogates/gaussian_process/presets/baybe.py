@@ -10,7 +10,7 @@ from typing_extensions import override
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.enum import ParameterKind
+from baybe.parameters.enum import _ParameterKind
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
@@ -32,8 +32,8 @@ if TYPE_CHECKING:
 class BayBEKernelFactory(_PureKernelFactory):
     """The default kernel factory for Gaussian process surrogates."""
 
-    supported_parameter_kinds: ClassVar[ParameterKind] = (
-        ParameterKind.REGULAR | ParameterKind.TASK
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = (
+        _ParameterKind.REGULAR | _ParameterKind.TASK
     )
     # See base class.
 
@@ -59,7 +59,7 @@ class BayBETaskKernelFactory(_PureKernelFactory):
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
-    supported_parameter_kinds: ClassVar[ParameterKind] = ParameterKind.TASK
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.TASK
     # See base class.
 
     parameter_selector: ParameterSelectorProtocol | None = field(

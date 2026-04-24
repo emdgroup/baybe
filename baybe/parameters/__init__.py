@@ -5,7 +5,6 @@ from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.enum import (
     CategoricalEncoding,
     CustomEncoding,
-    ParameterKind,
     SubstanceEncoding,
 )
 from baybe.parameters.numerical import (
@@ -23,7 +22,6 @@ __all__ = [
     "MeasurableMetadata",
     "NumericalContinuousParameter",
     "NumericalDiscreteParameter",
-    "ParameterKind",
     "SubstanceEncoding",
     "SubstanceParameter",
     "TaskParameter",

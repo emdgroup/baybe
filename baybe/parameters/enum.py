@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from baybe.parameters.base import Parameter
 
 
-class ParameterKind(Flag):
+class _ParameterKind(Flag):
     """Flag enum encoding the kind of a parameter.
 
     Can be used to express compatibility (e.g. Gaussian process kernel factories)
@@ -26,13 +26,13 @@ class ParameterKind(Flag):
     """Fidelity parameter for multi-fidelity modelling."""
 
     @staticmethod
-    def from_parameter(parameter: Parameter) -> ParameterKind:
+    def from_parameter(parameter: Parameter) -> _ParameterKind:
         """Determine the kind of a parameter from its type."""
         from baybe.parameters.categorical import TaskParameter
 
         if isinstance(parameter, TaskParameter):
-            return ParameterKind.TASK
-        return ParameterKind.REGULAR
+            return _ParameterKind.TASK
+        return _ParameterKind.REGULAR
 
 
 class ParameterEncoding(Enum):

@@ -15,7 +15,7 @@ from typing_extensions import override
 from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.kernels.base import Kernel
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.enum import ParameterKind
+from baybe.parameters.enum import _ParameterKind
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
@@ -52,7 +52,7 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
     # TODO: Perhaps we can find a more elegant way to enforce this by design
     _uses_parameter_names: ClassVar[bool] = False
 
-    supported_parameter_kinds: ClassVar[ParameterKind] = ParameterKind.REGULAR
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
     """The parameter kinds supported by the kernel factory."""
 
     parameter_selector: ParameterSelectorProtocol | None = field(
@@ -89,12 +89,14 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
             IncompatibleSearchSpaceError: If unsupported parameter kinds are found.
         """
         if unsupported := [
-            p.name for p in parameters if not (p.kind & self.supported_parameter_kinds)
+            p.name
+            for p in parameters
+            if not (p._kind & self._supported_parameter_kinds)
         ]:
             raise IncompatibleSearchSpaceError(
                 f"'{type(self).__name__}' does not support parameter kind(s) for "
                 f"parameter(s) {unsupported}. Supported kinds: "
-                f"{self.supported_parameter_kinds}."
+                f"{self._supported_parameter_kinds}."
             )
 
     @override
