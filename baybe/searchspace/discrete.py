@@ -14,7 +14,7 @@ from attrs import define, field
 from cattrs import IterableValidationError
 from typing_extensions import override
 
-from baybe.constraints import validate_constraints
+from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import DeprecationError
 from baybe.parameters import (
@@ -97,7 +97,13 @@ class SubspaceDiscrete(SerialMixin):
     """Flag encoding whether an empty encoding is used."""
 
     constraints: tuple[DiscreteConstraint, ...] = field(
-        converter=to_tuple, factory=tuple
+        converter=lambda x: to_tuple(
+            sorted(
+                x,
+                key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
+            )
+        ),
+        factory=tuple,
     )
     """A list of constraints for restricting the space."""
 
