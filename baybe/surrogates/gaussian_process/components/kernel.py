@@ -44,8 +44,8 @@ else:
 
 
 @define
-class _KernelFactory(KernelFactoryProtocol, ABC):
-    """Base class for kernel factories."""
+class _PureKernelFactory(KernelFactoryProtocol, ABC):
+    """Base class for pure kernel factories."""
 
     # For internal use only: sanity check mechanism to remind developers of new
     # factories to actually use the parameter selector when it is provided

@@ -17,7 +17,7 @@ from baybe.parameters.selectors import (
     to_parameter_selector,
 )
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.components.kernel import _KernelFactory
+from baybe.surrogates.gaussian_process.components.kernel import _PureKernelFactory
 from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOKernelFactory,
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 
 @define
-class BayBEKernelFactory(_KernelFactory):
+class BayBEKernelFactory(_PureKernelFactory):
     """The default kernel factory for Gaussian process surrogates."""
 
     supported_parameter_kinds: ClassVar[ParameterKind] = (
@@ -53,7 +53,7 @@ BayBENumericalKernelFactory = SmoothedEDBOKernelFactory
 
 
 @define
-class BayBETaskKernelFactory(_KernelFactory):
+class BayBETaskKernelFactory(_PureKernelFactory):
     """The factory providing the default task kernel for Gaussian process surrogates."""
 
     _uses_parameter_names: ClassVar[bool] = True
