@@ -25,6 +25,12 @@ experimental design. It targets Python 3.10+.
 - `benchmarks/` — Benchmarking framework.
 - `.github/workflows/` — CI/CD (lint, test, docs, release, benchmark).
 
+### Convention Files
+More specific conventions for subdirectories:
+- `docs/AGENTS.md` — Documentation conventions (Sphinx, MyST, user guide)
+- `examples/AGENTS.md` — Example conventions (jupytext format, SMOKE_TEST)
+- `tests/AGENTS.md` — Testing conventions (pytest, fixtures, parametrize, hypothesis)
+
 ## 2. Architecture and Design Principles
 - Campaign is the single stateful class: All other domain objects are frozen or
   stateless after construction. Do not add mutable state outside `Campaign`
