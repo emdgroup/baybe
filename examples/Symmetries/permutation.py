@@ -1,7 +1,7 @@
 # # Optimizing a Permutation-Invariant Function
 
 # In this example, we explore BayBE's capabilities for handling optimization problems
-# with symmetry via automatic data augmentation and / or constraint.
+# with symmetry via automatic data augmentation and/or constraint.
 
 # ## Imports
 
@@ -68,7 +68,6 @@ def lookup(df: pd.DataFrame) -> pd.DataFrame:
     return df_z
 
 
-# Grid and dataframe for plotting
 x = np.linspace(LBOUND, UBOUND, 25)
 y = np.linspace(LBOUND, UBOUND, 25)
 xx, yy = np.meshgrid(x, y)
@@ -76,7 +75,6 @@ df_plot = lookup(pd.DataFrame({"x": xx.ravel(), "y": yy.ravel()}))
 zz = df_plot["f"].values.reshape(xx.shape)
 line_vals = np.linspace(LBOUND, UBOUND, 2)
 
-# Plot the contour and diagonal
 # fmt: off
 fig, axs = plt.subplots(1, 2, figsize=(15, 6))
 contour = axs[0].contourf(xx, yy, zz, levels=50, cmap="viridis")
