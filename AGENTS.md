@@ -250,6 +250,8 @@ Coverage: 70% overall, 45% per-file minimum.
 CI runs on push/PR to `main`/`dev/**`: changelog check, lint, typecheck, audit,
 coretest, fulltest. Docs and benchmarks on releases.
 For each development, ensure `tox -e mypy-py310` runs without problems.
+The entire test suite is too expensive to run all the time, but you should select
+relevant tests from `tests/` or newly created tests to validate your developments.
 
 ## 15. Git and PR Workflow
 - Feature branches from `main`. `dev/**` for development. Naming: `bug/`, `refactor/`,
