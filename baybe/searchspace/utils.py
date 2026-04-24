@@ -41,7 +41,6 @@ def optimize_parameter_order(
 
     # Separate constrained from unconstrained parameters
     all_constrained_names = set().union(*constraint_params)
-    constrained = [p for p in parameters if p.name in all_constrained_names]
     unconstrained = [p for p in parameters if p.name not in all_constrained_names]
 
     # Greedy ordering: at each step, pick the parameter whose addition
@@ -50,7 +49,7 @@ def optimize_parameter_order(
     # (smallest expansion factor during cross-merging).
     ordered: list[DiscreteParameter] = []
     available: set[str] = set()
-    remaining = list(constrained)
+    remaining = [p for p in parameters if p.name in all_constrained_names]
 
     while remaining:
         best_param = None
