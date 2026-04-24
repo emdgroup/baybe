@@ -64,6 +64,8 @@ class ShiftedHartmann(Hartmann):
         # They are anyway only set for 3D and 6D hartman in the parent class
         if self._optimizers is not None:
             self._optimizers = None
+        if hasattr(self, "optimizers"):
+            self.register_buffer("optimizers", None)
 
     @override
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
