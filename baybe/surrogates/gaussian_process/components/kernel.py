@@ -118,7 +118,18 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
 
 
 @define
-class ICMKernelFactory(KernelFactoryProtocol):
+class _MetaKernelFactory(KernelFactoryProtocol, ABC):
+    """Base class for meta kernel factories that orchestrate other kernel factories."""
+
+    @override
+    @abstractmethod
+    def __call__(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> Kernel: ...
+
+
+@define
+class ICMKernelFactory(_MetaKernelFactory):
     """A kernel factory that constructs an ICM kernel for transfer learning.
 
     ICM: Intrinsic Coregionalization Model :cite:p:`NIPS2007_66368270`
