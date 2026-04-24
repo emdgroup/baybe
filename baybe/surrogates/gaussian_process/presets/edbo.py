@@ -16,13 +16,14 @@ from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
-    _ParameterSelectorMixin,
     to_parameter_selector,
 )
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
 from baybe.searchspace.discrete import SubspaceDiscrete
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
+from baybe.surrogates.gaussian_process.components.kernel import (
+    _PureKernelFactory,
+)
 from baybe.surrogates.gaussian_process.components.likelihood import (
     LikelihoodFactoryProtocol,
 )
@@ -56,7 +57,7 @@ _EDBO_ENCODINGS = (
 
 
 @define
-class EDBOKernelFactory(KernelFactoryProtocol, _ParameterSelectorMixin):
+class EDBOKernelFactory(_PureKernelFactory):
     """A factory providing EDBO kernels.
 
     References:
@@ -74,12 +75,10 @@ class EDBOKernelFactory(KernelFactoryProtocol, _ParameterSelectorMixin):
     # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
-    def __call__(
+    def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        effective_dims = train_x.shape[-1] - len(
-            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
-        )
+        effective_dims = train_x.shape[-1]
 
         switching_condition = _contains_encoding(
             searchspace.discrete, _EDBO_ENCODINGS

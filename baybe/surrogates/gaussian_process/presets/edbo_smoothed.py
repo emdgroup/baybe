@@ -15,11 +15,12 @@ from baybe.parameters import TaskParameter
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
-    _ParameterSelectorMixin,
     to_parameter_selector,
 )
 from baybe.priors.basic import GammaPrior
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
+from baybe.surrogates.gaussian_process.components.kernel import (
+    _PureKernelFactory,
+)
 from baybe.surrogates.gaussian_process.components.likelihood import (
     LikelihoodFactoryProtocol,
 )
@@ -38,7 +39,7 @@ _DIM_LIMITS = (8, 75)
 
 
 @define
-class SmoothedEDBOKernelFactory(KernelFactoryProtocol, _ParameterSelectorMixin):
+class SmoothedEDBOKernelFactory(_PureKernelFactory):
     """A factory providing smoothed versions of EDBO kernels.
 
     Takes the low and high dimensional limits of
@@ -56,12 +57,10 @@ class SmoothedEDBOKernelFactory(KernelFactoryProtocol, _ParameterSelectorMixin):
     # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
-    def __call__(
+    def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        effective_dims = train_x.shape[-1] - len(
-            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
-        )
+        effective_dims = train_x.shape[-1]
 
         # Interpolate prior moments linearly between low D and high D regime.
         # The high D regime itself is the average of the EDBO OHE and Mordred regime.

@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `EDBO` and `EDBO_SMOOTHED` presets for `GaussianProcessSurrogate`
 - `TypeSelector` and `NameSelector` classes for parameter selection in kernel factories
 - `parameter_names` attribute to basic kernels for controlling the considered parameters
+- `ParameterKind` flag enum for classifying parameters by their role and automatic
+  parameter kind validation in kernel factories
 - `IndexKernel` and `PositiveIndexKernel` classes
 - Interpoint constraints for continuous search spaces
 - `IndexKernel` and `PositiveIndexKernel` classes

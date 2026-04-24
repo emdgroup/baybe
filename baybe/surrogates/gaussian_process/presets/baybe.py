@@ -10,14 +10,14 @@ from typing_extensions import override
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel
 from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.enum import _ParameterKind
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
-    _ParameterSelectorMixin,
     to_parameter_selector,
 )
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.components.kernel import KernelFactoryProtocol
+from baybe.surrogates.gaussian_process.components.kernel import _PureKernelFactory
 from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOKernelFactory,
@@ -29,11 +29,16 @@ if TYPE_CHECKING:
 
 
 @define
-class BayBEKernelFactory(KernelFactoryProtocol):
+class BayBEKernelFactory(_PureKernelFactory):
     """The default kernel factory for Gaussian process surrogates."""
 
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = (
+        _ParameterKind.REGULAR | _ParameterKind.TASK
+    )
+    # See base class.
+
     @override
-    def __call__(
+    def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
@@ -48,10 +53,13 @@ BayBENumericalKernelFactory = SmoothedEDBOKernelFactory
 
 
 @define
-class BayBETaskKernelFactory(KernelFactoryProtocol, _ParameterSelectorMixin):
+class BayBETaskKernelFactory(_PureKernelFactory):
     """The factory providing the default task kernel for Gaussian process surrogates."""
 
     _uses_parameter_names: ClassVar[bool] = True
+    # See base class.
+
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.TASK
     # See base class.
 
     parameter_selector: ParameterSelectorProtocol | None = field(
@@ -61,7 +69,7 @@ class BayBETaskKernelFactory(KernelFactoryProtocol, _ParameterSelectorMixin):
     # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
-    def __call__(
+    def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         return IndexKernel(
