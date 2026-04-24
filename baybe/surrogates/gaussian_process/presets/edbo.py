@@ -60,7 +60,7 @@ _EDBO_ENCODINGS = (
 class EDBOKernelFactory(_PureKernelFactory):
     """A factory providing EDBO kernels, as proposed by :cite:p:`Shields2021`.
 
-    Github repository: https://github.com/b-shields/edbo
+    GitHub repository: https://github.com/b-shields/edbo
     """
 
     _uses_parameter_names: ClassVar[bool] = True
@@ -130,7 +130,7 @@ EDBOMeanFactory = LazyConstantMeanFactory
 class EDBOLikelihoodFactory(LikelihoodFactoryProtocol):
     """A factory providing EDBO likelihoods, as proposed by :cite:p:`Shields2021`.
 
-    Github repository: https://github.com/b-shields/edbo
+    GitHub repository: https://github.com/b-shields/edbo
     """
 
     @override
