@@ -247,15 +247,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-          Solvent                Base                        Ligand  Temperature  \
-    387  p-Xylene   Potassium acetate                     BrettPhos         90.0   
-    318      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
-    316      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine         90.0   
+             Solvent                Base                        Ligand  \
+    316         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+    314         DMAc  Potassium pivalate                     BrettPhos   
+    61   Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
     
-         Concentration  
-    387          0.057  
-    318          0.057  
-    316          0.100  
+         Temperature  Concentration  
+    316         90.0          0.100  
+    314        120.0          0.153  
+    61         120.0          0.100  
 
 
 
@@ -268,15 +268,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-          Solvent                Base                        Ligand  Temperature  \
-    387  p-Xylene   Potassium acetate                     BrettPhos         90.0   
-    318      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
-    316      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine         90.0   
+             Solvent                Base                        Ligand  \
+    316         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+    314         DMAc  Potassium pivalate                     BrettPhos   
+    61   Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
     
-         Concentration      yield  
-    387          0.057 -26.448921  
-    318          0.057  19.126039  
-    316          0.100  34.823874  
+         Temperature  Concentration      yield  
+    316         90.0          0.100  25.097279  
+    314        120.0          0.153  82.090424  
+    61         120.0          0.100  79.987044  
 
 
 
