@@ -82,6 +82,13 @@ All domain classes use `attrs` `@define`. No dataclasses, no Pydantic.
 
 ### Attribute Docstrings
 String literals immediately below field declarations, blank lines between attributes.
+```python
+name: str = field()
+"""The name of the object."""
+
+values: tuple[float, ...] = field(factory=tuple)
+"""The possible values."""
+```
 
 ### Module Epilogue
 Every module using `@define` must end with:
@@ -166,7 +173,14 @@ Custom `@classproperty` from `baybe.utils.basic` for class-level computed proper
 - Sphinx roles for cross-refs: `:func:`, `:class:`, `:meth:`. Double backticks for
   literals.
 - Attrs validators get `# noqa: DOC101, DOC103` (pydoclint confused by
-  `(self, attribute, value)` signature).
+  `(self, attribute, value)` signature):
+  ```python
+  @some_field.validator
+  def _validate_some_field(self, attribute, value):  # noqa: DOC101, DOC103
+      """Validate some_field."""
+      if value < 0:
+          raise ValueError("some_field must be non-negative.")
+  ```
 
 ### Comment Patterns
 - `# TODO:` — planned improvements.

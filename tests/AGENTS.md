@@ -34,6 +34,12 @@
   `@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])`
 - **Prefer local fixtures** over adding to `conftest.py`. The autouse `reset_settings` fixture 
   restores global state before every test. Only one top-level `conftest.py` exists.
+  ```python
+  @pytest.fixture(name="campaign")
+  def fixture_campaign():
+      """A minimal campaign for local test use."""
+      ...
+  ```
 
 ## Parametrization
 - Avoid creating multiple test functions with similar content. Generalize content
