@@ -172,10 +172,7 @@ def parameter_cartesian_prod_pandas_constrained(
     ]
 
     # Initialize the dataframe
-    if initial_df is not None:
-        df = initial_df
-    else:
-        df = pd.DataFrame()
+    df = pd.DataFrame() if initial_df is None else initial_df
 
     # Original column order for final reindexing
     original_columns = (list(initial_df.columns) if initial_df is not None else []) + [
