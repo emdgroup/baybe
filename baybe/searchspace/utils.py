@@ -246,32 +246,21 @@ def _apply_constraint_filter_pandas(
 def _apply_constraint_filter_polars(
     ldf: pl.LazyFrame,
     constraints: Sequence[DiscreteConstraint],
-) -> tuple[pl.LazyFrame, list[bool]]:
+) -> pl.LazyFrame:
     """Remove discrete search space entries based on constraints.
-
-    Note:
-        This will silently skip constraints that have no Polars implementation.
 
     Args:
         ldf: The data in experimental representation to be filtered.
         constraints: Collection of discrete constraints.
 
     Returns:
-        A tuple containing
-            * The Polars lazyframe with undesired rows removed
-            * A Boolean mask indicating which constraints have **not** been applied
+        The Polars lazyframe with undesired rows removed.
     """
-    mask_missing = []
-
     for c in constraints:
-        try:
-            to_keep = c.get_invalid_polars().not_()
-            ldf = ldf.filter(to_keep)
-            mask_missing.append(False)
-        except NotImplementedError:
-            mask_missing.append(True)
+        to_keep = c.get_invalid_polars().not_()
+        ldf = ldf.filter(to_keep)
 
-    return ldf, mask_missing
+    return ldf
 
 
 def build_constrained_product(
@@ -323,7 +312,7 @@ def build_constrained_product(
             lazy_df = parameter_cartesian_prod_polars(
                 polars_params, initial_ldf=initial_ldf
             )
-            lazy_df, _ = _apply_constraint_filter_polars(lazy_df, polars_constraints)
+            lazy_df = _apply_constraint_filter_polars(lazy_df, polars_constraints)
             initial_df = lazy_df.collect().to_pandas()
 
             remaining_params = [
