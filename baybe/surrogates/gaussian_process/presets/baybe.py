@@ -8,8 +8,8 @@ from attrs import define, field
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
-from baybe.kernels.basic import IndexKernel
-from baybe.parameters.categorical import TaskParameter
+from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
+from baybe.parameters.categorical import TaskCorrelation, TaskParameter
 from baybe.parameters.enum import _ParameterKind
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
@@ -72,6 +72,15 @@ class BayBETaskKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
+        task_correlation = searchspace.task_correlation
+
+        if task_correlation == TaskCorrelation.POSITIVE:
+            return PositiveIndexKernel(
+                num_tasks=searchspace.n_tasks,
+                rank=searchspace.n_tasks,
+                target_task_index=searchspace.target_task_idxs[0],
+                parameter_names=self.get_parameter_names(searchspace),
+            )
         return IndexKernel(
             num_tasks=searchspace.n_tasks,
             rank=searchspace.n_tasks,

@@ -238,6 +238,9 @@ class IndexKernel(BasicKernel):
 class PositiveIndexKernel(IndexKernel):
     """A positive index kernel for transfer learning across tasks."""
 
+    target_task_index: int = field(default=0, validator=[instance_of(int), ge(0)])
+    """The index of the target task for normalization."""
+
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
