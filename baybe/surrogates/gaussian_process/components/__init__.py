@@ -17,6 +17,7 @@ from baybe.surrogates.gaussian_process.components.mean import (
     LazyConstantMeanFactory,
     MeanFactoryProtocol,
     PlainMeanFactory,
+    PriorMeanFactory,
 )
 
 __all__ = [
@@ -34,4 +35,5 @@ __all__ = [
     "LazyConstantMeanFactory",
     "MeanFactoryProtocol",
     "PlainMeanFactory",
+    "PriorMeanFactory",
 ]
