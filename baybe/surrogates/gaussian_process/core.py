@@ -212,6 +212,58 @@ class GaussianProcessSurrogate(Surrogate):
 
         return cls(kernel, mean, likelihood)
 
+    @classmethod
+    def from_prior(
+        cls,
+        prior_gp: GaussianProcessSurrogate,
+        kernel_or_factory: KernelFactoryProtocol
+        | Kernel
+        | GPyTorchKernel
+        | None = None,
+        likelihood_or_factory: LikelihoodFactoryProtocol
+        | GPyTorchLikelihood
+        | None = None,
+    ) -> Self:
+        """Create a GP using a fitted GP's posterior mean as the mean function.
+
+        Args:
+            prior_gp: A fitted :class:`GaussianProcessSurrogate` whose posterior
+                mean will serve as the mean function of the new GP.
+            kernel_or_factory: Kernel or kernel factory for the new GP.
+                Defaults to the BayBE default kernel factory.
+            likelihood_or_factory: Likelihood or likelihood factory for the new GP.
+                Defaults to the BayBE default likelihood factory.
+
+        Returns:
+            A new :class:`GaussianProcessSurrogate` instance.
+
+        Raises:
+            TypeError: If ``prior_gp`` is not a :class:`GaussianProcessSurrogate`.
+            ModelNotTrainedError: If the prior GP has not been fitted.
+        """
+        from copy import deepcopy
+
+        from baybe.exceptions import ModelNotTrainedError
+        from baybe.surrogates.gaussian_process.components.mean import PriorMeanFactory
+
+        if not isinstance(prior_gp, cls):
+            raise TypeError(
+                f"prior_gp must be a {cls.__name__} instance, "
+                f"got {type(prior_gp).__name__}"
+            )
+        if prior_gp._model is None:
+            raise ModelNotTrainedError("Prior GP must be fitted before use.")
+
+        prior_model = deepcopy(prior_gp._model)
+
+        kwargs: dict = {"mean_or_factory": PriorMeanFactory(prior_model)}
+        if kernel_or_factory is not None:
+            kwargs["kernel_or_factory"] = kernel_or_factory
+        if likelihood_or_factory is not None:
+            kwargs["likelihood_or_factory"] = likelihood_or_factory
+
+        return cls(**kwargs)
+
     @override
     def to_botorch(self) -> GPyTorchModel:
         return self._model
