@@ -61,6 +61,7 @@ class EDBOKernelFactory(_PureKernelFactory):
     """A factory providing EDBO kernels, as proposed by :cite:p:`Shields2021`.
 
     GitHub repository: https://github.com/b-shields/edbo
+    Prior settings: https://github.com/b-shields/edbo/blob/9b41eac3f6d9e520547702fd5b0c7ef6441625a4/edbo/bro.py#L658
     """
 
     _uses_parameter_names: ClassVar[bool] = True
@@ -131,6 +132,7 @@ class EDBOLikelihoodFactory(LikelihoodFactoryProtocol):
     """A factory providing EDBO likelihoods, as proposed by :cite:p:`Shields2021`.
 
     GitHub repository: https://github.com/b-shields/edbo
+    Prior settings: https://github.com/b-shields/edbo/blob/9b41eac3f6d9e520547702fd5b0c7ef6441625a4/edbo/bro.py#L658
     """
 
     @override
