@@ -21,10 +21,10 @@ from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.components.kernel import (
     _PureKernelFactory,
 )
-from baybe.surrogates.gaussian_process.presets.baybe import (
-    BayBELikelihoodFactory,
-    BayBEMeanFactory,
+from baybe.surrogates.gaussian_process.components.likelihood import (
+    LazyGaussianLikelihoodFactory,
 )
+from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -73,5 +73,5 @@ gc.collect()
 
 # Aliases for generic preset imports
 PresetKernelFactory = CHENKernelFactory
-PresetMeanFactory = BayBEMeanFactory
-PresetLikelihoodFactory = BayBELikelihoodFactory
+PresetMeanFactory = LazyConstantMeanFactory
+PresetLikelihoodFactory = LazyGaussianLikelihoodFactory
