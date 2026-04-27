@@ -1,5 +1,6 @@
 """Custom exceptions and warnings."""
 
+import gc
 from typing import Any
 
 import pandas as pd
@@ -172,3 +173,7 @@ class InvalidTargetValueError(Exception):
 
 class NotAllowedError(Exception):
     """An operation was attempted that is not allowed in the current context."""
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for determining the Pareto front
 - Interpoint constraints for continuous search spaces
 - Transfer learning benchmarks for shifted and inverted Hartmann functions
+- Coding convention instructions for agentic developers (`AGENTS.md`, `CLAUDE.md`)
 
 ### Breaking Changes
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
