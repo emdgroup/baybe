@@ -1,4 +1,4 @@
-"""EDBO preset for Gaussian process surrogates."""
+"""EDBO preset :cite:p:`Shields2021`."""
 
 from __future__ import annotations
 
@@ -58,11 +58,10 @@ _EDBO_ENCODINGS = (
 
 @define
 class EDBOKernelFactory(_PureKernelFactory):
-    """A factory providing EDBO kernels.
+    """A factory providing EDBO kernels, as proposed by :cite:p:`Shields2021`.
 
-    References:
-        * https://github.com/b-shields/edbo/blob/master/edbo/bro.py#L664
-        * https://doi.org/10.1038/s41586-021-03213-y
+    GitHub repository: https://github.com/b-shields/edbo
+    Prior settings: https://github.com/b-shields/edbo/blob/9b41eac3f6d9e520547702fd5b0c7ef6441625a4/edbo/bro.py#L658
     """
 
     _uses_parameter_names: ClassVar[bool] = True
@@ -130,11 +129,10 @@ EDBOMeanFactory = LazyConstantMeanFactory
 
 @define
 class EDBOLikelihoodFactory(LikelihoodFactoryProtocol):
-    """A factory providing EDBO likelihoods.
+    """A factory providing EDBO likelihoods, as proposed by :cite:p:`Shields2021`.
 
-    References:
-        * https://github.com/b-shields/edbo/blob/master/edbo/bro.py#L664
-        * https://doi.org/10.1038/s41586-021-03213-y
+    GitHub repository: https://github.com/b-shields/edbo
+    Prior settings: https://github.com/b-shields/edbo/blob/9b41eac3f6d9e520547702fd5b0c7ef6441625a4/edbo/bro.py#L658
     """
 
     @override
