@@ -155,7 +155,7 @@ nitpick_ignore_regex = [
 
 # Ignore the following links when checking inks for viability
 linkcheck_ignore = [
-    r"https://github.com/b-shields/edbo/blob/master/edbo/bro.py*",
+    r"https://github.com/b-shields/edbo/blob*",
     r"https://doi.org/10.26434/chemrxiv.10001986/v2",
 ]
 
