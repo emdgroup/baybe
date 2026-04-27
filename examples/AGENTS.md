@@ -19,7 +19,13 @@ Every example follows this pattern:
 8. Print results: `print(recommendation)`
 9. Fake measurements: Non-simulation examples use
    `add_fake_measurements(recommendation, campaign.targets)`
-
+## Purpose
+The purpose of the examples are to demonstrate how to use BayBE and its component.
+Ideally, an example should not simply show a feature, but embed the feature into an
+interesting and meaningful use case. This style is not yet followed by all examples.
+The desired style is demonstrated best by the following examples:
+- `Transformations/laser_tuning` demonstrates the use of transformations for a laser tuning example
+- `Mixtures/slot_based` uses a specific example for demonstrating how to set up a search space for mixture problems.
 ## Cross-References
 You can embed Sphinx admonitions and cross-references in comments:
 "# See {class}`~baybe.campaign.Campaign` for details."
