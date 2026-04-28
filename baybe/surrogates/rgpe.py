@@ -386,37 +386,57 @@ class RGPESurrogate(Surrogate):
             )
             base_models.append(model)
 
-        # Fit target GP
-        target_model = self._fit_single_gp(
-            target_x,
-            target_y,
-            feature_indices,
-            fit_gpytorch_mll,
-            SingleTaskGP,
-            ChainedInputTransform,
-            FilterFeatures,
-            Normalize,
-            Standardize,
-            ExactMarginalLogLikelihood,
-        )
-
-        # Compute rank weights (only if we have base models and enough target data)
-        if len(base_models) > 0 and len(target_x) >= 2:
-            weights = _compute_rank_weights(
+        # Fit target GP (only if we have target data)
+        if len(target_x) >= 2:
+            target_model = self._fit_single_gp(
                 target_x,
                 target_y,
-                base_models,
-                target_model,
-                self.num_posterior_samples,
+                feature_indices,
+                fit_gpytorch_mll,
+                SingleTaskGP,
+                ChainedInputTransform,
+                FilterFeatures,
+                Normalize,
+                Standardize,
+                ExactMarginalLogLikelihood,
             )
         else:
-            # No source models or insufficient target data: weight 1.0 on target
+            target_model = None
+
+        # Compute rank weights
+        # LOOCV requires at least 3 target points to be meaningful
+        if target_model is not None and len(base_models) > 0 and len(target_x) >= 3:
+            try:
+                weights = _compute_rank_weights(
+                    target_x,
+                    target_y,
+                    base_models,
+                    target_model,
+                    self.num_posterior_samples,
+                )
+            except (RuntimeError, ValueError):
+                # Fall back to target-only if weight computation fails
+                n_models = len(base_models) + 1
+                weights = torch.zeros(n_models, dtype=train_x.dtype)
+                weights[-1] = 1.0
+        elif target_model is not None:
+            # Have target model but insufficient data for LOOCV: use target only
             n_models = len(base_models) + 1
-            weights = torch.zeros(n_models, dtype=target_x.dtype)
+            weights = torch.zeros(n_models, dtype=train_x.dtype)
             weights[-1] = 1.0
+        else:
+            # No target model: equal weights on source models
+            n_models = len(base_models)
+            if n_models > 0:
+                weights = torch.ones(n_models, dtype=train_x.dtype) / n_models
+            else:
+                raise ValueError(
+                    "RGPE requires at least some training data "
+                    "(either source or target)."
+                )
 
         # Assemble RGPE
-        all_models = base_models + [target_model]
+        all_models = base_models + ([target_model] if target_model is not None else [])
         self._rgpe_model = RGPEModel(all_models, weights)
 
     def _fit_single_gp(

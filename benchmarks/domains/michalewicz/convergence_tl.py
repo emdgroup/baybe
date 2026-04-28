@@ -143,6 +143,9 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     tl_pos_index_searchspace = make_searchspace(
         use_task_parameter=True, task_correlation=TaskCorrelation.POSITIVE
     )
+    tl_ranked_searchspace = make_searchspace(
+        use_task_parameter=True, task_correlation=TaskCorrelation.RANKED
+    )
 
     objective = make_objective()
     tl_index_campaign = Campaign(
@@ -151,6 +154,10 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     )
     tl_pos_index_campaign = Campaign(
         searchspace=tl_pos_index_searchspace,
+        objective=objective,
+    )
+    tl_ranked_campaign = Campaign(
+        searchspace=tl_ranked_searchspace,
         objective=objective,
     )
     nontl_campaign = Campaign(
@@ -175,6 +182,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
                 {
                     f"{p}_index": tl_index_campaign,
                     f"{p}_pos_index": tl_pos_index_campaign,
+                    f"{p}_rgpe": tl_ranked_campaign,
                     f"{p}_naive": nontl_campaign,
                 },
                 lambda x: wrap_function(
@@ -192,6 +200,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
             {
                 "0_index": tl_index_campaign,
                 "0_pos_index": tl_pos_index_campaign,
+                "0_rgpe": tl_ranked_campaign,
                 "0_naive": nontl_campaign,
             },
             lambda x: wrap_function(functions["Target_Function"], "Target_Function", x),

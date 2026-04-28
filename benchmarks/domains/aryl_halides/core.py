@@ -123,6 +123,12 @@ def aryl_halide_tl_substance_benchmark(
         target_tasks=target_tasks,
         task_correlation=TaskCorrelation.POSITIVE,
     )
+    searchspace_tl_ranked = make_searchspace(
+        data=data,
+        source_tasks=source_tasks,
+        target_tasks=target_tasks,
+        task_correlation=TaskCorrelation.RANKED,
+    )
     searchspace_nontl = make_searchspace(data=data)
 
     lookup = make_lookup(data, target_tasks)
@@ -135,6 +141,10 @@ def aryl_halide_tl_substance_benchmark(
     )
     tl_pos_index_campaign = Campaign(
         searchspace=searchspace_tl_pos_index,
+        objective=objective,
+    )
+    tl_ranked_campaign = Campaign(
+        searchspace=searchspace_tl_ranked,
         objective=objective,
     )
     nontl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
@@ -153,6 +163,7 @@ def aryl_halide_tl_substance_benchmark(
                 {
                     f"{int(100 * p)}_index": tl_index_campaign,
                     f"{int(100 * p)}_pos_index": tl_pos_index_campaign,
+                    f"{int(100 * p)}_rgpe": tl_ranked_campaign,
                     f"{int(100 * p)}_naive": nontl_campaign,
                 },
                 lookup,
@@ -168,6 +179,7 @@ def aryl_halide_tl_substance_benchmark(
             {
                 "0_index": tl_index_campaign,
                 "0_pos_index": tl_pos_index_campaign,
+                "0_rgpe": tl_ranked_campaign,
                 "0_naive": nontl_campaign,
             },
             lookup,

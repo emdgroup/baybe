@@ -131,6 +131,11 @@ def direct_arylation_tl_temperature(
         use_task_parameter=True,
         task_correlation=TaskCorrelation.POSITIVE,
     )
+    tl_ranked_searchspace = make_searchspace(
+        data=data,
+        use_task_parameter=True,
+        task_correlation=TaskCorrelation.RANKED,
+    )
     searchspace_nontl = make_searchspace(
         data=data,
         use_task_parameter=False,
@@ -143,6 +148,9 @@ def direct_arylation_tl_temperature(
     tl_index_campaign = Campaign(searchspace=tl_index_searchspace, objective=objective)
     tl_pos_index_campaign = Campaign(
         searchspace=tl_pos_index_searchspace, objective=objective
+    )
+    tl_ranked_campaign = Campaign(
+        searchspace=tl_ranked_searchspace, objective=objective
     )
     nontl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
 
@@ -162,6 +170,7 @@ def direct_arylation_tl_temperature(
                 {
                     f"{int(100 * p)}_index": tl_index_campaign,
                     f"{int(100 * p)}_pos_index": tl_pos_index_campaign,
+                    f"{int(100 * p)}_rgpe": tl_ranked_campaign,
                     f"{int(100 * p)}_naive": nontl_campaign,
                 },
                 lookup,
@@ -177,6 +186,7 @@ def direct_arylation_tl_temperature(
             {
                 "0_index": tl_index_campaign,
                 "0_pos_index": tl_pos_index_campaign,
+                "0_rgpe": tl_ranked_campaign,
                 "0_naive": nontl_campaign,
             },
             lookup,
