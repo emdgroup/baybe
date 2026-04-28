@@ -23,6 +23,7 @@ class TaskCorrelation(Enum):
 
     UNKNOWN = "unknown"
     POSITIVE = "positive"
+    RANKED = "ranked"
 
 
 def _convert_values(value, self, field) -> tuple[str, ...]:
@@ -112,13 +113,13 @@ class TaskParameter(CategoricalParameter):
             ValueError: If task_correlation is POSITIVE but active_values contains more
                 than one value.
         """
-        if value == TaskCorrelation.POSITIVE and self._active_values is not None:
-            if len(self._active_values) > 1:
+        if value in (TaskCorrelation.POSITIVE, TaskCorrelation.RANKED):
+            if self._active_values is not None and len(self._active_values) > 1:
                 raise ValueError(
-                    f"Task correlation '{TaskCorrelation.POSITIVE.value}' requires "
+                    f"Task correlation '{value.value}' requires "
                     f"one active value, but {len(self._active_values)} were provided: "
-                    f"{self._active_values}. The POSITIVE mode uses the "
-                    f"PositiveIndexKernel which assumes a single target task."
+                    f"{self._active_values}. The {value.name} mode assumes a single "
+                    f"target task."
                 )
 
 
