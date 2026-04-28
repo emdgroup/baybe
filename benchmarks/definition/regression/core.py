@@ -23,6 +23,7 @@ from baybe.parameters import TaskParameter
 from baybe.parameters.categorical import TaskCorrelation
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+from baybe.surrogates.rgpe import RGPESurrogate
 from benchmarks.definition import TransferLearningRegressionBenchmarkSettings
 
 
@@ -170,6 +171,9 @@ def run_tl_regression_benchmark(
     tl_pos_index_searchspace = searchspace_factory(
         data=data, use_task_parameter=True, task_correlation=TaskCorrelation.POSITIVE
     )
+    tl_ranked_searchspace = searchspace_factory(
+        data=data, use_task_parameter=True, task_correlation=TaskCorrelation.RANKED
+    )
 
     # Extract task parameter details (use index searchspace as reference)
     task_param = next(
@@ -281,6 +285,26 @@ def run_tl_regression_benchmark(
             result.update(metrics)
             results.append(result)
 
+            # RGPE on full search space, no source data
+            metrics = _evaluate_model(
+                RGPESurrogate(),
+                target_train,
+                target_test,
+                tl_ranked_searchspace,
+                objective,
+            )
+            result = {
+                "scenario": "0_rgpe",
+                "mc_iter": mc_iter,
+                "n_train_pts": n_train_pts,
+                "fraction_source": 0.0,
+                "n_source_pts": 0,
+                "n_test_pts": len(target_test),
+                "source_data_seed": settings.random_seed + mc_iter,
+            }
+            result.update(metrics)
+            results.append(result)
+
             # Evaluate transfer learning models for each source fraction
             for fraction_source in settings.source_fractions:
                 # Update progress bar description
@@ -332,6 +356,27 @@ def run_tl_regression_benchmark(
                     combined_data,
                     target_test,
                     tl_pos_index_searchspace,
+                    objective,
+                )
+                result = {
+                    "scenario": scenario_name,
+                    "mc_iter": mc_iter,
+                    "n_train_pts": n_train_pts,
+                    "fraction_source": fraction_source,
+                    "n_source_pts": len(source_subset),
+                    "n_test_pts": len(target_test),
+                    "source_data_seed": settings.random_seed + mc_iter,
+                }
+                result.update(metrics)
+                results.append(result)
+
+                # Evaluate RGPE
+                scenario_name = f"{int(100 * fraction_source)}_rgpe"
+                metrics = _evaluate_model(
+                    RGPESurrogate(),
+                    combined_data,
+                    target_test,
+                    tl_ranked_searchspace,
                     objective,
                 )
                 result = {
