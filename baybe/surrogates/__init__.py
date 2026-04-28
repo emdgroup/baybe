@@ -8,6 +8,7 @@ from baybe.surrogates.linear import BayesianLinearSurrogate
 from baybe.surrogates.naive import MeanPredictionSurrogate
 from baybe.surrogates.ngboost import NGBoostSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
+from baybe.surrogates.rgpe import RGPESurrogate
 
 __all__ = [
     "register_custom_architecture",
@@ -19,4 +20,5 @@ __all__ = [
     "MeanPredictionSurrogate",
     "NGBoostSurrogate",
     "RandomForestSurrogate",
+    "RGPESurrogate",
 ]
