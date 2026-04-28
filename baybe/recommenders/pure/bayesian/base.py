@@ -93,9 +93,20 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame,
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
+        from baybe.parameters.categorical import TaskCorrelation
+        from baybe.surrogates.rgpe import RGPESurrogate
+
+        surrogate = self._surrogate_model
+
+        # Auto-swap to RGPE when TaskCorrelation.RANKED is detected
+        if searchspace.task_correlation == TaskCorrelation.RANKED and not isinstance(
+            surrogate, RGPESurrogate
+        ):
+            surrogate = RGPESurrogate()
+
         # This fit applies internal caching and does not necessarily involve computation
-        self._surrogate_model.fit(searchspace, objective, measurements)
-        return self._surrogate_model
+        surrogate.fit(searchspace, objective, measurements)
+        return surrogate
 
     def _setup_botorch_acqf(
         self,
