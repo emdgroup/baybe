@@ -109,6 +109,24 @@ class DiscreteConstraint(Constraint, ABC):
     eval_during_modeling: ClassVar[bool] = False
     # See base class.
 
+    def _can_evaluate(self, available: set[str], /) -> bool:
+        """Indicate whether the constraint can be (partially) evaluated.
+
+        Called to decide if the constraint logic should be invoked at all. The default
+        implementation requires *all* parameters considered by the constraint to be
+        present. Subclasses that support useful partial filtering override this to
+        return ``True`` whenever a meaningful subset is available.
+
+        Args:
+            available: The set of column names present in the dataframe that
+                is about to be evaluated.
+
+        Returns:
+            ``True`` if the constraint can apply a meaningful partial filtering
+            given the *available* columns, ``False`` otherwise.
+        """
+        return self._required_parameters <= available
+
     def get_valid(
         self, df: pd.DataFrame, /, *, allow_missing: bool = False
     ) -> pd.Index:
@@ -136,10 +154,10 @@ class DiscreteConstraint(Constraint, ABC):
             data: A dataframe where each row represents a parameter
                 configuration.
             allow_missing: If ``False``, a :class:`ValueError` is raised when
-                the dataframe is missing required parameter columns. If
-                ``True``, the constraint performs partial filtering on the
-                available columns, returning an empty index when insufficient
-                columns are present.
+                the dataframe is missing required parameter columns. If ``True``, the
+                subclass is asked whether it can perform (partial) constraint
+                evaluation; if not, an empty index is returned, signaling to the
+                caller `there are no entries to be excluded *yet*`.
 
         Raises:
             ValueError: If ``allow_missing`` is ``False`` and the dataframe
@@ -149,27 +167,30 @@ class DiscreteConstraint(Constraint, ABC):
             The dataframe indices of rows that violate the constraint.
         """
         # TODO: Should switch backends (pandas/polars/...) behind the scenes
+        available = set(data.columns)
+
         if not allow_missing:
-            if missing := self._required_parameters - set(data.columns):
+            if missing := self._required_parameters - available:
                 raise ValueError(
                     f"'{self.__class__.__name__}' requires columns {missing} "
                     f"which are missing from the dataframe."
                 )
+        elif not self._can_evaluate(available):
+            return pd.Index([])
+
         return self._get_invalid(data)
 
     @abstractmethod
     def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        """Get the indices of invalid entries (implementation for subclasses).
+        """Get the indices of invalid entries (core logic for subclasses).
 
-        Subclasses implement this method with their specific filtering logic.
-        When the dataframe contains only a subset of the constraint's
-        parameters, implementations should return an empty index if they
-        cannot perform useful filtering.
+        This method is only called after it has been confirmed that the dataframe
+        contains sufficient columns for (at least partial) evaluation. Implementations
+        should therefore contain only the constraint's core filtering logic without
+        column-availability checks.
 
         Args:
-            data: A dataframe where each row represents a parameter
-                configuration. May contain all or a subset of the constraint's
-                parameters.
+            data: A dataframe where each row represents a parameter configuration.
 
         Returns:
             The dataframe indices of rows that violate the constraint.

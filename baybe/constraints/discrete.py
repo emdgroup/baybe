@@ -42,16 +42,20 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
     """Operator encoding how to combine the individual conditions."""
 
     @override
+    def _can_evaluate(self, available: set[str], /) -> bool:
+        # The OR combiner supports incremental filtering (a single true
+        # condition suffices to mark a row as invalid), so at least one
+        # parameter is enough. Other combiners need all parameters.
+        present = available & set(self.parameters)
+        if not present:
+            return False
+        if self.combiner != "OR" and present != set(self.parameters):
+            return False
+        return True
+
+    @override
     def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
         pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in data]
-        if not pairs:
-            return pd.Index([])
-
-        # Only the OR combiner supports incremental filtering: a single
-        # true condition is sufficient to mark a row as invalid.
-        if self.combiner != "OR" and len(pairs) < len(self.parameters):
-            return pd.Index([])
-
         satisfied = [cond.evaluate(data[p]) for p, cond in pairs]
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
 
@@ -76,6 +80,11 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
+    # IMPROVE: Look-ahead filtering would be possible if parameter
+    # value ranges (min/max) were available to the constraint, allowing
+    # bound-based pruning of partial sums before all parameters are
+    # present. This could be expressed via a _can_evaluate override.
+
     # class variables
     numerical_only: ClassVar[bool] = True
     # See base class.
@@ -86,12 +95,6 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
     @override
     def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # IMPROVE: Look-ahead filtering would be possible if parameter
-        # value ranges (min/max) were available to the constraint, allowing
-        # bound-based pruning of partial sums before all parameters are
-        # present.
-        if not set(self.parameters) <= set(data.columns):
-            return pd.Index([])
         evaluate_data = data[self.parameters].sum(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
 
@@ -118,14 +121,13 @@ class DiscreteProductConstraint(DiscreteConstraint):
     condition: ThresholdCondition = field()
     """The condition that is used for this constraint."""
 
+    # IMPROVE: Look-ahead filtering would be possible if parameter
+    # value ranges (min/max) were available to the constraint, allowing
+    # bound-based pruning of partial products before all parameters are
+    # present. This could be expressed via a _can_evaluate override.
+
     @override
     def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # IMPROVE: Look-ahead filtering would be possible if parameter
-        # value ranges (min/max) were available to the constraint, allowing
-        # bound-based pruning of partial products before all parameters are
-        # present.
-        if not set(self.parameters) <= set(data.columns):
-            return pd.Index([])
         evaluate_data = data[self.parameters].prod(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
 
@@ -159,10 +161,15 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
     """
 
     @override
+    def _can_evaluate(self, available: set[str], /) -> bool:
+        # Duplicate detection is meaningful as soon as at least two of the
+        # constraint's parameters are available: duplicates in a subset
+        # will also be duplicates in the full set.
+        return len(available & set(self.parameters)) >= 2
+
+    @override
     def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
         params = [p for p in self.parameters if p in data]
-        if len(params) < 2:
-            return pd.Index([])
         mask_bad = data[params].nunique(axis=1) != len(params)
 
         return data.index[mask_bad]
@@ -191,10 +198,15 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
     """
 
     @override
+    def _can_evaluate(self, available: set[str], /) -> bool:
+        # Linked-parameter checking is meaningful as soon as at least two of
+        # the constraint's parameters are available: if values differ in a
+        # subset, they will also differ in the full set.
+        return len(available & set(self.parameters)) >= 2
+
+    @override
     def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
         params = [p for p in self.parameters if p in set(data.columns)]
-        if len(params) < 2:
-            return pd.Index([])
         mask_bad = data[params].nunique(axis=1) != 1
 
         return data.index[mask_bad]
@@ -265,8 +277,6 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
     @override
     def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        if not self._required_parameters <= set(data.columns):
-            return pd.Index([])
         # Create data copy and mark entries where the dependency conditions are negative
         # with a dummy value to cause degeneracy.
         censored_data = data.copy()
@@ -340,11 +350,16 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         return params
 
     @override
+    def _can_evaluate(self, available: set[str], /) -> bool:
+        # At least two parameters are needed for any deduplication. When only a
+        # partial set is available, the constraint falls back to the always-safe
+        # label-dedup logic.
+        return len(available & set(self.parameters)) >= 2
+
+    @override
     def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
         cols = set(data.columns)
         params = [p for p in self.parameters if p in cols]
-        if len(params) < 2:
-            return pd.Index([])
         # When dependencies exist, permutation dedup on a partial set of
         # parameters is not safe because the dependency logic can change
         # which permutations are equivalent. In this case, only the
@@ -404,8 +419,6 @@ class DiscreteCustomConstraint(DiscreteConstraint):
 
     @override
     def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        if not set(self.parameters) <= set(data.columns):
-            return pd.Index([])
         mask_bad = ~self.validator(data[self.parameters])
 
         return data.index[mask_bad]
@@ -420,11 +433,14 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteConstraint):
     # See base class.
 
     @override
+    def _can_evaluate(self, available: set[str], /) -> bool:
+        # The max-cardinality check is safe on any non-empty subset: the
+        # nonzero count can only increase as more parameters are added.
+        return bool(available & set(self.parameters))
+
+    @override
     def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        cols = set(data.columns)
-        params = [p for p in self.parameters if p in cols]
-        if not params:
-            return pd.Index([])
+        params = [p for p in self.parameters if p in set(data.columns)]
         all_present = len(params) == len(self.parameters)
 
         non_zeros = (data[params] != 0.0).sum(axis=1)
