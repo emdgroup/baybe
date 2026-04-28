@@ -260,8 +260,6 @@ results_interrupted = simulate_scenarios(
 
     
 
-    
-
 
 ```{note}
 If an exception is thrown inside the loop, the function still returns the partial
