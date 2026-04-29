@@ -12,7 +12,7 @@ abbreviations = [
     if hasattr(cl, "abbreviation")
 ]
 fullnames = [cl.__name__ for cl in get_subclasses(AcquisitionFunction)]
-combined = set(abbreviations + fullnames)
+combined = sorted(set(abbreviations + fullnames))
 
 
 @pytest.mark.parametrize("acqf", combined)
