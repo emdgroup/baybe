@@ -386,7 +386,25 @@ class RGPESurrogate(Surrogate):
             )
             base_models.append(model)
 
-        # Fit target GP (only if we have target data)
+        # If no source data, fall back to a plain GP (RGPE adds no value)
+        if len(base_models) == 0:
+            target_model = self._fit_single_gp(
+                target_x,
+                target_y,
+                feature_indices,
+                fit_gpytorch_mll,
+                SingleTaskGP,
+                ChainedInputTransform,
+                FilterFeatures,
+                Normalize,
+                Standardize,
+                ExactMarginalLogLikelihood,
+            )
+            weights = torch.ones(1, dtype=train_x.dtype)
+            self._rgpe_model = RGPEModel([target_model], weights)
+            return
+
+        # Fit target GP (need at least 2 points for meaningful model)
         if len(target_x) >= 2:
             target_model = self._fit_single_gp(
                 target_x,
@@ -405,7 +423,7 @@ class RGPESurrogate(Surrogate):
 
         # Compute rank weights
         # LOOCV requires at least 3 target points to be meaningful
-        if target_model is not None and len(base_models) > 0 and len(target_x) >= 3:
+        if target_model is not None and len(target_x) >= 3:
             try:
                 weights = _compute_rank_weights(
                     target_x,
@@ -425,15 +443,9 @@ class RGPESurrogate(Surrogate):
             weights = torch.zeros(n_models, dtype=train_x.dtype)
             weights[-1] = 1.0
         else:
-            # No target model: equal weights on source models
-            n_models = len(base_models)
-            if n_models > 0:
-                weights = torch.ones(n_models, dtype=train_x.dtype) / n_models
-            else:
-                raise ValueError(
-                    "RGPE requires at least some training data "
-                    "(either source or target)."
-                )
+            # No target model yet: equal weights on source models only
+            weights = torch.ones(len(base_models), dtype=train_x.dtype)
+            weights /= weights.sum()
 
         # Assemble RGPE
         all_models = base_models + ([target_model] if target_model is not None else [])
