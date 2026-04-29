@@ -124,6 +124,7 @@ acqfs_single_output_batching = [
 ]
 acqfs_multi_output_batching = [a for a in acqfs_batching if a.supports_multi_output]
 
+
 # List of all hybrid recommenders with default attributes. Is extended with other lists
 # of hybrid recommenders like naive ones or recommenders not using default arguments
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
@@ -269,6 +270,7 @@ def test_single_output_batching_acqfs(ongoing_campaign, n_iterations, batch_size
 @pytest.mark.parametrize(
     "objective",
     [ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2", minimize=True)])],
+    ids=["pareto_objective"],
 )
 @pytest.mark.parametrize(
     "acqf",
@@ -292,7 +294,7 @@ def test_non_batching_acqfs(ongoing_campaign, n_iterations, batch_size):
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "kernel", valid_kernels, ids=[c.__class__ for c in valid_kernels]
+    "kernel", valid_kernels, ids=[c.__class__.__name__ for c in valid_kernels]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_kernels(ongoing_campaign, n_iterations, batch_size):
@@ -332,7 +334,7 @@ def test_surrogate_models(ongoing_campaign, n_iterations, batch_size, surrogate_
 @pytest.mark.parametrize(
     "recommender",
     valid_initial_recommenders,
-    ids=[c.__class__ for c in valid_initial_recommenders],
+    ids=[c.__class__.__name__ for c in valid_initial_recommenders],
 )
 def test_initial_recommenders(ongoing_campaign, n_iterations, batch_size):
     with pytest.warns(UnusedObjectWarning):
@@ -352,7 +354,7 @@ def test_targets(ongoing_campaign, n_iterations, batch_size):
 @pytest.mark.parametrize(
     "recommender",
     valid_discrete_recommenders,
-    ids=[c.__class__ for c in valid_discrete_recommenders],
+    ids=[c.__class__.__name__ for c in valid_discrete_recommenders],
 )
 def test_recommenders_discrete(ongoing_campaign, n_iterations, batch_size):
     try:
@@ -365,7 +367,7 @@ def test_recommenders_discrete(ongoing_campaign, n_iterations, batch_size):
 @pytest.mark.parametrize(
     "recommender",
     valid_continuous_recommenders,
-    ids=[c.__class__ for c in valid_continuous_recommenders],
+    ids=[c.__class__.__name__ for c in valid_continuous_recommenders],
 )
 @pytest.mark.parametrize(
     "parameter_names", [["Conti_finite1", "Conti_finite2"]], ids=["conti_params"]
@@ -378,7 +380,7 @@ def test_recommenders_continuous(ongoing_campaign, n_iterations, batch_size):
 @pytest.mark.parametrize(
     "recommender",
     valid_hybrid_recommenders,
-    ids=[c.__class__ for c in valid_hybrid_recommenders],
+    ids=[c.__class__.__name__ for c in valid_hybrid_recommenders],
 )
 @pytest.mark.parametrize(
     "parameter_names",
@@ -410,7 +412,7 @@ def test_recommenders_hybrid(ongoing_campaign, n_iterations, batch_size):
 @pytest.mark.parametrize(
     "recommender",
     valid_meta_recommenders,
-    ids=[c.__class__ for c in valid_meta_recommenders],
+    ids=[c.__name__ for c in valid_meta_recommenders],
     indirect=True,
 )
 def test_meta_recommenders(ongoing_campaign, n_iterations, batch_size):
