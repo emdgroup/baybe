@@ -3,7 +3,9 @@
 import pytest
 from pytest import param
 
+from baybe.constraints.conditions import ThresholdCondition
 from baybe.constraints.continuous import ContinuousCardinalityConstraint
+from baybe.constraints.discrete import DiscreteSumConstraint
 
 
 @pytest.mark.parametrize(
@@ -21,3 +23,13 @@ def test_invalid_cardinalities(cardinalities, error, match):
     """Providing an invalid parameter name raises an exception."""
     with pytest.raises(error, match=match):
         ContinuousCardinalityConstraint(["x", "y"], *cardinalities)
+
+
+def test_discrete_sum_constraint_coefficients_length_mismatch():
+    """Mismatched coefficients length raises a ValueError."""
+    with pytest.raises(ValueError, match="'coefficients' list must have one"):
+        DiscreteSumConstraint(
+            parameters=["A", "B", "C"],
+            condition=ThresholdCondition(threshold=1.0, operator="<="),
+            coefficients=(1.0, 2.0),  # only 2 entries for 3 parameters
+        )
