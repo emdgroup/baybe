@@ -395,49 +395,10 @@ class SubspaceDiscrete(SerialMixin):
         # For a positive coefficient c the minimum contribution is c*min_raw; for a
         # negative coefficient the ordering flips and it becomes c*max_raw. Taking
         # min of both products handles any real coefficient correctly.
-        coeffs = list(simplex_coefficients)
-        min_weighted = [
-            min(c * lo, c * hi) for c, lo, hi in zip(coeffs, min_raw, max_raw)
-        ]
-
-        def drop_invalid(
-            df: pd.DataFrame,
-            max_sum: float,
-            boundary_only: bool,
-            weights: Sequence[float],
-            min_nonzero: int | None = None,
-            max_nonzero: int | None = None,
-        ) -> None:
-            """Drop rows that violate the specified simplex constraint.
-
-            Args:
-                df: The dataframe whose rows should satisfy the simplex constraint.
-                max_sum: The maximum weighted row sum defining the simplex size.
-                boundary_only: Flag to control if the points represented by the rows
-                    may lie inside the simplex or on its boundary only.
-                weights: Coefficients for the weighted sum, aligned with the columns
-                    of ``df``.
-                min_nonzero: Minimum number of nonzero parameters required per row.
-                max_nonzero: Maximum number of nonzero parameters allowed per row.
-            """
-            # Apply weighted sum constraints via a single matrix-vector product
-            row_sums = pd.Series(df.to_numpy() @ np.asarray(weights), index=df.index)
-            mask_violated = row_sums > max_sum + tolerance
-            if boundary_only:
-                mask_violated |= row_sums < max_sum - tolerance
-
-            # Apply optional nonzero constraints (based on raw parameter values,
-            # independent of coefficient signs)
-            if (min_nonzero is not None) or (max_nonzero is not None):
-                n_nonzero = (df != 0.0).sum(axis=1)
-                if min_nonzero is not None:
-                    mask_violated |= n_nonzero < min_nonzero
-                if max_nonzero is not None:
-                    mask_violated |= n_nonzero > max_nonzero
-
-            # Remove violating rows
-            idxs_to_drop = df[mask_violated].index
-            df.drop(index=idxs_to_drop, inplace=True)
+        coeffs = np.asarray(simplex_coefficients, dtype=float)
+        min_weighted = np.array(
+            [min(c * lo, c * hi) for c, lo, hi in zip(coeffs, min_raw, max_raw)]
+        )
 
         # Get the minimum weighted sum contributions to come in the upcoming joins (the
         # first item is the minimum possible weighted sum of all parameters starting
@@ -452,22 +413,17 @@ class SubspaceDiscrete(SerialMixin):
         min_nonzero_upcoming = np.cumsum((np.asarray(min_raw) > 0.0)[:0:-1])[::-1]
         max_nonzero_upcoming = np.cumsum((np.asarray(max_raw) > 0.0)[:0:-1])[::-1]
 
-        # Incrementally build up the space, dropping invalid configuration along the
-        # way. More specifically:
-        # * After having cross-joined a new parameter, there must
-        #   be enough "room" left for the remaining parameters to fit. That is,
-        #   configurations of the current parameter subset that exceed the desired
-        #   total value minus the minimum contribution to come from the yet-to-be-added
-        #   parameters can be already discarded, because it is already clear that
-        #   the total sum will be exceeded once all joins are completed.
-        # * Analogously, there must be enough "nonzero slots" left for the yet to be
-        #   joined parameters, i.e. parameter subset configurations can be discarded
-        #   where the number of nonzero parameters already exceeds the maximum number
-        #   of nonzeros minus the number of nonzeros to come, because it is already
-        #   clear that the maximum will be exceeded once all joins are completed.
-        # * Similarly, it can be verified for each parameter that there are still
-        #   enough nonzero parameters to come to even reach the minimum
-        #   desired number of nonzero after all joins.
+        # Incrementally build up the space as a numpy array, dropping invalid
+        # configurations along the way. Working with raw numpy avoids pandas overhead
+        # (index management, BlockManager, merge machinery) in the hot loop.
+        #
+        # After having cross-joined a new parameter, there must be enough "room" left
+        # for the remaining parameters to fit. That is, configurations of the current
+        # parameter subset that exceed the desired total value minus the minimum
+        # contribution to come from the yet-to-be-added parameters can be already
+        # discarded, because it is already clear that the total sum will be exceeded
+        # once all joins are completed. Analogously, nonzero cardinality bounds are
+        # checked at each step.
         for i, (
             param,
             min_sum_to_go,
@@ -481,28 +437,44 @@ class SubspaceDiscrete(SerialMixin):
                 np.append(max_nonzero_upcoming, 0),
             )
         ):
+            values = np.asarray(param.values, dtype=float)
+
             if i == 0:
-                exp_rep = pd.DataFrame({param.name: param.values})
+                arr = values.reshape(-1, 1)
             else:
-                exp_rep = pd.merge(
-                    exp_rep, pd.DataFrame({param.name: param.values}), how="cross"
+                n_old = arr.shape[0]
+                n_new = len(values)
+                arr = np.column_stack(  # type: ignore[assignment]  # shape widens
+                    [
+                        np.repeat(arr, n_new, axis=0),
+                        np.tile(values, n_old),
+                    ]
                 )
-            drop_invalid(
-                exp_rep,
-                max_sum=max_sum - min_sum_to_go,
-                weights=coeffs[: i + 1],
-                # the maximum possible number of nonzeros to come dictates if we
-                # can achieve our minimum constraint in the end:
-                min_nonzero=min_nonzero - max_nonzero_to_go,
-                # the minimum possible number of nonzeros to come dictates if we
-                # can stay below the targeted maximum in the end:
-                max_nonzero=max_nonzero - min_nonzero_to_go,
-                boundary_only=False,
-            )
+
+            # Compute weighted row sums and build validity mask
+            row_sums = arr @ coeffs[: i + 1]
+            mask = row_sums <= (max_sum - min_sum_to_go) + tolerance
+
+            # Apply nonzero cardinality bounds
+            effective_min = min_nonzero - max_nonzero_to_go
+            effective_max = max_nonzero - min_nonzero_to_go
+            if effective_min > 0 or effective_max < len(simplex_parameters):
+                n_nz = np.count_nonzero(arr, axis=1)
+                if effective_min > 0:
+                    mask &= n_nz >= effective_min
+                if effective_max < len(simplex_parameters):
+                    mask &= n_nz <= effective_max
+
+            arr = arr[mask]
 
         # If requested, keep only the boundary values
         if boundary_only:
-            drop_invalid(exp_rep, max_sum, boundary_only=True, weights=coeffs)
+            row_sums = arr @ coeffs
+            mask = np.abs(row_sums - max_sum) <= tolerance
+            arr = arr[mask]
+
+        # Wrap in DataFrame
+        exp_rep = pd.DataFrame(arr, columns=[p.name for p in simplex_parameters])
 
         # Merge product parameters and apply constraints incrementally
         exp_rep = build_constrained_product(
