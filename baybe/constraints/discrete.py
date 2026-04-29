@@ -54,12 +54,12 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
         return True
 
     @override
-    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in data]
-        satisfied = [cond.evaluate(data[p]) for p, cond in pairs]
+    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+        pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in df]
+        satisfied = [cond.evaluate(df[p]) for p, cond in pairs]
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
 
-        return data.index[res]
+        return df.index[res]
 
     @override
     def get_invalid_polars(self) -> pl.Expr:
@@ -94,11 +94,11 @@ class DiscreteSumConstraint(DiscreteConstraint):
     """The condition modeled by this constraint."""
 
     @override
-    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        evaluate_data = data[self.parameters].sum(axis=1)
-        mask_bad = ~self.condition.evaluate(evaluate_data)
+    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+        evaluate_df = df[self.parameters].sum(axis=1)
+        mask_bad = ~self.condition.evaluate(evaluate_df)
 
-        return data.index[mask_bad]
+        return df.index[mask_bad]
 
     @override
     def get_invalid_polars(self) -> pl.Expr:
@@ -127,11 +127,11 @@ class DiscreteProductConstraint(DiscreteConstraint):
     # present. This could be expressed via a _can_evaluate override.
 
     @override
-    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        evaluate_data = data[self.parameters].prod(axis=1)
-        mask_bad = ~self.condition.evaluate(evaluate_data)
+    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+        evaluate_df = df[self.parameters].prod(axis=1)
+        mask_bad = ~self.condition.evaluate(evaluate_df)
 
-        return data.index[mask_bad]
+        return df.index[mask_bad]
 
     @override
     def get_invalid_polars(self) -> pl.Expr:
@@ -168,11 +168,11 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
         return len(available & set(self.parameters)) >= 2
 
     @override
-    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        params = [p for p in self.parameters if p in data]
-        mask_bad = data[params].nunique(axis=1) != len(params)
+    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+        params = [p for p in self.parameters if p in df]
+        mask_bad = df[params].nunique(axis=1) != len(params)
 
-        return data.index[mask_bad]
+        return df.index[mask_bad]
 
     @override
     def get_invalid_polars(self) -> pl.Expr:
@@ -205,11 +205,11 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
         return len(available & set(self.parameters)) >= 2
 
     @override
-    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        params = [p for p in self.parameters if p in set(data.columns)]
-        mask_bad = data[params].nunique(axis=1) != 1
+    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+        params = [p for p in self.parameters if p in set(df.columns)]
+        mask_bad = df[params].nunique(axis=1) != 1
 
-        return data.index[mask_bad]
+        return df.index[mask_bad]
 
     @override
     def get_invalid_polars(self) -> pl.Expr:
@@ -276,15 +276,15 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
         return params
 
     @override
-    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # Create data copy and mark entries where the dependency conditions are negative
+    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+        # Create df copy and mark entries where the dependency conditions are negative
         # with a dummy value to cause degeneracy.
-        censored_data = data.copy()
+        censored_df = df.copy()
         for k, _ in enumerate(self.parameters):
             # .loc assignments are not supported by mypy + pandas-stubs yet
             # See https://github.com/pandas-dev/pandas-stubs/issues/572
-            censored_data.loc[  # type: ignore[call-overload]
-                ~self.conditions[k].evaluate(data[self.parameters[k]]),
+            censored_df.loc[  # type: ignore[call-overload]
+                ~self.conditions[k].evaluate(df[self.parameters[k]]),
                 self.affected_parameters[k],
             ] = Dummy()
 
@@ -293,17 +293,17 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
         # will become invariant when frozenset is applied to them.
         for k, param in enumerate(self.parameters):
             for affected_param in self.affected_parameters[k]:
-                censored_data[affected_param] = list(
-                    zip(censored_data[affected_param], censored_data[param])
+                censored_df[affected_param] = list(
+                    zip(censored_df[affected_param], censored_df[param])
                 )
 
         # Merge the invariant indicator with all other parameters (i.e. neither the
         # affected nor the dependency-causing ones) and detect duplicates in that space.
         all_affected_params = [col for cols in self.affected_parameters for col in cols]
         other_params = (
-            data.columns.drop(all_affected_params).drop(self.parameters).tolist()
+            df.columns.drop(all_affected_params).drop(self.parameters).tolist()
         )
-        invariant_indicator = censored_data[all_affected_params].apply(
+        invariant_indicator = censored_df[all_affected_params].apply(
             cast(Callable, frozenset)
             if self.permutation_invariant
             else cast(Callable, tuple),
@@ -311,10 +311,10 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
         )
         # Only include the other_params DataFrame if it is non-empty to avoid
         # pandas FutureWarning about concatenation with empty entries
-        parts = [censored_data[other_params]] if other_params else []
+        parts = [censored_df[other_params]] if other_params else []
         parts.append(invariant_indicator)
         df_eval = pd.concat(parts, axis=1)
-        inds_bad = data.index[df_eval.duplicated(keep="first")]
+        inds_bad = df.index[df_eval.duplicated(keep="first")]
 
         return inds_bad
 
@@ -357,8 +357,8 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         return len(available & set(self.parameters)) >= 2
 
     @override
-    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        cols = set(data.columns)
+    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+        cols = set(df.columns)
         params = [p for p in self.parameters if p in cols]
         # When dependencies exist, permutation dedup on a partial set of
         # parameters is not safe because the dependency logic can change
@@ -368,30 +368,30 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
             if not self._required_parameters <= cols:
                 return DiscreteNoLabelDuplicatesConstraint(
                     parameters=params
-                ).get_invalid(data)
+                ).get_invalid(df)
 
         # Get indices of entries with duplicate label entries. These will also be
         # dropped by this constraint.
-        mask_duplicate_labels = pd.Series(False, index=data.index)
+        mask_duplicate_labels = pd.Series(False, index=df.index)
         mask_duplicate_labels[
-            DiscreteNoLabelDuplicatesConstraint(parameters=params).get_invalid(data)
+            DiscreteNoLabelDuplicatesConstraint(parameters=params).get_invalid(df)
         ] = True
 
         # Merge a permutation invariant representation of all affected parameters with
         # the other parameters and indicate duplicates. This ensures that variation in
         # other parameters is also accounted for.
-        other_params = data.columns.drop(params).tolist()
-        frozen = data[params].apply(cast(Callable, frozenset), axis=1)
-        parts = [data[other_params].copy(), frozen] if other_params else [frozen]
+        other_params = df.columns.drop(params).tolist()
+        frozen = df[params].apply(cast(Callable, frozenset), axis=1)
+        parts = [df[other_params].copy(), frozen] if other_params else [frozen]
         df_eval = pd.concat(parts, axis=1).loc[
             ~mask_duplicate_labels  # only consider label-duplicate-free part
         ]
         mask_duplicate_permutations = df_eval.duplicated(keep="first")
 
         # Indices of entries with label-duplicates
-        inds_duplicate_labels = data.index[mask_duplicate_labels]
+        inds_duplicate_labels = df.index[mask_duplicate_labels]
 
-        # Indices of duplicate permutations in the (already label-duplicate-free) data
+        # Indices of duplicate permutations in the (already label-duplicate-free) df
         inds_duplicate_permutations = df_eval.index[mask_duplicate_permutations]
 
         # If there are dependencies connected to the invariant parameters evaluate them
@@ -400,7 +400,7 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         if self.dependencies:
             self.dependencies.permutation_invariant = True
             inds_duplicate_independency_adjusted = self.dependencies.get_invalid(
-                data.drop(index=inds_invalid)
+                df.drop(index=inds_invalid)
             )
             inds_invalid = inds_invalid.union(inds_duplicate_independency_adjusted)
 
@@ -418,10 +418,10 @@ class DiscreteCustomConstraint(DiscreteConstraint):
     you want to keep/remove."""
 
     @override
-    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        mask_bad = ~self.validator(data[self.parameters])
+    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+        mask_bad = ~self.validator(df[self.parameters])
 
-        return data.index[mask_bad]
+        return df.index[mask_bad]
 
 
 @define
@@ -439,11 +439,11 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteConstraint):
         return bool(available & set(self.parameters))
 
     @override
-    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        params = [p for p in self.parameters if p in set(data.columns)]
+    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+        params = [p for p in self.parameters if p in set(df.columns)]
         all_present = len(params) == len(self.parameters)
 
-        non_zeros = (data[params] != 0.0).sum(axis=1)
+        non_zeros = (df[params] != 0.0).sum(axis=1)
         # The max_cardinality check is safe on a partial subset: the nonzero
         # count can only increase as more parameters are added.
         mask_bad = non_zeros > self.max_cardinality
@@ -451,7 +451,7 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteConstraint):
         # are present, since missing parameters could still add nonzero values.
         if all_present:
             mask_bad |= non_zeros < self.min_cardinality
-        return data.index[mask_bad]
+        return df.index[mask_bad]
 
 
 # Constraints are approximately ordered according to increasing computational effort

@@ -146,13 +146,12 @@ class DiscreteConstraint(Constraint, ABC):
         return df.index.drop(invalid)
 
     def get_invalid(
-        self, data: pd.DataFrame, /, *, allow_missing: bool = False
+        self, df: pd.DataFrame, /, *, allow_missing: bool = False
     ) -> pd.Index:
         """Get the indices of dataframe entries that are invalid under the constraint.
 
         Args:
-            data: A dataframe where each row represents a parameter
-                configuration.
+            df: A dataframe where each row represents a parameter configuration.
             allow_missing: If ``False``, a :class:`ValueError` is raised when
                 the dataframe is missing required parameter columns. If ``True``, the
                 subclass is asked whether it can perform (partial) constraint
@@ -167,7 +166,7 @@ class DiscreteConstraint(Constraint, ABC):
             The dataframe indices of rows that violate the constraint.
         """
         # TODO: Should switch backends (pandas/polars/...) behind the scenes
-        available = set(data.columns)
+        available = set(df.columns)
 
         if not allow_missing:
             if missing := self._required_parameters - available:
@@ -178,10 +177,10 @@ class DiscreteConstraint(Constraint, ABC):
         elif not self._can_evaluate(available):
             return pd.Index([])
 
-        return self._get_invalid(data)
+        return self._get_invalid(df)
 
     @abstractmethod
-    def _get_invalid(self, data: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
         """Get the indices of invalid entries (core logic for subclasses).
 
         This method is only called after it has been confirmed that the dataframe
@@ -190,7 +189,7 @@ class DiscreteConstraint(Constraint, ABC):
         column-availability checks.
 
         Args:
-            data: A dataframe where each row represents a parameter configuration.
+            df: A dataframe where each row represents a parameter configuration.
 
         Returns:
             The dataframe indices of rows that violate the constraint.
