@@ -132,7 +132,9 @@ class DiscreteSumConstraint(DiscreteConstraint):
     @override
     def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = pd.Series(
-            df[self.parameters].to_numpy() @ np.asarray(self.coefficients),
+            sum(
+                df[p].to_numpy() * c for p, c in zip(self.parameters, self.coefficients)
+            ),
             index=df.index,
         )
         mask_bad = ~self.condition.evaluate(evaluate_df)
