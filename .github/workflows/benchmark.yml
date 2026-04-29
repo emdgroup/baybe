@@ -14,14 +14,16 @@ on:
         type: choice
         options:
           - "All"
-          - "Transfer Learning"
+          - "Transfer Learning Convergence"
+          - "Transfer Learning Regression"
           - "Synthetic"
           - "Non Transfer Learning"
 
 env:
-  TRANSFER_LEARNING_BENCHMARKS: '["aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_20_15","michalewicz_tl_continuous"]'
+  TRANSFER_LEARNING_CONVERGENCE_BENCHMARKS: '["aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_20_15","michalewicz_tl_continuous"]'
+  TRANSFER_LEARNING_REGRESSION_BENCHMARKS: '["direct_arylation_temperature_tl_regr","aryl_halide_CT_I_BM_tl_regr","aryl_halide_CT_IM_tl_regr","aryl_halide_IP_CP_tl_regr"]'
   SYNTHETIC_BENCHMARKS: '["synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
-  ALL_BENCHMARKS: '["direct_arylation_multi_batch","direct_arylation_single_batch","aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_20_15","michalewicz_tl_continuous","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
+  ALL_BENCHMARKS: '["direct_arylation_multi_batch","direct_arylation_single_batch","aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_20_15","michalewicz_tl_continuous","direct_arylation_temperature_tl_regr","aryl_halide_CT_I_BM_tl_regr","aryl_halide_CT_IM_tl_regr","aryl_halide_IP_CP_tl_regr","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
   NON_TL_BENCHMARKS: '["direct_arylation_multi_batch","direct_arylation_single_batch","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
 
 permissions:
@@ -41,8 +43,11 @@ jobs:
         run: |
           benchmarks_to_execute='{"benchmark_list": []}'
 
-          if [ "$RUN_GROUP" = "Transfer Learning" ]; then
-            benchmarks_to_execute='{"benchmark_list": ${{ env.TRANSFER_LEARNING_BENCHMARKS }} }'
+          if [ "$RUN_GROUP" = "Transfer Learning Convergence" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.TRANSFER_LEARNING_CONVERGENCE_BENCHMARKS }} }'
+          fi
+          if [ "$RUN_GROUP" = "Transfer Learning Regression" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.TRANSFER_LEARNING_REGRESSION_BENCHMARKS }} }'
           fi
           if [ "$RUN_GROUP" = "Non Transfer Learning" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.NON_TL_BENCHMARKS }} }'
