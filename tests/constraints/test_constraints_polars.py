@@ -2,6 +2,7 @@
 
 import pytest
 from pandas.testing import assert_frame_equal
+from pytest import param
 
 from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import (
@@ -99,6 +100,35 @@ def test_polars_prodsum3(parameters, constraints):
     num_entries = len(df)
 
     assert num_entries == 0
+
+
+@pytest.mark.parametrize(
+    ("coefficients", "threshold", "operator"),
+    [
+        param((2.0, 1.0), 150.0, "<=", id="weighted-le"),
+        param((1.0, -1.0), 50.0, "<=", id="negative-le"),
+        param((0.5, 0.5), 50.0, "=", id="weighted-eq"),
+    ],
+)
+@pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
+def test_polars_weighted_sum_constraint(parameters, coefficients, threshold, operator):
+    """Polars and Pandas paths produce identical results for weighted sum."""
+    constraint = DiscreteSumConstraint(
+        parameters=[p.name for p in parameters],
+        condition=ThresholdCondition(threshold=threshold, operator=operator),
+        coefficients=coefficients,
+    )
+    ldf = _lazyframe_from_product(parameters)
+    df_pd = parameter_cartesian_prod_pandas(parameters)
+
+    _apply_constraint_filter_pandas(df_pd, [constraint])
+    df_pl = _apply_constraint_filter_polars(ldf, [constraint]).collect().to_pandas()
+
+    cols = df_pd.columns.tolist()
+    assert_frame_equal(
+        df_pd.sort_values(cols).reset_index(drop=True),
+        df_pl.sort_values(cols).reset_index(drop=True),
+    )
 
 
 @pytest.mark.parametrize(
