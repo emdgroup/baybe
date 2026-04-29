@@ -267,7 +267,7 @@ def build_constrained_product(
     constraints: Sequence[DiscreteConstraint],
     initial_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Build a constrained Cartesian product, using Polars when available.
+    """Build a constrained Cartesian product, using Polars if configured.
 
     Partitions constraints by Polars support and builds the product accordingly.
     Parameters covered by Polars-capable constraints are cross-joined and
