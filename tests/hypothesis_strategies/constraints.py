@@ -174,7 +174,9 @@ def discrete_permutation_invariance_constraints(
     return DiscretePermutationInvarianceConstraint(parameter_names, dependencies)
 
 
+@st.composite
 def _discrete_constraints(
+    draw: st.DrawFn,
     constraint_type: (
         type[DiscreteSumConstraint]
         | type[DiscreteProductConstraint]
@@ -185,16 +187,22 @@ def _discrete_constraints(
 ):
     """Generate discrete constraints."""
     if parameter_names is None:
-        parameters = st.lists(st.text(), unique=True, min_size=1)
+        params = draw(st.lists(st.text(), unique=True, min_size=1))
     else:
         assert len(parameter_names) > 0
         assert len(parameter_names) == len(set(parameter_names))
-        parameters = st.just(parameter_names)
+        params = parameter_names
 
-    if constraint_type in [DiscreteSumConstraint, DiscreteProductConstraint]:
-        return st.builds(constraint_type, parameters, threshold_conditions())
+    if constraint_type is DiscreteSumConstraint:
+        condition = draw(threshold_conditions())
+        if draw(st.booleans()):
+            coefficients = draw(st.tuples(*([finite_floats()] * len(params))))
+            return DiscreteSumConstraint(params, condition, coefficients)
+        return DiscreteSumConstraint(params, condition)
+    elif constraint_type is DiscreteProductConstraint:
+        return DiscreteProductConstraint(params, draw(threshold_conditions()))
     else:
-        return st.builds(constraint_type, parameters)
+        return constraint_type(params)
 
 
 discrete_sum_constraints = partial(_discrete_constraints, DiscreteSumConstraint)

@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+import cattrs
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
-from attrs.validators import in_, min_len
+from attrs.validators import deep_iterable, in_, min_len
 from typing_extensions import override
 
 from baybe.constraints.base import CardinalityConstraint, DiscreteConstraint
@@ -26,6 +27,7 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
+from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
     import polars as pl
@@ -77,7 +79,11 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
 
 @define
 class DiscreteSumConstraint(DiscreteConstraint):
-    """Class for modelling sum constraints."""
+    """Class for modelling sum constraints.
+
+    The constraint evaluates whether the (optionally weighted) sum of the specified
+    parameters satisfies the given threshold condition.
+    """
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
@@ -94,9 +100,41 @@ class DiscreteSumConstraint(DiscreteConstraint):
     condition: ThresholdCondition = field()
     """The condition modeled by this constraint."""
 
+    coefficients: tuple[float, ...] = field(
+        converter=lambda x: cattrs.structure(x, tuple[float, ...]),
+        validator=deep_iterable(member_validator=finite_float),
+    )
+    """The coefficients for the weighted sum, one per entry in ``parameters``.
+
+    Defaults to all-ones, i.e. an unweighted sum."""
+
+    @coefficients.default
+    def _default_coefficients(self) -> tuple[float, ...]:
+        """Return equal weight coefficients as default."""
+        return (1.0,) * len(self.parameters)
+
+    @coefficients.validator
+    def _validate_coefficients(  # noqa: DOC101, DOC103
+        self, _: Any, coefficients: Sequence[float]
+    ) -> None:
+        """Validate the coefficients.
+
+        Raises:
+            ValueError: If the number of coefficients does not match the number of
+                parameters.
+        """
+        if len(self.parameters) != len(coefficients):
+            raise ValueError(
+                "The given 'coefficients' list must have one floating point entry for "
+                "each entry in 'parameters'."
+            )
+
     @override
     def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
-        evaluate_df = df[self.parameters].sum(axis=1)
+        evaluate_df = pd.Series(
+            df[self.parameters].to_numpy() @ np.asarray(self.coefficients),
+            index=df.index,
+        )
         mask_bad = ~self.condition.evaluate(evaluate_df)
 
         return df.index[mask_bad]
@@ -105,7 +143,8 @@ class DiscreteSumConstraint(DiscreteConstraint):
     def get_invalid_polars(self) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
-        return self.condition.to_polars(pl.sum_horizontal(self.parameters)).not_()
+        weighted = [pl.col(p) * c for p, c in zip(self.parameters, self.coefficients)]
+        return self.condition.to_polars(pl.sum_horizontal(weighted)).not_()
 
 
 @define
