@@ -4,9 +4,16 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from baybe._optional.info import POLARS_INSTALLED
+from baybe.constraints import (
+    DiscreteLinkedParametersConstraint,
+    DiscreteSumConstraint,
+    ThresholdCondition,
+)
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace.utils import (
     _apply_constraint_filter_pandas,
     _apply_constraint_filter_polars,
+    build_constrained_product,
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )
@@ -203,4 +210,40 @@ def test_polars_product(constraints, parameters):
     assert_frame_equal(
         df_pd_filtered.sort_values(cols).reset_index(drop=True),
         df_pl_filtered.sort_values(cols).reset_index(drop=True),
+    )
+
+
+def test_mixed_polars_pandas_constraints():
+    """build_constrained_product with Polars active matches naive pandas result.
+
+    Verifies that parameters shared between Polars and pandas constraints are
+    handled correctly — parameters in the Polars product remain available for
+    subsequent pandas constraint filtering.
+    """
+    parameters = [
+        NumericalDiscreteParameter(name="A", values=[0.0, 50.0, 100.0]),
+        NumericalDiscreteParameter(name="B", values=[0.0, 50.0, 100.0]),
+        NumericalDiscreteParameter(name="C", values=[0.0, 50.0, 100.0]),
+    ]
+    constraints = [
+        # Polars-capable: operates on [A, B]
+        DiscreteSumConstraint(
+            parameters=["A", "B"],
+            condition=ThresholdCondition(threshold=100, operator="="),
+        ),
+        # Pandas-only: operates on [B, C] — B is shared with the Polars constraint
+        DiscreteLinkedParametersConstraint(parameters=["B", "C"]),
+    ]
+
+    # Naive reference: full product then filter
+    df_naive = parameter_cartesian_prod_pandas(parameters)
+    _apply_constraint_filter_pandas(df_naive, constraints)
+
+    # Under test: build_constrained_product routes through Polars partitioning
+    df_result = build_constrained_product(parameters, constraints)
+
+    cols = df_naive.columns.tolist()
+    assert_frame_equal(
+        df_result.sort_values(cols).reset_index(drop=True),
+        df_naive.sort_values(cols).reset_index(drop=True),
     )
