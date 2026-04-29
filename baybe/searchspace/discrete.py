@@ -424,6 +424,7 @@ class SubspaceDiscrete(SerialMixin):
         # discarded, because it is already clear that the total sum will be exceeded
         # once all joins are completed. Analogously, nonzero cardinality bounds are
         # checked at each step.
+        arr: np.ndarray
         for i, (
             param,
             min_sum_to_go,
@@ -444,7 +445,7 @@ class SubspaceDiscrete(SerialMixin):
             else:
                 n_old = arr.shape[0]
                 n_new = len(values)
-                arr = np.column_stack(  # type: ignore[assignment]  # shape widens
+                arr = np.column_stack(
                     [
                         np.repeat(arr, n_new, axis=0),
                         np.tile(values, n_old),
