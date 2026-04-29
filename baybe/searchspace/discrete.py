@@ -269,6 +269,8 @@ class SubspaceDiscrete(SerialMixin):
         cls,
         max_sum: float,
         simplex_parameters: Sequence[NumericalDiscreteParameter],
+        *,
+        simplex_coefficients: Sequence[float] | None = None,
         product_parameters: Sequence[DiscreteParameter] | None = None,
         constraints: Sequence[DiscreteConstraint] | None = None,
         min_nonzero: int = 0,
@@ -290,8 +292,13 @@ class SubspaceDiscrete(SerialMixin):
         significantly faster construction.
 
         Args:
-            max_sum: The maximum sum of the parameter values defining the simplex size.
+            max_sum: The maximum weighted sum of the parameter values defining the
+                simplex size.
             simplex_parameters: The parameters to be used for the simplex construction.
+            simplex_coefficients: Optional coefficients for the weighted sum, one per
+                entry in ``simplex_parameters``. Defaults to all-ones, i.e. an
+                unweighted sum. Negative coefficients are supported and handled
+                correctly by the incremental construction algorithm.
             product_parameters: Optional parameters that enter in form of a Cartesian
                 product.
             constraints: See :class:`baybe.searchspace.core.SearchSpace`.
@@ -306,6 +313,8 @@ class SubspaceDiscrete(SerialMixin):
         Raises:
             ValueError: If the passed simplex parameters are not suitable for a simplex
                 construction.
+            ValueError: If the length of ``simplex_coefficients`` does not match the
+                number of ``simplex_parameters``.
             ValueError: If the passed product parameters are not discrete.
             ValueError: If the passed simplex parameters and product parameters are
                 not disjoint.
@@ -325,6 +334,8 @@ class SubspaceDiscrete(SerialMixin):
             constraints = []
         if max_nonzero is None:
             max_nonzero = len(simplex_parameters)
+        if simplex_coefficients is None:
+            simplex_coefficients = [1.0] * len(simplex_parameters)
 
         # Validate constraints
         validate_constraints(constraints, [*simplex_parameters, *product_parameters])
@@ -341,6 +352,14 @@ class SubspaceDiscrete(SerialMixin):
             raise ValueError(
                 f"All parameters passed via 'product_parameters' "
                 f"must be of subclasses of '{DiscreteParameter.__name__}'."
+            )
+
+        # Validate coefficients length
+        if len(simplex_coefficients) != len(simplex_parameters):
+            raise ValueError(
+                f"'simplex_coefficients' must have one entry per 'simplex_parameters' "
+                f"entry, but got {len(simplex_coefficients)} coefficient(s) for "
+                f"{len(simplex_parameters)} parameter(s)."
             )
 
         # Validate no overlap between simplex parameters and product parameters
@@ -364,19 +383,29 @@ class SubspaceDiscrete(SerialMixin):
             if len(simplex_parameters) < 1:
                 return cls.from_product(product_parameters, constraints)
 
-        # Validate non-negativity
-        min_values = [min(p.values) for p in simplex_parameters]
-        max_values = [max(p.values) for p in simplex_parameters]
-        if not (min(min_values) >= 0.0):
+        # Validate non-negativity of raw parameter values (required by the algorithm)
+        min_raw = [min(p.values) for p in simplex_parameters]
+        max_raw = [max(p.values) for p in simplex_parameters]
+        if not (min(min_raw) >= 0.0):
             raise ValueError(
                 f"All simplex_parameters passed to '{cls.from_simplex.__name__}' "
                 f"must have non-negative values only."
             )
 
+        # Compute per-parameter minimum weighted contributions.
+        # For a positive coefficient c the minimum contribution is c*min_raw; for a
+        # negative coefficient the ordering flips and it becomes c*max_raw. Taking
+        # min of both products handles any real coefficient correctly.
+        coeffs = list(simplex_coefficients)
+        min_weighted = [
+            min(c * lo, c * hi) for c, lo, hi in zip(coeffs, min_raw, max_raw)
+        ]
+
         def drop_invalid(
             df: pd.DataFrame,
             max_sum: float,
             boundary_only: bool,
+            weights: Sequence[float],
             min_nonzero: int | None = None,
             max_nonzero: int | None = None,
         ) -> None:
@@ -384,19 +413,22 @@ class SubspaceDiscrete(SerialMixin):
 
             Args:
                 df: The dataframe whose rows should satisfy the simplex constraint.
-                max_sum: The maximum row sum defining the simplex size.
+                max_sum: The maximum weighted row sum defining the simplex size.
                 boundary_only: Flag to control if the points represented by the rows
                     may lie inside the simplex or on its boundary only.
+                weights: Coefficients for the weighted sum, aligned with the columns
+                    of ``df``.
                 min_nonzero: Minimum number of nonzero parameters required per row.
                 max_nonzero: Maximum number of nonzero parameters allowed per row.
             """
-            # Apply sum constraints
-            row_sums = df.sum(axis=1)
+            # Apply weighted sum constraints via a single matrix-vector product
+            row_sums = pd.Series(df.to_numpy() @ np.asarray(weights), index=df.index)
             mask_violated = row_sums > max_sum + tolerance
             if boundary_only:
                 mask_violated |= row_sums < max_sum - tolerance
 
-            # Apply optional nonzero constraints
+            # Apply optional nonzero constraints (based on raw parameter values,
+            # independent of coefficient signs)
             if (min_nonzero is not None) or (max_nonzero is not None):
                 n_nonzero = (df != 0.0).sum(axis=1)
                 if min_nonzero is not None:
@@ -408,18 +440,18 @@ class SubspaceDiscrete(SerialMixin):
             idxs_to_drop = df[mask_violated].index
             df.drop(index=idxs_to_drop, inplace=True)
 
-        # Get the minimum sum contributions to come in the upcoming joins (the
-        # first item is the minimum possible sum of all parameters starting from the
-        # second parameter, the second item is the minimum possible sum starting from
-        # the third parameter, and so on ...)
-        min_sum_upcoming = np.cumsum(min_values[:0:-1])[::-1]
+        # Get the minimum weighted sum contributions to come in the upcoming joins (the
+        # first item is the minimum possible weighted sum of all parameters starting
+        # from the second parameter, the second item is the minimum possible weighted
+        # sum starting from the third parameter, and so on ...)
+        min_sum_upcoming = np.cumsum(min_weighted[:0:-1])[::-1]
 
-        # Get the min/max number of nonzero values to come in the upcoming joins (the
-        # first item is the min/max number of nonzero parameters starting from the
-        # second parameter, the second item is the min/max number starting from
-        # the third parameter, and so on ...)
-        min_nonzero_upcoming = np.cumsum((np.asarray(min_values) > 0.0)[:0:-1])[::-1]
-        max_nonzero_upcoming = np.cumsum((np.asarray(max_values) > 0.0)[:0:-1])[::-1]
+        # Get the min/max number of nonzero values to come in the upcoming joins.
+        # Nonzero counting is based on raw parameter values, not weighted values,
+        # because the cardinality constraint counts zero/nonzero entries regardless
+        # of the coefficient signs.
+        min_nonzero_upcoming = np.cumsum((np.asarray(min_raw) > 0.0)[:0:-1])[::-1]
+        max_nonzero_upcoming = np.cumsum((np.asarray(max_raw) > 0.0)[:0:-1])[::-1]
 
         # Incrementally build up the space, dropping invalid configuration along the
         # way. More specifically:
@@ -459,6 +491,7 @@ class SubspaceDiscrete(SerialMixin):
             drop_invalid(
                 exp_rep,
                 max_sum=max_sum - min_sum_to_go,
+                weights=coeffs[: i + 1],
                 # the maximum possible number of nonzeros to come dictates if we
                 # can achieve our minimum constraint in the end:
                 min_nonzero=min_nonzero - max_nonzero_to_go,
@@ -470,7 +503,7 @@ class SubspaceDiscrete(SerialMixin):
 
         # If requested, keep only the boundary values
         if boundary_only:
-            drop_invalid(exp_rep, max_sum, boundary_only=True)
+            drop_invalid(exp_rep, max_sum, boundary_only=True, weights=coeffs)
 
         # Merge product parameters and apply constraints incrementally
         exp_rep = build_constrained_product(
@@ -770,6 +803,16 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
                 f"All simplex_parameters passed to "
                 f"'{SubspaceDiscrete.from_simplex.__name__}' must have non-negative "
                 f"values only."
+            )
+
+        simplex_coefficients = specs.get("simplex_coefficients", None)
+        if simplex_coefficients is not None and len(simplex_coefficients) != len(
+            simplex_parameters
+        ):
+            raise ValueError(
+                f"'simplex_coefficients' must have one entry per 'simplex_parameters' "
+                f"entry, but got {len(simplex_coefficients)} coefficient(s) for "
+                f"{len(simplex_parameters)} parameter(s)."
             )
 
         product_parameters = specs.get("product_parameters", [])
