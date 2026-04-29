@@ -292,13 +292,12 @@ class SubspaceDiscrete(SerialMixin):
         significantly faster construction.
 
         Args:
-            max_sum: The maximum weighted sum of the parameter values defining the
+            max_sum: The maximum (weighted) sum of the parameter values defining the
                 simplex size.
             simplex_parameters: The parameters to be used for the simplex construction.
             simplex_coefficients: Optional coefficients for the weighted sum, one per
                 entry in ``simplex_parameters``. Defaults to all-ones, i.e. an
-                unweighted sum. Negative coefficients are supported and handled
-                correctly by the incremental construction algorithm.
+                unweighted sum.
             product_parameters: Optional parameters that enter in form of a Cartesian
                 product.
             constraints: See :class:`baybe.searchspace.core.SearchSpace`.
@@ -386,7 +385,7 @@ class SubspaceDiscrete(SerialMixin):
         # Validate non-negativity of raw parameter values (required by the algorithm)
         min_raw = [min(p.values) for p in simplex_parameters]
         max_raw = [max(p.values) for p in simplex_parameters]
-        if not (min(min_raw) >= 0.0):
+        if any(v < 0.0 for v in min_raw):
             raise ValueError(
                 f"All simplex_parameters passed to '{cls.from_simplex.__name__}' "
                 f"must have non-negative values only."
