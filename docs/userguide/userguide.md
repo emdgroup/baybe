@@ -44,6 +44,7 @@ Serialization <serialization>
 Settings <settings>
 Simulation <simulation>
 Surrogates <surrogates>
+Symmetries <symmetries>
 Targets <targets>
 Transformations <transformations>
 Transfer Learning <transfer_learning>

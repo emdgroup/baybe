@@ -86,6 +86,22 @@ class BayesianRecommender(PureRecommender, ABC):
             return qLogNEHVI() if objective.is_multi_output else qLogEI()
         return self.acquisition_function
 
+    def _get_surrogate_for_augmentation(self) -> Surrogate | None:
+        """Get the Surrogate instance for augmentation/validation, if available."""
+        from baybe.surrogates.composite import CompositeSurrogate, _ReplicationMapping
+
+        model = self._surrogate_model
+        if isinstance(model, Surrogate):
+            return model
+        if isinstance(model, CompositeSurrogate):
+            # All inner surrogates are copies of the same template
+            surrogates = model.surrogates
+            if isinstance(surrogates, _ReplicationMapping):
+                template = surrogates.template
+                if isinstance(template, Surrogate):
+                    return template
+        return None
+
     def get_surrogate(
         self,
         searchspace: SearchSpace,
@@ -112,6 +128,13 @@ class BayesianRecommender(PureRecommender, ABC):
             raise IncompatibleAcquisitionFunctionError(
                 f"You attempted to use a single-output acquisition function in a "
                 f"{len(objective.targets)}-target multi-output context."
+            )
+
+        # Perform data augmentation if configured
+        surrogate_for_augmentation = self._get_surrogate_for_augmentation()
+        if surrogate_for_augmentation is not None:
+            measurements = surrogate_for_augmentation.augment_measurements(
+                measurements, searchspace.parameters
             )
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)
@@ -156,6 +179,13 @@ class BayesianRecommender(PureRecommender, ABC):
 
         validate_object_names(searchspace.parameters + objective.targets)
 
+        # Validate compatibility of surrogate symmetries with searchspace
+        surrogate_for_validation = self._get_surrogate_for_augmentation()
+        if surrogate_for_validation is not None:
+            for s in surrogate_for_validation.symmetries:
+                s.validate_searchspace_context(searchspace)
+
+        # Experimental input validation
         if (measurements is None) or measurements.empty:
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "

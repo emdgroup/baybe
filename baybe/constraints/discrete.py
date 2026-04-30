@@ -29,6 +29,9 @@ from baybe.utils.basic import Dummy
 if TYPE_CHECKING:
     import polars as pl
 
+    from baybe.symmetries.dependency import DependencySymmetry
+    from baybe.symmetries.permutation import PermutationSymmetry
+
 
 @define
 class DiscreteExcludeConstraint(DiscreteConstraint):
@@ -195,10 +198,6 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     a single constraint.
     """
 
-    # class variables
-    eval_during_augmentation: ClassVar[bool] = True
-    # See base class
-
     # object variables
     conditions: list[Condition] = field()
     """The list of individual conditions."""
@@ -271,23 +270,49 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
         return inds_bad
 
+    def to_symmetries(
+        self, use_data_augmentation: bool = True
+    ) -> tuple[DependencySymmetry, ...]:
+        """Convert to :class:`~baybe.symmetries.dependency.DependencySymmetry` objects.
+
+        Create one symmetry object per dependency relationship, i.e., per
+        (parameter, condition, affected_parameters) triple.
+
+        Args:
+            use_data_augmentation: Flag indicating whether the resulting symmetry
+                objects should apply data augmentation. ``True`` means that
+                measurement augmentation will be performed by replacing inactive
+                affected parameter values with all possible values.
+
+        Returns:
+            A tuple of dependency symmetries, one for each dependency in the
+            constraint.
+        """
+        from baybe.symmetries.dependency import DependencySymmetry
+
+        return tuple(
+            DependencySymmetry(
+                parameter_name=p,
+                condition=c,
+                affected_parameter_names=aps,
+                use_data_augmentation=use_data_augmentation,
+            )
+            for p, c, aps in zip(
+                self.parameters, self.conditions, self.affected_parameters, strict=True
+            )
+        )
+
 
 @define
 class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     """Constraint class for declaring that a set of parameters is permutation invariant.
 
     More precisely, this means that, ``(val_from_param1, val_from_param2)`` is
-    equivalent to ``(val_from_param2, val_from_param1)``. Since it does not make sense
-    to have this constraint with duplicated labels, this implementation also internally
-    applies the :class:`baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`.
+    equivalent to ``(val_from_param2, val_from_param1)``.
 
     *Note:* This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
     """
-
-    # class variables
-    eval_during_augmentation: ClassVar[bool] = True
-    # See base class
 
     # object variables
     dependencies: DiscreteDependenciesConstraint | None = field(default=None)
@@ -295,15 +320,6 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
 
     @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # Get indices of entries with duplicate label entries. These will also be
-        # dropped by this constraint.
-        mask_duplicate_labels = pd.Series(False, index=data.index)
-        mask_duplicate_labels[
-            DiscreteNoLabelDuplicatesConstraint(parameters=self.parameters).get_invalid(
-                data
-            )
-        ] = True
-
         # Merge a permutation invariant representation of all affected parameters with
         # the other parameters and indicate duplicates. This ensures that variation in
         # other parameters is also accounted for.
@@ -314,20 +330,14 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
                 data[self.parameters].apply(cast(Callable, frozenset), axis=1),
             ],
             axis=1,
-        ).loc[
-            ~mask_duplicate_labels  # only consider label-duplicate-free part
-        ]
+        )
         mask_duplicate_permutations = df_eval.duplicated(keep="first")
 
-        # Indices of entries with label-duplicates
-        inds_duplicate_labels = data.index[mask_duplicate_labels]
-
-        # Indices of duplicate permutations in the (already label-duplicate-free) data
-        inds_duplicate_permutations = df_eval.index[mask_duplicate_permutations]
+        # Indices of duplicate permutations
+        inds_invalid = data.index[mask_duplicate_permutations]
 
         # If there are dependencies connected to the invariant parameters evaluate them
         # here and remove resulting duplicates with a DependenciesConstraint
-        inds_invalid = inds_duplicate_labels.union(inds_duplicate_permutations)
         if self.dependencies:
             self.dependencies.permutation_invariant = True
             inds_duplicate_independency_adjusted = self.dependencies.get_invalid(
@@ -336,6 +346,32 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
             inds_invalid = inds_invalid.union(inds_duplicate_independency_adjusted)
 
         return inds_invalid
+
+    def to_symmetry(self, use_data_augmentation: bool = True) -> PermutationSymmetry:
+        """Convert to a :class:`~baybe.symmetries.permutation.PermutationSymmetry`.
+
+        The constraint's parameters form the primary permutation group. If
+        dependencies are attached, their parameters are added as an additional
+        group that is permuted in lockstep.
+
+        Args:
+            use_data_augmentation: Flag indicating whether the resulting symmetry
+                object should apply data augmentation. ``True`` means that
+                measurement augmentation will be performed by generating all
+                permutations of parameter values within each group.
+
+        Returns:
+            The corresponding permutation symmetry.
+        """
+        from baybe.symmetries.permutation import PermutationSymmetry
+
+        groups = [self.parameters]
+        if self.dependencies:
+            groups.append(list(self.dependencies.parameters))
+        return PermutationSymmetry(
+            permutation_groups=groups,
+            use_data_augmentation=use_data_augmentation,
+        )
 
 
 @define

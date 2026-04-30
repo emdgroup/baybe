@@ -1,14 +1,11 @@
 """Hypothesis strategies for constraints."""
 
 from functools import partial
-from typing import Any
 
 import hypothesis.strategies as st
 from hypothesis import assume
 
 from baybe.constraints.conditions import (
-    SubSelectionCondition,
-    ThresholdCondition,
     _valid_logic_combiners,
 )
 from baybe.constraints.continuous import (
@@ -26,22 +23,10 @@ from baybe.constraints.discrete import (
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from tests.hypothesis_strategies.basic import finite_floats
-
-
-def sub_selection_conditions(superset: list[Any] | None = None):
-    """Generate :class:`baybe.constraints.conditions.SubSelectionCondition`."""
-    if superset is None:
-        element_strategy = st.text()
-    else:
-        element_strategy = st.sampled_from(superset)
-    return st.builds(
-        SubSelectionCondition, st.lists(element_strategy, unique=True, min_size=1)
-    )
-
-
-def threshold_conditions():
-    """Generate :class:`baybe.constraints.conditions.ThresholdCondition`."""
-    return st.builds(ThresholdCondition, threshold=finite_floats())
+from tests.hypothesis_strategies.conditions import (
+    sub_selection_conditions,
+    threshold_conditions,
+)
 
 
 @st.composite
