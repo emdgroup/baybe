@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import time
-import warnings
 from copy import deepcopy
 from itertools import chain
 from unittest.mock import Mock
@@ -81,13 +80,6 @@ from baybe.utils.dataframe import (
     add_fake_measurements,
     add_parameter_noise,
     create_fake_input,
-)
-
-# TODO: Remove when https://github.com/cornellius-gp/linear_operator/pull/129 is ready
-warnings.filterwarnings(
-    "ignore",
-    message=".*torch.jit.script.*is deprecated",
-    category=DeprecationWarning,
 )
 
 # Hypothesis settings
