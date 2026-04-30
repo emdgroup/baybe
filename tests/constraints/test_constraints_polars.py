@@ -27,6 +27,14 @@ if POLARS_INSTALLED:
     import polars as pl
 
 
+@pytest.fixture(autouse=True)
+def _assert_polars_active():
+    """Assert that polars is enabled in the active settings."""
+    from baybe.settings import active_settings
+
+    assert active_settings.use_polars_for_constraints
+
+
 def _lazyframe_from_product(parameters):
     """Create a Polars lazyframe from the product of given parameters and return it."""
     param_frames = [pl.LazyFrame({p.name: p.values}) for p in parameters]
