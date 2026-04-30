@@ -484,9 +484,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # pick the remaining n_clusters-1 points
         for cluster_index in range(1, n_clusters):
             rand_vals = random_state_.random_sample(n_local_trials) * current_pot
-            candidate_ids = np.searchsorted(
-                np.cumulative_sum(closest_dist_sq), rand_vals
-            )
+            candidate_ids = np.searchsorted(np.cumsum(closest_dist_sq), rand_vals)
 
             # Compute distances to center candidates
             distance_to_candidates = D[candidate_ids, :] ** 2
