@@ -180,7 +180,7 @@ class DiscreteConstraint(Constraint, ABC):
         return self._get_invalid(df)
 
     @abstractmethod
-    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         """Get the indices of invalid entries (core logic for subclasses).
 
         This method is only called after it has been confirmed that the dataframe

@@ -54,7 +54,7 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
         return True
 
     @override
-    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in df]
         satisfied = [cond.evaluate(df[p]) for p, cond in pairs]
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
@@ -94,7 +94,7 @@ class DiscreteSumConstraint(DiscreteConstraint):
     """The condition modeled by this constraint."""
 
     @override
-    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = df[self.parameters].sum(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_df)
 
@@ -127,7 +127,7 @@ class DiscreteProductConstraint(DiscreteConstraint):
     # present. This could be expressed via a _can_evaluate override.
 
     @override
-    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = df[self.parameters].prod(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_df)
 
@@ -168,7 +168,7 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
         return len(available & set(self.parameters)) >= 2
 
     @override
-    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         params = [p for p in self.parameters if p in df]
         mask_bad = df[params].nunique(axis=1) != len(params)
 
@@ -205,7 +205,7 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
         return len(available & set(self.parameters)) >= 2
 
     @override
-    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         params = [p for p in self.parameters if p in set(df.columns)]
         mask_bad = df[params].nunique(axis=1) != 1
 
@@ -276,7 +276,7 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
         return params
 
     @override
-    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         # Create df copy and mark entries where the dependency conditions are negative
         # with a dummy value to cause degeneracy.
         censored_df = df.copy()
@@ -357,7 +357,7 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         return len(available & set(self.parameters)) >= 2
 
     @override
-    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         cols = set(df.columns)
         params = [p for p in self.parameters if p in cols]
         # When dependencies exist, permutation dedup on a partial set of
@@ -418,7 +418,7 @@ class DiscreteCustomConstraint(DiscreteConstraint):
     you want to keep/remove."""
 
     @override
-    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         mask_bad = ~self.validator(df[self.parameters])
 
         return df.index[mask_bad]
@@ -439,7 +439,7 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteConstraint):
         return bool(available & set(self.parameters))
 
     @override
-    def _get_invalid(self, df: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         params = [p for p in self.parameters if p in set(df.columns)]
         all_present = len(params) == len(self.parameters)
 
