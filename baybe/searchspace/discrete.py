@@ -188,6 +188,9 @@ class SubspaceDiscrete(SerialMixin):
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         constraints = constraints or []
 
+        if constraints:
+            validate_constraints(constraints, parameters)
+
         df = build_constrained_product(parameters, constraints)
 
         return SubspaceDiscrete(
