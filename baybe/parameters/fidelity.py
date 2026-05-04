@@ -19,8 +19,8 @@ from baybe.parameters.validation import (
     validate_contains_exactly_one,
     validate_equal_length,
 )
+from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple
-from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.validation import validate_is_finite, validate_unique_values
 
 
@@ -106,7 +106,9 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
     @cached_property
     def comp_df(self) -> pd.DataFrame:
         return pd.DataFrame(
-            range(len(self.values)), dtype=DTypeFloatNumpy, columns=[self.name]
+            range(len(self.values)),
+            dtype=active_settings.DTypeFloatNumpy,
+            columns=[self.name],
         )
 
 
@@ -158,5 +160,7 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
     @cached_property
     def comp_df(self) -> pd.DataFrame:
         return pd.DataFrame(
-            {self.name: self.values}, index=self.values, dtype=DTypeFloatNumpy
+            {self.name: self.values},
+            index=self.values,
+            dtype=active_settings.DTypeFloatNumpy,
         )
