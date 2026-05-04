@@ -110,6 +110,7 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
             range(len(self.values)),
             dtype=active_settings.DTypeFloatNumpy,
             columns=[self.name],
+            index=self.values,
         )
 
 
