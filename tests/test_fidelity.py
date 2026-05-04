@@ -25,7 +25,7 @@ def test_numerical_discrete_fidelity_parameter_construction():
 
 
 @pytest.mark.parametrize(
-    ("param", "series", "expected"),
+    ("parameter", "series", "expected"),
     [
         param(
             CategoricalFidelityParameter(
@@ -53,7 +53,7 @@ def test_numerical_discrete_fidelity_parameter_construction():
         ),
     ],
 )
-def test_fidelity_parameter_transform(param, series, expected):
+def test_fidelity_parameter_transform(parameter, series, expected):
     """Transform must correctly map fidelity values to computational representation."""
-    result = param.transform(series)
+    result = parameter.transform(series)
     assert list(result["fidelity"]) == expected
