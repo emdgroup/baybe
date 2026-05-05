@@ -302,7 +302,7 @@ class SearchSpace(SerialMixin):
             return 0
         return max(d, 1) * max(c, 1)
 
-    def partitions(  # noqa: DOC404
+    def partitions(
         self,
         candidates_exp: pd.DataFrame,
         min_discrete_candidates: int | None = None,

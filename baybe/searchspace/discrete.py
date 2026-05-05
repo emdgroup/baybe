@@ -600,7 +600,7 @@ class SubspaceDiscrete(SerialMixin):
             for c in self.constraints_batch
         )
 
-    def partition_masks(  # noqa: DOC404
+    def partition_masks(
         self,
         candidates_exp: pd.DataFrame,
         min_candidates: int | None = None,

@@ -159,7 +159,7 @@ class SubspaceContinuous(SerialMixin):
             c.n_inactive_parameter_combinations for c in self.constraints_cardinality
         )
 
-    def inactive_parameter_combinations(  # noqa: DOC404
+    def inactive_parameter_combinations(
         self,
         *,
         shuffle: bool = False,
