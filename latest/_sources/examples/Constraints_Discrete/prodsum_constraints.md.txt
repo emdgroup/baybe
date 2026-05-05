@@ -176,14 +176,14 @@ NaN
                 
                 [8 rows x 5 columns]
              Experimental Representation
-                    Solvent Speed  ...  NumParam5  NumParam6
-                0        C1  fast  ...        0.0      100.0
-                1        C1  fast  ...       50.0       50.0
-                2        C1  fast  ...      100.0        0.0
-                ..      ...   ...  ...        ...        ...
-                861   water  slow  ...        0.0      100.0
-                862   water  slow  ...       50.0       50.0
-                863   water  slow  ...      100.0        0.0
+                     NumParam1  NumParam2  ...  Solvent   Speed
+                0          0.0        0.0  ...       C1    fast
+                1          0.0        0.0  ...       C1  normal
+                2          0.0        0.0  ...       C1    slow
+                ..         ...        ...  ...      ...     ...
+                861      100.0       50.0  ...    water    fast
+                862      100.0       50.0  ...    water  normal
+                863      100.0       50.0  ...    water    slow
                 
                 [864 rows x 8 columns]
              Constraints
@@ -194,11 +194,11 @@ NaN
              Computational Representation
                      NumParam1  NumParam2  ...  Solvent_RDKIT2DD  Speed
                 0          0.0        0.0  ...              1.0     0.0
-                1          0.0        0.0  ...              1.0     0.0
-                2          0.0        0.0  ...              1.0     0.0
+                1          0.0        0.0  ...              1.0     1.0
+                2          0.0        0.0  ...              1.0     2.0
                 ..         ...        ...  ...              ...     ...
-                861      100.0       50.0  ...              0.0     2.0
-                862      100.0       50.0  ...              0.0     2.0
+                861      100.0       50.0  ...              0.0     0.0
+                862      100.0       50.0  ...              0.0     1.0
                 863      100.0       50.0  ...              0.0     2.0
                 
                 [864 rows x 9 columns]

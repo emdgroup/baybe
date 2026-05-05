@@ -36,6 +36,7 @@ DiscreteCustomConstraint
       ~DiscreteCustomConstraint.eval_during_augmentation
       ~DiscreteCustomConstraint.eval_during_creation
       ~DiscreteCustomConstraint.eval_during_modeling
+      ~DiscreteCustomConstraint.has_polars_implementation
       ~DiscreteCustomConstraint.is_continuous
       ~DiscreteCustomConstraint.is_discrete
       ~DiscreteCustomConstraint.numerical_only

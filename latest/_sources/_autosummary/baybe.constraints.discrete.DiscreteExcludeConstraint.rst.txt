@@ -37,6 +37,7 @@ DiscreteExcludeConstraint
       ~DiscreteExcludeConstraint.eval_during_augmentation
       ~DiscreteExcludeConstraint.eval_during_creation
       ~DiscreteExcludeConstraint.eval_during_modeling
+      ~DiscreteExcludeConstraint.has_polars_implementation
       ~DiscreteExcludeConstraint.is_continuous
       ~DiscreteExcludeConstraint.is_discrete
       ~DiscreteExcludeConstraint.numerical_only

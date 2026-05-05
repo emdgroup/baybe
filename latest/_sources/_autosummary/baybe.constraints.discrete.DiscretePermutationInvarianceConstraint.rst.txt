@@ -36,6 +36,7 @@ DiscretePermutationInvarianceConstraint
       ~DiscretePermutationInvarianceConstraint.eval_during_augmentation
       ~DiscretePermutationInvarianceConstraint.eval_during_creation
       ~DiscretePermutationInvarianceConstraint.eval_during_modeling
+      ~DiscretePermutationInvarianceConstraint.has_polars_implementation
       ~DiscretePermutationInvarianceConstraint.is_continuous
       ~DiscretePermutationInvarianceConstraint.is_discrete
       ~DiscretePermutationInvarianceConstraint.numerical_only

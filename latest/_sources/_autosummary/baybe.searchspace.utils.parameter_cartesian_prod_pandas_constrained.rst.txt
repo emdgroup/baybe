@@ -1,0 +1,6 @@
+baybe.searchspace.utils.parameter\_cartesian\_prod\_pandas\_constrained
+=======================================================================
+
+.. currentmodule:: baybe.searchspace.utils
+
+.. autofunction:: parameter_cartesian_prod_pandas_constrained

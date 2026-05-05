@@ -14,8 +14,6 @@ baybe.searchspace.discrete
    .. autosummary::
       :toctree:                                       
    
-      parameter_cartesian_prod_pandas
-      parameter_cartesian_prod_polars
       validate_simplex_subspace_from_config
    
    

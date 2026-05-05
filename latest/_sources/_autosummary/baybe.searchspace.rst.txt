@@ -35,5 +35,7 @@ baybe.searchspace
 
    discrete
 
+   utils
+
    validation
 

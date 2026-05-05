@@ -1,0 +1,6 @@
+baybe.searchspace.utils.optimize\_parameter\_order
+==================================================
+
+.. currentmodule:: baybe.searchspace.utils
+
+.. autofunction:: optimize_parameter_order

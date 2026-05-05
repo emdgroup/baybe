@@ -175,12 +175,12 @@ None           NaN
              Experimental Representation
                     Solvent      Speed  Temperature  Concentration
                 0        C1       fast        100.0            1.0
-                1        C1       fast        100.0            2.0
-                2        C1       fast        100.0            5.0
+                1        C1     normal        100.0            1.0
+                2        C1       slow        100.0            1.0
                 ..      ...        ...          ...            ...
-                447   water  very slow        200.0            1.0
-                448   water  very slow        200.0            2.0
-                449   water  very slow        200.0            5.0
+                447      c6       slow        200.0           10.0
+                448      c6  very fast        200.0           10.0
+                449      c6  very slow        200.0           10.0
                 
                 [450 rows x 4 columns]
              Constraints
@@ -189,12 +189,12 @@ None           NaN
              Computational Representation
                      Concentration  Solvent_RDKIT2DD  ...  Speed  Temperature
                 0              1.0              0.0   ...    0.0        100.0
-                1              2.0              0.0   ...    0.0        100.0
-                2              5.0              0.0   ...    0.0        100.0
+                1              1.0              0.0   ...    1.0        100.0
+                2              1.0              0.0   ...    2.0        100.0
                 ..             ...              ...   ...    ...          ...
-                447            1.0              0.0   ...    4.0        200.0
-                448            2.0              0.0   ...    4.0        200.0
-                449            5.0              0.0   ...    4.0        200.0
+                447           10.0              3.0   ...    2.0        200.0
+                448           10.0              3.0   ...    3.0        200.0
+                449           10.0              3.0   ...    4.0        200.0
                 
                 [450 rows x 8 columns]
        Objective

@@ -49,6 +49,7 @@ baybe.exceptions
       SearchSpaceMatchWarning
       UnidentifiedSubclassError
       UnmatchedAttributeError
+      UnsupportedEarlyFilteringError
       UnusedObjectWarning
    
    

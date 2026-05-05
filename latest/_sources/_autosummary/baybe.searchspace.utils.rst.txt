@@ -1,0 +1,34 @@
+baybe.searchspace.utils
+=======================
+
+.. automodule:: baybe.searchspace.utils
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      build_constrained_product
+      optimize_parameter_order
+      parameter_cartesian_prod_pandas
+      parameter_cartesian_prod_pandas_constrained
+      parameter_cartesian_prod_polars
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

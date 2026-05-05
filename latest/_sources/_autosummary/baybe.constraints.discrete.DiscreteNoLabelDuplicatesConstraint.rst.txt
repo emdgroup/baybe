@@ -35,6 +35,7 @@ DiscreteNoLabelDuplicatesConstraint
       ~DiscreteNoLabelDuplicatesConstraint.eval_during_augmentation
       ~DiscreteNoLabelDuplicatesConstraint.eval_during_creation
       ~DiscreteNoLabelDuplicatesConstraint.eval_during_modeling
+      ~DiscreteNoLabelDuplicatesConstraint.has_polars_implementation
       ~DiscreteNoLabelDuplicatesConstraint.is_continuous
       ~DiscreteNoLabelDuplicatesConstraint.is_discrete
       ~DiscreteNoLabelDuplicatesConstraint.numerical_only
