@@ -4,9 +4,16 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from baybe._optional.info import POLARS_INSTALLED
-from baybe.searchspace.discrete import (
+from baybe.constraints import (
+    DiscreteLinkedParametersConstraint,
+    DiscreteSumConstraint,
+    ThresholdCondition,
+)
+from baybe.parameters import NumericalDiscreteParameter
+from baybe.searchspace.utils import (
     _apply_constraint_filter_pandas,
     _apply_constraint_filter_polars,
+    build_constrained_product,
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )
@@ -18,6 +25,14 @@ pytestmark = pytest.mark.skipif(
 
 if POLARS_INSTALLED:
     import polars as pl
+
+
+@pytest.fixture(autouse=True)
+def _assert_polars_active():
+    """Assert that polars is enabled in the active settings."""
+    from baybe.settings import active_settings
+
+    assert active_settings.use_polars_for_constraints
 
 
 def _lazyframe_from_product(parameters):
@@ -41,7 +56,7 @@ def _lazyframe_from_product(parameters):
 def test_polars_prodsum1(parameters, constraints):
     """Tests Polars implementation of sum constraint."""
     ldf = _lazyframe_from_product(parameters)
-    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
+    ldf = _apply_constraint_filter_polars(ldf, constraints)
 
     # Number of entries with 1,2-sum above 150
     ldf = ldf.with_columns(sum=pl.sum_horizontal(["Fraction_1", "Fraction_2"]))
@@ -56,7 +71,7 @@ def test_polars_prodsum1(parameters, constraints):
 def test_polars_prodsum2(parameters, constraints):
     """Tests Polars implementation of product constrain."""
     ldf = _lazyframe_from_product(parameters)
-    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
+    ldf = _apply_constraint_filter_polars(ldf, constraints)
 
     # Number of entries with product under 30
     df = ldf.filter(
@@ -75,7 +90,7 @@ def test_polars_prodsum2(parameters, constraints):
 def test_polars_prodsum3(parameters, constraints):
     """Tests Polars implementation of exact sum constraint."""
     ldf = _lazyframe_from_product(parameters)
-    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
+    ldf = _apply_constraint_filter_polars(ldf, constraints)
 
     # Number of entries with sum unequal to 100
     ldf = ldf.with_columns(sum=pl.sum_horizontal(["Fraction_1", "Fraction_2"]))
@@ -96,7 +111,7 @@ def test_polars_prodsum3(parameters, constraints):
 def test_polars_exclusion(mock_substances, parameters, constraints):
     """Tests Polars implementation of exclusion constraint."""
     ldf = _lazyframe_from_product(parameters)
-    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
+    ldf = _apply_constraint_filter_polars(ldf, constraints)
 
     # Number of entries with either first/second substance and a temperature above 151
     df = ldf.filter(
@@ -125,7 +140,7 @@ def test_polars_exclusion(mock_substances, parameters, constraints):
 def test_polars_label_duplicates(parameters, constraints):
     """Tests Polars implementation of no-label duplicates constraint."""
     ldf = _lazyframe_from_product(parameters)
-    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
+    ldf = _apply_constraint_filter_polars(ldf, constraints)
 
     ldf = ldf.with_columns(
         pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
@@ -144,7 +159,7 @@ def test_polars_label_duplicates(parameters, constraints):
 def test_polars_linked_parameters(parameters, constraints):
     """Tests Polars implementation of linked parameters constraint."""
     ldf = _lazyframe_from_product(parameters)
-    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
+    ldf = _apply_constraint_filter_polars(ldf, constraints)
 
     ldf = ldf.with_columns(
         pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
@@ -195,7 +210,7 @@ def test_polars_product(constraints, parameters):
     # Apply constraints
     df_pd_filtered = _apply_constraint_filter_pandas(df_pd, constraints)
     df_pl_filtered = (
-        _apply_constraint_filter_polars(ldf, constraints)[0].collect().to_pandas()
+        _apply_constraint_filter_polars(ldf, constraints).collect().to_pandas()
     )
 
     # Assert order-agnostic equality of the two dataframes
@@ -203,4 +218,40 @@ def test_polars_product(constraints, parameters):
     assert_frame_equal(
         df_pd_filtered.sort_values(cols).reset_index(drop=True),
         df_pl_filtered.sort_values(cols).reset_index(drop=True),
+    )
+
+
+def test_mixed_polars_pandas_constraints():
+    """build_constrained_product with Polars active matches naive pandas result.
+
+    Verifies that parameters shared between Polars and pandas constraints are
+    handled correctly — parameters in the Polars product remain available for
+    subsequent pandas constraint filtering.
+    """
+    parameters = [
+        NumericalDiscreteParameter(name="A", values=[0.0, 50.0, 100.0]),
+        NumericalDiscreteParameter(name="B", values=[0.0, 50.0, 100.0]),
+        NumericalDiscreteParameter(name="C", values=[0.0, 50.0, 100.0]),
+    ]
+    constraints = [
+        # Polars-capable: operates on [A, B]
+        DiscreteSumConstraint(
+            parameters=["A", "B"],
+            condition=ThresholdCondition(threshold=100, operator="="),
+        ),
+        # Pandas-only: operates on [B, C] — B is shared with the Polars constraint
+        DiscreteLinkedParametersConstraint(parameters=["B", "C"]),
+    ]
+
+    # Naive reference: full product then filter
+    df_naive = parameter_cartesian_prod_pandas(parameters)
+    _apply_constraint_filter_pandas(df_naive, constraints)
+
+    # Under test: build_constrained_product routes through Polars partitioning
+    df_result = build_constrained_product(parameters, constraints)
+
+    cols = df_naive.columns.tolist()
+    assert_frame_equal(
+        df_result.sort_values(cols).reset_index(drop=True),
+        df_naive.sort_values(cols).reset_index(drop=True),
     )
