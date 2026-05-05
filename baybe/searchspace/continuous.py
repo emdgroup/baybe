@@ -192,10 +192,8 @@ class SubspaceContinuous(SerialMixin):
             return frozenset(chain(*combo))
 
         if replace:
-            candidates = list(range(total))
-            while candidates:
-                idx_pos = random.randint(0, len(candidates) - 1)
-                yield _resolve_flat_idx(candidates[idx_pos])
+            while True:
+                yield _resolve_flat_idx(random.randint(0, total - 1))
         else:
             order = list(range(total))
             if shuffle:
