@@ -1,9 +1,9 @@
 """Gaussian process surrogate components."""
 
 from baybe.surrogates.gaussian_process.components.criterion import (
-    Criterion,
-    CriterionFactoryProtocol,
-    PlainCriterionFactory,
+    FitCriterion,
+    FitCriterionFactoryProtocol,
+    PlainFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
     KernelFactoryProtocol,
@@ -20,10 +20,10 @@ from baybe.surrogates.gaussian_process.components.mean import (
 )
 
 __all__ = [
-    # Criterion
-    "Criterion",
-    "CriterionFactoryProtocol",
-    "PlainCriterionFactory",
+    # Fit Criterion
+    "FitCriterion",
+    "FitCriterionFactoryProtocol",
+    "PlainFitCriterionFactory",
     # Kernel
     "KernelFactoryProtocol",
     "PlainKernelFactory",

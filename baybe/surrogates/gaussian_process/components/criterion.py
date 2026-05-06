@@ -1,4 +1,4 @@
-"""Optimization criteria for the Gaussian process surrogate."""
+"""Fitting criteria for the Gaussian process surrogate."""
 
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
     from gpytorch.models import GP as GPyTorchModel
 
 
-class Criterion(Enum):
-    """Available optimization criteria for GP hyperparameter selection."""
+class FitCriterion(Enum):
+    """Available fitting criteria for GP hyperparameter optimization."""
 
     MARGINAL_LOG_LIKELIHOOD = "MARGINAL_LOG_LIKELIHOOD"
     """Exact marginal log-likelihood."""
@@ -32,14 +32,14 @@ class Criterion(Enum):
         import gpytorch
 
         mll_class = {
-            Criterion.MARGINAL_LOG_LIKELIHOOD: gpytorch.ExactMarginalLogLikelihood,
-            Criterion.LEAVE_ONE_OUT: gpytorch.mlls.LeaveOneOutPseudoLikelihood,
+            FitCriterion.MARGINAL_LOG_LIKELIHOOD: gpytorch.ExactMarginalLogLikelihood,
+            FitCriterion.LEAVE_ONE_OUT: gpytorch.mlls.LeaveOneOutPseudoLikelihood,
         }[self]
         return mll_class(likelihood, model)
 
 
-CriterionFactoryProtocol = GPComponentFactoryProtocol[Criterion]
-"""A protocol defining the interface for criterion factories."""
+FitCriterionFactoryProtocol = GPComponentFactoryProtocol[FitCriterion]
+"""A protocol defining the interface for fit criterion factories."""
 
-PlainCriterionFactory = PlainGPComponentFactory[Criterion]
-"""A trivial factory that returns a fixed criterion."""
+PlainFitCriterionFactory = PlainGPComponentFactory[FitCriterion]
+"""A trivial factory that returns a fixed fit criterion."""

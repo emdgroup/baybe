@@ -20,8 +20,8 @@ from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.criterion import (
-    Criterion,
-    CriterionFactoryProtocol,
+    FitCriterion,
+    FitCriterionFactoryProtocol,
 )
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentType,
@@ -39,7 +39,7 @@ from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
 )
 from baybe.surrogates.gaussian_process.presets.baybe import (
-    BayBECriterionFactory,
+    BayBEFitCriterionFactory,
     BayBEKernelFactory,
     BayBELikelihoodFactory,
     BayBEMeanFactory,
@@ -183,19 +183,19 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`gpytorch.likelihoods.Likelihood`
     """
 
-    criterion_factory: CriterionFactoryProtocol = field(
+    criterion_factory: FitCriterionFactoryProtocol = field(
         alias="criterion_or_factory",
-        factory=BayBECriterionFactory,
+        factory=BayBEFitCriterionFactory,
         converter=partial(  # type: ignore[misc]
             to_component_factory, component_type=GPComponentType.CRITERION
         ),
         validator=is_callable(),
     )
-    """The optimization criterion for hyperparameter selection.
+    """The fitting criterion for Gaussian process hyperparameter optimization.
 
     Accepts:
-        * :class:`.components.criterion.Criterion`
-        * :class:`.components.criterion.CriterionFactoryProtocol`
+        * :class:`.components.criterion.FitCriterion`
+        * :class:`.components.criterion.FitCriterionFactoryProtocol`
     """
 
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
@@ -215,7 +215,7 @@ class GaussianProcessSurrogate(Surrogate):
         likelihood_or_factory: LikelihoodFactoryProtocol
         | GPyTorchLikelihood
         | None = None,
-        criterion_or_factory: Criterion | CriterionFactoryProtocol | None = None,
+        criterion_or_factory: FitCriterion | FitCriterionFactoryProtocol | None = None,
     ) -> Self:
         """Create a Gaussian process surrogate from one of the defined presets."""
         preset = GaussianProcessPreset(preset)
@@ -230,7 +230,9 @@ class GaussianProcessSurrogate(Surrogate):
         likelihood = likelihood_or_factory or getattr(
             module, "PRESET_LIKELIHOOD_FACTORY"
         )
-        criterion = criterion_or_factory or getattr(module, "PRESET_CRITERION_FACTORY")
+        criterion = criterion_or_factory or getattr(
+            module, "PRESET_FIT_CRITERION_FACTORY"
+        )
 
         return cls(kernel, mean, likelihood, criterion)
 
@@ -324,7 +326,9 @@ class GaussianProcessSurrogate(Surrogate):
             to_string("Kernel factory", self.kernel_factory, single_line=True),
             to_string("Mean factory", self.mean_factory, single_line=True),
             to_string("Likelihood factory", self.likelihood_factory, single_line=True),
-            to_string("Criterion factory", self.criterion_factory, single_line=True),
+            to_string(
+                "Fit criterion factory", self.criterion_factory, single_line=True
+            ),
         ]
         return to_string(super().__str__(), *fields)
 

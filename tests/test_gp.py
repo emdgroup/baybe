@@ -14,7 +14,7 @@ from pytest import param
 from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.surrogates.gaussian_process.components.criterion import Criterion
+from baybe.surrogates.gaussian_process.components.criterion import FitCriterion
 from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
@@ -90,7 +90,7 @@ def test_presets(preset: GaussianProcessPreset):
     kernel = GPyTorchMaternKernel()
     mean = ConstantMean()
     likelihood = GaussianLikelihood()
-    criterion = Criterion.LEAVE_ONE_OUT
+    criterion = FitCriterion.LEAVE_ONE_OUT
 
     # Works without overrides ...
     gp1 = GaussianProcessSurrogate.from_preset(preset)
@@ -125,6 +125,6 @@ def test_invalid_components():
     with pytest.raises(TypeError, match="Component must be one of"):
         GaussianProcessSurrogate(mean_or_factory=GaussianLikelihood())
     with pytest.raises(TypeError, match="Component must be one of"):
-        GaussianProcessSurrogate(likelihood_or_factory=Criterion.LEAVE_ONE_OUT)
+        GaussianProcessSurrogate(likelihood_or_factory=FitCriterion.LEAVE_ONE_OUT)
     with pytest.raises(TypeError, match="Component must be one of"):
         GaussianProcessSurrogate(criterion_or_factory=MaternKernel())

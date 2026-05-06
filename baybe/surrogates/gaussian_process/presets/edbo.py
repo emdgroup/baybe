@@ -22,8 +22,8 @@ from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.surrogates.gaussian_process.components.criterion import (
-    Criterion,
-    PlainCriterionFactory,
+    FitCriterion,
+    PlainFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
     _PureKernelFactory,
@@ -180,8 +180,8 @@ class EDBOLikelihoodFactory(LikelihoodFactoryProtocol):
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
-EDBOCriterionFactory = PlainCriterionFactory(Criterion.MARGINAL_LOG_LIKELIHOOD)
-"""A factory providing optimization criteria for the EDBO preset."""
+EDBOFitCriterionFactory = PlainFitCriterionFactory(FitCriterion.MARGINAL_LOG_LIKELIHOOD)
+"""A factory providing fitting criteria for the EDBO preset."""
 
 gc.collect()
 
@@ -189,4 +189,4 @@ gc.collect()
 PRESET_KERNEL_FACTORY = EDBOKernelFactory()
 PRESET_MEAN_FACTORY = EDBOMeanFactory()
 PRESET_LIKELIHOOD_FACTORY = EDBOLikelihoodFactory()
-PRESET_CRITERION_FACTORY = EDBOCriterionFactory
+PRESET_FIT_CRITERION_FACTORY = EDBOFitCriterionFactory

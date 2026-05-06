@@ -19,8 +19,8 @@ from baybe.parameters.selectors import (
 )
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.components.criterion import (
-    Criterion,
-    PlainCriterionFactory,
+    FitCriterion,
+    PlainFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
     _PureKernelFactory,
@@ -72,8 +72,8 @@ class CHENKernelFactory(_PureKernelFactory):
         )
 
 
-CHENCriterionFactory = PlainCriterionFactory(Criterion.MARGINAL_LOG_LIKELIHOOD)
-"""A factory providing optimization criteria for the CHEN preset."""
+CHENFitCriterionFactory = PlainFitCriterionFactory(FitCriterion.MARGINAL_LOG_LIKELIHOOD)
+"""A factory providing fitting criteria for the CHEN preset."""
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
@@ -82,4 +82,4 @@ gc.collect()
 PRESET_KERNEL_FACTORY = CHENKernelFactory()
 PRESET_MEAN_FACTORY = LazyConstantMeanFactory()
 PRESET_LIKELIHOOD_FACTORY = LazyGaussianLikelihoodFactory()
-PRESET_CRITERION_FACTORY = CHENCriterionFactory
+PRESET_FIT_CRITERION_FACTORY = CHENFitCriterionFactory

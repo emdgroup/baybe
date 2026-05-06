@@ -1,11 +1,11 @@
 """Gaussian process surrogate presets."""
 
 # Criterion
-from baybe.surrogates.gaussian_process.components.criterion import Criterion
+from baybe.surrogates.gaussian_process.components.criterion import FitCriterion
 
 # Default preset
 from baybe.surrogates.gaussian_process.presets.baybe import (
-    BayBECriterionFactory,
+    BayBEFitCriterionFactory,
     BayBEKernelFactory,
     BayBELikelihoodFactory,
     BayBEMeanFactory,
@@ -13,7 +13,7 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
 
 # Chen preset
 from baybe.surrogates.gaussian_process.presets.chen import (
-    CHENCriterionFactory,
+    CHENFitCriterionFactory,
     CHENKernelFactory,
 )
 
@@ -22,7 +22,7 @@ from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
 
 # EDBO preset
 from baybe.surrogates.gaussian_process.presets.edbo import (
-    EDBOCriterionFactory,
+    EDBOFitCriterionFactory,
     EDBOKernelFactory,
     EDBOLikelihoodFactory,
     EDBOMeanFactory,
@@ -30,7 +30,7 @@ from baybe.surrogates.gaussian_process.presets.edbo import (
 
 # Smoothed EDBO preset
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
-    SmoothedEDBOCriterionFactory,
+    SmoothedEDBOFitCriterionFactory,
     SmoothedEDBOKernelFactory,
     SmoothedEDBOLikelihoodFactory,
     SmoothedEDBOMeanFactory,
@@ -38,23 +38,23 @@ from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
 
 __all__ = [
     # Core
-    "Criterion",
+    "FitCriterion",
     "GaussianProcessPreset",
     # Default BayBE preset
-    "BayBECriterionFactory",
+    "BayBEFitCriterionFactory",
     "BayBEKernelFactory",
     "BayBELikelihoodFactory",
     "BayBEMeanFactory",
     # Chen preset
-    "CHENCriterionFactory",
+    "CHENFitCriterionFactory",
     "CHENKernelFactory",
     # EDBO preset
-    "EDBOCriterionFactory",
+    "EDBOFitCriterionFactory",
     "EDBOKernelFactory",
     "EDBOLikelihoodFactory",
     "EDBOMeanFactory",
     # Smoothed EDBO preset
-    "SmoothedEDBOCriterionFactory",
+    "SmoothedEDBOFitCriterionFactory",
     "SmoothedEDBOKernelFactory",
     "SmoothedEDBOLikelihoodFactory",
     "SmoothedEDBOMeanFactory",

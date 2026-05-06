@@ -18,8 +18,8 @@ from baybe.parameters.selectors import (
 )
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.criterion import (
-    Criterion,
-    CriterionFactoryProtocol,
+    FitCriterion,
+    FitCriterionFactoryProtocol,
 )
 from baybe.surrogates.gaussian_process.components.kernel import _PureKernelFactory
 from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
@@ -91,17 +91,17 @@ BayBELikelihoodFactory = SmoothedEDBOLikelihoodFactory
 
 
 @define
-class BayBECriterionFactory(CriterionFactoryProtocol):
-    """The factory providing the default optimization criterion for Gaussian process surrogates."""  # noqa: E501
+class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
+    """The factory providing the default fitting criterion for Gaussian process surrogates."""  # noqa: E501
 
     @override
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Criterion:
+    ) -> FitCriterion:
         return (
-            Criterion.MARGINAL_LOG_LIKELIHOOD
+            FitCriterion.MARGINAL_LOG_LIKELIHOOD
             if searchspace.task_idx is None
-            else Criterion.LEAVE_ONE_OUT
+            else FitCriterion.LEAVE_ONE_OUT
         )
 
 
@@ -109,4 +109,4 @@ class BayBECriterionFactory(CriterionFactoryProtocol):
 PRESET_KERNEL_FACTORY = BayBEKernelFactory()
 PRESET_MEAN_FACTORY = BayBEMeanFactory()
 PRESET_LIKELIHOOD_FACTORY = BayBELikelihoodFactory()
-PRESET_CRITERION_FACTORY = BayBECriterionFactory()
+PRESET_FIT_CRITERION_FACTORY = BayBEFitCriterionFactory()

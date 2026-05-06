@@ -23,10 +23,10 @@ if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
-    from baybe.surrogates.gaussian_process.components.criterion import Criterion
+    from baybe.surrogates.gaussian_process.components.criterion import FitCriterion
 
     GPyTorchGPComponent: TypeAlias = GPyTorchKernel | GPyTorchMean | GPyTorchLikelihood
-    GPComponent: TypeAlias = BayBEGPComponent | GPyTorchGPComponent | Criterion
+    GPComponent: TypeAlias = BayBEGPComponent | GPyTorchGPComponent | FitCriterion
 else:
     # At runtime, we use only the BayBE types for serialization compatibility
     GPComponent: TypeAlias = BayBEGPComponent
@@ -47,7 +47,7 @@ class GPComponentType(Enum):
     """Gaussian process likelihood."""
 
     CRITERION = "CRITERION"
-    """Gaussian process optimization criterion."""
+    """Gaussian process fitting criterion."""
 
     def get_types(self) -> tuple[type, ...]:
         """Get the accepted BayBE and GPyTorch types for this component."""
@@ -60,10 +60,10 @@ class GPComponentType(Enum):
             types.append(Kernel)
         elif self is GPComponentType.CRITERION:
             from baybe.surrogates.gaussian_process.components.criterion import (
-                Criterion,
+                FitCriterion,
             )
 
-            types.append(Criterion)
+            types.append(FitCriterion)
 
         # Add GPyTorch type if available
         if sys.modules.get("gpytorch") is not None:
