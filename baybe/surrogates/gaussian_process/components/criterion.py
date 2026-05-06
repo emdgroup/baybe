@@ -5,11 +5,6 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from baybe.surrogates.gaussian_process.components.generic import (
-    GPComponentFactoryProtocol,
-    PlainGPComponentFactory,
-)
-
 if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.mlls import MarginalLogLikelihood
@@ -37,6 +32,12 @@ class FitCriterion(Enum):
         }[self]
         return mll_class(likelihood, model)
 
+
+# Delayed import to avoid circular dependency
+from baybe.surrogates.gaussian_process.components.generic import (  # noqa: E402
+    GPComponentFactoryProtocol,
+    PlainGPComponentFactory,
+)
 
 FitCriterionFactoryProtocol = GPComponentFactoryProtocol[FitCriterion]
 """A protocol defining the interface for fit criterion factories."""

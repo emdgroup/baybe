@@ -14,8 +14,9 @@ from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import block_serialization_hook, converter
 from baybe.serialization.mixin import SerialMixin
+from baybe.surrogates.gaussian_process.components.criterion import FitCriterion
 
-BayBEGPComponent: TypeAlias = Kernel
+BayBEGPComponent: TypeAlias = Kernel | FitCriterion
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
@@ -23,10 +24,8 @@ if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
-    from baybe.surrogates.gaussian_process.components.criterion import FitCriterion
-
     GPyTorchGPComponent: TypeAlias = GPyTorchKernel | GPyTorchMean | GPyTorchLikelihood
-    GPComponent: TypeAlias = BayBEGPComponent | GPyTorchGPComponent | FitCriterion
+    GPComponent: TypeAlias = BayBEGPComponent | GPyTorchGPComponent
 else:
     # At runtime, we use only the BayBE types for serialization compatibility
     GPComponent: TypeAlias = BayBEGPComponent
