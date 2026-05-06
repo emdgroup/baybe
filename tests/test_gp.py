@@ -14,6 +14,7 @@ from pytest import param
 from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.surrogates.gaussian_process.components.criterion import Criterion
 from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
@@ -89,24 +90,32 @@ def test_presets(preset: GaussianProcessPreset):
     kernel = GPyTorchMaternKernel()
     mean = ConstantMean()
     likelihood = GaussianLikelihood()
+    criterion = Criterion.LEAVE_ONE_OUT
 
     # Works without overrides ...
-    GaussianProcessSurrogate.from_preset(preset)
+    gp1 = GaussianProcessSurrogate.from_preset(preset)
 
     # ... and with overrides
-    gp = GaussianProcessSurrogate.from_preset(
+    gp2 = GaussianProcessSurrogate.from_preset(
         preset,
         kernel_or_factory=kernel,
         mean_or_factory=mean,
         likelihood_or_factory=likelihood,
+        criterion_or_factory=criterion,
     )
-    assert isinstance(gp.kernel_factory, PlainGPComponentFactory)
-    assert gp.kernel_factory.component is kernel
-    assert isinstance(gp.mean_factory, PlainGPComponentFactory)
-    assert gp.mean_factory.component is mean
-    assert isinstance(gp.likelihood_factory, PlainGPComponentFactory)
-    assert gp.likelihood_factory.component is likelihood
-    gp.fit(searchspace, objective, measurements)
+
+    # Check that the overrides were applied correctly
+    assert isinstance(gp2.kernel_factory, PlainGPComponentFactory)
+    assert gp2.kernel_factory.component is kernel
+    assert isinstance(gp2.mean_factory, PlainGPComponentFactory)
+    assert gp2.mean_factory.component is mean
+    assert isinstance(gp2.likelihood_factory, PlainGPComponentFactory)
+    assert gp2.likelihood_factory.component is likelihood
+    assert isinstance(gp2.criterion_factory, PlainGPComponentFactory)
+    assert gp2.criterion_factory.component == criterion
+    assert gp2.criterion_factory != gp1.criterion_factory
+
+    gp2.fit(searchspace, objective, measurements)
 
 
 def test_invalid_components():
@@ -116,4 +125,6 @@ def test_invalid_components():
     with pytest.raises(TypeError, match="Component must be one of"):
         GaussianProcessSurrogate(mean_or_factory=GaussianLikelihood())
     with pytest.raises(TypeError, match="Component must be one of"):
-        GaussianProcessSurrogate(likelihood_or_factory=MaternKernel())
+        GaussianProcessSurrogate(likelihood_or_factory=Criterion.LEAVE_ONE_OUT)
+    with pytest.raises(TypeError, match="Component must be one of"):
+        GaussianProcessSurrogate(criterion_or_factory=MaternKernel())
