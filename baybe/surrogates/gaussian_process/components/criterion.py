@@ -17,7 +17,7 @@ class FitCriterion(Enum):
     MARGINAL_LOG_LIKELIHOOD = "MARGINAL_LOG_LIKELIHOOD"
     """Exact marginal log-likelihood."""
 
-    LEAVE_ONE_OUT = "LEAVE_ONE_OUT"
+    LEAVE_ONE_OUT_PSEUDOLIKELIHOOD = "LEAVE_ONE_OUT_PSEUDOLIKELIHOOD"
     """Leave-one-out cross-validation pseudo-likelihood."""
 
     def to_gpytorch(
@@ -28,7 +28,7 @@ class FitCriterion(Enum):
 
         mll_class = {
             FitCriterion.MARGINAL_LOG_LIKELIHOOD: gpytorch.ExactMarginalLogLikelihood,
-            FitCriterion.LEAVE_ONE_OUT: gpytorch.mlls.LeaveOneOutPseudoLikelihood,
+            FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD: gpytorch.mlls.LeaveOneOutPseudoLikelihood,  # noqa: E501
         }[self]
         return mll_class(likelihood, model)
 

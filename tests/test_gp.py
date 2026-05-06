@@ -90,7 +90,7 @@ def test_presets(preset: GaussianProcessPreset):
     kernel = GPyTorchMaternKernel()
     mean = ConstantMean()
     likelihood = GaussianLikelihood()
-    criterion = FitCriterion.LEAVE_ONE_OUT
+    criterion = FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
 
     # Works without overrides ...
     gp1 = GaussianProcessSurrogate.from_preset(preset)
@@ -125,6 +125,8 @@ def test_invalid_components():
     with pytest.raises(TypeError, match="Component must be one of"):
         GaussianProcessSurrogate(mean_or_factory=GaussianLikelihood())
     with pytest.raises(TypeError, match="Component must be one of"):
-        GaussianProcessSurrogate(likelihood_or_factory=FitCriterion.LEAVE_ONE_OUT)
+        GaussianProcessSurrogate(
+            likelihood_or_factory=FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
+        )
     with pytest.raises(TypeError, match="Component must be one of"):
         GaussianProcessSurrogate(criterion_or_factory=MaternKernel())
