@@ -78,8 +78,8 @@ CHENCriterionFactory = PlainCriterionFactory(Criterion.MARGINAL_LOG_LIKELIHOOD)
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
 
-# Aliases for generic preset imports
-PresetKernelFactory = CHENKernelFactory
-PresetMeanFactory = LazyConstantMeanFactory
-PresetLikelihoodFactory = LazyGaussianLikelihoodFactory
-PresetCriterionFactory = CHENCriterionFactory
+# Preset defaults
+PRESET_KERNEL_FACTORY = CHENKernelFactory()
+PRESET_MEAN_FACTORY = LazyConstantMeanFactory()
+PRESET_LIKELIHOOD_FACTORY = LazyGaussianLikelihoodFactory()
+PRESET_CRITERION_FACTORY = CHENCriterionFactory

@@ -185,8 +185,8 @@ EDBOCriterionFactory = PlainCriterionFactory(Criterion.MARGINAL_LOG_LIKELIHOOD)
 
 gc.collect()
 
-# Aliases for generic preset imports
-PresetKernelFactory = EDBOKernelFactory
-PresetMeanFactory = EDBOMeanFactory
-PresetLikelihoodFactory = EDBOLikelihoodFactory
-PresetCriterionFactory = EDBOCriterionFactory
+# Preset defaults
+PRESET_KERNEL_FACTORY = EDBOKernelFactory()
+PRESET_MEAN_FACTORY = EDBOMeanFactory()
+PRESET_LIKELIHOOD_FACTORY = EDBOLikelihoodFactory()
+PRESET_CRITERION_FACTORY = EDBOCriterionFactory

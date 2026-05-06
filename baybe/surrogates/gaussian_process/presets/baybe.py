@@ -105,8 +105,8 @@ class BayBECriterionFactory(CriterionFactoryProtocol):
         )
 
 
-# Aliases for generic preset imports
-PresetKernelFactory = BayBEKernelFactory
-PresetMeanFactory = BayBEMeanFactory
-PresetLikelihoodFactory = BayBELikelihoodFactory
-PresetCriterionFactory = BayBECriterionFactory
+# Preset defaults
+PRESET_KERNEL_FACTORY = BayBEKernelFactory()
+PRESET_MEAN_FACTORY = BayBEMeanFactory()
+PRESET_LIKELIHOOD_FACTORY = BayBELikelihoodFactory()
+PRESET_CRITERION_FACTORY = BayBECriterionFactory()

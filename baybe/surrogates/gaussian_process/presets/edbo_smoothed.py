@@ -136,8 +136,8 @@ SmoothedEDBOCriterionFactory = PlainCriterionFactory(Criterion.MARGINAL_LOG_LIKE
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
 
-# Aliases for generic preset imports
-PresetKernelFactory = SmoothedEDBOKernelFactory
-PresetMeanFactory = SmoothedEDBOMeanFactory
-PresetLikelihoodFactory = SmoothedEDBOLikelihoodFactory
-PresetCriterionFactory = SmoothedEDBOCriterionFactory
+# Preset defaults
+PRESET_KERNEL_FACTORY = SmoothedEDBOKernelFactory()
+PRESET_MEAN_FACTORY = SmoothedEDBOMeanFactory()
+PRESET_LIKELIHOOD_FACTORY = SmoothedEDBOLikelihoodFactory()
+PRESET_CRITERION_FACTORY = SmoothedEDBOCriterionFactory
