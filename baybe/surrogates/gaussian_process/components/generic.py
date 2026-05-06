@@ -96,13 +96,7 @@ def _is_gpytorch_component_class(obj: Any, /) -> bool:
 
 def _validate_component(instance: Any, attribute: Attribute, value: Any) -> None:
     """Validate that an object is a BayBE or a GPyTorch GP component."""
-    from baybe.surrogates.gaussian_process.components.criterion import Criterion
-
-    if (
-        isinstance(value, Kernel)
-        or isinstance(value, Criterion)
-        or _is_gpytorch_component_class(type(value))
-    ):
+    if isinstance(value, BayBEGPComponent) or _is_gpytorch_component_class(type(value)):
         return
 
     raise TypeError(
@@ -153,13 +147,7 @@ def to_component_factory(
     Raises:
         TypeError: If the given component does not match the allowed types.
     """
-    from baybe.surrogates.gaussian_process.components.criterion import Criterion
-
-    if (
-        isinstance(obj, BayBEGPComponent)
-        or isinstance(obj, Criterion)
-        or _is_gpytorch_component_class(type(obj))
-    ):
+    if isinstance(obj, BayBEGPComponent) or _is_gpytorch_component_class(type(obj)):
         if component_type is not None:
             allowed_types = component_type.get_types()
             if not isinstance(obj, allowed_types):
