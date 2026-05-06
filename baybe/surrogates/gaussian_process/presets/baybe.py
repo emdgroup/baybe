@@ -17,6 +17,10 @@ from baybe.parameters.selectors import (
     to_parameter_selector,
 )
 from baybe.searchspace.core import SearchSpace
+from baybe.surrogates.gaussian_process.components.criterion import (
+    Criterion,
+    CriterionFactoryProtocol,
+)
 from baybe.surrogates.gaussian_process.components.kernel import _PureKernelFactory
 from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
@@ -85,7 +89,24 @@ BayBEMeanFactory = LazyConstantMeanFactory
 BayBELikelihoodFactory = SmoothedEDBOLikelihoodFactory
 """The factory providing the default likelihood for Gaussian process surrogates."""
 
+
+@define
+class BayBECriterionFactory(CriterionFactoryProtocol):
+    """The factory providing the default optimization criterion for Gaussian process surrogates."""  # noqa: E501
+
+    @override
+    def __call__(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> Criterion:
+        return (
+            Criterion.MARGINAL_LOG_LIKELIHOOD
+            if searchspace.task_idx is None
+            else Criterion.LEAVE_ONE_OUT
+        )
+
+
 # Aliases for generic preset imports
 PresetKernelFactory = BayBEKernelFactory
 PresetMeanFactory = BayBEMeanFactory
 PresetLikelihoodFactory = BayBELikelihoodFactory
+PresetCriterionFactory = BayBECriterionFactory

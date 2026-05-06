@@ -14,6 +14,7 @@ from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import block_serialization_hook, converter
 from baybe.serialization.mixin import SerialMixin
+from baybe.surrogates.gaussian_process.components.criterion import Criterion
 
 BayBEGPComponent: TypeAlias = Kernel
 
@@ -23,8 +24,10 @@ if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
+    from baybe.surrogates.gaussian_process.components.criterion import Criterion
+
     GPyTorchGPComponent: TypeAlias = GPyTorchKernel | GPyTorchMean | GPyTorchLikelihood
-    GPComponent: TypeAlias = BayBEGPComponent | GPyTorchGPComponent
+    GPComponent: TypeAlias = BayBEGPComponent | GPyTorchGPComponent | Criterion
 else:
     # At runtime, we use only the BayBE types for serialization compatibility
     GPComponent: TypeAlias = BayBEGPComponent
@@ -44,6 +47,9 @@ class GPComponentType(Enum):
     LIKELIHOOD = "LIKELIHOOD"
     """Gaussian process likelihood."""
 
+    CRITERION = "CRITERION"
+    """Gaussian process optimization criterion."""
+
     def get_types(self) -> tuple[type, ...]:
         """Get the accepted BayBE and GPyTorch types for this component."""
         types = []
@@ -53,6 +59,12 @@ class GPComponentType(Enum):
             from baybe.kernels.base import Kernel
 
             types.append(Kernel)
+        elif self is GPComponentType.CRITERION:
+            from baybe.surrogates.gaussian_process.components.criterion import (
+                Criterion,
+            )
+
+            types.append(Criterion)
 
         # Add GPyTorch type if available
         if sys.modules.get("gpytorch") is not None:
@@ -85,7 +97,11 @@ def _is_gpytorch_component_class(obj: Any, /) -> bool:
 
 def _validate_component(instance: Any, attribute: Attribute, value: Any) -> None:
     """Validate that an object is a BayBE or a GPyTorch GP component."""
-    if isinstance(value, Kernel) or _is_gpytorch_component_class(type(value)):
+    if (
+        isinstance(value, Kernel)
+        or isinstance(value, Criterion)
+        or _is_gpytorch_component_class(type(value))
+    ):
         return
 
     raise TypeError(
@@ -136,7 +152,11 @@ def to_component_factory(
     Raises:
         TypeError: If the given component does not match the allowed types.
     """
-    if isinstance(obj, BayBEGPComponent) or _is_gpytorch_component_class(type(obj)):
+    if (
+        isinstance(obj, BayBEGPComponent)
+        or isinstance(obj, Criterion)
+        or _is_gpytorch_component_class(type(obj))
+    ):
         if component_type is not None:
             allowed_types = component_type.get_types()
             if not isinstance(obj, allowed_types):

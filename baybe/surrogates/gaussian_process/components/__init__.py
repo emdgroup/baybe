@@ -1,5 +1,10 @@
 """Gaussian process surrogate components."""
 
+from baybe.surrogates.gaussian_process.components.criterion import (
+    Criterion,
+    CriterionFactoryProtocol,
+    PlainCriterionFactory,
+)
 from baybe.surrogates.gaussian_process.components.kernel import (
     KernelFactoryProtocol,
     PlainKernelFactory,
@@ -15,6 +20,10 @@ from baybe.surrogates.gaussian_process.components.mean import (
 )
 
 __all__ = [
+    # Criterion
+    "Criterion",
+    "CriterionFactoryProtocol",
+    "PlainCriterionFactory",
     # Kernel
     "KernelFactoryProtocol",
     "PlainKernelFactory",
