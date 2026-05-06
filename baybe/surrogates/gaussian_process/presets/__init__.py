@@ -1,7 +1,7 @@
 """Gaussian process surrogate presets."""
 
 # Criterion
-from baybe.surrogates.gaussian_process.components.criterion import FitCriterion
+from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriterion
 
 # Default preset
 from baybe.surrogates.gaussian_process.presets.baybe import (

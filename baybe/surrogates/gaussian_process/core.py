@@ -19,7 +19,7 @@ from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.gaussian_process.components.criterion import (
+from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     FitCriterionFactoryProtocol,
 )
@@ -194,8 +194,8 @@ class GaussianProcessSurrogate(Surrogate):
     """The fitting criterion for Gaussian process hyperparameter optimization.
 
     Accepts:
-        * :class:`.components.criterion.FitCriterion`
-        * :class:`.components.criterion.FitCriterionFactoryProtocol`
+        * :class:`.components.fit_criterion.FitCriterion`
+        * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
     """
 
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently

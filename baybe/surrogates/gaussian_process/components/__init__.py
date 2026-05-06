@@ -1,6 +1,6 @@
 """Gaussian process surrogate components."""
 
-from baybe.surrogates.gaussian_process.components.criterion import (
+from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     FitCriterionFactoryProtocol,
     PlainFitCriterionFactory,

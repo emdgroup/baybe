@@ -14,7 +14,7 @@ from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import block_serialization_hook, converter
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.gaussian_process.components.criterion import FitCriterion
+from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriterion
 
 BayBEGPComponent: TypeAlias = Kernel | FitCriterion
 
@@ -58,7 +58,7 @@ class GPComponentType(Enum):
 
             types.append(Kernel)
         elif self is GPComponentType.CRITERION:
-            from baybe.surrogates.gaussian_process.components.criterion import (
+            from baybe.surrogates.gaussian_process.components.fit_criterion import (
                 FitCriterion,
             )
 

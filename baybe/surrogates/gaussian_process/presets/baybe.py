@@ -17,7 +17,7 @@ from baybe.parameters.selectors import (
     to_parameter_selector,
 )
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.components.criterion import (
+from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     FitCriterionFactoryProtocol,
 )
