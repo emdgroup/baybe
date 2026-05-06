@@ -14,7 +14,6 @@ from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import block_serialization_hook, converter
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.gaussian_process.components.criterion import Criterion
 
 BayBEGPComponent: TypeAlias = Kernel
 
@@ -97,6 +96,8 @@ def _is_gpytorch_component_class(obj: Any, /) -> bool:
 
 def _validate_component(instance: Any, attribute: Attribute, value: Any) -> None:
     """Validate that an object is a BayBE or a GPyTorch GP component."""
+    from baybe.surrogates.gaussian_process.components.criterion import Criterion
+
     if (
         isinstance(value, Kernel)
         or isinstance(value, Criterion)
@@ -152,6 +153,8 @@ def to_component_factory(
     Raises:
         TypeError: If the given component does not match the allowed types.
     """
+    from baybe.surrogates.gaussian_process.components.criterion import Criterion
+
     if (
         isinstance(obj, BayBEGPComponent)
         or isinstance(obj, Criterion)
