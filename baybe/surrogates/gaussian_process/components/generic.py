@@ -51,7 +51,7 @@ class GPComponentType(Enum):
 
     def get_types(self) -> tuple[type, ...]:
         """Get the accepted BayBE and GPyTorch types for this component."""
-        types = []
+        types: list[type[GPComponent]] = []
 
         # Add BayBE type if applicable
         if self is GPComponentType.KERNEL:
