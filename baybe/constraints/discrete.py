@@ -428,7 +428,7 @@ class DiscreteCustomConstraint(DiscreteConstraint):
 
 @define
 class DiscreteBatchConstraint(DiscreteConstraint):
-    """Constraint ensuring all batch recommendations share the same parameter value.
+    """Constraint ensuring recommendations in a batch share certain parameter values.
 
     When this constraint is active, the recommender internally partitions the
     candidate set into partitions (one for each unique value of the constrained
