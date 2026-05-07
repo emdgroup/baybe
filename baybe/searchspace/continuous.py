@@ -110,9 +110,7 @@ class SubspaceContinuous(SerialMixin):
         return to_string(self.__class__.__name__, *fields)
 
     @property
-    def constraints_cardinality(
-        self,
-    ) -> tuple[ContinuousCardinalityConstraint, ...]:
+    def constraints_cardinality(self) -> tuple[ContinuousCardinalityConstraint, ...]:
         """The cardinality constraints of the subspace."""
         return tuple(
             c
