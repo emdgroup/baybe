@@ -464,7 +464,7 @@ class DiscreteBatchConstraint(DiscreteConstraint):
             )
 
     @override
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         # Always returns an empty index because this constraint operates at the
         # batch level, not the row level. Individual rows are never invalid; the
         # constraint is enforced at recommendation time by partitioning candidates
@@ -534,6 +534,7 @@ DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscreteCustomConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteDependenciesConstraint,
+    DiscreteBatchConstraint,
 )
 
 # Prevent (de-)serialization of custom constraints
