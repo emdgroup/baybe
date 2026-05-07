@@ -485,7 +485,7 @@ class DiscreteBatchConstraint(DiscreteConstraint):
     def partition_masks(
         self, candidates_exp: pd.DataFrame, /
     ) -> list[npt.NDArray[np.bool_]]:
-        """Return boolean masks defining the partitions for this constraint.
+        """Return Boolean masks defining the partitions for this constraint.
 
         Each mask selects the rows in ``candidates_exp`` that belong to one
         partition, i.e. share the same value for the constrained parameter.
@@ -494,7 +494,7 @@ class DiscreteBatchConstraint(DiscreteConstraint):
             candidates_exp: The experimental representation of candidate points.
 
         Returns:
-            A list of boolean masks, one per unique value of the constrained
+            A list of Boolean masks, one per unique value of the constrained
             parameter.
         """
         param = self.parameters[0]
