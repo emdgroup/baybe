@@ -45,17 +45,17 @@ class SingleTargetObjective(Objective):
             to_string("Targets", pretty_print_df(targets_df)),
         ]
 
+        if self.outcome_constraints:
+            constraints_str = "\n".join(str(c) for c in self.outcome_constraints)
+            fields.append(to_string("Outcome Constraints", constraints_str))
+
         return to_string("Objective", *fields)
 
     @override
     @property
-    def targets(self) -> tuple[Target, ...]:
+    def _optimization_targets(self) -> tuple[Target, ...]:
+        """Only the optimization targets."""
         return (self._target,)
-
-    @override
-    @property
-    def output_names(self) -> tuple[str, ...]:
-        return (self._target.name,)
 
     @override
     @property
@@ -75,6 +75,7 @@ class SingleTargetObjective(Objective):
 
     @override
     def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
+        self._check_posterior_transform_constraint_support()
         if not (
             isinstance((t := self._target), NumericalTarget)
             and isinstance(

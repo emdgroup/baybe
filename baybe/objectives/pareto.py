@@ -11,6 +11,7 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.objectives.validation import validate_target_names
+from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
 
@@ -35,13 +36,9 @@ class ParetoObjective(Objective):
 
     @override
     @property
-    def targets(self) -> tuple[NumericalTarget, ...]:
+    def _optimization_targets(self) -> tuple[Target, ...]:
+        """Only the targets being optimized."""
         return self._targets
-
-    @override
-    @property
-    def output_names(self) -> tuple[str, ...]:
-        return tuple(target.name for target in self.targets)
 
     @override
     @property
