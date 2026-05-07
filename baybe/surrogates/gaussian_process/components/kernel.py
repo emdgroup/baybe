@@ -134,11 +134,15 @@ def _enable_transfer_learning(
     automatically composes its kernel with BayBE's default task kernel.
     Otherwise, the factory behaves unchanged.
 
+    When used as a decorator (without ``name``), the class is modified in-place.
+    When called with a ``name`` argument, a new subclass is created so that the
+    original class remains unmodified. The latter form is intended for cases where
+    the original class is reused independently elsewhere.
+
     Args:
         cls: The kernel factory class to decorate.
-        name: Optional name for the created class. Defaults to ``cls.__name__``.
-            Useful when calling the function directly (as opposed to using it as a
-            decorator) and assigning the result to a different name.
+        name: Optional name for the created class. If provided, a new subclass is
+            created instead of modifying ``cls`` in-place.
 
     Raises:
         TypeError: If the factory already supports task parameters.
@@ -149,8 +153,14 @@ def _enable_transfer_learning(
     if cls._supported_parameter_kinds & _ParameterKind.TASK:
         raise TypeError(f"'{cls.__name__}' already supports task parameters.")
 
-    # Create a subclass so the original class remains unmodified
-    new_cls = type(name or cls.__name__, (cls,), {"__doc__": cls.__doc__})
+    # This distinction is important for serialization so that the classes can be
+    # correctly identified by their names in the subclass registry
+    if name is not None:
+        # Create a subclass so the original class remains unmodified
+        target_cls = type(name, (cls,), {"__doc__": cls.__doc__})
+    else:
+        # Modify the class in-place (avoids name collision in subclass registry)
+        target_cls = cls
 
     original_call = cls.__call__
     original_supported_kinds = cls._supported_parameter_kinds
@@ -161,8 +171,8 @@ def _enable_transfer_learning(
         # Temporarily narrow the supported parameter kinds to those of the original
         # class. If the decorator logic is correct, the original factory should never
         # see the extended scope, but this acts as a sanity check to prevent regressions
-        broadened_kinds = new_cls._supported_parameter_kinds
-        new_cls._supported_parameter_kinds = original_supported_kinds
+        broadened_kinds = target_cls._supported_parameter_kinds
+        target_cls._supported_parameter_kinds = original_supported_kinds
 
         # Split off the task parameters
         original_selector = self.parameter_selector
@@ -175,7 +185,7 @@ def _enable_transfer_learning(
         try:
             base_kernel = original_call(self, searchspace, train_x, train_y)
         finally:
-            new_cls._supported_parameter_kinds = broadened_kinds
+            target_cls._supported_parameter_kinds = broadened_kinds
             self.parameter_selector = original_selector
 
         if searchspace.task_idx is not None:
@@ -183,11 +193,11 @@ def _enable_transfer_learning(
             return icm(searchspace, train_x, train_y)
         return base_kernel
 
-    new_cls.__call__ = __call__  # type: ignore[method-assign]
-    new_cls._supported_parameter_kinds = (
+    target_cls.__call__ = __call__  # type: ignore[method-assign]
+    target_cls._supported_parameter_kinds = (
         cls._supported_parameter_kinds | _ParameterKind.TASK
     )
-    return new_cls
+    return target_cls
 
 
 @define
