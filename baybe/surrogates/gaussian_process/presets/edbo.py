@@ -116,8 +116,8 @@ class EDBOKernelFactory(_PureKernelFactory):
         )
 
 
-EDBOMeanFactory = LazyConstantMeanFactory
-"""A factory providing mean functions for the EDBO preset."""
+class EDBOMeanFactory(LazyConstantMeanFactory):
+    """A factory providing mean functions for the EDBO preset."""
 
 
 @define

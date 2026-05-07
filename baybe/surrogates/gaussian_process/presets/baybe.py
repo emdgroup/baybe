@@ -33,17 +33,17 @@ if TYPE_CHECKING:
     from torch import Tensor
 
 
-_BayBENumericalKernelFactory = _SmoothedEDBONumericalKernelFactory
-"""The factory providing the default numerical kernel for Gaussian process surrogates."""  # noqa: E501
+class _BayBENumericalKernelFactory(_SmoothedEDBONumericalKernelFactory):
+    """The default numerical kernel factory for GP surrogates."""
 
 
-BayBEKernelFactory = SmoothedEDBOKernelFactory
-"""The default kernel factory for Gaussian process surrogates."""
+class BayBEKernelFactory(SmoothedEDBOKernelFactory):
+    """The default kernel factory for GP surrogates."""
 
 
 @define
 class _BayBETaskKernelFactory(_PureKernelFactory):
-    """The factory providing the default task kernel for Gaussian process surrogates."""
+    """The default task kernel factory for GP surrogates."""
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
@@ -68,11 +68,12 @@ class _BayBETaskKernelFactory(_PureKernelFactory):
         )
 
 
-BayBEMeanFactory = LazyConstantMeanFactory
-"""The factory providing the default mean function for Gaussian process surrogates."""
+class BayBEMeanFactory(LazyConstantMeanFactory):
+    """The default mean factory for GP surrogates."""
 
-BayBELikelihoodFactory = SmoothedEDBOLikelihoodFactory
-"""The factory providing the default likelihood for Gaussian process surrogates."""
+
+class BayBELikelihoodFactory(SmoothedEDBOLikelihoodFactory):
+    """The default likelihood factory for GP surrogates."""
 
 
 @define

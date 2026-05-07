@@ -86,8 +86,9 @@ Takes the low and high dimensional limits of
 and interpolates the prior moments linearly in between.
 """  # noqa: E501
 
-SmoothedEDBOMeanFactory = LazyConstantMeanFactory
-"""A factory providing mean functions for the smoothed EDBO preset."""
+
+class SmoothedEDBOMeanFactory(LazyConstantMeanFactory):
+    """A factory providing mean functions for the smoothed EDBO preset."""
 
 
 @define
