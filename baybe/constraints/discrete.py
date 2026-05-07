@@ -483,7 +483,7 @@ class DiscreteBatchConstraint(DiscreteConstraint):
         return pd.Index([])
 
     def partition_masks(
-        self, candidates_exp: pd.DataFrame
+        self, candidates_exp: pd.DataFrame, /
     ) -> list[npt.NDArray[np.bool_]]:
         """Return boolean masks defining the partitions for this constraint.
 
