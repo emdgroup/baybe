@@ -465,19 +465,10 @@ class DiscreteBatchConstraint(DiscreteConstraint):
 
     @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        """Get the indices of invalid rows.
-
-        Always returns an empty index because this constraint operates at the
-        batch level, not the row level. Individual rows are never invalid; the
-        constraint is enforced at recommendation time by partitioning candidates
-        into partitions.
-
-        Args:
-            data: A dataframe where each row represents a parameter configuration.
-
-        Returns:
-            An empty index.
-        """
+        # Always returns an empty index because this constraint operates at the
+        # batch level, not the row level. Individual rows are never invalid; the
+        # constraint is enforced at recommendation time by partitioning candidates
+        # into partitions.
         return pd.Index([])
 
     def partition_masks(
