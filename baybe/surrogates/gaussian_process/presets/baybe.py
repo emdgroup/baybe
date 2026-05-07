@@ -37,7 +37,7 @@ class _BayBENumericalKernelFactory(_SmoothedEDBONumericalKernelFactory):
     """The default numerical kernel factory for GP surrogates."""
 
 
-class BayBEKernelFactory(SmoothedEDBOKernelFactory):
+class BayBEKernelFactory(SmoothedEDBOKernelFactory):  # type: ignore[valid-type, misc]
     """The default kernel factory for GP surrogates."""
 
 

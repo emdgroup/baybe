@@ -176,8 +176,8 @@ def _enable_transfer_learning(
         # Temporarily narrow the supported parameter kinds to those of the original
         # class. If the decorator logic is correct, the original factory should never
         # see the extended scope, but this acts as a sanity check to prevent regressions
-        broadened_kinds = target_cls._supported_parameter_kinds
-        target_cls._supported_parameter_kinds = original_supported_kinds
+        broadened_kinds = target_cls._supported_parameter_kinds  # type: ignore[attr-defined]
+        target_cls._supported_parameter_kinds = original_supported_kinds  # type: ignore[attr-defined]
 
         # Split off the task parameters
         original_selector = self.parameter_selector
@@ -190,7 +190,7 @@ def _enable_transfer_learning(
         try:
             base_kernel = original_call(self, searchspace, train_x, train_y)
         finally:
-            target_cls._supported_parameter_kinds = broadened_kinds
+            target_cls._supported_parameter_kinds = broadened_kinds  # type: ignore[attr-defined]
             self.parameter_selector = original_selector
 
         if searchspace.task_idx is not None:
@@ -199,7 +199,7 @@ def _enable_transfer_learning(
         return base_kernel
 
     target_cls.__call__ = __call__  # type: ignore[method-assign]
-    target_cls._supported_parameter_kinds = (
+    target_cls._supported_parameter_kinds = (  # type: ignore[attr-defined]
         cls._supported_parameter_kinds | _ParameterKind.TASK
     )
     return target_cls
