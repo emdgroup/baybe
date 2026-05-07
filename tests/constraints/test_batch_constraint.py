@@ -1,12 +1,20 @@
 """Tests for the discrete batch constraint."""
 
+from contextlib import nullcontext
+
 import pytest
 from pytest import param
 
+from baybe.constraints import DiscreteExcludeConstraint, SubSelectionCondition
 from baybe.constraints.discrete import DiscreteBatchConstraint
-from baybe.exceptions import IncompatibilityError, InfeasibilityError
+from baybe.exceptions import (
+    IncompatibilityError,
+    InfeasibilityError,
+    UnusedObjectWarning,
+)
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders import BotorchRecommender
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
@@ -25,13 +33,14 @@ _params = [
 
 
 @pytest.mark.parametrize(
-    ("constraints", "constrained_params", "batch_size"),
+    ("constraints", "constrained_params", "batch_size", "recommender"),
     [
         param(
             [DiscreteBatchConstraint(parameters=["d0"])],
             ["d0"],
             BATCH_SIZE,
-            id="single",
+            BotorchRecommender(),
+            id="botorch-single",
         ),
         param(
             [
@@ -40,31 +49,44 @@ _params = [
             ],
             ["d0", "d1"],
             1,
-            id="multiple",
+            BotorchRecommender(),
+            id="botorch-multiple",
+        ),
+        param(
+            [DiscreteBatchConstraint(parameters=["d0"])],
+            ["d0"],
+            BATCH_SIZE,
+            RandomRecommender(),
+            id="random-single",
+        ),
+        param(
+            [
+                DiscreteBatchConstraint(parameters=["d0"]),
+                DiscreteBatchConstraint(parameters=["d1"]),
+            ],
+            ["d0", "d1"],
+            1,
+            RandomRecommender(),
+            id="random-multiple",
         ),
     ],
 )
-def test_batch_constraint_bayesian(constraints, constrained_params, batch_size):
-    """BotorchRecommender respects batch constraints."""
+def test_batch_constraint(constraints, constrained_params, batch_size, recommender):
+    """Recommenders respecting batch constraints return uniform batches."""
     searchspace = SearchSpace.from_product(_params, constraints)
     measurements = create_fake_input(_params, [TARGET], n_rows=3)
-
-    rec = BotorchRecommender().recommend(
-        batch_size, searchspace, TARGET.to_objective(), measurements
+    ctx = (
+        pytest.warns(UnusedObjectWarning)
+        if isinstance(recommender, NonPredictiveRecommender)
+        else nullcontext()
     )
+    with ctx:
+        rec = recommender.recommend(
+            batch_size, searchspace, TARGET.to_objective(), measurements
+        )
     assert rec.shape[0] == batch_size
     for p in constrained_params:
         assert rec[p].nunique() == 1
-
-
-def test_batch_constraint_random_recommender():
-    """RandomRecommender respects the batch constraint."""
-    searchspace = SearchSpace.from_product(
-        _params, [DiscreteBatchConstraint(parameters=["d0"])]
-    )
-    rec = RandomRecommender().recommend(BATCH_SIZE, searchspace)
-    assert rec["d0"].nunique() == 1
-    assert rec.shape[0] == BATCH_SIZE
 
 
 def test_batch_constraint_unsupported_recommender():
@@ -130,18 +152,31 @@ def test_batch_constraint_all_partitions_too_small():
 
 
 @pytest.mark.parametrize(
-    ("min_candidates", "expected_count"),
+    ("min_candidates", "expected_count", "constraint"),
     [
-        param(None, 3, id="no_filter"),
-        param(4, 0, id="all_skipped"),
-        param(3, 3, id="all_retained"),
+        param(None, 3, None, id="no_filter"),
+        param(4, 0, None, id="all_skipped"),
+        param(3, 3, None, id="all_retained"),
+        param(
+            2,
+            2,
+            DiscreteExcludeConstraint(
+                parameters=["d0", "d1"],
+                conditions=[
+                    SubSelectionCondition(selection=[0.0]),
+                    SubSelectionCondition(selection=[0.0, 0.5]),
+                ],
+            ),
+            id="partial",
+        ),
     ],
 )
-def test_partition_masks_min_candidates(min_candidates, expected_count):
+def test_partition_masks_min_candidates(min_candidates, expected_count, constraint):
     """Partition mask filtering by min_candidates."""
-    searchspace = SearchSpace.from_product(
-        _params, [DiscreteBatchConstraint(parameters=["d0"])]
-    )
+    constraints = [DiscreteBatchConstraint(parameters=["d0"])]
+    if constraint is not None:
+        constraints.append(constraint)
+    searchspace = SearchSpace.from_product(_params, constraints)
     masks = list(
         searchspace.discrete.partition_masks(
             searchspace.discrete.exp_rep, min_candidates=min_candidates
