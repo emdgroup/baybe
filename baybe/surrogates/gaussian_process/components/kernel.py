@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from functools import partial
@@ -115,6 +116,47 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
         """Construct the kernel."""
 
 
+def _enable_transfer_learning(
+    cls: type[_PureKernelFactory], /
+) -> type[_PureKernelFactory]:
+    """Class decorator enabling BayBE's default transfer learning mechanism.
+
+    When the search space contains a task parameter, the decorated factory
+    automatically composes its kernel with BayBE's default task kernel.
+    Otherwise, the factory behaves unchanged.
+
+    Args:
+        cls: The kernel factory class to decorate.
+
+    Raises:
+        TypeError: If the factory already supports task parameters.
+
+    Returns:
+        The decorated kernel factory class with transfer learning enabled.
+    """
+    if cls._supported_parameter_kinds & _ParameterKind.TASK:
+        raise TypeError(f"'{cls.__name__}' already supports task parameters.")
+
+    # Create a subclass so the original class remains unmodified
+    new_cls = type(cls.__name__, (cls,), {"__doc__": cls.__doc__})
+
+    original_call = cls.__call__
+
+    @functools.wraps(original_call)
+    def __call__(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor):
+        base_kernel = original_call(self, searchspace, train_x, train_y)
+        if searchspace.task_idx is not None:
+            icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
+            return icm(searchspace, train_x, train_y)
+        return base_kernel
+
+    new_cls.__call__ = __call__  # type: ignore[method-assign]
+    new_cls._supported_parameter_kinds = (
+        cls._supported_parameter_kinds | _ParameterKind.TASK
+    )
+    return new_cls
+
+
 @define
 class _MetaKernelFactory(KernelFactoryProtocol, ABC):
     """Base class for meta kernel factories that orchestrate other kernel factories."""
@@ -150,18 +192,25 @@ class ICMKernelFactory(_MetaKernelFactory):
     @base_kernel_factory.default
     def _default_base_kernel_factory(self) -> KernelFactoryProtocol:
         from baybe.surrogates.gaussian_process.presets.baybe import (
-            BayBENumericalKernelFactory,
+            _BayBENumericalKernelFactory,
         )
 
-        return BayBENumericalKernelFactory(TypeSelector((TaskParameter,), exclude=True))
+        assert (
+            _BayBENumericalKernelFactory._supported_parameter_kinds
+            is _ParameterKind.REGULAR
+        )
+        return _BayBENumericalKernelFactory(
+            TypeSelector((TaskParameter,), exclude=True)
+        )
 
     @task_kernel_factory.default
     def _default_task_kernel_factory(self) -> KernelFactoryProtocol:
         from baybe.surrogates.gaussian_process.presets.baybe import (
-            BayBETaskKernelFactory,
+            _BayBETaskKernelFactory,
         )
 
-        return BayBETaskKernelFactory(TypeSelector((TaskParameter,)))
+        assert _BayBETaskKernelFactory._supported_parameter_kinds is _ParameterKind.TASK
+        return _BayBETaskKernelFactory()
 
     @override
     def __call__(

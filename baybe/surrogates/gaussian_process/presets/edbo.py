@@ -6,18 +6,13 @@ import gc
 from collections.abc import Collection
 from typing import TYPE_CHECKING, ClassVar
 
-from attrs import define, field
+from attrs import define
 from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters import TaskParameter
 from baybe.parameters.enum import SubstanceEncoding
-from baybe.parameters.selectors import (
-    ParameterSelectorProtocol,
-    TypeSelector,
-    to_parameter_selector,
-)
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
 from baybe.searchspace.discrete import SubspaceDiscrete
@@ -25,6 +20,7 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
     _MLLForNonTLFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
+    _enable_transfer_learning,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -59,6 +55,7 @@ _EDBO_ENCODINGS = (
 """Encodings relevant to EDBO logic."""
 
 
+@_enable_transfer_learning
 @define
 class EDBOKernelFactory(_PureKernelFactory):
     """A factory providing EDBO kernels, as proposed by :cite:p:`Shields2021`.
@@ -69,12 +66,6 @@ class EDBOKernelFactory(_PureKernelFactory):
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
-
-    parameter_selector: ParameterSelectorProtocol | None = field(
-        factory=lambda: TypeSelector([TaskParameter], exclude=True),
-        converter=to_parameter_selector,
-    )
-    # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
     def _make(

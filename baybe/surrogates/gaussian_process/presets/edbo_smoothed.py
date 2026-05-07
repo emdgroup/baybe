@@ -6,22 +6,18 @@ import gc
 from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
-from attrs import define, field
+from attrs import define
 from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters import TaskParameter
-from baybe.parameters.selectors import (
-    ParameterSelectorProtocol,
-    TypeSelector,
-    to_parameter_selector,
-)
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     _MLLForNonTLFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
+    _enable_transfer_learning,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -42,22 +38,11 @@ _DIM_LIMITS = (8, 75)
 
 
 @define
-class SmoothedEDBOKernelFactory(_PureKernelFactory):
-    """A factory providing smoothed versions of EDBO kernels (adapted from :cite:p:`Shields2021`).
-
-    Takes the low and high dimensional limits of
-    :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`
-    and interpolates the prior moments linearly in between.
-    """  # noqa: E501
+class _SmoothedEDBONumericalKernelFactory(_PureKernelFactory):
+    """A factory providing the core numerical kernel for the smoothed EDBO preset."""
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
-
-    parameter_selector: ParameterSelectorProtocol | None = field(
-        factory=lambda: TypeSelector([TaskParameter], exclude=True),
-        converter=to_parameter_selector,
-    )
-    # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
     def _make(
@@ -90,6 +75,16 @@ class SmoothedEDBOKernelFactory(_PureKernelFactory):
             outputscale_initial_value=outputscale_initial_value,
         )
 
+
+SmoothedEDBOKernelFactory = _enable_transfer_learning(
+    _SmoothedEDBONumericalKernelFactory
+)
+"""A factory providing smoothed versions of EDBO kernels (adapted from :cite:p:`Shields2021`).
+
+Takes the low and high dimensional limits of
+:class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`
+and interpolates the prior moments linearly in between.
+"""  # noqa: E501
 
 SmoothedEDBOMeanFactory = LazyConstantMeanFactory
 """A factory providing mean functions for the smoothed EDBO preset."""
