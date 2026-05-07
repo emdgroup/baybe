@@ -157,8 +157,12 @@ def _enable_transfer_learning(
     # This distinction is important for serialization so that the classes can be
     # correctly identified by their names in the subclass registry
     if name is not None:
-        # Create a subclass so the original class remains unmodified
-        target_cls = type(name, (cls,), {"__doc__": cls.__doc__})
+        # Create a subclass so the original class remains unmodified.
+        # __module__ must be set explicitly because the Protocol metaclass
+        # would otherwise default it to "abc".
+        target_cls = type(
+            name, (cls,), {"__doc__": cls.__doc__, "__module__": cls.__module__}
+        )
     else:
         # Modify the class in-place (avoids name collision in subclass registry)
         target_cls = cls
