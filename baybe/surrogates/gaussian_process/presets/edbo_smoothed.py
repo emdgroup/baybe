@@ -11,7 +11,7 @@ from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
-from baybe.parameters import TaskParameter
+from baybe.parameters.enum import _ParameterKind
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     _MLLForNonTLFitCriterionFactory,
@@ -48,7 +48,7 @@ class _SmoothedEDBONumericalKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        effective_dims = train_x.shape[-1]
+        effective_dims = self._get_effective_dimensionality(searchspace)
 
         # Interpolate prior moments linearly between low D and high D regime.
         # The high D regime itself is the average of the EDBO OHE and Mordred regime.
@@ -109,8 +109,10 @@ class SmoothedEDBOLikelihoodFactory(LikelihoodFactoryProtocol):
         # Interpolate prior moments linearly between low D and high D regime.
         # The high D regime itself is the average of the EDBO OHE and Mordred regime.
         # Values outside the dimension limits will get the border value assigned.
-        effective_dims = train_x.shape[-1] - len(
-            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+        effective_dims = sum(
+            len(searchspace.get_comp_rep_parameter_indices(p.name))
+            for p in searchspace.parameters
+            if p._kind & _ParameterKind.REGULAR
         )
 
         prior = GammaPrior(

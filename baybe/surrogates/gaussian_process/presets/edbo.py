@@ -11,8 +11,7 @@ from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
-from baybe.parameters import TaskParameter
-from baybe.parameters.enum import SubstanceEncoding
+from baybe.parameters.enum import SubstanceEncoding, _ParameterKind
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
 from baybe.searchspace.discrete import SubspaceDiscrete
@@ -71,7 +70,7 @@ class EDBOKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        effective_dims = train_x.shape[-1]
+        effective_dims = self._get_effective_dimensionality(searchspace)
 
         switching_condition = _contains_encoding(
             searchspace.discrete, _EDBO_ENCODINGS
@@ -136,8 +135,10 @@ class EDBOLikelihoodFactory(LikelihoodFactoryProtocol):
         import torch
         from gpytorch.likelihoods import GaussianLikelihood
 
-        effective_dims = train_x.shape[-1] - len(
-            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+        effective_dims = sum(
+            len(searchspace.get_comp_rep_parameter_indices(p.name))
+            for p in searchspace.parameters
+            if p._kind & _ParameterKind.REGULAR
         )
 
         switching_condition = _contains_encoding(

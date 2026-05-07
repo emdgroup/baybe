@@ -43,7 +43,8 @@ class CHENKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        lengthscale = 0.4 * math.sqrt(train_x.shape[-1]) + 4.0
+        n_dimensions = self._get_effective_dimensionality(searchspace)
+        lengthscale = 0.4 * math.sqrt(n_dimensions) + 4.0
         lengthscale_prior = GammaPrior(2.0 * lengthscale, 2.0)
         lengthscale_initial_value = lengthscale
         outputscale_prior = GammaPrior(1.0 * lengthscale, 1.0)

@@ -76,6 +76,15 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
         selector = self.parameter_selector or (lambda _: True)
         return tuple(p.name for p in searchspace.parameters if selector(p))
 
+    def _get_effective_dimensionality(self, searchspace: SearchSpace) -> int:
+        """Get the number of computational columns for the selected parameters."""
+        names = self.get_parameter_names(searchspace)
+        if names is None:
+            return len(searchspace.comp_rep_columns)
+        return sum(
+            len(searchspace.get_comp_rep_parameter_indices(name)) for name in names
+        )
+
     def _validate_parameter_kinds(self, parameters: Iterable[Parameter]) -> None:
         """Validate that the given parameters are supported by the factory.
 
@@ -141,10 +150,31 @@ def _enable_transfer_learning(
     new_cls = type(cls.__name__, (cls,), {"__doc__": cls.__doc__})
 
     original_call = cls.__call__
+    original_supported_kinds = cls._supported_parameter_kinds
+    _task_exclude_selector = TypeSelector((TaskParameter,), exclude=True)
 
     @functools.wraps(original_call)
     def __call__(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor):
-        base_kernel = original_call(self, searchspace, train_x, train_y)
+        # Temporarily narrow the supported parameter kinds to those of the original
+        # class. If the decorator logic is correct, the original factory should never
+        # see the extended scope, but this acts as a sanity check to prevent regressions
+        broadened_kinds = new_cls._supported_parameter_kinds
+        new_cls._supported_parameter_kinds = original_supported_kinds
+
+        # Split off the task parameters
+        original_selector = self.parameter_selector
+        if original_selector is None:
+            self.parameter_selector = _task_exclude_selector
+        else:
+            self.parameter_selector = lambda p: (
+                _task_exclude_selector(p) and original_selector(p)
+            )
+        try:
+            base_kernel = original_call(self, searchspace, train_x, train_y)
+        finally:
+            new_cls._supported_parameter_kinds = broadened_kinds
+            self.parameter_selector = original_selector
+
         if searchspace.task_idx is not None:
             icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
             return icm(searchspace, train_x, train_y)
