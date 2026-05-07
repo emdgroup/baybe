@@ -453,9 +453,7 @@ class DiscreteBatchConstraint(DiscreteConstraint):
     # Class variables
     eval_during_creation: ClassVar[bool] = False
     eval_during_modeling: ClassVar[bool] = True
-
     numerical_only: ClassVar[bool] = False
-    # See base class.
 
     def __attrs_post_init__(self):
         """Validate that exactly one parameter is specified."""
