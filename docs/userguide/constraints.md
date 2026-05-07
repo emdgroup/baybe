@@ -579,7 +579,7 @@ computational cost due to the combinatorial explosion.
 
 ```{admonition} Recommender Compatibility
 :class: warning
-The `DiscreteBatchConstraint` is only effective with recommenders that can compare
+The `DiscreteBatchConstraint` is only compatible with recommenders that can compare
 batch-level outcomes, such as
 {class}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender` and
 {class}`~baybe.recommenders.pure.nonpredictive.sampling.RandomRecommender`.
