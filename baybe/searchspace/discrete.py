@@ -396,6 +396,11 @@ class SubspaceDiscrete(SerialMixin):
         # negative coefficient the ordering flips and it becomes c*max_raw. Taking
         # min of both products handles any real coefficient correctly.
         coeffs = np.asarray(simplex_coefficients, dtype=float)
+        if not np.isfinite(coeffs).all():
+            raise ValueError(
+                f"All simplex_coefficients passed to '{cls.from_simplex.__name__}' "
+                f"must be finite numbers."
+            )
         min_weighted = np.array(
             [min(c * lo, c * hi) for c, lo, hi in zip(coeffs, min_raw, max_raw)]
         )
