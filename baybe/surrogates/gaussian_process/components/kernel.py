@@ -23,6 +23,7 @@ from baybe.parameters.selectors import (
     to_parameter_selector,
 )
 from baybe.searchspace.core import SearchSpace
+from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
     GPComponentType,
@@ -45,7 +46,7 @@ else:
 
 
 @define
-class _PureKernelFactory(KernelFactoryProtocol, ABC):
+class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
     """Base class for pure kernel factories."""
 
     # For internal use only: sanity check mechanism to remind developers of new

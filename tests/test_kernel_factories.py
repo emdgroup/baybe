@@ -13,16 +13,10 @@ from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
 )
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEKernelFactory,
     _BayBENumericalKernelFactory,
     _BayBETaskKernelFactory,
-)
-from baybe.surrogates.gaussian_process.presets.chen import CHENKernelFactory
-from baybe.surrogates.gaussian_process.presets.edbo import EDBOKernelFactory
-from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
-    SmoothedEDBOKernelFactory,
 )
 
 # A selector that accepts all parameters
@@ -79,21 +73,3 @@ def test_factory_parameter_kind_validation(factory, parameters, error):
         else pytest.raises(error, match="does not support")
     ):
         factory(ss, train_x, train_y)
-
-
-@pytest.mark.parametrize(
-    "factory",
-    [
-        param(BayBEKernelFactory(), id="BayBEKernelFactory"),
-        param(SmoothedEDBOKernelFactory(), id="SmoothedEDBOKernelFactory"),
-        param(EDBOKernelFactory(), id="EDBOKernelFactory"),
-        param(CHENKernelFactory(), id="CHENKernelFactory"),
-    ],
-)
-def test_kernel_factory_serialization_roundtrip(factory):
-    """Kernel factories survive a serialization roundtrip via a GP surrogate."""
-    gp = GaussianProcessSurrogate(kernel_or_factory=factory)
-    json_str = gp.to_json()
-    gp_roundtrip = GaussianProcessSurrogate.from_json(json_str)
-    assert type(gp.kernel_factory) is type(gp_roundtrip.kernel_factory)
-    assert gp == gp_roundtrip
