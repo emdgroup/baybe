@@ -126,7 +126,7 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
 
 
 def _enable_transfer_learning(
-    cls: type[_PureKernelFactory], /
+    cls: type[_PureKernelFactory], name: str | None = None, /
 ) -> type[_PureKernelFactory]:
     """Class decorator enabling BayBE's default transfer learning mechanism.
 
@@ -136,6 +136,9 @@ def _enable_transfer_learning(
 
     Args:
         cls: The kernel factory class to decorate.
+        name: Optional name for the created class. Defaults to ``cls.__name__``.
+            Useful when calling the function directly (as opposed to using it as a
+            decorator) and assigning the result to a different name.
 
     Raises:
         TypeError: If the factory already supports task parameters.
@@ -147,7 +150,7 @@ def _enable_transfer_learning(
         raise TypeError(f"'{cls.__name__}' already supports task parameters.")
 
     # Create a subclass so the original class remains unmodified
-    new_cls = type(cls.__name__, (cls,), {"__doc__": cls.__doc__})
+    new_cls = type(name or cls.__name__, (cls,), {"__doc__": cls.__doc__})
 
     original_call = cls.__call__
     original_supported_kinds = cls._supported_parameter_kinds

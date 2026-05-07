@@ -77,7 +77,7 @@ class _SmoothedEDBONumericalKernelFactory(_PureKernelFactory):
 
 
 SmoothedEDBOKernelFactory = _enable_transfer_learning(
-    _SmoothedEDBONumericalKernelFactory
+    _SmoothedEDBONumericalKernelFactory, "SmoothedEDBOKernelFactory"
 )
 """A factory providing smoothed versions of EDBO kernels (adapted from :cite:p:`Shields2021`).
 
