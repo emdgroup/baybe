@@ -1,12 +1,14 @@
 """Naive recommender for hybrid spaces."""
 
 import gc
+import warnings
 from typing import ClassVar
 
 import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
+from baybe.exceptions import OutcomeConstraintIgnoredWarning
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
@@ -84,6 +86,25 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             )
 
         # We are in a hybrid setting now
+
+        # Outcome constraint compatibility check — Layer 1 gap fill.
+        # In this hybrid path, _recommend_discrete() is called directly on the
+        # disc_recommender, bypassing its recommend() and therefore the general
+        # Layer 1 warning in PureRecommender.recommend().
+        # See notes_compability_check_outcome_constraints.md for full design.
+        if (
+            not disc_is_bayesian
+            and objective is not None
+            and objective.outcome_constraints
+        ):
+            warnings.warn(
+                f"'{type(self.disc_recommender).__name__}' does not support outcome "
+                f"constraints. The constraints will be ignored for the discrete "
+                f"subspace during this recommendation step. Use a Bayesian "
+                f"recommender for the discrete subspace to enforce outcome "
+                f"constraints.",
+                OutcomeConstraintIgnoredWarning,
+            )
 
         # We will attach continuous parts to discrete parts and the other way round.
         # To make things simple, we sample a single point in the continuous space which

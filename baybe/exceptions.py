@@ -44,6 +44,10 @@ class MinimumCardinalityViolatedWarning(UserWarning):
     """Minimum cardinality constraints are violated."""
 
 
+class OutcomeConstraintIgnoredWarning(UserWarning):
+    """Outcome constraints are present but cannot be enforced by the recommender."""
+
+
 ##### Exceptions #####
 
 

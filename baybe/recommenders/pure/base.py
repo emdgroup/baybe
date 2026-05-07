@@ -1,6 +1,7 @@
 """Base classes for all pure recommenders."""
 
 import gc
+import warnings
 from abc import ABC
 from collections.abc import Callable
 from typing import Any, ClassVar, NoReturn
@@ -11,7 +12,11 @@ from attrs import define, field
 from cattrs.gen import make_dict_unstructure_fn
 from typing_extensions import override
 
-from baybe.exceptions import DeprecationError, NotEnoughPointsLeftError
+from baybe.exceptions import (
+    DeprecationError,
+    NotEnoughPointsLeftError,
+    OutcomeConstraintIgnoredWarning,
+)
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.searchspace import SearchSpace
@@ -102,6 +107,26 @@ class PureRecommender(ABC, RecommenderProtocol):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
+        # Outcome constraint compatibility check — Layer 1 (recommender level).
+        # Outcome constraints are only enforced by BayesianRecommender (via the acqf
+        # builder's _set_constraints, which is Layer 2). All other recommenders silently
+        # ignore them, so we warn the user here. BayesianRecommender is excluded via
+        # isinstance because it delegates enforcement to Layer 2.
+        from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+
+        if (
+            not isinstance(self, BayesianRecommender)
+            and objective is not None
+            and objective.outcome_constraints
+        ):
+            warnings.warn(
+                f"'{self.__class__.__name__}' does not support outcome constraints. "
+                f"The constraints will be ignored during this recommendation step. "
+                f"Use a Bayesian recommender with a compatible acquisition function "
+                f"to enforce outcome constraints.",
+                OutcomeConstraintIgnoredWarning,
+            )
+
         if objective is not None:
             validate_object_names(searchspace.parameters + objective.targets)
 
