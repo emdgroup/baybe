@@ -783,14 +783,23 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
             )
 
         simplex_coefficients = specs.get("simplex_coefficients", None)
-        if simplex_coefficients is not None and len(simplex_coefficients) != len(
-            simplex_parameters
-        ):
-            raise ValueError(
-                f"'simplex_coefficients' must have one entry per 'simplex_parameters' "
-                f"entry, but got {len(simplex_coefficients)} coefficient(s) for "
-                f"{len(simplex_parameters)} parameter(s)."
-            )
+        if simplex_coefficients is not None:
+            try:
+                simplex_coefficients = converter.structure(
+                    simplex_coefficients, list[float]
+                )
+            except (IterableValidationError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    "'simplex_coefficients' must be a list of numeric values."
+                ) from exc
+
+            if len(simplex_coefficients) != len(simplex_parameters):
+                raise ValueError(
+                    f"'simplex_coefficients' must have one entry per "
+                    f"'simplex_parameters' entry, but got "
+                    f"{len(simplex_coefficients)} coefficient(s) for "
+                    f"{len(simplex_parameters)} parameter(s)."
+                )
 
         product_parameters = specs.get("product_parameters", [])
         if product_parameters:
