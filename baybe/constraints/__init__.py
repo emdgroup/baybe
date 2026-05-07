@@ -21,6 +21,7 @@ from baybe.constraints.discrete import (
     DiscreteProductConstraint,
     DiscreteSumConstraint,
 )
+from baybe.constraints.outcome import OutcomeConstraint
 from baybe.constraints.validation import validate_constraints
 
 __all__ = [
@@ -42,6 +43,8 @@ __all__ = [
     "DiscretePermutationInvarianceConstraint",
     "DiscreteProductConstraint",
     "DiscreteSumConstraint",
+    # --- Outcome constraints ---#
+    "OutcomeConstraint",
     # --- Other --- #
     "validate_constraints",
     "DISCRETE_CONSTRAINTS_FILTERING_ORDER",
