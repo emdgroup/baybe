@@ -230,7 +230,9 @@ class GaussianProcessSurrogate(Surrogate):
         likelihood = likelihood_or_factory or getattr(module, "LIKELIHOOD_FACTORY")
         criterion = criterion_or_factory or getattr(module, "FIT_CRITERION_FACTORY")
 
-        return cls(kernel, mean, likelihood, criterion)
+        gp = cls(kernel, mean, likelihood, criterion)
+        gp._custom_kernel = False  # preset are first-party features
+        return gp
 
     @override
     def to_botorch(self) -> GPyTorchModel:

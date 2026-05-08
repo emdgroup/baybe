@@ -196,10 +196,9 @@ def test_invalid_components():
 
 
 @pytest.mark.parametrize("multitask", [False, True], ids=["single-task", "multi-task"])
-def test_botorch_preset(multitask: bool, monkeypatch):
+def test_botorch_preset(multitask: bool):
     """The BoTorch preset exactly mimics BoTorch's behavior."""
     if multitask:
-        monkeypatch.setenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "true")
         sp = searchspace_mt
         data = measurements_mt
     else:
