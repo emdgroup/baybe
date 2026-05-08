@@ -33,46 +33,22 @@ _params = [
 
 
 @pytest.mark.parametrize(
-    ("constraints", "constrained_params", "batch_size", "recommender"),
+    "recommender",
     [
-        param(
-            [DiscreteBatchConstraint(parameters=["d0"])],
-            ["d0"],
-            BATCH_SIZE,
-            BotorchRecommender(),
-            id="botorch-single",
-        ),
-        param(
-            [
-                DiscreteBatchConstraint(parameters=["d0"]),
-                DiscreteBatchConstraint(parameters=["d1"]),
-            ],
-            ["d0", "d1"],
-            1,
-            BotorchRecommender(),
-            id="botorch-multiple",
-        ),
-        param(
-            [DiscreteBatchConstraint(parameters=["d0"])],
-            ["d0"],
-            BATCH_SIZE,
-            RandomRecommender(),
-            id="random-single",
-        ),
-        param(
-            [
-                DiscreteBatchConstraint(parameters=["d0"]),
-                DiscreteBatchConstraint(parameters=["d1"]),
-            ],
-            ["d0", "d1"],
-            1,
-            RandomRecommender(),
-            id="random-multiple",
-        ),
+        param(BotorchRecommender(), id="botorch"),
+        param(RandomRecommender(), id="random"),
     ],
 )
-def test_batch_constraint(constraints, constrained_params, batch_size, recommender):
+@pytest.mark.parametrize(
+    ("constrained_params", "batch_size"),
+    [
+        param(["d0"], BATCH_SIZE, id="single"),
+        param(["d0", "d1"], 1, id="multiple"),
+    ],
+)
+def test_batch_constraint(constrained_params, batch_size, recommender):
     """Recommenders respecting batch constraints return uniform batches."""
+    constraints = [DiscreteBatchConstraint(parameters=[p]) for p in constrained_params]
     searchspace = SearchSpace.from_product(_params, constraints)
     measurements = create_fake_input(_params, [TARGET], n_rows=3)
     ctx = (
