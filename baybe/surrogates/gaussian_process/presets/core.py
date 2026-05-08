@@ -17,7 +17,7 @@ class GaussianProcessPreset(Enum):
 
 
 def make_gp_from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
-    """Create a :class:`GaussianProcessSurrogate` from a :class:`GaussianProcessPreset."""  # noqa: E501
+    """Create a :class:`GaussianProcessSurrogate` from a :class:`GaussianProcessPreset`."""  # noqa: E501
     from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 
     if preset is GaussianProcessPreset.BAYBE:
