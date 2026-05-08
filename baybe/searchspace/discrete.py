@@ -28,7 +28,7 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
-from baybe.searchspace.utils import build_constrained_product
+from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
 from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
@@ -637,26 +637,14 @@ class SubspaceDiscrete(SerialMixin):
 
         total = prod(len(masks) for masks in per_constraint)
 
-        def _resolve_flat_idx(flat_idx: int) -> npt.NDArray[np.bool_]:
-            # Decompose flat index into per-constraint indices.
-            # Example with 3 constraints of partition lengths [3, 2, 4]:
-            #   flat_idx=11 -> divmod(11,3)=(3,2) -> A[2]
-            #                  divmod(3,2)=(1,1)  -> B[1]
-            #                  divmod(1,4)=(0,1)  -> C[1]
-            #   Result: masks A[2] AND B[1] AND C[1]
-            masks = []
-            remaining = flat_idx
-            for constraint_masks in per_constraint:
-                remaining, idx = divmod(remaining, len(constraint_masks))
-                masks.append(constraint_masks[idx])
-            return np.logical_and.reduce(masks)
-
         if replace:
             candidates = list(range(total))
             while candidates:
                 idx_pos = random.randint(0, len(candidates) - 1)
                 flat_idx = candidates[idx_pos]
-                combined = _resolve_flat_idx(flat_idx)
+                combined = np.logical_and.reduce(
+                    select_via_flat_index(flat_idx, per_constraint)
+                )
                 if min_candidates is not None and combined.sum() < min_candidates:
                     candidates[idx_pos] = candidates[-1]
                     candidates.pop()
@@ -667,7 +655,9 @@ class SubspaceDiscrete(SerialMixin):
             if shuffle:
                 random.shuffle(order)
             for flat_idx in order:
-                combined = _resolve_flat_idx(flat_idx)
+                combined = np.logical_and.reduce(
+                    select_via_flat_index(flat_idx, per_constraint)
+                )
                 if min_candidates is not None and combined.sum() < min_candidates:
                     continue
                 yield combined

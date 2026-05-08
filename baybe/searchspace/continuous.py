@@ -32,6 +32,7 @@ from baybe.parameters.utils import (
     get_parameters_from_dataframe,
     sort_parameters,
 )
+from baybe.searchspace.utils import select_via_flat_index
 from baybe.searchspace.validation import (
     validate_parameter_names,
 )
@@ -181,23 +182,21 @@ class SubspaceContinuous(SerialMixin):
 
         total = math.prod(len(v) for v in per_constraint)
 
-        def _resolve_flat_idx(flat_idx: int) -> frozenset[str]:
-            combo = []
-            remaining = flat_idx
-            for values in per_constraint:
-                remaining, idx = divmod(remaining, len(values))
-                combo.append(values[idx])
-            return frozenset(chain(*combo))
-
         if replace:
             while True:
-                yield _resolve_flat_idx(random.randint(0, total - 1))
+                yield frozenset(
+                    chain(
+                        *select_via_flat_index(
+                            random.randint(0, total - 1), per_constraint
+                        )
+                    )
+                )
         else:
             order = list(range(total))
             if shuffle:
                 random.shuffle(order)
             for flat_idx in order:
-                yield _resolve_flat_idx(flat_idx)
+                yield frozenset(chain(*select_via_flat_index(flat_idx, per_constraint)))
 
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:
