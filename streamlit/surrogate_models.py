@@ -113,11 +113,11 @@ def main():
     )
     if st_enable_multitask:
         st_n_training_points_other = st.sidebar.slider(
-            "Number of off-task training points", 0, 20, 5
+            "Number of source training points", 0, 20, 5
         )
-        st_offtask_scale = st.sidebar.slider("Off-task scale factor", -20.0, 20.0, 1.0)
+        st_offtask_scale = st.sidebar.slider("Source scale factor", -20.0, 20.0, 1.0)
         st_offtask_offset_factor = st.sidebar.slider(
-            "Off-task offset", -100.0, 100.0, 0.0
+            "Source offset", -100.0, 100.0, 0.0
         )
 
     # Model
@@ -182,15 +182,15 @@ def main():
     )
 
     # Generate task-specific transforms (scale and offset for each task)
-    task_names = ["on-task", "off-task"] if st_n_tasks > 1 else ["on-task"]
+    task_names = ["target", "source"] if st_n_tasks > 1 else ["target"]
     task_transforms = {}
     for task_idx in range(st_n_tasks):
         task_name = task_names[task_idx]
         if task_idx == 0:
-            # On-task: use original function values
+            # Target: use original function values
             task_transforms[task_name] = {"scale": 1.0, "offset": 0.0}
         else:
-            # Off-task: use user-specified scale and offset
+            # Source: use user-specified scale and offset
             scale = st_offtask_scale
             offset = st_offtask_offset_factor * st_function_amplitude
             task_transforms[task_name] = {"scale": scale, "offset": offset}
@@ -244,7 +244,7 @@ def main():
             TaskParameter(
                 name="task",
                 values=task_names,
-                active_values=["on-task"],
+                active_values=["target"],
             )
         )
     searchspace = SearchSpace.from_product(parameters=parameters)
@@ -276,7 +276,7 @@ def main():
                 surrogate_model=make_surrogate(),
                 acquisition_function=acqf,
             )
-            if task_name == "on-task":
+            if task_name == "target":
                 try:
                     recommendations = task_recommender.recommend(
                         st_n_recommendations, searchspace, objective, task_meas
@@ -345,7 +345,7 @@ def main():
         plt.plot(task_train_x, train_y, "o", color="tab:blue")
         plt.plot(test_x, mean, color="tab:red", label="Surrogate model")
         plt.fill_between(test_x, mean - std, mean + std, alpha=0.2, color="tab:red")
-        if task_name == "on-task":
+        if task_name == "target":
             plt.vlines(
                 recommendations["x"] if st_n_tasks > 1 else recommendations,
                 *plt.gca().get_ylim(),
