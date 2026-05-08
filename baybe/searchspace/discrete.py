@@ -587,8 +587,8 @@ class SubspaceDiscrete(SerialMixin):
         )
 
     @property
-    def n_theoretical_partitions(self) -> int:
-        """The theoretical number of possible partition configurations.
+    def n_theoretical_subsets(self) -> int:
+        """The theoretical number of possible subset configurations.
 
         Returns 0 if no batch constraints exist, indicating that
         no decomposition is needed.
@@ -600,7 +600,7 @@ class SubspaceDiscrete(SerialMixin):
             for c in self.constraints_batch
         )
 
-    def partition_masks(
+    def subset_masks(
         self,
         candidates_exp: pd.DataFrame,
         min_candidates: int | None = None,
@@ -608,7 +608,7 @@ class SubspaceDiscrete(SerialMixin):
         shuffle: bool = False,
         replace: bool = False,
     ) -> Iterator[npt.NDArray[np.bool_]]:
-        """Get an iterator over all possible partition masks.
+        """Get an iterator over all possible subset masks.
 
         Collect masks from each batch constraint, iterates the
         Cartesian product, AND-reduces each combination, and yields feasible
@@ -625,7 +625,7 @@ class SubspaceDiscrete(SerialMixin):
                 indices are permanently excluded from the sampling pool.
 
         Yields:
-            A boolean mask selecting the partition's rows.
+            A boolean mask selecting the subset's rows.
         """
         constraints = self.constraints_batch
         if not constraints:
@@ -633,7 +633,7 @@ class SubspaceDiscrete(SerialMixin):
                 [np.ones(len(candidates_exp), dtype=bool)]
             ]
         else:
-            per_constraint = [c.partition_masks(candidates_exp) for c in constraints]
+            per_constraint = [c.subset_masks(candidates_exp) for c in constraints]
 
         total = prod(len(masks) for masks in per_constraint)
 
@@ -662,18 +662,18 @@ class SubspaceDiscrete(SerialMixin):
                     continue
                 yield combined
 
-    def sample_partition_masks(
+    def sample_subset_masks(
         self,
         candidates_exp: pd.DataFrame,
         n: int,
         min_candidates: int | None = None,
     ) -> list[npt.NDArray[np.bool_]]:
-        """Sample partition masks (without replacement).
+        """Sample subset masks (without replacement).
 
         Args:
             candidates_exp: The experimental representation of candidate points.
             n: Number of masks to sample.
-            min_candidates: If provided, partitions with fewer matching
+            min_candidates: If provided, Subsets with fewer matching
                 candidates are skipped.
 
         Returns:
@@ -681,7 +681,7 @@ class SubspaceDiscrete(SerialMixin):
         """
         return list(
             islice(
-                self.partition_masks(candidates_exp, min_candidates, shuffle=True),
+                self.subset_masks(candidates_exp, min_candidates, shuffle=True),
                 n,
             )
         )

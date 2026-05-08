@@ -289,45 +289,45 @@ class SearchSpace(SerialMixin):
             return 1
 
     @property
-    def n_theoretical_partitions(self) -> int:
-        """Total theoretical number of partition configurations.
+    def n_theoretical_subsets(self) -> int:
+        """Total theoretical number of subset configurations.
 
-        Returns 0 if no partitioning constraints exist on either side.
+        Returns 0 if no subset constraints exist on either side.
         When only one side has constraints, the other does not contribute to
         the count.
         """
-        d = self.discrete.n_theoretical_partitions
-        c = self.continuous.n_theoretical_partitions
+        d = self.discrete.n_theoretical_subsets
+        c = self.continuous.n_theoretical_subsets
         if d == 0 == c:
             return 0
         return max(d, 1) * max(c, 1)
 
-    def partitions(
+    def subsets(
         self,
         candidates_exp: pd.DataFrame,
         min_discrete_candidates: int | None = None,
     ) -> Iterator[tuple[npt.NDArray[np.bool_], frozenset[str]]]:
-        r"""Get an iterator over all combined partition configurations.
+        r"""Get an iterator over all combined subset configurations.
 
         Yields the Cartesian product of discrete masks and continuous
         configurations.
 
         Args:
             candidates_exp: The experimental representation of discrete candidates.
-            min_discrete_candidates: If provided, discrete partitions with fewer
+            min_discrete_candidates: If provided, discrete Subsets with fewer
                 matching candidates are skipped.
 
         Yields:
             A discrete mask and continuous inactive parameters pair.
         """
         yield from product(
-            self.discrete.partition_masks(
+            self.discrete.subset_masks(
                 candidates_exp, min_candidates=min_discrete_candidates
             ),
             self.continuous.inactive_parameter_combinations(),
         )
 
-    def sample_partitions(
+    def sample_subsets(
         self,
         candidates_exp: pd.DataFrame,
         n: int,
@@ -335,7 +335,7 @@ class SearchSpace(SerialMixin):
         *,
         max_rejections: int = 10,
     ) -> list[tuple[npt.NDArray[np.bool_], frozenset[str]]]:
-        """Sample unique combined partition configurations.
+        """Sample unique combined subset configurations.
 
         Zips two independent with-replacement iterators from the discrete and
         continuous sides, producing random pairs from the Cartesian product.
@@ -344,19 +344,19 @@ class SearchSpace(SerialMixin):
         Args:
             candidates_exp: The experimental representation of discrete candidates.
             n: Number of unique configurations to sample.
-            min_discrete_candidates: If provided, discrete partitions with fewer
+            min_discrete_candidates: If provided, discrete Subsets with fewer
                 matching candidates are excluded.
             max_rejections: Maximum number of times a duplicate combination can
                 be drawn before raising ``InfeasibilityError``.
 
         Raises:
-            InfeasibilityError: If not enough unique partition configurations
+            InfeasibilityError: If not enough unique subset configurations
                 are available.
 
         Returns:
             A list of ``(discrete_mask, continuous_inactive_params)`` tuples.
         """
-        d_iter = self.discrete.partition_masks(
+        d_iter = self.discrete.subset_masks(
             candidates_exp,
             min_candidates=min_discrete_candidates,
             shuffle=True,
@@ -376,7 +376,7 @@ class SearchSpace(SerialMixin):
                 rejections += 1
                 if rejections > max_rejections:
                     raise InfeasibilityError(
-                        f"Not enough unique partition configurations available. "
+                        f"Not enough unique subset configurations available. "
                         f"Requested {n} but only {len(results)} could be found."
                     )
                 continue

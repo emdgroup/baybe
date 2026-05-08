@@ -105,22 +105,22 @@ def test_batch_constraint_validation_duplicate():
         ),
     ],
 )
-def test_batch_constraint_n_theoretical_partitions(constraints, expected):
-    """The n_theoretical_partitions property returns the correct count."""
+def test_batch_constraint_n_theoretical_subsets(constraints, expected):
+    """The n_theoretical_subsets property returns the correct count."""
     assert (
-        SearchSpace.from_product(_params, constraints).discrete.n_theoretical_partitions
+        SearchSpace.from_product(_params, constraints).discrete.n_theoretical_subsets
         == expected
     )
 
 
-def test_batch_constraint_all_partitions_too_small():
-    """All partitions infeasible raises InfeasibilityError."""
+def test_batch_constraint_all_subsets_too_small():
+    """All subsets infeasible raises InfeasibilityError."""
     searchspace = SearchSpace.from_product(
         _params, [DiscreteBatchConstraint(parameters=["d0"])]
     )
     measurements = create_fake_input(_params, [TARGET], n_rows=2)
 
-    # Each d0 partition has 3 candidates, batch_size=4 exceeds all
+    # Each d0 subset has 3 candidates, batch_size=4 exceeds all
     with pytest.raises(InfeasibilityError):
         BotorchRecommender().recommend(
             4, searchspace, TARGET.to_objective(), measurements
@@ -147,14 +147,14 @@ def test_batch_constraint_all_partitions_too_small():
         ),
     ],
 )
-def test_partition_masks_min_candidates(min_candidates, expected_count, constraint):
-    """Partition mask filtering by min_candidates."""
+def test_subset_masks_min_candidates(min_candidates, expected_count, constraint):
+    """Subset mask filtering by min_candidates."""
     constraints = [DiscreteBatchConstraint(parameters=["d0"])]
     if constraint is not None:
         constraints.append(constraint)
     searchspace = SearchSpace.from_product(_params, constraints)
     masks = list(
-        searchspace.discrete.partition_masks(
+        searchspace.discrete.subset_masks(
             searchspace.discrete.exp_rep, min_candidates=min_candidates
         )
     )

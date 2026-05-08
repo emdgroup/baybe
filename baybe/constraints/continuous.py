@@ -207,8 +207,8 @@ class ContinuousCardinalityConstraint(
 
     Notes:
         This constraint can lead to overhead in the computation since optimization
-        results in individual optimizations over several partitions. If there are
-        multiple partition-generating constraints active, this can drastically increase
+        results in individual optimizations over several subsets. If there are
+        multiple subset-generating constraints active, this can drastically increase
         the computational cost due to the combinatorial explosion.
     """
 

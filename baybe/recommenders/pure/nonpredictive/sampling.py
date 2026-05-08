@@ -42,17 +42,17 @@ class RandomRecommender(NonPredictiveRecommender):
             if searchspace.type is SearchSpaceType.CONTINUOUS:
                 return cont_random
 
-        # Restrict to a random partition if batch constraints are present
+        # Restrict to a random subset if batch constraints are present
         if searchspace.discrete.constraints_batch:
-            masks = searchspace.discrete.sample_partition_masks(
+            masks = searchspace.discrete.sample_subset_masks(
                 candidates_exp,
                 n=1,
                 min_candidates=None if is_hybrid else batch_size,
             )
             if not masks:
                 raise InfeasibilityError(
-                    "No feasible partition found for the given "
-                    "batch constraints. All partitions have fewer "
+                    "No feasible subset found for the given "
+                    "batch constraints. All subsets have fewer "
                     f"candidates than the requested {batch_size=}."
                 )
             candidates_exp = candidates_exp.loc[masks[0]]

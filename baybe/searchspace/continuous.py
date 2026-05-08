@@ -146,8 +146,8 @@ class SubspaceContinuous(SerialMixin):
             )
 
     @property
-    def n_theoretical_partitions(self) -> int:
-        """The theoretical number of possible partition configurations.
+    def n_theoretical_subsets(self) -> int:
+        """The theoretical number of possible subset configurations.
 
         Returns 0 if no cardinality constraints exist, indicating that
         no decomposition is needed.

@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
 
 
-def recommend_hybrid_without_partitions(
+def recommend_hybrid_without_subsets(
     recommender: BotorchRecommender,
     searchspace: SearchSpace,
     candidates_exp: pd.DataFrame,
@@ -161,17 +161,17 @@ def recommend_hybrid_without_partitions(
     return rec_exp
 
 
-def recommend_hybrid_with_partitions(
+def recommend_hybrid_with_subsets(
     recommender: BotorchRecommender,
     searchspace: SearchSpace,
     candidates_exp: pd.DataFrame,
     batch_size: int,
 ) -> pd.DataFrame:
-    """Recommend from a hybrid space with partitioning constraints.
+    """Recommend from a hybrid space with subset constraints.
 
-    Uses ``SearchSpace.partitions()`` to enumerate the Cartesian
-    product of discrete and continuous partition configurations, capped at
-    ``max_n_partitions`` total. In purely discrete search spaces, partitions
+    Uses ``SearchSpace.subsets()`` to enumerate the Cartesian
+    product of discrete and continuous subset configurations, capped at
+    ``max_n_subsets`` total. In purely discrete search spaces, subsets
     with fewer candidates than ``batch_size`` are pre-filtered.
 
     Args:
@@ -188,16 +188,16 @@ def recommend_hybrid_with_partitions(
 
     subspace_c = searchspace.continuous
 
-    # Get combined configurations, capped at max_n_partitions
+    # Get combined configurations, capped at max_n_subsets
     # NOTE: No min_discrete_candidates filtering in hybrid spaces because
     # optimize_acqf_mixed can produce multiple recommendations from a single
     # discrete candidate by varying continuous parameters.
     combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
-    if searchspace.n_theoretical_partitions <= recommender.max_n_partitions:
-        combined_masks = searchspace.partitions(candidates_exp)
+    if searchspace.n_theoretical_subsets <= recommender.max_n_subsets:
+        combined_masks = searchspace.subsets(candidates_exp)
     else:
-        combined_masks = searchspace.sample_partitions(
-            candidates_exp, recommender.max_n_partitions
+        combined_masks = searchspace.sample_subsets(
+            candidates_exp, recommender.max_n_subsets
         )
 
     def make_callable(
@@ -217,7 +217,7 @@ def recommend_hybrid_with_partitions(
                 mod_cont = subspace_c
             mod_searchspace = evolve(searchspace, continuous=mod_cont)
 
-            rec = recommend_hybrid_without_partitions(
+            rec = recommend_hybrid_without_subsets(
                 recommender, mod_searchspace, subset, batch_size
             )
 
@@ -231,7 +231,7 @@ def recommend_hybrid_with_partitions(
         return optimize
 
     callables = (make_callable(d_mask, c_ip) for d_mask, c_ip in combined_masks)
-    best_rec, _ = recommender._optimize_over_partitions(callables)
+    best_rec, _ = recommender._optimize_over_subsets(callables)
 
     # Post-check minimum cardinality on continuous columns
     if subspace_c.constraints_cardinality and not is_cardinality_fulfilled(

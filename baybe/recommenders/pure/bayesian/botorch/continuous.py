@@ -47,15 +47,15 @@ def recommend_continuous_with_cardinality_constraints(
 ) -> tuple[Tensor, Tensor]:
     """Recommend from a continuous space with cardinality constraints.
 
-    Optimizes the acquisition function across partitions defined by cardinality
+    Optimizes the acquisition function across subsets defined by cardinality
     constraints and returns the best result.
 
-    The specific collection of partitions considered by the recommender is obtained
+    The specific collection of subsets considered by the recommender is obtained
     as either the full combinatorial set of possible parameter splits or a random
     selection thereof, depending on the upper bound specified by the corresponding
     recommender attribute.
 
-    In each partition, the constraint-imposed configuration is fixed, so that the
+    In each subset, the constraint-imposed configuration is fixed, so that the
     constraints can be removed and a regular optimization can be performed. The
     recommendation is then constructed from the combined optimization results of the
     unconstrained spaces.
@@ -79,16 +79,16 @@ def recommend_continuous_with_cardinality_constraints(
             f"expects a subspace with cardinality constraints."
         )
 
-    # Determine search scope based on number of partition configurations
+    # Determine search scope based on number of subset configurations
     configs: Iterable[frozenset[str]]
-    if subspace_continuous.n_theoretical_partitions <= recommender.max_n_partitions:
+    if subspace_continuous.n_theoretical_subsets <= recommender.max_n_subsets:
         configs = subspace_continuous.inactive_parameter_combinations()
     else:
         configs = subspace_continuous._sample_inactive_parameters(
-            recommender.max_n_partitions
+            recommender.max_n_subsets
         )
 
-    # Create closures for each partition configuration
+    # Create closures for each subset configuration
     def make_callable(
         inactive_params: Collection[str],
     ) -> Callable[[], tuple[Tensor, Tensor]]:
@@ -108,7 +108,7 @@ def recommend_continuous_with_cardinality_constraints(
         return optimize
 
     callables = (make_callable(ip) for ip in configs)
-    points, acqf_value = recommender._optimize_over_partitions(callables)
+    points, acqf_value = recommender._optimize_over_subsets(callables)
 
     # Check if any minimum cardinality constraints are violated
     if not is_cardinality_fulfilled(

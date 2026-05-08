@@ -430,9 +430,9 @@ class DiscreteCustomConstraint(DiscreteConstraint):
 class DiscreteBatchConstraint(DiscreteConstraint):
     """Constraint ensuring recommendations in a batch share certain parameter values.
 
-    When this constraint is active, the recommender internally partitions the
-    candidate set (one partition for each unique value of the constrained
-    parameter), obtains a full batch recommendation from each partition, and
+    When this constraint is active, the recommender internally subsets the
+    candidate set (one subset for each unique value of the constrained
+    parameter), obtains a full batch recommendation from each subset, and
     returns the batch with the highest joint acquisition value.
 
     This constraint is not supported by all recommenders. It is not applied during
@@ -445,8 +445,8 @@ class DiscreteBatchConstraint(DiscreteConstraint):
 
     Notes:
         This constraint can lead to overhead in the computation since optimization
-        results in individual optimizations over several partitions. If there are
-        multiple partition-generating constraints active, this can drastically increase
+        results in individual optimizations over several subsets. If there are
+        multiple subset-generating constraints active, this can drastically increase
         the computational cost due to the combinatorial explosion.
     """
 
@@ -467,17 +467,17 @@ class DiscreteBatchConstraint(DiscreteConstraint):
     def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         # Always returns an empty index because this constraint operates at the
         # batch level, not the row level. Individual rows are never invalid; the
-        # constraint is enforced at recommendation time by partitioning candidates
-        # into partitions.
+        # constraint is enforced at recommendation time by subsetting candidates
+        # into subsets.
         return pd.Index([])
 
-    def partition_masks(
+    def subset_masks(
         self, candidates_exp: pd.DataFrame, /
     ) -> list[npt.NDArray[np.bool_]]:
-        """Return Boolean masks defining the partitions for this constraint.
+        """Return Boolean masks defining the subsets for this constraint.
 
         Each mask selects the rows in ``candidates_exp`` that belong to one
-        partition, i.e. share the same value for the constrained parameter.
+        subset, i.e. share the same value for the constrained parameter.
 
         Args:
             candidates_exp: The experimental representation of candidate points.

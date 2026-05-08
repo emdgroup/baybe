@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
 
 
-def recommend_discrete_with_partitions(
+def recommend_discrete_with_subsets(
     recommender: BotorchRecommender,
     subspace_discrete: SubspaceDiscrete,
     candidates_exp: pd.DataFrame,
@@ -26,9 +26,9 @@ def recommend_discrete_with_partitions(
 ) -> pd.Index:
     """Recommend from a discrete space with batch constraints.
 
-    Partitions the candidate set according to batch constraints,
-    runs optimization on each feasible partition, and returns the batch with
-    the highest joint acquisition value. Partitions with fewer candidates
+    Splits the candidate set into subsets according to batch constraints,
+    runs optimization on each feasible subset, and returns the batch with
+    the highest joint acquisition value. Subsets with fewer candidates
     than ``batch_size`` are skipped.
 
     Args:
@@ -44,13 +44,13 @@ def recommend_discrete_with_partitions(
     import torch
 
     masks: Iterable[npt.NDArray[np.bool_]]
-    if subspace_discrete.n_theoretical_partitions <= recommender.max_n_partitions:
-        masks = subspace_discrete.partition_masks(
+    if subspace_discrete.n_theoretical_subsets <= recommender.max_n_subsets:
+        masks = subspace_discrete.subset_masks(
             candidates_exp, min_candidates=batch_size
         )
     else:
-        masks = subspace_discrete.sample_partition_masks(
-            candidates_exp, recommender.max_n_partitions, min_candidates=batch_size
+        masks = subspace_discrete.sample_subset_masks(
+            candidates_exp, recommender.max_n_subsets, min_candidates=batch_size
         )
 
     def make_callable(
@@ -59,7 +59,7 @@ def recommend_discrete_with_partitions(
         def optimize() -> tuple[pd.Index, Tensor]:
             subset = candidates_exp.loc[mask]
 
-            idxs = recommend_discrete_without_partitions(
+            idxs = recommend_discrete_without_subsets(
                 recommender, subspace_discrete, subset, batch_size
             )
 
@@ -71,11 +71,11 @@ def recommend_discrete_with_partitions(
         return optimize
 
     callables = (make_callable(m) for m in masks)
-    best_idxs, _ = recommender._optimize_over_partitions(callables)
+    best_idxs, _ = recommender._optimize_over_subsets(callables)
     return best_idxs
 
 
-def recommend_discrete_without_partitions(
+def recommend_discrete_without_subsets(
     recommender: BotorchRecommender,
     subspace_discrete: SubspaceDiscrete,
     candidates_exp: pd.DataFrame,
