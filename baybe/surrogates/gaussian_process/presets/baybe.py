@@ -106,7 +106,7 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
 
 
 # Preset defaults
-PRESET_KERNEL_FACTORY = BayBEKernelFactory()
-PRESET_MEAN_FACTORY = BayBEMeanFactory()
-PRESET_LIKELIHOOD_FACTORY = BayBELikelihoodFactory()
-PRESET_FIT_CRITERION_FACTORY = BayBEFitCriterionFactory()
+KERNEL_FACTORY = BayBEKernelFactory()
+MEAN_FACTORY = BayBEMeanFactory()
+LIKELIHOOD_FACTORY = BayBELikelihoodFactory()
+FIT_CRITERION_FACTORY = BayBEFitCriterionFactory()

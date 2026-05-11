@@ -79,7 +79,7 @@ CHENFitCriterionFactory = PlainFitCriterionFactory(FitCriterion.MARGINAL_LOG_LIK
 gc.collect()
 
 # Preset defaults
-PRESET_KERNEL_FACTORY = CHENKernelFactory()
-PRESET_MEAN_FACTORY = LazyConstantMeanFactory()
-PRESET_LIKELIHOOD_FACTORY = LazyGaussianLikelihoodFactory()
-PRESET_FIT_CRITERION_FACTORY = CHENFitCriterionFactory
+KERNEL_FACTORY = CHENKernelFactory()
+MEAN_FACTORY = LazyConstantMeanFactory()
+LIKELIHOOD_FACTORY = LazyGaussianLikelihoodFactory()
+FIT_CRITERION_FACTORY = CHENFitCriterionFactory

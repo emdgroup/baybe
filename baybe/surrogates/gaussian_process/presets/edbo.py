@@ -186,7 +186,7 @@ EDBOFitCriterionFactory = PlainFitCriterionFactory(FitCriterion.MARGINAL_LOG_LIK
 gc.collect()
 
 # Preset defaults
-PRESET_KERNEL_FACTORY = EDBOKernelFactory()
-PRESET_MEAN_FACTORY = EDBOMeanFactory()
-PRESET_LIKELIHOOD_FACTORY = EDBOLikelihoodFactory()
-PRESET_FIT_CRITERION_FACTORY = EDBOFitCriterionFactory
+KERNEL_FACTORY = EDBOKernelFactory()
+MEAN_FACTORY = EDBOMeanFactory()
+LIKELIHOOD_FACTORY = EDBOLikelihoodFactory()
+FIT_CRITERION_FACTORY = EDBOFitCriterionFactory

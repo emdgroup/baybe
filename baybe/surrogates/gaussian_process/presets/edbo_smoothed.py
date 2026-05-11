@@ -139,7 +139,7 @@ SmoothedEDBOFitCriterionFactory = PlainFitCriterionFactory(
 gc.collect()
 
 # Preset defaults
-PRESET_KERNEL_FACTORY = SmoothedEDBOKernelFactory()
-PRESET_MEAN_FACTORY = SmoothedEDBOMeanFactory()
-PRESET_LIKELIHOOD_FACTORY = SmoothedEDBOLikelihoodFactory()
-PRESET_FIT_CRITERION_FACTORY = SmoothedEDBOFitCriterionFactory
+KERNEL_FACTORY = SmoothedEDBOKernelFactory()
+MEAN_FACTORY = SmoothedEDBOMeanFactory()
+LIKELIHOOD_FACTORY = SmoothedEDBOLikelihoodFactory()
+FIT_CRITERION_FACTORY = SmoothedEDBOFitCriterionFactory
