@@ -19,8 +19,7 @@ from baybe.parameters.selectors import (
 )
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
-    FitCriterion,
-    PlainFitCriterionFactory,
+    _MLLForNonTLFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
     _PureKernelFactory,
@@ -130,9 +129,7 @@ class SmoothedEDBOLikelihoodFactory(LikelihoodFactoryProtocol):
         return likelihood
 
 
-SmoothedEDBOFitCriterionFactory = PlainFitCriterionFactory(
-    FitCriterion.MARGINAL_LOG_LIKELIHOOD
-)
+SmoothedEDBOFitCriterionFactory = _MLLForNonTLFitCriterionFactory()
 """A factory providing fitting criteria for the smoothed EDBO preset."""
 
 # Collect leftover original slotted classes processed by `attrs.define`

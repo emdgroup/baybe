@@ -5,10 +5,16 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
+from attrs import define
+from typing_extensions import override
+
 if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.mlls import MarginalLogLikelihood
     from gpytorch.models import GP as GPyTorchModel
+    from torch import Tensor
+
+    from baybe.searchspace.core import SearchSpace
 
 
 class FitCriterion(Enum):
@@ -44,3 +50,25 @@ FitCriterionFactoryProtocol = GPComponentFactoryProtocol[FitCriterion]
 
 PlainFitCriterionFactory = PlainGPComponentFactory[FitCriterion]
 """A trivial factory that returns a fixed fit criterion."""
+
+
+@define
+class _MLLForNonTLFitCriterionFactory(FitCriterionFactoryProtocol):
+    """A fit criterion factory switching between MLL and BayBE default.
+
+    In transfer learning contexts, delegates to
+    :class:`baybe.surrogates.gaussian_process.presets.baybe.BayBEFitCriterionFactory`.
+    """
+
+    @override
+    def __call__(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> FitCriterion:
+        if searchspace.task_idx is None:
+            return FitCriterion.MARGINAL_LOG_LIKELIHOOD
+
+        from baybe.surrogates.gaussian_process.presets.baybe import (
+            BayBEFitCriterionFactory,
+        )
+
+        return BayBEFitCriterionFactory()(searchspace, train_x, train_y)
