@@ -183,8 +183,8 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`gpytorch.likelihoods.Likelihood`
     """
 
-    criterion_factory: FitCriterionFactoryProtocol = field(
-        alias="criterion_or_factory",
+    fit_criterion_factory: FitCriterionFactoryProtocol = field(
+        alias="fit_criterion_or_factory",
         factory=BayBEFitCriterionFactory,
         converter=partial(  # type: ignore[misc]
             to_component_factory, component_type=GPComponentType.CRITERION
@@ -215,7 +215,9 @@ class GaussianProcessSurrogate(Surrogate):
         likelihood_or_factory: LikelihoodFactoryProtocol
         | GPyTorchLikelihood
         | None = None,
-        criterion_or_factory: FitCriterion | FitCriterionFactoryProtocol | None = None,
+        fit_criterion_or_factory: FitCriterion
+        | FitCriterionFactoryProtocol
+        | None = None,
     ) -> Self:
         """Create a Gaussian process surrogate from one of the defined presets."""
         preset = GaussianProcessPreset(preset)
@@ -228,9 +230,11 @@ class GaussianProcessSurrogate(Surrogate):
         kernel = kernel_or_factory or getattr(module, "KERNEL_FACTORY")
         mean = mean_or_factory or getattr(module, "MEAN_FACTORY")
         likelihood = likelihood_or_factory or getattr(module, "LIKELIHOOD_FACTORY")
-        criterion = criterion_or_factory or getattr(module, "FIT_CRITERION_FACTORY")
+        fit_criterion = fit_criterion_or_factory or getattr(
+            module, "FIT_CRITERION_FACTORY"
+        )
 
-        gp = cls(kernel, mean, likelihood, criterion)
+        gp = cls(kernel, mean, likelihood, fit_criterion)
         gp._custom_kernel = False  # preset are first-party features
         return gp
 
@@ -303,7 +307,7 @@ class GaussianProcessSurrogate(Surrogate):
         likelihood = self.likelihood_factory(context.searchspace, train_x, train_y)
 
         ### Criterion
-        criterion = self.criterion_factory(context.searchspace, train_x, train_y)
+        criterion = self.fit_criterion_factory(context.searchspace, train_x, train_y)
 
         ### Model construction and fitting
         self._model = botorch.models.SingleTaskGP(
@@ -325,7 +329,7 @@ class GaussianProcessSurrogate(Surrogate):
             to_string("Mean factory", self.mean_factory, single_line=True),
             to_string("Likelihood factory", self.likelihood_factory, single_line=True),
             to_string(
-                "Fit criterion factory", self.criterion_factory, single_line=True
+                "Fit criterion factory", self.fit_criterion_factory, single_line=True
             ),
         ]
         return to_string(super().__str__(), *fields)

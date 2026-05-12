@@ -164,7 +164,7 @@ def test_presets(preset: GaussianProcessPreset):
         kernel_or_factory=kernel,
         mean_or_factory=mean,
         likelihood_or_factory=likelihood,
-        criterion_or_factory=criterion,
+        fit_criterion_or_factory=criterion,
     )
 
     # Check that the overrides were applied correctly
@@ -174,9 +174,9 @@ def test_presets(preset: GaussianProcessPreset):
     assert gp2.mean_factory.component is mean
     assert isinstance(gp2.likelihood_factory, PlainGPComponentFactory)
     assert gp2.likelihood_factory.component is likelihood
-    assert isinstance(gp2.criterion_factory, PlainGPComponentFactory)
-    assert gp2.criterion_factory.component == criterion
-    assert gp2.criterion_factory != gp1.criterion_factory
+    assert isinstance(gp2.fit_criterion_factory, PlainGPComponentFactory)
+    assert gp2.fit_criterion_factory.component == criterion
+    assert gp2.fit_criterion_factory != gp1.fit_criterion_factory
 
     gp2.fit(searchspace, objective, measurements)
 
@@ -192,7 +192,7 @@ def test_invalid_components():
             likelihood_or_factory=FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
         )
     with pytest.raises(TypeError, match="Component must be one of"):
-        GaussianProcessSurrogate(criterion_or_factory=MaternKernel())
+        GaussianProcessSurrogate(fit_criterion_or_factory=MaternKernel())
 
 
 @pytest.mark.parametrize("multitask", [False, True], ids=["single-task", "multi-task"])
@@ -206,7 +206,9 @@ def test_botorch_preset(multitask: bool):
         data = measurements
 
     active_settings.random_seed = 1337
-    gp = GaussianProcessSurrogate.from_preset("BOTORCH")
+    gp = GaussianProcessSurrogate.from_preset(
+        "BOTORCH", fit_criterion_or_factory=FitCriterion.MARGINAL_LOG_LIKELIHOOD
+    )
     gp.fit(sp, objective, data)
     posterior1 = gp.posterior_stats(data)
 
