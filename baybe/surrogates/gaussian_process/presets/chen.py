@@ -18,6 +18,9 @@ from baybe.parameters.selectors import (
     to_parameter_selector,
 )
 from baybe.priors.basic import GammaPrior
+from baybe.surrogates.gaussian_process.components.fit_criterion import (
+    _MLLForNonTLFitCriterionFactory,
+)
 from baybe.surrogates.gaussian_process.components.kernel import (
     _PureKernelFactory,
 )
@@ -68,10 +71,14 @@ class CHENKernelFactory(_PureKernelFactory):
         )
 
 
+CHENFitCriterionFactory = _MLLForNonTLFitCriterionFactory()
+"""A factory providing fitting criteria for the CHEN preset."""
+
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
 
-# Aliases for generic preset imports
-PresetKernelFactory = CHENKernelFactory
-PresetMeanFactory = LazyConstantMeanFactory
-PresetLikelihoodFactory = LazyGaussianLikelihoodFactory
+# Preset defaults
+KERNEL_FACTORY = CHENKernelFactory()
+MEAN_FACTORY = LazyConstantMeanFactory()
+LIKELIHOOD_FACTORY = LazyGaussianLikelihoodFactory()
+FIT_CRITERION_FACTORY = CHENFitCriterionFactory

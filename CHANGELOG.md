@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gaussian process component factories
 - Support for GPyTorch objects (kernels, means, likelihood) as Gaussian process
   components, enabling full low-level customization
+- Configurable fitting criterion for Gaussian process hyperparameter optimization
 - Factories for all Gaussian process components
 - `CHEN`, `EDBO` and `EDBO_SMOOTHED` presets for `GaussianProcessSurrogate`
 - `TypeSelector` and `NameSelector` classes for parameter selection in kernel factories

@@ -19,6 +19,10 @@ from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
+from baybe.surrogates.gaussian_process.components.fit_criterion import (
+    FitCriterion,
+    FitCriterionFactoryProtocol,
+)
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentType,
     to_component_factory,
@@ -35,6 +39,7 @@ from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
 )
 from baybe.surrogates.gaussian_process.presets.baybe import (
+    BayBEFitCriterionFactory,
     BayBEKernelFactory,
     BayBELikelihoodFactory,
     BayBEMeanFactory,
@@ -178,6 +183,21 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`gpytorch.likelihoods.Likelihood`
     """
 
+    criterion_factory: FitCriterionFactoryProtocol = field(
+        alias="criterion_or_factory",
+        factory=BayBEFitCriterionFactory,
+        converter=partial(  # type: ignore[misc]
+            to_component_factory, component_type=GPComponentType.CRITERION
+        ),
+        validator=is_callable(),
+    )
+    """The fitting criterion for Gaussian process hyperparameter optimization.
+
+    Accepts:
+        * :class:`.components.fit_criterion.FitCriterion`
+        * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
+    """
+
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
@@ -195,6 +215,7 @@ class GaussianProcessSurrogate(Surrogate):
         likelihood_or_factory: LikelihoodFactoryProtocol
         | GPyTorchLikelihood
         | None = None,
+        criterion_or_factory: FitCriterion | FitCriterionFactoryProtocol | None = None,
     ) -> Self:
         """Create a Gaussian process surrogate from one of the defined presets."""
         preset = GaussianProcessPreset(preset)
@@ -204,13 +225,12 @@ class GaussianProcessSurrogate(Surrogate):
         )
         module = importlib.import_module(module_name)
 
-        kernel = kernel_or_factory or getattr(module, "PresetKernelFactory")()
-        mean = mean_or_factory or getattr(module, "PresetMeanFactory")()
-        likelihood = (
-            likelihood_or_factory or getattr(module, "PresetLikelihoodFactory")()
-        )
+        kernel = kernel_or_factory or getattr(module, "KERNEL_FACTORY")
+        mean = mean_or_factory or getattr(module, "MEAN_FACTORY")
+        likelihood = likelihood_or_factory or getattr(module, "LIKELIHOOD_FACTORY")
+        criterion = criterion_or_factory or getattr(module, "FIT_CRITERION_FACTORY")
 
-        return cls(kernel, mean, likelihood)
+        return cls(kernel, mean, likelihood, criterion)
 
     @override
     def to_botorch(self) -> GPyTorchModel:
@@ -237,7 +257,6 @@ class GaussianProcessSurrogate(Surrogate):
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         import botorch
-        import gpytorch
         from botorch.models.transforms import Normalize, Standardize
 
         assert self._searchspace is not None  # provided by base class
@@ -281,6 +300,9 @@ class GaussianProcessSurrogate(Surrogate):
         ### Likelihood
         likelihood = self.likelihood_factory(context.searchspace, train_x, train_y)
 
+        ### Criterion
+        criterion = self.criterion_factory(context.searchspace, train_x, train_y)
+
         ### Model construction and fitting
         self._model = botorch.models.SingleTaskGP(
             train_x,
@@ -291,18 +313,7 @@ class GaussianProcessSurrogate(Surrogate):
             covar_module=kernel,
             likelihood=likelihood,
         )
-
-        # TODO: This is still a temporary workaround to avoid overfitting seen in
-        #  low-dimensional TL cases. More robust settings are being researched.
-        if context.n_task_dimensions > 0:
-            mll = gpytorch.mlls.LeaveOneOutPseudoLikelihood(
-                self._model.likelihood, self._model
-            )
-        else:
-            mll = gpytorch.ExactMarginalLogLikelihood(
-                self._model.likelihood, self._model
-            )
-
+        mll = criterion.to_gpytorch(self._model.likelihood, self._model)
         botorch.fit.fit_gpytorch_mll(mll)
 
     @override
@@ -311,6 +322,9 @@ class GaussianProcessSurrogate(Surrogate):
             to_string("Kernel factory", self.kernel_factory, single_line=True),
             to_string("Mean factory", self.mean_factory, single_line=True),
             to_string("Likelihood factory", self.likelihood_factory, single_line=True),
+            to_string(
+                "Fit criterion factory", self.criterion_factory, single_line=True
+            ),
         ]
         return to_string(super().__str__(), *fields)
 

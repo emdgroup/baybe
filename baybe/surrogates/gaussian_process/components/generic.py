@@ -14,8 +14,9 @@ from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import block_serialization_hook, converter
 from baybe.serialization.mixin import SerialMixin
+from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriterion
 
-BayBEGPComponent: TypeAlias = Kernel
+BayBEGPComponent: TypeAlias = Kernel | FitCriterion
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
@@ -44,15 +45,24 @@ class GPComponentType(Enum):
     LIKELIHOOD = "LIKELIHOOD"
     """Gaussian process likelihood."""
 
+    CRITERION = "CRITERION"
+    """Gaussian process fitting criterion."""
+
     def get_types(self) -> tuple[type, ...]:
         """Get the accepted BayBE and GPyTorch types for this component."""
-        types = []
+        types: list[type[GPComponent]] = []
 
         # Add BayBE type if applicable
         if self is GPComponentType.KERNEL:
             from baybe.kernels.base import Kernel
 
             types.append(Kernel)
+        elif self is GPComponentType.CRITERION:
+            from baybe.surrogates.gaussian_process.components.fit_criterion import (
+                FitCriterion,
+            )
+
+            types.append(FitCriterion)
 
         # Add GPyTorch type if available
         if sys.modules.get("gpytorch") is not None:
@@ -85,7 +95,7 @@ def _is_gpytorch_component_class(obj: Any, /) -> bool:
 
 def _validate_component(instance: Any, attribute: Attribute, value: Any) -> None:
     """Validate that an object is a BayBE or a GPyTorch GP component."""
-    if isinstance(value, Kernel) or _is_gpytorch_component_class(type(value)):
+    if isinstance(value, BayBEGPComponent) or _is_gpytorch_component_class(type(value)):
         return
 
     raise TypeError(
