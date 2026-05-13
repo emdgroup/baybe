@@ -146,7 +146,7 @@ class TableCandidates(CandidatesProtocol):
     """The dataframe containing the candidates."""
 
     def __attrs_post_init__(self):
-        # TODO: Remove .collect().to_pandas() once we supports validation on lazy frames
+        # TODO: Remove collect().to_pandas() once validation on lazy frames is supported
         validate_parameter_input(self.dataframe.collect().to_pandas(), self.parameters)
 
     @override
