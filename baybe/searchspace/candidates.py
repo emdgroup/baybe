@@ -22,16 +22,7 @@ from baybe.utils.validation import validate_parameter_input
 class CandidatesProtocol(Protocol):
     """Type protocol specifying the interface for Candidates to implement."""
 
-    parameters: tuple[DiscreteParameter, ...] = field(
-        converter=sort_parameters,
-        validator=[
-            lambda _, __, x: validate_parameter_names(x),
-            min_len(1),
-            deep_iterable(
-                member_validator=instance_of(DiscreteParameter),
-            ),
-        ],
-    )
+    parameters: tuple[DiscreteParameter, ...]
     """
     The parameters that define the search space for which candidates are generated.
     """
