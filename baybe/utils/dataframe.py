@@ -7,8 +7,10 @@ import warnings
 from collections.abc import Callable, Collection, Iterable, Sequence
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
+import narwhals as nw
 import numpy as np
 import pandas as pd
+from narwhals.typing import IntoDataFrame
 from typing_extensions import assert_never
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
@@ -778,3 +780,32 @@ def normalize_input_dtypes(
     for col in cols_to_convert:
         df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
     return df
+
+
+def to_lazy_narwhals(
+    df: IntoDataFrame,
+) -> nw.LazyFrame:
+    """Convert a native dataframe to a lazyframe, if it is not already a lazyframe.
+
+    Args:
+        df: A dataframe in native format (e.g. pandas or polars) or already in narwhals
+            lazy format.
+
+    Returns:
+        A lazy dataframe in narwhals format.
+    """
+    return nw.from_native(df).lazy()
+
+
+def from_lazy_narwhals(
+    ldf: nw.LazyFrame,
+) -> IntoDataFrame:
+    """Convert a lazy dataframe to its native dataframe.
+
+    Args:
+        ldf: A lazy dataframe
+
+    Returns:
+        A dataframe in native format (e.g. pandas or polars)
+    """
+    return ldf.collect().to_native()
