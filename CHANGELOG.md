@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Coding convention instructions for agentic developers (`AGENTS.md`, `CLAUDE.md`)
 - `has_polars_implementation` property on `DiscreteConstraint`
 - `allow_missing` flag on `DiscreteConstraint.get_invalid` and `get_valid`
+- `polars[pyarrow]` and `narwhals` as hard dependencies
+- `CandidateProtocol` as a base protocol for candidates handling
+- `TableCandidates` and `ProductCandidates` classes implementing `CandidateProtocol`
 
 ### Breaking Changes
 - `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
