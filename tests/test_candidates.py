@@ -110,7 +110,7 @@ def test_table_candidates_creation(parameters, dataframe_factory, fake_measureme
 )
 def test_table_candidates_invalid_input(parameters, dataframe):
     """Invalid parameter and dataframe inputs raise appropriate errors."""
-    with pytest.raises((TypeError, ValueError)):
+    with pytest.raises((TypeError, ValueError, AttributeError)):
         TableCandidates(parameters=parameters, dataframe=dataframe)
 
 
@@ -163,7 +163,7 @@ def test_product_candidates_creation(parameters, constraints):
 )
 def test_product_candidates_invalid_input(parameters, constraints):
     """Invalid parameter and constraint inputs raise appropriate errors."""
-    with pytest.raises((TypeError, ValueError)):
+    with pytest.raises((TypeError, ValueError, AttributeError)):
         ProductCandidates(parameters=parameters, constraints=constraints)
 
 

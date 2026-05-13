@@ -11,7 +11,9 @@ from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_con
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import InfiniteSpaceError
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.utils import sort_parameters
 from baybe.searchspace.utils import build_constrained_product
+from baybe.searchspace.validation import validate_parameter_names
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import to_lazy_narwhals
 from baybe.utils.validation import validate_parameter_input
@@ -21,8 +23,9 @@ class CandidatesProtocol(Protocol):
     """Type protocol specifying the interface for Candidates to implement."""
 
     parameters: tuple[DiscreteParameter, ...] = field(
-        converter=to_tuple,
+        converter=sort_parameters,
         validator=[
+            lambda _, __, x: validate_parameter_names(x),
             min_len(1),
             deep_iterable(
                 member_validator=instance_of(DiscreteParameter),
@@ -58,8 +61,9 @@ class ProductCandidates(CandidatesProtocol):
     """
 
     parameters: tuple[DiscreteParameter, ...] = field(
-        converter=to_tuple,
+        converter=sort_parameters,
         validator=[
+            lambda _, __, x: validate_parameter_names(x),
             min_len(1),
             deep_iterable(
                 member_validator=instance_of(DiscreteParameter),
@@ -125,8 +129,9 @@ class TableCandidates(CandidatesProtocol):
     """Class for managing candidates provided as a table directly."""
 
     parameters: tuple[DiscreteParameter, ...] = field(
-        converter=to_tuple,
+        converter=sort_parameters,
         validator=[
+            lambda _, __, x: validate_parameter_names(x),
             min_len(1),
             deep_iterable(
                 member_validator=instance_of(DiscreteParameter),
