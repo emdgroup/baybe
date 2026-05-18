@@ -185,17 +185,13 @@ class ICMKernelFactory(_MetaKernelFactory):
         allowed_task_idcs = {searchspace.task_idx}
         allowed_base_idcs = all_idcs - allowed_task_idcs
         base_idcs = (
-            set(dims)
-            if (dims := base_kernel.active_dims.tolist()) is not None
-            else None
+            set(d.tolist()) if (d := base_kernel.active_dims) is not None else all_idcs
         )
         task_idcs = (
-            set(dims)
-            if (dims := task_kernel.active_dims.tolist()) is not None
-            else None
+            set(d.tolist()) if (d := task_kernel.active_dims) is not None else all_idcs
         )
 
-        if base_idcs is not None and (base_idcs > allowed_base_idcs):
+        if not base_idcs <= allowed_base_idcs:
             raise ValueError(
                 f"The base kernel's 'active_dims' {base_idcs} must be a subset of "
                 f"the non-task indices {allowed_base_idcs}."
