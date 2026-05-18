@@ -99,14 +99,16 @@ class TaskParameter(CategoricalParameter):
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
 
-    transfer_learning_mode: TransferLearningMode = field(
-        default=TransferLearningMode.POSITIVE_INDEX_KERNEL
-    )
-    """The transfer learning mode to be used for this task parameter."""
+    transfer_learning_mode: TransferLearningMode | None = field(default=None)
+    """The transfer learning mode to be used for this task parameter.
+
+    If not specified, defaults to POSITIVE_INDEX_KERNEL when exactly one active
+    value is set, and INDEX_KERNEL otherwise.
+    """
 
     @transfer_learning_mode.validator
     def _validate_transfer_learning_mode(  # noqa: DOC101, DOC103
-        self, _: Any, value: TransferLearningMode
+        self, _: Any, value: TransferLearningMode | None
     ) -> None:
         """Validate active values compatibility with transfer learning mode.
 
@@ -114,6 +116,8 @@ class TaskParameter(CategoricalParameter):
             ValueError: If mode is POSITIVE_INDEX_KERNEL but active_values
                 contains more than one value.
         """
+        if value is None:
+            return
         if (
             value is TransferLearningMode.POSITIVE_INDEX_KERNEL
             and len(self.active_values) > 1
@@ -125,6 +129,14 @@ class TaskParameter(CategoricalParameter):
                 f"provided: {self.active_values}. The POSITIVE_INDEX_KERNEL "
                 f"mode assumes a single target task."
             )
+
+    def __attrs_post_init__(self):
+        if self.transfer_learning_mode is None:
+            if len(self.active_values) == 1:
+                mode = TransferLearningMode.POSITIVE_INDEX_KERNEL
+            else:
+                mode = TransferLearningMode.INDEX_KERNEL
+            object.__setattr__(self, "transfer_learning_mode", mode)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
