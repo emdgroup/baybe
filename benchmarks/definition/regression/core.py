@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import TaskParameter
-from baybe.parameters.categorical import TaskCorrelation
+from baybe.parameters.categorical import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from benchmarks.definition import TransferLearningRegressionBenchmarkSettings
@@ -44,7 +44,9 @@ class SearchSpaceFactory(Protocol):
         self,
         data: pd.DataFrame,
         use_task_parameter: bool,
-        task_correlation: TaskCorrelation = TaskCorrelation.UNKNOWN,
+        transfer_learning_mode: TransferLearningMode = (
+            TransferLearningMode.INDEX_KERNEL
+        ),
     ) -> SearchSpace:
         """Create a SearchSpace for regression benchmark evaluation.
 
@@ -54,8 +56,8 @@ class SearchSpaceFactory(Protocol):
                 scenarios. If True, creates search space with TaskParameter for
                 TL models. If False, creates vanilla search space without
                 task parameter.
-            task_correlation: The task correlation mode. See
-                :class:`~baybe.parameters.categorical.TaskCorrelation`.
+            transfer_learning_mode: The transfer learning mode. See
+                :class:`~baybe.parameters.categorical.TransferLearningMode`.
                 Only used when use_task_parameter is True.
 
         Returns:
@@ -166,8 +168,10 @@ def run_tl_regression_benchmark(
 
     # Create transfer learning search spaces (with task parameter)
     tl_searchspaces = {
-        tc: searchspace_factory(data=data, use_task_parameter=True, task_correlation=tc)
-        for tc in TaskCorrelation
+        tc: searchspace_factory(
+            data=data, use_task_parameter=True, transfer_learning_mode=tc
+        )
+        for tc in TransferLearningMode
     }
 
     # Extract task parameter details (use first TL searchspace as reference)

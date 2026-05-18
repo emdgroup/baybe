@@ -18,11 +18,11 @@ from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple
 
 
-class TaskCorrelation(Enum):
-    """Task correlation modes for TaskParameter."""
+class TransferLearningMode(Enum):
+    """Transfer learning modes for TaskParameter."""
 
-    UNKNOWN = "unknown"
-    POSITIVE = "positive"
+    INDEX_KERNEL = "index_kernel"
+    POSITIVE_INDEX_KERNEL = "positive_index_kernel"
 
 
 def _convert_values(value, self, field) -> tuple[str, ...]:
@@ -99,25 +99,31 @@ class TaskParameter(CategoricalParameter):
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
 
-    task_correlation: TaskCorrelation = field(default=TaskCorrelation.POSITIVE)
-    """Task correlation influencing which kernel will be used by default."""
+    transfer_learning_mode: TransferLearningMode = field(
+        default=TransferLearningMode.POSITIVE_INDEX_KERNEL
+    )
+    """The transfer learning mode to be used for this task parameter."""
 
-    @task_correlation.validator
-    def _validate_task_correlation_active_values(  # noqa: DOC101, DOC103
-        self, _: Any, value: TaskCorrelation
+    @transfer_learning_mode.validator
+    def _validate_transfer_learning_mode(  # noqa: DOC101, DOC103
+        self, _: Any, value: TransferLearningMode
     ) -> None:
-        """Validate active values compatibility with task correlation mode.
+        """Validate active values compatibility with transfer learning mode.
 
         Raises:
-            ValueError: If task_correlation is POSITIVE but active_values contains more
-                than one value.
+            ValueError: If mode is POSITIVE_INDEX_KERNEL but active_values
+                contains more than one value.
         """
-        if value is TaskCorrelation.POSITIVE and len(self.active_values) > 1:
+        if (
+            value is TransferLearningMode.POSITIVE_INDEX_KERNEL
+            and len(self.active_values) > 1
+        ):
             raise ValueError(
-                f"Task correlation '{TaskCorrelation.POSITIVE.value}' requires "
+                f"Transfer learning mode "
+                f"'{TransferLearningMode.POSITIVE_INDEX_KERNEL.value}' requires "
                 f"exactly one active value, but {len(self.active_values)} were "
-                f"provided: {self.active_values}. The POSITIVE mode uses the "
-                f"PositiveIndexKernel which assumes a single target task."
+                f"provided: {self.active_values}. The POSITIVE_INDEX_KERNEL "
+                f"mode assumes a single target task."
             )
 
 

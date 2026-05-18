@@ -13,7 +13,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.categorical import TaskCorrelation
+from baybe.parameters.categorical import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -110,11 +110,11 @@ def _make_hartmann_tl_benchmark(
                         name="Function",
                         values=("Target_Function", "Source_Function"),
                         active_values=("Target_Function",),
-                        task_correlation=tc,
+                        transfer_learning_mode=tc,
                     )
                 ]
             )
-            for tc in TaskCorrelation
+            for tc in TransferLearningMode
         }
 
         objective = SingleTargetObjective(

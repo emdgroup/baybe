@@ -15,7 +15,7 @@ from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
-from baybe.parameters.categorical import TaskCorrelation
+from baybe.parameters.categorical import TransferLearningMode
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -306,12 +306,12 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def task_correlation(self) -> TaskCorrelation | None:
-        """The task correlation mode for this searchspace."""
+    def transfer_learning_mode(self) -> TransferLearningMode | None:
+        """The transfer learning mode for this searchspace."""
         # TODO [16932]: This approach only works for a single task parameter.
         if (task_param := self._task_parameter) is None:
             return None
-        return task_param.task_correlation
+        return task_param.transfer_learning_mode
 
     def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
         """Find a parameter's column indices in the computational representation.

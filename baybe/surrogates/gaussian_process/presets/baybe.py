@@ -9,7 +9,7 @@ from typing_extensions import override
 
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
-from baybe.parameters.categorical import TaskCorrelation, TaskParameter
+from baybe.parameters.categorical import TaskParameter, TransferLearningMode
 from baybe.parameters.enum import _ParameterKind
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
@@ -76,9 +76,9 @@ class BayBETaskKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        task_correlation = searchspace.task_correlation
+        tl_mode = searchspace.transfer_learning_mode
 
-        if task_correlation == TaskCorrelation.POSITIVE:
+        if tl_mode is TransferLearningMode.POSITIVE_INDEX_KERNEL:
             return PositiveIndexKernel(
                 num_tasks=searchspace.n_tasks,
                 rank=searchspace.n_tasks,

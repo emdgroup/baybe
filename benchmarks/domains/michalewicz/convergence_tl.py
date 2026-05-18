@@ -18,7 +18,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.parameters.base import Parameter
-from baybe.parameters.categorical import TaskCorrelation
+from baybe.parameters.categorical import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -29,7 +29,7 @@ from benchmarks.definition.base import RunMode
 
 def make_searchspace(
     use_task_parameter: bool,
-    task_correlation: TaskCorrelation = TaskCorrelation.UNKNOWN,
+    transfer_learning_mode: TransferLearningMode = TransferLearningMode.INDEX_KERNEL,
 ) -> SearchSpace:
     """Create search space for the benchmark."""
     params: list[Parameter] = [
@@ -45,7 +45,7 @@ def make_searchspace(
                 name="Function",
                 values=["Target_Function", "Source_Function"],
                 active_values=["Target_Function"],
-                task_correlation=task_correlation,
+                transfer_learning_mode=transfer_learning_mode,
             )
         )
 
@@ -138,8 +138,8 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     }
     searchspace_nontl = make_searchspace(use_task_parameter=False)
     tl_searchspaces = {
-        tc: make_searchspace(use_task_parameter=True, task_correlation=tc)
-        for tc in TaskCorrelation
+        tc: make_searchspace(use_task_parameter=True, transfer_learning_mode=tc)
+        for tc in TransferLearningMode
     }
 
     objective = make_objective()
