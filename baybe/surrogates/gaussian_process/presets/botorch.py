@@ -13,9 +13,6 @@ from baybe.kernels.base import Kernel
 from baybe.parameters.enum import _ParameterKind
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components import LikelihoodFactoryProtocol
-from baybe.surrogates.gaussian_process.components._gpytorch import (
-    make_botorch_multitask_likelihood,
-)
 from baybe.surrogates.gaussian_process.components.kernel import (
     ICMKernelFactory,
     _PureKernelFactory,
@@ -114,12 +111,17 @@ class BotorchLikelihoodFactory(LikelihoodFactoryProtocol):
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> GPyTorchLikelihood:
-        from botorch.models.utils.gpytorch_modules import (
-            get_gaussian_likelihood_with_lognormal_prior,
-        )
 
         if searchspace.n_tasks == 1:
+            from botorch.models.utils.gpytorch_modules import (
+                get_gaussian_likelihood_with_lognormal_prior,
+            )
+
             return get_gaussian_likelihood_with_lognormal_prior()
+
+        from baybe.surrogates.gaussian_process.components._gpytorch import (
+            make_botorch_multitask_likelihood,
+        )
 
         assert searchspace.task_idx is not None
         return make_botorch_multitask_likelihood(
