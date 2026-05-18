@@ -54,7 +54,8 @@ class SearchSpaceFactory(Protocol):
                 scenarios. If True, creates search space with TaskParameter for
                 TL models. If False, creates vanilla search space without
                 task parameter.
-            task_correlation: The task correlation mode (UNKNOWN or POSITIVE).
+            task_correlation: The task correlation mode. See
+                :class:`~baybe.parameters.categorical.TaskCorrelation`.
                 Only used when use_task_parameter is True.
 
         Returns:
@@ -164,16 +165,15 @@ def run_tl_regression_benchmark(
     vanilla_searchspace = searchspace_factory(data=data, use_task_parameter=False)
 
     # Create transfer learning search spaces (with task parameter)
-    tl_index_searchspace = searchspace_factory(
-        data=data, use_task_parameter=True, task_correlation=TaskCorrelation.UNKNOWN
-    )
-    tl_pos_index_searchspace = searchspace_factory(
-        data=data, use_task_parameter=True, task_correlation=TaskCorrelation.POSITIVE
-    )
+    tl_searchspaces = {
+        tc: searchspace_factory(data=data, use_task_parameter=True, task_correlation=tc)
+        for tc in TaskCorrelation
+    }
 
-    # Extract task parameter details (use index searchspace as reference)
+    # Extract task parameter details (use first TL searchspace as reference)
+    first_tl_searchspace = next(iter(tl_searchspaces.values()))
     task_param = next(
-        p for p in tl_index_searchspace.parameters if isinstance(p, TaskParameter)
+        p for p in first_tl_searchspace.parameters if isinstance(p, TaskParameter)
     )
     name_task = task_param.name
 
@@ -241,45 +241,26 @@ def run_tl_regression_benchmark(
             result.update(metrics)
             results.append(result)
 
-            # IndexKernel on full search space, no source data
-            metrics = _evaluate_model(
-                GaussianProcessSurrogate(),
-                target_train,
-                target_test,
-                tl_index_searchspace,
-                objective,
-            )
-            result = {
-                "scenario": "0_index",
-                "mc_iter": mc_iter,
-                "n_train_pts": n_train_pts,
-                "fraction_source": 0.0,
-                "n_source_pts": 0,
-                "n_test_pts": len(target_test),
-                "source_data_seed": settings.random_seed + mc_iter,
-            }
-            result.update(metrics)
-            results.append(result)
-
-            # PositiveIndexKernel on full search space, no source data
-            metrics = _evaluate_model(
-                GaussianProcessSurrogate(),
-                target_train,
-                target_test,
-                tl_pos_index_searchspace,
-                objective,
-            )
-            result = {
-                "scenario": "0_pos_index",
-                "mc_iter": mc_iter,
-                "n_train_pts": n_train_pts,
-                "fraction_source": 0.0,
-                "n_source_pts": 0,
-                "n_test_pts": len(target_test),
-                "source_data_seed": settings.random_seed + mc_iter,
-            }
-            result.update(metrics)
-            results.append(result)
+            # TL kernels on full search space, no source data
+            for tc, tl_searchspace in tl_searchspaces.items():
+                metrics = _evaluate_model(
+                    GaussianProcessSurrogate(),
+                    target_train,
+                    target_test,
+                    tl_searchspace,
+                    objective,
+                )
+                result = {
+                    "scenario": f"0_{tc.value}",
+                    "mc_iter": mc_iter,
+                    "n_train_pts": n_train_pts,
+                    "fraction_source": 0.0,
+                    "n_source_pts": 0,
+                    "n_test_pts": len(target_test),
+                    "source_data_seed": settings.random_seed + mc_iter,
+                }
+                result.update(metrics)
+                results.append(result)
 
             # Evaluate transfer learning models for each source fraction
             for fraction_source in settings.source_fractions:
@@ -304,47 +285,26 @@ def run_tl_regression_benchmark(
 
                 combined_data = pd.concat([source_subset, target_train])
 
-                # Evaluate IndexKernel
-                scenario_name = f"{int(100 * fraction_source)}_index"
-                metrics = _evaluate_model(
-                    GaussianProcessSurrogate(),
-                    combined_data,
-                    target_test,
-                    tl_index_searchspace,
-                    objective,
-                )
-                result = {
-                    "scenario": scenario_name,
-                    "mc_iter": mc_iter,
-                    "n_train_pts": n_train_pts,
-                    "fraction_source": fraction_source,
-                    "n_source_pts": len(source_subset),
-                    "n_test_pts": len(target_test),
-                    "source_data_seed": settings.random_seed + mc_iter,
-                }
-                result.update(metrics)
-                results.append(result)
-
-                # Evaluate PositiveIndexKernel
-                scenario_name = f"{int(100 * fraction_source)}_pos_index"
-                metrics = _evaluate_model(
-                    GaussianProcessSurrogate(),
-                    combined_data,
-                    target_test,
-                    tl_pos_index_searchspace,
-                    objective,
-                )
-                result = {
-                    "scenario": scenario_name,
-                    "mc_iter": mc_iter,
-                    "n_train_pts": n_train_pts,
-                    "fraction_source": fraction_source,
-                    "n_source_pts": len(source_subset),
-                    "n_test_pts": len(target_test),
-                    "source_data_seed": settings.random_seed + mc_iter,
-                }
-                result.update(metrics)
-                results.append(result)
+                # Evaluate TL kernels
+                for tc, tl_searchspace in tl_searchspaces.items():
+                    metrics = _evaluate_model(
+                        GaussianProcessSurrogate(),
+                        combined_data,
+                        target_test,
+                        tl_searchspace,
+                        objective,
+                    )
+                    result = {
+                        "scenario": f"{int(100 * fraction_source)}_{tc.value}",
+                        "mc_iter": mc_iter,
+                        "n_train_pts": n_train_pts,
+                        "fraction_source": fraction_source,
+                        "n_source_pts": len(source_subset),
+                        "n_test_pts": len(target_test),
+                        "source_data_seed": settings.random_seed + mc_iter,
+                    }
+                    result.update(metrics)
+                    results.append(result)
 
                 pbar.update(1)
 

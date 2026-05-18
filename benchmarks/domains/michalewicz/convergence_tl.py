@@ -137,22 +137,16 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         "Target_Function": Michalewicz(dim=5, negate=True),
     }
     searchspace_nontl = make_searchspace(use_task_parameter=False)
-    tl_index_searchspace = make_searchspace(
-        use_task_parameter=True, task_correlation=TaskCorrelation.UNKNOWN
-    )
-    tl_pos_index_searchspace = make_searchspace(
-        use_task_parameter=True, task_correlation=TaskCorrelation.POSITIVE
-    )
+    tl_searchspaces = {
+        tc: make_searchspace(use_task_parameter=True, task_correlation=tc)
+        for tc in TaskCorrelation
+    }
 
     objective = make_objective()
-    tl_index_campaign = Campaign(
-        searchspace=tl_index_searchspace,
-        objective=objective,
-    )
-    tl_pos_index_campaign = Campaign(
-        searchspace=tl_pos_index_searchspace,
-        objective=objective,
-    )
+    tl_campaigns = {
+        tc: Campaign(searchspace=ss, objective=objective)
+        for tc, ss in tl_searchspaces.items()
+    }
     nontl_campaign = Campaign(
         searchspace=searchspace_nontl,
         objective=objective,
@@ -170,13 +164,13 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
 
     results = []
     for p in n_points:
+        scenarios = {
+            f"{p}_{tc.value}": campaign for tc, campaign in tl_campaigns.items()
+        }
+        scenarios[f"{p}_naive"] = nontl_campaign
         results.append(
             simulate_scenarios(
-                {
-                    f"{p}_index": tl_index_campaign,
-                    f"{p}_pos_index": tl_pos_index_campaign,
-                    f"{p}_naive": nontl_campaign,
-                },
+                scenarios,
                 lambda x: wrap_function(
                     functions["Target_Function"], "Target_Function", x
                 ),
@@ -187,13 +181,11 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
                 random_seed=settings.random_seed,
             )
         )
+    scenarios_0 = {f"0_{tc.value}": campaign for tc, campaign in tl_campaigns.items()}
+    scenarios_0["0_naive"] = nontl_campaign
     results.append(
         simulate_scenarios(
-            {
-                "0_index": tl_index_campaign,
-                "0_pos_index": tl_pos_index_campaign,
-                "0_naive": nontl_campaign,
-            },
+            scenarios_0,
             lambda x: wrap_function(functions["Target_Function"], "Target_Function", x),
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

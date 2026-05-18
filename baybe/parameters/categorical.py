@@ -100,7 +100,7 @@ class TaskParameter(CategoricalParameter):
     # See base class.
 
     task_correlation: TaskCorrelation = field(default=TaskCorrelation.POSITIVE)
-    """Task correlation. Defaults to positive correlation via PositiveIndexKernel."""
+    """Task correlation influencing which kernel will be used by default."""
 
     @task_correlation.validator
     def _validate_task_correlation_active_values(  # noqa: DOC101, DOC103
@@ -112,14 +112,13 @@ class TaskParameter(CategoricalParameter):
             ValueError: If task_correlation is POSITIVE but active_values contains more
                 than one value.
         """
-        if value == TaskCorrelation.POSITIVE and self._active_values is not None:
-            if len(self._active_values) > 1:
-                raise ValueError(
-                    f"Task correlation '{TaskCorrelation.POSITIVE.value}' requires "
-                    f"one active value, but {len(self._active_values)} were provided: "
-                    f"{self._active_values}. The POSITIVE mode uses the "
-                    f"PositiveIndexKernel which assumes a single target task."
-                )
+        if value is TaskCorrelation.POSITIVE and len(self.active_values) > 1:
+            raise ValueError(
+                f"Task correlation '{TaskCorrelation.POSITIVE.value}' requires "
+                f"exactly one active value, but {len(self.active_values)} were "
+                f"provided: {self.active_values}. The POSITIVE mode uses the "
+                f"PositiveIndexKernel which assumes a single target task."
+            )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

@@ -121,29 +121,20 @@ def direct_arylation_tl_temperature(
     """
     data = load_data()
 
-    tl_index_searchspace = make_searchspace(
-        data=data,
-        use_task_parameter=True,
-        task_correlation=TaskCorrelation.UNKNOWN,
-    )
-    tl_pos_index_searchspace = make_searchspace(
-        data=data,
-        use_task_parameter=True,
-        task_correlation=TaskCorrelation.POSITIVE,
-    )
-    searchspace_nontl = make_searchspace(
-        data=data,
-        use_task_parameter=False,
-    )
+    tl_searchspaces = {
+        tc: make_searchspace(data=data, use_task_parameter=True, task_correlation=tc)
+        for tc in TaskCorrelation
+    }
+    searchspace_nontl = make_searchspace(data=data, use_task_parameter=False)
 
     lookup = make_lookup(data)
     initial_data = make_initial_data(data)
     objective = make_objective()
 
-    tl_index_campaign = Campaign(searchspace=tl_index_searchspace, objective=objective)
-    tl_pos_index_campaign = Campaign(
-        searchspace=tl_pos_index_searchspace, objective=objective
-    )
+    tl_campaigns = {
+        tc: Campaign(searchspace=ss, objective=objective)
+        for tc, ss in tl_searchspaces.items()
+    }
     nontl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
 
     percentages = [0.01, 0.1, 0.2]
@@ -157,13 +148,14 @@ def direct_arylation_tl_temperature(
 
     results = []
     for p in percentages:
+        scenarios = {
+            f"{int(100 * p)}_{tc.value}": campaign
+            for tc, campaign in tl_campaigns.items()
+        }
+        scenarios[f"{int(100 * p)}_naive"] = nontl_campaign
         results.append(
             simulate_scenarios(
-                {
-                    f"{int(100 * p)}_index": tl_index_campaign,
-                    f"{int(100 * p)}_pos_index": tl_pos_index_campaign,
-                    f"{int(100 * p)}_naive": nontl_campaign,
-                },
+                scenarios,
                 lookup,
                 initial_data=initial_data_samples[p],
                 batch_size=settings.batch_size,
@@ -172,13 +164,11 @@ def direct_arylation_tl_temperature(
                 random_seed=settings.random_seed,
             )
         )
+    scenarios_0 = {f"0_{tc.value}": campaign for tc, campaign in tl_campaigns.items()}
+    scenarios_0["0_naive"] = nontl_campaign
     results.append(
         simulate_scenarios(
-            {
-                "0_index": tl_index_campaign,
-                "0_pos_index": tl_pos_index_campaign,
-                "0_naive": nontl_campaign,
-            },
+            scenarios_0,
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

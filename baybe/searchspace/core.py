@@ -289,10 +289,10 @@ class SearchSpace(SerialMixin):
         return len(task_param.values)
 
     @property
-    def target_task_idxs(self) -> list[int] | None:
+    def target_task_idxs(self) -> tuple[int, ...] | None:
         """The indices of the target tasks in the computational representation.
 
-        Returns a list of integer indices corresponding to each active value in the
+        Returns a tuple of integer indices corresponding to each active value in the
         TaskParameter. Returns None when there are no task parameters.
         """
         # TODO [16932]: This approach only works for a single task parameter.
@@ -300,10 +300,10 @@ class SearchSpace(SerialMixin):
             return None
 
         comp_df = task_param.comp_df
-        return [
+        return tuple(
             int(comp_df.loc[active_value].iloc[0])
             for active_value in task_param.active_values
-        ]
+        )
 
     @property
     def task_correlation(self) -> TaskCorrelation | None:
