@@ -123,7 +123,7 @@ class _MetaKernelFactory(KernelFactoryProtocol, ABC):
     @abstractmethod
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel: ...
+    ) -> Kernel | GPyTorchKernel: ...
 
 
 @define
@@ -166,7 +166,7 @@ class ICMKernelFactory(_MetaKernelFactory):
     @override
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
+    ) -> Kernel | GPyTorchKernel:
         if searchspace.task_idx is None:
             raise IncompatibleSearchSpaceError(
                 f"'{type(self).__name__}' can only be used with a searchspace that "
