@@ -7,7 +7,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from attrs import Converter, define, field
+from attrs import Converter, Factory, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
@@ -99,7 +99,17 @@ class TaskParameter(CategoricalParameter):
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
 
-    transfer_learning_mode: TransferLearningMode | None = field(default=None)
+    transfer_learning_mode: TransferLearningMode = field(
+        default=Factory(
+            lambda self: (
+                TransferLearningMode.POSITIVE_INDEX_KERNEL
+                if len(self.active_values) == 1
+                else TransferLearningMode.INDEX_KERNEL
+            ),
+            takes_self=True,
+        ),
+        converter=TransferLearningMode,
+    )
     """The transfer learning mode to be used for this task parameter.
 
     If not specified, defaults to POSITIVE_INDEX_KERNEL when exactly one active
@@ -108,7 +118,7 @@ class TaskParameter(CategoricalParameter):
 
     @transfer_learning_mode.validator
     def _validate_transfer_learning_mode(  # noqa: DOC101, DOC103
-        self, _: Any, value: TransferLearningMode | None
+        self, _: Any, value: TransferLearningMode
     ) -> None:
         """Validate active values compatibility with transfer learning mode.
 
@@ -116,10 +126,8 @@ class TaskParameter(CategoricalParameter):
             ValueError: If mode is POSITIVE_INDEX_KERNEL but active_values
                 contains more than one value.
         """
-        if value is None:
-            return
         if (
-            value is TransferLearningMode.POSITIVE_INDEX_KERNEL
+            value == TransferLearningMode.POSITIVE_INDEX_KERNEL
             and len(self.active_values) > 1
         ):
             raise ValueError(
@@ -129,14 +137,6 @@ class TaskParameter(CategoricalParameter):
                 f"provided: {self.active_values}. The POSITIVE_INDEX_KERNEL "
                 f"mode assumes a single target task."
             )
-
-    def __attrs_post_init__(self):
-        if self.transfer_learning_mode is None:
-            if len(self.active_values) == 1:
-                mode = TransferLearningMode.POSITIVE_INDEX_KERNEL
-            else:
-                mode = TransferLearningMode.INDEX_KERNEL
-            object.__setattr__(self, "transfer_learning_mode", mode)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

@@ -78,20 +78,26 @@ class BayBETaskKernelFactory(_PureKernelFactory):
     ) -> Kernel:
         tl_mode = searchspace.transfer_learning_mode
 
-        if tl_mode is TransferLearningMode.POSITIVE_INDEX_KERNEL:
-            target_task_idxs = searchspace.target_task_idxs
-            assert target_task_idxs is not None
+        if tl_mode == TransferLearningMode.POSITIVE_INDEX_KERNEL:
+            active_task_indices = searchspace.active_task_indices
+            assert active_task_indices is not None
             return PositiveIndexKernel(
                 num_tasks=searchspace.n_tasks,
                 rank=searchspace.n_tasks,
-                target_task_index=target_task_idxs[0],
+                target_task_index=active_task_indices[0],
                 parameter_names=self.get_parameter_names(searchspace),
             )
-        return IndexKernel(
-            num_tasks=searchspace.n_tasks,
-            rank=searchspace.n_tasks,
-            parameter_names=self.get_parameter_names(searchspace),
-        )
+        elif tl_mode == TransferLearningMode.INDEX_KERNEL:
+            return IndexKernel(
+                num_tasks=searchspace.n_tasks,
+                rank=searchspace.n_tasks,
+                parameter_names=self.get_parameter_names(searchspace),
+            )
+        else:
+            raise ValueError(
+                f"Unsupported transfer learning mode: {tl_mode}. "
+                f"Expected one of {list(TransferLearningMode)}."
+            )
 
 
 BayBEMeanFactory = LazyConstantMeanFactory

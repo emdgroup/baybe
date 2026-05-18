@@ -58,7 +58,7 @@ class SearchSpaceFactory(Protocol):
                 task parameter.
             transfer_learning_mode: The transfer learning mode. See
                 :class:`~baybe.parameters.categorical.TransferLearningMode`.
-                Only used when use_task_parameter is True.
+                Only used when ``use_task_parameter`` is ``True``.
 
         Returns:
             The TL and non-TL searchspaces for the benchmark.
