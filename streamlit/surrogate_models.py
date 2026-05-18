@@ -347,7 +347,7 @@ def main():
         plt.fill_between(test_x, mean - std, mean + std, alpha=0.2, color="tab:red")
         if task_name == "target":
             plt.vlines(
-                recommendations["x"] if st_n_tasks > 1 else recommendations,
+                recommendations["x"],
                 *plt.gca().get_ylim(),
                 color="k",
                 label="Recommendations",
