@@ -6,7 +6,7 @@ import gc
 import math
 import random
 from collections.abc import Collection, Iterator, Sequence
-from itertools import chain
+from itertools import chain, product
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -32,7 +32,6 @@ from baybe.parameters.utils import (
     get_parameters_from_dataframe,
     sort_parameters,
 )
-from baybe.searchspace.utils import select_via_flat_index
 from baybe.searchspace.validation import (
     validate_parameter_names,
 )
@@ -161,14 +160,11 @@ class SubspaceContinuous(SerialMixin):
     def inactive_parameter_combinations(
         self,
         *,
-        shuffle: bool = False,
         replace: bool = False,
     ) -> Iterator[frozenset[str]]:
         """Get an iterator over all possible inactive parameter combinations.
 
         Args:
-            shuffle: If ``True``, iterate in uniformly shuffled order.
-                Has no effect when ``replace=True``.
             replace: If ``True``, sample with replacement, producing an
                 infinite iterator where each draw is independent.
 
@@ -180,23 +176,18 @@ class SubspaceContinuous(SerialMixin):
             for con in self.constraints_cardinality
         ]
 
-        total = math.prod(len(v) for v in per_constraint)
-
+        combos: Iterator[tuple[frozenset[str], ...]]
         if replace:
-            while True:
-                yield frozenset(
-                    chain(
-                        *select_via_flat_index(
-                            random.randint(0, total - 1), per_constraint
-                        )
-                    )
-                )
+            combos = iter(
+                lambda: tuple(random.choice(group) for group in per_constraint), None
+            )
         else:
-            order = list(range(total))
-            if shuffle:
-                random.shuffle(order)
-            for flat_idx in order:
-                yield frozenset(chain(*select_via_flat_index(flat_idx, per_constraint)))
+            for group in per_constraint:
+                random.shuffle(group)
+            combos = product(*per_constraint)
+
+        for combo in combos:
+            yield frozenset(chain(*combo))
 
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:

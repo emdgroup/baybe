@@ -6,7 +6,7 @@ import gc
 import random
 import warnings
 from collections.abc import Collection, Iterator, Sequence
-from itertools import islice
+from itertools import islice, product
 from math import prod
 from typing import TYPE_CHECKING, Any
 
@@ -28,7 +28,7 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
-from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
+from baybe.searchspace.utils import build_constrained_product
 from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
@@ -605,7 +605,6 @@ class SubspaceDiscrete(SerialMixin):
         candidates_exp: pd.DataFrame,
         min_candidates: int | None = None,
         *,
-        shuffle: bool = False,
         replace: bool = False,
     ) -> Iterator[npt.NDArray[np.bool_]]:
         """Get an iterator over all possible subset masks.
@@ -618,49 +617,33 @@ class SubspaceDiscrete(SerialMixin):
             candidates_exp: The experimental representation of candidate points.
             min_candidates: If provided, combined masks selecting fewer rows
                 are silently skipped.
-            shuffle: If ``True``, iterate in uniformly shuffled order.
-                Has no effect when ``replace=True``.
             replace: If ``True``, sample with replacement, producing an
-                infinite iterator where each draw is independent. Infeasible
-                indices are permanently excluded from the sampling pool.
+                infinite iterator where each draw is independent.
 
         Yields:
             A boolean mask selecting the subset's rows.
         """
-        constraints = self.constraints_batch
-        if not constraints:
-            per_constraint: list[list[npt.NDArray[np.bool_]]] = [
-                [np.ones(len(candidates_exp), dtype=bool)]
-            ]
+        per_constraint: list[list[npt.NDArray[np.bool_]]]
+        if not (constraints := self.constraints_batch):
+            per_constraint = [[np.ones(len(candidates_exp), dtype=bool)]]
         else:
             per_constraint = [c.subset_masks(candidates_exp) for c in constraints]
 
-        total = prod(len(masks) for masks in per_constraint)
-
+        combos: Iterator[tuple[npt.NDArray[np.bool_], ...]]
         if replace:
-            candidates = list(range(total))
-            while candidates:
-                idx_pos = random.randint(0, len(candidates) - 1)
-                flat_idx = candidates[idx_pos]
-                combined = np.logical_and.reduce(
-                    select_via_flat_index(flat_idx, per_constraint)
-                )
-                if min_candidates is not None and combined.sum() < min_candidates:
-                    candidates[idx_pos] = candidates[-1]
-                    candidates.pop()
-                    continue
-                yield combined
+            combos = iter(
+                lambda: tuple(random.choice(group) for group in per_constraint), None
+            )
         else:
-            order = list(range(total))
-            if shuffle:
-                random.shuffle(order)
-            for flat_idx in order:
-                combined = np.logical_and.reduce(
-                    select_via_flat_index(flat_idx, per_constraint)
-                )
-                if min_candidates is not None and combined.sum() < min_candidates:
-                    continue
-                yield combined
+            for group in per_constraint:
+                random.shuffle(group)
+            combos = product(*per_constraint)
+
+        for combo in combos:
+            combined = np.logical_and.reduce(combo)
+            if min_candidates is not None and combined.sum() < min_candidates:
+                continue
+            yield combined
 
     def sample_subset_masks(
         self,
@@ -681,7 +664,7 @@ class SubspaceDiscrete(SerialMixin):
         """
         return list(
             islice(
-                self.subset_masks(candidates_exp, min_candidates, shuffle=True),
+                self.subset_masks(candidates_exp, min_candidates),
                 n,
             )
         )

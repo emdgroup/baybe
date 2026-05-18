@@ -359,12 +359,9 @@ class SearchSpace(SerialMixin):
         d_iter = self.discrete.subset_masks(
             candidates_exp,
             min_candidates=min_discrete_candidates,
-            shuffle=True,
             replace=True,
         )
-        c_iter = self.continuous.inactive_parameter_combinations(
-            shuffle=True, replace=True
-        )
+        c_iter = self.continuous.inactive_parameter_combinations(replace=True)
 
         seen: set[tuple[bytes, frozenset[str]]] = set()
         results: list[tuple[npt.NDArray[np.bool_], frozenset[str]]] = []
