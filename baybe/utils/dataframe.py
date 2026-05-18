@@ -751,8 +751,8 @@ def normalize_input_dtypes(
             obj, NumericalTarget
         )
 
-    # Find columns that are not of float dtype but should be
-    wrong_cols = [
+    # Find columns that need conversion to float
+    cols_to_convert = [
         o.name
         for o in objects
         if needs_float_dtype(o)
@@ -760,17 +760,21 @@ def normalize_input_dtypes(
         and not pd.api.types.is_float_dtype(df[o.name])
     ]
 
-    # If there are no issues, return the original
-    if not wrong_cols:
+    if not cols_to_convert:
         return df
 
-    # Make a copy of the dataframe and convert problematic column data types
-    warnings.warn(
-        f"The following columns have unexpected data types: {wrong_cols}. "
-        f"Converting to float internally.",
-        InputDataTypeWarning,
-    )
+    # Warn only about truly problematic types (not integers)
+    warn_cols = [
+        col for col in cols_to_convert if not pd.api.types.is_integer_dtype(df[col])
+    ]
+    if warn_cols:
+        warnings.warn(
+            f"The following columns have unexpected data types: {warn_cols}. "
+            f"Converting to float internally.",
+            InputDataTypeWarning,
+        )
+
     df = df.copy()
-    for col in wrong_cols:
+    for col in cols_to_convert:
         df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
     return df

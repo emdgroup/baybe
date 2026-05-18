@@ -19,9 +19,9 @@ on:
           - "Non Transfer Learning"
 
 env:
-  TRANSFER_LEARNING_BENCHMARKS: '["aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_20_15","michalewicz_tl_continuous"]'
+  TRANSFER_LEARNING_BENCHMARKS: '["aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_20_15","hartmann_tl_inv_3_20_15","hartmann_tl_shift_3_20_15","michalewicz_tl_continuous"]'
   SYNTHETIC_BENCHMARKS: '["synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
-  ALL_BENCHMARKS: '["direct_arylation_multi_batch","direct_arylation_single_batch","aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_20_15","michalewicz_tl_continuous","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
+  ALL_BENCHMARKS: '["direct_arylation_multi_batch","direct_arylation_single_batch","aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_20_15","hartmann_tl_inv_3_20_15","hartmann_tl_shift_3_20_15","michalewicz_tl_continuous","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
   NON_TL_BENCHMARKS: '["direct_arylation_multi_batch","direct_arylation_single_batch","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
 
 permissions:
@@ -96,11 +96,11 @@ jobs:
             echo -e "\n\n\n\033[1;34m===== GPU INFORMATION =====\033[0m"
             nvidia-smi
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: "Set up Python"
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.10"
       - name: Install uv

@@ -48,6 +48,7 @@ from baybe.targets._deprecated import (
     linear_transform,
     triangular_transform,
 )
+from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.transformations.basic import AffineTransformation
 from baybe.utils.dataframe import create_fake_input
@@ -248,6 +249,7 @@ def test_target_deprecation_helpers():
         NumericalTarget.from_modern_interface("t", minimize=True)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_target_legacy_deserialization():
     """Deserialization also works from legacy arguments."""
     actual = NumericalTarget.from_dict({"name": "t", "mode": "MATCH", "bounds": (1, 2)})
@@ -264,6 +266,7 @@ def series() -> pd.Series:
     return sample_input()
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 @pytest.mark.parametrize("mode", ["MAX", "MIN"])
 def test_constructor_equivalence_min_max(mode):
     """
@@ -305,6 +308,7 @@ def test_constructor_equivalence_min_max(mode):
             assert t1 == t2
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 @pytest.mark.parametrize("transformation", ["TRIANGULAR", "BELL"])
 def test_constructor_equivalence_match(transformation):
     """
@@ -345,9 +349,13 @@ def test_constructor_equivalence_match(transformation):
         assert t1 == t2
 
 
-@pytest.mark.parametrize(
-    ("legacy", "deprecation", "modern", "expected"),
-    [
+# NOTE: The parametrize values below use the deprecated legacy interface of
+# ModernTarget (e.g. ModernTarget("t", "MAX")), which emits DeprecationWarning.
+# Since these are evaluated at module/collection time, we suppress the warning here
+# to avoid failures when running with `-W error`.
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    _target_transformation_params = [
         param(
             LegacyTarget("t", "MAX"),
             ModernTarget("t", "MAX"),
@@ -469,7 +477,12 @@ def test_constructor_equivalence_match(transformation):
             triangular_transform(sample_input(), 2, 6),
             id="match_triangular_scaled_shifted",
         ),
-    ],
+    ]
+
+
+@pytest.mark.parametrize(
+    ("legacy", "deprecation", "modern", "expected"),
+    _target_transformation_params,
 )
 def test_target_transformation(
     series,
@@ -485,6 +498,24 @@ def test_target_transformation(
     if deprecation is not None:
         assert_series_equal(deprecation.transform(series), expected)
     assert_series_equal(modern.transform(series), expected)
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_deserialization_using_constructor():
+    """Deserialization using the 'constructor' field works despite having other
+    deprecation mechanisms in place."""  # noqa
+    config = """
+    {
+        "type": "NumericalTarget",
+        "name": "t_max_bounds",
+        "constructor": "normalized_ramp",
+        "cutoffs": [0, 100]
+    }
+    """
+    t_old = NumericalTarget("t_max_bounds", mode="MAX", bounds=(0, 100))
+    t_new = NumericalTarget.normalized_ramp("t_max_bounds", cutoffs=(0, 100))
+    t_new_config = Target.from_json(config)
+    assert t_old == t_new == t_new_config
 
 
 def test_deprecated_random_seed_control():

@@ -17,7 +17,7 @@ from typing_extensions import assert_never, override
 
 from baybe.exceptions import IncompatibilityError
 from baybe.serialization import SerialMixin, converter
-from baybe.serialization.core import select_constructor_hook
+from baybe.serialization.core import _TYPE_FIELD, select_constructor_hook
 from baybe.targets._deprecated import (
     _VALID_TRANSFORMATIONS,
     TargetMode,
@@ -765,12 +765,16 @@ class NumericalTarget(Target, SerialMixin):
         )
 
 
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
+
 converter.register_unstructure_hook(
     NumericalTarget,
     cattrs.gen.make_dict_unstructure_fn(
         NumericalTarget, converter, _constructor_info=cattrs.override(omit=False)
     ),
 )
+converter.register_structure_hook(NumericalTarget, select_constructor_hook)
 
 
 # >>> Deprecation >>> #
@@ -779,26 +783,11 @@ _hook = converter.get_structure_hook(NumericalTarget)
 
 
 @converter.register_structure_hook
-def _(dct, cls) -> NumericalTarget:
+def _enable_legacy_target_deserialization(dct: dict[str, Any], cls) -> NumericalTarget:
     if "mode" in dct:
-        return _hook(*dct)
-    return select_constructor_hook(dct, cls)
-
-
-_hook = converter.get_structure_hook(NumericalTarget)
-
-
-@converter.register_structure_hook
-def _structure_legacy_target_arguments(x: dict[str, Any], _) -> NumericalTarget:
-    """Accept legacy target argument for backward compatibility."""
-    x.pop("type", None)
-    try:
-        return _hook(x, _)
-    except Exception:
-        return NumericalTarget(**x)  # type: ignore[return-value]
+        dct.pop(_TYPE_FIELD, None)
+        return NumericalTarget(**dct)
+    return _hook(dct, cls)
 
 
 # <<< Deprecation <<< #
-
-
-gc.collect()

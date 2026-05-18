@@ -11,9 +11,9 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 
 _targets = (
-    NumericalTarget("n1", "MAX"),
-    NumericalTarget("n2", "MAX"),
-    NumericalTarget("n3", "MAX"),
+    NumericalTarget("n1"),
+    NumericalTarget("n2", minimize=True),
+    NumericalTarget.match_absolute("n3", 0.0),
 )
 _parameters = (
     NumericalDiscreteParameter("n1", (1, 2, 3)),
@@ -41,7 +41,13 @@ def test_overlapping_target_parameter_names_campaign():
             TwoPhaseMetaRecommender(initial_recommender=BayesianRecommender()),
             id="meta_predictive",
         ),
-        pytest.param(FPSRecommender(), id="pure_non-predictive"),
+        pytest.param(
+            FPSRecommender(),
+            id="pure_non-predictive",
+            marks=pytest.mark.filterwarnings(
+                "ignore::baybe.exceptions.UnusedObjectWarning"
+            ),
+        ),
         pytest.param(
             TwoPhaseMetaRecommender(initial_recommender=FPSRecommender()),
             id="meta_non-predictive",

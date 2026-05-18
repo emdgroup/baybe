@@ -27,7 +27,10 @@ def test_numerical_target_invalid_arguments(name, transformation, minimize, matc
     name = "t" if name is X else name
     transformation = None if transformation is X else transformation
     minimize = False if minimize is X else minimize
-    with pytest.raises(TypeError, match=match):
+    with (
+        pytest.raises(TypeError, match=match),
+        pytest.warns(DeprecationWarning, match="deprecation phase of"),
+    ):
         NumericalTarget.from_modern_interface(name, transformation, minimize=minimize)
 
 

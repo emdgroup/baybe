@@ -5,7 +5,6 @@ from pytest import param
 
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import MatchMode, NumericalTarget
 from baybe.transformations import ExponentialTransformation
 from baybe.utils.metadata import MeasurableMetadata, Metadata, to_metadata
@@ -20,9 +19,7 @@ def make_parameter(metadata: TMetadata = None) -> NumericalDiscreteParameter:
 
 
 def make_target(metadata: TMetadata = None) -> NumericalTarget:
-    return NumericalTarget(
-        "yield", TargetMode.MAX, metadata=metadata or MeasurableMetadata()
-    )
+    return NumericalTarget("yield", metadata=metadata or MeasurableMetadata())
 
 
 def make_objective(metadata: TMetadata = None) -> SingleTargetObjective:

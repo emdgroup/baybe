@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 import pandas as pd
 import torch
@@ -21,129 +23,169 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.definition.base import RunMode
+from benchmarks.domains.hartmann.utils import ShiftedHartmann
 
 
-def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
-    """Benchmark function for transfer learning with the Hartmann function in 3D.
+def _make_hartmann_tl_benchmark(
+    name: str,
+    *,
+    source_noise_std: float,
+    source_shift: tuple[float, float, float] | None,
+    source_negate: bool,
+) -> Callable[[ConvergenceBenchmarkSettings], pd.DataFrame]:
+    """Return a named Hartmann transfer-learning benchmark callable.
 
-    Key characteristics:
-    • Compares two versions of Hartmann function:
+    The benchmark operates on Hartmann function in 3D.
+    It compares two discretized versions of the Hartmann function:
       - Target: standard Hartmann
-      - Source: Hartmann with added noise (noise_std=0.15)
-    • Uses 20 points per dimension
-    • Tests transfer learning with different source data percentages:
+      - Source: Hartmann with optional changes (noise, shifting, or negation)
+    - Uses 20 points per dimension
+    - Tests transfer learning with different source data percentages:
       - 1% of source data
       - 10% of source data
       - 20% of source data
 
-    Args:
+    The callable requires one argument:
         settings: Configuration settings for the convergence benchmark.
+    The callable returns:
+        DataFrame containing benchmark results.
+
+    Args:
+        name: Benchmark name.
+        source_noise_std: Noise added to the source Hartmann function.
+        source_shift: Shift added to the source Hartmann function.
+        source_negate: Whether to negate the source Hartmann function.
 
     Returns:
-        DataFrame containing benchmark results.
+        The callable returning the benchmark results.
+
+    Raises:
+        ValueError: If ``source_shift`` is provided but does not have length 3.
     """
-    target_function = Hartmann(dim=3)
-    source_function = Hartmann(dim=3, noise_std=0.15)
+    if source_shift is not None and len(source_shift) != 3:
+        raise ValueError("Shift list must have length 3 for 3D Hartmann function.")
 
-    points_per_dim = 20
-    percentages = [0.01, 0.05, 0.1]
+    def benchmark_fn(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
+        """Execute a Hartmann transfer-learning benchmark variant."""
+        # Define base bounds
+        bounds = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]).T
 
-    # Create grid locations for the parameters
-    bounds = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
-    grid_locations = {
-        f"x{d}": np.linspace(lower, upper, points_per_dim)
-        for d, (lower, upper) in enumerate(bounds.T)
-    }
-
-    params: list[DiscreteParameter] = [
-        NumericalDiscreteParameter(
-            name=name,
-            values=points,
+        # Create source function with specified parameters
+        source_function = ShiftedHartmann(
+            bounds=bounds,
+            shift=list(source_shift) if source_shift is not None else None,
+            dim=3,
+            noise_std=source_noise_std,
+            negate=source_negate,
         )
-        for name, points in grid_locations.items()
-    ]
-    task_param = TaskParameter(
-        name="Function",
-        values=["Target_Function", "Source_Function"],
-        active_values=["Target_Function"],
-    )
-    params_tl = params + [task_param]
 
-    searchspace_nontl = SearchSpace.from_product(parameters=params)
-    searchspace_tl = SearchSpace.from_product(parameters=params_tl)
+        # Create target function (standard Hartmann with adjusted bounds from source)
+        target_function = Hartmann(
+            dim=source_function.dim, bounds=source_function._bounds
+        )
 
-    objective = SingleTargetObjective(
-        target=NumericalTarget(name="Target", minimize=True)
-    )
-    tl_campaign = Campaign(
-        searchspace=searchspace_tl,
-        objective=objective,
-    )
-    nontl_campaign = Campaign(
-        searchspace=searchspace_nontl,
-        objective=objective,
-    )
+        points_per_dim = 20
+        percentages = [0.01, 0.05, 0.1]
 
-    meshgrid = np.meshgrid(*[points for points in grid_locations.values()])
+        # Create grid locations for the parameters
+        grid_locations = {
+            f"x{d}": np.linspace(lower, upper, points_per_dim)
+            for d, (lower, upper) in enumerate(bounds)
+        }
 
-    # Create a DataFrame for the initial data coordinates
-    coord_columns = [p.name for p in params]
-    initial_data = pd.DataFrame(
-        {f"x{d}": grid_d.ravel() for d, grid_d in enumerate(meshgrid)},
-        columns=coord_columns,  # Ensure correct column order
-    )
+        params: list[DiscreteParameter] = [
+            NumericalDiscreteParameter(
+                name=name,
+                values=tuple(points),
+            )
+            for name, points in grid_locations.items()
+        ]
+        task_param = TaskParameter(
+            name="Function",
+            values=("Target_Function", "Source_Function"),
+            active_values=("Target_Function",),
+        )
+        params_tl = params + [task_param]
 
-    # Convert coordinates to a PyTorch tensor
-    initial_data_tensor = torch.tensor(initial_data[coord_columns].values)
+        searchspace_nontl = SearchSpace.from_product(parameters=params)
+        searchspace_tl = SearchSpace.from_product(parameters=params_tl)
 
-    with Settings(random_seed=settings.random_seed):
-        target_values_tensor = source_function(
-            initial_data_tensor
-        )  # Randomness from source function
+        objective = SingleTargetObjective(
+            target=NumericalTarget(name="Target", minimize=True)
+        )
+        tl_campaign = Campaign(
+            searchspace=searchspace_tl,
+            objective=objective,
+        )
+        nontl_campaign = Campaign(
+            searchspace=searchspace_nontl,
+            objective=objective,
+        )
 
-    # Assign the results back to a new DataFrame for initial_data
-    initial_data["Target"] = target_values_tensor.detach().numpy()
-    initial_data["Function"] = "Source_Function"
+        meshgrid = np.meshgrid(*[points for points in grid_locations.values()])
 
-    lookup = arrays_to_dataframes([p.name for p in params], ["Target"], use_torch=True)(
-        target_function
-    )
+        # Create a DataFrame for the initial data coordinates
+        coord_columns = [p.name for p in params]
+        initial_data = pd.DataFrame(
+            {f"x{d}": grid_d.ravel() for d, grid_d in enumerate(meshgrid)},
+            columns=coord_columns,  # Ensure correct column order
+        )
 
-    initial_data_samples = {}
-    with Settings(random_seed=settings.random_seed):
+        # Convert coordinates to a PyTorch tensor
+        initial_data_tensor = torch.tensor(initial_data[coord_columns].values)
+
+        with Settings(random_seed=settings.random_seed):
+            target_values_tensor = source_function(
+                initial_data_tensor
+            )  # Randomness from source function
+
+        # Assign the results back to a new DataFrame for initial_data
+        initial_data["Target"] = target_values_tensor.detach().numpy()
+        initial_data["Function"] = "Source_Function"
+
+        lookup = arrays_to_dataframes(
+            [p.name for p in params], ["Target"], use_torch=True
+        )(target_function)
+
+        initial_data_samples = {}
+        with Settings(random_seed=settings.random_seed):
+            for p in percentages:
+                initial_data_samples[p] = [
+                    initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
+                ]
+
+        results = []
         for p in percentages:
-            initial_data_samples[p] = [
-                initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
-            ]
-
-    results = []
-    for p in percentages:
+            results.append(
+                simulate_scenarios(
+                    {
+                        f"{int(100 * p)}": tl_campaign,
+                        f"{int(100 * p)}_naive": nontl_campaign,
+                    },
+                    lookup,
+                    initial_data=initial_data_samples[p],
+                    batch_size=settings.batch_size,
+                    n_doe_iterations=settings.n_doe_iterations,
+                    impute_mode="error",
+                    random_seed=settings.random_seed,
+                )
+            )
         results.append(
             simulate_scenarios(
-                {
-                    f"{int(100 * p)}": tl_campaign,
-                    f"{int(100 * p)}_naive": nontl_campaign,
-                },
+                {"0": tl_campaign, "0_naive": nontl_campaign},
                 lookup,
-                initial_data=initial_data_samples[p],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
+                n_mc_iterations=settings.n_mc_iterations,
                 impute_mode="error",
                 random_seed=settings.random_seed,
             )
         )
-    results.append(
-        simulate_scenarios(
-            {"0": tl_campaign, "0_naive": nontl_campaign},
-            lookup,
-            batch_size=settings.batch_size,
-            n_doe_iterations=settings.n_doe_iterations,
-            n_mc_iterations=settings.n_mc_iterations,
-            impute_mode="error",
-            random_seed=settings.random_seed,
-        )
-    )
-    return pd.concat(results)
+        return pd.concat(results)
+
+    benchmark_fn.__name__ = name
+    benchmark_fn.__qualname__ = name
+    return benchmark_fn
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
@@ -162,7 +204,34 @@ benchmark_config = ConvergenceBenchmarkSettings(
 )
 
 hartmann_tl_3_20_15_benchmark = ConvergenceBenchmark(
-    function=hartmann_tl_3_20_15,
-    optimal_target_values={"Target": -3.851831124860353},
+    function=_make_hartmann_tl_benchmark(
+        name="hartmann_tl_3_20_15",
+        source_noise_std=0.15,
+        source_shift=None,
+        source_negate=False,
+    ),
+    optimal_target_values={"Target": -3.8324342572721695},
+    settings=benchmark_config,
+)
+
+hartmann_tl_inv_3_20_15_benchmark = ConvergenceBenchmark(
+    function=_make_hartmann_tl_benchmark(
+        name="hartmann_tl_inv_3_20_15",
+        source_noise_std=0.15,
+        source_shift=None,
+        source_negate=True,
+    ),
+    optimal_target_values={"Target": -3.8324342572721695},
+    settings=benchmark_config,
+)
+
+hartmann_tl_shift_3_20_15_benchmark = ConvergenceBenchmark(
+    function=_make_hartmann_tl_benchmark(
+        "hartmann_tl_shift_3_20_15",
+        source_noise_std=0.15,
+        source_shift=(0.2, 0, 0),
+        source_negate=False,
+    ),
+    optimal_target_values={"Target": -3.8324342572721695},
     settings=benchmark_config,
 )

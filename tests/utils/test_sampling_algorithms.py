@@ -60,6 +60,7 @@ def test_discrete_sampling(fraction, method):
 )
 # Explicitly test scenario with equidistant points (see comments in test body)
 @pytest.mark.parametrize("random_tie_break", [False, True])
+@pytest.mark.filterwarnings("ignore:All points are identical:UserWarning")
 @example(points=np.array([[0, 0], [0, 1], [1, 0], [1, 1]]))
 def test_farthest_point_sampling(points: np.ndarray, random_tie_break: bool):
     """FPS produces the same point sequence regardless of the order in which the
@@ -74,14 +75,14 @@ def test_farthest_point_sampling(points: np.ndarray, random_tie_break: bool):
 
     # For the ordered collection of points, it must hold:
     # ---------------------------------------------------
-    # The minimum distance of the n_th selected point to all previously selected points
-    # must be larger than the minimum distance of any other remaining candidate point to
-    # the previously selected points – that's what makes it the "farthest point" in the
-    # respective iteration.
+    # The minimum distance of the n_th selected point to all previously selected
+    # points must be larger than the minimum distance of any other remaining
+    # candidate point to the previously selected points – that's what makes it
+    # the "farthest point" in the respective iteration.
     #
-    # For the check, we start with the second point (because there are otherwise no
-    # previous points) and end with the second last point (because there are otherwise
-    # no alternative candidates left):
+    # For the check, we start with the second point (because there are otherwise
+    # no previous points) and end with the second last point (because there are
+    # otherwise no alternative candidates left):
     dist_mat = pairwise_distances(target)
     for i in range(1, len(dist_mat) - 1):
         min_dist_selected_to_previous = np.min(dist_mat[i, :i])
@@ -89,16 +90,18 @@ def test_farthest_point_sampling(points: np.ndarray, random_tie_break: bool):
         z = min_dist_selected_to_previous >= min_dist_remaining_to_previous
         assert z
 
-    # Also, if the algorithm is set to fully deterministic, the obtained result should
-    # not depend on the particular (random) order in which the points are provided.
-    # That is, running the algorithm on a permutation should still produce the same
-    # sequence of points. The flag `random_tie_break` can adjust the deterministic
-    # behaviour. Note: We establish the check on the point coordinates and not the
-    # selection index, because the latter can still differ in case of duplicated points.
+    # Also, if the algorithm is set to fully deterministic, the obtained result
+    # should not depend on the particular (random) order in which the points are
+    # provided. That is, running the algorithm on a permutation should still
+    # produce the same sequence of points. The flag `random_tie_break` can adjust
+    # the deterministic behaviour. Note: We establish the check on the point
+    # coordinates and not the selection index, because the latter can still differ
+    # in case of duplicated points.
     #
-    # Examples where this can make a difference is three points forming an equilateral
-    # triangle or four points spanning a unit cube. Here, tie-breaking operations such
-    # as `np.max` can lead to different results depending on the order.
+    # Examples where this can make a difference is three points forming an
+    # equilateral triangle or four points spanning a unit cube. Here,
+    # tie-breaking operations such as `np.max` can lead to different results
+    # depending on the order.
     permutation_idxs = np.random.permutation(len(points))
     sorting_idxs = farthest_point_sampling(
         points[permutation_idxs], len(points), random_tie_break=random_tie_break

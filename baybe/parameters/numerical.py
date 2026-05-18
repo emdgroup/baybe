@@ -31,7 +31,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
     _values: tuple[float, ...] = field(
         alias="values",
         # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
-        converter=lambda x: sorted(cattrs.structure(x, tuple[float, ...])),  # type: ignore
+        converter=lambda x: sorted(cattrs.structure(x, tuple[float, ...])),
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(2),

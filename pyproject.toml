@@ -73,9 +73,16 @@ chem = [
     "scikit-fingerprints>=1.13.1",
 ]
 
+# NOTE: There is an error in the metadata of onnxruntime version 1.24.1 to 1.24.3.
+# The metadata claims that these versions are compatible with Python 3.10.
+# However, Python 3.10 is not actually supported by versions >=1.24.
+# As this causes issues with dependency resolving, we explicitly set the upper bound
+# for onnxruntime to <1.24 for Python 3.10.
+# See https://github.com/microsoft/onnxruntime/pull/27354 for more details.
 onnx = [
     "onnx>=1.16.0", # see AUDIT NOTE, required by skl2onnx
-    "onnxruntime>=1.15.1",
+    "onnxruntime>=1.15.1,<1.24; python_version < '3.11'",
+    "onnxruntime>=1.15.1; python_version >= '3.11'",   
     "skl2onnx>=1.19.1",
 ]
 
@@ -89,7 +96,7 @@ dev = [
     "pip-audit>=2.5.5",
     "setuptools-scm>=7.1.0",
     "tox-uv>=1.7.0",
-    "uv>=0.9.25",
+    "uv>=0.11.3",
 ]
 
 insights = [
@@ -127,7 +134,7 @@ lint = [
     "pre-commit==4.2.0", # see DEV TOOLS NOTE
     "pydoclint==0.5.5", # see DEV TOOLS NOTE
     "pyupgrade==3.21.2", # see DEV TOOLS NOTE
-    "ruff==0.14.11", # see DEV TOOLS NOTE
+    "ruff==0.15.9", # see DEV TOOLS NOTE
 ]
 
 mypy = [
@@ -178,3 +185,6 @@ fallback_version = "0.0+unknown"
 
 [tool.setuptools]
 packages = ["baybe"]
+
+[tool.uv]
+exclude-newer = "7 days"

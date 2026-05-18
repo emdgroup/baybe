@@ -461,7 +461,7 @@ class BotorchRecommender(BayesianRecommender):
         # Prepare all considered discrete configurations in the
         # List[Dict[int, float]] format expected by BoTorch.
         num_comp_columns = len(candidates_comp.columns)
-        candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
+        candidates_comp.columns = list(range(num_comp_columns))
         fixed_features_list = candidates_comp.to_dict("records")
 
         # Actual call of the BoTorch optimization routine

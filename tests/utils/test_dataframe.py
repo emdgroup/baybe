@@ -208,7 +208,18 @@ def test_measurement_singletons():
             ),
             None,
             "",
-            id="valid",
+            id="valid_float",
+        ),
+        param(
+            pd.DataFrame(
+                {
+                    "Num_disc_1": [1, 2],
+                    "Target_max": [3, 4],
+                }
+            ),
+            None,
+            "",
+            id="valid_int",
         ),
         param(
             pd.DataFrame(

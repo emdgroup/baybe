@@ -483,7 +483,7 @@ class SigmoidTransformation(MonotonicTransformation):
         try:
             anchors = cattrs.structure(
                 anchors, tuple[tuple[float, float], tuple[float, float]]
-            )  # type: ignore[call-arg]
+            )
         except cattrs.IterableValidationError as ex:
             raise ValueError(
                 f"The specified anchor point argument must be convertible to two "

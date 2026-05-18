@@ -33,8 +33,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with: {python-version: "3.10"}
       - name: Build Docs
         run: |
@@ -53,8 +53,8 @@ jobs:
     name: Lint ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -76,8 +76,8 @@ jobs:
     name: Type Check ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -99,8 +99,8 @@ jobs:
     name: Audit ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -122,8 +122,8 @@ jobs:
     name: Core Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -144,8 +144,8 @@ jobs:
     name: Full Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -180,8 +180,8 @@ jobs:
     name: GPU Tests ${{ matrix.py-version.semantic }}
     runs-on: XS-GPU
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}

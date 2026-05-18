@@ -86,7 +86,10 @@ extensions = [
     "sphinx_design",  # For dropdowns etc
 ]
 bibtex_bibfiles = ["references.bib"]
-myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
+myst_enable_extensions = [
+    "dollarmath",  # Enables Latex-like math in markdown files
+    "colon_fence",  # Enables ::: syntax for directives
+]
 autosectionlabel_prefix_document = True  # Make sure autosectionlabels are unique
 myst_heading_anchors = 4
 
@@ -94,7 +97,7 @@ myst_heading_anchors = 4
 # Tell sphinx where to find the templates
 templates_path = ["templates"]
 # Tell sphinx which files should be excluded
-exclude_patterns = ["sdk"]
+exclude_patterns = ["sdk", "AGENTS.md", "CLAUDE.md", "**/AGENTS.md", "**/CLAUDE.md"]
 autodoc_exclude_modules = ["baybe.utils.clustering_algorithms.third_party.kmedoids"]
 
 # Enable markdown
@@ -136,6 +139,7 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.acquisition.base.*.supports_multi_output"),
     (r"py:obj", "baybe.acquisition.base.*.is_analytic"),
     (r"py:obj", "baybe.surrogates.*.is_available"),
+    (r"py:obj", r"baybe.constraints.*.has_polars_implementation"),
     # KMedoids
     (r"py:.*", r".*clustering_algorithms.*KMedoids.*"),
     (r"ref:.*", r".*clustering_algorithms.*KMedoids.*"),

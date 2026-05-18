@@ -113,17 +113,41 @@ experimentation is feasible in the first place, or whether the given time budget
 even allows for sequential runs.
 ```
 
-### Candidate Control in Discrete Spaces
-For discrete search spaces, campaigns provide additional control over how the candidate
-set of recommendable points is built based on the trajectory the campaign has taken so
-far. This is done by setting the following Boolean flags:
-- `allow_recommending_already_measured`:  Controls whether points that have already been
-  measured can be recommended.
-- `allow_recommending_already_recommended`: Controls whether previously recommended points can
-  be recommended again.
-- `allow_recommending_pending_experiments`: Controls whether points marked as
-  `pending_experiments` can be recommended (see [asynchronous
-  workflows](PENDING_EXPERIMENTS)).
+### Candidate Control Flags
+Due to their sequential nature, campaigns provide some unique mechanisms to dynamically
+adjust the set of recommendable candidates based on the specific trajectory they have
+taken so far. This is done by setting the following optional
+{class}`~baybe.utils.boolean.AutoBool` flags:
+- `allow_recommending_already_measured`: Controls whether candidates that have already
+  been measured can be recommended.
+- `allow_recommending_already_recommended`: Controls whether previously recommended
+  candidates can be recommended again.
+- `allow_recommending_pending_experiments`: Controls whether candidates marked as
+  `pending_experiments` can be recommended
+  (see [asynchronous workflows](PENDING_EXPERIMENTS)).
+
+When set to `"auto"`/{attr}`~baybe.utils.boolean.AutoBool.AUTO`, the effective flag
+value is resolved based on the type of the configured search space:
+
+:::{table} Resolved values when flags are set to {attr}`~baybe.utils.boolean.AutoBool.AUTO`
+
+| Flag                                        | Discrete | Continuous | Hybrid |
+|:--------------------------------------------|:--------:|:----------:|:------:|
+| {attr}`~baybe.campaign.Campaign.allow_recommending_already_measured`       | `True`   | `True`     | `True` |
+| {attr}`~baybe.campaign.Campaign.allow_recommending_already_recommended`    | `False`  | `True`     | `True` |
+| {attr}`~baybe.campaign.Campaign.allow_recommending_pending_experiments`    | `False`  | `True`     | `True` |
+
+:::
+
+```{admonition} Non-Discrete Search Spaces
+:class: note
+
+For search spaces that involve a continuous subspace (i.e., continuous or hybrid),
+setting any of the above flags to `False`/{attr}`~baybe.utils.boolean.AutoBool.FALSE` is
+not supported for algorithmic reasons (continuous spaces have infinite candidate sets)
+and will raise an error. Use `True`/{attr}`~baybe.utils.boolean.AutoBool.TRUE` or
+`"auto"`/{attr}`~baybe.utils.boolean.AutoBool.AUTO` in those cases.
+```
 
 ### Caching of Recommendations
 

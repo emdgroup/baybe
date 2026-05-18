@@ -12,7 +12,11 @@ from baybe.constraints import (
     DiscreteSumConstraint,
     ThresholdCondition,
 )
-from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
+from baybe.exceptions import (
+    EmptySearchSpaceError,
+    IncompatibilityError,
+    InputDataTypeWarning,
+)
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -25,7 +29,7 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
-from baybe.searchspace.discrete import (
+from baybe.searchspace.utils import (
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )
@@ -107,7 +111,8 @@ def test_discrete_from_dataframe_dtype_consistency():
             "C": [int(1), 2.2, True],  # Valid but inconsistent dtypes
         }
     )
-    subspace = SubspaceDiscrete.from_dataframe(df)
+    with pytest.warns(InputDataTypeWarning, match=r"unexpected data types: \['C'\]"):
+        subspace = SubspaceDiscrete.from_dataframe(df)
 
     assert isinstance(
         next(p for p in subspace.parameters if p.name == "C"),
@@ -132,6 +137,35 @@ def test_invalid_simplex_creating_with_overlapping_parameters():
                 product_parameters=parameters,
             )
         )
+
+
+@pytest.mark.parametrize(
+    ("simplex_parameters", "expected_len"),
+    [
+        pytest.param([], 3, id="zero_simplex"),
+        pytest.param(
+            [NumericalDiscreteParameter("x", values=[0.0, 0.5, 1.0, 1.5, 2.0])],
+            9,
+            id="one_simplex",
+        ),
+    ],
+)
+def test_from_simplex_with_degenerate_parameter_count(simplex_parameters, expected_len):
+    """Calling from_simplex with less than 2 simplex parameters emits a warning."""
+    product_parameters = [CategoricalParameter(name="C", values=["a", "b", "c"])]
+
+    with pytest.warns(UserWarning, match="less than 2 simplex parameters"):
+        subspace = SubspaceDiscrete.from_simplex(
+            max_sum=1.0,
+            simplex_parameters=simplex_parameters,
+            product_parameters=product_parameters,
+        )
+
+    assert len(subspace.exp_rep) == expected_len
+
+    if simplex_parameters:
+        simplex_cols = [p.name for p in simplex_parameters]
+        assert all(subspace.exp_rep[simplex_cols].sum(axis=1) <= 1.0)
 
 
 def test_continuous_searchspace_creation_from_bounds():
@@ -425,14 +459,16 @@ def test_task_parameter_active_values_validation():
     [
         (
             ["InterConstraint_3"],
-            lambda samples: samples["Conti_finite1"].sum()
-            + 2 * samples["Conti_finite2"].sum(),
+            lambda samples: (
+                samples["Conti_finite1"].sum() + 2 * samples["Conti_finite2"].sum()
+            ),
             lambda result: np.isclose(result, 0.3, atol=1e-6),
         ),
         (
             ["InterConstraint_4"],
-            lambda samples: 2 * samples["Conti_finite1"].sum()
-            - samples["Conti_finite2"].sum(),
+            lambda samples: (
+                2 * samples["Conti_finite1"].sum() - samples["Conti_finite2"].sum()
+            ),
             lambda result: result >= 0.3 - 1e-6,
         ),
     ],

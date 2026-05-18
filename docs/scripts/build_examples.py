@@ -158,7 +158,11 @@ def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
                         continue
                     if any(substring in line for substring in ignored_substrings):
                         continue
-                    if len(line) > 88 and "](" not in line:
+                    if (
+                        len(line) > 88
+                        and "](" not in line
+                        and not line.lstrip().startswith("#")
+                    ):
                         wrapped = textwrap.wrap(line, width=88)
                         wrapped_lines.extend(wrapped)
                     else:

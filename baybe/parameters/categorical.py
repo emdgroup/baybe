@@ -39,7 +39,7 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
     _values: tuple[str | bool, ...] = field(
         alias="values",
         converter=Converter(_convert_values, takes_self=True, takes_field=True),  # type: ignore
-        validator=(  # type: ignore
+        validator=(
             validate_unique_values,
             deep_iterable(
                 member_validator=(instance_of((str, bool)), _validate_label_min_len),

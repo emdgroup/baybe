@@ -50,6 +50,9 @@ def _validate_whitelist_env_vars(vars: dict[str, str], /) -> None:
                 f"Allowed values for 'BAYBE_TEST_ENV' are "
                 f"'CORETEST', 'FULLTEST', and 'GPUTEST'. Given: '{value}'"
             )
+    for var in list(vars):
+        if var.startswith("BAYBE_BENCHMARKING_"):
+            vars.pop(var)
 
     if (value := vars.pop("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", None)) is not None:
         try:

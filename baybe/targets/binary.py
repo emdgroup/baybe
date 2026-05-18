@@ -33,14 +33,14 @@ class BinaryTarget(Target, SerialMixin):
 
     success_value: ChoiceValue = field(
         default=True,
-        validator=[instance_of(ChoiceValue), validate_not_nan],  # type: ignore[call-overload]
+        validator=[instance_of(ChoiceValue), validate_not_nan],
         kw_only=True,
     )
     """Experimental representation of the success value."""
 
     failure_value: ChoiceValue = field(
         default=False,
-        validator=[instance_of(ChoiceValue), validate_not_nan],  # type: ignore[call-overload]
+        validator=[instance_of(ChoiceValue), validate_not_nan],
         kw_only=True,
     )
     """Experimental representation of the failure value."""

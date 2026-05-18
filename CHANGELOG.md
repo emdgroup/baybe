@@ -24,12 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   parameter kind validation in kernel factories
 - `IndexKernel` and `PositiveIndexKernel` classes
 - Interpoint constraints for continuous search spaces
-- `IndexKernel` and `PositiveIndexKernel` classes
 - Addition and multiplication operators for kernel objects, enabling kernel
   composition via `+` (sum) and `*` (product), as well as `constant * kernel`
   for creating a `ScaleKernel` with a fixed output scale
+- Transfer learning benchmarks for shifted and inverted Hartmann functions
+- Coding convention instructions for agentic developers (`AGENTS.md`, `CLAUDE.md`)
+- `has_polars_implementation` property on `DiscreteConstraint`
+- `allow_missing` flag on `DiscreteConstraint.get_invalid` and `get_valid`
 
 ### Breaking Changes
+- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
+  from `baybe.searchspace.discrete` to `baybe.searchspace.utils`
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
   instead of a single tuple (needed for interpoint constraints)
 - `Kernel.to_gpytorch` now takes a `SearchSpace` instead of explicit `ard_num_dims`,
@@ -38,6 +43,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GaussianProcessSurrogate` no longer automatically adds a task kernel in multi-task
   scenarios. Custom kernel architectures must now explicitly include the task kernel,
   e.g. via `ICMKernelFactory`
+
+### Fixed
+- Broken cache validation for certain `Campaign.recommend` cases
+- `SHAPInsight` breaking with `numpy>=2.4` due to no longer accepted implicit array to 
+  scalar conversion
+- Using `np.isclose` for assessing equality of `Interval` bounds instead of hard
+  equality check
+
+### Changed
+- The `Campaign.allow_*` flag mechanism is now based on `AutoBool` logic, providing
+  well-defined Boolean values at query time while exposing the `AUTO` option to the user
+- Discrete search space construction now applies constraints incrementally during
+  Cartesian product building, significantly reducing memory usage and construction
+  time for constrained spaces
+- Polars path in discrete search space construction now builds the Cartesian product
+  only for parameters involved in Polars-capable constraints, merging the rest
+  incrementally via pandas
 
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
@@ -62,6 +84,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The environment variable `BAYBE_PARALLEL_SIMULATION_RUNS` has been replaced with
   `BAYBE_PARALLELIZE_SIMULATION_RUNS` linked to the `parallelize_simulation_runs`
   attribute of the new `Settings` class
+
+## [0.14.3] - 2026-02-10
+### Fixed
+- Deserialization of `NumericalTarget` objects using the optional `constructor` field
+- Broken cache validation for certain `Campaign.recommend` cases
 
 ## [0.14.2] - 2026-01-14
 ### Added

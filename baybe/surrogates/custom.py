@@ -176,9 +176,9 @@ def _encode_onnx_string(dct: dict[str, Any], _) -> CustomONNXSurrogate:
         CustomONNXSurrogate,
         converter,
         onnx_str=cattrs.override(
-            struct_hook=lambda x, _: x.encode(_ONNX_ENCODING)
-            if isinstance(x, str)
-            else x
+            struct_hook=lambda x, _: (
+                x.encode(_ONNX_ENCODING) if isinstance(x, str) else x
+            )
         ),
     )
     return fn(dct)

@@ -1,6 +1,7 @@
 """Tests for the substance parameter."""
 
 import pytest
+from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.enum import SubstanceEncoding
@@ -12,8 +13,16 @@ from tests.conftest import run_iterations
 )
 @pytest.mark.parametrize(
     "parameter_names",
-    [["Categorical_1", f"Substance_1_{enc.name}"] for enc in SubstanceEncoding],
-    ids=[enc.name for enc in SubstanceEncoding],
+    [
+        param(
+            ["Categorical_1", f"Substance_1_{enc.name}"],
+            id=enc.name,
+            marks=pytest.mark.filterwarnings("ignore::DeprecationWarning")
+            if enc.name in {"RDKIT", "MORGAN_FP"}
+            else [],
+        )
+        for enc in SubstanceEncoding
+    ],
 )
 @pytest.mark.parametrize("batch_size", [1], ids=["b3"])
 def test_run_iterations(campaign, batch_size, n_iterations):

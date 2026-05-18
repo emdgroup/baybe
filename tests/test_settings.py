@@ -21,6 +21,7 @@ from baybe import Settings, active_settings
 from baybe.campaign import Campaign
 from baybe.exceptions import NotAllowedError
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace.core import SearchSpace
 from baybe.settings import _RANDOM_SEED_ATTRIBUTE_NAME
 from baybe.utils.basic import cache_to_disk
 from baybe.utils.random import _RandomState
@@ -486,10 +487,14 @@ def test_settings_are_sorted_alphabetically():
 
 
 @pytest.mark.parametrize("cache", [True, False], ids=["cache", "no_cache"])
-def test_recommendation_caching(campaign: Campaign, cache: bool):
+def test_recommendation_caching(searchspace: SearchSpace, cache: bool):
     """Recommendations are (not) cached according to the settings."""
-    campaign.allow_recommending_already_recommended = True
-    campaign.recommender = Mock(wraps=RandomRecommender())
+    campaign = Campaign(
+        searchspace,
+        recommender=Mock(wraps=RandomRecommender(), spec=RandomRecommender),
+        allow_recommending_already_recommended=True,
+    )
+
     with Settings(cache_campaign_recommendations=cache):
         df1 = campaign.recommend(2)
         assert campaign.recommender.recommend.call_count == 1
@@ -504,7 +509,7 @@ def test_recommendation_caching(campaign: Campaign, cache: bool):
 def test_cache_directory(tmp_path: Path):
     """The cache directory is used to store cached results."""
     mock = Mock(return_value=0)
-    f = cache_to_disk(lambda: mock())
+    f = cache_to_disk(lambda: mock())  # noqa: PLW0108
 
     for path in [tmp_path / "a", tmp_path / "b", None]:
         mock.reset_mock()
