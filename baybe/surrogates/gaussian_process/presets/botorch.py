@@ -70,16 +70,14 @@ class BotorchKernelFactory(_PureKernelFactory):
         if (task_idx := searchspace.task_idx) is None:
             return base_kernel
 
-        # Multi-task case
-        base = get_covar_module_with_dim_scaled_prior(
-            ard_num_dims=ard_num_dims, active_dims=active_dims
-        )
         index_kernel = PositiveIndexKernel(
             num_tasks=searchspace.n_tasks,
             rank=searchspace.n_tasks,
             active_dims=[task_idx],
         )
-        return ICMKernelFactory(base, index_kernel)(searchspace, train_x, train_y)
+        return ICMKernelFactory(base_kernel, index_kernel)(
+            searchspace, train_x, train_y
+        )
 
 
 class BotorchMeanFactory(MeanFactoryProtocol):
