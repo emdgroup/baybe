@@ -70,14 +70,10 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
                 f"they actually use the selected parameter names."
             )
 
-    def get_parameter_names(self, searchspace: SearchSpace) -> tuple[str, ...] | None:
+    def get_parameter_names(self, searchspace: SearchSpace) -> tuple[str, ...]:
         """Get the names of the parameters to be considered by the kernel."""
-        if self.parameter_selector is None:
-            return None
-
-        return tuple(
-            p.name for p in searchspace.parameters if self.parameter_selector(p)
-        )
+        selector = self.parameter_selector or (lambda _: True)
+        return tuple(p.name for p in searchspace.parameters if selector(p))
 
     def _validate_parameter_kinds(self, parameters: Iterable[Parameter]) -> None:
         """Validate that the given parameters are supported by the factory.

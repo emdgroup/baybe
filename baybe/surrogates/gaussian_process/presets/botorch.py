@@ -53,39 +53,29 @@ class BotorchKernelFactory(_PureKernelFactory):
 
         parameter_names = self.get_parameter_names(searchspace)
 
-        # Resolve parameter names to active dimension indices
-        active_dims: list[int] | None
-        if parameter_names is not None:
-            active_dims = list(
-                chain.from_iterable(
-                    searchspace.get_comp_rep_parameter_indices(name)
-                    for name in parameter_names
-                )
+        # For regular parameters, resolve parameter names to active dimension indices
+        active_dims = list(
+            chain.from_iterable(
+                searchspace.get_comp_rep_parameter_indices(name)
+                for name in parameter_names
+                if searchspace.get_parameters_by_name([name])[0]._kind
+                is _ParameterKind.REGULAR
             )
-            ard_num_dims = len(active_dims)
-        else:
-            active_dims = None
-            ard_num_dims = len(searchspace.comp_rep_columns)
+        )
+        ard_num_dims = len(active_dims)
 
-        # Determine if the selected parameters include a task parameter
-        task_idx = searchspace.task_idx
-        is_multitask = task_idx is not None and (
-            active_dims is None or task_idx in active_dims
+        # Create the base kernel for the regular parameters
+        base_kernel = get_covar_module_with_dim_scaled_prior(
+            ard_num_dims=ard_num_dims, active_dims=active_dims
         )
 
-        if not is_multitask:
-            return get_covar_module_with_dim_scaled_prior(
-                ard_num_dims=ard_num_dims, active_dims=active_dims
-            )
+        # Single-task case
+        if (task_idx := searchspace.task_idx) is None:
+            return base_kernel
 
-        assert task_idx is not None
-        base_idcs = [
-            idx
-            for idx in (active_dims or range(len(searchspace.comp_rep_columns)))
-            if idx != task_idx
-        ]
+        # Multi-task case
         base = get_covar_module_with_dim_scaled_prior(
-            ard_num_dims=len(base_idcs), active_dims=base_idcs
+            ard_num_dims=ard_num_dims, active_dims=active_dims
         )
         index_kernel = PositiveIndexKernel(
             num_tasks=searchspace.n_tasks,
