@@ -57,24 +57,42 @@ class PriorMeanFactory(MeanFactoryProtocol):
     ) -> GPyTorchMean:
         import gpytorch
         import torch
+        from botorch.models.transforms.input import Normalize
+
+        from baybe.surrogates.gaussian_process.core import _ModelContext
+
+        context = _ModelContext(searchspace)
+
+        # Build the same normalization used by _fit for the new GP.
+        # In eval mode, untransform reverses the normalization.
+        input_transform = Normalize(
+            train_x.shape[-1],
+            bounds=context.parameter_bounds,
+            indices=context.numerical_indices,
+        )
+        input_transform.eval()
 
         class PriorMean(gpytorch.means.Mean):
             """GPyTorch mean using a trained GP's posterior as the mean function."""
 
-            def __init__(self, gp: SingleTaskGP) -> None:
+            def __init__(self, gp: SingleTaskGP, input_transform: Normalize) -> None:
                 super().__init__()
                 self.gp: SingleTaskGP = deepcopy(gp)
                 for param in self.gp.parameters():
                     param.requires_grad = False
+                self.input_transform = input_transform
 
             def forward(self, x: Tensor) -> Tensor:
                 """Compute the mean using the wrapped GP's posterior."""
                 self.gp.eval()
                 self.gp.likelihood.eval()
                 with torch.no_grad(), gpytorch.settings.fast_pred_var():
-                    return self.gp(x).mean.detach()
+                    # Unnormalize to raw physical space so that posterior()
+                    # can apply the prior GP's own input normalization.
+                    x_raw = self.input_transform.untransform(x)
+                    return self.gp.posterior(x_raw).mean.squeeze(-1).detach()
 
-        return PriorMean(self._prior_model)
+        return PriorMean(self._prior_model, input_transform)
 
 
 gc.collect()  # Collect leftover original slotted classes created by attrs

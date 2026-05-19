@@ -130,3 +130,73 @@ def test_invalid_components():
         )
     with pytest.raises(TypeError, match="Component must be one of"):
         GaussianProcessSurrogate(criterion_or_factory=MaternKernel())
+
+
+def test_prior_mean_correct_under_different_bounds():
+    """PriorMean evaluates at correct physical points when bounds differ."""
+    import pandas as pd
+    import torch
+
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.searchspace.core import SearchSpace
+
+    # Train a prior GP on a narrow search space [0, 5]
+    prior_params = [NumericalDiscreteParameter("x1", values=[0.0, 2.5, 5.0])]
+    prior_ss = SearchSpace.from_product(prior_params)
+    obj = NumericalTarget(name="y").to_objective()
+
+    prior_surrogate = GaussianProcessSurrogate()
+    prior_measurements = pd.DataFrame({"x1": [0.0, 2.5, 5.0], "y": [0.0, 5.0, 10.0]})
+    prior_surrogate.fit(prior_ss, obj, prior_measurements)
+
+    # Get the prior's prediction at a known physical point (x1=2.5)
+    prior_posterior = prior_surrogate.posterior(pd.DataFrame({"x1": [2.5]}))
+    expected_mean = prior_posterior.mean.item()
+
+    # Create a new GP with from_prior on a WIDER search space [0, 10]
+    new_params = [NumericalDiscreteParameter("x1", values=[0.0, 2.5, 5.0, 7.5, 10.0])]
+    new_ss = SearchSpace.from_product(new_params)
+
+    new_surrogate = GaussianProcessSurrogate.from_prior(prior_gp=prior_surrogate)
+    new_measurements = pd.DataFrame({"x1": [0.0, 10.0], "y": [0.0, 20.0]})
+    new_surrogate.fit(new_ss, obj, new_measurements)
+
+    # Extract the mean module and evaluate it at x1=2.5's normalized position
+    # In the new space [0,10], x1=2.5 normalizes to 0.25
+    mean_module = new_surrogate._model.mean_module
+    x_normalized = torch.tensor([[0.25]])
+    with torch.no_grad():
+        actual_mean = mean_module(x_normalized).item()
+
+    assert abs(actual_mean - expected_mean) < 1e-4
+
+
+def test_prior_mean_same_bounds():
+    """PriorMean is correct when prior and new search spaces have same bounds."""
+    import pandas as pd
+    import torch
+
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.searchspace.core import SearchSpace
+
+    params = [NumericalDiscreteParameter("x1", values=[0.0, 2.5, 5.0])]
+    ss = SearchSpace.from_product(params)
+    obj = NumericalTarget(name="y").to_objective()
+
+    prior_surrogate = GaussianProcessSurrogate()
+    meas = pd.DataFrame({"x1": [0.0, 2.5, 5.0], "y": [0.0, 5.0, 10.0]})
+    prior_surrogate.fit(ss, obj, meas)
+
+    prior_posterior = prior_surrogate.posterior(pd.DataFrame({"x1": [2.5]}))
+    expected_mean = prior_posterior.mean.item()
+
+    new_surrogate = GaussianProcessSurrogate.from_prior(prior_gp=prior_surrogate)
+    new_surrogate.fit(ss, obj, meas)
+
+    # x1=2.5 normalizes to 0.5 in [0,5]
+    mean_module = new_surrogate._model.mean_module
+    x_normalized = torch.tensor([[0.5]])
+    with torch.no_grad():
+        actual_mean = mean_module(x_normalized).item()
+
+    assert abs(actual_mean - expected_mean) < 1e-4
