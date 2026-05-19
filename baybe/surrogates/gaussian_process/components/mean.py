@@ -79,12 +79,12 @@ class PriorMeanFactory(MeanFactoryProtocol):
                 self.gp: SingleTaskGP = deepcopy(gp)
                 for param in self.gp.parameters():
                     param.requires_grad = False
+                self.gp.eval()
+                self.gp.likelihood.eval()
                 self.input_transform = input_transform
 
             def forward(self, x: Tensor) -> Tensor:
                 """Compute the mean using the wrapped GP's posterior."""
-                self.gp.eval()
-                self.gp.likelihood.eval()
                 with gpytorch.settings.fast_pred_var():
                     # Unnormalize to raw physical space so that posterior()
                     # can apply the prior GP's own input normalization.
