@@ -56,7 +56,6 @@ class PriorMeanFactory(MeanFactoryProtocol):
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> GPyTorchMean:
         import gpytorch
-        import torch
         from botorch.models.transforms.input import Normalize
 
         from baybe.surrogates.gaussian_process.core import _ModelContext
@@ -86,11 +85,11 @@ class PriorMeanFactory(MeanFactoryProtocol):
                 """Compute the mean using the wrapped GP's posterior."""
                 self.gp.eval()
                 self.gp.likelihood.eval()
-                with torch.no_grad(), gpytorch.settings.fast_pred_var():
+                with gpytorch.settings.fast_pred_var():
                     # Unnormalize to raw physical space so that posterior()
                     # can apply the prior GP's own input normalization.
                     x_raw = self.input_transform.untransform(x)
-                    return self.gp.posterior(x_raw).mean.squeeze(-1).detach()
+                    return self.gp.posterior(x_raw).mean.squeeze(-1)
 
         return PriorMean(self._prior_model, input_transform)
 
