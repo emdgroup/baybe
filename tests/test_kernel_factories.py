@@ -7,7 +7,12 @@ import torch
 from pytest import param
 
 from baybe.exceptions import IncompatibleSearchSpaceError
-from baybe.parameters.categorical import CategoricalParameter, TaskParameter
+from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
+from baybe.parameters.categorical import (
+    CategoricalParameter,
+    TaskParameter,
+    TransferLearningMode,
+)
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -73,3 +78,37 @@ def test_factory_parameter_kind_validation(factory, parameters, error):
         else pytest.raises(error, match="does not support")
     ):
         factory(ss, train_x, train_y)
+
+
+@pytest.mark.parametrize(
+    ("transfer_learning_mode", "expected_kernel_type"),
+    [
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            PositiveIndexKernel,
+            id="positive_index_kernel",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            IndexKernel,
+            id="index_kernel",
+        ),
+    ],
+)
+def test_task_kernel_factory_dispatching(transfer_learning_mode, expected_kernel_type):
+    """BayBETaskKernelFactory dispatches to the correct kernel type."""
+    parameters = [
+        NumericalDiscreteParameter(name="x", values=[1.0, 2.0, 3.0]),
+        TaskParameter(
+            name="task",
+            values=["source", "target"],
+            active_values=["target"],
+            transfer_learning_mode=transfer_learning_mode,
+        ),
+    ]
+    ss = SearchSpace.from_product(parameters)
+    train_x = torch.zeros(2, len(ss.comp_rep_columns))
+    train_y = torch.zeros(2, 1)
+
+    kernel = BayBETaskKernelFactory()(ss, train_x, train_y)
+    assert isinstance(kernel, expected_kernel_type)

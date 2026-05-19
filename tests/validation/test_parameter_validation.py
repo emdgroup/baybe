@@ -12,6 +12,7 @@ from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.categorical import (
     CategoricalParameter,
     TaskParameter,
+    TransferLearningMode,
 )
 from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.numerical import (
@@ -132,6 +133,42 @@ def test_invalid_values_task_parameter(values, active_values, error):
     with pytest.raises(error):
         """Providing invalid (active) parameter values raises an exception."""
         TaskParameter(name="invalid_values", values=values, active_values=active_values)
+
+
+@pytest.mark.parametrize(
+    ("values", "active_values", "transfer_learning_mode", "error"),
+    [
+        param(
+            ["A", "B", "C"],
+            ["A", "B"],
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            ValueError,
+            id="positive_index_kernel_multiple_active",
+        ),
+    ],
+)
+def test_invalid_transfer_learning_mode_task_parameter(
+    values, active_values, transfer_learning_mode, error
+):
+    """Providing incompatible transfer_learning_mode raises an exception."""
+    with pytest.raises(error):
+        TaskParameter(
+            name="invalid",
+            values=values,
+            active_values=active_values,
+            transfer_learning_mode=transfer_learning_mode,
+        )
+
+
+def test_transfer_learning_mode_default_inference():
+    """Default transfer_learning_mode is inferred from active_values."""
+    tp_single = TaskParameter(name="t", values=["a", "b", "c"], active_values=["a"])
+    assert (
+        tp_single.transfer_learning_mode == TransferLearningMode.POSITIVE_INDEX_KERNEL
+    )
+
+    tp_multi = TaskParameter(name="t", values=["a", "b", "c"], active_values=["a", "b"])
+    assert tp_multi.transfer_learning_mode == TransferLearningMode.INDEX_KERNEL
 
 
 @pytest.mark.skipif(
