@@ -258,7 +258,9 @@ class GaussianProcessSurrogate(Surrogate):
                 new GP. Defaults to the BayBE default fit criterion factory.
 
         Returns:
-            A new :class:`GaussianProcessSurrogate` instance.
+            A new :class:`GaussianProcessSurrogate` instance. The returned surrogate
+            is not serializable. Calling ``to_json`` on a campaign using this
+            surrogate will raise an error.
 
         Raises:
             TypeError: If ``prior_gp`` is not a :class:`GaussianProcessSurrogate`.

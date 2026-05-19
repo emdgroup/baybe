@@ -10,6 +10,11 @@ from attrs import define, field
 from typing_extensions import override
 
 from baybe.searchspace.core import SearchSpace
+from baybe.serialization.core import (
+    block_deserialization_hook,
+    block_serialization_hook,
+    converter,
+)
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
     PlainGPComponentFactory,
@@ -47,6 +52,9 @@ class PriorMeanFactory(MeanFactoryProtocol):
 
     The mean function uses the trained GP's posterior mean predictions.
     The provided model is deep-copied and its parameters are frozen.
+
+    Surrogates using this factory are not serializable because the underlying
+    BoTorch model is not covered by BayBE's serialization system.
     """
 
     _prior_model: SingleTaskGP = field()
@@ -93,5 +101,9 @@ class PriorMeanFactory(MeanFactoryProtocol):
 
         return PriorMean(self._prior_model, input_transform)
 
+
+# Prevent (de-)serialization of PriorMeanFactory since it contains a BoTorch model
+converter.register_unstructure_hook(PriorMeanFactory, block_serialization_hook)
+converter.register_structure_hook(PriorMeanFactory, block_deserialization_hook)
 
 gc.collect()  # Collect leftover original slotted classes created by attrs
