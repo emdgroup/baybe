@@ -206,9 +206,7 @@ def test_botorch_preset(multitask: bool):
         data = measurements
 
     active_settings.random_seed = 1337
-    gp = GaussianProcessSurrogate.from_preset(
-        "BOTORCH", fit_criterion_or_factory=FitCriterion.MARGINAL_LOG_LIKELIHOOD
-    )
+    gp = GaussianProcessSurrogate.from_preset("BOTORCH")
     gp.fit(sp, objective, data)
     posterior1 = gp.posterior_stats(data)
 

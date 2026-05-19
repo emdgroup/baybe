@@ -13,12 +13,15 @@ from baybe.kernels.base import Kernel
 from baybe.parameters.enum import _ParameterKind
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components import LikelihoodFactoryProtocol
+from baybe.surrogates.gaussian_process.components.fit_criterion import (
+    FitCriterion,
+    PlainFitCriterionFactory,
+)
 from baybe.surrogates.gaussian_process.components.kernel import (
     ICMKernelFactory,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.mean import MeanFactoryProtocol
-from baybe.surrogates.gaussian_process.presets.baybe import BayBEFitCriterionFactory
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
@@ -134,5 +137,4 @@ gc.collect()
 KERNEL_FACTORY = BotorchKernelFactory()
 MEAN_FACTORY = BotorchMeanFactory()
 LIKELIHOOD_FACTORY = BotorchLikelihoodFactory()
-# Botorch dictates no specific criterion, so we fill the preset with our default
-FIT_CRITERION_FACTORY = BayBEFitCriterionFactory()
+FIT_CRITERION_FACTORY = PlainFitCriterionFactory(FitCriterion.MARGINAL_LOG_LIKELIHOOD)
