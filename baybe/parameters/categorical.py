@@ -122,6 +122,8 @@ class TaskParameter(CategoricalParameter):
             value is TransferLearningMode.POSITIVE_INDEX_KERNEL
             and len(self.active_values) > 1
         ):
+            # BoTorch's PositiveIndexKernel requires a single target task
+            # in its constructor, so only one active (target) task is supported.
             raise ValueError(
                 f"Transfer learning mode "
                 f"'{TransferLearningMode.POSITIVE_INDEX_KERNEL.value}' requires "

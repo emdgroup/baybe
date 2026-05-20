@@ -236,7 +236,11 @@ class IndexKernel(BasicKernel):
 
 @define(frozen=True)
 class PositiveIndexKernel(IndexKernel):
-    """A positive index kernel for transfer learning across tasks."""
+    """A positive index kernel for transfer learning across tasks.
+
+    Requires exactly one target task. The covariance matrix is normalized by the
+    target task's diagonal entry, enforcing positive correlations between tasks.
+    """
 
     target_task_index: int = field(validator=[instance_of(int), ge(0)])
     """The index of the target task for normalization."""
