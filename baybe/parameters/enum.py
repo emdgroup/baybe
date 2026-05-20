@@ -174,3 +174,10 @@ class SubstanceEncoding(ParameterEncoding):
 
     WHIM = "WHIM"
     """:class:`skfp.fingerprints.WHIMFingerprint`"""
+
+
+class TransferLearningMode(Enum):
+    """Transfer learning modes for TaskParameter."""
+
+    INDEX_KERNEL = "index_kernel"
+    POSITIVE_INDEX_KERNEL = "positive_index_kernel"

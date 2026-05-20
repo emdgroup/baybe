@@ -1,7 +1,6 @@
 """Categorical parameters."""
 
 import gc
-from enum import Enum
 from functools import cached_property
 from typing import Any
 
@@ -12,17 +11,10 @@ from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
 from baybe.parameters.base import _DiscreteLabelLikeParameter
-from baybe.parameters.enum import CategoricalEncoding
+from baybe.parameters.enum import CategoricalEncoding, TransferLearningMode
 from baybe.parameters.validation import validate_unique_values
 from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple
-
-
-class TransferLearningMode(Enum):
-    """Transfer learning modes for TaskParameter."""
-
-    INDEX_KERNEL = "index_kernel"
-    POSITIVE_INDEX_KERNEL = "positive_index_kernel"
 
 
 def _convert_values(value, self, field) -> tuple[str, ...]:
