@@ -42,7 +42,7 @@ jobs:
           pip install check-wheel-contents     
           check-wheel-contents dist/*.whl
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Dist_${{  github.ref_name }}
           path: dist
@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download packages built
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Dist_${{  github.ref_name }}
           path: dist
@@ -81,7 +81,7 @@ jobs:
         run: |
           pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ baybe==${{  github.ref_name }}
       - name: Download packages built
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Dist_${{  github.ref_name }}
           path: dist
