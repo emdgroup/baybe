@@ -78,7 +78,7 @@ from torch import Tensor
 from baybe.kernels.basic import LinearKernel, MaternKernel
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
-from baybe.surrogates.gaussian_process import FitCriterion
+from baybe.surrogates.gaussian_process.components import FitCriterion
 
 
 def likelihood_factory(searchspace: SearchSpace, train_x: Tensor, train_y: Tensor):
