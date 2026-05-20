@@ -299,9 +299,8 @@ class SearchSpace(SerialMixin):
         if (task_param := self._task_parameter) is None:
             return None
 
-        comp_df = task_param.comp_df
         return tuple(
-            int(comp_df.loc[active_value].iloc[0])
+            task_param.values.index(active_value)
             for active_value in task_param.active_values
         )
 
