@@ -126,8 +126,9 @@ class TaskParameter(CategoricalParameter):
                 f"Transfer learning mode "
                 f"'{TransferLearningMode.POSITIVE_INDEX_KERNEL.value}' requires "
                 f"exactly one active value, but {len(self.active_values)} were "
-                f"provided: {self.active_values}. The POSITIVE_INDEX_KERNEL "
-                f"mode assumes a single target task."
+                f"provided: {self.active_values}. The "
+                f"'{TransferLearningMode.POSITIVE_INDEX_KERNEL.value}' mode "
+                f"assumes a single target task."
             )
 
 
