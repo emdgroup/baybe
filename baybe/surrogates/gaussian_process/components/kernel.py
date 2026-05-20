@@ -70,14 +70,10 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
                 f"they actually use the selected parameter names."
             )
 
-    def get_parameter_names(self, searchspace: SearchSpace) -> tuple[str, ...] | None:
+    def get_parameter_names(self, searchspace: SearchSpace) -> tuple[str, ...]:
         """Get the names of the parameters to be considered by the kernel."""
-        if self.parameter_selector is None:
-            return None
-
-        return tuple(
-            p.name for p in searchspace.parameters if self.parameter_selector(p)
-        )
+        selector = self.parameter_selector or (lambda _: True)
+        return tuple(p.name for p in searchspace.parameters if selector(p))
 
     def _validate_parameter_kinds(self, parameters: Iterable[Parameter]) -> None:
         """Validate that the given parameters are supported by the factory.
@@ -102,7 +98,7 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
     @override
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
+    ) -> Kernel | GPyTorchKernel:
         """Construct the kernel, validating parameter kinds before construction."""
         if self.parameter_selector is not None:
             params = [p for p in searchspace.parameters if self.parameter_selector(p)]
@@ -115,7 +111,7 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
     @abstractmethod
     def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
+    ) -> Kernel | GPyTorchKernel:
         """Construct the kernel."""
 
 
@@ -127,7 +123,7 @@ class _MetaKernelFactory(KernelFactoryProtocol, ABC):
     @abstractmethod
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel: ...
+    ) -> Kernel | GPyTorchKernel: ...
 
 
 @define
@@ -170,11 +166,40 @@ class ICMKernelFactory(_MetaKernelFactory):
     @override
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
+    ) -> Kernel | GPyTorchKernel:
+        if searchspace.task_idx is None:
+            raise IncompatibleSearchSpaceError(
+                f"'{type(self).__name__}' can only be used with a searchspace that "
+                f"contains a '{TaskParameter.__name__}'."
+            )
+
         base_kernel = self.base_kernel_factory(searchspace, train_x, train_y)
         task_kernel = self.task_kernel_factory(searchspace, train_x, train_y)
         if isinstance(base_kernel, Kernel):
             base_kernel = base_kernel.to_gpytorch(searchspace)
         if isinstance(task_kernel, Kernel):
             task_kernel = task_kernel.to_gpytorch(searchspace)
+
+        # Ensure correct partitioning between base and task kernels active dimensions
+        all_idcs = set(range(len(searchspace.comp_rep_columns)))
+        allowed_task_idcs = {searchspace.task_idx}
+        allowed_base_idcs = all_idcs - allowed_task_idcs
+        base_idcs = (
+            set(d.tolist()) if (d := base_kernel.active_dims) is not None else all_idcs
+        )
+        task_idcs = (
+            set(d.tolist()) if (d := task_kernel.active_dims) is not None else all_idcs
+        )
+
+        if not base_idcs <= allowed_base_idcs:
+            raise ValueError(
+                f"The base kernel's 'active_dims' {base_idcs} must be a subset of "
+                f"the non-task indices {allowed_base_idcs}."
+            )
+        if task_idcs != allowed_task_idcs:
+            raise ValueError(
+                f"The task kernel's 'active_dims' {task_idcs} does not match "
+                f"the task index {allowed_task_idcs}."
+            )
+
         return base_kernel * task_kernel

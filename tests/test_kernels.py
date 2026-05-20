@@ -210,7 +210,7 @@ def test_mul_constant_produces_constant_scale_kernel(left, right, searchspace):
     # Create a dummy input and compute a loss through the kernel to assert training
     # does not affect the output scale
     x = torch.randn(5, 1)
-    loss = gpytorch_kernel(x).evaluate().sum()
+    loss = gpytorch_kernel(x).to_dense().sum()
     loss.backward()
     optimizer = torch.optim.SGD(gpytorch_kernel.parameters(), lr=0.1)
     optimizer.step()

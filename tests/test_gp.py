@@ -1,6 +1,11 @@
 """Tests for the Gaussian Process surrogate."""
 
+import pandas as pd
 import pytest
+import torch
+from botorch.fit import fit_gpytorch_mll
+from botorch.models import MultiTaskGP, SingleTaskGP
+from botorch.models.transforms import Normalize, Standardize
 from gpytorch.kernels import MaternKernel as GPyTorchMaternKernel
 from gpytorch.kernels import RBFKernel as GPyTorchRBFKernel
 from gpytorch.kernels import ScaleKernel as GPyTorchScaleKernel
@@ -8,23 +13,35 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.means import Mean as GPyTorchMean
+from gpytorch.mlls import ExactMarginalLogLikelihood
 from pandas.testing import assert_frame_equal
 from pytest import param
 
+from baybe import active_settings
 from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import ScaleKernel
+from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriterion
 from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.dataframe import create_fake_input
+from baybe.utils.dataframe import create_fake_input, to_tensor
 
 searchspace = NumericalContinuousParameter("p", (0, 1)).to_searchspace()
+searchspace_mt = SearchSpace.from_product(
+    [
+        NumericalContinuousParameter("p", (0, 1)),
+        TaskParameter("task", ["a", "b", "c"]),
+    ]
+)
 objective = NumericalTarget("t").to_objective()
 measurements = create_fake_input(searchspace.parameters, objective.targets, n_rows=100)
-
+measurements_mt = create_fake_input(
+    searchspace_mt.parameters, objective.targets, n_rows=100
+)
 baybe_kernel = ScaleKernel(MaternKernel() + RBFKernel())
 gpytorch_kernel = GPyTorchScaleKernel(GPyTorchMaternKernel() + GPyTorchRBFKernel())
 
@@ -35,6 +52,52 @@ def _dummy_mean_factory(*args, **kwargs) -> GPyTorchMean:
 
 def _dummy_likelihood_factory(*args, **kwargs) -> GPyTorchLikelihood:
     return GaussianLikelihood()
+
+
+def _posterior_stats_botorch(
+    searchspace: SearchSpace, measurements: pd.DataFrame
+) -> pd.DataFrame:
+    """The essential BoTorch steps to produce posterior estimates."""
+    train_X = to_tensor(searchspace.transform(measurements, allow_extra=True))
+    train_Y = to_tensor(objective.transform(measurements, allow_extra=True))
+
+    # >>>>> Code adapted from BoTorch landing page: https://botorch.org/ >>>>>
+    # NOTE: We normalize according to the searchspace bounds to ensure consistency with
+    #       the BayBE GP implementation.
+    if searchspace.n_tasks == 1:
+        gp = SingleTaskGP(
+            train_X=train_X,
+            train_Y=train_Y,
+            input_transform=Normalize(
+                d=len(searchspace.comp_rep_columns),
+                bounds=to_tensor(searchspace.scaling_bounds),
+            ),
+            outcome_transform=Standardize(m=1),
+        )
+    else:
+        assert searchspace.task_idx is not None
+        non_task_idcs = [
+            i for i in range(train_X.shape[-1]) if i != searchspace.task_idx
+        ]
+        gp = MultiTaskGP(
+            train_X=train_X,
+            train_Y=train_Y,
+            task_feature=searchspace.task_idx,
+            input_transform=Normalize(
+                d=len(searchspace.comp_rep_columns),
+                indices=non_task_idcs,
+                bounds=to_tensor(searchspace.scaling_bounds),
+            ),
+        )
+    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+    fit_gpytorch_mll(mll)
+    # <<<<<<<<<<
+
+    with torch.no_grad():
+        posterior = gp.posterior(train_X)
+    mean = posterior.mean
+    std = posterior.variance.sqrt()
+    return pd.DataFrame({"t_mean": mean.numpy().ravel(), "t_std": std.numpy().ravel()})
 
 
 @pytest.mark.parametrize(
@@ -101,7 +164,7 @@ def test_presets(preset: GaussianProcessPreset):
         kernel_or_factory=kernel,
         mean_or_factory=mean,
         likelihood_or_factory=likelihood,
-        criterion_or_factory=criterion,
+        fit_criterion_or_factory=criterion,
     )
 
     # Check that the overrides were applied correctly
@@ -111,9 +174,9 @@ def test_presets(preset: GaussianProcessPreset):
     assert gp2.mean_factory.component is mean
     assert isinstance(gp2.likelihood_factory, PlainGPComponentFactory)
     assert gp2.likelihood_factory.component is likelihood
-    assert isinstance(gp2.criterion_factory, PlainGPComponentFactory)
-    assert gp2.criterion_factory.component == criterion
-    assert gp2.criterion_factory != gp1.criterion_factory
+    assert isinstance(gp2.fit_criterion_factory, PlainGPComponentFactory)
+    assert gp2.fit_criterion_factory.component == criterion
+    assert gp2.fit_criterion_factory != gp1.fit_criterion_factory
 
     gp2.fit(searchspace, objective, measurements)
 
@@ -129,4 +192,25 @@ def test_invalid_components():
             likelihood_or_factory=FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
         )
     with pytest.raises(TypeError, match="Component must be one of"):
-        GaussianProcessSurrogate(criterion_or_factory=MaternKernel())
+        GaussianProcessSurrogate(fit_criterion_or_factory=MaternKernel())
+
+
+@pytest.mark.parametrize("multitask", [False, True], ids=["single-task", "multi-task"])
+def test_botorch_preset(multitask: bool):
+    """The BoTorch preset exactly mimics BoTorch's behavior."""
+    if multitask:
+        sp = searchspace_mt
+        data = measurements_mt
+    else:
+        sp = searchspace
+        data = measurements
+
+    active_settings.random_seed = 1337
+    gp = GaussianProcessSurrogate.from_preset("BOTORCH")
+    gp.fit(sp, objective, data)
+    posterior1 = gp.posterior_stats(data)
+
+    active_settings.random_seed = 1337
+    posterior2 = _posterior_stats_botorch(sp, data)
+
+    assert_frame_equal(posterior1, posterior2)

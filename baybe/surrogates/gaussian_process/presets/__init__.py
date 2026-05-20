@@ -11,6 +11,13 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEMeanFactory,
 )
 
+# BoTorch preset
+from baybe.surrogates.gaussian_process.presets.botorch import (
+    BotorchKernelFactory,
+    BotorchLikelihoodFactory,
+    BotorchMeanFactory,
+)
+
 # Chen preset
 from baybe.surrogates.gaussian_process.presets.chen import (
     CHENFitCriterionFactory,
@@ -45,6 +52,10 @@ __all__ = [
     "BayBEKernelFactory",
     "BayBELikelihoodFactory",
     "BayBEMeanFactory",
+    # BoTorch preset
+    "BotorchKernelFactory",
+    "BotorchLikelihoodFactory",
+    "BotorchMeanFactory",
     # Chen preset
     "CHENFitCriterionFactory",
     "CHENKernelFactory",
