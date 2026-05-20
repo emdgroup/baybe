@@ -151,7 +151,7 @@ def test_invalid_transfer_learning_mode_task_parameter(
     values, active_values, transfer_learning_mode, error
 ):
     """Providing incompatible transfer_learning_mode raises an exception."""
-    with pytest.raises(error):
+    with pytest.raises(error, match="requires exactly one active value"):
         TaskParameter(
             name="invalid",
             values=values,
