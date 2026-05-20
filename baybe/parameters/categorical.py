@@ -127,7 +127,7 @@ class TaskParameter(CategoricalParameter):
                 contains more than one value.
         """
         if (
-            value == TransferLearningMode.POSITIVE_INDEX_KERNEL
+            value is TransferLearningMode.POSITIVE_INDEX_KERNEL
             and len(self.active_values) > 1
         ):
             raise ValueError(
