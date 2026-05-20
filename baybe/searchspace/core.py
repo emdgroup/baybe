@@ -292,8 +292,8 @@ class SearchSpace(SerialMixin):
     def active_task_indices(self) -> tuple[int, ...] | None:
         """The comp-rep indices of the active task values.
 
-        Returns a tuple of integer indices corresponding to each active value in the
-        TaskParameter. Returns None when there are no task parameters.
+        Returns:
+            The indices, or ``None`` if there are no task parameters.
         """
         # See comment on `n_tasks` regarding single task parameter limitation.
         if (task_param := self._task_parameter) is None:
