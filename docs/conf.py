@@ -277,6 +277,7 @@ modindex_common_prefix = ["baybe."]
 # Mappings to all external packages that we want to have clickable links to
 intersphinx_mapping = {
     "botorch": ("https://botorch.readthedocs.io/en/latest", None),
+    "gpytorch": ("https://docs.gpytorch.ai/en/stable/", None),
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "polars": ("https://docs.pola.rs/api/python/stable/", None),

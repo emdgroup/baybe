@@ -57,7 +57,7 @@ class SearchSpaceFactory(Protocol):
                 TL models. If False, creates vanilla search space without
                 task parameter.
             transfer_learning_mode: The transfer learning mode. See
-                :class:`~baybe.parameters.categorical.TransferLearningMode`.
+                :class:`~baybe.parameters.enum.TransferLearningMode`.
                 Only used when ``use_task_parameter`` is ``True``.
 
         Returns:

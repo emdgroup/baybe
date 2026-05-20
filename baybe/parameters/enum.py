@@ -180,4 +180,7 @@ class TransferLearningMode(Enum):
     """Transfer learning modes for TaskParameter."""
 
     INDEX_KERNEL = "index_kernel"
+    """:class:`gpytorch.kernels.IndexKernel` for unknown task correlations."""
+
     POSITIVE_INDEX_KERNEL = "positive_index_kernel"
+    """:class:`botorch.models.kernels.PositiveIndexKernel` for positive correlations."""
