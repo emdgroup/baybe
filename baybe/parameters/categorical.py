@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from attrs import Converter, Factory, define, field
+from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
@@ -92,14 +92,6 @@ class TaskParameter(CategoricalParameter):
     # See base class.
 
     transfer_learning_mode: TransferLearningMode = field(
-        default=Factory(
-            lambda self: (
-                TransferLearningMode.POSITIVE_INDEX_KERNEL
-                if len(self.active_values) == 1
-                else TransferLearningMode.INDEX_KERNEL
-            ),
-            takes_self=True,
-        ),
         converter=TransferLearningMode,
     )
     """The transfer learning mode to be used for this task parameter.
@@ -107,6 +99,13 @@ class TaskParameter(CategoricalParameter):
     If not specified, defaults to POSITIVE_INDEX_KERNEL when exactly one active
     value is set, and INDEX_KERNEL otherwise.
     """
+
+    @transfer_learning_mode.default
+    def _default_transfer_learning_mode(self) -> TransferLearningMode:
+        """Infer the default transfer learning mode from ``active_values``."""
+        if len(self.active_values) == 1:
+            return TransferLearningMode.POSITIVE_INDEX_KERNEL
+        return TransferLearningMode.INDEX_KERNEL
 
     @transfer_learning_mode.validator
     def _validate_transfer_learning_mode(  # noqa: DOC101, DOC103
