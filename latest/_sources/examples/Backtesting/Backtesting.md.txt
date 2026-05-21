@@ -5,8 +5,8 @@ These examples demonstrate BayBE's
 ```{toctree}
 :maxdepth: 1
 
-Full Lookup<full_lookup>
 Full Initial Data<full_initial_data>
 Custom Blackbox<custom_blackbox>
+Full Lookup<full_lookup>
 Impute Mode<impute_mode>
 ```
