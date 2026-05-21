@@ -77,6 +77,40 @@ class _SlottedContextDecorator:
         return inner
 
 
+def _make_default_factory(fld: Attribute, /) -> Any:
+    """Make the default factory for the given attribute."""
+    # TODO: https://github.com/python-attrs/attrs/issues/1540
+    name = fld.alias or fld.name
+
+    def get_default_value(self: Settings) -> Any:
+        """Dynamically retrieve the default value for the field.
+
+        Depending on the control flags, the value is retrieved either from the
+        field specification itself, from the corresponding environment variable,
+        or from the active settings object.
+        """
+        if self._restore_defaults:
+            default = fld.default
+        else:
+            # Here, the active settings value is used as default, to
+            # enable updating settings one attribute at a time (the fallback to
+            # the default happens when the active settings object is itself
+            # being created)
+            default = getattr(active_settings, fld.name, fld.default)
+
+        if self._restore_environment:
+            # If enabled, the environment values take precedence for the default
+            env_name = f"BAYBE_{name.upper()}"
+            value = os.getenv(env_name, default)
+            if fld.type == "bool":
+                value = to_bool(value)
+            return value
+
+        return default
+
+    return Factory(get_default_value, takes_self=True)
+
+
 def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attribute]:
     """Replace default values with the appropriate source, controlled via flags."""
     results = []
@@ -87,39 +121,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
 
         # We use a factory here because the environment variables should be looked up
         # at instantiation time, not at class definition time
-        def make_default_factory(fld: Attribute) -> Any:
-            # TODO: https://github.com/python-attrs/attrs/issues/1479
-            name = fld.alias or fld.name
-
-            def get_default_value(self: Settings) -> Any:
-                """Dynamically retrieve the default value for the field.
-
-                Depending on the control flags, the value is retrieved either from the
-                field specification itself, from the corresponding environment variable,
-                or from the active settings object.
-                """
-                if self._restore_defaults:
-                    default = fld.default
-                else:
-                    # Here, the active settings value is used as default, to
-                    # enable updating settings one attribute at a time (the fallback to
-                    # the default happens when the active settings object is itself
-                    # being created)
-                    default = getattr(active_settings, fld.name, fld.default)
-
-                if self._restore_environment:
-                    # If enabled, the environment values take precedence for the default
-                    env_name = f"BAYBE_{name.upper()}"
-                    value = os.getenv(env_name, default)
-                    if fld.type == "bool":
-                        value = to_bool(value)
-                    return value
-
-                return default
-
-            return Factory(get_default_value, takes_self=True)
-
-        results.append(fld.evolve(default=make_default_factory(fld)))
+        results.append(fld.evolve(default=_make_default_factory(fld)))
 
     return results
 
@@ -227,11 +229,14 @@ class Settings(_SlottedContextDecorator):
             ("BAYBE_CACHE_DIR", flds.cache_directory),
         ]
         for env_var, fld in pairs:
+            # TODO: https://github.com/python-attrs/attrs/issues/1540
+            name = fld.alias or fld.name
+
             if (value := os.environ.pop(env_var, None)) is not None:
                 warnings.warn(
                     f"The environment variable '{env_var}' has "
                     f"been deprecated and support will be dropped in a future version. "
-                    f"Please use 'BAYBE_{(fld.alias or fld.name).upper()}' instead. "
+                    f"Please use 'BAYBE_{name.upper()}' instead. "
                     f"For now, we've automatically handled the translation for you.",
                     DeprecationWarning,
                 )
@@ -239,7 +244,7 @@ class Settings(_SlottedContextDecorator):
                     value = "false" if to_bool(value) else "true"
                 elif env_var.endswith("SIMULATION_RUNS"):
                     value = "true" if to_bool(value) else "false"
-                os.environ[f"BAYBE_{(fld.alias or fld.name).upper()}"] = value
+                os.environ[f"BAYBE_{name.upper()}"] = value
         # <<<<< Deprecation
 
         known_env_vars = {
