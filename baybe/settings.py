@@ -79,6 +79,8 @@ class _SlottedContextDecorator:
 
 def _make_default_factory(fld: Attribute, /) -> Any:
     """Make the default factory for the given attribute."""
+    # TODO: https://github.com/python-attrs/attrs/issues/1540
+    name = fld.alias or fld.name
 
     def get_default_value(self: Settings) -> Any:
         """Dynamically retrieve the default value for the field.
@@ -98,7 +100,7 @@ def _make_default_factory(fld: Attribute, /) -> Any:
 
         if self._restore_environment:
             # If enabled, the environment values take precedence for the default
-            env_name = f"BAYBE_{fld.alias.upper()}"
+            env_name = f"BAYBE_{name.upper()}"
             value = os.getenv(env_name, default)
             if fld.type == "bool":
                 value = to_bool(value)
@@ -227,11 +229,14 @@ class Settings(_SlottedContextDecorator):
             ("BAYBE_CACHE_DIR", flds.cache_directory),
         ]
         for env_var, fld in pairs:
+            # TODO: https://github.com/python-attrs/attrs/issues/1540
+            name = fld.alias or fld.name
+
             if (value := os.environ.pop(env_var, None)) is not None:
                 warnings.warn(
                     f"The environment variable '{env_var}' has "
                     f"been deprecated and support will be dropped in a future version. "
-                    f"Please use 'BAYBE_{fld.alias.upper()}' instead. "
+                    f"Please use 'BAYBE_{name.upper()}' instead. "
                     f"For now, we've automatically handled the translation for you.",
                     DeprecationWarning,
                 )
@@ -239,7 +244,7 @@ class Settings(_SlottedContextDecorator):
                     value = "false" if to_bool(value) else "true"
                 elif env_var.endswith("SIMULATION_RUNS"):
                     value = "true" if to_bool(value) else "false"
-                os.environ[f"BAYBE_{fld.alias.upper()}"] = value
+                os.environ[f"BAYBE_{name.upper()}"] = value
         # <<<<< Deprecation
 
         known_env_vars = {
