@@ -142,7 +142,7 @@ def test_product_candidates_creation(parameters, constraints):
     assert candidates.is_finite
     assert len(lazy_candidates.collect())
 
-    ProductCandidates(parameters=parameters, constraints=None)
+    ProductCandidates(parameters=parameters)
 
 
 @pytest.mark.parametrize(

@@ -54,31 +54,20 @@ class ProductCandidates(CandidatesProtocol):
     parameters: tuple[DiscreteParameter, ...] = field(
         converter=sort_parameters,
         validator=[
-            lambda _, __, x: validate_parameter_names(x),
             min_len(1),
-            deep_iterable(
-                member_validator=instance_of(DiscreteParameter),
-            ),
+            deep_iterable(member_validator=instance_of(DiscreteParameter)),
+            lambda _, __, x: validate_parameter_names(x),
         ],
     )
 
     constraints: tuple[DiscreteConstraint, ...] = field(
-        converter=lambda x: (
-            to_tuple(
-                sorted(
-                    x,
-                    key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(
-                        c.__class__
-                    ),
-                )
+        default=(),
+        converter=lambda x: to_tuple(
+            sorted(
+                x, key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__)
             )
-            if x is not None
-            else ()
         ),
-        factory=tuple,
-        validator=deep_iterable(
-            member_validator=instance_of(DiscreteConstraint),
-        ),
+        validator=deep_iterable(member_validator=instance_of(DiscreteConstraint)),
     )
     """The constraints to apply to the cartesian product of the parameter values."""
 
@@ -122,18 +111,13 @@ class TableCandidates(CandidatesProtocol):
     parameters: tuple[DiscreteParameter, ...] = field(
         converter=sort_parameters,
         validator=[
-            lambda _, __, x: validate_parameter_names(x),
             min_len(1),
-            deep_iterable(
-                member_validator=instance_of(DiscreteParameter),
-            ),
+            deep_iterable(member_validator=instance_of(DiscreteParameter)),
+            lambda _, __, x: validate_parameter_names(x),
         ],
     )
 
-    dataframe: nw.LazyFrame = field(
-        validator=instance_of(nw.LazyFrame),
-        converter=to_lazy_narwhals,
-    )
+    dataframe: nw.LazyFrame = field(converter=to_lazy_narwhals)
     """The dataframe containing the candidates."""
 
     def __attrs_post_init__(self):
