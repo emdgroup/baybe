@@ -16,7 +16,7 @@ from baybe.parameters.utils import sort_parameters
 from baybe.searchspace.utils import build_constrained_product
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import to_lazy_narwhals
+from baybe.utils.dataframe import to_lazy
 from baybe.utils.validation import validate_parameter_input
 
 
@@ -79,8 +79,10 @@ class ProductCandidates(CandidatesProtocol):
             )
 
         candidates_df = build_constrained_product(self.parameters, self.constraints)
+
         # TODO: Remove to lazy once build_constrained_product returns a nw.LazyFrame
-        return to_lazy_narwhals(candidates_df)
+        assert not isinstance(candidates_df, nw.LazyFrame)
+        return to_lazy(candidates_df)
 
 
 @define(frozen=True)
@@ -97,7 +99,7 @@ class TableCandidates(CandidatesProtocol):
     )
     """See :attr:`CandidatesProtocol.parameters`."""
 
-    dataframe: nw.LazyFrame = field(converter=to_lazy_narwhals)
+    dataframe: nw.LazyFrame = field(converter=to_lazy)
     """The dataframe containing the candidates."""
 
     @dataframe.validator

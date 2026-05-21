@@ -782,16 +782,6 @@ def normalize_input_dtypes(
     return df
 
 
-def to_lazy_narwhals(
-    df: IntoDataFrame,
-) -> nw.LazyFrame:
-    """Convert a native dataframe to a lazyframe, if it is not already a lazyframe.
-
-    Args:
-        df: A dataframe in native format (e.g. pandas or polars) or already in narwhals
-            lazy format.
-
-    Returns:
-        A lazy dataframe in narwhals format.
-    """
+def to_lazy(df: IntoDataFrame, /) -> nw.LazyFrame:
+    """Convert any dataframe to a :class:`~narwhals.LazyFrame`."""
     return nw.from_native(df).lazy()
