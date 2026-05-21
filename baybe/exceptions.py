@@ -180,7 +180,7 @@ class UnsupportedEarlyFilteringError(Exception):
 
 
 class InfiniteSpaceError(Exception):
-    """An operation requires an enumerable search space, but the space is infinite."""
+    """An operation requires a finite search space but the space is infinite."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
