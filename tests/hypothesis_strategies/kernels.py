@@ -12,7 +12,6 @@ from baybe.kernels.basic import (
     PeriodicKernel,
     PiecewisePolynomialKernel,
     PolynomialKernel,
-    PositiveIndexKernel,
     RBFKernel,
     RFFKernel,
     RQKernel,
@@ -131,16 +130,15 @@ def index_kernels(
     draw: st.DrawFn,
     parameter_names: Sequence[str] | None = None,
 ):
-    """A strategy that generates index kernels."""
+    """A strategy that generates index kernels.
+
+    :class:`PositiveIndexKernel` is excluded because its translation requires a
+    :class:`TaskParameter` in the searchspace and is covered separately in
+    ``test_task_kernel_factory_dispatching``.
+    """
     num_tasks = draw(st.integers(min_value=2, max_value=5))
     rank = draw(st.integers(min_value=1, max_value=num_tasks))
     names = draw(active_parameter_names(parameter_names))
-    if draw(st.booleans()):
-        return PositiveIndexKernel(
-            parameter_names=names,
-            num_tasks=num_tasks,
-            rank=rank,
-        )
     return IndexKernel(parameter_names=names, num_tasks=num_tasks, rank=rank)
 
 
