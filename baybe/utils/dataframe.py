@@ -7,10 +7,10 @@ import warnings
 from collections.abc import Callable, Collection, Iterable, Sequence
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
-import narwhals as nw
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
-from narwhals.typing import IntoDataFrame
+from narwhals.stable.v2.typing import IntoDataFrame
 from typing_extensions import assert_never
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning

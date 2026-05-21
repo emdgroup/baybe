@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-import narwhals as nw
+import narwhals.stable.v2 as nw
 from attr.validators import deep_iterable, instance_of, min_len
 from attrs import define, field
 from typing_extensions import override
