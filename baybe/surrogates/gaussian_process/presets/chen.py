@@ -62,7 +62,7 @@ class CHENKernelFactory(_PureKernelFactory):
         )
 
 
-CHENFitCriterionFactory = _MLLForNonTLFitCriterionFactory()
+CHEN_FIT_CRITERION_FACTORY = _MLLForNonTLFitCriterionFactory()
 """A factory providing fitting criteria for the CHEN preset."""
 
 # Collect leftover original slotted classes processed by `attrs.define`
@@ -72,4 +72,4 @@ gc.collect()
 KERNEL_FACTORY = CHENKernelFactory()
 MEAN_FACTORY = LazyConstantMeanFactory()
 LIKELIHOOD_FACTORY = LazyGaussianLikelihoodFactory()
-FIT_CRITERION_FACTORY = CHENFitCriterionFactory
+FIT_CRITERION_FACTORY = CHEN_FIT_CRITERION_FACTORY
