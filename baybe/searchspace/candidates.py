@@ -1,5 +1,6 @@
 """Candidates module for managing the lazy candidate generation."""
 
+import gc
 from typing import Protocol
 
 import narwhals.stable.v2 as nw
@@ -152,3 +153,7 @@ class TableCandidates(CandidatesProtocol):
             The finite set of candidates as a lazy dataframe.
         """
         return self.dataframe
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
