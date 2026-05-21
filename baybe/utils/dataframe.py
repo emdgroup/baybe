@@ -795,17 +795,3 @@ def to_lazy_narwhals(
         A lazy dataframe in narwhals format.
     """
     return nw.from_native(df).lazy()
-
-
-def from_lazy_narwhals(
-    ldf: nw.LazyFrame,
-) -> IntoDataFrame:
-    """Convert a lazy dataframe to its native dataframe.
-
-    Args:
-        ldf: A lazy dataframe
-
-    Returns:
-        A dataframe in native format (e.g. pandas or polars)
-    """
-    return ldf.collect().to_native()
