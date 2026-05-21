@@ -60,6 +60,12 @@ class ProductCandidates(CandidatesProtocol):
     )
     """Constraints to filter the Cartesian product of parameter values."""
 
+    @constraints.validator
+    def _validate_constraints(
+        self, _: Attribute, value: tuple[DiscreteConstraint, ...]
+    ):  # noqa: DOC101, DOC103
+        validate_constraints(value, self.parameters)
+
     @override
     @property
     def is_finite(self) -> bool:
@@ -73,9 +79,6 @@ class ProductCandidates(CandidatesProtocol):
             raise InfiniteSpaceError(
                 "Cannot generate all candidates from an infinite space."
             )
-
-        if len(self.constraints) >= 1:
-            validate_constraints(self.constraints, self.parameters)
 
         candidates_df = build_constrained_product(self.parameters, self.constraints)
         # TODO: Remove to lazy once build_constrained_product returns a nw.LazyFrame
