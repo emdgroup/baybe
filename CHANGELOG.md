@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `narwhals` as hard dependencies
 - `CandidateProtocol` as a base protocol for candidates handling
 - `TableCandidates` and `ProductCandidates` classes implementing `CandidateProtocol`
+- `DiscreteParameter.is_finite` property
 
 ### Breaking Changes
 - `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved

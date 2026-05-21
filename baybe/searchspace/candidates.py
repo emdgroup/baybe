@@ -69,9 +69,7 @@ class ProductCandidates(CandidatesProtocol):
     @override
     @property
     def is_finite(self) -> bool:
-        # TODO: Need a property for each DiscreteParameter to check if it's finite then
-        #   replace here with: return all(p.is_finite for p in self.parameters)
-        return True
+        return all(p.is_finite for p in self.parameters)
 
     @override
     def to_lazy_candidates(self) -> nw.LazyFrame:

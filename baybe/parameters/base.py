@@ -117,6 +117,12 @@ class DiscreteParameter(Parameter, ABC):
         """The values the parameter can take."""
 
     @property
+    def is_finite(self) -> bool:
+        """Indicates whether the parameter has a finite number of values."""
+        len(self.values)  # <-- raises an error if the parameter is infinite
+        return True
+
+    @property
     def active_values(self) -> tuple:
         """The values that are considered for recommendation."""
         return self.values
