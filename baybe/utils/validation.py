@@ -149,6 +149,8 @@ def validate_parameter_input(
     data: pd.DataFrame,
     parameters: Iterable[Parameter],
     numerical_measurements_must_be_within_tolerance: bool = False,
+    *,
+    allow_extra: bool = True,
 ) -> None:
     """Validate input dataframe columns corresponding to parameters.
 
@@ -158,10 +160,14 @@ def validate_parameter_input(
         numerical_measurements_must_be_within_tolerance: If ``True``, numerical
             parameter values must match to parameter values within the
             parameter-specific tolerance.
+        allow_extra: If ``False``, the dataframe is not allowed to contain columns that
+            do not correspond to any parameter.
 
     Raises:
         ValueError: If the data is empty.
         ValueError: If the data misses columns for a parameter.
+        ValueError: If the data contains columns that do not correspond to any parameter
+            and the corresponding check is enabled.
         ValueError: If a parameter contains NaN.
         TypeError: If a parameter contains non-numeric values.
     """
@@ -172,6 +178,14 @@ def validate_parameter_input(
         raise ValueError(
             f"The input dataframe is missing columns for the following parameters: "
             f"{missing}"
+        )
+
+    if not allow_extra and (
+        extra := set(data.columns).difference({p.name for p in parameters})
+    ):
+        raise ValueError(
+            f"The input dataframe contains columns that do not correspond to any "
+            f"parameter: {extra}"
         )
 
     for p in parameters:

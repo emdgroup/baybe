@@ -105,7 +105,9 @@ class TableCandidates(CandidatesProtocol):
     @dataframe.validator
     def _validate_dataframe(self, _: Attribute, value: nw.LazyFrame) -> None:  # noqa: DOC101, DOC103
         # TODO: Remove collect().to_pandas() once validation on lazy frames is supported
-        validate_parameter_input(value.collect().to_pandas(), self.parameters)
+        validate_parameter_input(
+            value.collect().to_pandas(), self.parameters, allow_extra=False
+        )
 
     @override
     @property

@@ -65,7 +65,7 @@ def test_table_candidates_generation(dataframe_factory):
         pytest.param(
             [p_disc],
             pd.DataFrame({"disc": [1], "extra": [2]}),
-            ValueError("extra columns"),
+            ValueError("not correspond"),
             id="extra_cols",
         ),
     ],
