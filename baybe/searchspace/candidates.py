@@ -5,7 +5,7 @@ from typing import Protocol
 
 import narwhals.stable.v2 as nw
 from attr.validators import deep_iterable, instance_of, min_len
-from attrs import define, field
+from attrs import Attribute, define, field
 from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
@@ -120,13 +120,15 @@ class TableCandidates(CandidatesProtocol):
     dataframe: nw.LazyFrame = field(converter=to_lazy_narwhals)
     """The dataframe containing the candidates."""
 
-    def __attrs_post_init__(self):
+    @dataframe.validator
+    def _validate_dataframe(self, _: Attribute, value: nw.LazyFrame) -> None:  # noqa: DOC101, DOC103
         # TODO: Remove collect().to_pandas() once validation on lazy frames is supported
-        validate_parameter_input(self.dataframe.collect().to_pandas(), self.parameters)
+        validate_parameter_input(value.collect().to_pandas(), self.parameters)
 
     @override
     @property
     def is_finite(self) -> bool:
+        """Whether the candidate set is finite."""
         return True
 
     @override
