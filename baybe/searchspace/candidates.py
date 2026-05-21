@@ -22,10 +22,9 @@ from baybe.utils.validation import validate_parameter_input
 class CandidatesProtocol(Protocol):
     """Type protocol specifying the interface for Candidates to implement."""
 
-    parameters: tuple[DiscreteParameter, ...]
-    """
-    The parameters that define the search space for which candidates are generated.
-    """
+    @property
+    def parameters(self) -> tuple[DiscreteParameter, ...]:
+        """The parameters that define the search space for which candidates are generated."""  # noqa: E501
 
     @property
     def is_finite(self) -> bool:
