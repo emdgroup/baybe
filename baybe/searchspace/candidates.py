@@ -31,7 +31,7 @@ class CandidatesProtocol(Protocol):
     def is_finite(self) -> bool:
         """Indicates whether the candidate set is finite or infinite."""
 
-    def to_lazy_candidates(self) -> nw.LazyFrame:
+    def to_lazy(self) -> nw.LazyFrame:
         """Generate all candidates."""
 
 
@@ -72,7 +72,7 @@ class ProductCandidates(CandidatesProtocol):
         return all(p.is_finite for p in self.parameters)
 
     @override
-    def to_lazy_candidates(self) -> nw.LazyFrame:
+    def to_lazy(self) -> nw.LazyFrame:
         if not self.is_finite:
             raise InfiniteSpaceError(
                 "Cannot generate all candidates from an infinite space."
@@ -113,7 +113,7 @@ class TableCandidates(CandidatesProtocol):
         return True
 
     @override
-    def to_lazy_candidates(self) -> nw.LazyFrame:
+    def to_lazy(self) -> nw.LazyFrame:
         return self.dataframe
 
 

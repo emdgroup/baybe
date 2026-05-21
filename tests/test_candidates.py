@@ -52,7 +52,7 @@ def test_table_candidates_creation(parameters, dataframe_factory, fake_measureme
     """TableCandidates can be created with valid parameters and the compatible data."""
     df = dataframe_factory(fake_measurements)
     candidates = TableCandidates(parameters=tuple(parameters), dataframe=df)
-    candidates_ldf = candidates.to_lazy_candidates()
+    candidates_ldf = candidates.to_lazy()
 
     if isinstance(df, pl.LazyFrame) or isinstance(df, nw.LazyFrame):
         df_shape = df.collect().shape
@@ -135,7 +135,7 @@ def test_table_candidates_invalid_input(parameters, dataframe):
 def test_product_candidates_creation(parameters, constraints):
     """ProductCandidates can be created with valid parameters and constraints."""
     candidates = ProductCandidates(parameters=parameters, constraints=constraints)
-    lazy_candidates = candidates.to_lazy_candidates()
+    lazy_candidates = candidates.to_lazy()
     assert isinstance(lazy_candidates, nw.LazyFrame)
     for p in parameters:
         assert p.name in lazy_candidates.columns
@@ -205,7 +205,7 @@ def test_product_candidates_invalid_input(parameters, constraints):
 def test_product_candidates_cartesian_product(parameters, expected):
     """ProductCandidates builds the correct cartesian product."""
     candidates = ProductCandidates(parameters=parameters)
-    df = candidates.to_lazy_candidates().collect()
+    df = candidates.to_lazy().collect()
     assert df.shape[0] == len(expected)
     actual = {tuple(row) for row in df[[p.name for p in parameters]].to_numpy()}
     assert actual == expected
@@ -263,6 +263,6 @@ def test_constraints_product_candidates(parameters, constraints, expected_combin
     """The constraints are applied correctly in ProductCandidates.to_lazy_candidates."""
     p_names = [p.name for p in parameters]
     candidates = ProductCandidates(parameters=parameters, constraints=constraints)
-    df = candidates.to_lazy_candidates().collect()
+    df = candidates.to_lazy().collect()
     assert {tuple(row) for row in df[p_names].to_numpy()} == expected_combinations
     assert df.shape[0] == len(expected_combinations)
