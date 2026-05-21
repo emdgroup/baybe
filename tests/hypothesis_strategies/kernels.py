@@ -136,12 +136,10 @@ def index_kernels(
     rank = draw(st.integers(min_value=1, max_value=num_tasks))
     names = draw(active_parameter_names(parameter_names))
     if draw(st.booleans()):
-        target_task_index = draw(st.integers(min_value=0, max_value=num_tasks - 1))
         return PositiveIndexKernel(
             parameter_names=names,
             num_tasks=num_tasks,
             rank=rank,
-            target_task_index=target_task_index,
         )
     return IndexKernel(parameter_names=names, num_tasks=num_tasks, rank=rank)
 

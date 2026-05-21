@@ -289,22 +289,6 @@ class SearchSpace(SerialMixin):
         return len(task_param.values)
 
     @property
-    def active_task_indices(self) -> tuple[int, ...] | None:
-        """The comp-rep indices of the active task values.
-
-        Returns:
-            The indices, or ``None`` if there are no task parameters.
-        """
-        # See comment on `n_tasks` regarding single task parameter limitation.
-        if (task_param := self._task_parameter) is None:
-            return None
-
-        return tuple(
-            task_param.values.index(active_value)
-            for active_value in task_param.active_values
-        )
-
-    @property
     def transfer_learning_mode(self) -> TransferLearningMode | None:
         """The transfer learning mode for this searchspace."""
         # See comment on `n_tasks` regarding single task parameter limitation.

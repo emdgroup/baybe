@@ -79,12 +79,9 @@ class BayBETaskKernelFactory(_PureKernelFactory):
         tl_mode = searchspace.transfer_learning_mode
 
         if tl_mode is TransferLearningMode.POSITIVE_INDEX_KERNEL:
-            active_task_indices = searchspace.active_task_indices
-            assert active_task_indices is not None
             return PositiveIndexKernel(
                 num_tasks=searchspace.n_tasks,
                 rank=searchspace.n_tasks,
-                target_task_index=active_task_indices[0],
                 parameter_names=self.get_parameter_names(searchspace),
             )
         elif tl_mode is TransferLearningMode.INDEX_KERNEL:

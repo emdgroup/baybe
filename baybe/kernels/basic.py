@@ -1,6 +1,9 @@
 """Collection of basic kernels."""
 
+from __future__ import annotations
+
 import gc
+from typing import TYPE_CHECKING, Any
 
 from attrs import define, field
 from attrs.converters import optional as optional_c
@@ -8,11 +11,15 @@ from attrs.validators import ge, gt, in_, instance_of
 from attrs.validators import optional as optional_v
 from typing_extensions import override
 
+from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.kernels.base import BasicKernel
 from baybe.priors.base import Prior
 from baybe.settings import active_settings
 from baybe.utils.conversion import fraction_to_float
 from baybe.utils.validation import finite_float
+
+if TYPE_CHECKING:
+    from baybe.searchspace.core import SearchSpace
 
 
 @define(frozen=True)
@@ -240,10 +247,26 @@ class PositiveIndexKernel(IndexKernel):
 
     Requires exactly one target task. The covariance matrix is normalized by the
     target task's diagonal entry, enforcing positive correlations between tasks.
+    The target task is resolved automatically from the searchspace's
+    :class:`~baybe.parameters.categorical.TaskParameter`.
     """
 
-    target_task_index: int = field(validator=[instance_of(int), ge(0)])
-    """The index of the target task for normalization."""
+    @override
+    def _extra_gpytorch_kwargs(self, searchspace: SearchSpace) -> dict[str, Any]:
+        task_param = searchspace._task_parameter
+        if task_param is None:
+            raise IncompatibleSearchSpaceError(
+                f"'{self.__class__.__name__}' requires a searchspace containing a "
+                f"'TaskParameter'."
+            )
+        if len(task_param.active_values) != 1:
+            raise ValueError(
+                f"'{self.__class__.__name__}' requires exactly one active value on "
+                f"the task parameter, but {len(task_param.active_values)} were "
+                f"provided: {task_param.active_values}."
+            )
+        target = task_param.active_values[0]
+        return {"target_task_index": task_param.values.index(target)}
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
