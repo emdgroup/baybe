@@ -10,8 +10,14 @@ from attrs import asdict, has
 from hypothesis import given
 from pytest import param
 
+from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.kernels.base import BasicKernel, Kernel
-from baybe.kernels.basic import IndexKernel, MaternKernel, RBFKernel
+from baybe.kernels.basic import (
+    IndexKernel,
+    MaternKernel,
+    PositiveIndexKernel,
+    RBFKernel,
+)
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace.core import SearchSpace
@@ -51,6 +57,21 @@ def _collect_parameter_names(kernel: Kernel) -> set[str]:
                 parameter_names.update(_collect_parameter_names(k))
 
     return parameter_names
+
+
+def _contains_kernel_of_type(kernel: Kernel, kernel_type: type[Kernel]) -> bool:
+    """Whether the kernel tree contains an instance of the given type."""
+    if isinstance(kernel, kernel_type):
+        return True
+    for value in asdict(kernel, recurse=False).values():
+        if isinstance(value, Kernel) and _contains_kernel_of_type(value, kernel_type):
+            return True
+        if isinstance(value, tuple) and any(
+            isinstance(k, Kernel) and _contains_kernel_of_type(k, kernel_type)
+            for k in value
+        ):
+            return True
+    return False
 
 
 def validate_gpytorch_kernel_components(  # noqa: DOC501
@@ -148,6 +169,12 @@ def test_kernel_assembly(kernel: Kernel):
     searchspace = SearchSpace.from_product(
         [NumericalContinuousParameter(name, (0, 1)) for name in parameter_names]
     )
+
+    # `PositiveIndexKernel` requires a `TaskParameter` in the searchspace.
+    if _contains_kernel_of_type(kernel, PositiveIndexKernel):
+        with pytest.raises(IncompatibleSearchSpaceError):
+            kernel.to_gpytorch(searchspace)
+        return
 
     k = kernel.to_gpytorch(searchspace)
     validate_gpytorch_kernel_components(kernel, k, searchspace)
