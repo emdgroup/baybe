@@ -292,6 +292,7 @@ class SearchSpace(SerialMixin):
         if not params:
             return None
 
+        assert len(params) == 1  # currently ensured by parameter validation step
         return params[0]
 
     @property
@@ -310,6 +311,7 @@ class SearchSpace(SerialMixin):
         if not params:
             return None
 
+        assert len(params) == 1  # currently ensured by parameter validation step
         return params[0]
 
     @property
