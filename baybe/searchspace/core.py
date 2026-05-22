@@ -306,12 +306,6 @@ class SearchSpace(SerialMixin):
             name_or_selector: Either the name of a single parameter or a selector
                 that filters parameters to be included.
 
-        Raises:
-            ValueError: If a parameter name is provided but no matching parameter
-                exists.
-            ValueError: If a parameter name is provided but multiple matches are
-                found.
-
         Returns:
             A tuple containing the integer indices of the columns in the computational
             representation associated with the selected parameter(s). When a selected
@@ -319,18 +313,9 @@ class SearchSpace(SerialMixin):
             no indices.
         """
         if isinstance(name_or_selector, str):
-            matched = self.get_parameters_by_name([name_or_selector])
-            if len(matched) < 1:
-                raise ValueError(
-                    f"There exists no parameter named '{name_or_selector}' in the "
-                    f"search space."
-                )
-            if len(matched) > 1:
-                raise ValueError(
-                    f"There exist multiple parameter matches for "
-                    f"'{name_or_selector}' in the search space."
-                )
-            params: list[Parameter] = list(matched)
+            params: list[Parameter] = [
+                p for p in self.parameters if p.name == name_or_selector
+            ]
         else:
             params = [p for p in self.parameters if name_or_selector(p)]
 
