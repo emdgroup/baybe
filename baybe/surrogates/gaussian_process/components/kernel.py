@@ -186,6 +186,7 @@ def _enable_transfer_learning(
             self.parameter_selector = lambda p: (
                 _task_exclude_selector(p) and original_selector(p)
             )
+
         try:
             base_kernel = original_call(self, searchspace, train_x, train_y)
         finally:
