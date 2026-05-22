@@ -156,12 +156,20 @@ def _enable_transfer_learning(
     # This distinction is important for serialization so that the classes can be
     # correctly identified by their names in the subclass registry
     if name is not None:
-        # Create a subclass so the original class remains unmodified.
+        # Create a sibling class so the original class remains unmodified.
+        # We use cls.__bases__ (not (cls,)) because the new class is conceptually
+        # an equivalent variant, not a specialization. Concrete (non-dunder)
+        # attributes are copied so the sibling has the same behavior.
         # __module__ must be set explicitly because the Protocol metaclass
         # would otherwise default it to "abc".
-        target_cls = type(
-            name, (cls,), {"__doc__": cls.__doc__, "__module__": cls.__module__}
-        )
+        ns = {
+            k: v
+            for k, v in cls.__dict__.items()
+            if not (k.startswith("__") and k.endswith("__"))
+        }
+        ns["__doc__"] = cls.__doc__
+        ns["__module__"] = cls.__module__
+        target_cls = type(name, cls.__bases__, ns)
     else:
         # Modify the class in-place (avoids name collision in subclass registry)
         target_cls = cls
