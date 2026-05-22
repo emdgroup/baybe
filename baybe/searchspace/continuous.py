@@ -6,7 +6,7 @@ import gc
 import math
 import random
 from collections.abc import Collection, Iterator, Sequence
-from itertools import chain, product
+from itertools import chain
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -32,6 +32,7 @@ from baybe.parameters.utils import (
     get_parameters_from_dataframe,
     sort_parameters,
 )
+from baybe.searchspace.utils import select_via_flat_index
 from baybe.searchspace.validation import (
     validate_parameter_names,
 )
@@ -176,18 +177,18 @@ class SubspaceContinuous(SerialMixin):
             for con in self.constraints_cardinality
         ]
 
-        combos: Iterator[tuple[frozenset[str], ...]]
-        if replace:
-            combos = iter(
-                lambda: tuple(random.choice(group) for group in per_constraint), None
-            )
-        else:
-            for group in per_constraint:
-                random.shuffle(group)
-            combos = product(*per_constraint)
+        total = math.prod(len(v) for v in per_constraint)
 
-        for combo in combos:
-            yield frozenset(chain(*combo))
+        if replace:
+            while True:
+                yield frozenset(
+                    chain(*(random.choice(group) for group in per_constraint))
+                )
+        else:
+            order = list(range(total))
+            random.shuffle(order)
+            for flat_idx in order:
+                yield frozenset(chain(*select_via_flat_index(flat_idx, per_constraint)))
 
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:

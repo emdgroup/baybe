@@ -6,7 +6,7 @@ import gc
 import random
 import warnings
 from collections.abc import Collection, Iterator, Sequence
-from itertools import islice, product
+from itertools import islice
 from math import prod
 from typing import TYPE_CHECKING, Any
 
@@ -28,7 +28,7 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
-from baybe.searchspace.utils import build_constrained_product
+from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
 from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
@@ -618,7 +618,8 @@ class SubspaceDiscrete(SerialMixin):
             min_candidates: If provided, combined masks selecting fewer rows
                 are silently skipped.
             replace: If ``True``, sample with replacement, producing an
-                infinite iterator where each draw is independent.
+                infinite iterator where each draw is independent. Infeasible
+                indices are permanently excluded from the sampling pool.
 
         Yields:
             A boolean mask selecting the subset's rows.
@@ -629,21 +630,31 @@ class SubspaceDiscrete(SerialMixin):
         else:
             per_constraint = [c.subset_masks(candidates_exp) for c in constraints]
 
-        combos: Iterator[tuple[npt.NDArray[np.bool_], ...]]
-        if replace:
-            combos = iter(
-                lambda: tuple(random.choice(group) for group in per_constraint), None
-            )
-        else:
-            for group in per_constraint:
-                random.shuffle(group)
-            combos = product(*per_constraint)
+        total = prod(len(masks) for masks in per_constraint)
 
-        for combo in combos:
-            combined = np.logical_and.reduce(combo)
-            if min_candidates is not None and combined.sum() < min_candidates:
-                continue
-            yield combined
+        if replace:
+            candidates = list(range(total))
+            while candidates:
+                idx_pos = random.randint(0, len(candidates) - 1)
+                flat_idx = candidates[idx_pos]
+                combined = np.logical_and.reduce(
+                    select_via_flat_index(flat_idx, per_constraint)
+                )
+                if min_candidates is not None and combined.sum() < min_candidates:
+                    candidates[idx_pos] = candidates[-1]
+                    candidates.pop()
+                    continue
+                yield combined
+        else:
+            order = list(range(total))
+            random.shuffle(order)
+            for flat_idx in order:
+                combined = np.logical_and.reduce(
+                    select_via_flat_index(flat_idx, per_constraint)
+                )
+                if min_candidates is not None and combined.sum() < min_candidates:
+                    continue
+                yield combined
 
     def sample_subset_masks(
         self,
