@@ -135,10 +135,10 @@ class EDBOLikelihoodFactory(LikelihoodFactoryProtocol):
         import torch
         from gpytorch.likelihoods import GaussianLikelihood
 
-        effective_dims = sum(
-            len(searchspace.get_comp_rep_parameter_indices(p.name))
-            for p in searchspace.parameters
-            if p._kind & _ParameterKind.REGULAR
+        effective_dims = len(
+            searchspace.get_comp_rep_parameter_indices(
+                lambda p: bool(p._kind & _ParameterKind.REGULAR)
+            )
         )
 
         switching_condition = _contains_encoding(

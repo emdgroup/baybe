@@ -79,11 +79,10 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
 
     def _get_effective_dimensionality(self, searchspace: SearchSpace) -> int:
         """Get the number of computational columns for the selected parameters."""
-        names = self.get_parameter_names(searchspace)
-        if names is None:
-            return len(searchspace.comp_rep_columns)
-        return sum(
-            len(searchspace.get_comp_rep_parameter_indices(name)) for name in names
+        return len(
+            searchspace.get_comp_rep_parameter_indices(
+                self.parameter_selector or (lambda _: True)
+            )
         )
 
     def _validate_parameter_kinds(self, parameters: Iterable[Parameter]) -> None:

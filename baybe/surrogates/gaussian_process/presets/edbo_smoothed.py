@@ -110,10 +110,10 @@ class SmoothedEDBOLikelihoodFactory(LikelihoodFactoryProtocol):
         # Interpolate prior moments linearly between low D and high D regime.
         # The high D regime itself is the average of the EDBO OHE and Mordred regime.
         # Values outside the dimension limits will get the border value assigned.
-        effective_dims = sum(
-            len(searchspace.get_comp_rep_parameter_indices(p.name))
-            for p in searchspace.parameters
-            if p._kind & _ParameterKind.REGULAR
+        effective_dims = len(
+            searchspace.get_comp_rep_parameter_indices(
+                lambda p: bool(p._kind & _ParameterKind.REGULAR)
+            )
         )
 
         prior = GammaPrior(
