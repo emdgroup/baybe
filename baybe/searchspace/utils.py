@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Collection, Sequence
 from typing import TYPE_CHECKING, TypeVar
 
+import numpy as np
 import pandas as pd
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
@@ -17,18 +18,11 @@ if TYPE_CHECKING:
 _T = TypeVar("_T")
 
 
-def select_via_flat_index(flat_idx: int, groups: Sequence[Sequence[_T]]) -> list[_T]:
+def select_via_flat_index(flat_idx: int, /, groups: Sequence[Sequence[_T]]) -> list[_T]:
     """Select one element per group using a flat Cartesian-product index.
 
     Maps a single integer index over the Cartesian product of ``groups`` to the
-    corresponding element from each group, using repeated ``divmod`` to unpack
-    the mixed-radix representation.
-
-    Note:
-        Given groups of sizes ``[3, 2, 4]`` and ``flat_idx=11``,
-        ``divmod(11, 3)`` yields index ``2`` from group 0,
-        ``divmod(3, 2)`` yields index ``1`` from group 1, and
-        ``divmod(1, 4)`` yields index ``1`` from group 2.
+    corresponding element from each group via :func:`numpy.unravel_index`.
 
     Args:
         flat_idx: The flat index into the Cartesian product of all groups.
@@ -37,12 +31,9 @@ def select_via_flat_index(flat_idx: int, groups: Sequence[Sequence[_T]]) -> list
     Returns:
         A list of selected elements, one per group.
     """
-    selected = []
-    remaining = flat_idx
-    for group in groups:
-        remaining, idx = divmod(remaining, len(group))
-        selected.append(group[idx])
-    return selected
+    shape = tuple(len(g) for g in groups)
+    indices = np.unravel_index(flat_idx, shape)
+    return [group[int(idx)] for group, idx in zip(groups, indices)]
 
 
 def optimize_parameter_order(
