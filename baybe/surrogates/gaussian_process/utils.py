@@ -1,5 +1,8 @@
 """Gaussian process utilities."""
 
+from __future__ import annotations
+
+import gc
 from typing import TYPE_CHECKING
 
 from attrs import define, field
@@ -70,3 +73,7 @@ class _ModelContext:
             for i in range(len(self.searchspace.comp_rep_columns))
             if i not in (self.task_idx, self.fidelity_idx)
         ]
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
