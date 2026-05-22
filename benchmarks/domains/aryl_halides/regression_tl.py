@@ -6,7 +6,6 @@ from collections.abc import Sequence
 
 import pandas as pd
 
-from baybe.parameters.categorical import TransferLearningMode
 from benchmarks.definition import (
     TransferLearningRegressionBenchmark,
     TransferLearningRegressionBenchmarkSettings,
@@ -62,16 +61,12 @@ def _aryl_halide_tl_regr(
     def make_searchspace_wrapper(
         data: pd.DataFrame,
         use_task_parameter: bool,
-        transfer_learning_mode: TransferLearningMode = (
-            TransferLearningMode.INDEX_KERNEL
-        ),
     ):
         if use_task_parameter:
             return make_searchspace(
                 data=data,
                 source_tasks=source_tasks,
                 target_tasks=target_tasks,
-                transfer_learning_mode=transfer_learning_mode,
             )
         else:
             return make_searchspace(data=data)

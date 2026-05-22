@@ -18,7 +18,6 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import SubstanceParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.categorical import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -49,7 +48,6 @@ def make_searchspace(
     data: pd.DataFrame,
     target_tasks: Sequence[str] | None = None,
     source_tasks: Sequence[str] | None = None,
-    transfer_learning_mode: TransferLearningMode = TransferLearningMode.INDEX_KERNEL,
 ) -> SearchSpace:
     """Create the search space for the benchmark."""
     params: list[DiscreteParameter] = [
@@ -67,7 +65,6 @@ def make_searchspace(
                 name="aryl_halide",
                 values=all_tasks,
                 active_values=target_tasks,
-                transfer_learning_mode=transfer_learning_mode,
             )
         )
     return SearchSpace.from_product(parameters=params)
@@ -111,25 +108,18 @@ def aryl_halide_tl_substance_benchmark(
     """
     data = load_data()
 
-    tl_searchspaces = {
-        tc: make_searchspace(
-            data=data,
-            source_tasks=source_tasks,
-            target_tasks=target_tasks,
-            transfer_learning_mode=tc,
-        )
-        for tc in TransferLearningMode
-    }
+    tl_searchspace = make_searchspace(
+        data=data,
+        source_tasks=source_tasks,
+        target_tasks=target_tasks,
+    )
     searchspace_nontl = make_searchspace(data=data)
 
     lookup = make_lookup(data, target_tasks)
     initial_data = make_initial_data(data, source_tasks)
     objective = make_objective()
 
-    tl_campaigns = {
-        tc: Campaign(searchspace=ss, objective=objective)
-        for tc, ss in tl_searchspaces.items()
-    }
+    tl_campaign = Campaign(searchspace=tl_searchspace, objective=objective)
     nontl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
 
     initial_data_samples = {}
@@ -142,10 +132,9 @@ def aryl_halide_tl_substance_benchmark(
     results = []
     for p in percentages:
         scenarios = {
-            f"{int(100 * p)}_{tc.value}": campaign
-            for tc, campaign in tl_campaigns.items()
+            f"{int(100 * p)}_tl": tl_campaign,
+            f"{int(100 * p)}_naive": nontl_campaign,
         }
-        scenarios[f"{int(100 * p)}_naive"] = nontl_campaign
         results.append(
             simulate_scenarios(
                 scenarios,
@@ -157,8 +146,10 @@ def aryl_halide_tl_substance_benchmark(
                 random_seed=settings.random_seed,
             )
         )
-    scenarios_0 = {f"0_{tc.value}": campaign for tc, campaign in tl_campaigns.items()}
-    scenarios_0["0_naive"] = nontl_campaign
+    scenarios_0 = {
+        "0_tl": tl_campaign,
+        "0_naive": nontl_campaign,
+    }
     results.append(
         simulate_scenarios(
             scenarios_0,

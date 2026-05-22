@@ -13,7 +13,6 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.categorical import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -102,28 +101,21 @@ def _make_hartmann_tl_benchmark(
             for name, points in grid_locations.items()
         ]
         searchspace_nontl = SearchSpace.from_product(parameters=params)
-        tl_searchspaces = {
-            tc: SearchSpace.from_product(
-                parameters=params
-                + [
-                    TaskParameter(
-                        name="Function",
-                        values=("Target_Function", "Source_Function"),
-                        active_values=("Target_Function",),
-                        transfer_learning_mode=tc,
-                    )
-                ]
-            )
-            for tc in TransferLearningMode
-        }
+        tl_searchspace = SearchSpace.from_product(
+            parameters=params
+            + [
+                TaskParameter(
+                    name="Function",
+                    values=("Target_Function", "Source_Function"),
+                    active_values=("Target_Function",),
+                )
+            ]
+        )
 
         objective = SingleTargetObjective(
             target=NumericalTarget(name="Target", minimize=True)
         )
-        tl_campaigns = {
-            tc: Campaign(searchspace=ss, objective=objective)
-            for tc, ss in tl_searchspaces.items()
-        }
+        tl_campaign = Campaign(searchspace=tl_searchspace, objective=objective)
         nontl_campaign = Campaign(
             searchspace=searchspace_nontl,
             objective=objective,
@@ -164,10 +156,9 @@ def _make_hartmann_tl_benchmark(
         results = []
         for p in percentages:
             scenarios = {
-                f"{int(100 * p)}_{tc.value}": campaign
-                for tc, campaign in tl_campaigns.items()
+                f"{int(100 * p)}_tl": tl_campaign,
+                f"{int(100 * p)}_naive": nontl_campaign,
             }
-            scenarios[f"{int(100 * p)}_naive"] = nontl_campaign
             results.append(
                 simulate_scenarios(
                     scenarios,
@@ -180,9 +171,9 @@ def _make_hartmann_tl_benchmark(
                 )
             )
         scenarios_0 = {
-            f"0_{tc.value}": campaign for tc, campaign in tl_campaigns.items()
+            "0_tl": tl_campaign,
+            "0_naive": nontl_campaign,
         }
-        scenarios_0["0_naive"] = nontl_campaign
         results.append(
             simulate_scenarios(
                 scenarios_0,

@@ -18,7 +18,6 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.parameters.base import Parameter
-from baybe.parameters.categorical import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -29,7 +28,6 @@ from benchmarks.definition.base import RunMode
 
 def make_searchspace(
     use_task_parameter: bool,
-    transfer_learning_mode: TransferLearningMode = TransferLearningMode.INDEX_KERNEL,
 ) -> SearchSpace:
     """Create search space for the benchmark."""
     params: list[Parameter] = [
@@ -45,7 +43,6 @@ def make_searchspace(
                 name="Function",
                 values=["Target_Function", "Source_Function"],
                 active_values=["Target_Function"],
-                transfer_learning_mode=transfer_learning_mode,
             )
         )
 
@@ -137,16 +134,10 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         "Target_Function": Michalewicz(dim=5, negate=True),
     }
     searchspace_nontl = make_searchspace(use_task_parameter=False)
-    tl_searchspaces = {
-        tc: make_searchspace(use_task_parameter=True, transfer_learning_mode=tc)
-        for tc in TransferLearningMode
-    }
+    tl_searchspace = make_searchspace(use_task_parameter=True)
 
     objective = make_objective()
-    tl_campaigns = {
-        tc: Campaign(searchspace=ss, objective=objective)
-        for tc, ss in tl_searchspaces.items()
-    }
+    tl_campaign = Campaign(searchspace=tl_searchspace, objective=objective)
     nontl_campaign = Campaign(
         searchspace=searchspace_nontl,
         objective=objective,
@@ -165,9 +156,9 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     results = []
     for p in n_points:
         scenarios = {
-            f"{p}_{tc.value}": campaign for tc, campaign in tl_campaigns.items()
+            f"{p}_tl": tl_campaign,
+            f"{p}_naive": nontl_campaign,
         }
-        scenarios[f"{p}_naive"] = nontl_campaign
         results.append(
             simulate_scenarios(
                 scenarios,
@@ -181,8 +172,10 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
                 random_seed=settings.random_seed,
             )
         )
-    scenarios_0 = {f"0_{tc.value}": campaign for tc, campaign in tl_campaigns.items()}
-    scenarios_0["0_naive"] = nontl_campaign
+    scenarios_0 = {
+        "0_tl": tl_campaign,
+        "0_naive": nontl_campaign,
+    }
     results.append(
         simulate_scenarios(
             scenarios_0,

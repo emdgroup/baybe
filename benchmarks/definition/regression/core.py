@@ -20,7 +20,6 @@ from tqdm import tqdm
 
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import TaskParameter
-from baybe.parameters.categorical import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from benchmarks.definition import TransferLearningRegressionBenchmarkSettings
@@ -44,9 +43,6 @@ class SearchSpaceFactory(Protocol):
         self,
         data: pd.DataFrame,
         use_task_parameter: bool,
-        transfer_learning_mode: TransferLearningMode = (
-            TransferLearningMode.INDEX_KERNEL
-        ),
     ) -> SearchSpace:
         """Create a SearchSpace for regression benchmark evaluation.
 
@@ -56,9 +52,6 @@ class SearchSpaceFactory(Protocol):
                 scenarios. If True, creates search space with TaskParameter for
                 TL models. If False, creates vanilla search space without
                 task parameter.
-            transfer_learning_mode: The transfer learning mode. See
-                :class:`~baybe.parameters.enum.TransferLearningMode`.
-                Only used when ``use_task_parameter`` is ``True``.
 
         Returns:
             The TL and non-TL searchspaces for the benchmark.
@@ -152,7 +145,7 @@ def run_tl_regression_benchmark(
         model, training scenario, and Monte Carlo iteration. Columns include:
 
       - scenario: Model scenario identifier (e.g., "0_reduced_searchspace",
-        "5_index_kernel")
+        "5_tl")
       - Performance metrics: root_mean_squared_error, mean_squared_error, r2_score,
         mean_absolute_error, max_error, explained_variance_score, kendall_tau_score,
         spearman_rho_score
@@ -166,18 +159,12 @@ def run_tl_regression_benchmark(
     # Create search space without task parameter
     vanilla_searchspace = searchspace_factory(data=data, use_task_parameter=False)
 
-    # Create transfer learning search spaces (with task parameter)
-    tl_searchspaces = {
-        tc: searchspace_factory(
-            data=data, use_task_parameter=True, transfer_learning_mode=tc
-        )
-        for tc in TransferLearningMode
-    }
+    # Create transfer learning search space (with task parameter)
+    tl_searchspace = searchspace_factory(data=data, use_task_parameter=True)
 
-    # Extract task parameter details (use first TL searchspace as reference)
-    first_tl_searchspace = next(iter(tl_searchspaces.values()))
+    # Extract task parameter details
     task_param = next(
-        p for p in first_tl_searchspace.parameters if isinstance(p, TaskParameter)
+        p for p in tl_searchspace.parameters if isinstance(p, TaskParameter)
     )
     name_task = task_param.name
 
@@ -245,26 +232,25 @@ def run_tl_regression_benchmark(
             result.update(metrics)
             results.append(result)
 
-            # TL kernels on full search space, no source data
-            for tc, tl_searchspace in tl_searchspaces.items():
-                metrics = _evaluate_model(
-                    GaussianProcessSurrogate(),
-                    target_train,
-                    target_test,
-                    tl_searchspace,
-                    objective,
-                )
-                result = {
-                    "scenario": f"0_{tc.value}",
-                    "mc_iter": mc_iter,
-                    "n_train_pts": n_train_pts,
-                    "fraction_source": 0.0,
-                    "n_source_pts": 0,
-                    "n_test_pts": len(target_test),
-                    "source_data_seed": settings.random_seed + mc_iter,
-                }
-                result.update(metrics)
-                results.append(result)
+            # TL kernel on full search space, no source data
+            metrics = _evaluate_model(
+                GaussianProcessSurrogate(),
+                target_train,
+                target_test,
+                tl_searchspace,
+                objective,
+            )
+            result = {
+                "scenario": "0_tl",
+                "mc_iter": mc_iter,
+                "n_train_pts": n_train_pts,
+                "fraction_source": 0.0,
+                "n_source_pts": 0,
+                "n_test_pts": len(target_test),
+                "source_data_seed": settings.random_seed + mc_iter,
+            }
+            result.update(metrics)
+            results.append(result)
 
             # Evaluate transfer learning models for each source fraction
             for fraction_source in settings.source_fractions:
@@ -289,26 +275,25 @@ def run_tl_regression_benchmark(
 
                 combined_data = pd.concat([source_subset, target_train])
 
-                # Evaluate TL kernels
-                for tc, tl_searchspace in tl_searchspaces.items():
-                    metrics = _evaluate_model(
-                        GaussianProcessSurrogate(),
-                        combined_data,
-                        target_test,
-                        tl_searchspace,
-                        objective,
-                    )
-                    result = {
-                        "scenario": f"{int(100 * fraction_source)}_{tc.value}",
-                        "mc_iter": mc_iter,
-                        "n_train_pts": n_train_pts,
-                        "fraction_source": fraction_source,
-                        "n_source_pts": len(source_subset),
-                        "n_test_pts": len(target_test),
-                        "source_data_seed": settings.random_seed + mc_iter,
-                    }
-                    result.update(metrics)
-                    results.append(result)
+                # Evaluate TL kernel
+                metrics = _evaluate_model(
+                    GaussianProcessSurrogate(),
+                    combined_data,
+                    target_test,
+                    tl_searchspace,
+                    objective,
+                )
+                result = {
+                    "scenario": f"{int(100 * fraction_source)}_tl",
+                    "mc_iter": mc_iter,
+                    "n_train_pts": n_train_pts,
+                    "fraction_source": fraction_source,
+                    "n_source_pts": len(source_subset),
+                    "n_test_pts": len(target_test),
+                    "source_data_seed": settings.random_seed + mc_iter,
+                }
+                result.update(metrics)
+                results.append(result)
 
                 pbar.update(1)
 

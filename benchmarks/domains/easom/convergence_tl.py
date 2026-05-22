@@ -11,7 +11,6 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.categorical import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -87,28 +86,21 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
         for name, values in grid_locations.items()
     ]
     searchspace_nontl = SearchSpace.from_product(parameters=params)
-    tl_searchspaces = {
-        tc: SearchSpace.from_product(
-            parameters=params
-            + [
-                TaskParameter(
-                    name="Function",
-                    values=["Target_Function", "Source_Function"],
-                    active_values=["Target_Function"],
-                    transfer_learning_mode=tc,
-                )
-            ]
-        )
-        for tc in TransferLearningMode
-    }
+    tl_searchspace = SearchSpace.from_product(
+        parameters=params
+        + [
+            TaskParameter(
+                name="Function",
+                values=["Target_Function", "Source_Function"],
+                active_values=["Target_Function"],
+            )
+        ]
+    )
 
     objective = SingleTargetObjective(
         target=NumericalTarget(name="Target", minimize=not negate)
     )
-    tl_campaigns = {
-        tc: Campaign(searchspace=ss, objective=objective)
-        for tc, ss in tl_searchspaces.items()
-    }
+    tl_campaign = Campaign(searchspace=tl_searchspace, objective=objective)
     nontl_campaign = Campaign(
         searchspace=searchspace_nontl,
         objective=objective,
@@ -142,10 +134,9 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
     results = []
     for p in percentages:
         scenarios = {
-            f"{int(100 * p)}_{tc.value}": campaign
-            for tc, campaign in tl_campaigns.items()
+            f"{int(100 * p)}_tl": tl_campaign,
+            f"{int(100 * p)}_naive": nontl_campaign,
         }
-        scenarios[f"{int(100 * p)}_naive"] = nontl_campaign
         results.append(
             simulate_scenarios(
                 scenarios,
@@ -157,8 +148,10 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
                 random_seed=settings.random_seed,
             )
         )
-    scenarios_0 = {f"0_{tc.value}": campaign for tc, campaign in tl_campaigns.items()}
-    scenarios_0["0_naive"] = nontl_campaign
+    scenarios_0 = {
+        "0_tl": tl_campaign,
+        "0_naive": nontl_campaign,
+    }
     results.append(
         simulate_scenarios(
             scenarios_0,
