@@ -30,7 +30,7 @@ def recommend_continuous_torch(
     batch_size: int,
 ) -> tuple[Tensor, Tensor]:
     """Dispatcher selecting the continuous optimization routine."""
-    if subspace_continuous.constraints_cardinality:
+    if subspace_continuous.n_theoretical_subsets > 0:
         return recommend_continuous_with_cardinality_constraints(
             recommender, subspace_continuous, batch_size
         )
@@ -73,7 +73,7 @@ def recommend_continuous_with_cardinality_constraints(
         ValueError: If the continuous search space has no cardinality
             constraints.
     """
-    if not subspace_continuous.constraints_cardinality:
+    if subspace_continuous.n_theoretical_subsets == 0:
         raise ValueError(
             f"'{recommend_continuous_with_cardinality_constraints.__name__}' "
             f"expects a subspace with cardinality constraints."
@@ -150,7 +150,7 @@ def recommend_continuous_without_cardinality_constraints(
     import torch
     from botorch.optim import optimize_acqf
 
-    if subspace_continuous.constraints_cardinality:
+    if subspace_continuous.n_theoretical_subsets > 0:
         raise ValueError(
             f"'{recommend_continuous_without_cardinality_constraints.__name__}' "
             f"expects a subspace without cardinality constraints."
