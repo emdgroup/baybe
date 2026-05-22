@@ -360,41 +360,20 @@ class SearchSpace(SerialMixin):
     @property
     def task_type(self) -> SearchSpaceTaskType:
         """Return the task type of the search space."""
-        task_parameters = (p for p in self.parameters if isinstance(p, TaskParameter))
-
-        if len(task_parameters) == 0:
+        if self._task_parameter is None:
             return SearchSpaceTaskType.SINGLETASK
-        elif len(task_parameters) == 1:
-            return SearchSpaceTaskType.CATEGORICALMULTITASK
-        else:
-            raise NotImplementedError(
-                "BayBE does not currently support search"
-                "spaces with multiple task parameters."
-            )
+        return SearchSpaceTaskType.CATEGORICALMULTITASK
 
+    @property
     def fidelity_type(self) -> SearchSpaceFidelityType:
         """Return the fidelity type of the search space."""
-        fidelity_parameters = (
-            CategoricalFidelityParameter,
-            NumericalDiscreteFidelityParameter,
-        )
-
-        fidelity_parameters = (
-            p for p in self.parameters if isinstance(p, fidelity_parameters)
-        )
-
-        if len(fidelity_parameters) == 0:
+        if (fidelity_param := self._fidelity_parameter) is None:
             return SearchSpaceFidelityType.SINGLEFIDELITY
-        elif len(fidelity_parameters) == 1:
-            if isinstance(fidelity_parameters[0], CategoricalFidelityParameter):
-                return SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
-            if isinstance(fidelity_parameters[0], NumericalDiscreteFidelityParameter):
-                return SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
-        else:
-            raise NotImplementedError(
-                "BayBE does not currently support search"
-                "spaces with multiple fidelity parameters."
-            )
+        if isinstance(fidelity_param, CategoricalFidelityParameter):
+            return SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+        if isinstance(fidelity_param, NumericalDiscreteFidelityParameter):
+            return SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+        raise RuntimeError("This line should be impossible to reach.")
 
     @property
     def n_subsets(self) -> int:
