@@ -166,6 +166,7 @@ benchmarking = [
 ]
 
 test = [
+    "baybe[polars]",
     "hypothesis[pandas]>=6.88.4",
     "tenacity>=8.5.0",
     "pytest>=7.2.0",

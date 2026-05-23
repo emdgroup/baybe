@@ -10,7 +10,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-05-14T08:07:50.351631Z"
+exclude-newer = "2026-05-16T16:42:53.860732Z"
 exclude-newer-span = "P7D"
 
 [[package]]
@@ -388,6 +388,7 @@ simulation = [
 ]
 test = [
     { name = "hypothesis", extra = ["pandas"] },
+    { name = "polars", extra = ["pyarrow"] },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "tenacity" },
@@ -410,6 +411,7 @@ requires-dist = [
     { name = "baybe", extras = ["onnx"], marker = "extra == 'benchmarking'" },
     { name = "baybe", extras = ["onnx"], marker = "extra == 'extras'" },
     { name = "baybe", extras = ["polars"], marker = "extra == 'extras'" },
+    { name = "baybe", extras = ["polars"], marker = "extra == 'test'" },
     { name = "baybe", extras = ["simulation"], marker = "extra == 'benchmarking'" },
     { name = "baybe", extras = ["simulation"], marker = "extra == 'extras'" },
     { name = "baybe", extras = ["test"], marker = "extra == 'dev'" },
