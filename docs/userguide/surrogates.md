@@ -51,7 +51,7 @@ four configurable components:
 Configuring these components in the right way is key to unlocking the full potential of
 the Bayesian optimization process since they directly drive the surrogate's predictions
 and thus its ability to describe your data. Therefore, we invest much effort into
-making BayBE's *default GP configuration* a solid, well-tested choice for a wide range
+making BayBE's default GP configuration a solid, well-tested choice for a wide range
 of problems, increasing the chances that you'll get decent performance out of the box.
 
 However, we also understand that there is no one-size-fits-all solution and that certain
