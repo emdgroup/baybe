@@ -155,13 +155,22 @@ def _enable_transfer_learning(
 
     # This distinction is important for serialization so that the classes can be
     # correctly identified by their names in the subclass registry
-    if name is not None:
+    if name is None:
+        # Modify the class in-place (avoids name collision in subclass registry)
+        # -> For the use with `@` syntax, where the original class gets overridden by
+        #    the decorated version, i.e., no references to the original class remain.
+        target_cls = cls
+    else:
         # Create a sibling class so the original class remains unmodified.
         # We use cls.__bases__ (not (cls,)) because the new class is conceptually
         # an equivalent variant, not a specialization. Concrete (non-dunder)
         # attributes are copied so the sibling has the same behavior.
         # __module__ must be set explicitly because the Protocol metaclass
         # would otherwise default it to "abc".
+        # -> For the assignment-based used, i.e.,
+        #   `DecoratedX = enable_transfer_learning(X, name="DecoratedX")`,
+        #    where both the original and decorated versions remain accessible and
+        #    are intended to be used independently.
         ns = {
             k: v
             for k, v in cls.__dict__.items()
@@ -170,9 +179,6 @@ def _enable_transfer_learning(
         ns["__doc__"] = cls.__doc__
         ns["__module__"] = cls.__module__
         target_cls = type(name, cls.__bases__, ns)
-    else:
-        # Modify the class in-place (avoids name collision in subclass registry)
-        target_cls = cls
 
     original_call = cls.__call__
     original_supported_kinds = cls._supported_parameter_kinds
