@@ -421,12 +421,16 @@ def fuzzy_row_match(
     for col in cat_cols:
         # Per categorical parameter, this identifies matches between all elements of
         # left and right and stores them in a matrix.
-        match_matrix &= right_df[col].values[:, None] == left_df[col].values[None, :]
+        match_matrix &= (
+            np.asarray(right_df[col])[:, None] == np.asarray(left_df[col])[None, :]
+        )
 
     # Match numerical parameters
     for col in num_cols:
         # Compute absolute differences and find the minimum difference
-        abs_diff = np.abs(right_df[col].values[:, None] - left_df[col].values[None, :])
+        abs_diff = np.abs(
+            np.asarray(right_df[col])[:, None] - np.asarray(left_df[col])[None, :]
+        )
         min_diff = abs_diff.min(axis=1, keepdims=True)
         match_matrix &= abs_diff == min_diff
 
