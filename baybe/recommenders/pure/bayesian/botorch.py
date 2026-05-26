@@ -368,7 +368,7 @@ class BotorchRecommender(BayesianRecommender):
         #   For details: https://github.com/pytorch/botorch/issues/2042
         points, acqf_values = optimize_acqf(
             acq_function=self._botorch_acqf,
-            bounds=torch.from_numpy(subspace_continuous.comp_rep_bounds.values),
+            bounds=torch.tensor(subspace_continuous.comp_rep_bounds.to_numpy()),
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
@@ -471,7 +471,7 @@ class BotorchRecommender(BayesianRecommender):
         #   For details: https://github.com/pytorch/botorch/issues/2042
         points, _ = optimize_acqf_mixed(
             acq_function=self._botorch_acqf,
-            bounds=torch.from_numpy(searchspace.comp_rep_bounds.values),
+            bounds=torch.tensor(searchspace.comp_rep_bounds.to_numpy()),
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,

@@ -61,6 +61,9 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
                 # tensors with negative strides are not supported by PyTorch
                 fix_strides = any(s < 0 for s in x.strides)
                 x = x.astype(numpy_dtype, copy=fix_strides)
+                # Copy if read-only (possible under pandas 3 Copy-on-Write)
+                if not x.flags.writeable:
+                    x = x.copy()
                 tensor = torch.from_numpy(x)
             case pd.Series() | pd.DataFrame():
                 # We already coerce to the target dtype during the dataframe-to-numpy
@@ -72,6 +75,9 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
                 # tensors with negative strides are not supported by PyTorch
                 fix_strides = any(s < 0 for s in x.to_numpy().strides)
                 array = x.to_numpy(numpy_dtype, copy=fix_strides)
+                # Copy if read-only (possible under pandas 3 Copy-on-Write)
+                if not array.flags.writeable:
+                    array = array.copy()
                 tensor = torch.from_numpy(array)
             case _:
                 assert_never(x)
@@ -695,6 +701,9 @@ def arrays_to_dataframes(
             if use_torch:
                 import torch
 
+                # Copy if read-only (possible under pandas 3 Copy-on-Write)
+                if not array_in.flags.writeable:
+                    array_in = array_in.copy()
                 with torch.no_grad():
                     array_out = fn(torch.from_numpy(array_in)).numpy()
             else:
