@@ -43,10 +43,10 @@ four configurable components:
 
 | Component | Role |
 |-----------|------|
-| **Kernel** | Encodes assumptions about the function's structure. |
-| **Mean function** | The expected function values prior to observing any data. |
-| **Likelihood** | Encodes assumptions about the observation noise. |
-| **Fit criterion** | The optimization objective used to tune the model hyperparameters. |
+| **Kernel** | Encodes assumptions about the function's structure |
+| **Mean function** | The expected function values prior to observing any data |
+| **Likelihood** | Encodes assumptions about the observation noise |
+| **Fit criterion** | The optimization objective used to tune the model hyperparameters |
 
 Configuring these components in the right way is key to unlocking the full potential of
 the Bayesian optimization process since they directly drive the surrogate's predictions
