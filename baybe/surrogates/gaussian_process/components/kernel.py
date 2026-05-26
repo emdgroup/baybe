@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.converters import optional
 from attrs.validators import is_callable
 from typing_extensions import override
@@ -257,10 +257,6 @@ class ICMKernelFactory(_MetaKernelFactory):
             _BayBENumericalKernelFactory,
         )
 
-        assert (
-            _BayBENumericalKernelFactory._supported_parameter_kinds
-            is _ParameterKind.REGULAR
-        )
         return _BayBENumericalKernelFactory(
             TypeSelector((TaskParameter,), exclude=True)
         )
@@ -271,8 +267,29 @@ class ICMKernelFactory(_MetaKernelFactory):
             _BayBETaskKernelFactory,
         )
 
-        assert _BayBETaskKernelFactory._supported_parameter_kinds is _ParameterKind.TASK
         return _BayBETaskKernelFactory()
+
+    @base_kernel_factory.validator
+    def _validate_base_kernel_factory(self, _, factory: KernelFactoryProtocol):
+        if (
+            isinstance(factory, _PureKernelFactory)
+            and factory._supported_parameter_kinds & _ParameterKind.TASK
+        ):
+            raise TypeError(
+                f"The specified '{fields(ICMKernelFactory).base_kernel_factory.alias}' "
+                f"must not support task parameters."
+            )
+
+    @task_kernel_factory.validator
+    def _validate_task_kernel_factory(self, _, factory: KernelFactoryProtocol):
+        if (
+            isinstance(factory, _PureKernelFactory)
+            and factory._supported_parameter_kinds is not _ParameterKind.TASK
+        ):
+            raise TypeError(
+                f"The specified '{fields(ICMKernelFactory).task_kernel_factory.alias}' "
+                f"must support only task parameters."
+            )
 
     @override
     def __call__(
