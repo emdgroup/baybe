@@ -107,12 +107,21 @@ def _validate_component(instance: Any, attribute: Attribute, value: Any) -> None
 
 
 class GPComponentFactoryProtocol(Protocol, Generic[_T_co]):
-    """A protocol defining the interface expected for GP component factories."""
+    """A protocol defining the interface for Gaussian process component factories."""
 
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> _T_co:
-        """Create a GP component for the given recommendation context."""
+        """Create a Gaussian process component for the given recommendation context.
+
+        Args:
+            searchspace: The optimization search space.
+            objective: The optimization objective.
+            measurements: The available experimentation data.
+
+        Returns:
+            The constructed Gaussian process component.
+        """
 
 
 @define(frozen=True)

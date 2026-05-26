@@ -23,7 +23,10 @@ if TYPE_CHECKING:
 else:
     # At runtime, we avoid loading GPyTorch eagerly for performance reasons
     MeanFactoryProtocol = GPComponentFactoryProtocol[Any]
+    """A factory protocol for Gaussian process mean functions."""
+
     PlainMeanFactory = PlainGPComponentFactory[Any]
+    """A trivial factory returning a fixed, pre-defined mean function."""
 
 
 @define

@@ -43,7 +43,10 @@ if TYPE_CHECKING:
 else:
     # At runtime, we use only the BayBE type for serialization compatibility
     KernelFactoryProtocol = GPComponentFactoryProtocol[Kernel]
+    """A factory protocol for Gaussian process kernels."""
+
     PlainKernelFactory = PlainGPComponentFactory[Kernel]
+    """A trivial factory returning a fixed, pre-defined kernel."""
 
 
 @define

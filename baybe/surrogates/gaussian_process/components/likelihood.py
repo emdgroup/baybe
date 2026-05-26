@@ -23,7 +23,10 @@ if TYPE_CHECKING:
 else:
     # At runtime, we avoid loading GPyTorch eagerly for performance reasons
     LikelihoodFactoryProtocol = GPComponentFactoryProtocol[Any]
+    """A factory protocol for Gaussian process likelihoods."""
+
     PlainLikelihoodFactory = PlainGPComponentFactory[Any]
+    """A trivial factory returning a fixed, pre-defined likelihood."""
 
 
 @define

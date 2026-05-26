@@ -6,6 +6,7 @@
    :members:                              
    :show-inheritance:                 
    :inherited-members:
+   :special-members: __call__
 
    {% block methods %}
    {% if methods %}
