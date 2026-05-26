@@ -2,7 +2,6 @@
 
 import gc
 from functools import cached_property
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -92,45 +91,14 @@ class TaskParameter(CategoricalParameter):
     # See base class.
 
     transfer_learning_mode: TransferLearningMode = field(
+        default=TransferLearningMode.POSITIVE_INDEX_KERNEL,
         converter=TransferLearningMode,
     )
     """The transfer learning mode to be used for this task parameter.
 
-    If not specified, defaults to POSITIVE_INDEX_KERNEL when exactly one active
-    value is set, and INDEX_KERNEL otherwise.
+    Defaults to
+    :attr:`~baybe.parameters.enum.TransferLearningMode.POSITIVE_INDEX_KERNEL`.
     """
-
-    @transfer_learning_mode.default
-    def _default_transfer_learning_mode(self) -> TransferLearningMode:
-        """Infer the default transfer learning mode from ``active_values``."""
-        if len(self.active_values) == 1:
-            return TransferLearningMode.POSITIVE_INDEX_KERNEL
-        return TransferLearningMode.INDEX_KERNEL
-
-    @transfer_learning_mode.validator
-    def _validate_transfer_learning_mode(  # noqa: DOC101, DOC103
-        self, _: Any, value: TransferLearningMode
-    ) -> None:
-        """Validate active values compatibility with transfer learning mode.
-
-        Raises:
-            ValueError: If mode is POSITIVE_INDEX_KERNEL but active_values
-                contains more than one value.
-        """
-        if (
-            value is TransferLearningMode.POSITIVE_INDEX_KERNEL
-            and len(self.active_values) > 1
-        ):
-            # BoTorch's PositiveIndexKernel requires a single target task
-            # in its constructor, so only one active (target) task is supported.
-            raise ValueError(
-                f"Transfer learning mode "
-                f"'{TransferLearningMode.POSITIVE_INDEX_KERNEL.value}' requires "
-                f"exactly one active value, but {len(self.active_values)} were "
-                f"provided: {self.active_values}. The "
-                f"'{TransferLearningMode.POSITIVE_INDEX_KERNEL.value}' mode "
-                f"assumes a single target task."
-            )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

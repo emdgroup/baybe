@@ -112,10 +112,3 @@ def test_task_kernel_factory_dispatching(transfer_learning_mode, expected_kernel
 
     kernel = BayBETaskKernelFactory()(ss, train_x, train_y)
     assert isinstance(kernel, expected_kernel_type)
-
-    # For PositiveIndexKernel, verify that the target task index is resolved
-    # from the searchspace.
-    if transfer_learning_mode is TransferLearningMode.POSITIVE_INDEX_KERNEL:
-        gpytorch_kernel = kernel.to_gpytorch(ss)
-        expected_index = ss._task_parameter.values.index("target")
-        assert gpytorch_kernel.target_task_index == expected_index

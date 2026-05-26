@@ -105,10 +105,6 @@ class Kernel(ABC, SerialMixin):
     ) -> tuple[tuple[int, ...] | None, int | None]:
         """Get the active dimensions and the number of ARD dimensions."""
 
-    def _extra_gpytorch_kwargs(self, searchspace: SearchSpace) -> dict[str, Any]:
-        """Provide extra constructor kwargs for the gpytorch kernel."""
-        return {}
-
     def to_gpytorch(self, searchspace: SearchSpace):
         """Create the gpytorch representation of the kernel."""
         import gpytorch.kernels
@@ -169,7 +165,6 @@ class Kernel(ABC, SerialMixin):
         # Create the kernel with all its inner gpytorch objects
         kernel_attrs.update(kernel_dict)
         kernel_attrs.update(prior_dict)
-        kernel_attrs.update(self._extra_gpytorch_kwargs(searchspace))
         gpytorch_kernel = kernel_cls(
             **kernel_attrs, ard_num_dims=ard_num_dims, active_dims=active_dims
         )
