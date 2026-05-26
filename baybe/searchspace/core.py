@@ -289,15 +289,15 @@ class SearchSpace(SerialMixin):
             return 1
 
     @property
-    def n_theoretical_subsets(self) -> int:
+    def n_subsets(self) -> int:
         """Total theoretical number of subset configurations.
 
         Returns 0 if no subset constraints exist on either side.
         When only one side has constraints, the other does not contribute to
         the count.
         """
-        d = self.discrete.n_theoretical_subsets
-        c = self.continuous.n_theoretical_subsets
+        d = self.discrete.n_subsets
+        c = self.continuous.n_subsets
         if d == 0 == c:
             return 0
         return max(d, 1) * max(c, 1)

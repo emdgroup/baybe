@@ -44,7 +44,7 @@ def recommend_discrete_with_subsets(
     import torch
 
     masks: Iterable[npt.NDArray[np.bool_]]
-    if subspace_discrete.n_theoretical_subsets <= recommender.max_n_subsets:
+    if subspace_discrete.n_subsets <= recommender.max_n_subsets:
         masks = subspace_discrete.subset_masks(
             candidates_exp, min_candidates=batch_size
         )

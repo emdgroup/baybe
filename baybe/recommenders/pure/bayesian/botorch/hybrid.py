@@ -193,7 +193,7 @@ def recommend_hybrid_with_subsets(
     # optimize_acqf_mixed can produce multiple recommendations from a single
     # discrete candidate by varying continuous parameters.
     combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
-    if searchspace.n_theoretical_subsets <= recommender.max_n_subsets:
+    if searchspace.n_subsets <= recommender.max_n_subsets:
         combined_masks = searchspace.subsets(candidates_exp)
     else:
         combined_masks = searchspace.sample_subsets(

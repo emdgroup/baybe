@@ -175,7 +175,7 @@ class BotorchRecommender(BayesianRecommender):
             The dataframe indices of the recommended points in the provided
             experimental representation.
         """
-        if subspace_discrete.n_theoretical_subsets > 0:
+        if subspace_discrete.n_subsets > 0:
             return recommend_discrete_with_subsets(
                 self, subspace_discrete, candidates_exp, batch_size
             )
@@ -238,7 +238,7 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The recommended points.
         """
-        if searchspace.n_theoretical_subsets > 0:
+        if searchspace.n_subsets > 0:
             return recommend_hybrid_with_subsets(
                 self, searchspace, candidates_exp, batch_size
             )

@@ -105,12 +105,9 @@ def test_batch_constraint_validation_duplicate():
         ),
     ],
 )
-def test_batch_constraint_n_theoretical_subsets(constraints, expected):
-    """The n_theoretical_subsets property returns the correct count."""
-    assert (
-        SearchSpace.from_product(_params, constraints).discrete.n_theoretical_subsets
-        == expected
-    )
+def test_batch_constraint_n_subsets(constraints, expected):
+    """The n_subsets property returns the correct count."""
+    assert SearchSpace.from_product(_params, constraints).discrete.n_subsets == expected
 
 
 def test_batch_constraint_all_subsets_too_small():

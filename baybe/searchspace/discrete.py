@@ -587,7 +587,7 @@ class SubspaceDiscrete(SerialMixin):
         )
 
     @property
-    def n_theoretical_subsets(self) -> int:
+    def n_subsets(self) -> int:
         """The theoretical number of possible subset configurations.
 
         Returns 0 if no batch constraints exist, indicating that
