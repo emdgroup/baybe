@@ -436,7 +436,7 @@ requires-dist = [
     { name = "onnxruntime", marker = "python_full_version >= '3.11' and extra == 'onnx'", specifier = ">=1.15.1" },
     { name = "onnxruntime", marker = "python_full_version < '3.11' and extra == 'onnx'", specifier = ">=1.15.1,<1.24" },
     { name = "openpyxl", marker = "extra == 'examples'", specifier = ">=3.0.9" },
-    { name = "pandas", specifier = ">=1.4.2,<3" },
+    { name = "pandas", specifier = ">=1.4.2,<4" },
     { name = "pandas-stubs", marker = "extra == 'mypy'", specifier = ">=2.2.2.240603" },
     { name = "pillow", marker = "extra == 'examples'", specifier = ">=10.0.1" },
     { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.5.5" },
