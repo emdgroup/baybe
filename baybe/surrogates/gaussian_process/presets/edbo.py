@@ -6,11 +6,13 @@ import gc
 from collections.abc import Collection
 from typing import TYPE_CHECKING, ClassVar
 
+import pandas as pd
 from attrs import define
 from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
+from baybe.objectives.base import Objective
 from baybe.parameters.enum import SubstanceEncoding, _ParameterKind
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
@@ -29,7 +31,6 @@ from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFa
 
 if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
-    from torch import Tensor
 
     from baybe.kernels.base import Kernel
     from baybe.searchspace.core import SearchSpace
@@ -68,7 +69,7 @@ class EDBOKernelFactory(_PureKernelFactory):
 
     @override
     def _make(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel:
         effective_dims = self._get_effective_dimensionality(searchspace)
 
@@ -130,7 +131,7 @@ class EDBOLikelihoodFactory(LikelihoodFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> GPyTorchLikelihood:
         import torch
         from gpytorch.likelihoods import GaussianLikelihood

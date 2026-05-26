@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import pandas as pd
 from attrs import define
 from typing_extensions import override
 
+from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
@@ -15,7 +17,6 @@ from baybe.surrogates.gaussian_process.components.generic import (
 
 if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
-    from torch import Tensor
 
     MeanFactoryProtocol = GPComponentFactoryProtocol[GPyTorchMean]
     PlainMeanFactory = PlainGPComponentFactory[GPyTorchMean]
@@ -31,7 +32,7 @@ class LazyConstantMeanFactory(MeanFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> GPyTorchMean:
         from gpytorch.means import ConstantMean
 

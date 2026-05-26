@@ -8,6 +8,7 @@ import os
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
+import pandas as pd
 from attrs import Converter, define, field
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable
@@ -15,6 +16,7 @@ from typing_extensions import Self, override
 
 from baybe.exceptions import DeprecationError
 from baybe.kernels.base import Kernel
+from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace.core import SearchSpace
@@ -64,6 +66,12 @@ class _ModelContext:
 
     searchspace: SearchSpace = field(validator=instance_of(SearchSpace))
     """The search space the model is trained on."""
+
+    objective: Objective = field(validator=instance_of(Objective))
+    """The objective for which the model is trained."""
+
+    measurements: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
+    """The training data in experimental representation."""
 
     @property
     def task_idx(self) -> int | None:
@@ -266,7 +274,9 @@ class GaussianProcessSurrogate(Surrogate):
         from botorch.models.transforms import Normalize, Standardize
 
         assert self._searchspace is not None  # provided by base class
-        context = _ModelContext(self._searchspace)
+        assert self._objective is not None  # provided by base class
+        assert self._measurements is not None  # provided by base class
+        context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
         if (
             context.is_multitask
@@ -296,18 +306,26 @@ class GaussianProcessSurrogate(Surrogate):
         outcome_transform = Standardize(train_y.shape[-1])
 
         ### Mean
-        mean = self.mean_factory(context.searchspace, train_x, train_y)
+        mean = self.mean_factory(
+            context.searchspace, context.objective, context.measurements
+        )
 
         ### Kernel
-        kernel = self.kernel_factory(context.searchspace, train_x, train_y)
+        kernel = self.kernel_factory(
+            context.searchspace, context.objective, context.measurements
+        )
         if isinstance(kernel, Kernel):
             kernel = kernel.to_gpytorch(searchspace=context.searchspace)
 
         ### Likelihood
-        likelihood = self.likelihood_factory(context.searchspace, train_x, train_y)
+        likelihood = self.likelihood_factory(
+            context.searchspace, context.objective, context.measurements
+        )
 
         ### Criterion
-        criterion = self.fit_criterion_factory(context.searchspace, train_x, train_y)
+        criterion = self.fit_criterion_factory(
+            context.searchspace, context.objective, context.measurements
+        )
 
         ### Model construction and fitting
         self._model = botorch.models.SingleTaskGP(

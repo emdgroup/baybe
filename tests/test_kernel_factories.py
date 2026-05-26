@@ -2,8 +2,8 @@
 
 from contextlib import nullcontext
 
+import pandas as pd
 import pytest
-import torch
 from pytest import param
 
 from baybe.exceptions import IncompatibleSearchSpaceError
@@ -18,6 +18,7 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     _BayBENumericalKernelFactory,
     _BayBETaskKernelFactory,
 )
+from baybe.targets.numerical import NumericalTarget
 
 # A selector that accepts all parameters
 _SELECT_ALL = lambda parameter: True  # noqa: E731
@@ -63,13 +64,13 @@ _SELECT_ALL = lambda parameter: True  # noqa: E731
 )
 def test_factory_parameter_kind_validation(factory, parameters, error):
     """Factories reject unsupported parameter kinds and accept supported ones."""
-    ss = SearchSpace.from_product(parameters)
-    train_x = torch.zeros(2, len(ss.comp_rep_columns))
-    train_y = torch.zeros(2, 1)
+    searchspace = SearchSpace.from_product(parameters)
+    objective = NumericalTarget("y").to_objective()
+    measurements = pd.DataFrame()
 
     with (
         nullcontext()
         if error is None
         else pytest.raises(error, match="does not support")
     ):
-        factory(ss, train_x, train_y)
+        factory(searchspace, objective, measurements)

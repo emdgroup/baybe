@@ -5,14 +5,16 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
+import pandas as pd
 from attrs import define
 from typing_extensions import override
+
+from baybe.objectives.base import Objective
 
 if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.mlls import MarginalLogLikelihood
     from gpytorch.models import GP as GPyTorchModel
-    from torch import Tensor
 
     from baybe.searchspace.core import SearchSpace
 
@@ -62,7 +64,7 @@ class _MLLForNonTLFitCriterionFactory(FitCriterionFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> FitCriterion:
         if searchspace.task_idx is None:
             return FitCriterion.MARGINAL_LOG_LIKELIHOOD
@@ -71,4 +73,4 @@ class _MLLForNonTLFitCriterionFactory(FitCriterionFactoryProtocol):
             BayBEFitCriterionFactory,
         )
 
-        return BayBEFitCriterionFactory()(searchspace, train_x, train_y)
+        return BayBEFitCriterionFactory()(searchspace, objective, measurements)
