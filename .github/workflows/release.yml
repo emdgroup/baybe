@@ -13,7 +13,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   # Build and verify wheels
@@ -55,6 +54,9 @@ jobs:
     environment: release-test-pypi
     if: github.repository_owner == 'emdgroup' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Download packages built
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
@@ -71,8 +73,11 @@ jobs:
     needs: build
     name: Publish PyPI PROD
     environment: release-pypi
-    if: github.repository_owner == 'emdgroup' && github.event.action == 'published'
+    if: github.repository_owner == 'emdgroup' && github.event_name == 'published'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python

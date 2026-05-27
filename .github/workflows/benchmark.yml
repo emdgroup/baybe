@@ -26,7 +26,6 @@ env:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   prepare:
@@ -72,6 +71,9 @@ jobs:
     name: run
     needs: [prepare]
     runs-on: M
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.benchmarks_to_execute) }}
