@@ -8,8 +8,8 @@ from attrs import define, field
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
-from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
-from baybe.parameters.categorical import TaskParameter, TransferLearningMode
+from baybe.kernels.basic import PositiveIndexKernel
+from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import _ParameterKind
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
@@ -76,25 +76,11 @@ class BayBETaskKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        tl_mode = searchspace.transfer_learning_mode
-
-        if tl_mode is TransferLearningMode.POSITIVE_INDEX_KERNEL:
-            return PositiveIndexKernel(
-                num_tasks=searchspace.n_tasks,
-                rank=searchspace.n_tasks,
-                parameter_names=self.get_parameter_names(searchspace),
-            )
-        elif tl_mode is TransferLearningMode.INDEX_KERNEL:
-            return IndexKernel(
-                num_tasks=searchspace.n_tasks,
-                rank=searchspace.n_tasks,
-                parameter_names=self.get_parameter_names(searchspace),
-            )
-        else:
-            raise ValueError(
-                f"Unsupported transfer learning mode: {tl_mode}. "
-                f"Expected one of {list(TransferLearningMode)}."
-            )
+        return PositiveIndexKernel(
+            num_tasks=searchspace.n_tasks,
+            rank=searchspace.n_tasks,
+            parameter_names=self.get_parameter_names(searchspace),
+        )
 
 
 BayBEMeanFactory = LazyConstantMeanFactory

@@ -6,7 +6,7 @@ from functools import cached_property
 import numpy as np
 import pandas as pd
 from attrs import Converter, define, field
-from attrs.validators import deep_iterable, instance_of, min_len
+from attrs.validators import deep_iterable, instance_of, min_len, optional
 from typing_extensions import override
 
 from baybe.parameters.base import _DiscreteLabelLikeParameter
@@ -90,15 +90,11 @@ class TaskParameter(CategoricalParameter):
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
 
-    transfer_learning_mode: TransferLearningMode = field(
-        default=TransferLearningMode.POSITIVE_INDEX_KERNEL,
-        converter=TransferLearningMode,
+    override_transfer_learning_mode: TransferLearningMode | None = field(
+        default=None,
+        validator=optional(instance_of(TransferLearningMode)),
     )
-    """The transfer learning mode to be used for this task parameter.
-
-    Defaults to
-    :attr:`~baybe.parameters.enum.TransferLearningMode.POSITIVE_INDEX_KERNEL`.
-    """
+    """Optional override for the transfer learning kernel mode."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

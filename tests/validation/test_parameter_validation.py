@@ -12,7 +12,6 @@ from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.categorical import (
     CategoricalParameter,
     TaskParameter,
-    TransferLearningMode,
 )
 from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.numerical import (
@@ -142,10 +141,10 @@ def test_invalid_values_task_parameter(values, active_values, error):
         param(["a", "b"], id="multiple_active"),
     ],
 )
-def test_transfer_learning_mode_default(active_values):
-    """Default ``transfer_learning_mode`` is ``POSITIVE_INDEX_KERNEL``."""
+def test_override_transfer_learning_mode_default(active_values):
+    """Default ``override_transfer_learning_mode`` is ``None``."""
     tp = TaskParameter(name="t", values=["a", "b", "c"], active_values=active_values)
-    assert tp.transfer_learning_mode is TransferLearningMode.POSITIVE_INDEX_KERNEL
+    assert tp.override_transfer_learning_mode is None
 
 
 @pytest.mark.skipif(
