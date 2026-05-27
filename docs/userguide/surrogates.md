@@ -338,7 +338,6 @@ Below an example of how to use this functionality to extract the posterior mean 
 
 ~~~python
 # Assuming we already have a campaign created and measurements added
-data = campaign.measurements[[p.name for p in campaign.parameters]]
 posterior_mean = lambda x: campaign.get_surrogate().posterior(x).mean
 ~~~
 
