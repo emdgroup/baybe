@@ -1,9 +1,11 @@
 # Surrogates
 
 In Bayesian optimization (BO), surrogate models serve as a probabilistic stand-in for
-the unknown system under study, modeling it from an input-output perspective. Based on
-observations collected through experiments, surrogates provide predictions and
-corresponding uncertainty estimates that guide us in deciding where to sample next.
+the unknown system under study, capturing its behavior from an input-output perspective.
+Based on observations collected through experiments, surrogates provide predictions and
+corresponding uncertainty estimates that guide us in deciding where to sample next. As
+such, they are at the heart of the BO loop, making their configuration one of the most
+consequential modeling choices.
 
 ## The Gaussian Process
 
