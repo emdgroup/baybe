@@ -66,6 +66,14 @@ multiple ways:
   More precisely: a callable that receives the actual recommendation context and
   dynamically returns a component produced specifically for the problem at hand. 
 
+```{admonition} Serialization
+:class: warning
+
+Surrogate models can only be serialized when populated with built-in components and
+built-in component factories. Serialization attempts will fail when GPyTorch components
+or custom factories are involved. 
+```
+
 The following example demonstrates some of the possible specification mechanisms:
 ```python
 import math
