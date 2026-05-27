@@ -289,7 +289,7 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
                 censored_df[affected_param] = [
                     (None if inv else val, dep)
                     for val, dep, inv in zip(
-                        df[affected_param], censored_df[param], invalid
+                        censored_df[affected_param], censored_df[param], invalid
                     )
                 ]
 
