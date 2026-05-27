@@ -64,9 +64,12 @@ multiple ways:
   {class}`~baybe.kernels.base.Kernel` object)
 * As a low-level [GPyTorch](https://gpytorch.ai/) component (e.g., a
   {class}`gpytorch.kernels.Kernel`)
-* Or most flexibly: as a *factory* producing either of the two above.
-  More precisely: a callable that receives the actual recommendation context and
-  dynamically returns a component produced specifically for the problem at hand. 
+* Or most flexibly: as a
+  [*factory*](baybe.surrogates.gaussian_process.components.generic.GPComponentFactoryProtocol)
+  (e.g., a {class}`~baybe.surrogates.gaussian_process.components.kernel.KernelFactoryProtocol`-compatible object),
+  producing either of the two above. More precisely: a callable that receives the actual
+  recommendation context and dynamically returns a component produced specifically for
+  the problem at hand. 
 
 ```{admonition} Serialization
 :class: warning
