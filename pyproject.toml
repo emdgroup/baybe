@@ -54,10 +54,6 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 # DEV TOOLS NOTE: The versions of all dev tools should be consistent everywhere
 # (pre-commit, environment.yml, requirements.txt, pyproject.toml, ...)
 
-# AUDIT NOTE: The marked packages are secondary dependencies but their versions are
-# set explicitly because the otherwise installed default versions have been flagged
-# for vulnerabilities by pip-audit
-
 [project.optional-dependencies]
 extras = [
     "baybe[chem]",
@@ -80,7 +76,6 @@ chem = [
 # for onnxruntime to <1.24 for Python 3.10.
 # See https://github.com/microsoft/onnxruntime/pull/27354 for more details.
 onnx = [
-    "onnx>=1.16.0", # see AUDIT NOTE, required by skl2onnx
     "onnxruntime>=1.15.1,<1.24; python_version < '3.11'",
     "onnxruntime>=1.15.1; python_version >= '3.11'",   
     "skl2onnx>=1.19.1",
@@ -93,7 +88,6 @@ dev = [
     "baybe[mypy]",
     "baybe[test]",
     "baybe[benchmarking]",
-    "pip-audit>=2.5.5",
     "setuptools-scm>=7.1.0",
     "tox-uv>=1.7.0",
     "uv>=0.11.3",
@@ -122,11 +116,9 @@ examples = [
     "baybe[extras]",
     "matplotlib>=3.7.3,!=3.9.1",
     "openpyxl>=3.0.9",
-    "pillow>=10.0.1", # Necessary due to vulnerability
     "plotly>=5.10.0",
     "seaborn>=0.12.2",
-    "streamlit>=1.37.0", # Necessary due to vulnerability
-    "tornado>=6.3.3", # see AUDIT NOTE, required by streamlit
+    "streamlit>=1.37.0",
 ]
 
 lint = [

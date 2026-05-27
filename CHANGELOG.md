@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `has_polars_implementation` property on `DiscreteConstraint`
 - `allow_missing` flag on `DiscreteConstraint.get_invalid` and `get_valid`
 
+### Changed
+- Switched from `pip-audit` to `uv audit`, checking only direct dependencies
+
 ### Breaking Changes
 - `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
   from `baybe.searchspace.discrete` to `baybe.searchspace.utils`
