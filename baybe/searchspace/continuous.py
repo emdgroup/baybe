@@ -183,8 +183,8 @@ class SubspaceContinuous(SerialMixin):
             raise ValueError(f"Invalid {mode=}. Must be one of {allowed}.")
 
         per_constraint = [
-            list(con.inactive_parameter_combinations())
-            for con in self.constraints_cardinality
+            list(c.inactive_parameter_combinations())
+            for c in self.constraints_cardinality
         ]
 
         total = math.prod(len(v) for v in per_constraint)
@@ -192,7 +192,11 @@ class SubspaceContinuous(SerialMixin):
         if mode == "replace":
             while True:
                 yield frozenset(
-                    chain(*(random.choice(group) for group in per_constraint))
+                    chain(
+                        *select_via_flat_index(
+                            random.randint(0, total - 1), per_constraint
+                        )
+                    )
                 )
         else:
             order = list(range(total))
