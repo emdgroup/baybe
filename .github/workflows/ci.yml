@@ -49,7 +49,7 @@ jobs:
     name: "Reminder"
     continue-on-error: true
     permissions:
-      issues: write
+      issues: write  # Required for reminder-action to post issue comments
     steps:
       - name: check reminders and notify
         uses: agrc/reminder-action@76a6297d144adb572b4cf6d9c0ee667f0ec6b832 # v1
@@ -79,8 +79,8 @@ jobs:
     needs: [lint]
     permissions:
       contents: read
-      pages: write
-      id-token: write
+      pages: write     # Required to deploy to GitHub Pages
+      id-token: write  # Required for OIDC authentication to GitHub Pages
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
