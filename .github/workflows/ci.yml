@@ -25,7 +25,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Assert Changelog Edit
         run: |
           git fetch origin main:main
@@ -47,7 +47,7 @@ jobs:
       issues: write
     steps:
       - name: check reminders and notify
-        uses: agrc/reminder-action@v1
+        uses: agrc/reminder-action@76a6297d144adb572b4cf6d9c0ee667f0ec6b832 # v1
 
   lint:
     strategy:
@@ -56,8 +56,8 @@ jobs:
     name: Lint ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -75,8 +75,8 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with: {python-version: "3.10"}
       - name: Build Docs
         run: |
@@ -91,8 +91,8 @@ jobs:
     name: Type Check ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -109,8 +109,8 @@ jobs:
     name: Audit ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -127,12 +127,12 @@ jobs:
     name: Core Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
-      - uses: actions/cache@v5
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: .tox/coretest-${{ matrix.py-version.tox }}
           key: coretest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
@@ -150,12 +150,12 @@ jobs:
     name: Full Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
-      - uses: actions/cache@v5
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: .tox/fulltest-${{ matrix.py-version.tox }}
           key: fulltest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
@@ -185,12 +185,12 @@ jobs:
     name: GPU Tests ${{ matrix.py-version.semantic }}
     runs-on: XS-GPU
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
-      - uses: actions/cache@v5
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: .tox/gputest-${{ matrix.py-version.tox }}
           key: gputest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
