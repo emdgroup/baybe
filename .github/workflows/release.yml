@@ -84,8 +84,10 @@ jobs:
         with:
           python-version: '3.14'
       - name: Install test-package
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ baybe==${{  github.ref_name }}
+          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ baybe=="$REF_NAME"
       - name: Download packages built
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:

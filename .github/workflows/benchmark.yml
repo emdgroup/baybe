@@ -59,8 +59,8 @@ jobs:
       - name: Set benchmarks output
         id: set_benchmarks
         run: |
-          echo 'benchmarks_to_execute=${{ env.benchmarks_to_execute }}' >> "$GITHUB_OUTPUT"
-          number_of_tasks=$(echo '${{ env.benchmarks_to_execute }}' | jq '.benchmark_list | length')
+          echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_OUTPUT"
+          number_of_tasks=$(echo "$benchmarks_to_execute" | jq '.benchmark_list | length')
 
           if [ "$number_of_tasks" -le 0 ]; then
             echo "Please run at least one benchmark"
@@ -113,4 +113,6 @@ jobs:
       - name: Install the project
         run: uv sync --locked --extra benchmarking
       - name: Benchmark
-        run: uv run -m benchmarks --benchmark-list "${{ matrix.benchmark_list }}"
+        env:
+          BENCHMARK_LIST: ${{ matrix.benchmark_list }}
+        run: uv run -m benchmarks --benchmark-list "$BENCHMARK_LIST"

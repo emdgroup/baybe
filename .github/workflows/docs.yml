@@ -42,20 +42,25 @@ jobs:
             git show main:docs/scripts/utils.py > utils.py
       - name: Check for Hotfix
         id: hotfix
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
           pip install packaging
           git fetch --tags
           tags=$(git tag -l)
-          if ${{ github.event_name == 'release' }}; then
-            HOTFIX_VERSION=$(python utils.py hotfix "${{github.event.release.tag_name}}" "$tags")
+          if [ "$EVENT_NAME" = 'release' ]; then
+            HOTFIX_VERSION=$(python utils.py hotfix "$TAG_NAME" "$tags")
           else
             HOTFIX_VERSION="False"
           fi
           echo "$HOTFIX_VERSION"
           echo "hotfix=$HOTFIX_VERSION" >> "$GITHUB_OUTPUT"
       - name: Verify setting of hotfix
+        env:
+          HOTFIX_VALUE: ${{ steps.hotfix.outputs.hotfix }}
         run: |
-          echo "The value of hotfix is ${{ steps.hotfix.outputs.hotfix }}"       
+          echo "The value of hotfix is $HOTFIX_VALUE"
       - if: ${{ steps.hotfix.outputs.hotfix == 'False'}}
         name: Copy latest folder to gh-pages branch and update branch
         run: |
@@ -69,8 +74,10 @@ jobs:
             git add -f latest
       - if: ${{ github.event_name == 'release' }}
         name: Create numbered version
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
-            FOLDER=${{github.event.release.tag_name}}
+            FOLDER="$TAG_NAME"
             mkdir ./$FOLDER
             cp -r docs/build/* ./$FOLDER
             python utils.py selector_page $FOLDER
