@@ -10,6 +10,8 @@ on:
   workflow_dispatch:  # Allow manually triggering the workflow
 
 
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
@@ -18,9 +20,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pages: write
-      id-token: write
+      contents: write  # Required to push docs to the gh-pages branch
+      pages: write     # Required to deploy to GitHub Pages
+      id-token: write  # Required for OIDC authentication to GitHub Pages
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
