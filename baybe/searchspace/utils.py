@@ -24,6 +24,17 @@ def select_via_flat_index(flat_idx: int, /, groups: Sequence[Sequence[_T]]) -> l
     Maps a single integer index over the Cartesian product of ``groups`` to the
     corresponding element from each group via :func:`numpy.unravel_index`.
 
+    Examples:
+        >>> groups = [[0, 1], ["a", "b"]]
+        >>> select_via_flat_index(0, groups)
+        [0, 'a']
+        >>> select_via_flat_index(1, groups)
+        [0, 'b']
+        >>> select_via_flat_index(2, groups)
+        [1, 'a']
+        >>> select_via_flat_index(3, groups)
+        [1, 'b']
+
     Args:
         flat_idx: The flat index into the Cartesian product of all groups.
         groups: The groups to select from, one element selected per group.
