@@ -7,7 +7,7 @@ import math
 import random
 from collections.abc import Collection, Iterator, Sequence
 from itertools import chain
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -161,17 +161,27 @@ class SubspaceContinuous(SerialMixin):
     def inactive_parameter_combinations(
         self,
         *,
-        replace: bool = False,
+        mode: Literal["sequential", "shuffled", "replace"] = "shuffled",
     ) -> Iterator[frozenset[str]]:
         """Get an iterator over all possible inactive parameter combinations.
 
         Args:
-            replace: If ``True``, sample with replacement, producing an
-                infinite iterator where each draw is independent.
+            mode: The iteration strategy.
+
+                * ``"sequential"`` iterates all combinations in deterministic order.
+                * ``"shuffled"`` iterates all combinations exactly once in random order.
+                * ``"replace"`` samples with replacement, producing an infinite iterator
+                  where each draw is independent.
+
+        Raises:
+            ValueError: If an invalid mode is provided.
 
         Yields:
             A frozenset of inactive parameter names for the subspace.
         """
+        if mode not in (allowed := {"sequential", "shuffled", "replace"}):
+            raise ValueError(f"Invalid {mode=}. Must be one of {allowed}.")
+
         per_constraint = [
             list(con.inactive_parameter_combinations())
             for con in self.constraints_cardinality
@@ -179,14 +189,15 @@ class SubspaceContinuous(SerialMixin):
 
         total = math.prod(len(v) for v in per_constraint)
 
-        if replace:
+        if mode == "replace":
             while True:
                 yield frozenset(
                     chain(*(random.choice(group) for group in per_constraint))
                 )
         else:
             order = list(range(total))
-            random.shuffle(order)
+            if mode == "shuffled":
+                random.shuffle(order)
             for flat_idx in order:
                 yield frozenset(chain(*select_via_flat_index(flat_idx, per_constraint)))
 

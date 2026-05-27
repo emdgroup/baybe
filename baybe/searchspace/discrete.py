@@ -8,7 +8,7 @@ import warnings
 from collections.abc import Collection, Iterator, Sequence
 from itertools import islice
 from math import prod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -604,8 +604,7 @@ class SubspaceDiscrete(SerialMixin):
         self,
         candidates_exp: pd.DataFrame,
         min_candidates: int | None = None,
-        *,
-        replace: bool = False,
+        mode: Literal["sequential", "shuffled", "replace"] = "shuffled",
     ) -> Iterator[npt.NDArray[np.bool_]]:
         """Get an iterator over all possible subset masks.
 
@@ -617,13 +616,22 @@ class SubspaceDiscrete(SerialMixin):
             candidates_exp: The experimental representation of candidate points.
             min_candidates: If provided, combined masks selecting fewer rows
                 are silently skipped.
-            replace: If ``True``, sample with replacement, producing an
-                infinite iterator where each draw is independent. Infeasible
-                indices are permanently excluded from the sampling pool.
+            mode: The iteration strategy.
+
+                * ``"sequential"`` iterates all combinations in deterministic order.
+                * ``"shuffled"`` iterates all combinations exactly once in random order.
+                * ``"replace"`` samples with replacement, producing an infinite iterator
+                  where each draw is independent.
+
+        Raises:
+            ValueError: If an invalid mode is provided.
 
         Yields:
-            A boolean mask selecting the subset's rows.
+            A Boolean mask selecting the subset's rows.
         """
+        if mode not in (allowed := {"sequential", "shuffled", "replace"}):
+            raise ValueError(f"Invalid {mode=}. Must be one of {allowed}.")
+
         per_constraint: list[list[npt.NDArray[np.bool_]]]
         if not (constraints := self.constraints_batch):
             per_constraint = [[np.ones(len(candidates_exp), dtype=bool)]]
@@ -632,7 +640,7 @@ class SubspaceDiscrete(SerialMixin):
 
         total = prod(len(masks) for masks in per_constraint)
 
-        if replace:
+        if mode == "replace":
             candidates = list(range(total))
             while candidates:
                 idx_pos = random.randint(0, len(candidates) - 1)
@@ -647,7 +655,8 @@ class SubspaceDiscrete(SerialMixin):
                 yield combined
         else:
             order = list(range(total))
-            random.shuffle(order)
+            if mode == "shuffled":
+                random.shuffle(order)
             for flat_idx in order:
                 combined = np.logical_and.reduce(
                     select_via_flat_index(flat_idx, per_constraint)
