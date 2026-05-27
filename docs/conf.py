@@ -150,6 +150,8 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.utils.boolean.UncertainBool.*"),
     ("py:obj", "baybe.targets.botorch.*"),
     ("py:obj", "baybe.objectives.botorch.*"),
+    ("py:obj", "baybe.serialization.mixin.SupportsRead.read"),
+    ("py:obj", "baybe.serialization.mixin.SupportsWrite.write"),
     ("py:class", "baybe.surrogates.gaussian_process.components.PlainKernelFactory"),
     # Private classes
     (r"py:class", r"baybe\..*\._.*"),
