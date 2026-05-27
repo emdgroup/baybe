@@ -262,7 +262,7 @@ def df_drop_string_columns(
     """
     ignore_list = ignore_list or []
     # applymap was removed in pandas 3.0; map() is the replacement (added in 2.1)
-    _df_map = getattr(df, "map", df.applymap)
+    _df_map = df.map if hasattr(df, "map") else df.applymap
     no_string = ~_df_map(lambda x: isinstance(x, str)).any()
     no_string = no_string[no_string].index
     to_keep = set(no_string).union(set(ignore_list))
