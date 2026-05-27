@@ -25,6 +25,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           ref: ${{ github.ref }}
+          persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with: {python-version: "3.10"}
       - name: Install tox
@@ -91,4 +92,8 @@ jobs:
             git_hash=$(git rev-parse --short "$GITHUB_SHA")
             git commit -m "Sphinx documentation for ${git_hash}"
       - name: Push changes to gh-pages branch
-        run: git push origin gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
+          git push origin gh-pages
