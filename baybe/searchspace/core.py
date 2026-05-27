@@ -287,6 +287,24 @@ class SearchSpace(SerialMixin):
             return 1
         return len(task_param.values)
 
+    def _without_task_parameter(self) -> SearchSpace:
+        """Create a copy of this search space with the task parameter removed.
+
+        Returns:
+            A new search space containing only the non-task parameters and
+            constraints that do not involve the task parameter.
+        """
+        task_param_names = {
+            p.name for p in self.parameters if isinstance(p, TaskParameter)
+        }
+        non_task_params = [
+            p for p in self.parameters if not isinstance(p, TaskParameter)
+        ]
+        non_task_constraints = [
+            c for c in self.constraints if not c._required_parameters & task_param_names
+        ]
+        return SearchSpace.from_product(non_task_params, non_task_constraints)
+
     def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
         """Find a parameter's column indices in the computational representation.
 

@@ -134,6 +134,19 @@ def test_invalid_values_task_parameter(values, active_values, error):
         TaskParameter(name="invalid_values", values=values, active_values=active_values)
 
 
+@pytest.mark.parametrize(
+    ("active_values",),
+    [
+        param(["a"], id="single_active"),
+        param(["a", "b"], id="multiple_active"),
+    ],
+)
+def test_override_transfer_learning_mode_default(active_values):
+    """Default ``override_transfer_learning_mode`` is ``None``."""
+    tp = TaskParameter(name="t", values=["a", "b", "c"], active_values=active_values)
+    assert tp.override_transfer_learning_mode is None
+
+
 @pytest.mark.skipif(
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )

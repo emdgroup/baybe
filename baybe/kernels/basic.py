@@ -236,7 +236,16 @@ class IndexKernel(BasicKernel):
 
 @define(frozen=True)
 class PositiveIndexKernel(IndexKernel):
-    """A positive index kernel for transfer learning across tasks."""
+    """A positive index kernel for transfer learning across tasks.
+
+    Enforces strictly positive correlations between tasks via a
+    Cholesky-positive parameterization of the covariance factor. BayBE always
+    disables botorch's target-task normalization.
+    """
+
+    unit_scale_for_target: bool = field(default=False, init=False)
+    """Hardcoded to ``False`` in BayBE; disables botorch's normalization of the
+    covariance matrix by the target task's diagonal entry."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

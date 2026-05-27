@@ -39,7 +39,11 @@ class DataLoader(Protocol):
 class SearchSpaceFactory(Protocol):
     """Protocol for SearchSpace creation used in TL regression benchmarks."""
 
-    def __call__(self, data: pd.DataFrame, use_task_parameter: bool) -> SearchSpace:
+    def __call__(
+        self,
+        data: pd.DataFrame,
+        use_task_parameter: bool,
+    ) -> SearchSpace:
         """Create a SearchSpace for regression benchmark evaluation.
 
         Args:
@@ -100,12 +104,6 @@ def spearman_rho_score(x: np.ndarray, y: np.ndarray, /) -> float:
     return rho
 
 
-# Dictionary mapping transfer learning model names to their surrogate classes
-TL_MODELS = {
-    "index_kernel": GaussianProcessSurrogate,
-}
-
-
 # Regression metrics to evaluate model performance
 REGRESSION_METRICS = {
     root_mean_squared_error,
@@ -147,7 +145,7 @@ def run_tl_regression_benchmark(
         model, training scenario, and Monte Carlo iteration. Columns include:
 
       - scenario: Model scenario identifier (e.g., "0_reduced_searchspace",
-        "5_index_kernel")
+        "5_tl")
       - Performance metrics: root_mean_squared_error, mean_squared_error, r2_score,
         mean_absolute_error, max_error, explained_variance_score, kendall_tau_score,
         spearman_rho_score
@@ -234,7 +232,7 @@ def run_tl_regression_benchmark(
             result.update(metrics)
             results.append(result)
 
-            # Naive GP on full search space
+            # TL kernel on full search space, no source data
             metrics = _evaluate_model(
                 GaussianProcessSurrogate(),
                 target_train,
@@ -243,7 +241,7 @@ def run_tl_regression_benchmark(
                 objective,
             )
             result = {
-                "scenario": "0_full_searchspace",
+                "scenario": "0_tl",
                 "mc_iter": mc_iter,
                 "n_train_pts": n_train_pts,
                 "fraction_source": 0.0,
@@ -277,29 +275,25 @@ def run_tl_regression_benchmark(
 
                 combined_data = pd.concat([source_subset, target_train])
 
-                for model_suffix, model_class in TL_MODELS.items():
-                    scenario_name = f"{int(100 * fraction_source)}_{model_suffix}"
-                    model = model_class()
-
-                    metrics = _evaluate_model(
-                        model,
-                        combined_data,
-                        target_test,
-                        tl_searchspace,
-                        objective,
-                    )
-
-                    result = {
-                        "scenario": scenario_name,
-                        "mc_iter": mc_iter,
-                        "n_train_pts": n_train_pts,
-                        "fraction_source": fraction_source,
-                        "n_source_pts": len(source_subset),
-                        "n_test_pts": len(target_test),
-                        "source_data_seed": settings.random_seed + mc_iter,
-                    }
-                    result.update(metrics)
-                    results.append(result)
+                # Evaluate TL kernel
+                metrics = _evaluate_model(
+                    GaussianProcessSurrogate(),
+                    combined_data,
+                    target_test,
+                    tl_searchspace,
+                    objective,
+                )
+                result = {
+                    "scenario": f"{int(100 * fraction_source)}_tl",
+                    "mc_iter": mc_iter,
+                    "n_train_pts": n_train_pts,
+                    "fraction_source": fraction_source,
+                    "n_source_pts": len(source_subset),
+                    "n_test_pts": len(target_test),
+                    "source_data_seed": settings.random_seed + mc_iter,
+                }
+                result.update(metrics)
+                results.append(result)
 
                 pbar.update(1)
 
