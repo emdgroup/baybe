@@ -22,3 +22,6 @@ class GaussianProcessPreset(Enum):
 
     EDBO_SMOOTHED = "EDBO_SMOOTHED"
     """A smoothed version of the EDBO settings (adapted from :cite:p:`Shields2021`)."""
+
+    HVARFNER = "HVARFNER"
+    """The settings proposed by :cite:p:`Hvarfner2024`."""

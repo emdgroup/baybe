@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   components, enabling full low-level customization
 - Configurable fitting criterion for Gaussian process hyperparameter optimization
 - Factories for all Gaussian process components
-- `BOTORCH`, `CHEN`, `EDBO` and `EDBO_SMOOTHED` presets for `GaussianProcessSurrogate`
+- `BOTORCH`, `CHEN`, `EDBO`, `EDBO_SMOOTHED` and `HVARFNER` presets for
+  `GaussianProcessSurrogate`
 - `TypeSelector` and `NameSelector` classes for parameter selection in kernel factories
 - `parameter_names` attribute to basic kernels for controlling the considered parameters
 - `ParameterKind` flag enum for classifying parameters by their role and automatic
