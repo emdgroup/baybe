@@ -26,39 +26,24 @@ from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFa
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOKernelFactory,
     SmoothedEDBOLikelihoodFactory,
+    _SmoothedEDBONumericalKernelFactory,
 )
 
 if TYPE_CHECKING:
     from torch import Tensor
 
 
-@define
-class BayBEKernelFactory(_PureKernelFactory):
-    """The default kernel factory for Gaussian process surrogates."""
-
-    _supported_parameter_kinds: ClassVar[_ParameterKind] = (
-        _ParameterKind.REGULAR | _ParameterKind.TASK
-    )
-    # See base class.
-
-    @override
-    def _make(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
-        from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
-
-        is_multitask = searchspace.task_idx is not None
-        factory = ICMKernelFactory if is_multitask else BayBENumericalKernelFactory
-        return factory()(searchspace, train_x, train_y)
+class _BayBENumericalKernelFactory(_SmoothedEDBONumericalKernelFactory):
+    """The default numerical kernel factory for GP surrogates."""
 
 
-BayBENumericalKernelFactory = SmoothedEDBOKernelFactory
-"""The factory providing the default numerical kernel for Gaussian process surrogates."""  # noqa: E501
+class BayBEKernelFactory(SmoothedEDBOKernelFactory):  # type: ignore[valid-type, misc]
+    """The default kernel factory for GP surrogates."""
 
 
 @define
-class BayBETaskKernelFactory(_PureKernelFactory):
-    """The factory providing the default task kernel for Gaussian process surrogates."""
+class _BayBETaskKernelFactory(_PureKernelFactory):
+    """The default task kernel factory for GP surrogates."""
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
@@ -83,11 +68,12 @@ class BayBETaskKernelFactory(_PureKernelFactory):
         )
 
 
-BayBEMeanFactory = LazyConstantMeanFactory
-"""The factory providing the default mean function for Gaussian process surrogates."""
+class BayBEMeanFactory(LazyConstantMeanFactory):
+    """The default mean factory for GP surrogates."""
 
-BayBELikelihoodFactory = SmoothedEDBOLikelihoodFactory
-"""The factory providing the default likelihood for Gaussian process surrogates."""
+
+class BayBELikelihoodFactory(SmoothedEDBOLikelihoodFactory):
+    """The default likelihood factory for GP surrogates."""
 
 
 @define

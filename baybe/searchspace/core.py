@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 from collections.abc import Iterable, Sequence
 from enum import Enum
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
 from attrs import define, field
@@ -27,6 +27,9 @@ from baybe.searchspace.validation import (
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.conversion import to_string
+
+if TYPE_CHECKING:
+    from baybe.parameters.selectors import ParameterSelectorProtocol
 
 
 class SearchSpaceType(Enum):
@@ -287,35 +290,38 @@ class SearchSpace(SerialMixin):
             return 1
         return len(task_param.values)
 
-    def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
-        """Find a parameter's column indices in the computational representation.
+    def get_comp_rep_parameter_indices(
+        self,
+        name_or_selector: str | ParameterSelectorProtocol,
+        /,
+    ) -> tuple[int, ...]:
+        """Find comp-rep column indices for a parameter selection.
+
+        When called with a parameter name, returns the indices for that single
+        parameter. When called with a
+        :class:`~baybe.parameters.selectors.ParameterSelectorProtocol`,
+        returns the combined indices for all matching parameters.
 
         Args:
-            name: The name of the parameter whose columns indices are to be retrieved.
-
-        Raises:
-            ValueError: If no parameter with the provided name exists.
-            ValueError: If more than one parameter with the provided name exists.
+            name_or_selector: Either the name of a single parameter or a selector
+                that filters parameters to be included.
 
         Returns:
             A tuple containing the integer indices of the columns in the computational
-            representation associated with the parameter. When the parameter is not part
-            of the computational representation, an empty tuple is returned.
+            representation associated with the selected parameter(s). When a selected
+            parameter is not part of the computational representation, it contributes
+            no indices.
         """
-        params = self.get_parameters_by_name([name])
-        if len(params) < 1:
-            raise ValueError(
-                f"There exists no parameter named '{name}' in the search space."
-            )
-        if len(params) > 1:
-            raise ValueError(
-                f"There exist multiple parameter matches for '{name}' in the search "
-                f"space."
-            )
-        p = params[0]
+        if isinstance(name_or_selector, str):
+            params: list[Parameter] = [
+                p for p in self.parameters if p.name == name_or_selector
+            ]
+        else:
+            params = [p for p in self.parameters if name_or_selector(p)]
 
         return tuple(
             i
+            for p in params
             for i, col in enumerate(self.comp_rep_columns)
             if col in p.comp_rep_columns
         )

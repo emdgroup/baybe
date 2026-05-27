@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import functools
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.converters import optional
 from attrs.validators import is_callable
 from typing_extensions import override
@@ -22,6 +23,7 @@ from baybe.parameters.selectors import (
     to_parameter_selector,
 )
 from baybe.searchspace.core import SearchSpace
+from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
     GPComponentType,
@@ -44,7 +46,7 @@ else:
 
 
 @define
-class _PureKernelFactory(KernelFactoryProtocol, ABC):
+class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
     """Base class for pure kernel factories."""
 
     # For internal use only: sanity check mechanism to remind developers of new
@@ -74,6 +76,14 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
         """Get the names of the parameters to be considered by the kernel."""
         selector = self.parameter_selector or (lambda _: True)
         return tuple(p.name for p in searchspace.parameters if selector(p))
+
+    def _get_effective_dimensionality(self, searchspace: SearchSpace) -> int:
+        """Get the number of computational columns for the selected parameters."""
+        return len(
+            searchspace.get_comp_rep_parameter_indices(
+                self.parameter_selector or (lambda _: True)
+            )
+        )
 
     def _validate_parameter_kinds(self, parameters: Iterable[Parameter]) -> None:
         """Validate that the given parameters are supported by the factory.
@@ -115,6 +125,100 @@ class _PureKernelFactory(KernelFactoryProtocol, ABC):
         """Construct the kernel."""
 
 
+def _enable_transfer_learning(
+    cls: type[_PureKernelFactory], name: str | None = None, /
+) -> type[_PureKernelFactory]:
+    """Class decorator enabling BayBE's default transfer learning mechanism.
+
+    When the search space contains a task parameter, the decorated factory
+    automatically composes its kernel with BayBE's default task kernel.
+    Otherwise, the factory behaves unchanged.
+
+    When used as a decorator (without ``name``), the class is modified in-place.
+    When called with a ``name`` argument, a new subclass is created so that the
+    original class remains unmodified. The latter form is intended for cases where
+    the original class is reused independently elsewhere.
+
+    Args:
+        cls: The kernel factory class to decorate.
+        name: Optional name for the created class. If provided, a new subclass is
+            created instead of modifying ``cls`` in-place.
+
+    Raises:
+        TypeError: If the factory already supports task parameters.
+
+    Returns:
+        The decorated kernel factory class with transfer learning enabled.
+    """
+    if cls._supported_parameter_kinds & _ParameterKind.TASK:
+        raise TypeError(f"'{cls.__name__}' already supports task parameters.")
+
+    # This distinction is important for serialization so that the classes can be
+    # correctly identified by their names in the subclass registry
+    if name is None:
+        # Modify the class in-place (avoids name collision in subclass registry)
+        # -> For the use with `@` syntax, where the original class gets overridden by
+        #    the decorated version, i.e., no references to the original class remain.
+        target_cls = cls
+    else:
+        # Create a sibling class so the original class remains unmodified.
+        # We use cls.__bases__ (not (cls,)) because the new class is conceptually
+        # an equivalent variant, not a specialization. Concrete (non-dunder)
+        # attributes are copied so the sibling has the same behavior.
+        # __module__ must be set explicitly because the Protocol metaclass
+        # would otherwise default it to "abc".
+        # -> For the assignment-based used, i.e.,
+        #   `DecoratedX = enable_transfer_learning(X, name="DecoratedX")`,
+        #    where both the original and decorated versions remain accessible and
+        #    are intended to be used independently.
+        ns = {
+            k: v
+            for k, v in cls.__dict__.items()
+            if not (k.startswith("__") and k.endswith("__"))
+        }
+        ns["__doc__"] = cls.__doc__
+        ns["__module__"] = cls.__module__
+        target_cls = type(name, cls.__bases__, ns)
+
+    original_call = cls.__call__
+    original_supported_kinds = cls._supported_parameter_kinds
+    _task_exclude_selector = TypeSelector((TaskParameter,), exclude=True)
+
+    @functools.wraps(original_call)
+    def __call__(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor):
+        # Temporarily narrow the supported parameter kinds to those of the original
+        # class. If the decorator logic is correct, the original factory should never
+        # see the extended scope, but this acts as a sanity check to prevent regressions
+        broadened_kinds = target_cls._supported_parameter_kinds
+        target_cls._supported_parameter_kinds = original_supported_kinds
+
+        # Split off the task parameters
+        original_selector = self.parameter_selector
+        if original_selector is None:
+            self.parameter_selector = _task_exclude_selector
+        else:
+            self.parameter_selector = lambda p: (
+                _task_exclude_selector(p) and original_selector(p)
+            )
+
+        try:
+            base_kernel = original_call(self, searchspace, train_x, train_y)
+        finally:
+            target_cls._supported_parameter_kinds = broadened_kinds
+            self.parameter_selector = original_selector
+
+        if searchspace.task_idx is not None:
+            icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
+            return icm(searchspace, train_x, train_y)
+        return base_kernel
+
+    target_cls.__call__ = __call__  # type: ignore[method-assign]
+    target_cls._supported_parameter_kinds = (
+        cls._supported_parameter_kinds | _ParameterKind.TASK
+    )
+    return target_cls
+
+
 @define
 class _MetaKernelFactory(KernelFactoryProtocol, ABC):
     """Base class for meta kernel factories that orchestrate other kernel factories."""
@@ -150,18 +254,42 @@ class ICMKernelFactory(_MetaKernelFactory):
     @base_kernel_factory.default
     def _default_base_kernel_factory(self) -> KernelFactoryProtocol:
         from baybe.surrogates.gaussian_process.presets.baybe import (
-            BayBENumericalKernelFactory,
+            _BayBENumericalKernelFactory,
         )
 
-        return BayBENumericalKernelFactory(TypeSelector((TaskParameter,), exclude=True))
+        return _BayBENumericalKernelFactory(
+            TypeSelector((TaskParameter,), exclude=True)
+        )
 
     @task_kernel_factory.default
     def _default_task_kernel_factory(self) -> KernelFactoryProtocol:
         from baybe.surrogates.gaussian_process.presets.baybe import (
-            BayBETaskKernelFactory,
+            _BayBETaskKernelFactory,
         )
 
-        return BayBETaskKernelFactory(TypeSelector((TaskParameter,)))
+        return _BayBETaskKernelFactory()
+
+    @base_kernel_factory.validator
+    def _validate_base_kernel_factory(self, _, factory: KernelFactoryProtocol):
+        if (
+            isinstance(factory, _PureKernelFactory)
+            and factory._supported_parameter_kinds & _ParameterKind.TASK
+        ):
+            raise TypeError(
+                f"The specified '{fields(ICMKernelFactory).base_kernel_factory.alias}' "
+                f"must not support task parameters."
+            )
+
+    @task_kernel_factory.validator
+    def _validate_task_kernel_factory(self, _, factory: KernelFactoryProtocol):
+        if (
+            isinstance(factory, _PureKernelFactory)
+            and factory._supported_parameter_kinds is not _ParameterKind.TASK
+        ):
+            raise TypeError(
+                f"The specified '{fields(ICMKernelFactory).task_kernel_factory.alias}' "
+                f"must support only task parameters."
+            )
 
     @override
     def __call__(

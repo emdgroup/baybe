@@ -15,8 +15,8 @@ from baybe.parameters.numerical import (
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEKernelFactory,
-    BayBENumericalKernelFactory,
-    BayBETaskKernelFactory,
+    _BayBENumericalKernelFactory,
+    _BayBETaskKernelFactory,
 )
 
 # A selector that accepts all parameters
@@ -27,25 +27,25 @@ _SELECT_ALL = lambda parameter: True  # noqa: E731
     ("factory", "parameters", "error"),
     [
         param(
-            BayBENumericalKernelFactory(parameter_selector=_SELECT_ALL),
+            _BayBENumericalKernelFactory(parameter_selector=_SELECT_ALL),
             [TaskParameter("task", ["t1", "t2"])],
             IncompatibleSearchSpaceError,
             id="regular_rejects_task",
         ),
         param(
-            BayBETaskKernelFactory(parameter_selector=_SELECT_ALL),
+            _BayBETaskKernelFactory(parameter_selector=_SELECT_ALL),
             [CategoricalParameter("cat", ["a", "b"])],
             IncompatibleSearchSpaceError,
             id="task_rejects_categorical",
         ),
         param(
-            BayBETaskKernelFactory(parameter_selector=_SELECT_ALL),
+            _BayBETaskKernelFactory(parameter_selector=_SELECT_ALL),
             [NumericalDiscreteParameter("num", [1, 2, 3])],
             IncompatibleSearchSpaceError,
             id="task_rejects_numerical_discrete",
         ),
         param(
-            BayBETaskKernelFactory(parameter_selector=_SELECT_ALL),
+            _BayBETaskKernelFactory(parameter_selector=_SELECT_ALL),
             [NumericalContinuousParameter("cont", (0, 1))],
             IncompatibleSearchSpaceError,
             id="task_rejects_numerical_continuous",
