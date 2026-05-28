@@ -169,8 +169,8 @@ settings, searching an optimal parameter configuration can quickly become infeas
 creating the need for approximation schemes:
 
 * The
-  {paramref}`BotorchRecommender.max_n_partitions <baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.max_n_partitions>`
-  attribute can be used to limit the number of partitions considered during optimization.
+  {paramref}`BotorchRecommender.max_n_subsets <baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.max_n_subsets>`
+  attribute can be used to limit the number of subsets considered during optimization.
 * When the ranges of cardinality-constrained parameters cover both positive and negative
   values, minimal cardinality requirements cannot always be guaranteed, potentially
   resulting in a {class}`~baybe.exceptions.MinimumCardinalityViolatedWarning`.
@@ -545,7 +545,7 @@ This is useful, for example, when experiments in a batch must be run under share
 conditions. Consider a well plate experiment where each plate holds multiple samples
 but only one temperature can be set per plate. If the optimizer recommends a batch of
 experiments to fill one plate, all of them must use the same temperature. The
-`DiscreteBatchConstraint` enforces this by internally partitioning the candidate space
+`DiscreteBatchConstraint` enforces this by internally separating the candidate space
 into subspaces (one per temperature value), optimizing each subspace independently, and
 selecting the batch with the highest expected utility.
 
@@ -573,7 +573,7 @@ and selects the best one.
 ```{admonition} Computational Expense
 :class: warning
 This constraint can lead to overhead in the computation. If there are multiple
-partition-generating constraints active, this can drastically increase the
+subset-generating constraints active, this can drastically increase the
 computational cost due to the combinatorial explosion.
 ```
 
