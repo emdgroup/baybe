@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 @_enable_transfer_learning
 @define
-class CHENKernelFactory(_PureKernelFactory):
+class ChenKernelFactory(_PureKernelFactory):
     """A factory providing adaptive hyperprior kernels as proposed by :cite:p:`Chen2026`."""  # noqa: E501
 
     _uses_parameter_names: ClassVar[bool] = True
@@ -69,7 +69,7 @@ CHEN_FIT_CRITERION_FACTORY = _MLLForNonTLFitCriterionFactory()
 gc.collect()
 
 # Preset defaults
-KERNEL_FACTORY = CHENKernelFactory()
+KERNEL_FACTORY = ChenKernelFactory()
 MEAN_FACTORY = LazyConstantMeanFactory()
 LIKELIHOOD_FACTORY = LazyGaussianLikelihoodFactory()
 FIT_CRITERION_FACTORY = CHEN_FIT_CRITERION_FACTORY

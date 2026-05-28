@@ -21,7 +21,7 @@ from baybe.surrogates.gaussian_process.presets.botorch import (
 # Chen preset
 from baybe.surrogates.gaussian_process.presets.chen import (
     CHEN_FIT_CRITERION_FACTORY,
-    CHENKernelFactory,
+    ChenKernelFactory,
 )
 
 # Core
@@ -58,7 +58,7 @@ __all__ = [
     "BotorchMeanFactory",
     # Chen preset
     "CHEN_FIT_CRITERION_FACTORY",
-    "CHENKernelFactory",
+    "ChenKernelFactory",
     # EDBO preset
     "EDBO_FIT_CRITERION_FACTORY",
     "EDBOKernelFactory",
