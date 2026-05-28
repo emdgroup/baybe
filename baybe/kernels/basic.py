@@ -1,6 +1,7 @@
 """Collection of basic kernels."""
 
 import gc
+from typing import Any
 
 from attrs import define, field
 from attrs.converters import optional as optional_c
@@ -236,7 +237,15 @@ class IndexKernel(BasicKernel):
 
 @define(frozen=True)
 class PositiveIndexKernel(IndexKernel):
-    """A positive index kernel for transfer learning across tasks."""
+    """A positive index kernel for transfer learning across tasks.
+
+    Enforces strictly positive correlations between tasks. BayBE always
+    disables botorch's target-task normalization.
+    """
+
+    @override
+    def _extra_gpytorch_kwargs(self) -> dict[str, Any]:
+        return {"unit_scale_for_target": False}
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

@@ -9,7 +9,7 @@ from attrs import define, field
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
-from baybe.kernels.basic import IndexKernel
+from baybe.kernels.basic import PositiveIndexKernel
 from baybe.objectives.base import Objective
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import _ParameterKind
@@ -60,7 +60,7 @@ class _BayBETaskKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel:
-        return IndexKernel(
+        return PositiveIndexKernel(
             num_tasks=searchspace.n_tasks,
             rank=searchspace.n_tasks,
             parameter_names=self.get_parameter_names(searchspace),
