@@ -73,7 +73,6 @@ jobs:
     runs-on: M
     permissions:
       contents: read
-      id-token: write  # Required for OIDC authentication to AWS S3 benchmark storage
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.benchmarks_to_execute) }}
