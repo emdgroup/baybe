@@ -103,7 +103,10 @@ def numerical_discrete_parameters(
             unique=True,
         )
     )
-    max_tolerance = np.diff(np.sort(values)).min() / 2
+    with np.errstate(over="ignore"):
+        max_tolerance = np.diff(np.sort(values)).min() / 2
+    if not np.isfinite(max_tolerance):
+        max_tolerance = np.finfo(active_settings.DTypeFloatNumpy).max
     if (max_tolerance == 0.0) or (
         max_tolerance != active_settings.DTypeFloatNumpy(max_tolerance)
     ):
