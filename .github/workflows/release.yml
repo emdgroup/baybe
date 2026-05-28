@@ -73,7 +73,7 @@ jobs:
     needs: build
     name: Publish PyPI PROD
     environment: release-pypi
-    if: github.repository_owner == 'emdgroup' && github.event_name == 'published'
+    if: github.repository_owner == 'emdgroup' && github.event.action == 'published'
     runs-on: ubuntu-latest
     permissions:
       contents: read
