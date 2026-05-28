@@ -1170,14 +1170,19 @@
         <span class="k">if</span> <span class="n">tolerance</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="n">min_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">over</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+            <span class="n">min_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">min_dist</span> <span class="o">==</span> <span class="p">(</span><span class="n">eps</span> <span class="o">:=</span> <span class="n">np</span><span class="o">.</span><span class="n">nextafter</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="n">NumericalUnderflowError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;The distance between any two parameter values must be at least &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;twice the size of the used floating point resolution of </span><span class="si">{</span><span class="n">eps</span><span class="si">}</span><span class="s2">.&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">tolerance</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">max_tol</span> <span class="o">:=</span> <span class="n">min_dist</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">min_dist</span><span class="p">):</span>
+            <span class="n">max_tol</span> <span class="o">=</span> <span class="n">min_dist</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">max_tol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">max</span>
+        <span class="k">if</span> <span class="n">tolerance</span> <span class="o">&gt;=</span> <span class="n">max_tol</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Parameter &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is initialized with tolerance </span><span class="si">{</span><span class="n">tolerance</span><span class="si">}</span><span class="s2"> &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;but due to the given parameter values </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="si">}</span><span class="s2">, the specified &quot;</span>
