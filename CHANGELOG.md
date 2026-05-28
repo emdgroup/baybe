@@ -99,6 +99,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `BAYBE_PARALLELIZE_SIMULATION_RUNS` linked to the `parallelize_simulation_runs`
   attribute of the new `Settings` class
 
+### Expired Deprecations (from 0.11.*)
+- `register_custom_architecture` decorator
+- `BayesianRecommender.surrogate_model` attribute
+
 ## [0.14.3] - 2026-02-10
 ### Fixed
 - Deserialization of `NumericalTarget` objects using the optional `constructor` field

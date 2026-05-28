@@ -55,21 +55,6 @@ from baybe.utils.dataframe import create_fake_input
 from baybe.utils.random import set_random_seed, temporary_seed
 
 
-def test_surrogate_registration():
-    """Using the deprecated registration mechanism raises a warning."""
-    from baybe.surrogates import register_custom_architecture
-
-    with pytest.raises(DeprecationError):
-        register_custom_architecture()
-
-
-def test_surrogate_access():
-    """Public attribute access to the surrogate model raises a warning."""
-    recommender = BotorchRecommender()
-    with pytest.warns(DeprecationWarning):
-        recommender.surrogate_model
-
-
 def test_continuous_linear_eq_constraint():
     """Usage of deprecated continuous linear eq constraint raises a warning."""
     with pytest.warns(DeprecationWarning):
