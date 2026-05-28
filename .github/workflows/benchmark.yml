@@ -26,7 +26,6 @@ env:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   prepare:
@@ -60,8 +59,8 @@ jobs:
       - name: Set benchmarks output
         id: set_benchmarks
         run: |
-          echo 'benchmarks_to_execute=${{ env.benchmarks_to_execute }}' >> "$GITHUB_OUTPUT"
-          number_of_tasks=$(echo '${{ env.benchmarks_to_execute }}' | jq '.benchmark_list | length')
+          echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_OUTPUT"
+          number_of_tasks=$(echo "$benchmarks_to_execute" | jq '.benchmark_list | length')
 
           if [ "$number_of_tasks" -le 0 ]; then
             echo "Please run at least one benchmark"
@@ -72,6 +71,8 @@ jobs:
     name: run
     needs: [prepare]
     runs-on: M
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.benchmarks_to_execute) }}
@@ -96,16 +97,21 @@ jobs:
             echo -e "\n\n\n\033[1;34m===== GPU INFORMATION =====\033[0m"
             nvidia-smi
           fi
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: "Set up Python"
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.10"
       - name: Install uv
-        uses: astral-sh/setup-uv@v8
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: false
       - name: Install the project
         run: uv sync --locked --extra benchmarking
       - name: Benchmark
-        run: uv run -m benchmarks --benchmark-list "${{ matrix.benchmark_list }}"
+        env:
+          BENCHMARK_LIST: ${{ matrix.benchmark_list }}
+        run: uv run -m benchmarks --benchmark-list "$BENCHMARK_LIST"

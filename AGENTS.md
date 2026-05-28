@@ -253,12 +253,13 @@ Three tiers:
 ## 14. Tooling and CI
 | Tool | Config | Purpose |
 |------|--------|---------|
-| `ruff` | `ruff.toml` | Lint (D, E4, E7, E9, E501, F, I, W, PL) + format. Line length 88. |
 | `flake8`+`pydoclint` | `pydoclint.toml` | Docstring consistency (DOC rules only) |
 | `mypy` | `mypy.ini` | Type checking. `explicit-override`, `unused-ignore` enabled. |
 | `pyupgrade` | `.pre-commit-config.yaml` | Python 3.10+ syntax |
+| `ruff` | `ruff.toml` | Lint (D, E4, E7, E9, E501, F, I, W, PL) + format. Line length 88. |
+| `zizmor` | `.pre-commit-config.yaml` | GitHub Actions security audit |
 
-Pre-commit hooks: pydoclint, ruff (lint+format), uv-lock, pyupgrade.
+Pre-commit hooks: pydoclint, ruff (lint+format), uv-lock, pyupgrade, zizmor.
 Tox environments: `fulltest`, `coretest`, `lint`, `mypy`, `audit`, `docs`.
 Coverage: 70% overall, 45% per-file minimum.
 CI runs on push/PR to `main`/`dev/**`: changelog check, lint, typecheck, audit,

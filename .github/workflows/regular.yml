@@ -9,6 +9,9 @@ env:
   COVERAGE_OVERALL_THRESH: 70      # threshold for overall coverage check
   COVERAGE_INDIVIDUAL_THRESH: 45   # threshold for individual coverage check
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -20,10 +23,10 @@ jobs:
     name: "Reminder"
     continue-on-error: true
     permissions:
-      issues: write
+      issues: write  # Required for reminder-action to post issue comments
     steps:
       - name: check reminders and notify
-        uses: agrc/reminder-action@v1
+        uses: agrc/reminder-action@76a6297d144adb572b4cf6d9c0ee667f0ec6b832 # v1
 
   # Warns about broken links in the docs. Especially useful for
   # those that point to our own github.io page (linkcheck is disabled in the
@@ -33,8 +36,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with: {python-version: "3.10"}
       - name: Build Docs
         run: |
@@ -53,8 +58,10 @@ jobs:
     name: Lint ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -76,8 +83,10 @@ jobs:
     name: Type Check ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -99,8 +108,10 @@ jobs:
     name: Audit ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -122,8 +133,10 @@ jobs:
     name: Core Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -144,8 +157,10 @@ jobs:
     name: Full Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -180,8 +195,10 @@ jobs:
     name: GPU Tests ${{ matrix.py-version.semantic }}
     runs-on: XS-GPU
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}

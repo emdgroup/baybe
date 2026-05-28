@@ -135,6 +135,7 @@ lint = [
     "pydoclint==0.5.5", # see DEV TOOLS NOTE
     "pyupgrade==3.21.2", # see DEV TOOLS NOTE
     "ruff==0.15.9", # see DEV TOOLS NOTE
+    "zizmor==1.25.2", # see DEV TOOLS NOTE
 ]
 
 mypy = [
