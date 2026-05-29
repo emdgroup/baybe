@@ -239,8 +239,7 @@ class IndexKernel(BasicKernel):
 class PositiveIndexKernel(IndexKernel):
     """A positive index kernel for transfer learning across tasks.
 
-    Enforces strictly positive correlations between tasks. BayBE always
-    disables botorch's target-task normalization.
+    Enforces strictly positive correlations between tasks.
     """
 
     @override
