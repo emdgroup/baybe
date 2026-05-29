@@ -47,10 +47,14 @@ class HvarfnerKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
+        import math
+
         from botorch.models.kernels.positive_index import PositiveIndexKernel
         from botorch.models.utils.gpytorch_modules import (
             get_covar_module_with_dim_scaled_prior,
         )
+        from gpytorch.kernels import ScaleKernel as GPyTorchScaleKernel
+        from gpytorch.priors import LogNormalPrior
 
         parameter_names = self.get_parameter_names(searchspace)
 
@@ -70,16 +74,27 @@ class HvarfnerKernelFactory(_PureKernelFactory):
             ard_num_dims=ard_num_dims, active_dims=active_dims
         )
 
+        # Wrap in ScaleKernel with Hvarfner-consistent LogNormal outputscale prior
+        outputscale_prior = LogNormalPrior(
+            loc=math.sqrt(2) + math.log(ard_num_dims) * 0.5,
+            scale=math.sqrt(3),
+        )
+        scaled_kernel = GPyTorchScaleKernel(
+            base_kernel,
+            outputscale_prior=outputscale_prior,
+        )
+        scaled_kernel.outputscale = outputscale_prior.mode.detach().clone()
+
         # Single-task case
         if (task_idx := searchspace.task_idx) is None:
-            return base_kernel
+            return scaled_kernel
 
         index_kernel = PositiveIndexKernel(
             num_tasks=searchspace.n_tasks,
             rank=searchspace.n_tasks,
             active_dims=[task_idx],
         )
-        return ICMKernelFactory(base_kernel, index_kernel)(
+        return ICMKernelFactory(scaled_kernel, index_kernel)(
             searchspace, objective, measurements
         )
 
@@ -113,7 +128,6 @@ class HvarfnerLikelihoodFactory(LikelihoodFactoryProtocol):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> GPyTorchLikelihood:
-
         if searchspace.n_tasks == 1:
             from botorch.models.utils.gpytorch_modules import (
                 get_gaussian_likelihood_with_lognormal_prior,
