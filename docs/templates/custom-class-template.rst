@@ -16,6 +16,9 @@
    {% for item in methods %}
       ~{{ name }}.{{ item }}
    {%- endfor %}
+   {% if "__call__" in all_methods %}
+      ~{{ name }}.__call__
+   {% endif %}
    {% endif %}
    {% endblock %}
 
