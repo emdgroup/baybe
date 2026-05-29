@@ -42,7 +42,7 @@ def set_random_seed(seed: int):
     "https://emdgroup.github.io/baybe/stable/userguide/settings.html",
 )
 @contextlib.contextmanager
-def temporary_seed(seed: int):  # noqa: DOC402, DOC404
+def temporary_seed(seed: int):  # noqa: DOC402
     """Context manager for setting a temporary random seed.
 
     Args:

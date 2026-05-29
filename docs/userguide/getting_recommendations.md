@@ -31,7 +31,7 @@ BayBE offers two entry points for requesting recommendations:
   {attr}`~baybe.recommenders.meta.base.MetaRecommender.is_stateful` property. 
   ```
 
-  For example, using the {class}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender`:
+  For example, using the {class}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender`:
   ~~~python
   recommender = BotorchRecommender()
   recommendation = recommender.recommend(batch_size, searchspace, objective, measurements)

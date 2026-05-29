@@ -11,6 +11,7 @@ from baybe.constraints.deprecation import (
 )
 from baybe.constraints.discrete import (
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
+    DiscreteBatchConstraint,
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
@@ -33,6 +34,7 @@ __all__ = [
     "ContinuousLinearEqualityConstraint",
     "ContinuousLinearInequalityConstraint",
     # --- Discrete constraints ---#
+    "DiscreteBatchConstraint",
     "DiscreteCardinalityConstraint",
     "DiscreteCustomConstraint",
     "DiscreteDependenciesConstraint",

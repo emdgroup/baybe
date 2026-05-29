@@ -131,6 +131,8 @@ Custom `@classproperty` from `baybe.utils.basic` for class-level computed proper
 - No private field names (`_attr`) in user-facing messages — use
   `fields(type(self)).attr.alias`.
 - Method names start with verbs. Comments capitalize first word.
+- Always capitalize words that correspond to names of inventors, e.g. `Bayesian`,
+  `Boolean` or `Gaussian`
 
 ## 5. Type Annotations
 - **Full coverage**: All signatures including returns. Every field annotated.
@@ -236,7 +238,7 @@ Three tiers:
 - Cache invalidation: `on_setattr` hooks on mutable fields.
 
 ## 12. Optional Dependencies
-1. Detection (`baybe/_optional/info.py`): `importlib.util.find_spec()` sets boolean
+1. Detection (`baybe/_optional/info.py`): `importlib.util.find_spec()` sets Boolean
    flags (`CHEM_INSTALLED`, `ONNX_INSTALLED`, etc.) without importing.
 2. Guarded imports (`baybe/_optional/<dep>.py`): Import or raise
    `OptionalImportError` with pip install instructions.
