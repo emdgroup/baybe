@@ -1,7 +1,7 @@
 ## Transfer Learning
 
 # This example demonstrates BayBE's
-# {doc}`Transfer Learning </userguide/transfer_learning>` capabilities using the
+# {doc}`Transfer Learning </concepts/transfer_learning>` capabilities using the
 # Hartmann test function:
 # * We construct a campaign,
 # * give it access to data from a related but different task,

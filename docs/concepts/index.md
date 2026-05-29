@@ -7,4 +7,5 @@ Getting Recommendations <getting_recommendations>
 Serialization <serialization>
 Settings <settings>
 Simulation <simulation>
+Transfer Learning <transfer_learning>
 ```

@@ -40,6 +40,5 @@ Search Spaces <searchspace>
 Surrogates <surrogates>
 Targets <targets>
 Transformations <transformations>
-Transfer Learning <transfer_learning>
 Utilities <utils>
 ```
