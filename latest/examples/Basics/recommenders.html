@@ -1315,15 +1315,10 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent                Base                        Ligand  \
-352       p-Xylene     Cesium pivalate                 (t-Bu)PhCPhos   
-199  Butyornitrile  Potassium pivalate                     BrettPhos   
-294           DMAc   Potassium acetate  Di-tert-butylphenylphosphine   
-
-     Temperature  Concentration  
-352         90.0          0.100  
-199         90.0          0.100  
-294        120.0          0.057  
+           Solvent                Base     Ligand  Temperature  Concentration
+387       p-Xylene   Potassium acetate  BrettPhos         90.0          0.057
+310           DMAc  Potassium pivalate  BrettPhos        105.0          0.100
+174  Butyornitrile   Potassium acetate  BrettPhos        105.0          0.057
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1332,15 +1327,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent                Base                        Ligand  \
-352       p-Xylene     Cesium pivalate                 (t-Bu)PhCPhos   
-199  Butyornitrile  Potassium pivalate                     BrettPhos   
-294           DMAc   Potassium acetate  Di-tert-butylphenylphosphine   
+           Solvent                Base     Ligand  Temperature  Concentration  \
+387       p-Xylene   Potassium acetate  BrettPhos         90.0          0.057   
+310           DMAc  Potassium pivalate  BrettPhos        105.0          0.100   
+174  Butyornitrile   Potassium acetate  BrettPhos        105.0          0.057   
 
-     Temperature  Concentration      yield  
-352         90.0          0.100  76.093583  
-199         90.0          0.100   3.959229  
-294        120.0          0.057  42.187380  
+         yield  
+387  35.108166  
+310 -81.839175  
+174  82.812383  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

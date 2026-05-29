@@ -150,8 +150,6 @@ results_uninterrupted = simulate_scenarios(
 
     
 
-    
-
 
 ## Defining the Campaign-Stopping Hook
 
@@ -253,8 +251,6 @@ results_interrupted = simulate_scenarios(
     random_seed=RANDOM_SEED,
 )
 ```
-
-    
 
     
 
