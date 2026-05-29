@@ -939,7 +939,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
@@ -1166,6 +1165,9 @@
                 <span class="c1"># tensors with negative strides are not supported by PyTorch</span>
                 <span class="n">fix_strides</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">strides</span><span class="p">)</span>
                 <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">numpy_dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="n">fix_strides</span><span class="p">)</span>
+                <span class="c1"># Copy if read-only (possible under pandas 3 Copy-on-Write)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span><span class="p">:</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
                 <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
             <span class="k">case</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">()</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">():</span>
                 <span class="c1"># We already coerce to the target dtype during the dataframe-to-numpy</span>
@@ -1177,6 +1179,9 @@
                 <span class="c1"># tensors with negative strides are not supported by PyTorch</span>
                 <span class="n">fix_strides</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">strides</span><span class="p">)</span>
                 <span class="n">array</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">numpy_dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="n">fix_strides</span><span class="p">)</span>
+                <span class="c1"># Copy if read-only (possible under pandas 3 Copy-on-Write)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">array</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span><span class="p">:</span>
+                    <span class="n">array</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
                 <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
             <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
                 <span class="n">assert_never</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -1375,7 +1380,7 @@
 <span class="sd">        The cleaned dataframe.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">ignore_list</span> <span class="o">=</span> <span class="n">ignore_list</span> <span class="ow">or</span> <span class="p">[]</span>
-    <span class="n">no_string</span> <span class="o">=</span> <span class="o">~</span><span class="n">df</span><span class="o">.</span><span class="n">applymap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+    <span class="n">no_string</span> <span class="o">=</span> <span class="o">~</span><span class="n">df</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
     <span class="n">no_string</span> <span class="o">=</span> <span class="n">no_string</span><span class="p">[</span><span class="n">no_string</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
     <span class="n">to_keep</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">no_string</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ignore_list</span><span class="p">))</span>
     <span class="n">ordered_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">to_keep</span><span class="p">]</span>
@@ -1550,12 +1555,16 @@
     <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cat_cols</span><span class="p">:</span>
         <span class="c1"># Per categorical parameter, this identifies matches between all elements of</span>
         <span class="c1"># left and right and stores them in a matrix.</span>
-        <span class="n">match_matrix</span> <span class="o">&amp;=</span> <span class="n">right_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">==</span> <span class="n">left_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">match_matrix</span> <span class="o">&amp;=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">right_df</span><span class="p">[</span><span class="n">col</span><span class="p">])[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">left_df</span><span class="p">[</span><span class="n">col</span><span class="p">])[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="p">)</span>
 
     <span class="c1"># Match numerical parameters</span>
     <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">num_cols</span><span class="p">:</span>
         <span class="c1"># Compute absolute differences and find the minimum difference</span>
-        <span class="n">abs_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">right_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">left_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">abs_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">right_df</span><span class="p">[</span><span class="n">col</span><span class="p">])[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">left_df</span><span class="p">[</span><span class="n">col</span><span class="p">])[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="p">)</span>
         <span class="n">min_diff</span> <span class="o">=</span> <span class="n">abs_diff</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">match_matrix</span> <span class="o">&amp;=</span> <span class="n">abs_diff</span> <span class="o">==</span> <span class="n">min_diff</span>
 
@@ -1833,6 +1842,9 @@
             <span class="k">if</span> <span class="n">use_torch</span><span class="p">:</span>
                 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
+                <span class="c1"># Copy if read-only (possible under pandas 3 Copy-on-Write)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">array_in</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span><span class="p">:</span>
+                    <span class="n">array_in</span> <span class="o">=</span> <span class="n">array_in</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
                 <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
                     <span class="n">array_out</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">array_in</span><span class="p">))</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>

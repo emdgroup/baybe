@@ -940,7 +940,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
@@ -1118,6 +1117,7 @@ and this project adheres to <a class="reference external" href="https://semver.o
 <h3>Added<a class="headerlink" href="#added" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>Support for Python 3.14</p></li>
+<li><p>Support for pandas 3</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Settings</span></code> class for unified and streamlined settings management</p></li>
 <li><p>Settings options to (de-)activate recommendation caching / dataframe preprocessing</p></li>
 <li><p>Settings option for random seed control</p></li>
@@ -1161,6 +1161,7 @@ time for constrained spaces</p></li>
 <li><p>Polars path in discrete search space construction now builds the Cartesian product
 only for parameters involved in Polars-capable constraints, merging the rest
 incrementally via pandas</p></li>
+<li><p>Minimum required pandas version increased to <code class="docutils literal notranslate"><span class="pre">2.1.0</span></code></p></li>
 </ul>
 </section>
 <section id="removed">

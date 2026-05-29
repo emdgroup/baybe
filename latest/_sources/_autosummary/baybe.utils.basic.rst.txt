@@ -48,7 +48,6 @@ baybe.utils.basic
       :toctree:                                       
       :template: custom-class-template.rst              
    
-      Dummy
       UnspecifiedType
       classproperty
    

@@ -940,7 +940,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
@@ -1213,16 +1212,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>       Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
-0   9.936455   3.706930     0.526147     4.040588  48.129925  33.659954
-1   4.827758  16.735588     0.158318     3.312197  32.220583  42.745556
-2   6.544103   4.432497     0.137264     3.398942  70.111485  15.375710
-3  18.533550  12.546833     1.023288     3.878080  33.377540  30.640709
-4   9.159192   4.693955     4.667275     0.231390  29.769872  51.478317
-5  14.016129   3.503644     2.434858     2.430779  41.690579  35.924010
-6  12.976106  13.311952     2.123201     1.557790  36.645998  33.384953
-7  13.506998  12.299016     0.744695     1.883285  17.676517  53.889489
-8   0.797281  15.909574     0.986255     3.984226  77.526043   0.796622
-9   3.971423   6.115120     3.843452     1.016607  20.318940  64.734458
+0  16.954944  19.451064     1.325603     3.000278  44.778994  14.489117
+1  15.199181  11.158296     0.776391     0.579326  27.397969  44.888837
+2  18.929663  11.298560     2.170908     2.352416  59.913195   5.335257
+3  19.122459  18.343056     4.746214     0.150847   0.814544  56.822880
+4   2.495066  18.375100     0.206056     2.088710   1.685337  75.149731
+5  18.025543   4.189715     0.932483     2.805708  47.184795  26.861755
+6  18.650593   3.150385     1.961310     2.054328  15.804433  58.378952
+7  16.604010   1.131695     3.912127     0.473049  10.978863  66.900256
+8  14.350150   4.084413     0.187230     4.523273  44.692371  32.162562
+9   5.886688   9.306382     0.449489     0.425308  13.349279  70.582853
 </pre></div>
 </div>
 <p>Computing the respective row sums reveals the expected result:</p>
@@ -1237,16 +1236,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   Total  Total_Bases  Total_Phase_Agents
-0  100.0    13.643385            4.566735
-1  100.0    21.563346            3.470514
-2  100.0    10.976600            3.536205
-3  100.0    31.080383            4.901368
-4  100.0    13.853146            4.898665
-5  100.0    17.519774            4.865637
-6  100.0    26.288059            3.680991
-7  100.0    25.806014            2.627980
-8  100.0    16.706854            4.970481
-9  100.0    10.086544            4.860058
+0  100.0    36.406008            4.325881
+1  100.0    26.357477            1.355717
+2  100.0    30.228223            4.523325
+3  100.0    37.465515            4.897061
+4  100.0    20.870166            2.294767
+5  100.0    22.215258            3.738191
+6  100.0    21.800978            4.015638
+7  100.0    17.735704            4.385177
+8  100.0    18.434564            4.710503
+9  100.0    15.193070            0.874797
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>

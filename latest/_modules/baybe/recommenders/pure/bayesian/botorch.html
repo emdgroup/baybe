@@ -939,7 +939,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
@@ -1473,7 +1472,9 @@
         <span class="c1">#   For details: https://github.com/pytorch/botorch/issues/2042</span>
         <span class="n">points</span><span class="p">,</span> <span class="n">acqf_values</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
             <span class="n">acq_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_botorch_acqf</span><span class="p">,</span>
-            <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">subspace_continuous</span><span class="o">.</span><span class="n">comp_rep_bounds</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+                <span class="n">subspace_continuous</span><span class="o">.</span><span class="n">comp_rep_bounds</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="p">),</span>
             <span class="n">q</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
             <span class="n">num_restarts</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_restarts</span><span class="p">,</span>
             <span class="n">raw_samples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_raw_samples</span><span class="p">,</span>
@@ -1576,7 +1577,7 @@
         <span class="c1">#   For details: https://github.com/pytorch/botorch/issues/2042</span>
         <span class="n">points</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf_mixed</span><span class="p">(</span>
             <span class="n">acq_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_botorch_acqf</span><span class="p">,</span>
-            <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">comp_rep_bounds</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">comp_rep_bounds</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)),</span>
             <span class="n">q</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
             <span class="n">num_restarts</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_restarts</span><span class="p">,</span>
             <span class="n">raw_samples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_raw_samples</span><span class="p">,</span>
