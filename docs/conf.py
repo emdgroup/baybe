@@ -7,6 +7,12 @@ from __future__ import annotations
 import os
 import shutil
 
+from gpytorch.kernels import Kernel as GPyTorchKernel
+
+from baybe.surrogates.gaussian_process.components import kernel as _kernel
+
+_kernel.GPyTorchKernel = GPyTorchKernel
+
 # -- Path setup --------------------------------------------------------------
 
 __location__ = os.path.dirname(__file__)
