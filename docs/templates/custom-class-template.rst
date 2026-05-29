@@ -15,10 +15,10 @@
    .. autosummary::
    {% for item in methods %}
       ~{{ name }}.{{ item }}
-   {%- endfor %}
-   {% if "__call__" in all_methods %}
+   {% if item == "__init__" and "__call__" in all_methods %}
       ~{{ name }}.__call__
    {% endif %}
+   {%- endfor %}
    {% endif %}
    {% endblock %}
 
