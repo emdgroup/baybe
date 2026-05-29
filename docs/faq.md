@@ -8,7 +8,7 @@ BayBE offers two entry points for generating recommendations:
 * a stateless [`RecommenderProtocol.recommend`](baybe.recommenders.base.RecommenderProtocol.recommend) method.
 
 For more details on when to choose one method over the other,
-see [here](userguide/getting_recommendations).
+see [here](concepts/getting_recommendations).
 ```
 
 ```{dropdown} BayBE recommends A but experimentalists do B. What now?

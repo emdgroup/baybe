@@ -30,7 +30,6 @@ how the results can be post-analysed.
 Detailed examples of how to use individual API components can be found below:
 
 ```{toctree}
-Getting Recommendations <getting_recommendations>
 Campaigns <campaigns>
 Constraints <constraints>
 Insights <insights>

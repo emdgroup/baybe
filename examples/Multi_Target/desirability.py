@@ -85,7 +85,7 @@ objective = DesirabilityObjective(targets, weights=[20, 20, 60], scalarizer="MEA
 ### Getting Recommendations
 
 # We can now use the objective, like any other, to
-# {doc}`query recommendations </userguide/getting_recommendations>`, e.g. by setting
+# {doc}`query recommendations </concepts/getting_recommendations>`, e.g. by setting
 # up a {class}`~baybe.campaign.Campaign`:
 
 campaign = Campaign(searchspace, objective)
