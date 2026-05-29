@@ -8,10 +8,23 @@ import os
 import shutil
 
 from gpytorch.kernels import Kernel as GPyTorchKernel
+from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
+from gpytorch.means import Mean as GPyTorchMean
 
 from baybe.surrogates.gaussian_process.components import kernel as _kernel
+from baybe.surrogates.gaussian_process.components import likelihood as _likelihood
+from baybe.surrogates.gaussian_process.components import mean as _mean
+from baybe.surrogates.gaussian_process.presets import botorch as _botorch
+from baybe.surrogates.gaussian_process.presets import edbo as _edbo
+from baybe.surrogates.gaussian_process.presets import edbo_smoothed as _edbo_smoothed
 
 _kernel.GPyTorchKernel = GPyTorchKernel
+_likelihood.GPyTorchLikelihood = GPyTorchLikelihood
+_mean.GPyTorchMean = GPyTorchMean
+_botorch.GPyTorchLikelihood = GPyTorchLikelihood
+_botorch.GPyTorchMean = GPyTorchMean
+_edbo.GPyTorchLikelihood = GPyTorchLikelihood
+_edbo_smoothed.GPyTorchLikelihood = GPyTorchLikelihood
 
 # -- Path setup --------------------------------------------------------------
 
@@ -276,7 +289,12 @@ html_theme_options = {
     "dark_logo": "logo1.svg",  # Logo for dark mode
 }
 
-autodoc_type_aliases = {"Smiles": "Smiles"}
+autodoc_type_aliases = {
+    "GPyTorchKernel": "GPyTorchKernel",
+    "GPyTorchLikelihood": "GPyTorchLikelihood",
+    "GPyTorchMean": "GPyTorchMean",
+    "Smiles": "Smiles",
+}
 
 # Everything in the module has the prefix baybe
 modindex_common_prefix = ["baybe."]
