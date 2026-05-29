@@ -37,7 +37,6 @@ Objectives <objectives>
 Parameters <parameters>
 Recommenders <recommenders>
 Search Spaces <searchspace>
-Settings <settings>
 Simulation <simulation>
 Surrogates <surrogates>
 Targets <targets>
