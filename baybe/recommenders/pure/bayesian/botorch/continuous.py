@@ -183,7 +183,9 @@ def recommend_continuous_without_cardinality_constraints(
     #   For details: https://github.com/pytorch/botorch/issues/2042
     points, acqf_values = optimize_acqf(
         acq_function=recommender._botorch_acqf,
-        bounds=torch.from_numpy(subspace_continuous.comp_rep_bounds.values),
+        bounds=torch.from_numpy(
+            subspace_continuous.comp_rep_bounds.to_numpy(copy=True)
+        ),
         q=batch_size,
         num_restarts=recommender.n_restarts,
         raw_samples=recommender.n_raw_samples,

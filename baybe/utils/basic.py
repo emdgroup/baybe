@@ -7,8 +7,7 @@ import functools
 import inspect
 import itertools
 from collections.abc import Callable, Collection, Iterable, Sequence
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar, get_origin
 
 import cattrs
 from attrs import asdict, has
@@ -42,19 +41,6 @@ UNSPECIFIED = UnspecifiedType.UNSPECIFIED
 """Sentinel indicating an unspecified value when `None` is ambiguous."""
 
 
-@dataclass(frozen=True, repr=False)
-class Dummy:
-    """Placeholder element for array-like data types.
-
-    Useful e.g. for detecting duplicates in constraints.
-    """
-
-    @override
-    def __repr__(self):
-        """Return a representation of the placeholder."""
-        return "<dummy>"
-
-
 def is_all_instance(
     x: Collection[Any], t: type[_T] | tuple[type[_T], ...], /
 ) -> TypeGuard[Collection[_T]]:
@@ -77,6 +63,9 @@ def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> l
         A list of subclasses for the given class.
     """
     from baybe.utils.boolean import is_abstract
+
+    # Handle generics
+    cls = get_origin(cls) or cls
 
     subclasses = []
     for subclass in cls.__subclasses__():

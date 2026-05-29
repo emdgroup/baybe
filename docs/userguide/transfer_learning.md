@@ -185,7 +185,4 @@ on the optimization:
 :class: only-dark
 ```
 
-```{bibliography}
-```
-
 [`TaskParameter`]: baybe.parameters.categorical.TaskParameter
