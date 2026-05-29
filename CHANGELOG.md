@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Support for Python 3.14
+- Support for pandas 3
 - `Settings` class for unified and streamlined settings management
 - Settings options to (de-)activate recommendation caching / dataframe preprocessing
 - Settings option for random seed control
@@ -32,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Coding convention instructions for agentic developers (`AGENTS.md`, `CLAUDE.md`)
 - `has_polars_implementation` property on `DiscreteConstraint`
 - `allow_missing` flag on `DiscreteConstraint.get_invalid` and `get_valid`
+- `zizmor` pre-commit hook for static analysis of GitHub Actions workflows
 
 ### Breaking Changes
 - `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
@@ -62,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Polars path in discrete search space construction now builds the Cartesian product
   only for parameters involved in Polars-capable constraints, merging the rest
   incrementally via pandas
+- Minimum required pandas version increased to `2.1.0`
 
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization

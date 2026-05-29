@@ -99,7 +99,7 @@ class _ModelContext:
         """Get the search space parameter bounds in BoTorch Format."""
         import torch
 
-        return torch.from_numpy(self.searchspace.scaling_bounds.values)
+        return torch.from_numpy(self.searchspace.scaling_bounds.to_numpy(copy=True))
 
     @property
     def numerical_indices(self) -> list[int]:

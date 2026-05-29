@@ -479,10 +479,12 @@ class SubspaceContinuous(SerialMixin):
             return pd.DataFrame(index=pd.RangeIndex(0, batch_size))
 
         if not self.is_constrained:
-            return self._sample_from_bounds(batch_size, self.comp_rep_bounds.values)
+            return self._sample_from_bounds(batch_size, self.comp_rep_bounds.to_numpy())
 
         if len(self.constraints_cardinality) == 0:
-            return self._sample_from_polytope(batch_size, self.comp_rep_bounds.values)
+            return self._sample_from_polytope(
+                batch_size, self.comp_rep_bounds.to_numpy()
+            )
 
         return self._sample_from_polytope_with_cardinality_constraints(batch_size)
 
@@ -501,6 +503,9 @@ class SubspaceContinuous(SerialMixin):
         import torch
         from botorch.utils.sampling import get_polytope_samples
 
+        # pandas 3 with Copy-on-Write may pass a read-only array; copy only if needed
+        if not bounds.flags.writeable:
+            bounds = bounds.copy()
         bounds_tensor = torch.from_numpy(bounds)
         if not self.has_interpoint_constraints:
             points = get_polytope_samples(

@@ -7,7 +7,6 @@ import functools
 import inspect
 import itertools
 from collections.abc import Callable, Collection, Iterable, Sequence
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar, get_origin
 
 import cattrs
@@ -40,19 +39,6 @@ class UnspecifiedType(enum.Enum):
 
 UNSPECIFIED = UnspecifiedType.UNSPECIFIED
 """Sentinel indicating an unspecified value when `None` is ambiguous."""
-
-
-@dataclass(frozen=True, repr=False)
-class Dummy:
-    """Placeholder element for array-like data types.
-
-    Useful e.g. for detecting duplicates in constraints.
-    """
-
-    @override
-    def __repr__(self):
-        """Return a representation of the placeholder."""
-        return "<dummy>"
 
 
 def is_all_instance(
