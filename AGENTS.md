@@ -19,8 +19,8 @@ experimental design. It targets Python 3.10+.
 - `baybe/` — Main source package with many subpackages containing structures and objects
   such as parameters, constraints, targets, etc.
 - `tests/` — Test suite. `conftest.py` has the central fixture system.
-- `docs/` — Sphinx documentation (Furo theme, MyST-Parser). `docs/userguide/` has
-  concept-oriented pages.
+- `docs/` — Sphinx documentation (Furo theme, MyST-Parser). `docs/concepts/` has
+  concept-oriented pages; `docs/components/` has component reference pages.
 - `examples/` — Runnable example scripts (jupytext percent format).
 - `benchmarks/` — Benchmarking framework.
 - `.github/workflows/` — CI/CD (lint, test, docs, release, benchmark).
