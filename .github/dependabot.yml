@@ -6,3 +6,7 @@ updates:
       interval: "quarterly"
     cooldown:
       default-days: 14
+    groups:
+      github-actions:
+        patterns:
+          - "*"
