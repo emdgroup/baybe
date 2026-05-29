@@ -24,9 +24,9 @@ def recommend_discrete_with_subsets(
     candidates_exp: pd.DataFrame,
     batch_size: int,
 ) -> pd.Index:
-    """Recommend from a discrete space with batch constraints.
+    """Recommend from a discrete space with subset-generating constraints.
 
-    Splits the candidate set into subsets according to batch constraints,
+    Splits the candidate set into subsets according to subset-generating constraints,
     runs optimization on each feasible subset, and returns the batch with
     the highest joint acquisition value. Subsets with fewer candidates
     than ``batch_size`` are skipped.

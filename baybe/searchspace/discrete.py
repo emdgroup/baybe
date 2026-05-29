@@ -590,7 +590,7 @@ class SubspaceDiscrete(SerialMixin):
     def n_subsets(self) -> int:
         """The theoretical number of possible subset configurations.
 
-        Returns 0 if no batch constraints exist, indicating that
+        Returns 0 if no subset-generating constraints exist, indicating that
         no decomposition is needed.
         """
         if not self.constraints_batch:
@@ -608,7 +608,7 @@ class SubspaceDiscrete(SerialMixin):
     ) -> Iterator[npt.NDArray[np.bool_]]:
         """Get an iterator over all possible subset masks.
 
-        Collect masks from each batch constraint, iterates the
+        Collect masks from each subset-generating constraint, iterates the
         Cartesian product, AND-reduces each combination, and yields feasible
         combined masks.
 

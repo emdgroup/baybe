@@ -42,9 +42,9 @@ class PureRecommender(ABC, RecommenderProtocol):
     compatibility: ClassVar[SearchSpaceType]
     """Class variable reflecting the search space compatibility."""
 
-    supports_discrete_batch_constraints: ClassVar[bool] = False
+    supports_discrete_subset_generating_constraints: ClassVar[bool] = False
     """Class variable indicating whether the recommender supports discrete
-    batch constraints."""
+    subset-generating constraints."""
 
     _deprecated_allow_repeated_recommendations: bool = field(
         alias="allow_repeated_recommendations",
@@ -267,17 +267,17 @@ class PureRecommender(ABC, RecommenderProtocol):
         """
         is_hybrid_space = searchspace.type is SearchSpaceType.HYBRID
 
-        # Check batch constraint support
+        # Check discrete subset-generating constraint support
         if (
-            searchspace.discrete.constraints_batch
-            and not self.supports_discrete_batch_constraints
+            searchspace.discrete.n_subsets > 0
+            and not self.supports_discrete_subset_generating_constraints
         ):
             constraint_types = {
                 type(c).__name__ for c in searchspace.discrete.constraints_batch
             }
             raise IncompatibilityError(
                 f"'{self.__class__.__name__}' does not support discrete "
-                f"batch constraints. The search space contains: "
+                f"subset-generating constraints. The search space contains: "
                 f"{constraint_types}."
             )
 

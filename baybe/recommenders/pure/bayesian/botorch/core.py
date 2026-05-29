@@ -62,7 +62,7 @@ class BotorchRecommender(BayesianRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
-    supports_discrete_batch_constraints: ClassVar[bool] = True
+    supports_discrete_subset_generating_constraints: ClassVar[bool] = True
     # See base class.
 
     # Object variables
@@ -93,7 +93,7 @@ class BotorchRecommender(BayesianRecommender):
     """
 
     max_n_subsets: int = field(default=10, validator=[instance_of(int), ge(1)])
-    """Maximum number of subsets to evaluate when subset constraints are
+    """Maximum number of subsets to evaluate when subset-generating constraints are
     present (e.g., continuous cardinality constraints). If the total number of
     subsets exceeds this limit, a random subset of that size is sampled for
     optimization instead of performing an exhaustive search."""
@@ -253,7 +253,7 @@ class BotorchRecommender(BayesianRecommender):
         """Optimize across subsets and return the result with the best acqf value.
 
         Each callable performs optimization for one subset configuration and returns
-        a ``(result, acquisition_value)`` tuple. Partitions that raise
+        a ``(result, acquisition_value)`` tuple. Subsets that raise
         ``InfeasibilityError`` are silently skipped.
 
         Args:

@@ -24,7 +24,7 @@ class RandomRecommender(NonPredictiveRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
-    supports_discrete_batch_constraints: ClassVar[bool] = True
+    supports_discrete_subset_generating_constraints: ClassVar[bool] = True
     # See base class.
 
     @override
@@ -42,8 +42,8 @@ class RandomRecommender(NonPredictiveRecommender):
             if searchspace.type is SearchSpaceType.CONTINUOUS:
                 return cont_random
 
-        # Restrict to a random subset if batch constraints are present
-        if searchspace.discrete.constraints_batch:
+        # Restrict to a random subset if subset-generating constraints are present
+        if searchspace.discrete.n_subsets > 0:
             masks = searchspace.discrete.sample_subset_masks(
                 candidates_exp,
                 n=1,
@@ -52,7 +52,7 @@ class RandomRecommender(NonPredictiveRecommender):
             if not masks:
                 raise InfeasibilityError(
                     "No feasible subset found for the given "
-                    "batch constraints. All subsets have fewer "
+                    "subset-generating constraints. All subsets have fewer "
                     f"candidates than the requested {batch_size=}."
                 )
             candidates_exp = candidates_exp.loc[masks[0]]
