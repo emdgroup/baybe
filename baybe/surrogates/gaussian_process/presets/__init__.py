@@ -1,9 +1,9 @@
 """Gaussian process surrogate presets."""
 
-# Criterion
+# Core
 from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriterion
 
-# Default preset
+# BayBE preset
 from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEFitCriterionFactory,
     BayBEKernelFactory,
@@ -19,35 +19,35 @@ from baybe.surrogates.gaussian_process.presets.botorch import (
 )
 
 # Chen preset
-from baybe.surrogates.gaussian_process.presets.chen import (
-    CHEN_FIT_CRITERION_FACTORY,
-    ChenKernelFactory,
-)
-
-# Core
+from baybe.surrogates.gaussian_process.presets.chen import ChenKernelFactory
 from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
 
 # EDBO preset
 from baybe.surrogates.gaussian_process.presets.edbo import (
-    EDBO_FIT_CRITERION_FACTORY,
     EDBOKernelFactory,
     EDBOLikelihoodFactory,
     EDBOMeanFactory,
 )
 
-# Smoothed EDBO preset
+# EDBO Smoothed preset
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
-    SMOOTHED_EDBO_FIT_CRITERION_FACTORY,
     SmoothedEDBOKernelFactory,
     SmoothedEDBOLikelihoodFactory,
     SmoothedEDBOMeanFactory,
+)
+
+# Hvarfner preset
+from baybe.surrogates.gaussian_process.presets.hvarfner import (
+    HvarfnerKernelFactory,
+    HvarfnerLikelihoodFactory,
+    HvarfnerMeanFactory,
 )
 
 __all__ = [
     # Core
     "FitCriterion",
     "GaussianProcessPreset",
-    # Default BayBE preset
+    # BayBE preset
     "BayBEFitCriterionFactory",
     "BayBEKernelFactory",
     "BayBELikelihoodFactory",
@@ -57,16 +57,17 @@ __all__ = [
     "BotorchLikelihoodFactory",
     "BotorchMeanFactory",
     # Chen preset
-    "CHEN_FIT_CRITERION_FACTORY",
     "ChenKernelFactory",
     # EDBO preset
-    "EDBO_FIT_CRITERION_FACTORY",
     "EDBOKernelFactory",
     "EDBOLikelihoodFactory",
     "EDBOMeanFactory",
-    # Smoothed EDBO preset
-    "SMOOTHED_EDBO_FIT_CRITERION_FACTORY",
+    # EDBO Smoothed preset
     "SmoothedEDBOKernelFactory",
     "SmoothedEDBOLikelihoodFactory",
     "SmoothedEDBOMeanFactory",
+    # Hvarfner preset
+    "HvarfnerKernelFactory",
+    "HvarfnerLikelihoodFactory",
+    "HvarfnerMeanFactory",
 ]

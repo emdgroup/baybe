@@ -171,9 +171,6 @@ class EDBOLikelihoodFactory(LikelihoodFactoryProtocol):
         return likelihood
 
 
-EDBO_FIT_CRITERION_FACTORY = _MLLForNonTLFitCriterionFactory()
-"""A factory providing fitting criteria for the EDBO preset."""
-
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
 
@@ -181,4 +178,4 @@ gc.collect()
 KERNEL_FACTORY = EDBOKernelFactory()
 MEAN_FACTORY = EDBOMeanFactory()
 LIKELIHOOD_FACTORY = EDBOLikelihoodFactory()
-FIT_CRITERION_FACTORY = EDBO_FIT_CRITERION_FACTORY
+FIT_CRITERION_FACTORY = _MLLForNonTLFitCriterionFactory()

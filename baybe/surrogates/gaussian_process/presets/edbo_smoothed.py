@@ -128,9 +128,6 @@ class SmoothedEDBOLikelihoodFactory(LikelihoodFactoryProtocol):
         return likelihood
 
 
-SMOOTHED_EDBO_FIT_CRITERION_FACTORY = _MLLForNonTLFitCriterionFactory()
-"""A factory providing fitting criteria for the smoothed EDBO preset."""
-
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
 
@@ -138,4 +135,4 @@ gc.collect()
 KERNEL_FACTORY = SmoothedEDBOKernelFactory()
 MEAN_FACTORY = SmoothedEDBOMeanFactory()
 LIKELIHOOD_FACTORY = SmoothedEDBOLikelihoodFactory()
-FIT_CRITERION_FACTORY = SMOOTHED_EDBO_FIT_CRITERION_FACTORY
+FIT_CRITERION_FACTORY = _MLLForNonTLFitCriterionFactory()
