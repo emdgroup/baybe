@@ -31,5 +31,6 @@ FPSRecommender
       ~FPSRecommender.allow_recommending_pending_experiments
       ~FPSRecommender.allow_repeated_recommendations
       ~FPSRecommender.compatibility
+      ~FPSRecommender.supports_discrete_subset_generating_constraints
    
    

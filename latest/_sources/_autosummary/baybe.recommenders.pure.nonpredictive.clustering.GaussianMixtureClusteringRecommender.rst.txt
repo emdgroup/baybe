@@ -31,5 +31,6 @@ GaussianMixtureClusteringRecommender
       ~GaussianMixtureClusteringRecommender.compatibility
       ~GaussianMixtureClusteringRecommender.model_cluster_num_parameter_name
       ~GaussianMixtureClusteringRecommender.model_params
+      ~GaussianMixtureClusteringRecommender.supports_discrete_subset_generating_constraints
    
    

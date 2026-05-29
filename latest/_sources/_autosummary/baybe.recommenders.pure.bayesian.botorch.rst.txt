@@ -13,14 +13,6 @@ baybe.recommenders.pure.bayesian.botorch
 
    
    
-   .. rubric:: Classes
-
-   .. autosummary::
-      :toctree:                                       
-      :template: custom-class-template.rst              
-   
-      BotorchRecommender
-   
    
 
    
@@ -28,4 +20,20 @@ baybe.recommenders.pure.bayesian.botorch
    
 
 
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+
+   continuous
+
+   core
+
+   discrete
+
+   hybrid
 

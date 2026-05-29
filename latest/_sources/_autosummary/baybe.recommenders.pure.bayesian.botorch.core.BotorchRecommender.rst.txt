@@ -1,7 +1,7 @@
 BotorchRecommender
 ==================
 
-.. currentmodule:: baybe.recommenders.pure.bayesian.botorch
+.. currentmodule:: baybe.recommenders.pure.bayesian.botorch.core
 
 .. autoclass:: BotorchRecommender
    :members:                              
@@ -34,12 +34,14 @@ BotorchRecommender
       ~BotorchRecommender.sampling_percentage
       ~BotorchRecommender.n_restarts
       ~BotorchRecommender.n_raw_samples
-      ~BotorchRecommender.max_n_subspaces
+      ~BotorchRecommender.max_n_subsets
       ~BotorchRecommender.acquisition_function
       ~BotorchRecommender.allow_recommending_already_measured
       ~BotorchRecommender.allow_recommending_pending_experiments
       ~BotorchRecommender.allow_repeated_recommendations
       ~BotorchRecommender.compatibility
+      ~BotorchRecommender.max_n_subspaces
+      ~BotorchRecommender.supports_discrete_subset_generating_constraints
       ~BotorchRecommender.surrogate_model
    
    

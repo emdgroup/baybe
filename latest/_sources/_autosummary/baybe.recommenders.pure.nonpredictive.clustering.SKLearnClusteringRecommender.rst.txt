@@ -30,6 +30,7 @@ SKLearnClusteringRecommender
       ~SKLearnClusteringRecommender.allow_recommending_pending_experiments
       ~SKLearnClusteringRecommender.allow_repeated_recommendations
       ~SKLearnClusteringRecommender.compatibility
+      ~SKLearnClusteringRecommender.supports_discrete_subset_generating_constraints
       ~SKLearnClusteringRecommender.model_cluster_num_parameter_name
    
    

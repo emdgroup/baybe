@@ -1,0 +1,6 @@
+baybe.recommenders.pure.bayesian.botorch.hybrid.recommend\_hybrid\_without\_subsets
+===================================================================================
+
+.. currentmodule:: baybe.recommenders.pure.bayesian.botorch.hybrid
+
+.. autofunction:: recommend_hybrid_without_subsets

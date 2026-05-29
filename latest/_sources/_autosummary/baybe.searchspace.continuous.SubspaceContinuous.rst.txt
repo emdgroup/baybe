@@ -50,7 +50,7 @@ SubspaceContinuous
       ~SubspaceContinuous.has_interpoint_constraints
       ~SubspaceContinuous.is_constrained
       ~SubspaceContinuous.is_empty
-      ~SubspaceContinuous.n_inactive_parameter_combinations
+      ~SubspaceContinuous.n_subsets
       ~SubspaceContinuous.parameter_names
       ~SubspaceContinuous.parameter_names_in_cardinality_constraints
       ~SubspaceContinuous.scaling_bounds

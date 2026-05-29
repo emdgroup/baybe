@@ -25,6 +25,8 @@ SubspaceDiscrete
       ~SubspaceDiscrete.from_simplex
       ~SubspaceDiscrete.get_candidates
       ~SubspaceDiscrete.get_parameters_by_name
+      ~SubspaceDiscrete.sample_subset_masks
+      ~SubspaceDiscrete.subset_masks
       ~SubspaceDiscrete.to_dict
       ~SubspaceDiscrete.to_json
       ~SubspaceDiscrete.to_searchspace
@@ -45,9 +47,11 @@ SubspaceDiscrete
       ~SubspaceDiscrete.comp_rep
       ~SubspaceDiscrete.comp_rep_bounds
       ~SubspaceDiscrete.comp_rep_columns
+      ~SubspaceDiscrete.constraints_batch
       ~SubspaceDiscrete.is_constrained
       ~SubspaceDiscrete.is_empty
       ~SubspaceDiscrete.metadata
+      ~SubspaceDiscrete.n_subsets
       ~SubspaceDiscrete.parameter_names
       ~SubspaceDiscrete.scaling_bounds
    

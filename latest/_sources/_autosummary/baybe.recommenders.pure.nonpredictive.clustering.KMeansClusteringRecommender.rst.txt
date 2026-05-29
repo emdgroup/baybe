@@ -31,5 +31,6 @@ KMeansClusteringRecommender
       ~KMeansClusteringRecommender.compatibility
       ~KMeansClusteringRecommender.model_cluster_num_parameter_name
       ~KMeansClusteringRecommender.model_params
+      ~KMeansClusteringRecommender.supports_discrete_subset_generating_constraints
    
    

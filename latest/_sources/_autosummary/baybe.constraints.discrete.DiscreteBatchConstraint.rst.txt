@@ -1,0 +1,45 @@
+DiscreteBatchConstraint
+=======================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteBatchConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteBatchConstraint.__init__
+      ~DiscreteBatchConstraint.from_dict
+      ~DiscreteBatchConstraint.from_json
+      ~DiscreteBatchConstraint.get_invalid
+      ~DiscreteBatchConstraint.get_invalid_polars
+      ~DiscreteBatchConstraint.get_valid
+      ~DiscreteBatchConstraint.subset_masks
+      ~DiscreteBatchConstraint.summary
+      ~DiscreteBatchConstraint.to_dict
+      ~DiscreteBatchConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteBatchConstraint.eval_during_augmentation
+      ~DiscreteBatchConstraint.eval_during_creation
+      ~DiscreteBatchConstraint.eval_during_modeling
+      ~DiscreteBatchConstraint.has_polars_implementation
+      ~DiscreteBatchConstraint.is_continuous
+      ~DiscreteBatchConstraint.is_discrete
+      ~DiscreteBatchConstraint.numerical_only
+      ~DiscreteBatchConstraint.parameters
+   
+   

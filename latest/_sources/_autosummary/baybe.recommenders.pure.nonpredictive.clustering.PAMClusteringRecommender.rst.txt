@@ -31,5 +31,6 @@ PAMClusteringRecommender
       ~PAMClusteringRecommender.compatibility
       ~PAMClusteringRecommender.model_cluster_num_parameter_name
       ~PAMClusteringRecommender.model_params
+      ~PAMClusteringRecommender.supports_discrete_subset_generating_constraints
    
    

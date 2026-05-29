@@ -19,6 +19,7 @@ baybe.searchspace.utils
       parameter_cartesian_prod_pandas
       parameter_cartesian_prod_pandas_constrained
       parameter_cartesian_prod_polars
+      select_via_flat_index
    
    
 

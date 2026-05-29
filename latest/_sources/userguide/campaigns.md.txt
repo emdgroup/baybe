@@ -96,7 +96,7 @@ used is strongly discouraged.
 **Note:** While the above distinction is true in the general case, it may not be 
 relevant for all configured settings, for instance, when the used recommender 
 is not capable of joint optimization. Currently, the 
-[BotorchRecommender](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender)
+[BotorchRecommender](baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender)
 is the only recommender available that performs joint optimization.
 ```
 

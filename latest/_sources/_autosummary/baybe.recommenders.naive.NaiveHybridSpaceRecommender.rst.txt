@@ -31,5 +31,6 @@ NaiveHybridSpaceRecommender
       ~NaiveHybridSpaceRecommender.allow_recommending_pending_experiments
       ~NaiveHybridSpaceRecommender.allow_repeated_recommendations
       ~NaiveHybridSpaceRecommender.compatibility
+      ~NaiveHybridSpaceRecommender.supports_discrete_subset_generating_constraints
    
    
