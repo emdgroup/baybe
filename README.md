@@ -216,7 +216,7 @@ from baybe.searchspace import SearchSpace
 searchspace = SearchSpace.from_product(parameters)
 ```
 
-See the [search spaces section](https://emdgroup.github.io/baybe/stable/userguide/searchspace.html)
+See the [search spaces section](https://emdgroup.github.io/baybe/stable/components/searchspace.html)
 of our user guide for more information on the structure of search spaces
 and alternative ways of construction. 
 

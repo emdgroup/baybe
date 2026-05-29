@@ -7,4 +7,5 @@ Insights <insights>
 Objectives <objectives>
 Parameters <parameters>
 Recommenders <recommenders>
+Search Spaces <searchspace>
 ```

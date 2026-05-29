@@ -4,7 +4,7 @@ The core functionality of BayBE is its ability to generate context-aware recomme
 for your experiments. This page covers the basics of the corresponding user interface,
 assuming that a {class}`~baybe.searchspace.core.SearchSpace` object and optional
 {class}`~baybe.objectives.base.Objective` and measurement objects are already in place
-(for more details, see the corresponding [search space](/userguide/searchspace) /
+(for more details, see the corresponding [search space](/components/searchspace) /
 [objective](/components/objectives) user guides).
 
 
