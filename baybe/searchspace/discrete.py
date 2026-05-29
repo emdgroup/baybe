@@ -588,7 +588,7 @@ class SubspaceDiscrete(SerialMixin):
 
     @property
     def n_subsets(self) -> int:
-        """The theoretical number of possible subset configurations.
+        """The number of possible subset configurations.
 
         Returns 0 if no subset-generating constraints exist, indicating that
         no decomposition is needed.

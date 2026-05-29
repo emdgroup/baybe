@@ -147,7 +147,7 @@ class SubspaceContinuous(SerialMixin):
 
     @property
     def n_subsets(self) -> int:
-        """The theoretical number of possible subset configurations.
+        """The number of possible subset configurations.
 
         Returns 0 if no cardinality constraints exist, indicating that
         no decomposition is needed.
