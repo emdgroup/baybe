@@ -56,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   equality check
 
 ### Changed
+- Default transfer learning kernel changed from `IndexKernel` to `PositiveIndexKernel`,
+  enforcing positive task correlations
 - The `Campaign.allow_*` flag mechanism is now based on `AutoBool` logic, providing
   well-defined Boolean values at query time while exposing the `AUTO` option to the user
 - Discrete search space construction now applies constraints incrementally during
