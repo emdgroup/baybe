@@ -73,7 +73,7 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
         </ul>
       </li>
       <li>Specify the desired target value via <a href="https://emdgroup.github.io/baybe/stable/userguide/transformations.html">target transformations</a>.</li>
-      <li>Optimize multiple targets at the same time via <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#paretoobjective">Pareto optimization</a> or <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#desirabilityobjective">desirability scalarization</a>.</li>
+      <li>Optimize multiple targets at the same time via <a href="https://emdgroup.github.io/baybe/stable/components/objectives.html#paretoobjective">Pareto optimization</a> or <a href="https://emdgroup.github.io/baybe/stable/components/objectives.html#desirabilityobjective">desirability scalarization</a>.</li>
     </ul>
   </div>
 </details>
@@ -157,7 +157,7 @@ In cases where we are confronted with multiple (potentially conflicting) targets
 (e.g., yield vs selectivity),
 the `ParetoObjective` or `DesirabilityObjective` can be used to define how the targets should be balanced.
 For more details, see the
-[objectives section](https://emdgroup.github.io/baybe/stable/userguide/objectives.html)
+[objectives section](https://emdgroup.github.io/baybe/stable/components/objectives.html)
 of the user guide.
 
 ### Defining the Search Space

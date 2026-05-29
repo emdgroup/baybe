@@ -5,7 +5,7 @@ experiment and the machine learning core behind BayBE.
 In general, it is expected that you create one [`Target`](baybe.targets.base.Target)
 object for each of your observables to inform BayBE about their existence.
 The way BayBE treats these targets is then controlled via the
-[`Objective`](../../userguide/objectives).
+[`Objective`](/components/objectives).
 
 ## NumericalTarget
 ```{admonition} Important

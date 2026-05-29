@@ -260,7 +260,7 @@ joint_acq_value = campaign.joint_acquisition_value(rec, qPSTD())
 While iterating your {class}`~baybe.campaign.Campaign`, you may be interested in
 monitoring the *non-dominated* configurations you have found along the way, to observe
 how the corresponding Pareto front evolves over successive experimentation rounds.
-{ref}`Like for objectives <userguide/objectives:Identifying Non-Dominated
+{ref}`Like for objectives <components/objectives:Identifying Non-Dominated
 Configurations>`, the
 {meth}`~baybe.campaign.Campaign.identify_non_dominated_configurations` method offers an
 easy interface for this purpose:

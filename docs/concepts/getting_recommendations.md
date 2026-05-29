@@ -5,7 +5,7 @@ for your experiments. This page covers the basics of the corresponding user inte
 assuming that a {class}`~baybe.searchspace.core.SearchSpace` object and optional
 {class}`~baybe.objectives.base.Objective` and measurement objects are already in place
 (for more details, see the corresponding [search space](/userguide/searchspace) /
-[objective](/userguide/objectives) user guides).
+[objective](/components/objectives) user guides).
 
 
 ## The `recommend` Call
