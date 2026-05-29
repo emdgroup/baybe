@@ -49,7 +49,7 @@ BayBE offers two entry points for requesting recommendations:
   campaign.add_measurements(measurements)
   recommendation = campaign.recommend(batch_size)
   ~~~
-  For more details, have a look at our [campaign user guide](/userguide/campaigns).
+  For more details, have a look at our [campaign user guide](/components/campaigns).
 
 
 ## Excluding Configurations
@@ -179,7 +179,7 @@ we need to consider two different cases:
 
   {class}`~baybe.campaign.Campaign`s allow you to further control the candidate
   generation based on the experimental trajectory taken via their `allow_*` 
-  {ref}`flags <userguide/campaigns:Candidate Control Flags>`.
+  {ref}`flags <components/campaigns:Candidate Control Flags>`.
   ```
 
 

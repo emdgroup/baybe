@@ -25,7 +25,7 @@ Config in `docs/conf.py`.
 
 ## MyST Syntax Reference
 - Cross-refs: "{class}`~baybe.campaign.Campaign`",
-  "{meth}`~baybe.campaign.Campaign.recommend`", "{doc}`/userguide/campaigns`".
+  "{meth}`~baybe.campaign.Campaign.recommend`", "{doc}`/components/campaigns`".
   The `~` shortens display to final component
 - Admonitions: `{admonition} Title` with `:class: note|important|tip|warning|caution|info`.
 - Anchors: `(ANCHOR_NAME)=` above a heading, reference via "{ref}`ANCHOR_NAME`".

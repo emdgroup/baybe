@@ -2,7 +2,7 @@
 
 # This example shows how to create a campaign and how to use it.
 # It is intended to be used as a first point of interaction with campaign after having
-# read the corresponding [user guide](./../../userguide/campaigns).
+# read the corresponding [user guide](./../../components/campaigns).
 
 ### Necessary imports for this example
 

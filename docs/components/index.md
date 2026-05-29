@@ -1,4 +1,5 @@
 # Components
 
 ```{toctree}
+Campaigns <campaigns>
 ```

@@ -13,7 +13,7 @@ from tests.docs.utils import extract_code_blocks
 doc_files = list(map(str, [Path("README.md"), *Path("docs/userguide/").rglob("*.md")]))
 """Files whose code blocks are to be checked."""
 
-doc_files_pseudocode = list(map(str, [Path("docs/userguide/campaigns.md")]))
+doc_files_pseudocode = list(map(str, [Path("docs/components/campaigns.md")]))
 """Files containing pseudocode that needs to be checked with injected fixtures."""
 
 
