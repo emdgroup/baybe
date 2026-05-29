@@ -68,7 +68,7 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
       <li>Exclude undesired or impossible parameter configurations (e.g., to define a maximal number of mixture components) using <a href="https://emdgroup.github.io/baybe/stable/userguide/constraints.html">constraints</a>.</li>
       <li>Choose between different optimization strategies to balance exploration and exploitation of the search space:
         <ul>
-          <li>Smartly acquire training data for model building via <a href="https://emdgroup.github.io/baybe/stable/userguide/active_learning.html">active learning</a>.</li>
+          <li>Smartly acquire training data for model building via <a href="https://emdgroup.github.io/baybe/stable/concepts/active_learning.html">active learning</a>.</li>
           <li>Conduct AB testing via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html">bandit models</a>.</li>
         </ul>
       </li>
