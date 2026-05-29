@@ -93,11 +93,12 @@ def to_parameter_selector(
 
     * A callable (i.e., an existing selector or any object satisfying
       :class:`ParameterSelectorProtocol`) is passed through unchanged.
-    * A single string is interpreted as a parameter name and wrapped into a
-      :class:`NameSelector`.
+    * A single string is interpreted as a parameter name pattern and wrapped into a
+      :class:`NameSelector` with regex mode active.
     * A single :class:`~baybe.parameters.base.Parameter` subclass is wrapped into a
       :class:`TypeSelector`.
-    * A collection of strings is converted to a :class:`NameSelector`.
+    * A collection of strings is converted to a :class:`NameSelector` with regex mode
+      active.
     * A collection of :class:`~baybe.parameters.base.Parameter` subclasses is converted
       to a :class:`TypeSelector`.
 
@@ -111,7 +112,7 @@ def to_parameter_selector(
         TypeError: If the input cannot be converted to a parameter selector.
     """
     if isinstance(x, str):
-        return NameSelector([x])
+        return NameSelector([x], regex=True)
 
     if isinstance(x, type) and issubclass(x, Parameter):
         return TypeSelector([x])
@@ -123,7 +124,7 @@ def to_parameter_selector(
     items = tuple(x)
 
     if all(isinstance(item, str) for item in items):
-        return NameSelector(items)
+        return NameSelector(items, regex=True)
 
     if all(isinstance(item, type) and issubclass(item, Parameter) for item in items):
         return TypeSelector(items)
