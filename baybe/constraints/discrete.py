@@ -24,7 +24,6 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
-from baybe.utils.basic import Dummy
 
 if TYPE_CHECKING:
     import polars as pl
@@ -277,25 +276,22 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
     @override
     def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
-        # Create df copy and mark entries where the dependency conditions are negative
-        # with a dummy value to cause degeneracy.
+        # Build an invariant indicator for each affected parameter: pair each value
+        # with the value of the parameter it depends on. For rows where the dependency
+        # condition is not met, use None as a sentinel so that all such rows with the
+        # same dependency value appear identical, causing them to be detected as
+        # duplicates. The indicator tuples are constructed directly without storing
+        # any intermediate sentinel in the typed columns.
         censored_df = df.copy()
-        for k, _ in enumerate(self.parameters):
-            # .loc assignments are not supported by mypy + pandas-stubs yet
-            # See https://github.com/pandas-dev/pandas-stubs/issues/572
-            censored_df.loc[  # type: ignore[call-overload]
-                ~self.conditions[k].evaluate(df[self.parameters[k]]),
-                self.affected_parameters[k],
-            ] = Dummy()
-
-        # Create an invariant indicator: pair each value of an affected parameter with
-        # the corresponding value of the parameter it depends on. These indicators
-        # will become invariant when frozenset is applied to them.
         for k, param in enumerate(self.parameters):
+            invalid = ~self.conditions[k].evaluate(df[self.parameters[k]])
             for affected_param in self.affected_parameters[k]:
-                censored_df[affected_param] = list(
-                    zip(censored_df[affected_param], censored_df[param])
-                )
+                censored_df[affected_param] = [
+                    (None if inv else val, dep)
+                    for val, dep, inv in zip(
+                        censored_df[affected_param], censored_df[param], invalid
+                    )
+                ]
 
         # Merge the invariant indicator with all other parameters (i.e. neither the
         # affected nor the dependency-causing ones) and detect duplicates in that space.
