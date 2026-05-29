@@ -137,7 +137,7 @@ def validate_gpytorch_kernel_components(  # noqa: DOC501
 
     # Validate extra kwargs injected via the _extra_gpytorch_kwargs hook
     if isinstance(obj, Kernel):
-        for name, value in obj._extra_gpytorch_kwargs().items():
+        for name, value in obj._extra_gpytorch_kwargs.items():
             mapped_value = getattr(mapped, name, None)
             assert mapped_value == value, (
                 f"Extra gpytorch kwarg '{name}' expected {value}, got {mapped_value}"

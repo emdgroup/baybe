@@ -244,6 +244,7 @@ class PositiveIndexKernel(IndexKernel):
     """
 
     @override
+    @property
     def _extra_gpytorch_kwargs(self) -> dict[str, Any]:
         return {"unit_scale_for_target": False}
 
