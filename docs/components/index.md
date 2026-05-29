@@ -8,4 +8,5 @@ Objectives <objectives>
 Parameters <parameters>
 Recommenders <recommenders>
 Search Spaces <searchspace>
+Surrogates <surrogates>
 ```
