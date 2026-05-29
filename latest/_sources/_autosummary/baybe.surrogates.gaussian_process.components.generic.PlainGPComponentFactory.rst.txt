@@ -1,0 +1,33 @@
+PlainGPComponentFactory
+=======================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.generic
+
+.. autoclass:: PlainGPComponentFactory
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PlainGPComponentFactory.__init__
+      ~PlainGPComponentFactory.from_dict
+      ~PlainGPComponentFactory.from_json
+      ~PlainGPComponentFactory.to_dict
+      ~PlainGPComponentFactory.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PlainGPComponentFactory.component
+   
+   

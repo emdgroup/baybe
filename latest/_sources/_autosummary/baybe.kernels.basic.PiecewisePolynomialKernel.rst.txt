@@ -33,5 +33,6 @@ PiecewisePolynomialKernel
       ~PiecewisePolynomialKernel.q
       ~PiecewisePolynomialKernel.lengthscale_prior
       ~PiecewisePolynomialKernel.lengthscale_initial_value
+      ~PiecewisePolynomialKernel.parameter_names
    
    

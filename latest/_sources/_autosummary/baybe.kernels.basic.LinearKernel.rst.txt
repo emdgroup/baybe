@@ -32,5 +32,6 @@ LinearKernel
    
       ~LinearKernel.variance_prior
       ~LinearKernel.variance_initial_value
+      ~LinearKernel.parameter_names
    
    

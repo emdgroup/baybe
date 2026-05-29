@@ -1,0 +1,23 @@
+BayBEFitCriterionFactory
+========================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.baybe
+
+.. autoclass:: BayBEFitCriterionFactory
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BayBEFitCriterionFactory.__init__
+   
+   
+
+   
+   
+   

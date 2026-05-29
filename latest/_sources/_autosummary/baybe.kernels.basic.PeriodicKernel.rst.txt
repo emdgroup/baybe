@@ -34,5 +34,6 @@ PeriodicKernel
       ~PeriodicKernel.lengthscale_initial_value
       ~PeriodicKernel.period_length_prior
       ~PeriodicKernel.period_length_initial_value
+      ~PeriodicKernel.parameter_names
    
    

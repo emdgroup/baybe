@@ -1,0 +1,32 @@
+GPComponentType
+===============
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.generic
+
+.. autoclass:: GPComponentType
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~GPComponentType.get_types
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~GPComponentType.KERNEL
+      ~GPComponentType.MEAN
+      ~GPComponentType.LIKELIHOOD
+      ~GPComponentType.CRITERION
+   
+   

@@ -33,5 +33,6 @@ MaternKernel
       ~MaternKernel.nu
       ~MaternKernel.lengthscale_prior
       ~MaternKernel.lengthscale_initial_value
+      ~MaternKernel.parameter_names
    
    

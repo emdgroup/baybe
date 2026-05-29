@@ -33,5 +33,6 @@ PolynomialKernel
       ~PolynomialKernel.power
       ~PolynomialKernel.offset_prior
       ~PolynomialKernel.offset_initial_value
+      ~PolynomialKernel.parameter_names
    
    

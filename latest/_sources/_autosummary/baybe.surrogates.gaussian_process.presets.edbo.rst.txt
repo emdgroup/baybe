@@ -20,6 +20,8 @@ baybe.surrogates.gaussian\_process.presets.edbo
       :template: custom-class-template.rst              
    
       EDBOKernelFactory
+      EDBOLikelihoodFactory
+      EDBOMeanFactory
    
    
 

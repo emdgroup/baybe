@@ -39,6 +39,8 @@ baybe.parameters
 
    numerical
 
+   selectors
+
    substance
 
    utils

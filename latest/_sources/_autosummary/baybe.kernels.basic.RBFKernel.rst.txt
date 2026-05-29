@@ -32,5 +32,6 @@ RBFKernel
    
       ~RBFKernel.lengthscale_prior
       ~RBFKernel.lengthscale_initial_value
+      ~RBFKernel.parameter_names
    
    

@@ -26,4 +26,10 @@ BasicKernel
 
    
    
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~BasicKernel.parameter_names
+   
    

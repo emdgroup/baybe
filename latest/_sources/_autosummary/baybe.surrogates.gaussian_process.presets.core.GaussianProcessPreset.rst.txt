@@ -19,5 +19,10 @@ GaussianProcessPreset
    .. autosummary::
    
       ~GaussianProcessPreset.BAYBE
+      ~GaussianProcessPreset.BOTORCH
+      ~GaussianProcessPreset.CHEN
+      ~GaussianProcessPreset.EDBO
+      ~GaussianProcessPreset.EDBO_SMOOTHED
+      ~GaussianProcessPreset.HVARFNER
    
    

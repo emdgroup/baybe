@@ -1,0 +1,7 @@
+baybe.surrogates.gaussian\_process.components.fit\_criterion.PlainFitCriterionFactory
+=====================================================================================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.fit_criterion
+
+
+.. autodata:: PlainFitCriterionFactory

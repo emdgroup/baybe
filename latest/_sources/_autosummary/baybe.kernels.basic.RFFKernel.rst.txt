@@ -33,5 +33,6 @@ RFFKernel
       ~RFFKernel.num_samples
       ~RFFKernel.lengthscale_prior
       ~RFFKernel.lengthscale_initial_value
+      ~RFFKernel.parameter_names
    
    

@@ -32,5 +32,6 @@ RQKernel
    
       ~RQKernel.lengthscale_prior
       ~RQKernel.lengthscale_initial_value
+      ~RQKernel.parameter_names
    
    

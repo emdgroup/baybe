@@ -9,13 +9,6 @@ baybe.surrogates.gaussian\_process.presets.core
 
    
    
-   .. rubric:: Functions
-
-   .. autosummary::
-      :toctree:                                       
-   
-      make_gp_from_preset
-   
    
 
    

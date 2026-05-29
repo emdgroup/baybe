@@ -29,9 +29,17 @@ baybe.surrogates.gaussian\_process.presets
    :recursive:
 
 
+   baybe
+
+   botorch
+
+   chen
+
    core
 
-   default
-
    edbo
+
+   edbo_smoothed
+
+   hvarfner
 

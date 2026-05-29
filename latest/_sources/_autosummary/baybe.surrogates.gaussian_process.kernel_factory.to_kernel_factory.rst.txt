@@ -1,6 +1,0 @@
-baybe.surrogates.gaussian\_process.kernel\_factory.to\_kernel\_factory
-======================================================================
-
-.. currentmodule:: baybe.surrogates.gaussian_process.kernel_factory
-
-.. autofunction:: to_kernel_factory

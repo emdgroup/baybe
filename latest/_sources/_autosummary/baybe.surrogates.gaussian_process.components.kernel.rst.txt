@@ -1,0 +1,40 @@
+baybe.surrogates.gaussian\_process.components.kernel
+====================================================
+
+.. automodule:: baybe.surrogates.gaussian_process.components.kernel
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      KernelFactoryProtocol
+      PlainKernelFactory
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      ICMKernelFactory
+   
+   
+
+   
+   
+   
+
+
+

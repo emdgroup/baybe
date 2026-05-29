@@ -1,0 +1,23 @@
+HvarfnerMeanFactory
+===================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.hvarfner
+
+.. autoclass:: HvarfnerMeanFactory
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~HvarfnerMeanFactory.__init__
+   
+   
+
+   
+   
+   

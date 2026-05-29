@@ -33,5 +33,6 @@ ScaleKernel
       ~ScaleKernel.base_kernel
       ~ScaleKernel.outputscale_prior
       ~ScaleKernel.outputscale_initial_value
+      ~ScaleKernel.outputscale_trainable
    
    

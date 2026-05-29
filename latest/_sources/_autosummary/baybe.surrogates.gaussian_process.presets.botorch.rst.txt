@@ -1,0 +1,23 @@
+baybe.surrogates.gaussian\_process.presets.botorch
+==================================================
+
+.. automodule:: baybe.surrogates.gaussian_process.presets.botorch
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

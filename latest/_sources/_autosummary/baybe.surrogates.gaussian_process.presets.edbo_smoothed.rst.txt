@@ -1,0 +1,41 @@
+baybe.surrogates.gaussian\_process.presets.edbo\_smoothed
+=========================================================
+
+.. automodule:: baybe.surrogates.gaussian_process.presets.edbo_smoothed
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      SmoothedEDBOKernelFactory
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      SmoothedEDBOKernelFactory
+      SmoothedEDBOLikelihoodFactory
+      SmoothedEDBOMeanFactory
+   
+   
+
+   
+   
+   
+
+
+

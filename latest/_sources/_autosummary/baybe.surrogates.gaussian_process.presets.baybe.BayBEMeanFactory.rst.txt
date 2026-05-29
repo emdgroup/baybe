@@ -1,0 +1,23 @@
+BayBEMeanFactory
+================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.baybe
+
+.. autoclass:: BayBEMeanFactory
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BayBEMeanFactory.__init__
+   
+   
+
+   
+   
+   

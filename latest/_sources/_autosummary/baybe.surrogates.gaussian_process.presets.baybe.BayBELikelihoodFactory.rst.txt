@@ -1,0 +1,23 @@
+BayBELikelihoodFactory
+======================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.baybe
+
+.. autoclass:: BayBELikelihoodFactory
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BayBELikelihoodFactory.__init__
+   
+   
+
+   
+   
+   

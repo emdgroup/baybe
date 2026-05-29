@@ -1,0 +1,34 @@
+HvarfnerKernelFactory
+=====================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.hvarfner
+
+.. autoclass:: HvarfnerKernelFactory
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~HvarfnerKernelFactory.__init__
+      ~HvarfnerKernelFactory.from_dict
+      ~HvarfnerKernelFactory.from_json
+      ~HvarfnerKernelFactory.get_parameter_names
+      ~HvarfnerKernelFactory.to_dict
+      ~HvarfnerKernelFactory.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~HvarfnerKernelFactory.parameter_selector
+   
+   

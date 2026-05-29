@@ -1,0 +1,37 @@
+PositiveIndexKernel
+===================
+
+.. currentmodule:: baybe.kernels.basic
+
+.. autoclass:: PositiveIndexKernel
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PositiveIndexKernel.__init__
+      ~PositiveIndexKernel.from_dict
+      ~PositiveIndexKernel.from_json
+      ~PositiveIndexKernel.to_dict
+      ~PositiveIndexKernel.to_factory
+      ~PositiveIndexKernel.to_gpytorch
+      ~PositiveIndexKernel.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PositiveIndexKernel.num_tasks
+      ~PositiveIndexKernel.parameter_names
+      ~PositiveIndexKernel.rank
+   
+   

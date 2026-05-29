@@ -1,0 +1,23 @@
+HvarfnerLikelihoodFactory
+=========================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.hvarfner
+
+.. autoclass:: HvarfnerLikelihoodFactory
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~HvarfnerLikelihoodFactory.__init__
+   
+   
+
+   
+   
+   

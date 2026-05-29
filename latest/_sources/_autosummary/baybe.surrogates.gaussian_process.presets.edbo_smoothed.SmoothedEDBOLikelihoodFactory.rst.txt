@@ -1,0 +1,23 @@
+SmoothedEDBOLikelihoodFactory
+=============================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.edbo_smoothed
+
+.. autoclass:: SmoothedEDBOLikelihoodFactory
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SmoothedEDBOLikelihoodFactory.__init__
+   
+   
+
+   
+   
+   

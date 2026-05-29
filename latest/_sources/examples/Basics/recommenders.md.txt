@@ -150,9 +150,12 @@ print(recommender)
           BotorchRecommender
              Surrogate
                 CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianProce
-ssSurrogate(_searchspace=None, _objective=None, _measurements_hash=None,
-_input_scaler=None, _output_scaler=None, kernel_factory=DefaultKernelFactory(),
-_model=None), _data={}), _modeled_quantity_names=None)
+ssSurrogate(_searchspace=None, _objective=None, _measurements=None,
+_measurements_hash=None, _input_scaler=None, _output_scaler=None,
+kernel_factory=BayBEKernelFactory(parameter_selector=None),
+mean_factory=BayBEMeanFactory(), likelihood_factory=BayBELikelihoodFactory(),
+fit_criterion_factory=BayBEFitCriterionFactory(), _model=None), _data={}),
+_modeled_quantity_names=None)
              Acquisition function: qLogExpectedImprovement()
              Compatibility: SearchSpaceType.HYBRID
              Sequential continuous: True
@@ -247,15 +250,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent             Base                        Ligand  Temperature  \
-    8    Butyl Ester   Cesium acetate                 (t-Bu)PhCPhos        120.0   
-    243         DMAc  Cesium pivalate                 (t-Bu)PhCPhos         90.0   
-    25   Butyl Ester   Cesium acetate  Di-tert-butylphenylphosphine        120.0   
+             Solvent                Base                        Ligand  \
+    312         DMAc  Potassium pivalate                     BrettPhos   
+    95   Butyl Ester  Potassium pivalate                     BrettPhos   
+    102  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
     
-         Concentration  
-    8            0.153  
-    243          0.057  
-    25           0.100  
+         Temperature  Concentration  
+    312        120.0          0.057  
+    95         105.0          0.153  
+    102        105.0          0.057  
 
 
 
@@ -268,15 +271,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent             Base                        Ligand  Temperature  \
-    8    Butyl Ester   Cesium acetate                 (t-Bu)PhCPhos        120.0   
-    243         DMAc  Cesium pivalate                 (t-Bu)PhCPhos         90.0   
-    25   Butyl Ester   Cesium acetate  Di-tert-butylphenylphosphine        120.0   
+             Solvent                Base                        Ligand  \
+    312         DMAc  Potassium pivalate                     BrettPhos   
+    95   Butyl Ester  Potassium pivalate                     BrettPhos   
+    102  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
     
-         Concentration      yield  
-    8            0.153 -68.943827  
-    243          0.057 -46.481534  
-    25           0.100  61.976093  
+         Temperature  Concentration      yield  
+    312        120.0          0.057  66.086971  
+    95         105.0          0.153  53.654546  
+    102        105.0          0.057  69.744122  
 
 
 

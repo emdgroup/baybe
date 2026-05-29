@@ -15,9 +15,20 @@ EDBOKernelFactory
    .. autosummary::
    
       ~EDBOKernelFactory.__init__
+      ~EDBOKernelFactory.from_dict
+      ~EDBOKernelFactory.from_json
+      ~EDBOKernelFactory.get_parameter_names
+      ~EDBOKernelFactory.to_dict
+      ~EDBOKernelFactory.to_json
    
    
 
    
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~EDBOKernelFactory.parameter_selector
    
    

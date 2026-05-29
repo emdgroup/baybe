@@ -1,0 +1,23 @@
+ParameterSelectorProtocol
+=========================
+
+.. currentmodule:: baybe.parameters.selectors
+
+.. autoclass:: ParameterSelectorProtocol
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ParameterSelectorProtocol.__init__
+   
+   
+
+   
+   
+   

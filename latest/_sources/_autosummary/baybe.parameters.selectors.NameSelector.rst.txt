@@ -1,0 +1,31 @@
+NameSelector
+============
+
+.. currentmodule:: baybe.parameters.selectors
+
+.. autoclass:: NameSelector
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~NameSelector.__init__
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~NameSelector.patterns
+      ~NameSelector.regex
+      ~NameSelector.exclude
+   
+   

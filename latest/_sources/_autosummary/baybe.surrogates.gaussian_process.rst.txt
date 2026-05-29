@@ -29,9 +29,9 @@ baybe.surrogates.gaussian\_process
    :recursive:
 
 
-   core
+   components
 
-   kernel_factory
+   core
 
    presets
 

@@ -20,6 +20,8 @@ baybe.serialization.mixin
       :template: custom-class-template.rst              
    
       SerialMixin
+      SupportsRead
+      SupportsWrite
    
    
 

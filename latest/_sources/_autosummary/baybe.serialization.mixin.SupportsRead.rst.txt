@@ -1,0 +1,24 @@
+SupportsRead
+============
+
+.. currentmodule:: baybe.serialization.mixin
+
+.. autoclass:: SupportsRead
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SupportsRead.__init__
+      ~SupportsRead.read
+   
+   
+
+   
+   
+   

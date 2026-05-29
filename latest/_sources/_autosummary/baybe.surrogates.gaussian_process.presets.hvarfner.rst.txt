@@ -1,0 +1,33 @@
+baybe.surrogates.gaussian\_process.presets.hvarfner
+===================================================
+
+.. automodule:: baybe.surrogates.gaussian_process.presets.hvarfner
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      HvarfnerKernelFactory
+      HvarfnerLikelihoodFactory
+      HvarfnerMeanFactory
+   
+   
+
+   
+   
+   
+
+
+

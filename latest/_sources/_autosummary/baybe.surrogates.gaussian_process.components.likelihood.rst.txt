@@ -1,0 +1,40 @@
+baybe.surrogates.gaussian\_process.components.likelihood
+========================================================
+
+.. automodule:: baybe.surrogates.gaussian_process.components.likelihood
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      LikelihoodFactoryProtocol
+      PlainLikelihoodFactory
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      LazyGaussianLikelihoodFactory
+   
+   
+
+   
+   
+   
+
+
+
