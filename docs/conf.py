@@ -150,15 +150,20 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.utils.boolean.UncertainBool.*"),
     ("py:obj", "baybe.targets.botorch.*"),
     ("py:obj", "baybe.objectives.botorch.*"),
-    ("py:class", "baybe.parameters.base._DiscreteLabelLikeParameter"),
-    ("py:class", "baybe.acquisition.acqfs._ExpectedHypervolumeImprovement"),
-    ("py:class", "baybe.settings._SlottedContextDecorator"),
+    ("py:obj", "baybe.serialization.mixin.SupportsRead.read"),
+    ("py:obj", "baybe.serialization.mixin.SupportsWrite.write"),
+    ("py:class", "baybe.surrogates.gaussian_process.components.PlainKernelFactory"),
+    # Private classes
+    (r"py:class", r"baybe\..*\._.*"),
     # Deprecation
     ("py:.*", "baybe.targets._deprecated.*"),
 ]
 
 # Ignore the following links when checking inks for viability
-linkcheck_ignore = [r"https://github.com/b-shields/edbo/blob/master/edbo/bro.py*"]
+linkcheck_ignore = [
+    r"https://github.com/b-shields/edbo/blob*",
+    r"https://doi.org/10.26434/chemrxiv.10001986/v2",
+]
 
 
 # Ignore the warnings that are given by autosectionlabel
@@ -274,6 +279,7 @@ modindex_common_prefix = ["baybe."]
 # Mappings to all external packages that we want to have clickable links to
 intersphinx_mapping = {
     "botorch": ("https://botorch.readthedocs.io/en/latest", None),
+    "gpytorch": ("https://docs.gpytorch.ai/en/stable/", None),
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "polars": ("https://docs.pola.rs/api/python/stable/", None),
