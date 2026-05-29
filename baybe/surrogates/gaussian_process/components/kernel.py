@@ -8,6 +8,7 @@ from collections.abc import Iterable
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
+import pandas as pd
 from attrs import define, field, fields
 from attrs.converters import optional
 from attrs.validators import is_callable
@@ -15,6 +16,7 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.kernels.base import Kernel
+from baybe.objectives.base import Objective
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import _ParameterKind
 from baybe.parameters.selectors import (
@@ -33,7 +35,6 @@ from baybe.surrogates.gaussian_process.components.generic import (
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
-    from torch import Tensor
 
     from baybe.parameters.base import Parameter
 
@@ -42,7 +43,10 @@ if TYPE_CHECKING:
 else:
     # At runtime, we use only the BayBE type for serialization compatibility
     KernelFactoryProtocol = GPComponentFactoryProtocol[Kernel]
+    """A factory protocol for Gaussian process kernels."""
+
     PlainKernelFactory = PlainGPComponentFactory[Kernel]
+    """A trivial factory returning a fixed, pre-defined kernel."""
 
 
 @define
@@ -107,7 +111,7 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
         """Construct the kernel, validating parameter kinds before construction."""
         if self.parameter_selector is not None:
@@ -116,11 +120,11 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
             params = list(searchspace.parameters)
         self._validate_parameter_kinds(params)
 
-        return self._make(searchspace, train_x, train_y)
+        return self._make(searchspace, objective, measurements)
 
     @abstractmethod
     def _make(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
         """Construct the kernel."""
 
@@ -185,7 +189,9 @@ def _enable_transfer_learning(
     _task_exclude_selector = TypeSelector((TaskParameter,), exclude=True)
 
     @functools.wraps(original_call)
-    def __call__(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor):
+    def __call__(
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+    ):
         # Temporarily narrow the supported parameter kinds to those of the original
         # class. If the decorator logic is correct, the original factory should never
         # see the extended scope, but this acts as a sanity check to prevent regressions
@@ -202,14 +208,14 @@ def _enable_transfer_learning(
             )
 
         try:
-            base_kernel = original_call(self, searchspace, train_x, train_y)
+            base_kernel = original_call(self, searchspace, objective, measurements)
         finally:
             target_cls._supported_parameter_kinds = broadened_kinds
             self.parameter_selector = original_selector
 
         if searchspace.task_idx is not None:
             icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
-            return icm(searchspace, train_x, train_y)
+            return icm(searchspace, objective, measurements)
         return base_kernel
 
     target_cls.__call__ = __call__  # type: ignore[method-assign]
@@ -226,7 +232,7 @@ class _MetaKernelFactory(KernelFactoryProtocol, ABC):
     @override
     @abstractmethod
     def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel: ...
 
 
@@ -293,7 +299,7 @@ class ICMKernelFactory(_MetaKernelFactory):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
         if searchspace.task_idx is None:
             raise IncompatibleSearchSpaceError(
@@ -301,8 +307,8 @@ class ICMKernelFactory(_MetaKernelFactory):
                 f"contains a '{TaskParameter.__name__}'."
             )
 
-        base_kernel = self.base_kernel_factory(searchspace, train_x, train_y)
-        task_kernel = self.task_kernel_factory(searchspace, train_x, train_y)
+        base_kernel = self.base_kernel_factory(searchspace, objective, measurements)
+        task_kernel = self.task_kernel_factory(searchspace, objective, measurements)
         if isinstance(base_kernel, Kernel):
             base_kernel = base_kernel.to_gpytorch(searchspace)
         if isinstance(task_kernel, Kernel):

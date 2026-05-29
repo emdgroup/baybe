@@ -6,10 +6,12 @@ import gc
 from itertools import chain
 from typing import TYPE_CHECKING, ClassVar
 
+import pandas as pd
 from attrs import define
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
+from baybe.objectives.base import Objective
 from baybe.parameters.enum import _ParameterKind
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components import LikelihoodFactoryProtocol
@@ -27,7 +29,6 @@ if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.means import Mean as GPyTorchMean
-    from torch import Tensor
 
 
 @define
@@ -44,7 +45,7 @@ class BotorchKernelFactory(_PureKernelFactory):
 
     @override
     def _make(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
         from botorch.models.kernels.positive_index import PositiveIndexKernel
         from botorch.models.utils.gpytorch_modules import (
@@ -79,7 +80,7 @@ class BotorchKernelFactory(_PureKernelFactory):
             active_dims=[task_idx],
         )
         return ICMKernelFactory(base_kernel, index_kernel)(
-            searchspace, train_x, train_y
+            searchspace, objective, measurements
         )
 
 
@@ -88,7 +89,7 @@ class BotorchMeanFactory(MeanFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> GPyTorchMean:
         from gpytorch.means import ConstantMean
 
@@ -110,7 +111,7 @@ class BotorchLikelihoodFactory(LikelihoodFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> GPyTorchLikelihood:
 
         if searchspace.n_tasks == 1:

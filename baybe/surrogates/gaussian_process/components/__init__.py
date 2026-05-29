@@ -6,6 +6,7 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
     PlainFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
+    ICMKernelFactory,
     KernelFactoryProtocol,
     PlainKernelFactory,
 )
@@ -25,6 +26,7 @@ __all__ = [
     "FitCriterionFactoryProtocol",
     "PlainFitCriterionFactory",
     # Kernel
+    "ICMKernelFactory",
     "KernelFactoryProtocol",
     "PlainKernelFactory",
     # Likelihood

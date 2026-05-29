@@ -64,9 +64,12 @@ multiple ways:
   {class}`~baybe.kernels.base.Kernel` object)
 * As a low-level [GPyTorch](https://gpytorch.ai/) component (e.g., a
   {class}`gpytorch.kernels.Kernel`)
-* Or most flexibly: as a *factory* producing either of the two above.
-  More precisely: a callable that receives the actual recommendation context and
-  dynamically returns a component produced specifically for the problem at hand. 
+* Or most flexibly: as a
+  [*factory*](baybe.surrogates.gaussian_process.components.generic.GPComponentFactoryProtocol)
+  (e.g., a {class}`~baybe.surrogates.gaussian_process.components.kernel.KernelFactoryProtocol`-compatible object),
+  producing either of the two above. More precisely: a callable that receives the actual
+  recommendation context and dynamically returns a component produced specifically for
+  the problem at hand. 
 
 ```{admonition} Serialization
 :class: warning
@@ -80,21 +83,25 @@ The following example demonstrates some of the possible specification mechanisms
 ```python
 import math
 
+import pandas as pd
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import LinearMean
 from gpytorch.priors import GammaPrior
-from torch import Tensor
 
-from baybe.kernels.basic import LinearKernel, MaternKernel
-from baybe.searchspace.core import SearchSpace
+from baybe.kernels import LinearKernel, MaternKernel
+from baybe.objectives.base import Objective
+from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.components import FitCriterion
 
 
-def likelihood_factory(searchspace: SearchSpace, train_x: Tensor, train_y: Tensor):
+# Implements the protocol for kernel factories:
+def likelihood_factory(
+    searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+):
     """Create a dimensionality-adjusted Gaussian likelihood model."""
     # Use a Gamma prior whose mean and variance scale with the input dimensionality
-    d = train_x.shape[-1]
+    d = len(searchspace.comp_rep_columns)
     noise_prior = GammaPrior(concentration=math.sqrt(d), rate=1.0)
     return GaussianLikelihood(noise_prior)
 

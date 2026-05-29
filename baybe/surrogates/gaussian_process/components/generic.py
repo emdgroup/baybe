@@ -7,10 +7,12 @@ import sys
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeAlias, TypeVar
 
+import pandas as pd
 from attrs import Attribute, define, field
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
+from baybe.objectives.base import Objective
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import block_serialization_hook, converter
 from baybe.serialization.mixin import SerialMixin
@@ -22,7 +24,6 @@ if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.means import Mean as GPyTorchMean
-    from torch import Tensor
 
     GPyTorchGPComponent: TypeAlias = GPyTorchKernel | GPyTorchMean | GPyTorchLikelihood
     GPComponent: TypeAlias = BayBEGPComponent | GPyTorchGPComponent
@@ -106,12 +107,21 @@ def _validate_component(instance: Any, attribute: Attribute, value: Any) -> None
 
 
 class GPComponentFactoryProtocol(Protocol, Generic[_T_co]):
-    """A protocol defining the interface expected for GP component factories."""
+    """A protocol defining the interface for Gaussian process component factories."""
 
     def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> _T_co:
-        """Create a GP component for the given recommendation context."""
+        """Create a Gaussian process component for the given recommendation context.
+
+        Args:
+            searchspace: The optimization search space.
+            objective: The optimization objective.
+            measurements: The available experimentation data.
+
+        Returns:
+            The constructed Gaussian process component.
+        """
 
 
 @define(frozen=True)
@@ -123,7 +133,7 @@ class PlainGPComponentFactory(GPComponentFactoryProtocol[_T_co], SerialMixin):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> _T_co:
         return self.component
 

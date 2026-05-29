@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
+import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel
+from baybe.objectives.base import Objective
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import _ParameterKind
 from baybe.parameters.selectors import (
@@ -28,9 +30,6 @@ from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOLikelihoodFactory,
     _SmoothedEDBONumericalKernelFactory,
 )
-
-if TYPE_CHECKING:
-    from torch import Tensor
 
 
 class _BayBENumericalKernelFactory(_SmoothedEDBONumericalKernelFactory):
@@ -59,7 +58,7 @@ class _BayBETaskKernelFactory(_PureKernelFactory):
 
     @override
     def _make(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel:
         return IndexKernel(
             num_tasks=searchspace.n_tasks,
@@ -82,7 +81,7 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> FitCriterion:
         return (
             FitCriterion.MARGINAL_LOG_LIKELIHOOD

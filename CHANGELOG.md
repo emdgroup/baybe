@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GaussianProcessSurrogate` no longer automatically adds a task kernel in multi-task
   scenarios. Custom kernel architectures must now explicitly include the task kernel,
   e.g. via `ICMKernelFactory`
+- `KernelFactory` now obeys the more general `GPComponentFactoryProtocol`
 
 ### Fixed
 - Broken cache validation for certain `Campaign.recommend` cases

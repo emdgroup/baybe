@@ -6,11 +6,13 @@ import gc
 import math
 from typing import TYPE_CHECKING, ClassVar
 
+import pandas as pd
 from attrs import define
 from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
+from baybe.objectives.base import Objective
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     _MLLForNonTLFitCriterionFactory,
@@ -25,15 +27,13 @@ from baybe.surrogates.gaussian_process.components.likelihood import (
 from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
 
 if TYPE_CHECKING:
-    from torch import Tensor
-
     from baybe.kernels.base import Kernel
     from baybe.searchspace.core import SearchSpace
 
 
 @_enable_transfer_learning
 @define
-class CHENKernelFactory(_PureKernelFactory):
+class ChenKernelFactory(_PureKernelFactory):
     """A factory providing adaptive hyperprior kernels as proposed by :cite:p:`Chen2026`."""  # noqa: E501
 
     _uses_parameter_names: ClassVar[bool] = True
@@ -41,7 +41,7 @@ class CHENKernelFactory(_PureKernelFactory):
 
     @override
     def _make(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel:
         n_dimensions = self._get_effective_dimensionality(searchspace)
         lengthscale = 0.4 * math.sqrt(n_dimensions) + 4.0
@@ -62,14 +62,14 @@ class CHENKernelFactory(_PureKernelFactory):
         )
 
 
-CHENFitCriterionFactory = _MLLForNonTLFitCriterionFactory()
+CHEN_FIT_CRITERION_FACTORY = _MLLForNonTLFitCriterionFactory()
 """A factory providing fitting criteria for the CHEN preset."""
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
 
 # Preset defaults
-KERNEL_FACTORY = CHENKernelFactory()
+KERNEL_FACTORY = ChenKernelFactory()
 MEAN_FACTORY = LazyConstantMeanFactory()
 LIKELIHOOD_FACTORY = LazyGaussianLikelihoodFactory()
-FIT_CRITERION_FACTORY = CHENFitCriterionFactory
+FIT_CRITERION_FACTORY = CHEN_FIT_CRITERION_FACTORY

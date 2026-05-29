@@ -20,8 +20,8 @@ from baybe.surrogates.gaussian_process.presets.botorch import (
 
 # Chen preset
 from baybe.surrogates.gaussian_process.presets.chen import (
-    CHENFitCriterionFactory,
-    CHENKernelFactory,
+    CHEN_FIT_CRITERION_FACTORY,
+    ChenKernelFactory,
 )
 
 # Core
@@ -29,7 +29,7 @@ from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
 
 # EDBO preset
 from baybe.surrogates.gaussian_process.presets.edbo import (
-    EDBOFitCriterionFactory,
+    EDBO_FIT_CRITERION_FACTORY,
     EDBOKernelFactory,
     EDBOLikelihoodFactory,
     EDBOMeanFactory,
@@ -37,7 +37,7 @@ from baybe.surrogates.gaussian_process.presets.edbo import (
 
 # Smoothed EDBO preset
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
-    SmoothedEDBOFitCriterionFactory,
+    SMOOTHED_EDBO_FIT_CRITERION_FACTORY,
     SmoothedEDBOKernelFactory,
     SmoothedEDBOLikelihoodFactory,
     SmoothedEDBOMeanFactory,
@@ -57,15 +57,15 @@ __all__ = [
     "BotorchLikelihoodFactory",
     "BotorchMeanFactory",
     # Chen preset
-    "CHENFitCriterionFactory",
-    "CHENKernelFactory",
+    "CHEN_FIT_CRITERION_FACTORY",
+    "ChenKernelFactory",
     # EDBO preset
-    "EDBOFitCriterionFactory",
+    "EDBO_FIT_CRITERION_FACTORY",
     "EDBOKernelFactory",
     "EDBOLikelihoodFactory",
     "EDBOMeanFactory",
     # Smoothed EDBO preset
-    "SmoothedEDBOFitCriterionFactory",
+    "SMOOTHED_EDBO_FIT_CRITERION_FACTORY",
     "SmoothedEDBOKernelFactory",
     "SmoothedEDBOLikelihoodFactory",
     "SmoothedEDBOMeanFactory",
