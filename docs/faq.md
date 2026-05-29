@@ -1,5 +1,14 @@
 # FAQ
 
+```{dropdown} What is BayBE's backwards compatibility policy?
+
+BayBE is in a state of constant development. As part of this, interfaces and objects
+might change in ways breaking existing code. We aspire to provide backwards **support
+for deprecated code of the last three minor versions**. After this time, old code will
+generally be removed. Both the moment of deprecation and full removal (deprecation
+expiration) will be noted in the [changelog](/misc/changelog_link).
+```
+
 ```{dropdown} Do I need to create a campaign to get recommendations?
 
 No, creating a campaign is not mandatory.
