@@ -355,3 +355,4 @@ class GaussianProcessSurrogate(Surrogate):
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
+# benchmark
