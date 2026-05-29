@@ -261,9 +261,7 @@ def df_drop_string_columns(
         The cleaned dataframe.
     """
     ignore_list = ignore_list or []
-    # applymap was removed in pandas 3.0; map() is the replacement (added in 2.1)
-    _df_map = df.map if hasattr(df, "map") else df.applymap
-    no_string = ~_df_map(lambda x: isinstance(x, str)).any()
+    no_string = ~df.map(lambda x: isinstance(x, str)).any()
     no_string = no_string[no_string].index
     to_keep = set(no_string).union(set(ignore_list))
     ordered_cols = [col for col in df if col in to_keep]
