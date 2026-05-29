@@ -83,8 +83,8 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Capture relationships between categories via <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#customdiscreteparameter">custom encodings for categorical</a> data.</li>
-      <li>Use built-in <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#substanceparameter">chemical encodings</a> for chemistry-related parameters.</li>
+      <li>Capture relationships between categories via <a href="https://emdgroup.github.io/baybe/stable/components/parameters.html#customdiscreteparameter">custom encodings for categorical</a> data.</li>
+      <li>Use built-in <a href="https://emdgroup.github.io/baybe/stable/components/parameters.html#substanceparameter">chemical encodings</a> for chemistry-related parameters.</li>
       <li>Add mechanistic process understanding via <a href="https://emdgroup.github.io/baybe/stable/userguide/surrogates.html#using-custom-models">custom surrogate</a> models.</li>
       <li>Leverage additional data from similar campaigns to accelerate optimization via <a href="https://emdgroup.github.io/baybe/stable/concepts/transfer_learning.html">transfer learning</a>.</li>
     </ul>
@@ -199,7 +199,7 @@ parameters = [
 ```
 
 For more parameter types and their details, see the
-[parameters section](https://emdgroup.github.io/baybe/stable/userguide/parameters.html)
+[parameters section](https://emdgroup.github.io/baybe/stable/components/parameters.html)
 of the user guide.
 
 Additionally, we can define a set of constraints to further specify allowed ranges and

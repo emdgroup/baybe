@@ -167,7 +167,7 @@ Due to the leading design philosophy behind BayBE to provide its users easy acce
 to a broad range of tools, you typically have the choice between several modelling 
 alternatives when building your objects.
 For example, when describing the degrees of freedom of your experimental campaign,
-you can chose from several different [parameter types](/userguide/parameters).
+you can chose from several different [parameter types](/components/parameters).
 
 While this offers great flexibility, it comes with a challenge for deserialization
 because you cannot know a priori which concrete object subclass is contained 
