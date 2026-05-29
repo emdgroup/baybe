@@ -1239,6 +1239,8 @@ equality check</p></li>
 <section id="changed">
 <h3>Changed<a class="headerlink" href="#changed" title="Link to this heading">¶</a></h3>
 <ul class="simple">
+<li><p>Default transfer learning kernel changed from <code class="docutils literal notranslate"><span class="pre">IndexKernel</span></code> to <code class="docutils literal notranslate"><span class="pre">PositiveIndexKernel</span></code>,
+enforcing positive task correlations</p></li>
 <li><p>The <code class="docutils literal notranslate"><span class="pre">Campaign.allow_*</span></code> flag mechanism is now based on <code class="docutils literal notranslate"><span class="pre">AutoBool</span></code> logic, providing
 well-defined Boolean values at query time while exposing the <code class="docutils literal notranslate"><span class="pre">AUTO</span></code> option to the user</p></li>
 <li><p>Discrete search space construction now applies constraints incrementally during

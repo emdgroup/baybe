@@ -1175,7 +1175,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">IndexKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">PositiveIndexKernel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Objective</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.categorical</span><span class="w"> </span><span class="kn">import</span> <span class="n">TaskParameter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ParameterKind</span>
@@ -1229,7 +1229,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_make</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">IndexKernel</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">PositiveIndexKernel</span><span class="p">(</span>
             <span class="n">num_tasks</span><span class="o">=</span><span class="n">searchspace</span><span class="o">.</span><span class="n">n_tasks</span><span class="p">,</span>
             <span class="n">rank</span><span class="o">=</span><span class="n">searchspace</span><span class="o">.</span><span class="n">n_tasks</span><span class="p">,</span>
             <span class="n">parameter_names</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">(</span><span class="n">searchspace</span><span class="p">),</span>

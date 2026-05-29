@@ -1276,6 +1276,11 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the active dimensions and the number of ARD dimensions.&quot;&quot;&quot;</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extra_gpytorch_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extra keyword arguments injected into the gpytorch kernel constructor.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
 <div class="viewcode-block" id="Kernel.to_gpytorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.base.Kernel.html#baybe.kernels.base.Kernel.to_gpytorch">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_gpytorch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">):</span>
@@ -1339,7 +1344,10 @@
         <span class="n">kernel_attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kernel_dict</span><span class="p">)</span>
         <span class="n">kernel_attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">prior_dict</span><span class="p">)</span>
         <span class="n">gpytorch_kernel</span> <span class="o">=</span> <span class="n">kernel_cls</span><span class="p">(</span>
-            <span class="o">**</span><span class="n">kernel_attrs</span><span class="p">,</span> <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">ard_num_dims</span><span class="p">,</span> <span class="n">active_dims</span><span class="o">=</span><span class="n">active_dims</span>
+            <span class="o">**</span><span class="n">kernel_attrs</span><span class="p">,</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_extra_gpytorch_kwargs</span><span class="p">,</span>
+            <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">ard_num_dims</span><span class="p">,</span>
+            <span class="n">active_dims</span><span class="o">=</span><span class="n">active_dims</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># If the kernel has a lengthscale, set its initial value</span>
