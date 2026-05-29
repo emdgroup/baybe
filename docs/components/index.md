@@ -11,4 +11,5 @@ Search Spaces <searchspace>
 Surrogates <surrogates>
 Targets <targets>
 Transformations <transformations>
+Utilities <utils>
 ```
