@@ -96,7 +96,7 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Run campaigns <a href="https://emdgroup.github.io/baybe/stable/userguide/async.html">asynchronously</a> with partial measurements and pending experiments.</li>
+      <li>Run campaigns <a href="https://emdgroup.github.io/baybe/stable/concepts/async.html">asynchronously</a> with partial measurements and pending experiments.</li>
       <li>Store BayBE objects and use API wrappers with the <a href="https://emdgroup.github.io/baybe/stable/userguide/serialization.html">serialization</a> functionality.</li>
     </ul>
   </div>

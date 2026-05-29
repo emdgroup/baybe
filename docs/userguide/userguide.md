@@ -32,7 +32,6 @@ Detailed examples of how to use individual API components can be found below:
 ```{toctree}
 Getting Recommendations <getting_recommendations>
 Campaigns <campaigns>
-Asynchronous Workflows <async>
 Constraints <constraints>
 Insights <insights>
 Objectives <objectives>
