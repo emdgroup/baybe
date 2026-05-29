@@ -297,7 +297,7 @@ assert campaign == reconstructed
 ```
 
 General information on this topic can be found in our 
-[serialization user guide](/userguide/serialization).
+[serialization user guide](/concepts/serialization).
 For campaigns, however, this possibility is particularly noteworthy as it enables
 one of the most common workflows in this context –
 persisting the current state of a campaign for long-term storage and continuing the
