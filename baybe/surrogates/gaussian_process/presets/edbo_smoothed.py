@@ -11,7 +11,6 @@ from attrs import define
 from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
-from baybe.kernels.composite import ScaleKernel
 from baybe.objectives.base import Objective
 from baybe.parameters.enum import _ParameterKind
 from baybe.priors.basic import GammaPrior
@@ -59,21 +58,12 @@ class _SmoothedEDBONumericalKernelFactory(_PureKernelFactory):
             np.interp(effective_dims, _DIM_LIMITS, [1.1, 0.55]),
         )
         lengthscale_initial_value = np.interp(effective_dims, _DIM_LIMITS, [0.2, 6.0])
-        outputscale_prior = GammaPrior(
-            np.interp(effective_dims, _DIM_LIMITS, [5.0, 3.5]),
-            np.interp(effective_dims, _DIM_LIMITS, [0.5, 0.15]),
-        )
-        outputscale_initial_value = np.interp(effective_dims, _DIM_LIMITS, [8.0, 15.0])
 
-        return ScaleKernel(
-            MaternKernel(
-                nu=2.5,
-                lengthscale_prior=lengthscale_prior,
-                lengthscale_initial_value=lengthscale_initial_value,
-                parameter_names=self.get_parameter_names(searchspace),
-            ),
-            outputscale_prior=outputscale_prior,
-            outputscale_initial_value=outputscale_initial_value,
+        return MaternKernel(
+            nu=2.5,
+            lengthscale_prior=lengthscale_prior,
+            lengthscale_initial_value=lengthscale_initial_value,
+            parameter_names=self.get_parameter_names(searchspace),
         )
 
 
