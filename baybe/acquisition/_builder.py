@@ -23,6 +23,7 @@ from baybe.acquisition.acqfs import (
     _ExpectedHypervolumeImprovement,
     qExpectedHypervolumeImprovement,
     qLogExpectedHypervolumeImprovement,
+    qLogNoisyExpectedImprovement,
     qNegIntegratedPosteriorVariance,
     qThompsonSampling,
 )
@@ -75,6 +76,7 @@ class BotorchAcquisitionArgs:
     # Optional, depending on the specific acquisition function being used
     best_f: float | None = _OPT_FIELD
     beta: float | None = _OPT_FIELD
+    constraints: list | None = _OPT_FIELD
     maximize: bool | None = _OPT_FIELD
     mc_points: Tensor | None = _OPT_FIELD
     num_fantasies: int | None = _OPT_FIELD
@@ -197,6 +199,7 @@ class BotorchAcquisitionFunctionBuilder:
         # Set context-specific parameters
         self._set_best_f()
         self._set_target_transformation()
+        self._set_constraints()
         self._set_X_baseline()
         self._set_X_pending()
         self._set_mc_points()
@@ -222,6 +225,18 @@ class BotorchAcquisitionFunctionBuilder:
                 return
 
         if self.acqf.is_analytic:
+            # TODO: Certain analytic acquisition functions (e.g. analytic EI with
+            #   constraints) do support outcome constraints and will be added to BayBE
+            #   in the future. Once available, this guard should be scoped to only
+            #   those analytic acqfs that do NOT support constraints, and
+            #   `to_botorch_posterior_transform()` must be fixed to pad the weight
+            #   vector to length `n_models`.
+            if self.objective.outcome_constraints:
+                raise IncompatibilityError(
+                    f"Analytical acquisition function '{type(self.acqf).__name__}' "
+                    f"does not support outcome constraints. Use an MC-based "
+                    f"acquisition function instead."
+                )
             try:
                 transform = self.objective.to_botorch_posterior_transform()
             except NonGaussianityError as ex:
@@ -253,16 +268,110 @@ class BotorchAcquisitionFunctionBuilder:
 
             self._args.objective = self.objective.to_botorch()
 
+    def _set_constraints(self) -> None:
+        """Set BoTorch's ``constraints`` argument from outcome constraints.
+
+        Outcome constraint compatibility check — Layer 2 (acquisition function level).
+        Raises IncompatibilityError if the acqf's BoTorch __init__ signature does not
+        include a ``constraints`` parameter.
+        """
+        if not self.objective.outcome_constraints:
+            return
+
+        if flds.constraints.name not in self._signature:
+            raise IncompatibilityError(
+                f"The selected acquisition function "
+                f"'{type(self.acqf).__name__}' does not support outcome "
+                f"constraints. Use a compatible acquisition function such as "
+                f"'{qLogNoisyExpectedImprovement.__name__}' instead."
+            )
+        constraints = self.objective.to_botorch_constraints()
+        if constraints:
+            self._args.constraints = constraints
+
     def _set_best_f(self) -> None:
-        """Set BoTorch's ``best_f`` argument."""
+        """Set BoTorch's ``best_f`` argument.
+
+        best_f is a constant reference value (not differentiable). When outcome
+        constraints are present, only feasible training points are considered.
+        """
         if flds.best_f.name not in self._signature:
             return
 
         match self.objective:
             case SingleTargetObjective() | DesirabilityObjective():
-                self._args.best_f = self._posterior_mean_comp.max().item()
+                if not (constraints := self.objective.to_botorch_constraints()):
+                    self._args.best_f = self._posterior_mean_comp.max().item()
+                else:
+                    self._args.best_f = self._compute_best_f_with_constraints(
+                        constraints
+                    )
             case _:
                 raise NotImplementedError("This line should be impossible to reach.")
+
+    def _compute_best_f_with_constraints(
+        self, constraints: list[Callable[[Tensor], Tensor]]
+    ) -> float:
+        """Compute the best objective value considering outcome constraints.
+
+        Falls back to the global maximum if no feasible training point exists.
+
+        Args:
+            constraints: Constraint functions from
+                :meth:`~baybe.objectives.base.Objective.to_botorch_constraints`.
+
+        Returns:
+            The best feasible objective value, or the global maximum as fallback.
+        """
+        # Get objective values for all training points
+        objective_values = self._posterior_mean_comp
+
+        # Get raw model predictions for constraint evaluation
+        batched = to_tensor(self._train_x).unsqueeze(-2)
+        posterior = self._botorch_surrogate.posterior(batched)
+        model_predictions = posterior.mean.squeeze(-2)
+
+        # Apply constraint functions to filter feasible points
+        feasible_mask = self._compute_feasible_mask(model_predictions, constraints)
+
+        if not feasible_mask.any():
+            # TODO: other mechanisms, e.g. steer towards feasible region?
+            # No feasible training points - fall back to global maximum
+            return objective_values.max().item()
+
+        # Return maximum among feasible points
+        feasible_objectives = objective_values[feasible_mask]
+        return feasible_objectives.max().item()
+
+    def _compute_feasible_mask(
+        self,
+        model_predictions: Tensor,
+        constraints: list[Callable[[Tensor], Tensor]],
+    ) -> Tensor:
+        """Compute boolean mask indicating which points satisfy all constraints.
+
+        Uses hard thresholding (feasible when constraint value <= 0) combined
+        via boolean AND across all constraints.
+
+        Args:
+            model_predictions: Raw model predictions [n_points, n_outputs]
+            constraints: Constraint functions from to_botorch_constraints()
+
+        Returns:
+            Boolean mask [n_points] where True = feasible, False = infeasible
+        """
+        n_points = model_predictions.shape[0]
+        feasible_mask = torch.ones(n_points, dtype=torch.bool)
+
+        for constraint_func in constraints:
+            # Constraint func: [batch, q, m] -> [batch, q]; we insert q=1
+            # via unsqueeze(-2), so output is [n_points, 1]; squeeze q dim.
+            constraint_violations = constraint_func(
+                model_predictions.unsqueeze(-2)
+            ).squeeze(-1)
+            feasible_mask &= constraint_violations <= 0
+
+        return feasible_mask
 
     def set_default_sample_shape(self, acqf: BoAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""

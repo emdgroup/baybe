@@ -5,15 +5,18 @@ from __future__ import annotations
 import gc
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
 from attrs import define, field
+from attrs.validators import deep_iterable, instance_of
 
+from baybe.constraints.outcome import OutcomeConstraint
 from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.basic import is_all_instance
+from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.dataframe import get_transform_objects, to_tensor
 from baybe.utils.dataframe import (
     handle_missing_values as df_handle_missing_values,
@@ -22,6 +25,7 @@ from baybe.utils.metadata import Metadata, to_metadata
 from baybe.utils.validation import validate_target_input
 
 if TYPE_CHECKING:
+    import torch
     from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 
 
@@ -43,15 +47,56 @@ class Objective(ABC, SerialMixin):
     )
     """Optional metadata containing description and other information."""
 
+    outcome_constraints: tuple[OutcomeConstraint, ...] = field(
+        default=(),
+        converter=to_tuple,
+        validator=deep_iterable(member_validator=instance_of(OutcomeConstraint)),
+        kw_only=True,
+    )
+    """Outcome constraints applied to the optimization problem."""
+
     @property
     def description(self) -> str | None:
         """The description of the objective."""
         return self.metadata.description
 
+    def __attrs_post_init__(self) -> None:
+        """Validate outcome constraints against optimization targets."""
+        # Disallow overlap between optimization and constraint targets
+        optimization_names = {t.name for t in self._optimization_targets}
+        constraint_names = {t.name for t in self.constraint_targets}
+        if overlap := optimization_names & constraint_names:
+            raise ValueError(
+                f"Targets cannot be both optimized and constrained: {sorted(overlap)}."
+            )
+
+        # Constraint-only targets must have minimize=None
+        if invalid := [
+            t.name
+            for t in self.constraint_targets
+            if isinstance(t, NumericalTarget) and t.minimize is not None
+        ]:
+            raise ValueError(
+                f"Constraint-only targets must have minimize=None, "
+                f"but the following do not: {invalid}."
+            )
+
     @property
     @abstractmethod
+    def _optimization_targets(self) -> tuple[Target, ...]:
+        """The targets being optimized."""
+
+    @property
+    def constraint_targets(self) -> tuple[Target, ...]:
+        """Targets referenced in constraints (guaranteed disjoint from optimization)."""
+        return tuple(
+            {c.target.name: c.target for c in self.outcome_constraints}.values()
+        )
+
+    @property
     def targets(self) -> tuple[Target, ...]:
-        """The targets included in the objective."""
+        """All targets requiring data processing and modeling (opt + constraints)."""
+        return (*self._optimization_targets, *self.constraint_targets)
 
     @property
     def _modeled_quantities(self) -> tuple[Target, ...]:
@@ -82,9 +127,9 @@ class Objective(ABC, SerialMixin):
         return self._n_models > 1
 
     @property
-    @abstractmethod
     def output_names(self) -> tuple[str, ...]:
         """The names of the outputs of the objective."""
+        return tuple(t.name for t in self._optimization_targets)
 
     @property
     def n_outputs(self) -> int:
@@ -98,10 +143,10 @@ class Objective(ABC, SerialMixin):
 
     @property
     def _oriented_targets(self) -> tuple[Target, ...]:
-        """The targets with optional negation transformation for minimization."""
+        """The targets to optimize with optional negation transform for minimization."""
         return tuple(
             t.negate() if isinstance(t, NumericalTarget) and t.minimize else t
-            for t in self.targets
+            for t in self._optimization_targets
         )
 
     @property
@@ -148,6 +193,23 @@ class Objective(ABC, SerialMixin):
                 dim=-1,
             )
         )
+
+    def _check_posterior_transform_constraint_support(self) -> None:
+        """Raise error if outcome constraints are present.
+
+        Analytic acquisition functions do not yet support outcome constraints.
+        This guard prevents a shape mismatch in the posterior transform by
+        raising early when constraints are detected.
+
+        Raises:
+            NotImplementedError: If outcome constraints are present.
+        """
+        if self.constraint_targets:
+            raise NotImplementedError(
+                f"'{type(self).__name__}.to_botorch_posterior_transform()' does not "
+                f"yet support objectives with outcome constraints. Use an MC-based "
+                f"acquisition function instead."
+            )
 
     @abstractmethod
     def to_botorch_posterior_transform(self) -> PosteriorTransform:
@@ -278,12 +340,53 @@ class Objective(ABC, SerialMixin):
         """
         from botorch.utils.multi_objective.pareto import is_non_dominated
 
-        validate_target_input(configurations, self.targets)
+        validate_target_input(configurations, self._optimization_targets)
 
         targets = self.transform(configurations, allow_extra=True)
         non_dominated = is_non_dominated(Y=to_tensor(targets), deduplicate=False)
 
         return pd.Series(non_dominated.numpy(), name="is_non_dominated")
+
+    def to_botorch_constraints(
+        self,
+    ) -> list[Callable[[torch.Tensor], torch.Tensor]]:
+        """Convert outcome constraints to BoTorch constraint callables.
+
+        Returns a list of callables, each mapping samples of shape
+        ``sample_shape x batch_shape x q x m`` to constraint values of shape
+        ``sample_shape x batch_shape x q``. A constraint is satisfied when
+        the return value is <= 0. Multiple constraints on the same target are
+        combined via ``torch.max`` (most-violated semantics).
+        """
+        if not self.outcome_constraints:
+            return []
+
+        from collections import defaultdict
+
+        import torch
+
+        # Group constraints by target index in model output
+        all_quantities = list(self._modeled_quantity_names)
+        constraints_by_target: dict[int, list[OutcomeConstraint]] = defaultdict(list)
+        for constraint in self.outcome_constraints:
+            if constraint.target.name in all_quantities:
+                idx = all_quantities.index(constraint.target.name)
+                constraints_by_target[idx].append(constraint)
+
+        # Build one callable per target; combine multiple via max (most-violated)
+        constraint_callables: list[Callable[[torch.Tensor], torch.Tensor]] = []
+        for target_idx, constraints in constraints_by_target.items():
+            funcs = [c.to_botorch_constraint_func(target_idx) for c in constraints]
+            if len(funcs) == 1:
+                constraint_callables.append(funcs[0])
+            else:
+                constraint_callables.append(
+                    lambda s, f=funcs: torch.max(
+                        torch.stack([fn(s) for fn in f]), dim=0
+                    )[0]
+                )
+
+        return constraint_callables
 
 
 def to_objective(x: Target | Objective, /) -> Objective:

@@ -111,7 +111,7 @@ class DesirabilityObjective(Objective):
     @weights.default
     def _default_weights(self) -> tuple[float, ...]:
         """Create unit weights for all targets."""
-        return tuple(1.0 for _ in range(len(self.targets)))
+        return tuple(1.0 for _ in range(len(self._optimization_targets)))
 
     @_targets.validator
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
@@ -147,7 +147,7 @@ class DesirabilityObjective(Objective):
 
     @weights.validator
     def _validate_weights(self, _, weights) -> None:  # noqa: DOC101, DOC103
-        if (lw := len(weights)) != (lt := len(self.targets)):
+        if (lw := len(weights)) != (lt := len(self._optimization_targets)):
             raise ValueError(
                 f"If custom weights are specified, there must be one for each target. "
                 f"Specified number of targets: {lt}. Specified number of weights: {lw}."
@@ -155,14 +155,16 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def targets(self) -> tuple[NumericalTarget, ...]:
+    def _optimization_targets(self) -> tuple[Target, ...]:
+        """Only the targets being optimized."""
         return self._targets
 
     @override
     @property
     def _modeled_quantities(self) -> tuple[Target, ...]:
         if self.as_pre_transformation:
-            return (NumericalTarget(_OUTPUT_NAME),)
+            # TODO: add constraint_targets
+            return (NumericalTarget(_OUTPUT_NAME),) + self.constraint_targets
         else:
             return self.targets
 
@@ -170,7 +172,9 @@ class DesirabilityObjective(Objective):
     @property
     def _model_quantities_to_target_names(self) -> dict[str, list[str]]:
         if self.as_pre_transformation:
-            return {_OUTPUT_NAME: [t.name for t in self.targets]}
+            result = {_OUTPUT_NAME: [t.name for t in self._optimization_targets]}
+            result.update({t.name: [t.name] for t in self.constraint_targets})
+            return result
         else:
             return {t.name: [t.name] for t in self.targets}
 
@@ -191,7 +195,7 @@ class DesirabilityObjective(Objective):
 
     @override
     def __str__(self) -> str:
-        targets_list = [target.summary() for target in self.targets]
+        targets_list = [target.summary() for target in self._optimization_targets]
         targets_df = pd.DataFrame(targets_list)
         targets_df["Weights"] = self.normalized_weights
 
@@ -211,7 +215,7 @@ class DesirabilityObjective(Objective):
         # to enable geometric averaging.
         return tuple(
             t.negate() + 1 if isinstance(t, NumericalTarget) and t.minimize else t
-            for t in self.targets
+            for t in self._optimization_targets
         )
 
     @override
@@ -265,10 +269,11 @@ class DesirabilityObjective(Objective):
 
     @override
     def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
+        self._check_posterior_transform_constraint_support()
         if self.as_pre_transformation:
             return IdentityTransformation().to_botorch_posterior_transform()
 
-        targets = self.targets
+        targets = self._optimization_targets
         transformations = [t.transformation for t in targets]
         if (
             self.scalarizer is not Scalarizer.MEAN

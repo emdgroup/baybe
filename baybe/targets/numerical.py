@@ -122,8 +122,17 @@ class NumericalTarget(Target, SerialMixin):
     )
     """An optional target transformation."""
 
-    minimize: bool = field(default=False, validator=instance_of(bool), kw_only=True)
-    """Boolean flag indicating if the target is to be minimized."""
+    minimize: bool | None = field(
+        default=False,
+        validator=instance_of((bool, type(None))),
+        kw_only=True,
+    )
+    """Boolean flag indicating if the target is to be minimized.
+
+    - ``False``: maximize the target (default)
+    - ``True``: minimize the target
+    - ``None``: no optimization direction (constraint-only target)
+    """
 
     _constructor_info: dict[str, Any] | None = field(default=None, init=False, eq=False)
     """Helper to keep track of the target's construction details."""
