@@ -57,7 +57,7 @@ Since desirability computation relies on scalarization, and because targets can 
 arbitrarily in scale, it is (by default) required that all targets are properly
 normalized before entering the computation to enable meaningful combination into
 desirability values. This can be achieved by applying appropriate normalizing target
-[transformations](/userguide/transformations).
+[transformations](/components/transformations).
 
 Alternatively, if you know what you are doing, you can also disable this requirement
 via the [`require_normalization`](#require-normalization) flag. 

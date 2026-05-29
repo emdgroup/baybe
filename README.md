@@ -72,7 +72,7 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
           <li>Conduct AB testing via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html">bandit models</a>.</li>
         </ul>
       </li>
-      <li>Specify the desired target value via <a href="https://emdgroup.github.io/baybe/stable/userguide/transformations.html">target transformations</a>.</li>
+      <li>Specify the desired target value via <a href="https://emdgroup.github.io/baybe/stable/components/transformations.html">target transformations</a>.</li>
       <li>Optimize multiple targets at the same time via <a href="https://emdgroup.github.io/baybe/stable/components/objectives.html#paretoobjective">Pareto optimization</a> or <a href="https://emdgroup.github.io/baybe/stable/components/objectives.html#desirabilityobjective">desirability scalarization</a>.</li>
     </ul>
   </div>
