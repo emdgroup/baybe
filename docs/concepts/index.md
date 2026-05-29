@@ -6,4 +6,5 @@ Asynchronous Workflows <async>
 Getting Recommendations <getting_recommendations>
 Serialization <serialization>
 Settings <settings>
+Simulation <simulation>
 ```

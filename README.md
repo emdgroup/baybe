@@ -108,7 +108,7 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
   <div style="padding: 10px;">
     <ul>
       <li>Gain <a href="https://emdgroup.github.io/baybe/stable/userguide/insights.html">insights</a> about the optimization campaigns by analyzing model behavior and feature importance.</li>
-      <li>Conduct benchmarks to select between different Bayesian optimization settings via <a href="https://emdgroup.github.io/baybe/stable/userguide/simulation.html">backtesting</a>.</li>
+      <li>Conduct benchmarks to select between different Bayesian optimization settings via <a href="https://emdgroup.github.io/baybe/stable/concepts/simulation.html">backtesting</a>.</li>
     </ul>
   </div>
 </details>
