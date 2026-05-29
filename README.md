@@ -65,7 +65,7 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
   <div style="padding: 10px;">
     <ul>
       <li>Use both continuous and discrete parameters within a single <a href="https://emdgroup.github.io/baybe/stable/examples/Searchspaces/hybrid_space.html">hybrid search space</a>.</li>
-      <li>Exclude undesired or impossible parameter configurations (e.g., to define a maximal number of mixture components) using <a href="https://emdgroup.github.io/baybe/stable/userguide/constraints.html">constraints</a>.</li>
+      <li>Exclude undesired or impossible parameter configurations (e.g., to define a maximal number of mixture components) using <a href="https://emdgroup.github.io/baybe/stable/components/constraints.html">constraints</a>.</li>
       <li>Choose between different optimization strategies to balance exploration and exploitation of the search space:
         <ul>
           <li>Smartly acquire training data for model building via <a href="https://emdgroup.github.io/baybe/stable/concepts/active_learning.html">active learning</a>.</li>
@@ -204,7 +204,7 @@ of the user guide.
 
 Additionally, we can define a set of constraints to further specify allowed ranges and
 relationships between our parameters. Details can be found in the
-[constraints section](https://emdgroup.github.io/baybe/stable/userguide/constraints.html) of the user guide.
+[constraints section](https://emdgroup.github.io/baybe/stable/components/constraints.html) of the user guide.
 In this example, we assume no further constraints.
 
 With the parameter definitions at hand, we can now create our

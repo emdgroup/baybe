@@ -4,7 +4,7 @@
 # apply restrictions on plates (batches) of experiments rather than on individual
 # experiments.
 # For more details on interpoint constraints, we refer to the {ref}`constraints user
-# guide <userguide/constraints:Interpoint Constraints>`.
+# guide <components/constraints:Interpoint Constraints>`.
 
 # ## The Scenario
 

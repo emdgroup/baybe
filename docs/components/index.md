@@ -2,4 +2,5 @@
 
 ```{toctree}
 Campaigns <campaigns>
+Constraints <constraints>
 ```
