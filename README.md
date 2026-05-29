@@ -247,7 +247,7 @@ recommender = TwoPhaseMetaRecommender(
 
 For more details on the different recommenders, their underlying algorithmic
 details and how their settings can be adjusted, see the
-[recommenders section](https://emdgroup.github.io/baybe/stable/userguide/recommenders.html)
+[recommenders section](https://emdgroup.github.io/baybe/stable/components/recommenders.html)
 of the user guide.
 
 ### The Optimization Loop

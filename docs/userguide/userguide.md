@@ -30,7 +30,6 @@ how the results can be post-analysed.
 Detailed examples of how to use individual API components can be found below:
 
 ```{toctree}
-Recommenders <recommenders>
 Search Spaces <searchspace>
 Surrogates <surrogates>
 Targets <targets>
