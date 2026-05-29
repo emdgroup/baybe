@@ -1,6 +1,8 @@
 # Components
 
 ```{toctree}
+:maxdepth: 2
+
 Campaigns <campaigns>
 Constraints <constraints>
 Insights <insights>
