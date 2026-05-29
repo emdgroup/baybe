@@ -1315,10 +1315,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent                Base     Ligand  Temperature  Concentration
-387       p-Xylene   Potassium acetate  BrettPhos         90.0          0.057
-310           DMAc  Potassium pivalate  BrettPhos        105.0          0.100
-174  Butyornitrile   Potassium acetate  BrettPhos        105.0          0.057
+           Solvent                Base         Ligand  Temperature  \
+202  Butyornitrile  Potassium pivalate      BrettPhos        105.0   
+304           DMAc  Potassium pivalate  (t-Bu)PhCPhos        120.0   
+168  Butyornitrile   Potassium acetate  (t-Bu)PhCPhos        120.0   
+
+     Concentration  
+202          0.100  
+304          0.100  
+168          0.057  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1327,15 +1332,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent                Base     Ligand  Temperature  Concentration  \
-387       p-Xylene   Potassium acetate  BrettPhos         90.0          0.057   
-310           DMAc  Potassium pivalate  BrettPhos        105.0          0.100   
-174  Butyornitrile   Potassium acetate  BrettPhos        105.0          0.057   
+           Solvent                Base         Ligand  Temperature  \
+202  Butyornitrile  Potassium pivalate      BrettPhos        105.0   
+304           DMAc  Potassium pivalate  (t-Bu)PhCPhos        120.0   
+168  Butyornitrile   Potassium acetate  (t-Bu)PhCPhos        120.0   
 
-         yield  
-387  35.108166  
-310 -81.839175  
-174  82.812383  
+     Concentration      yield  
+202          0.100  51.304876  
+304          0.100  -3.567666  
+168          0.057  -6.165933  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
