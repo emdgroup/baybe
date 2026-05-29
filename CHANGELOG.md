@@ -102,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Expired Deprecations (from 0.11.*)
 - `register_custom_architecture` decorator
 - `BayesianRecommender.surrogate_model` attribute
+- `ContinuousLinearEqualityConstraint`/`ContinuousLinearInequalityConstraint` classes
 
 ## [0.14.3] - 2026-02-10
 ### Fixed

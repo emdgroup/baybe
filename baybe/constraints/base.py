@@ -10,16 +10,7 @@ import pandas as pd
 from attrs import define, field
 from attrs.validators import ge, instance_of, min_len
 
-from baybe.constraints.deprecation import (
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
-)
-from baybe.serialization import (
-    SerialMixin,
-)
-from baybe.serialization.core import (
-    converter,
-)
+from baybe.serialization import SerialMixin
 from baybe.utils.basic import classproperty
 
 if TYPE_CHECKING:
@@ -292,27 +283,6 @@ class CardinalityConstraint(Constraint, ABC):
 
 class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
     """Abstract base class for continuous nonlinear constraints."""
-
-
-# >>>>> Deprecation handling
-_hook = converter.get_structure_hook(Constraint)
-
-
-def _deprecate_legacy_classes(dct: dict[str, Any], _) -> Constraint:
-    """Enable constraint configs using legacy class names."""
-    if dct["type"] == "ContinuousLinearEqualityConstraint":
-        dct.pop("type")
-        return ContinuousLinearEqualityConstraint(**dct)
-    elif dct["type"] == "ContinuousLinearInequalityConstraint":
-        dct.pop("type")
-        return ContinuousLinearInequalityConstraint(**dct)
-    return _hook(dct, _)
-
-
-converter.register_structure_hook_func(
-    lambda c: c is Constraint, _deprecate_legacy_classes
-)
-# <<<<< Deprecation handling
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

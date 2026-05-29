@@ -15,12 +15,6 @@ from pandas.testing import assert_series_equal
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
-from baybe.constraints import (
-    ContinuousLinearConstraint,
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
-)
-from baybe.constraints.base import Constraint
 from baybe.exceptions import DeprecationError
 from baybe.kernels.basic import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
@@ -53,51 +47,6 @@ from baybe.targets.binary import BinaryTarget
 from baybe.transformations.basic import AffineTransformation
 from baybe.utils.dataframe import create_fake_input
 from baybe.utils.random import set_random_seed, temporary_seed
-
-
-def test_continuous_linear_eq_constraint():
-    """Usage of deprecated continuous linear eq constraint raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        ContinuousLinearEqualityConstraint(["p1", "p2"])
-
-
-def test_continuous_linear_inq_constraint():
-    """Usage of deprecated continuous linear ineq constraint raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        ContinuousLinearInequalityConstraint(["p1", "p2"])
-
-
-@pytest.mark.parametrize(
-    ("type_", "op"),
-    [
-        ("ContinuousLinearEqualityConstraint", "="),
-        ("ContinuousLinearInequalityConstraint", ">="),
-    ],
-    ids=["lin_eq", "lin_ineq"],
-)
-def test_constraint_config_deserialization(type_, op):
-    """The deprecated constraint config format can still be parsed."""
-    config = """
-    {
-        "type": "__replace__",
-        "parameters": ["p1", "p2", "p3"],
-        "coefficients": [1.0, 2.0, 3.0],
-        "rhs": 2.0
-    }
-    """
-    config = config.replace("__replace__", type_)
-
-    expected = ContinuousLinearConstraint(
-        parameters=["p1", "p2", "p3"],
-        operator=op,
-        coefficients=[1.0, 2.0, 3.0],
-        rhs=2.0,
-    )
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-        actual = Constraint.from_json(config)
-    assert expected == actual, (expected, actual)
 
 
 def test_objective_transform_interface():

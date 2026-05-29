@@ -5,10 +5,6 @@ from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
 )
-from baybe.constraints.deprecation import (
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
-)
 from baybe.constraints.discrete import (
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteBatchConstraint,
@@ -31,8 +27,6 @@ __all__ = [
     # --- Continuous constraints ---#
     "ContinuousLinearConstraint",
     "ContinuousCardinalityConstraint",
-    "ContinuousLinearEqualityConstraint",
-    "ContinuousLinearInequalityConstraint",
     # --- Discrete constraints ---#
     "DiscreteBatchConstraint",
     "DiscreteCardinalityConstraint",
