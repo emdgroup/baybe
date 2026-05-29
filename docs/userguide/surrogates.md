@@ -95,7 +95,7 @@ from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.components import FitCriterion
 
 
-# Implements the protocol for kernel factories:
+# Implements the protocol for likelihood factories:
 def likelihood_factory(
     searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
 ):
