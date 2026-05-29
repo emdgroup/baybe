@@ -195,8 +195,11 @@ def test_invalid_components():
         GaussianProcessSurrogate(fit_criterion_or_factory=MaternKernel())
 
 
-@pytest.mark.parametrize("multitask", [False, True], ids=["single-task", "multi-task"])
+# NOTE: BOTORCH and HVARFNER presets coincide at the moment but BOTORCH settings can
+#   change in the future. If that happens, the test below will start to fail and the
+#   HVARFNER parametrization needs to be dropped.
 @pytest.mark.parametrize("preset", ["BOTORCH", "HVARFNER"], ids=["botorch", "hvarfner"])
+@pytest.mark.parametrize("multitask", [False, True], ids=["single-task", "multi-task"])
 def test_botorch_preset(multitask: bool, preset: str):
     """The BoTorch/Hvarfner presets exactly mimic BoTorch's behavior."""
     if multitask:
