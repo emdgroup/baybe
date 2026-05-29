@@ -11,7 +11,6 @@ from attrs import define
 from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
-from baybe.kernels.composite import ScaleKernel
 from baybe.objectives.base import Objective
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
@@ -47,18 +46,12 @@ class ChenKernelFactory(_PureKernelFactory):
         lengthscale = 0.4 * math.sqrt(n_dimensions) + 4.0
         lengthscale_prior = GammaPrior(2.0 * lengthscale, 2.0)
         lengthscale_initial_value = lengthscale
-        outputscale_prior = GammaPrior(1.0 * lengthscale, 1.0)
-        outputscale_initial_value = lengthscale
 
-        return ScaleKernel(
-            MaternKernel(
-                nu=2.5,
-                lengthscale_prior=lengthscale_prior,
-                lengthscale_initial_value=lengthscale_initial_value,
-                parameter_names=self.get_parameter_names(searchspace),
-            ),
-            outputscale_prior=outputscale_prior,
-            outputscale_initial_value=outputscale_initial_value,
+        return MaternKernel(
+            nu=2.5,
+            lengthscale_prior=lengthscale_prior,
+            lengthscale_initial_value=lengthscale_initial_value,
+            parameter_names=self.get_parameter_names(searchspace),
         )
 
 
