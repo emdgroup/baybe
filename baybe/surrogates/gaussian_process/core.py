@@ -40,11 +40,13 @@ from baybe.surrogates.gaussian_process.components.mean import MeanFactoryProtoco
 from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
 )
-from baybe.surrogates.gaussian_process.presets.baybe import (
-    BayBEFitCriterionFactory,
-    BayBEKernelFactory,
-    BayBELikelihoodFactory,
-    BayBEMeanFactory,
+from baybe.surrogates.gaussian_process.presets.chen import (
+    LIKELIHOOD_FACTORY,
+)
+from baybe.surrogates.gaussian_process.presets.hvarfner import (
+    FIT_CRITERION_FACTORY,
+    KERNEL_FACTORY,
+    MEAN_FACTORY,
 )
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
@@ -115,7 +117,7 @@ def _mark_custom_kernel(
     value: Kernel | KernelFactoryProtocol, self: GaussianProcessSurrogate
 ) -> Kernel | KernelFactoryProtocol:
     """Mark the surrogate as using a custom kernel (for deprecation purposes)."""
-    if type(value) is not BayBEKernelFactory:
+    if type(value) is not type(KERNEL_FACTORY):
         self._custom_kernel = True
 
     return value
@@ -152,7 +154,7 @@ class GaussianProcessSurrogate(Surrogate):
             Converter(_mark_custom_kernel, takes_self=True),  # type: ignore[call-overload]
             partial(to_component_factory, component_type=GPComponentType.KERNEL),
         ),
-        factory=BayBEKernelFactory,
+        default=KERNEL_FACTORY,
         validator=is_callable(),
     )
     """The factory used to create the kernel for the Gaussian process.
@@ -165,7 +167,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     mean_factory: MeanFactoryProtocol = field(
         alias="mean_or_factory",
-        factory=BayBEMeanFactory,
+        default=MEAN_FACTORY,
         converter=partial(to_component_factory, component_type=GPComponentType.MEAN),  # type: ignore[misc]
         validator=is_callable(),
     )
@@ -178,7 +180,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     likelihood_factory: LikelihoodFactoryProtocol = field(
         alias="likelihood_or_factory",
-        factory=BayBELikelihoodFactory,
+        default=LIKELIHOOD_FACTORY,
         converter=partial(  # type: ignore[misc]
             to_component_factory, component_type=GPComponentType.LIKELIHOOD
         ),
@@ -193,7 +195,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     fit_criterion_factory: FitCriterionFactoryProtocol = field(
         alias="fit_criterion_or_factory",
-        factory=BayBEFitCriterionFactory,
+        default=FIT_CRITERION_FACTORY,
         converter=partial(  # type: ignore[misc]
             to_component_factory, component_type=GPComponentType.CRITERION
         ),
