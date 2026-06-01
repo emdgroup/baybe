@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   equality check
 
 ### Changed
+- "User Guide" section has been split into "Components" and "Concepts" 
 - Default transfer learning kernel changed from `IndexKernel` to `PositiveIndexKernel`,
   enforcing positive task correlations
 - The `Campaign.allow_*` flag mechanism is now based on `AutoBool` logic, providing
