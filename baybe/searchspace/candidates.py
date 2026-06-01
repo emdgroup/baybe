@@ -23,6 +23,10 @@ from baybe.utils.validation import validate_parameter_input
 class CandidatesProtocol(Protocol):
     """Type protocol specifying the interface candidate generators need to implement."""
 
+    # Use slots so that derived classes also remain slotted
+    # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
+    __slots__ = ()
+
     @property
     def parameters(self) -> tuple[DiscreteParameter, ...]:
         """The parameters spanning the space from which candidates are generated."""
