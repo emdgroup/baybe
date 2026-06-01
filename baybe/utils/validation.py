@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -147,7 +147,7 @@ def validate_objective_input(data: pd.DataFrame, objective: Objective) -> None:
 
 def validate_parameter_input(
     data: pd.DataFrame,
-    parameters: Iterable[Parameter],
+    parameters: Sequence[Parameter],
     numerical_measurements_must_be_within_tolerance: bool = False,
     *,
     allow_extra: bool = True,
