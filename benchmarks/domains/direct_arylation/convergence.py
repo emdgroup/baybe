@@ -54,7 +54,7 @@ def direct_arylation_multi_batch(
         )
         for substance in ["Solvent", "Base", "Ligand"]
     ]
-    rdkit_parameters = [
+    mordred_parameters = [
         SubstanceParameter(
             name=substance,
             data=dict(zip(data[substance], data[f"{substance}_SMILES"])),
@@ -70,7 +70,7 @@ def direct_arylation_multi_batch(
         parameters=[*rdkit_parameters, *non_substance_paramters]
     )
     mordred_searchspace = SearchSpace.from_product(
-        parameters=[*rdkit_parameters, *non_substance_paramters]
+        parameters=[*mordred_parameters, *non_substance_paramters]
     )
     target = NumericalTarget(name="yield")
     objective = SingleTargetObjective(target=target)
@@ -138,7 +138,7 @@ def direct_arylation_single_batch(
         )
         for substance in ["Solvent", "Base", "Ligand"]
     ]
-    rdkit_parameters = [
+    mordred_parameters = [
         SubstanceParameter(
             name=substance,
             data=dict(zip(data[substance], data[f"{substance}_SMILES"])),
@@ -154,7 +154,7 @@ def direct_arylation_single_batch(
         parameters=[*rdkit_parameters, *non_substance_paramters]
     )
     mordred_searchspace = SearchSpace.from_product(
-        parameters=[*rdkit_parameters, *non_substance_paramters]
+        parameters=[*mordred_parameters, *non_substance_paramters]
     )
     target = NumericalTarget(name="yield")
     objective = SingleTargetObjective(target=target)
