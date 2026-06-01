@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Coding convention instructions for agentic developers (`AGENTS.md`, `CLAUDE.md`)
 - `has_polars_implementation` property on `DiscreteConstraint`
 - `allow_missing` flag on `DiscreteConstraint.get_invalid` and `get_valid`
-- `narwhals` as hard dependencies
+- `narwhals` as a hard dependency
 - `CandidatesProtocol` as an interface for candidates generation
 - `TableCandidates` and `ProductCandidates` classes implementing `CandidatesProtocol`
 - `DiscreteParameter.is_finite` property

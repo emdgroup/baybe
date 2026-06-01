@@ -60,7 +60,7 @@ All domain classes use `attrs` `@define`. No dataclasses, no Pydantic.
 - Immutable value objects (parameters, kernels, priors, transformations, objectives,
   targets): `@define(frozen=True)`.
 - Mutable stateful objects (campaign, surrogates, recommenders): `@define`.
-- `slots=False` required `cached_property` is needed. See `attrs` issue #164
+- `slots=False` is required when `cached_property` is needed. See `attrs` issue #164
 - Also use `slots=False` when monkeypatching is needed (e.g., `register_hooks`)
 
 ### Inheritance: ABC + SerialMixin + Protocol
