@@ -10,7 +10,16 @@ from baybe._optional.info import CHEM_INSTALLED, LINT_INSTALLED
 from baybe.utils.dataframe import create_fake_input
 from tests.docs.utils import extract_code_blocks
 
-doc_files = list(map(str, [Path("README.md"), *Path("docs/userguide/").rglob("*.md")]))
+doc_files = list(
+    map(
+        str,
+        [
+            Path("README.md"),
+            *Path("docs/concepts/").rglob("*.md"),
+            *Path("docs/components/").rglob("*.md"),
+        ],
+    )
+)
 """Files whose code blocks are to be checked."""
 
 doc_files_pseudocode = list(map(str, [Path("docs/components/campaigns.md")]))
