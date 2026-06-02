@@ -13,7 +13,7 @@ Versions <https://emdgroup.github.io/baybe/versions>
 
 Readme <self>
 Concepts <concepts/index>
-Components <components/index>
+API Reference <_autosummary/baybe>
 Examples <examples/examples>
 FAQ <faq>
 ```
@@ -27,6 +27,7 @@ FAQ <faq>
    :toctree: _autosummary
    :template: custom-module-template.rst
    :recursive:
+   :hidden:
 
    baybe
 ```
