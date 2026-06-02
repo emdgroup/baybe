@@ -166,7 +166,7 @@ wavelength = NumericalTarget("Wavelength", metadata={"unit": "nm"})
 ```
 
 Using BayBE's ability to {ref}`compose transformations
-<userguide/transformations:Composite Transformations>`, the optimization objective can
+<components/transformations:Composite Transformations>`, the optimization objective can
 be imprinted onto the target using basic algebraic operations:
 
 
@@ -181,9 +181,9 @@ target = wavelength1_peak + wavelength2_peak
 For demonstration purposes, we use the
 {meth}`~baybe.targets.numerical.NumericalTarget.match_bell` convenience constructor to
 create the second peak, which yields a target object that is {ref}`mathematically
-equivalent <userguide/transformations:Equality>` to that of the corresponding
+equivalent <components/transformations:Equality>` to that of the corresponding
 algebraic construction. See our [transformation user
-guide](/userguide/transformations) for more alternative construction routes.
+guide](/components/transformations) for more alternative construction routes.
 
 Let us overlay the relationship between observed wavelength and objective value in the
 existing plot:
