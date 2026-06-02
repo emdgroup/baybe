@@ -4,8 +4,8 @@ The core functionality of BayBE is its ability to generate context-aware recomme
 for your experiments. This page covers the basics of the corresponding user interface,
 assuming that a {class}`~baybe.searchspace.core.SearchSpace` object and optional
 {class}`~baybe.objectives.base.Objective` and measurement objects are already in place
-(for more details, see the corresponding [search space](/userguide/searchspace) /
-[objective](/userguide/objectives) user guides).
+(for more details, see the corresponding [search space](/components/searchspace) /
+[objective](/components/objectives) user guides).
 
 
 ## The `recommend` Call
@@ -49,7 +49,7 @@ BayBE offers two entry points for requesting recommendations:
   campaign.add_measurements(measurements)
   recommendation = campaign.recommend(batch_size)
   ~~~
-  For more details, have a look at our [campaign user guide](/userguide/campaigns).
+  For more details, have a look at our [campaign user guide](/components/campaigns).
 
 
 ## Excluding Configurations
@@ -57,7 +57,7 @@ When asking for recommendation, you often don't want to consider all possible
 combinations of parameter values (a.k.a. the full Cartesian product space) but you may
 want to exclude certain configurations that are known to be infeasible or undesirable.
 There are several ways to do this, including using BayBE's sophisticated [constraint
-machinery](/userguide/constraints). Which approach is the right choice for you depends on
+machinery](/components/constraints). Which approach is the right choice for you depends on
 whether you want to exclude configurations *permanently* or (in-)activate them
 *dynamically* during your experimentation cycle.
 
@@ -179,7 +179,7 @@ we need to consider two different cases:
 
   {class}`~baybe.campaign.Campaign`s allow you to further control the candidate
   generation based on the experimental trajectory taken via their `allow_*` 
-  {ref}`flags <userguide/campaigns:Candidate Control Flags>`.
+  {ref}`flags <components/campaigns:Candidate Control Flags>`.
   ```
 
 

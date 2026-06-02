@@ -163,6 +163,8 @@ nitpick_ignore_regex = [
 linkcheck_ignore = [
     r"https://github.com/b-shields/edbo/blob*",
     r"https://doi.org/10.26434/chemrxiv.10001986/v2",
+    # New components/ pages don't exist on stable yet; remove once released
+    r"https://emdgroup\.github\.io/baybe/stable/components/.*",
 ]
 
 

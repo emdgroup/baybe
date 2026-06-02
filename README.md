@@ -65,15 +65,15 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
   <div style="padding: 10px;">
     <ul>
       <li>Use both continuous and discrete parameters within a single <a href="https://emdgroup.github.io/baybe/stable/examples/Searchspaces/hybrid_space.html">hybrid search space</a>.</li>
-      <li>Exclude undesired or impossible parameter configurations (e.g., to define a maximal number of mixture components) using <a href="https://emdgroup.github.io/baybe/stable/userguide/constraints.html">constraints</a>.</li>
+      <li>Exclude undesired or impossible parameter configurations (e.g., to define a maximal number of mixture components) using <a href="https://emdgroup.github.io/baybe/stable/components/constraints.html">constraints</a>.</li>
       <li>Choose between different optimization strategies to balance exploration and exploitation of the search space:
         <ul>
-          <li>Smartly acquire training data for model building via <a href="https://emdgroup.github.io/baybe/stable/userguide/active_learning.html">active learning</a>.</li>
+          <li>Smartly acquire training data for model building via <a href="https://emdgroup.github.io/baybe/stable/concepts/active_learning.html">active learning</a>.</li>
           <li>Conduct AB testing via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html">bandit models</a>.</li>
         </ul>
       </li>
-      <li>Specify the desired target value via <a href="https://emdgroup.github.io/baybe/stable/userguide/transformations.html">target transformations</a>.</li>
-      <li>Optimize multiple targets at the same time via <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#paretoobjective">Pareto optimization</a> or <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#desirabilityobjective">desirability scalarization</a>.</li>
+      <li>Specify the desired target value via <a href="https://emdgroup.github.io/baybe/stable/components/transformations.html">target transformations</a>.</li>
+      <li>Optimize multiple targets at the same time via <a href="https://emdgroup.github.io/baybe/stable/components/objectives.html#paretoobjective">Pareto optimization</a> or <a href="https://emdgroup.github.io/baybe/stable/components/objectives.html#desirabilityobjective">desirability scalarization</a>.</li>
     </ul>
   </div>
 </details>
@@ -83,10 +83,10 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Capture relationships between categories via <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#customdiscreteparameter">custom encodings for categorical</a> data.</li>
-      <li>Use built-in <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#substanceparameter">chemical encodings</a> for chemistry-related parameters.</li>
-      <li>Add mechanistic process understanding via <a href="https://emdgroup.github.io/baybe/stable/userguide/surrogates.html#using-custom-models">custom surrogate</a> models.</li>
-      <li>Leverage additional data from similar campaigns to accelerate optimization via <a href="https://emdgroup.github.io/baybe/stable/userguide/transfer_learning.html">transfer learning</a>.</li>
+      <li>Capture relationships between categories via <a href="https://emdgroup.github.io/baybe/stable/components/parameters.html#customdiscreteparameter">custom encodings for categorical</a> data.</li>
+      <li>Use built-in <a href="https://emdgroup.github.io/baybe/stable/components/parameters.html#substanceparameter">chemical encodings</a> for chemistry-related parameters.</li>
+      <li>Add mechanistic process understanding via <a href="https://emdgroup.github.io/baybe/stable/components/surrogates.html#using-custom-models">custom surrogate</a> models.</li>
+      <li>Leverage additional data from similar campaigns to accelerate optimization via <a href="https://emdgroup.github.io/baybe/stable/concepts/transfer_learning.html">transfer learning</a>.</li>
     </ul>
   </div>
 </details>
@@ -96,8 +96,8 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Run campaigns <a href="https://emdgroup.github.io/baybe/stable/userguide/async.html">asynchronously</a> with partial measurements and pending experiments.</li>
-      <li>Store BayBE objects and use API wrappers with the <a href="https://emdgroup.github.io/baybe/stable/userguide/serialization.html">serialization</a> functionality.</li>
+      <li>Run campaigns <a href="https://emdgroup.github.io/baybe/stable/concepts/async.html">asynchronously</a> with partial measurements and pending experiments.</li>
+      <li>Store BayBE objects and use API wrappers with the <a href="https://emdgroup.github.io/baybe/stable/concepts/serialization.html">serialization</a> functionality.</li>
     </ul>
   </div>
 </details>
@@ -107,8 +107,8 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Gain <a href="https://emdgroup.github.io/baybe/stable/userguide/insights.html">insights</a> about the optimization campaigns by analyzing model behavior and feature importance.</li>
-      <li>Conduct benchmarks to select between different Bayesian optimization settings via <a href="https://emdgroup.github.io/baybe/stable/userguide/simulation.html">backtesting</a>.</li>
+      <li>Gain <a href="https://emdgroup.github.io/baybe/stable/components/insights.html">insights</a> about the optimization campaigns by analyzing model behavior and feature importance.</li>
+      <li>Conduct benchmarks to select between different Bayesian optimization settings via <a href="https://emdgroup.github.io/baybe/stable/concepts/simulation.html">backtesting</a>.</li>
     </ul>
   </div>
 </details>
@@ -157,7 +157,7 @@ In cases where we are confronted with multiple (potentially conflicting) targets
 (e.g., yield vs selectivity),
 the `ParetoObjective` or `DesirabilityObjective` can be used to define how the targets should be balanced.
 For more details, see the
-[objectives section](https://emdgroup.github.io/baybe/stable/userguide/objectives.html)
+[objectives section](https://emdgroup.github.io/baybe/stable/components/objectives.html)
 of the user guide.
 
 ### Defining the Search Space
@@ -199,12 +199,12 @@ parameters = [
 ```
 
 For more parameter types and their details, see the
-[parameters section](https://emdgroup.github.io/baybe/stable/userguide/parameters.html)
+[parameters section](https://emdgroup.github.io/baybe/stable/components/parameters.html)
 of the user guide.
 
 Additionally, we can define a set of constraints to further specify allowed ranges and
 relationships between our parameters. Details can be found in the
-[constraints section](https://emdgroup.github.io/baybe/stable/userguide/constraints.html) of the user guide.
+[constraints section](https://emdgroup.github.io/baybe/stable/components/constraints.html) of the user guide.
 In this example, we assume no further constraints.
 
 With the parameter definitions at hand, we can now create our
@@ -216,7 +216,7 @@ from baybe.searchspace import SearchSpace
 searchspace = SearchSpace.from_product(parameters)
 ```
 
-See the [search spaces section](https://emdgroup.github.io/baybe/stable/userguide/searchspace.html)
+See the [search spaces section](https://emdgroup.github.io/baybe/stable/components/searchspace.html)
 of our user guide for more information on the structure of search spaces
 and alternative ways of construction. 
 
@@ -247,7 +247,7 @@ recommender = TwoPhaseMetaRecommender(
 
 For more details on the different recommenders, their underlying algorithmic
 details and how their settings can be adjusted, see the
-[recommenders section](https://emdgroup.github.io/baybe/stable/userguide/recommenders.html)
+[recommenders section](https://emdgroup.github.io/baybe/stable/components/recommenders.html)
 of the user guide.
 
 ### The Optimization Loop
