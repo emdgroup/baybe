@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import gc
-import warnings
 from abc import ABC
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from attrs import define, field, fields
+from attrs import define, field
 from attrs.converters import optional
 from typing_extensions import override
 
@@ -67,18 +66,6 @@ class BayesianRecommender(PureRecommender, ABC):
 
     _botorch_acqf = field(default=None, init=False, eq=False)
     """The induced BoTorch acquisition function."""
-
-    @property
-    def surrogate_model(self) -> SurrogateProtocol:
-        """Deprecated!"""
-        warnings.warn(
-            f"Accessing the surrogate model via 'surrogate_model' has been "
-            f"deprecated. Use '{self.get_surrogate.__name__}' instead to get the "
-            f"trained model instance (or "
-            f"'{fields(type(self))._surrogate_model.name}' to access the raw object).",
-            DeprecationWarning,
-        )
-        return self._surrogate_model
 
     def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
