@@ -12,11 +12,12 @@ This modularity is one of BayBE's core strengths, offering two key advantages:
 The purpose of this user guide is to explain these components and their interactions.
 
 While advanced users can leverage this flexibility to fine-tune every aspect of their
-workflow, newcomers will most likely start with the {class}`~baybe.campaign.Campaign` as
-their first point of interaction. Campaigns are high-level objects that allow you to
-define a particular optimization problem, suggest new measurements, and administer the
-current state of your experimental operation. The diagram below shows how a campaign
-is built from other components and integrates into the Bayesian optimization loop.
+workflow, newcomers will most likely start with the
+[`Campaign`](/components/campaigns.md) as their first point of interaction. Campaigns are
+high-level objects that allow you to define a particular optimization problem, suggest
+new measurements, and administer the current state of your experimental operation. The
+diagram below shows how a campaign is built from other components and integrates into
+the Bayesian optimization loop.
 
 ```{image} ../_static/api_overview_dark.svg
 :align: center
