@@ -11,6 +11,15 @@ from gpytorch.kernels import Kernel as GPyTorchKernel
 from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
 from gpytorch.means import Mean as GPyTorchMean
 
+# >>>>>>>>>> NOTE ON THE FOLLOWING IMPORTS AND ALIASES <<<<<<<<<<
+# This is a hack to make the GPyTorch components available in the docs
+# Without those specific imports, the corresponding references cannot be resolved.
+# As a consequence, the __call__ functions that the factories use would not be part
+# of the documentation. Having those explicit imports here are the only solution
+# that two members of the core team were able to find, and it was agreed that even
+# though not pretty, it is the best solution to this problem.
+# If future implementations of the corresponding factories rely on different imports
+# not listed here, this will be flagged by the docs pipeline.
 from baybe.surrogates.gaussian_process.components import kernel as _kernel
 from baybe.surrogates.gaussian_process.components import likelihood as _likelihood
 from baybe.surrogates.gaussian_process.components import mean as _mean
@@ -25,6 +34,19 @@ _botorch.GPyTorchLikelihood = GPyTorchLikelihood
 _botorch.GPyTorchMean = GPyTorchMean
 _edbo.GPyTorchLikelihood = GPyTorchLikelihood
 _edbo_smoothed.GPyTorchLikelihood = GPyTorchLikelihood
+
+# It is also necessary to add those aliases here, otherwise the references in the
+# documentation resolve to the original name of the classes, i.e., we would have the
+# type hint `Kernel | Kernel` instead of `Kernel | GPyTorchKernel`.
+
+autodoc_type_aliases = {
+    "GPyTorchKernel": "GPyTorchKernel",
+    "GPyTorchLikelihood": "GPyTorchLikelihood",
+    "GPyTorchMean": "GPyTorchMean",
+    "Smiles": "Smiles",
+}
+
+# >>>>>>>>>> NOTE END <<<<<<<<<<
 
 # -- Path setup --------------------------------------------------------------
 
@@ -289,12 +311,6 @@ html_theme_options = {
     "dark_logo": "logo1.svg",  # Logo for dark mode
 }
 
-autodoc_type_aliases = {
-    "GPyTorchKernel": "GPyTorchKernel",
-    "GPyTorchLikelihood": "GPyTorchLikelihood",
-    "GPyTorchMean": "GPyTorchMean",
-    "Smiles": "Smiles",
-}
 
 # Everything in the module has the prefix baybe
 modindex_common_prefix = ["baybe."]
