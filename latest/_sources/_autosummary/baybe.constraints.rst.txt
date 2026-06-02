@@ -35,8 +35,6 @@ baybe.constraints
 
    continuous
 
-   deprecation
-
    discrete
 
    utils

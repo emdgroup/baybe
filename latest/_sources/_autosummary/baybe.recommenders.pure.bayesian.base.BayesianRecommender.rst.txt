@@ -34,7 +34,6 @@ BayesianRecommender
       ~BayesianRecommender.allow_recommending_pending_experiments
       ~BayesianRecommender.allow_repeated_recommendations
       ~BayesianRecommender.supports_discrete_subset_generating_constraints
-      ~BayesianRecommender.surrogate_model
       ~BayesianRecommender.compatibility
    
    

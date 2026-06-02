@@ -9,13 +9,6 @@ baybe.surrogates.custom
 
    
    
-   .. rubric:: Functions
-
-   .. autosummary::
-      :toctree:                                       
-   
-      register_custom_architecture
-   
    
 
    
