@@ -8,13 +8,14 @@ Versions <https://emdgroup.github.io/baybe/versions>
 ```{toctree}
 :maxdepth: 2
 :titlesonly:
-:caption: Documentation
+:caption: User Guide
 :hidden:
 
 Readme <self>
 Concepts <concepts/index>
-API Reference <_autosummary/baybe>
+Components <components/index>
 Examples <examples/examples>
+API Reference <_autosummary/baybe>
 FAQ <faq>
 ```
 
@@ -35,7 +36,7 @@ FAQ <faq>
 ```{toctree}
 :maxdepth: 2
 :titlesonly:
-:caption: Misc
+:caption: Project
 :hidden:
 
 Contribute <misc/contributing_link>
