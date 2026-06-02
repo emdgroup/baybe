@@ -282,4 +282,4 @@ constraints = [...]
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 ~~~
 
-For a more in-depth discussion of constraints, we refer to the corresponding  [user guide](/components/constraints) for more details.
+For a more in-depth discussion of constraints, we refer to the corresponding [user guide](/components/constraints) for more details.
