@@ -6,6 +6,7 @@ from typing import TypeVar
 
 import pandas as pd
 
+from baybe.constraints.base import Constraint
 from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
@@ -30,6 +31,26 @@ def validate_parameter_names(  # noqa: DOC101, DOC103
     param_names = [p.name for p in parameters]
     if len(set(param_names)) != len(param_names):
         raise ValueError("All parameters must have unique names.")
+
+
+def validate_constraint_parameter_names(  # noqa: DOC101, DOC103
+    constraints: Collection[Constraint],
+    parameters: Collection[Parameter],
+) -> None:
+    """Validate that all constraint parameter names reference existing parameters.
+
+    Raises:
+        IncompatibilityError: If any constraint references parameters not present
+            in the given parameter collection.
+    """
+    parameter_names = {p.name for p in parameters}
+    for constraint in constraints:
+        if invalid := set(constraint.parameters) - parameter_names:
+            raise IncompatibilityError(
+                f"A constraint of type '{constraint.__class__.__name__}' "
+                f"references the following parameters that are not part of "
+                f"the corresponding subspace: {invalid}."
+            )
 
 
 def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC101, DOC103

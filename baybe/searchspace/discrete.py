@@ -28,7 +28,11 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
-from baybe.searchspace.validation import validate_parameter_names, validate_parameters
+from baybe.searchspace.validation import (
+    validate_constraint_parameter_names,
+    validate_parameter_names,
+    validate_parameters,
+)
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
@@ -169,6 +173,11 @@ class SubspaceDiscrete(SerialMixin):
                 "This is not allowed, as it can lead to hard-to-detect bugs."
             )
 
+    @constraints.validator
+    def _validate_constraints(self, _, __) -> None:
+        """Validate constraints."""
+        validate_constraint_parameter_names(self.constraints, self.parameters)
+
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no continuous part."""
         from baybe.searchspace.core import SearchSpace
@@ -201,11 +210,14 @@ class SubspaceDiscrete(SerialMixin):
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         # Set defaults and order constraints
-        constraints = constraints or []
-        constraints = sorted(
-            constraints,
-            key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
-        )
+        if constraints is None:
+            constraints = []
+        else:
+            validate_constraint_parameter_names(constraints, parameters)
+            constraints = sorted(
+                constraints,
+                key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+            )
 
         if active_settings.use_polars_for_constraints:
             lazy_df = parameter_cartesian_prod_polars(parameters)

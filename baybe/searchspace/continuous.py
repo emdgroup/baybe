@@ -24,7 +24,6 @@ from baybe.constraints.validation import (
     validate_cardinality_constraint_parameter_bounds,
     validate_cardinality_constraints_are_nonoverlapping,
 )
-from baybe.exceptions import IncompatibilityError
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
@@ -34,6 +33,7 @@ from baybe.parameters.utils import (
     sort_parameters,
 )
 from baybe.searchspace.validation import (
+    validate_constraint_parameter_names,
     validate_parameter_names,
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
@@ -187,14 +187,7 @@ class SubspaceContinuous(SerialMixin):
     @constraints.validator
     def _validate_constraints(self, _, __) -> None:
         """Validate constraints."""
-        parameter_names = {p.name for p in self.parameters}
-        for constraint in self.constraints:
-            if invalid := set(constraint.parameters) - parameter_names:
-                raise IncompatibilityError(
-                    f"A constraint of type '{constraint.__class__.__name__}' "
-                    f"references the following parameters that are not part of "
-                    f"the subspace: {invalid}."
-                )
+        validate_constraint_parameter_names(self.constraints, self.parameters)
 
         validate_cardinality_constraints_are_nonoverlapping(
             self.constraints_cardinality
