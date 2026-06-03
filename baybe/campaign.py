@@ -423,7 +423,7 @@ class Campaign(SerialMixin):
             )
 
         # Allow only existing indices
-        if nonmatching_idxs := set(data.index).difference(self._measurements.index):
+        if nonmatching_idxs := set(data.index).difference(self.measurements.index):
             raise ValueError(
                 f"Updating measurements requires indices matching the "
                 f"existing measurements. The following indices were in the input, but "
@@ -595,7 +595,7 @@ class Campaign(SerialMixin):
                 batch_size,
                 searchspace,
                 self.objective,
-                self._measurements,
+                self.measurements,
                 pending_experiments,
             )
         is_nonpredictive = isinstance(recommender, NonPredictiveRecommender)
@@ -609,7 +609,7 @@ class Campaign(SerialMixin):
                     batch_size,
                     searchspace,
                     self.objective,
-                    self._measurements,
+                    self.measurements,
                     None if is_nonpredictive else pending_experiments,
                 )
         except NotEnoughPointsLeftError as ex:
