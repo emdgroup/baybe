@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Breaking Changes
+- All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
+  are now keyword-only
+
+### Added
+- `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
+  the same pattern as `ContinuousLinearConstraint.coefficients`
+- `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
+  weighted simplex sum constraints
+
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
   kernel in multi-task scenarios, matching BoTorch's `MultiTaskGP` defaults introduced
@@ -12,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `BOTORCH` GP preset now requires BoTorch `>= 0.18.0` and raises an
   `IncompatibilityError` if an older version is installed
 - Minimum required polars version increased to `0.20.8`
+- `DiscreteSumConstraint`, `ContinuousLinearConstraint`, and
+  `SubspaceDiscrete.from_simplex` now forbid 0 as coefficients
+- `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
