@@ -197,6 +197,7 @@ def _discrete_constraints(
         condition = draw(threshold_conditions())
         if draw(st.booleans()):
             coefficients = draw(st.tuples(*([finite_floats()] * len(params))))
+            assume(any(c != 0.0 for c in coefficients))
             return DiscreteSumConstraint(params, condition, coefficients)
         return DiscreteSumConstraint(params, condition)
     elif constraint_type is DiscreteProductConstraint:
@@ -236,6 +237,7 @@ def continuous_linear_constraints(
         assert len(parameter_names) == len(set(parameter_names))
 
     coefficients = draw(st.tuples(*([finite_floats()] * len(parameter_names))))
+    assume(any(c != 0.0 for c in coefficients))
     rhs = draw(finite_floats())
     is_interpoint = draw(st.booleans())
 
