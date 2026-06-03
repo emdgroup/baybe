@@ -61,11 +61,11 @@ if TYPE_CHECKING:
     _T = TypeVar("_T")
 
 # Metadata columns
-_MEASURED = "measured"
 _EXCLUDED = "excluded"
-_METADATA_COLUMNS = [_MEASURED, _EXCLUDED]
+_METADATA_COLUMNS = [_EXCLUDED]
 
-# Legacy constant kept for deserialization migration only
+# Legacy constants kept for deserialization migration only
+_MEASURED = "measured"
 _RECOMMENDED = "recommended"
 
 
@@ -217,7 +217,13 @@ class Campaign(SerialMixin):
     @override
     def __str__(self) -> str:
         recommended_count = len(self._recommended_experiments)
-        measured_count = sum(self._searchspace_metadata[_MEASURED])
+        exp_rep = self.searchspace.discrete.exp_rep
+        if self._measurements.empty or exp_rep.empty:
+            measured_count = 0
+        else:
+            measured_count = len(
+                fuzzy_row_match(exp_rep, self._measurements, self.parameters)
+            )
         excluded_count = sum(self._searchspace_metadata[_EXCLUDED])
         n_elements = len(self._searchspace_metadata)
         searchspace_fields = [
@@ -374,13 +380,6 @@ class Campaign(SerialMixin):
         # Read in measurements and add them to the database
         frames = [f for f in (self._measurements, data) if not f.empty]
         self._measurements = pd.concat(frames, axis=0, ignore_index=True)
-
-        # Update metadata
-        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            idxs_matched = fuzzy_row_match(
-                self.searchspace.discrete.exp_rep, data, self.parameters
-            )
-            self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 
     def update_measurements(
         self,
@@ -565,8 +564,16 @@ class Campaign(SerialMixin):
                     indicator=True,
                     how="left",
                 )["_merge"].eq("both")
-            if not self.allow_recommending_already_measured:
-                mask_todrop |= self._searchspace_metadata[_MEASURED]
+            if (
+                not self.allow_recommending_already_measured
+                and not self._measurements.empty
+            ):
+                measured_idxs = fuzzy_row_match(
+                    self.searchspace.discrete.exp_rep,
+                    self._measurements,
+                    self.parameters,
+                )
+                mask_todrop.loc[measured_idxs] = True
             if (
                 not self.allow_recommending_pending_experiments
                 and pending_experiments is not None
@@ -1018,18 +1025,19 @@ def _discard_legacy_fields(dict_: dict, /) -> dict:
                 meas.drop(columns=cols_to_drop)
             )
 
-    # Reconstruct _recommended_experiments from legacy _searchspace_metadata
+    # Strip legacy columns from _searchspace_metadata
     if "searchspace_metadata" in dict_:
         metadata = converter.structure(dict_["searchspace_metadata"], pd.DataFrame)
+        legacy_cols = [c for c in (_RECOMMENDED, _MEASURED) if c in metadata.columns]
         if _RECOMMENDED in metadata.columns:
             if "recommended_experiments" not in dict_:
                 recommended_idxs = metadata.index[metadata[_RECOMMENDED]]
                 # Store indices for post-structure reconstruction
                 if len(recommended_idxs) > 0:
                     dict_["_legacy_recommended_idxs"] = recommended_idxs
-            # Strip the legacy column
+        if legacy_cols:
             dict_["searchspace_metadata"] = converter.unstructure(
-                metadata.drop(columns=[_RECOMMENDED])
+                metadata.drop(columns=legacy_cols)
             )
 
     return dict_

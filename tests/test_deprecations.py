@@ -653,3 +653,26 @@ def test_legacy_empty_dataframe_schema_deserialization():
     assert restored._measurements.empty
     assert restored._recommended_experiments.empty
     assert restored == campaign
+
+
+def test_legacy_measured_metadata_deserialization():
+    """Legacy searchspace_metadata 'measured' column is stripped during loading."""
+    from baybe.campaign import _MEASURED, Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy format: searchspace_metadata with a "measured" column
+    data = campaign.to_dict()
+    metadata = converter.structure(data["searchspace_metadata"], pd.DataFrame)
+    metadata[_MEASURED] = [True, False, False]
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must strip the legacy column without errors
+    restored = Campaign.from_dict(data)
+    assert _MEASURED not in restored._searchspace_metadata.columns
+    assert restored == campaign
