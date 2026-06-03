@@ -27,6 +27,9 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from tests.hypothesis_strategies.basic import finite_floats
 
+_nonzero_finite_floats = finite_floats().filter(lambda x: x != 0.0)
+"""A strategy producing non-zero finite floats."""
+
 
 def sub_selection_conditions(superset: list[Any] | None = None):
     """Generate :class:`baybe.constraints.conditions.SubSelectionCondition`."""
@@ -196,8 +199,7 @@ def _discrete_constraints(
     if constraint_type is DiscreteSumConstraint:
         condition = draw(threshold_conditions())
         if draw(st.booleans()):
-            coefficients = draw(st.tuples(*([finite_floats()] * len(params))))
-            assume(any(c != 0.0 for c in coefficients))
+            coefficients = draw(st.tuples(*([_nonzero_finite_floats] * len(params))))
             return DiscreteSumConstraint(params, condition, coefficients)
         return DiscreteSumConstraint(params, condition)
     elif constraint_type is DiscreteProductConstraint:
@@ -236,8 +238,7 @@ def continuous_linear_constraints(
         assert len(parameter_names) > 0
         assert len(parameter_names) == len(set(parameter_names))
 
-    coefficients = draw(st.tuples(*([finite_floats()] * len(parameter_names))))
-    assume(any(c != 0.0 for c in coefficients))
+    coefficients = draw(st.tuples(*([_nonzero_finite_floats] * len(parameter_names))))
     rhs = draw(finite_floats())
     is_interpoint = draw(st.booleans())
 

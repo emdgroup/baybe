@@ -361,11 +361,9 @@ class SubspaceDiscrete(SerialMixin):
                 f"{len(simplex_parameters)} parameter(s)."
             )
 
-        # Validate coefficients are not all zero
-        if not any(simplex_coefficients):
-            raise ValueError(
-                "At least one entry in 'simplex_coefficients' must be non-zero."
-            )
+        # Validate no zero coefficients
+        if any(c == 0.0 for c in simplex_coefficients):
+            raise ValueError("All entries in 'simplex_coefficients' must be non-zero.")
 
         # Validate no overlap between simplex parameters and product parameters
         simplex_parameters_names = {p.name for p in simplex_parameters}
@@ -807,9 +805,9 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
                     f"{len(simplex_parameters)} parameter(s)."
                 )
 
-            if not any(simplex_coefficients):
+            if any(c == 0.0 for c in simplex_coefficients):
                 raise ValueError(
-                    "At least one entry in 'simplex_coefficients' must be non-zero."
+                    "All entries in 'simplex_coefficients' must be non-zero."
                 )
 
         product_parameters = specs.get("product_parameters", [])
