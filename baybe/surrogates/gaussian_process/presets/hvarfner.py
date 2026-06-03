@@ -47,10 +47,12 @@ class HvarfnerKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
+        import math
+
         from botorch.models.kernels.positive_index import PositiveIndexKernel
-        from botorch.models.utils.gpytorch_modules import (
-            get_covar_module_with_dim_scaled_prior,
-        )
+        from gpytorch.constraints import GreaterThan
+        from gpytorch.kernels import MaternKernel
+        from gpytorch.priors import GammaPrior as GPyTorchGammaPrior
 
         parameter_names = self.get_parameter_names(searchspace)
 
@@ -65,9 +67,22 @@ class HvarfnerKernelFactory(_PureKernelFactory):
         )
         ard_num_dims = len(active_dims)
 
-        # Create the base kernel for the regular parameters
-        base_kernel = get_covar_module_with_dim_scaled_prior(
-            ard_num_dims=ard_num_dims, active_dims=active_dims
+        # Gamma prior with dimension-scaled rate (BoTorch-style, mode-matched).
+        # alpha = 3 follows the conventional BoTorch concentration parameter.
+        # beta scales as 1/sqrt(d) to preserve the sqrt(d) lengthscale scaling law.
+        _ALPHA = 3.0
+        _BETA_1 = (_ALPHA - 1) / math.exp(math.sqrt(2) - 3)
+        concentration = _ALPHA
+        rate = _BETA_1 / math.sqrt(ard_num_dims)
+        lengthscale_prior = GPyTorchGammaPrior(concentration, rate)
+
+        base_kernel = MaternKernel(
+            ard_num_dims=ard_num_dims,
+            lengthscale_prior=lengthscale_prior,
+            lengthscale_constraint=GreaterThan(
+                2.5e-2, transform=None, initial_value=lengthscale_prior.mode
+            ),
+            active_dims=active_dims,
         )
 
         # Single-task case
@@ -113,21 +128,25 @@ class HvarfnerLikelihoodFactory(LikelihoodFactoryProtocol):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> GPyTorchLikelihood:
+        import math
 
-        if searchspace.n_tasks == 1:
-            from botorch.models.utils.gpytorch_modules import (
-                get_gaussian_likelihood_with_lognormal_prior,
-            )
+        from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
+        from gpytorch.constraints import GreaterThan
+        from gpytorch.likelihoods import GaussianLikelihood
+        from gpytorch.priors import GammaPrior as GPyTorchGammaPrior
 
-            return get_gaussian_likelihood_with_lognormal_prior()
-
-        from baybe.surrogates.gaussian_process.components._gpytorch import (
-            make_botorch_multitask_likelihood,
-        )
-
-        assert searchspace.task_idx is not None
-        return make_botorch_multitask_likelihood(
-            num_tasks=searchspace.n_tasks, task_feature=searchspace.task_idx
+        # Gamma approximation of LogNormal(loc=-4, scale=1) noise prior.
+        # BoTorch-style mode-matched: alpha = 3, beta = 2 / exp(-5).
+        _NOISE_ALPHA = 3.0
+        _NOISE_BETA = (_NOISE_ALPHA - 1) / math.exp(-4.0 - 1.0**2)
+        noise_prior = GPyTorchGammaPrior(_NOISE_ALPHA, _NOISE_BETA)
+        return GaussianLikelihood(
+            noise_prior=noise_prior,
+            noise_constraint=GreaterThan(
+                MIN_INFERRED_NOISE_LEVEL,
+                transform=None,
+                initial_value=noise_prior.mode,
+            ),
         )
 
 
