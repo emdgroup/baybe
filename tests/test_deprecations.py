@@ -605,22 +605,21 @@ def test_legacy_recommended_metadata_deserialization(ongoing_campaign):
     rec = ongoing_campaign.recommend(batch_size=2)
     n_recommended = len(rec)
 
-    # Serialize and simulate legacy format (no recommended_experiments field)
+    # Serialize and simulate legacy format (no recommended/excluded_experiments)
     data = ongoing_campaign.to_dict()
     del data["recommended_experiments"]
+    del data["excluded_experiments"]
 
-    # Inject legacy recommended column into searchspace_metadata
-    metadata = converter.structure(data["searchspace_metadata"], pd.DataFrame)
-    assert _RECOMMENDED not in metadata.columns
-    # Add the recommended column as it would have been in legacy format
-    metadata[_RECOMMENDED] = False
+    # Construct legacy searchspace_metadata with a "recommended" column
+    exp_rep = ongoing_campaign.searchspace.discrete.exp_rep
+    metadata = pd.DataFrame(False, index=exp_rep.index, columns=[_RECOMMENDED])
     idxs = rec.index[:n_recommended]
     metadata.loc[idxs, _RECOMMENDED] = True
     data["searchspace_metadata"] = converter.unstructure(metadata)
 
     # Deserialization must reconstruct _recommended_experiments with correct content
     restored = Campaign.from_dict(data)
-    expected = ongoing_campaign.searchspace.discrete.exp_rep.loc[idxs]
+    expected = exp_rep.loc[idxs]
     # Compare as sets of rows (order may differ)
     restored_sorted = restored._recommended_experiments.sort_values(
         restored._recommended_experiments.columns.tolist()
@@ -656,7 +655,7 @@ def test_legacy_empty_dataframe_schema_deserialization():
 
 
 def test_legacy_measured_metadata_deserialization():
-    """Legacy searchspace_metadata 'measured' column is stripped during loading."""
+    """Legacy searchspace_metadata 'measured' column is discarded during loading."""
     from baybe.campaign import _MEASURED, Campaign
     from baybe.parameters.numerical import NumericalDiscreteParameter
     from baybe.serialization import converter
@@ -668,11 +667,46 @@ def test_legacy_measured_metadata_deserialization():
 
     # Simulate legacy format: searchspace_metadata with a "measured" column
     data = campaign.to_dict()
-    metadata = converter.structure(data["searchspace_metadata"], pd.DataFrame)
-    metadata[_MEASURED] = [True, False, False]
+    metadata = pd.DataFrame(
+        {_MEASURED: [True, False, False]},
+        index=campaign.searchspace.discrete.exp_rep.index,
+    )
     data["searchspace_metadata"] = converter.unstructure(metadata)
 
-    # Deserialization must strip the legacy column without errors
+    # Deserialization must handle the legacy column without errors
     restored = Campaign.from_dict(data)
-    assert _MEASURED not in restored._searchspace_metadata.columns
     assert restored == campaign
+
+
+def test_legacy_excluded_metadata_deserialization():
+    """Legacy searchspace_metadata 'excluded' column migrates to new field."""
+    from baybe.campaign import _EXCLUDED, Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy format: searchspace_metadata with an "excluded" column,
+    # and no excluded_experiments field
+    data = campaign.to_dict()
+    del data["excluded_experiments"]
+    exp_rep = campaign.searchspace.discrete.exp_rep
+    metadata = pd.DataFrame(
+        {_EXCLUDED: [True, False, True]},
+        index=exp_rep.index,
+    )
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must reconstruct _excluded_experiments
+    restored = Campaign.from_dict(data)
+    excluded_idxs = metadata.index[metadata[_EXCLUDED]]
+    expected = exp_rep.loc[excluded_idxs].reset_index(drop=True)
+    pd.testing.assert_frame_equal(
+        restored._excluded_experiments.sort_values(
+            restored._excluded_experiments.columns.tolist()
+        ).reset_index(drop=True),
+        expected.sort_values(expected.columns.tolist()).reset_index(drop=True),
+    )

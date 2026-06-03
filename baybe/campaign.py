@@ -60,11 +60,8 @@ if TYPE_CHECKING:
 
     _T = TypeVar("_T")
 
-# Metadata columns
-_EXCLUDED = "excluded"
-_METADATA_COLUMNS = [_EXCLUDED]
-
 # Legacy constants kept for deserialization migration only
+_EXCLUDED = "excluded"
 _MEASURED = "measured"
 _RECOMMENDED = "recommended"
 
@@ -173,11 +170,10 @@ class Campaign(SerialMixin):
     )
     """Allow recommending pending experiments."""
 
-    # Metadata
-    _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
-    """Metadata tracking the experimentation status of the search space."""
-
     # Private
+    _excluded_experiments: pd.DataFrame = field(eq=eq_dataframe, init=False)
+    """The parameter configurations that have been excluded from recommendations."""
+
     _measurements: pd.DataFrame = field(eq=eq_dataframe, init=False)
     """The measurements added to the campaign."""
 
@@ -197,22 +193,17 @@ class Campaign(SerialMixin):
         ]
         return pd.DataFrame(columns=cols)
 
+    @_excluded_experiments.default
+    def _default_excluded_experiments(self) -> pd.DataFrame:
+        """Create an empty excluded experiments DataFrame with correct schema."""
+        cols = [p.name for p in self.searchspace.parameters]
+        return pd.DataFrame(columns=cols)
+
     @_recommended_experiments.default
     def _default_recommended_experiments(self) -> pd.DataFrame:
         """Create an empty recommended experiments DataFrame with correct schema."""
         cols = [p.name for p in self.searchspace.parameters]
         return pd.DataFrame(columns=cols)
-
-    @_searchspace_metadata.default
-    def _default_searchspace_metadata(self) -> pd.DataFrame:
-        """Create a fresh metadata object."""
-        df = pd.DataFrame(
-            False,
-            index=self.searchspace.discrete.exp_rep.index,
-            columns=_METADATA_COLUMNS,
-        )
-
-        return df
 
     @override
     def __str__(self) -> str:
@@ -224,8 +215,8 @@ class Campaign(SerialMixin):
             measured_count = len(
                 fuzzy_row_match(exp_rep, self._measurements, self.parameters)
             )
-        excluded_count = sum(self._searchspace_metadata[_EXCLUDED])
-        n_elements = len(self._searchspace_metadata)
+        excluded_count = len(self._excluded_experiments)
+        n_elements = len(exp_rep)
         searchspace_fields = [
             to_string(
                 "Recommended:",
@@ -497,7 +488,25 @@ class Campaign(SerialMixin):
             )
 
         if not dry_run:
-            self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
+            if exclude:
+                # Add the toggled points (avoid duplicates)
+                frames = [
+                    f for f in (self._excluded_experiments, points) if not f.empty
+                ]
+                self._excluded_experiments = (
+                    pd.concat(frames, axis=0).drop_duplicates().reset_index(drop=True)
+                )
+            # Remove the re-included points
+            elif not self._excluded_experiments.empty:
+                merged = pd.merge(
+                    self._excluded_experiments,
+                    points,
+                    indicator=True,
+                    how="left",
+                )
+                self._excluded_experiments = self._excluded_experiments[
+                    merged["_merge"].eq("left_only").values
+                ].reset_index(drop=True)
 
         return points
 
@@ -553,13 +562,21 @@ class Campaign(SerialMixin):
         if self.searchspace.type is SearchSpaceType.DISCRETE:
             # TODO: This implementation should at some point be hidden behind an
             #   appropriate public interface, like `SubspaceDiscrete.filter()`
-            mask_todrop = self._searchspace_metadata[_EXCLUDED].astype(bool)
+            exp_rep = self.searchspace.discrete.exp_rep
+            mask_todrop = pd.Series(False, index=exp_rep.index)
+            if not self._excluded_experiments.empty:
+                mask_todrop |= pd.merge(
+                    exp_rep,
+                    self._excluded_experiments,
+                    indicator=True,
+                    how="left",
+                )["_merge"].eq("both")
             if (
                 not self.allow_recommending_already_recommended
                 and not self._recommended_experiments.empty
             ):
                 mask_todrop |= pd.merge(
-                    self.searchspace.discrete.exp_rep,
+                    exp_rep,
                     self._recommended_experiments,
                     indicator=True,
                     how="left",
@@ -569,9 +586,7 @@ class Campaign(SerialMixin):
                 and not self._measurements.empty
             ):
                 measured_idxs = fuzzy_row_match(
-                    self.searchspace.discrete.exp_rep,
-                    self._measurements,
-                    self.parameters,
+                    exp_rep, self._measurements, self.parameters
                 )
                 mask_todrop.loc[measured_idxs] = True
             if (
@@ -579,7 +594,7 @@ class Campaign(SerialMixin):
                 and pending_experiments is not None
             ):
                 mask_todrop |= pd.merge(
-                    self.searchspace.discrete.exp_rep,
+                    exp_rep,
                     pending_experiments,
                     indicator=True,
                     how="left",
@@ -1025,20 +1040,19 @@ def _discard_legacy_fields(dict_: dict, /) -> dict:
                 meas.drop(columns=cols_to_drop)
             )
 
-    # Strip legacy columns from _searchspace_metadata
+    # Migrate legacy _searchspace_metadata to new fields
     if "searchspace_metadata" in dict_:
-        metadata = converter.structure(dict_["searchspace_metadata"], pd.DataFrame)
-        legacy_cols = [c for c in (_RECOMMENDED, _MEASURED) if c in metadata.columns]
+        metadata = converter.structure(dict_.pop("searchspace_metadata"), pd.DataFrame)
         if _RECOMMENDED in metadata.columns:
             if "recommended_experiments" not in dict_:
                 recommended_idxs = metadata.index[metadata[_RECOMMENDED]]
-                # Store indices for post-structure reconstruction
                 if len(recommended_idxs) > 0:
                     dict_["_legacy_recommended_idxs"] = recommended_idxs
-        if legacy_cols:
-            dict_["searchspace_metadata"] = converter.unstructure(
-                metadata.drop(columns=legacy_cols)
-            )
+        if _EXCLUDED in metadata.columns:
+            if "excluded_experiments" not in dict_:
+                excluded_idxs = metadata.index[metadata[_EXCLUDED]]
+                if len(excluded_idxs) > 0:
+                    dict_["_legacy_excluded_idxs"] = excluded_idxs
 
     return dict_
 
@@ -1069,15 +1083,23 @@ converter.register_unstructure_hook(
 def _structure_campaign(d: dict, cl: type) -> Campaign:
     """Structure a Campaign from a dictionary, handling legacy migrations."""
     prepared = _prepare_for_structuring(d)
-    legacy_idxs = prepared.pop("_legacy_recommended_idxs", None)
+    legacy_recommended_idxs = prepared.pop("_legacy_recommended_idxs", None)
+    legacy_excluded_idxs = prepared.pop("_legacy_excluded_idxs", None)
     campaign = structure_hook(prepared, cl)
 
     # >>>>>>>>>> Deprecation
-    # Post-structure reconstruction of _recommended_experiments from legacy metadata
-    if legacy_idxs is not None:
+    # Post-structure reconstruction from legacy metadata indices
+    if legacy_recommended_idxs is not None:
         try:
-            rec_df = campaign.searchspace.discrete.exp_rep.loc[legacy_idxs]
+            rec_df = campaign.searchspace.discrete.exp_rep.loc[legacy_recommended_idxs]
             campaign._recommended_experiments = rec_df.reset_index(drop=True)
+        except Exception:
+            pass
+
+    if legacy_excluded_idxs is not None:
+        try:
+            excl_df = campaign.searchspace.discrete.exp_rep.loc[legacy_excluded_idxs]
+            campaign._excluded_experiments = excl_df.reset_index(drop=True)
         except Exception:
             pass
 
@@ -1089,6 +1111,11 @@ def _structure_campaign(d: dict, cl: type) -> Campaign:
         and campaign._recommended_experiments.empty
     ):
         campaign._recommended_experiments = campaign._default_recommended_experiments()
+    if (
+        campaign._excluded_experiments.columns.empty
+        and campaign._excluded_experiments.empty
+    ):
+        campaign._excluded_experiments = campaign._default_excluded_experiments()
     # <<<<<<<<<< Deprecation
 
     return campaign
