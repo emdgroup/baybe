@@ -61,10 +61,12 @@ if TYPE_CHECKING:
     _T = TypeVar("_T")
 
 # Metadata columns
-_RECOMMENDED = "recommended"
 _MEASURED = "measured"
 _EXCLUDED = "excluded"
-_METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
+_METADATA_COLUMNS = [_MEASURED, _EXCLUDED]
+
+# Legacy constant kept for deserialization migration only
+_RECOMMENDED = "recommended"
 
 
 def _set_with_cache_cleared(instance: Campaign, attribute: Attribute, value: _T) -> _T:
@@ -181,6 +183,11 @@ class Campaign(SerialMixin):
     )
     """The measurements added to the campaign."""
 
+    _recommended_experiments: pd.DataFrame = field(
+        factory=pd.DataFrame, eq=eq_dataframe, init=False
+    )
+    """The (deduplicated) parameter configurations that have been recommended."""
+
     _cached_recommendation: pd.DataFrame | None = field(
         default=None, init=False, eq=False
     )
@@ -199,7 +206,7 @@ class Campaign(SerialMixin):
 
     @override
     def __str__(self) -> str:
-        recommended_count = sum(self._searchspace_metadata[_RECOMMENDED])
+        recommended_count = len(self._recommended_experiments)
         measured_count = sum(self._searchspace_metadata[_MEASURED])
         excluded_count = sum(self._searchspace_metadata[_EXCLUDED])
         n_elements = len(self._searchspace_metadata)
@@ -539,8 +546,16 @@ class Campaign(SerialMixin):
             # TODO: This implementation should at some point be hidden behind an
             #   appropriate public interface, like `SubspaceDiscrete.filter()`
             mask_todrop = self._searchspace_metadata[_EXCLUDED].astype(bool)
-            if not self.allow_recommending_already_recommended:
-                mask_todrop |= self._searchspace_metadata[_RECOMMENDED]
+            if (
+                not self.allow_recommending_already_recommended
+                and not self._recommended_experiments.empty
+            ):
+                mask_todrop |= pd.merge(
+                    self.searchspace.discrete.exp_rep,
+                    self._recommended_experiments,
+                    indicator=True,
+                    how="left",
+                )["_merge"].eq("both")
             if not self.allow_recommending_already_measured:
                 mask_todrop |= self._searchspace_metadata[_MEASURED]
             if (
@@ -624,9 +639,18 @@ class Campaign(SerialMixin):
         ):
             self._cache_recommendation(rec)
 
-        # Update metadata
+        # Track recommended experiments (deduplicated)
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            self._searchspace_metadata.loc[rec.index, _RECOMMENDED] = True
+            param_cols = [p.name for p in self.parameters]
+            self._recommended_experiments = (
+                pd.concat(
+                    [self._recommended_experiments, rec[param_cols]],
+                    axis=0,
+                    ignore_index=True,
+                )
+                .drop_duplicates()
+                .reset_index(drop=True)
+            )
 
         return rec
 
@@ -984,6 +1008,20 @@ def _discard_legacy_fields(dict_: dict, /) -> dict:
                 meas.drop(columns=cols_to_drop)
             )
 
+    # Reconstruct _recommended_experiments from legacy _searchspace_metadata
+    if "searchspace_metadata" in dict_:
+        metadata = converter.structure(dict_["searchspace_metadata"], pd.DataFrame)
+        if _RECOMMENDED in metadata.columns:
+            if "recommended_experiments" not in dict_:
+                recommended_idxs = metadata.index[metadata[_RECOMMENDED]]
+                # Store indices for post-structure reconstruction
+                if len(recommended_idxs) > 0:
+                    dict_["_legacy_recommended_idxs"] = recommended_idxs
+            # Strip the legacy column
+            dict_["searchspace_metadata"] = converter.unstructure(
+                metadata.drop(columns=[_RECOMMENDED])
+            )
+
     return dict_
 
 
@@ -1008,9 +1046,28 @@ structure_hook = cattrs.gen.make_dict_structure_fn(
 converter.register_unstructure_hook(
     Campaign, lambda x: _add_version(unstructure_hook(x))
 )
-converter.register_structure_hook(
-    Campaign, lambda d, cl: structure_hook(_prepare_for_structuring(d), cl)
-)
+
+
+def _structure_campaign(d: dict, cl: type) -> Campaign:
+    """Structure a Campaign from a dictionary, handling legacy migrations."""
+    prepared = _prepare_for_structuring(d)
+    legacy_idxs = prepared.pop("_legacy_recommended_idxs", None)
+    campaign = structure_hook(prepared, cl)
+
+    # >>>>>>>>>> Deprecation
+    # Post-structure reconstruction of _recommended_experiments from legacy metadata
+    if legacy_idxs is not None:
+        try:
+            rec_df = campaign.searchspace.discrete.exp_rep.loc[legacy_idxs]
+            campaign._recommended_experiments = rec_df.reset_index(drop=True)
+        except Exception:
+            pass
+    # <<<<<<<<<< Deprecation
+
+    return campaign
+
+
+converter.register_structure_hook(Campaign, _structure_campaign)
 
 
 # Converter for config validation

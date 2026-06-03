@@ -592,3 +592,40 @@ def test_legacy_campaign_counter_deserialization(ongoing_campaign):
     restored = Campaign.from_dict(data)
     assert "FitNr" not in restored._measurements.columns
     assert "BatchNr" not in restored._measurements.columns
+
+
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+def test_legacy_recommended_metadata_deserialization(ongoing_campaign):
+    """Legacy searchspace_metadata 'recommended' column migrates to new field."""
+    from baybe.campaign import _RECOMMENDED, Campaign
+    from baybe.serialization import converter
+
+    # Recommend to mark some entries as recommended
+    rec = ongoing_campaign.recommend(batch_size=2)
+    n_recommended = len(rec)
+
+    # Serialize and simulate legacy format (no recommended_experiments field)
+    data = ongoing_campaign.to_dict()
+    del data["recommended_experiments"]
+
+    # Inject legacy recommended column into searchspace_metadata
+    metadata = converter.structure(data["searchspace_metadata"], pd.DataFrame)
+    assert _RECOMMENDED not in metadata.columns
+    # Add the recommended column as it would have been in legacy format
+    metadata[_RECOMMENDED] = False
+    idxs = rec.index[:n_recommended]
+    metadata.loc[idxs, _RECOMMENDED] = True
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must reconstruct _recommended_experiments with correct content
+    restored = Campaign.from_dict(data)
+    expected = ongoing_campaign.searchspace.discrete.exp_rep.loc[idxs]
+    # Compare as sets of rows (order may differ)
+    restored_sorted = restored._recommended_experiments.sort_values(
+        restored._recommended_experiments.columns.tolist()
+    ).reset_index(drop=True)
+    expected_sorted = expected.sort_values(expected.columns.tolist()).reset_index(
+        drop=True
+    )
+    pd.testing.assert_frame_equal(restored_sorted, expected_sorted)
