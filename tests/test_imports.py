@@ -65,6 +65,7 @@ WHITELISTS = {
         "baybe.acquisition._builder",
         "baybe.objectives.botorch",
         "baybe.surrogates._adapter",
+        "baybe.surrogates.gaussian_process.components._gpytorch",
         "baybe.utils.torch",
     ],
     "scipy": [
@@ -77,12 +78,12 @@ WHITELISTS = {
         "baybe.insights.shap",
         "baybe.objectives.botorch",
         "baybe.surrogates._adapter",
+        "baybe.surrogates.gaussian_process.components._gpytorch",
         "baybe.utils.chemistry",
         "baybe.utils.clustering_algorithms",
         "baybe.utils.clustering_algorithms.third_party",
         "baybe.utils.clustering_algorithms.third_party.kmedoids",
-    ]
-    + (["baybe._optional.simulation"] if sys.version_info >= (3, 11) else []),
+    ],
     "sklearn": [
         "baybe._optional.chem",
         "baybe._optional.insights",

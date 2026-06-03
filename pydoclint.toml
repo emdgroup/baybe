@@ -9,8 +9,9 @@ style=google
 # We do not repeat parameter type hints in docstrings
 arg-type-hints-in-docstring=False
 
-# We do not repeat return types in the docstrings
+# We do not repeat return/yield types in the docstrings
 check-return-types=False 
+check-yield-types=False
 
 # As of 0.5.2, pydoclint breaks with attrs classes
 # https://github.com/jsh9/pydoclint/issues/140

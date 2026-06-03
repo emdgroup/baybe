@@ -509,7 +509,7 @@ def test_recommendation_caching(searchspace: SearchSpace, cache: bool):
 def test_cache_directory(tmp_path: Path):
     """The cache directory is used to store cached results."""
     mock = Mock(return_value=0)
-    f = cache_to_disk(lambda: mock())
+    f = cache_to_disk(lambda: mock())  # noqa: PLW0108
 
     for path in [tmp_path / "a", tmp_path / "b", None]:
         mock.reset_mock()

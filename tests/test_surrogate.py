@@ -163,6 +163,13 @@ def test_invalid_model_params(model_cls, params):
         model_cls(model_params=params)
 
 
+@pytest.mark.skipif(
+    os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
+    reason="Most surrogates are only available in FULLTEST environment.",
+)
+@pytest.mark.filterwarnings(
+    "ignore::botorch.exceptions.warnings.BadInitialCandidatesWarning",
+)
 @pytest.mark.parametrize(
     "target_names",
     [["Target_max"], ["Target_max_bounded", "Target_min_bounded"]],
@@ -185,7 +192,7 @@ def test_invalid_model_params(model_cls, params):
 )
 def test_continuous_incompatibility(campaign):
     """Using surrogates without gradients on continuous spaces fails expectedly."""
-    data = create_fake_input(campaign.parameters, campaign.targets)
+    data = create_fake_input(campaign.parameters, campaign.targets, n_rows=2)
     campaign.add_measurements(data)
 
     skip = False

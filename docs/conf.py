@@ -7,6 +7,47 @@ from __future__ import annotations
 import os
 import shutil
 
+from gpytorch.kernels import Kernel as GPyTorchKernel
+from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
+from gpytorch.means import Mean as GPyTorchMean
+
+# >>>>>>>>>> NOTE ON THE FOLLOWING IMPORTS AND ALIASES <<<<<<<<<<
+# This is a hack to make the GPyTorch components available in the docs
+# Without those specific imports, the corresponding references cannot be resolved.
+# As a consequence, the __call__ functions that the factories use would not be part
+# of the documentation. Having those explicit imports here are the only solution
+# that two members of the core team were able to find, and it was agreed that even
+# though not pretty, it is the best solution to this problem.
+# If future implementations of the corresponding factories rely on different imports
+# not listed here, this will be flagged by the docs pipeline.
+from baybe.surrogates.gaussian_process.components import kernel as _kernel
+from baybe.surrogates.gaussian_process.components import likelihood as _likelihood
+from baybe.surrogates.gaussian_process.components import mean as _mean
+from baybe.surrogates.gaussian_process.presets import botorch as _botorch
+from baybe.surrogates.gaussian_process.presets import edbo as _edbo
+from baybe.surrogates.gaussian_process.presets import edbo_smoothed as _edbo_smoothed
+
+_kernel.GPyTorchKernel = GPyTorchKernel
+_likelihood.GPyTorchLikelihood = GPyTorchLikelihood
+_mean.GPyTorchMean = GPyTorchMean
+_botorch.GPyTorchLikelihood = GPyTorchLikelihood
+_botorch.GPyTorchMean = GPyTorchMean
+_edbo.GPyTorchLikelihood = GPyTorchLikelihood
+_edbo_smoothed.GPyTorchLikelihood = GPyTorchLikelihood
+
+# It is also necessary to add those aliases here, otherwise the references in the
+# documentation resolve to the original name of the classes, i.e., we would have the
+# type hint `Kernel | Kernel` instead of `Kernel | GPyTorchKernel`.
+
+autodoc_type_aliases = {
+    "GPyTorchKernel": "GPyTorchKernel",
+    "GPyTorchLikelihood": "GPyTorchLikelihood",
+    "GPyTorchMean": "GPyTorchMean",
+    "Smiles": "Smiles",
+}
+
+# >>>>>>>>>> NOTE END <<<<<<<<<<
+
 # -- Path setup --------------------------------------------------------------
 
 __location__ = os.path.dirname(__file__)
@@ -86,7 +127,10 @@ extensions = [
     "sphinx_design",  # For dropdowns etc
 ]
 bibtex_bibfiles = ["references.bib"]
-myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
+myst_enable_extensions = [
+    "dollarmath",  # Enables Latex-like math in markdown files
+    "colon_fence",  # Enables ::: syntax for directives
+]
 autosectionlabel_prefix_document = True  # Make sure autosectionlabels are unique
 myst_heading_anchors = 4
 
@@ -94,7 +138,7 @@ myst_heading_anchors = 4
 # Tell sphinx where to find the templates
 templates_path = ["templates"]
 # Tell sphinx which files should be excluded
-exclude_patterns = ["sdk"]
+exclude_patterns = ["sdk", "AGENTS.md", "CLAUDE.md", "**/AGENTS.md", "**/CLAUDE.md"]
 autodoc_exclude_modules = ["baybe.utils.clustering_algorithms.third_party.kmedoids"]
 
 # Enable markdown
@@ -136,6 +180,7 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.acquisition.base.*.supports_multi_output"),
     (r"py:obj", "baybe.acquisition.base.*.is_analytic"),
     (r"py:obj", "baybe.surrogates.*.is_available"),
+    (r"py:obj", r"baybe.constraints.*.has_polars_implementation"),
     # KMedoids
     (r"py:.*", r".*clustering_algorithms.*KMedoids.*"),
     (r"ref:.*", r".*clustering_algorithms.*KMedoids.*"),
@@ -146,15 +191,22 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.utils.boolean.UncertainBool.*"),
     ("py:obj", "baybe.targets.botorch.*"),
     ("py:obj", "baybe.objectives.botorch.*"),
-    ("py:class", "baybe.parameters.base._DiscreteLabelLikeParameter"),
-    ("py:class", "baybe.acquisition.acqfs._ExpectedHypervolumeImprovement"),
-    ("py:class", "baybe.settings._SlottedContextDecorator"),
+    ("py:obj", "baybe.serialization.mixin.SupportsRead.read"),
+    ("py:obj", "baybe.serialization.mixin.SupportsWrite.write"),
+    ("py:class", "baybe.surrogates.gaussian_process.components.PlainKernelFactory"),
+    # Private classes
+    (r"py:class", r"baybe\..*\._.*"),
     # Deprecation
     ("py:.*", "baybe.targets._deprecated.*"),
 ]
 
 # Ignore the following links when checking inks for viability
-linkcheck_ignore = [r"https://github.com/b-shields/edbo/blob/master/edbo/bro.py*"]
+linkcheck_ignore = [
+    r"https://github.com/b-shields/edbo/blob*",
+    r"https://doi.org/10.26434/chemrxiv.10001986/v2",
+    # New components/ pages don't exist on stable yet; remove once released
+    r"https://emdgroup\.github\.io/baybe/stable/components/.*",
+]
 
 
 # Ignore the warnings that are given by autosectionlabel
@@ -259,7 +311,6 @@ html_theme_options = {
     "dark_logo": "logo1.svg",  # Logo for dark mode
 }
 
-autodoc_type_aliases = {"Smiles": "Smiles"}
 
 # Everything in the module has the prefix baybe
 modindex_common_prefix = ["baybe."]
@@ -270,6 +321,7 @@ modindex_common_prefix = ["baybe."]
 # Mappings to all external packages that we want to have clickable links to
 intersphinx_mapping = {
     "botorch": ("https://botorch.readthedocs.io/en/latest", None),
+    "gpytorch": ("https://docs.gpytorch.ai/en/stable/", None),
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "polars": ("https://docs.pola.rs/api/python/stable/", None),

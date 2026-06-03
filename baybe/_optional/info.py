@@ -7,7 +7,7 @@ from importlib.util import find_spec
 
 
 @contextmanager
-def exclude_sys_path(path: str, /):  # noqa: DOC402, DOC404
+def exclude_sys_path(path: str, /):  # noqa: DOC402
     """Temporarily remove a specified path from `sys.path`.
 
     Args:

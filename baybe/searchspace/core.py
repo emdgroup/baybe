@@ -3,16 +3,20 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from enum import Enum
-from typing import cast
+from itertools import product
+from typing import TYPE_CHECKING, cast
 
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
+from baybe.exceptions import InfeasibilityError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
@@ -27,6 +31,9 @@ from baybe.searchspace.validation import (
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.conversion import to_string
+
+if TYPE_CHECKING:
+    from baybe.parameters.selectors import ParameterSelectorProtocol
 
 
 class SearchSpaceType(Enum):
@@ -240,14 +247,22 @@ class SearchSpace(SerialMixin):
         return self.discrete.parameter_names + self.continuous.parameter_names
 
     @property
+    def _task_parameter(self) -> TaskParameter | None:
+        """The (single) task parameter of the space, if it exists."""
+        # Currently private since only a temporary solution (--> extension to multiple
+        # task parameters needed)
+        params = [p for p in self.parameters if isinstance(p, TaskParameter)]
+
+        if not params:
+            return None
+
+        assert len(params) == 1  # currently ensured by parameter validation step
+        return params[0]
+
+    @property
     def task_idx(self) -> int | None:
         """The column index of the task parameter in computational representation."""
-        try:
-            # TODO [16932]: Redesign metadata handling
-            task_param = next(
-                p for p in self.parameters if isinstance(p, TaskParameter)
-            )
-        except StopIteration:
+        if (task_param := self._task_parameter) is None:
             return None
         # TODO[11611]: The current approach has three limitations:
         #   1.  It matches by column name and thus assumes that the parameter name
@@ -265,45 +280,146 @@ class SearchSpace(SerialMixin):
         #  multiple task parameters, we need to align what the output should even
         #  represent (e.g. number of combinatorial task combinations, number of
         #  tasks per task parameter, etc).
-        try:
-            task_param = next(
-                p for p in self.parameters if isinstance(p, TaskParameter)
-            )
-            return len(task_param.values)
-
-        # When there are no task parameters, we effectively have a single task
-        except StopIteration:
+        if (task_param := self._task_parameter) is None:
+            # When there are no task parameters, we effectively have a single task
             return 1
+        return len(task_param.values)
 
-    def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
-        """Find a parameter's column indices in the computational representation.
+    @property
+    def n_subsets(self) -> int:
+        """Total number of subset configurations.
+
+        Returns 0 if no subset constraints exist on either side.
+        When only one side has constraints, the other does not contribute to
+        the count.
+        """
+        d = self.discrete.n_subsets
+        c = self.continuous.n_subsets
+        if d == 0 == c:
+            return 0
+        return max(d, 1) * max(c, 1)
+
+    def subsets(
+        self,
+        candidates_exp: pd.DataFrame,
+        min_discrete_candidates: int | None = None,
+    ) -> Iterator[tuple[npt.NDArray[np.bool_], frozenset[str]]]:
+        r"""Get an iterator over all combined subset configurations.
+
+        Yields the Cartesian product of discrete masks and continuous
+        configurations.
 
         Args:
-            name: The name of the parameter whose columns indices are to be retrieved.
+            candidates_exp: The experimental representation of discrete candidates.
+            min_discrete_candidates: If provided, discrete Subsets with fewer
+                matching candidates are skipped.
+
+        Yields:
+            A discrete mask and continuous inactive parameters pair.
+        """
+        yield from product(
+            self.discrete.subset_masks(
+                candidates_exp, min_candidates=min_discrete_candidates
+            ),
+            self.continuous.inactive_parameter_combinations(),
+        )
+
+    def sample_subsets(
+        self,
+        candidates_exp: pd.DataFrame,
+        n: int,
+        min_discrete_candidates: int | None = None,
+        *,
+        max_rejections: int = 10,
+    ) -> list[tuple[npt.NDArray[np.bool_], frozenset[str]]]:
+        """Sample unique combined subset configurations.
+
+        Zips two independent with-replacement iterators from the discrete and
+        continuous sides, producing random pairs from the Cartesian product.
+        Duplicate pairs are skipped.
+
+        Args:
+            candidates_exp: The experimental representation of discrete candidates.
+            n: Number of unique configurations to sample.
+            min_discrete_candidates: If provided, discrete Subsets with fewer
+                matching candidates are excluded.
+            max_rejections: Maximum number of times a duplicate combination can
+                be drawn before raising ``InfeasibilityError``.
 
         Raises:
-            ValueError: If no parameter with the provided name exists.
-            ValueError: If more than one parameter with the provided name exists.
+            InfeasibilityError: If not enough unique subset configurations
+                are available.
+
+        Returns:
+            A list of ``(discrete_mask, continuous_inactive_params)`` tuples.
+        """
+        d_iter = self.discrete.subset_masks(
+            candidates_exp,
+            min_candidates=min_discrete_candidates,
+            mode="replace",
+        )
+        c_iter = self.continuous.inactive_parameter_combinations(mode="replace")
+
+        seen: set[tuple[bytes, frozenset[str]]] = set()
+        results: list[tuple[npt.NDArray[np.bool_], frozenset[str]]] = []
+        rejections = 0
+
+        for d_mask, c_config in zip(d_iter, c_iter):
+            key = (d_mask.tobytes(), c_config)
+            if key in seen:
+                rejections += 1
+                if rejections > max_rejections:
+                    raise InfeasibilityError(
+                        f"Not enough unique subset configurations available. "
+                        f"Requested {n} but only {len(results)} could be found."
+                    )
+                continue
+            seen.add(key)
+            rejections = 0
+            results.append((d_mask, c_config))
+            if len(results) >= n:
+                break
+
+        if len(results) < n:
+            raise InfeasibilityError(
+                f"Not enough unique subspace configurations available. "
+                f"Requested {n} but only {len(results)} could be found."
+            )
+
+        return results
+
+    def get_comp_rep_parameter_indices(
+        self,
+        name_or_selector: str | ParameterSelectorProtocol,
+        /,
+    ) -> tuple[int, ...]:
+        """Find comp-rep column indices for a parameter selection.
+
+        When called with a parameter name, returns the indices for that single
+        parameter. When called with a
+        :class:`~baybe.parameters.selectors.ParameterSelectorProtocol`,
+        returns the combined indices for all matching parameters.
+
+        Args:
+            name_or_selector: Either the name of a single parameter or a selector
+                that filters parameters to be included.
 
         Returns:
             A tuple containing the integer indices of the columns in the computational
-            representation associated with the parameter. When the parameter is not part
-            of the computational representation, an empty tuple is returned.
+            representation associated with the selected parameter(s). When a selected
+            parameter is not part of the computational representation, it contributes
+            no indices.
         """
-        params = self.get_parameters_by_name([name])
-        if len(params) < 1:
-            raise ValueError(
-                f"There exists no parameter named '{name}' in the search space."
-            )
-        if len(params) > 1:
-            raise ValueError(
-                f"There exist multiple parameter matches for '{name}' in the search "
-                f"space."
-            )
-        p = params[0]
+        if isinstance(name_or_selector, str):
+            params: list[Parameter] = [
+                p for p in self.parameters if p.name == name_or_selector
+            ]
+        else:
+            params = [p for p in self.parameters if name_or_selector(p)]
 
         return tuple(
             i
+            for p in params
             for i, col in enumerate(self.comp_rep_columns)
             if col in p.comp_rep_columns
         )

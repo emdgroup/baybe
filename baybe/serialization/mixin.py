@@ -4,14 +4,25 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import Any, Protocol, TypeVar
 
 from baybe.serialization.core import _add_type_to_dict, converter
 
 _T = TypeVar("_T", bound="SerialMixin")
+_T_co = TypeVar("_T_co", covariant=True)
+_T_contra = TypeVar("_T_contra", contravariant=True)
 
-if TYPE_CHECKING:
-    from _typeshed import SupportsRead, SupportsWrite
+
+class SupportsRead(Protocol[_T_co]):
+    """Runtime equivalent of `_typeshed.SupportsRead`."""
+
+    def read(self, length: int = ..., /) -> _T_co: ...  # noqa
+
+
+class SupportsWrite(Protocol[_T_contra]):
+    """Runtime equivalent of `_typeshed.SupportsWrite`."""
+
+    def write(self, s: _T_contra, /) -> object: ...  # noqa
 
 
 class SerialMixin:

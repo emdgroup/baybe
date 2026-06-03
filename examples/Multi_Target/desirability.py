@@ -67,7 +67,7 @@ target_match = NumericalTarget.match_bell("target_match", match_value=50, sigma=
 # Note that you can easily change the specifics of the applied transformations by
 # resorting to other target constructors or specifying custom transformation
 # logic. For more details, see our
-# {ref}`target userguide <userguide/targets:NumericalTarget>`.
+# {ref}`target userguide <components/targets:NumericalTarget>`.
 # ```
 
 
@@ -85,7 +85,7 @@ objective = DesirabilityObjective(targets, weights=[20, 20, 60], scalarizer="MEA
 ### Getting Recommendations
 
 # We can now use the objective, like any other, to
-# {doc}`query recommendations </userguide/getting_recommendations>`, e.g. by setting
+# {doc}`query recommendations </concepts/getting_recommendations>`, e.g. by setting
 # up a {class}`~baybe.campaign.Campaign`:
 
 campaign = Campaign(searchspace, objective)

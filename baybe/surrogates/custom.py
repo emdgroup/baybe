@@ -11,13 +11,12 @@ It is planned to solve this issue in the future.
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, Any, ClassVar, NoReturn
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import cattrs
 from attrs import define, field, validators
 from typing_extensions import override
 
-from baybe.exceptions import DeprecationError
 from baybe.parameters import (
     CategoricalEncoding,
     CategoricalParameter,
@@ -49,15 +48,6 @@ The use of latin-1 ensures there are no loss from the conversion of
 bytes to string and back, since the specification is a bijection between
 0-255 and the character set.
 """
-
-
-def register_custom_architecture(*args, **kwargs) -> NoReturn:
-    """Deprecated! Raises an error when used."""  # noqa: D401
-    raise DeprecationError(
-        "The 'register_custom_architecture' decorator is no longer available. "
-        "Use :class:`baybe.surrogates.base.SurrogateProtocol` instead to define "
-        "your custom architectures."
-    )
 
 
 @define(kw_only=True)
@@ -176,9 +166,9 @@ def _encode_onnx_string(dct: dict[str, Any], _) -> CustomONNXSurrogate:
         CustomONNXSurrogate,
         converter,
         onnx_str=cattrs.override(
-            struct_hook=lambda x, _: x.encode(_ONNX_ENCODING)
-            if isinstance(x, str)
-            else x
+            struct_hook=lambda x, _: (
+                x.encode(_ONNX_ENCODING) if isinstance(x, str) else x
+            )
         ),
     )
     return fn(dct)

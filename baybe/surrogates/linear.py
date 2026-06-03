@@ -71,7 +71,9 @@ class BayesianLinearSurrogate(IndependentGaussianSurrogate):
         import torch
 
         # Get predictions
-        dists = self._model.predict(candidates_comp_scaled.numpy(), return_std=True)
+        dists = self._model.predict(
+            candidates_comp_scaled.detach().numpy(), return_std=True
+        )
 
         # Split into posterior mean and variance
         mean = torch.from_numpy(dists[0])

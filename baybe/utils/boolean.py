@@ -5,7 +5,7 @@ from __future__ import annotations
 import enum
 from abc import ABC
 from collections.abc import Callable
-from typing import Any
+from typing import Any, get_origin
 
 from attrs import cmp_using
 from typing_extensions import assert_never, is_protocol, override
@@ -31,6 +31,9 @@ def is_abstract(cls: Any) -> bool:
     Returns:
         ``True`` if the class is "abstract" (see definition above), ``False`` else.
     """
+    # Handle generics
+    cls = get_origin(cls) or cls
+
     return ABC in cls.__bases__ or is_protocol(cls)
 
 
@@ -221,3 +224,15 @@ class AutoBool(enum.Enum):
                     pass
 
         raise ValueError(f"Cannot convert '{value}' to '{cls.__name__}'.")
+
+
+def unstructure_autobool(value: AutoBool, /) -> bool | str:
+    """Unstructure an :class:`AutoBool`."""
+    if value is AutoBool.AUTO:
+        return AutoBool.AUTO.value
+    return bool(value)
+
+
+def structure_autobool(value: bool | str, _, /) -> AutoBool:
+    """Structure an :class:`AutoBool`."""
+    return AutoBool.from_unstructured(value)

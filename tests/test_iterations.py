@@ -25,7 +25,7 @@ from baybe.kernels.basic import (
     RFFKernel,
     RQKernel,
 )
-from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
+from baybe.kernels.composite import ScaleKernel
 from baybe.objectives.pareto import ParetoObjective
 from baybe.priors import (
     GammaPrior,
@@ -50,7 +50,7 @@ from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
 from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
-    DefaultKernelFactory,
+    BayBEKernelFactory,
     EDBOKernelFactory,
 )
 from baybe.surrogates.linear import BayesianLinearSurrogate
@@ -123,6 +123,82 @@ acqfs_single_output_batching = [
     a for a in acqfs_batching if not a.supports_multi_output
 ]
 acqfs_multi_output_batching = [a for a in acqfs_batching if a.supports_multi_output]
+
+
+def _make_acqf_id(acqf) -> str:
+    """Return a unique strict_parametrization_ids-compatible ID for an acqf.
+
+    Disambiguates multiple instances of the same class (e.g. qNIPV variants) by
+    appending their sampling configuration to the abbreviation.
+    """
+    if isinstance(acqf, qNIPV):
+        method = acqf.sampling_method.value
+        if acqf.sampling_n_points is not None:
+            return f"{acqf.abbreviation}_n{acqf.sampling_n_points}_{method}"
+        frac = str(acqf.sampling_fraction).replace(".", "p")
+        return f"{acqf.abbreviation}_frac{frac}_{method}"
+    return acqf.abbreviation
+
+
+def _make_kernel_id(kernel) -> str:
+    """Return a unique strict_parametrization_ids-compatible ID for a kernel.
+
+    Disambiguates same-class instances by incorporating the prior type (base kernels),
+    the wrapped kernel (ScaleKernel), or the component class names (composite kernels).
+    """
+    cls_name = kernel.__class__.__name__
+    # Base kernels: disambiguate by the prior attribute that varies across instances
+    for attr in ("lengthscale_prior", "variance_prior", "offset_prior"):
+        prior = getattr(kernel, attr, None)
+        if prior is not None:
+            return f"{cls_name}_{prior.__class__.__name__}"
+    # ScaleKernel wraps a single base_kernel
+    base = getattr(kernel, "base_kernel", None)
+    if base is not None:
+        return f"{cls_name}_{_make_kernel_id(base)}"
+    # Composite kernels (AdditiveKernel, ProductKernel) have a base_kernels collection
+    base_kernels = getattr(kernel, "base_kernels", None)
+    if base_kernels is not None:
+        inner = "_".join(k.__class__.__name__ for k in base_kernels)
+        return f"{cls_name}_{inner}"
+    return cls_name
+
+
+def _make_recommender_id(recommender) -> str:
+    """Return a unique strict_parametrization_ids-compatible ID for a recommender.
+
+    For TwoPhaseMetaRecommender wrappers, the inner recommender type (and its key
+    config for BotorchRecommender / NaiveHybridSpaceRecommender) is used to produce
+    a more informative ID than the outer wrapper class name alone.
+    """
+    if isinstance(recommender, TwoPhaseMetaRecommender):
+        inner = recommender.recommender
+        if isinstance(inner, NaiveHybridSpaceRecommender):
+            return f"Naive_{inner.disc_recommender.__class__.__name__}"
+        if isinstance(inner, BotorchRecommender):
+            sampler = inner.hybrid_sampler or "None"
+            pct = str(inner.sampling_percentage).replace(".", "p")
+            return f"Botorch_{sampler}_{pct}"
+        return inner.__class__.__name__
+    return recommender.__class__.__name__
+
+
+def _dedup_ids(ids: list[str]) -> list[str]:
+    """Append a numeric suffix to duplicate IDs to ensure uniqueness."""
+    from collections import Counter
+
+    totals = Counter(ids)
+    counts: dict[str, int] = {}
+    result = []
+    for id_ in ids:
+        if totals[id_] > 1:
+            n = counts.get(id_, 0) + 1
+            counts[id_] = n
+            result.append(f"{id_}_{n}")
+        else:
+            result.append(id_)
+    return result
+
 
 # List of all hybrid recommenders with default attributes. Is extended with other lists
 # of hybrid recommenders like naive ones or recommenders not using default arguments
@@ -214,25 +290,20 @@ valid_scale_kernels = [
 ]
 
 valid_composite_kernels = [
-    AdditiveKernel([MaternKernel(1.5), MaternKernel(2.5)]),
-    AdditiveKernel([PolynomialKernel(1), PolynomialKernel(2), PolynomialKernel(3)]),
-    AdditiveKernel([RBFKernel(), RQKernel(), PolynomialKernel(1)]),
-    ProductKernel([MaternKernel(1.5), MaternKernel(2.5)]),
-    ProductKernel([RBFKernel(), RQKernel(), PolynomialKernel(1)]),
-    ProductKernel([PolynomialKernel(1), PolynomialKernel(2), PolynomialKernel(3)]),
-    AdditiveKernel(
-        [
-            ProductKernel([MaternKernel(1.5), MaternKernel(2.5)]),
-            AdditiveKernel([MaternKernel(1.5), MaternKernel(2.5)]),
-        ]
-    ),
+    MaternKernel(1.5) + MaternKernel(2.5),
+    PolynomialKernel(1) + PolynomialKernel(2) + PolynomialKernel(3),
+    RBFKernel() + RQKernel() + PolynomialKernel(1),
+    MaternKernel(1.5) * MaternKernel(2.5),
+    RBFKernel() * RQKernel() * PolynomialKernel(1),
+    PolynomialKernel(1) * PolynomialKernel(2) * PolynomialKernel(3),
+    (MaternKernel(1.5) * MaternKernel(2.5)) + (MaternKernel(1.5) + MaternKernel(2.5)),
 ]
 
 valid_kernels = valid_base_kernels + valid_scale_kernels + valid_composite_kernels
 
 
 valid_kernel_factories = [
-    param(DefaultKernelFactory(), id="Default"),
+    param(BayBEKernelFactory(), id="Default"),
     param(EDBOKernelFactory(), id="EDBO"),
 ]
 
@@ -249,7 +320,7 @@ test_targets = [
 @pytest.mark.parametrize(
     "acqf",
     acqfs_single_output_batching,
-    ids=[a.abbreviation for a in acqfs_single_output_batching],
+    ids=[_make_acqf_id(a) for a in acqfs_single_output_batching],
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_single_output_batching_acqfs(ongoing_campaign, n_iterations, batch_size, acqf):
@@ -269,11 +340,12 @@ def test_single_output_batching_acqfs(ongoing_campaign, n_iterations, batch_size
 @pytest.mark.parametrize(
     "objective",
     [ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2", minimize=True)])],
+    ids=["pareto_objective"],
 )
 @pytest.mark.parametrize(
     "acqf",
     acqfs_multi_output_batching,
-    ids=[a.abbreviation for a in acqfs_multi_output_batching],
+    ids=[_make_acqf_id(a) for a in acqfs_multi_output_batching],
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_multi_output_batching_acqfs(ongoing_campaign, n_iterations, batch_size):
@@ -282,7 +354,7 @@ def test_multi_output_batching_acqfs(ongoing_campaign, n_iterations, batch_size)
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "acqf", acqfs_non_batching, ids=[a.abbreviation for a in acqfs_non_batching]
+    "acqf", acqfs_non_batching, ids=[_make_acqf_id(a) for a in acqfs_non_batching]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 @pytest.mark.parametrize("batch_size", [1], ids=["b1"])
@@ -292,7 +364,7 @@ def test_non_batching_acqfs(ongoing_campaign, n_iterations, batch_size):
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "kernel", valid_kernels, ids=[c.__class__ for c in valid_kernels]
+    "kernel", valid_kernels, ids=[_make_kernel_id(c) for c in valid_kernels]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_kernels(ongoing_campaign, n_iterations, batch_size):
@@ -332,7 +404,7 @@ def test_surrogate_models(ongoing_campaign, n_iterations, batch_size, surrogate_
 @pytest.mark.parametrize(
     "recommender",
     valid_initial_recommenders,
-    ids=[c.__class__ for c in valid_initial_recommenders],
+    ids=_dedup_ids([c.__class__.__name__ for c in valid_initial_recommenders]),
 )
 def test_initial_recommenders(ongoing_campaign, n_iterations, batch_size):
     with pytest.warns(UnusedObjectWarning):
@@ -352,7 +424,7 @@ def test_targets(ongoing_campaign, n_iterations, batch_size):
 @pytest.mark.parametrize(
     "recommender",
     valid_discrete_recommenders,
-    ids=[c.__class__ for c in valid_discrete_recommenders],
+    ids=_dedup_ids([_make_recommender_id(c) for c in valid_discrete_recommenders]),
 )
 def test_recommenders_discrete(ongoing_campaign, n_iterations, batch_size):
     try:
@@ -365,7 +437,7 @@ def test_recommenders_discrete(ongoing_campaign, n_iterations, batch_size):
 @pytest.mark.parametrize(
     "recommender",
     valid_continuous_recommenders,
-    ids=[c.__class__ for c in valid_continuous_recommenders],
+    ids=_dedup_ids([_make_recommender_id(c) for c in valid_continuous_recommenders]),
 )
 @pytest.mark.parametrize(
     "parameter_names", [["Conti_finite1", "Conti_finite2"]], ids=["conti_params"]
@@ -378,7 +450,7 @@ def test_recommenders_continuous(ongoing_campaign, n_iterations, batch_size):
 @pytest.mark.parametrize(
     "recommender",
     valid_hybrid_recommenders,
-    ids=[c.__class__ for c in valid_hybrid_recommenders],
+    ids=_dedup_ids([_make_recommender_id(c) for c in valid_hybrid_recommenders]),
 )
 @pytest.mark.parametrize(
     "parameter_names",
@@ -410,7 +482,7 @@ def test_recommenders_hybrid(ongoing_campaign, n_iterations, batch_size):
 @pytest.mark.parametrize(
     "recommender",
     valid_meta_recommenders,
-    ids=[c.__class__ for c in valid_meta_recommenders],
+    ids=[c.__name__ for c in valid_meta_recommenders],
     indirect=True,
 )
 def test_meta_recommenders(ongoing_campaign, n_iterations, batch_size):
