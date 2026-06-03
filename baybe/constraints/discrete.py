@@ -128,8 +128,8 @@ class DiscreteSumConstraint(DiscreteConstraint):
                 "The given 'coefficients' list must have one floating point entry for "
                 "each entry in 'parameters'."
             )
-        if not any(coefficients):
-            raise ValueError("At least one entry in 'coefficients' must be non-zero.")
+        if any(c == 0.0 for c in coefficients):
+            raise ValueError("All entries in 'coefficients' must be non-zero.")
 
     @override
     def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
