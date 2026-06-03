@@ -4,6 +4,7 @@
 
 .. autoclass:: {{ objname }}
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -14,6 +15,9 @@
    .. autosummary::
    {% for item in methods %}
       ~{{ name }}.{{ item }}
+   {% if item == "__init__" and "__call__" in all_methods %}
+      ~{{ name }}.__call__
+   {% endif %}
    {%- endfor %}
    {% endif %}
    {% endblock %}
