@@ -178,20 +178,30 @@ class Campaign(SerialMixin):
     """Metadata tracking the experimentation status of the search space."""
 
     # Private
-    _measurements: pd.DataFrame = field(
-        factory=pd.DataFrame, eq=eq_dataframe, init=False
-    )
+    _measurements: pd.DataFrame = field(eq=eq_dataframe, init=False)
     """The measurements added to the campaign."""
 
-    _recommended_experiments: pd.DataFrame = field(
-        factory=pd.DataFrame, eq=eq_dataframe, init=False
-    )
+    _recommended_experiments: pd.DataFrame = field(eq=eq_dataframe, init=False)
     """The (deduplicated) parameter configurations that have been recommended."""
 
     _cached_recommendation: pd.DataFrame | None = field(
         default=None, init=False, eq=False
     )
     """The cached recommendations."""
+
+    @_measurements.default
+    def _default_measurements(self) -> pd.DataFrame:
+        """Create an empty measurements DataFrame with the correct schema."""
+        cols = [p.name for p in self.searchspace.parameters] + [
+            t.name for t in (self.objective.targets if self.objective else ())
+        ]
+        return pd.DataFrame(columns=cols)
+
+    @_recommended_experiments.default
+    def _default_recommended_experiments(self) -> pd.DataFrame:
+        """Create an empty recommended experiments DataFrame with correct schema."""
+        cols = [p.name for p in self.searchspace.parameters]
+        return pd.DataFrame(columns=cols)
 
     @_searchspace_metadata.default
     def _default_searchspace_metadata(self) -> pd.DataFrame:
@@ -362,9 +372,8 @@ class Campaign(SerialMixin):
         self.clear_cache()
 
         # Read in measurements and add them to the database
-        self._measurements = pd.concat(
-            [self._measurements, data], axis=0, ignore_index=True
-        )
+        frames = [f for f in (self._measurements, data) if not f.empty]
+        self._measurements = pd.concat(frames, axis=0, ignore_index=True)
 
         # Update metadata
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
@@ -642,12 +651,13 @@ class Campaign(SerialMixin):
         # Track recommended experiments (deduplicated)
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
             param_cols = [p.name for p in self.parameters]
+            frames = [
+                f
+                for f in (self._recommended_experiments, rec[param_cols])
+                if not f.empty
+            ]
             self._recommended_experiments = (
-                pd.concat(
-                    [self._recommended_experiments, rec[param_cols]],
-                    axis=0,
-                    ignore_index=True,
-                )
+                pd.concat(frames, axis=0, ignore_index=True)
                 .drop_duplicates()
                 .reset_index(drop=True)
             )
@@ -1062,6 +1072,15 @@ def _structure_campaign(d: dict, cl: type) -> Campaign:
             campaign._recommended_experiments = rec_df.reset_index(drop=True)
         except Exception:
             pass
+
+    # Fix schema of empty DataFrames from legacy serialization
+    if campaign._measurements.columns.empty and campaign._measurements.empty:
+        campaign._measurements = campaign._default_measurements()
+    if (
+        campaign._recommended_experiments.columns.empty
+        and campaign._recommended_experiments.empty
+    ):
+        campaign._recommended_experiments = campaign._default_recommended_experiments()
     # <<<<<<<<<< Deprecation
 
     return campaign

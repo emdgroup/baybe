@@ -629,3 +629,27 @@ def test_legacy_recommended_metadata_deserialization(ongoing_campaign):
         drop=True
     )
     pd.testing.assert_frame_equal(restored_sorted, expected_sorted)
+
+
+def test_legacy_empty_dataframe_schema_deserialization():
+    """Legacy campaigns with schema-less empty DataFrames get correct columns."""
+    from baybe.campaign import Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy serialization: replace with column-less empty DataFrames
+    data = campaign.to_dict()
+    data["measurements"] = converter.unstructure(pd.DataFrame())
+    data["recommended_experiments"] = converter.unstructure(pd.DataFrame())
+
+    restored = Campaign.from_dict(data)
+    assert restored._measurements.columns.tolist() == ["x", "y"]
+    assert restored._recommended_experiments.columns.tolist() == ["x"]
+    assert restored._measurements.empty
+    assert restored._recommended_experiments.empty
+    assert restored == campaign
