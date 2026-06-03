@@ -61,6 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   equality check
 
 ### Changed
+- New default settings for GP components: the `CHEN` preset is used if there is a
+  `SubstanceParamter` present. The `SmoothedEDBO` preset is used otherwise
 - "User Guide" section has been split into "Components" and "Concepts" 
 - Default transfer learning kernel changed from `IndexKernel` to `PositiveIndexKernel`,
   enforcing positive task correlations
