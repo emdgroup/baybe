@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Breaking Changes
+- `Campaign.measurements` no longer contains `FitNr` or `BatchNr` metadata columns
+
+### Changed
+- Internal `Campaign` state model simplified: recommended and excluded experiments
+  are now stored as dataframes instead of being tracked as metadata flags
+
+### Deprecations
+- `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes 
+
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
 - `GaussianProcessSurrogate` no longer automatically adds a task kernel in multi-task
@@ -83,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `GaussianProcessSurrogate.from_preset` 
 
 ### Deprecations
+- `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
 - `BotorchRecommender.max_n_subspaces` has been renamed to `max_n_subsets`
 - `set_random_seed` and `temporary_seed` utility functions
 - Using a custom kernel with `GaussianProcessSurrogate` in a multi-task context now
