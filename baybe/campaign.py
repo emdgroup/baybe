@@ -7,10 +7,9 @@ import json
 import warnings
 from collections.abc import Collection, Sequence
 from functools import reduce
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, NoReturn, TypeVar
 
 import cattrs
-import numpy as np
 import pandas as pd
 from attrs import Attribute, define, evolve, field, fields, setters
 from attrs.converters import optional
@@ -19,6 +18,7 @@ from typing_extensions import override
 
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import (
+    DeprecationError,
     IncompatibilityError,
     NoMeasurementsError,
     NotEnoughPointsLeftError,
@@ -178,9 +178,6 @@ class Campaign(SerialMixin):
     n_batches_done: int = field(default=0, init=False)
     """The number of already processed batches."""
 
-    n_fits_done: int = field(default=0, init=False)
-    """The number of fits already done."""
-
     # Private
     _measurements_exp: pd.DataFrame = field(
         factory=pd.DataFrame, eq=eq_dataframe, init=False
@@ -228,7 +225,6 @@ class Campaign(SerialMixin):
         ]
         metadata_fields = [
             to_string("Batches done", self.n_batches_done, single_line=True),
-            to_string("Fits done", self.n_fits_done, single_line=True),
             to_string("Discrete Subspace Meta Data", *searchspace_fields),
         ]
         metadata = to_string("Meta Data", *metadata_fields)
@@ -240,6 +236,11 @@ class Campaign(SerialMixin):
     def measurements(self) -> pd.DataFrame:
         """The experimental data added to the Campaign."""
         return self._measurements_exp
+
+    @property
+    def n_fits_done(self) -> NoReturn:
+        """Deprecated!"""
+        raise DeprecationError("'n_fits_done' is no longer available.")
 
     @property
     def parameters(self) -> tuple[Parameter, ...]:
@@ -356,7 +357,6 @@ class Campaign(SerialMixin):
         self.n_batches_done += 1
         to_insert = data.copy()
         to_insert["BatchNr"] = self.n_batches_done
-        to_insert["FitNr"] = np.nan
 
         self._measurements_exp = pd.concat(
             [self._measurements_exp, to_insert], axis=0, ignore_index=True
@@ -378,7 +378,7 @@ class Campaign(SerialMixin):
 
         This can be useful to correct mistakes or update target measurements. The
         match to existing data entries is made based on the index. This will reset
-        the `FitNr` of the corresponding measurement and reset cached recommendations.
+        cached recommendations.
 
         Args:
             data: The measurement data to be updated (with filled values for targets).
@@ -420,9 +420,6 @@ class Campaign(SerialMixin):
         # Perform the update
         cols = [p.name for p in self.parameters] + [t.name for t in self.targets]
         self._measurements_exp.loc[data.index, cols] = data[cols]
-
-        # Reset fit number
-        self._measurements_exp.loc[data.index, "FitNr"] = np.nan
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
@@ -539,11 +536,6 @@ class Campaign(SerialMixin):
             and len(cache) == batch_size
         ):
             return cache
-
-        # Update recommendation meta data
-        if len(self._measurements_exp) > 0:
-            self.n_fits_done += 1
-            self._measurements_exp.fillna({"FitNr": self.n_fits_done}, inplace=True)
 
         # Prepare the search space according to the current campaign state
         if self.searchspace.type is SearchSpaceType.DISCRETE:
@@ -976,6 +968,33 @@ def _drop_version(dict_: dict) -> dict:
     return dict_
 
 
+# >>>>>>>>>> Deprecation
+def _discard_legacy_fields(dict_: dict, /) -> dict:
+    """Discard legacy fields from a Campaign dictionary during structuring."""
+    dict_.pop("n_fits_done", None)
+
+    # Strip FitNr column from legacy measurements
+    if "measurements_exp" in dict_:
+        meas = converter.structure(dict_["measurements_exp"], pd.DataFrame)
+        if "FitNr" in meas.columns:
+            dict_["measurements_exp"] = converter.unstructure(
+                meas.drop(columns="FitNr")
+            )
+
+    return dict_
+
+
+# <<<<<<<<<< Deprecation
+
+
+def _prepare_for_structuring(dict_: dict, /) -> dict:
+    """Prepare a Campaign dictionary for structuring."""
+    dict_ = dict_.copy()
+    _drop_version(dict_)
+    _discard_legacy_fields(dict_)
+    return dict_
+
+
 # Register (un-)structure hooks
 unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
     Campaign, converter, _cattrs_include_init_false=True
@@ -987,7 +1006,7 @@ converter.register_unstructure_hook(
     Campaign, lambda x: _add_version(unstructure_hook(x))
 )
 converter.register_structure_hook(
-    Campaign, lambda d, cl: structure_hook(_drop_version(d), cl)
+    Campaign, lambda d, cl: structure_hook(_prepare_for_structuring(d), cl)
 )
 
 

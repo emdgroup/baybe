@@ -276,7 +276,6 @@ def test_update_measurements(ongoing_campaign):
     meas = ongoing_campaign.measurements
     assert meas.iloc[0, updated.columns.get_loc(p_name)] == 1337
     assert meas.iloc[0, updated.columns.get_loc(t_name)] == 1337
-    assert meas.iloc[[0], updated.columns.get_loc("FitNr")].isna().all()
     assert ongoing_campaign._cached_recommendation is None
 
 

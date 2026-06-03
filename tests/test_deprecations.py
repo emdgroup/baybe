@@ -556,3 +556,31 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
     )
     with context:
         GaussianProcessSurrogate(*args).fit(searchspace, objective, measurements)
+
+
+def test_deprecated_n_fits_done(campaign):
+    """Accessing the deprecated n_fits_done property raises an error."""
+    with pytest.raises(DeprecationError, match="n_fits_done"):
+        campaign.n_fits_done
+
+
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+def test_legacy_n_fits_done_deserialization(ongoing_campaign):
+    """Deserializing a campaign with legacy n_fits_done and FitNr still works."""
+    from baybe.campaign import Campaign
+    from baybe.serialization import converter
+
+    # Serialize, then inject legacy fields
+    data = ongoing_campaign.to_dict()
+    assert "n_fits_done" not in data
+    data["n_fits_done"] = 3
+
+    # Inject FitNr column into measurements
+    meas = converter.structure(data["measurements_exp"], pd.DataFrame)
+    meas["FitNr"] = 1.0
+    data["measurements_exp"] = converter.unstructure(meas)
+
+    # Deserialization must not raise and FitNr must be stripped
+    restored = Campaign.from_dict(data)
+    assert "FitNr" not in restored._measurements_exp.columns
