@@ -175,9 +175,6 @@ class Campaign(SerialMixin):
     _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
     """Metadata tracking the experimentation status of the search space."""
 
-    n_batches_done: int = field(default=0, init=False)
-    """The number of already processed batches."""
-
     # Private
     _measurements_exp: pd.DataFrame = field(
         factory=pd.DataFrame, eq=eq_dataframe, init=False
@@ -224,7 +221,6 @@ class Campaign(SerialMixin):
             ),
         ]
         metadata_fields = [
-            to_string("Batches done", self.n_batches_done, single_line=True),
             to_string("Discrete Subspace Meta Data", *searchspace_fields),
         ]
         metadata = to_string("Meta Data", *metadata_fields)
@@ -236,6 +232,11 @@ class Campaign(SerialMixin):
     def measurements(self) -> pd.DataFrame:
         """The experimental data added to the Campaign."""
         return self._measurements_exp
+
+    @property
+    def n_batches_done(self) -> NoReturn:
+        """Deprecated!"""
+        raise DeprecationError("'n_batches_done' is no longer available.")
 
     @property
     def n_fits_done(self) -> NoReturn:
@@ -354,12 +355,8 @@ class Campaign(SerialMixin):
         self.clear_cache()
 
         # Read in measurements and add them to the database
-        self.n_batches_done += 1
-        to_insert = data.copy()
-        to_insert["BatchNr"] = self.n_batches_done
-
         self._measurements_exp = pd.concat(
-            [self._measurements_exp, to_insert], axis=0, ignore_index=True
+            [self._measurements_exp, data], axis=0, ignore_index=True
         )
 
         # Update metadata
@@ -972,13 +969,15 @@ def _drop_version(dict_: dict) -> dict:
 def _discard_legacy_fields(dict_: dict, /) -> dict:
     """Discard legacy fields from a Campaign dictionary during structuring."""
     dict_.pop("n_fits_done", None)
+    dict_.pop("n_batches_done", None)
 
-    # Strip FitNr column from legacy measurements
+    # Strip FitNr/BatchNr columns from legacy measurements
     if "measurements_exp" in dict_:
         meas = converter.structure(dict_["measurements_exp"], pd.DataFrame)
-        if "FitNr" in meas.columns:
+        cols_to_drop = [c for c in ("FitNr", "BatchNr") if c in meas.columns]
+        if cols_to_drop:
             dict_["measurements_exp"] = converter.unstructure(
-                meas.drop(columns="FitNr")
+                meas.drop(columns=cols_to_drop)
             )
 
     return dict_
