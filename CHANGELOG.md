@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
+  the same pattern as `ContinuousLinearConstraint.coefficients`
+- `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
+  weighted simplex sum constraints
 - Support for Python 3.14
 - Support for pandas 3
 - `Settings` class for unified and streamlined settings management
@@ -40,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 - `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
   from `baybe.searchspace.discrete` to `baybe.searchspace.utils`
+- All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters`
+  are now keyword-only
 - `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
   instead of a single tuple (needed for interpoint constraints)
 - `Kernel.to_gpytorch` now takes a `SearchSpace` instead of explicit `ard_num_dims`,
@@ -61,6 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   equality check
 
 ### Changed
+- `DiscreteSumConstraint`, `ContinuousLinearConstraint`, and
+  `SubspaceDiscrete.from_simplex` now forbid 0 as coefficients
 - "User Guide" section has been split into "Components" and "Concepts" 
 - Default transfer learning kernel changed from `IndexKernel` to `PositiveIndexKernel`,
   enforcing positive task correlations
