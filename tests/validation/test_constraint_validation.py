@@ -4,7 +4,10 @@ import pytest
 from pytest import param
 
 from baybe.constraints.conditions import ThresholdCondition
-from baybe.constraints.continuous import ContinuousCardinalityConstraint
+from baybe.constraints.continuous import (
+    ContinuousCardinalityConstraint,
+    ContinuousLinearConstraint,
+)
 from baybe.constraints.discrete import DiscreteSumConstraint
 
 
@@ -25,11 +28,28 @@ def test_invalid_cardinalities(cardinalities, error, match):
         ContinuousCardinalityConstraint(["x", "y"], *cardinalities)
 
 
-def test_discrete_sum_constraint_coefficients_length_mismatch():
-    """Mismatched coefficients length raises a ValueError."""
-    with pytest.raises(ValueError, match="'coefficients' list must have one"):
+@pytest.mark.parametrize(
+    ("coefficients", "match"),
+    [
+        param((1.0, 2.0), "'coefficients' list must have one", id="length-mismatch"),
+        param((1.0, 0.0, 1.0), "'coefficients' must be non-zero", id="zero-coeff"),
+    ],
+)
+def test_discrete_sum_constraint_invalid_coefficients(coefficients, match):
+    """Invalid coefficients raise a ValueError."""
+    with pytest.raises(ValueError, match=match):
         DiscreteSumConstraint(
             parameters=["A", "B", "C"],
             condition=ThresholdCondition(threshold=1.0, operator="<="),
-            coefficients=(1.0, 2.0),  # only 2 entries for 3 parameters
+            coefficients=coefficients,
+        )
+
+
+def test_continuous_linear_constraint_zero_coefficient():
+    """A zero entry in coefficients raises a ValueError."""
+    with pytest.raises(ValueError, match="'coefficients' must be non-zero"):
+        ContinuousLinearConstraint(
+            parameters=["x", "y"],
+            operator=">=",
+            coefficients=(1.0, 0.0),
         )

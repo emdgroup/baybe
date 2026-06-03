@@ -275,14 +275,23 @@ def test_discrete_space_creation_from_simplex_coefficients_vs_from_product():
     )
 
 
-def test_from_simplex_coefficients_length_mismatch():
-    """Mismatched simplex_coefficients length raises a ValueError."""
-    with pytest.raises(ValueError, match="'simplex_coefficients' must have one entry"):
+@pytest.mark.parametrize(
+    ("simplex_coefficients", "match"),
+    [
+        param(
+            [1.0], "'simplex_coefficients' must have one entry", id="length-mismatch"
+        ),
+        param([1.0, 0.0], "'simplex_coefficients' must be non-zero", id="zero-coeff"),
+    ],
+)
+def test_from_simplex_invalid_coefficients(simplex_coefficients, match):
+    """Invalid simplex_coefficients raise a ValueError."""
+    with pytest.raises(ValueError, match=match):
         SubspaceDiscrete.from_simplex(
             1.0,
             [
                 NumericalDiscreteParameter(name="x", values=[0.0, 0.5, 1.0]),
                 NumericalDiscreteParameter(name="y", values=[0.0, 0.5, 1.0]),
             ],
-            simplex_coefficients=[1.0],
+            simplex_coefficients=simplex_coefficients,
         )
