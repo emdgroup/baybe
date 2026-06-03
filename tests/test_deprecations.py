@@ -582,12 +582,13 @@ def test_legacy_campaign_counter_deserialization(ongoing_campaign):
     data["n_batches_done"] = 2
 
     # Inject legacy columns into measurements
-    meas = converter.structure(data["measurements_exp"], pd.DataFrame)
+    # (use legacy key name "measurements_exp" to test migration hook)
+    meas = converter.structure(data.pop("measurements"), pd.DataFrame)
     meas["FitNr"] = 1.0
     meas["BatchNr"] = 1
     data["measurements_exp"] = converter.unstructure(meas)
 
     # Deserialization must not raise and legacy columns must be stripped
     restored = Campaign.from_dict(data)
-    assert "FitNr" not in restored._measurements_exp.columns
-    assert "BatchNr" not in restored._measurements_exp.columns
+    assert "FitNr" not in restored._measurements.columns
+    assert "BatchNr" not in restored._measurements.columns

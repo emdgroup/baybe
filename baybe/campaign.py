@@ -176,10 +176,10 @@ class Campaign(SerialMixin):
     """Metadata tracking the experimentation status of the search space."""
 
     # Private
-    _measurements_exp: pd.DataFrame = field(
+    _measurements: pd.DataFrame = field(
         factory=pd.DataFrame, eq=eq_dataframe, init=False
     )
-    """The experimental representation of the conducted experiments."""
+    """The measurements added to the campaign."""
 
     _cached_recommendation: pd.DataFrame | None = field(
         default=None, init=False, eq=False
@@ -231,7 +231,7 @@ class Campaign(SerialMixin):
     @property
     def measurements(self) -> pd.DataFrame:
         """The experimental data added to the Campaign."""
-        return self._measurements_exp
+        return self._measurements
 
     @property
     def n_batches_done(self) -> NoReturn:
@@ -355,8 +355,8 @@ class Campaign(SerialMixin):
         self.clear_cache()
 
         # Read in measurements and add them to the database
-        self._measurements_exp = pd.concat(
-            [self._measurements_exp, data], axis=0, ignore_index=True
+        self._measurements = pd.concat(
+            [self._measurements, data], axis=0, ignore_index=True
         )
 
         # Update metadata
@@ -407,7 +407,7 @@ class Campaign(SerialMixin):
             )
 
         # Allow only existing indices
-        if nonmatching_idxs := set(data.index).difference(self._measurements_exp.index):
+        if nonmatching_idxs := set(data.index).difference(self._measurements.index):
             raise ValueError(
                 f"Updating measurements requires indices matching the "
                 f"existing measurements. The following indices were in the input, but "
@@ -416,7 +416,7 @@ class Campaign(SerialMixin):
 
         # Perform the update
         cols = [p.name for p in self.parameters] + [t.name for t in self.targets]
-        self._measurements_exp.loc[data.index, cols] = data[cols]
+        self._measurements.loc[data.index, cols] = data[cols]
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
@@ -571,7 +571,7 @@ class Campaign(SerialMixin):
                 batch_size,
                 searchspace,
                 self.objective,
-                self._measurements_exp,
+                self._measurements,
                 pending_experiments,
             )
         is_nonpredictive = isinstance(recommender, NonPredictiveRecommender)
@@ -585,7 +585,7 @@ class Campaign(SerialMixin):
                     batch_size,
                     searchspace,
                     self.objective,
-                    self._measurements_exp,
+                    self._measurements,
                     None if is_nonpredictive else pending_experiments,
                 )
         except NotEnoughPointsLeftError as ex:
@@ -971,12 +971,16 @@ def _discard_legacy_fields(dict_: dict, /) -> dict:
     dict_.pop("n_fits_done", None)
     dict_.pop("n_batches_done", None)
 
-    # Strip FitNr/BatchNr columns from legacy measurements
+    # Migrate legacy "measurements_exp" key to "measurements"
     if "measurements_exp" in dict_:
-        meas = converter.structure(dict_["measurements_exp"], pd.DataFrame)
+        dict_["measurements"] = dict_.pop("measurements_exp")
+
+    # Strip FitNr/BatchNr columns from legacy measurements
+    if "measurements" in dict_:
+        meas = converter.structure(dict_["measurements"], pd.DataFrame)
         cols_to_drop = [c for c in ("FitNr", "BatchNr") if c in meas.columns]
         if cols_to_drop:
-            dict_["measurements_exp"] = converter.unstructure(
+            dict_["measurements"] = converter.unstructure(
                 meas.drop(columns=cols_to_drop)
             )
 
