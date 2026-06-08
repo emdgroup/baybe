@@ -194,6 +194,8 @@ nitpick_ignore_regex = [
     ("py:obj", "baybe.serialization.mixin.SupportsRead.read"),
     ("py:obj", "baybe.serialization.mixin.SupportsWrite.write"),
     ("py:class", "baybe.surrogates.gaussian_process.components.PlainKernelFactory"),
+    # Deprecation field alias shadowing cached_property of the same name
+    (r"py:obj", r"baybe\.searchspace\.discrete\.SubspaceDiscrete\.comp_rep"),
     # Private classes
     (r"py:class", r"baybe\..*\._.*"),
     # Deprecation
