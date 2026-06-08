@@ -628,7 +628,7 @@ def test_deprecated_constraints_arguments_deserialization():
     ("arg", "error"), [("empty_encoding", False), ("comp_rep", True)]
 )
 def test_deprecated_subspace_discrete_arguments(arg, error):
-    """Providing deprecated arguments to `SubspaceDiscrete` raises an error."""
+    """Providing deprecated arguments to `SubspaceDiscrete` raises an error / a warning."""  # noqa
     context = (
         pytest.raises(DeprecationError, match=f"Providing '{arg}'")
         if error
@@ -641,7 +641,7 @@ def test_deprecated_subspace_discrete_arguments(arg, error):
 
 
 def test_deprecated_empty_encoding_from_product():
-    """Passing `empty_encoding` to `SubspaceDiscrete.from_product` raises an error."""
+    """Passing `empty_encoding` to `SubspaceDiscrete.from_product` raises a warning."""  # noqa
     with pytest.warns(DeprecationWarning, match="Providing 'empty_encoding'"):
         SubspaceDiscrete.from_product(
             parameters=[NumericalDiscreteParameter("p", [0, 1])],
@@ -650,7 +650,7 @@ def test_deprecated_empty_encoding_from_product():
 
 
 def test_deprecated_empty_encoding_from_dataframe():
-    """Passing `empty_encoding` to `SubspaceDiscrete.from_dataframe` raises an error."""
+    """Passing `empty_encoding` to `SubspaceDiscrete.from_dataframe` raises a warning."""  # noqa
     with pytest.warns(DeprecationWarning, match="Providing 'empty_encoding'"):
         SubspaceDiscrete.from_dataframe(
             parameters=[NumericalDiscreteParameter("p", [0, 1])],
