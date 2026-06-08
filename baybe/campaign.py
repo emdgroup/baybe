@@ -565,22 +565,30 @@ class Campaign(SerialMixin):
             exp_rep = self.searchspace.discrete.exp_rep
             mask_todrop = pd.Series(False, index=exp_rep.index)
             if not self._excluded_experiments.empty:
-                mask_todrop |= pd.merge(
-                    exp_rep,
-                    self._excluded_experiments,
-                    indicator=True,
-                    how="left",
-                )["_merge"].eq("both")
+                mask_todrop |= (
+                    pd.merge(
+                        exp_rep,
+                        self._excluded_experiments,
+                        indicator=True,
+                        how="left",
+                    )["_merge"]
+                    .eq("both")
+                    .to_numpy()
+                )
             if (
                 not self.allow_recommending_already_recommended
                 and not self._recommended_experiments.empty
             ):
-                mask_todrop |= pd.merge(
-                    exp_rep,
-                    self._recommended_experiments,
-                    indicator=True,
-                    how="left",
-                )["_merge"].eq("both")
+                mask_todrop |= (
+                    pd.merge(
+                        exp_rep,
+                        self._recommended_experiments,
+                        indicator=True,
+                        how="left",
+                    )["_merge"]
+                    .eq("both")
+                    .to_numpy()
+                )
             if (
                 not self.allow_recommending_already_measured
                 and not self._measurements.empty
@@ -593,12 +601,16 @@ class Campaign(SerialMixin):
                 not self.allow_recommending_pending_experiments
                 and pending_experiments is not None
             ):
-                mask_todrop |= pd.merge(
-                    exp_rep,
-                    pending_experiments,
-                    indicator=True,
-                    how="left",
-                )["_merge"].eq("both")
+                mask_todrop |= (
+                    pd.merge(
+                        exp_rep,
+                        pending_experiments,
+                        indicator=True,
+                        how="left",
+                    )["_merge"]
+                    .eq("both")
+                    .to_numpy()
+                )
             searchspace = evolve(
                 self.searchspace,
                 discrete=FilteredSubspaceDiscrete.from_subspace(
