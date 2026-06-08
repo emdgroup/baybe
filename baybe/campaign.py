@@ -496,8 +496,8 @@ class Campaign(SerialMixin):
                 self._excluded_experiments = (
                     pd.concat(frames, axis=0).drop_duplicates().reset_index(drop=True)
                 )
-            # Remove the re-included points
-            elif not self._excluded_experiments.empty:
+            elif not exclude and not self._excluded_experiments.empty:
+                # Remove the re-included points
                 merged = pd.merge(
                     self._excluded_experiments,
                     points,
