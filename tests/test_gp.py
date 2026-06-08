@@ -223,3 +223,74 @@ def test_botorch_preset(multitask: bool):
     posterior2 = _posterior_stats_botorch(sp, data)
 
     assert_frame_equal(posterior1, posterior2)
+
+
+def test_posterior_mean_correct_under_different_bounds():
+    """Posterior mean evaluates at correct physical points when bounds differ."""
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+
+    # Train a surrogate on a narrow search space [0, 5]
+    prior_params = [NumericalDiscreteParameter("x1", values=[0.0, 2.5, 5.0])]
+    prior_ss = SearchSpace.from_product(prior_params)
+    prior_obj = NumericalTarget(name="y").to_objective()
+
+    prior_surrogate = GaussianProcessSurrogate()
+    prior_meas = pd.DataFrame({"x1": [0.0, 2.5, 5.0], "y": [0.0, 5.0, 10.0]})
+    prior_surrogate.fit(prior_ss, prior_obj, prior_meas)
+
+    # Get the surrogate's prediction at x1=2.5
+    expected_mean = prior_surrogate.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
+
+    # New GP on a WIDER search space [0, 10], using the posterior_mean property
+    new_params = [NumericalDiscreteParameter("x1", values=[0.0, 2.5, 5.0, 7.5, 10.0])]
+    new_ss = SearchSpace.from_product(new_params)
+
+    new_surrogate = GaussianProcessSurrogate(
+        mean_or_factory=prior_surrogate.posterior_mean
+    )
+    new_meas = pd.DataFrame({"x1": [0.0, 10.0], "y": [0.0, 20.0]})
+    new_surrogate.fit(new_ss, prior_obj, new_meas)
+
+    # In the new space [0, 10], x1=2.5 normalizes to 0.25
+    mean_module = new_surrogate._model.mean_module
+    x_normalized = torch.tensor([[0.25]])
+    with torch.no_grad():
+        actual_mean = mean_module(x_normalized).item()
+
+    assert abs(actual_mean - expected_mean) < 1e-4
+
+
+def test_posterior_mean_same_bounds():
+    """Posterior mean is correct when both search spaces have the same bounds."""
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+
+    params = [NumericalDiscreteParameter("x1", values=[0.0, 2.5, 5.0])]
+    ss = SearchSpace.from_product(params)
+    obj = NumericalTarget(name="y").to_objective()
+
+    prior_surrogate = GaussianProcessSurrogate()
+    meas = pd.DataFrame({"x1": [0.0, 2.5, 5.0], "y": [0.0, 5.0, 10.0]})
+    prior_surrogate.fit(ss, obj, meas)
+
+    expected_mean = prior_surrogate.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
+
+    new_surrogate = GaussianProcessSurrogate(
+        mean_or_factory=prior_surrogate.posterior_mean
+    )
+    new_surrogate.fit(ss, obj, meas)
+
+    # x1=2.5 normalizes to 0.5 in [0, 5]
+    mean_module = new_surrogate._model.mean_module
+    x_normalized = torch.tensor([[0.5]])
+    with torch.no_grad():
+        actual_mean = mean_module(x_normalized).item()
+
+    assert abs(actual_mean - expected_mean) < 1e-4
+
+
+def test_posterior_mean_raises_if_not_fitted():
+    """Accessing posterior_mean raises if the surrogate has not been fitted."""
+    from baybe.exceptions import ModelNotTrainedError
+
+    with pytest.raises(ModelNotTrainedError, match="must be fitted"):
+        GaussianProcessSurrogate().posterior_mean  # noqa: B018
