@@ -33,8 +33,6 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
 from baybe.searchspace.validation import (
-    validate_constraint_parameter_names,
-    validate_parameter_names,
     validate_parameters,
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
@@ -115,7 +113,7 @@ class SubspaceDiscrete(SerialMixin):
         converter=sort_parameters,
         validator=[
             deep_iterable(member_validator=instance_of(DiscreteParameter)),
-            lambda _, __, x: validate_parameter_names(x),
+            lambda _, __, x: validate_parameters(x),
         ],
     )
     """The parameters spanning the subspace."""
@@ -184,7 +182,7 @@ class SubspaceDiscrete(SerialMixin):
     @constraints.validator
     def _validate_constraints(self, _, __) -> None:
         """Validate constraints."""
-        validate_constraint_parameter_names(self.constraints, self.parameters)
+        validate_constraints(self.constraints, self.parameters)
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no continuous part."""
@@ -217,17 +215,15 @@ class SubspaceDiscrete(SerialMixin):
         empty_encoding: bool | None = None,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
-        # Set defaults and order constraints
+        validate_parameters(parameters)
+
         if constraints is None:
             constraints = []
         else:
-            validate_constraint_parameter_names(constraints, parameters)
             constraints = sorted(
                 constraints,
                 key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
             )
-
-        if constraints:
             validate_constraints(constraints, parameters)
 
         df = build_constrained_product(parameters, constraints)
@@ -360,9 +356,6 @@ class SubspaceDiscrete(SerialMixin):
             constraints = []
         if max_nonzero is None:
             max_nonzero = len(simplex_parameters)
-
-        # Validate constraints
-        validate_constraints(constraints, [*simplex_parameters, *product_parameters])
 
         # Validate parameter types
         if not (

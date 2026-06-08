@@ -19,13 +19,9 @@ from typing_extensions import override
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
-)
-from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
-from baybe.constraints.validation import (
-    validate_cardinality_constraint_parameter_bounds,
-    validate_cardinality_constraints_are_nonoverlapping,
     validate_constraints,
 )
+from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
@@ -35,10 +31,7 @@ from baybe.parameters.utils import (
     sort_parameters,
 )
 from baybe.searchspace.utils import select_via_flat_index
-from baybe.searchspace.validation import (
-    validate_constraint_parameter_names,
-    validate_parameter_names,
-)
+from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
 from baybe.utils.basic import flatten, is_all_instance, to_tuple
@@ -63,7 +56,7 @@ class SubspaceContinuous(SerialMixin):
 
     parameters: tuple[NumericalContinuousParameter, ...] = field(
         converter=sort_parameters,
-        validator=lambda _, __, x: validate_parameter_names(x),
+        validator=lambda _, __, x: validate_parameters(x),
     )
     """The parameters spanning the subspace."""
 
@@ -233,16 +226,7 @@ class SubspaceContinuous(SerialMixin):
     @constraints.validator
     def _validate_constraints(self, _, __) -> None:
         """Validate constraints."""
-        validate_constraint_parameter_names(self.constraints, self.parameters)
-
-        validate_cardinality_constraints_are_nonoverlapping(
-            self.constraints_cardinality
-        )
-
-        for constraint in self.constraints_cardinality:
-            validate_cardinality_constraint_parameter_bounds(
-                constraint, self.parameters
-            )
+        validate_constraints(self.constraints, self.parameters)
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no discrete part."""

@@ -11,7 +11,6 @@ from baybe.constraints import (
     ThresholdCondition,
 )
 from baybe.constraints.discrete import DiscreteLinkedParametersConstraint
-from baybe.exceptions import IncompatibilityError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -206,7 +205,7 @@ def test_continuous_subspace_constraint_with_nonexistent_params(referenced, disc
         space = SubspaceContinuous
         constraint = ContinuousLinearConstraint(referenced, "=")
 
-    with pytest.raises(IncompatibilityError, match="not part of the subspace"):
+    with pytest.raises(ValueError, match="does not exist"):
         space.from_product(parameters=parameters, constraints=[constraint])
 
 

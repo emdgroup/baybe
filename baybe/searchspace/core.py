@@ -16,7 +16,7 @@ from typing_extensions import override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
-from baybe.exceptions import InfeasibilityError
+from baybe.exceptions import EmptySearchSpaceError, InfeasibilityError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
@@ -87,6 +87,15 @@ class SearchSpace(SerialMixin):
 
     def __attrs_post_init__(self):
         """Perform validation."""
+        if not self.parameters:
+            raise EmptySearchSpaceError("At least one parameter must be provided.")
+
+        # TODO [16932]: Remove once more task parameters are supported
+        if len([p for p in self.parameters if isinstance(p, TaskParameter)]) > 1:
+            raise NotImplementedError(
+                "Currently, at most one task parameter can be considered."
+            )
+
         validate_parameters(self.parameters)
         validate_constraints(self.constraints, self.parameters)
 
@@ -123,11 +132,19 @@ class SearchSpace(SerialMixin):
 
         Returns:
             The constructed search space.
+
+        Raises:
+            EmptySearchSpaceError: If no parameters are provided.
+            NotImplementedError: If more than one
+                :class:`baybe.parameters.categorical.TaskParameter` is provided.
         """
-        # IMPROVE: The arguments get pre-validated here to avoid the potentially costly
-        #   creation of the subspaces. Perhaps there is an elegant way to bypass the
-        #   default validation in the initializer (which is required for other
-        #   ways of object creation) in this particular case.
+        if not parameters:
+            raise EmptySearchSpaceError("At least one parameter must be provided.")
+        # TODO [16932]: Remove once more task parameters are supported
+        if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
+            raise NotImplementedError(
+                "Currently, at most one task parameter can be considered."
+            )
         validate_parameters(parameters)
         if constraints:
             validate_constraints(constraints, parameters)

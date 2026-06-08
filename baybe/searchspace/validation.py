@@ -6,9 +6,7 @@ from typing import TypeVar
 
 import pandas as pd
 
-from baybe.constraints.base import Constraint
-from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
-from baybe.parameters import TaskParameter
+from baybe.exceptions import IncompatibilityError
 from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
 from baybe.utils.dataframe import get_transform_objects
 
@@ -20,10 +18,8 @@ except NameError:
 _T = TypeVar("_T", bound=Parameter)
 
 
-def validate_parameter_names(  # noqa: DOC101, DOC103
-    parameters: Collection[Parameter],
-) -> None:
-    """Validate the parameter names.
+def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC101, DOC103
+    """Validate the parameters.
 
     Raises:
         ValueError: If the given list contains parameters with the same name.
@@ -31,47 +27,6 @@ def validate_parameter_names(  # noqa: DOC101, DOC103
     param_names = [p.name for p in parameters]
     if len(set(param_names)) != len(param_names):
         raise ValueError("All parameters must have unique names.")
-
-
-def validate_constraint_parameter_names(  # noqa: DOC101, DOC103
-    constraints: Collection[Constraint],
-    parameters: Collection[Parameter],
-) -> None:
-    """Validate that all constraint parameter names reference existing parameters.
-
-    Raises:
-        IncompatibilityError: If any constraint references parameters not present
-            in the given parameter collection.
-    """
-    parameter_names = {p.name for p in parameters}
-    for constraint in constraints:
-        if invalid := set(constraint.parameters) - parameter_names:
-            raise IncompatibilityError(
-                f"A constraint of type '{constraint.__class__.__name__}' "
-                f"references the following parameters that are not part of "
-                f"the corresponding subspace: {invalid}."
-            )
-
-
-def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC101, DOC103
-    """Validate the parameters.
-
-    Raises:
-        EmptySearchSpaceError: If the parameter list is empty.
-        NotImplementedError: If more than one
-            :class:`baybe.parameters.categorical.TaskParameter` is requested.
-    """
-    if not parameters:
-        raise EmptySearchSpaceError("At least one parameter must be provided.")
-
-    # TODO [16932]: Remove once more task parameters are supported
-    if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
-        raise NotImplementedError(
-            "Currently, at most one task parameter can be considered."
-        )
-
-    # Assert: unique names
-    validate_parameter_names(parameters)
 
 
 def validate_dataframe_active_values(
