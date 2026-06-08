@@ -74,13 +74,6 @@ def test_invalid_constraint_parameter_combos():
             constraints=[ContinuousLinearConstraint(["c1", "c2", "d1"], "=")],
         )
 
-    # Attempting continuous constraint over hybrid parameter set
-    with pytest.raises(ValueError):
-        SearchSpace.from_product(
-            parameters=parameters,
-            constraints=[ContinuousLinearConstraint(["c1", "c2", "d1"], "=")],
-        )
-
     # Attempting discrete constraint over hybrid parameter set
     with pytest.raises(ValueError):
         SearchSpace.from_product(
