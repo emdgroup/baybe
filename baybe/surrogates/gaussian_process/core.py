@@ -211,6 +211,30 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
+    @property
+    def posterior_mean(self) -> MeanFactoryProtocol:
+        """A mean factory representing this surrogate's posterior mean.
+
+        Examples:
+            >>> new_gp = GaussianProcessSurrogate(
+            ...     mean_or_factory=prior_gp.posterior_mean
+            ... )
+
+        Raises:
+            ModelNotTrainedError: If this surrogate has not been fitted yet.
+        """
+        from baybe.exceptions import ModelNotTrainedError
+        from baybe.surrogates.gaussian_process.components.mean import (
+            _PosteriorMeanFactory,
+        )
+
+        if self._model is None:
+            raise ModelNotTrainedError(
+                f"'{self.__class__.__name__}' must be fitted before accessing "
+                f"'posterior_mean'."
+            )
+        return _PosteriorMeanFactory(self._model)
+
     @classmethod
     def from_preset(
         cls,
