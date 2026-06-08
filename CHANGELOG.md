@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings option for random seed control
 - `identify_non_dominated_configurations` method to `Campaign` and `Objective`
   for determining the Pareto front
+- `posterior_mean` property on `GaussianProcessSurrogate`
 - Gaussian process component factories
 - Support for GPyTorch objects (kernels, means, likelihood) as Gaussian process
   components, enabling full low-level customization
