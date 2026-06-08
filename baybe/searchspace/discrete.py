@@ -236,7 +236,7 @@ class SubspaceDiscrete(SerialMixin):
             parameters=parameters,
             constraints=constraints,
             exp_rep=df,
-            empty_encoding=empty_encoding,
+            empty_encoding=empty_encoding,  # type: ignore[arg-type]
         )
 
     @classmethod
@@ -297,7 +297,7 @@ class SubspaceDiscrete(SerialMixin):
         # Ensure dtype consistency
         df = normalize_input_dtypes(df, parameters)
 
-        return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)
+        return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)  # type: ignore[arg-type]
 
     @classmethod
     def from_simplex(

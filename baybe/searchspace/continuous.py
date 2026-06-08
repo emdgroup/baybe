@@ -41,7 +41,7 @@ from baybe.searchspace.validation import (
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
-from baybe.utils.basic import flatten, to_tuple
+from baybe.utils.basic import flatten, is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 
@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 _MAX_CARDINALITY_SAMPLING_ATTEMPTS = 10_000
 
 
-@define
+@define(init=False)
 class SubspaceContinuous(SerialMixin):
     """Class for managing continuous subspaces.
 
@@ -74,7 +74,7 @@ class SubspaceContinuous(SerialMixin):
 
     def __init__(
         self,
-        parameters: Sequence[NumericalContinuousParameter] | None = None,
+        parameters: Sequence[ContinuousParameter] | None = None,
         constraints: Sequence[ContinuousConstraint] | None = None,
         constraints_lin_eq: Sequence[ContinuousLinearConstraint] | None = None,
         constraints_lin_ineq: Sequence[ContinuousLinearConstraint] | None = None,
@@ -392,9 +392,18 @@ class SubspaceContinuous(SerialMixin):
         Args:
             parameter_names: The names of the parameter to be removed.
 
+        Raises:
+            NotImplementedError: If the subspace contains constraints that are not
+                linear intrapoint constraints.
+
         Returns:
             The reduced subspace.
         """
+        if not is_all_instance(self.constraints, ContinuousLinearConstraint):
+            raise NotImplementedError(
+                "Dropping parameters is only supported for subspaces without "
+                "constraints or with linear intrapoint constraints."
+            )
         return SubspaceContinuous(
             parameters=[p for p in self.parameters if p.name not in parameter_names],
             constraints=[
