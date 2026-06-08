@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -40,3 +41,7 @@ class LazyConstantMeanFactory(MeanFactoryProtocol):
         from gpytorch.means import ConstantMean
 
         return ConstantMean()
+
+
+# Collect leftover original slotted classes created by attrs
+gc.collect()
