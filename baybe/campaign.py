@@ -488,7 +488,7 @@ class Campaign(SerialMixin):
             )
 
         if not dry_run:
-            if exclude:
+            if exclude and not points.empty:
                 # Add the toggled points (avoid duplicates)
                 frames = [
                     f for f in (self._excluded_experiments, points) if not f.empty
