@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `SubspaceContinuous` now offers a simpler interface for passing constraints,
   no longer requiring users to manually group constraints according to their type
+- Parameter and constraint validation has been streamlined, using `validate_parameters`
+  and `validate_constraints` as the only remaining public entry points
 
 ### Breaking Changes
 - `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
@@ -53,6 +55,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scenarios. Custom kernel architectures must now explicitly include the task kernel,
   e.g. via `ICMKernelFactory`
 - `KernelFactory` now obeys the more general `GPComponentFactoryProtocol`
+- `validate_parameter_names`, `validate_cardinality_constraints_are_nonoverlapping`
+  and `validate_cardinality_constraint_parameter_bounds` are no longer available
+  as public utilities
 
 ### Fixed
 - Broken cache validation for certain `Campaign.recommend` cases
