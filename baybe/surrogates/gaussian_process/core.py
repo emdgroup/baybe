@@ -14,7 +14,7 @@ from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable
 from typing_extensions import Self, override
 
-from baybe.exceptions import DeprecationError
+from baybe.exceptions import DeprecationError, ModelNotTrainedError
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
@@ -48,11 +48,12 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
 )
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
+from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     from botorch.models.gpytorch import GPyTorchModel
-    from botorch.models.transforms.input import InputTransform
-    from botorch.models.transforms.outcome import OutcomeTransform
+    from botorch.models.transforms.input import InputTransform, Normalize
+    from botorch.models.transforms.outcome import OutcomeTransform, Standardize
     from botorch.posteriors import Posterior
     from gpytorch.kernels import Kernel as GPyTorchKernel
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
@@ -211,6 +212,31 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
+    @staticmethod
+    def _make_input_transform(context: _ModelContext) -> Normalize:
+        """Create the input transform for the Gaussian process."""
+        from botorch.models.transforms.input import Normalize
+
+        return Normalize(
+            len(context.searchspace.comp_rep_columns),
+            bounds=context.parameter_bounds,
+            indices=context.numerical_indices,
+        )
+
+    @staticmethod
+    def _make_outcome_transform(context: _ModelContext) -> Standardize:
+        """Create the outcome transform for the Gaussian process."""
+        from botorch.models.transforms.outcome import Standardize
+
+        train_y = to_tensor(
+            context.objective._pre_transform(context.measurements, allow_extra=True)
+        )
+        if train_y.ndim == 1:
+            train_y = train_y.unsqueeze(-1)
+        transform = Standardize(m=train_y.shape[-1])
+        transform(train_y)  # fits means/stdvs; GP will re-fit in train mode
+        return transform
+
     @classmethod
     def from_preset(
         cls,
@@ -246,6 +272,82 @@ class GaussianProcessSurrogate(Surrogate):
         gp._custom_kernel = False  # preset are first-party features
         return gp
 
+    def posterior_mean_function(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> GPyTorchMean:
+        """Return a GPyTorch mean module representing the surrogate's posterior mean.
+
+        The bound method satisfies
+        :class:`~baybe.surrogates.gaussian_process.components.mean.MeanFactoryProtocol`
+        and can be passed directly to a new :class:`GaussianProcessSurrogate`.
+
+        Args:
+            searchspace: The search space of the new GP being fitted.
+            objective: The objective of the new GP being fitted.
+            measurements: The training data of the new GP being fitted.
+
+        Returns:
+            The posterior mean.
+
+        Raises:
+            ModelNotTrainedError: If the surrogate has not been fitted yet.
+        """
+        from copy import deepcopy
+
+        import gpytorch
+
+        if self._model is None:
+            raise ModelNotTrainedError(
+                f"'{self.__class__.__name__}' must be fitted before its "
+                f"'{self.posterior_mean_function.__name__}' can be used as a "
+                f"mean function."
+            )
+
+        context = _ModelContext(searchspace, objective, measurements)
+
+        # Undo the new GP's input normalization before querying the prior GP
+        input_transform = self._make_input_transform(context)
+        input_transform.eval()
+
+        # Match the new GP's outcome standardization
+        outcome_transform = self._make_outcome_transform(context)
+        outcome_transform.eval()
+
+        class _PosteriorMean(gpytorch.means.Mean):
+            """GPyTorch mean wrapping a trained GP's posterior.
+
+            Overrides ``train`` to keep all children in eval mode, preventing optimizers
+            from corrupting learned transform parameters.
+            """
+
+            def __init__(self, gp: GPyTorchModel) -> None:
+                super().__init__()
+                self.gp = deepcopy(gp)
+                for param in self.gp.parameters():
+                    param.requires_grad = False
+                self.gp.eval()
+                self.gp.likelihood.eval()
+
+            @override
+            def train(self, mode: bool = True) -> _PosteriorMean:
+                """Set training mode without propagating to children."""
+                self.training = mode
+                return self
+
+            @override
+            def forward(self, x: Tensor) -> Tensor:
+                """Compute the mean using the wrapped GP's posterior."""
+                with gpytorch.settings.fast_pred_var():
+                    x_raw = input_transform.untransform(x)
+                    posterior_mean = self.gp.posterior(x_raw).mean
+                    standardized, _ = outcome_transform(posterior_mean)
+                    return standardized.squeeze(-1)
+
+        return _PosteriorMean(self._model)
+
     @override
     def to_botorch(self) -> GPyTorchModel:
         return self._model
@@ -271,7 +373,6 @@ class GaussianProcessSurrogate(Surrogate):
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         import botorch
-        from botorch.models.transforms import Normalize, Standardize
 
         assert self._searchspace is not None  # provided by base class
         assert self._objective is not None  # provided by base class
@@ -298,12 +399,8 @@ class GaussianProcessSurrogate(Surrogate):
 
         ### Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
-        input_transform = Normalize(
-            train_x.shape[-1],
-            bounds=context.parameter_bounds,
-            indices=context.numerical_indices,
-        )
-        outcome_transform = Standardize(train_y.shape[-1])
+        input_transform = self._make_input_transform(context)
+        outcome_transform = self._make_outcome_transform(context)
 
         ### Mean
         mean = self.mean_factory(
