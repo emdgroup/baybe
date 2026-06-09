@@ -6,8 +6,9 @@ from typing import TypeVar
 
 import pandas as pd
 
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
 from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
+from baybe.parameters.categorical import TaskParameter
 from baybe.utils.dataframe import get_transform_objects
 
 try:  # For python < 3.11, use the exceptiongroup backport
@@ -18,12 +19,30 @@ except NameError:
 _T = TypeVar("_T", bound=Parameter)
 
 
-def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC101, DOC103
+def validate_parameters(
+    parameters: Collection[Parameter], *, allow_empty: bool = False
+) -> None:  # noqa: DOC101, DOC103
     """Validate the parameters.
+
+    Args:
+        parameters: The parameters to validate.
+        allow_empty: Whether to allow an empty parameter collection.
 
     Raises:
         ValueError: If the given list contains parameters with the same name.
+        EmptySearchSpaceError: If no parameter is provided and empty
+            collections are explicitly disallowed.
+        NotImplementedError: If more than one
+            :class:`baybe.parameters.categorical.TaskParameter` is requested.
     """
+    if not allow_empty and not parameters:
+        raise EmptySearchSpaceError("At least one parameter must be provided.")
+
+    if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
+        raise NotImplementedError(
+            "Currently, at most one task parameter can be considered."
+        )
+
     param_names = [p.name for p in parameters]
     if len(set(param_names)) != len(param_names):
         raise ValueError("All parameters must have unique names.")

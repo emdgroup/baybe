@@ -32,9 +32,7 @@ from baybe.parameters import (
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
-from baybe.searchspace.validation import (
-    validate_parameters,
-)
+from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
@@ -113,7 +111,7 @@ class SubspaceDiscrete(SerialMixin):
         converter=sort_parameters,
         validator=[
             deep_iterable(member_validator=instance_of(DiscreteParameter)),
-            lambda _, __, x: validate_parameters(x),
+            lambda _, __, x: validate_parameters(x, allow_empty=True),
         ],
     )
     """The parameters spanning the subspace."""
@@ -215,7 +213,7 @@ class SubspaceDiscrete(SerialMixin):
         empty_encoding: bool | None = None,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
-        validate_parameters(parameters)
+        validate_parameters(parameters, allow_empty=True)
 
         if constraints is None:
             constraints = []
@@ -768,7 +766,7 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
     # Validate product inputs without constructing it
     if specs.get("constructor", None) == "from_product":
         parameters = converter.structure(specs["parameters"], list[DiscreteParameter])
-        validate_parameters(parameters)
+        validate_parameters(parameters, allow_empty=True)
 
         constraints = specs.get("constraints", [])
         if constraints:

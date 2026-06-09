@@ -68,9 +68,8 @@ def test_empty_parameter_bounds():
 
     Also checks for the correct shapes.
     """
-    parameters = []
-    searchspace_discrete = SubspaceDiscrete.from_product(parameters=parameters)
-    searchspace_continuous = SubspaceContinuous(parameters=parameters)
+    searchspace_discrete = SubspaceDiscrete.empty()
+    searchspace_continuous = SubspaceContinuous.empty()
     expected = pd.DataFrame(np.empty((2, 0)), index=["min", "max"])
     pd.testing.assert_frame_equal(searchspace_discrete.comp_rep_bounds, expected)
     pd.testing.assert_frame_equal(searchspace_continuous.comp_rep_bounds, expected)

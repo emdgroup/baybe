@@ -56,7 +56,7 @@ class SubspaceContinuous(SerialMixin):
 
     parameters: tuple[NumericalContinuousParameter, ...] = field(
         converter=sort_parameters,
-        validator=lambda _, __, x: validate_parameters(x),
+        validator=lambda _, __, x: validate_parameters(x, allow_empty=True),
     )
     """The parameters spanning the subspace."""
 
