@@ -13,7 +13,6 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace import SearchSpace, SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from tests.hypothesis_strategies.parameters import numerical_discrete_parameters
@@ -148,8 +147,8 @@ def test_discrete_space_creation_from_simplex_inner(parameters, boundary_only):
 
 p_d1 = NumericalDiscreteParameter(name="d1", values=[0.0, 0.5, 1.0])
 p_d2 = NumericalDiscreteParameter(name="d2", values=[0.0, 0.5, 1.0])
-p_t1 = TaskParameter(name="t1", values=["A", "B"])
-p_t2 = TaskParameter(name="t2", values=["A", "B"])
+p_t1 = CategoricalParameter(name="t1", values=["A", "B"])
+p_t2 = CategoricalParameter(name="t2", values=["A", "B"])
 
 
 @pytest.mark.parametrize(
