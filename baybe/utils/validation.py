@@ -101,7 +101,7 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
     if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
 
-    if missing := {t.name for t in targets}.difference(data.columns):
+    if missing := {t.name for t in targets} - set(data.columns):
         raise ValueError(
             f"The input dataframe is missing columns for the following targets: "
             f"{missing}"
@@ -174,15 +174,13 @@ def validate_parameter_input(
     if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
 
-    if missing := {p.name for p in parameters}.difference(data.columns):
+    if missing := {p.name for p in parameters} - set(data.columns):
         raise ValueError(
             f"The input dataframe is missing columns for the following parameters: "
             f"{missing}"
         )
 
-    if not allow_extra and (
-        extra := set(data.columns).difference({p.name for p in parameters})
-    ):
+    if not allow_extra and (extra := set(data.columns) - {p.name for p in parameters}):
         raise ValueError(
             f"The input dataframe contains columns that do not correspond to any "
             f"parameter: {extra}"
