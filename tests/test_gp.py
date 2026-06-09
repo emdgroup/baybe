@@ -220,7 +220,7 @@ def test_botorch_preset(multitask: bool, preset: str):
     assert_frame_equal(posterior1, posterior2)
 
 
-def test_posterior_mean_correct_under_different_bounds():
+def test_get_posterior_mean_correct_under_different_bounds():
     """Posterior mean evaluates at correct physical points when bounds differ."""
     from baybe.parameters.numerical import NumericalDiscreteParameter
 
@@ -236,12 +236,12 @@ def test_posterior_mean_correct_under_different_bounds():
     # Get the surrogate's prediction at x1=2.5
     expected_mean = prior_surrogate.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
 
-    # New GP on a WIDER search space [0, 10], using the posterior_mean property
+    # New GP on a WIDER search space [0, 10], using the get_posterior_mean method
     new_params = [NumericalDiscreteParameter("x1", values=[0.0, 2.5, 5.0, 7.5, 10.0])]
     new_ss = SearchSpace.from_product(new_params)
 
     new_surrogate = GaussianProcessSurrogate(
-        mean_or_factory=prior_surrogate.posterior_mean
+        mean_or_factory=prior_surrogate.get_posterior_mean
     )
     new_meas = pd.DataFrame({"x1": [0.0, 10.0], "y": [0.0, 20.0]})
     new_surrogate.fit(new_ss, prior_obj, new_meas)
@@ -255,7 +255,7 @@ def test_posterior_mean_correct_under_different_bounds():
     assert abs(actual_mean - expected_mean) < 1e-4
 
 
-def test_posterior_mean_same_bounds():
+def test_get_posterior_mean_same_bounds():
     """Posterior mean is correct when both search spaces have the same bounds."""
     from baybe.parameters.numerical import NumericalDiscreteParameter
 
@@ -270,7 +270,7 @@ def test_posterior_mean_same_bounds():
     expected_mean = prior_surrogate.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
 
     new_surrogate = GaussianProcessSurrogate(
-        mean_or_factory=prior_surrogate.posterior_mean
+        mean_or_factory=prior_surrogate.get_posterior_mean
     )
     new_surrogate.fit(ss, obj, meas)
 
@@ -283,9 +283,11 @@ def test_posterior_mean_same_bounds():
     assert abs(actual_mean - expected_mean) < 1e-4
 
 
-def test_posterior_mean_raises_if_not_fitted():
-    """Accessing posterior_mean raises if the surrogate has not been fitted."""
+def test_get_posterior_mean_raises_if_not_fitted():
+    """Calling get_posterior_mean raises if the surrogate has not been fitted."""
     from baybe.exceptions import ModelNotTrainedError
 
     with pytest.raises(ModelNotTrainedError, match="must be fitted"):
-        GaussianProcessSurrogate().posterior_mean  # noqa: B018
+        GaussianProcessSurrogate().get_posterior_mean(
+            searchspace, objective, measurements
+        )
