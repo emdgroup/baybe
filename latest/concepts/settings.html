@@ -1333,7 +1333,7 @@ meantime, depending on execution flow:</p>
 <span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">==</span> <span class="mi">0</span>  <span class="c1"># &lt;-- the seed before s_42 got activated</span>
 
 <span class="n">s_1337</span><span class="o">.</span><span class="n">restore_previous</span><span class="p">()</span>
-<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">==</span> <span class="mi">42</span>  <span class="c1"># &lt;-- the seed before s_42 got activated</span>
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">==</span> <span class="mi">42</span>  <span class="c1"># &lt;-- the seed before s_1337 got activated</span>
 </pre></div>
 </div>
 </div>
