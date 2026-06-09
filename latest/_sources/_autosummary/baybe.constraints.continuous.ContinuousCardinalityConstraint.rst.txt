@@ -5,6 +5,7 @@ ContinuousCardinalityConstraint
 
 .. autoclass:: ContinuousCardinalityConstraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,14 +16,23 @@ ContinuousCardinalityConstraint
    .. autosummary::
    
       ~ContinuousCardinalityConstraint.__init__
+   
       ~ContinuousCardinalityConstraint.from_dict
+   
       ~ContinuousCardinalityConstraint.from_json
+   
       ~ContinuousCardinalityConstraint.get_absolute_thresholds
+   
       ~ContinuousCardinalityConstraint.inactive_parameter_combinations
+   
       ~ContinuousCardinalityConstraint.sample_inactive_parameters
+   
       ~ContinuousCardinalityConstraint.summary
+   
       ~ContinuousCardinalityConstraint.to_dict
+   
       ~ContinuousCardinalityConstraint.to_json
+   
    
    
 

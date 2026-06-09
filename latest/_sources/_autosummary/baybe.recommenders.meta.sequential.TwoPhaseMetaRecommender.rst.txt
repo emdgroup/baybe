@@ -5,6 +5,7 @@ TwoPhaseMetaRecommender
 
 .. autoclass:: TwoPhaseMetaRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ TwoPhaseMetaRecommender
    .. autosummary::
    
       ~TwoPhaseMetaRecommender.__init__
+   
       ~TwoPhaseMetaRecommender.from_dict
+   
       ~TwoPhaseMetaRecommender.from_json
+   
       ~TwoPhaseMetaRecommender.get_current_recommender
+   
       ~TwoPhaseMetaRecommender.get_next_recommender
+   
       ~TwoPhaseMetaRecommender.get_non_meta_recommender
+   
       ~TwoPhaseMetaRecommender.recommend
+   
       ~TwoPhaseMetaRecommender.select_recommender
+   
       ~TwoPhaseMetaRecommender.to_dict
+   
       ~TwoPhaseMetaRecommender.to_json
+   
    
    
 

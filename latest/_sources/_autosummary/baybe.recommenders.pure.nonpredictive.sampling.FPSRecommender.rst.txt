@@ -5,6 +5,7 @@ FPSRecommender
 
 .. autoclass:: FPSRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,7 +16,9 @@ FPSRecommender
    .. autosummary::
    
       ~FPSRecommender.__init__
+   
       ~FPSRecommender.recommend
+   
    
    
 

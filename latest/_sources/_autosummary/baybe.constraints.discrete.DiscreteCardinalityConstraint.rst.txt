@@ -5,6 +5,7 @@ DiscreteCardinalityConstraint
 
 .. autoclass:: DiscreteCardinalityConstraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,14 +16,23 @@ DiscreteCardinalityConstraint
    .. autosummary::
    
       ~DiscreteCardinalityConstraint.__init__
+   
       ~DiscreteCardinalityConstraint.from_dict
+   
       ~DiscreteCardinalityConstraint.from_json
+   
       ~DiscreteCardinalityConstraint.get_invalid
+   
       ~DiscreteCardinalityConstraint.get_invalid_polars
+   
       ~DiscreteCardinalityConstraint.get_valid
+   
       ~DiscreteCardinalityConstraint.summary
+   
       ~DiscreteCardinalityConstraint.to_dict
+   
       ~DiscreteCardinalityConstraint.to_json
+   
    
    
 

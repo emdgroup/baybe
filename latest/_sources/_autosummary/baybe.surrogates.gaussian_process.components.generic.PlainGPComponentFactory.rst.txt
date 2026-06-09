@@ -5,6 +5,7 @@ PlainGPComponentFactory
 
 .. autoclass:: PlainGPComponentFactory
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,10 +16,17 @@ PlainGPComponentFactory
    .. autosummary::
    
       ~PlainGPComponentFactory.__init__
+   
+      ~PlainGPComponentFactory.__call__
+   
       ~PlainGPComponentFactory.from_dict
+   
       ~PlainGPComponentFactory.from_json
+   
       ~PlainGPComponentFactory.to_dict
+   
       ~PlainGPComponentFactory.to_json
+   
    
    
 

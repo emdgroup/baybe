@@ -5,6 +5,7 @@ RandomForestSurrogate
 
 .. autoclass:: RandomForestSurrogate
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ RandomForestSurrogate
    .. autosummary::
    
       ~RandomForestSurrogate.__init__
+   
       ~RandomForestSurrogate.fit
+   
       ~RandomForestSurrogate.from_dict
+   
       ~RandomForestSurrogate.from_json
+   
       ~RandomForestSurrogate.posterior
+   
       ~RandomForestSurrogate.posterior_stats
+   
       ~RandomForestSurrogate.replicate
+   
       ~RandomForestSurrogate.to_botorch
+   
       ~RandomForestSurrogate.to_dict
+   
       ~RandomForestSurrogate.to_json
+   
    
    
 

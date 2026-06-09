@@ -5,6 +5,7 @@ DiscreteSumConstraint
 
 .. autoclass:: DiscreteSumConstraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,14 +16,23 @@ DiscreteSumConstraint
    .. autosummary::
    
       ~DiscreteSumConstraint.__init__
+   
       ~DiscreteSumConstraint.from_dict
+   
       ~DiscreteSumConstraint.from_json
+   
       ~DiscreteSumConstraint.get_invalid
+   
       ~DiscreteSumConstraint.get_invalid_polars
+   
       ~DiscreteSumConstraint.get_valid
+   
       ~DiscreteSumConstraint.summary
+   
       ~DiscreteSumConstraint.to_dict
+   
       ~DiscreteSumConstraint.to_json
+   
    
    
 

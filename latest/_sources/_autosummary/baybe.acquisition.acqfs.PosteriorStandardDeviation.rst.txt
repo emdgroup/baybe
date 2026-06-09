@@ -5,6 +5,7 @@ PosteriorStandardDeviation
 
 .. autoclass:: PosteriorStandardDeviation
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ PosteriorStandardDeviation
    .. autosummary::
    
       ~PosteriorStandardDeviation.__init__
+   
       ~PosteriorStandardDeviation.evaluate
+   
       ~PosteriorStandardDeviation.from_dict
+   
       ~PosteriorStandardDeviation.from_json
+   
       ~PosteriorStandardDeviation.to_botorch
+   
       ~PosteriorStandardDeviation.to_dict
+   
       ~PosteriorStandardDeviation.to_json
+   
    
    
 

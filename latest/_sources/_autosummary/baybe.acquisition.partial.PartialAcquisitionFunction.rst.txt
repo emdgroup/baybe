@@ -5,6 +5,7 @@ PartialAcquisitionFunction
 
 .. autoclass:: PartialAcquisitionFunction
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,7 +16,11 @@ PartialAcquisitionFunction
    .. autosummary::
    
       ~PartialAcquisitionFunction.__init__
+   
+      ~PartialAcquisitionFunction.__call__
+   
       ~PartialAcquisitionFunction.set_X_pending
+   
    
    
 

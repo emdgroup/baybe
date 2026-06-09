@@ -5,6 +5,7 @@ HvarfnerMeanFactory
 
 .. autoclass:: HvarfnerMeanFactory
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,6 +16,9 @@ HvarfnerMeanFactory
    .. autosummary::
    
       ~HvarfnerMeanFactory.__init__
+   
+      ~HvarfnerMeanFactory.__call__
+   
    
    
 

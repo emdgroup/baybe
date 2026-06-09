@@ -5,6 +5,7 @@ qPosteriorStandardDeviation
 
 .. autoclass:: qPosteriorStandardDeviation
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ qPosteriorStandardDeviation
    .. autosummary::
    
       ~qPosteriorStandardDeviation.__init__
+   
       ~qPosteriorStandardDeviation.evaluate
+   
       ~qPosteriorStandardDeviation.from_dict
+   
       ~qPosteriorStandardDeviation.from_json
+   
       ~qPosteriorStandardDeviation.to_botorch
+   
       ~qPosteriorStandardDeviation.to_dict
+   
       ~qPosteriorStandardDeviation.to_json
+   
    
    
 

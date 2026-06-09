@@ -5,6 +5,7 @@ SubspaceDiscrete
 
 .. autoclass:: SubspaceDiscrete
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,22 +16,39 @@ SubspaceDiscrete
    .. autosummary::
    
       ~SubspaceDiscrete.__init__
+   
       ~SubspaceDiscrete.empty
+   
       ~SubspaceDiscrete.estimate_product_space_size
+   
       ~SubspaceDiscrete.from_dataframe
+   
       ~SubspaceDiscrete.from_dict
+   
       ~SubspaceDiscrete.from_json
+   
       ~SubspaceDiscrete.from_parameter
+   
       ~SubspaceDiscrete.from_product
+   
       ~SubspaceDiscrete.from_simplex
+   
       ~SubspaceDiscrete.get_candidates
+   
       ~SubspaceDiscrete.get_parameters_by_name
+   
       ~SubspaceDiscrete.sample_subset_masks
+   
       ~SubspaceDiscrete.subset_masks
+   
       ~SubspaceDiscrete.to_dict
+   
       ~SubspaceDiscrete.to_json
+   
       ~SubspaceDiscrete.to_searchspace
+   
       ~SubspaceDiscrete.transform
+   
    
    
 

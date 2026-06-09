@@ -5,6 +5,7 @@ HvarfnerLikelihoodFactory
 
 .. autoclass:: HvarfnerLikelihoodFactory
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,6 +16,9 @@ HvarfnerLikelihoodFactory
    .. autosummary::
    
       ~HvarfnerLikelihoodFactory.__init__
+   
+      ~HvarfnerLikelihoodFactory.__call__
+   
    
    
 

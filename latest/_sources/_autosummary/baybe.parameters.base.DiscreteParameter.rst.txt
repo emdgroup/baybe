@@ -5,6 +5,7 @@ DiscreteParameter
 
 .. autoclass:: DiscreteParameter
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ DiscreteParameter
    .. autosummary::
    
       ~DiscreteParameter.__init__
+   
       ~DiscreteParameter.from_dict
+   
       ~DiscreteParameter.from_json
+   
       ~DiscreteParameter.is_in_range
+   
       ~DiscreteParameter.summary
+   
       ~DiscreteParameter.to_dict
+   
       ~DiscreteParameter.to_json
+   
       ~DiscreteParameter.to_searchspace
+   
       ~DiscreteParameter.to_subspace
+   
       ~DiscreteParameter.transform
+   
    
    
 

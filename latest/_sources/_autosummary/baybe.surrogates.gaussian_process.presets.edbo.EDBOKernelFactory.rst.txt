@@ -5,6 +5,7 @@ EDBOKernelFactory
 
 .. autoclass:: EDBOKernelFactory
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,11 +16,19 @@ EDBOKernelFactory
    .. autosummary::
    
       ~EDBOKernelFactory.__init__
+   
+      ~EDBOKernelFactory.__call__
+   
       ~EDBOKernelFactory.from_dict
+   
       ~EDBOKernelFactory.from_json
+   
       ~EDBOKernelFactory.get_parameter_names
+   
       ~EDBOKernelFactory.to_dict
+   
       ~EDBOKernelFactory.to_json
+   
    
    
 

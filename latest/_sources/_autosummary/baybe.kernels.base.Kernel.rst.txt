@@ -5,6 +5,7 @@ Kernel
 
 .. autoclass:: Kernel
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ Kernel
    .. autosummary::
    
       ~Kernel.__init__
+   
       ~Kernel.from_dict
+   
       ~Kernel.from_json
+   
       ~Kernel.to_dict
+   
       ~Kernel.to_factory
+   
       ~Kernel.to_gpytorch
+   
       ~Kernel.to_json
+   
    
    
 

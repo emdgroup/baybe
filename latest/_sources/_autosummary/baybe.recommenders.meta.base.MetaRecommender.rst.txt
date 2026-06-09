@@ -5,6 +5,7 @@ MetaRecommender
 
 .. autoclass:: MetaRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ MetaRecommender
    .. autosummary::
    
       ~MetaRecommender.__init__
+   
       ~MetaRecommender.from_dict
+   
       ~MetaRecommender.from_json
+   
       ~MetaRecommender.get_current_recommender
+   
       ~MetaRecommender.get_next_recommender
+   
       ~MetaRecommender.get_non_meta_recommender
+   
       ~MetaRecommender.recommend
+   
       ~MetaRecommender.select_recommender
+   
       ~MetaRecommender.to_dict
+   
       ~MetaRecommender.to_json
+   
    
    
 

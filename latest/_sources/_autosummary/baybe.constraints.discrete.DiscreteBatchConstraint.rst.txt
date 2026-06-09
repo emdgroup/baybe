@@ -5,6 +5,7 @@ DiscreteBatchConstraint
 
 .. autoclass:: DiscreteBatchConstraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ DiscreteBatchConstraint
    .. autosummary::
    
       ~DiscreteBatchConstraint.__init__
+   
       ~DiscreteBatchConstraint.from_dict
+   
       ~DiscreteBatchConstraint.from_json
+   
       ~DiscreteBatchConstraint.get_invalid
+   
       ~DiscreteBatchConstraint.get_invalid_polars
+   
       ~DiscreteBatchConstraint.get_valid
+   
       ~DiscreteBatchConstraint.subset_masks
+   
       ~DiscreteBatchConstraint.summary
+   
       ~DiscreteBatchConstraint.to_dict
+   
       ~DiscreteBatchConstraint.to_json
+   
    
    
 

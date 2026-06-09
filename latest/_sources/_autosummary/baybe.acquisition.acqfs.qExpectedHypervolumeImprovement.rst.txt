@@ -5,6 +5,7 @@ qExpectedHypervolumeImprovement
 
 .. autoclass:: qExpectedHypervolumeImprovement
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,13 +16,21 @@ qExpectedHypervolumeImprovement
    .. autosummary::
    
       ~qExpectedHypervolumeImprovement.__init__
+   
       ~qExpectedHypervolumeImprovement.compute_ref_point
+   
       ~qExpectedHypervolumeImprovement.evaluate
+   
       ~qExpectedHypervolumeImprovement.from_dict
+   
       ~qExpectedHypervolumeImprovement.from_json
+   
       ~qExpectedHypervolumeImprovement.to_botorch
+   
       ~qExpectedHypervolumeImprovement.to_dict
+   
       ~qExpectedHypervolumeImprovement.to_json
+   
    
    
 

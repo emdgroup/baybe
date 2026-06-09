@@ -5,6 +5,7 @@ qLogExpectedHypervolumeImprovement
 
 .. autoclass:: qLogExpectedHypervolumeImprovement
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,13 +16,21 @@ qLogExpectedHypervolumeImprovement
    .. autosummary::
    
       ~qLogExpectedHypervolumeImprovement.__init__
+   
       ~qLogExpectedHypervolumeImprovement.compute_ref_point
+   
       ~qLogExpectedHypervolumeImprovement.evaluate
+   
       ~qLogExpectedHypervolumeImprovement.from_dict
+   
       ~qLogExpectedHypervolumeImprovement.from_json
+   
       ~qLogExpectedHypervolumeImprovement.to_botorch
+   
       ~qLogExpectedHypervolumeImprovement.to_dict
+   
       ~qLogExpectedHypervolumeImprovement.to_json
+   
    
    
 

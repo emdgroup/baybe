@@ -5,6 +5,7 @@ TaskParameter
 
 .. autoclass:: TaskParameter
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ TaskParameter
    .. autosummary::
    
       ~TaskParameter.__init__
+   
       ~TaskParameter.from_dict
+   
       ~TaskParameter.from_json
+   
       ~TaskParameter.is_in_range
+   
       ~TaskParameter.summary
+   
       ~TaskParameter.to_dict
+   
       ~TaskParameter.to_json
+   
       ~TaskParameter.to_searchspace
+   
       ~TaskParameter.to_subspace
+   
       ~TaskParameter.transform
+   
    
    
 

@@ -5,6 +5,7 @@ DiscreteConstraint
 
 .. autoclass:: DiscreteConstraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,14 +16,23 @@ DiscreteConstraint
    .. autosummary::
    
       ~DiscreteConstraint.__init__
+   
       ~DiscreteConstraint.from_dict
+   
       ~DiscreteConstraint.from_json
+   
       ~DiscreteConstraint.get_invalid
+   
       ~DiscreteConstraint.get_invalid_polars
+   
       ~DiscreteConstraint.get_valid
+   
       ~DiscreteConstraint.summary
+   
       ~DiscreteConstraint.to_dict
+   
       ~DiscreteConstraint.to_json
+   
    
    
 

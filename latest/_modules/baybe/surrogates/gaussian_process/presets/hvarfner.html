@@ -1274,6 +1274,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">HvarfnerMeanFactory</span><span class="p">(</span><span class="n">MeanFactoryProtocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A factory providing mean functions as proposed by :cite:p:`Hvarfner2024`.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="HvarfnerMeanFactory.__call__">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.hvarfner.HvarfnerMeanFactory.html#baybe.surrogates.gaussian_process.presets.hvarfner.HvarfnerMeanFactory.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
@@ -1291,6 +1293,7 @@
         <span class="k">return</span> <span class="n">HadamardConstantMean</span><span class="p">(</span>
             <span class="n">ConstantMean</span><span class="p">(),</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">n_tasks</span><span class="p">,</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">task_idx</span>
         <span class="p">)</span></div>
+</div>
 
 
 
@@ -1299,6 +1302,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">HvarfnerLikelihoodFactory</span><span class="p">(</span><span class="n">LikelihoodFactoryProtocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A factory providing likelihoods as proposed by :cite:p:`Hvarfner2024`.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="HvarfnerLikelihoodFactory.__call__">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.hvarfner.HvarfnerLikelihoodFactory.html#baybe.surrogates.gaussian_process.presets.hvarfner.HvarfnerLikelihoodFactory.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
@@ -1319,6 +1324,7 @@
         <span class="k">return</span> <span class="n">make_botorch_multitask_likelihood</span><span class="p">(</span>
             <span class="n">num_tasks</span><span class="o">=</span><span class="n">searchspace</span><span class="o">.</span><span class="n">n_tasks</span><span class="p">,</span> <span class="n">task_feature</span><span class="o">=</span><span class="n">searchspace</span><span class="o">.</span><span class="n">task_idx</span>
         <span class="p">)</span></div>
+</div>
 
 
 

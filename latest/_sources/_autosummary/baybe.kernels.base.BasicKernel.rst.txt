@@ -5,6 +5,7 @@ BasicKernel
 
 .. autoclass:: BasicKernel
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ BasicKernel
    .. autosummary::
    
       ~BasicKernel.__init__
+   
       ~BasicKernel.from_dict
+   
       ~BasicKernel.from_json
+   
       ~BasicKernel.to_dict
+   
       ~BasicKernel.to_factory
+   
       ~BasicKernel.to_gpytorch
+   
       ~BasicKernel.to_json
+   
    
    
 

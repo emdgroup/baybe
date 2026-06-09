@@ -5,6 +5,7 @@ CustomTransformation
 
 .. autoclass:: CustomTransformation
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,22 +16,41 @@ CustomTransformation
    .. autosummary::
    
       ~CustomTransformation.__init__
+   
+      ~CustomTransformation.__call__
+   
       ~CustomTransformation.abs
+   
       ~CustomTransformation.chain
+   
       ~CustomTransformation.clamp
+   
       ~CustomTransformation.from_dict
+   
       ~CustomTransformation.from_json
+   
       ~CustomTransformation.get_codomain
+   
       ~CustomTransformation.get_image
+   
       ~CustomTransformation.hold_output_left_from
+   
       ~CustomTransformation.hold_output_outside
+   
       ~CustomTransformation.hold_output_right_from
+   
       ~CustomTransformation.hshift
+   
       ~CustomTransformation.negate
+   
       ~CustomTransformation.to_botorch_objective
+   
       ~CustomTransformation.to_dict
+   
       ~CustomTransformation.to_json
+   
       ~CustomTransformation.vshift
+   
    
    
 

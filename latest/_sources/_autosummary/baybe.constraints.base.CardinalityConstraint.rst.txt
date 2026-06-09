@@ -5,6 +5,7 @@ CardinalityConstraint
 
 .. autoclass:: CardinalityConstraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,11 +16,17 @@ CardinalityConstraint
    .. autosummary::
    
       ~CardinalityConstraint.__init__
+   
       ~CardinalityConstraint.from_dict
+   
       ~CardinalityConstraint.from_json
+   
       ~CardinalityConstraint.summary
+   
       ~CardinalityConstraint.to_dict
+   
       ~CardinalityConstraint.to_json
+   
    
    
 

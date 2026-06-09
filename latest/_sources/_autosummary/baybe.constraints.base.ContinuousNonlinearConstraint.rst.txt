@@ -5,6 +5,7 @@ ContinuousNonlinearConstraint
 
 .. autoclass:: ContinuousNonlinearConstraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,11 +16,17 @@ ContinuousNonlinearConstraint
    .. autosummary::
    
       ~ContinuousNonlinearConstraint.__init__
+   
       ~ContinuousNonlinearConstraint.from_dict
+   
       ~ContinuousNonlinearConstraint.from_json
+   
       ~ContinuousNonlinearConstraint.summary
+   
       ~ContinuousNonlinearConstraint.to_dict
+   
       ~ContinuousNonlinearConstraint.to_json
+   
    
    
 

@@ -5,6 +5,7 @@ BotorchRecommender
 
 .. autoclass:: BotorchRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,11 +16,17 @@ BotorchRecommender
    .. autosummary::
    
       ~BotorchRecommender.__init__
+   
       ~BotorchRecommender.acquisition_values
+   
       ~BotorchRecommender.get_acquisition_function
+   
       ~BotorchRecommender.get_surrogate
+   
       ~BotorchRecommender.joint_acquisition_value
+   
       ~BotorchRecommender.recommend
+   
    
    
 

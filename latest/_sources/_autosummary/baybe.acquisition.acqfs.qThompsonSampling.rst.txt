@@ -5,6 +5,7 @@ qThompsonSampling
 
 .. autoclass:: qThompsonSampling
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ qThompsonSampling
    .. autosummary::
    
       ~qThompsonSampling.__init__
+   
       ~qThompsonSampling.evaluate
+   
       ~qThompsonSampling.from_dict
+   
       ~qThompsonSampling.from_json
+   
       ~qThompsonSampling.to_botorch
+   
       ~qThompsonSampling.to_dict
+   
       ~qThompsonSampling.to_json
+   
    
    
 

@@ -5,6 +5,7 @@ GaussianProcessSurrogate
 
 .. autoclass:: GaussianProcessSurrogate
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,16 +16,27 @@ GaussianProcessSurrogate
    .. autosummary::
    
       ~GaussianProcessSurrogate.__init__
+   
       ~GaussianProcessSurrogate.fit
+   
       ~GaussianProcessSurrogate.from_dict
+   
       ~GaussianProcessSurrogate.from_json
+   
       ~GaussianProcessSurrogate.from_preset
+   
       ~GaussianProcessSurrogate.posterior
+   
       ~GaussianProcessSurrogate.posterior_stats
+   
       ~GaussianProcessSurrogate.replicate
+   
       ~GaussianProcessSurrogate.to_botorch
+   
       ~GaussianProcessSurrogate.to_dict
+   
       ~GaussianProcessSurrogate.to_json
+   
    
    
 

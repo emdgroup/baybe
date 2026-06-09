@@ -5,6 +5,7 @@ qNegIntegratedPosteriorVariance
 
 .. autoclass:: qNegIntegratedPosteriorVariance
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,13 +16,21 @@ qNegIntegratedPosteriorVariance
    .. autosummary::
    
       ~qNegIntegratedPosteriorVariance.__init__
+   
       ~qNegIntegratedPosteriorVariance.evaluate
+   
       ~qNegIntegratedPosteriorVariance.from_dict
+   
       ~qNegIntegratedPosteriorVariance.from_json
+   
       ~qNegIntegratedPosteriorVariance.get_integration_points
+   
       ~qNegIntegratedPosteriorVariance.to_botorch
+   
       ~qNegIntegratedPosteriorVariance.to_dict
+   
       ~qNegIntegratedPosteriorVariance.to_json
+   
    
    
 

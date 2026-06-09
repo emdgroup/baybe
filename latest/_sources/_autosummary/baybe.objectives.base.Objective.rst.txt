@@ -5,6 +5,7 @@ Objective
 
 .. autoclass:: Objective
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ Objective
    .. autosummary::
    
       ~Objective.__init__
+   
       ~Objective.from_dict
+   
       ~Objective.from_json
+   
       ~Objective.handle_missing_values
+   
       ~Objective.identify_non_dominated_configurations
+   
       ~Objective.to_botorch
+   
       ~Objective.to_botorch_posterior_transform
+   
       ~Objective.to_dict
+   
       ~Objective.to_json
+   
       ~Objective.transform
+   
    
    
 

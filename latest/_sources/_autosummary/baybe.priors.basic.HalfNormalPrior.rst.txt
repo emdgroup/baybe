@@ -5,6 +5,7 @@ HalfNormalPrior
 
 .. autoclass:: HalfNormalPrior
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,11 +16,17 @@ HalfNormalPrior
    .. autosummary::
    
       ~HalfNormalPrior.__init__
+   
       ~HalfNormalPrior.from_dict
+   
       ~HalfNormalPrior.from_json
+   
       ~HalfNormalPrior.to_dict
+   
       ~HalfNormalPrior.to_gpytorch
+   
       ~HalfNormalPrior.to_json
+   
    
    
 

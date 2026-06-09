@@ -5,6 +5,7 @@ MonotonicTransformation
 
 .. autoclass:: MonotonicTransformation
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,22 +16,41 @@ MonotonicTransformation
    .. autosummary::
    
       ~MonotonicTransformation.__init__
+   
+      ~MonotonicTransformation.__call__
+   
       ~MonotonicTransformation.abs
+   
       ~MonotonicTransformation.chain
+   
       ~MonotonicTransformation.clamp
+   
       ~MonotonicTransformation.from_dict
+   
       ~MonotonicTransformation.from_json
+   
       ~MonotonicTransformation.get_codomain
+   
       ~MonotonicTransformation.get_image
+   
       ~MonotonicTransformation.hold_output_left_from
+   
       ~MonotonicTransformation.hold_output_outside
+   
       ~MonotonicTransformation.hold_output_right_from
+   
       ~MonotonicTransformation.hshift
+   
       ~MonotonicTransformation.negate
+   
       ~MonotonicTransformation.to_botorch_objective
+   
       ~MonotonicTransformation.to_dict
+   
       ~MonotonicTransformation.to_json
+   
       ~MonotonicTransformation.vshift
+   
    
    
 

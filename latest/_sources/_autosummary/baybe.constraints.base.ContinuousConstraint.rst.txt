@@ -5,6 +5,7 @@ ContinuousConstraint
 
 .. autoclass:: ContinuousConstraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,11 +16,17 @@ ContinuousConstraint
    .. autosummary::
    
       ~ContinuousConstraint.__init__
+   
       ~ContinuousConstraint.from_dict
+   
       ~ContinuousConstraint.from_json
+   
       ~ContinuousConstraint.summary
+   
       ~ContinuousConstraint.to_dict
+   
       ~ContinuousConstraint.to_json
+   
    
    
 

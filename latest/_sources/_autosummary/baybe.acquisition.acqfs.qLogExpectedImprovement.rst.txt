@@ -5,6 +5,7 @@ qLogExpectedImprovement
 
 .. autoclass:: qLogExpectedImprovement
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ qLogExpectedImprovement
    .. autosummary::
    
       ~qLogExpectedImprovement.__init__
+   
       ~qLogExpectedImprovement.evaluate
+   
       ~qLogExpectedImprovement.from_dict
+   
       ~qLogExpectedImprovement.from_json
+   
       ~qLogExpectedImprovement.to_botorch
+   
       ~qLogExpectedImprovement.to_dict
+   
       ~qLogExpectedImprovement.to_json
+   
    
    
 

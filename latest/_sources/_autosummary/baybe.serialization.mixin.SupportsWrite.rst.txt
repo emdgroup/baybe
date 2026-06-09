@@ -5,6 +5,7 @@ SupportsWrite
 
 .. autoclass:: SupportsWrite
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,7 +16,9 @@ SupportsWrite
    .. autosummary::
    
       ~SupportsWrite.__init__
+   
       ~SupportsWrite.write
+   
    
    
 

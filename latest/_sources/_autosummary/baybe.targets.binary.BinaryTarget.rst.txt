@@ -5,6 +5,7 @@ BinaryTarget
 
 .. autoclass:: BinaryTarget
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,13 +16,21 @@ BinaryTarget
    .. autosummary::
    
       ~BinaryTarget.__init__
+   
       ~BinaryTarget.from_dict
+   
       ~BinaryTarget.from_json
+   
       ~BinaryTarget.summary
+   
       ~BinaryTarget.to_dict
+   
       ~BinaryTarget.to_json
+   
       ~BinaryTarget.to_objective
+   
       ~BinaryTarget.transform
+   
    
    
 

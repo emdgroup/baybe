@@ -1217,6 +1217,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">LazyConstantMeanFactory</span><span class="p">(</span><span class="n">MeanFactoryProtocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A factory providing constant mean functions using lazy loading.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="LazyConstantMeanFactory.__call__">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.components.mean.LazyConstantMeanFactory.html#baybe.surrogates.gaussian_process.components.mean.LazyConstantMeanFactory.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
@@ -1224,6 +1226,7 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.means</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConstantMean</span>
 
         <span class="k">return</span> <span class="n">ConstantMean</span><span class="p">()</span></div>
+</div>
 
 </pre></div>
         </article>

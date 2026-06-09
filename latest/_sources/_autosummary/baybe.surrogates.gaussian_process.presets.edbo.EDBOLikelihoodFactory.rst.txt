@@ -5,6 +5,7 @@ EDBOLikelihoodFactory
 
 .. autoclass:: EDBOLikelihoodFactory
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,6 +16,9 @@ EDBOLikelihoodFactory
    .. autosummary::
    
       ~EDBOLikelihoodFactory.__init__
+   
+      ~EDBOLikelihoodFactory.__call__
+   
    
    
 

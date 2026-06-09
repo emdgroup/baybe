@@ -5,6 +5,7 @@ SmoothedEDBOLikelihoodFactory
 
 .. autoclass:: SmoothedEDBOLikelihoodFactory
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,6 +16,9 @@ SmoothedEDBOLikelihoodFactory
    .. autosummary::
    
       ~SmoothedEDBOLikelihoodFactory.__init__
+   
+      ~SmoothedEDBOLikelihoodFactory.__call__
+   
    
    
 

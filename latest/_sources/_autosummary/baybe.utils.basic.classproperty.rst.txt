@@ -5,6 +5,7 @@ classproperty
 
 .. autoclass:: classproperty
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,6 +16,7 @@ classproperty
    .. autosummary::
    
       ~classproperty.__init__
+   
    
    
 

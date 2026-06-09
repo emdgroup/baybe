@@ -5,6 +5,7 @@ BellTransformation
 
 .. autoclass:: BellTransformation
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,22 +16,41 @@ BellTransformation
    .. autosummary::
    
       ~BellTransformation.__init__
+   
+      ~BellTransformation.__call__
+   
       ~BellTransformation.abs
+   
       ~BellTransformation.chain
+   
       ~BellTransformation.clamp
+   
       ~BellTransformation.from_dict
+   
       ~BellTransformation.from_json
+   
       ~BellTransformation.get_codomain
+   
       ~BellTransformation.get_image
+   
       ~BellTransformation.hold_output_left_from
+   
       ~BellTransformation.hold_output_outside
+   
       ~BellTransformation.hold_output_right_from
+   
       ~BellTransformation.hshift
+   
       ~BellTransformation.negate
+   
       ~BellTransformation.to_botorch_objective
+   
       ~BellTransformation.to_dict
+   
       ~BellTransformation.to_json
+   
       ~BellTransformation.vshift
+   
    
    
 

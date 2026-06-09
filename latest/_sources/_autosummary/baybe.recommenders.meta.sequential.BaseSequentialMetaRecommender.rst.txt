@@ -5,6 +5,7 @@ BaseSequentialMetaRecommender
 
 .. autoclass:: BaseSequentialMetaRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ BaseSequentialMetaRecommender
    .. autosummary::
    
       ~BaseSequentialMetaRecommender.__init__
+   
       ~BaseSequentialMetaRecommender.from_dict
+   
       ~BaseSequentialMetaRecommender.from_json
+   
       ~BaseSequentialMetaRecommender.get_current_recommender
+   
       ~BaseSequentialMetaRecommender.get_next_recommender
+   
       ~BaseSequentialMetaRecommender.get_non_meta_recommender
+   
       ~BaseSequentialMetaRecommender.recommend
+   
       ~BaseSequentialMetaRecommender.select_recommender
+   
       ~BaseSequentialMetaRecommender.to_dict
+   
       ~BaseSequentialMetaRecommender.to_json
+   
    
    
 

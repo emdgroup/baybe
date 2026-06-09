@@ -5,6 +5,7 @@ SequentialMetaRecommender
 
 .. autoclass:: SequentialMetaRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ SequentialMetaRecommender
    .. autosummary::
    
       ~SequentialMetaRecommender.__init__
+   
       ~SequentialMetaRecommender.from_dict
+   
       ~SequentialMetaRecommender.from_json
+   
       ~SequentialMetaRecommender.get_current_recommender
+   
       ~SequentialMetaRecommender.get_next_recommender
+   
       ~SequentialMetaRecommender.get_non_meta_recommender
+   
       ~SequentialMetaRecommender.recommend
+   
       ~SequentialMetaRecommender.select_recommender
+   
       ~SequentialMetaRecommender.to_dict
+   
       ~SequentialMetaRecommender.to_json
+   
    
    
 

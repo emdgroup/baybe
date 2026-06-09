@@ -5,6 +5,7 @@ BetaPrior
 
 .. autoclass:: BetaPrior
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,11 +16,17 @@ BetaPrior
    .. autosummary::
    
       ~BetaPrior.__init__
+   
       ~BetaPrior.from_dict
+   
       ~BetaPrior.from_json
+   
       ~BetaPrior.to_dict
+   
       ~BetaPrior.to_gpytorch
+   
       ~BetaPrior.to_json
+   
    
    
 

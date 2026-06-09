@@ -5,6 +5,7 @@ RecommenderProtocol
 
 .. autoclass:: RecommenderProtocol
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,7 +16,9 @@ RecommenderProtocol
    .. autosummary::
    
       ~RecommenderProtocol.__init__
+   
       ~RecommenderProtocol.recommend
+   
    
    
 

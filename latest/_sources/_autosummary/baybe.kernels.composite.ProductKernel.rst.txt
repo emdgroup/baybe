@@ -5,6 +5,7 @@ ProductKernel
 
 .. autoclass:: ProductKernel
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ ProductKernel
    .. autosummary::
    
       ~ProductKernel.__init__
+   
       ~ProductKernel.from_dict
+   
       ~ProductKernel.from_json
+   
       ~ProductKernel.to_dict
+   
       ~ProductKernel.to_factory
+   
       ~ProductKernel.to_gpytorch
+   
       ~ProductKernel.to_json
+   
    
    
 

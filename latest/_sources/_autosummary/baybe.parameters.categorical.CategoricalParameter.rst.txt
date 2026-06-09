@@ -5,6 +5,7 @@ CategoricalParameter
 
 .. autoclass:: CategoricalParameter
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ CategoricalParameter
    .. autosummary::
    
       ~CategoricalParameter.__init__
+   
       ~CategoricalParameter.from_dict
+   
       ~CategoricalParameter.from_json
+   
       ~CategoricalParameter.is_in_range
+   
       ~CategoricalParameter.summary
+   
       ~CategoricalParameter.to_dict
+   
       ~CategoricalParameter.to_json
+   
       ~CategoricalParameter.to_searchspace
+   
       ~CategoricalParameter.to_subspace
+   
       ~CategoricalParameter.transform
+   
    
    
 

@@ -5,6 +5,7 @@ CompositeSurrogate
 
 .. autoclass:: CompositeSurrogate
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ CompositeSurrogate
    .. autosummary::
    
       ~CompositeSurrogate.__init__
+   
       ~CompositeSurrogate.fit
+   
       ~CompositeSurrogate.from_dict
+   
       ~CompositeSurrogate.from_json
+   
       ~CompositeSurrogate.from_replication
+   
       ~CompositeSurrogate.posterior
+   
       ~CompositeSurrogate.posterior_stats
+   
       ~CompositeSurrogate.to_botorch
+   
       ~CompositeSurrogate.to_dict
+   
       ~CompositeSurrogate.to_json
+   
    
    
 

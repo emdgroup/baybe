@@ -5,6 +5,7 @@ CompositeKernel
 
 .. autoclass:: CompositeKernel
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ CompositeKernel
    .. autosummary::
    
       ~CompositeKernel.__init__
+   
       ~CompositeKernel.from_dict
+   
       ~CompositeKernel.from_json
+   
       ~CompositeKernel.to_dict
+   
       ~CompositeKernel.to_factory
+   
       ~CompositeKernel.to_gpytorch
+   
       ~CompositeKernel.to_json
+   
    
    
 

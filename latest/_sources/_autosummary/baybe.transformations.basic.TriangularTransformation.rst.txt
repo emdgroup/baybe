@@ -5,6 +5,7 @@ TriangularTransformation
 
 .. autoclass:: TriangularTransformation
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,24 +16,45 @@ TriangularTransformation
    .. autosummary::
    
       ~TriangularTransformation.__init__
+   
+      ~TriangularTransformation.__call__
+   
       ~TriangularTransformation.abs
+   
       ~TriangularTransformation.chain
+   
       ~TriangularTransformation.clamp
+   
       ~TriangularTransformation.from_dict
+   
       ~TriangularTransformation.from_json
+   
       ~TriangularTransformation.from_margins
+   
       ~TriangularTransformation.from_width
+   
       ~TriangularTransformation.get_codomain
+   
       ~TriangularTransformation.get_image
+   
       ~TriangularTransformation.hold_output_left_from
+   
       ~TriangularTransformation.hold_output_outside
+   
       ~TriangularTransformation.hold_output_right_from
+   
       ~TriangularTransformation.hshift
+   
       ~TriangularTransformation.negate
+   
       ~TriangularTransformation.to_botorch_objective
+   
       ~TriangularTransformation.to_dict
+   
       ~TriangularTransformation.to_json
+   
       ~TriangularTransformation.vshift
+   
    
    
 

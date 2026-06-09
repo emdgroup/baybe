@@ -1299,6 +1299,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">GPComponentFactoryProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">_T_co</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A protocol defining the interface for Gaussian process component factories.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="GPComponentFactoryProtocol.__call__">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.components.generic.GPComponentFactoryProtocol.html#baybe.surrogates.gaussian_process.components.generic.GPComponentFactoryProtocol.__call__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T_co</span><span class="p">:</span>
@@ -1312,6 +1314,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The constructed Gaussian process component.</span>
 <span class="sd">        &quot;&quot;&quot;</span></div>
+</div>
 
 
 
@@ -1324,11 +1327,14 @@
     <span class="n">component</span><span class="p">:</span> <span class="n">_T_co</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">_validate_component</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The fixed component to be returned by the factory.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="PlainGPComponentFactory.__call__">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.components.generic.PlainGPComponentFactory.html#baybe.surrogates.gaussian_process.components.generic.PlainGPComponentFactory.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T_co</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">component</span></div>
+</div>
 
 
 

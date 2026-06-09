@@ -5,6 +5,7 @@ RandomRecommender
 
 .. autoclass:: RandomRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,7 +16,9 @@ RandomRecommender
    .. autosummary::
    
       ~RandomRecommender.__init__
+   
       ~RandomRecommender.recommend
+   
    
    
 

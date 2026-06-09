@@ -1201,8 +1201,11 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ParameterSelectorProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Type protocol specifying the interface parameter selectors need to implement.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="ParameterSelectorProtocol.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.parameters.selectors.ParameterSelectorProtocol.html#baybe.parameters.selectors.ParameterSelectorProtocol.__call__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Determine if a parameter should be included in the selection.&quot;&quot;&quot;</span></div>
+</div>
 
 
 
@@ -1219,11 +1222,14 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Determine if a parameter meets the selection criterion.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="ParameterSelector.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.parameters.selectors.ParameterSelector.html#baybe.parameters.selectors.ParameterSelector.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Determine if a parameter should be included in the selection.&quot;&quot;&quot;</span>
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_match</span><span class="p">(</span><span class="n">parameter</span><span class="p">)</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="n">result</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span> <span class="k">else</span> <span class="n">result</span></div>
+</div>
 
 
 

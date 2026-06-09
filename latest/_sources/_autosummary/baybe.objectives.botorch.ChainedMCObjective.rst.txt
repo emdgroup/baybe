@@ -5,6 +5,7 @@ ChainedMCObjective
 
 .. autoclass:: ChainedMCObjective
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,55 +16,107 @@ ChainedMCObjective
    .. autosummary::
    
       ~ChainedMCObjective.__init__
+   
+      ~ChainedMCObjective.__call__
+   
       ~ChainedMCObjective.add_module
+   
       ~ChainedMCObjective.apply
+   
       ~ChainedMCObjective.bfloat16
+   
       ~ChainedMCObjective.buffers
+   
       ~ChainedMCObjective.children
+   
       ~ChainedMCObjective.compile
+   
       ~ChainedMCObjective.cpu
+   
       ~ChainedMCObjective.cuda
+   
       ~ChainedMCObjective.double
+   
       ~ChainedMCObjective.eval
+   
       ~ChainedMCObjective.extra_repr
+   
       ~ChainedMCObjective.float
+   
       ~ChainedMCObjective.forward
+   
       ~ChainedMCObjective.get_buffer
+   
       ~ChainedMCObjective.get_extra_state
+   
       ~ChainedMCObjective.get_parameter
+   
       ~ChainedMCObjective.get_submodule
+   
       ~ChainedMCObjective.half
+   
       ~ChainedMCObjective.ipu
+   
       ~ChainedMCObjective.modules
+   
       ~ChainedMCObjective.mtia
+   
       ~ChainedMCObjective.named_buffers
+   
       ~ChainedMCObjective.named_children
+   
       ~ChainedMCObjective.named_modules
+   
       ~ChainedMCObjective.named_parameters
+   
       ~ChainedMCObjective.parameters
+   
       ~ChainedMCObjective.register_backward_hook
+   
       ~ChainedMCObjective.register_buffer
+   
       ~ChainedMCObjective.register_forward_hook
+   
       ~ChainedMCObjective.register_forward_pre_hook
+   
       ~ChainedMCObjective.register_full_backward_hook
+   
       ~ChainedMCObjective.register_full_backward_pre_hook
+   
       ~ChainedMCObjective.register_load_state_dict_post_hook
+   
       ~ChainedMCObjective.register_load_state_dict_pre_hook
+   
       ~ChainedMCObjective.register_module
+   
       ~ChainedMCObjective.register_parameter
+   
       ~ChainedMCObjective.register_state_dict_post_hook
+   
       ~ChainedMCObjective.register_state_dict_pre_hook
+   
       ~ChainedMCObjective.requires_grad_
+   
       ~ChainedMCObjective.set_extra_state
+   
       ~ChainedMCObjective.set_submodule
+   
       ~ChainedMCObjective.share_memory
+   
       ~ChainedMCObjective.state_dict
+   
       ~ChainedMCObjective.to
+   
       ~ChainedMCObjective.to_empty
+   
       ~ChainedMCObjective.train
+   
       ~ChainedMCObjective.type
+   
       ~ChainedMCObjective.xpu
+   
       ~ChainedMCObjective.zero_grad
+   
    
    
 

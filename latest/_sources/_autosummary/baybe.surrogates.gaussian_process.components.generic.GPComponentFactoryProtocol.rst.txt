@@ -5,6 +5,7 @@ GPComponentFactoryProtocol
 
 .. autoclass:: GPComponentFactoryProtocol
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,6 +16,9 @@ GPComponentFactoryProtocol
    .. autosummary::
    
       ~GPComponentFactoryProtocol.__init__
+   
+      ~GPComponentFactoryProtocol.__call__
+   
    
    
 

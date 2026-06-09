@@ -5,6 +5,7 @@ BayBEKernelFactory
 
 .. autoclass:: BayBEKernelFactory
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,11 +16,19 @@ BayBEKernelFactory
    .. autosummary::
    
       ~BayBEKernelFactory.__init__
+   
+      ~BayBEKernelFactory.__call__
+   
       ~BayBEKernelFactory.from_dict
+   
       ~BayBEKernelFactory.from_json
+   
       ~BayBEKernelFactory.get_parameter_names
+   
       ~BayBEKernelFactory.to_dict
+   
       ~BayBEKernelFactory.to_json
+   
    
    
 

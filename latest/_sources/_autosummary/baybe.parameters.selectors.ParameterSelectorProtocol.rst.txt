@@ -5,6 +5,7 @@ ParameterSelectorProtocol
 
 .. autoclass:: ParameterSelectorProtocol
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,6 +16,9 @@ ParameterSelectorProtocol
    .. autosummary::
    
       ~ParameterSelectorProtocol.__init__
+   
+      ~ParameterSelectorProtocol.__call__
+   
    
    
 

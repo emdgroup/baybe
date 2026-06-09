@@ -5,6 +5,7 @@ DiscretePermutationInvarianceConstraint
 
 .. autoclass:: DiscretePermutationInvarianceConstraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,14 +16,23 @@ DiscretePermutationInvarianceConstraint
    .. autosummary::
    
       ~DiscretePermutationInvarianceConstraint.__init__
+   
       ~DiscretePermutationInvarianceConstraint.from_dict
+   
       ~DiscretePermutationInvarianceConstraint.from_json
+   
       ~DiscretePermutationInvarianceConstraint.get_invalid
+   
       ~DiscretePermutationInvarianceConstraint.get_invalid_polars
+   
       ~DiscretePermutationInvarianceConstraint.get_valid
+   
       ~DiscretePermutationInvarianceConstraint.summary
+   
       ~DiscretePermutationInvarianceConstraint.to_dict
+   
       ~DiscretePermutationInvarianceConstraint.to_json
+   
    
    
 

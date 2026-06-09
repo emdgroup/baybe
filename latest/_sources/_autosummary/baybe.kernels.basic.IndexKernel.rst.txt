@@ -5,6 +5,7 @@ IndexKernel
 
 .. autoclass:: IndexKernel
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ IndexKernel
    .. autosummary::
    
       ~IndexKernel.__init__
+   
       ~IndexKernel.from_dict
+   
       ~IndexKernel.from_json
+   
       ~IndexKernel.to_dict
+   
       ~IndexKernel.to_factory
+   
       ~IndexKernel.to_gpytorch
+   
       ~IndexKernel.to_json
+   
    
    
 

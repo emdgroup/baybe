@@ -5,6 +5,7 @@ ThresholdCondition
 
 .. autoclass:: ThresholdCondition
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ ThresholdCondition
    .. autosummary::
    
       ~ThresholdCondition.__init__
+   
       ~ThresholdCondition.evaluate
+   
       ~ThresholdCondition.from_dict
+   
       ~ThresholdCondition.from_json
+   
       ~ThresholdCondition.to_dict
+   
       ~ThresholdCondition.to_json
+   
       ~ThresholdCondition.to_polars
+   
    
    
 

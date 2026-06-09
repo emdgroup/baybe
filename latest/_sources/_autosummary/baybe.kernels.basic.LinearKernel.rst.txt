@@ -5,6 +5,7 @@ LinearKernel
 
 .. autoclass:: LinearKernel
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ LinearKernel
    .. autosummary::
    
       ~LinearKernel.__init__
+   
       ~LinearKernel.from_dict
+   
       ~LinearKernel.from_json
+   
       ~LinearKernel.to_dict
+   
       ~LinearKernel.to_factory
+   
       ~LinearKernel.to_gpytorch
+   
       ~LinearKernel.to_json
+   
    
    
 

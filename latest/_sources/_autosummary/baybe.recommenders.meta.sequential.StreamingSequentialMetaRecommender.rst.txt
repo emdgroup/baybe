@@ -5,6 +5,7 @@ StreamingSequentialMetaRecommender
 
 .. autoclass:: StreamingSequentialMetaRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ StreamingSequentialMetaRecommender
    .. autosummary::
    
       ~StreamingSequentialMetaRecommender.__init__
+   
       ~StreamingSequentialMetaRecommender.from_dict
+   
       ~StreamingSequentialMetaRecommender.from_json
+   
       ~StreamingSequentialMetaRecommender.get_current_recommender
+   
       ~StreamingSequentialMetaRecommender.get_next_recommender
+   
       ~StreamingSequentialMetaRecommender.get_non_meta_recommender
+   
       ~StreamingSequentialMetaRecommender.recommend
+   
       ~StreamingSequentialMetaRecommender.select_recommender
+   
       ~StreamingSequentialMetaRecommender.to_dict
+   
       ~StreamingSequentialMetaRecommender.to_json
+   
    
    
 

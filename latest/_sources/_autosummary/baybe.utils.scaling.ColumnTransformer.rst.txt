@@ -5,6 +5,7 @@ ColumnTransformer
 
 .. autoclass:: ColumnTransformer
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,8 +16,11 @@ ColumnTransformer
    .. autosummary::
    
       ~ColumnTransformer.__init__
+   
       ~ColumnTransformer.fit
+   
       ~ColumnTransformer.transform
+   
    
    
 

@@ -5,6 +5,7 @@ SubspaceContinuous
 
 .. autoclass:: SubspaceContinuous
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,21 +16,37 @@ SubspaceContinuous
    .. autosummary::
    
       ~SubspaceContinuous.__init__
+   
       ~SubspaceContinuous.empty
+   
       ~SubspaceContinuous.from_bounds
+   
       ~SubspaceContinuous.from_dataframe
+   
       ~SubspaceContinuous.from_dict
+   
       ~SubspaceContinuous.from_json
+   
       ~SubspaceContinuous.from_parameter
+   
       ~SubspaceContinuous.from_product
+   
       ~SubspaceContinuous.get_parameters_by_name
+   
       ~SubspaceContinuous.inactive_parameter_combinations
+   
       ~SubspaceContinuous.sample_from_full_factorial
+   
       ~SubspaceContinuous.sample_uniform
+   
       ~SubspaceContinuous.to_dict
+   
       ~SubspaceContinuous.to_json
+   
       ~SubspaceContinuous.to_searchspace
+   
       ~SubspaceContinuous.transform
+   
    
    
 

@@ -1272,6 +1272,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">BayBEFitCriterionFactory</span><span class="p">(</span><span class="n">FitCriterionFactoryProtocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The factory providing the default fitting criterion for Gaussian process surrogates.&quot;&quot;&quot;</span>  <span class="c1"># noqa: E501</span>
 
+<div class="viewcode-block" id="BayBEFitCriterionFactory.__call__">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEFitCriterionFactory.html#baybe.surrogates.gaussian_process.presets.baybe.BayBEFitCriterionFactory.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
@@ -1281,6 +1283,7 @@
             <span class="k">if</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">task_idx</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="k">else</span> <span class="n">FitCriterion</span><span class="o">.</span><span class="n">LEAVE_ONE_OUT_PSEUDOLIKELIHOOD</span>
         <span class="p">)</span></div>
+</div>
 
 
 

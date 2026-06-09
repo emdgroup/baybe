@@ -1244,6 +1244,8 @@
         <span class="n">full_point</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">disc_part</span><span class="p">,</span> <span class="n">cont_part</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">full_point</span>
 
+<div class="viewcode-block" id="PartialAcquisitionFunction.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.partial.PartialAcquisitionFunction.html#baybe.acquisition.partial.PartialAcquisitionFunction.__call__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable_part</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Lift the point to the hybrid space and evaluate the acquisition function.</span>
 
@@ -1254,7 +1256,8 @@
 <span class="sd">            The evaluation of the lifted point in the full hybrid space.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">full_point</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lift_partial_part</span><span class="p">(</span><span class="n">variable_part</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">botorch_acqf</span><span class="p">(</span><span class="n">full_point</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">botorch_acqf</span><span class="p">(</span><span class="n">full_point</span><span class="p">)</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">botorch_acqf</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>

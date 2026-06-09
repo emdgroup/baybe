@@ -5,6 +5,7 @@ PAMClusteringRecommender
 
 .. autoclass:: PAMClusteringRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,7 +16,9 @@ PAMClusteringRecommender
    .. autosummary::
    
       ~PAMClusteringRecommender.__init__
+   
       ~PAMClusteringRecommender.recommend
+   
    
    
 

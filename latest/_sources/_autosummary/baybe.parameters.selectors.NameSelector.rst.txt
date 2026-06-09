@@ -5,6 +5,7 @@ NameSelector
 
 .. autoclass:: NameSelector
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,6 +16,9 @@ NameSelector
    .. autosummary::
    
       ~NameSelector.__init__
+   
+      ~NameSelector.__call__
+   
    
    
 

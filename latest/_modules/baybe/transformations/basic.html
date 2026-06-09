@@ -1230,9 +1230,12 @@
         <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="CustomTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.CustomTransformation.html#baybe.transformations.basic.CustomTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">function</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
 
 
 
@@ -1253,9 +1256,12 @@
         <span class="k">return</span> <span class="n">AffineTransformation</span><span class="p">()</span><span class="o">.</span><span class="n">to_botorch_posterior_transform</span><span class="p">()</span></div>
 
 
+<div class="viewcode-block" id="IdentityTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.IdentityTransformation.html#baybe.transformations.basic.IdentityTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+
 
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__or__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Transformation</span><span class="p">:</span>
@@ -1287,9 +1293,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__attrs_init__</span><span class="p">(</span><span class="n">cutoffs</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">))</span></div>
 
 
+<div class="viewcode-block" id="ClampingTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.ClampingTransformation.html#baybe.transformations.basic.ClampingTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoffs</span><span class="o">.</span><span class="n">to_tuple</span><span class="p">())</span></div>
+</div>
 
 
 
@@ -1386,13 +1395,16 @@
         <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="AffineTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.AffineTransformation.html#baybe.transformations.basic.AffineTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="c1"># Handle problematic case where input contains infinity (to avoid 0 * inf)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">new_full</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shift</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shift</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shift</span></div>
+
 
     <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
 
@@ -1432,6 +1444,8 @@
             <span class="k">return</span> <span class="n">Interval</span><span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="TwoSidedAffineTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.TwoSidedAffineTransformation.html#baybe.transformations.basic.TwoSidedAffineTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
@@ -1444,6 +1458,7 @@
             <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mid</span><span class="p">)</span> <span class="o">*</span> <span class="n">sl</span> <span class="k">if</span> <span class="p">(</span><span class="n">sl</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slope_left</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
             <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mid</span><span class="p">)</span> <span class="o">*</span> <span class="n">sr</span> <span class="k">if</span> <span class="p">(</span><span class="n">sr</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slope_right</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
         <span class="p">)</span></div>
+</div>
 
 
 
@@ -1481,9 +1496,12 @@
             <span class="k">return</span> <span class="n">Interval</span><span class="p">(</span><span class="o">*</span><span class="nb">sorted</span><span class="p">([</span><span class="n">image_lower</span><span class="p">,</span> <span class="n">image_upper</span><span class="p">]))</span></div>
 
 
+<div class="viewcode-block" id="BellTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.BellTransformation.html#baybe.transformations.basic.BellTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">)</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span><span class="o">.</span><span class="n">neg</span><span class="p">()</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span></div>
+</div>
 
 
 
@@ -1508,9 +1526,12 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span><span class="o">.</span><span class="n">get_codomain</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="AbsoluteTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.AbsoluteTransformation.html#baybe.transformations.basic.AbsoluteTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
 
 
 
@@ -1626,9 +1647,12 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span><span class="o">.</span><span class="n">get_codomain</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="TriangularTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.TriangularTransformation.html#baybe.transformations.basic.TriangularTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
 
 
 
@@ -1639,9 +1663,12 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">LogarithmicTransformation</span><span class="p">(</span><span class="n">MonotonicTransformation</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A logarithmic transformation.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="LogarithmicTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.LogarithmicTransformation.html#baybe.transformations.basic.LogarithmicTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">log</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">log</span><span class="p">()</span></div>
+
 
 <div class="viewcode-block" id="LogarithmicTransformation.get_codomain">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.LogarithmicTransformation.html#baybe.transformations.basic.LogarithmicTransformation.get_codomain">[docs]</a>
@@ -1660,9 +1687,12 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ExponentialTransformation</span><span class="p">(</span><span class="n">MonotonicTransformation</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An exponential transformation.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="ExponentialTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.ExponentialTransformation.html#baybe.transformations.basic.ExponentialTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span></div>
+</div>
 
 
 
@@ -1689,6 +1719,8 @@
             <span class="k">return</span> <span class="n">Interval</span><span class="p">(</span><span class="o">*</span><span class="nb">sorted</span><span class="p">([</span><span class="n">image_lower</span><span class="p">,</span> <span class="n">image_upper</span><span class="p">]))</span></div>
 
 
+<div class="viewcode-block" id="PowerTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.PowerTransformation.html#baybe.transformations.basic.PowerTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exponent</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">exponent</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
@@ -1697,6 +1729,7 @@
                 <span class="s2">&quot;non-negative elements only.&quot;</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exponent</span><span class="p">)</span></div>
+</div>
 
 
 
@@ -1765,11 +1798,14 @@
         <span class="k">return</span> <span class="n">SigmoidTransformation</span><span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="n">steepness</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="SigmoidTransformation.__call__">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.SigmoidTransformation.html#baybe.transformations.basic.SigmoidTransformation.__call__">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
         <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">)))</span></div>
+</div>
 
 
 

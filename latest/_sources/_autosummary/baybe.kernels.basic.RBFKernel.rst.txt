@@ -5,6 +5,7 @@ RBFKernel
 
 .. autoclass:: RBFKernel
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ RBFKernel
    .. autosummary::
    
       ~RBFKernel.__init__
+   
       ~RBFKernel.from_dict
+   
       ~RBFKernel.from_json
+   
       ~RBFKernel.to_dict
+   
       ~RBFKernel.to_factory
+   
       ~RBFKernel.to_gpytorch
+   
       ~RBFKernel.to_json
+   
    
    
 

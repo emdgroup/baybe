@@ -5,6 +5,7 @@ Constraint
 
 .. autoclass:: Constraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,11 +16,17 @@ Constraint
    .. autosummary::
    
       ~Constraint.__init__
+   
       ~Constraint.from_dict
+   
       ~Constraint.from_json
+   
       ~Constraint.summary
+   
       ~Constraint.to_dict
+   
       ~Constraint.to_json
+   
    
    
 

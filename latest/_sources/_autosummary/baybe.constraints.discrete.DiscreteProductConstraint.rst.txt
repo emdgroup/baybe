@@ -5,6 +5,7 @@ DiscreteProductConstraint
 
 .. autoclass:: DiscreteProductConstraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,14 +16,23 @@ DiscreteProductConstraint
    .. autosummary::
    
       ~DiscreteProductConstraint.__init__
+   
       ~DiscreteProductConstraint.from_dict
+   
       ~DiscreteProductConstraint.from_json
+   
       ~DiscreteProductConstraint.get_invalid
+   
       ~DiscreteProductConstraint.get_invalid_polars
+   
       ~DiscreteProductConstraint.get_valid
+   
       ~DiscreteProductConstraint.summary
+   
       ~DiscreteProductConstraint.to_dict
+   
       ~DiscreteProductConstraint.to_json
+   
    
    
 

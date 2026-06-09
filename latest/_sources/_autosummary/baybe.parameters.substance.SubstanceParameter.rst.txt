@@ -5,6 +5,7 @@ SubstanceParameter
 
 .. autoclass:: SubstanceParameter
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,15 +16,25 @@ SubstanceParameter
    .. autosummary::
    
       ~SubstanceParameter.__init__
+   
       ~SubstanceParameter.from_dict
+   
       ~SubstanceParameter.from_json
+   
       ~SubstanceParameter.is_in_range
+   
       ~SubstanceParameter.summary
+   
       ~SubstanceParameter.to_dict
+   
       ~SubstanceParameter.to_json
+   
       ~SubstanceParameter.to_searchspace
+   
       ~SubstanceParameter.to_subspace
+   
       ~SubstanceParameter.transform
+   
    
    
 

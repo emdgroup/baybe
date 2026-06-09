@@ -5,6 +5,7 @@ KMeansClusteringRecommender
 
 .. autoclass:: KMeansClusteringRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,7 +16,9 @@ KMeansClusteringRecommender
    .. autosummary::
    
       ~KMeansClusteringRecommender.__init__
+   
       ~KMeansClusteringRecommender.recommend
+   
    
    
 

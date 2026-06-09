@@ -5,6 +5,7 @@ DiscreteLinkedParametersConstraint
 
 .. autoclass:: DiscreteLinkedParametersConstraint
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,14 +16,23 @@ DiscreteLinkedParametersConstraint
    .. autosummary::
    
       ~DiscreteLinkedParametersConstraint.__init__
+   
       ~DiscreteLinkedParametersConstraint.from_dict
+   
       ~DiscreteLinkedParametersConstraint.from_json
+   
       ~DiscreteLinkedParametersConstraint.get_invalid
+   
       ~DiscreteLinkedParametersConstraint.get_invalid_polars
+   
       ~DiscreteLinkedParametersConstraint.get_valid
+   
       ~DiscreteLinkedParametersConstraint.summary
+   
       ~DiscreteLinkedParametersConstraint.to_dict
+   
       ~DiscreteLinkedParametersConstraint.to_json
+   
    
    
 

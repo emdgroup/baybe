@@ -5,6 +5,7 @@ ChenKernelFactory
 
 .. autoclass:: ChenKernelFactory
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,11 +16,19 @@ ChenKernelFactory
    .. autosummary::
    
       ~ChenKernelFactory.__init__
+   
+      ~ChenKernelFactory.__call__
+   
       ~ChenKernelFactory.from_dict
+   
       ~ChenKernelFactory.from_json
+   
       ~ChenKernelFactory.get_parameter_names
+   
       ~ChenKernelFactory.to_dict
+   
       ~ChenKernelFactory.to_json
+   
    
    
 

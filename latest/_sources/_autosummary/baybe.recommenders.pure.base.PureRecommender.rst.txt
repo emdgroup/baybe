@@ -5,6 +5,7 @@ PureRecommender
 
 .. autoclass:: PureRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,7 +16,9 @@ PureRecommender
    .. autosummary::
    
       ~PureRecommender.__init__
+   
       ~PureRecommender.recommend
+   
    
    
 

@@ -5,6 +5,7 @@ HvarfnerKernelFactory
 
 .. autoclass:: HvarfnerKernelFactory
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,11 +16,19 @@ HvarfnerKernelFactory
    .. autosummary::
    
       ~HvarfnerKernelFactory.__init__
+   
+      ~HvarfnerKernelFactory.__call__
+   
       ~HvarfnerKernelFactory.from_dict
+   
       ~HvarfnerKernelFactory.from_json
+   
       ~HvarfnerKernelFactory.get_parameter_names
+   
       ~HvarfnerKernelFactory.to_dict
+   
       ~HvarfnerKernelFactory.to_json
+   
    
    
 

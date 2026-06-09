@@ -5,6 +5,7 @@ GaussianMixtureClusteringRecommender
 
 .. autoclass:: GaussianMixtureClusteringRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,7 +16,9 @@ GaussianMixtureClusteringRecommender
    .. autosummary::
    
       ~GaussianMixtureClusteringRecommender.__init__
+   
       ~GaussianMixtureClusteringRecommender.recommend
+   
    
    
 

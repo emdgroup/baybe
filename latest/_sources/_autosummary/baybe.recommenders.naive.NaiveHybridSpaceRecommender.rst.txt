@@ -5,6 +5,7 @@ NaiveHybridSpaceRecommender
 
 .. autoclass:: NaiveHybridSpaceRecommender
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,7 +16,9 @@ NaiveHybridSpaceRecommender
    .. autosummary::
    
       ~NaiveHybridSpaceRecommender.__init__
+   
       ~NaiveHybridSpaceRecommender.recommend
+   
    
    
 

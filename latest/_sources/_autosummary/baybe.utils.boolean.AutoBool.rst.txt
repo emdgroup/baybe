@@ -5,6 +5,7 @@ AutoBool
 
 .. autoclass:: AutoBool
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,7 +16,9 @@ AutoBool
    .. autosummary::
    
       ~AutoBool.evaluate
+   
       ~AutoBool.from_unstructured
+   
    
    
 

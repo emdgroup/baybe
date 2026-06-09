@@ -5,6 +5,7 @@ qLogNoisyExpectedImprovement
 
 .. autoclass:: qLogNoisyExpectedImprovement
    :members:                              
+   :special-members: __call__
    :show-inheritance:                 
    :inherited-members:
 
@@ -15,12 +16,19 @@ qLogNoisyExpectedImprovement
    .. autosummary::
    
       ~qLogNoisyExpectedImprovement.__init__
+   
       ~qLogNoisyExpectedImprovement.evaluate
+   
       ~qLogNoisyExpectedImprovement.from_dict
+   
       ~qLogNoisyExpectedImprovement.from_json
+   
       ~qLogNoisyExpectedImprovement.to_botorch
+   
       ~qLogNoisyExpectedImprovement.to_dict
+   
       ~qLogNoisyExpectedImprovement.to_json
+   
    
    
 
