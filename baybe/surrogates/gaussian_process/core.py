@@ -14,7 +14,7 @@ from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable
 from typing_extensions import Self, override
 
-from baybe.exceptions import DeprecationError
+from baybe.exceptions import DeprecationError, ModelNotTrainedError
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
@@ -211,25 +211,6 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
-    @property
-    def posterior_mean(self) -> MeanFactoryProtocol:
-        """A mean factory representing this surrogate's posterior mean.
-
-        Raises:
-            ModelNotTrainedError: If this surrogate has not been fitted yet.
-        """
-        from baybe.exceptions import ModelNotTrainedError
-        from baybe.surrogates.gaussian_process.components.mean import (
-            _PosteriorMeanFactory,
-        )
-
-        if self._model is None:
-            raise ModelNotTrainedError(
-                f"'{self.__class__.__name__}' must be fitted before accessing "
-                f"'posterior_mean'."
-            )
-        return _PosteriorMeanFactory(self._model)
-
     @classmethod
     def from_preset(
         cls,
@@ -264,6 +245,71 @@ class GaussianProcessSurrogate(Surrogate):
         gp = cls(kernel, mean, likelihood, fit_criterion)
         gp._custom_kernel = False  # preset are first-party features
         return gp
+
+    def get_posterior_mean(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> GPyTorchMean:
+        """Return a GPyTorch mean module representing this surrogate's posterior mean.
+
+        The bound method satisfies :class:`.MeanFactoryProtocol` and can be passed
+        directly as ``mean_or_factory`` to a new :class:`GaussianProcessSurrogate`.
+
+        Args:
+            searchspace: The search space of the new GP being fitted.
+            objective: The objective of the new GP being fitted.
+            measurements: The training data of the new GP being fitted.
+
+        Returns:
+            A GPyTorch mean module that evaluates this surrogate's posterior mean.
+
+        Raises:
+            ModelNotTrainedError: If this surrogate has not been fitted yet.
+        """
+        from copy import deepcopy
+
+        import gpytorch
+        from botorch.models.transforms.input import Normalize
+
+        if self._model is None:
+            raise ModelNotTrainedError(
+                f"'{self.__class__.__name__}' must be fitted before its "
+                f"'get_posterior_mean' can be used as a mean function."
+            )
+
+        context = _ModelContext(searchspace, objective, measurements)
+
+        # The new GP applies its input normalization before calling this mean module,
+        # so x arrives in the new GP's scaled coordinate system. Undo that scaling
+        # before calling the pretrained GP — it will apply its own normalization.
+        input_transform = Normalize(
+            len(searchspace.comp_rep_columns),
+            bounds=context.parameter_bounds,
+            indices=context.numerical_indices,
+        )
+        input_transform.eval()
+
+        class _PosteriorMean(gpytorch.means.Mean):
+            """GPyTorch mean using a trained GP's posterior as the mean function."""
+
+            def __init__(self, gp: GPyTorchModel, input_transform: Normalize) -> None:
+                super().__init__()
+                self.gp = deepcopy(gp)
+                for param in self.gp.parameters():
+                    param.requires_grad = False
+                self.gp.eval()
+                self.gp.likelihood.eval()
+                self.input_transform = input_transform
+
+            def forward(self, x: Tensor) -> Tensor:
+                """Compute the mean using the wrapped GP's posterior."""
+                with gpytorch.settings.fast_pred_var():
+                    x_raw = self.input_transform.untransform(x)
+                    return self.gp.posterior(x_raw).mean.squeeze(-1)
+
+        return _PosteriorMean(self._model, input_transform)
 
     @override
     def to_botorch(self) -> GPyTorchModel:
