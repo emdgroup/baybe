@@ -215,11 +215,6 @@ class GaussianProcessSurrogate(Surrogate):
     def posterior_mean(self) -> MeanFactoryProtocol:
         """A mean factory representing this surrogate's posterior mean.
 
-        Examples:
-            >>> new_gp = GaussianProcessSurrogate(
-            ...     mean_or_factory=prior_gp.posterior_mean
-            ... )
-
         Raises:
             ModelNotTrainedError: If this surrogate has not been fitted yet.
         """
