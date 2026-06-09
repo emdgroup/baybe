@@ -67,15 +67,13 @@ class SubspaceContinuous(SerialMixin):
 
     def __init__(
         self,
-        parameters: Sequence[ContinuousParameter] | None = None,
-        constraints: Sequence[ContinuousConstraint] | None = None,
-        constraints_lin_eq: Sequence[ContinuousLinearConstraint] | None = None,
-        constraints_lin_ineq: Sequence[ContinuousLinearConstraint] | None = None,
-        constraints_nonlin: Sequence[ContinuousNonlinearConstraint] | None = None,
+        parameters: Sequence[ContinuousParameter],
+        constraints: Sequence[ContinuousConstraint] = (),
+        constraints_lin_eq: Sequence[ContinuousLinearConstraint] = (),
+        constraints_lin_ineq: Sequence[ContinuousLinearConstraint] = (),
+        constraints_nonlin: Sequence[ContinuousNonlinearConstraint] = (),
     ):
-        parameters = list(parameters) if parameters is not None else []
-        constraints = list(constraints) if constraints is not None else []
-
+        constraints = list(constraints)
         n_constraints = len(constraints)
         if constraints_lin_eq is not None:
             constraints.extend(constraints_lin_eq)
