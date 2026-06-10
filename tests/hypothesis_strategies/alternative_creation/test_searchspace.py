@@ -147,14 +147,14 @@ def test_discrete_space_creation_from_simplex_inner(parameters, boundary_only):
 
 p_d1 = NumericalDiscreteParameter(name="d1", values=[0.0, 0.5, 1.0])
 p_d2 = NumericalDiscreteParameter(name="d2", values=[0.0, 0.5, 1.0])
-p_t1 = CategoricalParameter(name="t1", values=["A", "B"])
-p_t2 = CategoricalParameter(name="t2", values=["A", "B"])
+p_c1 = CategoricalParameter(name="c1", values=["A", "B"])
+p_c2 = CategoricalParameter(name="c2", values=["A", "B"])
 
 
 @pytest.mark.parametrize(
     ("simplex_parameters", "product_parameters", "n_elements"),
     [
-        param([p_d1, p_d2], [p_t1, p_t2], 6 * 4, id="both"),
+        param([p_d1, p_d2], [p_c1, p_c2], 6 * 4, id="both"),
         param([p_d1, p_d2], [], 6, id="simplex-only"),
     ],
 )
