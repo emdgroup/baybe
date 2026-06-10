@@ -53,24 +53,9 @@ def _lazyframe_from_product(parameters):
 
 
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
-@pytest.mark.parametrize("constraint_names", [["Constraint_8"]])
-def test_polars_prodsum1(parameters, constraints):
-    """Tests Polars implementation of sum constraint."""
-    ldf = _lazyframe_from_product(parameters)
-    ldf = _apply_constraint_filter_polars(ldf, constraints)
-
-    # Number of entries with 1,2-sum above 150
-    ldf = ldf.with_columns(sum=pl.sum_horizontal(["Fraction_1", "Fraction_2"]))
-    ldf = ldf.filter(pl.col("sum") > 150)
-    num_entries = len(ldf.collect())
-
-    assert num_entries == 0
-
-
-@pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_9"]])
-def test_polars_prodsum2(parameters, constraints):
-    """Tests Polars implementation of product constrain."""
+def test_polars_product_constraint(parameters, constraints):
+    """Tests Polars implementation of product constraint."""
     ldf = _lazyframe_from_product(parameters)
     ldf = _apply_constraint_filter_polars(ldf, constraints)
 
@@ -86,44 +71,39 @@ def test_polars_prodsum2(parameters, constraints):
     assert num_entries == 0
 
 
-@pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
-@pytest.mark.parametrize("constraint_names", [["Constraint_10"]])
-def test_polars_prodsum3(parameters, constraints):
-    """Tests Polars implementation of exact sum constraint."""
-    ldf = _lazyframe_from_product(parameters)
-    ldf = _apply_constraint_filter_polars(ldf, constraints)
-
-    # Number of entries with sum unequal to 100
-    ldf = ldf.with_columns(sum=pl.sum_horizontal(["Fraction_1", "Fraction_2"]))
-    df = ldf.select(abs(pl.col("sum") - 100)).filter(pl.col("sum") > 0.01).collect()
-
-    num_entries = len(df)
-
-    assert num_entries == 0
-
-
 @pytest.mark.parametrize(
     ("coefficients", "threshold", "operator"),
     [
+        param(None, 150.0, "<=", id="unweighted-le"),
+        param(None, 100.0, "=", id="unweighted-eq"),
         param((2.0, 1.0), 150.0, "<=", id="weighted-le"),
         param((1.0, -1.0), 50.0, "<=", id="negative-le"),
         param((0.5, 0.5), 50.0, "=", id="weighted-eq"),
     ],
 )
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
-def test_polars_weighted_sum_constraint(parameters, coefficients, threshold, operator):
-    """Polars and Pandas paths produce identical results for weighted sum."""
-    constraint = DiscreteSumConstraint(
-        parameters=[p.name for p in parameters],
-        condition=ThresholdCondition(threshold=threshold, operator=operator),
-        coefficients=coefficients,
-    )
+def test_polars_sum_constraint(parameters, coefficients, threshold, operator):
+    """Polars and Pandas paths produce correct and identical results."""
+    names = [p.name for p in parameters]
+    kwargs = {} if coefficients is None else {"coefficients": coefficients}
+    condition = ThresholdCondition(threshold=threshold, operator=operator)
+    constraint = DiscreteSumConstraint(parameters=names, condition=condition, **kwargs)
+    coeffs = coefficients or (1.0,) * len(parameters)
+
     ldf = _lazyframe_from_product(parameters)
     df_pd = parameter_cartesian_prod_pandas(parameters)
 
     _apply_constraint_filter_pandas(df_pd, [constraint])
     df_pl = _apply_constraint_filter_polars(ldf, [constraint]).collect().to_pandas()
 
+    # Correctness: all remaining rows satisfy the constraint
+    weighted_pd = sum(df_pd[n] * c for n, c in zip(names, coeffs))
+    assert condition.evaluate(weighted_pd).all()
+
+    weighted_pl = sum(df_pl[n] * c for n, c in zip(names, coeffs))
+    assert condition.evaluate(weighted_pl).all()
+
+    # Consistency: both paths agree
     cols = df_pd.columns.tolist()
     assert_frame_equal(
         df_pd.sort_values(cols).reset_index(drop=True),
