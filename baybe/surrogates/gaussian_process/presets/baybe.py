@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import gc
 import math
+from collections.abc import Callable
 from itertools import chain
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, TypeVar
 
 import pandas as pd
 from attrs import define, field
@@ -32,21 +34,30 @@ from baybe.surrogates.gaussian_process.components.kernel import (
 from baybe.surrogates.gaussian_process.components.likelihood import (
     LikelihoodFactoryProtocol,
 )
-from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
+from baybe.surrogates.gaussian_process.components.mean import (
+    LazyConstantMeanFactory,
+    MeanFactoryProtocol,
+)
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
+    from gpytorch.means import Mean as GPyTorchMean
+
+_T = TypeVar("_T")
+
+
+##### Private custom-scaled factories #####
 
 
 @define
-class _BayBENumericalKernelFactory(_PureKernelFactory):
-    """The default numerical kernel factory for GP surrogates.
+class _CustomScaledNumericalKernelFactory(_PureKernelFactory):
+    """A numerical kernel factory with dimension-scaled Gamma lengthscale prior.
 
     Inspired by the dimension-scaled priors in :cite:p:`Hvarfner2024` but with slight
-    adjustements:
+    adjustments:
 
-    * Uses Matern instead of RBF kernel
+    * Uses Matern instead of RBF kernel.
     * Uses a Gamma prior instead of a LogNormal prior for faster convergence (less heavy
       tails). The parameters of the Gamma are set such that:
         - The concentration matches that of the conventional (i.e., Hvarfner
@@ -61,7 +72,6 @@ class _BayBENumericalKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-
         from gpytorch.constraints import GreaterThan
         from gpytorch.kernels import MaternKernel
         from gpytorch.priors import GammaPrior
@@ -97,6 +107,116 @@ class _BayBENumericalKernelFactory(_PureKernelFactory):
 
 
 @define
+class _CustomScaledLikelihoodFactory(LikelihoodFactoryProtocol):
+    """A likelihood factory with dimension-scaled Gamma noise prior.
+
+    Inspired by the likelihood proposed in :cite:p:`Hvarfner2024` but uses a Gamma prior
+    instead of a LogNormal prior for faster convergence (less heavy tails). The
+    parameters of the Gamma are set such that:
+
+    * The mode matches that of the LogNormal and thus also scales with sqrt(d).
+    * The curvature at the mode matches that of the LogNormal, resulting in similar
+      convergence behavior in the vicinity of the mode.
+    """
+
+    @override
+    def __call__(
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+    ) -> GPyTorchLikelihood:
+        from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
+        from gpytorch.constraints import GreaterThan
+        from gpytorch.likelihoods import GaussianLikelihood
+        from gpytorch.priors import GammaPrior
+
+        concentration = 2.0
+        rate = (concentration - 1) / math.exp(-4.0 - 1.0**2)
+        noise_prior = GammaPrior(concentration, rate)
+        return GaussianLikelihood(
+            noise_prior=noise_prior,
+            noise_constraint=GreaterThan(
+                MIN_INFERRED_NOISE_LEVEL,
+                transform=None,
+                initial_value=noise_prior.mode,
+            ),
+        )
+
+
+class _CustomScaledMeanFactory(LazyConstantMeanFactory):
+    """A mean factory for the custom-scaled preset."""
+
+
+##### Dispatch logic #####
+
+
+def _dispatch(
+    factory_with_substance: Callable[[SearchSpace, Objective, pd.DataFrame], _T],
+    factory_without_substance: Callable[[SearchSpace, Objective, pd.DataFrame], _T],
+    searchspace: SearchSpace,
+    objective: Objective,
+    measurements: pd.DataFrame,
+) -> _T:
+    """Select a GP component factory based on search space content.
+
+    Delegates to ``factory_with_substance`` when a
+    :class:`~baybe.parameters.substance.SubstanceParameter` is present in the
+    search space, and to ``factory_without_substance`` otherwise.
+
+    Args:
+        factory_with_substance: The factory to use when a
+            ``SubstanceParameter`` is present.
+        factory_without_substance: The factory to use otherwise.
+        searchspace: The search space.
+        objective: The objective.
+        measurements: The available measurements.
+
+    Returns:
+        The component produced by the selected factory.
+    """
+    # IMPROVE: Consider additional dispatch criteria such as dimensionality
+    # or CustomDiscreteParameter presence in the future.
+    from baybe.parameters.substance import SubstanceParameter
+
+    if any(isinstance(p, SubstanceParameter) for p in searchspace.discrete.parameters):
+        return factory_with_substance(searchspace, objective, measurements)
+    return factory_without_substance(searchspace, objective, measurements)
+
+
+##### Public BayBE component factories #####
+
+
+@define
+class _BayBENumericalKernelFactory(_PureKernelFactory):
+    """The default numerical kernel factory for GP surrogates."""
+
+    _uses_parameter_names: ClassVar[bool] = True
+    # See base class.
+
+    @override
+    def _make(
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+    ) -> Kernel | GPyTorchKernel:
+        from baybe.surrogates.gaussian_process.presets.chen import (
+            _ChenNumericalKernelFactory,
+        )
+
+        return _dispatch(
+            _ChenNumericalKernelFactory(parameter_selector=self.parameter_selector),
+            _CustomScaledNumericalKernelFactory(
+                parameter_selector=self.parameter_selector
+            ),
+            searchspace,
+            objective,
+            measurements,
+        )
+
+
+BayBEKernelFactory = _enable_transfer_learning(
+    _BayBENumericalKernelFactory, "BayBEKernelFactory"
+)
+"""The default kernel factory for GP surrogates."""
+
+
+@define
 class _BayBETaskKernelFactory(_PureKernelFactory):
     """The default task kernel factory for GP surrogates."""
 
@@ -124,49 +244,41 @@ class _BayBETaskKernelFactory(_PureKernelFactory):
 
 
 @define
+class BayBEMeanFactory(MeanFactoryProtocol):
+    """The default mean factory for GP surrogates."""
+
+    @override
+    def __call__(
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+    ) -> GPyTorchMean:
+        from baybe.surrogates.gaussian_process.presets.chen import ChenMeanFactory
+
+        return _dispatch(
+            ChenMeanFactory(),
+            _CustomScaledMeanFactory(),
+            searchspace,
+            objective,
+            measurements,
+        )
+
+
+@define
 class BayBELikelihoodFactory(LikelihoodFactoryProtocol):
-    """The default likelihood factory for GP surrogates.
-
-    Inspired by the likelihood proposed in :cite:p:`Hvarfner2024` but uses a Gamma prior
-    instead of a LogNormal prior for faster convergence (less heavy tails). The
-    parameters of the Gamma are set such that:
-
-    * The mode matches that of the LogNormal and thus also scales with sqrt(d).
-    * The curvature at the mode matches that of the LogNormal, resulting in similar
-      convergence behavior in the vicinity of the mode.
-    """
+    """The default likelihood factory for GP surrogates."""
 
     @override
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> GPyTorchLikelihood:
+        from baybe.surrogates.gaussian_process.presets.chen import ChenLikelihoodFactory
 
-        from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
-        from gpytorch.constraints import GreaterThan
-        from gpytorch.likelihoods import GaussianLikelihood
-        from gpytorch.priors import GammaPrior
-
-        concentration = 2.0
-        rate = (concentration - 1) / math.exp(-4.0 - 1.0**2)
-        noise_prior = GammaPrior(concentration, rate)
-        return GaussianLikelihood(
-            noise_prior=noise_prior,
-            noise_constraint=GreaterThan(
-                MIN_INFERRED_NOISE_LEVEL,
-                transform=None,
-                initial_value=noise_prior.mode,
-            ),
+        return _dispatch(
+            ChenLikelihoodFactory(),
+            _CustomScaledLikelihoodFactory(),
+            searchspace,
+            objective,
+            measurements,
         )
-
-
-BayBEKernelFactory = _enable_transfer_learning(
-    _BayBENumericalKernelFactory, "BayBEKernelFactory"
-)
-"""The default kernel factory for GP surrogates."""
-
-
-class BayBEMeanFactory(LazyConstantMeanFactory):
-    """The default mean factory for GP surrogates."""
 
 
 @define
@@ -183,6 +295,9 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
             else FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
         )
 
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
 
 # Preset defaults
 KERNEL_FACTORY = BayBEKernelFactory()
