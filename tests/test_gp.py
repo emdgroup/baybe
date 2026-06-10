@@ -243,14 +243,20 @@ def test_get_posterior_mean_correct_under_different_bounds():
     new_surrogate = GaussianProcessSurrogate(
         mean_or_factory=prior_surrogate.get_posterior_mean
     )
-    new_meas = pd.DataFrame({"x1": [0.0, 10.0], "y": [0.0, 20.0]})
+    # Train on data that lies exactly on the prior mean to avoid kernel effects
+    training_points = pd.DataFrame({"x1": [0.0, 10.0]})
+    with torch.no_grad():
+        training_targets = prior_surrogate.posterior(training_points).mean
+    new_meas = pd.DataFrame(
+        {
+            "x1": training_points["x1"],
+            "y": training_targets.numpy().ravel(),
+        }
+    )
     new_surrogate.fit(new_ss, prior_obj, new_meas)
 
-    # In the new space [0, 10], x1=2.5 normalizes to 0.25
-    mean_module = new_surrogate._model.mean_module
-    x_normalized = torch.tensor([[0.25]])
-    with torch.no_grad():
-        actual_mean = mean_module(x_normalized).item()
+    # Test end-to-end: the posterior should match the prior mean
+    actual_mean = new_surrogate.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
 
     assert abs(actual_mean - expected_mean) < 1e-4
 
@@ -272,13 +278,20 @@ def test_get_posterior_mean_same_bounds():
     new_surrogate = GaussianProcessSurrogate(
         mean_or_factory=prior_surrogate.get_posterior_mean
     )
-    new_surrogate.fit(ss, obj, meas)
-
-    # x1=2.5 normalizes to 0.5 in [0, 5]
-    mean_module = new_surrogate._model.mean_module
-    x_normalized = torch.tensor([[0.5]])
+    # Train on data that lies exactly on the prior mean
+    training_points = pd.DataFrame({"x1": [0.0, 5.0]})
     with torch.no_grad():
-        actual_mean = mean_module(x_normalized).item()
+        training_targets = prior_surrogate.posterior(training_points).mean
+    new_meas = pd.DataFrame(
+        {
+            "x1": training_points["x1"],
+            "y": training_targets.numpy().ravel(),
+        }
+    )
+    new_surrogate.fit(ss, obj, new_meas)
+
+    # Test end-to-end: the posterior should match the prior mean
+    actual_mean = new_surrogate.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
 
     assert abs(actual_mean - expected_mean) < 1e-4
 
