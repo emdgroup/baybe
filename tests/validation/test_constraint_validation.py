@@ -35,7 +35,7 @@ def test_invalid_cardinalities(cardinalities, error, match):
         param((1.0, 0.0, 1.0), "'coefficients' must be non-zero", id="zero-coeff"),
     ],
 )
-def test_discrete_sum_constraint_invalid_coefficients(coefficients, match):
+def test_invalid_coefficients(coefficients, match):
     """Invalid coefficients raise a ValueError."""
     with pytest.raises(ValueError, match=match):
         DiscreteSumConstraint(
@@ -43,13 +43,9 @@ def test_discrete_sum_constraint_invalid_coefficients(coefficients, match):
             condition=ThresholdCondition(threshold=1.0, operator="<="),
             coefficients=coefficients,
         )
-
-
-def test_continuous_linear_constraint_zero_coefficient():
-    """A zero entry in coefficients raises a ValueError."""
-    with pytest.raises(ValueError, match="'coefficients' must be non-zero"):
+    with pytest.raises(ValueError, match=match):
         ContinuousLinearConstraint(
-            parameters=["x", "y"],
-            operator=">=",
-            coefficients=(1.0, 0.0),
+            parameters=["A", "B", "C"],
+            operator="<=",
+            coefficients=coefficients,
         )
