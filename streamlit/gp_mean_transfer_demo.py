@@ -26,13 +26,13 @@ st.sidebar.header("Configuration")
 
 st.sidebar.subheader("Prior GP (narrow space)")
 prior_n_points = st.sidebar.slider("Number of training points", 3, 20, 5, key="prior")
-prior_x_min = st.sidebar.number_input("X min", -5.0, 0.0, 0.0, key="prior_xmin")
-prior_x_max = st.sidebar.number_input("X max", 1.0, 10.0, 5.0, key="prior_xmax")
+prior_x_min = st.sidebar.number_input("X min", -50.0, 0.0, 0.0, key="prior_xmin")
+prior_x_max = st.sidebar.number_input("X max", 1.0, 50.0, 5.0, key="prior_xmax")
 
 st.sidebar.subheader("New GP (wider space)")
 new_n_points = st.sidebar.slider("Number of training points", 2, 20, 2, key="new")
-new_x_min = st.sidebar.number_input("X min", -10.0, 0.0, 0.0, key="new_xmin")
-new_x_max = st.sidebar.number_input("X max", 5.0, 20.0, 10.0, key="new_xmax")
+new_x_min = st.sidebar.number_input("X min", -50.0, 0.0, 0.0, key="new_xmin")
+new_x_max = st.sidebar.number_input("X max", 5.0, 50.0, 10.0, key="new_xmax")
 new_y_scale = st.sidebar.slider(
     "Y scale factor",
     0.1,
@@ -47,9 +47,28 @@ use_prior_mean_data = st.sidebar.toggle(
     help="When enabled, new GP training data lies exactly on the prior mean",
 )
 
+st.sidebar.subheader("New GP lengthscale")
+constrain_lengthscale = st.sidebar.toggle(
+    "Constrain lengthscale",
+    value=False,
+    help="Apply hard bounds on the new GP's kernel lengthscale",
+)
+ls_lower = st.sidebar.number_input(
+    "Lengthscale lower bound", 0.01, 10.0, 0.1, step=0.01, key="ls_lower",
+    disabled=not constrain_lengthscale,
+)
+ls_upper = st.sidebar.number_input(
+    "Lengthscale upper bound", 0.01, 100.0, 2.0, step=0.01, key="ls_upper",
+    disabled=not constrain_lengthscale,
+)
+
 st.sidebar.subheader("Data generation")
 noise_level = st.sidebar.slider("Noise level", 0.0, 2.0, 0.3)
 seed = st.sidebar.number_input("Random seed", 0, 1000, 42)
+
+st.sidebar.subheader("Plot window")
+plot_x_min = st.sidebar.number_input("X min", -50.0, 0.0, -10.0, key="plot_xmin")
+plot_x_max = st.sidebar.number_input("X max", 1.0, 50.0, 15.0, key="plot_xmax")
 
 st.sidebar.subheader("Display options")
 show_std = st.sidebar.toggle(
@@ -85,7 +104,20 @@ def fit_prior_gp(prior_data, x_min, x_max):
     return gp, ss
 
 
-def fit_new_gp(new_data, x_min, x_max, prior_gp):
+def _make_constrained_kernel(ls_lower, ls_upper):
+    """Create a GPyTorch kernel with lengthscale constraints."""
+    from gpytorch.constraints import Interval
+    from gpytorch.kernels import MaternKernel, ScaleKernel
+
+    return ScaleKernel(
+        MaternKernel(
+            nu=2.5,
+            lengthscale_constraint=Interval(ls_lower, ls_upper),
+        )
+    )
+
+
+def fit_new_gp(new_data, x_min, x_max, prior_gp, ls_bounds=None):
     """Fit the new GP with transferred mean."""
     # Create discrete values for parameter
     x_values = np.linspace(x_min, x_max, 100).tolist()
@@ -93,12 +125,18 @@ def fit_new_gp(new_data, x_min, x_max, prior_gp):
     ss = SearchSpace.from_product(params)
     obj = NumericalTarget(name="y").to_objective()
 
+    kernel_kwargs = {}
+    if ls_bounds is not None:
+        kernel_kwargs["kernel_or_factory"] = _make_constrained_kernel(*ls_bounds)
+
     # Option 1: GP with transferred mean
-    gp_with_mean = GaussianProcessSurrogate(mean_or_factory=prior_gp.get_posterior_mean)
+    gp_with_mean = GaussianProcessSurrogate(
+        mean_or_factory=prior_gp.get_posterior_mean, **kernel_kwargs
+    )
     gp_with_mean.fit(ss, obj, new_data)
 
     # Option 2: Standard GP (for comparison)
-    gp_standard = GaussianProcessSurrogate()
+    gp_standard = GaussianProcessSurrogate(**kernel_kwargs)
     gp_standard.fit(ss, obj, new_data)
 
     return gp_with_mean, gp_standard, ss
@@ -126,28 +164,26 @@ else:
     )
 
 # Fit new GPs
+ls_bounds = (ls_lower, ls_upper) if constrain_lengthscale else None
 new_gp_with_mean, new_gp_standard, new_ss = fit_new_gp(
-    new_data, new_x_min, new_x_max, prior_gp
+    new_data, new_x_min, new_x_max, prior_gp, ls_bounds=ls_bounds
 )
 
-# Generate test points for plotting
-x_test_prior = np.linspace(prior_x_min, prior_x_max, 100)
-x_test_new = np.linspace(new_x_min, new_x_max, 200)
+# Generate test points for plotting (using plot window range)
+x_test = np.linspace(plot_x_min, plot_x_max, 300)
+test_df = pd.DataFrame({"x": x_test})
 
-# Get predictions
-test_df_prior = pd.DataFrame({"x": x_test_prior})
-test_df_new = pd.DataFrame({"x": x_test_new})
-
+# Get predictions for all GPs over the same plot range
 with torch.no_grad():
-    prior_posterior = prior_gp.posterior(test_df_prior)
+    prior_posterior = prior_gp.posterior(test_df)
     prior_mean = prior_posterior.mean.numpy().ravel()
     prior_std = prior_posterior.variance.sqrt().numpy().ravel()
 
-    new_with_mean_posterior = new_gp_with_mean.posterior(test_df_new)
+    new_with_mean_posterior = new_gp_with_mean.posterior(test_df)
     new_with_mean_mean = new_with_mean_posterior.mean.numpy().ravel()
     new_with_mean_std = new_with_mean_posterior.variance.sqrt().numpy().ravel()
 
-    new_standard_posterior = new_gp_standard.posterior(test_df_new)
+    new_standard_posterior = new_gp_standard.posterior(test_df)
     new_standard_mean = new_standard_posterior.mean.numpy().ravel()
     new_standard_std = new_standard_posterior.variance.sqrt().numpy().ravel()
 
@@ -160,7 +196,7 @@ fig = go.Figure()
 if show_std:
     fig.add_trace(
         go.Scatter(
-            x=np.concatenate([x_test_prior, x_test_prior[::-1]]),
+            x=np.concatenate([x_test, x_test[::-1]]),
             y=np.concatenate(
                 [
                     prior_mean + 2 * prior_std,
@@ -179,7 +215,7 @@ if show_std:
 # Prior GP - mean prediction
 fig.add_trace(
     go.Scatter(
-        x=x_test_prior,
+        x=x_test,
         y=prior_mean,
         mode="lines",
         name="Prior GP Mean",
@@ -200,28 +236,11 @@ fig.add_trace(
     )
 )
 
-# Prior GP mean extended to new space (for reference)
-prior_mean_extended_df = pd.DataFrame({"x": x_test_new})
-with torch.no_grad():
-    prior_mean_extended_posterior = prior_gp.posterior(prior_mean_extended_df)
-    prior_mean_extended = prior_mean_extended_posterior.mean.numpy().ravel()
-
-fig.add_trace(
-    go.Scatter(
-        x=x_test_new,
-        y=prior_mean_extended,
-        mode="lines",
-        name="Prior Mean (Extended)",
-        line=dict(color="gray", width=2, dash="dash"),
-        legendgroup="transfer",
-    )
-)
-
 # New GP with transferred mean - confidence interval (conditional)
 if show_std:
     fig.add_trace(
         go.Scatter(
-            x=np.concatenate([x_test_new, x_test_new[::-1]]),
+            x=np.concatenate([x_test, x_test[::-1]]),
             y=np.concatenate(
                 [
                     new_with_mean_mean + 2 * new_with_mean_std,
@@ -240,7 +259,7 @@ if show_std:
 # New GP with transferred mean
 fig.add_trace(
     go.Scatter(
-        x=x_test_new,
+        x=x_test,
         y=new_with_mean_mean,
         mode="lines",
         name="New GP w/ Transferred Mean",
@@ -252,7 +271,7 @@ fig.add_trace(
 # Standard GP (for comparison)
 fig.add_trace(
     go.Scatter(
-        x=x_test_new,
+        x=x_test,
         y=new_standard_mean,
         mode="lines",
         name="Standard GP (no transfer)",
@@ -280,7 +299,7 @@ fig.update_layout(
     legend=dict(x=0.02, y=0.98, xanchor="left", yanchor="top"),
     hovermode="x unified",
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 
 # Explanation
 st.markdown("---")
