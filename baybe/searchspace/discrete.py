@@ -295,6 +295,7 @@ class SubspaceDiscrete(SerialMixin):
             max_sum: The maximum (weighted) sum of the parameter values defining the
                 simplex size.
             simplex_parameters: The parameters to be used for the simplex construction.
+                Their values are required to be non-negative.
             simplex_coefficients: Optional coefficients for the weighted sum, one per
                 entry in ``simplex_parameters``. Defaults to all-ones, i.e. an
                 unweighted sum.
