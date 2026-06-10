@@ -20,6 +20,7 @@ from baybe.exceptions import (
 )
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.botorch.optimizers.base import OptimizerProtocol
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
@@ -55,6 +56,12 @@ class BayesianRecommender(PureRecommender, ABC):
         default=None, converter=optional(convert_acqf)
     )
     """The acquisition function. When omitted, a default is used."""
+
+    optimizer: OptimizerProtocol | None = field(
+        alias="optimizer",
+        default=None,
+    )
+    """The acquisition function optimizer."""
 
     # TODO: The objective is currently only required for validating the recommendation
     #   context. Once multi-target support is complete, we might want to refactor

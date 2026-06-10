@@ -30,6 +30,7 @@ from baybe.recommenders.pure.bayesian.botorch.hybrid import (
     recommend_hybrid_with_subsets,
     recommend_hybrid_without_subsets,
 )
+from baybe.recommenders.pure.bayesian.botorch.optimizers.basic import GradientOptimizer
 from baybe.searchspace import (
     SearchSpace,
     SearchSpaceType,
@@ -211,6 +212,13 @@ class BotorchRecommender(BayesianRecommender):
             raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
+            )
+
+        if self.optimizer is None:
+            self.optimizer = GradientOptimizer(
+                sequential_continuous=self.sequential_continuous,
+                n_restarts=self.n_restarts,
+                n_raw_samples=self.n_raw_samples,
             )
 
         points, _ = recommend_continuous_torch(self, subspace_continuous, batch_size)
