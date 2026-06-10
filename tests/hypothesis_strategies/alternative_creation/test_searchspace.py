@@ -1,5 +1,7 @@
 """Test alternative ways of creation not considered in the strategies."""
 
+import itertools
+
 import hypothesis.strategies as st
 import numpy as np
 import pandas as pd
@@ -8,6 +10,8 @@ from hypothesis import given
 from pandas.testing import assert_frame_equal
 from pytest import param
 
+from baybe.constraints.conditions import ThresholdCondition
+from baybe.constraints.discrete import DiscreteSumConstraint
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -196,3 +200,98 @@ def test_discrete_space_creation_from_simplex_restricted(boundary_only):
     assert n_nonzero.max() == 4
     assert len(subspace.parameters) == len(subspace.exp_rep.columns)
     assert all(p.name in subspace.exp_rep.columns for p in subspace.parameters)
+
+
+_simplex_params = [
+    NumericalDiscreteParameter(name="A", values=[0.0, 0.5, 1.0]),
+    NumericalDiscreteParameter(name="B", values=[0.0, 0.5, 1.0]),
+    NumericalDiscreteParameter(name="C", values=[0.0, 0.5, 1.0]),
+]
+
+
+def _brute_force_weighted_simplex(
+    params, max_sum, coefficients, *, boundary_only=False, tol=1e-9
+):
+    """Return all combinations satisfying the weighted simplex constraint."""
+    df = pd.DataFrame(
+        list(itertools.product(*[p.values for p in params])),
+        columns=[p.name for p in params],
+    )
+    weighted = sum(df[p.name] * c for p, c in zip(params, coefficients))
+    mask = weighted <= max_sum + tol
+    if boundary_only:
+        mask &= weighted >= max_sum - tol
+    return df[mask].reset_index(drop=True)
+
+
+@pytest.mark.parametrize(
+    ("coefficients", "max_sum", "boundary_only"),
+    [
+        param(None, 1.0, False, id="default"),
+        param([1.0, 1.0, 1.0], 1.0, False, id="explicit-ones"),
+        param([2.0, 1.0, 0.5], 1.5, False, id="positive"),
+        param([2.0, 1.0, 0.5], 1.5, True, id="positive-boundary"),
+        param([1.0, -0.5, 2.0], 1.0, False, id="mixed-sign"),
+    ],
+)
+def test_discrete_space_creation_from_simplex_coefficients(
+    coefficients, max_sum, boundary_only
+):
+    """Simplex subspace with coefficients matches brute-force and from_product."""
+    coeffs = coefficients or [1.0, 1.0, 1.0]
+    cols = [p.name for p in _simplex_params]
+
+    # Ground truth via brute force
+    expected = _brute_force_weighted_simplex(
+        _simplex_params, max_sum, coeffs, boundary_only=boundary_only
+    )
+    expected = expected.sort_values(cols).reset_index(drop=True)
+
+    # from_simplex
+    result_simplex = (
+        SubspaceDiscrete.from_simplex(
+            max_sum,
+            _simplex_params,
+            simplex_coefficients=coefficients,
+            boundary_only=boundary_only,
+        )
+        .exp_rep.sort_values(cols)
+        .reset_index(drop=True)
+    )
+    assert_frame_equal(result_simplex, expected, check_dtype=False)
+
+    # from_product with equivalent constraint
+    operator = "=" if boundary_only else "<="
+    constraint = DiscreteSumConstraint(
+        parameters=cols,
+        condition=ThresholdCondition(threshold=max_sum, operator=operator),
+        coefficients=tuple(coeffs),
+    )
+    result_product = (
+        SubspaceDiscrete.from_product(_simplex_params, constraints=[constraint])
+        .exp_rep.sort_values(cols)
+        .reset_index(drop=True)
+    )
+    assert_frame_equal(result_product, expected, check_dtype=False)
+
+
+@pytest.mark.parametrize(
+    ("simplex_coefficients", "match"),
+    [
+        param(
+            [1.0], "'simplex_coefficients' must have one entry", id="length-mismatch"
+        ),
+        param([1.0, 0.0], "'simplex_coefficients' must be non-zero", id="zero-coeff"),
+    ],
+)
+def test_from_simplex_invalid_coefficients(simplex_coefficients, match):
+    """Invalid simplex_coefficients raise a ValueError."""
+    with pytest.raises(ValueError, match=match):
+        SubspaceDiscrete.from_simplex(
+            1.0,
+            [
+                NumericalDiscreteParameter(name="x", values=[0.0, 0.5, 1.0]),
+                NumericalDiscreteParameter(name="y", values=[0.0, 0.5, 1.0]),
+            ],
+            simplex_coefficients=simplex_coefficients,
+        )
