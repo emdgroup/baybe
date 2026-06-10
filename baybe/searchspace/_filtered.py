@@ -34,9 +34,12 @@ class FilteredSubspaceDiscrete(SubspaceDiscrete):
     ) -> Self:
         """Filter an existing subspace."""
         kwargs = asdict(subspace, filter=lambda attr, _: attr.init, recurse=False)
-        # Remove deprecated fields (to be dropped with the deprecation)
+
+        # >>>>> Deprecation
         kwargs.pop("_empty_encoding", None)
         kwargs.pop("_comp_rep", None)
+        # <<<<< Deprecation
+
         return cls(**kwargs, mask_keep=mask_keep)
 
     @override
