@@ -125,13 +125,13 @@ class SubspaceDiscrete(SerialMixin):
     "Ignore! For backwards compatibility only."
 
     constraints: tuple[DiscreteConstraint, ...] = field(
+        default=(),
         converter=lambda x: to_tuple(
             sorted(
                 x,
                 key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
             )
         ),
-        factory=tuple,
     )
     """Optional constraints filtering the subspace."""
 
@@ -169,8 +169,18 @@ class SubspaceDiscrete(SerialMixin):
         """Validate the experimental representation.
 
         Raises:
+            ValueError: If the provided dataframe columns do not match the parameter
+                names of the subspace.
             ValueError: If the index of the provided dataframe contains duplicates.
         """
+        if set(exp_rep.columns) != {p.name for p in self.parameters}:
+            raise ValueError(
+                "The columns of the experimental representation must match the "
+                "parameter names of the subspace."
+            )
+        # TODO: We should ideally also also validate that there are no duplicate rows,
+        #    but in the current eager implementation this is a costly operation.
+        #    To be revisited once the lazy implementation is in place.
         if exp_rep.index.has_duplicates:
             raise ValueError(
                 "The index of this search space contains duplicates. "

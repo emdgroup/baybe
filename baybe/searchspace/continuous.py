@@ -14,6 +14,7 @@ import cattrs.gen
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field
+from attrs.validators import deep_iterable, instance_of
 from typing_extensions import override
 
 from baybe.constraints import (
@@ -56,12 +57,19 @@ class SubspaceContinuous(SerialMixin):
 
     parameters: tuple[NumericalContinuousParameter, ...] = field(
         converter=sort_parameters,
-        validator=lambda _, __, x: validate_parameters(x, allow_empty=True),
+        validator=[
+            deep_iterable(member_validator=instance_of(ContinuousParameter)),
+            lambda _, __, x: validate_parameters(x, allow_empty=True),
+        ],
     )
     """The parameters spanning the subspace."""
 
     constraints: tuple[ContinuousConstraint, ...] = field(
-        converter=to_tuple, factory=tuple
+        default=(),
+        converter=to_tuple,
+        validator=[
+            deep_iterable(member_validator=instance_of(ContinuousConstraint)),
+        ],
     )
     """Optional constraints filtering the subspace."""
 
@@ -126,6 +134,11 @@ class SubspaceContinuous(SerialMixin):
         ]
 
         return to_string(self.__class__.__name__, *fields)
+
+    @constraints.validator
+    def _validate_constraints(self, _, __) -> None:
+        """Validate constraints."""
+        validate_constraints(self.constraints, self.parameters)
 
     @property
     def constraints_lin_eq(self) -> tuple[ContinuousLinearConstraint, ...]:
