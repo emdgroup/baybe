@@ -37,12 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteBatchConstraint` for ensuring all recommendations in a batch share
   the same value for a specified discrete parameter
 
-### Changed
-- `SubspaceContinuous` now offers a simpler interface for passing constraints,
-  no longer requiring users to manually group constraints according to their type
-- Parameter and constraint validation has been streamlined, using `validate_parameters`
-  and `validate_constraints` as the only remaining public entry points
-
 ### Breaking Changes
 - `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
   from `baybe.searchspace.discrete` to `baybe.searchspace.utils`
@@ -82,6 +76,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   only for parameters involved in Polars-capable constraints, merging the rest
   incrementally via pandas
 - Minimum required pandas version increased to `2.1.0`
+- `SubspaceContinuous` now offers a simpler interface for passing constraints,
+  no longer requiring users to manually group constraints according to their type
+- Parameter and constraint validation has been streamlined, using `validate_parameters`
+  and `validate_constraints` as the only remaining public entry points
 
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
