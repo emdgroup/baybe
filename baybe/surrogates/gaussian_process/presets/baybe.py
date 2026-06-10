@@ -115,8 +115,9 @@ class _CustomScaledLikelihoodFactory(LikelihoodFactoryProtocol):
     parameters of the Gamma are set such that:
 
     * The mode matches that of the LogNormal and thus also scales with sqrt(d).
-    * The curvature at the mode matches that of the LogNormal, resulting in similar
-      convergence behavior in the vicinity of the mode.
+    * The curvature at the mode is slightly stronger than that of the LogNormal,
+      resulting in similar but more attracted convergence behavior in the vicinity of
+      the mode.
     """
 
     @override
@@ -128,7 +129,7 @@ class _CustomScaledLikelihoodFactory(LikelihoodFactoryProtocol):
         from gpytorch.likelihoods import GaussianLikelihood
         from gpytorch.priors import GammaPrior
 
-        concentration = 2.0
+        concentration = 3.0  # using 2.0 would match the Hvarfner LogNormal curvature
         rate = (concentration - 1) / math.exp(-4.0 - 1.0**2)
         noise_prior = GammaPrior(concentration, rate)
         return GaussianLikelihood(
