@@ -273,6 +273,8 @@ class GaussianProcessSurrogate(Surrogate):
         import gpytorch
         from botorch.models.transforms.input import Normalize
 
+        from baybe.utils.dataframe import to_tensor
+
         if self._model is None:
             raise ModelNotTrainedError(
                 f"'{self.__class__.__name__}' must be fitted before its "
@@ -281,9 +283,7 @@ class GaussianProcessSurrogate(Surrogate):
 
         context = _ModelContext(searchspace, objective, measurements)
 
-        # The new GP applies its input normalization before calling this mean module,
-        # so x arrives in the new GP's scaled coordinate system. Undo that scaling
-        # before calling the pretrained GP — it will apply its own normalization.
+        # Undo the new GP's input normalization before querying the prior GP
         input_transform = Normalize(
             len(searchspace.comp_rep_columns),
             bounds=context.parameter_bounds,
@@ -291,10 +291,30 @@ class GaussianProcessSurrogate(Surrogate):
         )
         input_transform.eval()
 
-        class _PosteriorMean(gpytorch.means.Mean):
-            """GPyTorch mean using a trained GP's posterior as the mean function."""
+        # Match the new GP's outcome standardization
+        from botorch.models.transforms.outcome import Standardize
 
-            def __init__(self, gp: GPyTorchModel, input_transform: Normalize) -> None:
+        pre_transformed = objective._pre_transform(measurements, allow_extra=True)
+        train_y_tensor = to_tensor(pre_transformed)
+        if train_y_tensor.ndim == 1:
+            train_y_tensor = train_y_tensor.unsqueeze(-1)
+        outcome_transform = Standardize(m=train_y_tensor.shape[-1])
+        outcome_transform(train_y_tensor)
+        outcome_transform.eval()
+
+        class _PosteriorMean(gpytorch.means.Mean):
+            """GPyTorch mean wrapping a trained GP's posterior.
+
+            Overrides ``train`` to keep all children in eval mode, preventing
+            ``fit_gpytorch_mll`` from corrupting learned transform parameters.
+            """
+
+            def __init__(
+                self,
+                gp: GPyTorchModel,
+                input_transform: Normalize,
+                outcome_transform: Standardize,
+            ) -> None:
                 super().__init__()
                 self.gp = deepcopy(gp)
                 for param in self.gp.parameters():
@@ -302,14 +322,24 @@ class GaussianProcessSurrogate(Surrogate):
                 self.gp.eval()
                 self.gp.likelihood.eval()
                 self.input_transform = input_transform
+                self.outcome_transform = outcome_transform
 
+            @override
+            def train(self, mode: bool = True) -> _PosteriorMean:
+                """Set training mode without propagating to children."""
+                self.training = mode
+                return self
+
+            @override
             def forward(self, x: Tensor) -> Tensor:
                 """Compute the mean using the wrapped GP's posterior."""
                 with gpytorch.settings.fast_pred_var():
                     x_raw = self.input_transform.untransform(x)
-                    return self.gp.posterior(x_raw).mean.squeeze(-1)
+                    posterior_mean = self.gp.posterior(x_raw).mean
+                    standardized, _ = self.outcome_transform(posterior_mean)
+                    return standardized.squeeze(-1)
 
-        return _PosteriorMean(self._model, input_transform)
+        return _PosteriorMean(self._model, input_transform, outcome_transform)
 
     @override
     def to_botorch(self) -> GPyTorchModel:
