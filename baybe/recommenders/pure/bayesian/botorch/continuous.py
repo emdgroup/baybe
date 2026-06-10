@@ -208,4 +208,5 @@ def recommend_continuous_without_cardinality_constraints(
         or None,
         sequential=recommender.sequential_continuous,
     )
+    assert acqf_values is not None  # for mypy; guaranteed by optimize_acqf defaults
     return points, acqf_values
