@@ -237,42 +237,42 @@ def _brute_force_weighted_simplex(
 def test_discrete_space_creation_from_simplex_coefficients(
     coefficients, max_sum, boundary_only
 ):
-    """Simplex subspace with coefficients matches brute-force filtering."""
-    subspace = SubspaceDiscrete.from_simplex(
-        max_sum,
-        _simplex_params,
-        simplex_coefficients=coefficients,
-        boundary_only=boundary_only,
-    )
+    """Simplex subspace with coefficients matches brute-force and from_product."""
     coeffs = coefficients or [1.0, 1.0, 1.0]
+    cols = [p.name for p in _simplex_params]
+
+    # Ground truth via brute force
     expected = _brute_force_weighted_simplex(
         _simplex_params, max_sum, coeffs, boundary_only=boundary_only
     )
-    cols = [p.name for p in _simplex_params]
-    result = subspace.exp_rep.sort_values(cols).reset_index(drop=True)
     expected = expected.sort_values(cols).reset_index(drop=True)
-    assert_frame_equal(result, expected, check_dtype=False)
 
-
-def test_discrete_space_creation_from_simplex_coefficients_vs_from_product():
-    """from_simplex with coefficients matches from_product with same constraint."""
-    coefficients = [2.0, 1.0, 0.5]
-    max_sum = 1.5
-    s_simplex = SubspaceDiscrete.from_simplex(
-        max_sum, _simplex_params, simplex_coefficients=coefficients
+    # from_simplex
+    result_simplex = (
+        SubspaceDiscrete.from_simplex(
+            max_sum,
+            _simplex_params,
+            simplex_coefficients=coefficients,
+            boundary_only=boundary_only,
+        )
+        .exp_rep.sort_values(cols)
+        .reset_index(drop=True)
     )
+    assert_frame_equal(result_simplex, expected, check_dtype=False)
+
+    # from_product with equivalent constraint
+    operator = "=" if boundary_only else "<="
     constraint = DiscreteSumConstraint(
-        parameters=["A", "B", "C"],
-        condition=ThresholdCondition(threshold=max_sum, operator="<="),
-        coefficients=tuple(coefficients),
+        parameters=cols,
+        condition=ThresholdCondition(threshold=max_sum, operator=operator),
+        coefficients=tuple(coeffs),
     )
-    s_product = SubspaceDiscrete.from_product(_simplex_params, constraints=[constraint])
-    cols = ["A", "B", "C"]
-    assert_frame_equal(
-        s_simplex.exp_rep.sort_values(cols).reset_index(drop=True),
-        s_product.exp_rep.sort_values(cols).reset_index(drop=True),
-        check_dtype=False,
+    result_product = (
+        SubspaceDiscrete.from_product(_simplex_params, constraints=[constraint])
+        .exp_rep.sort_values(cols)
+        .reset_index(drop=True)
     )
+    assert_frame_equal(result_product, expected, check_dtype=False)
 
 
 @pytest.mark.parametrize(
