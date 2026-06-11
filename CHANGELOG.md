@@ -61,6 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   equality check
 
 ### Changed
+- The `BAYBE` GP preset now dispatches between the `CHEN` preset (when a
+  `SubstanceParameter` is present) and custom dimension-scaled Gamma priors (otherwise)
 - "User Guide" section has been split into "Components" and "Concepts" 
 - Default transfer learning kernel changed from `IndexKernel` to `PositiveIndexKernel`,
   enforcing positive task correlations

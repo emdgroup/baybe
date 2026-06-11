@@ -92,9 +92,9 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 ### Defining the Tasks
 
 # To demonstrate the transfer learning mechanism, we consider the problem of optimizing
-# the Hartmann function using training data from its negated version, including some
-# noise. The used model is of course not aware of this relationship but needs to infer
-# it from the data gathered during the optimization process.
+# the Hartmann function using training data from a noisy version. The used model
+# is of course not aware of this relationship but needs to infer it from the data
+# gathered during the optimization process.
 
 wrapper = arrays_to_dataframes(
     [p.name for p in discrete_params], [target.name], use_torch=True
@@ -102,7 +102,7 @@ wrapper = arrays_to_dataframes(
 
 test_functions = {
     "Test_Function": wrapper(Hartmann(dim=DIMENSION)),
-    "Training_Function": wrapper(Hartmann(dim=DIMENSION, negate=True, noise_std=0.15)),
+    "Training_Function": wrapper(Hartmann(dim=DIMENSION, noise_std=0.15)),
 }
 
 # (Lookup)=
@@ -133,7 +133,7 @@ lookup_test_task = lookups["Test_Function"]
 # sampling of the provided data, we perform several Monte Carlo runs.
 
 results: list[pd.DataFrame] = []
-for p in (0.01, 0.02, 0.05, 0.08, 0.2):
+for p in (0.02, 0.05, 0.1, 0.2):
     campaign = Campaign(searchspace=searchspace, objective=objective)
     initial_data = [lookup_training_task.sample(frac=p) for _ in range(N_MC_ITERATIONS)]
     result_fraction = simulate_scenarios(

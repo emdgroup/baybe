@@ -38,9 +38,15 @@ if TYPE_CHECKING:
 _DIM_LIMITS = (8, 75)
 
 
+@_enable_transfer_learning
 @define
-class _SmoothedEDBONumericalKernelFactory(_PureKernelFactory):
-    """A factory providing the core numerical kernel for the smoothed EDBO preset."""
+class SmoothedEDBOKernelFactory(_PureKernelFactory):
+    """A factory providing smoothed versions of EDBO kernels (adapted from :cite:p:`Shields2021`).
+
+    Takes the low and high dimensional limits of
+    :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`
+    and interpolates the prior moments linearly in between.
+    """  # noqa: E501
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
@@ -75,17 +81,6 @@ class _SmoothedEDBONumericalKernelFactory(_PureKernelFactory):
             outputscale_prior=outputscale_prior,
             outputscale_initial_value=outputscale_initial_value,
         )
-
-
-SmoothedEDBOKernelFactory = _enable_transfer_learning(
-    _SmoothedEDBONumericalKernelFactory, "SmoothedEDBOKernelFactory"
-)
-"""A factory providing smoothed versions of EDBO kernels (adapted from :cite:p:`Shields2021`).
-
-Takes the low and high dimensional limits of
-:class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`
-and interpolates the prior moments linearly in between.
-"""  # noqa: E501
 
 
 class SmoothedEDBOMeanFactory(LazyConstantMeanFactory):
