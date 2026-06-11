@@ -865,6 +865,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.html">baybe.surrogates.gaussian_process.presets</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets" class="toctree-checkbox" id="toctree-checkbox-107" name="toctree-checkbox-107" role="switch" type="checkbox"/><label for="toctree-checkbox-107"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.html">baybe.surrogates.gaussian_process.presets.baybe</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.baybe" class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEFitCriterionFactory.html">BayBEFitCriterionFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBELikelihoodFactory.html">BayBELikelihoodFactory</a></li>
@@ -874,6 +875,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.botorch.html">baybe.surrogates.gaussian_process.presets.botorch</a></li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.html">baybe.surrogates.gaussian_process.presets.chen</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.chen" class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenLikelihoodFactory.html">ChenLikelihoodFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenMeanFactory.html">ChenMeanFactory</a></li>
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.core.html">baybe.surrogates.gaussian_process.presets.core</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.core" class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -887,7 +891,6 @@
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.html">baybe.surrogates.gaussian_process.presets.edbo_smoothed</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.edbo_smoothed" class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOLikelihoodFactory.html">SmoothedEDBOLikelihoodFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOMeanFactory.html">SmoothedEDBOMeanFactory</a></li>
@@ -1208,7 +1211,7 @@ The underlying use case is taken from the example shown
 <span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Campaign</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Campaign</span><span class="p">,</span> <span class="n">active_settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProbabilityOfImprovement</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnusedObjectWarning</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTargetObjective</span>
@@ -1353,6 +1356,7 @@ threshold.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">BotorchRecommender</span><span class="o">.</span><span class="n">recommend</span> <span class="o">=</span> <span class="n">register_hooks</span><span class="p">(</span>
     <span class="n">BotorchRecommender</span><span class="o">.</span><span class="n">recommend</span><span class="p">,</span> <span class="n">post_hooks</span><span class="o">=</span><span class="p">[</span><span class="n">stop_on_PI</span><span class="p">]</span>
 <span class="p">)</span>
+<span class="n">active_settings</span><span class="o">.</span><span class="n">parallelize_simulation_runs</span> <span class="o">=</span> <span class="kc">False</span>
 </pre></div>
 </div>
 <div class="note admonition">
@@ -1361,7 +1365,9 @@ threshold.</p>
 class. While it is possible to attach the hook only to a specific instance via
 <code class="docutils literal notranslate"><span class="pre">MethodType</span></code> (see <a class="reference internal" href="basics.html"><span class="std std-doc">here</span></a>), this approach does not work well with the
 simulation utilities because they internally create deep copies of the simulated
-campaign, effectively bypassing the patch.</p>
+campaign, effectively bypassing the patch. For the same reason, we deactivate
+parallelization of the simulation runs, which would spawn separate processes where the
+patch has no effect.</p>
 </div>
 </section>
 <section id="simulating-the-interrupted-campaigns">

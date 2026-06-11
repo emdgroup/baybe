@@ -865,6 +865,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.html">baybe.surrogates.gaussian_process.presets</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets" class="toctree-checkbox" id="toctree-checkbox-107" name="toctree-checkbox-107" role="switch" type="checkbox"/><label for="toctree-checkbox-107"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.html">baybe.surrogates.gaussian_process.presets.baybe</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.baybe" class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEFitCriterionFactory.html">BayBEFitCriterionFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBELikelihoodFactory.html">BayBELikelihoodFactory</a></li>
@@ -874,6 +875,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.botorch.html">baybe.surrogates.gaussian_process.presets.botorch</a></li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.html">baybe.surrogates.gaussian_process.presets.chen</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.chen" class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenLikelihoodFactory.html">ChenLikelihoodFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenMeanFactory.html">ChenMeanFactory</a></li>
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.core.html">baybe.surrogates.gaussian_process.presets.core</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.core" class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -887,7 +891,6 @@
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.html">baybe.surrogates.gaussian_process.presets.edbo_smoothed</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.edbo_smoothed" class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOLikelihoodFactory.html">SmoothedEDBOLikelihoodFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOMeanFactory.html">SmoothedEDBOMeanFactory</a></li>
@@ -1221,16 +1224,16 @@ Let us draw some samples from it and verify that they are within the bounds:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>        x_1       x_2       x_3       x_4
-0 -0.938504  0.178816 -0.451665 -0.917162
-1 -0.989201  0.067489 -0.378487  0.994310
-2 -0.760900 -0.537221  0.200144  0.801325
-3  0.421203  0.096348  0.844348 -0.955831
-4  0.299689 -0.893546  0.941323 -0.183545
-5  0.932500 -0.160458 -0.643213  0.874812
-6 -0.901225  0.176853  0.786936 -0.455046
-7  0.302393  0.698793 -0.487779 -0.228574
-8  0.097447  0.882118  0.720927  0.779050
-9 -0.891197  0.803159  0.262853 -0.127775
+0  0.214256  0.809899 -0.478732 -0.552130
+1 -0.996658  0.249742 -0.872320  0.564906
+2  0.967399 -0.579438 -0.769467 -0.673704
+3  0.186227  0.915522 -0.405272 -0.633632
+4 -0.707864 -0.362403 -0.656633 -0.146016
+5  0.086488 -0.932962  0.440948 -0.493151
+6  0.124437  0.220106  0.916009  0.649955
+7 -0.307913  0.848244  0.071110  0.695659
+8  0.337896  0.947738  0.793517 -0.092509
+9 -0.233822  0.211953  0.373374 -0.624318
 </pre></div>
 </div>
 <p>There are several ways we can turn the above objects into a search space.

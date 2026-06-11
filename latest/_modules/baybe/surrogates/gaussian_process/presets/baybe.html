@@ -864,6 +864,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.html">baybe.surrogates.gaussian_process.presets</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets" class="toctree-checkbox" id="toctree-checkbox-107" name="toctree-checkbox-107" role="switch" type="checkbox"/><label for="toctree-checkbox-107"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.html">baybe.surrogates.gaussian_process.presets.baybe</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.baybe" class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEFitCriterionFactory.html">BayBEFitCriterionFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBELikelihoodFactory.html">BayBELikelihoodFactory</a></li>
@@ -873,6 +874,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.botorch.html">baybe.surrogates.gaussian_process.presets.botorch</a></li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.html">baybe.surrogates.gaussian_process.presets.chen</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.chen" class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenLikelihoodFactory.html">ChenLikelihoodFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenMeanFactory.html">ChenMeanFactory</a></li>
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.core.html">baybe.surrogates.gaussian_process.presets.core</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.core" class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -886,7 +890,6 @@
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.html">baybe.surrogates.gaussian_process.presets.edbo_smoothed</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.edbo_smoothed" class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOLikelihoodFactory.html">SmoothedEDBOLikelihoodFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOMeanFactory.html">SmoothedEDBOMeanFactory</a></li>
@@ -1184,7 +1187,10 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassVar</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
@@ -1200,29 +1206,186 @@
     <span class="n">TypeSelector</span><span class="p">,</span>
     <span class="n">to_parameter_selector</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.substance</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubstanceParameter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.components.fit_criterion</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FitCriterion</span><span class="p">,</span>
     <span class="n">FitCriterionFactoryProtocol</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.components.kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">_PureKernelFactory</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.components.mean</span><span class="w"> </span><span class="kn">import</span> <span class="n">LazyConstantMeanFactory</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.presets.edbo_smoothed</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">SmoothedEDBOKernelFactory</span><span class="p">,</span>
-    <span class="n">SmoothedEDBOLikelihoodFactory</span><span class="p">,</span>
-    <span class="n">_SmoothedEDBONumericalKernelFactory</span><span class="p">,</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.components.generic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GPComponentFactoryProtocol</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.components.kernel</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_enable_transfer_learning</span><span class="p">,</span>
+    <span class="n">_PureKernelFactory</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.components.likelihood</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LikelihoodFactoryProtocol</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.components.mean</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LazyConstantMeanFactory</span><span class="p">,</span>
+    <span class="n">MeanFactoryProtocol</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span> <span class="k">as</span> <span class="n">GPyTorchKernel</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods</span><span class="w"> </span><span class="kn">import</span> <span class="n">Likelihood</span> <span class="k">as</span> <span class="n">GPyTorchLikelihood</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.means</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mean</span> <span class="k">as</span> <span class="n">GPyTorchMean</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">_BayBENumericalKernelFactory</span><span class="p">(</span><span class="n">_SmoothedEDBONumericalKernelFactory</span><span class="p">):</span>
+<span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">GPComponentFactoryProtocol</span><span class="p">)</span>
+
+
+<span class="c1">##### Private custom-scaled factories #####</span>
+
+
+<span class="nd">@define</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_CustomScaledNumericalKernelFactory</span><span class="p">(</span><span class="n">_PureKernelFactory</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A numerical kernel factory with dimension-scaled Gamma lengthscale prior.</span>
+
+<span class="sd">    Inspired by the dimension-scaled priors in :cite:p:`Hvarfner2024` but with slight</span>
+<span class="sd">    adjustments:</span>
+
+<span class="sd">    * Uses Matern instead of RBF kernel.</span>
+<span class="sd">    * Uses a Gamma prior instead of a LogNormal prior for faster convergence (less heavy</span>
+<span class="sd">      tails). The parameters of the Gamma are set such that:</span>
+<span class="sd">        - The concentration matches that of the conventional (i.e., Hvarfner</span>
+<span class="sd">          predecessor) Gamma distribution used by BoTorch.</span>
+<span class="sd">        - The mode matches that of the LogNormal and thus also scales with sqrt(d).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_uses_parameter_names</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1"># See base class.</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="n">GPyTorchKernel</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">GreaterThan</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaternKernel</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.priors</span><span class="w"> </span><span class="kn">import</span> <span class="n">GammaPrior</span>
+
+        <span class="n">parameter_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">(</span><span class="n">searchspace</span><span class="p">)</span>
+
+        <span class="c1"># For regular parameters, resolve parameter names to active dimension indices</span>
+        <span class="n">active_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
+                <span class="n">searchspace</span><span class="o">.</span><span class="n">get_comp_rep_parameter_indices</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">parameter_names</span>
+                <span class="k">if</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">get_parameters_by_name</span><span class="p">([</span><span class="n">name</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_kind</span>
+                <span class="ow">is</span> <span class="n">_ParameterKind</span><span class="o">.</span><span class="n">REGULAR</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">ard_num_dims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">active_dims</span><span class="p">)</span>
+
+        <span class="n">concentration</span> <span class="o">=</span> <span class="mf">3.0</span>
+        <span class="n">rate</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">concentration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ard_num_dims</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">lengthscale_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="n">concentration</span><span class="p">,</span> <span class="n">rate</span><span class="p">)</span>
+        <span class="n">base_kernel</span> <span class="o">=</span> <span class="n">MaternKernel</span><span class="p">(</span>
+            <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">ard_num_dims</span><span class="p">,</span>
+            <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">lengthscale_prior</span><span class="p">,</span>
+            <span class="n">lengthscale_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span>
+                <span class="mf">2.5e-2</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="n">lengthscale_prior</span><span class="o">.</span><span class="n">mode</span>
+            <span class="p">),</span>
+            <span class="n">active_dims</span><span class="o">=</span><span class="n">active_dims</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">base_kernel</span>
+
+
+<span class="nd">@define</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_CustomScaledLikelihoodFactory</span><span class="p">(</span><span class="n">LikelihoodFactoryProtocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A likelihood factory with custom Gamma noise prior.</span>
+
+<span class="sd">    Inspired by the likelihood proposed in :cite:p:`Hvarfner2024` but uses a Gamma prior</span>
+<span class="sd">    instead of a LogNormal prior for faster convergence (less heavy tails). The</span>
+<span class="sd">    parameters of the Gamma are set such that:</span>
+
+<span class="sd">    * The mode matches that of the LogNormal.</span>
+<span class="sd">    * The curvature at the mode matches that of the LogNormal, resulting in similar</span>
+<span class="sd">      convergence behavior in the vicinity of the mode.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchLikelihood</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils.gpytorch_modules</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">GreaterThan</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianLikelihood</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.priors</span><span class="w"> </span><span class="kn">import</span> <span class="n">GammaPrior</span>
+
+        <span class="n">concentration</span> <span class="o">=</span> <span class="mf">2.0</span>
+        <span class="n">rate</span> <span class="o">=</span> <span class="p">(</span><span class="n">concentration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">4.0</span> <span class="o">-</span> <span class="mf">1.0</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">noise_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="n">concentration</span><span class="p">,</span> <span class="n">rate</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">GaussianLikelihood</span><span class="p">(</span>
+            <span class="n">noise_prior</span><span class="o">=</span><span class="n">noise_prior</span><span class="p">,</span>
+            <span class="n">noise_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span>
+                <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span>
+                <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">initial_value</span><span class="o">=</span><span class="n">noise_prior</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_CustomScaledMeanFactory</span><span class="p">(</span><span class="n">LazyConstantMeanFactory</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A mean factory for the custom-scaled preset.&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dispatch</span><span class="p">(</span>
+    <span class="n">factory_with_substance</span><span class="p">:</span> <span class="n">_T</span><span class="p">,</span> <span class="n">factory_without_substance</span><span class="p">:</span> <span class="n">_T</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select a GP component factory based on search space content.</span>
+
+<span class="sd">    Delegates to ``factory_with_substance`` when a</span>
+<span class="sd">    :class:`~baybe.parameters.substance.SubstanceParameter` is present in the</span>
+<span class="sd">    search space, and to ``factory_without_substance`` otherwise.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        factory_with_substance: The factory used when a substance parameter is present.</span>
+<span class="sd">        factory_without_substance: The factory used otherwise.</span>
+<span class="sd">        searchspace: The search space.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The selected factory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># IMPROVE: Consider additional dispatch criteria such as dimensionality</span>
+    <span class="c1"># or CustomDiscreteParameter presence in the future.</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">SubstanceParameter</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">parameters</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">factory_with_substance</span>
+    <span class="k">return</span> <span class="n">factory_without_substance</span>
+
+
+<span class="nd">@define</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_BayBENumericalKernelFactory</span><span class="p">(</span><span class="n">_PureKernelFactory</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The default numerical kernel factory for GP surrogates.&quot;&quot;&quot;</span>
 
+    <span class="n">_uses_parameter_names</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1"># See base class.</span>
 
-<div class="viewcode-block" id="BayBEKernelFactory">
-<a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html#baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">BayBEKernelFactory</span><span class="p">(</span><span class="n">SmoothedEDBOKernelFactory</span><span class="p">):</span>  <span class="c1"># type: ignore[valid-type, misc]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The default kernel factory for GP surrogates.&quot;&quot;&quot;</span></div>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="n">GPyTorchKernel</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.presets.chen</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">_ChenNumericalKernelFactory</span><span class="p">,</span>
+        <span class="p">)</span>
 
+        <span class="n">factory</span> <span class="o">=</span> <span class="n">_dispatch</span><span class="p">(</span>
+            <span class="n">_ChenNumericalKernelFactory</span><span class="p">(</span><span class="n">parameter_selector</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameter_selector</span><span class="p">),</span>
+            <span class="n">_CustomScaledNumericalKernelFactory</span><span class="p">(</span>
+                <span class="n">parameter_selector</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameter_selector</span>
+            <span class="p">),</span>
+            <span class="n">searchspace</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">factory</span><span class="p">(</span><span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">)</span>
+
+
+<span class="n">BayBEKernelFactory</span> <span class="o">=</span> <span class="n">_enable_transfer_learning</span><span class="p">(</span>
+    <span class="n">_BayBENumericalKernelFactory</span><span class="p">,</span> <span class="s2">&quot;BayBEKernelFactory&quot;</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;The default kernel factory for GP surrogates.&quot;&quot;&quot;</span>
 
 
 <span class="nd">@define</span>
@@ -1254,15 +1417,49 @@
 
 <div class="viewcode-block" id="BayBEMeanFactory">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEMeanFactory.html#baybe.surrogates.gaussian_process.presets.baybe.BayBEMeanFactory">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">BayBEMeanFactory</span><span class="p">(</span><span class="n">LazyConstantMeanFactory</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The default mean factory for GP surrogates.&quot;&quot;&quot;</span></div>
+<span class="nd">@define</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BayBEMeanFactory</span><span class="p">(</span><span class="n">MeanFactoryProtocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The default mean factory for GP surrogates.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BayBEMeanFactory.__call__">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEMeanFactory.html#baybe.surrogates.gaussian_process.presets.baybe.BayBEMeanFactory.__call__">[docs]</a>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchMean</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.presets.chen</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChenMeanFactory</span>
+
+        <span class="n">factory</span> <span class="o">=</span> <span class="n">_dispatch</span><span class="p">(</span>
+            <span class="n">ChenMeanFactory</span><span class="p">(),</span>
+            <span class="n">_CustomScaledMeanFactory</span><span class="p">(),</span>
+            <span class="n">searchspace</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">factory</span><span class="p">(</span><span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">)</span></div>
+</div>
 
 
 
 <div class="viewcode-block" id="BayBELikelihoodFactory">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBELikelihoodFactory.html#baybe.surrogates.gaussian_process.presets.baybe.BayBELikelihoodFactory">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">BayBELikelihoodFactory</span><span class="p">(</span><span class="n">SmoothedEDBOLikelihoodFactory</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The default likelihood factory for GP surrogates.&quot;&quot;&quot;</span></div>
+<span class="nd">@define</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BayBELikelihoodFactory</span><span class="p">(</span><span class="n">LikelihoodFactoryProtocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The default likelihood factory for GP surrogates.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BayBELikelihoodFactory.__call__">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBELikelihoodFactory.html#baybe.surrogates.gaussian_process.presets.baybe.BayBELikelihoodFactory.__call__">[docs]</a>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchLikelihood</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.presets.chen</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChenLikelihoodFactory</span>
+
+        <span class="n">factory</span> <span class="o">=</span> <span class="n">_dispatch</span><span class="p">(</span>
+            <span class="n">ChenLikelihoodFactory</span><span class="p">(),</span>
+            <span class="n">_CustomScaledLikelihoodFactory</span><span class="p">(),</span>
+            <span class="n">searchspace</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">factory</span><span class="p">(</span><span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">)</span></div>
+</div>
 
 
 
@@ -1286,6 +1483,9 @@
 </div>
 
 
+
+<span class="c1"># Collect leftover original slotted classes processed by `attrs.define`</span>
+<span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 
 <span class="c1"># Preset defaults</span>
 <span class="n">KERNEL_FACTORY</span> <span class="o">=</span> <span class="n">BayBEKernelFactory</span><span class="p">()</span>

@@ -5,6 +5,14 @@ baybe.surrogates.gaussian\_process.presets.baybe
   
    
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      BayBEKernelFactory
+   
    
 
    

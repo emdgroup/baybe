@@ -5,6 +5,14 @@ baybe.surrogates.gaussian\_process.presets.chen
   
    
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      ChenKernelFactory
+   
    
 
    
@@ -20,6 +28,8 @@ baybe.surrogates.gaussian\_process.presets.chen
       :template: custom-class-template.rst              
    
       ChenKernelFactory
+      ChenLikelihoodFactory
+      ChenMeanFactory
    
    
 

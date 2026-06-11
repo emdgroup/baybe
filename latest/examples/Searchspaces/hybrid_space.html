@@ -865,6 +865,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.html">baybe.surrogates.gaussian_process.presets</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets" class="toctree-checkbox" id="toctree-checkbox-107" name="toctree-checkbox-107" role="switch" type="checkbox"/><label for="toctree-checkbox-107"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.html">baybe.surrogates.gaussian_process.presets.baybe</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.baybe" class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEFitCriterionFactory.html">BayBEFitCriterionFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBELikelihoodFactory.html">BayBELikelihoodFactory</a></li>
@@ -874,6 +875,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.botorch.html">baybe.surrogates.gaussian_process.presets.botorch</a></li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.html">baybe.surrogates.gaussian_process.presets.chen</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.chen" class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenLikelihoodFactory.html">ChenLikelihoodFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenMeanFactory.html">ChenMeanFactory</a></li>
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.core.html">baybe.surrogates.gaussian_process.presets.core</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.core" class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -887,7 +891,6 @@
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.html">baybe.surrogates.gaussian_process.presets.edbo_smoothed</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.edbo_smoothed" class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOLikelihoodFactory.html">SmoothedEDBOLikelihoodFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOMeanFactory.html">SmoothedEDBOMeanFactory</a></li>
@@ -1346,10 +1349,10 @@ We use the default choices, which is the <code class="docutils literal notransla
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with measured values: 
-     x_1   x_2   x_3       x_4       x_5       x_6      Target
-0  -5.12 -5.12 -5.12 -4.257475  4.041646 -3.180859  147.954030
-15  0.00  5.12 -5.12  4.184700 -4.406057  2.221362  132.238463
-25  5.12  5.12  0.00  1.962867 -4.408830 -0.938180  101.439794
+    x_1   x_2   x_3       x_4       x_5       x_6      Target
+12  0.0  0.00 -5.12  3.500740 -4.900492 -0.251239   97.227298
+17  0.0  5.12  5.12  4.484266  2.716361  1.335663  134.295966
+10  0.0 -5.12  0.00 -4.229422  0.505673  2.221416   88.921011
 </pre></div>
 </div>
 </section>

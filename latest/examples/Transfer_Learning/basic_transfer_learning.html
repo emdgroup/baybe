@@ -865,6 +865,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.html">baybe.surrogates.gaussian_process.presets</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets" class="toctree-checkbox" id="toctree-checkbox-107" name="toctree-checkbox-107" role="switch" type="checkbox"/><label for="toctree-checkbox-107"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.html">baybe.surrogates.gaussian_process.presets.baybe</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.baybe" class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEFitCriterionFactory.html">BayBEFitCriterionFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBELikelihoodFactory.html">BayBELikelihoodFactory</a></li>
@@ -874,6 +875,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.botorch.html">baybe.surrogates.gaussian_process.presets.botorch</a></li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.html">baybe.surrogates.gaussian_process.presets.chen</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.chen" class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenLikelihoodFactory.html">ChenLikelihoodFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenMeanFactory.html">ChenMeanFactory</a></li>
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.core.html">baybe.surrogates.gaussian_process.presets.core</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.core" class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -887,7 +891,6 @@
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.html">baybe.surrogates.gaussian_process.presets.edbo_smoothed</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.edbo_smoothed" class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOLikelihoodFactory.html">SmoothedEDBOLikelihoodFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOMeanFactory.html">SmoothedEDBOMeanFactory</a></li>
@@ -1287,9 +1290,9 @@ pass the <code class="docutils literal notranslate"><span class="pre">active_val
 <section id="defining-the-tasks">
 <h2>Defining the Tasks<a class="headerlink" href="#defining-the-tasks" title="Link to this heading">¶</a></h2>
 <p>To demonstrate the transfer learning mechanism, we consider the problem of optimizing
-the Hartmann function using training data from its negated version, including some
-noise. The used model is of course not aware of this relationship but needs to infer
-it from the data gathered during the optimization process.</p>
+the Hartmann function using training data from a noisy version. The used model
+is of course not aware of this relationship but needs to infer it from the data
+gathered during the optimization process.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">wrapper</span> <span class="o">=</span> <span class="n">arrays_to_dataframes</span><span class="p">(</span>
     <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">discrete_params</span><span class="p">],</span> <span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">],</span> <span class="n">use_torch</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
@@ -1297,7 +1300,7 @@ it from the data gathered during the optimization process.</p>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">test_functions</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;Test_Function&quot;</span><span class="p">:</span> <span class="n">wrapper</span><span class="p">(</span><span class="n">Hartmann</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">DIMENSION</span><span class="p">)),</span>
-    <span class="s2">&quot;Training_Function&quot;</span><span class="p">:</span> <span class="n">wrapper</span><span class="p">(</span><span class="n">Hartmann</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">DIMENSION</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="mf">0.15</span><span class="p">)),</span>
+    <span class="s2">&quot;Training_Function&quot;</span><span class="p">:</span> <span class="n">wrapper</span><span class="p">(</span><span class="n">Hartmann</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">DIMENSION</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="mf">0.15</span><span class="p">)),</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -1330,7 +1333,7 @@ to show the impact of transfer learning on the optimization performance.
 To average out and reduce statistical effects that might happen due to the random
 sampling of the provided data, we perform several Monte Carlo runs.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">):</span>
     <span class="n">campaign</span> <span class="o">=</span> <span class="n">Campaign</span><span class="p">(</span><span class="n">searchspace</span><span class="o">=</span><span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">)</span>
     <span class="n">initial_data</span> <span class="o">=</span> <span class="p">[</span><span class="n">lookup_training_task</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_MC_ITERATIONS</span><span class="p">)]</span>
     <span class="n">result_fraction</span> <span class="o">=</span> <span class="n">simulate_scenarios</span><span class="p">(</span>

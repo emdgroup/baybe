@@ -1,4 +1,4 @@
-﻿SmoothedEDBOKernelFactory
+SmoothedEDBOKernelFactory
 =========================
 
 .. currentmodule:: baybe.surrogates.gaussian_process.presets.edbo_smoothed

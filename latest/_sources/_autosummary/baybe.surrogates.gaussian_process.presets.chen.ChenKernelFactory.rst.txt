@@ -1,4 +1,4 @@
-ChenKernelFactory
+﻿ChenKernelFactory
 =================
 
 .. currentmodule:: baybe.surrogates.gaussian_process.presets.chen

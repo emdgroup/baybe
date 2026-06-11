@@ -864,6 +864,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.html">baybe.surrogates.gaussian_process.presets</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets" class="toctree-checkbox" id="toctree-checkbox-107" name="toctree-checkbox-107" role="switch" type="checkbox"/><label for="toctree-checkbox-107"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.html">baybe.surrogates.gaussian_process.presets.baybe</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.baybe" class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEFitCriterionFactory.html">BayBEFitCriterionFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.baybe.BayBELikelihoodFactory.html">BayBELikelihoodFactory</a></li>
@@ -873,6 +874,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.botorch.html">baybe.surrogates.gaussian_process.presets.botorch</a></li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.html">baybe.surrogates.gaussian_process.presets.chen</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.chen" class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenLikelihoodFactory.html">ChenLikelihoodFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.chen.ChenMeanFactory.html">ChenMeanFactory</a></li>
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.core.html">baybe.surrogates.gaussian_process.presets.core</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.core" class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -886,7 +890,6 @@
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.html">baybe.surrogates.gaussian_process.presets.edbo_smoothed</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.edbo_smoothed" class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOLikelihoodFactory.html">SmoothedEDBOLikelihoodFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOMeanFactory.html">SmoothedEDBOMeanFactory</a></li>
@@ -1220,9 +1223,17 @@
 <span class="n">_DIM_LIMITS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">75</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="SmoothedEDBOKernelFactory">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html#baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory">[docs]</a>
+<span class="nd">@_enable_transfer_learning</span>
 <span class="nd">@define</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">_SmoothedEDBONumericalKernelFactory</span><span class="p">(</span><span class="n">_PureKernelFactory</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A factory providing the core numerical kernel for the smoothed EDBO preset.&quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SmoothedEDBOKernelFactory</span><span class="p">(</span><span class="n">_PureKernelFactory</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A factory providing smoothed versions of EDBO kernels (adapted from :cite:p:`Shields2021`).</span>
+
+<span class="sd">    Takes the low and high dimensional limits of</span>
+<span class="sd">    :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`</span>
+<span class="sd">    and interpolates the prior moments linearly in between.</span>
+<span class="sd">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: E501</span>
 
     <span class="n">_uses_parameter_names</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="c1"># See base class.</span>
@@ -1256,18 +1267,8 @@
             <span class="p">),</span>
             <span class="n">outputscale_prior</span><span class="o">=</span><span class="n">outputscale_prior</span><span class="p">,</span>
             <span class="n">outputscale_initial_value</span><span class="o">=</span><span class="n">outputscale_initial_value</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
-
-<span class="n">SmoothedEDBOKernelFactory</span> <span class="o">=</span> <span class="n">_enable_transfer_learning</span><span class="p">(</span>
-    <span class="n">_SmoothedEDBONumericalKernelFactory</span><span class="p">,</span> <span class="s2">&quot;SmoothedEDBOKernelFactory&quot;</span>
-<span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;A factory providing smoothed versions of EDBO kernels (adapted from :cite:p:`Shields2021`).</span>
-
-<span class="sd">Takes the low and high dimensional limits of</span>
-<span class="sd">:class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`</span>
-<span class="sd">and interpolates the prior moments linearly in between.</span>
-<span class="sd">&quot;&quot;&quot;</span>  <span class="c1"># noqa: E501</span>
 
 
 <div class="viewcode-block" id="SmoothedEDBOMeanFactory">

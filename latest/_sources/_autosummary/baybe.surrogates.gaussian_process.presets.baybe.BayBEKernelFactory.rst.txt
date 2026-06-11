@@ -1,4 +1,4 @@
-BayBEKernelFactory
+﻿BayBEKernelFactory
 ==================
 
 .. currentmodule:: baybe.surrogates.gaussian_process.presets.baybe

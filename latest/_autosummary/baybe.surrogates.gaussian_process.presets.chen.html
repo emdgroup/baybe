@@ -865,6 +865,7 @@
 </li>
 <li class="toctree-l4 current has-children"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.html">baybe.surrogates.gaussian_process.presets</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets" checked="" class="toctree-checkbox" id="toctree-checkbox-107" name="toctree-checkbox-107" role="switch" type="checkbox"/><label for="toctree-checkbox-107"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l5 has-children"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.baybe.html">baybe.surrogates.gaussian_process.presets.baybe</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.baybe" class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.baybe.BayBEFitCriterionFactory.html">BayBEFitCriterionFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.baybe.BayBEKernelFactory.html">BayBEKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.baybe.BayBELikelihoodFactory.html">BayBELikelihoodFactory</a></li>
@@ -874,6 +875,9 @@
 <li class="toctree-l5"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.botorch.html">baybe.surrogates.gaussian_process.presets.botorch</a></li>
 <li class="toctree-l5 current has-children current-page"><a class="current reference internal" href="#">baybe.surrogates.gaussian_process.presets.chen</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.chen" checked="" class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html">ChenKernelFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.chen.ChenLikelihoodFactory.html">ChenLikelihoodFactory</a></li>
+<li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.chen.ChenMeanFactory.html">ChenMeanFactory</a></li>
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.core.html">baybe.surrogates.gaussian_process.presets.core</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.core" class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -887,7 +891,6 @@
 </ul>
 </li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.edbo_smoothed.html">baybe.surrogates.gaussian_process.presets.edbo_smoothed</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.edbo_smoothed" class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOKernelFactory.html">SmoothedEDBOKernelFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOLikelihoodFactory.html">SmoothedEDBOLikelihoodFactory</a></li>
 <li class="toctree-l6"><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.edbo_smoothed.SmoothedEDBOMeanFactory.html">SmoothedEDBOMeanFactory</a></li>
@@ -1189,12 +1192,28 @@
           <section id="module-baybe.surrogates.gaussian_process.presets.chen">
 <span id="baybe-surrogates-gaussian-process-presets-chen"></span><h1>baybe.surrogates.gaussian_process.presets.chen<a class="headerlink" href="#module-baybe.surrogates.gaussian_process.presets.chen" title="Link to this heading">¶</a></h1>
 <p>Preset for adaptive kernel hyperpriors proposed by <span id="id1">[<a class="reference internal" href="../misc/references.html#id3" title="Guanming Chen, Maximilian Fleck, and Thijs Stuyver. Leveraging hidden-space representations effectively in bayesian optimization for experiment design through dimension-aware hyperpriors. ChemRxiv, 2026. doi:10.26434/chemrxiv.10001986/v2.">CFS26</a>]</span>.</p>
-<p class="rubric">Classes</p>
+<p class="rubric">Module Attributes</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html#baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory" title="baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ChenKernelFactory</span></code></a></p></td>
 <td><p>A factory providing adaptive hyperprior kernels as proposed by <span id="id2">[<a class="reference internal" href="../misc/references.html#id3" title="Guanming Chen, Maximilian Fleck, and Thijs Stuyver. Leveraging hidden-space representations effectively in bayesian optimization for experiment design through dimension-aware hyperpriors. ChemRxiv, 2026. doi:10.26434/chemrxiv.10001986/v2.">CFS26</a>]</span>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Classes</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory.html#baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory" title="baybe.surrogates.gaussian_process.presets.chen.ChenKernelFactory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ChenKernelFactory</span></code></a></p></td>
+<td><p>A factory providing adaptive hyperprior kernels as proposed by <span id="id3">[<a class="reference internal" href="../misc/references.html#id3" title="Guanming Chen, Maximilian Fleck, and Thijs Stuyver. Leveraging hidden-space representations effectively in bayesian optimization for experiment design through dimension-aware hyperpriors. ChemRxiv, 2026. doi:10.26434/chemrxiv.10001986/v2.">CFS26</a>]</span>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.chen.ChenLikelihoodFactory.html#baybe.surrogates.gaussian_process.presets.chen.ChenLikelihoodFactory" title="baybe.surrogates.gaussian_process.presets.chen.ChenLikelihoodFactory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ChenLikelihoodFactory</span></code></a></p></td>
+<td><p>A factory providing likelihoods for the Chen preset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.surrogates.gaussian_process.presets.chen.ChenMeanFactory.html#baybe.surrogates.gaussian_process.presets.chen.ChenMeanFactory" title="baybe.surrogates.gaussian_process.presets.chen.ChenMeanFactory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ChenMeanFactory</span></code></a></p></td>
+<td><p>A factory providing mean functions for the Chen preset.</p></td>
 </tr>
 </tbody>
 </table>
