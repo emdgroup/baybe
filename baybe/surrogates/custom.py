@@ -11,7 +11,7 @@ It is planned to solve this issue in the future.
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any
 
 import cattrs
 from attrs import define, field, validators

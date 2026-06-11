@@ -8,7 +8,6 @@ import os
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
-import pandas as pd
 from attrs import Converter, define, field
 from attrs.converters import pipe
 from attrs.validators import is_callable
@@ -16,7 +15,6 @@ from typing_extensions import Self, override
 
 from baybe.exceptions import DeprecationError
 from baybe.kernels.base import Kernel
-from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
 from baybe.surrogates.base import Surrogate
