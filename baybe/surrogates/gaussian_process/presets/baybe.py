@@ -111,13 +111,13 @@ class _CustomScaledNumericalKernelFactory(_PureKernelFactory):
 
 @define
 class _CustomScaledLikelihoodFactory(LikelihoodFactoryProtocol):
-    """A likelihood factory with dimension-scaled Gamma noise prior.
+    """A likelihood factory with custom Gamma noise prior.
 
     Inspired by the likelihood proposed in :cite:p:`Hvarfner2024` but uses a Gamma prior
     instead of a LogNormal prior for faster convergence (less heavy tails). The
     parameters of the Gamma are set such that:
 
-    * The mode matches that of the LogNormal and thus also scales with sqrt(d).
+    * The mode matches that of the LogNormal.
     * The curvature at the mode matches that of the LogNormal, resulting in similar
       convergence behavior in the vicinity of the mode.
     """
