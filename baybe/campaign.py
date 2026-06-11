@@ -1102,18 +1102,12 @@ def _structure_campaign(d: dict, cl: type) -> Campaign:
     # >>>>>>>>>> Deprecation
     # Post-structure reconstruction from legacy metadata indices
     if legacy_recommended_idxs is not None:
-        try:
-            rec_df = campaign.searchspace.discrete.exp_rep.loc[legacy_recommended_idxs]
-            campaign._recommended_experiments = rec_df.reset_index(drop=True)
-        except Exception:
-            pass
+        rec_df = campaign.searchspace.discrete.exp_rep.loc[legacy_recommended_idxs]
+        campaign._recommended_experiments = rec_df.reset_index(drop=True)
 
     if legacy_excluded_idxs is not None:
-        try:
-            excl_df = campaign.searchspace.discrete.exp_rep.loc[legacy_excluded_idxs]
-            campaign._excluded_experiments = excl_df.reset_index(drop=True)
-        except Exception:
-            pass
+        excl_df = campaign.searchspace.discrete.exp_rep.loc[legacy_excluded_idxs]
+        campaign._excluded_experiments = excl_df.reset_index(drop=True)
 
     # Fix schema of empty DataFrames from legacy serialization
     if campaign._measurements.columns.empty and campaign._measurements.empty:
