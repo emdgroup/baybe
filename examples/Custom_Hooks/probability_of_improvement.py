@@ -46,7 +46,7 @@ from examples.utils import create_example_plots
 # iterations or the batch size:
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
-N_DOE_ITERATIONS = 3 if SMOKE_TEST else 7
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 5
 BATCH_SIZE = 2
 DIMENSION = 3
 POINTS_PER_DIM = 2 if SMOKE_TEST else 4
