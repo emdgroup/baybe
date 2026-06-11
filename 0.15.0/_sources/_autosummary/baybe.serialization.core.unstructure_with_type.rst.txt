@@ -1,0 +1,6 @@
+baybe.serialization.core.unstructure\_with\_type
+================================================
+
+.. currentmodule:: baybe.serialization.core
+
+.. autofunction:: unstructure_with_type

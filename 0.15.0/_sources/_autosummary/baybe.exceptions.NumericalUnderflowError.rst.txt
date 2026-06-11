@@ -1,0 +1,6 @@
+baybe.exceptions.NumericalUnderflowError
+========================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: NumericalUnderflowError

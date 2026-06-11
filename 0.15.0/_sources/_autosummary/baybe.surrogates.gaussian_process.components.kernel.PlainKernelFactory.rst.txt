@@ -1,0 +1,7 @@
+baybe.surrogates.gaussian\_process.components.kernel.PlainKernelFactory
+=======================================================================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.kernel
+
+
+.. autodata:: PlainKernelFactory

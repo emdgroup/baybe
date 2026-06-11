@@ -1,0 +1,41 @@
+baybe.surrogates.gaussian\_process.components
+=============================================
+
+.. automodule:: baybe.surrogates.gaussian_process.components
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+
+   fit_criterion
+
+   generic
+
+   kernel
+
+   likelihood
+
+   mean
+

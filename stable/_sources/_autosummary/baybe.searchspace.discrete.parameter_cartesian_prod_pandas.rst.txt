@@ -1,6 +1,0 @@
-baybe.searchspace.discrete.parameter\_cartesian\_prod\_pandas
-=============================================================
-
-.. currentmodule:: baybe.searchspace.discrete
-
-.. autofunction:: parameter_cartesian_prod_pandas

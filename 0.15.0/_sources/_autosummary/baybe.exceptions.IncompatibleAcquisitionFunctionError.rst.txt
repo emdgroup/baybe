@@ -1,0 +1,6 @@
+baybe.exceptions.IncompatibleAcquisitionFunctionError
+=====================================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: IncompatibleAcquisitionFunctionError

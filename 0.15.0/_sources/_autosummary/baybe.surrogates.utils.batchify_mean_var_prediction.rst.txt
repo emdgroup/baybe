@@ -1,0 +1,6 @@
+baybe.surrogates.utils.batchify\_mean\_var\_prediction
+======================================================
+
+.. currentmodule:: baybe.surrogates.utils
+
+.. autofunction:: batchify_mean_var_prediction

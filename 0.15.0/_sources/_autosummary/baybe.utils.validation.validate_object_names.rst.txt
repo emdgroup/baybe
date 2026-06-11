@@ -1,0 +1,6 @@
+baybe.utils.validation.validate\_object\_names
+==============================================
+
+.. currentmodule:: baybe.utils.validation
+
+.. autofunction:: validate_object_names

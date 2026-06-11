@@ -1,0 +1,6 @@
+baybe.utils.interval.use\_fallback\_constructor\_hook
+=====================================================
+
+.. currentmodule:: baybe.utils.interval
+
+.. autofunction:: use_fallback_constructor_hook

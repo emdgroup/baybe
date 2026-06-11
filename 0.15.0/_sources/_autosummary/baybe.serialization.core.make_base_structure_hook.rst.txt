@@ -1,0 +1,6 @@
+baybe.serialization.core.make\_base\_structure\_hook
+====================================================
+
+.. currentmodule:: baybe.serialization.core
+
+.. autofunction:: make_base_structure_hook

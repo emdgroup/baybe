@@ -1,0 +1,6 @@
+baybe.exceptions.IncompatibleExplainerError
+===========================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: IncompatibleExplainerError

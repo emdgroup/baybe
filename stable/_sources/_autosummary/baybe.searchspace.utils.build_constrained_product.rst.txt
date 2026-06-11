@@ -1,0 +1,6 @@
+baybe.searchspace.utils.build\_constrained\_product
+===================================================
+
+.. currentmodule:: baybe.searchspace.utils
+
+.. autofunction:: build_constrained_product

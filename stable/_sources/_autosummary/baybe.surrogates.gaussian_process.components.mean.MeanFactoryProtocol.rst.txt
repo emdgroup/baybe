@@ -1,0 +1,7 @@
+baybe.surrogates.gaussian\_process.components.mean.MeanFactoryProtocol
+======================================================================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.mean
+
+
+.. autodata:: MeanFactoryProtocol

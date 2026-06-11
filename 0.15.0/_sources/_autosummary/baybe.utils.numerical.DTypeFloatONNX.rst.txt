@@ -1,0 +1,7 @@
+baybe.utils.numerical.DTypeFloatONNX
+====================================
+
+.. currentmodule:: baybe.utils.numerical
+
+
+.. autoclass:: DTypeFloatONNX

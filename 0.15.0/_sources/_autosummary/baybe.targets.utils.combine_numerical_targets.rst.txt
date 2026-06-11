@@ -1,0 +1,6 @@
+baybe.targets.utils.combine\_numerical\_targets
+===============================================
+
+.. currentmodule:: baybe.targets.utils
+
+.. autofunction:: combine_numerical_targets

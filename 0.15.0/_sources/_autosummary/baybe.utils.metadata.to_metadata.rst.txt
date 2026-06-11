@@ -1,0 +1,6 @@
+baybe.utils.metadata.to\_metadata
+=================================
+
+.. currentmodule:: baybe.utils.metadata
+
+.. autofunction:: to_metadata

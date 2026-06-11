@@ -1,0 +1,6 @@
+baybe.transformations.utils.compress\_transformations
+=====================================================
+
+.. currentmodule:: baybe.transformations.utils
+
+.. autofunction:: compress_transformations

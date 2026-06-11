@@ -1,0 +1,6 @@
+baybe.transformations.utils.convert\_transformation
+===================================================
+
+.. currentmodule:: baybe.transformations.utils
+
+.. autofunction:: convert_transformation

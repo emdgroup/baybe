@@ -1,0 +1,31 @@
+baybe.recommenders.pure.bayesian.botorch.discrete
+=================================================
+
+.. automodule:: baybe.recommenders.pure.bayesian.botorch.discrete
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      recommend_discrete_with_subsets
+      recommend_discrete_without_subsets
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

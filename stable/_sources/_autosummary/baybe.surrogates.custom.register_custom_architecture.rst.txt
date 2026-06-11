@@ -1,6 +1,0 @@
-baybe.surrogates.custom.register\_custom\_architecture
-======================================================
-
-.. currentmodule:: baybe.surrogates.custom
-
-.. autofunction:: register_custom_architecture

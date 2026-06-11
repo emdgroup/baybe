@@ -1,0 +1,6 @@
+baybe.transformations.utils.sum\_affine\_transformations
+========================================================
+
+.. currentmodule:: baybe.transformations.utils
+
+.. autofunction:: sum_affine_transformations

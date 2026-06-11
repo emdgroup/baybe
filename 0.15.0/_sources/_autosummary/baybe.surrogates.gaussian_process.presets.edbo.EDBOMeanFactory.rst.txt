@@ -1,0 +1,27 @@
+EDBOMeanFactory
+===============
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.edbo
+
+.. autoclass:: EDBOMeanFactory
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~EDBOMeanFactory.__init__
+   
+      ~EDBOMeanFactory.__call__
+   
+   
+   
+
+   
+   
+   

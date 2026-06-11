@@ -1,0 +1,7 @@
+﻿baybe.utils.validation.non\_inf\_float
+======================================
+
+.. currentmodule:: baybe.utils.validation
+
+
+.. autofunction:: non_inf_float

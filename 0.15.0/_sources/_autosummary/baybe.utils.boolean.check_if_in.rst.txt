@@ -1,0 +1,6 @@
+baybe.utils.boolean.check\_if\_in
+=================================
+
+.. currentmodule:: baybe.utils.boolean
+
+.. autofunction:: check_if_in

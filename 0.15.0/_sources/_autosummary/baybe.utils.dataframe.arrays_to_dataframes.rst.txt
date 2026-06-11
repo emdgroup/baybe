@@ -1,0 +1,6 @@
+baybe.utils.dataframe.arrays\_to\_dataframes
+============================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: arrays_to_dataframes

@@ -1,0 +1,32 @@
+baybe.constraints.continuous
+============================
+
+.. automodule:: baybe.constraints.continuous
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      ContinuousCardinalityConstraint
+      ContinuousLinearConstraint
+   
+   
+
+   
+   
+   
+
+
+

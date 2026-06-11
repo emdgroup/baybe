@@ -1,0 +1,6 @@
+baybe.acquisition.utils.str\_to\_acqf
+=====================================
+
+.. currentmodule:: baybe.acquisition.utils
+
+.. autofunction:: str_to_acqf

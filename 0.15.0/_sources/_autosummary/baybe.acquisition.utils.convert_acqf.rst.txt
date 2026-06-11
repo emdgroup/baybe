@@ -1,0 +1,6 @@
+baybe.acquisition.utils.convert\_acqf
+=====================================
+
+.. currentmodule:: baybe.acquisition.utils
+
+.. autofunction:: convert_acqf

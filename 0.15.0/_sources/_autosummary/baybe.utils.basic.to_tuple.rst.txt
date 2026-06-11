@@ -1,0 +1,6 @@
+baybe.utils.basic.to\_tuple
+===========================
+
+.. currentmodule:: baybe.utils.basic
+
+.. autofunction:: to_tuple

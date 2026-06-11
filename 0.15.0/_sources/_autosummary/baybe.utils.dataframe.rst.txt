@@ -1,0 +1,45 @@
+baybe.utils.dataframe
+=====================
+
+.. automodule:: baybe.utils.dataframe
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      add_fake_measurements
+      add_noise_to_perturb_degenerate_rows
+      add_parameter_noise
+      arrays_to_dataframes
+      create_fake_input
+      df_drop_single_value_columns
+      df_drop_string_columns
+      df_uncorrelated_features
+      filter_df
+      fuzzy_row_match
+      get_transform_objects
+      handle_missing_values
+      normalize_input_dtypes
+      pretty_print_df
+      to_tensor
+      transform_target_columns
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

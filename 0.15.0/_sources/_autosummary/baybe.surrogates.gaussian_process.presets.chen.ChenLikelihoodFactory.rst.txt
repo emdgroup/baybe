@@ -1,0 +1,27 @@
+ChenLikelihoodFactory
+=====================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.chen
+
+.. autoclass:: ChenLikelihoodFactory
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ChenLikelihoodFactory.__init__
+   
+      ~ChenLikelihoodFactory.__call__
+   
+   
+   
+
+   
+   
+   

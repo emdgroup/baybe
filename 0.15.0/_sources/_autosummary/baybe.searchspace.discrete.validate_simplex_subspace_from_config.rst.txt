@@ -1,0 +1,6 @@
+baybe.searchspace.discrete.validate\_simplex\_subspace\_from\_config
+====================================================================
+
+.. currentmodule:: baybe.searchspace.discrete
+
+.. autofunction:: validate_simplex_subspace_from_config

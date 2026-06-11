@@ -1,0 +1,6 @@
+baybe.exceptions.NothingToComputeError
+======================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: NothingToComputeError

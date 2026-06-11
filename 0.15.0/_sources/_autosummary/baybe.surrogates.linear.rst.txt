@@ -1,0 +1,31 @@
+baybe.surrogates.linear
+=======================
+
+.. automodule:: baybe.surrogates.linear
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      BayesianLinearSurrogate
+   
+   
+
+   
+   
+   
+
+
+

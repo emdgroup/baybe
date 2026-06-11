@@ -1,0 +1,6 @@
+baybe.surrogates.gaussian\_process.components.generic.to\_component\_factory
+============================================================================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.generic
+
+.. autofunction:: to_component_factory

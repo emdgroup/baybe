@@ -1,0 +1,6 @@
+baybe.serialization.utils.deserialize\_dataframe
+================================================
+
+.. currentmodule:: baybe.serialization.utils
+
+.. autofunction:: deserialize_dataframe

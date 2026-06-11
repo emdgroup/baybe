@@ -1,0 +1,34 @@
+ICMKernelFactory
+================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.kernel
+
+.. autoclass:: ICMKernelFactory
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ICMKernelFactory.__init__
+   
+      ~ICMKernelFactory.__call__
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ICMKernelFactory.base_kernel_factory
+      ~ICMKernelFactory.task_kernel_factory
+   
+   

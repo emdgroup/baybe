@@ -1,0 +1,6 @@
+baybe.parameters.selectors.to\_parameter\_selector
+==================================================
+
+.. currentmodule:: baybe.parameters.selectors
+
+.. autofunction:: to_parameter_selector

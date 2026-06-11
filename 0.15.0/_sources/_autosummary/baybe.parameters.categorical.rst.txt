@@ -1,0 +1,32 @@
+baybe.parameters.categorical
+============================
+
+.. automodule:: baybe.parameters.categorical
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      CategoricalParameter
+      TaskParameter
+   
+   
+
+   
+   
+   
+
+
+

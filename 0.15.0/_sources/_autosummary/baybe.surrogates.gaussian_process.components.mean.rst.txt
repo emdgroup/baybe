@@ -1,0 +1,40 @@
+baybe.surrogates.gaussian\_process.components.mean
+==================================================
+
+.. automodule:: baybe.surrogates.gaussian_process.components.mean
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      MeanFactoryProtocol
+      PlainMeanFactory
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      LazyConstantMeanFactory
+   
+   
+
+   
+   
+   
+
+
+

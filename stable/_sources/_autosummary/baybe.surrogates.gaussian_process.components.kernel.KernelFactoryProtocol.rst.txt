@@ -1,0 +1,7 @@
+baybe.surrogates.gaussian\_process.components.kernel.KernelFactoryProtocol
+==========================================================================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.kernel
+
+
+.. autodata:: KernelFactoryProtocol

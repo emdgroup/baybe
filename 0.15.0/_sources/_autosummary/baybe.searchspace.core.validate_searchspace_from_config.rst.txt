@@ -1,0 +1,6 @@
+baybe.searchspace.core.validate\_searchspace\_from\_config
+==========================================================
+
+.. currentmodule:: baybe.searchspace.core
+
+.. autofunction:: validate_searchspace_from_config

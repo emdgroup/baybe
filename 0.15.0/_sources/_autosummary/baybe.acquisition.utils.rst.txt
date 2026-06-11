@@ -1,0 +1,32 @@
+baybe.acquisition.utils
+=======================
+
+.. automodule:: baybe.acquisition.utils
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      convert_acqf
+      make_partitioning
+      str_to_acqf
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

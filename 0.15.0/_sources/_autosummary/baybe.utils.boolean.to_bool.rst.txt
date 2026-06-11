@@ -1,0 +1,6 @@
+baybe.utils.boolean.to\_bool
+============================
+
+.. currentmodule:: baybe.utils.boolean
+
+.. autofunction:: to_bool

@@ -1,0 +1,6 @@
+baybe.utils.basic.find\_subclass
+================================
+
+.. currentmodule:: baybe.utils.basic
+
+.. autofunction:: find_subclass

@@ -1,0 +1,31 @@
+baybe.objectives.botorch
+========================
+
+.. automodule:: baybe.objectives.botorch
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      ChainedMCObjective
+   
+   
+
+   
+   
+   
+
+
+

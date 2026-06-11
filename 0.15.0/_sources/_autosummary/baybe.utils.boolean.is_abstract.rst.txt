@@ -1,0 +1,6 @@
+baybe.utils.boolean.is\_abstract
+================================
+
+.. currentmodule:: baybe.utils.boolean
+
+.. autofunction:: is_abstract

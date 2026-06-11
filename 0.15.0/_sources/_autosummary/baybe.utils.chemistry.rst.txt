@@ -1,0 +1,33 @@
+baybe.utils.chemistry
+=====================
+
+.. automodule:: baybe.utils.chemistry
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      get_canonical_smiles
+      get_fingerprint_class
+      name_to_smiles
+      smiles_to_fingerprint_features
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

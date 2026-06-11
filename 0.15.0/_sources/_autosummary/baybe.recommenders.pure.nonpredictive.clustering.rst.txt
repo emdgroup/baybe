@@ -1,0 +1,34 @@
+baybe.recommenders.pure.nonpredictive.clustering
+================================================
+
+.. automodule:: baybe.recommenders.pure.nonpredictive.clustering
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      GaussianMixtureClusteringRecommender
+      KMeansClusteringRecommender
+      PAMClusteringRecommender
+      SKLearnClusteringRecommender
+   
+   
+
+   
+   
+   
+
+
+
