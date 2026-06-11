@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import gc
 import math
-from collections.abc import Callable
 from itertools import chain
 from typing import TYPE_CHECKING, ClassVar, TypeVar
 
@@ -27,6 +26,9 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     FitCriterionFactoryProtocol,
 )
+from baybe.surrogates.gaussian_process.components.generic import (
+    GPComponentFactoryProtocol,
+)
 from baybe.surrogates.gaussian_process.components.kernel import (
     _enable_transfer_learning,
     _PureKernelFactory,
@@ -44,7 +46,7 @@ if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.means import Mean as GPyTorchMean
 
-_T = TypeVar("_T")
+_T = TypeVar("_T", bound=GPComponentFactoryProtocol)
 
 
 ##### Private custom-scaled factories #####
@@ -145,15 +147,8 @@ class _CustomScaledMeanFactory(LazyConstantMeanFactory):
     """A mean factory for the custom-scaled preset."""
 
 
-##### Dispatch logic #####
-
-
 def _dispatch(
-    factory_with_substance: Callable[[SearchSpace, Objective, pd.DataFrame], _T],
-    factory_without_substance: Callable[[SearchSpace, Objective, pd.DataFrame], _T],
-    searchspace: SearchSpace,
-    objective: Objective,
-    measurements: pd.DataFrame,
+    factory_with_substance: _T, factory_without_substance: _T, searchspace: SearchSpace
 ) -> _T:
     """Select a GP component factory based on search space content.
 
@@ -162,26 +157,20 @@ def _dispatch(
     search space, and to ``factory_without_substance`` otherwise.
 
     Args:
-        factory_with_substance: The factory to use when a
-            ``SubstanceParameter`` is present.
-        factory_without_substance: The factory to use otherwise.
+        factory_with_substance: The factory used when a substance parameter is present.
+        factory_without_substance: The factory used otherwise.
         searchspace: The search space.
-        objective: The objective.
-        measurements: The available measurements.
 
     Returns:
-        The component produced by the selected factory.
+        The selected factory.
     """
     # IMPROVE: Consider additional dispatch criteria such as dimensionality
     # or CustomDiscreteParameter presence in the future.
     from baybe.parameters.substance import SubstanceParameter
 
     if any(isinstance(p, SubstanceParameter) for p in searchspace.discrete.parameters):
-        return factory_with_substance(searchspace, objective, measurements)
-    return factory_without_substance(searchspace, objective, measurements)
-
-
-##### Public BayBE component factories #####
+        return factory_with_substance
+    return factory_without_substance
 
 
 @define
@@ -199,15 +188,14 @@ class _BayBENumericalKernelFactory(_PureKernelFactory):
             _ChenNumericalKernelFactory,
         )
 
-        return _dispatch(
+        factory = _dispatch(
             _ChenNumericalKernelFactory(parameter_selector=self.parameter_selector),
             _CustomScaledNumericalKernelFactory(
                 parameter_selector=self.parameter_selector
             ),
             searchspace,
-            objective,
-            measurements,
         )
+        return factory(searchspace, objective, measurements)
 
 
 BayBEKernelFactory = _enable_transfer_learning(
@@ -253,13 +241,12 @@ class BayBEMeanFactory(MeanFactoryProtocol):
     ) -> GPyTorchMean:
         from baybe.surrogates.gaussian_process.presets.chen import ChenMeanFactory
 
-        return _dispatch(
+        factory = _dispatch(
             ChenMeanFactory(),
             _CustomScaledMeanFactory(),
             searchspace,
-            objective,
-            measurements,
         )
+        return factory(searchspace, objective, measurements)
 
 
 @define
@@ -272,13 +259,12 @@ class BayBELikelihoodFactory(LikelihoodFactoryProtocol):
     ) -> GPyTorchLikelihood:
         from baybe.surrogates.gaussian_process.presets.chen import ChenLikelihoodFactory
 
-        return _dispatch(
+        factory = _dispatch(
             ChenLikelihoodFactory(),
             _CustomScaledLikelihoodFactory(),
             searchspace,
-            objective,
-            measurements,
         )
+        return factory(searchspace, objective, measurements)
 
 
 @define
