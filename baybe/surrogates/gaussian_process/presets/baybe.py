@@ -21,6 +21,7 @@ from baybe.parameters.selectors import (
     TypeSelector,
     to_parameter_selector,
 )
+from baybe.parameters.substance import SubstanceParameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
@@ -166,9 +167,7 @@ def _dispatch(
     """
     # IMPROVE: Consider additional dispatch criteria such as dimensionality
     # or CustomDiscreteParameter presence in the future.
-    from baybe.parameters.substance import SubstanceParameter
-
-    if any(isinstance(p, SubstanceParameter) for p in searchspace.discrete.parameters):
+    if any(isinstance(p, SubstanceParameter) for p in searchspace.parameters):
         return factory_with_substance
     return factory_without_substance
 
