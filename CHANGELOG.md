@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.15.0] - 2026-06-11
+### Breaking Changes
+- `GaussianProcessSurrogate` no longer automatically adds a task kernel in multi-task
+  scenarios. Custom kernel architectures must now explicitly include the task kernel,
+  e.g. via `ICMKernelFactory`.
+- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
+  from `baybe.searchspace.discrete` to `baybe.searchspace.utils`
+- `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
+  instead of a single tuple (needed for interpoint constraints)
+- `Kernel.to_gpytorch` now takes a `SearchSpace` instead of explicit `ard_num_dims`,
+  `batch_shape` and `active_dims` arguments, as kernels now automatically adjust this
+  configuration to the given search space
+- `KernelFactory` now obeys the more general `GPComponentFactoryProtocol`
+
 ### Added
 - Support for Python 3.14
 - Support for pandas 3
@@ -37,29 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `allow_missing` flag on `DiscreteConstraint.get_invalid` and `get_valid`
 - `zizmor` pre-commit hook for static analysis of GitHub Actions workflows
 
-### Breaking Changes
-- `GaussianProcessSurrogate` no longer automatically adds a task kernel in multi-task
-  scenarios. Custom kernel architectures must now explicitly include the task kernel,
-  e.g. via `ICMKernelFactory`
-- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
-  from `baybe.searchspace.discrete` to `baybe.searchspace.utils`
-- `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
-  instead of a single tuple (needed for interpoint constraints)
-- `Kernel.to_gpytorch` now takes a `SearchSpace` instead of explicit `ard_num_dims`,
-  `batch_shape` and `active_dims` arguments, as kernels now automatically adjust this
-  configuration to the given search space
-- `KernelFactory` now obeys the more general `GPComponentFactoryProtocol`
-
-### Fixed
-- Broken cache validation for certain `Campaign.recommend` cases
-- `ContinuousCardinalityConstraint` now works in hybrid search spaces
-- `SHAPInsight` breaking with `numpy>=2.4` due to no longer accepted implicit array to 
-  scalar conversion
-- Using `np.isclose` for assessing equality of `Interval` bounds instead of hard
-  equality check
-- Typo in `_FixedNumericalContinuousParameter` where `is_numeric` was used
-  instead of `is_numerical`
-
 ### Changed
 - The `BAYBE` GP preset now dispatches between the `CHEN` preset (when a
   `SubstanceParameter` is present) and custom dimension-scaled Gamma priors (otherwise)
@@ -75,6 +65,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   only for parameters involved in Polars-capable constraints, merging the rest
   incrementally via pandas
 - Minimum required pandas version increased to `2.1.0`
+
+### Fixed
+- Broken cache validation for certain `Campaign.recommend` cases
+- `ContinuousCardinalityConstraint` now works in hybrid search spaces
+- `SHAPInsight` breaking with `numpy>=2.4` due to no longer accepted implicit array to 
+  scalar conversion
+- Using `np.isclose` for assessing equality of `Interval` bounds instead of hard
+  equality check
+- Typo in `_FixedNumericalContinuousParameter` where `is_numeric` was used
+  instead of `is_numerical`
 
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
