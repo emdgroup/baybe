@@ -276,9 +276,7 @@ class ICMKernelFactory(_MetaKernelFactory):
         )
 
         return _BayBETaskKernelFactory(
-            TypeSelector(
-                (TaskParameter, CategoricalFidelityParameter)
-            )
+            TypeSelector((TaskParameter, CategoricalFidelityParameter))
         )
 
     @base_kernel_factory.validator
