@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 import cattrs.gen
 import numpy as np
 import pandas as pd
-from attrs import define, evolve, field
+from attrs import define, evolve, field, fields
 from attrs.validators import deep_iterable, instance_of
 from typing_extensions import override
 
@@ -91,14 +91,15 @@ class SubspaceContinuous(SerialMixin):
             constraints.extend(constraints_nonlin)
 
         if len(constraints) != n_constraints:
+            name = fields(SubspaceContinuous).constraints.name
             warnings.warn(
-                "You are using the deprecated `constraints_lin_eq`, "
-                "`constraints_lin_ineq` and/or `constraints_nonlin` arguments to "
-                "specify constraints. For backward compatibility, we have "
-                "automatically merged their content into the `constraints` attribute. "
-                "However, please update your code to directly use the `constraints` "
-                "argument instead since the deprecated arguments will be removed in "
-                "a future version.",
+                f"You are using the deprecated 'constraints_lin_eq', "
+                f"'constraints_lin_ineq' and/or 'constraints_nonlin' arguments to "
+                f"specify constraints. For backward compatibility, we have "
+                f"automatically merged their content into the '{name}' attribute. "
+                f"However, please update your code to directly use the '{name}' "
+                f"argument instead since the deprecated arguments will be removed in "
+                f"a future version.",
                 DeprecationWarning,
                 stacklevel=2,
             )
