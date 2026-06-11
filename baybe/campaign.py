@@ -1110,18 +1110,8 @@ def _structure_campaign(d: dict, cl: type) -> Campaign:
         campaign._excluded_experiments = excl_df.reset_index(drop=True)
 
     # Fix schema of empty DataFrames from legacy serialization
-    if campaign._measurements.columns.empty and campaign._measurements.empty:
+    if campaign._measurements.columns.empty:
         campaign._measurements = campaign._default_measurements()
-    if (
-        campaign._recommended_experiments.columns.empty
-        and campaign._recommended_experiments.empty
-    ):
-        campaign._recommended_experiments = campaign._default_recommended_experiments()
-    if (
-        campaign._excluded_experiments.columns.empty
-        and campaign._excluded_experiments.empty
-    ):
-        campaign._excluded_experiments = campaign._default_excluded_experiments()
     # <<<<<<<<<< Deprecation
 
     return campaign

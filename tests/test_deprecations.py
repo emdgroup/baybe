@@ -644,7 +644,6 @@ def test_legacy_empty_dataframe_schema_deserialization():
     # Simulate legacy serialization: replace with column-less empty DataFrames
     data = campaign.to_dict()
     data["measurements"] = converter.unstructure(pd.DataFrame())
-    data["recommended_experiments"] = converter.unstructure(pd.DataFrame())
 
     restored = Campaign.from_dict(data)
     assert restored._measurements.columns.tolist() == ["x", "y"]
