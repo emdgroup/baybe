@@ -278,10 +278,11 @@ class GaussianProcessSurrogate(Surrogate):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> GPyTorchMean:
-        """Return a GPyTorch mean module representing this surrogate's posterior mean.
+        """Return a GPyTorch mean module representing the surrogate's posterior mean.
 
-        The bound method satisfies :class:`.MeanFactoryProtocol` and can be passed
-        directly as ``mean_or_factory`` to a new :class:`GaussianProcessSurrogate`.
+        The bound method satisfies
+        :class:`~baybe.surrogates.gaussian_process.components.mean.MeanFactoryProtocol`
+        and can be passed directly to a new :class:`GaussianProcessSurrogate`.
 
         Args:
             searchspace: The search space of the new GP being fitted.
@@ -289,10 +290,10 @@ class GaussianProcessSurrogate(Surrogate):
             measurements: The training data of the new GP being fitted.
 
         Returns:
-            A GPyTorch mean module that evaluates this surrogate's posterior mean.
+            The posterior mean.
 
         Raises:
-            ModelNotTrainedError: If this surrogate has not been fitted yet.
+            ModelNotTrainedError: If the surrogate has not been fitted yet.
         """
         from copy import deepcopy
 
@@ -301,7 +302,7 @@ class GaussianProcessSurrogate(Surrogate):
         if self._model is None:
             raise ModelNotTrainedError(
                 f"'{self.__class__.__name__}' must be fitted before its "
-                f"'get_posterior_mean' can be used as a mean function."
+                f"'{self.get_posterior_mean.__name__}' can be used as a mean function."
             )
 
         context = _ModelContext(searchspace, objective, measurements)
@@ -317,8 +318,8 @@ class GaussianProcessSurrogate(Surrogate):
         class _PosteriorMean(gpytorch.means.Mean):
             """GPyTorch mean wrapping a trained GP's posterior.
 
-            Overrides ``train`` to keep all children in eval mode, preventing
-            ``fit_gpytorch_mll`` from corrupting learned transform parameters.
+            Overrides ``train`` to keep all children in eval mode, preventing optimizers
+            from corrupting learned transform parameters.
             """
 
             def __init__(self, gp: GPyTorchModel) -> None:
