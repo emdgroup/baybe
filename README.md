@@ -15,11 +15,9 @@
 [![Logo](https://raw.githubusercontent.com/emdgroup/baybe/main/docs/_static/banner2.svg)](https://github.com/emdgroup/baybe/)
 
 &nbsp;
-<a href="https://emdgroup.github.io/baybe/">Homepage<a/>
+<a href="https://emdgroup.github.io/baybe/">Documentation<a/>
 &nbsp;•&nbsp;
-<a href="https://emdgroup.github.io/baybe/stable/userguide/userguide.html">User Guide<a/>
-&nbsp;•&nbsp;
-<a href="https://emdgroup.github.io/baybe/stable/_autosummary/baybe.html">Documentation<a/>
+<a href="https://emdgroup.github.io/baybe/stable/_autosummary/baybe.html">API Reference<a/>
 &nbsp;•&nbsp;
 <a href="https://emdgroup.github.io/baybe/stable/misc/contributing_link.html">Contribute<a/>
 &nbsp;
