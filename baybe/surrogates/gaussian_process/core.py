@@ -272,7 +272,7 @@ class GaussianProcessSurrogate(Surrogate):
         gp._custom_kernel = False  # preset are first-party features
         return gp
 
-    def get_posterior_mean(
+    def posterior_mean_function(
         self,
         searchspace: SearchSpace,
         objective: Objective,
@@ -302,7 +302,8 @@ class GaussianProcessSurrogate(Surrogate):
         if self._model is None:
             raise ModelNotTrainedError(
                 f"'{self.__class__.__name__}' must be fitted before its "
-                f"'{self.get_posterior_mean.__name__}' can be used as a mean function."
+                f"'{self.posterior_mean_function.__name__}' can be used as a "
+                f"mean function."
             )
 
         context = _ModelContext(searchspace, objective, measurements)
