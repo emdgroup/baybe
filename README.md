@@ -141,8 +141,10 @@ For more information on this step, see our
 
 ### Defining the Optimization Objective
 
-In BayBE's language, the reaction yield can be represented as a `NumericalTarget`,
-which we wrap into a `SingleTargetObjective`:
+In BayBE's language, the reaction yield can be represented as a
+[`NumericalTarget`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.targets.numerical.NumericalTarget.html),
+which we wrap into a
+[`SingleTargetObjective`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.objectives.single.SingleTargetObjective.html):
 
 ```python
 from baybe.targets import NumericalTarget
@@ -151,18 +153,21 @@ from baybe.objectives import SingleTargetObjective
 target = NumericalTarget(name="Yield")
 objective = SingleTargetObjective(target=target)
 ```
-In cases where we are confronted with multiple (potentially conflicting) targets 
-(e.g., yield vs selectivity),
-the `ParetoObjective` or `DesirabilityObjective` can be used to define how the targets should be balanced.
-For more details, see the
+In cases where we are confronted with multiple (potentially conflicting) targets (e.g.,
+yield vs selectivity), the
+[`ParetoObjective`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.objectives.pareto.ParetoObjective.html)
+or
+[`DesirabilityObjective`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.objectives.desirability.DesirabilityObjective.html)
+can be used to define how the targets should be balanced. For more details, see the
 [objectives section](https://emdgroup.github.io/baybe/stable/components/objectives.html)
 of the user guide.
 
 ### Defining the Search Space
 
 Next, we inform BayBE about the available "control knobs", that is, the underlying
-reaction parameters we can tune to optimize the yield. 
-In this case we tune granularity, pressure and solvent, each being encoded as a `Parameter`.
+reaction parameters we can tune to optimize the yield. In this case we tune granularity,
+pressure and solvent, each being encoded as a
+[`Parameter`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.parameters.base.Parameter.html).
 We also need to specify which values individual parameters can take.
 
 ```python
@@ -206,7 +211,8 @@ relationships between our parameters. Details can be found in the
 In this example, we assume no further constraints.
 
 With the parameter definitions at hand, we can now create our
-`SearchSpace` based on the Cartesian product of all possible parameter values:
+[`SearchSpace`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.searchspace.core.SearchSpace.html)
+based on the Cartesian product of all possible parameter values:
 
 ```python
 from baybe.searchspace import SearchSpace
@@ -224,7 +230,7 @@ As an optional step, we can specify details on how the optimization of the exper
 performed. If omitted, BayBE will choose a default Bayesian optimization setting.
 
 For our example, we combine two recommenders via a so-called meta recommender named
-`TwoPhaseMetaRecommender`:
+[`TwoPhaseMetaRecommender`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.html):
 
 1. In cases where no measurements have been made prior to the interaction with BayBE,
    the parameters will be recommended with the `initial_recommender`.
@@ -250,7 +256,9 @@ of the user guide.
 
 ### The Optimization Loop
 
-We can now construct a `Campaign` that performs the Bayesian optimization of the experimental configurations:
+We can now construct a
+[`Campaign`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.campaign.Campaign.html)
+that performs the Bayesian optimization of the experimental configurations:
 
 ```python
 from baybe import Campaign
@@ -286,7 +294,9 @@ measure the reaction yield.
 29        fine            5.0  Solvent B
 ```
 
-Next, we need to conduct the recommended experiments and record the corresponding `Target` values.
+Next, we need to conduct the recommended experiments and record the corresponding
+[`Target`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.targets.base.Target.html)
+values.
 
 ```python
 df["Yield"] = [
@@ -303,14 +313,17 @@ print(df)
 29        fine            5.0  Solvent B   59.4
 ```
 
-Now, we can add the newly measured `Target` values to the `Campaign`:
+Now, we can add the newly measured
+[`Target`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.targets.base.Target.html)
+values to the
+[`Campaign`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.campaign.Campaign.html):
 
 ```python
 campaign.add_measurements(df)
 ```
 
 With the newly provided data, BayBE can produce a refined recommendation for the next iteration.
-This loop typically continues until a desired `Target` value is achieved in the experiment.
+This loop typically continues until a desired [`Target`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.targets.base.Target.html) value is achieved in the experiment.
 
 ### Inspect the Progress of the Experimental Configuration Optimization
 
@@ -320,14 +333,19 @@ by tuning the solvent, base and ligand
 Each line shows the best target value that was cumulatively achieved after a given number of experimental iterations.
 
 
-Different lines show outcomes of `Campaigns` with different settings.
+Different lines show outcomes of
+[`Campaign`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.campaign.Campaign.html)s
+with different settings.
 
 ![Substance Encoding Example](./examples/Backtesting/full_lookup_light.svg)
 
-In particular, the five `Campaigns` differ in how molecules are encoded within 
-each chemical `Parameter`. Instead of simply one-hot encoding each SMILES string,
-`SubstanceParameter` can be used to directly compute chemical fingerprints from 
-the input SMILES.
+In particular, the five
+[`Campaign`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.campaign.Campaign.html)s
+differ in how molecules are encoded within each chemical
+[`Parameter`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.parameters.base.Parameter.html).
+Instead of simply one-hot encoding each SMILES string,
+[`SubstanceParameter`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.parameters.substance.SubstanceParameter.html)
+can be used to directly compute chemical fingerprints from the input SMILES.
 We can see that optimization is more efficient when 
 using chemical encodings (e.g., *MORDRED*) rather than encoding categories with *one-hot* encoding. The latter is, in fact, no better than *randomly* suggesting parameter configurations at each experimental iteration.
 
@@ -394,7 +412,7 @@ pip install 'baybe[chem,simulation]'
 The available groups are:
 - `extras`: Installs all dependencies required for optional features.
 - `benchmarking`: Required for running the benchmarking module.
-- `chem`: Cheminformatics utilities (e.g. for the `SubstanceParameter`).
+- `chem`: Cheminformatics utilities (e.g. for the [`SubstanceParameter`](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.parameters.substance.SubstanceParameter.html)).
 - `docs`: Required for creating the documentation.
 - `examples`: Required for running the examples/streamlit.
 - `lint`: Required for linting and formatting.
