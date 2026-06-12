@@ -321,20 +321,13 @@ class GaussianProcessSurrogate(Surrogate):
             ``fit_gpytorch_mll`` from corrupting learned transform parameters.
             """
 
-            def __init__(
-                self,
-                gp: GPyTorchModel,
-                input_transform: Normalize,
-                outcome_transform: Standardize,
-            ) -> None:
+            def __init__(self, gp: GPyTorchModel) -> None:
                 super().__init__()
                 self.gp = deepcopy(gp)
                 for param in self.gp.parameters():
                     param.requires_grad = False
                 self.gp.eval()
                 self.gp.likelihood.eval()
-                self.input_transform = input_transform
-                self.outcome_transform = outcome_transform
 
             @override
             def train(self, mode: bool = True) -> _PosteriorMean:
@@ -346,12 +339,12 @@ class GaussianProcessSurrogate(Surrogate):
             def forward(self, x: Tensor) -> Tensor:
                 """Compute the mean using the wrapped GP's posterior."""
                 with gpytorch.settings.fast_pred_var():
-                    x_raw = self.input_transform.untransform(x)
+                    x_raw = input_transform.untransform(x)
                     posterior_mean = self.gp.posterior(x_raw).mean
-                    standardized, _ = self.outcome_transform(posterior_mean)
+                    standardized, _ = outcome_transform(posterior_mean)
                     return standardized.squeeze(-1)
 
-        return _PosteriorMean(self._model, input_transform, outcome_transform)
+        return _PosteriorMean(self._model)
 
     @override
     def to_botorch(self) -> GPyTorchModel:
