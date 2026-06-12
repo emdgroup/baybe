@@ -48,11 +48,12 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
 )
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
+from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     from botorch.models.gpytorch import GPyTorchModel
-    from botorch.models.transforms.input import InputTransform
-    from botorch.models.transforms.outcome import OutcomeTransform
+    from botorch.models.transforms.input import InputTransform, Normalize
+    from botorch.models.transforms.outcome import OutcomeTransform, Standardize
     from botorch.posteriors import Posterior
     from gpytorch.kernels import Kernel as GPyTorchKernel
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
@@ -211,6 +212,31 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
+    @staticmethod
+    def _make_input_transform(context: _ModelContext) -> Normalize:
+        """Create the input transform for the Gaussian process."""
+        from botorch.models.transforms.input import Normalize
+
+        return Normalize(
+            len(context.searchspace.comp_rep_columns),
+            bounds=context.parameter_bounds,
+            indices=context.numerical_indices,
+        )
+
+    @staticmethod
+    def _make_outcome_transform(context: _ModelContext) -> Standardize:
+        """Create the outcome transform for the Gaussian process."""
+        from botorch.models.transforms.outcome import Standardize
+
+        train_y = to_tensor(
+            context.objective._pre_transform(context.measurements, allow_extra=True)
+        )
+        if train_y.ndim == 1:
+            train_y = train_y.unsqueeze(-1)
+        transform = Standardize(m=train_y.shape[-1])
+        transform(train_y)  # fits means/stdvs; GP will re-fit in train mode
+        return transform
+
     @classmethod
     def from_preset(
         cls,
@@ -271,9 +297,6 @@ class GaussianProcessSurrogate(Surrogate):
         from copy import deepcopy
 
         import gpytorch
-        from botorch.models.transforms.input import Normalize
-
-        from baybe.utils.dataframe import to_tensor
 
         if self._model is None:
             raise ModelNotTrainedError(
@@ -284,22 +307,11 @@ class GaussianProcessSurrogate(Surrogate):
         context = _ModelContext(searchspace, objective, measurements)
 
         # Undo the new GP's input normalization before querying the prior GP
-        input_transform = Normalize(
-            len(searchspace.comp_rep_columns),
-            bounds=context.parameter_bounds,
-            indices=context.numerical_indices,
-        )
+        input_transform = self._make_input_transform(context)
         input_transform.eval()
 
         # Match the new GP's outcome standardization
-        from botorch.models.transforms.outcome import Standardize
-
-        pre_transformed = objective._pre_transform(measurements, allow_extra=True)
-        train_y_tensor = to_tensor(pre_transformed)
-        if train_y_tensor.ndim == 1:
-            train_y_tensor = train_y_tensor.unsqueeze(-1)
-        outcome_transform = Standardize(m=train_y_tensor.shape[-1])
-        outcome_transform(train_y_tensor)
+        outcome_transform = self._make_outcome_transform(context)
         outcome_transform.eval()
 
         class _PosteriorMean(gpytorch.means.Mean):
@@ -366,7 +378,6 @@ class GaussianProcessSurrogate(Surrogate):
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         import botorch
-        from botorch.models.transforms import Normalize, Standardize
 
         assert self._searchspace is not None  # provided by base class
         assert self._objective is not None  # provided by base class
@@ -393,12 +404,8 @@ class GaussianProcessSurrogate(Surrogate):
 
         ### Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
-        input_transform = Normalize(
-            train_x.shape[-1],
-            bounds=context.parameter_bounds,
-            indices=context.numerical_indices,
-        )
-        outcome_transform = Standardize(train_y.shape[-1])
+        input_transform = self._make_input_transform(context)
+        outcome_transform = self._make_outcome_transform(context)
 
         ### Mean
         mean = self.mean_factory(
