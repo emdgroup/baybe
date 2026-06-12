@@ -43,4 +43,5 @@ class LazyConstantMeanFactory(MeanFactoryProtocol):
         return ConstantMean()
 
 
-gc.collect()  # Collect leftover original slotted classes created by attrs
+# Collect leftover original slotted classes created by attrs
+gc.collect()
