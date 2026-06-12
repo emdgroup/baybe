@@ -246,7 +246,7 @@ def test_get_posterior_mean_correct_under_different_bounds():
     new_ss = SearchSpace.from_product(new_params)
 
     new_surrogate = GaussianProcessSurrogate(
-        mean_or_factory=prior_surrogate.get_posterior_mean
+        mean_or_factory=prior_surrogate.posterior_mean_function
     )
     # Train on data that lies exactly on the prior mean to avoid kernel effects
     training_points = pd.DataFrame({"x1": [0.0, 10.0]})
@@ -281,7 +281,7 @@ def test_get_posterior_mean_same_bounds():
     expected_mean = prior_surrogate.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
 
     new_surrogate = GaussianProcessSurrogate(
-        mean_or_factory=prior_surrogate.get_posterior_mean
+        mean_or_factory=prior_surrogate.posterior_mean_function
     )
     # Train on data that lies exactly on the prior mean
     training_points = pd.DataFrame({"x1": [0.0, 5.0]})
@@ -306,6 +306,6 @@ def test_get_posterior_mean_raises_if_not_fitted():
     from baybe.exceptions import ModelNotTrainedError
 
     with pytest.raises(ModelNotTrainedError, match="must be fitted"):
-        GaussianProcessSurrogate().get_posterior_mean(
+        GaussianProcessSurrogate().posterior_mean_function(
             searchspace, objective, measurements
         )
