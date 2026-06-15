@@ -29,9 +29,18 @@ class _ParameterKind(Flag):
     def from_parameter(parameter: Parameter) -> _ParameterKind:
         """Determine the kind of a parameter from its type."""
         from baybe.parameters.categorical import TaskParameter
+        from baybe.parameters.fidelity import (
+            CategoricalFidelityParameter,
+            NumericalDiscreteFidelityParameter,
+        )
 
         if isinstance(parameter, TaskParameter):
             return _ParameterKind.TASK
+        if isinstance(
+            parameter,
+            (CategoricalFidelityParameter, NumericalDiscreteFidelityParameter),
+        ):
+            return _ParameterKind.FIDELITY
         return _ParameterKind.REGULAR
 
 
