@@ -285,10 +285,10 @@ class ICMKernelFactory(_MetaKernelFactory):
     @task_kernel_factory.default
     def _default_task_kernel_factory(self) -> KernelFactoryProtocol:
         from baybe.surrogates.gaussian_process.presets.baybe import (
-            _BayBETaskKernelFactory,
+            _BayBEIndexKernelFactory,
         )
 
-        return _BayBETaskKernelFactory(
+        return _BayBEIndexKernelFactory(
             TypeSelector((TaskParameter, CategoricalFidelityParameter))
         )
 

@@ -204,7 +204,7 @@ BayBEKernelFactory = _enable_index_kernel(
 
 
 @define
-class _BayBETaskKernelFactory(_PureKernelFactory):
+class _BayBEIndexKernelFactory(_PureKernelFactory):
     """The default index kernel factory for GP surrogates.
 
     Handles both task parameters (transfer learning) and categorical fidelity
