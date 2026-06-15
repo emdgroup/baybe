@@ -97,7 +97,8 @@ class GaussianProcessSurrogateSTMF(Surrogate):
     @override
     @staticmethod
     def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
+        # For GPs, we let botorch handle the scaling. See Note [Scaling Workaround]
+        # in gaussian_process/core.py.
         return None
 
     @override

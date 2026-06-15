@@ -353,7 +353,7 @@ class SearchSpace(SerialMixin):
         """The number of fidelities encoded in the search space."""
         # See TODO [16932] above
         if (fidelity_param := self._fidelity_parameter) is None:
-            # When there are no task parameters, we effectively have a single task
+            # No fidelity parameter means we effectively have a single fidelity.
             return 1
         return len(fidelity_param.values)
 
