@@ -56,9 +56,11 @@ class GaussianProcessSurrogateSTMF(Surrogate):
         import botorch
         import gpytorch
 
-        assert self._searchspace is not None
+        assert self._searchspace is not None  # provided by base class
+        assert self._objective is not None  # provided by base class
+        assert self._measurements is not None  # provided by base class
 
-        context = _ModelContext(self._searchspace)
+        context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
         assert context.n_fidelity_dimensions > 0, (
             f"{self.__class__.__name__} can only be fit on multi fidelity searchspaces."

@@ -5,9 +5,11 @@ from __future__ import annotations
 import gc
 from typing import TYPE_CHECKING
 
+import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
 
+from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 
 if TYPE_CHECKING:
@@ -20,6 +22,12 @@ class _ModelContext:
 
     searchspace: SearchSpace = field(validator=instance_of(SearchSpace))
     """The search space the model is trained on."""
+
+    objective: Objective = field(validator=instance_of(Objective))
+    """The objective for which the model is trained."""
+
+    measurements: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
+    """The training data in experimental representation."""
 
     @property
     def task_idx(self) -> int | None:
