@@ -205,12 +205,19 @@ BayBEKernelFactory = _enable_index_kernel(
 
 @define
 class _BayBETaskKernelFactory(_PureKernelFactory):
-    """The default task kernel factory for GP surrogates."""
+    """The default index kernel factory for GP surrogates.
+
+    Handles both task parameters (transfer learning) and categorical fidelity
+    parameters (multi-fidelity), which both use a :class:`~baybe.kernels.basic.
+    PositiveIndexKernel` to model free-form correlations between their levels.
+    """
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
-    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.TASK
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = (
+        _ParameterKind.TASK | _ParameterKind.FIDELITY
+    )
     # See base class.
 
     parameter_selector: ParameterSelectorProtocol | None = field(
@@ -223,9 +230,14 @@ class _BayBETaskKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel:
+        n_index = (
+            searchspace.n_tasks
+            if searchspace.task_idx is not None
+            else searchspace.n_fidelities
+        )
         return PositiveIndexKernel(
-            num_tasks=searchspace.n_tasks,
-            rank=searchspace.n_tasks,
+            num_tasks=n_index,
+            rank=n_index,
             parameter_names=self.get_parameter_names(searchspace),
         )
 

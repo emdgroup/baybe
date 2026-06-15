@@ -294,24 +294,25 @@ class ICMKernelFactory(_MetaKernelFactory):
 
     @base_kernel_factory.validator
     def _validate_base_kernel_factory(self, _, factory: KernelFactoryProtocol):
+        _index_kinds = _ParameterKind.TASK | _ParameterKind.FIDELITY
         if (
             isinstance(factory, _PureKernelFactory)
-            and factory._supported_parameter_kinds & _ParameterKind.TASK
+            and factory._supported_parameter_kinds & _index_kinds
         ):
             raise TypeError(
                 f"The specified '{fields(ICMKernelFactory).base_kernel_factory.alias}' "
-                f"must not support task parameters."
+                f"must not support task or fidelity parameters."
             )
 
     @task_kernel_factory.validator
     def _validate_task_kernel_factory(self, _, factory: KernelFactoryProtocol):
         if (
             isinstance(factory, _PureKernelFactory)
-            and factory._supported_parameter_kinds is not _ParameterKind.TASK
+            and factory._supported_parameter_kinds & _ParameterKind.REGULAR
         ):
             raise TypeError(
                 f"The specified '{fields(ICMKernelFactory).task_kernel_factory.alias}' "
-                f"must support only task parameters."
+                f"must support only task or fidelity parameters."
             )
 
     @override
