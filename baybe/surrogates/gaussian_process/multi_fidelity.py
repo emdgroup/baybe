@@ -41,7 +41,11 @@ if TYPE_CHECKING:
 
 @define
 class GaussianProcessSurrogateSTMF(Surrogate):
-    """Botorch's single task multi fidelity Gaussian process."""
+    """A GP surrogate for numerical discrete fidelity parameters.
+
+    Wraps BoTorch's ``SingleTaskMultiFidelityGP``, which uses a downsampling kernel
+    to model smooth degradation along a continuous fidelity axis.
+    """
 
     supports_multi_fidelity: ClassVar[bool] = True
     # See base class.
