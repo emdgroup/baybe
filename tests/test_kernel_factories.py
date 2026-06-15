@@ -8,11 +8,13 @@ from pytest import param
 
 from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.parameters.categorical import CategoricalParameter, TaskParameter
+from baybe.parameters.fidelity import CategoricalFidelityParameter
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
 from baybe.searchspace.core import SearchSpace
+from baybe.surrogates.gaussian_process.components.kernel import _enable_index_kernel
 from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEKernelFactory,
     _BayBENumericalKernelFactory,
@@ -58,7 +60,17 @@ _SELECT_ALL = lambda parameter: True  # noqa: E731
                 TaskParameter("task", ["t1", "t2"]),
             ],
             None,
-            id="combined_accepts_both",
+            id="combined_accepts_task",
+        ),
+        param(
+            _BayBENumericalKernelFactory(parameter_selector=_SELECT_ALL),
+            [
+                CategoricalFidelityParameter(
+                    "fid", ["lo", "hi"], costs=[1, 10], zeta=[0.5, 0.0]
+                )
+            ],
+            IncompatibleSearchSpaceError,
+            id="regular_rejects_fidelity",
         ),
     ],
 )
@@ -74,3 +86,9 @@ def test_factory_parameter_kind_validation(factory, parameters, error):
         else pytest.raises(error, match="does not support")
     ):
         factory(searchspace, objective, measurements)
+
+
+def test_enable_index_kernel_guard():
+    """_enable_index_kernel raises when the factory already supports task/fidelity."""
+    with pytest.raises(TypeError, match="already supports task or fidelity"):
+        _enable_index_kernel(_BayBETaskKernelFactory)
