@@ -22,7 +22,7 @@ from baybe.parameters.selectors import (
     to_parameter_selector,
 )
 from baybe.parameters.substance import SubstanceParameter
-from baybe.searchspace.core import SearchSpace
+from baybe.searchspace.core import SearchSpace, SearchSpaceFidelityType
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     FitCriterionFactoryProtocol,
@@ -286,10 +286,18 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> FitCriterion:
+        # Use LOO whenever the model uses an IndexKernel structure — i.e., for
+        # transfer learning (TaskParameter) and categorical multi-fidelity
+        # (CategoricalFidelityParameter).
+        uses_index_kernel = (
+            searchspace.task_idx is not None
+            or searchspace.fidelity_type
+            == SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+        )
         return (
-            FitCriterion.MARGINAL_LOG_LIKELIHOOD
-            if searchspace.n_tasks == 1
-            else FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
+            FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
+            if uses_index_kernel
+            else FitCriterion.MARGINAL_LOG_LIKELIHOOD
         )
 
 
