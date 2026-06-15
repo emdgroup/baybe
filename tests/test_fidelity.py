@@ -4,10 +4,12 @@ import pandas as pd
 import pytest
 from pytest import param
 
+from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.fidelity import (
     CategoricalFidelityParameter,
     NumericalDiscreteFidelityParameter,
 )
+from baybe.searchspace.core import SearchSpace
 
 
 def test_categorical_fidelity_parameter_construction():
@@ -57,3 +59,60 @@ def test_fidelity_parameter_transform(parameter, series, expected):
     """Transform must correctly map fidelity values to computational representation."""
     result = parameter.transform(series)
     assert list(result["fidelity"]) == expected
+
+
+@pytest.mark.parametrize(
+    ("parameters", "match"),
+    [
+        param(
+            [
+                CategoricalFidelityParameter(
+                    "f1", values=["lo", "hi"], costs=[1, 10], zeta=[0.5, 0.0]
+                ),
+                CategoricalFidelityParameter(
+                    "f2", values=["a", "b"], costs=[1, 5], zeta=[0.3, 0.0]
+                ),
+            ],
+            "at most one fidelity",
+            id="two_categorical_fidelity",
+        ),
+        param(
+            [
+                CategoricalFidelityParameter(
+                    "f1", values=["lo", "hi"], costs=[1, 10], zeta=[0.5, 0.0]
+                ),
+                NumericalDiscreteFidelityParameter(
+                    "f2", values=[0.5, 1.0], costs=[1, 10]
+                ),
+            ],
+            "at most one fidelity",
+            id="mixed_fidelity_types",
+        ),
+        param(
+            [
+                NumericalDiscreteFidelityParameter(
+                    "f1", values=[0.5, 1.0], costs=[1, 10]
+                ),
+                NumericalDiscreteFidelityParameter(
+                    "f2", values=[0.2, 1.0], costs=[1, 5]
+                ),
+            ],
+            "at most one fidelity",
+            id="two_numerical_fidelity",
+        ),
+        param(
+            [
+                TaskParameter("task", values=["a", "b"]),
+                CategoricalFidelityParameter(
+                    "f", values=["lo", "hi"], costs=[1, 10], zeta=[0.5, 0.0]
+                ),
+            ],
+            "Combining task.*fidelity",
+            id="task_plus_fidelity",
+        ),
+    ],
+)
+def test_invalid_fidelity_parameter_combinations(parameters, match):
+    """Search spaces with invalid fidelity parameter combinations are rejected."""
+    with pytest.raises(NotImplementedError, match=match):
+        SearchSpace.from_product(parameters)

@@ -9,6 +9,10 @@ import pandas as pd
 from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
+from baybe.parameters.fidelity import (
+    CategoricalFidelityParameter,
+    NumericalDiscreteFidelityParameter,
+)
 from baybe.utils.dataframe import get_transform_objects
 
 try:  # For python < 3.11, use the exceptiongroup backport
@@ -39,14 +43,34 @@ def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC
         EmptySearchSpaceError: If the parameter list is empty.
         NotImplementedError: If more than one
             :class:`baybe.parameters.categorical.TaskParameter` is requested.
+        NotImplementedError: If more than one fidelity parameter is present.
+        NotImplementedError: If task and fidelity parameters are combined.
     """
     if not parameters:
         raise EmptySearchSpaceError("At least one parameter must be provided.")
 
     # TODO [16932]: Remove once more task parameters are supported
-    if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
+    task_params = [p for p in parameters if isinstance(p, TaskParameter)]
+    if len(task_params) > 1:
         raise NotImplementedError(
             "Currently, at most one task parameter can be considered."
+        )
+
+    fidelity_params = [
+        p
+        for p in parameters
+        if isinstance(
+            p, (CategoricalFidelityParameter, NumericalDiscreteFidelityParameter)
+        )
+    ]
+    if len(fidelity_params) > 1:
+        raise NotImplementedError(
+            "Currently, at most one fidelity parameter can be considered."
+        )
+
+    if task_params and fidelity_params:
+        raise NotImplementedError(
+            "Combining task parameters with fidelity parameters is not supported."
         )
 
     # Assert: unique names
