@@ -92,7 +92,7 @@ class GaussianProcessSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = True
     # See base class.
 
-    supports_multi_fidelity = True
+    supports_multi_fidelity: ClassVar[bool] = True
     # See base class.
 
     _custom_kernel: bool = field(init=False, default=False, repr=False, eq=False)

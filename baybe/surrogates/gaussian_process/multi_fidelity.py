@@ -163,10 +163,10 @@ class GaussianProcessSurrogateSTMF(Surrogate):
     @override
     def __str__(self) -> str:
         return (
-            "Wrapper for a"
+            "Wrapper for a "
             ":class:`~botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP`,"
-            "used as the default GP for discrete numerical fidelity parameters in,"
-            "e.g., multi fidelity knowledge gradient."
+            " used as the default GP for discrete numerical fidelity parameters,"
+            " e.g., in multi fidelity knowledge gradient."
         )
 
 
