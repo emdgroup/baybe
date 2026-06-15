@@ -3,13 +3,29 @@
 from __future__ import annotations
 
 import gc
+from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
+from attrs.validators import is_callable
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
 from baybe.surrogates.base import Surrogate
+from baybe.surrogates.gaussian_process.components.fit_criterion import (
+    FitCriterionFactoryProtocol,
+)
+from baybe.surrogates.gaussian_process.components.generic import (
+    GPComponentType,
+    to_component_factory,
+)
+from baybe.surrogates.gaussian_process.components.likelihood import (
+    LikelihoodFactoryProtocol,
+)
+from baybe.surrogates.gaussian_process.presets.baybe import (
+    BayBEFitCriterionFactory,
+    BayBELikelihoodFactory,
+)
 from baybe.surrogates.gaussian_process.utils import _ModelContext
 
 if TYPE_CHECKING:
@@ -26,6 +42,36 @@ class GaussianProcessSurrogateSTMF(Surrogate):
 
     supports_multi_fidelity: ClassVar[bool] = True
     # See base class.
+
+    likelihood_factory: LikelihoodFactoryProtocol = field(
+        alias="likelihood_or_factory",
+        factory=BayBELikelihoodFactory,
+        converter=partial(  # type: ignore[misc]
+            to_component_factory, component_type=GPComponentType.LIKELIHOOD
+        ),
+        validator=is_callable(),
+    )
+    """The factory used to create the likelihood for the Gaussian process.
+
+    Accepts:
+        * :class:`.components.likelihood.LikelihoodFactory`
+        * :class:`gpytorch.likelihoods.Likelihood`
+    """
+
+    fit_criterion_factory: FitCriterionFactoryProtocol = field(
+        alias="fit_criterion_or_factory",
+        factory=BayBEFitCriterionFactory,
+        converter=partial(  # type: ignore[misc]
+            to_component_factory, component_type=GPComponentType.CRITERION
+        ),
+        validator=is_callable(),
+    )
+    """The fitting criterion for Gaussian process hyperparameter optimization.
+
+    Accepts:
+        * :class:`.components.fit_criterion.FitCriterion`
+        * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
+    """
 
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
@@ -54,7 +100,7 @@ class GaussianProcessSurrogateSTMF(Surrogate):
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         import botorch
-        import gpytorch
+        from botorch.models.transforms import Normalize, Standardize
 
         assert self._searchspace is not None  # provided by base class
         assert self._objective is not None  # provided by base class
@@ -62,31 +108,38 @@ class GaussianProcessSurrogateSTMF(Surrogate):
 
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
-        assert context.n_fidelity_dimensions > 0, (
+        assert context.fidelity_idx is not None, (
             f"{self.__class__.__name__} can only be fit on multi fidelity searchspaces."
         )
 
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        input_transform = botorch.models.transforms.Normalize(  # type: ignore[attr-defined]
+        ### Input/output scaling
+        input_transform = Normalize(
             train_x.shape[-1],
             bounds=context.parameter_bounds,
             indices=context.numerical_indices,
         )
-        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])  # type: ignore[attr-defined]
+        outcome_transform = Standardize(train_y.shape[-1])
 
-        # construct and fit the Gaussian process
+        ### Likelihood
+        likelihood = self.likelihood_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        ### Criterion
+        criterion = self.fit_criterion_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        ### Model construction and fitting
         self._model = botorch.models.SingleTaskMultiFidelityGP(
             train_x,
             train_y,
             input_transform=input_transform,
             outcome_transform=outcome_transform,
-            data_fidelities=None
-            if context.fidelity_idx is None
-            else (context.fidelity_idx,),
+            likelihood=likelihood,
+            data_fidelities=(context.fidelity_idx,),
         )
-
-        mll = gpytorch.ExactMarginalLogLikelihood(self._model.likelihood, self._model)
-
+        mll = criterion.to_gpytorch(self._model.likelihood, self._model)
         botorch.fit.fit_gpytorch_mll(mll)
 
     @override
