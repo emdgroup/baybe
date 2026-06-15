@@ -318,39 +318,47 @@ class ICMKernelFactory(_MetaKernelFactory):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-        if searchspace.n_tasks == 1:
+        if searchspace.task_idx is None and searchspace.fidelity_idx is None:
             raise IncompatibleSearchSpaceError(
                 f"'{type(self).__name__}' can only be used with a searchspace that "
-                f"contains a '{TaskParameter.__name__}'."
+                f"contains a '{TaskParameter.__name__}' or a "
+                f"'{CategoricalFidelityParameter.__name__}'."
             )
 
         base_kernel = self.base_kernel_factory(searchspace, objective, measurements)
-        task_kernel = self.task_kernel_factory(searchspace, objective, measurements)
+        index_kernel = self.task_kernel_factory(searchspace, objective, measurements)
         if isinstance(base_kernel, Kernel):
             base_kernel = base_kernel.to_gpytorch(searchspace)
-        if isinstance(task_kernel, Kernel):
-            task_kernel = task_kernel.to_gpytorch(searchspace)
+        if isinstance(index_kernel, Kernel):
+            index_kernel = index_kernel.to_gpytorch(searchspace)
 
-        # Ensure correct partitioning between base and task kernels active dimensions
+        # Ensure correct partitioning between base and index kernels active dimensions.
+        # The index dimension is either the task or the categorical fidelity column —
+        # exactly one is non-None after the guard above.
+        index_idx = (
+            searchspace.task_idx
+            if searchspace.task_idx is not None
+            else searchspace.fidelity_idx
+        )
         all_idcs = set(range(len(searchspace.comp_rep_columns)))
-        allowed_task_idcs = {searchspace.task_idx}
-        allowed_base_idcs = all_idcs - allowed_task_idcs
+        allowed_index_idcs = {index_idx}
+        allowed_base_idcs = all_idcs - allowed_index_idcs
         base_idcs = (
             set(d.tolist()) if (d := base_kernel.active_dims) is not None else all_idcs
         )
-        task_idcs = (
-            set(d.tolist()) if (d := task_kernel.active_dims) is not None else all_idcs
+        index_idcs = (
+            set(d.tolist()) if (d := index_kernel.active_dims) is not None else all_idcs
         )
 
         if not base_idcs <= allowed_base_idcs:
             raise ValueError(
                 f"The base kernel's 'active_dims' {base_idcs} must be a subset of "
-                f"the non-task indices {allowed_base_idcs}."
+                f"the non-index indices {allowed_base_idcs}."
             )
-        if task_idcs != allowed_task_idcs:
+        if index_idcs != allowed_index_idcs:
             raise ValueError(
-                f"The task kernel's 'active_dims' {task_idcs} does not match "
-                f"the task index {allowed_task_idcs}."
+                f"The index kernel's 'active_dims' {index_idcs} does not match "
+                f"the index column {allowed_index_idcs}."
             )
 
-        return base_kernel * task_kernel
+        return base_kernel * index_kernel

@@ -14,7 +14,10 @@ from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
 )
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.components.kernel import _enable_index_kernel
+from baybe.surrogates.gaussian_process.components.kernel import (
+    ICMKernelFactory,
+    _enable_index_kernel,
+)
 from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEKernelFactory,
     _BayBENumericalKernelFactory,
@@ -92,3 +95,15 @@ def test_enable_index_kernel_guard():
     """_enable_index_kernel raises when the factory already supports task/fidelity."""
     with pytest.raises(TypeError, match="already supports task or fidelity"):
         _enable_index_kernel(_BayBETaskKernelFactory)
+
+
+_icm_guard_message = "contains a 'TaskParameter' or a 'CategoricalFidelityParameter'"
+
+
+def test_icm_guard_rejects_plain_space():
+    """ICMKernelFactory raises for a space with no task or fidelity parameter."""
+    searchspace = SearchSpace.from_product([NumericalContinuousParameter("x", (0, 1))])
+    with pytest.raises(IncompatibleSearchSpaceError, match=_icm_guard_message):
+        ICMKernelFactory()(
+            searchspace, NumericalTarget("y").to_objective(), pd.DataFrame()
+        )
