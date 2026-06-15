@@ -20,11 +20,15 @@ from baybe.exceptions import (
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
+from baybe.searchspace.core import SearchSpaceFidelityType
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import (
     Surrogate,
     SurrogateProtocol,
+)
+from baybe.surrogates.gaussian_process.multi_fidelity import (
+    GaussianProcessSurrogateSTMF,
 )
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
@@ -43,12 +47,16 @@ def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
 class BayesianRecommender(PureRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
 
-    _surrogate_model: SurrogateProtocol = field(
+    _surrogate_model: SurrogateProtocol | None = field(
         alias="surrogate_model",
-        factory=GaussianProcessSurrogate,
-        converter=_autoreplicate,
+        default=None,
+        converter=optional(_autoreplicate),
     )
-    """The surrogate model."""
+    """The surrogate model. When omitted, a default is selected based on the search
+    space: :class:`~baybe.surrogates.gaussian_process.multi_fidelity.
+    GaussianProcessSurrogateSTMF` for numerical discrete fidelity spaces,
+    :class:`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`
+    otherwise."""
 
     acquisition_function: AcquisitionFunction | None = field(
         default=None, converter=optional(convert_acqf)
@@ -80,6 +88,16 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame,
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
+        # Lazy dispatch: select the right default surrogate on first use
+        if self._surrogate_model is None:
+            if (
+                searchspace.fidelity_type
+                == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+            ):
+                self._surrogate_model = _autoreplicate(GaussianProcessSurrogateSTMF())
+            else:
+                self._surrogate_model = _autoreplicate(GaussianProcessSurrogate())
+
         # This fit applies internal caching and does not necessarily involve computation
         self._surrogate_model.fit(searchspace, objective, measurements)
         return self._surrogate_model

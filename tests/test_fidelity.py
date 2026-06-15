@@ -13,6 +13,7 @@ from baybe.parameters.fidelity import (
     NumericalDiscreteFidelityParameter,
 )
 from baybe.parameters.numerical import NumericalDiscreteParameter
+from baybe.recommenders import BotorchRecommender
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriterion
 from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
@@ -206,6 +207,37 @@ def test_stmf_fit():
     stats = surrogate.posterior_stats(measurements_num_fid)
     assert set(stats.columns) == {"t_mean", "t_std"}
     assert len(stats) == len(measurements_num_fid)
+
+
+@pytest.mark.parametrize(
+    ("searchspace", "measurements", "expected_surrogate_type"),
+    [
+        param(
+            searchspace_num_fid,
+            measurements_num_fid,
+            GaussianProcessSurrogateSTMF,
+            id="numerical_fidelity_dispatches_to_stmf",
+        ),
+        param(
+            searchspace_cat_fid,
+            create_fake_input(
+                searchspace_cat_fid.parameters,
+                NumericalTarget("t").to_objective().targets,
+                n_rows=20,
+            ),
+            GaussianProcessSurrogate,
+            id="categorical_fidelity_dispatches_to_standard_gp",
+        ),
+    ],
+)
+def test_recommender_surrogate_dispatch(
+    searchspace, measurements, expected_surrogate_type
+):
+    """BotorchRecommender auto-selects the correct surrogate for fidelity spaces."""
+    recommender = BotorchRecommender()
+    surrogate = recommender.get_surrogate(searchspace, objective, measurements)
+    # The surrogate is wrapped in a CompositeSurrogate — check the inner template type
+    assert isinstance(surrogate.surrogates.template, expected_surrogate_type)
 
 
 def test_standard_gp_fit_categorical_fidelity():
