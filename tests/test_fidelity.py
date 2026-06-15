@@ -38,6 +38,9 @@ objective = NumericalTarget("t").to_objective()
 measurements_num_fid = create_fake_input(
     searchspace_num_fid.parameters, objective.targets, n_rows=20
 )
+measurements_cat_fid = create_fake_input(
+    searchspace_cat_fid.parameters, objective.targets, n_rows=20
+)
 
 
 def _dummy_likelihood_factory(*_args, **_kwargs) -> GPyTorchLikelihood:
@@ -203,3 +206,12 @@ def test_stmf_fit():
     stats = surrogate.posterior_stats(measurements_num_fid)
     assert set(stats.columns) == {"t_mean", "t_std"}
     assert len(stats) == len(measurements_num_fid)
+
+
+def test_standard_gp_fit_categorical_fidelity():
+    """GaussianProcessSurrogate can be fitted on a categorical fidelity space."""
+    surrogate = GaussianProcessSurrogate()
+    surrogate.fit(searchspace_cat_fid, objective, measurements_cat_fid)
+    stats = surrogate.posterior_stats(measurements_cat_fid)
+    assert set(stats.columns) == {"t_mean", "t_std"}
+    assert len(stats) == len(measurements_cat_fid)

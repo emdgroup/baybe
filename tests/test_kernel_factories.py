@@ -66,6 +66,17 @@ _SELECT_ALL = lambda parameter: True  # noqa: E731
             id="combined_accepts_task",
         ),
         param(
+            BayBEKernelFactory(),
+            [
+                NumericalContinuousParameter("cont", (0, 1)),
+                CategoricalFidelityParameter(
+                    "fid", ["lo", "hi"], costs=[1, 10], zeta=[0.5, 0.0]
+                ),
+            ],
+            None,
+            id="combined_accepts_fidelity",
+        ),
+        param(
             _BayBENumericalKernelFactory(parameter_selector=_SELECT_ALL),
             [
                 CategoricalFidelityParameter(
