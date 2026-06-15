@@ -10,7 +10,10 @@ from attrs import define, field
 from attrs.validators import is_callable
 from typing_extensions import override
 
+from baybe.exceptions import IncompatibleSurrogateError
 from baybe.parameters.base import Parameter
+from baybe.parameters.fidelity import CategoricalFidelityParameter
+from baybe.searchspace.core import SearchSpaceFidelityType
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterionFactoryProtocol,
@@ -111,6 +114,16 @@ class GaussianProcessSurrogateSTMF(Surrogate):
         assert context.fidelity_idx is not None, (
             f"{self.__class__.__name__} can only be fit on multi fidelity searchspaces."
         )
+
+        if (
+            self._searchspace.fidelity_type
+            == SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+        ):
+            raise IncompatibleSurrogateError(
+                f"'{self.__class__.__name__}' does not support "
+                f"'{CategoricalFidelityParameter.__name__}'. "
+                f"Use 'GaussianProcessSurrogate' instead."
+            )
 
         ### Input/output scaling
         input_transform = Normalize(

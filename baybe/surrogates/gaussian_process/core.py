@@ -13,10 +13,12 @@ from attrs.converters import pipe
 from attrs.validators import is_callable
 from typing_extensions import Self, override
 
-from baybe.exceptions import DeprecationError
+from baybe.exceptions import DeprecationError, IncompatibleSurrogateError
 from baybe.kernels.base import Kernel
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.fidelity import NumericalDiscreteFidelityParameter
+from baybe.searchspace.core import SearchSpaceFidelityType
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
@@ -226,6 +228,17 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._searchspace is not None  # provided by base class
         assert self._objective is not None  # provided by base class
         assert self._measurements is not None  # provided by base class
+
+        if (
+            self._searchspace.fidelity_type
+            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+        ):
+            raise IncompatibleSurrogateError(
+                f"'{self.__class__.__name__}' does not support "
+                f"'{NumericalDiscreteFidelityParameter.__name__}'. "
+                f"Use 'GaussianProcessSurrogateSTMF' instead."
+            )
+
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
         if (
