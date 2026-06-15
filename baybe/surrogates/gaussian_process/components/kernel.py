@@ -25,7 +25,7 @@ from baybe.parameters.selectors import (
     TypeSelector,
     to_parameter_selector,
 )
-from baybe.searchspace.core import SearchSpace
+from baybe.searchspace.core import SearchSpace, SearchSpaceFidelityType
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
@@ -128,14 +128,19 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
         """Construct the kernel."""
 
 
-def _enable_transfer_learning(
+def _enable_index_kernel(
     cls: type[_PureKernelFactory], name: str | None = None, /
 ) -> type[_PureKernelFactory]:
-    """Class decorator enabling BayBE's default transfer learning mechanism.
+    """Class decorator enabling automatic IndexKernel composition.
 
-    When the search space contains a task parameter, the decorated factory
-    automatically composes its kernel with BayBE's default task kernel.
-    Otherwise, the factory behaves unchanged.
+    When the search space contains a task parameter or a categorical fidelity
+    parameter, the decorated factory automatically composes its kernel with
+    BayBE's default ICM kernel (IndexKernel × base kernel). Otherwise, the
+    factory behaves unchanged.
+
+    This is used for both transfer learning (``TaskParameter``) and categorical
+    multi-fidelity (``CategoricalFidelityParameter``), which share the same
+    kernel mechanism.
 
     When used as a decorator (without ``name``), the class is modified in-place.
     When called with a ``name`` argument, a new subclass is created so that the
@@ -148,13 +153,16 @@ def _enable_transfer_learning(
             created instead of modifying ``cls`` in-place.
 
     Raises:
-        TypeError: If the factory already supports task parameters.
+        TypeError: If the factory already supports task or fidelity parameters.
 
     Returns:
-        The decorated kernel factory class with transfer learning enabled.
+        The decorated kernel factory class with IndexKernel support enabled.
     """
-    if cls._supported_parameter_kinds & _ParameterKind.TASK:
-        raise TypeError(f"'{cls.__name__}' already supports task parameters.")
+    _extended_kinds = _ParameterKind.TASK | _ParameterKind.FIDELITY
+    if cls._supported_parameter_kinds & _extended_kinds:
+        raise TypeError(
+            f"'{cls.__name__}' already supports task or fidelity parameters."
+        )
 
     # This distinction is important for serialization so that the classes can be
     # correctly identified by their names in the subclass registry
@@ -170,8 +178,8 @@ def _enable_transfer_learning(
         # attributes are copied so the sibling has the same behavior.
         # __module__ must be set explicitly because the Protocol metaclass
         # would otherwise default it to "abc".
-        # -> For the assignment-based used, i.e.,
-        #   `DecoratedX = enable_transfer_learning(X, name="DecoratedX")`,
+        # -> For the assignment-based use, i.e.,
+        #   `DecoratedX = _enable_index_kernel(X, name="DecoratedX")`,
         #    where both the original and decorated versions remain accessible and
         #    are intended to be used independently.
         ns = {
@@ -185,7 +193,9 @@ def _enable_transfer_learning(
 
     original_call = cls.__call__
     original_supported_kinds = cls._supported_parameter_kinds
-    _task_exclude_selector = TypeSelector((TaskParameter,), exclude=True)
+    _index_exclude_selector = TypeSelector(
+        (TaskParameter, CategoricalFidelityParameter), exclude=True
+    )
 
     @functools.wraps(original_call)
     def __call__(
@@ -197,13 +207,13 @@ def _enable_transfer_learning(
         broadened_kinds = target_cls._supported_parameter_kinds
         target_cls._supported_parameter_kinds = original_supported_kinds
 
-        # Split off the task parameters
+        # Split off task and categorical fidelity parameters
         original_selector = self.parameter_selector
         if original_selector is None:
-            self.parameter_selector = _task_exclude_selector
+            self.parameter_selector = _index_exclude_selector
         else:
             self.parameter_selector = lambda p: (
-                _task_exclude_selector(p) and original_selector(p)
+                _index_exclude_selector(p) and original_selector(p)
             )
 
         try:
@@ -212,14 +222,17 @@ def _enable_transfer_learning(
             target_cls._supported_parameter_kinds = broadened_kinds
             self.parameter_selector = original_selector
 
-        if searchspace.n_tasks > 1:
+        if searchspace.task_idx is not None or (
+            searchspace.fidelity_type
+            == SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+        ):
             icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
             return icm(searchspace, objective, measurements)
         return base_kernel
 
     target_cls.__call__ = __call__  # type: ignore[method-assign]
     target_cls._supported_parameter_kinds = (
-        cls._supported_parameter_kinds | _ParameterKind.TASK
+        cls._supported_parameter_kinds | _extended_kinds
     )
     return target_cls
 

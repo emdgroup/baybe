@@ -21,7 +21,7 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
     _MLLForNonTLFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
-    _enable_transfer_learning,
+    _enable_index_kernel,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -55,7 +55,7 @@ _EDBO_ENCODINGS = (
 """Encodings relevant to EDBO logic."""
 
 
-@_enable_transfer_learning
+@_enable_index_kernel
 @define
 class EDBOKernelFactory(_PureKernelFactory):
     """A factory providing EDBO kernels, as proposed by :cite:p:`Shields2021`.
