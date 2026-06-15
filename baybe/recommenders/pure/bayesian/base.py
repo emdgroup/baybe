@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from abc import ABC
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.converters import optional
 from typing_extensions import override
 
@@ -19,6 +20,7 @@ from baybe.exceptions import (
 )
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.botorch.optimizers.base import OptimizerProtocol
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
@@ -55,6 +57,12 @@ class BayesianRecommender(PureRecommender, ABC):
     )
     """The acquisition function. When omitted, a default is used."""
 
+    optimizer: OptimizerProtocol | None = field(
+        alias="optimizer",
+        default=None,
+    )
+    """The acquisition function optimizer."""
+
     # TODO: The objective is currently only required for validating the recommendation
     #   context. Once multi-target support is complete, we might want to refactor
     #   the validation mechanism, e.g. by
@@ -66,6 +74,18 @@ class BayesianRecommender(PureRecommender, ABC):
 
     _botorch_acqf = field(default=None, init=False, eq=False)
     """The induced BoTorch acquisition function."""
+
+    @property
+    def surrogate_model(self) -> SurrogateProtocol:
+        """Deprecated!"""
+        warnings.warn(
+            f"Accessing the surrogate model via 'surrogate_model' has been "
+            f"deprecated. Use '{self.get_surrogate.__name__}' instead to get the "
+            f"trained model instance (or "
+            f"'{fields(type(self))._surrogate_model.name}' to access the raw object).",
+            DeprecationWarning,
+        )
+        return self._surrogate_model
 
     def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""

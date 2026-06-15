@@ -16,7 +16,7 @@ from baybe.exceptions import (
 )
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.searchspace import SubspaceContinuous
-from baybe.utils.basic import flatten
+from baybe.searchspace.core import SearchSpace
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -147,9 +147,6 @@ def recommend_continuous_without_cardinality_constraints(
     Raises:
         ValueError: If the continuous search space has cardinality constraints.
     """
-    import torch
-    from botorch.optim import optimize_acqf
-
     if subspace_continuous.n_subsets > 0:
         raise ValueError(
             f"'{recommend_continuous_without_cardinality_constraints.__name__}' "
@@ -181,32 +178,10 @@ def recommend_continuous_without_cardinality_constraints(
     #   because it is unclear if the corresponding presence checks for these
     #   arguments is correctly implemented in all invoked BoTorch subroutines.
     #   For details: https://github.com/pytorch/botorch/issues/2042
-    points, acqf_values = optimize_acqf(
-        acq_function=recommender._botorch_acqf,
-        bounds=torch.from_numpy(
-            subspace_continuous.comp_rep_bounds.to_numpy(copy=True)
-        ),
-        q=batch_size,
-        num_restarts=recommender.n_restarts,
-        raw_samples=recommender.n_raw_samples,
-        fixed_features=fixed_parameters or None,
-        equality_constraints=flatten(
-            c.to_botorch(
-                subspace_continuous.parameters,
-                batch_size=batch_size if c.is_interpoint else None,
-            )
-            for c in subspace_continuous.constraints_lin_eq
-        )
-        or None,
-        inequality_constraints=flatten(
-            c.to_botorch(
-                subspace_continuous.parameters,
-                batch_size=batch_size if c.is_interpoint else None,
-            )
-            for c in subspace_continuous.constraints_lin_ineq
-        )
-        or None,
-        sequential=recommender.sequential_continuous,
+    points, acqf_values = recommender.optimizer(
+        batch_size=batch_size,
+        acquisition_function=recommender._botorch_acqf,
+        searchspace=SearchSpace(continuous=subspace_continuous),
+        fixed_parameters=fixed_parameters,
     )
-    assert acqf_values is not None  # for mypy; guaranteed by optimize_acqf defaults
     return points, acqf_values
