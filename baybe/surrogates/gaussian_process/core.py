@@ -5,8 +5,9 @@ from __future__ import annotations
 import gc
 import importlib
 import os
+import warnings
 from functools import partial
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import pandas as pd
 from attrs import Converter, define, field
@@ -277,6 +278,11 @@ class GaussianProcessSurrogate(Surrogate):
         searchspace: SearchSpace,
         objective: Objective,
         measurements: pd.DataFrame,
+        *,
+        anchors: Literal["pretrained", "new", "combined"] = "pretrained",
+        mean_kernel_init: Literal["freeze", "warmstart", "discard"] = "freeze",
+        freeze_input_transform: bool = True,
+        freeze_outcome_transform: bool = True,
     ) -> GPyTorchMean:
         """Return a GPyTorch mean module representing the surrogate's posterior mean.
 
@@ -284,21 +290,59 @@ class GaussianProcessSurrogate(Surrogate):
         :class:`~baybe.surrogates.gaussian_process.components.mean.MeanFactoryProtocol`
         and can be passed directly to a new :class:`GaussianProcessSurrogate`.
 
+        The returned mean module wraps an *inner* GP whose anchor inputs/targets are
+        selected by ``anchors`` and whose kernel/mean/likelihood hyperparameters are
+        controlled by ``mean_kernel_init``. ``mean_kernel_init`` affects only the
+        inner kernel inside the prior-mean module — the new GP's outer kernel is
+        always learned from default initialization.
+
         Args:
             searchspace: The search space of the new GP being fitted.
             objective: The objective of the new GP being fitted.
             measurements: The training data of the new GP being fitted.
+            anchors: Which inputs/targets to use as anchors for the inner GP.
+
+                * ``"pretrained"``: the pretrained GP's training data (current default).
+                * ``"new"``: the new GP's training data (the pretrained GP's targets
+                  are not used; only its kernel structure is reused).
+                * ``"combined"``: the concatenation of both. Beware that overlapping
+                  or near-duplicate inputs across the two datasets make the inner
+                  kernel matrix ``K_XX + sigma^2 I`` ill-conditioned (and, at very low
+                  likelihood noise, effectively singular), which can destabilize the
+                  inner posterior solve. Prefer non-overlapping anchor data or a
+                  non-negligible likelihood noise when using this option.
+            mean_kernel_init: How to initialize the inner kernel/likelihood/mean.
+
+                * ``"freeze"``: deepcopy the pretrained components and freeze them
+                  (the prior mean is a fixed function of the inputs).
+                * ``"warmstart"``: deepcopy the pretrained components but leave them
+                  trainable so the outer MLL can adjust them.
+                * ``"discard"``: build fresh components via the surrogate's configured
+                  factories (no pretrained hyperparameters are transferred).
+            freeze_input_transform: Controls the inner GP's input normalization.
+                ``True`` (default) reuses the pretrained GP's input transform, so the
+                inner kernel lengthscale is transferred in absolute input units.
+                ``False`` refits the transform on the anchor inputs, so the
+                lengthscale is interpreted relative to the anchor data spread. Has no
+                effect when source and target share the same search space and the
+                anchors span it.
+            freeze_outcome_transform: Controls the inner GP's output standardization.
+                ``True`` (default) reuses the pretrained GP's standardization, so the
+                inner output scale and the far-field reversion level are transferred
+                in absolute output units. ``False`` standardizes on the anchor
+                targets instead, which keeps the inner data well-scaled; prefer it
+                when the anchor target level differs strongly from the pretrained
+                data, where freezing is poorly conditioned.
 
         Returns:
-            The posterior mean.
+            The posterior mean module.
 
         Raises:
             ModelNotTrainedError: If the surrogate has not been fitted yet.
+            ValueError: If ``anchors="new"`` is combined with
+                ``mean_kernel_init="discard"`` (no information from the pretrained GP
+                would be transferred).
         """
-        from copy import deepcopy
-
-        import gpytorch
-
         if self._model is None:
             raise ModelNotTrainedError(
                 f"'{self.__class__.__name__}' must be fitted before its "
@@ -306,47 +350,58 @@ class GaussianProcessSurrogate(Surrogate):
                 f"mean function."
             )
 
+        if anchors == "new" and mean_kernel_init == "discard":
+            raise ValueError(
+                f"The combination 'anchors=\"new\"' and "
+                f"'mean_kernel_init=\"discard\"' would not transfer any information "
+                f"from the pretrained '{self.__class__.__name__}'."
+            )
+
+        # Dangerous combinations: when the inner anchors include the *new* GP's
+        # training targets (``anchors in {"new", "combined"}``) *and* the inner
+        # hyperparameters are trainable (``warmstart``), the same target values drive
+        # both the inner prior mean and the outer likelihood. The outer MLL can then
+        # explain the data almost entirely through the (now flexible) prior mean,
+        # pushing the outer residual -- and hence the outer noise -- toward zero, i.e.
+        # overfitting. The even more degenerate ``new``+``discard`` case transfers no
+        # pretrained information at all and is rejected above; here we only warn
+        # because ``combined`` still carries pretrained anchor information.
+        if mean_kernel_init == "warmstart" and anchors in ("new", "combined"):
+            warnings.warn(
+                f"Using 'mean_kernel_init=\"warmstart\"' with 'anchors=\"{anchors}\"' "
+                f"causes the new GP's training targets to influence both the inner "
+                f"prior mean and the outer likelihood; the marginal log-likelihood "
+                f"optimizer may collapse the outer noise toward zero.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         context = _ModelContext(searchspace, objective, measurements)
+        new_input_transform = self._make_input_transform(context)
+        new_input_transform.eval()
+        new_outcome_transform = self._make_outcome_transform(context)
+        new_outcome_transform.eval()
 
-        # Undo the new GP's input normalization before querying the prior GP
-        input_transform = self._make_input_transform(context)
-        input_transform.eval()
+        anchor_x_raw, anchor_y_raw = _resolve_anchors(anchors, self._model, context)
+        inner_gp = _build_mean_transfer_gp(
+            anchor_x_raw,
+            anchor_y_raw,
+            mean_kernel_init=mean_kernel_init,
+            freeze_input_transform=freeze_input_transform,
+            freeze_outcome_transform=freeze_outcome_transform,
+            pretrained_model=self._model,
+            mean_factory=self.mean_factory,
+            kernel_factory=self.kernel_factory,
+            likelihood_factory=self.likelihood_factory,
+            context=context,
+        )
 
-        # Match the new GP's outcome standardization
-        outcome_transform = self._make_outcome_transform(context)
-        outcome_transform.eval()
-
-        class _PosteriorMean(gpytorch.means.Mean):
-            """GPyTorch mean wrapping a trained GP's posterior.
-
-            Overrides ``train`` to keep all children in eval mode, preventing optimizers
-            from corrupting learned transform parameters.
-            """
-
-            def __init__(self, gp: GPyTorchModel) -> None:
-                super().__init__()
-                self.gp = deepcopy(gp)
-                for param in self.gp.parameters():
-                    param.requires_grad = False
-                self.gp.eval()
-                self.gp.likelihood.eval()
-
-            @override
-            def train(self, mode: bool = True) -> _PosteriorMean:
-                """Set training mode without propagating to children."""
-                self.training = mode
-                return self
-
-            @override
-            def forward(self, x: Tensor) -> Tensor:
-                """Compute the mean using the wrapped GP's posterior."""
-                with gpytorch.settings.fast_pred_var():
-                    x_raw = input_transform.untransform(x)
-                    posterior_mean = self.gp.posterior(x_raw).mean
-                    standardized, _ = outcome_transform(posterior_mean)
-                    return standardized.squeeze(-1)
-
-        return _PosteriorMean(self._model)
+        return _build_posterior_mean_module(
+            inner_gp=inner_gp,
+            new_input_transform=new_input_transform,
+            new_outcome_transform=new_outcome_transform,
+            trainable=mean_kernel_init != "freeze",
+        )
 
     @override
     def to_botorch(self) -> GPyTorchModel:
@@ -406,6 +461,11 @@ class GaussianProcessSurrogate(Surrogate):
         mean = self.mean_factory(
             context.searchspace, context.objective, context.measurements
         )
+        # A posterior-mean module transferred from another GP bakes in the input/
+        # output transforms of the context it was built for. Fitting the new GP on a
+        # different context would silently evaluate the transferred mean at the wrong
+        # physical inputs/outputs, so we verify the contexts agree.
+        _validate_transferred_mean_context(mean, input_transform, outcome_transform)
 
         ### Kernel
         kernel = self.kernel_factory(
@@ -448,6 +508,358 @@ class GaussianProcessSurrogate(Surrogate):
             ),
         ]
         return to_string(super().__str__(), *fields)
+
+
+def _extract_raw_training_data(
+    model: Any,
+) -> tuple[Tensor, Tensor]:
+    """Return a fitted GP's training data in raw (un-transformed) space.
+
+    Args:
+        model: A fitted BoTorch ``SingleTaskGP`` whose ``train_inputs`` /
+            ``train_targets`` are read. Typed as ``Any`` because gpytorch's
+            registered-buffer attributes are not statically resolvable.
+
+    Returns:
+        A tuple ``(X_raw, Y_raw)`` of detached, cloned tensors with shapes
+        ``(N, d)`` and ``(N, 1)`` respectively.
+    """
+    x_norm = model.train_inputs[0]
+    y_std = model.train_targets
+    if y_std.ndim == 1:
+        y_std = y_std.unsqueeze(-1)
+    x_raw = model.input_transform.untransform(x_norm).detach().clone()
+    y_raw, _ = model.outcome_transform.untransform(y_std)
+    return x_raw, y_raw.detach().clone()
+
+
+def _resolve_anchors(
+    anchors: Literal["pretrained", "new", "combined"],
+    pretrained_model: Any,
+    context: _ModelContext,
+) -> tuple[Tensor, Tensor]:
+    """Resolve anchor inputs/targets for the inner GP in raw space.
+
+    Args:
+        anchors: Which dataset(s) the inner GP should be conditioned on.
+        pretrained_model: The fitted pretrained GP whose data may be reused.
+        context: Bundles the new GP's search space, objective and measurements.
+
+    Returns:
+        A tuple ``(X_raw, Y_raw)`` of the selected anchor inputs/targets in raw
+        space.
+    """
+    import torch
+
+    if anchors == "pretrained":
+        return _extract_raw_training_data(pretrained_model)
+
+    x_new_raw = to_tensor(
+        context.searchspace.transform(context.measurements, allow_extra=True)
+    )
+    y_new_raw = to_tensor(
+        context.objective._pre_transform(context.measurements, allow_extra=True)
+    )
+    if y_new_raw.ndim == 1:
+        y_new_raw = y_new_raw.unsqueeze(-1)
+
+    if anchors == "new":
+        return x_new_raw, y_new_raw
+
+    x_old_raw, y_old_raw = _extract_raw_training_data(pretrained_model)
+    return (
+        torch.cat([x_old_raw, x_new_raw], dim=0),
+        torch.cat([y_old_raw, y_new_raw], dim=0),
+    )
+
+
+def _build_mean_transfer_gp(
+    anchor_x_raw: Tensor,
+    anchor_y_raw: Tensor,
+    *,
+    mean_kernel_init: Literal["freeze", "warmstart", "discard"],
+    freeze_input_transform: bool = True,
+    freeze_outcome_transform: bool = True,
+    pretrained_model: Any,
+    mean_factory: MeanFactoryProtocol,
+    kernel_factory: KernelFactoryProtocol,
+    likelihood_factory: LikelihoodFactoryProtocol,
+    context: _ModelContext,
+) -> GPyTorchModel:
+    """Construct the inner GP wrapped by the posterior-mean module.
+
+    Args:
+        anchor_x_raw: Anchor inputs in raw parameter space.
+        anchor_y_raw: Anchor targets in raw output space.
+        mean_kernel_init: How to initialize the inner mean/kernel/likelihood. See
+            :meth:`GaussianProcessSurrogate.posterior_mean_function` for details.
+        freeze_input_transform: Whether to reuse the pretrained input transform
+            (``True``) or refit it on the anchor inputs' range (``False``).
+        freeze_outcome_transform: Whether to reuse the pretrained output
+            standardization (``True``) or standardize on the anchor targets
+            (``False``). See
+            :meth:`GaussianProcessSurrogate.posterior_mean_function` for details.
+        pretrained_model: The fitted pretrained GP whose transforms and (for
+            ``freeze``/``warmstart``) hyperparameters are reused.
+        mean_factory: Factory used to build a fresh mean module for ``discard``.
+        kernel_factory: Factory used to build a fresh kernel for ``discard``.
+        likelihood_factory: Factory used to build a fresh likelihood for ``discard``.
+        context: Bundles the new GP's search space, objective and measurements;
+            passed to the factories for ``discard``.
+
+    Returns:
+        A BoTorch ``SingleTaskGP`` in eval mode with the appropriate parameters
+        frozen when ``mean_kernel_init='freeze'``.
+    """
+    from copy import deepcopy
+
+    import botorch
+
+    # Input transform: reuse the pretrained one (freeze = source bounds, absolute
+    # x-scaling) or refit it on the anchor inputs' empirical range (relative
+    # x-scaling), mirroring the outcome transform which refits on the anchor targets.
+    # Unlike the outcome transform, BoTorch does not silently refit the input
+    # transform, so this choice persists.
+    if freeze_input_transform:
+        input_transform = deepcopy(pretrained_model.input_transform)
+    else:
+        input_transform = _make_anchor_input_transform(anchor_x_raw, context)
+    input_transform.eval()
+
+    # Outcome transform: deep-copied from the pretrained GP. NOTE: ``SingleTaskGP``
+    # re-fits ``Standardize`` on the anchor targets during construction, so by default
+    # the inner GP standardizes on the anchor data. When ``freeze_outcome_transform``
+    # is set, the pretrained statistics are restored afterwards (see below).
+    outcome_transform = deepcopy(pretrained_model.outcome_transform)
+    outcome_transform.eval()
+
+    if mean_kernel_init == "discard":
+        mean = mean_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+        kernel = kernel_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+        if isinstance(kernel, Kernel):
+            kernel = kernel.to_gpytorch(searchspace=context.searchspace)
+        likelihood = likelihood_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+    else:
+        # We transfer all three modules because the posterior mean depends on
+        # mean + kernel + likelihood noise, not only on the mean module.
+        mean = deepcopy(pretrained_model.mean_module)
+        kernel = deepcopy(pretrained_model.covar_module)
+        likelihood = deepcopy(pretrained_model.likelihood)
+
+    inner_gp = botorch.models.SingleTaskGP(
+        anchor_x_raw,
+        anchor_y_raw,
+        input_transform=input_transform,
+        outcome_transform=outcome_transform,
+        mean_module=mean,
+        covar_module=kernel,
+        likelihood=likelihood,
+    )
+
+    if freeze_outcome_transform:
+        _restore_source_outcome_transform(inner_gp, pretrained_model, anchor_y_raw)
+
+    if mean_kernel_init == "freeze":
+        for param in inner_gp.parameters():
+            param.requires_grad = False
+    inner_gp.eval()
+    return inner_gp
+
+
+def _restore_source_outcome_transform(
+    inner_gp: Any, pretrained_model: Any, anchor_y_raw: Tensor
+) -> None:
+    """Re-pin the inner GP's outcome standardization to the pretrained statistics.
+
+    ``SingleTaskGP.__init__`` re-fits the ``Standardize`` transform on the anchor
+    targets, overriding the deep-copied pretrained statistics. This restores the
+    pretrained mean/standard deviation and re-expresses the stored (standardized)
+    training targets in that same space, so that the inner GP's conditioning and its
+    un-standardization remain mutually consistent.
+
+    Args:
+        inner_gp: The freshly constructed inner ``SingleTaskGP``, adjusted in place.
+        pretrained_model: The fitted source GP supplying the target statistics.
+        anchor_y_raw: The anchor targets in raw output space.
+    """
+    source = pretrained_model.outcome_transform
+    inner = inner_gp.outcome_transform
+    inner.means = source.means.detach().clone()
+    inner.stdvs = source.stdvs.detach().clone()
+    inner._stdvs_sq = inner.stdvs.pow(2)
+    inner._is_trained = source._is_trained.detach().clone()
+    standardized = ((anchor_y_raw - inner.means) / inner.stdvs).squeeze(-1)
+    inner_gp.set_train_data(targets=standardized, strict=False)
+
+
+def _make_anchor_input_transform(
+    anchor_x_raw: Tensor, context: _ModelContext
+) -> Normalize:
+    """Create an input transform normalizing to the anchor inputs' empirical range.
+
+    Analogous to :meth:`GaussianProcessSurrogate._make_input_transform`, but the
+    ``Normalize`` bounds of the numerical columns are taken from the anchor inputs'
+    per-column min/max instead of the search-space bounds. This mirrors the outcome
+    transform (which, when refit, standardizes on the anchor targets), so that both
+    inner-GP transforms are derived from the anchor data when not frozen.
+
+    Args:
+        anchor_x_raw: The anchor inputs in raw parameter space.
+        context: Bundles the new GP's search space, objective and measurements.
+
+    Returns:
+        A ``Normalize`` transform whose numerical-column bounds span the anchor
+        inputs.
+    """
+    from botorch.models.transforms.input import Normalize
+
+    indices = context.numerical_indices
+    numerical = anchor_x_raw[:, indices]
+    bounds = context.parameter_bounds.clone()
+    lo, hi = numerical.amin(dim=0), numerical.amax(dim=0)
+    if bounds.shape[-1] == len(context.searchspace.comp_rep_columns):
+        # Full-width bounds: overwrite only the numerical columns.
+        bounds[0, indices] = lo
+        bounds[1, indices] = hi
+    else:
+        # Bounds already restricted to the numerical columns.
+        bounds[0], bounds[1] = lo, hi
+    return Normalize(
+        len(context.searchspace.comp_rep_columns), bounds=bounds, indices=indices
+    )
+
+
+def _build_posterior_mean_module(
+    inner_gp: GPyTorchModel,
+    new_input_transform: Normalize,
+    new_outcome_transform: Standardize,
+    trainable: bool,
+) -> GPyTorchMean:
+    """Build a :class:`gpytorch.means.Mean` wrapping the given inner GP.
+
+    Args:
+        inner_gp: The GP whose posterior mean is used as the prior mean. Already
+            constructed with the desired anchors, hyperparameters, and transforms.
+        new_input_transform: The new GP's input transform; used to un-normalize the
+            inputs ``x`` arriving at ``forward`` so the inner GP sees raw inputs.
+        new_outcome_transform: The new GP's outcome transform; used to standardize
+            the inner GP's raw-space predictions into the new GP's output space.
+        trainable: If ``True``, the inner GP's cached prediction strategy is
+            invalidated on every forward call and gradients flow through
+            ``(K_XX + sigma^2 I)^{-1} y`` for joint optimization with the outer MLL.
+
+    Returns:
+        A mean module suitable for use as ``mean_module`` of the new GP.
+    """
+    import gpytorch
+
+    class _PosteriorMean(gpytorch.means.Mean):
+        """GPyTorch mean wrapping a GP's posterior."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.gp = inner_gp
+            # Stored as a plain tuple (not as direct module attributes) so that
+            # ``torch.nn.Module`` does not register the transforms as submodules of
+            # this mean. They are read only by ``_validate_transferred_mean_context``
+            # to check that the new GP is fitted on the context they were built for.
+            self._transferred_context = (new_input_transform, new_outcome_transform)
+
+        @override
+        def train(self, mode: bool = True) -> _PosteriorMean:
+            """Set training mode without propagating to children.
+
+            The inner GP stays in eval so ``posterior(x)`` returns predictive
+            (not training) outputs. Trainable parameters keep ``requires_grad``
+            and the outer MLL still updates them via the autograd graph.
+            """
+            # Keep this wrapper's flag in sync with the outer model while
+            # intentionally not toggling child module modes.
+            #
+            # Why: we always use the inner GP as a posterior provider, but we
+            # may still optimize its parameters via autograd in warmstart/
+            # discard modes.
+            self.training = mode
+            return self
+
+        @override
+        def forward(self, x: Tensor) -> Tensor:
+            """Compute the prior mean in the new GP's standardized output space."""
+            x_raw = new_input_transform.untransform(x)
+            if trainable:
+                # The pretrained cache holds (K_XX + sigma^2 I)^{-1} y for the
+                # values the hyperparameters had at the last evaluation. Discard
+                # it so the next call recomputes against the current values and
+                # keep its solve attached to the autograd graph.
+                self.gp.prediction_strategy = None  # type: ignore[assignment]  # gpytorch's typed attribute is intentionally cleared to force recomputation
+                # Keep test-time caches attached so gradients can flow into
+                # inner GP parameters during outer MLL optimization.
+                with gpytorch.settings.detach_test_caches(False):
+                    posterior_mean = self.gp.posterior(x_raw).mean
+            else:
+                # Frozen inner GP: only the posterior mean is consumed, so neither
+                # gradient-through-inner machinery nor predictive-variance
+                # acceleration (``fast_pred_var`` only speeds up *variances*) is
+                # needed here.
+                posterior_mean = self.gp.posterior(x_raw).mean
+            standardized, _ = new_outcome_transform(posterior_mean)
+            return standardized.squeeze(-1)
+
+    return _PosteriorMean()
+
+
+def _validate_transferred_mean_context(
+    mean: Any,
+    input_transform: Normalize,
+    outcome_transform: Standardize,
+) -> None:
+    """Validate a transferred posterior-mean module against the new GP's context.
+
+    A posterior-mean module created by
+    :meth:`GaussianProcessSurrogate.posterior_mean_function` bakes in the input/output
+    transforms of the context it was built for. When such a module is reused as the
+    mean of a new GP, the new GP must be fitted on a matching context; otherwise the
+    transforms disagree and the transferred prior mean is evaluated at the wrong
+    physical inputs/outputs.
+
+    Args:
+        mean: The mean module of the new GP. Only modules produced by
+            ``posterior_mean_function`` carry the context marker; anything else is
+            ignored. Typed as ``Any`` because the marker attribute is not part of the
+            static ``Mean`` interface.
+        input_transform: The new GP's input transform.
+        outcome_transform: The new GP's (fitted) outcome transform.
+
+    Raises:
+        ValueError: If the transferred module's transforms do not match the new GP's.
+    """
+    import torch
+
+    transferred = getattr(mean, "_transferred_context", None)
+    if transferred is None:
+        return
+
+    inner_input_transform, inner_outcome_transform = transferred
+    if (
+        torch.equal(inner_input_transform.coefficient, input_transform.coefficient)
+        and torch.equal(inner_input_transform.offset, input_transform.offset)
+        and torch.equal(inner_outcome_transform.means, outcome_transform.means)
+        and torch.equal(inner_outcome_transform.stdvs, outcome_transform.stdvs)
+    ):
+        return
+
+    raise ValueError(
+        "The transferred posterior-mean module was created for a different "
+        "search space / objective / measurements context than the one the new "
+        "Gaussian process is being fitted on. Rebuild the mean function via "
+        "'posterior_mean_function' using the same context that you pass to 'fit'."
+    )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
