@@ -15,6 +15,7 @@ from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from benchmarks._priorgp import priorgp_scenarios
 from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -139,6 +140,12 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
                 {
                     f"{int(100 * p)}": tl_campaign,
                     f"{int(100 * p)}_naive": nontl_campaign,
+                    **priorgp_scenarios(
+                        searchspace_tl,
+                        objective,
+                        prefix=f"{int(100 * p)}",
+                        n_source_tasks=1,
+                    ),
                 },
                 lookup,
                 initial_data=initial_data_samples[p],

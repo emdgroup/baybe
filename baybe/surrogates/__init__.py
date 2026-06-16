@@ -5,6 +5,7 @@ from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.linear import BayesianLinearSurrogate
+from baybe.surrogates.mean_transfer import MeanTransferSurrogate
 from baybe.surrogates.naive import MeanPredictionSurrogate
 from baybe.surrogates.ngboost import NGBoostSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
@@ -16,6 +17,7 @@ __all__ = [
     "CustomONNXSurrogate",
     "GaussianProcessSurrogate",
     "MeanPredictionSurrogate",
+    "MeanTransferSurrogate",
     "NGBoostSurrogate",
     "RandomForestSurrogate",
 ]

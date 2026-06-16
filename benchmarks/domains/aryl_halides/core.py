@@ -22,6 +22,7 @@ from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from benchmarks._priorgp import priorgp_scenarios
 from benchmarks.data.utils import DATA_PATH
 from benchmarks.definition import ConvergenceBenchmarkSettings
 
@@ -139,6 +140,12 @@ def aryl_halide_tl_substance_benchmark(
                 {
                     f"{int(100 * p)}": tl_campaign,
                     f"{int(100 * p)}_naive": nontl_campaign,
+                    **priorgp_scenarios(
+                        searchspace,
+                        objective,
+                        prefix=f"{int(100 * p)}",
+                        n_source_tasks=len(source_tasks),
+                    ),
                 },
                 lookup,
                 initial_data=initial_data_samples[p],

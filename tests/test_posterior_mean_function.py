@@ -361,6 +361,52 @@ def test_build_mean_transfer_gp_copies_pretrained_components(
     )
 
 
+@pytest.mark.parametrize("freeze_input_transform", [True, False])
+def test_build_mean_transfer_gp_input_transform_source_vs_anchor(
+    pretrained: GaussianProcessSurrogate,
+    freeze_input_transform: bool,
+) -> None:
+    """The inner input transform reuses source bounds or refits on the anchors.
+
+    With ``freeze_input_transform=True`` the inner ``Normalize`` matches the source
+    GP's transform (absolute x-scaling). With ``False`` it is refit on the anchor
+    inputs' per-column min/max, independent of the new search-space bounds.
+    """
+    # New search space spans [0, 10] while the anchors lie in [1, 9] (range 8).
+    new_ss = _searchspace([0.0, 10.0])
+    new_meas = _measurements([1.0, 9.0], [4.0, 6.0])
+    context = _ModelContext(new_ss, _OBJECTIVE, new_meas)
+    x_raw, y_raw = _resolve_anchors("new", pretrained._model, context)
+
+    inner = _build_mean_transfer_gp(
+        x_raw,
+        y_raw,
+        mean_kernel_init="freeze",
+        freeze_input_transform=freeze_input_transform,
+        pretrained_model=pretrained._model,
+        mean_factory=pretrained.mean_factory,
+        kernel_factory=pretrained.kernel_factory,
+        likelihood_factory=pretrained.likelihood_factory,
+        context=context,
+    )
+
+    source = pretrained._model.input_transform
+    if freeze_input_transform:
+        assert torch.equal(inner.input_transform.coefficient, source.coefficient)
+        assert torch.equal(inner.input_transform.offset, source.offset)
+    else:
+        # Anchor inputs span [1, 9]: offset = min = 1, coefficient = range = 8.
+        assert torch.allclose(
+            inner.input_transform.offset, torch.ones_like(inner.input_transform.offset)
+        )
+        assert torch.allclose(
+            inner.input_transform.coefficient,
+            torch.full_like(inner.input_transform.coefficient, 8.0),
+        )
+        # The refit transform must not fall back to the new search-space bounds.
+        assert not torch.equal(inner.input_transform.coefficient, source.coefficient)
+
+
 def test_build_mean_transfer_gp_freeze_disables_gradients(
     pretrained: GaussianProcessSurrogate,
 ) -> None:

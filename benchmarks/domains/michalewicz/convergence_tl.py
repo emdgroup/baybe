@@ -22,6 +22,7 @@ from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from benchmarks._priorgp import priorgp_scenarios
 from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSettings
 from benchmarks.definition.base import RunMode
 
@@ -158,7 +159,16 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     for p in n_points:
         results.append(
             simulate_scenarios(
-                {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
+                {
+                    f"{p}": campaign_tl,
+                    f"{p}_naive": campaign_nontl,
+                    **priorgp_scenarios(
+                        searchspace_tl,
+                        objective,
+                        prefix=f"{p}",
+                        n_source_tasks=1,
+                    ),
+                },
                 lambda x: wrap_function(
                     functions["Target_Function"], "Target_Function", x
                 ),
