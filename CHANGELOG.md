@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `posterior_mean_function` method to `GaussianProcessSurrogate`
+- `anchors` and `mean_kernel_init` keyword arguments to
+  `GaussianProcessSurrogate.posterior_mean_function` for selecting the inner GP's
+  anchor data and controlling the transfer of its hyperparameters
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
