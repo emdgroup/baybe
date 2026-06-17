@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any, Protocol
 
 import numpy as np
@@ -21,7 +22,9 @@ from tqdm import tqdm
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import TaskParameter
 from baybe.searchspace import SearchSpace
+from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+from benchmarks._priorgp import PRIORGP_MODES, make_mean_transfer_surrogate
 from benchmarks.definition import TransferLearningRegressionBenchmarkSettings
 
 
@@ -100,9 +103,22 @@ def spearman_rho_score(x: np.ndarray, y: np.ndarray, /) -> float:
     return rho
 
 
-# Dictionary mapping transfer learning model names to their surrogate classes
-TL_MODELS = {
+# Dictionary mapping transfer learning model names to zero-argument factories that
+# create the corresponding surrogate. These models are evaluated regardless of the
+# number of source tasks.
+TL_MODELS: dict[str, Callable[[], Surrogate]] = {
     "index_kernel": GaussianProcessSurrogate,
+}
+
+# Additional ``PriorGP`` models that are only applicable to benchmarks with exactly
+# one source task (and one target task).
+SINGLE_SOURCE_TL_MODELS: dict[str, Callable[[], Surrogate]] = {
+    suffix: (
+        lambda anchors=anchors, mean_kernel_init=mean_kernel_init: (
+            make_mean_transfer_surrogate(anchors, mean_kernel_init)
+        )
+    )
+    for suffix, anchors, mean_kernel_init in PRIORGP_MODES
 }
 
 
@@ -173,6 +189,12 @@ def run_tl_regression_benchmark(
     # Extract target tasks (can be multiple)
     target_tasks = task_param.active_values
     source_tasks = [val for val in task_param.values if val not in target_tasks]
+
+    # Assemble the transfer learning models to evaluate. The ``PriorGP`` models are
+    # only applicable to benchmarks with exactly one source task and one target task.
+    tl_models = dict(TL_MODELS)
+    if len(source_tasks) == 1 and len(target_tasks) == 1:
+        tl_models.update(SINGLE_SOURCE_TL_MODELS)
 
     # Split data into source and target
     source_data = data[data[name_task].isin(source_tasks)]
@@ -277,7 +299,7 @@ def run_tl_regression_benchmark(
 
                 combined_data = pd.concat([source_subset, target_train])
 
-                for model_suffix, model_class in TL_MODELS.items():
+                for model_suffix, model_class in tl_models.items():
                     scenario_name = f"{int(100 * fraction_source)}_{model_suffix}"
                     model = model_class()
 
@@ -311,7 +333,7 @@ def run_tl_regression_benchmark(
 
 
 def _evaluate_model(
-    model: GaussianProcessSurrogate,
+    model: Surrogate,
     train_data: pd.DataFrame,
     test_data: pd.DataFrame,
     searchspace: SearchSpace,

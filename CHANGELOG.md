@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `anchors` and `mean_kernel_init` keyword arguments to
   `GaussianProcessSurrogate.posterior_mean_function` for selecting the inner GP's
   anchor data and controlling the transfer of its hyperparameters
+- `MeanTransferSurrogate`, a transfer-learning surrogate that transfers a source
+  Gaussian process's posterior mean onto a target Gaussian process and can be used as
+  a drop-in surrogate for Bayesian recommenders on search spaces with a `TaskParameter`
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
