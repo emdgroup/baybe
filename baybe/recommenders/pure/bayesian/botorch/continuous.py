@@ -178,9 +178,16 @@ def recommend_continuous_without_cardinality_constraints(
     #   because it is unclear if the corresponding presence checks for these
     #   arguments is correctly implemented in all invoked BoTorch subroutines.
     #   For details: https://github.com/pytorch/botorch/issues/2042
+    from baybe.recommenders.pure.bayesian.botorch.optimizers.basic import (
+        GradientOptimizerUtilityFunction,
+    )
+
+    assert recommender.optimizer is not None
     points, acqf_values = recommender.optimizer(
         batch_size=batch_size,
-        acquisition_function=recommender._botorch_acqf,
+        acquisition_function=GradientOptimizerUtilityFunction(
+            recommender._botorch_acqf
+        ),
         searchspace=SearchSpace(continuous=subspace_continuous),
         fixed_parameters=fixed_parameters,
     )

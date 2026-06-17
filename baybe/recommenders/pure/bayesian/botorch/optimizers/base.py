@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from baybe.searchspace import SearchSpace
 
 if TYPE_CHECKING:
-    from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from torch import Tensor
 
 
@@ -22,7 +21,7 @@ class OptimizerProtocol(Protocol):
     def __call__(
         self,
         batch_size: int,
-        acquisition_function: BoAcquisitionFunction,
+        acquisition_function: UtilityFunction,
         searchspace: SearchSpace,
         fixed_parameters: dict[int, float] | None = None,
     ) -> tuple[Tensor, Tensor]:
@@ -30,11 +29,42 @@ class OptimizerProtocol(Protocol):
 
         Args:
             batch_size: The size of the recommendation batch.
-            acquisition_function: The acquisition function to be optimized.
+            acquisition_function: The utility function to be optimized.
             searchspace: The search space from which to generate recommendations.
             fixed_parameters: A dictionary mapping parameter indices to fixed values.
 
         Returns:
             The recommendations and corresponding acquisition values.
+        """
+        ...
+
+
+@runtime_checkable
+class UtilityFunction(Protocol):
+    """Interface for callable utility functions used in acquisition optimization.
+
+    Any object implementing this protocol can be used as an objective for
+    gradient-based optimizers, decoupling the optimizer from BoTorch-specific
+    acquisition function types.
+    """
+
+    __slots__ = ()
+
+    def forward(self, X: Tensor) -> Tensor:
+        """Evaluate the utility function on a set of candidate points.
+
+        Args:
+            X: A tensor of candidate points of shape ``(b) x q x d``.
+
+        Returns:
+            A tensor of utility values of shape ``(b)``.
+        """
+        ...
+
+    def get_utility_object(self) -> Any:
+        """Return the underlying utility object used by the optimizer.
+
+        Returns:
+            The wrapped object passed to the optimization routine.
         """
         ...

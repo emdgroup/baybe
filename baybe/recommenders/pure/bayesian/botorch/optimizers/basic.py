@@ -3,19 +3,42 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING
-from typing_extensions import override
+from typing import TYPE_CHECKING, Any
 
 from attrs import define, field
 from attrs.validators import gt, instance_of
+from typing_extensions import override
 
-from baybe.recommenders.pure.bayesian.botorch.optimizers.base import OptimizerProtocol
+from baybe.recommenders.pure.bayesian.botorch.optimizers.base import (
+    OptimizerProtocol,
+    UtilityFunction,
+)
 from baybe.searchspace import SearchSpace
 from baybe.utils.basic import flatten
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from torch import Tensor
+
+
+@define(frozen=True, slots=False)
+class GradientOptimizerUtilityFunction:
+    """Adapts a BoTorch acquisition function to the :class:`UtilityFunction` protocol.
+
+    Wraps a BoTorch acquisition function to satisfy the :class:`UtilityFunction`
+    interface, decoupling the optimizer from BoTorch-specific types.
+    """
+
+    _acqf: BoAcquisitionFunction = field()
+    """The underlying BoTorch acquisition function."""
+
+    def forward(self, X: Tensor) -> Tensor:
+        """See :meth:`UtilityFunction.forward`."""
+        return self._acqf(X)
+
+    def get_utility_object(self) -> Any:
+        """See :meth:`UtilityFunction.get_utility_object`."""
+        return self._acqf
 
 
 @define(kw_only=True)
@@ -42,7 +65,7 @@ class GradientOptimizer(OptimizerProtocol):
     def __call__(
         self,
         batch_size: int,
-        acquisition_function: BoAcquisitionFunction,
+        acquisition_function: UtilityFunction,
         searchspace: SearchSpace,
         fixed_parameters: dict[int, float] | None = None,
     ) -> tuple[Tensor, Tensor]:
@@ -77,7 +100,8 @@ class GradientOptimizer(OptimizerProtocol):
             )
 
         points, acqf_values = optimize_acqf(
-            acq_function=acquisition_function,
+            # acq_function=acquisition_function.get_utility_object(),
+            acq_function=acquisition_function,  # type: ignore[arg-type]
             bounds=torch.from_numpy(
                 searchspace.continuous.comp_rep_bounds.to_numpy(copy=True)
             ),
