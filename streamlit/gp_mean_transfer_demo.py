@@ -4,9 +4,11 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 import torch
+from bokeh.models import ColumnDataSource, CustomJS, PointDrawTool
+from bokeh.plotting import figure
+from streamlit_bokeh3_events import streamlit_bokeh3_events as streamlit_bokeh_events
 
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.searchspace.core import SearchSpace
@@ -185,26 +187,50 @@ def fit_new_gp(
     return gp_with_mean, gp_standard, ss
 
 
-# Generate data
-prior_data = generate_data(prior_x_min, prior_x_max, prior_n_points, noise_level, seed)
+# --- Session-state data with signature-based invalidation ---
+# Any change to a data-generating sidebar input wipes user drag-edits.
+prior_sig = (prior_n_points, prior_x_min, prior_x_max, noise_level, seed)
 
-# Fit prior GP first
+if st.session_state.get("prior_sig") != prior_sig:
+    st.session_state.prior_data = generate_data(
+        prior_x_min, prior_x_max, prior_n_points, noise_level, seed
+    )
+    st.session_state.prior_sig = prior_sig
+    st.session_state.last_prior_drag = 0
+
+prior_data = st.session_state.prior_data
 prior_gp, prior_ss = fit_prior_gp(prior_data, prior_x_min, prior_x_max)
 
-# Generate new GP data based on toggle
-if use_prior_mean_data:
-    # Generate random x values and get predictions from prior GP
-    np.random.seed(seed + 100)
-    x_new = np.random.uniform(new_x_min, new_x_max, new_n_points)
-    x_new = np.sort(x_new)
-    new_data_df = pd.DataFrame({"x": x_new})
-    with torch.no_grad():
-        prior_predictions = prior_gp.posterior(new_data_df).mean.numpy().ravel()
-    new_data = pd.DataFrame({"x": x_new, "y": prior_predictions * new_y_scale})
-else:
-    new_data = generate_data(
-        new_x_min, new_x_max, new_n_points, noise_level, seed + 100, new_y_scale
-    )
+new_sig = (
+    new_n_points,
+    new_x_min,
+    new_x_max,
+    new_y_scale,
+    noise_level,
+    seed,
+    use_prior_mean_data,
+    prior_sig if use_prior_mean_data else None,
+)
+
+if st.session_state.get("new_sig") != new_sig:
+    if use_prior_mean_data:
+        np.random.seed(seed + 100)
+        x_new = np.sort(np.random.uniform(new_x_min, new_x_max, new_n_points))
+        with torch.no_grad():
+            y_pred = (
+                prior_gp.posterior(pd.DataFrame({"x": x_new})).mean.numpy().ravel()
+            )
+        st.session_state.new_data = pd.DataFrame(
+            {"x": x_new, "y": y_pred * new_y_scale}
+        )
+    else:
+        st.session_state.new_data = generate_data(
+            new_x_min, new_x_max, new_n_points, noise_level, seed + 100, new_y_scale
+        )
+    st.session_state.new_sig = new_sig
+    st.session_state.last_new_drag = 0
+
+new_data = st.session_state.new_data
 
 # Fit new GPs
 ls_bounds = (ls_lower, ls_upper) if constrain_lengthscale else None
@@ -236,137 +262,171 @@ with torch.no_grad():
     new_standard_mean = new_standard_posterior.mean.numpy().ravel()
     new_standard_std = new_standard_posterior.variance.sqrt().numpy().ravel()
 
-# Create combined plot
-fig = go.Figure()
-
-# Prior GP - confidence interval (conditional)
-if show_std:
-    fig.add_trace(
-        go.Scatter(
-            x=np.concatenate([x_test, x_test[::-1]]),
-            y=np.concatenate(
-                [
-                    prior_mean + 2 * prior_std,
-                    (prior_mean - 2 * prior_std)[::-1],
-                ]
-            ),
-            fill="toself",
-            fillcolor="rgba(0, 100, 250, 0.2)",
-            line=dict(color="rgba(255, 255, 255, 0)"),
-            name="Prior GP: 95% CI",
-            showlegend=True,
-            legendgroup="prior",
-        )
-    )
-
-# Prior GP - mean prediction
-fig.add_trace(
-    go.Scatter(
-        x=x_test,
-        y=prior_mean,
-        mode="lines",
-        name="Prior GP Mean",
-        line=dict(color="blue", width=3),
-        legendgroup="prior",
-    )
-)
-
-# Prior GP - training data
-fig.add_trace(
-    go.Scatter(
-        x=prior_data["x"],
-        y=prior_data["y"],
-        mode="markers",
-        name="Prior GP Training Data",
-        marker=dict(color="darkblue", size=10, symbol="circle"),
-        legendgroup="prior",
-    )
-)
-
-# New GP with transferred mean - confidence interval (conditional)
-if show_std:
-    fig.add_trace(
-        go.Scatter(
-            x=np.concatenate([x_test, x_test[::-1]]),
-            y=np.concatenate(
-                [
-                    new_with_mean_mean + 2 * new_with_mean_std,
-                    (new_with_mean_mean - 2 * new_with_mean_std)[::-1],
-                ]
-            ),
-            fill="toself",
-            fillcolor="rgba(0, 200, 100, 0.2)",
-            line=dict(color="rgba(255, 255, 255, 0)"),
-            name="New GP w/ Mean: 95% CI",
-            showlegend=True,
-            legendgroup="new_with_mean",
-        )
-    )
-
-# New GP with transferred mean
-fig.add_trace(
-    go.Scatter(
-        x=x_test,
-        y=new_with_mean_mean,
-        mode="lines",
-        name="New GP w/ Transferred Mean",
-        line=dict(color="green", width=3),
-        legendgroup="new_with_mean",
-    )
-)
-
-# Standard GP - confidence interval (conditional)
-if show_std:
-    fig.add_trace(
-        go.Scatter(
-            x=np.concatenate([x_test, x_test[::-1]]),
-            y=np.concatenate(
-                [
-                    new_standard_mean + 2 * new_standard_std,
-                    (new_standard_mean - 2 * new_standard_std)[::-1],
-                ]
-            ),
-            fill="toself",
-            fillcolor="rgba(255, 165, 0, 0.15)",
-            line=dict(color="rgba(255, 255, 255, 0)"),
-            name="Standard GP: 95% CI",
-            showlegend=True,
-            legendgroup="standard",
-        )
-    )
-
-# Standard GP (for comparison)
-fig.add_trace(
-    go.Scatter(
-        x=x_test,
-        y=new_standard_mean,
-        mode="lines",
-        name="Standard GP (no transfer)",
-        line=dict(color="orange", width=3, dash="dot"),
-        legendgroup="standard",
-    )
-)
-
-# New GP training data
-fig.add_trace(
-    go.Scatter(
-        x=new_data["x"],
-        y=new_data["y"],
-        mode="markers",
-        name="New GP Training Data",
-        marker=dict(color="darkgreen", size=10, symbol="diamond"),
-        legendgroup="new_with_mean",
-    )
-)
-
-fig.update_layout(
-    xaxis_title="x",
-    yaxis_title="y",
+# --- Bokeh figure with draggable training points ---
+p = figure(
+    width=1200,
     height=600,
-    legend=dict(x=0.02, y=0.98, xanchor="left", yanchor="top"),
-    hovermode="x unified",
+    x_axis_label="x",
+    y_axis_label="y",
+    x_range=(plot_x_min, plot_x_max),
+    tools="pan,box_zoom,wheel_zoom,reset,save",
+    toolbar_location="above",
 )
-st.plotly_chart(fig, width="stretch")
+
+if show_std:
+    p.varea(
+        x=x_test,
+        y1=prior_mean - 2 * prior_std,
+        y2=prior_mean + 2 * prior_std,
+        fill_color="#6496FA",
+        fill_alpha=0.2,
+        legend_label="Prior GP: 95% CI",
+    )
+p.line(
+    x_test,
+    prior_mean,
+    line_color="blue",
+    line_width=3,
+    legend_label="Prior GP Mean",
+)
+
+if show_std:
+    p.varea(
+        x=x_test,
+        y1=new_with_mean_mean - 2 * new_with_mean_std,
+        y2=new_with_mean_mean + 2 * new_with_mean_std,
+        fill_color="#00C864",
+        fill_alpha=0.2,
+        legend_label="New GP w/ Mean: 95% CI",
+    )
+p.line(
+    x_test,
+    new_with_mean_mean,
+    line_color="green",
+    line_width=3,
+    legend_label="New GP w/ Transferred Mean",
+)
+
+if show_std:
+    p.varea(
+        x=x_test,
+        y1=new_standard_mean - 2 * new_standard_std,
+        y2=new_standard_mean + 2 * new_standard_std,
+        fill_color="#FFA500",
+        fill_alpha=0.15,
+        legend_label="Standard GP: 95% CI",
+    )
+p.line(
+    x_test,
+    new_standard_mean,
+    line_color="orange",
+    line_width=3,
+    line_dash="dotted",
+    legend_label="Standard GP (no transfer)",
+)
+
+prior_source = ColumnDataSource(
+    data=dict(x=prior_data["x"].tolist(), y=prior_data["y"].tolist())
+)
+new_source = ColumnDataSource(
+    data=dict(x=new_data["x"].tolist(), y=new_data["y"].tolist())
+)
+
+prior_renderer = p.scatter(
+    "x",
+    "y",
+    source=prior_source,
+    color="darkblue",
+    size=12,
+    marker="circle",
+    legend_label="Prior GP Training Data (draggable)",
+)
+new_renderer = p.scatter(
+    "x",
+    "y",
+    source=new_source,
+    color="darkgreen",
+    size=14,
+    marker="diamond",
+    legend_label="New GP Training Data (draggable)",
+)
+
+draw_tool = PointDrawTool(
+    renderers=[prior_renderer, new_renderer],
+    add=False,
+)
+p.add_tools(draw_tool)
+p.toolbar.active_tap = draw_tool
+
+p.legend.location = "top_left"
+p.legend.click_policy = "hide"
+
+_dispatch_js = """
+    window.{counter} = (window.{counter} || 0) + 1;
+    const payload = {{x: Array.from(src.data.x), y: Array.from(src.data.y), n: window.{counter}}};
+    const ev1 = new CustomEvent("{name}", {{detail: payload}});
+    const ev2 = new CustomEvent("{name}", {{detail: payload}});
+    document.dispatchEvent(ev1);
+    window.dispatchEvent(ev2);
+    console.log("[drag] {name}", payload);
+"""
+
+prior_source.js_on_change(
+    "data",
+    CustomJS(
+        args=dict(src=prior_source),
+        code=_dispatch_js.format(counter="_priorN", name="PRIOR_MOVED"),
+    ),
+)
+new_source.js_on_change(
+    "data",
+    CustomJS(
+        args=dict(src=new_source),
+        code=_dispatch_js.format(counter="_newN", name="NEW_MOVED"),
+    ),
+)
+
+_plot_key = hash(
+    (
+        prior_sig,
+        new_sig,
+        tuple(prior_data["x"]),
+        tuple(prior_data["y"]),
+        tuple(new_data["x"]),
+        tuple(new_data["y"]),
+    )
+)
+
+event_result = streamlit_bokeh_events(
+    bokeh_plot=p,
+    events="PRIOR_MOVED,NEW_MOVED",
+    key=f"plot_{_plot_key}",
+    refresh_on_update=True,
+    debounce_time=200,
+    override_height=620,
+)
+
+st.write("DEBUG event_result:", event_result)
+
+if event_result:
+    rerun = False
+    pm = event_result.get("PRIOR_MOVED")
+    if pm and pm.get("n", 0) > st.session_state.get("last_prior_drag", 0):
+        st.session_state.last_prior_drag = pm["n"]
+        st.session_state.prior_data = pd.DataFrame({"x": pm["x"], "y": pm["y"]})
+        rerun = True
+    nm = event_result.get("NEW_MOVED")
+    if nm and nm.get("n", 0) > st.session_state.get("last_new_drag", 0):
+        st.session_state.last_new_drag = nm["n"]
+        st.session_state.new_data = pd.DataFrame({"x": nm["x"], "y": nm["y"]})
+        rerun = True
+    if rerun:
+        st.rerun()
+
+st.caption(
+    "💡 Drag the 🔵 / 🟢 training points to move them. "
+    "Any sidebar change that regenerates data will overwrite your edits."
+)
 
 # Explanation
 st.markdown("---")
@@ -401,8 +461,8 @@ Where the new GPs have **no training data**, the green curve follows the blue pr
 
 **Things to try:**
 
+- **Drag** a 🔵 or 🟢 point — both GPs refit live.
 - Toggle **Train on prior mean** — when training data lies exactly on the blue curve, the green GP should hug it everywhere.
-- Increase **Y scale factor** — checks that outcome standardization handles different scales.
 - Set **Anchors = combined** with **freeze** — richer conditioning typically tightens the green CI.
 - Set **Anchors = new** with **warmstart** — rebases the prior shape onto the new data.
 """
