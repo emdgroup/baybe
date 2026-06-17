@@ -215,11 +215,7 @@ class BotorchRecommender(BayesianRecommender):
             )
 
         if self.optimizer is None:
-            self.optimizer = GradientOptimizer(
-                sequential_continuous=self.sequential_continuous,
-                n_restarts=self.n_restarts,
-                n_raw_samples=self.n_raw_samples,
-            )
+            self.optimizer = GradientOptimizer()
 
         points, _ = recommend_continuous_torch(self, subspace_continuous, batch_size)
 

@@ -186,9 +186,12 @@ def recommend_continuous_without_cardinality_constraints(
     points, acqf_values = recommender.optimizer(
         batch_size=batch_size,
         acquisition_function=GradientOptimizerUtilityFunction(
-            recommender._botorch_acqf
+            recommender._botorch_acqf,
+            n_restarts=recommender.n_restarts,
+            n_raw_samples=recommender.n_raw_samples,
+            sequential_continuous=recommender.sequential_continuous,
+            fixed_parameters=fixed_parameters,
         ),
         searchspace=SearchSpace(continuous=subspace_continuous),
-        fixed_parameters=fixed_parameters,
     )
     return points, acqf_values
