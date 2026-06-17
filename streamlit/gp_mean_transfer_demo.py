@@ -217,9 +217,7 @@ if st.session_state.get("new_sig") != new_sig:
         np.random.seed(seed + 100)
         x_new = np.sort(np.random.uniform(new_x_min, new_x_max, new_n_points))
         with torch.no_grad():
-            y_pred = (
-                prior_gp.posterior(pd.DataFrame({"x": x_new})).mean.numpy().ravel()
-            )
+            y_pred = prior_gp.posterior(pd.DataFrame({"x": x_new})).mean.numpy().ravel()
         st.session_state.new_data = pd.DataFrame(
             {"x": x_new, "y": y_pred * new_y_scale}
         )
