@@ -8,12 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 - `Campaign.measurements` no longer contains `FitNr` or `BatchNr` metadata columns
 
+### Added
+- `narwhals` as a hard dependency
+- `CandidatesProtocol` as an interface for candidates generation
+- `TableCandidates` and `ProductCandidates` classes implementing `CandidatesProtocol`
+- `DiscreteParameter.is_finite` property
+
 ### Changed
 - Internal `Campaign` state model simplified: recommended and excluded experiments
   are now stored as dataframes instead of being tracked as metadata flags
 
 ### Deprecations
-- `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes 
+- `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
@@ -60,10 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `has_polars_implementation` property on `DiscreteConstraint`
 - `allow_missing` flag on `DiscreteConstraint.get_invalid` and `get_valid`
 - `zizmor` pre-commit hook for static analysis of GitHub Actions workflows
-- `narwhals` as a hard dependency
-- `CandidatesProtocol` as an interface for candidates generation
-- `TableCandidates` and `ProductCandidates` classes implementing `CandidatesProtocol`
-- `DiscreteParameter.is_finite` property
 
 ### Changed
 - The `BAYBE` GP preset now dispatches between the `CHEN` preset (when a
@@ -98,7 +100,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `GaussianProcessSurrogate.from_preset` 
 
 ### Deprecations
-- `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
 - `BotorchRecommender.max_n_subspaces` has been renamed to `max_n_subsets`
 - `set_random_seed` and `temporary_seed` utility functions
 - Using a custom kernel with `GaussianProcessSurrogate` in a multi-task context now
