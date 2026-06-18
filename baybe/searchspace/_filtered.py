@@ -33,10 +33,14 @@ class FilteredSubspaceDiscrete(SubspaceDiscrete):
         cls, subspace: SubspaceDiscrete, mask_keep: npt.NDArray[np.bool_]
     ) -> Self:
         """Filter an existing subspace."""
-        return cls(
-            **asdict(subspace, filter=lambda attr, _: attr.init, recurse=False),
-            mask_keep=mask_keep,
-        )
+        kwargs = asdict(subspace, filter=lambda attr, _: attr.init, recurse=False)
+
+        # >>>>> Deprecation
+        kwargs.pop("_empty_encoding", None)
+        kwargs.pop("_comp_rep", None)
+        # <<<<< Deprecation
+
+        return cls(**kwargs, mask_keep=mask_keep)
 
     @override
     def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:

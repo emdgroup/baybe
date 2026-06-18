@@ -6,14 +6,17 @@ import gc
 import random
 import warnings
 from collections.abc import Collection, Iterator, Sequence
+from functools import cached_property
 from itertools import islice
 from math import prod
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal
 
+import cattrs
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
+from attrs.validators import deep_iterable, instance_of
 from cattrs import IterableValidationError
 from typing_extensions import override
 
@@ -29,7 +32,7 @@ from baybe.parameters import (
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
-from baybe.searchspace.validation import validate_parameter_names, validate_parameters
+from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
@@ -44,6 +47,23 @@ from baybe.utils.memory import bytes_to_human_readable
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
+
+
+def _deprecate_argument(error: bool):
+    """Helper for deprecating legacy arguments."""  # noqa: D401
+
+    def validator(self, attribute, value):
+        if value is not None:
+            msg = (
+                f"Providing '{attribute.alias}' to '{self.__class__.__name__}' is no "
+                f"longer supported. To proceed, simply drop the argument."
+            )
+            if error:
+                raise DeprecationError(msg)
+            else:
+                warnings.warn(msg, DeprecationWarning, stacklevel=3)
+
+    return validator
 
 
 @define(kw_only=True)
@@ -83,39 +103,42 @@ class MemorySize:
 class SubspaceDiscrete(SerialMixin):
     """Class for managing discrete subspaces.
 
-    Builds the subspace from parameter definitions and optional constraints, keeps
-    track of search metadata, and provides access to candidate sets and different
-    parameter views.
+    Builds the subspace from parameter definitions and optional constraints,
+    and provides access to candidate sets and different parameter views.
     """
 
     parameters: tuple[DiscreteParameter, ...] = field(
         converter=sort_parameters,
-        validator=lambda _, __, x: validate_parameter_names(x),
+        validator=[
+            deep_iterable(member_validator=instance_of(DiscreteParameter)),
+            lambda _, __, x: validate_parameters(x, allow_empty=True),
+        ],
     )
-    """The list of parameters of the subspace."""
+    """The parameters spanning the subspace."""
 
-    exp_rep: pd.DataFrame = field(eq=eq_dataframe)
+    exp_rep: pd.DataFrame = field(validator=instance_of(pd.DataFrame), eq=eq_dataframe)
     """The experimental representation of the subspace."""
 
-    empty_encoding: bool = field(default=False)
-    """Flag encoding whether an empty encoding is used."""
+    _empty_encoding: Annotated[bool, cattrs.override(omit=True)] = field(
+        alias="empty_encoding", default=None, validator=_deprecate_argument(error=False)
+    )
+    "Ignore! For backwards compatibility only."
 
     constraints: tuple[DiscreteConstraint, ...] = field(
+        default=(),
         converter=lambda x: to_tuple(
             sorted(
                 x,
                 key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
             )
         ),
-        factory=tuple,
     )
-    """A list of constraints for restricting the space."""
+    """Optional constraints filtering the subspace."""
 
-    comp_rep: pd.DataFrame = field(eq=eq_dataframe)
-    """The computational representation of the space. Technically not required but added
-    as an optional initializer argument to allow ingestion from e.g. serialized objects
-    and thereby speed up construction. If not provided, the default hook will derive it
-    from ``exp_rep``."""
+    _comp_rep: Annotated[pd.DataFrame, cattrs.override(omit=True)] = field(
+        alias="comp_rep", default=None, validator=_deprecate_argument(error=True)
+    )
+    "Ignore! For backwards compatibility only."
 
     @override
     def __str__(self) -> str:
@@ -146,18 +169,28 @@ class SubspaceDiscrete(SerialMixin):
         """Validate the experimental representation.
 
         Raises:
+            ValueError: If the provided dataframe columns do not match the parameter
+                names of the subspace.
             ValueError: If the index of the provided dataframe contains duplicates.
         """
+        if set(exp_rep.columns) != {p.name for p in self.parameters}:
+            raise ValueError(
+                "The columns of the experimental representation must match the "
+                "parameter names of the subspace."
+            )
+        # TODO: We should ideally also also validate that there are no duplicate rows,
+        #    but in the current eager implementation this is a costly operation.
+        #    To be revisited once the lazy implementation is in place.
         if exp_rep.index.has_duplicates:
             raise ValueError(
                 "The index of this search space contains duplicates. "
                 "This is not allowed, as it can lead to hard-to-detect bugs."
             )
 
-    @comp_rep.default
-    def _default_comp_rep(self) -> pd.DataFrame:
-        """Create the default computational representation."""
-        return self.transform(self.exp_rep)
+    @constraints.validator
+    def _validate_constraints(self, _, __) -> None:
+        """Validate constraints."""
+        validate_constraints(self.constraints, self.parameters)
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no continuous part."""
@@ -187,12 +220,18 @@ class SubspaceDiscrete(SerialMixin):
         cls,
         parameters: Sequence[DiscreteParameter],
         constraints: Sequence[DiscreteConstraint] | None = None,
-        empty_encoding: bool = False,
+        empty_encoding: bool | None = None,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
-        constraints = constraints or []
+        validate_parameters(parameters, allow_empty=True)
 
-        if constraints:
+        if constraints is None:
+            constraints = []
+        else:
+            constraints = sorted(
+                constraints,
+                key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+            )
             validate_constraints(constraints, parameters)
 
         df = build_constrained_product(parameters, constraints)
@@ -201,7 +240,7 @@ class SubspaceDiscrete(SerialMixin):
             parameters=parameters,
             constraints=constraints,
             exp_rep=df,
-            empty_encoding=empty_encoding,
+            empty_encoding=empty_encoding,  # type: ignore[arg-type]
         )
 
     @classmethod
@@ -209,7 +248,7 @@ class SubspaceDiscrete(SerialMixin):
         cls,
         df: pd.DataFrame,
         parameters: Sequence[DiscreteParameter] | None = None,
-        empty_encoding: bool = False,
+        empty_encoding: bool | None = None,
     ) -> SubspaceDiscrete:
         """Create a discrete subspace with a specified set of configurations.
 
@@ -226,7 +265,7 @@ class SubspaceDiscrete(SerialMixin):
                 fallback. For both types, default values are used for their optional
                 arguments. For more details, see
                 :func:`baybe.parameters.utils.get_parameters_from_dataframe`.
-            empty_encoding: See :func:`baybe.searchspace.core.SearchSpace.from_product`.
+            empty_encoding: Ignore! For backwards compatibility only.
 
         Returns:
             The created discrete subspace.
@@ -262,7 +301,7 @@ class SubspaceDiscrete(SerialMixin):
         # Ensure dtype consistency
         df = normalize_input_dtypes(df, parameters)
 
-        return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)
+        return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)  # type: ignore[arg-type]
 
     @classmethod
     def from_simplex(
@@ -325,9 +364,6 @@ class SubspaceDiscrete(SerialMixin):
             constraints = []
         if max_nonzero is None:
             max_nonzero = len(simplex_parameters)
-
-        # Validate constraints
-        validate_constraints(constraints, [*simplex_parameters, *product_parameters])
 
         # Validate parameter types
         if not (
@@ -510,12 +546,14 @@ class SubspaceDiscrete(SerialMixin):
         """Return tuple of parameter names."""
         return tuple(p.name for p in self.parameters)
 
+    @cached_property
+    def comp_rep(self) -> pd.DataFrame:
+        """The computational representation of the subspace."""
+        return self.transform(self.exp_rep)
+
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:
         """The columns spanning the computational representation."""
-        # We go via `comp_rep` here instead of using the columns of the individual
-        # parameters because the search space potentially uses only a subset of the
-        # columns due to decorrelation
         return tuple(self.comp_rep.columns)
 
     @property
@@ -712,24 +750,12 @@ class SubspaceDiscrete(SerialMixin):
             df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
-        # If the transformed values are not required, return an empty dataframe
-        if self.empty_encoding or len(df) < 1:
-            return pd.DataFrame(index=df.index)
-
         # Transform the parameters
         dfs = []
         for param in parameters:
             comp_df = param.transform(df[param.name])
             dfs.append(comp_df)
-        comp_rep = pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
-
-        # If the computational representation has already been built (with potentially
-        # removing some columns, e.g. due to decorrelation or dropping constant ones),
-        # any subsequent transformation should yield the same columns.
-        try:
-            return comp_rep[self.comp_rep.columns]
-        except AttributeError:
-            return comp_rep
+        return pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
     def get_parameters_by_name(
         self, names: Sequence[str]
@@ -750,7 +776,7 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
     # Validate product inputs without constructing it
     if specs.get("constructor", None) == "from_product":
         parameters = converter.structure(specs["parameters"], list[DiscreteParameter])
-        validate_parameters(parameters)
+        validate_parameters(parameters, allow_empty=True)
 
         constraints = specs.get("constraints", [])
         if constraints:

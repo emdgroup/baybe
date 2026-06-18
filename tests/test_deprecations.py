@@ -15,6 +15,10 @@ from pandas.testing import assert_series_equal
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
+from baybe.constraints import (
+    ContinuousLinearConstraint,
+)
+from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.exceptions import DeprecationError
 from baybe.kernels.basic import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
@@ -22,6 +26,7 @@ from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
@@ -29,6 +34,7 @@ from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
@@ -709,3 +715,112 @@ def test_legacy_excluded_metadata_deserialization():
         ).reset_index(drop=True),
         expected.sort_values(expected.columns.tolist()).reset_index(drop=True),
     )
+
+
+@pytest.mark.parametrize("positional", [True, False])
+def test_deprecated_constraints_arguments(positional):
+    """Using the deprecated subspace constraint arguments raises a warning."""
+    p = NumericalContinuousParameter("p", (0, 1))
+    c = ContinuousLinearConstraint(["p"], "=", [0], 0)
+    c_lin_eq = ContinuousLinearConstraint(["p"], "=", [1], 0)
+    c_lin_ineq = ContinuousLinearConstraint(["p"], ">=", [1], 0)
+    c_nonlin = ContinuousCardinalityConstraint(["p"], 1)
+
+    with pytest.warns(DeprecationWarning):
+        if positional:
+            subspace = SubspaceContinuous(
+                parameters=(p,),
+                constraints=(c,),
+                constraints_lin_eq=(c_lin_eq,),
+                constraints_lin_ineq=(c_lin_ineq,),
+                constraints_nonlin=(c_nonlin,),
+            )
+        else:
+            subspace = SubspaceContinuous(
+                (p,),
+                (c, c_lin_eq),
+                (c_lin_ineq,),
+                (c_nonlin,),
+            )
+
+    assert c in subspace.constraints
+    assert c_lin_eq in subspace.constraints
+    assert c_lin_ineq in subspace.constraints
+    assert c_nonlin in subspace.constraints
+
+
+def test_deprecated_constraints_arguments_deserialization():
+    """Deserialization from legacy JSON with deprecated constraint attributes works."""
+    p1 = NumericalContinuousParameter("p", (0, 1))
+    c_lin_eq = ContinuousLinearConstraint(["p"], "=", [1], 1)
+    c_lin_ineq = ContinuousLinearConstraint(["p"], ">=", [1], 0)
+    c_nonlin = ContinuousCardinalityConstraint(["p"], 1)
+
+    # Construct the expected object using the modern interface
+    expected = SubspaceContinuous(
+        parameters=(p1,),
+        constraints=(c_lin_eq, c_lin_ineq, c_nonlin),
+    )
+
+    # Build a legacy dict with the deprecated constraint field names
+    legacy_dict = {
+        "type": "SubspaceContinuous",
+        "parameters": [p1.to_dict()],
+        "constraints_lin_eq": [c_lin_eq.to_dict()],
+        "constraints_lin_ineq": [c_lin_ineq.to_dict()],
+        "constraints_nonlin": [c_nonlin.to_dict()],
+    }
+
+    with pytest.warns(DeprecationWarning):
+        actual = SubspaceContinuous.from_dict(legacy_dict)
+
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("arg", "error"), [("empty_encoding", False), ("comp_rep", True)]
+)
+def test_deprecated_subspace_discrete_arguments(arg, error):
+    """Providing deprecated arguments to `SubspaceDiscrete` raises an error / a warning."""  # noqa
+    context = (
+        pytest.raises(DeprecationError, match=f"Providing '{arg}'")
+        if error
+        else pytest.warns(DeprecationWarning, match=f"Providing '{arg}'")
+    )
+    with context:
+        SubspaceDiscrete(
+            parameters=[], constraints=[], exp_rep=pd.DataFrame(), **{arg: 0}
+        )
+
+
+def test_deprecated_empty_encoding_from_product():
+    """Passing `empty_encoding` to `SubspaceDiscrete.from_product` raises a warning."""  # noqa
+    with pytest.warns(DeprecationWarning, match="Providing 'empty_encoding'"):
+        SubspaceDiscrete.from_product(
+            parameters=[NumericalDiscreteParameter("p", [0, 1])],
+            empty_encoding=True,
+        )
+
+
+def test_deprecated_empty_encoding_from_dataframe():
+    """Passing `empty_encoding` to `SubspaceDiscrete.from_dataframe` raises a warning."""  # noqa
+    with pytest.warns(DeprecationWarning, match="Providing 'empty_encoding'"):
+        SubspaceDiscrete.from_dataframe(
+            parameters=[NumericalDiscreteParameter("p", [0, 1])],
+            df=pd.DataFrame({"p": [0, 1]}),
+            empty_encoding=True,
+        )
+
+
+def test_deprecated_discrete_subspace_deserialization():
+    """Deserialization from legacy JSON with `empty_encoding`/`comp_rep` works."""
+    p = NumericalDiscreteParameter("p", [0, 1])
+    expected = SubspaceDiscrete.from_product(parameters=[p])
+
+    # Build a legacy dict containing the deprecated fields
+    legacy_dict = expected.to_dict()
+    legacy_dict["empty_encoding"] = False
+    legacy_dict["comp_rep"] = legacy_dict["exp_rep"]
+
+    actual = SubspaceDiscrete.from_dict(legacy_dict)
+    assert actual == expected

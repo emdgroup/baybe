@@ -43,7 +43,7 @@ def validate_constraints(  # noqa: DOC101, DOC103
             f"Please specify all dependencies in one single constraint."
         )
 
-    validate_cardinality_constraints_are_nonoverlapping(
+    _validate_cardinality_constraints_are_nonoverlapping(
         [con for con in constraints if isinstance(con, ContinuousCardinalityConstraint)]
     )
 
@@ -103,12 +103,12 @@ def validate_constraints(  # noqa: DOC101, DOC103
             )
 
         if isinstance(constraint, ContinuousCardinalityConstraint):
-            validate_cardinality_constraint_parameter_bounds(
+            _validate_cardinality_constraint_parameter_bounds(
                 constraint, params_continuous
             )
 
 
-def validate_cardinality_constraints_are_nonoverlapping(
+def _validate_cardinality_constraints_are_nonoverlapping(
     constraints: Collection[ContinuousCardinalityConstraint],
 ) -> None:
     """Validate that cardinality constraints are non-overlapping.
@@ -129,7 +129,7 @@ def validate_cardinality_constraints_are_nonoverlapping(
             )
 
 
-def validate_cardinality_constraint_parameter_bounds(
+def _validate_cardinality_constraint_parameter_bounds(
     constraint: ContinuousCardinalityConstraint,
     parameters: Collection[NumericalContinuousParameter],
 ) -> None:

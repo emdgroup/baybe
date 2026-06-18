@@ -14,7 +14,7 @@ from baybe.exceptions import InfiniteSpaceError
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import sort_parameters
 from baybe.searchspace.utils import build_constrained_product
-from baybe.searchspace.validation import validate_parameter_names
+from baybe.searchspace.validation import validate_parameters
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import to_lazy
 from baybe.utils.validation import validate_parameter_input
@@ -48,7 +48,7 @@ class ProductCandidates(CandidatesProtocol):
         validator=[
             min_len(1),
             deep_iterable(member_validator=instance_of(DiscreteParameter)),
-            lambda _, __, x: validate_parameter_names(x),
+            lambda _, __, x: validate_parameters(x),
         ],
     )
     """See :attr:`CandidatesProtocol.parameters`."""
@@ -98,7 +98,7 @@ class TableCandidates(CandidatesProtocol):
         validator=[
             min_len(1),
             deep_iterable(member_validator=instance_of(DiscreteParameter)),
-            lambda _, __, x: validate_parameter_names(x),
+            lambda _, __, x: validate_parameters(x),
         ],
     )
     """See :attr:`CandidatesProtocol.parameters`."""

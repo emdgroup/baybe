@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Breaking Changes
 - `Campaign.measurements` no longer contains `FitNr` or `BatchNr` metadata columns
+- `validate_parameter_names`, `validate_cardinality_constraints_are_nonoverlapping`
+  and `validate_cardinality_constraint_parameter_bounds` are no longer available
+  as public utilities
 
 ### Added
 - `narwhals` as a hard dependency
@@ -17,9 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Internal `Campaign` state model simplified: recommended and excluded experiments
   are now stored as dataframes instead of being tracked as metadata flags
+- `SubspaceContinuous` now offers a simpler interface for passing constraints,
+  no longer requiring users to manually group constraints according to their type
+- Parameter and constraint validation has been streamlined, using `validate_parameters`
+  and `validate_constraints` as the only remaining public entry points
 
 ### Deprecations
 - `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
+- `SubspaceDiscrete` ignores any `empty_encoding` when provided
+- `SubspaceDiscrete` no longer accepts a `comp_rep` argument
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
@@ -86,12 +95,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Broken cache validation for certain `Campaign.recommend` cases
 - `ContinuousCardinalityConstraint` now works in hybrid search spaces
+- Typo in `_FixedNumericalContinuousParameter` where `is_numeric` was used
+  instead of `is_numerical`
 - `SHAPInsight` breaking with `numpy>=2.4` due to no longer accepted implicit array to 
   scalar conversion
 - Using `np.isclose` for assessing equality of `Interval` bounds instead of hard
   equality check
-- Typo in `_FixedNumericalContinuousParameter` where `is_numeric` was used
-  instead of `is_numerical`
 
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization

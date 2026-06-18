@@ -124,6 +124,9 @@ def test_candidate_toggling(constraints, exclude, complement):
         expected_remaining = len(all_candidates) - len(toggled_rows)
         assert len(campaign._excluded_experiments) == expected_remaining
 
+    # Assert that recommendation with toggled candidates still works
+    campaign.recommend(1)
+
 
 @pytest.mark.parametrize(
     ("flag", "discrete_value"),
