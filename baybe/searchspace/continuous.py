@@ -235,11 +235,6 @@ class SubspaceContinuous(SerialMixin):
             for flat_idx in order:
                 yield frozenset(chain(*select_via_flat_index(flat_idx, per_constraint)))
 
-    @constraints.validator
-    def _validate_constraints(self, _, __) -> None:
-        """Validate constraints."""
-        validate_constraints(self.constraints, self.parameters)
-
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no discrete part."""
         from baybe.searchspace.core import SearchSpace
