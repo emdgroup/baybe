@@ -564,6 +564,159 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
         GaussianProcessSurrogate(*args).fit(searchspace, objective, measurements)
 
 
+@pytest.mark.parametrize(
+    "attr", ["n_fits_done", "n_batches_done"], ids=["fits", "batches"]
+)
+def test_deprecated_campaign_counters(campaign, attr):
+    """Accessing the deprecated campaign counter properties raises an error."""
+    with pytest.raises(DeprecationError, match=attr):
+        getattr(campaign, attr)
+
+
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+def test_legacy_campaign_counter_deserialization(ongoing_campaign):
+    """Deserializing a campaign with legacy counter fields and columns still works."""
+    from baybe.campaign import Campaign
+    from baybe.serialization import converter
+
+    # Serialize, then inject legacy fields
+    data = ongoing_campaign.to_dict()
+    assert "n_fits_done" not in data
+    assert "n_batches_done" not in data
+    data["n_fits_done"] = 3
+    data["n_batches_done"] = 2
+
+    # Inject legacy columns into measurements
+    # (use legacy key name "measurements_exp" to test migration hook)
+    meas = converter.structure(data.pop("measurements"), pd.DataFrame)
+    meas["FitNr"] = 1.0
+    meas["BatchNr"] = 1
+    data["measurements_exp"] = converter.unstructure(meas)
+
+    # Deserialization must not raise and legacy columns must be stripped
+    restored = Campaign.from_dict(data)
+    assert "FitNr" not in restored._measurements.columns
+    assert "BatchNr" not in restored._measurements.columns
+
+
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+def test_legacy_recommended_metadata_deserialization(ongoing_campaign):
+    """Legacy searchspace_metadata 'recommended' column migrates to new field."""
+    from baybe.campaign import _RECOMMENDED, Campaign
+    from baybe.serialization import converter
+
+    # Recommend to mark some entries as recommended
+    rec = ongoing_campaign.recommend(batch_size=2)
+    n_recommended = len(rec)
+
+    # Serialize and simulate legacy format (no recommended/excluded_experiments)
+    data = ongoing_campaign.to_dict()
+    del data["recommended_experiments"]
+    del data["excluded_experiments"]
+
+    # Construct legacy searchspace_metadata with a "recommended" column
+    exp_rep = ongoing_campaign.searchspace.discrete.exp_rep
+    metadata = pd.DataFrame(False, index=exp_rep.index, columns=[_RECOMMENDED])
+    idxs = rec.index[:n_recommended]
+    metadata.loc[idxs, _RECOMMENDED] = True
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must reconstruct _recommended_experiments with correct content
+    restored = Campaign.from_dict(data)
+    expected = exp_rep.loc[idxs]
+    # Compare as sets of rows (order may differ)
+    restored_sorted = restored._recommended_experiments.sort_values(
+        restored._recommended_experiments.columns.tolist()
+    ).reset_index(drop=True)
+    expected_sorted = expected.sort_values(expected.columns.tolist()).reset_index(
+        drop=True
+    )
+    pd.testing.assert_frame_equal(restored_sorted, expected_sorted)
+
+
+def test_legacy_empty_dataframe_schema_deserialization():
+    """Legacy campaigns with schema-less empty DataFrames get correct columns."""
+    from baybe.campaign import Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy serialization: replace with column-less empty DataFrames
+    data = campaign.to_dict()
+    data["measurements"] = converter.unstructure(pd.DataFrame())
+
+    restored = Campaign.from_dict(data)
+    assert restored._measurements.columns.tolist() == ["x", "y"]
+    assert restored._recommended_experiments.columns.tolist() == ["x"]
+    assert restored._measurements.empty
+    assert restored._recommended_experiments.empty
+    assert restored == campaign
+
+
+def test_legacy_measured_metadata_deserialization():
+    """Legacy searchspace_metadata 'measured' column is discarded during loading."""
+    from baybe.campaign import _MEASURED, Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy format: searchspace_metadata with a "measured" column
+    data = campaign.to_dict()
+    metadata = pd.DataFrame(
+        {_MEASURED: [True, False, False]},
+        index=campaign.searchspace.discrete.exp_rep.index,
+    )
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must handle the legacy column without errors
+    restored = Campaign.from_dict(data)
+    assert restored == campaign
+
+
+def test_legacy_excluded_metadata_deserialization():
+    """Legacy searchspace_metadata 'excluded' column migrates to new field."""
+    from baybe.campaign import _EXCLUDED, Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy format: searchspace_metadata with an "excluded" column,
+    # and no excluded_experiments field
+    data = campaign.to_dict()
+    del data["excluded_experiments"]
+    exp_rep = campaign.searchspace.discrete.exp_rep
+    metadata = pd.DataFrame(
+        {_EXCLUDED: [True, False, True]},
+        index=exp_rep.index,
+    )
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must reconstruct _excluded_experiments
+    restored = Campaign.from_dict(data)
+    excluded_idxs = metadata.index[metadata[_EXCLUDED]]
+    expected = exp_rep.loc[excluded_idxs].reset_index(drop=True)
+    pd.testing.assert_frame_equal(
+        restored._excluded_experiments.sort_values(
+            restored._excluded_experiments.columns.tolist()
+        ).reset_index(drop=True),
+        expected.sort_values(expected.columns.tolist()).reset_index(drop=True),
+    )
+
+
 @pytest.mark.parametrize("positional", [True, False])
 def test_deprecated_constraints_arguments(positional):
     """Using the deprecated subspace constraint arguments raises a warning."""

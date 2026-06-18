@@ -19,7 +19,7 @@ import warnings
 import pandas as pd
 import seaborn as sns
 
-from baybe import Campaign
+from baybe import Campaign, active_settings
 from baybe.acquisition import ProbabilityOfImprovement
 from baybe.exceptions import UnusedObjectWarning
 from baybe.objectives import SingleTargetObjective
@@ -158,6 +158,7 @@ def stop_on_PI(
 BotorchRecommender.recommend = register_hooks(
     BotorchRecommender.recommend, post_hooks=[stop_on_PI]
 )
+active_settings.parallelize_simulation_runs = False
 
 # ```{admonition} Monkeypatching
 # :class: note
@@ -165,7 +166,9 @@ BotorchRecommender.recommend = register_hooks(
 # class. While it is possible to attach the hook only to a specific instance via
 # ``MethodType`` (see [here](./basics.md)), this approach does not work well with the
 # simulation utilities because they internally create deep copies of the simulated
-# campaign, effectively bypassing the patch.
+# campaign, effectively bypassing the patch. For the same reason, we deactivate
+# parallelization of the simulation runs, which would spawn separate processes where the
+# patch has no effect.
 # ```
 
 ### Simulating the Interrupted Campaigns

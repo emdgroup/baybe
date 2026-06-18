@@ -132,7 +132,7 @@ s_42.restore_previous()
 assert active_settings.random_seed == 0  # <-- the seed before s_42 got activated
 
 s_1337.restore_previous()
-assert active_settings.random_seed == 42  # <-- the seed before s_42 got activated
+assert active_settings.random_seed == 42  # <-- the seed before s_1337 got activated
 ```
 
 #### Context Activation

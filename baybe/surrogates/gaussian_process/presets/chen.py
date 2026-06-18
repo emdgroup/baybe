@@ -31,10 +31,9 @@ if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
 
 
-@_enable_transfer_learning
 @define
-class ChenKernelFactory(_PureKernelFactory):
-    """A factory providing adaptive hyperprior kernels as proposed by :cite:p:`Chen2026`."""  # noqa: E501
+class _ChenNumericalKernelFactory(_PureKernelFactory):
+    """A factory providing the core numerical kernel for the Chen preset."""
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
@@ -62,11 +61,29 @@ class ChenKernelFactory(_PureKernelFactory):
         )
 
 
+ChenKernelFactory = _enable_transfer_learning(
+    _ChenNumericalKernelFactory, "ChenKernelFactory"
+)
+"""A factory providing adaptive hyperprior kernels as proposed by :cite:p:`Chen2026`.
+
+Takes a dimension-aware approach where kernel hyperpriors scale with the square root
+of the effective dimensionality of the search space.
+"""  # noqa: E501
+
+
+class ChenMeanFactory(LazyConstantMeanFactory):
+    """A factory providing mean functions for the Chen preset."""
+
+
+class ChenLikelihoodFactory(LazyGaussianLikelihoodFactory):
+    """A factory providing likelihoods for the Chen preset."""
+
+
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
 
 # Preset defaults
 KERNEL_FACTORY = ChenKernelFactory()
-MEAN_FACTORY = LazyConstantMeanFactory()
-LIKELIHOOD_FACTORY = LazyGaussianLikelihoodFactory()
+MEAN_FACTORY = ChenMeanFactory()
+LIKELIHOOD_FACTORY = ChenLikelihoodFactory()
 FIT_CRITERION_FACTORY = _MLLForNonTLFitCriterionFactory()

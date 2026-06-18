@@ -5,14 +5,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Breaking Changes
+- `Campaign.measurements` no longer contains `FitNr` or `BatchNr` metadata columns
+- `validate_parameter_names`, `validate_cardinality_constraints_are_nonoverlapping`
+  and `validate_cardinality_constraint_parameter_bounds` are no longer available
+  as public utilities
+
+### Added
+- `narwhals` as a hard dependency
+- `CandidatesProtocol` as an interface for candidates generation
+- `TableCandidates` and `ProductCandidates` classes implementing `CandidatesProtocol`
+- `DiscreteParameter.is_finite` property
+
+### Changed
+- Internal `Campaign` state model simplified: recommended and excluded experiments
+  are now stored as dataframes instead of being tracked as metadata flags
+- `SubspaceContinuous` now offers a simpler interface for passing constraints,
+  no longer requiring users to manually group constraints according to their type
+- Parameter and constraint validation has been streamlined, using `validate_parameters`
+  and `validate_constraints` as the only remaining public entry points
+
+### Deprecations
+- `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
+- `SubspaceDiscrete` ignores any `empty_encoding` when provided
+- `SubspaceDiscrete` no longer accepts a `comp_rep` argument
+
+## [0.15.0] - 2026-06-11
+### Breaking Changes
+- `GaussianProcessSurrogate` no longer automatically adds a task kernel in multi-task
+  scenarios. Custom kernel architectures must now explicitly include the task kernel,
+  e.g. via `ICMKernelFactory`.
+- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
+  from `baybe.searchspace.discrete` to `baybe.searchspace.utils`
+- `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
+  instead of a single tuple (needed for interpoint constraints)
+- `Kernel.to_gpytorch` now takes a `SearchSpace` instead of explicit `ard_num_dims`,
+  `batch_shape` and `active_dims` arguments, as kernels now automatically adjust this
+  configuration to the given search space
+- `KernelFactory` now obeys the more general `GPComponentFactoryProtocol`
+
 ### Added
 - Support for Python 3.14
 - Support for pandas 3
 - `Settings` class for unified and streamlined settings management
 - Settings options to (de-)activate recommendation caching / dataframe preprocessing
 - Settings option for random seed control
-- `identify_non_dominated_configurations` method to `Campaign` and `Objective`
-  for determining the Pareto front
 - Gaussian process component factories
 - Support for GPyTorch objects (kernels, means, likelihood) as Gaussian process
   components, enabling full low-level customization
@@ -20,12 +57,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Factories for all Gaussian process components
 - `BOTORCH`, `CHEN`, `EDBO`, `EDBO_SMOOTHED` and `HVARFNER` presets for
   `GaussianProcessSurrogate`
+- `DiscreteBatchConstraint` for ensuring all recommendations in a batch share
+  the same value for a specified discrete parameter
+- Interpoint constraints for continuous search spaces
+- `identify_non_dominated_configurations` method to `Campaign` and `Objective`
+  for determining the Pareto front
 - `TypeSelector` and `NameSelector` classes for parameter selection in kernel factories
 - `parameter_names` attribute to basic kernels for controlling the considered parameters
 - `ParameterKind` flag enum for classifying parameters by their role and automatic
   parameter kind validation in kernel factories
 - `IndexKernel` and `PositiveIndexKernel` classes
-- Interpoint constraints for continuous search spaces
 - Addition and multiplication operators for kernel objects, enabling kernel
   composition via `+` (sum) and `*` (product), as well as `constant * kernel`
   for creating a `ScaleKernel` with a fixed output scale
@@ -34,24 +75,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `has_polars_implementation` property on `DiscreteConstraint`
 - `allow_missing` flag on `DiscreteConstraint.get_invalid` and `get_valid`
 - `zizmor` pre-commit hook for static analysis of GitHub Actions workflows
-- `DiscreteBatchConstraint` for ensuring all recommendations in a batch share
-  the same value for a specified discrete parameter
 
-### Breaking Changes
-- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars` moved
-  from `baybe.searchspace.discrete` to `baybe.searchspace.utils`
-- `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
-  instead of a single tuple (needed for interpoint constraints)
-- `Kernel.to_gpytorch` now takes a `SearchSpace` instead of explicit `ard_num_dims`,
-  `batch_shape` and `active_dims` arguments, as kernels now automatically adjust this
-  configuration to the given search space
-- `GaussianProcessSurrogate` no longer automatically adds a task kernel in multi-task
-  scenarios. Custom kernel architectures must now explicitly include the task kernel,
-  e.g. via `ICMKernelFactory`
-- `KernelFactory` now obeys the more general `GPComponentFactoryProtocol`
-- `validate_parameter_names`, `validate_cardinality_constraints_are_nonoverlapping`
-  and `validate_cardinality_constraint_parameter_bounds` are no longer available
-  as public utilities
+### Changed
+- The `BAYBE` GP preset now dispatches between the `CHEN` preset (when a
+  `SubstanceParameter` is present) and custom dimension-scaled Gamma priors (otherwise)
+- Default transfer learning kernel changed from `IndexKernel` to `PositiveIndexKernel`,
+  enforcing positive task correlations
+- Discrete search space construction now applies constraints incrementally during
+  Cartesian product building, significantly reducing memory usage and construction
+  time for constrained spaces
+- "User Guide" section has been split into "Components" and "Concepts"
+- The `Campaign.allow_*` flag mechanism is now based on `AutoBool` logic, providing
+  well-defined Boolean values at query time while exposing the `AUTO` option to the user
+- Polars path in discrete search space construction now builds the Cartesian product
+  only for parameters involved in Polars-capable constraints, merging the rest
+  incrementally via pandas
+- Minimum required pandas version increased to `2.1.0`
 
 ### Fixed
 - Broken cache validation for certain `Campaign.recommend` cases
@@ -63,24 +102,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Using `np.isclose` for assessing equality of `Interval` bounds instead of hard
   equality check
 
-### Changed
-- "User Guide" section has been split into "Components" and "Concepts" 
-- Default transfer learning kernel changed from `IndexKernel` to `PositiveIndexKernel`,
-  enforcing positive task correlations
-- The `Campaign.allow_*` flag mechanism is now based on `AutoBool` logic, providing
-  well-defined Boolean values at query time while exposing the `AUTO` option to the user
-- Discrete search space construction now applies constraints incrementally during
-  Cartesian product building, significantly reducing memory usage and construction
-  time for constrained spaces
-- Polars path in discrete search space construction now builds the Cartesian product
-  only for parameters involved in Polars-capable constraints, merging the rest
-  incrementally via pandas
-- Minimum required pandas version increased to `2.1.0`
-- `SubspaceContinuous` now offers a simpler interface for passing constraints,
-  no longer requiring users to manually group constraints according to their type
-- Parameter and constraint validation has been streamlined, using `validate_parameters`
-  and `validate_constraints` as the only remaining public entry points
-
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
   can now be conveniently controlled via the new `Settings` mechanism
@@ -88,14 +109,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `GaussianProcessSurrogate.from_preset` 
 
 ### Deprecations
-- `SubspaceDiscrete` ignores any `empty_encoding` when provided
-- `SubspaceDiscrete` no longer accepts a `comp_rep` argument
 - `BotorchRecommender.max_n_subspaces` has been renamed to `max_n_subsets`
+- `set_random_seed` and `temporary_seed` utility functions
 - Using a custom kernel with `GaussianProcessSurrogate` in a multi-task context now
   raises a `DeprecationError` to alert users about the changed kernel logic. This can
   be suppressed by setting the `BAYBE_DISABLE_CUSTOM_KERNEL_WARNING` environment
   variable to a truthy value
-- `set_random_seed` and `temporary_seed` utility functions
 - The environment variables
   `BAYBE_NUMPY_USE_SINGLE_PRECISION`/`BAYBE_TORCH_USE_SINGLE_PRECISION` have been
   replaced with the variables
