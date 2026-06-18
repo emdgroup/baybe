@@ -7,6 +7,8 @@ from collections.abc import Callable
 from functools import reduce
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from attrs.validators import in_, min_len
@@ -24,7 +26,6 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
-from baybe.utils.basic import Dummy
 
 if TYPE_CHECKING:
     import polars as pl
@@ -277,25 +278,22 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
     @override
     def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
-        # Create df copy and mark entries where the dependency conditions are negative
-        # with a dummy value to cause degeneracy.
+        # Build an invariant indicator for each affected parameter: pair each value
+        # with the value of the parameter it depends on. For rows where the dependency
+        # condition is not met, use None as a sentinel so that all such rows with the
+        # same dependency value appear identical, causing them to be detected as
+        # duplicates. The indicator tuples are constructed directly without storing
+        # any intermediate sentinel in the typed columns.
         censored_df = df.copy()
-        for k, _ in enumerate(self.parameters):
-            # .loc assignments are not supported by mypy + pandas-stubs yet
-            # See https://github.com/pandas-dev/pandas-stubs/issues/572
-            censored_df.loc[  # type: ignore[call-overload]
-                ~self.conditions[k].evaluate(df[self.parameters[k]]),
-                self.affected_parameters[k],
-            ] = Dummy()
-
-        # Create an invariant indicator: pair each value of an affected parameter with
-        # the corresponding value of the parameter it depends on. These indicators
-        # will become invariant when frozenset is applied to them.
         for k, param in enumerate(self.parameters):
+            invalid = ~self.conditions[k].evaluate(df[self.parameters[k]])
             for affected_param in self.affected_parameters[k]:
-                censored_df[affected_param] = list(
-                    zip(censored_df[affected_param], censored_df[param])
-                )
+                censored_df[affected_param] = [
+                    (None if inv else val, dep)
+                    for val, dep, inv in zip(
+                        censored_df[affected_param], censored_df[param], invalid
+                    )
+                ]
 
         # Merge the invariant indicator with all other parameters (i.e. neither the
         # affected nor the dependency-causing ones) and detect duplicates in that space.
@@ -425,6 +423,72 @@ class DiscreteCustomConstraint(DiscreteConstraint):
 
 
 @define
+class DiscreteBatchConstraint(DiscreteConstraint):
+    """Constraint ensuring recommendations in a batch share certain parameter values.
+
+    When this constraint is active, the recommender internally subsets the
+    candidate set (one subset for each unique value of the constrained
+    parameter), obtains a full batch recommendation from each subset, and
+    returns the batch with the highest joint acquisition value.
+
+    This constraint is not supported by all recommenders. It is not applied during
+    search space creation (all parameter values remain in the search space).
+
+    Example:
+        If parameter ``Temperature`` has values ``[50, 100, 150]`` and a batch of
+        10 is requested, the recommender will generate three candidate batches
+        (one all-50, one all-100, one all-150) and return the best one.
+
+    Notes:
+        This constraint can lead to overhead in the computation since optimization
+        results in individual optimizations over several subsets. If there are
+        multiple subset-generating constraints active, this can drastically increase
+        the computational cost due to the combinatorial explosion.
+    """
+
+    # Class variables
+    eval_during_creation: ClassVar[bool] = False
+    eval_during_modeling: ClassVar[bool] = True
+    numerical_only: ClassVar[bool] = False
+
+    def __attrs_post_init__(self):
+        """Validate that exactly one parameter is specified."""
+        if len(self.parameters) != 1:
+            raise ValueError(
+                f"'{self.__class__.__name__}' requires exactly one parameter, "
+                f"but {len(self.parameters)} were provided: {self.parameters}."
+            )
+
+    @override
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
+        # Always returns an empty index because this constraint operates at the
+        # batch level, not the row level. Individual rows are never invalid; the
+        # constraint is enforced at recommendation time by subsetting candidates
+        # into subsets.
+        return pd.Index([])
+
+    def subset_masks(
+        self, candidates_exp: pd.DataFrame, /
+    ) -> list[npt.NDArray[np.bool_]]:
+        """Return Boolean masks defining the subsets for this constraint.
+
+        Each mask selects the rows in ``candidates_exp`` that belong to one
+        subset, i.e. share the same value for the constrained parameter.
+
+        Args:
+            candidates_exp: The experimental representation of candidate points.
+
+        Returns:
+            A list of Boolean masks, one per unique value of the constrained
+            parameter.
+        """
+        param = self.parameters[0]
+        return [
+            (candidates_exp[param] == v).values for v in candidates_exp[param].unique()
+        ]
+
+
+@define
 class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteConstraint):
     """Class for discrete cardinality constraints."""
 
@@ -466,6 +530,7 @@ DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscreteCustomConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteDependenciesConstraint,
+    DiscreteBatchConstraint,
 )
 
 # Prevent (de-)serialization of custom constraints

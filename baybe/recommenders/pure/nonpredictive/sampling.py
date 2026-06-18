@@ -9,6 +9,7 @@ from attrs import define, field, fields
 from attrs.validators import instance_of
 from typing_extensions import override
 
+from baybe.exceptions import InfeasibilityError
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.settings import Settings, active_settings
@@ -23,6 +24,9 @@ class RandomRecommender(NonPredictiveRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
+    supports_discrete_subset_generating_constraints: ClassVar[bool] = True
+    # See base class.
+
     @override
     def _recommend_hybrid(
         self,
@@ -30,21 +34,36 @@ class RandomRecommender(NonPredictiveRecommender):
         candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
-        if searchspace.type == SearchSpaceType.DISCRETE:
-            return candidates_exp.sample(batch_size)
+        is_hybrid = searchspace.type is SearchSpaceType.HYBRID
 
-        cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
-        if searchspace.type == SearchSpaceType.CONTINUOUS:
-            return cont_random
+        # Sample continuous part if applicable
+        if is_hybrid or searchspace.type is SearchSpaceType.CONTINUOUS:
+            cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
+            if searchspace.type is SearchSpaceType.CONTINUOUS:
+                return cont_random
 
-        disc_candidates, _ = searchspace.discrete.get_candidates()
+        # Restrict to a random subset if subset-generating constraints are present
+        if searchspace.discrete.n_subsets > 0:
+            masks = searchspace.discrete.sample_subset_masks(
+                candidates_exp,
+                n=1,
+                min_candidates=None if is_hybrid else batch_size,
+            )
+            if not masks:
+                raise InfeasibilityError(
+                    "No feasible subset found for the given "
+                    "subset-generating constraints. All subsets have fewer "
+                    f"candidates than the requested {batch_size=}."
+                )
+            candidates_exp = candidates_exp.loc[masks[0]]
 
-        # TODO decide mechanism if number of possible discrete candidates is smaller
-        #  than batch size
-        disc_random = disc_candidates.sample(
+        disc_random = candidates_exp.sample(
             n=batch_size,
-            replace=len(disc_candidates) < batch_size,
+            replace=is_hybrid or len(candidates_exp) < batch_size,
         )
+
+        if not is_hybrid:
+            return disc_random
 
         cont_random.index = disc_random.index
         return pd.concat([disc_random, cont_random], axis=1)

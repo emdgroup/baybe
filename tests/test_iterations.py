@@ -25,7 +25,7 @@ from baybe.kernels.basic import (
     RFFKernel,
     RQKernel,
 )
-from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
+from baybe.kernels.composite import ScaleKernel
 from baybe.objectives.pareto import ParetoObjective
 from baybe.priors import (
     GammaPrior,
@@ -50,7 +50,7 @@ from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
 from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
-    DefaultKernelFactory,
+    BayBEKernelFactory,
     EDBOKernelFactory,
 )
 from baybe.surrogates.linear import BayesianLinearSurrogate
@@ -290,25 +290,20 @@ valid_scale_kernels = [
 ]
 
 valid_composite_kernels = [
-    AdditiveKernel([MaternKernel(1.5), MaternKernel(2.5)]),
-    AdditiveKernel([PolynomialKernel(1), PolynomialKernel(2), PolynomialKernel(3)]),
-    AdditiveKernel([RBFKernel(), RQKernel(), PolynomialKernel(1)]),
-    ProductKernel([MaternKernel(1.5), MaternKernel(2.5)]),
-    ProductKernel([RBFKernel(), RQKernel(), PolynomialKernel(1)]),
-    ProductKernel([PolynomialKernel(1), PolynomialKernel(2), PolynomialKernel(3)]),
-    AdditiveKernel(
-        [
-            ProductKernel([MaternKernel(1.5), MaternKernel(2.5)]),
-            AdditiveKernel([MaternKernel(1.5), MaternKernel(2.5)]),
-        ]
-    ),
+    MaternKernel(1.5) + MaternKernel(2.5),
+    PolynomialKernel(1) + PolynomialKernel(2) + PolynomialKernel(3),
+    RBFKernel() + RQKernel() + PolynomialKernel(1),
+    MaternKernel(1.5) * MaternKernel(2.5),
+    RBFKernel() * RQKernel() * PolynomialKernel(1),
+    PolynomialKernel(1) * PolynomialKernel(2) * PolynomialKernel(3),
+    (MaternKernel(1.5) * MaternKernel(2.5)) + (MaternKernel(1.5) + MaternKernel(2.5)),
 ]
 
 valid_kernels = valid_base_kernels + valid_scale_kernels + valid_composite_kernels
 
 
 valid_kernel_factories = [
-    param(DefaultKernelFactory(), id="Default"),
+    param(BayBEKernelFactory(), id="Default"),
     param(EDBOKernelFactory(), id="EDBO"),
 ]
 

@@ -60,7 +60,6 @@ def make_searchspace(
     ]
     if target_tasks is not None and source_tasks is not None:
         all_tasks = [*source_tasks, *target_tasks]
-        all_tasks = [*source_tasks, *target_tasks]
         params.append(
             TaskParameter(
                 name="aryl_halide",

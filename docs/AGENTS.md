@@ -6,16 +6,19 @@ sphinxcontrib-bibtex, jupytext (example conversion), autosummary (API reference)
 Config in `docs/conf.py`.
 
 ## Structure
-- `docs/userguide/` — Concept-oriented pages (campaigns, parameters, targets,
+- `docs/concepts/` — Concept-oriented pages (getting recommendations, simulation,
+  serialization, etc.)
+- `docs/components/` — Component reference pages (campaigns, parameters, targets,
   objectives, constraints, etc.)
 - `docs/faq.md` — FAQ with dropdown directives
 - `docs/known_issues.md` — Known issues with fix suggestions
 - `docs/templates/` — RST templates for autosummary
 - `docs/scripts/` — Build scripts (`build_documentation.py`, `build_examples.py`)
 
-## User Guide
-- Contains explanations for high-level concepts
-- Provides runnable code snippets, uses admonitions, links to relevant examples. Keep
+## Concepts and Components
+- Concepts contain explanations for high-level ideas and workflows
+- Components contain reference pages for specific BayBE building blocks
+- Provide runnable code snippets, use admonitions, link to relevant examples. Keep
   the snippets very concise 
 - Use fenced code blocks with triple backticks (e.g. ```python) for runnable code that
   is also tested in the doc tests
@@ -25,7 +28,7 @@ Config in `docs/conf.py`.
 
 ## MyST Syntax Reference
 - Cross-refs: "{class}`~baybe.campaign.Campaign`",
-  "{meth}`~baybe.campaign.Campaign.recommend`", "{doc}`/userguide/campaigns`".
+  "{meth}`~baybe.campaign.Campaign.recommend`", "{doc}`/components/campaigns`".
   The `~` shortens display to final component
 - Admonitions: `{admonition} Title` with `:class: note|important|tip|warning|caution|info`.
 - Anchors: `(ANCHOR_NAME)=` above a heading, reference via "{ref}`ANCHOR_NAME`".

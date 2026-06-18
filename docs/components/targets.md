@@ -5,7 +5,7 @@ experiment and the machine learning core behind BayBE.
 In general, it is expected that you create one [`Target`](baybe.targets.base.Target)
 object for each of your observables to inform BayBE about their existence.
 The way BayBE treats these targets is then controlled via the
-[`Objective`](../../userguide/objectives).
+[`Objective`](/components/objectives).
 
 ## NumericalTarget
 ```{admonition} Important
@@ -34,7 +34,7 @@ Optimization with targets of this type follows two basic rules:
    {attr}`~baybe.targets.numerical.NumericalTarget.transformation`, with no
    transformation defined being equivalent to the identity transformation.
 2. Whenever an optimization direction is required (i.e., when the context is *not*
-   [active learning](/userguide/active_learning)), the transformed targets are assumed
+   [active learning](/concepts/active_learning)), the transformed targets are assumed
    to be **maximized** by default or **minimized** if explicitly specified via their
    {attr}`~baybe.targets.numerical.NumericalTarget.minimize` flag.
 

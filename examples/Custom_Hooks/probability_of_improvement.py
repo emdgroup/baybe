@@ -4,7 +4,7 @@
 # {func}`register_hooks <baybe.utils.basic.register_hooks>` utility can be used to
 # extract the *Probability of Improvement (PI)* from a running campaign:
 # * We define a hook that is compatible with the
-#   {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.recommend>`
+#   {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.recommend>`
 #   interface and lets us extract the PI achieved after each experimental iteration,
 # * attach the hook to the recommender driving our campaign,
 # * and plot the evolving PI values after campaign completion.
@@ -46,7 +46,7 @@ from examples.utils import create_example_plots
 # iterations or the batch size:
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
-N_DOE_ITERATIONS = 3 if SMOKE_TEST else 7
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 5
 BATCH_SIZE = 2
 DIMENSION = 3
 POINTS_PER_DIM = 2 if SMOKE_TEST else 4
@@ -107,7 +107,7 @@ recommender = TwoPhaseMetaRecommender(
 )
 
 # In this example, we use `MethodType` to bind the
-# {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.recommend>`
+# {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.recommend>`
 # **function** with our hook.
 # For more information, we refer to the [`basic example`](./basics.md) explaining the
 # hook mechanics.

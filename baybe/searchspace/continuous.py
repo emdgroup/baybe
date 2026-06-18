@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import gc
 import math
+import random
 from collections.abc import Collection, Iterator, Sequence
-from itertools import chain, product
-from typing import TYPE_CHECKING, Any, cast
+from itertools import chain
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -31,6 +32,7 @@ from baybe.parameters.utils import (
     get_parameters_from_dataframe,
     sort_parameters,
 )
+from baybe.searchspace.utils import select_via_flat_index
 from baybe.searchspace.validation import (
     validate_parameter_names,
 )
@@ -110,7 +112,7 @@ class SubspaceContinuous(SerialMixin):
 
     @property
     def constraints_cardinality(self) -> tuple[ContinuousCardinalityConstraint, ...]:
-        """Cardinality constraints."""
+        """The cardinality constraints of the subspace."""
         return tuple(
             c
             for c in self.constraints_nonlin
@@ -144,21 +146,64 @@ class SubspaceContinuous(SerialMixin):
             )
 
     @property
-    def n_inactive_parameter_combinations(self) -> int:
-        """The number of possible inactive parameter combinations."""
+    def n_subsets(self) -> int:
+        """The number of possible subset configurations.
+
+        Returns 0 if no cardinality constraints exist, indicating that
+        no decomposition is needed.
+        """
+        if not self.constraints_cardinality:
+            return 0
         return math.prod(
             c.n_inactive_parameter_combinations for c in self.constraints_cardinality
         )
 
-    def inactive_parameter_combinations(self) -> Iterator[frozenset[str]]:
-        """Get an iterator over all possible combinations of inactive parameters."""
-        for combination in product(
-            *[
-                con.inactive_parameter_combinations()
-                for con in self.constraints_cardinality
-            ]
-        ):
-            yield frozenset(chain(*combination))
+    def inactive_parameter_combinations(
+        self,
+        *,
+        mode: Literal["sequential", "shuffled", "replace"] = "shuffled",
+    ) -> Iterator[frozenset[str]]:
+        """Get an iterator over all possible inactive parameter combinations.
+
+        Args:
+            mode: The iteration strategy.
+
+                * ``"sequential"`` iterates all combinations in deterministic order.
+                * ``"shuffled"`` iterates all combinations exactly once in random order.
+                * ``"replace"`` samples with replacement, producing an infinite iterator
+                  where each draw is independent.
+
+        Raises:
+            ValueError: If an invalid mode is provided.
+
+        Yields:
+            A frozenset of inactive parameter names for the subspace.
+        """
+        if mode not in (allowed := {"sequential", "shuffled", "replace"}):
+            raise ValueError(f"Invalid {mode=}. Must be one of {allowed}.")
+
+        per_constraint = [
+            list(c.inactive_parameter_combinations())
+            for c in self.constraints_cardinality
+        ]
+
+        total = math.prod(len(v) for v in per_constraint)
+
+        if mode == "replace":
+            while True:
+                yield frozenset(
+                    chain(
+                        *select_via_flat_index(
+                            random.randint(0, total - 1), per_constraint
+                        )
+                    )
+                )
+        else:
+            order = list(range(total))
+            if mode == "shuffled":
+                random.shuffle(order)
+            for flat_idx in order:
+                yield frozenset(chain(*select_via_flat_index(flat_idx, per_constraint)))
 
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:
@@ -479,10 +524,12 @@ class SubspaceContinuous(SerialMixin):
             return pd.DataFrame(index=pd.RangeIndex(0, batch_size))
 
         if not self.is_constrained:
-            return self._sample_from_bounds(batch_size, self.comp_rep_bounds.values)
+            return self._sample_from_bounds(batch_size, self.comp_rep_bounds.to_numpy())
 
         if len(self.constraints_cardinality) == 0:
-            return self._sample_from_polytope(batch_size, self.comp_rep_bounds.values)
+            return self._sample_from_polytope(
+                batch_size, self.comp_rep_bounds.to_numpy()
+            )
 
         return self._sample_from_polytope_with_cardinality_constraints(batch_size)
 
@@ -501,6 +548,9 @@ class SubspaceContinuous(SerialMixin):
         import torch
         from botorch.utils.sampling import get_polytope_samples
 
+        # pandas 3 with Copy-on-Write may pass a read-only array; copy only if needed
+        if not bounds.flags.writeable:
+            bounds = bounds.copy()
         bounds_tensor = torch.from_numpy(bounds)
         if not self.has_interpoint_constraints:
             points = get_polytope_samples(
@@ -622,13 +672,13 @@ class SubspaceContinuous(SerialMixin):
             .fillna(0.0)
         )
 
-    def _sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
-        """Sample inactive parameters according to the given cardinality constraints."""
+    def _sample_inactive_parameters(self, batch_size: int = 1) -> list[frozenset[str]]:
+        """Sample inactive parameter configurations from the cardinality constraints."""
         inactives_per_constraint = [
             con.sample_inactive_parameters(batch_size)
             for con in self.constraints_cardinality
         ]
-        return [set(chain(*x)) for x in zip(*inactives_per_constraint)]
+        return [frozenset(chain(*x)) for x in zip(*inactives_per_constraint)]
 
     def sample_from_full_factorial(self, batch_size: int = 1) -> pd.DataFrame:
         """Draw parameter configurations from the full factorial of the space.

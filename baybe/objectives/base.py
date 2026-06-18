@@ -266,7 +266,7 @@ class Objective(ABC, SerialMixin):
             Non-dominated configurations can be computed for any objective type, not
             just for :class:`~baybe.objectives.pareto.ParetoObjective`.
             For more details, have a look at the corresponding
-            :ref:`user guide section <userguide/objectives:Identifying Non-Dominated
+            :ref:`user guide section <components/objectives:Identifying Non-Dominated
             Configurations>`.
 
         Args:

@@ -63,6 +63,9 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
                 # tensors with negative strides are not supported by PyTorch
                 fix_strides = any(s < 0 for s in x.strides)
                 x = x.astype(numpy_dtype, copy=fix_strides)
+                # Copy if read-only (possible under pandas 3 Copy-on-Write)
+                if not x.flags.writeable:
+                    x = x.copy()
                 tensor = torch.from_numpy(x)
             case pd.Series() | pd.DataFrame():
                 # We already coerce to the target dtype during the dataframe-to-numpy
@@ -74,6 +77,9 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
                 # tensors with negative strides are not supported by PyTorch
                 fix_strides = any(s < 0 for s in x.to_numpy().strides)
                 array = x.to_numpy(numpy_dtype, copy=fix_strides)
+                # Copy if read-only (possible under pandas 3 Copy-on-Write)
+                if not array.flags.writeable:
+                    array = array.copy()
                 tensor = torch.from_numpy(array)
             case _:
                 assert_never(x)
@@ -257,7 +263,7 @@ def df_drop_string_columns(
         The cleaned dataframe.
     """
     ignore_list = ignore_list or []
-    no_string = ~df.applymap(lambda x: isinstance(x, str)).any()
+    no_string = ~df.map(lambda x: isinstance(x, str)).any()
     no_string = no_string[no_string].index
     to_keep = set(no_string).union(set(ignore_list))
     ordered_cols = [col for col in df if col in to_keep]
@@ -423,12 +429,16 @@ def fuzzy_row_match(
     for col in cat_cols:
         # Per categorical parameter, this identifies matches between all elements of
         # left and right and stores them in a matrix.
-        match_matrix &= right_df[col].values[:, None] == left_df[col].values[None, :]
+        match_matrix &= (
+            np.asarray(right_df[col])[:, None] == np.asarray(left_df[col])[None, :]
+        )
 
     # Match numerical parameters
     for col in num_cols:
         # Compute absolute differences and find the minimum difference
-        abs_diff = np.abs(right_df[col].values[:, None] - left_df[col].values[None, :])
+        abs_diff = np.abs(
+            np.asarray(right_df[col])[:, None] - np.asarray(left_df[col])[None, :]
+        )
         min_diff = abs_diff.min(axis=1, keepdims=True)
         match_matrix &= abs_diff == min_diff
 
@@ -691,6 +701,9 @@ def arrays_to_dataframes(
             if use_torch:
                 import torch
 
+                # Copy if read-only (possible under pandas 3 Copy-on-Write)
+                if not array_in.flags.writeable:
+                    array_in = array_in.copy()
                 with torch.no_grad():
                     array_out = fn(torch.from_numpy(array_in)).numpy()
             else:

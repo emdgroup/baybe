@@ -65,6 +65,7 @@ WHITELISTS = {
         "baybe.acquisition._builder",
         "baybe.objectives.botorch",
         "baybe.surrogates._adapter",
+        "baybe.surrogates.gaussian_process.components._gpytorch",
         "baybe.utils.torch",
     ],
     "scipy": [
@@ -77,6 +78,7 @@ WHITELISTS = {
         "baybe.insights.shap",
         "baybe.objectives.botorch",
         "baybe.surrogates._adapter",
+        "baybe.surrogates.gaussian_process.components._gpytorch",
         "baybe.utils.chemistry",
         "baybe.utils.clustering_algorithms",
         "baybe.utils.clustering_algorithms.third_party",

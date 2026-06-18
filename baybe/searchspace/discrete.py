@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import gc
+import random
 import warnings
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Iterator, Sequence
+from itertools import islice
 from math import prod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from cattrs import IterableValidationError
@@ -16,6 +19,7 @@ from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
+from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import DeprecationError
 from baybe.parameters import (
     CategoricalEncoding,
@@ -24,7 +28,7 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
-from baybe.searchspace.utils import build_constrained_product
+from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
 from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
@@ -571,6 +575,118 @@ class SubspaceDiscrete(SerialMixin):
             exp_rep_shape=(n_rows, n_cols_exp),
             comp_rep_bytes=comp_rep_bytes,
             comp_rep_shape=(n_rows, n_cols_comp),
+        )
+
+    @property
+    def constraints_batch(
+        self,
+    ) -> tuple[DiscreteBatchConstraint, ...]:
+        """The batch constraints of the subspace."""
+        return tuple(
+            c for c in self.constraints if isinstance(c, DiscreteBatchConstraint)
+        )
+
+    @property
+    def n_subsets(self) -> int:
+        """The number of possible subset configurations.
+
+        Returns 0 if no subset-generating constraints exist, indicating that
+        no decomposition is needed.
+        """
+        if not self.constraints_batch:
+            return 0
+        return prod(
+            len(self.get_parameters_by_name([c.parameters[0]])[0].active_values)
+            for c in self.constraints_batch
+        )
+
+    def subset_masks(
+        self,
+        candidates_exp: pd.DataFrame,
+        min_candidates: int | None = None,
+        mode: Literal["sequential", "shuffled", "replace"] = "shuffled",
+    ) -> Iterator[npt.NDArray[np.bool_]]:
+        """Get an iterator over all possible subset masks.
+
+        Collect masks from each subset-generating constraint, iterates the
+        Cartesian product, AND-reduces each combination, and yields feasible
+        combined masks.
+
+        Args:
+            candidates_exp: The experimental representation of candidate points.
+            min_candidates: If provided, combined masks selecting fewer rows
+                are silently skipped.
+            mode: The iteration strategy.
+
+                * ``"sequential"`` iterates all combinations in deterministic order.
+                * ``"shuffled"`` iterates all combinations exactly once in random order.
+                * ``"replace"`` samples with replacement, producing an infinite iterator
+                  where each draw is independent.
+
+        Raises:
+            ValueError: If an invalid mode is provided.
+
+        Yields:
+            A Boolean mask selecting the subset's rows.
+        """
+        if mode not in (allowed := {"sequential", "shuffled", "replace"}):
+            raise ValueError(f"Invalid {mode=}. Must be one of {allowed}.")
+
+        per_constraint: list[list[npt.NDArray[np.bool_]]]
+        if not (constraints := self.constraints_batch):
+            per_constraint = [[np.ones(len(candidates_exp), dtype=bool)]]
+        else:
+            per_constraint = [c.subset_masks(candidates_exp) for c in constraints]
+
+        total = prod(len(masks) for masks in per_constraint)
+
+        if mode == "replace":
+            candidates = list(range(total))
+            while candidates:
+                idx_pos = random.randint(0, len(candidates) - 1)
+                flat_idx = candidates[idx_pos]
+                combined = np.logical_and.reduce(
+                    select_via_flat_index(flat_idx, per_constraint)
+                )
+                if min_candidates is not None and combined.sum() < min_candidates:
+                    candidates[idx_pos] = candidates[-1]
+                    candidates.pop()
+                    continue
+                yield combined
+        else:
+            order = list(range(total))
+            if mode == "shuffled":
+                random.shuffle(order)
+            for flat_idx in order:
+                combined = np.logical_and.reduce(
+                    select_via_flat_index(flat_idx, per_constraint)
+                )
+                if min_candidates is not None and combined.sum() < min_candidates:
+                    continue
+                yield combined
+
+    def sample_subset_masks(
+        self,
+        candidates_exp: pd.DataFrame,
+        n: int,
+        min_candidates: int | None = None,
+    ) -> list[npt.NDArray[np.bool_]]:
+        """Sample subset masks (without replacement).
+
+        Args:
+            candidates_exp: The experimental representation of candidate points.
+            n: Number of masks to sample.
+            min_candidates: If provided, Subsets with fewer matching
+                candidates are skipped.
+
+        Returns:
+            A list of boolean masks.
+        """
+        return list(
+            islice(
+                self.subset_masks(candidates_exp, min_candidates),
+                n,
+            )
         )
 
     def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:

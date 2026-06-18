@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
+import numpy as np
 import pandas as pd
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
@@ -13,6 +14,37 @@ from baybe.parameters.base import DiscreteParameter
 
 if TYPE_CHECKING:
     import polars as pl
+
+_T = TypeVar("_T")
+
+
+def select_via_flat_index(flat_idx: int, /, groups: Sequence[Sequence[_T]]) -> list[_T]:
+    """Select one element per group using a flat Cartesian-product index.
+
+    Maps a single integer index over the Cartesian product of ``groups`` to the
+    corresponding element from each group via :func:`numpy.unravel_index`.
+
+    Examples:
+        >>> groups = [[0, 1], ["a", "b"]]
+        >>> select_via_flat_index(0, groups)
+        [0, 'a']
+        >>> select_via_flat_index(1, groups)
+        [0, 'b']
+        >>> select_via_flat_index(2, groups)
+        [1, 'a']
+        >>> select_via_flat_index(3, groups)
+        [1, 'b']
+
+    Args:
+        flat_idx: The flat index into the Cartesian product of all groups.
+        groups: The groups to select from, one element selected per group.
+
+    Returns:
+        A list of selected elements, one per group.
+    """
+    shape = tuple(len(g) for g in groups)
+    indices = np.unravel_index(flat_idx, shape)
+    return [group[int(idx)] for group, idx in zip(groups, indices)]
 
 
 def optimize_parameter_order(

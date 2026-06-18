@@ -2,6 +2,7 @@
 
 import os
 import warnings
+from contextlib import nullcontext
 from itertools import pairwise
 from pathlib import Path
 from unittest.mock import patch
@@ -14,15 +15,11 @@ from pandas.testing import assert_series_equal
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
-from baybe.constraints import (
-    ContinuousLinearConstraint,
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
-)
-from baybe.constraints.base import Constraint
 from baybe.exceptions import DeprecationError
+from baybe.kernels.basic import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
+from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
@@ -32,9 +29,11 @@ from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace.core import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.settings import Settings
+from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.targets import NumericalTarget as ModernTarget
 from baybe.targets._deprecated import (
@@ -46,67 +45,8 @@ from baybe.targets._deprecated import (
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.transformations.basic import AffineTransformation
+from baybe.utils.dataframe import create_fake_input
 from baybe.utils.random import set_random_seed, temporary_seed
-
-
-def test_surrogate_registration():
-    """Using the deprecated registration mechanism raises a warning."""
-    from baybe.surrogates import register_custom_architecture
-
-    with pytest.raises(DeprecationError):
-        register_custom_architecture()
-
-
-def test_surrogate_access():
-    """Public attribute access to the surrogate model raises a warning."""
-    recommender = BotorchRecommender()
-    with pytest.warns(DeprecationWarning):
-        recommender.surrogate_model
-
-
-def test_continuous_linear_eq_constraint():
-    """Usage of deprecated continuous linear eq constraint raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        ContinuousLinearEqualityConstraint(["p1", "p2"])
-
-
-def test_continuous_linear_inq_constraint():
-    """Usage of deprecated continuous linear ineq constraint raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        ContinuousLinearInequalityConstraint(["p1", "p2"])
-
-
-@pytest.mark.parametrize(
-    ("type_", "op"),
-    [
-        ("ContinuousLinearEqualityConstraint", "="),
-        ("ContinuousLinearInequalityConstraint", ">="),
-    ],
-    ids=["lin_eq", "lin_ineq"],
-)
-def test_constraint_config_deserialization(type_, op):
-    """The deprecated constraint config format can still be parsed."""
-    config = """
-    {
-        "type": "__replace__",
-        "parameters": ["p1", "p2", "p3"],
-        "coefficients": [1.0, 2.0, 3.0],
-        "rhs": 2.0
-    }
-    """
-    config = config.replace("__replace__", type_)
-
-    expected = ContinuousLinearConstraint(
-        parameters=["p1", "p2", "p3"],
-        operator=op,
-        coefficients=[1.0, 2.0, 3.0],
-        rhs=2.0,
-    )
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-        actual = Constraint.from_json(config)
-    assert expected == actual, (expected, actual)
 
 
 def test_objective_transform_interface():
@@ -588,3 +528,184 @@ def test_deprecated_cache_environment_variables(monkeypatch, value: str, expecte
         DeprecationWarning, match="'BAYBE_CACHE_DIR' has been deprecated"
     ):
         assert Settings(restore_environment=True).cache_directory == expected
+
+
+@pytest.mark.parametrize("custom", [False, True], ids=["default", "custom"])
+@pytest.mark.parametrize("env", [False, True], ids=["no_env", "env"])
+@pytest.mark.parametrize("task", [False, True], ids=["no_task", "task"])
+def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task: bool):
+    """Providing a custom kernel in a transfer learning context raises a deprecation
+    error unless explicitly disabled via environment variable."""  # noqa
+    parameters = [NumericalDiscreteParameter("p", [0, 1])]
+    if task:
+        parameters.append(TaskParameter("task", ["a", "b"]))
+    searchspace = SearchSpace.from_product(parameters)
+    objective = NumericalTarget("t").to_objective()
+    measurements = create_fake_input(
+        searchspace.parameters, objective.targets, n_rows=2
+    )
+    args = (MaternKernel(),) if custom else ()
+
+    if env:
+        monkeypatch.setenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "True")
+
+    context = (
+        pytest.raises(DeprecationError)
+        if task and custom and not env
+        else nullcontext()
+    )
+    with context:
+        GaussianProcessSurrogate(*args).fit(searchspace, objective, measurements)
+
+
+@pytest.mark.parametrize(
+    "attr", ["n_fits_done", "n_batches_done"], ids=["fits", "batches"]
+)
+def test_deprecated_campaign_counters(campaign, attr):
+    """Accessing the deprecated campaign counter properties raises an error."""
+    with pytest.raises(DeprecationError, match=attr):
+        getattr(campaign, attr)
+
+
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+def test_legacy_campaign_counter_deserialization(ongoing_campaign):
+    """Deserializing a campaign with legacy counter fields and columns still works."""
+    from baybe.campaign import Campaign
+    from baybe.serialization import converter
+
+    # Serialize, then inject legacy fields
+    data = ongoing_campaign.to_dict()
+    assert "n_fits_done" not in data
+    assert "n_batches_done" not in data
+    data["n_fits_done"] = 3
+    data["n_batches_done"] = 2
+
+    # Inject legacy columns into measurements
+    # (use legacy key name "measurements_exp" to test migration hook)
+    meas = converter.structure(data.pop("measurements"), pd.DataFrame)
+    meas["FitNr"] = 1.0
+    meas["BatchNr"] = 1
+    data["measurements_exp"] = converter.unstructure(meas)
+
+    # Deserialization must not raise and legacy columns must be stripped
+    restored = Campaign.from_dict(data)
+    assert "FitNr" not in restored._measurements.columns
+    assert "BatchNr" not in restored._measurements.columns
+
+
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+def test_legacy_recommended_metadata_deserialization(ongoing_campaign):
+    """Legacy searchspace_metadata 'recommended' column migrates to new field."""
+    from baybe.campaign import _RECOMMENDED, Campaign
+    from baybe.serialization import converter
+
+    # Recommend to mark some entries as recommended
+    rec = ongoing_campaign.recommend(batch_size=2)
+    n_recommended = len(rec)
+
+    # Serialize and simulate legacy format (no recommended/excluded_experiments)
+    data = ongoing_campaign.to_dict()
+    del data["recommended_experiments"]
+    del data["excluded_experiments"]
+
+    # Construct legacy searchspace_metadata with a "recommended" column
+    exp_rep = ongoing_campaign.searchspace.discrete.exp_rep
+    metadata = pd.DataFrame(False, index=exp_rep.index, columns=[_RECOMMENDED])
+    idxs = rec.index[:n_recommended]
+    metadata.loc[idxs, _RECOMMENDED] = True
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must reconstruct _recommended_experiments with correct content
+    restored = Campaign.from_dict(data)
+    expected = exp_rep.loc[idxs]
+    # Compare as sets of rows (order may differ)
+    restored_sorted = restored._recommended_experiments.sort_values(
+        restored._recommended_experiments.columns.tolist()
+    ).reset_index(drop=True)
+    expected_sorted = expected.sort_values(expected.columns.tolist()).reset_index(
+        drop=True
+    )
+    pd.testing.assert_frame_equal(restored_sorted, expected_sorted)
+
+
+def test_legacy_empty_dataframe_schema_deserialization():
+    """Legacy campaigns with schema-less empty DataFrames get correct columns."""
+    from baybe.campaign import Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy serialization: replace with column-less empty DataFrames
+    data = campaign.to_dict()
+    data["measurements"] = converter.unstructure(pd.DataFrame())
+
+    restored = Campaign.from_dict(data)
+    assert restored._measurements.columns.tolist() == ["x", "y"]
+    assert restored._recommended_experiments.columns.tolist() == ["x"]
+    assert restored._measurements.empty
+    assert restored._recommended_experiments.empty
+    assert restored == campaign
+
+
+def test_legacy_measured_metadata_deserialization():
+    """Legacy searchspace_metadata 'measured' column is discarded during loading."""
+    from baybe.campaign import _MEASURED, Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy format: searchspace_metadata with a "measured" column
+    data = campaign.to_dict()
+    metadata = pd.DataFrame(
+        {_MEASURED: [True, False, False]},
+        index=campaign.searchspace.discrete.exp_rep.index,
+    )
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must handle the legacy column without errors
+    restored = Campaign.from_dict(data)
+    assert restored == campaign
+
+
+def test_legacy_excluded_metadata_deserialization():
+    """Legacy searchspace_metadata 'excluded' column migrates to new field."""
+    from baybe.campaign import _EXCLUDED, Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy format: searchspace_metadata with an "excluded" column,
+    # and no excluded_experiments field
+    data = campaign.to_dict()
+    del data["excluded_experiments"]
+    exp_rep = campaign.searchspace.discrete.exp_rep
+    metadata = pd.DataFrame(
+        {_EXCLUDED: [True, False, True]},
+        index=exp_rep.index,
+    )
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must reconstruct _excluded_experiments
+    restored = Campaign.from_dict(data)
+    excluded_idxs = metadata.index[metadata[_EXCLUDED]]
+    expected = exp_rep.loc[excluded_idxs].reset_index(drop=True)
+    pd.testing.assert_frame_equal(
+        restored._excluded_experiments.sort_values(
+            restored._excluded_experiments.columns.tolist()
+        ).reset_index(drop=True),
+        expected.sort_values(expected.columns.tolist()).reset_index(drop=True),
+    )

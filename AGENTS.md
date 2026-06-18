@@ -19,8 +19,8 @@ experimental design. It targets Python 3.10+.
 - `baybe/` — Main source package with many subpackages containing structures and objects
   such as parameters, constraints, targets, etc.
 - `tests/` — Test suite. `conftest.py` has the central fixture system.
-- `docs/` — Sphinx documentation (Furo theme, MyST-Parser). `docs/userguide/` has
-  concept-oriented pages.
+- `docs/` — Sphinx documentation (Furo theme, MyST-Parser). `docs/concepts/` has
+  concept-oriented pages; `docs/components/` has component reference pages.
 - `examples/` — Runnable example scripts (jupytext percent format).
 - `benchmarks/` — Benchmarking framework.
 - `.github/workflows/` — CI/CD (lint, test, docs, release, benchmark).
@@ -141,6 +141,8 @@ Custom `@classproperty` from `baybe.utils.basic` for class-level computed proper
 - No private field names (`_attr`) in user-facing messages — use
   `fields(type(self)).attr.alias`.
 - Method names start with verbs. Comments capitalize first word.
+- Always capitalize words that correspond to names of inventors, e.g. `Bayesian`,
+  `Boolean` or `Gaussian`
 
 ## 5. Type Annotations
 - **Full coverage**: All signatures including returns. Every field annotated.
@@ -259,7 +261,7 @@ Three tiers:
 - Cache invalidation: `on_setattr` hooks on mutable fields.
 
 ## 12. Optional Dependencies
-1. Detection (`baybe/_optional/info.py`): `importlib.util.find_spec()` sets boolean
+1. Detection (`baybe/_optional/info.py`): `importlib.util.find_spec()` sets Boolean
    flags (`CHEM_INSTALLED`, `ONNX_INSTALLED`, etc.) without importing.
 2. Guarded imports (`baybe/_optional/<dep>.py`): Import or raise
    `OptionalImportError` with pip install instructions.
@@ -276,12 +278,13 @@ Three tiers:
 ## 14. Tooling and CI
 | Tool | Config | Purpose |
 |------|--------|---------|
-| `ruff` | `ruff.toml` | Lint (D, E4, E7, E9, E501, F, I, W, PL) + format. Line length 88. |
 | `flake8`+`pydoclint` | `pydoclint.toml` | Docstring consistency (DOC rules only) |
 | `mypy` | `mypy.ini` | Type checking. `explicit-override`, `unused-ignore` enabled. |
 | `pyupgrade` | `.pre-commit-config.yaml` | Python 3.10+ syntax |
+| `ruff` | `ruff.toml` | Lint (D, E4, E7, E9, E501, F, I, W, PL) + format. Line length 88. |
+| `zizmor` | `.pre-commit-config.yaml` | GitHub Actions security audit |
 
-Pre-commit hooks: pydoclint, ruff (lint+format), uv-lock, pyupgrade.
+Pre-commit hooks: pydoclint, ruff (lint+format), uv-lock, pyupgrade, zizmor.
 Tox environments: `fulltest`, `coretest`, `lint`, `mypy`, `audit`, `docs`.
 Coverage: 70% overall, 45% per-file minimum.
 CI runs on push/PR to `main`/`dev/**`: changelog check, lint, typecheck, audit,
