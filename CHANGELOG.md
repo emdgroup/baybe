@@ -60,6 +60,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `has_polars_implementation` property on `DiscreteConstraint`
 - `allow_missing` flag on `DiscreteConstraint.get_invalid` and `get_valid`
 - `zizmor` pre-commit hook for static analysis of GitHub Actions workflows
+- `narwhals` as a hard dependency
+- `CandidatesProtocol` as an interface for candidates generation
+- `TableCandidates` and `ProductCandidates` classes implementing `CandidatesProtocol`
+- `DiscreteParameter.is_finite` property
 
 ### Changed
 - The `BAYBE` GP preset now dispatches between the `CHEN` preset (when a

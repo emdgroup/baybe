@@ -179,5 +179,9 @@ class UnsupportedEarlyFilteringError(Exception):
     """A constraint does not support early filtering with the given parameters."""
 
 
+class InfiniteSpaceError(Exception):
+    """An operation requires a finite search space but the space is infinite."""
+
+
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
