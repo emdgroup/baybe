@@ -19,36 +19,78 @@ st.set_page_config(page_title="GP Mean Transfer Demo", layout="wide")
 
 st.title("Gaussian Process Mean Transfer Demo")
 
+# Fixed Forrester coefficients for the prior GP.
+PRIOR_FORRESTER = (1.0, 0.0, 0.0)
+
+# The Forrester toggle lives in the General tab (rendered last), but the Prior/New
+# GP tabs must react to it. Streamlit restores keyed-widget state at the start of
+# each run, so reading the stored value here reflects the latest toggle state.
+forrester_on = st.session_state.get("forrester_on", False)
+
 prior_tab, new_tab, general_tab = st.sidebar.tabs(
     ["🔵 Prior GP", "🟢 New GP", "⚙️ General"]
 )
 
 with prior_tab:
     prior_n_points = st.slider("Training points", 3, 20, 5, key="prior_n")
-    prior_x_range = st.slider(
-        "X range", -50.0, 50.0, (0.0, 5.0), step=0.5, key="prior_x_range"
-    )
-    prior_x_min, prior_x_max = prior_x_range
+    if forrester_on:
+        prior_x_min, prior_x_max = 0.0, 1.0
+        st.info("Forrester mode: X range fixed to [0, 1].")
+    else:
+        prior_x_range = st.slider(
+            "X range", -50.0, 50.0, (0.0, 5.0), step=0.5, key="prior_x_range"
+        )
+        prior_x_min, prior_x_max = prior_x_range
 
 with new_tab:
     new_n_points = st.slider("Training points", 2, 20, 2, key="new_n")
-    new_x_range = st.slider(
-        "X range", -50.0, 50.0, (0.0, 10.0), step=0.5, key="new_x_range"
-    )
-    new_x_min, new_x_max = new_x_range
-    new_y_scale = st.slider(
-        "Y scale factor",
-        0.1,
-        5.0,
-        1.0,
-        step=0.1,
-        help="Multiply new GP training y-values by this factor",
-    )
-    use_prior_mean_data = st.toggle(
-        "Train on prior mean",
-        value=False,
-        help="When enabled, new GP training data lies exactly on the prior mean",
-    )
+    if forrester_on:
+        new_x_range = st.slider(
+            "X range (within [0, 1])",
+            0.0,
+            1.0,
+            (0.0, 0.5),
+            step=0.05,
+            key="new_x_range_forrester",
+        )
+        new_x_min, new_x_max = new_x_range
+        new_y_scale = 1.0
+        use_prior_mean_data = False
+        st.slider(
+            "Y scale factor",
+            0.1,
+            5.0,
+            1.0,
+            step=0.1,
+            disabled=True,
+            help="Disabled in Forrester mode (scale is determined by A, B, C).",
+            key="new_y_scale_disabled",
+        )
+        st.toggle(
+            "Train on prior mean",
+            value=False,
+            disabled=True,
+            help="Disabled in Forrester mode.",
+            key="use_prior_mean_disabled",
+        )
+    else:
+        new_x_range = st.slider(
+            "X range", -50.0, 50.0, (0.0, 10.0), step=0.5, key="new_x_range"
+        )
+        new_x_min, new_x_max = new_x_range
+        new_y_scale = st.slider(
+            "Y scale factor",
+            0.1,
+            5.0,
+            1.0,
+            step=0.1,
+            help="Multiply new GP training y-values by this factor",
+        )
+        use_prior_mean_data = st.toggle(
+            "Train on prior mean",
+            value=False,
+            help="When enabled, new GP training data lies exactly on the prior mean",
+        )
 
     st.markdown("**Mean transfer**")
     anchors = st.selectbox(
@@ -94,11 +136,35 @@ with general_tab:
     noise_level = st.slider("Noise level", 0.0, 2.0, 0.3)
     seed = st.number_input("Random seed", 0, 1000, 42)
 
-    st.markdown("**Plot window**")
-    plot_x_range = st.slider(
-        "X range", -50.0, 50.0, (-10.0, 15.0), step=0.5, key="plot_x_range"
+    st.markdown("**Forrester set up**")
+    forrester_on = st.toggle(
+        "Use Forrester functions",
+        value=False,
+        key="forrester_on",
+        help=(
+            "Sample training data from the generalized Forrester function "
+            "f(x) = A·(6x−2)²·sin(12x−4) + B·(x−0.5) + C instead of Gaussian noise."
+        ),
     )
-    plot_x_min, plot_x_max = plot_x_range
+    if forrester_on:
+        pa, pb, pc = PRIOR_FORRESTER
+        st.caption(f"Prior GP (fixed): A={pa:g}, B={pb:g}, C={pc:g}")
+        fc1, fc2, fc3 = st.columns(3)
+        new_A = fc1.number_input("A (new)", value=0.5, step=0.1, key="forr_A")
+        new_B = fc2.number_input("B (new)", value=10.0, step=0.5, key="forr_B")
+        new_C = fc3.number_input("C (new)", value=-5.0, step=0.5, key="forr_C")
+    else:
+        new_A, new_B, new_C = 0.5, 10.0, -5.0
+
+    st.markdown("**Plot window**")
+    if forrester_on:
+        plot_x_min, plot_x_max = 0.0, 1.0
+        st.info("Forrester mode: plot window set to [0, 1].")
+    else:
+        plot_x_range = st.slider(
+            "X range", -50.0, 50.0, (-10.0, 15.0), step=0.5, key="plot_x_range"
+        )
+        plot_x_min, plot_x_max = plot_x_range
 
     st.markdown("**Display**")
     show_std = st.toggle(
@@ -118,6 +184,21 @@ def generate_data(x_min, x_max, n_points, noise, random_seed, y_scale=1.0):
     x = np.sort(x)  # Sort for better visualization
     # Random y values (no correlation with x)
     y = np.random.randn(n_points) * noise * y_scale
+    return pd.DataFrame({"x": x, "y": y})
+
+
+def forrester(x, A, B, C):
+    """Evaluate the generalized Forrester function."""
+    x = np.asarray(x, dtype=float)
+    return A * (6.0 * x - 2.0) ** 2 * np.sin(12.0 * x - 4.0) + B * (x - 0.5) + C
+
+
+@st.cache_data
+def generate_forrester_data(x_min, x_max, n_points, A, B, C, noise, random_seed):
+    """Generate training data sampled from the Forrester function."""
+    np.random.seed(random_seed)
+    x = np.sort(np.random.uniform(x_min, x_max, n_points))
+    y = forrester(x, A, B, C) + np.random.randn(n_points) * noise
     return pd.DataFrame({"x": x, "y": y})
 
 
@@ -189,12 +270,29 @@ def fit_new_gp(
 
 # --- Session-state data with signature-based invalidation ---
 # Any change to a data-generating sidebar input wipes user drag-edits.
-prior_sig = (prior_n_points, prior_x_min, prior_x_max, noise_level, seed)
+prior_sig = (
+    prior_n_points,
+    prior_x_min,
+    prior_x_max,
+    noise_level,
+    seed,
+    forrester_on,
+)
 
 if st.session_state.get("prior_sig") != prior_sig:
-    st.session_state.prior_data = generate_data(
-        prior_x_min, prior_x_max, prior_n_points, noise_level, seed
-    )
+    if forrester_on:
+        st.session_state.prior_data = generate_forrester_data(
+            prior_x_min,
+            prior_x_max,
+            prior_n_points,
+            *PRIOR_FORRESTER,
+            noise_level,
+            seed,
+        )
+    else:
+        st.session_state.prior_data = generate_data(
+            prior_x_min, prior_x_max, prior_n_points, noise_level, seed
+        )
     st.session_state.prior_sig = prior_sig
     st.session_state.last_prior_drag = 0
 
@@ -210,10 +308,25 @@ new_sig = (
     seed,
     use_prior_mean_data,
     prior_sig if use_prior_mean_data else None,
+    forrester_on,
+    new_A,
+    new_B,
+    new_C,
 )
 
 if st.session_state.get("new_sig") != new_sig:
-    if use_prior_mean_data:
+    if forrester_on:
+        st.session_state.new_data = generate_forrester_data(
+            new_x_min,
+            new_x_max,
+            new_n_points,
+            new_A,
+            new_B,
+            new_C,
+            noise_level,
+            seed + 100,
+        )
+    elif use_prior_mean_data:
         np.random.seed(seed + 100)
         x_new = np.sort(np.random.uniform(new_x_min, new_x_max, new_n_points))
         with torch.no_grad():
@@ -262,14 +375,37 @@ with torch.no_grad():
 
 # --- Bokeh figure with draggable training points ---
 p = figure(
-    width=1200,
     height=600,
+    sizing_mode="stretch_width",
     x_axis_label="x",
     y_axis_label="y",
     x_range=(plot_x_min, plot_x_max),
     tools="pan,box_zoom,wheel_zoom,reset,save",
     toolbar_location="above",
 )
+
+# Ground-truth Forrester functions (drawn first so GP means stay on top).
+if forrester_on:
+    prior_truth = forrester(x_test, *PRIOR_FORRESTER)
+    new_truth = forrester(x_test, new_A, new_B, new_C)
+    p.line(
+        x_test,
+        prior_truth,
+        line_color="#1f3a8a",
+        line_width=2,
+        line_dash="dashed",
+        line_alpha=0.9,
+        legend_label="Prior Forrester (truth)",
+    )
+    p.line(
+        x_test,
+        new_truth,
+        line_color="#0a7d3c",
+        line_width=2,
+        line_dash="dotdash",
+        line_alpha=0.9,
+        legend_label="New Forrester (truth)",
+    )
 
 if show_std:
     p.varea(
@@ -430,11 +566,17 @@ st.caption(
 st.markdown("---")
 st.subheader("What's happening?")
 
-data_mode_text = (
-    f"trained on the prior mean (zero residuals) with y-scale={new_y_scale:.1f}"
-    if use_prior_mean_data
-    else f"trained on random data with noise and y-scale={new_y_scale:.1f}"
-)
+if forrester_on:
+    data_mode_text = (
+        f"sampled from the Forrester function with "
+        f"A={new_A:g}, B={new_B:g}, C={new_C:g}"
+    )
+elif use_prior_mean_data:
+    data_mode_text = (
+        f"trained on the prior mean (zero residuals) with y-scale={new_y_scale:.1f}"
+    )
+else:
+    data_mode_text = f"trained on random data with noise and y-scale={new_y_scale:.1f}"
 
 st.markdown(
     f"""
@@ -465,5 +607,24 @@ Where the new GPs have **no training data**, the green curve follows the blue pr
 - Set **Anchors = new** with **warmstart** — rebases the prior shape onto the new data.
 """
 )
+
+if forrester_on:
+    pa, pb, pc = PRIOR_FORRESTER
+    st.markdown(
+        f"""
+**Forrester mode** is active. Training targets are sampled from the generalized
+Forrester function $f(x) = A\\,(6x-2)^2\\sin(12x-4) + B\\,(x-0.5) + C$:
+
+- **Prior GP** uses the fixed low-fidelity setting `A={pa:g}, B={pb:g}, C={pc:g}`
+  (dashed navy *truth* curve).
+- **New GP** uses your `A={new_A:g}, B={new_B:g}, C={new_C:g}`
+  (dash-dot green *truth* curve).
+
+The prior X range is fixed to `[0, 1]`; the new GP samples a sub-range of `[0, 1]`
+so the region without new data shows how the transferred mean extrapolates along
+the prior. Y-scale and *train on prior mean* are disabled because the targets are
+fully determined by `A, B, C`.
+"""
+    )
 
 st.markdown("---")
