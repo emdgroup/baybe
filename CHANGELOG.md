@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no longer requiring users to manually group constraints according to their type
 - Parameter and constraint validation has been streamlined, using `validate_parameters`
   and `validate_constraints` as the only remaining public entry points
+- `_recommend_discrete` and kin now return a `pd.DataFrame` subselection of the
+  candidates instead of a `pd.Index`
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
