@@ -35,7 +35,7 @@ from baybe.searchspace.utils import select_via_flat_index
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
-from baybe.utils.basic import flatten, to_tuple
+from baybe.utils.basic import flatten, is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 
@@ -396,22 +396,25 @@ class SubspaceContinuous(SerialMixin):
         ]
 
         # Check if all affected constraints are linear intrapoint constraints
-        if any(
-            not isinstance(c, ContinuousLinearConstraint) or c.is_interpoint
-            for c in affected_constraints
+        if not is_all_instance(affected_constraints, ContinuousLinearConstraint) or any(
+            c.is_interpoint for c in affected_constraints
         ):
             raise NotImplementedError(
                 "Dropping parameters is only supported for subspaces without "
                 "constraints or with linear intrapoint constraints."
             )
 
+        unaffected_constraints = [
+            c for c in self.constraints if c not in affected_constraints
+        ]
+        reduced_constraints = [
+            c._drop_parameters(parameter_names)
+            for c in affected_constraints
+            if (set(c.parameters) - set(parameter_names))
+        ]
         return SubspaceContinuous(
             parameters=[p for p in self.parameters if p.name not in parameter_names],
-            constraints=[
-                c._drop_parameters(parameter_names)
-                for c in self.constraints
-                if (set(c.parameters) - set(parameter_names))
-            ],
+            constraints=[*unaffected_constraints, *reduced_constraints],
         )
 
     @property
