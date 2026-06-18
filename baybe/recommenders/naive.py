@@ -112,8 +112,8 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
             self.disc_recommender._botorch_acqf = disc_acqf_part
 
-        # Call the private function of the discrete recommender and get the indices
-        disc_rec_idx = self.disc_recommender._recommend_discrete(
+        # Call the private function of the discrete recommender and get the candidates
+        disc_rec = self.disc_recommender._recommend_discrete(
             subspace_discrete=searchspace.discrete,
             candidates_exp=candidates_exp,
             batch_size=batch_size,
@@ -121,7 +121,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
         # Get one random discrete point that will be attached when evaluating the
         # acquisition function in the discrete space.
-        disc_part = searchspace.discrete.comp_rep.loc[disc_rec_idx].sample(1)
+        disc_part = searchspace.discrete.comp_rep.loc[disc_rec.index].sample(1)
         disc_part_tensor = to_tensor(disc_part).unsqueeze(-2)
 
         # Setup a fresh acquisition function for the continuous recommender
@@ -143,9 +143,8 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         )
 
         # Glue the solutions together and return them
-        rec_disc_exp = searchspace.discrete.exp_rep.loc[disc_rec_idx]
-        rec_cont.index = rec_disc_exp.index
-        rec_exp = pd.concat([rec_disc_exp, rec_cont], axis=1)
+        rec_cont.index = disc_rec.index
+        rec_exp = pd.concat([disc_rec, rec_cont], axis=1)
         return rec_exp
 
 

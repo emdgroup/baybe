@@ -103,7 +103,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         subspace_discrete: SubspaceDiscrete,
         candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.Index:
+    ) -> pd.DataFrame:
         # Fit scaler on entire search space
         from sklearn.preprocessing import StandardScaler
 
@@ -129,7 +129,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
             selection = self._make_selection_default(model, candidates_scaled)
 
         # Convert positional indices into DataFrame indices and return result
-        return candidates_comp.index[selection]
+        return candidates_exp.iloc[selection]
 
     @override
     def __str__(self) -> str:

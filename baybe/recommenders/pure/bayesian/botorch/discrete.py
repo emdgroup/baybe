@@ -23,7 +23,7 @@ def recommend_discrete_with_subsets(
     subspace_discrete: SubspaceDiscrete,
     candidates_exp: pd.DataFrame,
     batch_size: int,
-) -> pd.Index:
+) -> pd.DataFrame:
     """Recommend from a discrete space with subset-generating constraints.
 
     Splits the candidate set into subsets according to subset-generating constraints,
@@ -39,7 +39,8 @@ def recommend_discrete_with_subsets(
         batch_size: The size of the recommendation batch.
 
     Returns:
-        The dataframe indices of the recommended points.
+        A dataframe containing the recommendations as a subset of rows from the
+        provided experimental representation.
     """
     import torch
 
@@ -55,24 +56,24 @@ def recommend_discrete_with_subsets(
 
     def make_callable(
         mask: np.ndarray,
-    ) -> Callable[[], tuple[pd.Index, Tensor]]:
-        def optimize() -> tuple[pd.Index, Tensor]:
+    ) -> Callable[[], tuple[pd.DataFrame, Tensor]]:
+        def optimize() -> tuple[pd.DataFrame, Tensor]:
             subset = candidates_exp.loc[mask]
 
-            idxs = recommend_discrete_without_subsets(
+            rec = recommend_discrete_without_subsets(
                 recommender, subspace_discrete, subset, batch_size
             )
 
-            comp = subspace_discrete.transform(candidates_exp.loc[idxs])
+            comp = subspace_discrete.transform(rec)
             with torch.no_grad():
                 acqf_value = recommender._botorch_acqf(to_tensor(comp).unsqueeze(0))
-            return idxs, acqf_value
+            return rec, acqf_value
 
         return optimize
 
     callables = (make_callable(m) for m in masks)
-    best_idxs, _ = recommender._optimize_over_subsets(callables)
-    return best_idxs
+    best_rec, _ = recommender._optimize_over_subsets(callables)
+    return best_rec
 
 
 def recommend_discrete_without_subsets(
@@ -80,7 +81,7 @@ def recommend_discrete_without_subsets(
     subspace_discrete: SubspaceDiscrete,
     candidates_exp: pd.DataFrame,
     batch_size: int,
-) -> pd.Index:
+) -> pd.DataFrame:
     """Generate recommendations from a discrete search space.
 
     Args:
@@ -96,8 +97,8 @@ def recommend_discrete_without_subsets(
             function is used with a batch size > 1.
 
     Returns:
-        The dataframe indices of the recommended points in the provided
-        experimental representation.
+        A dataframe containing the recommendations as a subset of rows from the
+        provided experimental representation.
     """
     from baybe.acquisition.acqfs import qThompsonSampling
     from baybe.exceptions import (
@@ -125,7 +126,7 @@ def recommend_discrete_without_subsets(
         recommender._botorch_acqf, batch_size, to_tensor(candidates_comp)
     )
 
-    # retrieve the index of the points from the input dataframe
+    # retrieve the rows from the input dataframe corresponding to the selected points
     # IMPROVE: The merging procedure is conceptually similar to what
     #   `SearchSpace._match_measurement_with_searchspace_indices` does, though using
     #   a simpler matching logic. When refactoring the SearchSpace class to
@@ -139,4 +140,4 @@ def recommend_discrete_without_subsets(
         )["index"]
     )
 
-    return idxs
+    return candidates_exp.loc[idxs]

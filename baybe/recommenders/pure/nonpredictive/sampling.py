@@ -148,7 +148,7 @@ class FPSRecommender(NonPredictiveRecommender):
         subspace_discrete: SubspaceDiscrete,
         candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.Index:
+    ) -> pd.DataFrame:
         # Fit scaler on entire search space
         from sklearn.preprocessing import StandardScaler
 
@@ -174,7 +174,7 @@ class FPSRecommender(NonPredictiveRecommender):
                 initialization=self.initialization.value,
                 random_tie_break=self.random_tie_break,
             )
-        return candidates_comp.index[ilocs]
+        return candidates_exp.iloc[ilocs]
 
     @override
     def __str__(self) -> str:
