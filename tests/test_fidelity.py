@@ -21,6 +21,7 @@ from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.multi_fidelity import (
     GaussianProcessSurrogateSTMF,
 )
+from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
 
@@ -345,3 +346,14 @@ def test_standard_gp_fit_categorical_fidelity():
     stats = surrogate.posterior_stats(measurements_cat_fid)
     assert set(stats.columns) == {"t_mean", "t_std"}
     assert len(stats) == len(measurements_cat_fid)
+
+
+@pytest.mark.parametrize(
+    "preset",
+    list(GaussianProcessPreset),
+    ids=lambda preset: preset.value,
+)
+def test_gp_presets_fit_categorical_fidelity(preset):
+    """All GP presets can be fitted on a categorical fidelity space."""
+    surrogate = GaussianProcessSurrogate.from_preset(preset)
+    surrogate.fit(searchspace_cat_fid, objective, measurements_cat_fid)
