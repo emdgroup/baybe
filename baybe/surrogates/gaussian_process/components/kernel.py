@@ -319,7 +319,10 @@ class ICMKernelFactory(_MetaKernelFactory):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-        if searchspace.task_idx is None and searchspace.fidelity_idx is None:
+        if searchspace.task_idx is None and (
+            searchspace.fidelity_type
+            != SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+        ):
             raise IncompatibleSearchSpaceError(
                 f"'{type(self).__name__}' can only be used with a searchspace that "
                 f"contains a '{TaskParameter.__name__}' or a "

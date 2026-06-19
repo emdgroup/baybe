@@ -8,7 +8,10 @@ from pytest import param
 
 from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.parameters.categorical import CategoricalParameter, TaskParameter
-from baybe.parameters.fidelity import CategoricalFidelityParameter
+from baybe.parameters.fidelity import (
+    CategoricalFidelityParameter,
+    NumericalDiscreteFidelityParameter,
+)
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -111,9 +114,24 @@ def test_enable_index_kernel_guard():
 _icm_guard_message = "contains a 'TaskParameter' or a 'CategoricalFidelityParameter'"
 
 
-def test_icm_guard_rejects_plain_space():
-    """ICMKernelFactory raises for a space with no task or fidelity parameter."""
-    searchspace = SearchSpace.from_product([NumericalContinuousParameter("x", (0, 1))])
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        param([NumericalContinuousParameter("x", (0, 1))], id="plain"),
+        param(
+            [
+                NumericalContinuousParameter("x", (0, 1)),
+                NumericalDiscreteFidelityParameter(
+                    "fid", values=[0.5, 1.0], costs=[1.0, 10.0]
+                ),
+            ],
+            id="numerical_fidelity",
+        ),
+    ],
+)
+def test_icm_guard_rejects_non_index_space(parameters):
+    """ICMKernelFactory raises for spaces without an index parameter."""
+    searchspace = SearchSpace.from_product(parameters)
     with pytest.raises(IncompatibleSearchSpaceError, match=_icm_guard_message):
         ICMKernelFactory()(
             searchspace, NumericalTarget("y").to_objective(), pd.DataFrame()
