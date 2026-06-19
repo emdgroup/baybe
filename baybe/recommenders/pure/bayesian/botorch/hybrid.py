@@ -81,8 +81,9 @@ def recommend_hybrid_without_subsets(
     from botorch.optim import optimize_acqf_mixed
 
     # Transform discrete candidates
-    # (Create a shallow copy to avoid in-place modifications of the original dataframe)
-    candidates_comp = searchspace.discrete.comp_rep.copy(deep=False)
+    candidates_comp = searchspace.discrete.transform(
+        searchspace.discrete.get_candidates()
+    )
 
     # Calculate the number of samples from the given percentage
     n_candidates = math.ceil(

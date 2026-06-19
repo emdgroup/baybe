@@ -6,7 +6,7 @@ import gc
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
 from itertools import product
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 import numpy.typing as npt
@@ -263,7 +263,7 @@ class SearchSpace(SerialMixin):
         #       appear first in the computational dataframe.
         #   3.  It assumes there exists exactly one task parameter
         #   --> Fix this when refactoring the data
-        return cast(int, self.discrete.comp_rep.columns.get_loc(task_param.name))
+        return self.discrete.comp_rep_columns.index(task_param.name)
 
     @property
     def n_tasks(self) -> int:

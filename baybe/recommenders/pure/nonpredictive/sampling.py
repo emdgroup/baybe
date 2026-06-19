@@ -152,11 +152,13 @@ class FPSRecommender(NonPredictiveRecommender):
         from sklearn.preprocessing import StandardScaler
 
         # TODO [Scaling]: scaling should be handled by search space object
+        candidates_comp = subspace_discrete.transform(
+            subspace_discrete.get_candidates()
+        )
         scaler = StandardScaler()
-        scaler.fit(subspace_discrete.comp_rep)
+        scaler.fit(candidates_comp)
 
         # Scale and sample
-        candidates_comp = subspace_discrete.comp_rep
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
         if active_settings.use_fpsample:

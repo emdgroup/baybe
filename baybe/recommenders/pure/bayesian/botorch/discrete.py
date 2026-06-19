@@ -117,7 +117,7 @@ def recommend_discrete_without_subsets(
     from botorch.optim import optimize_acqf_discrete
 
     # Determine the next set of points to be tested
-    candidates_comp = subspace_discrete.comp_rep
+    candidates_comp = subspace_discrete.transform(subspace_discrete.get_candidates())
     points, _ = optimize_acqf_discrete(
         recommender._botorch_acqf, batch_size, to_tensor(candidates_comp)
     )

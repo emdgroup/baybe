@@ -107,13 +107,14 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         from sklearn.preprocessing import StandardScaler
 
         # TODO [Scaling]: scaling should be handled by search space object
+        candidates_comp = subspace_discrete.transform(
+            subspace_discrete.get_candidates()
+        )
         scaler = StandardScaler()
-        scaler.fit(subspace_discrete.comp_rep)
+        scaler.fit(candidates_comp)
 
         # Scale candidates
-        candidates_scaled = np.ascontiguousarray(
-            scaler.transform(subspace_discrete.comp_rep)
-        )
+        candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
         # Set model parameters and perform fit
         model = self._get_model_cls()(
