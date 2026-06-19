@@ -622,7 +622,7 @@ def test_legacy_recommended_metadata_deserialization(ongoing_campaign):
     del data["excluded_experiments"]
 
     # Construct legacy searchspace_metadata with a "recommended" column
-    exp_rep = ongoing_campaign.searchspace.discrete.exp_rep
+    exp_rep = ongoing_campaign.searchspace.discrete.get_candidates()
     metadata = pd.DataFrame(False, index=exp_rep.index, columns=[_RECOMMENDED])
     idxs = rec.index[:n_recommended]
     metadata.loc[idxs, _RECOMMENDED] = True
@@ -679,7 +679,7 @@ def test_legacy_measured_metadata_deserialization():
     data = campaign.to_dict()
     metadata = pd.DataFrame(
         {_MEASURED: [True, False, False]},
-        index=campaign.searchspace.discrete.exp_rep.index,
+        index=campaign.searchspace.discrete.get_candidates().index,
     )
     data["searchspace_metadata"] = converter.unstructure(metadata)
 
@@ -703,7 +703,7 @@ def test_legacy_excluded_metadata_deserialization():
     # and no excluded_experiments field
     data = campaign.to_dict()
     del data["excluded_experiments"]
-    exp_rep = campaign.searchspace.discrete.exp_rep
+    exp_rep = campaign.searchspace.discrete.get_candidates()
     metadata = pd.DataFrame(
         {_EXCLUDED: [True, False, True]},
         index=exp_rep.index,
@@ -880,10 +880,10 @@ def test_deprecated_constraints_argument_from_product():
 
     assert ss_both.batch_constraints == ss_with_batch.batch_constraints == (batch_c,)
     assert ss_without_batch.batch_constraints == ss_none.batch_constraints == ()
-    assert_frame_equal(ss_both.exp_rep, ss_without_batch.exp_rep)
-    assert_frame_equal(ss_with_batch.exp_rep, ss_none.exp_rep)
-    assert len(ss_both.exp_rep) == 2
-    assert len(ss_none.exp_rep) == 4
+    assert_frame_equal(ss_both.get_candidates(), ss_without_batch.get_candidates())
+    assert_frame_equal(ss_with_batch.get_candidates(), ss_none.get_candidates())
+    assert len(ss_both.get_candidates()) == 2
+    assert len(ss_none.get_candidates()) == 4
 
 
 def test_deprecated_constraints_batch_property():

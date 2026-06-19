@@ -99,7 +99,7 @@ def test_candidate_toggling(constraints, exclude, complement):
         ]
     )
     campaign = Campaign(subspace)
-    all_candidates = campaign.searchspace.discrete.exp_rep
+    all_candidates = campaign.searchspace.discrete.get_candidates()
 
     # Set initial state to the opposite of the targeted value
     if not exclude:
@@ -410,7 +410,7 @@ def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
 @pytest.mark.parametrize("batch_size", [3], ids=["b3"])
 def test_acquisition_value_computation(ongoing_campaign: Campaign):
     """Acquisition values have the expected shape."""
-    df = ongoing_campaign.searchspace.discrete.exp_rep
+    df = ongoing_campaign.searchspace.discrete.get_candidates()
     assert not df.empty
 
     # Using campaign acquisition function
