@@ -12,7 +12,10 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSurrogateError
 from baybe.parameters.base import Parameter
-from baybe.parameters.fidelity import CategoricalFidelityParameter
+from baybe.parameters.fidelity import (
+    CategoricalFidelityParameter,
+    NumericalDiscreteFidelityParameter,
+)
 from baybe.searchspace.core import SearchSpaceFidelityType
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
@@ -32,11 +35,15 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
 from baybe.surrogates.gaussian_process.utils import _ModelContext
 
 if TYPE_CHECKING:
+    import pandas as pd
     from botorch.models.gpytorch import GPyTorchModel
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import Posterior
     from torch import Tensor
+
+    from baybe.objectives.base import Objective
+    from baybe.searchspace import SearchSpace
 
 
 @define
@@ -88,6 +95,32 @@ class GaussianProcessSurrogateSTMF(Surrogate):
         return self._model
 
     @override
+    def _validate_fit_context(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
+
+        if searchspace.fidelity_type == SearchSpaceFidelityType.SINGLEFIDELITY:
+            raise IncompatibleSurrogateError(
+                f"'{self.__class__.__name__}' can only be fit on search spaces with a "
+                f"'{NumericalDiscreteFidelityParameter.__name__}'."
+            )
+
+        if (
+            searchspace.fidelity_type
+            == SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+        ):
+            from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+
+            raise IncompatibleSurrogateError(
+                f"'{self.__class__.__name__}' does not support "
+                f"'{CategoricalFidelityParameter.__name__}'. "
+                f"Use '{GaussianProcessSurrogate.__name__}' instead."
+            )
+
+    @override
     @staticmethod
     def _make_parameter_scaler_factory(
         parameter: Parameter,
@@ -119,16 +152,6 @@ class GaussianProcessSurrogateSTMF(Surrogate):
         assert context.fidelity_idx is not None, (
             f"{self.__class__.__name__} can only be fit on multi fidelity searchspaces."
         )
-
-        if (
-            self._searchspace.fidelity_type
-            == SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
-        ):
-            raise IncompatibleSurrogateError(
-                f"'{self.__class__.__name__}' does not support "
-                f"'{CategoricalFidelityParameter.__name__}'. "
-                f"Use 'GaussianProcessSurrogate' instead."
-            )
 
         ### Input/output scaling
         input_transform = Normalize(

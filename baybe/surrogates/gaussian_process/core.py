@@ -50,6 +50,7 @@ from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    import pandas as pd
     from botorch.models.gpytorch import GPyTorchModel
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
@@ -58,6 +59,9 @@ if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
+
+    from baybe.objectives.base import Objective
+    from baybe.searchspace import SearchSpace
 
 
 def _mark_custom_kernel(
@@ -203,6 +207,46 @@ class GaussianProcessSurrogate(Surrogate):
         return self._model
 
     @override
+    def _validate_fit_context(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
+
+        if (
+            searchspace.fidelity_type
+            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+        ):
+            from baybe.surrogates.gaussian_process.multi_fidelity import (
+                GaussianProcessSurrogateSTMF,
+            )
+
+            raise IncompatibleSurrogateError(
+                f"'{self.__class__.__name__}' does not support "
+                f"'{NumericalDiscreteFidelityParameter.__name__}'. "
+                f"Use '{GaussianProcessSurrogateSTMF.__name__}' instead."
+            )
+
+        if (
+            searchspace.task_idx is not None
+            and self._custom_kernel
+            and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
+        ):
+            raise DeprecationError(
+                f"We noticed that you are using a custom kernel architecture on a "
+                f"search space that includes a '{TaskParameter.__name__}'. Please note "
+                f"that the kernel logic of '{GaussianProcessSurrogate.__name__}' has "
+                f"changed: the task kernel is no longer automatically added and must "
+                f"now be explicitly included in your kernel (factory). "
+                f"The '{ICMKernelFactory.__name__}' provides a suitable interface "
+                f"for this purpose. If you are aware of this breaking change and wish "
+                f"to proceed with your current kernel architecture, you can disable "
+                f"this error by setting the 'BAYBE_DISABLE_CUSTOM_KERNEL_WARNING' "
+                f"environment variable to a truthy value."
+            )
+
+    @override
     @staticmethod
     def _make_parameter_scaler_factory(
         parameter: Parameter,
@@ -229,35 +273,7 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._objective is not None  # provided by base class
         assert self._measurements is not None  # provided by base class
 
-        if (
-            self._searchspace.fidelity_type
-            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
-        ):
-            raise IncompatibleSurrogateError(
-                f"'{self.__class__.__name__}' does not support "
-                f"'{NumericalDiscreteFidelityParameter.__name__}'. "
-                f"Use 'GaussianProcessSurrogateSTMF' instead."
-            )
-
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
-
-        if (
-            context.is_multitask
-            and self._custom_kernel
-            and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
-        ):
-            raise DeprecationError(
-                f"We noticed that you are using a custom kernel architecture on a "
-                f"search space that includes a '{TaskParameter.__name__}'. Please note "
-                f"that the kernel logic of '{GaussianProcessSurrogate.__name__}' has "
-                f"changed: the task kernel is no longer automatically added and must "
-                f"now be explicitly included in your kernel (factory). "
-                f"The '{ICMKernelFactory.__name__}' provides a suitable interface "
-                f"for this purpose. If you are aware of this breaking change and wish "
-                f"to proceed with your current kernel architecture, you can disable "
-                f"this error by setting the 'BAYBE_DISABLE_CUSTOM_KERNEL_WARNING' "
-                f"environment variable to a truthy value."
-            )
 
         ### Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)

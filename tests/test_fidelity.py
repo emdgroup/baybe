@@ -172,6 +172,44 @@ def test_stmf_rejects_categorical_fidelity():
 
 
 @pytest.mark.parametrize(
+    ("surrogate", "searchspace", "measurements", "match"),
+    [
+        param(
+            GaussianProcessSurrogate(),
+            searchspace_num_fid,
+            measurements_num_fid,
+            "STMF",
+            id="standard_gp_numerical_fidelity",
+        ),
+        param(
+            GaussianProcessSurrogateSTMF(),
+            searchspace_cat_fid,
+            measurements_cat_fid,
+            "GaussianProcessSurrogate",
+            id="stmf_categorical_fidelity",
+        ),
+    ],
+)
+def test_surrogate_rejects_wrong_fidelity_repeatedly(
+    surrogate, searchspace, measurements, match
+):
+    """Repeated wrong-fidelity fits raise instead of returning from the cache."""
+    for _ in range(2):
+        with pytest.raises(IncompatibleSurrogateError, match=match):
+            surrogate.fit(searchspace, objective, measurements)
+
+
+def test_stmf_rejects_single_fidelity():
+    """STMF raises an error when fitted on a single-fidelity search space."""
+    searchspace = SearchSpace.from_product([_design_param])
+    measurements = create_fake_input(
+        searchspace.parameters, objective.targets, n_rows=20
+    )
+    with pytest.raises(IncompatibleSurrogateError, match="NumericalDiscrete"):
+        GaussianProcessSurrogateSTMF().fit(searchspace, objective, measurements)
+
+
+@pytest.mark.parametrize(
     ("component", "factory_attr", "expected_type"),
     [
         param(
