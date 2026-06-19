@@ -206,39 +206,7 @@ class Campaign(SerialMixin):
 
     @override
     def __str__(self) -> str:
-        recommended_count = len(self._recommended_experiments)
-        exp_rep = self.searchspace.discrete.exp_rep
-        if self._measurements.empty or exp_rep.empty:
-            measured_count = 0
-        else:
-            measured_count = len(
-                fuzzy_row_match(exp_rep, self._measurements, self.parameters)
-            )
-        excluded_count = len(self._excluded_experiments)
-        n_elements = len(exp_rep)
-        searchspace_fields = [
-            to_string(
-                "Recommended:",
-                f"{recommended_count}/{n_elements}",
-                single_line=True,
-            ),
-            to_string(
-                "Measured:",
-                f"{measured_count}/{n_elements}",
-                single_line=True,
-            ),
-            to_string(
-                "Excluded:",
-                f"{excluded_count}/{n_elements}",
-                single_line=True,
-            ),
-        ]
-        metadata_fields = [
-            to_string("Discrete Subspace Meta Data", *searchspace_fields),
-        ]
-        metadata = to_string("Meta Data", *metadata_fields)
-        fields = [metadata, self.searchspace, self.objective, self.recommender]
-
+        fields = [self.searchspace, self.objective, self.recommender]
         return to_string(self.__class__.__name__, *fields)
 
     @property

@@ -195,9 +195,7 @@ class SubspaceDiscrete(SerialMixin):
                 "Discrete Parameters",
                 pretty_print_df(param_df, max_colwidth=None),
             ),
-            to_string("Experimental Representation", pretty_print_df(self._exp_rep)),
             to_string("Batch Constraints", pretty_print_df(batch_constraints_df)),
-            to_string("Computational Representation", pretty_print_df(self.comp_rep)),
         ]
         return to_string(self.__class__.__name__, *fields)
 
