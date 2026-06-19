@@ -271,7 +271,9 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Check if enough candidates are left
         # TODO [15917]: This check is not perfectly correct.
-        if (not is_hybrid_space) and (len(searchspace.discrete.exp_rep) < batch_size):
+        if (not is_hybrid_space) and (
+            len(searchspace.discrete.get_candidates()) < batch_size
+        ):
             raise NotEnoughPointsLeftError(
                 f"Using the current settings, there are fewer than {batch_size} "
                 f"possible data points left to recommend."

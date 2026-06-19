@@ -144,7 +144,7 @@ def recommend_hybrid_without_subsets(
     ).set_index("index")
 
     # Get experimental representation of discrete part
-    rec_disc_exp = searchspace.discrete.exp_rep.loc[merged.index]
+    rec_disc_exp = searchspace.discrete.get_candidates().loc[merged.index]
 
     # Combine discrete and continuous parts
     rec_exp = pd.concat(
@@ -186,6 +186,7 @@ def recommend_hybrid_with_subsets(
     # NOTE: No min_discrete_candidates filtering in hybrid spaces because
     # optimize_acqf_mixed can produce multiple recommendations from a single
     # discrete candidate by varying continuous parameters.
+    candidates = searchspace.discrete.get_candidates()
     combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
     if searchspace.n_subsets <= recommender.max_n_subsets:
         combined_masks = searchspace.subsets()
@@ -201,7 +202,7 @@ def recommend_hybrid_with_subsets(
 
             mod_disc = evolve(
                 searchspace.discrete,
-                exp_rep=searchspace.discrete.exp_rep.loc[d_mask],
+                exp_rep=candidates.loc[d_mask],
             )
             mod_cont = (
                 subspace_c._enforce_cardinality_constraints(c_inactive_params)

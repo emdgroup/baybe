@@ -43,6 +43,7 @@ def recommend_discrete_with_subsets(
     """
     import torch
 
+    candidates = subspace_discrete.get_candidates()
     masks: Iterable[npt.NDArray[np.bool_]]
     if subspace_discrete.n_subsets <= recommender.max_n_subsets:
         masks = subspace_discrete.subset_masks(min_candidates=batch_size)
@@ -56,9 +57,7 @@ def recommend_discrete_with_subsets(
         mask: np.ndarray,
     ) -> Callable[[], tuple[pd.DataFrame, Tensor]]:
         def optimize() -> tuple[pd.DataFrame, Tensor]:
-            subset_subspace = evolve(
-                subspace_discrete, exp_rep=subspace_discrete.exp_rep.loc[mask]
-            )
+            subset_subspace = evolve(subspace_discrete, exp_rep=candidates.loc[mask])
 
             rec = recommend_discrete_without_subsets(
                 recommender, subset_subspace, batch_size
@@ -137,4 +136,4 @@ def recommend_discrete_without_subsets(
         )["index"]
     )
 
-    return subspace_discrete.exp_rep.loc[idxs]
+    return subspace_discrete.get_candidates().loc[idxs]

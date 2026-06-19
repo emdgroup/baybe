@@ -41,7 +41,7 @@ class RandomRecommender(NonPredictiveRecommender):
             if searchspace.type is SearchSpaceType.CONTINUOUS:
                 return cont_random
 
-        candidates_exp = searchspace.discrete.exp_rep
+        candidates_exp = searchspace.discrete.get_candidates()
 
         # Restrict to a random subset if subset-generating constraints are present
         if searchspace.discrete.n_subsets > 0:
@@ -173,7 +173,7 @@ class FPSRecommender(NonPredictiveRecommender):
                 initialization=self.initialization.value,
                 random_tie_break=self.random_tie_break,
             )
-        return subspace_discrete.exp_rep.iloc[ilocs]
+        return subspace_discrete.get_candidates().iloc[ilocs]
 
     @override
     def __str__(self) -> str:

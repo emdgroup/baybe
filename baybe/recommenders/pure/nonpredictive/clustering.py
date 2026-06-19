@@ -129,7 +129,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
             selection = self._make_selection_default(model, candidates_scaled)
 
         # Select rows by positional indices and return the corresponding subset
-        return subspace_discrete.exp_rep.iloc[selection]
+        return subspace_discrete.get_candidates().iloc[selection]
 
     @override
     def __str__(self) -> str:
