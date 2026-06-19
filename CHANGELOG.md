@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parameter and constraint validation has been streamlined, using `validate_parameters`
   and `validate_constraints` as the only remaining public entry points
 
+### Fixed
+- Deserialization with constructor selection now correctly respects converter settings
+
 ### Deprecations
 - `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
 - `SubspaceDiscrete` ignores any `empty_encoding` when provided
