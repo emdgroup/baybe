@@ -198,7 +198,7 @@ class SearchSpace(SerialMixin):
     def constraints(self) -> tuple[Constraint, ...]:
         """Return the constraints of the search space."""
         return (
-            *self.discrete.constraints,
+            *self.discrete.batch_constraints,
             *self.continuous.constraints,
         )
 

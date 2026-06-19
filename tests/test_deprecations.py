@@ -11,19 +11,24 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from pandas.testing import assert_series_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
 from baybe.constraints import (
     ContinuousLinearConstraint,
 )
+from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.continuous import ContinuousCardinalityConstraint
+from baybe.constraints.discrete import (
+    DiscreteBatchConstraint,
+    DiscreteExcludeConstraint,
+)
 from baybe.exceptions import DeprecationError
 from baybe.kernels.basic import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
-from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.categorical import CategoricalParameter, TaskParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
@@ -788,9 +793,7 @@ def test_deprecated_subspace_discrete_arguments(arg, error):
         else pytest.warns(DeprecationWarning, match=f"Providing '{arg}'")
     )
     with context:
-        SubspaceDiscrete(
-            parameters=[], constraints=[], exp_rep=pd.DataFrame(), **{arg: 0}
-        )
+        SubspaceDiscrete(parameters=[], exp_rep=pd.DataFrame(), **{arg: 0})
 
 
 def test_deprecated_empty_encoding_from_product():
@@ -824,3 +827,60 @@ def test_deprecated_discrete_subspace_deserialization():
 
     actual = SubspaceDiscrete.from_dict(legacy_dict)
     assert actual == expected
+
+
+def test_deprecated_constraints_deserialization():
+    """Deserialization of legacy ``constraints`` key migrates batch constraints."""
+    p = NumericalDiscreteParameter("p", [0, 1, 2])
+    batch_c = DiscreteBatchConstraint(["p"])
+    expected = SubspaceDiscrete.from_product(parameters=[p], constraints=[batch_c])
+
+    # Simulate a legacy dict with `constraints` instead of `batch_constraints`
+    legacy_dict = expected.to_dict()
+    legacy_dict["constraints"] = [batch_c.to_dict()]
+    del legacy_dict["batch_constraints"]
+
+    with pytest.warns(DeprecationWarning, match="Providing 'constraints'"):
+        actual = SubspaceDiscrete.from_dict(legacy_dict)
+
+    assert actual == expected
+
+
+def test_deprecated_constraints_argument():
+    """Passing `constraints` to `SubspaceDiscrete` raises a deprecation warning."""
+    p = NumericalDiscreteParameter("p", [0, 1, 2])
+    batch_c = DiscreteBatchConstraint(["p"])
+    with pytest.warns(DeprecationWarning, match="Providing 'constraints'"):
+        subspace = SubspaceDiscrete(
+            parameters=[p],
+            exp_rep=pd.DataFrame({"p": [0, 1, 2]}),
+            constraints=[batch_c],
+        )
+    # The batch constraint must be migrated to `batch_constraints`
+    assert subspace.batch_constraints == (batch_c,)
+
+
+def test_deprecated_constraints_argument_from_product():
+    """Passing mixed constraints to ``from_product`` routes batch constraints correctly."""  # noqa: E501
+    p = CategoricalParameter("p", ["a", "b"])
+    q = CategoricalParameter("q", ["x", "y"])
+    batch_c = DiscreteBatchConstraint(["p"])
+    no_dup_c = DiscreteExcludeConstraint(["p"], [SubSelectionCondition(["a"])])
+
+    ss_both = SubspaceDiscrete.from_product(
+        parameters=[p, q], constraints=[batch_c, no_dup_c]
+    )
+    ss_none = SubspaceDiscrete.from_product(parameters=[p, q], constraints=[])
+    ss_with_batch = SubspaceDiscrete.from_product(
+        parameters=[p, q], constraints=[batch_c]
+    )
+    ss_without_batch = SubspaceDiscrete.from_product(
+        parameters=[p, q], constraints=[no_dup_c]
+    )
+
+    assert ss_both.batch_constraints == ss_with_batch.batch_constraints == (batch_c,)
+    assert ss_without_batch.batch_constraints == ss_none.batch_constraints == ()
+    assert_frame_equal(ss_both.exp_rep, ss_without_batch.exp_rep)
+    assert_frame_equal(ss_with_batch.exp_rep, ss_none.exp_rep)
+    assert len(ss_both.exp_rep) == 2
+    assert len(ss_none.exp_rep) == 4

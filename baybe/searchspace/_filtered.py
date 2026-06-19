@@ -37,6 +37,7 @@ class FilteredSubspaceDiscrete(SubspaceDiscrete):
 
         # >>>>> Deprecation
         kwargs.pop("_empty_encoding", None)
+        kwargs.pop("_constraints", None)
         kwargs.pop("_comp_rep", None)
         # <<<<< Deprecation
 
