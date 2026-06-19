@@ -300,7 +300,7 @@ class SearchSpace(SerialMixin):
         self,
     ) -> NumericalDiscreteFidelityParameter | CategoricalFidelityParameter | None:
         """The (single) fidelity parameter of the space, if it exists."""
-        # Currently private, see comment above
+        # Currently private since this helper assumes at most one fidelity parameter.
         fidelity_parameters = (
             NumericalDiscreteFidelityParameter,
             CategoricalFidelityParameter,
@@ -333,7 +333,7 @@ class SearchSpace(SerialMixin):
         """Column index of the fidelity parameter in computational representation."""
         if (fidelity_param := self._fidelity_parameter) is None:
             return None
-        # See TODO [11611] above
+        # TODO: Refactor the comp-rep index lookup as described in `task_idx`.
         return cast(int, self.discrete.comp_rep.columns.get_loc(fidelity_param.name))
 
     @property
@@ -351,7 +351,8 @@ class SearchSpace(SerialMixin):
     @property
     def n_fidelities(self) -> int:
         """The number of fidelities encoded in the search space."""
-        # See TODO [16932] above
+        # TODO: Generalize the fidelity-count semantics to multiple fidelity
+        # parameters, consistent with the task-count semantics in `n_tasks`.
         if (fidelity_param := self._fidelity_parameter) is None:
             # No fidelity parameter means we effectively have a single fidelity.
             return 1

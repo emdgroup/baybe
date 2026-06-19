@@ -256,13 +256,15 @@ class GaussianProcessSurrogate(Surrogate):
     def _make_parameter_scaler_factory(
         parameter: Parameter,
     ) -> type[InputTransform] | None:
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
+        # For GPs, we let botorch handle the scaling. See Note [Scaling Workaround]
+        # in the class docstring.
         return None
 
     @override
     @staticmethod
     def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
+        # For GPs, we let botorch handle the scaling. See Note [Scaling Workaround]
+        # in the class docstring.
         return None
 
     @override
@@ -281,7 +283,8 @@ class GaussianProcessSurrogate(Surrogate):
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
         ### Input/output scaling
-        # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
+        # NOTE: For GPs, we let BoTorch handle scaling. See Note [Scaling Workaround]
+        # in the class docstring.
         input_transform = Normalize(
             train_x.shape[-1],
             bounds=context.parameter_bounds,

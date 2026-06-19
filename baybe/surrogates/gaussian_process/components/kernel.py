@@ -338,7 +338,7 @@ class ICMKernelFactory(_MetaKernelFactory):
 
         # Ensure correct partitioning between base and index kernels active dimensions.
         # The index dimension is either the task or the categorical fidelity column —
-        # exactly one is non-None after the guard above.
+        # exactly one is non-None after the guard at the start of this method.
         index_idx = (
             searchspace.task_idx
             if searchspace.task_idx is not None
