@@ -185,11 +185,12 @@ constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 
 
 space = SubspaceDiscrete.from_product(parameters=parameters, constraints=constraints)
+candidates = space.get_candidates()
 print(
     pretty_print_df(
-        space.exp_rep,
-        max_rows=len(space.exp_rep),
-        max_columns=len(space.exp_rep.columns),
+        candidates,
+        max_rows=len(candidates),
+        max_columns=len(candidates.columns),
     )
 )
 
@@ -222,9 +223,9 @@ print(
 
 # Let us programmatically assert that all constraints are satisfied:
 
-amounts = space.exp_rep[["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"]]
-labels = space.exp_rep[["Slot1_Label", "Slot2_Label", "Slot3_Label"]]
-slots = space.exp_rep.apply(
+amounts = candidates[["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"]]
+labels = candidates[["Slot1_Label", "Slot2_Label", "Slot3_Label"]]
+slots = candidates.apply(
     lambda row: pd.Series(
         [(row[f"Slot{k}_Label"], row[f"Slot{k}_Amount"]) for k in range(1, 4)]
     ),

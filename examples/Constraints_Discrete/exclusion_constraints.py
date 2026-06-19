@@ -114,32 +114,30 @@ print(campaign)
 
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
+    candidates = campaign.searchspace.discrete.get_candidates()
+
     print(f"\n\n#### ITERATION {kIter + 1} ####")
 
     print("## ASSERTS ##")
     print(
         "Number of entries with either Solvents C2 or C4 and a temperature above 151: ",
         (
-            campaign.searchspace.discrete.exp_rep["Temp"].apply(lambda x: x > 151)
-            & campaign.searchspace.discrete.exp_rep["Solv"].apply(
-                lambda x: x in ["C2", "C4"]
-            )
+            candidates["Temp"].apply(lambda x: x > 151)
+            & candidates["Solv"].apply(lambda x: x in ["C2", "C4"])
         ).sum(),
     )
     print(
         "Number of entries with either Solvents C5 or C6 and a pressure above 5:      ",
         (
-            campaign.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 5)
-            & campaign.searchspace.discrete.exp_rep["Solv"].apply(
-                lambda x: x in ["C5", "C6"]
-            )
+            candidates["Pressure"].apply(lambda x: x > 5)
+            & candidates["Solv"].apply(lambda x: x in ["C5", "C6"])
         ).sum(),
     )
     print(
         "Number of entries with pressure below 3 and temperature above 120:           ",
         (
-            campaign.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x < 3)
-            & campaign.searchspace.discrete.exp_rep["Temp"].apply(lambda x: x > 120)
+            candidates["Pressure"].apply(lambda x: x < 3)
+            & candidates["Temp"].apply(lambda x: x > 120)
         ).sum(),
     )
 
