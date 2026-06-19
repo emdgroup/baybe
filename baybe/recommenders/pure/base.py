@@ -133,11 +133,7 @@ class PureRecommender(ABC, RecommenderProtocol):
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
             )
         else:
-            return self._recommend_with_discrete_parts(
-                searchspace,
-                batch_size,
-                pending_experiments=pending_experiments,
-            )
+            return self._recommend_with_discrete_parts(searchspace, batch_size)
 
     def _recommend_discrete(
         self,
@@ -246,7 +242,6 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         searchspace: SearchSpace,
         batch_size: int,
-        pending_experiments: pd.DataFrame | None,
     ) -> pd.DataFrame:
         """Obtain recommendations in search spaces with a discrete part.
 
@@ -256,7 +251,6 @@ class PureRecommender(ABC, RecommenderProtocol):
         Args:
             searchspace: The search space from which to generate recommendations.
             batch_size: The size of the recommendation batch.
-            pending_experiments: Pending experiments in experimental representation.
 
         Returns:
             A dataframe containing the recommendations as individual rows.
