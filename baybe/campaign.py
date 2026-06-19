@@ -31,7 +31,6 @@ from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
-from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from baybe.searchspace.core import (
     SearchSpace,
     SearchSpaceType,
@@ -613,8 +612,8 @@ class Campaign(SerialMixin):
                 )
             searchspace = evolve(
                 self.searchspace,
-                discrete=FilteredSubspaceDiscrete.from_subspace(
-                    self.searchspace.discrete, ~mask_todrop.to_numpy()
+                discrete=evolve(
+                    self.searchspace.discrete, exp_rep=exp_rep.loc[~mask_todrop]
                 ),
             )
         else:
