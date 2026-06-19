@@ -117,7 +117,9 @@ class SubspaceDiscrete(SerialMixin):
     )
     """The parameters spanning the subspace."""
 
-    exp_rep: pd.DataFrame = field(validator=instance_of(pd.DataFrame), eq=eq_dataframe)
+    _exp_rep: pd.DataFrame = field(
+        alias="exp_rep", validator=instance_of(pd.DataFrame), eq=eq_dataframe
+    )
     """The experimental representation of the subspace."""
 
     _empty_encoding: Annotated[bool, cattrs.override(omit=True)] = field(
@@ -193,13 +195,13 @@ class SubspaceDiscrete(SerialMixin):
                 "Discrete Parameters",
                 pretty_print_df(param_df, max_colwidth=None),
             ),
-            to_string("Experimental Representation", pretty_print_df(self.exp_rep)),
+            to_string("Experimental Representation", pretty_print_df(self._exp_rep)),
             to_string("Batch Constraints", pretty_print_df(batch_constraints_df)),
             to_string("Computational Representation", pretty_print_df(self.comp_rep)),
         ]
         return to_string(self.__class__.__name__, *fields)
 
-    @exp_rep.validator
+    @_exp_rep.validator
     def _validate_exp_rep(  # noqa: DOC101, DOC103
         self, _: Any, exp_rep: pd.DataFrame
     ) -> None:
@@ -615,7 +617,7 @@ class SubspaceDiscrete(SerialMixin):
     @cached_property
     def comp_rep(self) -> pd.DataFrame:
         """The computational representation of the subspace."""
-        return self.transform(self.exp_rep)
+        return self.transform(self._exp_rep)
 
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:
@@ -804,7 +806,7 @@ class SubspaceDiscrete(SerialMixin):
             The candidate parameter settings both in experimental and computational
             representation.
         """
-        return self.exp_rep, self.comp_rep
+        return self._exp_rep, self.comp_rep
 
     def transform(
         self,
