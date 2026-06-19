@@ -799,14 +799,9 @@ class SubspaceDiscrete(SerialMixin):
             )
         )
 
-    def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:
-        """Return the set of candidate parameter settings that can be tested.
-
-        Returns:
-            The candidate parameter settings both in experimental and computational
-            representation.
-        """
-        return self._exp_rep, self.comp_rep
+    def get_candidates(self) -> pd.DataFrame:
+        """Return all candidate parameter configurations."""
+        return self._exp_rep
 
     def transform(
         self,
