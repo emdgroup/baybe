@@ -32,7 +32,10 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEFitCriterionFactory,
     BayBELikelihoodFactory,
 )
-from baybe.surrogates.gaussian_process.utils import _ModelContext
+from baybe.surrogates.gaussian_process.utils import (
+    _ModelContext,
+    _validate_searchspace_has_non_index_input,
+)
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -119,6 +122,8 @@ class GaussianProcessSurrogateSTMF(Surrogate):
                 f"'{CategoricalFidelityParameter.__name__}'. "
                 f"Use '{GaussianProcessSurrogate.__name__}' instead."
             )
+
+        _validate_searchspace_has_non_index_input(searchspace, self.__class__.__name__)
 
     @override
     @staticmethod

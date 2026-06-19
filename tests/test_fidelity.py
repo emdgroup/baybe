@@ -211,6 +211,37 @@ def test_stmf_rejects_single_fidelity():
 
 
 @pytest.mark.parametrize(
+    ("surrogate", "parameters"),
+    [
+        param(
+            GaussianProcessSurrogate(),
+            [TaskParameter("task", values=["a", "b"])],
+            id="task_only",
+        ),
+        param(
+            GaussianProcessSurrogate(),
+            [_cat_fid_param],
+            id="categorical_fidelity_only",
+        ),
+        param(
+            GaussianProcessSurrogateSTMF(),
+            [_num_fid_param],
+            id="numerical_fidelity_only",
+        ),
+    ],
+)
+def test_surrogate_rejects_index_only_searchspace(surrogate, parameters):
+    """GP surrogates raise for search spaces without regular model inputs."""
+    searchspace = SearchSpace.from_product(parameters)
+    measurements = create_fake_input(
+        searchspace.parameters, objective.targets, n_rows=20
+    )
+
+    with pytest.raises(IncompatibleSurrogateError, match="non-task/non-fidelity"):
+        surrogate.fit(searchspace, objective, measurements)
+
+
+@pytest.mark.parametrize(
     ("component", "factory_attr", "expected_type"),
     [
         param(

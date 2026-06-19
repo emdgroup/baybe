@@ -45,7 +45,10 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBELikelihoodFactory,
     BayBEMeanFactory,
 )
-from baybe.surrogates.gaussian_process.utils import _ModelContext
+from baybe.surrogates.gaussian_process.utils import (
+    _ModelContext,
+    _validate_searchspace_has_non_index_input,
+)
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 
@@ -227,6 +230,8 @@ class GaussianProcessSurrogate(Surrogate):
                 f"'{NumericalDiscreteFidelityParameter.__name__}'. "
                 f"Use '{GaussianProcessSurrogateSTMF.__name__}' instead."
             )
+
+        _validate_searchspace_has_non_index_input(searchspace, self.__class__.__name__)
 
         if (
             searchspace.task_idx is not None

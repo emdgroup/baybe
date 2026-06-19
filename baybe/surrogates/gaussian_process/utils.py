@@ -9,6 +9,7 @@ import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
 
+from baybe.exceptions import IncompatibleSurrogateError
 from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 
@@ -81,6 +82,32 @@ class _ModelContext:
             for i in range(len(self.searchspace.comp_rep_columns))
             if i not in (self.task_idx, self.fidelity_idx)
         ]
+
+
+def _validate_searchspace_has_non_index_input(
+    searchspace: SearchSpace, surrogate_name: str
+) -> None:
+    """Validate that a GP search space has non-index model inputs.
+
+    Args:
+        searchspace: The search space to validate.
+        surrogate_name: The name of the surrogate being validated.
+
+    Raises:
+        IncompatibleSurrogateError: If the search space has no non-task/non-fidelity
+            computational input.
+    """
+    task_idx = searchspace.task_idx
+    fidelity_idx = searchspace.fidelity_idx
+    if any(
+        i not in (task_idx, fidelity_idx)
+        for i in range(len(searchspace.comp_rep_columns))
+    ):
+        return
+
+    raise IncompatibleSurrogateError(
+        f"'{surrogate_name}' requires at least one non-task/non-fidelity parameter."
+    )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
