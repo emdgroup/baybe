@@ -32,7 +32,7 @@ dynamic = ['version']
 dependencies = [
     "attrs>=26.1.0",
     "botorch>=0.13.0,<1",
-    "cattrs>=25.2.0",
+    "cattrs>=26.1.0",
     "exceptiongroup",
     "gpytorch>=1.9.1,<2",
     "joblib>1.4.0,<2",
