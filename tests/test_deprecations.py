@@ -900,3 +900,19 @@ def test_deprecated_constraints_batch_property():
         result = subspace.constraints_batch
 
     assert result == subspace.batch_constraints == (batch_c,)
+
+
+def test_deprecated_exp_rep_property():
+    """Accessing ``exp_rep`` on ``SubspaceDiscrete`` emits a deprecation warning."""
+    subspace = CategoricalParameter("p", ["a", "b"]).to_subspace()
+    with pytest.warns(DeprecationWarning, match="Accessing 'exp_rep'"):
+        result = subspace.exp_rep
+    assert_frame_equal(result, subspace.get_candidates())
+
+
+def test_deprecated_comp_rep_property():
+    """Accessing ``comp_rep`` on ``SubspaceDiscrete`` emits a deprecation warning."""
+    subspace = CategoricalParameter("p", ["a", "b"]).to_subspace()
+    with pytest.warns(DeprecationWarning, match="Accessing 'comp_rep'"):
+        result = subspace.comp_rep
+    assert_frame_equal(result, subspace.transform(subspace.get_candidates()))

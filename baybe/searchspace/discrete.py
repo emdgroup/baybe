@@ -6,7 +6,6 @@ import gc
 import random
 import warnings
 from collections.abc import Callable, Collection, Iterator, Sequence
-from functools import cached_property
 from itertools import islice
 from math import prod
 from typing import TYPE_CHECKING, Annotated, Any, Literal
@@ -612,10 +611,37 @@ class SubspaceDiscrete(SerialMixin):
         """Return tuple of parameter names."""
         return tuple(p.name for p in self.parameters)
 
-    @cached_property
+    # >>>>>>>>>> Deprecation
+    @property
+    def exp_rep(self) -> pd.DataFrame:
+        """Deprecated! Use :meth:`get_candidates` instead."""
+        cls = type(self)
+        name = cls.exp_rep.fget.__name__
+        get_candidates = cls.get_candidates.__name__
+        warnings.warn(
+            f"Accessing '{name}' is deprecated and will be removed in a future "
+            f"version. Use '{get_candidates}()' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._exp_rep
+
+    @property
     def comp_rep(self) -> pd.DataFrame:
-        """The computational representation of the subspace."""
+        """Deprecated! Use :meth:`transform` with :meth:`get_candidates` instead."""
+        cls = type(self)
+        name = cls.comp_rep.fget.__name__
+        transform = cls.transform.__name__
+        get_candidates = cls.get_candidates.__name__
+        warnings.warn(
+            f"Accessing '{name}' is deprecated and will be removed in a future "
+            f"version. Use '{transform}({get_candidates}())' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.transform(self._exp_rep)
+
+    # <<<<<<<<<< Deprecation
 
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:
