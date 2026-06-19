@@ -10,12 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `validate_parameter_names`, `validate_cardinality_constraints_are_nonoverlapping`
   and `validate_cardinality_constraint_parameter_bounds` are no longer available
   as public utilities
+- `is_constrained` property removed from `SubspaceDiscrete`, `SubspaceContinuous`,
+  and `SearchSpace`
 
 ### Added
 - `narwhals` as a hard dependency
 - `CandidatesProtocol` as an interface for candidates generation
 - `TableCandidates` and `ProductCandidates` classes implementing `CandidatesProtocol`
 - `DiscreteParameter.is_finite` property
+- `SubspaceDiscrete.batch_constraints` field for storing batch-level constraints
+- `SubspaceDiscrete.from_dataframe` now accepts `batch_constraints`
 
 ### Changed
 - Internal `Campaign` state model simplified: recommended and excluded experiments
@@ -26,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `validate_constraints` as the only remaining public entry points
 - `_recommend_discrete` and kin now return a `pd.DataFrame` subselection of the
   candidates instead of a `pd.Index`
+- `SubspaceDiscrete.from_product` and `SubspaceDiscrete.from_simplex` now split
+  their `constraints` argument into filtering constraints (applied during construction)
+  and batch constraints (stored in `batch_constraints`)
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
@@ -34,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
 - `SubspaceDiscrete` ignores any `empty_encoding` when provided
 - `SubspaceDiscrete` no longer accepts a `comp_rep` argument
+- `SubspaceDiscrete.constraints` field
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
