@@ -75,6 +75,21 @@ class BayesianRecommender(PureRecommender, ABC):
     _botorch_acqf = field(default=None, init=False, eq=False)
     """The induced BoTorch acquisition function."""
 
+    _default_surrogate_model_cls: type[Surrogate] | None = field(
+        default=None, init=False, eq=False
+    )
+    """The class of the current auto-selected default surrogate."""
+
+    @staticmethod
+    def _get_default_surrogate_model_cls(searchspace: SearchSpace) -> type[Surrogate]:
+        """Select the default surrogate class for the given search space."""
+        if (
+            searchspace.fidelity_type
+            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+        ):
+            return GaussianProcessSurrogateSTMF
+        return GaussianProcessSurrogate
+
     def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
         if self.acquisition_function is None:
@@ -88,15 +103,14 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame,
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
-        # Lazy dispatch: select the right default surrogate on first use
-        if self._surrogate_model is None:
-            if (
-                searchspace.fidelity_type
-                == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
-            ):
-                self._surrogate_model = _autoreplicate(GaussianProcessSurrogateSTMF())
-            else:
-                self._surrogate_model = _autoreplicate(GaussianProcessSurrogate())
+        # Lazy dispatch: select or update auto-created defaults.
+        default_surrogate_model_cls = self._get_default_surrogate_model_cls(searchspace)
+        if self._surrogate_model is None or (
+            self._default_surrogate_model_cls is not None
+            and self._default_surrogate_model_cls is not default_surrogate_model_cls
+        ):
+            self._surrogate_model = _autoreplicate(default_surrogate_model_cls())
+            self._default_surrogate_model_cls = default_surrogate_model_cls
 
         # This fit applies internal caching and does not necessarily involve computation
         self._surrogate_model.fit(searchspace, objective, measurements)

@@ -278,6 +278,66 @@ def test_recommender_surrogate_dispatch(
     assert isinstance(surrogate.surrogates.template, expected_surrogate_type)
 
 
+@pytest.mark.parametrize(
+    (
+        "first_searchspace",
+        "first_measurements",
+        "first_expected_type",
+        "second_searchspace",
+        "second_measurements",
+        "second_expected_type",
+    ),
+    [
+        param(
+            searchspace_cat_fid,
+            measurements_cat_fid,
+            GaussianProcessSurrogate,
+            searchspace_num_fid,
+            measurements_num_fid,
+            GaussianProcessSurrogateSTMF,
+            id="categorical_to_numerical",
+        ),
+        param(
+            searchspace_num_fid,
+            measurements_num_fid,
+            GaussianProcessSurrogateSTMF,
+            searchspace_cat_fid,
+            measurements_cat_fid,
+            GaussianProcessSurrogate,
+            id="numerical_to_categorical",
+        ),
+    ],
+)
+def test_recommender_default_surrogate_redispatch(
+    first_searchspace,
+    first_measurements,
+    first_expected_type,
+    second_searchspace,
+    second_measurements,
+    second_expected_type,
+):
+    """BotorchRecommender updates auto-selected surrogates when the context changes."""
+    recommender = BotorchRecommender()
+
+    surrogate = recommender.get_surrogate(
+        first_searchspace, objective, first_measurements
+    )
+    assert isinstance(surrogate.surrogates.template, first_expected_type)
+
+    surrogate = recommender.get_surrogate(
+        second_searchspace, objective, second_measurements
+    )
+    assert isinstance(surrogate.surrogates.template, second_expected_type)
+
+
+def test_recommender_explicit_surrogate_is_not_redispatched():
+    """BotorchRecommender does not replace an explicitly provided surrogate."""
+    recommender = BotorchRecommender(surrogate_model=GaussianProcessSurrogate())
+
+    with pytest.raises(IncompatibleSurrogateError, match="STMF"):
+        recommender.get_surrogate(searchspace_num_fid, objective, measurements_num_fid)
+
+
 def test_standard_gp_fit_categorical_fidelity():
     """GaussianProcessSurrogate can be fitted on a categorical fidelity space."""
     surrogate = GaussianProcessSurrogate()
