@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from attrs import evolve
 
 from baybe.searchspace import SubspaceDiscrete
 from baybe.utils.dataframe import to_tensor
@@ -21,7 +22,6 @@ if TYPE_CHECKING:
 def recommend_discrete_with_subsets(
     recommender: BotorchRecommender,
     subspace_discrete: SubspaceDiscrete,
-    candidates_exp: pd.DataFrame,
     batch_size: int,
 ) -> pd.DataFrame:
     """Recommend from a discrete space with subset-generating constraints.
@@ -35,7 +35,6 @@ def recommend_discrete_with_subsets(
         recommender: The recommender instance.
         subspace_discrete: The discrete subspace from which to generate
             recommendations.
-        candidates_exp: The experimental representation of candidates.
         batch_size: The size of the recommendation batch.
 
     Returns:
@@ -47,21 +46,25 @@ def recommend_discrete_with_subsets(
     masks: Iterable[npt.NDArray[np.bool_]]
     if subspace_discrete.n_subsets <= recommender.max_n_subsets:
         masks = subspace_discrete.subset_masks(
-            candidates_exp, min_candidates=batch_size
+            subspace_discrete.exp_rep, min_candidates=batch_size
         )
     else:
         masks = subspace_discrete.sample_subset_masks(
-            candidates_exp, recommender.max_n_subsets, min_candidates=batch_size
+            subspace_discrete.exp_rep,
+            recommender.max_n_subsets,
+            min_candidates=batch_size,
         )
 
     def make_callable(
         mask: np.ndarray,
     ) -> Callable[[], tuple[pd.DataFrame, Tensor]]:
         def optimize() -> tuple[pd.DataFrame, Tensor]:
-            subset = candidates_exp.loc[mask]
+            subset_subspace = evolve(
+                subspace_discrete, exp_rep=subspace_discrete.exp_rep.loc[mask]
+            )
 
             rec = recommend_discrete_without_subsets(
-                recommender, subspace_discrete, subset, batch_size
+                recommender, subset_subspace, batch_size
             )
 
             comp = subspace_discrete.transform(rec)
@@ -79,7 +82,6 @@ def recommend_discrete_with_subsets(
 def recommend_discrete_without_subsets(
     recommender: BotorchRecommender,
     subspace_discrete: SubspaceDiscrete,
-    candidates_exp: pd.DataFrame,
     batch_size: int,
 ) -> pd.DataFrame:
     """Generate recommendations from a discrete search space.
@@ -88,8 +90,6 @@ def recommend_discrete_without_subsets(
         recommender: The recommender instance.
         subspace_discrete: The discrete subspace from which to generate
             recommendations.
-        candidates_exp: The experimental representation of all discrete candidate
-            points to be considered.
         batch_size: The size of the recommendation batch.
 
     Raises:
@@ -120,13 +120,13 @@ def recommend_discrete_without_subsets(
 
     from botorch.optim import optimize_acqf_discrete
 
-    # determine the next set of points to be tested
-    candidates_comp = subspace_discrete.transform(candidates_exp)
+    # Determine the next set of points to be tested
+    candidates_comp = subspace_discrete.comp_rep
     points, _ = optimize_acqf_discrete(
         recommender._botorch_acqf, batch_size, to_tensor(candidates_comp)
     )
 
-    # retrieve the rows from the input dataframe corresponding to the selected points
+    # Retrieve the rows from the subspace corresponding to the selected points
     # IMPROVE: The merging procedure is conceptually similar to what
     #   `SearchSpace._match_measurement_with_searchspace_indices` does, though using
     #   a simpler matching logic. When refactoring the SearchSpace class to
@@ -140,4 +140,4 @@ def recommend_discrete_without_subsets(
         )["index"]
     )
 
-    return candidates_exp.loc[idxs]
+    return subspace_discrete.exp_rep.loc[idxs]

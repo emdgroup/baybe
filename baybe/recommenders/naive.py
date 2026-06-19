@@ -92,9 +92,6 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         cont_part = searchspace.continuous.sample_uniform(1)
         cont_part_tensor = to_tensor(cont_part).unsqueeze(-2)
 
-        # Get discrete candidates
-        candidates_exp, _ = searchspace.discrete.get_candidates()
-
         # We now check whether the discrete recommender is bayesian.
         if isinstance(self.disc_recommender, BayesianRecommender):
             # Get access to the recommenders acquisition function
@@ -115,7 +112,6 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # Call the private function of the discrete recommender and get the candidates
         disc_rec = self.disc_recommender._recommend_discrete(
             subspace_discrete=searchspace.discrete,
-            candidates_exp=candidates_exp,
             batch_size=batch_size,
         )
 

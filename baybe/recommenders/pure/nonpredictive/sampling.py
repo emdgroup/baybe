@@ -31,7 +31,6 @@ class RandomRecommender(NonPredictiveRecommender):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         is_hybrid = searchspace.type is SearchSpaceType.HYBRID
@@ -41,6 +40,8 @@ class RandomRecommender(NonPredictiveRecommender):
             cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
             if searchspace.type is SearchSpaceType.CONTINUOUS:
                 return cont_random
+
+        candidates_exp = searchspace.discrete.exp_rep
 
         # Restrict to a random subset if subset-generating constraints are present
         if searchspace.discrete.n_subsets > 0:
@@ -146,7 +147,6 @@ class FPSRecommender(NonPredictiveRecommender):
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         # Fit scaler on entire search space
@@ -157,7 +157,7 @@ class FPSRecommender(NonPredictiveRecommender):
         scaler.fit(subspace_discrete.comp_rep)
 
         # Scale and sample
-        candidates_comp = subspace_discrete.transform(candidates_exp)
+        candidates_comp = subspace_discrete.comp_rep
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
         if active_settings.use_fpsample:
@@ -174,7 +174,7 @@ class FPSRecommender(NonPredictiveRecommender):
                 initialization=self.initialization.value,
                 random_tie_break=self.random_tie_break,
             )
-        return candidates_exp.iloc[ilocs]
+        return subspace_discrete.exp_rep.iloc[ilocs]
 
     @override
     def __str__(self) -> str:

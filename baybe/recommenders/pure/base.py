@@ -138,7 +138,6 @@ class PureRecommender(ABC, RecommenderProtocol):
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         """Generate recommendations from a discrete search space.
@@ -146,8 +145,6 @@ class PureRecommender(ABC, RecommenderProtocol):
         Args:
             subspace_discrete: The discrete subspace from which to generate
                 recommendations.
-            candidates_exp: The experimental representation of all discrete candidate
-                points to be considered.
             batch_size: The size of the recommendation batch.
 
         Raises:
@@ -162,7 +159,6 @@ class PureRecommender(ABC, RecommenderProtocol):
         try:
             return self._recommend_hybrid(
                 searchspace=SearchSpace(discrete=subspace_discrete),
-                candidates_exp=candidates_exp,
                 batch_size=batch_size,
             )
         except NotImplementedError as exc:
@@ -198,7 +194,6 @@ class PureRecommender(ABC, RecommenderProtocol):
         try:
             return self._recommend_hybrid(
                 searchspace=SearchSpace(continuous=subspace_continuous),
-                candidates_exp=pd.DataFrame(),
                 batch_size=batch_size,
             )
         except NotImplementedError as exc:
@@ -214,7 +209,6 @@ class PureRecommender(ABC, RecommenderProtocol):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         """Generate recommendations from a hybrid search space.
@@ -226,8 +220,6 @@ class PureRecommender(ABC, RecommenderProtocol):
         Args:
             searchspace: The hybrid search space from which to generate
                 recommendations.
-            candidates_exp: The experimental representation of all discrete candidate
-                points to be considered.
             batch_size: The size of the recommendation batch.
 
         Raises:
@@ -275,14 +267,11 @@ class PureRecommender(ABC, RecommenderProtocol):
                 f"{constraint_types}."
             )
 
-        # Get discrete candidates
-        candidates_exp, _ = searchspace.discrete.get_candidates()
-
         # TODO: Introduce new flag to recommend batches larger than the search space
 
         # Check if enough candidates are left
         # TODO [15917]: This check is not perfectly correct.
-        if (not is_hybrid_space) and (len(candidates_exp) < batch_size):
+        if (not is_hybrid_space) and (len(searchspace.discrete.exp_rep) < batch_size):
             raise NotEnoughPointsLeftError(
                 f"Using the current settings, there are fewer than {batch_size} "
                 f"possible data points left to recommend."
@@ -290,11 +279,9 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Get recommendations
         if is_hybrid_space:
-            rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
+            rec = self._recommend_hybrid(searchspace, batch_size)
         else:
-            rec = self._recommend_discrete(
-                searchspace.discrete, candidates_exp, batch_size
-            )
+            rec = self._recommend_discrete(searchspace.discrete, batch_size)
 
         # Return recommendations
         return rec
