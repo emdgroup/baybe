@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable, TypeAlias, ClassVar
+from collections.abc import Callable
 
 from baybe.searchspace import SearchSpace
+from baybe.searchspace.core import SearchSpaceType
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from torch import Tensor
+    Optimand: TypeAlias = Callable[[Tensor], Tensor]
 
 
 @runtime_checkable
@@ -19,10 +22,13 @@ class OptimizerProtocol(Protocol):
     # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
     __slots__ = ()
 
+    compatibility: ClassVar[SearchSpaceType]
+    """Class variable reflecting the search space compatibility."""
+
     def __call__(
         self,
         batch_size: int,
-        acquisition_function: BoAcquisitionFunction,
+        acquisition_function: Optimand,
         searchspace: SearchSpace,
         fixed_parameters: dict[int, float] | None = None,
     ) -> tuple[Tensor, Tensor]:

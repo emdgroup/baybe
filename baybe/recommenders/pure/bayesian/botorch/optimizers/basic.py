@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 from typing_extensions import override
 
 from attrs import define, field
 from attrs.validators import gt, instance_of
 
+from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.recommenders.pure.bayesian.botorch.optimizers.base import OptimizerProtocol
 from baybe.searchspace import SearchSpace
+from baybe.searchspace.core import SearchSpaceType
 from baybe.utils.basic import flatten
 
 if TYPE_CHECKING:
@@ -21,6 +23,10 @@ if TYPE_CHECKING:
 @define(kw_only=True)
 class GradientOptimizer(OptimizerProtocol):
     """Acquisition function optimizer using gradient-based optimization."""
+
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.CONTINUOUS
+    # See base class.
 
     n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
     """Number of times gradient-based optimization is restarted from different initial
@@ -63,6 +69,12 @@ class GradientOptimizer(OptimizerProtocol):
         """
         import torch
         from botorch.optim import optimize_acqf
+
+        if searchspace.type is not self.compatibility:
+            raise IncompatibleSearchSpaceError(
+                    f"'{self.__class__.__name__}' currently only supports "
+                    f"continuous search spaces."
+                )
 
         if not searchspace.discrete.is_empty:
             raise NotImplementedError(
