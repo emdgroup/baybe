@@ -198,14 +198,9 @@ class SearchSpace(SerialMixin):
     def constraints(self) -> tuple[Constraint, ...]:
         """Return the constraints of the search space."""
         return (
-            *self.discrete.constraints,
+            *self.discrete.batch_constraints,
             *self.continuous.constraints,
         )
-
-    @property
-    def is_constrained(self) -> bool:
-        """Boolean indicating if the search space has any constraints."""
-        return self.discrete.is_constrained or self.continuous.is_constrained
 
     @property
     def type(self) -> SearchSpaceType:

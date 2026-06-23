@@ -418,11 +418,6 @@ class SubspaceContinuous(SerialMixin):
         )
 
     @property
-    def is_constrained(self) -> bool:
-        """Boolean indicating if the subspace is constrained in any way."""
-        return bool(self.constraints)
-
-    @property
     def has_interpoint_constraints(self) -> bool:
         """Boolean indicating if the subspace has any interpoint constraints."""
         return any(
@@ -536,7 +531,7 @@ class SubspaceContinuous(SerialMixin):
         if not self.parameters:
             return pd.DataFrame(index=pd.RangeIndex(0, batch_size))
 
-        if not self.is_constrained:
+        if not self.constraints:
             return self._sample_from_bounds(batch_size, self.comp_rep_bounds.to_numpy())
 
         if len(self.constraints_cardinality) == 0:

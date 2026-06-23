@@ -273,7 +273,7 @@ class PureRecommender(ABC, RecommenderProtocol):
             and not self.supports_discrete_subset_generating_constraints
         ):
             constraint_types = {
-                type(c).__name__ for c in searchspace.discrete.constraints_batch
+                type(c).__name__ for c in searchspace.discrete.batch_constraints
             }
             raise IncompatibilityError(
                 f"'{self.__class__.__name__}' does not support discrete "
