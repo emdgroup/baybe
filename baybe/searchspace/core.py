@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
 from itertools import product
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -416,6 +416,23 @@ class SearchSpace(SerialMixin):
             if col in p.comp_rep_columns
         )
 
+    def _get_n_comp_rep_columns(
+        self,
+        name_or_selector: str | ParameterSelectorProtocol,
+        /,
+    ) -> int:
+        """Get the number of comp-rep columns for a parameter selection.
+
+        Args:
+            name_or_selector: Either the name of a single parameter or a selector
+                that filters parameters to be included.
+
+        Returns:
+            The number of columns in the computational representation associated
+            with the selected parameter(s).
+        """
+        return len(self.get_comp_rep_parameter_indices(name_or_selector))
+
     @staticmethod
     def estimate_product_space_size(parameters: Iterable[Parameter]) -> MemorySize:
         """Estimate an upper bound for the memory size of a product space.
@@ -497,6 +514,124 @@ class SearchSpace(SerialMixin):
         return self.discrete.get_parameters_by_name(
             names
         ) + self.continuous.get_parameters_by_name(names)
+
+    def _drop_parameters(self, names: Collection[str], /) -> _ReducedSearchSpace:
+        """Return a reduced search space without the named parameters.
+
+        The returned object exposes only parameter information and blocks
+        access to constraints, subspaces, and transformation.
+
+        Args:
+            names: The names of the parameters to remove.
+
+        Raises:
+            ValueError: If any name does not match a parameter in the space.
+
+        Returns:
+            A reduced search space containing only parameter information.
+        """
+        current_names = {p.name for p in self.parameters}
+        names_set = set(names)
+        if unknown := names_set - current_names:
+            raise ValueError(
+                f"Parameter name(s) {unknown} not found in the search space. "
+                f"Available: {current_names}."
+            )
+        remaining = [p for p in self.parameters if p.name not in names_set]
+
+        disc_params = [p for p in remaining if p.is_discrete]
+        cont_params = [p for p in remaining if p.is_continuous]
+
+        # Explicit comp_rep needed because transform() drops columns for empty inputs.
+        discrete = (
+            SubspaceDiscrete(
+                parameters=disc_params,
+                exp_rep=pd.DataFrame(columns=[p.name for p in disc_params]),
+                comp_rep=pd.DataFrame(
+                    columns=[c for p in disc_params for c in p.comp_rep_columns]
+                ),
+            )
+            if disc_params
+            else SubspaceDiscrete.empty()
+        )
+
+        continuous = (
+            SubspaceContinuous(
+                parameters=cont_params,
+            )
+            if cont_params
+            else SubspaceContinuous.empty()
+        )
+
+        return _ReducedSearchSpace(discrete=discrete, continuous=continuous)
+
+
+@define(slots=False)
+class _ReducedSearchSpace(SearchSpace):
+    """A lightweight search space exposing only parameter information.
+
+    Provides access to parameter-related properties needed by kernel factory
+    calls. Blocks access to transformation, index-based lookups, and other
+    functionality requiring actual candidate data.
+
+    This class is not intended for direct construction. Use
+    :meth:`SearchSpace._drop_parameters` instead.
+    """
+
+    _ALLOWED_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "discrete",
+            "continuous",
+            "parameters",
+            "parameter_names",
+            "comp_rep_columns",
+            "constraints",
+            "type",
+            "_task_parameter",
+            "n_tasks",
+            "_get_n_comp_rep_columns",
+            "get_parameters_by_name",
+            "_ALLOWED_ATTRIBUTES",
+        }
+    )
+    """Attributes accessible on this reduced search space."""
+
+    @override
+    def __getattribute__(self, name: str):
+        """Guard attribute access, allowing only parameter-related attributes."""
+        if name.startswith("__"):
+            return object.__getattribute__(self, name)
+        allowed = object.__getattribute__(self, "_ALLOWED_ATTRIBUTES")
+        if name in allowed:
+            return object.__getattribute__(self, name)
+        raise AttributeError(
+            f"'{object.__getattribute__(self, '__class__').__name__}' does not "
+            f"support attribute '{name}'. Only parameter information is available."
+        )
+
+    @override
+    def _get_n_comp_rep_columns(
+        self,
+        name_or_selector: str | ParameterSelectorProtocol,
+        /,
+    ) -> int:
+        """Get the number of comp-rep columns for a parameter selection.
+
+        Args:
+            name_or_selector: Either the name of a single parameter or a selector
+                that filters parameters to be included.
+
+        Returns:
+            The number of columns in the computational representation associated
+            with the selected parameter(s).
+        """
+        if isinstance(name_or_selector, str):
+            params: list[Parameter] = [
+                p for p in self.parameters if p.name == name_or_selector
+            ]
+        else:
+            params = [p for p in self.parameters if name_or_selector(p)]
+        return sum(len(p.comp_rep_columns) for p in params)
 
 
 def to_searchspace(
