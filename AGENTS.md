@@ -108,6 +108,17 @@ Every module using `@define` must end with:
 Name descriptively: `from_product`, `from_dataframe`, `from_parameter`, `from_config`,
 `from_json`, `from_dict`, `from_preset`.
 
+Use `Self` return type and `cls()` construction for proper subclass support:
+```python
+from typing_extensions import Self
+
+@classmethod
+def from_parameter(cls, parameter: DiscreteParameter) -> Self:
+    """Create a subspace from a single parameter."""
+    return cls(parameters=[parameter], ...)  # Use cls(), not ClassName()
+```
+This ensures subclasses return their own type, not the base class type.
+
 ### classproperty
 Custom `@classproperty` from `baybe.utils.basic` for class-level computed properties.
 
@@ -319,6 +330,7 @@ For a full list of available tox environments and developer commands, see
 - No hardcoded enum values in comments — link the enum.
 - No private field names in user-facing messages — use public alias.
 - No hardcoded class names in repr/errors — use `self.__class__.__name__`.
+- No hardcoded class names in classmethods — use `cls()` and return `Self`.
 - No silent errors. No mutation of caller-provided dicts.
 - No silent defaults or "best effort" fallbacks — if input is invalid, raise.
 - No proceeding past failed preconditions into expensive computation.

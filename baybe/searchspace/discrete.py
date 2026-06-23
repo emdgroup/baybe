@@ -18,7 +18,7 @@ import pandas as pd
 from attrs import define, field, fields
 from attrs.validators import deep_iterable, instance_of
 from cattrs import IterableValidationError
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
@@ -222,12 +222,12 @@ class SubspaceDiscrete(SerialMixin):
         return SearchSpace(discrete=self)
 
     @classmethod
-    def empty(cls) -> SubspaceDiscrete:
+    def empty(cls) -> Self:
         """Create an empty discrete subspace."""
-        return SubspaceDiscrete(parameters=[], exp_rep=pd.DataFrame())
+        return cls(parameters=[], exp_rep=pd.DataFrame())
 
     @classmethod
-    def from_parameter(cls, parameter: DiscreteParameter) -> SubspaceDiscrete:
+    def from_parameter(cls, parameter: DiscreteParameter) -> Self:
         """Create a subspace from a single parameter.
 
         Args:
@@ -244,7 +244,7 @@ class SubspaceDiscrete(SerialMixin):
         parameters: Sequence[DiscreteParameter],
         constraints: Sequence[DiscreteConstraint] | None = None,
         empty_encoding: bool | None = None,
-    ) -> SubspaceDiscrete:
+    ) -> Self:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         validate_parameters(parameters, allow_empty=True)
 
@@ -269,7 +269,7 @@ class SubspaceDiscrete(SerialMixin):
 
         df = build_constrained_product(parameters, filtering_constraints)
 
-        return SubspaceDiscrete(
+        return cls(
             parameters=parameters,
             batch_constraints=batch_constraints,
             exp_rep=df,
@@ -283,7 +283,7 @@ class SubspaceDiscrete(SerialMixin):
         parameters: Sequence[DiscreteParameter] | None = None,
         batch_constraints: Collection[DiscreteBatchConstraint] = (),
         empty_encoding: bool | None = None,
-    ) -> SubspaceDiscrete:
+    ) -> Self:
         """Create a discrete subspace with a specified set of configurations.
 
         Args:
@@ -355,7 +355,7 @@ class SubspaceDiscrete(SerialMixin):
         max_nonzero: int | None = None,
         boundary_only: bool = False,
         tolerance: float = 1e-6,
-    ) -> SubspaceDiscrete:
+    ) -> Self:
         """Efficiently create discrete simplex subspaces.
 
         The same result can be achieved using
