@@ -667,12 +667,20 @@ class SubspaceDiscrete(SerialMixin):
             comp_rep_shape=(n_rows, n_cols_comp),
         )
 
+    # >>>>>>>>>> Deprecation
     @property
-    def constraints_batch(
-        self,
-    ) -> tuple[DiscreteBatchConstraint, ...]:
-        """The batch constraints of the subspace."""
+    def constraints_batch(self) -> tuple[DiscreteBatchConstraint, ...]:
+        """Deprecated! Use :attr:`batch_constraints` instead."""
+        replacement = fields(type(self)).batch_constraints.name
+        warnings.warn(
+            f"Accessing 'constraints_batch' is deprecated and will be disabled in a "
+            f"future version. Use '{replacement}' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.batch_constraints
+
+    # <<<<<<<<<< Deprecation
 
     @property
     def n_subsets(self) -> int:

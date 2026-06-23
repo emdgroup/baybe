@@ -884,3 +884,19 @@ def test_deprecated_constraints_argument_from_product():
     assert_frame_equal(ss_with_batch.exp_rep, ss_none.exp_rep)
     assert len(ss_both.exp_rep) == 2
     assert len(ss_none.exp_rep) == 4
+
+
+def test_deprecated_constraints_batch_property():
+    """Accessing ``constraints_batch`` emits a deprecation warning and delegates correctly."""  # noqa: E501
+    p = NumericalDiscreteParameter("p", [0, 1, 2])
+    batch_c = DiscreteBatchConstraint(["p"])
+    subspace = SubspaceDiscrete(
+        parameters=[p],
+        exp_rep=pd.DataFrame({"p": [0, 1, 2]}),
+        batch_constraints=(batch_c,),
+    )
+
+    with pytest.warns(DeprecationWarning, match="constraints_batch"):
+        result = subspace.constraints_batch
+
+    assert result == subspace.batch_constraints == (batch_c,)
