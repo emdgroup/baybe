@@ -250,15 +250,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent             Base                        Ligand  Temperature  \
-    49   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine        105.0   
-    231         DMAc   Cesium acetate                     BrettPhos        120.0   
-    334     p-Xylene   Cesium acetate                     BrettPhos         90.0   
+               Solvent               Base                        Ligand  \
+    157  Butyornitrile    Cesium pivalate  Di-tert-butylphenylphosphine   
+    394       p-Xylene  Potassium acetate                     BrettPhos   
+    6      Butyl Ester     Cesium acetate                 (t-Bu)PhCPhos   
     
-         Concentration  
-    49           0.100  
-    231          0.057  
-    334          0.100  
+         Temperature  Concentration  
+    157        105.0          0.100  
+    394        120.0          0.100  
+    6          120.0          0.057  
 
 
 
@@ -271,15 +271,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent             Base                        Ligand  Temperature  \
-    49   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine        105.0   
-    231         DMAc   Cesium acetate                     BrettPhos        120.0   
-    334     p-Xylene   Cesium acetate                     BrettPhos         90.0   
+               Solvent               Base                        Ligand  \
+    157  Butyornitrile    Cesium pivalate  Di-tert-butylphenylphosphine   
+    394       p-Xylene  Potassium acetate                     BrettPhos   
+    6      Butyl Ester     Cesium acetate                 (t-Bu)PhCPhos   
     
-         Concentration      yield  
-    49           0.100 -10.406065  
-    231          0.057 -99.893894  
-    334          0.100  12.724842  
+         Temperature  Concentration      yield  
+    157        105.0          0.100  44.748558  
+    394        120.0          0.100  14.331651  
+    6          120.0          0.057 -48.513043  
 
 
 
