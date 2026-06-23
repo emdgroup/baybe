@@ -1477,7 +1477,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitCriterion</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">FitCriterion</span><span class="o">.</span><span class="n">MARGINAL_LOG_LIKELIHOOD</span>
-            <span class="k">if</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">task_idx</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">n_tasks</span> <span class="o">==</span> <span class="mi">1</span>
             <span class="k">else</span> <span class="n">FitCriterion</span><span class="o">.</span><span class="n">LEAVE_ONE_OUT_PSEUDOLIKELIHOOD</span>
         <span class="p">)</span></div>
 </div>

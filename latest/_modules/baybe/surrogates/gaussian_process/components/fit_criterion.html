@@ -1257,7 +1257,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitCriterion</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">task_idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">n_tasks</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">FitCriterion</span><span class="o">.</span><span class="n">MARGINAL_LOG_LIKELIHOOD</span>
 
         <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.presets.baybe</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>

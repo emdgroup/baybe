@@ -1188,10 +1188,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
@@ -1641,6 +1641,23 @@
         <span class="p">)</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_n_comp_rep_columns</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name_or_selector</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">ParameterSelectorProtocol</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the number of comp-rep columns for a parameter selection.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name_or_selector: Either the name of a single parameter or a selector</span>
+<span class="sd">                that filters parameters to be included.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The number of columns in the computational representation associated</span>
+<span class="sd">            with the selected parameter(s).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_comp_rep_parameter_indices</span><span class="p">(</span><span class="n">name_or_selector</span><span class="p">))</span>
+
 <div class="viewcode-block" id="SearchSpace.estimate_product_space_size">
 <a class="viewcode-back" href="../../../_autosummary/baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.estimate_product_space_size">[docs]</a>
     <span class="nd">@staticmethod</span>
@@ -1730,8 +1747,126 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">get_parameters_by_name</span><span class="p">(</span>
             <span class="n">names</span>
         <span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">continuous</span><span class="o">.</span><span class="n">get_parameters_by_name</span><span class="p">(</span><span class="n">names</span><span class="p">)</span></div>
-</div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_drop_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ReducedSearchSpace</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a reduced search space without the named parameters.</span>
+
+<span class="sd">        The returned object exposes only parameter information and blocks</span>
+<span class="sd">        access to constraints, subspaces, and transformation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            names: The names of the parameters to remove.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any name does not match a parameter in the space.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A reduced search space containing only parameter information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">current_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">}</span>
+        <span class="n">names_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unknown</span> <span class="o">:=</span> <span class="n">names_set</span> <span class="o">-</span> <span class="n">current_names</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Parameter name(s) </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2"> not found in the search space. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Available: </span><span class="si">{</span><span class="n">current_names</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names_set</span><span class="p">]</span>
+
+        <span class="n">disc_params</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">remaining</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_discrete</span><span class="p">]</span>
+        <span class="n">cont_params</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">remaining</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_continuous</span><span class="p">]</span>
+
+        <span class="c1"># Explicit comp_rep needed because transform() drops columns for empty inputs.</span>
+        <span class="n">discrete</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">SubspaceDiscrete</span><span class="p">(</span>
+                <span class="n">parameters</span><span class="o">=</span><span class="n">disc_params</span><span class="p">,</span>
+                <span class="n">exp_rep</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">disc_params</span><span class="p">]),</span>
+                <span class="n">comp_rep</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">disc_params</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">comp_rep_columns</span><span class="p">]</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">disc_params</span>
+            <span class="k">else</span> <span class="n">SubspaceDiscrete</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="n">continuous</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">SubspaceContinuous</span><span class="p">(</span>
+                <span class="n">parameters</span><span class="o">=</span><span class="n">cont_params</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">cont_params</span>
+            <span class="k">else</span> <span class="n">SubspaceContinuous</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_ReducedSearchSpace</span><span class="p">(</span><span class="n">discrete</span><span class="o">=</span><span class="n">discrete</span><span class="p">,</span> <span class="n">continuous</span><span class="o">=</span><span class="n">continuous</span><span class="p">)</span></div>
+
+
+
+<span class="nd">@define</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ReducedSearchSpace</span><span class="p">(</span><span class="n">SearchSpace</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A lightweight search space exposing only parameter information.</span>
+
+<span class="sd">    Provides access to parameter-related properties needed by kernel factory</span>
+<span class="sd">    calls. Blocks access to transformation, index-based lookups, and other</span>
+<span class="sd">    functionality requiring actual candidate data.</span>
+
+<span class="sd">    This class is not intended for direct construction. Use</span>
+<span class="sd">    :meth:`SearchSpace._drop_parameters` instead.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_ALLOWED_ATTRIBUTES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;discrete&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;continuous&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;parameters&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;parameter_names&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;comp_rep_columns&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;constraints&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;_task_parameter&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_tasks&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;_get_n_comp_rep_columns&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;get_parameters_by_name&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;_ALLOWED_ATTRIBUTES&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Attributes accessible on this reduced search space.&quot;&quot;&quot;</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Guard attribute access, allowing only parameter-related attributes.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_ALLOWED_ATTRIBUTES&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;__class__&#39;</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; does not &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;support attribute &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;. Only parameter information is available.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_n_comp_rep_columns</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name_or_selector</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">ParameterSelectorProtocol</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the number of comp-rep columns for a parameter selection.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name_or_selector: Either the name of a single parameter or a selector</span>
+<span class="sd">                that filters parameters to be included.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The number of columns in the computational representation associated</span>
+<span class="sd">            with the selected parameter(s).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name_or_selector</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">params</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name_or_selector</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="k">if</span> <span class="n">name_or_selector</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">comp_rep_columns</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="to_searchspace">
