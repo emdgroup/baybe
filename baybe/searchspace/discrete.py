@@ -430,6 +430,12 @@ class SubspaceDiscrete(SerialMixin):
                 f"parameters: {overlap}."
             )
 
+        # Validate constraints
+        if constraints:
+            validate_constraints(
+                constraints, [*simplex_parameters, *product_parameters]
+            )
+
         # Handle degenerate simplex cases
         if len(simplex_parameters) < 2:
             warnings.warn(
