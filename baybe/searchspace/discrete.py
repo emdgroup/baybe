@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 import random
 import warnings
-from collections.abc import Collection, Iterator, Sequence
+from collections.abc import Callable, Collection, Iterator, Sequence
 from functools import cached_property
 from itertools import islice
 from math import prod
@@ -15,7 +15,7 @@ import cattrs
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.validators import deep_iterable, instance_of
 from cattrs import IterableValidationError
 from typing_extensions import override
@@ -49,21 +49,13 @@ if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
 
 
-_CONSTRAINTS_DEPRECATION_MSG = (
-    "Providing 'constraints' to 'SubspaceDiscrete' is no longer supported. "
-    "Use 'batch_constraints' for any 'DiscreteBatchConstraint' instances. "
-    "Filtering constraints can simply be dropped. For now, we took care of "
-    "these steps, but please familiarize yourself with the new API and update "
-    "your code accordingly."
-)
-
-
-def _deprecate_argument(error: bool, msg: str | None = None):
+def _deprecate_argument(error: bool, msg: str | Callable[[], str] | None = None):
     """Helper for deprecating legacy arguments."""  # noqa: D401
 
     def validator(self, attribute, value):
         if value is not None:
-            warning_msg = msg or (
+            # Generate message lazily if callable, otherwise use provided string
+            warning_msg = (msg() if callable(msg) else msg) or (
                 f"Providing '{attribute.alias}' to '{self.__class__.__name__}' is no "
                 f"longer supported. To proceed, simply drop the argument."
             )
@@ -138,7 +130,10 @@ class SubspaceDiscrete(SerialMixin):
     ] = field(
         alias="constraints",
         default=None,
-        validator=_deprecate_argument(error=False, msg=_CONSTRAINTS_DEPRECATION_MSG),
+        validator=_deprecate_argument(
+            error=False,
+            msg=lambda: _make_constraints_deprecation_msg(),  # noqa: PLW0108
+        ),
     )
     "Ignore! For backwards compatibility only."
 
@@ -874,12 +869,30 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
 
 
 # >>>>>>>>>> Deprecation
+def _make_constraints_deprecation_msg() -> str:
+    """Generate the constraints deprecation message with programmatic names."""
+    # Get field aliases programmatically
+    constraints_alias = fields(SubspaceDiscrete)._constraints.alias
+    batch_constraints_alias = fields(SubspaceDiscrete).batch_constraints.alias
+
+    return (
+        f"Providing '{constraints_alias}' to '{SubspaceDiscrete.__name__}' is no "
+        f"longer supported. Please update your code as follows:\n"
+        f"  • Use '{batch_constraints_alias}' for '{DiscreteBatchConstraint.__name__}' "
+        f"objects. Any batch constraints you have provided have been extracted "
+        f"automatically for you. This automatic extraction is temporary and will be "
+        f"removed in a future version.\n"
+        f"  • Filtering constraints can simply be dropped. Instead, make sure you "
+        f"construct the experimental representation to satisfy them."
+    )
+
+
 def _structure_subspace_discrete(specs: dict, cls: type) -> SubspaceDiscrete:
     """Structure hook supporting legacy ``constraints`` key migration."""
     specs = specs.copy()
     if "constraints" in specs and specs["constraints"] is not None:
         warnings.warn(
-            _CONSTRAINTS_DEPRECATION_MSG,
+            _make_constraints_deprecation_msg(),
             DeprecationWarning,
             stacklevel=2,
         )
