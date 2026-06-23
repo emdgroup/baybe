@@ -342,7 +342,7 @@ class SubspaceDiscrete(SerialMixin):
         return cls(
             parameters=parameters,
             exp_rep=df,
-            batch_constraints=batch_constraints or (),
+            batch_constraints=batch_constraints,
             empty_encoding=empty_encoding,  # type: ignore[arg-type]
         )
 
