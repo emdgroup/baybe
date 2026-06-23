@@ -163,6 +163,9 @@ class SubspaceDiscrete(SerialMixin):
             )
             if batch:
                 self.batch_constraints = self.batch_constraints + batch
+
+                # attrs validators have already run at this point, so re-validate.
+                validate_constraints(self.batch_constraints, self.parameters)
         # <<<<<<<<<< Deprecation
 
     @override
