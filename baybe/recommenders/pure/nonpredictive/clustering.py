@@ -128,7 +128,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         else:
             selection = self._make_selection_default(model, candidates_scaled)
 
-        # Convert positional indices into DataFrame indices and return result
+        # Select rows by positional indices and return the corresponding subset
         return candidates_exp.iloc[selection]
 
     @override
