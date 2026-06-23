@@ -156,6 +156,20 @@ class SubspaceDiscrete(SerialMixin):
             batch: tuple[DiscreteBatchConstraint, ...] = tuple(
                 c for c in self._constraints if isinstance(c, DiscreteBatchConstraint)
             )
+
+            if n_non_batch := len(self._constraints) - len(batch):
+                warnings.warn(
+                    f"You provided {n_non_batch} filtering constraint(s) via "
+                    f"'constraints' but filtering constraints are (and always have "
+                    f"been) ignored when entered via '__init__'. The latter assumes "
+                    f"that all filtering constraints have already been applied to the "
+                    f"given experimental candidate representation. To avoid this "
+                    f"warning, either drop the filtering constraints or use one of the "
+                    f"alternative constructors.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+
             if batch:
                 self.batch_constraints = self.batch_constraints + batch
 
