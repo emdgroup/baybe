@@ -158,7 +158,7 @@ class BotorchRecommender(BayesianRecommender):
         subspace_discrete: SubspaceDiscrete,
         candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.Index:
+    ) -> pd.DataFrame:
         """Generate recommendations from a discrete search space.
 
         Dispatches to the appropriate optimization routine depending on whether
@@ -172,8 +172,8 @@ class BotorchRecommender(BayesianRecommender):
             batch_size: The size of the recommendation batch.
 
         Returns:
-            The dataframe indices of the recommended points in the provided
-            experimental representation.
+            A dataframe containing the recommendations as a subset of rows from the
+            provided experimental representation.
         """
         if subspace_discrete.n_subsets > 0:
             return recommend_discrete_with_subsets(

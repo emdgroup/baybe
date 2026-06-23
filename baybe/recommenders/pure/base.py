@@ -144,7 +144,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         subspace_discrete: SubspaceDiscrete,
         candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.Index:
+    ) -> pd.DataFrame:
         """Generate recommendations from a discrete search space.
 
         Args:
@@ -158,8 +158,8 @@ class PureRecommender(ABC, RecommenderProtocol):
             NotImplementedError: If the function is not implemented by the child class.
 
         Returns:
-            The dataframe indices of the recommended points in the provided
-            experimental representation.
+            A dataframe containing the recommendations as a subset of rows from the
+            provided experimental representation.
         """
         # If this method is not implemented by a child class, try to resort to hybrid
         # recommendation (with an empty subspace) instead.
@@ -168,7 +168,7 @@ class PureRecommender(ABC, RecommenderProtocol):
                 searchspace=SearchSpace(discrete=subspace_discrete),
                 candidates_exp=candidates_exp,
                 batch_size=batch_size,
-            ).index
+            )
         except NotImplementedError as exc:
             raise NotImplementedError(
                 """Hybrid recommendation could not be used as fallback when trying to
@@ -298,10 +298,9 @@ class PureRecommender(ABC, RecommenderProtocol):
         if is_hybrid_space:
             rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
         else:
-            idxs = self._recommend_discrete(
+            rec = self._recommend_discrete(
                 searchspace.discrete, candidates_exp, batch_size
             )
-            rec = searchspace.discrete.exp_rep.loc[idxs, :]
 
         # Return recommendations
         return rec
