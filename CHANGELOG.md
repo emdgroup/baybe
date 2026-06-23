@@ -41,7 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
 - `SubspaceDiscrete` ignores any `empty_encoding` when provided
 - `SubspaceDiscrete` no longer accepts a `comp_rep` argument
-- `SubspaceDiscrete.constraints` field
+- `SubspaceDiscrete.constraints` attribute (use `batch_constraints` to provide and
+  access batch-level constraints; filtering constraints are only needed during subspace
+  construction and are thus no longer stored).
 - `SubspaceDiscrete.constraints_batch` property (use `batch_constraints` instead)
 
 ## [0.15.0] - 2026-06-11
