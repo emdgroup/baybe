@@ -373,6 +373,21 @@ with torch.no_grad():
     new_standard_mean = new_standard_posterior.mean.numpy().ravel()
     new_standard_std = new_standard_posterior.variance.sqrt().numpy().ravel()
 
+    # Transferred prior-mean function actually used by the green GP (raw space).
+    # `mean_module.gp` is the inner GP; its posterior mean -- including any updates
+    # the outer MLL applied in warmstart/discard -- is exactly the prior mean the
+    # green outer GP is built on. Plotting it makes the green curve's far-away
+    # reversion self-explanatory and reveals how the anchors/init modes reshape it.
+    mean_module = new_gp_with_mean._model.mean_module
+    inner_gp = getattr(mean_module, "gp", None)
+    if inner_gp is not None:
+        x_raw = torch.tensor(
+            x_test, dtype=inner_gp.train_inputs[0].dtype
+        ).unsqueeze(-1)
+        transferred_mean = inner_gp.posterior(x_raw).mean.numpy().ravel()
+    else:
+        transferred_mean = None
+
 # --- Bokeh figure with draggable training points ---
 p = figure(
     height=600,
@@ -440,6 +455,16 @@ p.line(
     line_width=3,
     legend_label="New GP w/ Transferred Mean",
 )
+
+if transferred_mean is not None:
+    p.line(
+        x_test,
+        transferred_mean,
+        line_color="#9C27B0",
+        line_width=2,
+        line_dash="dashed",
+        legend_label="Transferred Prior Mean (inner GP)",
+    )
 
 if show_std:
     p.varea(
@@ -580,13 +605,14 @@ else:
 
 st.markdown(
     f"""
-Three GPs are plotted on the same axis:
+Curves plotted on the same axis:
 
 - **🔵 Prior GP** — fitted on `{prior_n_points}` points in `[{prior_x_min}, {prior_x_max}]`.
 - **🟢 New GP w/ Transferred Mean** — fitted on `{new_n_points}` points in `[{new_x_min}, {new_x_max}]` ({data_mode_text}), using the prior GP's posterior as its prior mean function.
+- **🟣 Transferred Prior Mean (dashed)** — the actual inner-GP posterior mean used as the green GP's prior mean. It depends on **Anchors** and **Inner kernel/mean init**, and the green curve reverts to it where there is no new data. (Equals the blue prior only for `anchors=pretrained` + `freeze`.)
 - **🟠 Standard GP (dotted)** — same data as the green GP but with a zero mean. Baseline for comparison.
 
-Where the new GPs have **no training data**, the green curve follows the blue prior (informed extrapolation) while the orange curve collapses back to zero with wide uncertainty. That gap is what mean transfer buys you.
+Where the new GPs have **no training data**, the green curve follows the **purple transferred mean** (informed extrapolation) while the orange curve collapses back to zero with wide uncertainty. That gap is what mean transfer buys you.
 
 **Mean transfer controls** (sidebar → 🟢 New GP):
 
