@@ -8,10 +8,12 @@ from collections.abc import Callable
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 
+Optimand: TypeAlias = Callable[[Tensor], Tensor]
+"Type alias for the callable to be optimized."
+
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from torch import Tensor
-    Optimand: TypeAlias = Callable[[Tensor], Tensor]
 
 
 @runtime_checkable
