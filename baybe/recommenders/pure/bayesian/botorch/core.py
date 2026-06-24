@@ -214,13 +214,6 @@ class BotorchRecommender(BayesianRecommender):
                 f"acquisition functions for batch sizes > 1."
             )
 
-        if self.optimizer is None:
-            self.optimizer = GradientOptimizer(
-                sequential_continuous=self.sequential_continuous,
-                n_restarts=self.n_restarts,
-                n_raw_samples=self.n_raw_samples,
-            )
-
         points, _ = recommend_continuous_torch(self, subspace_continuous, batch_size)
 
         return pd.DataFrame(points, columns=subspace_continuous.parameter_names)
@@ -254,6 +247,7 @@ class BotorchRecommender(BayesianRecommender):
             self, searchspace, candidates_exp, batch_size
         )
 
+    @override
     def _optimize_over_subsets(
         self,
         subset_callables: Iterable[Callable[[], tuple[Any, Tensor]]],
