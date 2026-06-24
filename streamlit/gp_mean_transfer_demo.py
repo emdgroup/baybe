@@ -116,21 +116,26 @@ with new_tab:
         ),
     )
 
-    constrain_lengthscale = st.toggle(
-        "Constrain lengthscale",
-        value=False,
-        help="Apply hard bounds on the new GP's kernel lengthscale",
+    freeze_input_transform = st.toggle(
+        "Freeze input transform",
+        value=True,
+        help=(
+            "Inner GP input normalization:\n"
+            "- on: reuse the prior GP's bounds (absolute x-lengthscale transfer)\n"
+            "- off: rebuild for the new domain (relative x-lengthscale)\n"
+            "No effect when prior and new share the same X range."
+        ),
     )
-    if constrain_lengthscale:
-        ls_c1, ls_c2 = st.columns(2)
-        ls_lower = ls_c1.number_input(
-            "LS lower", 0.01, 10.0, 0.1, step=0.01, key="ls_lower"
-        )
-        ls_upper = ls_c2.number_input(
-            "LS upper", 0.01, 100.0, 2.0, step=0.01, key="ls_upper"
-        )
-    else:
-        ls_lower, ls_upper = 0.1, 2.0
+    freeze_outcome_transform = st.toggle(
+        "Freeze outcome transform",
+        value=True,
+        help=(
+            "Inner GP output standardization:\n"
+            "- on: reuse the prior GP's standardization; far-field mean reverts to"
+            " the prior level (poorly conditioned if y-levels differ strongly)\n"
+            "- off: standardize on the anchor targets (well-scaled)."
+        ),
+    )
 
 with general_tab:
     noise_level = st.slider("Noise level", 0.0, 2.0, 0.3)
@@ -215,19 +220,6 @@ def fit_prior_gp(prior_data, x_min, x_max):
     return gp, ss
 
 
-def _make_constrained_kernel(ls_lower, ls_upper):
-    """Create a GPyTorch kernel with lengthscale constraints."""
-    from gpytorch.constraints import Interval
-    from gpytorch.kernels import MaternKernel, ScaleKernel
-
-    return ScaleKernel(
-        MaternKernel(
-            nu=2.5,
-            lengthscale_constraint=Interval(ls_lower, ls_upper),
-        )
-    )
-
-
 def fit_new_gp(
     new_data,
     x_min,
@@ -236,7 +228,8 @@ def fit_new_gp(
     *,
     anchors="pretrained",
     mean_kernel_init="freeze",
-    ls_bounds=None,
+    freeze_input_transform=True,
+    freeze_outcome_transform=True,
 ):
     """Fit the new GP with transferred mean."""
     # Create discrete values for parameter
@@ -245,24 +238,20 @@ def fit_new_gp(
     ss = SearchSpace.from_product(params)
     obj = NumericalTarget(name="y").to_objective()
 
-    kernel_kwargs = {}
-    if ls_bounds is not None:
-        kernel_kwargs["kernel_or_factory"] = _make_constrained_kernel(*ls_bounds)
-
     mean_factory = partial(
         prior_gp.posterior_mean_function,
         anchors=anchors,
         mean_kernel_init=mean_kernel_init,
+        freeze_input_transform=freeze_input_transform,
+        freeze_outcome_transform=freeze_outcome_transform,
     )
 
     # Option 1: GP with transferred mean
-    gp_with_mean = GaussianProcessSurrogate(
-        mean_or_factory=mean_factory, **kernel_kwargs
-    )
+    gp_with_mean = GaussianProcessSurrogate(mean_or_factory=mean_factory)
     gp_with_mean.fit(ss, obj, new_data)
 
     # Option 2: Standard GP (for comparison)
-    gp_standard = GaussianProcessSurrogate(**kernel_kwargs)
+    gp_standard = GaussianProcessSurrogate()
     gp_standard.fit(ss, obj, new_data)
 
     return gp_with_mean, gp_standard, ss
@@ -344,7 +333,6 @@ if st.session_state.get("new_sig") != new_sig:
 new_data = st.session_state.new_data
 
 # Fit new GPs
-ls_bounds = (ls_lower, ls_upper) if constrain_lengthscale else None
 new_gp_with_mean, new_gp_standard, new_ss = fit_new_gp(
     new_data,
     new_x_min,
@@ -352,7 +340,8 @@ new_gp_with_mean, new_gp_standard, new_ss = fit_new_gp(
     prior_gp,
     anchors=anchors,
     mean_kernel_init=mean_kernel_init,
-    ls_bounds=ls_bounds,
+    freeze_input_transform=freeze_input_transform,
+    freeze_outcome_transform=freeze_outcome_transform,
 )
 
 # Generate test points for plotting (using plot window range)
@@ -381,9 +370,7 @@ with torch.no_grad():
     mean_module = new_gp_with_mean._model.mean_module
     inner_gp = getattr(mean_module, "gp", None)
     if inner_gp is not None:
-        x_raw = torch.tensor(
-            x_test, dtype=inner_gp.train_inputs[0].dtype
-        ).unsqueeze(-1)
+        x_raw = torch.tensor(x_test, dtype=inner_gp.train_inputs[0].dtype).unsqueeze(-1)
         transferred_mean = inner_gp.posterior(x_raw).mean.numpy().ravel()
     else:
         transferred_mean = None

@@ -281,6 +281,8 @@ class GaussianProcessSurrogate(Surrogate):
         *,
         anchors: Literal["pretrained", "new", "combined"] = "pretrained",
         mean_kernel_init: Literal["freeze", "warmstart", "discard"] = "freeze",
+        freeze_input_transform: bool = True,
+        freeze_outcome_transform: bool = True,
     ) -> GPyTorchMean:
         """Return a GPyTorch mean module representing the surrogate's posterior mean.
 
@@ -317,6 +319,19 @@ class GaussianProcessSurrogate(Surrogate):
                   trainable so the outer MLL can adjust them.
                 * ``"discard"``: build fresh components via the surrogate's configured
                   factories (no pretrained hyperparameters are transferred).
+            freeze_input_transform: Controls the inner GP's input normalization.
+                ``True`` (default) reuses the pretrained GP's input transform, so the
+                inner kernel lengthscale is transferred in absolute input units.
+                ``False`` rebuilds the transform for the new search space, so the
+                lengthscale is interpreted relative to the new domain. Has no effect
+                when source and target share the same search space.
+            freeze_outcome_transform: Controls the inner GP's output standardization.
+                ``True`` (default) reuses the pretrained GP's standardization, so the
+                inner output scale and the far-field reversion level are transferred
+                in absolute output units. ``False`` standardizes on the anchor
+                targets instead, which keeps the inner data well-scaled; prefer it
+                when the anchor target level differs strongly from the pretrained
+                data, where freezing is poorly conditioned.
 
         Returns:
             The posterior mean module.
@@ -371,6 +386,8 @@ class GaussianProcessSurrogate(Surrogate):
             anchor_x_raw,
             anchor_y_raw,
             mean_kernel_init=mean_kernel_init,
+            freeze_input_transform=freeze_input_transform,
+            freeze_outcome_transform=freeze_outcome_transform,
             pretrained_model=self._model,
             mean_factory=self.mean_factory,
             kernel_factory=self.kernel_factory,
@@ -560,6 +577,8 @@ def _build_mean_transfer_gp(
     anchor_y_raw: Tensor,
     *,
     mean_kernel_init: Literal["freeze", "warmstart", "discard"],
+    freeze_input_transform: bool = True,
+    freeze_outcome_transform: bool = True,
     pretrained_model: Any,
     mean_factory: MeanFactoryProtocol,
     kernel_factory: KernelFactoryProtocol,
@@ -572,6 +591,12 @@ def _build_mean_transfer_gp(
         anchor_x_raw: Anchor inputs in raw parameter space.
         anchor_y_raw: Anchor targets in raw output space.
         mean_kernel_init: How to initialize the inner mean/kernel/likelihood. See
+            :meth:`GaussianProcessSurrogate.posterior_mean_function` for details.
+        freeze_input_transform: Whether to reuse the pretrained input transform
+            (``True``) or rebuild it for the new context (``False``).
+        freeze_outcome_transform: Whether to reuse the pretrained output
+            standardization (``True``) or standardize on the anchor targets
+            (``False``). See
             :meth:`GaussianProcessSurrogate.posterior_mean_function` for details.
         pretrained_model: The fitted pretrained GP whose transforms and (for
             ``freeze``/``warmstart``) hyperparameters are reused.
@@ -589,24 +614,22 @@ def _build_mean_transfer_gp(
 
     import botorch
 
-    # The pretrained GP's transforms define the space the kernel/likelihood
-    # hyperparameters were learned in. Reusing them keeps inner predictions
-    # consistent with the pretrained scales; the new GP's transforms convert
-    # to/from the new GP's standardized output space inside `forward`.
-    input_transform = deepcopy(pretrained_model.input_transform)
+    # Input transform: reuse the pretrained one (the inner lengthscale is transferred
+    # in absolute input units) or rebuild it for the new search space (relative
+    # units). Unlike the outcome transform, BoTorch does not silently refit it, so
+    # this choice persists.
+    if freeze_input_transform:
+        input_transform = deepcopy(pretrained_model.input_transform)
+    else:
+        input_transform = GaussianProcessSurrogate._make_input_transform(context)
     input_transform.eval()
+
+    # Outcome transform: deep-copied from the pretrained GP. NOTE: ``SingleTaskGP``
+    # re-fits ``Standardize`` on the anchor targets during construction, so by default
+    # the inner GP standardizes on the anchor data. When ``freeze_outcome_transform``
+    # is set, the pretrained statistics are restored afterwards (see below).
     outcome_transform = deepcopy(pretrained_model.outcome_transform)
     outcome_transform.eval()
-
-    # TODO: Decide whether the inner outcome transform should be refit on the anchor
-    #   data instead of reusing the pretrained one. For ``discard`` (fresh inner
-    #   hyperparameters) -- and arguably ``warmstart``, where the inner
-    #   hyperparameters also change during outer optimization -- the inner kernel ends
-    #   up living in a space scaled by the *pretrained* standardization statistics,
-    #   which is a mild inconsistency. Reusing the pretrained transform keeps
-    #   ``freeze``/``pretrained`` numerically exact; refitting would be more
-    #   principled for ``discard``. The right trade-off (and whether to also refit for
-    #   ``warmstart``) is currently undecided.
 
     if mean_kernel_init == "discard":
         mean = mean_factory(
@@ -637,11 +660,40 @@ def _build_mean_transfer_gp(
         likelihood=likelihood,
     )
 
+    if freeze_outcome_transform:
+        _restore_source_outcome_transform(inner_gp, pretrained_model, anchor_y_raw)
+
     if mean_kernel_init == "freeze":
         for param in inner_gp.parameters():
             param.requires_grad = False
     inner_gp.eval()
     return inner_gp
+
+
+def _restore_source_outcome_transform(
+    inner_gp: Any, pretrained_model: Any, anchor_y_raw: Tensor
+) -> None:
+    """Re-pin the inner GP's outcome standardization to the pretrained statistics.
+
+    ``SingleTaskGP.__init__`` re-fits the ``Standardize`` transform on the anchor
+    targets, overriding the deep-copied pretrained statistics. This restores the
+    pretrained mean/standard deviation and re-expresses the stored (standardized)
+    training targets in that same space, so that the inner GP's conditioning and its
+    un-standardization remain mutually consistent.
+
+    Args:
+        inner_gp: The freshly constructed inner ``SingleTaskGP``, adjusted in place.
+        pretrained_model: The fitted source GP supplying the target statistics.
+        anchor_y_raw: The anchor targets in raw output space.
+    """
+    source = pretrained_model.outcome_transform
+    inner = inner_gp.outcome_transform
+    inner.means = source.means.detach().clone()
+    inner.stdvs = source.stdvs.detach().clone()
+    inner._stdvs_sq = inner.stdvs.pow(2)
+    inner._is_trained = source._is_trained.detach().clone()
+    standardized = ((anchor_y_raw - inner.means) / inner.stdvs).squeeze(-1)
+    inner_gp.set_train_data(targets=standardized, strict=False)
 
 
 def _build_posterior_mean_module(
