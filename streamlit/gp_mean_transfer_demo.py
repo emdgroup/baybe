@@ -92,50 +92,80 @@ with new_tab:
             help="When enabled, new GP training data lies exactly on the prior mean",
         )
 
-    st.markdown("**Mean transfer**")
-    anchors = st.selectbox(
-        "Anchors",
-        options=["pretrained", "new", "combined"],
-        index=0,
+    model_type = st.radio(
+        "New-data model",
+        options=["Mean Transfer", "Residual Learning"],
         help=(
-            "Which inputs/targets to condition the inner (prior-mean) GP on:\n"
-            "- pretrained: original training data\n"
-            "- new: new GP's data (reuses only kernel structure)\n"
-            "- combined: both"
-        ),
-    )
-    mean_kernel_init = st.selectbox(
-        "Inner kernel/mean init",
-        options=["freeze", "warmstart", "discard"],
-        index=0,
-        help=(
-            "How to initialize the inner kernel/likelihood/mean:\n"
-            "- freeze: copy and freeze pretrained hyperparameters\n"
-            "- warmstart: copy but leave trainable\n"
-            "- discard: fresh components from default factories"
+            "How to use the prior (blue) GP for the new data:\n"
+            "- Mean Transfer: the prior posterior becomes the new GP's prior mean\n"
+            "- Residual Learning: fit a GP on (new data - prior prediction), then"
+            " report prior + residual"
         ),
     )
 
-    freeze_input_transform = st.toggle(
-        "Freeze input transform",
-        value=True,
-        help=(
-            "Inner GP input normalization:\n"
-            "- on: reuse the prior GP's bounds (absolute x-lengthscale transfer)\n"
-            "- off: rebuild for the new domain (relative x-lengthscale)\n"
-            "No effect when prior and new share the same X range."
-        ),
-    )
-    freeze_outcome_transform = st.toggle(
-        "Freeze outcome transform",
-        value=True,
-        help=(
-            "Inner GP output standardization:\n"
-            "- on: reuse the prior GP's standardization; far-field mean reverts to"
-            " the prior level (poorly conditioned if y-levels differ strongly)\n"
-            "- off: standardize on the anchor targets (well-scaled)."
-        ),
-    )
+    # Defaults; overridden below in the branch that matches the chosen model so
+    # that the unused parameters are harmless placeholders.
+    anchors = "pretrained"
+    mean_kernel_init = "freeze"
+    freeze_input_transform = True
+    freeze_outcome_transform = True
+    add_uncertainty = False
+
+    if model_type == "Mean Transfer":
+        st.markdown("**Mean transfer**")
+        anchors = st.selectbox(
+            "Anchors",
+            options=["pretrained", "new", "combined"],
+            index=0,
+            help=(
+                "Which inputs/targets to condition the inner (prior-mean) GP on:\n"
+                "- pretrained: original training data\n"
+                "- new: new GP's data (reuses only kernel structure)\n"
+                "- combined: both"
+            ),
+        )
+        mean_kernel_init = st.selectbox(
+            "Inner kernel/mean init",
+            options=["freeze", "warmstart", "discard"],
+            index=0,
+            help=(
+                "How to initialize the inner kernel/likelihood/mean:\n"
+                "- freeze: copy and freeze pretrained hyperparameters\n"
+                "- warmstart: copy but leave trainable\n"
+                "- discard: fresh components from default factories"
+            ),
+        )
+        freeze_input_transform = st.toggle(
+            "Freeze input transform",
+            value=True,
+            help=(
+                "Inner GP input normalization:\n"
+                "- on: reuse the prior GP's bounds (absolute x-lengthscale transfer)\n"
+                "- off: rebuild for the new domain (relative x-lengthscale)\n"
+                "No effect when prior and new share the same X range."
+            ),
+        )
+        freeze_outcome_transform = st.toggle(
+            "Freeze outcome transform",
+            value=True,
+            help=(
+                "Inner GP output standardization:\n"
+                "- on: reuse the prior GP's standardization; far-field mean reverts"
+                " to the prior level (poorly conditioned if y-levels differ)\n"
+                "- off: standardize on the anchor targets (well-scaled)."
+            ),
+        )
+    else:
+        st.markdown("**Residual learning**")
+        add_uncertainty = st.toggle(
+            "Add prior uncertainty",
+            value=False,
+            help=(
+                "Combine the prior GP's variance with the residual GP's variance"
+                " (var = var_prior + var_residual). Off: use only the residual GP's"
+                " uncertainty."
+            ),
+        )
 
 with general_tab:
     noise_level = st.slider("Noise level", 0.0, 2.0, 0.3)
@@ -177,6 +207,21 @@ with general_tab:
         value=True,
         help="Display 95% confidence intervals (±2 std)",
     )
+    show_standard = st.toggle(
+        "Show standard GP",
+        value=True,
+        help="Display the orange vanilla GP baseline (no prior information)",
+    )
+    magenta_toggle_label = (
+        "Show transferred prior mean"
+        if model_type == "Mean Transfer"
+        else "Show residual GP mean"
+    )
+    show_magenta = st.toggle(
+        magenta_toggle_label,
+        value=True,
+        help="Display the dashed magenta companion curve of the green model",
+    )
 
 
 # Generate synthetic data
@@ -208,36 +253,44 @@ def generate_forrester_data(x_min, x_max, n_points, A, B, C, noise, random_seed)
 
 
 def fit_prior_gp(prior_data, x_min, x_max):
-    """Fit the prior GP."""
-    # Create discrete values for parameter
+    """Fit the prior GP on a 50-point grid."""
     x_values = np.linspace(x_min, x_max, 50).tolist()
-    params = [NumericalDiscreteParameter("x", values=x_values)]
-    ss = SearchSpace.from_product(params)
+    ss = SearchSpace.from_product([NumericalDiscreteParameter("x", values=x_values)])
     obj = NumericalTarget(name="y").to_objective()
-
     gp = GaussianProcessSurrogate()
     gp.fit(ss, obj, prior_data)
-    return gp, ss
+    return gp
 
 
-def fit_new_gp(
+def _new_searchspace(x_min, x_max):
+    """Build the new-data search space and objective on a 100-point grid."""
+    x_values = np.linspace(x_min, x_max, 100).tolist()
+    ss = SearchSpace.from_product([NumericalDiscreteParameter("x", values=x_values)])
+    obj = NumericalTarget(name="y").to_objective()
+    return ss, obj
+
+
+def fit_standard_gp(new_data, x_min, x_max):
+    """Fit a vanilla GP on the new data (baseline, no transfer)."""
+    ss, obj = _new_searchspace(x_min, x_max)
+    gp = GaussianProcessSurrogate()
+    gp.fit(ss, obj, new_data)
+    return gp
+
+
+def fit_transfer_gp(
     new_data,
     x_min,
     x_max,
     prior_gp,
     *,
-    anchors="pretrained",
-    mean_kernel_init="freeze",
-    freeze_input_transform=True,
-    freeze_outcome_transform=True,
+    anchors,
+    mean_kernel_init,
+    freeze_input_transform,
+    freeze_outcome_transform,
 ):
-    """Fit the new GP with transferred mean."""
-    # Create discrete values for parameter
-    x_values = np.linspace(x_min, x_max, 100).tolist()
-    params = [NumericalDiscreteParameter("x", values=x_values)]
-    ss = SearchSpace.from_product(params)
-    obj = NumericalTarget(name="y").to_objective()
-
+    """Fit the new GP using the prior GP's posterior as a transferred prior mean."""
+    ss, obj = _new_searchspace(x_min, x_max)
     mean_factory = partial(
         prior_gp.posterior_mean_function,
         anchors=anchors,
@@ -245,16 +298,26 @@ def fit_new_gp(
         freeze_input_transform=freeze_input_transform,
         freeze_outcome_transform=freeze_outcome_transform,
     )
-
-    # Option 1: GP with transferred mean
     gp_with_mean = GaussianProcessSurrogate(mean_or_factory=mean_factory)
     gp_with_mean.fit(ss, obj, new_data)
+    return gp_with_mean
 
-    # Option 2: Standard GP (for comparison)
-    gp_standard = GaussianProcessSurrogate()
-    gp_standard.fit(ss, obj, new_data)
 
-    return gp_with_mean, gp_standard, ss
+def fit_residual_gp(new_data, x_min, x_max, prior_gp):
+    """Fit a vanilla GP on the residuals between the new data and the prior GP.
+
+    The residual-learning prediction is the sum of the prior GP and this residual
+    GP, combined later in the prediction step.
+    """
+    with torch.no_grad():
+        prior_at_new = prior_gp.posterior(new_data[["x"]]).mean.numpy().ravel()
+    residual_data = pd.DataFrame(
+        {"x": new_data["x"].to_numpy(), "y": new_data["y"].to_numpy() - prior_at_new}
+    )
+    ss, obj = _new_searchspace(x_min, x_max)
+    residual_gp = GaussianProcessSurrogate()
+    residual_gp.fit(ss, obj, residual_data)
+    return residual_gp
 
 
 # --- Session-state data with signature-based invalidation ---
@@ -286,7 +349,7 @@ if st.session_state.get("prior_sig") != prior_sig:
     st.session_state.last_prior_drag = 0
 
 prior_data = st.session_state.prior_data
-prior_gp, prior_ss = fit_prior_gp(prior_data, prior_x_min, prior_x_max)
+prior_gp = fit_prior_gp(prior_data, prior_x_min, prior_x_max)
 
 new_sig = (
     new_n_points,
@@ -332,17 +395,23 @@ if st.session_state.get("new_sig") != new_sig:
 
 new_data = st.session_state.new_data
 
-# Fit new GPs
-new_gp_with_mean, new_gp_standard, new_ss = fit_new_gp(
-    new_data,
-    new_x_min,
-    new_x_max,
-    prior_gp,
-    anchors=anchors,
-    mean_kernel_init=mean_kernel_init,
-    freeze_input_transform=freeze_input_transform,
-    freeze_outcome_transform=freeze_outcome_transform,
-)
+# Fit the baseline (orange) once, then the active new-data model.
+new_gp_standard = fit_standard_gp(new_data, new_x_min, new_x_max)
+new_gp_with_mean = None
+residual_gp = None
+if model_type == "Mean Transfer":
+    new_gp_with_mean = fit_transfer_gp(
+        new_data,
+        new_x_min,
+        new_x_max,
+        prior_gp,
+        anchors=anchors,
+        mean_kernel_init=mean_kernel_init,
+        freeze_input_transform=freeze_input_transform,
+        freeze_outcome_transform=freeze_outcome_transform,
+    )
+else:
+    residual_gp = fit_residual_gp(new_data, new_x_min, new_x_max, prior_gp)
 
 # Generate test points for plotting (using plot window range)
 x_test = np.linspace(plot_x_min, plot_x_max, 300)
@@ -354,26 +423,38 @@ with torch.no_grad():
     prior_mean = prior_posterior.mean.numpy().ravel()
     prior_std = prior_posterior.variance.sqrt().numpy().ravel()
 
-    new_with_mean_posterior = new_gp_with_mean.posterior(test_df)
-    new_with_mean_mean = new_with_mean_posterior.mean.numpy().ravel()
-    new_with_mean_std = new_with_mean_posterior.variance.sqrt().numpy().ravel()
-
     new_standard_posterior = new_gp_standard.posterior(test_df)
     new_standard_mean = new_standard_posterior.mean.numpy().ravel()
     new_standard_std = new_standard_posterior.variance.sqrt().numpy().ravel()
 
-    # Transferred prior-mean function actually used by the green GP (raw space).
-    # `mean_module.gp` is the inner GP; its posterior mean -- including any updates
-    # the outer MLL applied in warmstart/discard -- is exactly the prior mean the
-    # green outer GP is built on. Plotting it makes the green curve's far-away
-    # reversion self-explanatory and reveals how the anchors/init modes reshape it.
-    mean_module = new_gp_with_mean._model.mean_module
-    inner_gp = getattr(mean_module, "gp", None)
-    if inner_gp is not None:
+    # The green model and its dashed magenta companion depend on the chosen model.
+    if model_type == "Mean Transfer":
+        green_posterior = new_gp_with_mean.posterior(test_df)
+        green_mean = green_posterior.mean.numpy().ravel()
+        green_std = green_posterior.variance.sqrt().numpy().ravel()
+        green_label = "New GP w/ Transferred Mean"
+        # Magenta = the inner GP's posterior mean (the transferred prior mean),
+        # including any warmstart/discard updates the outer MLL applied.
+        inner_gp = getattr(new_gp_with_mean._model.mean_module, "gp", None)
         x_raw = torch.tensor(x_test, dtype=inner_gp.train_inputs[0].dtype).unsqueeze(-1)
-        transferred_mean = inner_gp.posterior(x_raw).mean.numpy().ravel()
+        magenta_mean = inner_gp.posterior(x_raw).mean.numpy().ravel()
+        magenta_label = "Transferred Prior Mean (inner GP)"
     else:
-        transferred_mean = None
+        # Residual learning: green = prior + residual. With add_uncertainty the
+        # prior variance is added (independence assumption), else only the residual
+        # variance is used.
+        residual_posterior = residual_gp.posterior(test_df)
+        residual_mean = residual_posterior.mean.numpy().ravel()
+        residual_std = residual_posterior.variance.sqrt().numpy().ravel()
+        green_mean = prior_mean + residual_mean
+        green_std = (
+            np.sqrt(residual_std**2 + prior_std**2)
+            if add_uncertainty
+            else residual_std
+        )
+        green_label = "Residual Learning (prior + residual)"
+        magenta_mean = residual_mean
+        magenta_label = "Residual GP mean"
 
 # --- Bokeh figure with draggable training points ---
 p = figure(
@@ -429,47 +510,48 @@ p.line(
 if show_std:
     p.varea(
         x=x_test,
-        y1=new_with_mean_mean - 2 * new_with_mean_std,
-        y2=new_with_mean_mean + 2 * new_with_mean_std,
+        y1=green_mean - 2 * green_std,
+        y2=green_mean + 2 * green_std,
         fill_color="#00C864",
         fill_alpha=0.2,
-        legend_label="New GP w/ Mean: 95% CI",
+        legend_label=f"{green_label}: 95% CI",
     )
 p.line(
     x_test,
-    new_with_mean_mean,
+    green_mean,
     line_color="green",
     line_width=3,
-    legend_label="New GP w/ Transferred Mean",
+    legend_label=green_label,
 )
 
-if transferred_mean is not None:
+if show_magenta:
     p.line(
         x_test,
-        transferred_mean,
+        magenta_mean,
         line_color="#9C27B0",
         line_width=2,
         line_dash="dashed",
-        legend_label="Transferred Prior Mean (inner GP)",
+        legend_label=magenta_label,
     )
 
-if show_std:
-    p.varea(
-        x=x_test,
-        y1=new_standard_mean - 2 * new_standard_std,
-        y2=new_standard_mean + 2 * new_standard_std,
-        fill_color="#FFA500",
-        fill_alpha=0.15,
-        legend_label="Standard GP: 95% CI",
+if show_standard:
+    if show_std:
+        p.varea(
+            x=x_test,
+            y1=new_standard_mean - 2 * new_standard_std,
+            y2=new_standard_mean + 2 * new_standard_std,
+            fill_color="#FFA500",
+            fill_alpha=0.15,
+            legend_label="Standard GP: 95% CI",
+        )
+    p.line(
+        x_test,
+        new_standard_mean,
+        line_color="orange",
+        line_width=3,
+        line_dash="dotted",
+        legend_label="Standard GP (no transfer)",
     )
-p.line(
-    x_test,
-    new_standard_mean,
-    line_color="orange",
-    line_width=3,
-    line_dash="dotted",
-    legend_label="Standard GP (no transfer)",
-)
 
 prior_source = ColumnDataSource(
     data=dict(x=prior_data["x"].tolist(), y=prior_data["y"].tolist())
@@ -536,6 +618,8 @@ _plot_key = hash(
     (
         prior_sig,
         new_sig,
+        model_type,
+        add_uncertainty,
         tuple(prior_data["x"]),
         tuple(prior_data["y"]),
         tuple(new_data["x"]),
@@ -551,8 +635,6 @@ event_result = streamlit_bokeh_events(
     debounce_time=200,
     override_height=620,
 )
-
-st.write("DEBUG event_result:", event_result)
 
 if event_result:
     rerun = False
@@ -590,18 +672,24 @@ elif use_prior_mean_data:
 else:
     data_mode_text = f"trained on random data with noise and y-scale={new_y_scale:.1f}"
 
-st.markdown(
-    f"""
-Curves plotted on the same axis:
-
-- **🔵 Prior GP** — fitted on `{prior_n_points}` points in `[{prior_x_min}, {prior_x_max}]`.
-- **🟢 New GP w/ Transferred Mean** — fitted on `{new_n_points}` points in `[{new_x_min}, {new_x_max}]` ({data_mode_text}), using the prior GP's posterior as its prior mean function.
-- **🟣 Transferred Prior Mean (dashed)** — the actual inner-GP posterior mean used as the green GP's prior mean. It depends on **Anchors** and **Inner kernel/mean init**, and the green curve reverts to it where there is no new data. (Equals the blue prior only for `anchors=pretrained` + `freeze`.)
-- **🟠 Standard GP (dotted)** — same data as the green GP but with a zero mean. Baseline for comparison.
-
-Where the new GPs have **no training data**, the green curve follows the **purple transferred mean** (informed extrapolation) while the orange curve collapses back to zero with wide uncertainty. That gap is what mean transfer buys you.
-
-**Mean transfer controls** (sidebar → 🟢 New GP):
+if model_type == "Mean Transfer":
+    green_desc = (
+        f"**🟢 New GP w/ Transferred Mean** — fitted on `{new_n_points}` points in "
+        f"`[{new_x_min}, {new_x_max}]` ({data_mode_text}), using the prior GP's "
+        f"posterior as its prior mean function."
+    )
+    magenta_desc = (
+        "**🟣 Transferred Prior Mean (dashed)** — the inner-GP posterior mean used "
+        "as the green GP's prior mean. It depends on **Anchors**, **Inner "
+        "kernel/mean init** and the **freeze** flags; the green curve reverts to it "
+        "where there is no new data."
+    )
+    extrap_desc = (
+        "Where the new model has **no training data**, the green curve follows the "
+        "**purple transferred mean** (informed extrapolation) while the orange "
+        "curve collapses back to zero with wide uncertainty."
+    )
+    controls_md = """**Mean-transfer controls** (sidebar → 🟢 New GP):
 
 - **Anchors** — which inputs/targets condition the inner GP that produces the prior mean.
   - `pretrained`: use the pretrained GP's training data.
@@ -611,13 +699,59 @@ Where the new GPs have **no training data**, the green curve follows the **purpl
   - `freeze`: copy pretrained components and freeze them (prior mean is fixed).
   - `warmstart`: copy them but leave trainable so the outer MLL can adjust.
   - `discard`: rebuild from default factories (no hyperparameter transfer).
+- **Freeze input / outcome transform** — reuse the prior GP's input normalization /
+  output standardization (absolute transfer) or rebuild them for the new data (relative)."""
+    things_md = """**Things to try:**
 
-**Things to try:**
-
-- **Drag** a 🔵 or 🟢 point — both GPs refit live.
+- **Drag** a 🔵 or 🟢 point — the models refit live.
 - Toggle **Train on prior mean** — when training data lies exactly on the blue curve, the green GP should hug it everywhere.
 - Set **Anchors = combined** with **freeze** — richer conditioning typically tightens the green CI.
-- Set **Anchors = new** with **warmstart** — rebases the prior shape onto the new data.
+- Set **Anchors = new** with **warmstart** — rebases the prior shape onto the new data."""
+else:
+    unc_text = (
+        "prior + residual variance"
+        if add_uncertainty
+        else "the residual variance only"
+    )
+    green_desc = (
+        f"**🟢 Residual Learning (prior + residual)** — the prior GP plus a vanilla "
+        f"GP fitted on the residuals `new_y - prior(new_x)` (`{new_n_points}` points "
+        f"in `[{new_x_min}, {new_x_max}]`). Its 95% CI uses {unc_text}."
+    )
+    magenta_desc = (
+        "**🟣 Residual GP mean (dashed)** — the residual GP's own mean; the green "
+        "curve equals the blue prior plus this curve."
+    )
+    extrap_desc = (
+        "Where the new model has **no training data**, the residual (**purple**) "
+        "decays to zero, so the green curve falls back to the **blue prior** "
+        "(informed extrapolation) while the orange curve collapses back to zero "
+        "with wide uncertainty."
+    )
+    controls_md = """**Residual-learning controls** (sidebar → 🟢 New GP):
+
+- **Add prior uncertainty** — combine the prior GP's variance with the residual GP's
+  (`var = var_prior + var_residual`). Off: use only the residual GP's uncertainty."""
+    things_md = """**Things to try:**
+
+- **Drag** a 🔵 or 🟢 point — the models refit live.
+- Toggle **Add prior uncertainty** — the green CI widens to absorb the prior GP's variance.
+- Move the 🟢 points far from the 🔵 data — the residual (purple) decays to zero, so the green model falls back to the blue prior."""
+
+st.markdown(
+    f"""
+Curves plotted on the same axis:
+
+- **🔵 Prior GP** — fitted on `{prior_n_points}` points in `[{prior_x_min}, {prior_x_max}]`.
+- {green_desc}
+- {magenta_desc}
+- **🟠 Standard GP (dotted)** — same data as the green model but with a zero mean. Baseline for comparison.
+
+{extrap_desc}
+
+{controls_md}
+
+{things_md}
 """
 )
 
