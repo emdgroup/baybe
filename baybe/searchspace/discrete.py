@@ -766,10 +766,10 @@ class SubspaceDiscrete(SerialMixin):
 
         per_constraint: list[list[npt.NDArray[np.bool_]]]
         if not self.batch_constraints:
-            per_constraint = [[np.ones(len(self.exp_rep), dtype=bool)]]
+            per_constraint = [[np.ones(len(self.get_candidates()), dtype=bool)]]
         else:
             per_constraint = [
-                c.subset_masks(self.exp_rep) for c in self.batch_constraints
+                c.subset_masks(self.get_candidates()) for c in self.batch_constraints
             ]
 
         total = prod(len(masks) for masks in per_constraint)
