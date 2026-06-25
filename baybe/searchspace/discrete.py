@@ -615,11 +615,9 @@ class SubspaceDiscrete(SerialMixin):
     @property
     def exp_rep(self) -> pd.DataFrame:
         """Deprecated! Use :meth:`get_candidates` instead."""
-        cls = type(self)
-        name = cls.exp_rep.fget.__name__
-        get_candidates = cls.get_candidates.__name__
+        get_candidates = type(self).get_candidates.__name__
         warnings.warn(
-            f"Accessing '{name}' is deprecated and will be removed in a future "
+            f"Accessing 'exp_rep' is deprecated and will be removed in a future "
             f"version. Use '{get_candidates}()' instead.",
             DeprecationWarning,
             stacklevel=2,
@@ -630,11 +628,10 @@ class SubspaceDiscrete(SerialMixin):
     def comp_rep(self) -> pd.DataFrame:
         """Deprecated! Use :meth:`transform` with :meth:`get_candidates` instead."""
         cls = type(self)
-        name = cls.comp_rep.fget.__name__
         transform = cls.transform.__name__
         get_candidates = cls.get_candidates.__name__
         warnings.warn(
-            f"Accessing '{name}' is deprecated and will be removed in a future "
+            f"Accessing 'comp_rep' is deprecated and will be removed in a future "
             f"version. Use '{transform}({get_candidates}())' instead.",
             DeprecationWarning,
             stacklevel=2,
