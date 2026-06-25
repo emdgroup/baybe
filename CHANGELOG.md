@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `candidates_exp` argument removed from `SubspaceDiscrete.subset_masks`,
   `SubspaceDiscrete.sample_subset_masks`, `SearchSpace.subsets`, and
   `SearchSpace.sample_subsets`
+- `SubspaceDiscrete.get_candidates` now returns only the experimental representation
+  instead of a tuple of experimental and computational representations
 
 ### Added
 - `narwhals` as a hard dependency
@@ -50,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   access batch-level constraints; filtering constraints are only needed during subspace
   construction and are thus no longer stored).
 - `SubspaceDiscrete.constraints_batch` property (use `batch_constraints` instead)
+- `SubspaceDiscrete.exp_rep` attribute (use `get_candidates()` instead)
+- `SubspaceDiscrete.comp_rep` attribute (use `transform(get_candidates())` instead)
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
