@@ -46,7 +46,6 @@ class RandomRecommender(NonPredictiveRecommender):
         # Restrict to a random subset if subset-generating constraints are present
         if searchspace.discrete.n_subsets > 0:
             masks = searchspace.discrete.sample_subset_masks(
-                candidates_exp,
                 n=1,
                 min_candidates=None if is_hybrid else batch_size,
             )

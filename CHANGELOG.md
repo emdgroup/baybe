@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as public utilities
 - `is_constrained` property removed from `SubspaceDiscrete`, `SubspaceContinuous`,
   and `SearchSpace`
+- `candidates_exp` argument removed from `SubspaceDiscrete.subset_masks`,
+  `SubspaceDiscrete.sample_subset_masks`, `SearchSpace.subsets`, and
+  `SearchSpace.sample_subsets`
 
 ### Added
 - `narwhals` as a hard dependency

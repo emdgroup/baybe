@@ -712,7 +712,6 @@ class SubspaceDiscrete(SerialMixin):
 
     def subset_masks(
         self,
-        candidates_exp: pd.DataFrame,
         min_candidates: int | None = None,
         mode: Literal["sequential", "shuffled", "replace"] = "shuffled",
     ) -> Iterator[npt.NDArray[np.bool_]]:
@@ -723,7 +722,6 @@ class SubspaceDiscrete(SerialMixin):
         combined masks.
 
         Args:
-            candidates_exp: The experimental representation of candidate points.
             min_candidates: If provided, combined masks selecting fewer rows
                 are silently skipped.
             mode: The iteration strategy.
@@ -744,10 +742,10 @@ class SubspaceDiscrete(SerialMixin):
 
         per_constraint: list[list[npt.NDArray[np.bool_]]]
         if not self.batch_constraints:
-            per_constraint = [[np.ones(len(candidates_exp), dtype=bool)]]
+            per_constraint = [[np.ones(len(self.exp_rep), dtype=bool)]]
         else:
             per_constraint = [
-                c.subset_masks(candidates_exp) for c in self.batch_constraints
+                c.subset_masks(self.exp_rep) for c in self.batch_constraints
             ]
 
         total = prod(len(masks) for masks in per_constraint)
@@ -779,14 +777,12 @@ class SubspaceDiscrete(SerialMixin):
 
     def sample_subset_masks(
         self,
-        candidates_exp: pd.DataFrame,
         n: int,
         min_candidates: int | None = None,
     ) -> list[npt.NDArray[np.bool_]]:
         """Sample subset masks (without replacement).
 
         Args:
-            candidates_exp: The experimental representation of candidate points.
             n: Number of masks to sample.
             min_candidates: If provided, Subsets with fewer matching
                 candidates are skipped.
@@ -796,7 +792,7 @@ class SubspaceDiscrete(SerialMixin):
         """
         return list(
             islice(
-                self.subset_masks(candidates_exp, min_candidates),
+                self.subset_masks(min_candidates),
                 n,
             )
         )

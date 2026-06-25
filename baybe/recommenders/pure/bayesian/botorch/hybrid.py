@@ -188,11 +188,9 @@ def recommend_hybrid_with_subsets(
     # discrete candidate by varying continuous parameters.
     combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
     if searchspace.n_subsets <= recommender.max_n_subsets:
-        combined_masks = searchspace.subsets(searchspace.discrete.exp_rep)
+        combined_masks = searchspace.subsets()
     else:
-        combined_masks = searchspace.sample_subsets(
-            searchspace.discrete.exp_rep, recommender.max_n_subsets
-        )
+        combined_masks = searchspace.sample_subsets(recommender.max_n_subsets)
 
     def make_callable(
         d_mask: np.ndarray,

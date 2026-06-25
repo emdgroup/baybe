@@ -150,9 +150,5 @@ def test_subset_masks_min_candidates(min_candidates, expected_count, constraint)
     if constraint is not None:
         constraints.append(constraint)
     searchspace = SearchSpace.from_product(_params, constraints)
-    masks = list(
-        searchspace.discrete.subset_masks(
-            searchspace.discrete.exp_rep, min_candidates=min_candidates
-        )
-    )
+    masks = list(searchspace.discrete.subset_masks(min_candidates=min_candidates))
     assert len(masks) == expected_count

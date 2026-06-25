@@ -45,12 +45,9 @@ def recommend_discrete_with_subsets(
 
     masks: Iterable[npt.NDArray[np.bool_]]
     if subspace_discrete.n_subsets <= recommender.max_n_subsets:
-        masks = subspace_discrete.subset_masks(
-            subspace_discrete.exp_rep, min_candidates=batch_size
-        )
+        masks = subspace_discrete.subset_masks(min_candidates=batch_size)
     else:
         masks = subspace_discrete.sample_subset_masks(
-            subspace_discrete.exp_rep,
             recommender.max_n_subsets,
             min_candidates=batch_size,
         )
