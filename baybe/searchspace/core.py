@@ -18,7 +18,7 @@ from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
 from baybe.exceptions import InfeasibilityError
 from baybe.parameters import TaskParameter
-from baybe.parameters.base import Parameter
+from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -293,7 +293,6 @@ class SearchSpace(SerialMixin):
 
     def subsets(
         self,
-        candidates_exp: pd.DataFrame,
         min_discrete_candidates: int | None = None,
     ) -> Iterator[tuple[npt.NDArray[np.bool_], frozenset[str]]]:
         r"""Get an iterator over all combined subset configurations.
@@ -302,7 +301,6 @@ class SearchSpace(SerialMixin):
         configurations.
 
         Args:
-            candidates_exp: The experimental representation of discrete candidates.
             min_discrete_candidates: If provided, discrete Subsets with fewer
                 matching candidates are skipped.
 
@@ -310,15 +308,12 @@ class SearchSpace(SerialMixin):
             A discrete mask and continuous inactive parameters pair.
         """
         yield from product(
-            self.discrete.subset_masks(
-                candidates_exp, min_candidates=min_discrete_candidates
-            ),
+            self.discrete.subset_masks(min_candidates=min_discrete_candidates),
             self.continuous.inactive_parameter_combinations(),
         )
 
     def sample_subsets(
         self,
-        candidates_exp: pd.DataFrame,
         n: int,
         min_discrete_candidates: int | None = None,
         *,
@@ -331,7 +326,6 @@ class SearchSpace(SerialMixin):
         Duplicate pairs are skipped.
 
         Args:
-            candidates_exp: The experimental representation of discrete candidates.
             n: Number of unique configurations to sample.
             min_discrete_candidates: If provided, discrete Subsets with fewer
                 matching candidates are excluded.
@@ -346,7 +340,6 @@ class SearchSpace(SerialMixin):
             A list of ``(discrete_mask, continuous_inactive_params)`` tuples.
         """
         d_iter = self.discrete.subset_masks(
-            candidates_exp,
             min_candidates=min_discrete_candidates,
             mode="replace",
         )
@@ -539,26 +532,21 @@ class SearchSpace(SerialMixin):
             )
         remaining = [p for p in self.parameters if p.name not in names_set]
 
-        disc_params = [p for p in remaining if p.is_discrete]
-        cont_params = [p for p in remaining if p.is_continuous]
+        disc_params = [p for p in remaining if isinstance(p, DiscreteParameter)]
+        cont_params = [p for p in remaining if isinstance(p, ContinuousParameter)]
 
         # Explicit comp_rep needed because transform() drops columns for empty inputs.
         discrete = (
             SubspaceDiscrete(
                 parameters=disc_params,
                 exp_rep=pd.DataFrame(columns=[p.name for p in disc_params]),
-                comp_rep=pd.DataFrame(
-                    columns=[c for p in disc_params for c in p.comp_rep_columns]
-                ),
             )
             if disc_params
             else SubspaceDiscrete.empty()
         )
 
         continuous = (
-            SubspaceContinuous(
-                parameters=cont_params,
-            )
+            SubspaceContinuous(parameters=cont_params)
             if cont_params
             else SubspaceContinuous.empty()
         )
