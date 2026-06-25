@@ -540,18 +540,13 @@ class SearchSpace(SerialMixin):
             SubspaceDiscrete(
                 parameters=disc_params,
                 exp_rep=pd.DataFrame(columns=[p.name for p in disc_params]),
-                comp_rep=pd.DataFrame(
-                    columns=[c for p in disc_params for c in p.comp_rep_columns]
-                ),
             )
             if disc_params
             else SubspaceDiscrete.empty()
         )
 
         continuous = (
-            SubspaceContinuous(
-                parameters=cont_params,
-            )
+            SubspaceContinuous(parameters=cont_params)
             if cont_params
             else SubspaceContinuous.empty()
         )
