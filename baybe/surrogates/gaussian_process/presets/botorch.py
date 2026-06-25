@@ -45,14 +45,20 @@ class BotorchKernelFactory(_PureKernelFactory):
     )
     # See base class.
 
+    #: The minimum BoTorch version required for this preset.
+    _MIN_BOTORCH_VERSION: ClassVar[str] = "0.18.0"
+
     @override
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
+        self._check_botorch_version()
+
         from botorch.models.kernels.positive_index import PositiveIndexKernel
         from botorch.models.utils.gpytorch_modules import (
             get_covar_module_with_dim_scaled_prior,
         )
+        from botorch.models.utils.priors import BetaPrior
 
         parameter_names = self.get_parameter_names(searchspace)
 
@@ -76,17 +82,7 @@ class BotorchKernelFactory(_PureKernelFactory):
         if (task_idx := searchspace.task_idx) is None:
             return base_kernel
 
-        # BoTorch's MultiTaskGP added BetaPrior(2.5, 1.5) as the default task
-        # covariance prior starting from version 0.18.0. For older versions, the
-        # prior is not available and we fall back to no prior (matching that version's
-        # MultiTaskGP behavior).
-        try:
-            from botorch.models.utils.priors import BetaPrior
-
-            task_prior = BetaPrior(concentration1=2.5, concentration0=1.5)
-        except ImportError:
-            task_prior = None
-
+        task_prior = BetaPrior(concentration1=2.5, concentration0=1.5)
         index_kernel = PositiveIndexKernel(
             num_tasks=searchspace.n_tasks,
             rank=searchspace.n_tasks,
@@ -96,6 +92,27 @@ class BotorchKernelFactory(_PureKernelFactory):
         return ICMKernelFactory(base_kernel, index_kernel)(
             searchspace, objective, measurements
         )
+
+    def _check_botorch_version(self) -> None:
+        """Verify that the installed BoTorch version meets the minimum requirement.
+
+        Raises:
+            IncompatibilityError: If the installed BoTorch version is too old.
+        """
+        from importlib.metadata import version
+
+        from packaging.version import Version
+
+        from baybe.exceptions import IncompatibilityError
+
+        installed = version("botorch")
+        if Version(installed) < Version(self._MIN_BOTORCH_VERSION):
+            raise IncompatibilityError(
+                f"The '{self.__class__.__name__}' requires BoTorch >= "
+                f"{self._MIN_BOTORCH_VERSION}, but version {installed} is installed. "
+                f"Please upgrade BoTorch: pip install 'botorch>="
+                f"{self._MIN_BOTORCH_VERSION}'."
+            )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
