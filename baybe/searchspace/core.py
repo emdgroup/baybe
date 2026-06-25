@@ -18,7 +18,7 @@ from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
 from baybe.exceptions import InfeasibilityError
 from baybe.parameters import TaskParameter
-from baybe.parameters.base import Parameter
+from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -532,8 +532,8 @@ class SearchSpace(SerialMixin):
             )
         remaining = [p for p in self.parameters if p.name not in names_set]
 
-        disc_params = [p for p in remaining if p.is_discrete]
-        cont_params = [p for p in remaining if p.is_continuous]
+        disc_params = [p for p in remaining if isinstance(p, DiscreteParameter)]
+        cont_params = [p for p in remaining if isinstance(p, ContinuousParameter)]
 
         # Explicit comp_rep needed because transform() drops columns for empty inputs.
         discrete = (
