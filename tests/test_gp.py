@@ -1,5 +1,7 @@
 """Tests for the Gaussian Process surrogate."""
 
+import sys
+
 import pandas as pd
 import pytest
 import torch
@@ -198,6 +200,11 @@ def test_invalid_components():
 # NOTE: The BOTORCH preset tracks BoTorch's GP defaults while the HVARFNER preset
 #   implements BoTorch's static Hvarfner et al. (2024) parametrization. Therefore, the
 #   presets diverge as BoTorch evolves (e.g., BetaPrior added in 0.18.0).
+@pytest.mark.xfail(
+    sys.version_info < (3, 11),
+    reason="BoTorch >=0.18.0 requires Python >=3.11.",
+    strict=True,
+)
 @pytest.mark.parametrize("multitask", [False, True], ids=["single-task", "multi-task"])
 def test_botorch_preset(multitask: bool):
     """The BoTorch preset exactly mimics BoTorch's MultiTaskGP/SingleTaskGP behavior."""
