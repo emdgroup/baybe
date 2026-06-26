@@ -15,11 +15,11 @@
 [![Logo](https://raw.githubusercontent.com/emdgroup/baybe/main/docs/_static/banner2.svg)](https://github.com/emdgroup/baybe/)
 
 &nbsp;
-<a href="https://emdgroup.github.io/baybe/">Documentation</a>
+[Documentation](https://emdgroup.github.io/baybe/)
 &nbsp;•&nbsp;
-<a href="https://emdgroup.github.io/baybe/stable/_autosummary/baybe.html">API Reference</a>
+[API Reference](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.html)
 &nbsp;•&nbsp;
-<a href="https://emdgroup.github.io/baybe/stable/misc/contributing_link.html">Contribute</a>
+[Contribute](https://emdgroup.github.io/baybe/stable/misc/contributing_link.html)
 &nbsp;
 </div>
 
@@ -61,18 +61,15 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
     🛠️ Flexible modeling options
   </summary>
   <div style="padding: 10px;">
-    <ul>
-      <li>Use both continuous and discrete parameters within a single <a href="https://emdgroup.github.io/baybe/stable/examples/Searchspaces/hybrid_space.html">hybrid search space</a>.</li>
-      <li>Exclude undesired or impossible parameter configurations (e.g., to define a maximal number of mixture components) using <a href="https://emdgroup.github.io/baybe/stable/components/constraints.html">constraints</a>.</li>
-      <li>Choose between different optimization strategies to balance exploration and exploitation of the search space:
-        <ul>
-          <li>Smartly acquire training data for model building via <a href="https://emdgroup.github.io/baybe/stable/concepts/active_learning.html">active learning</a>.</li>
-          <li>Conduct AB testing via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html">bandit models</a>.</li>
-        </ul>
-      </li>
-      <li>Specify the desired target value via <a href="https://emdgroup.github.io/baybe/stable/components/transformations.html">target transformations</a>.</li>
-      <li>Optimize multiple targets at the same time via <a href="https://emdgroup.github.io/baybe/stable/components/objectives.html#paretoobjective">Pareto optimization</a> or <a href="https://emdgroup.github.io/baybe/stable/components/objectives.html#desirabilityobjective">desirability scalarization</a>.</li>
-    </ul>
+
+  - Use both continuous and discrete parameters within a single [hybrid search space](https://emdgroup.github.io/baybe/stable/examples/Searchspaces/hybrid_space.html).
+  - Exclude undesired or impossible parameter configurations (e.g., to define a maximal number of mixture components) using [constraints](https://emdgroup.github.io/baybe/stable/components/constraints.html).
+  - Choose between different optimization strategies to balance exploration and exploitation of the search space:
+    - Smartly acquire training data for model building via [active learning](https://emdgroup.github.io/baybe/stable/concepts/active_learning.html).
+    - Conduct AB testing via [bandit models](https://emdgroup.github.io/baybe/stable/examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html).
+  - Specify the desired target value via [target transformations](https://emdgroup.github.io/baybe/stable/components/transformations.html).
+  - Optimize multiple targets at the same time via [Pareto optimization](https://emdgroup.github.io/baybe/stable/components/objectives.html#paretoobjective) or [desirability scalarization](https://emdgroup.github.io/baybe/stable/components/objectives.html#desirabilityobjective).
+
   </div>
 </details>
 <details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
@@ -80,12 +77,12 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
     📚 Mechanisms for leveraging additional information
   </summary>
   <div style="padding: 10px;">
-    <ul>
-      <li>Capture relationships between categories via <a href="https://emdgroup.github.io/baybe/stable/components/parameters.html#customdiscreteparameter">custom encodings for categorical</a> data.</li>
-      <li>Use built-in <a href="https://emdgroup.github.io/baybe/stable/components/parameters.html#substanceparameter">chemical encodings</a> for chemistry-related parameters.</li>
-      <li>Add mechanistic process understanding via <a href="https://emdgroup.github.io/baybe/stable/components/surrogates.html#using-custom-models">custom surrogate</a> models.</li>
-      <li>Leverage additional data from similar campaigns to accelerate optimization via <a href="https://emdgroup.github.io/baybe/stable/concepts/transfer_learning.html">transfer learning</a>.</li>
-    </ul>
+
+  - Capture relationships between categories via [custom encodings for categorical](https://emdgroup.github.io/baybe/stable/components/parameters.html#customdiscreteparameter) data.
+  - Use built-in [chemical encodings](https://emdgroup.github.io/baybe/stable/components/parameters.html#substanceparameter) for chemistry-related parameters.
+  - Add mechanistic process understanding via [custom surrogate](https://emdgroup.github.io/baybe/stable/components/surrogates.html#using-custom-models) models.
+  - Leverage additional data from similar campaigns to accelerate optimization via [transfer learning](https://emdgroup.github.io/baybe/stable/concepts/transfer_learning.html).
+
   </div>
 </details>
 <details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
@@ -93,10 +90,10 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
     🔗 Advanced optimization workflows
   </summary>
   <div style="padding: 10px;">
-    <ul>
-      <li>Run campaigns <a href="https://emdgroup.github.io/baybe/stable/concepts/async.html">asynchronously</a> with partial measurements and pending experiments.</li>
-      <li>Store BayBE objects and use API wrappers with the <a href="https://emdgroup.github.io/baybe/stable/concepts/serialization.html">serialization</a> functionality.</li>
-    </ul>
+
+  - Run campaigns [asynchronously](https://emdgroup.github.io/baybe/stable/concepts/async.html) with partial measurements and pending experiments.
+  - Store BayBE objects and use API wrappers with the [serialization](https://emdgroup.github.io/baybe/stable/concepts/serialization.html) functionality.
+
   </div>
 </details>
 <details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
@@ -104,10 +101,10 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
     🔍 Performance evaluation tools
   </summary>
   <div style="padding: 10px;">
-    <ul>
-      <li>Gain <a href="https://emdgroup.github.io/baybe/stable/components/insights.html">insights</a> about the optimization campaigns by analyzing model behavior and feature importance.</li>
-      <li>Conduct benchmarks to select between different Bayesian optimization settings via <a href="https://emdgroup.github.io/baybe/stable/concepts/simulation.html">backtesting</a>.</li>
-    </ul>
+
+  - Gain [insights](https://emdgroup.github.io/baybe/stable/components/insights.html) about the optimization campaigns by analyzing model behavior and feature importance.
+  - Conduct benchmarks to select between different Bayesian optimization settings via [backtesting](https://emdgroup.github.io/baybe/stable/concepts/simulation.html).
+
   </div>
 </details>
 
