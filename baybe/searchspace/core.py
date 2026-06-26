@@ -19,6 +19,7 @@ from baybe.constraints.base import Constraint
 from baybe.exceptions import InfeasibilityError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
+from baybe.searchspace.candidates import TableCandidates
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -535,11 +536,11 @@ class SearchSpace(SerialMixin):
         disc_params = [p for p in remaining if isinstance(p, DiscreteParameter)]
         cont_params = [p for p in remaining if isinstance(p, ContinuousParameter)]
 
-        # Explicit comp_rep needed because transform() drops columns for empty inputs.
         discrete = (
             SubspaceDiscrete(
-                parameters=disc_params,
-                exp_rep=pd.DataFrame(columns=[p.name for p in disc_params]),
+                candidates=TableCandidates(
+                    disc_params, pd.DataFrame(columns=[p.name for p in disc_params])
+                )
             )
             if disc_params
             else SubspaceDiscrete.empty()

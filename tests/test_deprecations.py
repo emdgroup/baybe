@@ -40,6 +40,7 @@ from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace.candidates import EmptyCandidates, TableCandidates
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
@@ -794,7 +795,7 @@ def test_deprecated_subspace_discrete_arguments(arg, error):
         else pytest.warns(DeprecationWarning, match=f"Providing '{arg}'")
     )
     with context:
-        SubspaceDiscrete(parameters=[], exp_rep=pd.DataFrame(), **{arg: 0})
+        SubspaceDiscrete(candidates=EmptyCandidates(), **{arg: 0})
 
 
 def test_deprecated_empty_encoding_from_product():
@@ -827,7 +828,7 @@ def test_deprecated_discrete_subspace_deserialization():
     assert actual == expected
 
     with pytest.raises(cattrs.ClassValidationError) as exc_info:
-        SubspaceDiscrete.from_dict(base_dict | {"comp_rep": base_dict["exp_rep"]})
+        SubspaceDiscrete.from_dict(base_dict | {"comp_rep": {}})
     (ex,) = exc_info.value.exceptions
     assert isinstance(ex, DeprecationError) and "comp_rep" in str(ex)
 
@@ -855,8 +856,7 @@ def test_deprecated_constraints_argument():
     batch_c = DiscreteBatchConstraint(["p"])
     with pytest.warns(DeprecationWarning, match="Providing 'constraints'"):
         subspace = SubspaceDiscrete(
-            parameters=[p],
-            exp_rep=pd.DataFrame({"p": [0, 1, 2]}),
+            candidates=TableCandidates([p], pd.DataFrame({"p": [0, 1, 2]})),
             constraints=[batch_c],
         )
     # The batch constraint must be migrated to `batch_constraints`
@@ -898,8 +898,7 @@ def test_deprecated_constraints_batch_property():
     p = NumericalDiscreteParameter("p", [0, 1, 2])
     batch_c = DiscreteBatchConstraint(["p"])
     subspace = SubspaceDiscrete(
-        parameters=[p],
-        exp_rep=pd.DataFrame({"p": [0, 1, 2]}),
+        candidates=TableCandidates([p], pd.DataFrame({"p": [0, 1, 2]})),
         batch_constraints=(batch_c,),
     )
 

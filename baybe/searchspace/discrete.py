@@ -29,13 +29,18 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
 )
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
+from baybe.parameters.utils import get_parameters_from_dataframe
+from baybe.searchspace.candidates import (
+    CandidatesProtocol,
+    EmptyCandidates,
+    ProductCandidates,
+    TableCandidates,
+)
 from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
-from baybe.utils.boolean import eq_dataframe
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     get_transform_objects,
@@ -107,19 +112,8 @@ class SubspaceDiscrete(SerialMixin):
     and provides access to candidate sets and different parameter views.
     """
 
-    parameters: tuple[DiscreteParameter, ...] = field(
-        converter=sort_parameters,
-        validator=[
-            deep_iterable(member_validator=instance_of(DiscreteParameter)),
-            lambda _, __, x: validate_parameters(x, allow_empty=True),
-        ],
-    )
-    """The parameters spanning the subspace."""
-
-    _exp_rep: pd.DataFrame = field(
-        alias="exp_rep", validator=instance_of(pd.DataFrame), eq=eq_dataframe
-    )
-    """The experimental representation of the subspace."""
+    candidates: CandidatesProtocol = field()
+    """The subspace candidate generator."""
 
     _empty_encoding: Annotated[bool, cattrs.override(omit_if_default=True)] = field(
         alias="empty_encoding",
@@ -142,7 +136,7 @@ class SubspaceDiscrete(SerialMixin):
     )
     "Ignore! For backwards compatibility only."
 
-    _comp_rep: Annotated[pd.DataFrame, cattrs.override(omit_if_default=True)] = field(
+    _comp_rep: Annotated[Any, cattrs.override(omit_if_default=True)] = field(
         alias="comp_rep",
         default=None,
         eq=False,
@@ -205,30 +199,10 @@ class SubspaceDiscrete(SerialMixin):
         ]
         return to_string(self.__class__.__name__, *fields)
 
-    @_exp_rep.validator
-    def _validate_exp_rep(  # noqa: DOC101, DOC103
-        self, _: Any, exp_rep: pd.DataFrame
-    ) -> None:
-        """Validate the experimental representation.
-
-        Raises:
-            ValueError: If the provided dataframe columns do not match the parameter
-                names of the subspace.
-            ValueError: If the index of the provided dataframe contains duplicates.
-        """
-        if set(exp_rep.columns) != {p.name for p in self.parameters}:
-            raise ValueError(
-                "The columns of the experimental representation must match the "
-                "parameter names of the subspace."
-            )
-        # TODO: We should ideally also also validate that there are no duplicate rows,
-        #    but in the current eager implementation this is a costly operation.
-        #    To be revisited once the lazy implementation is in place.
-        if exp_rep.index.has_duplicates:
-            raise ValueError(
-                "The index of this search space contains duplicates. "
-                "This is not allowed, as it can lead to hard-to-detect bugs."
-            )
+    @property
+    def parameters(self) -> tuple[DiscreteParameter, ...]:
+        """The parameters spanning the subspace."""
+        return self.candidates.parameters
 
     @batch_constraints.validator
     def _validate_batch_constraints(self, _, __) -> None:  # noqa: DOC101, DOC103
@@ -244,7 +218,7 @@ class SubspaceDiscrete(SerialMixin):
     @classmethod
     def empty(cls) -> Self:
         """Create an empty discrete subspace."""
-        return cls(parameters=[], exp_rep=pd.DataFrame())
+        return cls(candidates=EmptyCandidates())
 
     @classmethod
     def from_parameter(cls, parameter: DiscreteParameter) -> Self:
@@ -287,12 +261,13 @@ class SubspaceDiscrete(SerialMixin):
             "exactly to one type."
         )
 
-        df = build_constrained_product(parameters, filtering_constraints)
-
         return cls(
-            parameters=parameters,
+            candidates=(
+                EmptyCandidates()
+                if not parameters
+                else ProductCandidates(parameters, filtering_constraints)
+            ),
             batch_constraints=batch_constraints,
-            exp_rep=df,
             empty_encoding=empty_encoding,  # type: ignore[arg-type]
         )
 
@@ -349,7 +324,7 @@ class SubspaceDiscrete(SerialMixin):
         if df.shape[1] == 0:
             return cls.empty()
 
-        # Get the full list of both explicitly and implicitly defined parameter
+        # Get the full list of both explicitly and implicitly defined parameters
         parameters = get_parameters_from_dataframe(
             df, discrete_parameter_factory, parameters
         )
@@ -358,8 +333,7 @@ class SubspaceDiscrete(SerialMixin):
         df = normalize_input_dtypes(df, parameters)
 
         return cls(
-            parameters=parameters,
-            exp_rep=df,
+            candidates=TableCandidates(parameters, df),
             batch_constraints=batch_constraints,
             empty_encoding=empty_encoding,  # type: ignore[arg-type]
         )
@@ -590,9 +564,11 @@ class SubspaceDiscrete(SerialMixin):
             product_parameters, filtering_constraints, initial_df=exp_rep
         )
 
+        all_parameters = [*simplex_parameters, *product_parameters]
         return cls(
-            parameters=[*simplex_parameters, *product_parameters],
-            exp_rep=exp_rep,
+            # TODO: Investigate how off-the-shelf query optimization performs against
+            #   our custom TableCandidates construction
+            candidates=TableCandidates(all_parameters, exp_rep),
             batch_constraints=batch_constraints_list,
         )
 
@@ -629,7 +605,7 @@ class SubspaceDiscrete(SerialMixin):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self._exp_rep
+        return self.get_candidates()
 
     @property
     def comp_rep(self) -> pd.DataFrame:
@@ -643,7 +619,7 @@ class SubspaceDiscrete(SerialMixin):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.transform(self._exp_rep)
+        return self.transform(self.get_candidates())
 
     # <<<<<<<<<< Deprecation
 
@@ -832,7 +808,7 @@ class SubspaceDiscrete(SerialMixin):
 
     def get_candidates(self) -> pd.DataFrame:
         """Return all candidate parameter configurations."""
-        return self._exp_rep
+        return self.candidates.to_lazy().collect().to_pandas()
 
     def transform(
         self,

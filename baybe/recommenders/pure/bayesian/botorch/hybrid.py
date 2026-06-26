@@ -18,6 +18,7 @@ from baybe.exceptions import (
     MinimumCardinalityViolatedWarning,
 )
 from baybe.searchspace import SearchSpace
+from baybe.searchspace.candidates import TableCandidates
 from baybe.utils.basic import flatten
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.sampling_algorithms import sample_numerical_df
@@ -200,9 +201,12 @@ def recommend_hybrid_with_subsets(
         def optimize() -> tuple[pd.DataFrame, Tensor]:
             import torch
 
+            # TODO: Replace with .filter() method to avoid materialization
             mod_disc = evolve(
                 searchspace.discrete,
-                exp_rep=candidates.loc[d_mask],
+                candidates=TableCandidates(
+                    searchspace.discrete.parameters, candidates.loc[d_mask]
+                ),
             )
             mod_cont = (
                 subspace_c._enforce_cardinality_constraints(c_inactive_params)

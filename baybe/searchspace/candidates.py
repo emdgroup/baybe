@@ -125,7 +125,10 @@ class TableCandidates(CandidatesProtocol):
     )
     """See :attr:`CandidatesProtocol.parameters`."""
 
-    dataframe: nw.LazyFrame = field(converter=to_lazy)
+    # TODO: Decide if this should be a LazyFrame or a DataFrame.
+    #   The former might enable performance benefits but comes with challenges, e.g.
+    #   eq-comparison, which is currently disabled
+    dataframe: nw.LazyFrame = field(converter=to_lazy, eq=False)
     """The dataframe containing the candidates."""
 
     @dataframe.validator
