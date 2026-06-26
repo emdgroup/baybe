@@ -108,7 +108,7 @@ def test_discrete_searchspace_creation_from_degenerate_dataframe():
     """A degenerate dataframe with index but no columns yields an empty space."""
     df = pd.DataFrame(index=[0])
     subspace = SubspaceDiscrete.from_dataframe(df)
-    assert_frame_equal(subspace.exp_rep, pd.DataFrame())
+    assert_frame_equal(subspace.get_candidates(), pd.DataFrame())
 
 
 @pytest.mark.parametrize("boundary_only", (False, True))
@@ -139,10 +139,11 @@ def test_discrete_space_creation_from_simplex_inner(parameters, boundary_only):
         max_sum, parameters, boundary_only=boundary_only, tolerance=tolerance
     )
 
+    candidates = subspace.get_candidates()
     if boundary_only:
-        assert np.allclose(subspace.exp_rep.sum(axis=1), max_sum, atol=tolerance)
+        assert np.allclose(candidates.sum(axis=1), max_sum, atol=tolerance)
     else:
-        assert (subspace.exp_rep.sum(axis=1) <= max_sum + tolerance).all()
+        assert (candidates.sum(axis=1) <= max_sum + tolerance).all()
 
 
 p_d1 = NumericalDiscreteParameter(name="d1", values=[0.0, 0.5, 1.0])
@@ -169,10 +170,11 @@ def test_discrete_space_creation_from_simplex_mixed(
         product_parameters=product_parameters,
         boundary_only=False,
     )
-    assert len(subspace.exp_rep) == n_elements  # <-- (# simplex part) x (# task part)
-    assert not any(subspace.exp_rep.duplicated())
-    assert len(subspace.parameters) == len(subspace.exp_rep.columns)
-    assert all(p.name in subspace.exp_rep.columns for p in subspace.parameters)
+    candidates = subspace.get_candidates()
+    assert len(candidates) == n_elements  # <-- (# simplex part) x (# task part)
+    assert not any(candidates.duplicated())
+    assert len(subspace.parameters) == len(candidates.columns)
+    assert all(p.name in candidates.columns for p in subspace.parameters)
 
 
 @pytest.mark.parametrize("boundary_only", (False, True))
@@ -188,10 +190,11 @@ def test_discrete_space_creation_from_simplex_restricted(boundary_only):
         max_nonzero=4,
         boundary_only=True,
     )
-    n_nonzero = (subspace.exp_rep > 0.0).sum(axis=1)
+    candidates = subspace.get_candidates()
+    n_nonzero = (candidates > 0.0).sum(axis=1)
     if boundary_only:
-        assert np.allclose(subspace.exp_rep.sum(axis=1), 1.0)
+        assert np.allclose(candidates.sum(axis=1), 1.0)
     assert n_nonzero.min() == 2
     assert n_nonzero.max() == 4
-    assert len(subspace.parameters) == len(subspace.exp_rep.columns)
-    assert all(p.name in subspace.exp_rep.columns for p in subspace.parameters)
+    assert len(subspace.parameters) == len(candidates.columns)
+    assert all(p.name in candidates.columns for p in subspace.parameters)

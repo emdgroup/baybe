@@ -95,7 +95,7 @@ def test_discrete_searchspace_creation_from_dataframe():
 
     assert searchspace.type == SearchSpaceType.DISCRETE
     assert searchspace.parameters == all_params
-    assert df.equals(searchspace.discrete.exp_rep)
+    assert df.equals(searchspace.discrete.get_candidates())
 
 
 def test_discrete_from_dataframe_dtype_consistency():
@@ -114,7 +114,7 @@ def test_discrete_from_dataframe_dtype_consistency():
         next(p for p in subspace.parameters if p.name == "C"),
         NumericalDiscreteParameter,
     )
-    assert pd.api.types.is_float_dtype(subspace.exp_rep["C"])
+    assert pd.api.types.is_float_dtype(subspace.get_candidates()["C"])
 
 
 def test_invalid_simplex_creating_with_overlapping_parameters():
@@ -157,11 +157,12 @@ def test_from_simplex_with_degenerate_parameter_count(simplex_parameters, expect
             product_parameters=product_parameters,
         )
 
-    assert len(subspace.exp_rep) == expected_len
+    candidates = subspace.get_candidates()
+    assert len(candidates) == expected_len
 
     if simplex_parameters:
         simplex_cols = [p.name for p in simplex_parameters]
-        assert all(subspace.exp_rep[simplex_cols].sum(axis=1) <= 1.0)
+        assert all(candidates[simplex_cols].sum(axis=1) <= 1.0)
 
 
 def test_continuous_searchspace_creation_from_bounds():
@@ -232,10 +233,10 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
     estimate_exp = estimate.exp_rep_bytes
     estimate_comp = estimate.comp_rep_bytes
 
-    actual_exp = searchspace.discrete.exp_rep.memory_usage(deep=True, index=False).sum()
-    actual_comp = searchspace.discrete.comp_rep.memory_usage(
-        deep=True, index=False
-    ).sum()
+    candidates = searchspace.discrete.get_candidates()
+    candidates_comp = searchspace.discrete.transform(candidates)
+    actual_exp = candidates.memory_usage(deep=True, index=False).sum()
+    actual_comp = candidates_comp.memory_usage(deep=True, index=False).sum()
 
     assert 0.95 <= estimate_exp / actual_exp <= 1.05, (
         "Exp: ",
@@ -332,8 +333,9 @@ def test_task_parameter_active_values_validation():
     searchspace = SearchSpace.from_dataframe(
         target_df, parameters=[num_param, task_param, cat_param]
     )
-    assert len(searchspace.discrete.exp_rep) == 1
-    assert all(searchspace.discrete.exp_rep["task"] == "target")
+    candidates = searchspace.discrete.get_candidates()
+    assert len(candidates) == 1
+    assert all(candidates["task"] == "target")
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])

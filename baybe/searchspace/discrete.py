@@ -6,7 +6,6 @@ import gc
 import random
 import warnings
 from collections.abc import Callable, Collection, Iterator, Sequence
-from functools import cached_property
 from itertools import islice
 from math import prod
 from typing import TYPE_CHECKING, Annotated, Any, Literal
@@ -117,7 +116,9 @@ class SubspaceDiscrete(SerialMixin):
     )
     """The parameters spanning the subspace."""
 
-    exp_rep: pd.DataFrame = field(validator=instance_of(pd.DataFrame), eq=eq_dataframe)
+    _exp_rep: pd.DataFrame = field(
+        alias="exp_rep", validator=instance_of(pd.DataFrame), eq=eq_dataframe
+    )
     """The experimental representation of the subspace."""
 
     _empty_encoding: Annotated[bool, cattrs.override(omit=True)] = field(
@@ -193,13 +194,11 @@ class SubspaceDiscrete(SerialMixin):
                 "Discrete Parameters",
                 pretty_print_df(param_df, max_colwidth=None),
             ),
-            to_string("Experimental Representation", pretty_print_df(self.exp_rep)),
             to_string("Batch Constraints", pretty_print_df(batch_constraints_df)),
-            to_string("Computational Representation", pretty_print_df(self.comp_rep)),
         ]
         return to_string(self.__class__.__name__, *fields)
 
-    @exp_rep.validator
+    @_exp_rep.validator
     def _validate_exp_rep(  # noqa: DOC101, DOC103
         self, _: Any, exp_rep: pd.DataFrame
     ) -> None:
@@ -612,20 +611,47 @@ class SubspaceDiscrete(SerialMixin):
         """Return tuple of parameter names."""
         return tuple(p.name for p in self.parameters)
 
-    @cached_property
+    # >>>>>>>>>> Deprecation
+    @property
+    def exp_rep(self) -> pd.DataFrame:
+        """Deprecated! Use :meth:`get_candidates` instead."""
+        get_candidates = type(self).get_candidates.__name__
+        warnings.warn(
+            f"Accessing 'exp_rep' is deprecated and will be removed in a future "
+            f"version. Use '{get_candidates}()' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._exp_rep
+
+    @property
     def comp_rep(self) -> pd.DataFrame:
-        """The computational representation of the subspace."""
-        return self.transform(self.exp_rep)
+        """Deprecated! Use :meth:`transform` with :meth:`get_candidates` instead."""
+        cls = type(self)
+        transform = cls.transform.__name__
+        get_candidates = cls.get_candidates.__name__
+        warnings.warn(
+            f"Accessing 'comp_rep' is deprecated and will be removed in a future "
+            f"version. Use '{transform}({get_candidates}())' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.transform(self._exp_rep)
+
+    # <<<<<<<<<< Deprecation
 
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:
         """The columns spanning the computational representation."""
-        return tuple(self.comp_rep.columns)
+        return tuple(col for p in self.parameters for col in p.comp_rep_columns)
 
     @property
     def comp_rep_bounds(self) -> pd.DataFrame:
         """The minimum and maximum values of the computational representation."""
-        return pd.DataFrame({"min": self.comp_rep.min(), "max": self.comp_rep.max()}).T
+        if not self.parameters:
+            return pd.DataFrame(index=["min", "max"])
+        df = pd.concat([p.comp_df for p in self.parameters], axis=1)
+        return pd.DataFrame({"min": df.min(), "max": df.max()}).T
 
     @property
     def scaling_bounds(self) -> pd.DataFrame:
@@ -742,10 +768,10 @@ class SubspaceDiscrete(SerialMixin):
 
         per_constraint: list[list[npt.NDArray[np.bool_]]]
         if not self.batch_constraints:
-            per_constraint = [[np.ones(len(self.exp_rep), dtype=bool)]]
+            per_constraint = [[np.ones(len(self.get_candidates()), dtype=bool)]]
         else:
             per_constraint = [
-                c.subset_masks(self.exp_rep) for c in self.batch_constraints
+                c.subset_masks(self.get_candidates()) for c in self.batch_constraints
             ]
 
         total = prod(len(masks) for masks in per_constraint)
@@ -797,14 +823,9 @@ class SubspaceDiscrete(SerialMixin):
             )
         )
 
-    def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:
-        """Return the set of candidate parameter settings that can be tested.
-
-        Returns:
-            The candidate parameter settings both in experimental and computational
-            representation.
-        """
-        return self.exp_rep, self.comp_rep
+    def get_candidates(self) -> pd.DataFrame:
+        """Return all candidate parameter configurations."""
+        return self._exp_rep
 
     def transform(
         self,

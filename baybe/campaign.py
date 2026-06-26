@@ -206,39 +206,7 @@ class Campaign(SerialMixin):
 
     @override
     def __str__(self) -> str:
-        recommended_count = len(self._recommended_experiments)
-        exp_rep = self.searchspace.discrete.exp_rep
-        if self._measurements.empty or exp_rep.empty:
-            measured_count = 0
-        else:
-            measured_count = len(
-                fuzzy_row_match(exp_rep, self._measurements, self.parameters)
-            )
-        excluded_count = len(self._excluded_experiments)
-        n_elements = len(exp_rep)
-        searchspace_fields = [
-            to_string(
-                "Recommended:",
-                f"{recommended_count}/{n_elements}",
-                single_line=True,
-            ),
-            to_string(
-                "Measured:",
-                f"{measured_count}/{n_elements}",
-                single_line=True,
-            ),
-            to_string(
-                "Excluded:",
-                f"{excluded_count}/{n_elements}",
-                single_line=True,
-            ),
-        ]
-        metadata_fields = [
-            to_string("Discrete Subspace Meta Data", *searchspace_fields),
-        ]
-        metadata = to_string("Meta Data", *metadata_fields)
-        fields = [metadata, self.searchspace, self.objective, self.recommender]
-
+        fields = [self.searchspace, self.objective, self.recommender]
         return to_string(self.__class__.__name__, *fields)
 
     @property
@@ -460,7 +428,7 @@ class Campaign(SerialMixin):
         #  * Additional shortcuts might be possible.
         self.clear_cache()
 
-        df = self.searchspace.discrete.exp_rep
+        df = self.searchspace.discrete.get_candidates()
 
         if isinstance(constraints, pd.DataFrame):
             # Determine the candidate subset to be toggled
@@ -561,12 +529,12 @@ class Campaign(SerialMixin):
         if self.searchspace.type is SearchSpaceType.DISCRETE:
             # TODO: This implementation should at some point be hidden behind an
             #   appropriate public interface, like `SubspaceDiscrete.filter()`
-            exp_rep = self.searchspace.discrete.exp_rep
-            mask_todrop = pd.Series(False, index=exp_rep.index)
+            candidates = self.searchspace.discrete.get_candidates()
+            mask_todrop = pd.Series(False, index=candidates.index)
             if not self._excluded_experiments.empty:
                 mask_todrop |= (
                     pd.merge(
-                        exp_rep,
+                        candidates,
                         self._excluded_experiments,
                         indicator=True,
                         how="left",
@@ -580,7 +548,7 @@ class Campaign(SerialMixin):
             ):
                 mask_todrop |= (
                     pd.merge(
-                        exp_rep,
+                        candidates,
                         self._recommended_experiments,
                         indicator=True,
                         how="left",
@@ -593,7 +561,7 @@ class Campaign(SerialMixin):
                 and not self._measurements.empty
             ):
                 measured_idxs = fuzzy_row_match(
-                    exp_rep, self._measurements, self.parameters
+                    candidates, self._measurements, self.parameters
                 )
                 mask_todrop.loc[measured_idxs] = True
             if (
@@ -602,7 +570,7 @@ class Campaign(SerialMixin):
             ):
                 mask_todrop |= (
                     pd.merge(
-                        exp_rep,
+                        candidates,
                         pending_experiments,
                         indicator=True,
                         how="left",
@@ -613,7 +581,7 @@ class Campaign(SerialMixin):
             searchspace = evolve(
                 self.searchspace,
                 discrete=evolve(
-                    self.searchspace.discrete, exp_rep=exp_rep.loc[~mask_todrop]
+                    self.searchspace.discrete, exp_rep=candidates.loc[~mask_todrop]
                 ),
             )
         else:
@@ -1100,13 +1068,16 @@ def _structure_campaign(d: dict, cl: type) -> Campaign:
 
     # >>>>>>>>>> Deprecation
     # Post-structure reconstruction from legacy metadata indices
-    if legacy_recommended_idxs is not None:
-        rec_df = campaign.searchspace.discrete.exp_rep.loc[legacy_recommended_idxs]
-        campaign._recommended_experiments = rec_df.reset_index(drop=True)
-
-    if legacy_excluded_idxs is not None:
-        excl_df = campaign.searchspace.discrete.exp_rep.loc[legacy_excluded_idxs]
-        campaign._excluded_experiments = excl_df.reset_index(drop=True)
+    if legacy_recommended_idxs is not None or legacy_excluded_idxs is not None:
+        candidates = campaign.searchspace.discrete.get_candidates()
+        if legacy_recommended_idxs is not None:
+            campaign._recommended_experiments = candidates.loc[
+                legacy_recommended_idxs
+            ].reset_index(drop=True)
+        if legacy_excluded_idxs is not None:
+            campaign._excluded_experiments = candidates.loc[
+                legacy_excluded_idxs
+            ].reset_index(drop=True)
 
     # Fix schema of empty DataFrames from legacy serialization
     if campaign._measurements.columns.empty:

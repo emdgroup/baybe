@@ -109,30 +109,22 @@ print(campaign)
 
 N_ITERATIONS = 2 if SMOKE_TEST else 5
 for kIter in range(N_ITERATIONS):
+    candidates = campaign.searchspace.discrete.get_candidates()
+
     print(f"\n\n#### ITERATION {kIter + 1} ####")
 
     print("## ASSERTS ##")
     print(
         "Number of entries with 1,2-sum above 150:      ",
-        (
-            campaign.searchspace.discrete.exp_rep[["NumParam1", "NumParam2"]].sum(
-                axis=1
-            )
-            > 150.0
-        ).sum(),
+        (candidates[["NumParam1", "NumParam2"]].sum(axis=1) > 150.0).sum(),
     )
     print(
         "Number of entries with 3,4-product under 30:   ",
-        (
-            campaign.searchspace.discrete.exp_rep[["NumParam3", "NumParam4"]].prod(
-                axis=1
-            )
-            < 30
-        ).sum(),
+        (candidates[["NumParam3", "NumParam4"]].prod(axis=1) < 30).sum(),
     )
     print(
         "Number of entries with 5,6-sum unequal to 100: ",
-        campaign.searchspace.discrete.exp_rep[["NumParam5", "NumParam6"]]
+        candidates[["NumParam5", "NumParam6"]]
         .sum(axis=1)
         .apply(lambda x: x - 100.0)
         .abs()
