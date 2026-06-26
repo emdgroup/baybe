@@ -7,6 +7,7 @@ from itertools import pairwise
 from pathlib import Path
 from unittest.mock import patch
 
+import cattrs
 import numpy as np
 import pandas as pd
 import pytest
@@ -825,8 +826,10 @@ def test_deprecated_discrete_subspace_deserialization():
         actual = SubspaceDiscrete.from_dict(base_dict | {"empty_encoding": False})
     assert actual == expected
 
-    with pytest.raises(DeprecationError, match="comp_rep"):
-        SubspaceDiscrete.from_dict(base_dict | {"comp_rep": {}})
+    with pytest.raises(cattrs.ClassValidationError) as exc_info:
+        SubspaceDiscrete.from_dict(base_dict | {"comp_rep": base_dict["exp_rep"]})
+    (ex,) = exc_info.value.exceptions
+    assert isinstance(ex, DeprecationError) and "comp_rep" in str(ex)
 
 
 def test_deprecated_constraints_deserialization():

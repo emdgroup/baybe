@@ -121,16 +121,20 @@ class SubspaceDiscrete(SerialMixin):
     )
     """The experimental representation of the subspace."""
 
-    _empty_encoding: Annotated[bool, cattrs.override(omit=True)] = field(
-        alias="empty_encoding", default=None, validator=_deprecate_argument(error=False)
+    _empty_encoding: Annotated[bool, cattrs.override(omit_if_default=True)] = field(
+        alias="empty_encoding",
+        default=None,
+        eq=False,
+        validator=_deprecate_argument(error=False),
     )
     "Ignore! For backwards compatibility only."
 
     _constraints: Annotated[
-        tuple[DiscreteConstraint, ...], cattrs.override(omit=True)
+        tuple[DiscreteConstraint, ...], cattrs.override(omit_if_default=True)
     ] = field(
         alias="constraints",
         default=None,
+        eq=False,
         validator=_deprecate_argument(
             error=False,
             msg=lambda: _make_constraints_deprecation_msg(),  # noqa: PLW0108
@@ -138,8 +142,11 @@ class SubspaceDiscrete(SerialMixin):
     )
     "Ignore! For backwards compatibility only."
 
-    _comp_rep: Annotated[pd.DataFrame, cattrs.override(omit=True)] = field(
-        alias="comp_rep", default=None, validator=_deprecate_argument(error=True)
+    _comp_rep: Annotated[pd.DataFrame, cattrs.override(omit_if_default=True)] = field(
+        alias="comp_rep",
+        default=None,
+        eq=False,
+        validator=_deprecate_argument(error=True),
     )
     "Ignore! For backwards compatibility only."
 
