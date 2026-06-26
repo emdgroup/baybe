@@ -816,17 +816,17 @@ def test_deprecated_empty_encoding_from_dataframe():
 
 
 def test_deprecated_discrete_subspace_deserialization():
-    """Deserialization from legacy JSON with `empty_encoding`/`comp_rep` works."""
+    """Deserialization from legacy JSON with deprecated keys raises the right signal."""
     p = NumericalDiscreteParameter("p", [0, 1])
     expected = SubspaceDiscrete.from_product(parameters=[p])
+    base_dict = expected.to_dict()
 
-    # Build a legacy dict containing the deprecated fields
-    legacy_dict = expected.to_dict()
-    legacy_dict["empty_encoding"] = False
-    legacy_dict["comp_rep"] = legacy_dict["exp_rep"]
-
-    actual = SubspaceDiscrete.from_dict(legacy_dict)
+    with pytest.warns(DeprecationWarning, match="empty_encoding"):
+        actual = SubspaceDiscrete.from_dict(base_dict | {"empty_encoding": False})
     assert actual == expected
+
+    with pytest.raises(DeprecationError, match="comp_rep"):
+        SubspaceDiscrete.from_dict(base_dict | {"comp_rep": {}})
 
 
 def test_deprecated_constraints_deserialization():
