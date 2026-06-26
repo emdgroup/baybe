@@ -19,7 +19,7 @@ from baybe.parameters.numerical import (
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.kernel import (
     ICMKernelFactory,
-    _enable_index_kernel,
+    _enable_kernel_composition,
 )
 from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEKernelFactory,
@@ -105,10 +105,10 @@ def test_factory_parameter_kind_validation(factory, parameters, error):
         factory(searchspace, objective, measurements)
 
 
-def test_enable_index_kernel_guard():
-    """_enable_index_kernel raises when the factory already supports task/fidelity."""
+def test_enable_kernel_composition_guard():
+    """Decorator raises when the factory already supports task/fidelity."""
     with pytest.raises(TypeError, match="already supports task or fidelity"):
-        _enable_index_kernel(_BayBEIndexKernelFactory)
+        _enable_kernel_composition(_BayBEIndexKernelFactory)
 
 
 _icm_guard_message = "contains a 'TaskParameter' or a 'CategoricalFidelityParameter'"

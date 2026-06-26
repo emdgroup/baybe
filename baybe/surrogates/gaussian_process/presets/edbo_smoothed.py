@@ -19,7 +19,7 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
     _MLLForNonTLFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
-    _enable_index_kernel,
+    _enable_kernel_composition,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 _DIM_LIMITS = (8, 75)
 
 
-@_enable_index_kernel
+@_enable_kernel_composition
 @define
 class SmoothedEDBOKernelFactory(_PureKernelFactory):
     """A factory providing smoothed versions of EDBO kernels (adapted from :cite:p:`Shields2021`).

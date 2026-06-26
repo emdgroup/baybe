@@ -31,7 +31,7 @@ from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
-    _enable_index_kernel,
+    _enable_kernel_composition,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -197,7 +197,7 @@ class _BayBENumericalKernelFactory(_PureKernelFactory):
         return factory(searchspace, objective, measurements)
 
 
-BayBEKernelFactory = _enable_index_kernel(
+BayBEKernelFactory = _enable_kernel_composition(
     _BayBENumericalKernelFactory, "BayBEKernelFactory"
 )
 """The default kernel factory for GP surrogates."""
@@ -243,6 +243,39 @@ class _BayBEIndexKernelFactory(_PureKernelFactory):
 
 
 @define
+class _BayBEDownsamplingBaseKernelFactory(_PureKernelFactory):
+    """The default base kernel factory for numerical fidelity.
+
+    Produces the same kernel as BoTorch's ``get_covar_module_with_dim_scaled_prior``
+    to ensure behavioral equivalence with ``SingleTaskMultiFidelityGP``.
+    """
+
+    _uses_parameter_names: ClassVar[bool] = True
+    # See base class.
+
+    @override
+    def _make(
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+    ) -> Kernel | GPyTorchKernel:
+        from botorch.models.utils.gpytorch_modules import (
+            get_covar_module_with_dim_scaled_prior,
+        )
+
+        active_dims = list(
+            chain.from_iterable(
+                searchspace.get_comp_rep_parameter_indices(name)
+                for name in self.get_parameter_names(searchspace)
+                if searchspace.get_parameters_by_name([name])[0]._kind
+                is _ParameterKind.REGULAR
+            )
+        )
+        return get_covar_module_with_dim_scaled_prior(
+            ard_num_dims=len(active_dims),
+            active_dims=active_dims,
+        )
+
+
+@define
 class BayBEMeanFactory(MeanFactoryProtocol):
     """The default mean factory for GP surrogates."""
 
@@ -269,6 +302,18 @@ class BayBELikelihoodFactory(LikelihoodFactoryProtocol):
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> GPyTorchLikelihood:
         from baybe.surrogates.gaussian_process.presets.chen import ChenLikelihoodFactory
+
+        # For numerical fidelity, use BoTorch's default likelihood to match the
+        # kernel structure produced by DownsamplingKernelFactory.
+        if (
+            searchspace.fidelity_type
+            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+        ):
+            from botorch.models.utils.gpytorch_modules import (
+                get_gaussian_likelihood_with_lognormal_prior,
+            )
+
+            return get_gaussian_likelihood_with_lognormal_prior()
 
         factory = _dispatch(
             ChenLikelihoodFactory(),
