@@ -141,7 +141,7 @@ print(recommendation)
 
     Recommendation from campaign:
         Granularity  Pressure[bar]  Temperature[degree_C]    Solvent
-    301      medium            5.0             155.555556  Solvent B
+    103      coarse           10.0             155.555556  Solvent D
 
 
 
