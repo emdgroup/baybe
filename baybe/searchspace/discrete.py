@@ -112,7 +112,7 @@ class SubspaceDiscrete(SerialMixin):
     and provides access to candidate sets and different parameter views.
     """
 
-    candidates: CandidatesProtocol = field()
+    candidates: CandidatesProtocol = field(validator=instance_of(CandidatesProtocol))
     """The subspace candidate generator."""
 
     _empty_encoding: Annotated[bool, cattrs.override(omit_if_default=True)] = field(

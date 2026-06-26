@@ -1,7 +1,7 @@
 """Candidates module for managing lazy candidate generation."""
 
 import gc
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 import narwhals.stable.v2 as nw
 from attr.validators import deep_iterable, instance_of, min_len
@@ -20,6 +20,7 @@ from baybe.utils.dataframe import to_lazy
 from baybe.utils.validation import validate_parameter_input
 
 
+@runtime_checkable
 class CandidatesProtocol(Protocol):
     """Type protocol specifying the interface candidate generators need to implement."""
 
