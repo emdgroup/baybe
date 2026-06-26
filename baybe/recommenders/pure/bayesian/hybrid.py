@@ -1,4 +1,4 @@
-"""Hybrid recommendation routines for BotorchRecommender."""
+"""Hybrid recommendation routines for BayesianRecommender."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Discrete recommendation routines for BotorchRecommender."""
+"""Discrete recommendation routines for BayesianRecommender."""
 
 from __future__ import annotations
 

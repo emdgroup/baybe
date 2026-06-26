@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable, TypeAlias, ClassVar
 from collections.abc import Callable
+from typing import TYPE_CHECKING, ClassVar, Protocol, TypeAlias, runtime_checkable
 
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 
-Optimand: TypeAlias = Callable[[Tensor], Tensor]
-"Type alias for the callable to be optimized."
-
 if TYPE_CHECKING:
-    from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from torch import Tensor
+
+    Optimand: TypeAlias = Callable[[Tensor], Tensor]
+    "Type alias for the callable to be optimized."
 
 
 @runtime_checkable

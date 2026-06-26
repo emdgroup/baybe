@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import gc
 from typing import TYPE_CHECKING, ClassVar, cast
-from typing_extensions import override
 
 from attrs import define, field, fields
 from attrs.validators import gt, instance_of
+from typing_extensions import override
 
-from baybe.exceptions import IncompatibilityError
-from baybe.exceptions import IncompatibleSearchSpaceError
+from baybe.exceptions import IncompatibilityError, IncompatibleSearchSpaceError
 from baybe.recommenders.pure.bayesian.botorch.optimizers.base import OptimizerProtocol
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
@@ -18,6 +17,7 @@ from baybe.utils.basic import flatten
 
 if TYPE_CHECKING:
     from torch import Tensor
+
     from baybe.recommenders.pure.bayesian.botorch.optimizers.base import Optimand
 
 
@@ -31,12 +31,12 @@ class GradientOptimizer(OptimizerProtocol):
 
     n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
     """Number of times gradient-based optimization is restarted from different initial
-    points. **Does not affect purely discrete optimization**.
+    points.
     """
 
     n_raw_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
     """Number of raw samples drawn for the initialization heuristic in gradient-based
-    optimization. **Does not affect purely discrete optimization**.
+    optimization.
     """
 
     sequential_continuous: bool = field(default=True)
@@ -65,27 +65,32 @@ class GradientOptimizer(OptimizerProtocol):
             The recommendations and corresponding acquisition values.
 
         Raises:
+            IncompatibilityError: If the search space has interpoint constraints and the
+                ``sequential_continuous`` flag is set to ``True``.
             NotImplementedError: If the search space has a discrete component.
             ValueError: If the search space has cardinality constraints.
         """
         import torch
-        from botorch.optim import optimize_acqf
         from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
+        from botorch.optim import optimize_acqf
 
         if searchspace.type is not self.compatibility:
             raise IncompatibleSearchSpaceError(
-                    f"'{self.__class__.__name__}' currently only supports "
-                    f"continuous search spaces."
-                )
+                f"'{self.__class__.__name__}' currently only supports "
+                f"continuous search spaces."
+            )
 
         # TODO: Add option for automatic choice once the "settings" PR is merged,
         #   which ships the necessary machinery
-        if self.sequential_continuous and searchspace.continuous.has_interpoint_constraints:                
+        if (
+            self.sequential_continuous
+            and searchspace.continuous.has_interpoint_constraints
+        ):
             raise IncompatibilityError(
-                f"Setting the "                                                                             
-                f"'{fields(self.__class__).sequential_continuous.name}' "                                   
-                f"flag to ``True`` while interpoint constraints are present in the "                        
-                f"continuous subspace is not supported. "                                                   
+                f"Setting the "
+                f"'{fields(self.__class__).sequential_continuous.name}' "
+                f"flag to ``True`` while interpoint constraints are present in the "
+                f"continuous subspace is not supported. "
             )
 
         if not searchspace.discrete.is_empty:
