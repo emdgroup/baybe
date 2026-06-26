@@ -8,18 +8,15 @@ import os
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
-import pandas as pd
 from attrs import Converter, define, field
 from attrs.converters import pipe
-from attrs.validators import instance_of, is_callable
+from attrs.validators import is_callable
 from typing_extensions import Self, override
 
 from baybe.exceptions import DeprecationError
 from baybe.kernels.base import Kernel
-from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
-from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
@@ -46,10 +43,15 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBELikelihoodFactory,
     BayBEMeanFactory,
 )
+from baybe.surrogates.gaussian_process.utils import (
+    _ModelContext,
+    _validate_searchspace_has_non_index_input,
+)
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    import pandas as pd
     from botorch.models.gpytorch import GPyTorchModel
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
@@ -59,56 +61,8 @@ if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
-
-@define
-class _ModelContext:
-    """Model context for :class:`GaussianProcessSurrogate`."""
-
-    searchspace: SearchSpace = field(validator=instance_of(SearchSpace))
-    """The search space the model is trained on."""
-
-    objective: Objective = field(validator=instance_of(Objective))
-    """The objective for which the model is trained."""
-
-    measurements: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
-    """The training data in experimental representation."""
-
-    @property
-    def task_idx(self) -> int | None:
-        """The computational column index of the task parameter, if available."""
-        return self.searchspace.task_idx
-
-    @property
-    def is_multitask(self) -> bool:
-        """Indicates if model is to be operated in a multi-task context."""
-        return self.n_task_dimensions > 0
-
-    @property
-    def n_task_dimensions(self) -> int:
-        """The number of task dimensions."""
-        # TODO: Generalize to multiple task parameters
-        return 1 if self.task_idx is not None else 0
-
-    @property
-    def n_tasks(self) -> int:
-        """The number of tasks."""
-        return self.searchspace.n_tasks
-
-    @property
-    def parameter_bounds(self) -> Tensor:
-        """Get the search space parameter bounds in BoTorch Format."""
-        import torch
-
-        return torch.from_numpy(self.searchspace.scaling_bounds.to_numpy(copy=True))
-
-    @property
-    def numerical_indices(self) -> list[int]:
-        """The indices of the regular numerical model inputs."""
-        return [
-            i
-            for i in range(len(self.searchspace.comp_rep_columns))
-            if i != self.task_idx
-        ]
+    from baybe.objectives.base import Objective
+    from baybe.searchspace import SearchSpace
 
 
 def _mark_custom_kernel(
@@ -141,6 +95,9 @@ class GaussianProcessSurrogate(Surrogate):
     # Moving the scaling operation into the botorch GP object avoids this conflict.
 
     supports_transfer_learning: ClassVar[bool] = True
+    # See base class.
+
+    supports_multi_fidelity: ClassVar[bool] = True
     # See base class.
 
     _custom_kernel: bool = field(init=False, default=False, repr=False, eq=False)
@@ -251,35 +208,17 @@ class GaussianProcessSurrogate(Surrogate):
         return self._model
 
     @override
-    @staticmethod
-    def _make_parameter_scaler_factory(
-        parameter: Parameter,
-    ) -> type[InputTransform] | None:
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        return None
+    def _validate_fit_context(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
 
-    @override
-    @staticmethod
-    def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        return None
-
-    @override
-    def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
-        return self._model.posterior(candidates_comp_scaled)
-
-    @override
-    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
-        import botorch
-        from botorch.models.transforms import Normalize, Standardize
-
-        assert self._searchspace is not None  # provided by base class
-        assert self._objective is not None  # provided by base class
-        assert self._measurements is not None  # provided by base class
-        context = _ModelContext(self._searchspace, self._objective, self._measurements)
+        _validate_searchspace_has_non_index_input(searchspace, self.__class__.__name__)
 
         if (
-            context.is_multitask
+            searchspace.task_idx is not None
             and self._custom_kernel
             and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
         ):
@@ -296,8 +235,40 @@ class GaussianProcessSurrogate(Surrogate):
                 f"environment variable to a truthy value."
             )
 
+    @override
+    @staticmethod
+    def _make_parameter_scaler_factory(
+        parameter: Parameter,
+    ) -> type[InputTransform] | None:
+        # For GPs, we let botorch handle the scaling. See Note [Scaling Workaround]
+        # in the class docstring.
+        return None
+
+    @override
+    @staticmethod
+    def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
+        # For GPs, we let botorch handle the scaling. See Note [Scaling Workaround]
+        # in the class docstring.
+        return None
+
+    @override
+    def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
+        return self._model.posterior(candidates_comp_scaled)
+
+    @override
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        import botorch
+        from botorch.models.transforms import Normalize, Standardize
+
+        assert self._searchspace is not None  # provided by base class
+        assert self._objective is not None  # provided by base class
+        assert self._measurements is not None  # provided by base class
+
+        context = _ModelContext(self._searchspace, self._objective, self._measurements)
+
         ### Input/output scaling
-        # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
+        # NOTE: For GPs, we let BoTorch handle scaling. See Note [Scaling Workaround]
+        # in the class docstring.
         input_transform = Normalize(
             train_x.shape[-1],
             bounds=context.parameter_bounds,

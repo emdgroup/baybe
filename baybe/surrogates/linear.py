@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, ClassVar, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from attrs import define, field
 from typing_extensions import override
@@ -40,9 +40,6 @@ class _ARDRegressionParams(TypedDict, total=False):
 @define
 class BayesianLinearSurrogate(IndependentGaussianSurrogate):
     """A Bayesian linear regression surrogate model."""
-
-    supports_transfer_learning: ClassVar[bool] = False
-    # See base class.
 
     model_params: _ARDRegressionParams = field(
         factory=dict,

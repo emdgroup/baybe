@@ -52,7 +52,7 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
         converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),  # type: ignore
         validator=[
             min_len(2),
-            validate_unique_values,  # type: ignore
+            validate_unique_values,
             deep_iterable(member_validator=instance_of((str, bool))),
         ],
     )
@@ -130,7 +130,7 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
         validator=[
             min_len(2),
             validate_contains_exactly_one(1.0),
-            validate_unique_values,  # type: ignore
+            validate_unique_values,
             validate_is_finite,
             deep_iterable(member_validator=and_(ge(0.0), le(1.0))),
         ],

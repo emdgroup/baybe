@@ -43,12 +43,14 @@ def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
 class BayesianRecommender(PureRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
 
-    _surrogate_model: SurrogateProtocol = field(
+    _surrogate_model: SurrogateProtocol | None = field(
         alias="surrogate_model",
-        factory=GaussianProcessSurrogate,
-        converter=_autoreplicate,
+        default=None,
+        converter=optional(_autoreplicate),
     )
-    """The surrogate model."""
+    """The surrogate model. When omitted, a
+    :class:`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`
+    is used as the default."""
 
     acquisition_function: AcquisitionFunction | None = field(
         default=None, converter=optional(convert_acqf)
@@ -80,6 +82,9 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame,
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
+        if self._surrogate_model is None:
+            self._surrogate_model = _autoreplicate(GaussianProcessSurrogate())
+
         # This fit applies internal caching and does not necessarily involve computation
         self._surrogate_model.fit(searchspace, objective, measurements)
         return self._surrogate_model

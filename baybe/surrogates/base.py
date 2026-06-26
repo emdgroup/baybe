@@ -82,9 +82,13 @@ class SurrogateProtocol(Protocol):
 class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Abstract base class for all surrogate models."""
 
-    supports_transfer_learning: ClassVar[bool]
+    supports_transfer_learning: ClassVar[bool] = False
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
+
+    supports_multi_fidelity: ClassVar[bool] = False
+    """Class variable encoding whether or not the surrogate supports multi fidelity
+    Bayesian optimization."""
 
     supports_multi_output: ClassVar[bool] = False
     """Class variable encoding whether or not the surrogate is multi-output
@@ -383,6 +387,14 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         return result
 
+    def _validate_fit_context(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
+        """Validate the surrogate fit context before mutating cached state."""
+
     @override
     def fit(
         self,
@@ -415,14 +427,6 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 f"'.{self.replicate.__name__}' method."
             )
 
-        # When the context is unchanged, no retraining is necessary
-        if (
-            searchspace == self._searchspace
-            and objective == self._objective
-            and hash(measurements) == self._measurements_hash
-        ):
-            return
-
         # Check if transfer learning capabilities are needed
         if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
             raise ValueError(
@@ -430,6 +434,24 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 f"surrogate model type ({self.__class__.__name__}) does not "
                 f"support transfer learning."
             )
+
+        # Check if multi fidelity capabilities are needed
+        if (searchspace.n_fidelities > 1) and (not self.supports_multi_fidelity):
+            raise ValueError(
+                f"The search space contains fidelity parameters but the selected "
+                f"surrogate model type ({self.__class__.__name__}) does not "
+                f"support multi fidelity Bayesian optimisation."
+            )
+
+        self._validate_fit_context(searchspace, objective, measurements)
+
+        # When the context is unchanged, no retraining is necessary
+        if (
+            searchspace == self._searchspace
+            and objective == self._objective
+            and hash(measurements) == self._measurements_hash
+        ):
+            return
 
         # Block partial measurements
         handle_missing_values(measurements, [t.name for t in objective.targets])
@@ -474,6 +496,11 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             to_string(
                 "Supports Transfer Learning",
                 self.supports_transfer_learning,
+                single_line=True,
+            ),
+            to_string(
+                "Supports Multi Fidelity",
+                self.supports_multi_fidelity,
                 single_line=True,
             ),
         ]
