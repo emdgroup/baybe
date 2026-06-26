@@ -110,9 +110,9 @@ class BotorchKernelFactory(_PureKernelFactory):
         installed = version("botorch")
         if Version(installed) < Version(_MIN_BOTORCH_VERSION):
             raise IncompatibilityError(
-                f"The '{self.__class__.__name__}' requires BoTorch >= "
+                f"The '{self.__class__.__name__}' requires botorch>="
                 f"{_MIN_BOTORCH_VERSION}, but version {installed} is installed. "
-                f"Please upgrade BoTorch: pip install 'botorch>="
+                f"Please upgrade: pip install 'botorch>="
                 f"{_MIN_BOTORCH_VERSION}'."
             )
 
