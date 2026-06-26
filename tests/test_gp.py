@@ -195,9 +195,9 @@ def test_invalid_components():
         GaussianProcessSurrogate(fit_criterion_or_factory=MaternKernel())
 
 
-# NOTE: The BOTORCH preset tracks BoTorch's MultiTaskGP defaults. The HVARFNER preset
-#   implements the fixed Hvarfner et al. (2024) parametrization and may diverge from
-#   BoTorch's defaults as BoTorch evolves (e.g., BetaPrior added in 0.18.0).
+# NOTE: The BOTORCH preset tracks BoTorch's GP defaults while the HVARFNER preset
+#   implements BoTorch's static Hvarfner et al. (2024) parametrization. Therefore, the
+#   presets diverge as BoTorch evolves (e.g., BetaPrior added in 0.18.0).
 @pytest.mark.parametrize("multitask", [False, True], ids=["single-task", "multi-task"])
 def test_botorch_preset(multitask: bool):
     """The BoTorch preset exactly mimics BoTorch's MultiTaskGP/SingleTaskGP behavior."""
