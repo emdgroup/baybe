@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import gc
-import warnings
 from abc import ABC
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
-from attrs import define, field, fields
+from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import ge, gt, instance_of
 from typing_extensions import override
@@ -24,6 +23,8 @@ from baybe.exceptions import (
 )
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.botorch.optimizers.base import OptimizerProtocol
+from baybe.recommenders.pure.bayesian.botorch.optimizers.basic import GradientOptimizer
 from baybe.recommenders.pure.bayesian.continuous import (
     recommend_continuous_torch,
 )
@@ -35,8 +36,6 @@ from baybe.recommenders.pure.bayesian.hybrid import (
     recommend_hybrid_with_subsets,
     recommend_hybrid_without_subsets,
 )
-from baybe.recommenders.pure.bayesian.botorch.optimizers.base import OptimizerProtocol
-from baybe.recommenders.pure.bayesian.botorch.optimizers.basic import GradientOptimizer
 from baybe.searchspace import (
     SearchSpace,
     SubspaceContinuous,
@@ -48,8 +47,8 @@ from baybe.surrogates.base import (
     Surrogate,
     SurrogateProtocol,
 )
-from baybe.utils.validation import preprocess_dataframe, validate_object_names
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
+from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
@@ -85,7 +84,7 @@ class BayesianRecommender(PureRecommender, ABC):
     )
     """The acquisition function optimizer."""
 
-    #TODO: Move fields to respective optimizers
+    # TODO: Move fields to respective optimizers
     hybrid_sampler: DiscreteSamplingMethod | None = field(
         converter=optional(DiscreteSamplingMethod), default=None
     )
@@ -123,6 +122,20 @@ class BayesianRecommender(PureRecommender, ABC):
 
     _botorch_acqf = field(default=None, init=False, eq=False)
     """The induced BoTorch acquisition function."""
+
+    @sampling_percentage.validator
+    def _validate_percentage(  # noqa: DOC101, DOC103
+        self, _: Any, value: float
+    ) -> None:
+        """Validate that the given value is in fact a percentage.
+
+        Raises:
+            ValueError: If ``value`` is not between 0 and 1.
+        """
+        if not 0 <= value <= 1:
+            raise ValueError(
+                f"Hybrid sampling percentage needs to be between 0 and 1 but is {value}"
+            )
 
     def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
