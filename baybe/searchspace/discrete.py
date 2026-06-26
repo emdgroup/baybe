@@ -648,6 +648,8 @@ class SubspaceDiscrete(SerialMixin):
     @property
     def comp_rep_bounds(self) -> pd.DataFrame:
         """The minimum and maximum values of the computational representation."""
+        if not self.parameters:
+            return pd.DataFrame(index=["min", "max"])
         df = pd.concat([p.comp_df for p in self.parameters], axis=1)
         return pd.DataFrame({"min": df.min(), "max": df.max()}).T
 
