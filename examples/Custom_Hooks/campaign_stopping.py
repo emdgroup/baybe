@@ -26,7 +26,7 @@ from baybe.objectives import SingleTargetObjective
 from baybe.objectives.base import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import (
-    BotorchRecommender,
+    BayesianRecommender,
     RandomRecommender,
     TwoPhaseMetaRecommender,
 )
@@ -87,7 +87,7 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 objective = SingleTargetObjective(target=NumericalTarget(name="yield"))
 
 recommender = TwoPhaseMetaRecommender(
-    initial_recommender=RandomRecommender(), recommender=BotorchRecommender()
+    initial_recommender=RandomRecommender(), recommender=BayesianRecommender()
 )
 
 ### Simulating the Uninterrupted Campaigns
@@ -126,7 +126,7 @@ PI_REQUIRED_FRACTION = 0.2  # 20% of candidates must be above the threshold
 
 
 def stop_on_PI(
-    self: BotorchRecommender,
+    self: BayesianRecommender,
     searchspace: SearchSpace,
     objective: Objective | None = None,
     measurements: pd.DataFrame | None = None,
@@ -155,8 +155,8 @@ def stop_on_PI(
 
 # Now, we attach the hook to the ``recommend`` function of our recommender class:
 
-BotorchRecommender.recommend = register_hooks(
-    BotorchRecommender.recommend, post_hooks=[stop_on_PI]
+BayesianRecommender.recommend = register_hooks(
+    BayesianRecommender.recommend, post_hooks=[stop_on_PI]
 )
 active_settings.parallelize_simulation_runs = False
 
@@ -178,7 +178,7 @@ active_settings.parallelize_simulation_runs = False
 # hook and assign it to a fresh copy of the campaign:
 
 recommender_with_hook = TwoPhaseMetaRecommender(
-    initial_recommender=RandomRecommender(), recommender=BotorchRecommender()
+    initial_recommender=RandomRecommender(), recommender=BayesianRecommender()
 )
 campaign_with_hook = Campaign(searchspace, objective, recommender)
 

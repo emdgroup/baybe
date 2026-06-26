@@ -17,7 +17,7 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
 )
 from baybe.recommenders import (
-    BotorchRecommender,
+    BayesianRecommender,
     FPSRecommender,
     TwoPhaseMetaRecommender,
 )
@@ -49,7 +49,7 @@ campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=SingleTargetObjective(target=NumericalTarget(name="Yield")),
     recommender=TwoPhaseMetaRecommender(
-        recommender=BotorchRecommender(),
+        recommender=BayesianRecommender(),
         initial_recommender=FPSRecommender(),
     ),
 )

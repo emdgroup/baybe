@@ -30,7 +30,7 @@ from matplotlib import pyplot as plt
 from baybe import Campaign, active_settings
 from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters import NumericalContinuousParameter
-from baybe.recommenders import BotorchRecommender
+from baybe.recommenders import BayesianRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
@@ -122,7 +122,7 @@ searchspace = SearchSpace.from_product(
 )
 objective = NumericalTarget(name="Reaction_Yield").to_objective()
 recommender = TwoPhaseMetaRecommender(
-    recommender=BotorchRecommender(sequential_continuous=False)
+    recommender=BayesianRecommender(sequential_continuous=False)
 )
 campaign = Campaign(
     searchspace=searchspace,

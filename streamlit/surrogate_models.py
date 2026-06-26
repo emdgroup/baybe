@@ -20,7 +20,7 @@ from baybe.acquisition import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import IncompatibleSurrogateError
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
-from baybe.recommenders import BotorchRecommender
+from baybe.recommenders import BayesianRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
@@ -272,7 +272,7 @@ def main():
             task_meas = measurements[measurements["task"] == task_name][
                 ["x", "y"]
             ].reset_index(drop=True)
-            task_recommender = BotorchRecommender(
+            task_recommender = BayesianRecommender(
                 surrogate_model=make_surrogate(),
                 acquisition_function=acqf,
             )
@@ -296,7 +296,7 @@ def main():
             )
     else:
         # Single recommender (single task, or multi-task with transfer learning)
-        recommender = BotorchRecommender(
+        recommender = BayesianRecommender(
             surrogate_model=make_surrogate(),
             acquisition_function=acqf,
         )

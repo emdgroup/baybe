@@ -19,7 +19,7 @@ from baybe.acquisition import PosteriorStandardDeviation, qThompsonSampling
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.parameters import CategoricalParameter
 from baybe.recommenders import (
-    BotorchRecommender,
+    BayesianRecommender,
     RandomRecommender,
     TwoPhaseMetaRecommender,
 )
@@ -124,7 +124,7 @@ def simulate(acqf: AcquisitionFunction) -> SimulationResult:
     """Simulate the campaign with with the given acquisition function."""
     recommender = TwoPhaseMetaRecommender(
         initial_recommender=RandomRecommender(),
-        recommender=BotorchRecommender(
+        recommender=BayesianRecommender(
             surrogate_model=surrogate, acquisition_function=acqf
         ),
     )

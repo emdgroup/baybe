@@ -234,14 +234,14 @@ For our example, we combine two recommenders via a so-called meta recommender na
 
 ```python
 from baybe.recommenders import (
-    BotorchRecommender,
+    BayesianRecommender,
     FPSRecommender,
     TwoPhaseMetaRecommender,
 )
 
 recommender = TwoPhaseMetaRecommender(
     initial_recommender=FPSRecommender(),  # farthest point sampling
-    recommender=BotorchRecommender(),  # Bayesian model-based optimization
+    recommender=BayesianRecommender(),  # Bayesian model-based optimization
 )
 ```
 
