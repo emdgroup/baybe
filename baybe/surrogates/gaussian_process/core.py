@@ -217,28 +217,21 @@ class GaussianProcessSurrogate(Surrogate):
         measurements: pd.DataFrame,
     ) -> None:
 
-        _validate_searchspace_has_non_index_input(searchspace, self.__class__.__name__)
-
-        # For numerical fidelity, BoTorch's SingleTaskMultiFidelityGP constructs
-        # the kernel and mean internally. Custom factories are not supported.
         if (
             searchspace.fidelity_type
             == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
         ):
-            if type(self.kernel_factory) is not BayBEKernelFactory:
-                raise IncompatibleSurrogateError(
-                    f"Custom kernel factories are not supported for search spaces "
-                    f"with a '{NumericalDiscreteFidelityParameter.__name__}'. "
-                    f"The kernel is constructed internally by BoTorch's "
-                    f"'SingleTaskMultiFidelityGP'."
-                )
-            if type(self.mean_factory) is not BayBEMeanFactory:
-                raise IncompatibleSurrogateError(
-                    f"Custom mean factories are not supported for search spaces "
-                    f"with a '{NumericalDiscreteFidelityParameter.__name__}'. "
-                    f"The mean is constructed internally by BoTorch's "
-                    f"'SingleTaskMultiFidelityGP'."
-                )
+            from baybe.surrogates.gaussian_process.multi_fidelity import (
+                GaussianProcessSurrogateSTMF,
+            )
+
+            raise IncompatibleSurrogateError(
+                f"'{self.__class__.__name__}' does not support "
+                f"'{NumericalDiscreteFidelityParameter.__name__}'. "
+                f"Use '{GaussianProcessSurrogateSTMF.__name__}' instead."
+            )
+
+        _validate_searchspace_has_non_index_input(searchspace, self.__class__.__name__)
 
         if (
             searchspace.task_idx is not None
@@ -299,6 +292,18 @@ class GaussianProcessSurrogate(Surrogate):
         )
         outcome_transform = Standardize(train_y.shape[-1])
 
+        ### Mean
+        mean = self.mean_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        ### Kernel
+        kernel = self.kernel_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+        if isinstance(kernel, Kernel):
+            kernel = kernel.to_gpytorch(searchspace=context.searchspace)
+
         ### Likelihood
         likelihood = self.likelihood_factory(
             context.searchspace, context.objective, context.measurements
@@ -310,44 +315,15 @@ class GaussianProcessSurrogate(Surrogate):
         )
 
         ### Model construction and fitting
-        if (
-            context.searchspace.fidelity_type
-            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
-        ):
-            # For numerical fidelity, BoTorch's SingleTaskMultiFidelityGP
-            # constructs the kernel (DownsamplingKernel) and mean internally.
-            assert context.fidelity_idx is not None  # guaranteed by fidelity_type
-            self._model = botorch.models.SingleTaskMultiFidelityGP(
-                train_x,
-                train_y,
-                data_fidelities=(context.fidelity_idx,),
-                input_transform=input_transform,
-                outcome_transform=outcome_transform,
-                likelihood=likelihood,
-            )
-        else:
-            ### Mean
-            mean = self.mean_factory(
-                context.searchspace, context.objective, context.measurements
-            )
-
-            ### Kernel
-            kernel = self.kernel_factory(
-                context.searchspace, context.objective, context.measurements
-            )
-            if isinstance(kernel, Kernel):
-                kernel = kernel.to_gpytorch(searchspace=context.searchspace)
-
-            self._model = botorch.models.SingleTaskGP(
-                train_x,
-                train_y,
-                input_transform=input_transform,
-                outcome_transform=outcome_transform,
-                mean_module=mean,
-                covar_module=kernel,
-                likelihood=likelihood,
-            )
-
+        self._model = botorch.models.SingleTaskGP(
+            train_x,
+            train_y,
+            input_transform=input_transform,
+            outcome_transform=outcome_transform,
+            mean_module=mean,
+            covar_module=kernel,
+            likelihood=likelihood,
+        )
         mll = criterion.to_gpytorch(self._model.likelihood, self._model)
         botorch.fit.fit_gpytorch_mll(mll)
 
