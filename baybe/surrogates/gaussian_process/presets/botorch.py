@@ -52,7 +52,7 @@ class BotorchKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-        self._check_botorch_version()
+        self._validate_botorch_version()
 
         from botorch.models.kernels.positive_index import PositiveIndexKernel
         from botorch.models.utils.gpytorch_modules import (
@@ -93,7 +93,7 @@ class BotorchKernelFactory(_PureKernelFactory):
             searchspace, objective, measurements
         )
 
-    def _check_botorch_version(self) -> None:
+    def _validate_botorch_version(self) -> None:
         """Verify that the installed BoTorch version meets the minimum requirement.
 
         Raises:
