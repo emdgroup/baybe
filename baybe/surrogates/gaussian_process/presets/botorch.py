@@ -32,6 +32,9 @@ from baybe.surrogates.gaussian_process.presets.hvarfner import (
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
 
+# The minimum BoTorch version required for the preset
+_MIN_BOTORCH_VERSION = "0.18.0"
+
 
 @define
 class BotorchKernelFactory(_PureKernelFactory):
@@ -44,9 +47,6 @@ class BotorchKernelFactory(_PureKernelFactory):
         _ParameterKind.REGULAR | _ParameterKind.TASK
     )
     # See base class.
-
-    #: The minimum BoTorch version required for this preset.
-    _MIN_BOTORCH_VERSION: ClassVar[str] = "0.18.0"
 
     @override
     def _make(
@@ -106,12 +106,12 @@ class BotorchKernelFactory(_PureKernelFactory):
         from baybe.exceptions import IncompatibilityError
 
         installed = version("botorch")
-        if Version(installed) < Version(self._MIN_BOTORCH_VERSION):
+        if Version(installed) < Version(_MIN_BOTORCH_VERSION):
             raise IncompatibilityError(
                 f"The '{self.__class__.__name__}' requires BoTorch >= "
-                f"{self._MIN_BOTORCH_VERSION}, but version {installed} is installed. "
+                f"{_MIN_BOTORCH_VERSION}, but version {installed} is installed. "
                 f"Please upgrade BoTorch: pip install 'botorch>="
-                f"{self._MIN_BOTORCH_VERSION}'."
+                f"{_MIN_BOTORCH_VERSION}'."
             )
 
 
