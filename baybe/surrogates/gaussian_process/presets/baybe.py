@@ -22,7 +22,7 @@ from baybe.parameters.selectors import (
     to_parameter_selector,
 )
 from baybe.parameters.substance import SubstanceParameter
-from baybe.searchspace.core import SearchSpace
+from baybe.searchspace.core import SearchSpace, SearchSpaceFidelityType
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     FitCriterionFactoryProtocol,
@@ -31,7 +31,7 @@ from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
-    _enable_transfer_learning,
+    _enable_kernel_composition,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -197,20 +197,27 @@ class _BayBENumericalKernelFactory(_PureKernelFactory):
         return factory(searchspace, objective, measurements)
 
 
-BayBEKernelFactory = _enable_transfer_learning(
+BayBEKernelFactory = _enable_kernel_composition(
     _BayBENumericalKernelFactory, "BayBEKernelFactory"
 )
 """The default kernel factory for GP surrogates."""
 
 
 @define
-class _BayBETaskKernelFactory(_PureKernelFactory):
-    """The default task kernel factory for GP surrogates."""
+class _BayBEIndexKernelFactory(_PureKernelFactory):
+    """The default index kernel factory for GP surrogates.
+
+    Handles both task parameters (transfer learning) and categorical fidelity
+    parameters (multi-fidelity), which both use a :class:`~baybe.kernels.basic.
+    PositiveIndexKernel` to model free-form correlations between their levels.
+    """
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
-    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.TASK
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = (
+        _ParameterKind.TASK | _ParameterKind.FIDELITY
+    )
     # See base class.
 
     parameter_selector: ParameterSelectorProtocol | None = field(
@@ -223,10 +230,48 @@ class _BayBETaskKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel:
+        n_index = (
+            searchspace.n_tasks
+            if searchspace.task_idx is not None
+            else searchspace.n_fidelities
+        )
         return PositiveIndexKernel(
-            num_tasks=searchspace.n_tasks,
-            rank=searchspace.n_tasks,
+            num_tasks=n_index,
+            rank=n_index,
             parameter_names=self.get_parameter_names(searchspace),
+        )
+
+
+@define
+class _BayBEDownsamplingBaseKernelFactory(_PureKernelFactory):
+    """The default base kernel factory for numerical fidelity.
+
+    Produces the same kernel as BoTorch's ``get_covar_module_with_dim_scaled_prior``
+    to ensure behavioral equivalence with ``SingleTaskMultiFidelityGP``.
+    """
+
+    _uses_parameter_names: ClassVar[bool] = True
+    # See base class.
+
+    @override
+    def _make(
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+    ) -> Kernel | GPyTorchKernel:
+        from botorch.models.utils.gpytorch_modules import (
+            get_covar_module_with_dim_scaled_prior,
+        )
+
+        active_dims = list(
+            chain.from_iterable(
+                searchspace.get_comp_rep_parameter_indices(name)
+                for name in self.get_parameter_names(searchspace)
+                if searchspace.get_parameters_by_name([name])[0]._kind
+                is _ParameterKind.REGULAR
+            )
+        )
+        return get_covar_module_with_dim_scaled_prior(
+            ard_num_dims=len(active_dims),
+            active_dims=active_dims,
         )
 
 
@@ -258,6 +303,18 @@ class BayBELikelihoodFactory(LikelihoodFactoryProtocol):
     ) -> GPyTorchLikelihood:
         from baybe.surrogates.gaussian_process.presets.chen import ChenLikelihoodFactory
 
+        # For numerical fidelity, use BoTorch's default likelihood to match the
+        # kernel structure produced by DownsamplingKernelFactory.
+        if (
+            searchspace.fidelity_type
+            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+        ):
+            from botorch.models.utils.gpytorch_modules import (
+                get_gaussian_likelihood_with_lognormal_prior,
+            )
+
+            return get_gaussian_likelihood_with_lognormal_prior()
+
         factory = _dispatch(
             ChenLikelihoodFactory(),
             _CustomScaledLikelihoodFactory(),
@@ -274,10 +331,18 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> FitCriterion:
+        # Use LOO whenever the model uses an IndexKernel structure — i.e., for
+        # transfer learning (TaskParameter) and categorical multi-fidelity
+        # (CategoricalFidelityParameter).
+        uses_index_kernel = (
+            searchspace.task_idx is not None
+            or searchspace.fidelity_type
+            == SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+        )
         return (
-            FitCriterion.MARGINAL_LOG_LIKELIHOOD
-            if searchspace.n_tasks == 1
-            else FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
+            FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
+            if uses_index_kernel
+            else FitCriterion.MARGINAL_LOG_LIKELIHOOD
         )
 
 

@@ -203,10 +203,13 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             A dataframe containing the recommendations as individual rows.
         """
+        searchspace = SearchSpace(continuous=subspace_continuous)
         assert self._objective is not None
         if (
             batch_size > 1
-            and not self._get_acquisition_function(self._objective).supports_batching
+            and not self._get_acquisition_function(
+                self._objective, searchspace
+            ).supports_batching
         ):
             raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "

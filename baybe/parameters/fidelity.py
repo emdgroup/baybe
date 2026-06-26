@@ -52,7 +52,7 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
         converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),  # type: ignore
         validator=[
             min_len(2),
-            validate_unique_values,  # type: ignore
+            validate_unique_values,
             deep_iterable(member_validator=instance_of((str, bool))),
         ],
     )
@@ -88,7 +88,7 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
           discrepancy ``zeta``, 2 * ``zeta``, and so on."""
 
     def __attrs_post_init__(self) -> None:
-        """Sort attribute values according to lexographic fidelity values."""
+        """Sort attribute values according to lexicographic fidelity values."""
         # Because categories can be str or bool, we sort by (type, value)
         idx = sorted(
             range(len(self._values)),
@@ -102,6 +102,28 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
     @property
     def values(self) -> tuple[str | bool, ...]:
         return self._values
+
+    @property
+    def highest_fidelity(self) -> str:
+        """The fidelity with discrepancy value of zero."""
+        highest_fid = next(
+            value for value, zeta in zip(self.values, self.zeta) if zeta == 0
+        )
+
+        assert isinstance(highest_fid, str)  # for mypy
+
+        return highest_fid
+
+    @property
+    def highest_fidelity_cost(self) -> int:
+        """Cost of querying the fidelity with discrepancy value of zero."""
+        highest_cost = next(
+            cost for cost, zeta in zip(self.costs, self.zeta) if zeta == 0
+        )
+
+        assert isinstance(highest_cost, int)  # for mypy
+
+        return highest_cost
 
     @override
     @cached_property
@@ -130,7 +152,7 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
         validator=[
             min_len(2),
             validate_contains_exactly_one(1.0),
-            validate_unique_values,  # type: ignore
+            validate_unique_values,
             validate_is_finite,
             deep_iterable(member_validator=and_(ge(0.0), le(1.0))),
         ],
