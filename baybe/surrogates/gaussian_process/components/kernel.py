@@ -19,12 +19,16 @@ from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import _ParameterKind
+from baybe.parameters.fidelity import (
+    CategoricalFidelityParameter,
+    NumericalDiscreteFidelityParameter,
+)
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
     to_parameter_selector,
 )
-from baybe.searchspace.core import SearchSpace
+from baybe.searchspace.core import SearchSpace, SearchSpaceFidelityType
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
@@ -127,14 +131,22 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
         """Construct the kernel."""
 
 
-def _enable_transfer_learning(
+def _enable_kernel_composition(
     cls: type[_PureKernelFactory], name: str | None = None, /
 ) -> type[_PureKernelFactory]:
-    """Class decorator enabling BayBE's default transfer learning mechanism.
+    """Class decorator enabling automatic kernel composition for non-design parameters.
 
-    When the search space contains a task parameter, the decorated factory
-    automatically composes its kernel with BayBE's default task kernel.
-    Otherwise, the factory behaves unchanged.
+    The decorated factory produces the base kernel for design parameters. Depending
+    on the search space, the decorator composes it with the appropriate meta-kernel:
+
+    * **Task / categorical fidelity**: Composed with an ``ICMKernelFactory``
+      (``IndexKernel`` × base kernel). Used for transfer learning
+      (``TaskParameter``) and categorical multi-fidelity
+      (``CategoricalFidelityParameter``).
+    * **Numerical discrete fidelity**: The base kernel is not used. Instead, a
+      ``DownsamplingKernelFactory`` builds the full kernel (replicating BoTorch's
+      ``SingleTaskMultiFidelityGP`` structure).
+    * **No task or fidelity parameters**: The base kernel is returned unchanged.
 
     When used as a decorator (without ``name``), the class is modified in-place.
     When called with a ``name`` argument, a new subclass is created so that the
@@ -147,13 +159,16 @@ def _enable_transfer_learning(
             created instead of modifying ``cls`` in-place.
 
     Raises:
-        TypeError: If the factory already supports task parameters.
+        TypeError: If the factory already supports task or fidelity parameters.
 
     Returns:
-        The decorated kernel factory class with transfer learning enabled.
+        The decorated kernel factory class with kernel composition enabled.
     """
-    if cls._supported_parameter_kinds & _ParameterKind.TASK:
-        raise TypeError(f"'{cls.__name__}' already supports task parameters.")
+    _extended_kinds = _ParameterKind.TASK | _ParameterKind.FIDELITY
+    if cls._supported_parameter_kinds & _extended_kinds:
+        raise TypeError(
+            f"'{cls.__name__}' already supports task or fidelity parameters."
+        )
 
     # This distinction is important for serialization so that the classes can be
     # correctly identified by their names in the subclass registry
@@ -169,8 +184,8 @@ def _enable_transfer_learning(
         # attributes are copied so the sibling has the same behavior.
         # __module__ must be set explicitly because the Protocol metaclass
         # would otherwise default it to "abc".
-        # -> For the assignment-based used, i.e.,
-        #   `DecoratedX = enable_transfer_learning(X, name="DecoratedX")`,
+        # -> For the assignment-based use, i.e.,
+        #   `DecoratedX = _enable_kernel_composition(X, name="DecoratedX")`,
         #    where both the original and decorated versions remain accessible and
         #    are intended to be used independently.
         ns = {
@@ -184,25 +199,38 @@ def _enable_transfer_learning(
 
     original_call = cls.__call__
     original_supported_kinds = cls._supported_parameter_kinds
-    _task_exclude_selector = TypeSelector((TaskParameter,), exclude=True)
+    _index_exclude_selector = TypeSelector(
+        (
+            TaskParameter,
+            CategoricalFidelityParameter,
+            NumericalDiscreteFidelityParameter,
+        ),
+        exclude=True,
+    )
 
     @functools.wraps(original_call)
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ):
-        # Temporarily narrow the supported parameter kinds to those of the original
-        # class. If the decorator logic is correct, the original factory should never
-        # see the extended scope, but this acts as a sanity check to prevent regressions
+        # Numerical fidelity: the full kernel is built by DownsamplingKernelFactory
+        # (replicates BoTorch's SingleTaskMultiFidelityGP kernel structure).
+        # The base kernel from this factory is not used in this path.
+        if (
+            searchspace.fidelity_type
+            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+        ):
+            return DownsamplingKernelFactory()(searchspace, objective, measurements)
+
+        # Compute the base kernel, excluding task/fidelity parameters from scope
         broadened_kinds = target_cls._supported_parameter_kinds
         target_cls._supported_parameter_kinds = original_supported_kinds
 
-        # Split off the task parameters
         original_selector = self.parameter_selector
         if original_selector is None:
-            self.parameter_selector = _task_exclude_selector
+            self.parameter_selector = _index_exclude_selector
         else:
             self.parameter_selector = lambda p: (
-                _task_exclude_selector(p) and original_selector(p)
+                _index_exclude_selector(p) and original_selector(p)
             )
 
         try:
@@ -211,14 +239,19 @@ def _enable_transfer_learning(
             target_cls._supported_parameter_kinds = broadened_kinds
             self.parameter_selector = original_selector
 
-        if searchspace.n_tasks > 1:
+        # Task / categorical fidelity: compose base kernel with IndexKernel
+        if searchspace.task_idx is not None or (
+            searchspace.fidelity_type
+            == SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+        ):
             icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
             return icm(searchspace, objective, measurements)
+
         return base_kernel
 
     target_cls.__call__ = __call__  # type: ignore[method-assign]
     target_cls._supported_parameter_kinds = (
-        cls._supported_parameter_kinds | _ParameterKind.TASK
+        cls._supported_parameter_kinds | _extended_kinds
     )
     return target_cls
 
@@ -262,76 +295,150 @@ class ICMKernelFactory(_MetaKernelFactory):
         )
 
         return _BayBENumericalKernelFactory(
-            TypeSelector((TaskParameter,), exclude=True)
+            TypeSelector(
+                (TaskParameter, CategoricalFidelityParameter),
+                exclude=True,
+            )
         )
 
     @task_kernel_factory.default
     def _default_task_kernel_factory(self) -> KernelFactoryProtocol:
         from baybe.surrogates.gaussian_process.presets.baybe import (
-            _BayBETaskKernelFactory,
+            _BayBEIndexKernelFactory,
         )
 
-        return _BayBETaskKernelFactory()
+        return _BayBEIndexKernelFactory(
+            TypeSelector((TaskParameter, CategoricalFidelityParameter))
+        )
 
     @base_kernel_factory.validator
     def _validate_base_kernel_factory(self, _, factory: KernelFactoryProtocol):
+        _index_kinds = _ParameterKind.TASK | _ParameterKind.FIDELITY
         if (
             isinstance(factory, _PureKernelFactory)
-            and factory._supported_parameter_kinds & _ParameterKind.TASK
+            and factory._supported_parameter_kinds & _index_kinds
         ):
             raise TypeError(
                 f"The specified '{fields(ICMKernelFactory).base_kernel_factory.alias}' "
-                f"must not support task parameters."
+                f"must not support task or fidelity parameters."
             )
 
     @task_kernel_factory.validator
     def _validate_task_kernel_factory(self, _, factory: KernelFactoryProtocol):
         if (
             isinstance(factory, _PureKernelFactory)
-            and factory._supported_parameter_kinds is not _ParameterKind.TASK
+            and factory._supported_parameter_kinds & _ParameterKind.REGULAR
         ):
             raise TypeError(
                 f"The specified '{fields(ICMKernelFactory).task_kernel_factory.alias}' "
-                f"must support only task parameters."
+                f"must support only task or fidelity parameters."
             )
 
     @override
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-        if searchspace.n_tasks == 1:
+        if searchspace.task_idx is None and (
+            searchspace.fidelity_type
+            != SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+        ):
             raise IncompatibleSearchSpaceError(
                 f"'{type(self).__name__}' can only be used with a searchspace that "
-                f"contains a '{TaskParameter.__name__}'."
+                f"contains a '{TaskParameter.__name__}' or a "
+                f"'{CategoricalFidelityParameter.__name__}'."
             )
 
         base_kernel = self.base_kernel_factory(searchspace, objective, measurements)
-        task_kernel = self.task_kernel_factory(searchspace, objective, measurements)
+        index_kernel = self.task_kernel_factory(searchspace, objective, measurements)
         if isinstance(base_kernel, Kernel):
             base_kernel = base_kernel.to_gpytorch(searchspace)
-        if isinstance(task_kernel, Kernel):
-            task_kernel = task_kernel.to_gpytorch(searchspace)
+        if isinstance(index_kernel, Kernel):
+            index_kernel = index_kernel.to_gpytorch(searchspace)
 
-        # Ensure correct partitioning between base and task kernels active dimensions
+        # Ensure correct partitioning between base and index kernels active dimensions.
+        # The index dimension is either the task or the categorical fidelity column —
+        # exactly one is non-None after the guard at the start of this method.
+        index_idx = (
+            searchspace.task_idx
+            if searchspace.task_idx is not None
+            else searchspace.fidelity_idx
+        )
         all_idcs = set(range(len(searchspace.comp_rep_columns)))
-        allowed_task_idcs = {searchspace.task_idx}
-        allowed_base_idcs = all_idcs - allowed_task_idcs
+        allowed_index_idcs = {index_idx}
+        allowed_base_idcs = all_idcs - allowed_index_idcs
         base_idcs = (
             set(d.tolist()) if (d := base_kernel.active_dims) is not None else all_idcs
         )
-        task_idcs = (
-            set(d.tolist()) if (d := task_kernel.active_dims) is not None else all_idcs
+        index_idcs = (
+            set(d.tolist()) if (d := index_kernel.active_dims) is not None else all_idcs
         )
 
         if not base_idcs <= allowed_base_idcs:
             raise ValueError(
                 f"The base kernel's 'active_dims' {base_idcs} must be a subset of "
-                f"the non-task indices {allowed_base_idcs}."
+                f"the non-index indices {allowed_base_idcs}."
             )
-        if task_idcs != allowed_task_idcs:
+        if index_idcs != allowed_index_idcs:
             raise ValueError(
-                f"The task kernel's 'active_dims' {task_idcs} does not match "
-                f"the task index {allowed_task_idcs}."
+                f"The index kernel's 'active_dims' {index_idcs} does not match "
+                f"the index column {allowed_index_idcs}."
             )
 
-        return base_kernel * task_kernel
+        return base_kernel * index_kernel
+
+
+@define
+class DownsamplingKernelFactory(_MetaKernelFactory):
+    """A kernel factory for numerical fidelity via DownsamplingKernel composition.
+
+    Replicates BoTorch's ``SingleTaskMultiFidelityGP`` kernel structure:
+    ``ProductKernel(base_kernel, DownsamplingKernel)``.
+    """
+
+    base_kernel_factory: KernelFactoryProtocol = field(
+        alias="base_kernel_or_factory",
+        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),  # type: ignore[misc]
+        validator=is_callable(),
+    )
+    """The factory for the base kernel operating on non-fidelity input features."""
+
+    @base_kernel_factory.default
+    def _default_base_kernel_factory(self) -> KernelFactoryProtocol:
+        from baybe.surrogates.gaussian_process.presets.baybe import (
+            _BayBEDownsamplingBaseKernelFactory,
+        )
+
+        return _BayBEDownsamplingBaseKernelFactory(
+            TypeSelector((NumericalDiscreteFidelityParameter,), exclude=True)
+        )
+
+    @override
+    def __call__(
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+    ) -> Kernel | GPyTorchKernel:
+        """Construct the fidelity kernel for numerical fidelity spaces."""
+        from botorch.models.kernels.downsampling import DownsamplingKernel
+        from gpytorch.kernels import ProductKernel
+        from gpytorch.priors import GammaPrior
+
+        if (
+            searchspace.fidelity_type
+            != SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+        ):
+            raise IncompatibleSearchSpaceError(
+                f"'{type(self).__name__}' can only be used with a search space that "
+                f"contains a '{NumericalDiscreteFidelityParameter.__name__}'."
+            )
+
+        base_kernel = self.base_kernel_factory(searchspace, objective, measurements)
+        if isinstance(base_kernel, Kernel):
+            base_kernel = base_kernel.to_gpytorch(searchspace)
+
+        fidelity_idx = searchspace.fidelity_idx
+        downsampling = DownsamplingKernel(
+            offset_prior=GammaPrior(3.0, 6.0),
+            power_prior=GammaPrior(3.0, 6.0),
+            active_dims=[fidelity_idx],
+        )
+
+        return ProductKernel(base_kernel, downsampling)

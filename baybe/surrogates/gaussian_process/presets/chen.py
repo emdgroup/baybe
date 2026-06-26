@@ -18,7 +18,7 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
     _MLLForNonTLFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
-    _enable_transfer_learning,
+    _enable_kernel_composition,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -61,7 +61,7 @@ class _ChenNumericalKernelFactory(_PureKernelFactory):
         )
 
 
-ChenKernelFactory = _enable_transfer_learning(
+ChenKernelFactory = _enable_kernel_composition(
     _ChenNumericalKernelFactory, "ChenKernelFactory"
 )
 """A factory providing adaptive hyperprior kernels as proposed by :cite:p:`Chen2026`.

@@ -11,7 +11,13 @@ import torch
 from attrs import Attribute, asdict, define, field, fields
 from attrs.validators import instance_of, optional
 from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
-from botorch.acquisition.monte_carlo import MCAcquisitionObjective
+from botorch.acquisition.analytic import AnalyticAcquisitionFunction
+from botorch.acquisition.base import MultiObjectiveMCAcquisitionFunction
+from botorch.acquisition.cost_aware import CostAwareUtility
+from botorch.acquisition.monte_carlo import (
+    MCAcquisitionFunction,
+    MCAcquisitionObjective,
+)
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
@@ -22,12 +28,19 @@ from torch import Tensor
 from baybe.acquisition.acqfs import (
     _ExpectedHypervolumeImprovement,
     qExpectedHypervolumeImprovement,
+    qKnowledgeGradient,
     qLogExpectedHypervolumeImprovement,
+    qMultiFidelityKnowledgeGradient,
     qNegIntegratedPosteriorVariance,
     qThompsonSampling,
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
-from baybe.acquisition.utils import make_partitioning
+from baybe.acquisition.cost_aware_utils import (
+    make_cost_aware_utility,
+    wrap_cost_aware_abjective,
+)
+from baybe.acquisition.custom_acqfs import MultiFidelityUpperConfidenceBound
+from baybe.acquisition.utils import make_MFUCB_dicts, make_partitioning
 from baybe.exceptions import (
     IncompatibilityError,
     IncompleteMeasurementsError,
@@ -36,7 +49,7 @@ from baybe.exceptions import (
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
-from baybe.searchspace.core import SearchSpace
+from baybe.searchspace.core import SearchSpace, SearchSpaceCostType, SearchSpaceTaskType
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
@@ -75,16 +88,22 @@ class BotorchAcquisitionArgs:
     # Optional, depending on the specific acquisition function being used
     best_f: float | None = _OPT_FIELD
     beta: float | None = _OPT_FIELD
+    costs_dict: dict[Any, tuple[float, ...]] = _OPT_FIELD
+    cost_aware_utility: CostAwareUtility | None = _OPT_FIELD
+    current_value: Tensor | None = _OPT_FIELD
+    fidelities_dict: dict[Any, tuple[Any, ...]] = _OPT_FIELD
     maximize: bool | None = _OPT_FIELD
     mc_points: Tensor | None = _OPT_FIELD
     num_fantasies: int | None = _OPT_FIELD
     objective: MCAcquisitionObjective | None = _OPT_FIELD
     partitioning: BoxDecomposition | None = _OPT_FIELD
     posterior_transform: PosteriorTransform | None = _OPT_FIELD
+    project: Callable[[Tensor], Tensor] | None = _OPT_FIELD
     prune_baseline: bool | None = _OPT_FIELD
     ref_point: Tensor | None = _OPT_FIELD
     X_baseline: Tensor | None = _OPT_FIELD
     X_pending: Tensor | None = _OPT_FIELD
+    zetas_dict: dict[Any, tuple[float, ...]] = _OPT_FIELD
 
     def collect(self) -> dict[str, Any]:
         """Collect the assigned arguments into a dictionary."""
@@ -202,6 +221,10 @@ class BotorchAcquisitionFunctionBuilder:
         self._set_mc_points()
         self._set_ref_point()
         self._set_partitioning()
+        self._set_current_value()
+        self._set_projection()
+        self._set_MFUCB_dicts()
+        self._set_cost_aware_wrapper()
 
         botorch_acqf = self._botorch_acqf_cls(**self._args.collect())
         self.set_default_sample_shape(botorch_acqf)
@@ -263,6 +286,149 @@ class BotorchAcquisitionFunctionBuilder:
                 self._args.best_f = self._posterior_mean_comp.max().item()
             case _:
                 raise NotImplementedError("This line should be impossible to reach.")
+
+    def _set_current_value(self) -> None:
+        """Set current value maximising posterior mean in qMFKG."""
+        if not isinstance(
+            self.acqf, (qMultiFidelityKnowledgeGradient, qKnowledgeGradient)
+        ):
+            return
+
+        from botorch.optim import optimize_acqf_mixed
+
+        if isinstance(self.acqf, qMultiFidelityKnowledgeGradient):
+            from botorch.acquisition import PosteriorMean
+            from botorch.acquisition.fixed_feature import (
+                FixedFeatureAcquisitionFunction,
+            )
+
+            curr_val_acqf = FixedFeatureAcquisitionFunction(
+                acq_function=PosteriorMean(self._botorch_surrogate),
+                d=len(self.searchspace.parameters),
+                columns=[
+                    self.searchspace.fidelity_idx,
+                ],
+                values=[
+                    1.0,
+                ],
+            )
+
+        elif isinstance(self.acqf, qKnowledgeGradient):
+            curr_val_acqf = PosteriorMean(self._botorch_surrogate)
+
+        # Jordan MHS NOTE for discussion: This is a potentially fast-and-loose use of
+        # mixed space optimization.
+        candidates_comp = self.searchspace.discrete.comp_rep
+        num_comp_columns = len(candidates_comp.columns)
+        candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
+        candidates_comp_dict = candidates_comp.to_dict("records")
+
+        # Possible TODO. Align num_restarts and raw_samples with that defined by the
+        # user for the main acquisition function.
+        _, current_value = optimize_acqf_mixed(
+            acq_function=curr_val_acqf,
+            bounds=torch.from_numpy(self.searchspace.comp_rep_bounds.values),
+            fixed_features_list=candidates_comp_dict,  # type: ignore[arg-type]
+            q=1,
+            num_restarts=10,
+            raw_samples=64,
+        )
+
+        self._args.current_value = current_value
+
+    def _set_projection(self) -> None:
+        """Set projection to the target fidelity for qMFKG."""
+        if not isinstance(self.acqf, (qMultiFidelityKnowledgeGradient)):
+            return
+
+        # qMFKG for cost aware, single fidelity knowledge gradient
+        if self.searchspace.task_type != SearchSpaceTaskType.NUMERICALFIDELITY:
+            return
+
+        assert self.searchspace.fidelity_idx is not None  # for mypy
+
+        # qMFKG for multi fidelity
+        target_fidelities = {self.searchspace.fidelity_idx: 1.0}
+
+        num_dims = len(self.searchspace.parameters)
+
+        def target_fidelity_projection(X: Tensor) -> Tensor:
+            from botorch.acquisition.utils import project_to_target_fidelity
+
+            return project_to_target_fidelity(X, target_fidelities, num_dims)
+
+        self._args.project = target_fidelity_projection
+
+    def _set_MFUCB_dicts(self) -> None:
+        """Set value, fidelities and cost dictionaries for MFUCB."""
+        if not isinstance(self.acqf, MultiFidelityUpperConfidenceBound):
+            return
+
+        fidelities_dict, costs_dict, zetas_dict = make_MFUCB_dicts(self.searchspace)
+
+        self._args.fidelities_dict = fidelities_dict
+        self._args.costs_dict = costs_dict
+        self._args.zetas_dict = zetas_dict
+
+    def _set_cost_aware_wrapper(self) -> None:
+        """Set a cost aware wrapper for acquisition with costly design choices.
+
+        Cost aware wrappers act either at the MC sample level for most Monte-Carlo
+        approaches or at the fantasy level for knowledge gradient.
+
+        Note that qKnowledgeGradient is incompatible with fantasy-level cost adjustment.
+        For this reason, qMultiFidelityKnowledgeGradient should be used for
+        single-fidelity cost aware optimization.
+
+        Raises:
+            NotImplementedError: cost awareness attempted for a multi objective acqf.
+            NotImplementedError: cost awareness attempted for an analytic acqf.
+            ValueError: acquisition function is qKnowledgeGradient.
+            ValueError: acquisition function not considered for cost awareness.
+        """
+        # Possible TODO: train a learned cost posterior as a cost model option.
+        # By using objective and cost_aware_utility cost division is done at the sample
+        # or fantasy level so this would be a valid approach.
+        if self.searchspace.cost_type == SearchSpaceCostType.NOCOSTADJUSTMENT:
+            return
+
+        if issubclass(self._botorch_acqf_cls, MultiObjectiveMCAcquisitionFunction):
+            raise NotImplementedError(
+                "Cost aware multi-objective Bayesian optimization is currently not "
+                "supported."
+            )
+
+        # Possible TODO: implement cost awareness for analytic acquisition function.
+        elif issubclass(self._botorch_acqf_cls, AnalyticAcquisitionFunction):
+            raise NotImplementedError(
+                "Cost aware Bayesian optimization is currently not supported for "
+                "analytic acquisiton functions, please use MC-based acquisition "
+                "functions, e.g., qEI instead of EI."
+            )
+
+        elif isinstance(self.acqf, qKnowledgeGradient):
+            raise ValueError(
+                "qKnowledgeGradient cannot be used for cost-aware "
+                " acquisition. Instead set the acquisition function to "
+                "qMultiFidelityKnowledgeGradient."
+            )
+
+        elif issubclass(self._botorch_acqf_cls, MCAcquisitionFunction):
+            self._args.objective = wrap_cost_aware_abjective(
+                self._args.objective, self._args.self.searchspace
+            )
+
+        elif isinstance(self.acqf, qMultiFidelityKnowledgeGradient):
+            if self._args.cost_aware_utility is None:
+                self._args.cost_aware_utility = make_cost_aware_utility(
+                    self.searchspace
+                )
+
+        else:
+            raise ValueError(
+                f"Cost aware wrapping is not implemented for acquisiton function class"
+                f"{self._botorch_acqf_cls}."
+            )
 
     def set_default_sample_shape(self, acqf: BoAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""

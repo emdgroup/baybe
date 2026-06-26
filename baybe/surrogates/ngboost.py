@@ -46,9 +46,6 @@ class _NGBRegressorParams(TypedDict, total=False):
 class NGBoostSurrogate(IndependentGaussianSurrogate):
     """A natural-gradient-boosting surrogate model."""
 
-    supports_transfer_learning: ClassVar[bool] = False
-    # See base class.
-
     _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
     """Class variable encoding the default model parameters."""
 

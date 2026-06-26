@@ -71,7 +71,7 @@ def recommend_hybrid_without_subsets(
     if (
         batch_size > 1
         and not recommender._get_acquisition_function(
-            recommender._objective
+            recommender._objective, searchspace
         ).supports_batching
     ):
         raise IncompatibleAcquisitionFunctionError(

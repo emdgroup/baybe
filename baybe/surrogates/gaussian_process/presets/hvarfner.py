@@ -10,10 +10,12 @@ import pandas as pd
 from attrs import define
 from typing_extensions import override
 
+from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.enum import _ParameterKind
-from baybe.searchspace.core import SearchSpace
+from baybe.parameters.fidelity import CategoricalFidelityParameter
+from baybe.searchspace.core import SearchSpace, SearchSpaceFidelityType
 from baybe.surrogates.gaussian_process.components import LikelihoodFactoryProtocol
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
@@ -39,7 +41,7 @@ class HvarfnerKernelFactory(_PureKernelFactory):
     # See base class.
 
     _supported_parameter_kinds: ClassVar[_ParameterKind] = (
-        _ParameterKind.REGULAR | _ParameterKind.TASK
+        _ParameterKind.REGULAR | _ParameterKind.TASK | _ParameterKind.FIDELITY
     )
     # See base class.
 
@@ -70,14 +72,28 @@ class HvarfnerKernelFactory(_PureKernelFactory):
             ard_num_dims=ard_num_dims, active_dims=active_dims
         )
 
-        # Single-task case
-        if (task_idx := searchspace.task_idx) is None:
+        # Single-index case
+        if (task_idx := searchspace.task_idx) is not None:
+            n_index_levels = searchspace.n_tasks
+            index_dim = task_idx
+        elif (fidelity_idx := searchspace.fidelity_idx) is not None:
+            if (
+                searchspace.fidelity_type
+                != SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+            ):
+                raise IncompatibleSearchSpaceError(
+                    f"'{type(self).__name__}' supports fidelity parameters only for "
+                    f"'{CategoricalFidelityParameter.__name__}'."
+                )
+            n_index_levels = searchspace.n_fidelities
+            index_dim = fidelity_idx
+        else:
             return base_kernel
 
         index_kernel = PositiveIndexKernel(
-            num_tasks=searchspace.n_tasks,
-            rank=searchspace.n_tasks,
-            active_dims=[task_idx],
+            num_tasks=n_index_levels,
+            rank=n_index_levels,
+            active_dims=[index_dim],
         )
         return ICMKernelFactory(base_kernel, index_kernel)(
             searchspace, objective, measurements

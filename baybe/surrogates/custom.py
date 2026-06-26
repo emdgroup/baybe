@@ -11,7 +11,7 @@ It is planned to solve this issue in the future.
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any
 
 import cattrs
 from attrs import define, field, validators
@@ -56,9 +56,6 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
 
     Note that these surrogates cannot be retrained.
     """
-
-    supports_transfer_learning: ClassVar[bool] = False
-    # See base class.
 
     onnx_input_name: str = field(validator=validators.instance_of(str))
     """The input name used for constructing the ONNX str."""

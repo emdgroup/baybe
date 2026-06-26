@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from attrs import define, field
 from typing_extensions import override
@@ -22,9 +22,6 @@ class MeanPredictionSurrogate(IndependentGaussianSurrogate):
     It provides the average value of the training targets
     as posterior mean and a (data-independent) constant posterior variance.
     """
-
-    supports_transfer_learning: ClassVar[bool] = False
-    # See base class.
 
     _model: float | None = field(init=False, default=None, eq=False)
     """The estimated posterior mean value of the training targets."""
