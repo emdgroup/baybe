@@ -1,0 +1,43 @@
+BotorchKernelFactory
+====================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.botorch
+
+.. autoclass:: BotorchKernelFactory
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BotorchKernelFactory.__init__
+   
+      ~BotorchKernelFactory.__call__
+   
+      ~BotorchKernelFactory.from_dict
+   
+      ~BotorchKernelFactory.from_json
+   
+      ~BotorchKernelFactory.get_parameter_names
+   
+      ~BotorchKernelFactory.to_dict
+   
+      ~BotorchKernelFactory.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~BotorchKernelFactory.parameter_selector
+   
+   
