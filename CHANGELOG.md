@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
+  kernel in multi-task scenarios, matching BoTorch's `MultiTaskGP` defaults introduced
+  in version `0.18.0`
+- The `BOTORCH` GP preset now requires BoTorch `>= 0.18.0` and raises an
+  `IncompatibilityError` if an older version is installed
+
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
 - `GaussianProcessSurrogate` no longer automatically adds a task kernel in multi-task
