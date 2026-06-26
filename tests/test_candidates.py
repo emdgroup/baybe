@@ -14,7 +14,11 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.searchspace.candidates import ProductCandidates, TableCandidates
+from baybe.searchspace.candidates import (
+    EmptyCandidates,
+    ProductCandidates,
+    TableCandidates,
+)
 from baybe.utils.dataframe import create_fake_input
 
 p_disc = NumericalDiscreteParameter("disc", (1, 2))
@@ -24,6 +28,18 @@ p_cont = NumericalContinuousParameter("cont", (3, 8))
 c_sum = DiscreteSumConstraint(["disc", "disc2"], ThresholdCondition(2, "<="))
 c_sub = DiscreteExcludeConstraint(["disc"], [SubSelectionCondition([1])])
 edf = pd.DataFrame()
+
+
+def test_empty_candidates():
+    """EmptyCandidates has no parameters, is finite, and yields an empty lazy frame."""
+    candidates = EmptyCandidates()
+    candidates_ldf = candidates.to_lazy()
+    candidates_df = candidates_ldf.collect()
+
+    assert candidates.parameters == ()
+    assert candidates.is_finite
+    assert isinstance(candidates_ldf, nw.LazyFrame)
+    assert candidates_df.shape == (0, 0)
 
 
 @pytest.mark.parametrize(

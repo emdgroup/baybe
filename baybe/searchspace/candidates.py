@@ -40,6 +40,28 @@ class CandidatesProtocol(Protocol):
 
 
 @define(frozen=True)
+class EmptyCandidates(CandidatesProtocol):
+    """Sentinel class representing an empty candidate set with no parameters."""
+
+    @override
+    @property
+    def parameters(self) -> tuple[DiscreteParameter, ...]:
+        return ()
+
+    @override
+    @property
+    def is_finite(self) -> bool:
+        return True
+
+    @override
+    def to_lazy(self) -> nw.LazyFrame:
+        # TODO: Replace hard-coded pandas type with `Settings`-based approach
+        import pandas as pd
+
+        return to_lazy(pd.DataFrame())
+
+
+@define(frozen=True)
 class ProductCandidates(CandidatesProtocol):
     """Class for managing candidates from (filtered) Cartesian product spaces."""
 
