@@ -1,5 +1,7 @@
 """Tests for the Gaussian Process surrogate."""
 
+import sys
+
 import pandas as pd
 import pytest
 import torch
@@ -195,13 +197,16 @@ def test_invalid_components():
         GaussianProcessSurrogate(fit_criterion_or_factory=MaternKernel())
 
 
-# NOTE: BOTORCH and HVARFNER presets coincide at the moment but BOTORCH settings can
-#   change in the future. If that happens, the test below will start to fail and the
-#   HVARFNER parametrization needs to be dropped.
-@pytest.mark.parametrize("preset", ["BOTORCH", "HVARFNER"], ids=["botorch", "hvarfner"])
+# NOTE: The BOTORCH preset tracks BoTorch's GP defaults while the HVARFNER preset
+#   implements BoTorch's static Hvarfner et al. (2024) parametrization. Therefore, the
+#   presets diverge as BoTorch evolves (e.g., BetaPrior added in 0.18.0).
+@pytest.mark.skipif(
+    sys.version_info < (3, 11),
+    reason="BoTorch >=0.18.0 requires Python >=3.11.",
+)
 @pytest.mark.parametrize("multitask", [False, True], ids=["single-task", "multi-task"])
-def test_botorch_preset(multitask: bool, preset: str):
-    """The BoTorch/Hvarfner presets exactly mimic BoTorch's behavior."""
+def test_botorch_preset(multitask: bool):
+    """The BoTorch preset exactly mimics BoTorch's MultiTaskGP/SingleTaskGP behavior."""
     if multitask:
         sp = searchspace_mt
         data = measurements_mt
@@ -210,7 +215,7 @@ def test_botorch_preset(multitask: bool, preset: str):
         data = measurements
 
     active_settings.random_seed = 1337
-    gp = GaussianProcessSurrogate.from_preset(preset)
+    gp = GaussianProcessSurrogate.from_preset("BOTORCH")
     gp.fit(sp, objective, data)
     posterior1 = gp.posterior_stats(data)
 
