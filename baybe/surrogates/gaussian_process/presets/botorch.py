@@ -48,11 +48,13 @@ class BotorchKernelFactory(_PureKernelFactory):
     )
     # See base class.
 
+    def __attrs_pre_init__(self) -> None:
+        self._validate_botorch_version()
+
     @override
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-        self._validate_botorch_version()
 
         from botorch.models.kernels.positive_index import PositiveIndexKernel
         from botorch.models.utils.gpytorch_modules import (
