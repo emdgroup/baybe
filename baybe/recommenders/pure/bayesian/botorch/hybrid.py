@@ -81,9 +81,8 @@ def recommend_hybrid_without_subsets(
     from botorch.optim import optimize_acqf_mixed
 
     # Transform discrete candidates
-    candidates_comp = searchspace.discrete.transform(
-        searchspace.discrete.get_candidates()
-    )
+    candidates = searchspace.discrete.get_candidates()
+    candidates_comp = searchspace.discrete.transform(candidates)
 
     # Calculate the number of samples from the given percentage
     n_candidates = math.ceil(
@@ -145,7 +144,7 @@ def recommend_hybrid_without_subsets(
     ).set_index("index")
 
     # Get experimental representation of discrete part
-    rec_disc_exp = searchspace.discrete.get_candidates().loc[merged.index]
+    rec_disc_exp = candidates.loc[merged.index]
 
     # Combine discrete and continuous parts
     rec_exp = pd.concat(

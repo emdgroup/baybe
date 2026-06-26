@@ -107,9 +107,8 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         from sklearn.preprocessing import StandardScaler
 
         # TODO [Scaling]: scaling should be handled by search space object
-        candidates_comp = subspace_discrete.transform(
-            subspace_discrete.get_candidates()
-        )
+        candidates = subspace_discrete.get_candidates()
+        candidates_comp = subspace_discrete.transform(candidates)
         scaler = StandardScaler()
         scaler.fit(candidates_comp)
 
@@ -130,7 +129,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
             selection = self._make_selection_default(model, candidates_scaled)
 
         # Select rows by positional indices and return the corresponding subset
-        return subspace_discrete.get_candidates().iloc[selection]
+        return candidates.iloc[selection]
 
     @override
     def __str__(self) -> str:

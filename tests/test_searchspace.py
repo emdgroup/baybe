@@ -157,11 +157,12 @@ def test_from_simplex_with_degenerate_parameter_count(simplex_parameters, expect
             product_parameters=product_parameters,
         )
 
-    assert len(subspace.get_candidates()) == expected_len
+    candidates = subspace.get_candidates()
+    assert len(candidates) == expected_len
 
     if simplex_parameters:
         simplex_cols = [p.name for p in simplex_parameters]
-        assert all(subspace.get_candidates()[simplex_cols].sum(axis=1) <= 1.0)
+        assert all(candidates[simplex_cols].sum(axis=1) <= 1.0)
 
 
 def test_continuous_searchspace_creation_from_bounds():

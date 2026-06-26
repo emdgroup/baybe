@@ -878,12 +878,16 @@ def test_deprecated_constraints_argument_from_product():
         parameters=[p, q], constraints=[no_dup_c]
     )
 
+    ss_both_candidates = ss_both.get_candidates()
+    ss_none_candidates = ss_none.get_candidates()
+    ss_with_batch_candidates = ss_with_batch.get_candidates()
+    ss_without_batch_candidates = ss_without_batch.get_candidates()
     assert ss_both.batch_constraints == ss_with_batch.batch_constraints == (batch_c,)
     assert ss_without_batch.batch_constraints == ss_none.batch_constraints == ()
-    assert_frame_equal(ss_both.get_candidates(), ss_without_batch.get_candidates())
-    assert_frame_equal(ss_with_batch.get_candidates(), ss_none.get_candidates())
-    assert len(ss_both.get_candidates()) == 2
-    assert len(ss_none.get_candidates()) == 4
+    assert_frame_equal(ss_both_candidates, ss_without_batch_candidates)
+    assert_frame_equal(ss_with_batch_candidates, ss_none_candidates)
+    assert len(ss_both_candidates) == 2
+    assert len(ss_none_candidates) == 4
 
 
 def test_deprecated_constraints_batch_property():

@@ -152,9 +152,8 @@ class FPSRecommender(NonPredictiveRecommender):
         from sklearn.preprocessing import StandardScaler
 
         # TODO [Scaling]: scaling should be handled by search space object
-        candidates_comp = subspace_discrete.transform(
-            subspace_discrete.get_candidates()
-        )
+        candidates = subspace_discrete.get_candidates()
+        candidates_comp = subspace_discrete.transform(candidates)
         scaler = StandardScaler()
         scaler.fit(candidates_comp)
 
@@ -175,7 +174,7 @@ class FPSRecommender(NonPredictiveRecommender):
                 initialization=self.initialization.value,
                 random_tie_break=self.random_tie_break,
             )
-        return subspace_discrete.get_candidates().iloc[ilocs]
+        return candidates.iloc[ilocs]
 
     @override
     def __str__(self) -> str:
