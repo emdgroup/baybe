@@ -13,7 +13,8 @@ from typing_extensions import override
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.enum import _ParameterKind
-from baybe.searchspace.core import SearchSpace
+from baybe.parameters.fidelity import CategoricalFidelityParameter
+from baybe.searchspace.core import SearchSpace, SearchSpaceFidelityType
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     PlainFitCriterionFactory,
@@ -44,7 +45,7 @@ class BotorchKernelFactory(_PureKernelFactory):
     # See base class.
 
     _supported_parameter_kinds: ClassVar[_ParameterKind] = (
-        _ParameterKind.REGULAR | _ParameterKind.TASK
+        _ParameterKind.REGULAR | _ParameterKind.TASK | _ParameterKind.FIDELITY
     )
     # See base class.
 
@@ -78,20 +79,40 @@ class BotorchKernelFactory(_PureKernelFactory):
             ard_num_dims=ard_num_dims, active_dims=active_dims
         )
 
-        # Single-task case
-        if (task_idx := searchspace.task_idx) is None:
-            return base_kernel
+        # Single-index case: task or categorical fidelity
+        if (task_idx := searchspace.task_idx) is not None:
+            task_prior = BetaPrior(concentration1=2.5, concentration0=1.5)
+            index_kernel = PositiveIndexKernel(
+                num_tasks=searchspace.n_tasks,
+                rank=searchspace.n_tasks,
+                task_prior=task_prior,
+                active_dims=[task_idx],
+            )
+            return ICMKernelFactory(base_kernel, index_kernel)(
+                searchspace, objective, measurements
+            )
 
-        task_prior = BetaPrior(concentration1=2.5, concentration0=1.5)
-        index_kernel = PositiveIndexKernel(
-            num_tasks=searchspace.n_tasks,
-            rank=searchspace.n_tasks,
-            task_prior=task_prior,
-            active_dims=[task_idx],
-        )
-        return ICMKernelFactory(base_kernel, index_kernel)(
-            searchspace, objective, measurements
-        )
+        if (fidelity_idx := searchspace.fidelity_idx) is not None:
+            if (
+                searchspace.fidelity_type
+                != SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+            ):
+                from baybe.exceptions import IncompatibleSearchSpaceError
+
+                raise IncompatibleSearchSpaceError(
+                    f"'{type(self).__name__}' supports fidelity parameters "
+                    f"only for '{CategoricalFidelityParameter.__name__}'."
+                )
+            index_kernel = PositiveIndexKernel(
+                num_tasks=searchspace.n_fidelities,
+                rank=searchspace.n_fidelities,
+                active_dims=[fidelity_idx],
+            )
+            return ICMKernelFactory(base_kernel, index_kernel)(
+                searchspace, objective, measurements
+            )
+
+        return base_kernel
 
     def _validate_botorch_version(self) -> None:
         """Verify that the installed BoTorch version meets the minimum requirement.

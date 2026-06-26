@@ -1,5 +1,7 @@
 """Tests for fidelity parameters."""
 
+import sys
+
 import pandas as pd
 import pytest
 import torch
@@ -158,19 +160,22 @@ def test_gp_fit_numerical_fidelity():
 def test_gp_numerical_fidelity_kernel_structure():
     """Fitted GP on numerical fidelity contains a DownsamplingKernel component."""
     from botorch.models.kernels.downsampling import DownsamplingKernel
-    from gpytorch.kernels import ProductKernel, ScaleKernel
+    from gpytorch.kernels import ProductKernel
 
     surrogate = GaussianProcessSurrogate()
     surrogate.fit(searchspace_num_fid, objective, measurements_num_fid)
     model = surrogate.to_botorch()
     kernel = model.covar_module
 
-    assert isinstance(kernel, ScaleKernel)
-    assert isinstance(kernel.base_kernel, ProductKernel)
-    sub_kernels = list(kernel.base_kernel.kernels)
+    assert isinstance(kernel, ProductKernel)
+    sub_kernels = list(kernel.kernels)
     assert any(isinstance(k, DownsamplingKernel) for k in sub_kernels)
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 11),
+    reason="BoTorch >=0.18.0 requires Python >=3.11.",
+)
 def test_numerical_fidelity_matches_botorch_stmf():
     """BayBE GP on numerical fidelity matches BoTorch SingleTaskMultiFidelityGP."""
     import botorch

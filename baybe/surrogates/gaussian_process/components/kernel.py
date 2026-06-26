@@ -392,7 +392,7 @@ class DownsamplingKernelFactory(_MetaKernelFactory):
     """A kernel factory for numerical fidelity via DownsamplingKernel composition.
 
     Replicates BoTorch's ``SingleTaskMultiFidelityGP`` kernel structure:
-    ``ScaleKernel(ProductKernel(base_kernel, DownsamplingKernel))``.
+    ``ProductKernel(base_kernel, DownsamplingKernel)``.
     """
 
     base_kernel_factory: KernelFactoryProtocol = field(
@@ -418,7 +418,7 @@ class DownsamplingKernelFactory(_MetaKernelFactory):
     ) -> Kernel | GPyTorchKernel:
         """Construct the fidelity kernel for numerical fidelity spaces."""
         from botorch.models.kernels.downsampling import DownsamplingKernel
-        from gpytorch.kernels import ProductKernel, ScaleKernel
+        from gpytorch.kernels import ProductKernel
         from gpytorch.priors import GammaPrior
 
         if (
@@ -441,7 +441,4 @@ class DownsamplingKernelFactory(_MetaKernelFactory):
             active_dims=[fidelity_idx],
         )
 
-        return ScaleKernel(
-            ProductKernel(base_kernel, downsampling),
-            outputscale_prior=GammaPrior(2.0, 0.15),
-        )
+        return ProductKernel(base_kernel, downsampling)
