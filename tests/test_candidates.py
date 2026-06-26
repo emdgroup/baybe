@@ -68,6 +68,18 @@ def test_table_candidates_generation(dataframe_factory):
     assert_frame_equal(candidates_df.to_pandas(), data)
 
 
+def test_table_candidates_empty_rows():
+    """TableCandidates accepts a zero-row dataframe with correct columns."""
+    parameters = [p_disc, p_cat]
+    empty_df = pd.DataFrame(columns=[p.name for p in parameters])
+    candidates = TableCandidates(parameters, empty_df)
+    candidates_df = candidates.to_lazy().collect()
+
+    assert candidates.is_finite
+    assert set(candidates_df.columns) == {p.name for p in parameters}
+    assert len(candidates_df) == 0
+
+
 @pytest.mark.parametrize(
     ("parameters", "dataframe", "error"),
     [
@@ -87,6 +99,18 @@ def test_table_candidates_generation(dataframe_factory):
             pd.DataFrame({"disc": [1], "extra": [2]}),
             ValueError("not correspond"),
             id="extra_cols",
+        ),
+        pytest.param(
+            [p_disc],
+            pd.DataFrame(),
+            ValueError("missing columns"),
+            id="empty_rows_missing_cols",
+        ),
+        pytest.param(
+            [p_disc],
+            pd.DataFrame(columns=["disc", "extra"]),
+            ValueError("not correspond"),
+            id="empty_rows_extra_cols",
         ),
     ],
 )

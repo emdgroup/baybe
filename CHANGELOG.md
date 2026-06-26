@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteParameter.is_finite` property
 - `SubspaceDiscrete.batch_constraints` field for storing batch-level constraints
 - `SubspaceDiscrete.from_dataframe` now accepts `batch_constraints`
+- `validate_parameter_input` now accepts an `allow_empty` flag to permit zero-row input
 
 ### Changed
 - Internal `Campaign` state model simplified: recommended and excluded experiments
