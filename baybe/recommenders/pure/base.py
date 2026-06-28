@@ -48,21 +48,21 @@ class PureRecommender(ABC, RecommenderProtocol):
 
     _deprecated_allow_repeated_recommendations: bool = field(
         alias="allow_repeated_recommendations",
-        default=None,
+        default=None,  # pyrefly: ignore[bad-assignment]
         kw_only=True,
     )
     "Deprecated! Now handled by :class:`baybe.campaign.Campaign`."
 
     _deprecated_allow_recommending_already_measured: bool = field(
         alias="allow_recommending_already_measured",
-        default=None,
+        default=None,  # pyrefly: ignore[bad-assignment]
         kw_only=True,
     )
     "Deprecated! Now handled by :class:`baybe.campaign.Campaign`."
 
     _deprecated_allow_recommending_pending_experiments: bool = field(
         alias="allow_recommending_pending_experiments",
-        default=None,
+        default=None,  # pyrefly: ignore[bad-assignment]
         kw_only=True,
     )
     "Deprecated! Now handled by :class:`baybe.campaign.Campaign`."
