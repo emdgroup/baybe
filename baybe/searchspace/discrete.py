@@ -916,8 +916,30 @@ def _make_constraints_deprecation_msg() -> str:
 
 
 def _structure_subspace_discrete(specs: dict, cls: type) -> SubspaceDiscrete:
-    """Structure hook supporting legacy ``constraints`` key migration."""
+    """Structure hook supporting legacy key migration."""
     specs = specs.copy()
+
+    # Migrate legacy ``parameters`` + ``exp_rep`` format to ``candidates``
+    if "exp_rep" in specs:
+        name = fields(SubspaceDiscrete).candidates.alias
+        warnings.warn(
+            f"Deserializing a '{SubspaceDiscrete.__name__}' from the legacy "
+            f"'parameters' + 'exp_rep' format is deprecated and support will be "
+            f"removed in a future version. Please re-serialize your objects to use "
+            f"the new '{name}' format.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        parameters = converter.structure(
+            specs.pop("parameters"), list[DiscreteParameter]
+        )
+        exp_rep_df = converter.structure(specs.pop("exp_rep"), pd.DataFrame)
+        specs["candidates"] = converter.unstructure(
+            TableCandidates(parameters, exp_rep_df),
+            unstructure_as=CandidatesProtocol,
+        )
+
+    # Migrate legacy ``constraints`` key to ``batch_constraints``
     if "constraints" in specs and specs["constraints"] is not None:
         warnings.warn(
             _make_constraints_deprecation_msg(),
