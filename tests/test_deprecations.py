@@ -28,6 +28,7 @@ from baybe.exceptions import DeprecationError
 from baybe.kernels.basic import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
+from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.categorical import CategoricalParameter, TaskParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
@@ -39,10 +40,12 @@ from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace.candidates import EmptyCandidates, TableCandidates
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
+from baybe.serialization.core import converter
 from baybe.settings import Settings
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
@@ -793,7 +796,37 @@ def test_deprecated_subspace_discrete_arguments(arg, error):
         else pytest.warns(DeprecationWarning, match=f"Providing '{arg}'")
     )
     with context:
-        SubspaceDiscrete(parameters=[], exp_rep=pd.DataFrame(), **{arg: 0})
+        SubspaceDiscrete(candidates=EmptyCandidates(), **{arg: 0})
+
+
+def test_deprecated_parameters_exp_rep_conversion():
+    """Passing ``parameters`` and ``exp_rep`` warns and yields the correct object."""
+    p = NumericalDiscreteParameter("p", [0, 1])
+    df = pd.DataFrame({"p": [0, 1]})
+    expected = SubspaceDiscrete.from_dataframe(parameters=[p], df=df)
+    with pytest.warns(DeprecationWarning, match="parameters.*exp_rep"):
+        actual = SubspaceDiscrete(parameters=[p], exp_rep=df)
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "use_kw_exp_rep",
+    [
+        pytest.param(True, id="parameters_positional"),
+        pytest.param(False, id="both_positional"),
+    ],
+)
+def test_deprecated_parameters_exp_rep_positional(use_kw_exp_rep):
+    """Passing ``parameters`` and ``exp_rep`` positionally (or mixed) warns."""
+    p = NumericalDiscreteParameter("p", [0, 1])
+    df = pd.DataFrame({"p": [0, 1]})
+    expected = SubspaceDiscrete.from_dataframe(parameters=[p], df=df)
+    with pytest.warns(DeprecationWarning, match="parameters.*exp_rep"):
+        if use_kw_exp_rep:
+            actual = SubspaceDiscrete([p], exp_rep=df)  # type: ignore[call-arg]
+        else:
+            actual = SubspaceDiscrete([p], df)  # type: ignore[call-arg]
+    assert actual == expected
 
 
 def test_deprecated_empty_encoding_from_product():
@@ -816,16 +849,33 @@ def test_deprecated_empty_encoding_from_dataframe():
 
 
 def test_deprecated_discrete_subspace_deserialization():
-    """Deserialization from legacy JSON with `empty_encoding`/`comp_rep` works."""
+    """Deserialization from legacy JSON with deprecated keys raises the right signal."""
     p = NumericalDiscreteParameter("p", [0, 1])
     expected = SubspaceDiscrete.from_product(parameters=[p])
+    base_dict = expected.to_dict()
 
-    # Build a legacy dict containing the deprecated fields
-    legacy_dict = expected.to_dict()
-    legacy_dict["empty_encoding"] = False
-    legacy_dict["comp_rep"] = legacy_dict["exp_rep"]
+    with pytest.warns(DeprecationWarning, match="empty_encoding"):
+        actual = SubspaceDiscrete.from_dict(base_dict | {"empty_encoding": False})
+    assert actual == expected
 
-    actual = SubspaceDiscrete.from_dict(legacy_dict)
+    with pytest.raises(DeprecationError, match="comp_rep"):
+        SubspaceDiscrete.from_dict(base_dict | {"comp_rep": {}})
+
+
+def test_deprecated_exp_rep_deserialization():
+    """Deserialization from the legacy ``parameters`` + ``exp_rep`` format warns."""
+    p = NumericalDiscreteParameter("p", [0, 1])
+    df = pd.DataFrame({"p": [0, 1]})
+    expected = SubspaceDiscrete.from_dataframe(parameters=[p], df=df)
+    # Build a legacy dict as produced by the old SubspaceDiscrete serialization
+    legacy_dict = {
+        "type": "SubspaceDiscrete",
+        "parameters": [converter.unstructure(p, unstructure_as=DiscreteParameter)],
+        "exp_rep": converter.unstructure(expected.get_candidates()),
+        "batch_constraints": [],
+    }
+    with pytest.warns(DeprecationWarning, match="exp_rep"):
+        actual = SubspaceDiscrete.from_dict(legacy_dict)
     assert actual == expected
 
 
@@ -852,8 +902,7 @@ def test_deprecated_constraints_argument():
     batch_c = DiscreteBatchConstraint(["p"])
     with pytest.warns(DeprecationWarning, match="Providing 'constraints'"):
         subspace = SubspaceDiscrete(
-            parameters=[p],
-            exp_rep=pd.DataFrame({"p": [0, 1, 2]}),
+            candidates=TableCandidates([p], pd.DataFrame({"p": [0, 1, 2]})),
             constraints=[batch_c],
         )
     # The batch constraint must be migrated to `batch_constraints`
@@ -895,8 +944,7 @@ def test_deprecated_constraints_batch_property():
     p = NumericalDiscreteParameter("p", [0, 1, 2])
     batch_c = DiscreteBatchConstraint(["p"])
     subspace = SubspaceDiscrete(
-        parameters=[p],
-        exp_rep=pd.DataFrame({"p": [0, 1, 2]}),
+        candidates=TableCandidates([p], pd.DataFrame({"p": [0, 1, 2]})),
         batch_constraints=(batch_c,),
     )
 

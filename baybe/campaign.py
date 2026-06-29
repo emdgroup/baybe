@@ -31,6 +31,7 @@ from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
+from baybe.searchspace.candidates import TableCandidates
 from baybe.searchspace.core import (
     SearchSpace,
     SearchSpaceType,
@@ -578,10 +579,16 @@ class Campaign(SerialMixin):
                     .eq("both")
                     .to_numpy()
                 )
+            # TODO: Replace index-based selection and explicit TableCandidates
+            #   instantiation with .filter() method to avoid materialization
             searchspace = evolve(
                 self.searchspace,
                 discrete=evolve(
-                    self.searchspace.discrete, exp_rep=candidates.loc[~mask_todrop]
+                    self.searchspace.discrete,
+                    candidates=TableCandidates(
+                        self.searchspace.discrete.parameters,
+                        candidates.loc[~mask_todrop],
+                    ),
                 ),
             )
         else:
