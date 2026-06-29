@@ -264,7 +264,7 @@ class ContinuousCardinalityConstraint(
 
         # Probability of each set cardinality under the assumption that all possible
         # inactive parameter sets are equally likely
-        probabilities = n_configurations_per_cardinality / np.sum(
+        probabilities = np.array(n_configurations_per_cardinality) / np.sum(
             n_configurations_per_cardinality
         )
 
