@@ -191,5 +191,6 @@ packages = ["baybe"]
 exclude-newer = "7 days"
 
 [tool.pyrefly]
-project-includes = ["baybe"]
 preset = "legacy"
+project-includes = ["baybe"]
+project-excludes = ["baybe/recommenders/pure/nonpredictive/**"]
