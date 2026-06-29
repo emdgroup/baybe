@@ -196,4 +196,5 @@ project-includes = ["baybe"]
 project-excludes = [
     "baybe/recommenders/naive.py",
     "baybe/recommenders/pure/nonpredictive/**",
+    "baybe/simulation/**",
 ]
