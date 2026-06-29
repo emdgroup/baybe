@@ -812,8 +812,8 @@ def test_deprecated_parameters_exp_rep_conversion():
 @pytest.mark.parametrize(
     "use_kw_exp_rep",
     [
+        pytest.param(True, id="parameters_positional"),
         pytest.param(False, id="both_positional"),
-        pytest.param(True, id="pos_params_kw_exp_rep"),
     ],
 )
 def test_deprecated_parameters_exp_rep_positional(use_kw_exp_rep):
