@@ -193,4 +193,7 @@ exclude-newer = "7 days"
 [tool.pyrefly]
 preset = "legacy"
 project-includes = ["baybe"]
-project-excludes = ["baybe/recommenders/pure/nonpredictive/**"]
+project-excludes = [
+    "baybe/recommenders/naive.py",
+    "baybe/recommenders/pure/nonpredictive/**",
+]
