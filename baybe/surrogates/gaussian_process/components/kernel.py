@@ -6,7 +6,7 @@ import functools
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from functools import partial
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import pandas as pd
 from attrs import define, field, fields
@@ -180,7 +180,7 @@ def _enable_transfer_learning(
         }
         ns["__doc__"] = cls.__doc__
         ns["__module__"] = cls.__module__
-        target_cls = type(name, cls.__bases__, ns)
+        target_cls = cast(type[_PureKernelFactory], type(name, cls.__bases__, ns))
 
     original_call = cls.__call__
     original_supported_kinds = cls._supported_parameter_kinds
