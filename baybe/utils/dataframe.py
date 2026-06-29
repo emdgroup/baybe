@@ -12,7 +12,7 @@ import pandas as pd
 from typing_extensions import assert_never
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
-from baybe.parameters.base import Parameter
+from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
@@ -150,6 +150,8 @@ def add_parameter_noise(
         ValueError: If ``noise_type`` is neither ``absolute`` nor
             ``relative_percent``.
     """
+    from baybe.parameters.numerical import NumericalContinuousParameter
+
     # Validate input
     if noise_type not in ("relative_percent", "absolute"):
         raise ValueError(
@@ -167,7 +169,7 @@ def add_parameter_noise(
             data[param.name] += np.random.uniform(-noise_level, noise_level, len(data))
 
         # Respect continuous intervals
-        if param.is_continuous:
+        if isinstance(param, NumericalContinuousParameter):
             data[param.name] = data[param.name].clip(
                 param.bounds.lower, param.bounds.upper
             )
@@ -199,6 +201,8 @@ def create_fake_input(
     Raises:
         ValueError: If less than one row was requested.
     """
+    from baybe.parameters.numerical import NumericalContinuousParameter
+
     # Assert at least one fake entry is being generated
     if n_rows < 1:
         raise ValueError(
@@ -209,10 +213,12 @@ def create_fake_input(
     # Create fake parameter values from their definitions
     content = {}
     for p in parameters:
-        if p.is_discrete:
+        if isinstance(p, DiscreteParameter):
             vals = np.random.choice(p.values, n_rows, replace=True)
-        else:
+        elif isinstance(p, NumericalContinuousParameter):
             vals = np.random.uniform(p.bounds.lower, p.bounds.upper, n_rows)
+        else:
+            raise NotImplementedError(f"Unsupported parameter type: {type(p).__name__}")
 
         content[p.name] = vals
 
@@ -225,7 +231,7 @@ def create_fake_input(
 
 
 def df_drop_single_value_columns(
-    df: pd.DataFrame, lst_exclude: list = None
+    df: pd.DataFrame, lst_exclude: list | None = None
 ) -> pd.DataFrame:
     """Drop dataframe columns with zero variance.
 
