@@ -12,6 +12,7 @@ from attrs import evolve, fields, fields_dict
 from baybe.transformations.basic import IdentityTransformation
 
 _T = TypeVar("_T")
+_TNumericalTarget = TypeVar("_TNumericalTarget", bound="NumericalTarget")
 
 if TYPE_CHECKING:
     from baybe.targets.numerical import NumericalTarget
@@ -37,8 +38,8 @@ def _validate_numerical_target_combination(
 
 
 def combine_numerical_targets(
-    t1: NumericalTarget, t2: NumericalTarget, /, operator
-) -> NumericalTarget:
+    t1: _TNumericalTarget, t2: NumericalTarget, /, operator
+) -> _TNumericalTarget:
     """Combine two numerical targets using a binary operator."""
     _validate_numerical_target_combination(t1, t2)
     return evolve(t1, transformation=operator(t1.transformation, t2.transformation))  # type: ignore[call-arg]

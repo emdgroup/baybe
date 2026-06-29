@@ -15,7 +15,7 @@ import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from cattrs import IterableValidationError
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
@@ -166,9 +166,9 @@ class SubspaceDiscrete(SerialMixin):
         return SearchSpace(discrete=self)
 
     @classmethod
-    def empty(cls) -> SubspaceDiscrete:
+    def empty(cls) -> Self:
         """Create an empty discrete subspace."""
-        return SubspaceDiscrete(parameters=[], exp_rep=pd.DataFrame())
+        return cls(parameters=[], exp_rep=pd.DataFrame())
 
     @classmethod
     def from_parameter(cls, parameter: DiscreteParameter) -> SubspaceDiscrete:
@@ -188,7 +188,7 @@ class SubspaceDiscrete(SerialMixin):
         parameters: Sequence[DiscreteParameter],
         constraints: Sequence[DiscreteConstraint] | None = None,
         empty_encoding: bool = False,
-    ) -> SubspaceDiscrete:
+    ) -> Self:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         constraints = constraints or []
 
@@ -197,7 +197,7 @@ class SubspaceDiscrete(SerialMixin):
 
         df = build_constrained_product(parameters, constraints)
 
-        return SubspaceDiscrete(
+        return cls(
             parameters=parameters,
             constraints=constraints,
             exp_rep=df,

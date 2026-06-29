@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
 
 import pandas as pd
 from attrs import define, field
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from baybe.exceptions import IncompatibleSurrogateError
 from baybe.objectives.base import Objective
@@ -88,9 +88,9 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         return self.surrogates[key]
 
     @classmethod
-    def from_replication(cls, surrogate: SurrogateProtocol) -> CompositeSurrogate:
+    def from_replication(cls, surrogate: SurrogateProtocol) -> Self:
         """Replicate a given single-target surrogate logic for multiple targets."""
-        return CompositeSurrogate(_ReplicationMapping(surrogate))
+        return cls(_ReplicationMapping(surrogate))
 
     @property
     def _surrogates_flat(self) -> tuple[SurrogateProtocol, ...]:
