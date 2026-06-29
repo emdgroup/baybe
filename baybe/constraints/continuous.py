@@ -244,7 +244,10 @@ class ContinuousCardinalityConstraint(
     def inactive_parameter_combinations(self) -> Iterator[frozenset[str]]:
         """Get an iterator over all possible combinations of inactive parameters."""
         for n_inactive_parameters in self._inactive_set_sizes():
-            yield from combinations(self.parameters, n_inactive_parameters)
+            yield from (
+                frozenset(c)
+                for c in combinations(self.parameters, n_inactive_parameters)
+            )
 
     def sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample sets of inactive parameters according to the cardinality constraints.
