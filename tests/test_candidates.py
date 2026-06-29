@@ -47,9 +47,7 @@ def test_empty_candidates():
     [
         pytest.param(lambda pd_df: pd_df, id="pandas_eager"),
         pytest.param(pl.DataFrame, id="polars_eager"),
-        pytest.param(pl.LazyFrame, id="polars_lazy"),
         pytest.param(lambda x: nw.from_native(x, eager_only=True), id="narwhals_eager"),
-        pytest.param(lambda x: nw.from_native(x).lazy(), id="narwhals_lazy"),
     ],
 )
 def test_table_candidates_generation(dataframe_factory):
@@ -87,7 +85,17 @@ def test_table_candidates_empty_rows():
         pytest.param(None, edf, TypeError("not iterable"), id="none_param"),
         pytest.param([p_cont], edf, TypeError("be <class"), id="param_type"),
         pytest.param(p_disc, edf, TypeError("not iterable"), id="no_param_seq"),
-        pytest.param([p_disc], 123, TypeError("dataframe type"), id="df_type"),
+        pytest.param([p_disc], 123, TypeError("Unsupported dataframe"), id="df_type"),
+        pytest.param([p_disc], pl.LazyFrame(), TypeError("eager_only"), id="pl_lazy"),
+        pytest.param(
+            [p_disc],
+            nw.from_native(pl.LazyFrame()),
+            TypeError("eager_only"),
+            id="nw_lazy",
+            marks=pytest.mark.xfail(
+                reason="https://github.com/narwhals-dev/narwhals/pull/3677", strict=True
+            ),
+        ),
         pytest.param(
             [p_disc],
             pd.DataFrame({"x": [1]}),

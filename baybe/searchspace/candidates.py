@@ -5,7 +5,7 @@ from typing import Protocol, runtime_checkable
 
 import narwhals.stable.v2 as nw
 from attr.validators import deep_iterable, instance_of, min_len
-from attrs import Attribute, define, field
+from attrs import Attribute, cmp_using, define, field
 from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
@@ -16,7 +16,7 @@ from baybe.parameters.utils import sort_parameters
 from baybe.searchspace.utils import build_constrained_product
 from baybe.searchspace.validation import validate_parameters
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import to_lazy
+from baybe.utils.dataframe import _df_equals, to_lazy
 from baybe.utils.validation import validate_parameter_input
 
 
@@ -126,17 +126,16 @@ class TableCandidates(CandidatesProtocol):
     )
     """See :attr:`CandidatesProtocol.parameters`."""
 
-    # TODO: Decide if this should be a LazyFrame or a DataFrame.
-    #   The former might enable performance benefits but comes with challenges, e.g.
-    #   eq-comparison, which is currently disabled
-    dataframe: nw.LazyFrame = field(converter=to_lazy, eq=False)
+    dataframe: nw.DataFrame = field(
+        converter=lambda x: nw.from_native(x, eager_only=True),
+        eq=cmp_using(eq=_df_equals),
+    )
     """The dataframe containing the candidates."""
 
     @dataframe.validator
-    def _validate_dataframe(self, _: Attribute, value: nw.LazyFrame) -> None:  # noqa: DOC101, DOC103
-        # TODO: Remove collect().to_pandas() once validation on lazy frames is supported
+    def _validate_dataframe(self, _: Attribute, value: nw.DataFrame) -> None:  # noqa: DOC101, DOC103
         validate_parameter_input(
-            value.collect().to_pandas(),
+            value.to_pandas(),
             self.parameters,
             allow_extra=False,
             allow_empty=True,
@@ -149,7 +148,7 @@ class TableCandidates(CandidatesProtocol):
 
     @override
     def to_lazy(self) -> nw.LazyFrame:
-        return self.dataframe
+        return self.dataframe.lazy()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
