@@ -5,11 +5,13 @@ from __future__ import annotations
 import inspect
 from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec
+from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec, TypeVar
 
 from attrs import evolve, fields, fields_dict
 
 from baybe.transformations.basic import IdentityTransformation
+
+_T = TypeVar("_T")
 
 if TYPE_CHECKING:
     from baybe.targets.numerical import NumericalTarget
@@ -43,20 +45,16 @@ def combine_numerical_targets(
 
 
 def capture_constructor_info(
-    constructor: Callable[Concatenate[type[NumericalTarget], P], NumericalTarget],
-) -> Callable[Concatenate[type[NumericalTarget], P], NumericalTarget]:
+    constructor: Callable[Concatenate[type[_T], P], _T],
+) -> Callable[Concatenate[type[_T], P], _T]:
     """Capture constructor history upon object creation.
 
     To be used as decorator with classmethods.
     """
 
     @wraps(constructor)
-    def wrapper(
-        cls: type[NumericalTarget], *args: P.args, **kwargs: P.kwargs
-    ) -> NumericalTarget:
-        from baybe.targets.numerical import NumericalTarget
-
-        target = constructor(cls, *args, **kwargs)
+    def wrapper(cls: type[_T], *args: P.args, **kwargs: P.kwargs) -> _T:
+        obj = constructor(cls, *args, **kwargs)
 
         # Reconstruct arguments
         sig = inspect.signature(constructor)
@@ -70,14 +68,13 @@ def capture_constructor_info(
             **{
                 k: v
                 for k, v in bound.arguments.items()
-                if k
-                not in fields_dict(target.__class__)  # Ignore persistent attributes
+                if k not in fields_dict(obj.__class__)  # Ignore persistent attributes
             },
         }
         object.__setattr__(
-            target, fields(NumericalTarget)._constructor_info.name, constructor_info
+            obj, fields(obj.__class__)._constructor_info.name, constructor_info
         )
 
-        return target
+        return obj
 
     return wrapper
