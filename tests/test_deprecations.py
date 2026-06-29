@@ -7,7 +7,6 @@ from itertools import pairwise
 from pathlib import Path
 from unittest.mock import patch
 
-import cattrs
 import numpy as np
 import pandas as pd
 import pytest
@@ -800,6 +799,36 @@ def test_deprecated_subspace_discrete_arguments(arg, error):
         SubspaceDiscrete(candidates=EmptyCandidates(), **{arg: 0})
 
 
+def test_deprecated_parameters_exp_rep_conversion():
+    """Passing ``parameters`` and ``exp_rep`` warns and yields the correct object."""
+    p = NumericalDiscreteParameter("p", [0, 1])
+    df = pd.DataFrame({"p": [0, 1]})
+    expected = SubspaceDiscrete.from_dataframe(parameters=[p], df=df)
+    with pytest.warns(DeprecationWarning, match="parameters.*exp_rep"):
+        actual = SubspaceDiscrete(parameters=[p], exp_rep=df)
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "use_kw_exp_rep",
+    [
+        pytest.param(False, id="both_positional"),
+        pytest.param(True, id="pos_params_kw_exp_rep"),
+    ],
+)
+def test_deprecated_parameters_exp_rep_positional(use_kw_exp_rep):
+    """Passing ``parameters`` and ``exp_rep`` positionally (or mixed) warns."""
+    p = NumericalDiscreteParameter("p", [0, 1])
+    df = pd.DataFrame({"p": [0, 1]})
+    expected = SubspaceDiscrete.from_dataframe(parameters=[p], df=df)
+    with pytest.warns(DeprecationWarning, match="parameters.*exp_rep"):
+        if use_kw_exp_rep:
+            actual = SubspaceDiscrete([p], exp_rep=df)  # type: ignore[call-arg]
+        else:
+            actual = SubspaceDiscrete([p], df)  # type: ignore[call-arg]
+    assert actual == expected
+
+
 def test_deprecated_empty_encoding_from_product():
     """Passing `empty_encoding` to `SubspaceDiscrete.from_product` raises a warning."""  # noqa
     with pytest.warns(DeprecationWarning, match="Providing 'empty_encoding'"):
@@ -829,10 +858,8 @@ def test_deprecated_discrete_subspace_deserialization():
         actual = SubspaceDiscrete.from_dict(base_dict | {"empty_encoding": False})
     assert actual == expected
 
-    with pytest.raises(cattrs.ClassValidationError) as exc_info:
+    with pytest.raises(DeprecationError, match="comp_rep"):
         SubspaceDiscrete.from_dict(base_dict | {"comp_rep": {}})
-    (ex,) = exc_info.value.exceptions
-    assert isinstance(ex, DeprecationError) and "comp_rep" in str(ex)
 
 
 def test_deprecated_exp_rep_deserialization():

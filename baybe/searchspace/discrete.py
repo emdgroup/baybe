@@ -5,12 +5,11 @@ from __future__ import annotations
 import gc
 import random
 import warnings
-from collections.abc import Callable, Collection, Iterator, Sequence
+from collections.abc import Collection, Iterator, Sequence
 from itertools import islice
 from math import prod
-from typing import TYPE_CHECKING, Annotated, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-import cattrs
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -40,7 +39,7 @@ from baybe.searchspace.utils import build_constrained_product, select_via_flat_i
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
-from baybe.utils.basic import to_tuple
+from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     get_transform_objects,
@@ -51,24 +50,6 @@ from baybe.utils.memory import bytes_to_human_readable
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
-
-
-def _deprecate_argument(error: bool, msg: str | Callable[[], str] | None = None):
-    """Helper for deprecating legacy arguments."""  # noqa: D401
-
-    def validator(self, attribute, value):
-        if value is not None:
-            # Generate message lazily if callable, otherwise use provided string
-            warning_msg = (msg() if callable(msg) else msg) or (
-                f"Providing '{attribute.alias}' to '{self.__class__.__name__}' is no "
-                f"longer supported. To proceed, simply drop the argument."
-            )
-            if error:
-                raise DeprecationError(warning_msg)
-            else:
-                warnings.warn(warning_msg, DeprecationWarning, stacklevel=3)
-
-    return validator
 
 
 @define(kw_only=True)
@@ -115,35 +96,6 @@ class SubspaceDiscrete(SerialMixin):
     candidates: CandidatesProtocol = field(validator=instance_of(CandidatesProtocol))
     """The subspace candidate generator."""
 
-    _empty_encoding: Annotated[bool, cattrs.override(omit_if_default=True)] = field(
-        alias="empty_encoding",
-        default=None,
-        eq=False,
-        validator=_deprecate_argument(error=False),
-    )
-    "Ignore! For backwards compatibility only."
-
-    _constraints: Annotated[
-        tuple[DiscreteConstraint, ...], cattrs.override(omit_if_default=True)
-    ] = field(
-        alias="constraints",
-        default=None,
-        eq=False,
-        validator=_deprecate_argument(
-            error=False,
-            msg=lambda: _make_constraints_deprecation_msg(),  # noqa: PLW0108
-        ),
-    )
-    "Ignore! For backwards compatibility only."
-
-    _comp_rep: Annotated[Any, cattrs.override(omit_if_default=True)] = field(
-        alias="comp_rep",
-        default=None,
-        eq=False,
-        validator=_deprecate_argument(error=True),
-    )
-    "Ignore! For backwards compatibility only."
-
     batch_constraints: tuple[DiscreteBatchConstraint, ...] = field(
         default=(),
         converter=to_tuple,
@@ -151,33 +103,81 @@ class SubspaceDiscrete(SerialMixin):
     )
     """Constraints operating on the recommendation batch level."""
 
-    def __attrs_post_init__(self) -> None:
-        """Migrate deprecated ``constraints`` argument to ``batch_constraints``."""
-        # >>>>>>>>>> Deprecation
-        if self._constraints is not None:
-            batch: tuple[DiscreteBatchConstraint, ...] = tuple(
-                c for c in self._constraints if isinstance(c, DiscreteBatchConstraint)
+    # >>>>>>>>>> Deprecation
+    def __init__(
+        self,
+        candidates: CandidatesProtocol = UNSPECIFIED,  # type: ignore[assignment]
+        batch_constraints: Collection[DiscreteBatchConstraint] = (),
+        *,
+        parameters: Sequence[DiscreteParameter] | UnspecifiedType = UNSPECIFIED,
+        exp_rep: pd.DataFrame | UnspecifiedType = UNSPECIFIED,
+        empty_encoding: bool | UnspecifiedType = UNSPECIFIED,
+        constraints: Sequence[DiscreteConstraint] | UnspecifiedType = UNSPECIFIED,
+        comp_rep: Any | UnspecifiedType = UNSPECIFIED,
+    ) -> None:
+        # Detect legacy positional calls: SubspaceDiscrete([p, ...], df) where
+        # the parameters list and exp_rep DataFrame were passed as positional args.
+        if (
+            candidates is not UNSPECIFIED
+            and not isinstance(candidates, CandidatesProtocol)
+            and all(isinstance(p, DiscreteParameter) for p in candidates)
+        ):
+            parameters = candidates
+            candidates = UNSPECIFIED
+            if isinstance(batch_constraints, pd.DataFrame):
+                exp_rep = batch_constraints
+                batch_constraints = ()
+
+        # --- parameters + exp_rep ---
+        if parameters is not UNSPECIFIED and exp_rep is not UNSPECIFIED:
+            name = fields(self.__class__).candidates.alias
+            warnings.warn(
+                f"Providing 'parameters' and 'exp_rep' to '{self.__class__.__name__}' "
+                f"has been deprecated and support will be dropped in a future version. "
+                f"Please use the new '{name}' interface instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            candidates = TableCandidates(
+                parameters, normalize_input_dtypes(exp_rep, parameters)
             )
 
-            if n_non_batch := len(self._constraints) - len(batch):
+        # --- empty_encoding ---
+        if empty_encoding is not UNSPECIFIED:
+            _deprecate_argument("empty_encoding", error=False, stacklevel=3)
+
+        # --- comp_rep ---
+        if comp_rep is not UNSPECIFIED:
+            _deprecate_argument("comp_rep", error=True, stacklevel=3)
+
+        # --- constraints ---
+        if constraints is not UNSPECIFIED:
+            warnings.warn(
+                _make_constraints_deprecation_msg(),
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            batch_from_legacy: list[DiscreteBatchConstraint] = [
+                c for c in constraints if isinstance(c, DiscreteBatchConstraint)
+            ]
+            if n_non_batch := len(constraints) - len(batch_from_legacy):
                 warnings.warn(
                     f"You provided {n_non_batch} filtering constraint(s) via "
                     f"'constraints' but filtering constraints are (and always have "
                     f"been) ignored when entered via '__init__'. The latter assumes "
                     f"that all filtering constraints have already been applied to the "
                     f"given experimental candidate representation. To avoid this "
-                    f"warning, either drop the filtering constraints or use one of the "
-                    f"alternative constructors.",
+                    f"warning, either drop the filtering constraints or use one of "
+                    f"the alternative constructors.",
                     DeprecationWarning,
                     stacklevel=2,
                 )
+            if batch_from_legacy:
+                batch_constraints = tuple(batch_constraints) + tuple(batch_from_legacy)
 
-            if batch:
-                self.batch_constraints = self.batch_constraints + batch
+        self.__attrs_init__(candidates=candidates, batch_constraints=batch_constraints)  # type: ignore[attr-defined]
 
-                # attrs validators have already run at this point, so re-validate.
-                validate_constraints(self.batch_constraints, self.parameters)
-        # <<<<<<<<<< Deprecation
+    # <<<<<<<<<< Deprecation
 
     @override
     def __str__(self) -> str:
@@ -261,6 +261,7 @@ class SubspaceDiscrete(SerialMixin):
             "exactly to one type."
         )
 
+        extra = {"empty_encoding": empty_encoding} if empty_encoding is not None else {}
         return cls(
             candidates=(
                 EmptyCandidates()
@@ -268,7 +269,7 @@ class SubspaceDiscrete(SerialMixin):
                 else ProductCandidates(parameters, filtering_constraints)
             ),
             batch_constraints=batch_constraints,
-            empty_encoding=empty_encoding,  # type: ignore[arg-type]
+            **extra,
         )
 
     @classmethod
@@ -332,10 +333,11 @@ class SubspaceDiscrete(SerialMixin):
         # Ensure dtype consistency
         df = normalize_input_dtypes(df, parameters)
 
+        extra = {"empty_encoding": empty_encoding} if empty_encoding is not None else {}
         return cls(
             candidates=TableCandidates(parameters, df),
             batch_constraints=batch_constraints,
-            empty_encoding=empty_encoding,  # type: ignore[arg-type]
+            **extra,
         )
 
     @classmethod
@@ -897,15 +899,23 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
 
 
 # >>>>>>>>>> Deprecation
-def _make_constraints_deprecation_msg() -> str:
-    """Generate the constraints deprecation message with programmatic names."""
-    # Get field aliases programmatically
-    constraints_alias = fields(SubspaceDiscrete)._constraints.alias
-    batch_constraints_alias = fields(SubspaceDiscrete).batch_constraints.alias
+def _deprecate_argument(arg: str, *, error: bool, stacklevel: int) -> None:
+    """Raise a ``DeprecationError`` or emit a ``DeprecationWarning`` for a dropped argument."""  # noqa: E501
+    msg = (
+        f"Providing '{arg}' to '{SubspaceDiscrete.__name__}' is no longer "
+        f"supported. To proceed, simply drop the argument."
+    )
+    if error:
+        raise DeprecationError(msg)
+    warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
 
+
+def _make_constraints_deprecation_msg() -> str:
+    """Generate the constraints deprecation message."""
+    batch_constraints_alias = fields(SubspaceDiscrete).batch_constraints.alias
     return (
-        f"Providing '{constraints_alias}' to '{SubspaceDiscrete.__name__}' is no "
-        f"longer supported. Please update your code as follows:\n"
+        f"Providing 'constraints' to '{SubspaceDiscrete.__name__}' is no longer "
+        f"supported. Please update your code as follows:\n"
         f"  • Use '{batch_constraints_alias}' for '{DiscreteBatchConstraint.__name__}' "
         f"objects. Any batch constraints you have provided have been extracted "
         f"automatically for you. This automatic extraction is temporary and will be "
@@ -938,6 +948,15 @@ def _structure_subspace_discrete(specs: dict, cls: type) -> SubspaceDiscrete:
             TableCandidates(parameters, exp_rep_df),
             unstructure_as=CandidatesProtocol,
         )
+
+    # Drop legacy ``empty_encoding`` key
+    if "empty_encoding" in specs:
+        _deprecate_argument("empty_encoding", error=False, stacklevel=2)
+        specs.pop("empty_encoding")
+
+    # Reject legacy ``comp_rep`` key
+    if "comp_rep" in specs:
+        _deprecate_argument("comp_rep", error=True, stacklevel=2)
 
     # Migrate legacy ``constraints`` key to ``batch_constraints``
     if "constraints" in specs and specs["constraints"] is not None:
