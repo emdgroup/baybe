@@ -194,6 +194,8 @@ nitpick_ignore_regex = [
     ("py:obj", "baybe.serialization.mixin.SupportsRead.read"),
     ("py:obj", "baybe.serialization.mixin.SupportsWrite.write"),
     ("py:class", "baybe.surrogates.gaussian_process.components.PlainKernelFactory"),
+    # Deprecation field alias shadowing cached_property of the same name
+    (r"py:obj", r"baybe\.searchspace\.discrete\.SubspaceDiscrete\.comp_rep"),
     # Private classes
     (r"py:class", r"baybe\..*\._.*"),
     # Deprecation
@@ -320,15 +322,16 @@ modindex_common_prefix = ["baybe."]
 intersphinx_mapping = {
     "botorch": ("https://botorch.readthedocs.io/en/latest", None),
     "gpytorch": ("https://docs.gpytorch.ai/en/stable/", None),
-    "python": ("https://docs.python.org/3", None),
+    "narwhals": ("https://narwhals-dev.github.io/narwhals/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "polars": ("https://docs.pola.rs/api/python/stable/", None),
-    "skfp": ("https://scikit-fingerprints.readthedocs.io/latest/", None),
-    "sklearn": ("https://scikit-learn.org/stable/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "torch": ("https://pytorch.org/docs/main/", None),
+    "python": ("https://docs.python.org/3", None),
     "rdkit": ("https://rdkit.org/docs/", None),
     "shap": ("https://shap.readthedocs.io/en/stable/", None),
+    "skfp": ("https://scikit-fingerprints.readthedocs.io/latest/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+    "torch": ("https://pytorch.org/docs/main/", None),
     "xyzpy": ("https://xyzpy.readthedocs.io/en/latest/", None),
 }
 

@@ -101,18 +101,18 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.Index:
+    ) -> pd.DataFrame:
         # Fit scaler on entire search space
         from sklearn.preprocessing import StandardScaler
 
         # TODO [Scaling]: scaling should be handled by search space object
+        candidates = subspace_discrete.get_candidates()
+        candidates_comp = subspace_discrete.transform(candidates)
         scaler = StandardScaler()
-        scaler.fit(subspace_discrete.comp_rep)
+        scaler.fit(candidates_comp)
 
         # Scale candidates
-        candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
         # Set model parameters and perform fit
@@ -128,8 +128,8 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         else:
             selection = self._make_selection_default(model, candidates_scaled)
 
-        # Convert positional indices into DataFrame indices and return result
-        return candidates_comp.index[selection]
+        # Select rows by positional indices and return the corresponding subset
+        return candidates.iloc[selection]
 
     @override
     def __str__(self) -> str:

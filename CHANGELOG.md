@@ -5,12 +5,61 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Breaking Changes
+- `Campaign.measurements` no longer contains `FitNr` or `BatchNr` metadata columns
+- `validate_parameter_names`, `validate_cardinality_constraints_are_nonoverlapping`
+  and `validate_cardinality_constraint_parameter_bounds` are no longer available
+  as public utilities
+- `is_constrained` property removed from `SubspaceDiscrete`, `SubspaceContinuous`,
+  and `SearchSpace`
+- `candidates_exp` argument removed from `SubspaceDiscrete.subset_masks`,
+  `SubspaceDiscrete.sample_subset_masks`, `SearchSpace.subsets`, and
+  `SearchSpace.sample_subsets`
+- `SubspaceDiscrete.get_candidates` now returns only the experimental representation
+  instead of a tuple of experimental and computational representations
+
+### Added
+- `narwhals` as a hard dependency
+- `CandidatesProtocol` as an interface for candidates generation
+- `TableCandidates` and `ProductCandidates` classes implementing `CandidatesProtocol`
+- `DiscreteParameter.is_finite` property
+- `SubspaceDiscrete.batch_constraints` field for storing batch-level constraints
+- `SubspaceDiscrete.from_dataframe` now accepts `batch_constraints`
+
 ### Changed
+- Internal `Campaign` state model simplified: recommended and excluded experiments
+  are now stored as dataframes instead of being tracked as metadata flags
+- `SubspaceContinuous` now offers a simpler interface for passing constraints,
+  no longer requiring users to manually group constraints according to their type
+- Parameter and constraint validation has been streamlined, using `validate_parameters`
+  and `validate_constraints` as the only remaining public entry points
+- `_recommend_discrete` and kin now return a `pd.DataFrame` subselection of the
+  candidates instead of a `pd.Index`
+- `SubspaceDiscrete.from_product` and `SubspaceDiscrete.from_simplex` now split
+  their `constraints` argument into filtering constraints (applied during construction)
+  and batch constraints (stored in `batch_constraints`)
+- Internal search space and recommender logic simplified by reducing indirection and
+  argument passing between methods
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
   kernel in multi-task scenarios, matching BoTorch's `MultiTaskGP` defaults introduced
   in version `0.18.0`
 - The `BOTORCH` GP preset now requires BoTorch `>= 0.18.0` and raises an
   `IncompatibilityError` if an older version is installed
+
+
+### Fixed
+- Deserialization with constructor selection now correctly respects converter settings
+
+### Deprecations
+- `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
+- `SubspaceDiscrete` ignores any `empty_encoding` when provided
+- `SubspaceDiscrete` no longer accepts a `comp_rep` argument
+- `SubspaceDiscrete.constraints` attribute (use `batch_constraints` to provide and
+  access batch-level constraints; filtering constraints are only needed during subspace
+  construction and are thus no longer stored).
+- `SubspaceDiscrete.constraints_batch` property (use `batch_constraints` instead)
+- `SubspaceDiscrete.exp_rep` attribute (use `get_candidates()` instead)
+- `SubspaceDiscrete.comp_rep` attribute (use `transform(get_candidates())` instead)
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
@@ -77,12 +126,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Broken cache validation for certain `Campaign.recommend` cases
 - `ContinuousCardinalityConstraint` now works in hybrid search spaces
+- Typo in `_FixedNumericalContinuousParameter` where `is_numeric` was used
+  instead of `is_numerical`
 - `SHAPInsight` breaking with `numpy>=2.4` due to no longer accepted implicit array to 
   scalar conversion
 - Using `np.isclose` for assessing equality of `Interval` bounds instead of hard
   equality check
-- Typo in `_FixedNumericalContinuousParameter` where `is_numeric` was used
-  instead of `is_numerical`
 
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization

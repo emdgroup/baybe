@@ -5,25 +5,24 @@ from __future__ import annotations
 import gc
 import math
 import random
+import warnings
 from collections.abc import Collection, Iterator, Sequence
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Literal, cast
 
+import cattrs.gen
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field, fields
+from attrs.validators import deep_iterable, instance_of
 from typing_extensions import override
 
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
-)
-from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
-from baybe.constraints.validation import (
-    validate_cardinality_constraint_parameter_bounds,
-    validate_cardinality_constraints_are_nonoverlapping,
     validate_constraints,
 )
+from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
@@ -33,12 +32,10 @@ from baybe.parameters.utils import (
     sort_parameters,
 )
 from baybe.searchspace.utils import select_via_flat_index
-from baybe.searchspace.validation import (
-    validate_parameter_names,
-)
+from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
-from baybe.utils.basic import flatten, to_tuple
+from baybe.utils.basic import flatten, is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 
@@ -50,35 +47,64 @@ if TYPE_CHECKING:
 _MAX_CARDINALITY_SAMPLING_ATTEMPTS = 10_000
 
 
-@define
+@define(init=False)
 class SubspaceContinuous(SerialMixin):
     """Class for managing continuous subspaces.
 
-    Builds the subspace from parameter definitions, keeps
-    track of search metadata, and provides access to candidate sets and different
-    parameter views.
+    Builds the subspace from parameter definitions and optional constraints,
+    and provides access to candidate sets and different parameter views.
     """
 
     parameters: tuple[NumericalContinuousParameter, ...] = field(
         converter=sort_parameters,
-        validator=lambda _, __, x: validate_parameter_names(x),
+        validator=[
+            deep_iterable(member_validator=instance_of(ContinuousParameter)),
+            lambda _, __, x: validate_parameters(x, allow_empty=True),
+        ],
     )
-    """The parameters of the subspace."""
+    """The parameters spanning the subspace."""
 
-    constraints_lin_eq: tuple[ContinuousLinearConstraint, ...] = field(
-        converter=to_tuple, factory=tuple
+    constraints: tuple[ContinuousConstraint, ...] = field(
+        default=(),
+        converter=to_tuple,
+        validator=[
+            deep_iterable(member_validator=instance_of(ContinuousConstraint)),
+        ],
     )
-    """Linear equality constraints."""
+    """Optional constraints filtering the subspace."""
 
-    constraints_lin_ineq: tuple[ContinuousLinearConstraint, ...] = field(
-        converter=to_tuple, factory=tuple
-    )
-    """Linear inequality constraints."""
+    def __init__(
+        self,
+        parameters: Sequence[ContinuousParameter],
+        constraints: Sequence[ContinuousConstraint] = (),
+        constraints_lin_eq: Sequence[ContinuousLinearConstraint] = (),
+        constraints_lin_ineq: Sequence[ContinuousLinearConstraint] = (),
+        constraints_nonlin: Sequence[ContinuousNonlinearConstraint] = (),
+    ):
+        constraints = list(constraints)
+        n_constraints = len(constraints)
+        if constraints_lin_eq is not None:
+            constraints.extend(constraints_lin_eq)
+        if constraints_lin_ineq is not None:
+            constraints.extend(constraints_lin_ineq)
+        if constraints_nonlin is not None:
+            constraints.extend(constraints_nonlin)
 
-    constraints_nonlin: tuple[ContinuousNonlinearConstraint, ...] = field(
-        converter=to_tuple, factory=tuple
-    )
-    """Nonlinear constraints."""
+        if len(constraints) != n_constraints:
+            name = fields(SubspaceContinuous).constraints.name
+            warnings.warn(
+                f"You are using the deprecated 'constraints_lin_eq', "
+                f"'constraints_lin_ineq' and/or 'constraints_nonlin' arguments to "
+                f"specify constraints. For backward compatibility, we have "
+                f"automatically merged their content into the '{name}' attribute. "
+                f"However, please update your code to directly use the '{name}' "
+                f"argument instead since the deprecated arguments will be removed in "
+                f"a future version.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        self.__attrs_init__(parameters, constraints)
 
     @override
     def __str__(self) -> str:
@@ -110,40 +136,44 @@ class SubspaceContinuous(SerialMixin):
 
         return to_string(self.__class__.__name__, *fields)
 
+    @constraints.validator
+    def _validate_constraints(self, _, __) -> None:
+        """Validate constraints."""
+        validate_constraints(self.constraints, self.parameters)
+
+    @property
+    def constraints_lin_eq(self) -> tuple[ContinuousLinearConstraint, ...]:
+        """Linear equality constraints."""
+        return tuple(
+            c
+            for c in self.constraints
+            if isinstance(c, ContinuousLinearConstraint) and c.is_eq
+        )
+
+    @property
+    def constraints_lin_ineq(self) -> tuple[ContinuousLinearConstraint, ...]:
+        """Linear inequality constraints."""
+        return tuple(
+            c
+            for c in self.constraints
+            if isinstance(c, ContinuousLinearConstraint) and not c.is_eq
+        )
+
+    @property
+    def constraints_nonlin(self) -> tuple[ContinuousNonlinearConstraint, ...]:
+        """Nonlinear constraints."""
+        return tuple(
+            c for c in self.constraints if isinstance(c, ContinuousNonlinearConstraint)
+        )
+
     @property
     def constraints_cardinality(self) -> tuple[ContinuousCardinalityConstraint, ...]:
         """The cardinality constraints of the subspace."""
         return tuple(
             c
-            for c in self.constraints_nonlin
+            for c in self.constraints
             if isinstance(c, ContinuousCardinalityConstraint)
         )
-
-    @constraints_lin_eq.validator
-    def _validate_constraints_lin_eq(
-        self, _, lst: list[ContinuousLinearConstraint]
-    ) -> None:
-        """Validate linear equality constraints."""
-        # TODO Remove once eq and ineq constraints are consolidated into one list
-        if not all(c.is_eq for c in lst):
-            raise ValueError(
-                f"The list '{fields(self.__class__).constraints_lin_eq.name}' of "
-                f"{self.__class__.__name__} only accepts equality constraints, i.e. "
-                f"the 'operator' for all list items should be '='."
-            )
-
-    @constraints_lin_ineq.validator
-    def _validate_constraints_lin_ineq(
-        self, _, lst: list[ContinuousLinearConstraint]
-    ) -> None:
-        """Validate linear inequality constraints."""
-        # TODO Remove once eq and ineq constraints are consolidated into one list
-        if any(c.is_eq for c in lst):
-            raise ValueError(
-                f"The list '{fields(self.__class__).constraints_lin_ineq.name}' of "
-                f"{self.__class__.__name__} only accepts inequality constraints, i.e. "
-                f"the 'operator' for all list items should be '>=' or '<='."
-            )
 
     @property
     def n_subsets(self) -> int:
@@ -205,17 +235,6 @@ class SubspaceContinuous(SerialMixin):
             for flat_idx in order:
                 yield frozenset(chain(*select_via_flat_index(flat_idx, per_constraint)))
 
-    @constraints_nonlin.validator
-    def _validate_constraints_nonlin(self, _, __) -> None:
-        """Validate nonlinear constraints."""
-        # Note: The passed constraints are accessed indirectly through the property
-        validate_cardinality_constraints_are_nonoverlapping(
-            self.constraints_cardinality
-        )
-
-        for con in self.constraints_cardinality:
-            validate_cardinality_constraint_parameter_bounds(con, self.parameters)
-
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no discrete part."""
         from baybe.searchspace.core import SearchSpace
@@ -247,26 +266,9 @@ class SubspaceContinuous(SerialMixin):
     ) -> SubspaceContinuous:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         constraints = constraints or []
-
         if constraints:
             validate_constraints(constraints, parameters)
-
-        return SubspaceContinuous(
-            parameters=[p for p in parameters if p.is_continuous],
-            constraints_lin_eq=[
-                c
-                for c in constraints
-                if (isinstance(c, ContinuousLinearConstraint) and c.is_eq)
-            ],
-            constraints_lin_ineq=[
-                c
-                for c in constraints
-                if (isinstance(c, ContinuousLinearConstraint) and not c.is_eq)
-            ],
-            constraints_nonlin=[
-                c for c in constraints if isinstance(c, ContinuousNonlinearConstraint)
-            ],
-        )
+        return SubspaceContinuous(parameters, constraints)
 
     @classmethod
     def from_bounds(cls, bounds: pd.DataFrame) -> SubspaceContinuous:
@@ -381,32 +383,38 @@ class SubspaceContinuous(SerialMixin):
         Args:
             parameter_names: The names of the parameter to be removed.
 
+        Raises:
+            NotImplementedError: If the subspace contains constraints that are not
+                linear intrapoint constraints.
+
         Returns:
             The reduced subspace.
         """
+        # Filter constraints that involve the parameters being dropped
+        affected_constraints = [
+            c for c in self.constraints if set(c.parameters) & set(parameter_names)
+        ]
+
+        # Check if all affected constraints are linear intrapoint constraints
+        if not is_all_instance(affected_constraints, ContinuousLinearConstraint) or any(
+            c.is_interpoint for c in affected_constraints
+        ):
+            raise NotImplementedError(
+                "Dropping parameters is only supported for subspaces without "
+                "constraints or with linear intrapoint constraints."
+            )
+
+        unaffected_constraints = [
+            c for c in self.constraints if c not in affected_constraints
+        ]
+        reduced_constraints = [
+            c._drop_parameters(parameter_names)
+            for c in affected_constraints
+            if (set(c.parameters) - set(parameter_names))
+        ]
         return SubspaceContinuous(
             parameters=[p for p in self.parameters if p.name not in parameter_names],
-            constraints_lin_eq=[
-                c._drop_parameters(parameter_names)
-                for c in self.constraints_lin_eq
-                if set(c.parameters) - set(parameter_names)
-            ],
-            constraints_lin_ineq=[
-                c._drop_parameters(parameter_names)
-                for c in self.constraints_lin_ineq
-                if set(c.parameters) - set(parameter_names)
-            ],
-        )
-
-    @property
-    def is_constrained(self) -> bool:
-        """Boolean indicating if the subspace is constrained in any way."""
-        return any(
-            (
-                self.constraints_lin_eq,
-                self.constraints_lin_ineq,
-                self.constraints_nonlin,
-            )
+            constraints=[*unaffected_constraints, *reduced_constraints],
         )
 
     @property
@@ -474,9 +482,9 @@ class SubspaceContinuous(SerialMixin):
         return evolve(
             self,
             parameters=adjusted_parameters,
-            constraints_nonlin=[
+            constraints=[
                 c
-                for c in self.constraints_nonlin
+                for c in self.constraints
                 if not isinstance(c, ContinuousCardinalityConstraint)
             ],
         )
@@ -523,7 +531,7 @@ class SubspaceContinuous(SerialMixin):
         if not self.parameters:
             return pd.DataFrame(index=pd.RangeIndex(0, batch_size))
 
-        if not self.is_constrained:
+        if not self.constraints:
             return self._sample_from_bounds(batch_size, self.comp_rep_bounds.to_numpy())
 
         if len(self.constraints_cardinality) == 0:
@@ -725,8 +733,66 @@ class SubspaceContinuous(SerialMixin):
         return tuple(p for p in self.parameters if p.name in names)
 
 
-# Register deserialization hook
-converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)
-
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
+
+# Uncomment when removing the deprecation:
+# converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)
+
+# >>>>> Deprecation
+_hook = cattrs.gen.make_dict_structure_fn(SubspaceContinuous, converter)
+
+
+def _structure_hook(specs: dict, cls: type) -> SubspaceContinuous:
+    """Structure hook that supports both constructor dispatch and legacy fields."""
+    if "constructor" in specs:
+        return select_constructor_hook(specs, cls)
+
+    specs = specs.copy()
+    specs.pop("type", None)
+
+    # Check if any deprecated constraint fields are present
+    deprecated_keys = {
+        "constraints_lin_eq",
+        "constraints_lin_ineq",
+        "constraints_nonlin",
+    }
+    if deprecated_keys & specs.keys():
+        from baybe.constraints.base import (
+            ContinuousConstraint,
+            ContinuousNonlinearConstraint,
+        )
+
+        kwargs: dict[str, Any] = {}
+        if "parameters" in specs:
+            kwargs["parameters"] = [
+                converter.structure(p, NumericalContinuousParameter)
+                for p in specs["parameters"]
+            ]
+        if "constraints" in specs:
+            kwargs["constraints"] = [
+                converter.structure(c, ContinuousConstraint)
+                for c in specs["constraints"]
+            ]
+        if "constraints_lin_eq" in specs:
+            kwargs["constraints_lin_eq"] = [
+                converter.structure(c, ContinuousLinearConstraint)
+                for c in specs["constraints_lin_eq"]
+            ]
+        if "constraints_lin_ineq" in specs:
+            kwargs["constraints_lin_ineq"] = [
+                converter.structure(c, ContinuousLinearConstraint)
+                for c in specs["constraints_lin_ineq"]
+            ]
+        if "constraints_nonlin" in specs:
+            kwargs["constraints_nonlin"] = [
+                converter.structure(c, ContinuousNonlinearConstraint)
+                for c in specs["constraints_nonlin"]
+            ]
+        return SubspaceContinuous(**kwargs)
+
+    return _hook(specs, cls)
+
+
+converter.register_structure_hook(SubspaceContinuous, _structure_hook)
+# <<<<< Deprecation

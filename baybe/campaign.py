@@ -7,10 +7,9 @@ import json
 import warnings
 from collections.abc import Collection, Sequence
 from functools import reduce
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, NoReturn, TypeVar
 
 import cattrs
-import numpy as np
 import pandas as pd
 from attrs import Attribute, define, evolve, field, fields, setters
 from attrs.converters import optional
@@ -19,6 +18,7 @@ from typing_extensions import override
 
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import (
+    DeprecationError,
     IncompatibilityError,
     NoMeasurementsError,
     NotEnoughPointsLeftError,
@@ -31,7 +31,6 @@ from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
-from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from baybe.searchspace.core import (
     SearchSpace,
     SearchSpaceType,
@@ -60,11 +59,10 @@ if TYPE_CHECKING:
 
     _T = TypeVar("_T")
 
-# Metadata columns
-_RECOMMENDED = "recommended"
-_MEASURED = "measured"
+# Legacy constants kept for deserialization migration only
 _EXCLUDED = "excluded"
-_METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
+_MEASURED = "measured"
+_RECOMMENDED = "recommended"
 
 
 def _set_with_cache_cleared(instance: Campaign, attribute: Attribute, value: _T) -> _T:
@@ -171,75 +169,60 @@ class Campaign(SerialMixin):
     )
     """Allow recommending pending experiments."""
 
-    # Metadata
-    _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
-    """Metadata tracking the experimentation status of the search space."""
-
-    n_batches_done: int = field(default=0, init=False)
-    """The number of already processed batches."""
-
-    n_fits_done: int = field(default=0, init=False)
-    """The number of fits already done."""
-
     # Private
-    _measurements_exp: pd.DataFrame = field(
-        factory=pd.DataFrame, eq=eq_dataframe, init=False
-    )
-    """The experimental representation of the conducted experiments."""
+    _excluded_experiments: pd.DataFrame = field(eq=eq_dataframe, init=False)
+    """The parameter configurations that have been excluded from recommendations."""
+
+    _measurements: pd.DataFrame = field(eq=eq_dataframe, init=False)
+    """The measurements added to the campaign."""
+
+    _recommended_experiments: pd.DataFrame = field(eq=eq_dataframe, init=False)
+    """The (deduplicated) parameter configurations that have been recommended."""
 
     _cached_recommendation: pd.DataFrame | None = field(
         default=None, init=False, eq=False
     )
     """The cached recommendations."""
 
-    @_searchspace_metadata.default
-    def _default_searchspace_metadata(self) -> pd.DataFrame:
-        """Create a fresh metadata object."""
-        df = pd.DataFrame(
-            False,
-            index=self.searchspace.discrete.exp_rep.index,
-            columns=_METADATA_COLUMNS,
-        )
+    @_measurements.default
+    def _default_measurements(self) -> pd.DataFrame:
+        """Create an empty measurements DataFrame with the correct schema."""
+        cols = [p.name for p in self.searchspace.parameters] + [
+            t.name for t in (self.objective.targets if self.objective else ())
+        ]
+        return pd.DataFrame(columns=cols)
 
-        return df
+    @_excluded_experiments.default
+    def _default_excluded_experiments(self) -> pd.DataFrame:
+        """Create an empty excluded experiments DataFrame with correct schema."""
+        cols = [p.name for p in self.searchspace.parameters]
+        return pd.DataFrame(columns=cols)
+
+    @_recommended_experiments.default
+    def _default_recommended_experiments(self) -> pd.DataFrame:
+        """Create an empty recommended experiments DataFrame with correct schema."""
+        cols = [p.name for p in self.searchspace.parameters]
+        return pd.DataFrame(columns=cols)
 
     @override
     def __str__(self) -> str:
-        recommended_count = sum(self._searchspace_metadata[_RECOMMENDED])
-        measured_count = sum(self._searchspace_metadata[_MEASURED])
-        excluded_count = sum(self._searchspace_metadata[_EXCLUDED])
-        n_elements = len(self._searchspace_metadata)
-        searchspace_fields = [
-            to_string(
-                "Recommended:",
-                f"{recommended_count}/{n_elements}",
-                single_line=True,
-            ),
-            to_string(
-                "Measured:",
-                f"{measured_count}/{n_elements}",
-                single_line=True,
-            ),
-            to_string(
-                "Excluded:",
-                f"{excluded_count}/{n_elements}",
-                single_line=True,
-            ),
-        ]
-        metadata_fields = [
-            to_string("Batches done", self.n_batches_done, single_line=True),
-            to_string("Fits done", self.n_fits_done, single_line=True),
-            to_string("Discrete Subspace Meta Data", *searchspace_fields),
-        ]
-        metadata = to_string("Meta Data", *metadata_fields)
-        fields = [metadata, self.searchspace, self.objective, self.recommender]
-
+        fields = [self.searchspace, self.objective, self.recommender]
         return to_string(self.__class__.__name__, *fields)
 
     @property
     def measurements(self) -> pd.DataFrame:
         """The experimental data added to the Campaign."""
-        return self._measurements_exp
+        return self._measurements
+
+    @property
+    def n_batches_done(self) -> NoReturn:
+        """Deprecated!"""
+        raise DeprecationError("'n_batches_done' is no longer available.")
+
+    @property
+    def n_fits_done(self) -> NoReturn:
+        """Deprecated!"""
+        raise DeprecationError("'n_fits_done' is no longer available.")
 
     @property
     def parameters(self) -> tuple[Parameter, ...]:
@@ -353,21 +336,8 @@ class Campaign(SerialMixin):
         self.clear_cache()
 
         # Read in measurements and add them to the database
-        self.n_batches_done += 1
-        to_insert = data.copy()
-        to_insert["BatchNr"] = self.n_batches_done
-        to_insert["FitNr"] = np.nan
-
-        self._measurements_exp = pd.concat(
-            [self._measurements_exp, to_insert], axis=0, ignore_index=True
-        )
-
-        # Update metadata
-        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            idxs_matched = fuzzy_row_match(
-                self.searchspace.discrete.exp_rep, data, self.parameters
-            )
-            self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
+        frames = [f for f in (self._measurements, data) if not f.empty]
+        self._measurements = pd.concat(frames, axis=0, ignore_index=True)
 
     def update_measurements(
         self,
@@ -378,7 +348,7 @@ class Campaign(SerialMixin):
 
         This can be useful to correct mistakes or update target measurements. The
         match to existing data entries is made based on the index. This will reset
-        the `FitNr` of the corresponding measurement and reset cached recommendations.
+        cached recommendations.
 
         Args:
             data: The measurement data to be updated (with filled values for targets).
@@ -410,7 +380,7 @@ class Campaign(SerialMixin):
             )
 
         # Allow only existing indices
-        if nonmatching_idxs := set(data.index).difference(self._measurements_exp.index):
+        if nonmatching_idxs := set(data.index).difference(self.measurements.index):
             raise ValueError(
                 f"Updating measurements requires indices matching the "
                 f"existing measurements. The following indices were in the input, but "
@@ -419,10 +389,7 @@ class Campaign(SerialMixin):
 
         # Perform the update
         cols = [p.name for p in self.parameters] + [t.name for t in self.targets]
-        self._measurements_exp.loc[data.index, cols] = data[cols]
-
-        # Reset fit number
-        self._measurements_exp.loc[data.index, "FitNr"] = np.nan
+        self._measurements.loc[data.index, cols] = data[cols]
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
@@ -461,7 +428,7 @@ class Campaign(SerialMixin):
         #  * Additional shortcuts might be possible.
         self.clear_cache()
 
-        df = self.searchspace.discrete.exp_rep
+        df = self.searchspace.discrete.get_candidates()
 
         if isinstance(constraints, pd.DataFrame):
             # Determine the candidate subset to be toggled
@@ -488,7 +455,25 @@ class Campaign(SerialMixin):
             )
 
         if not dry_run:
-            self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
+            if exclude and not points.empty:
+                # Add the toggled points (avoid duplicates)
+                frames = [
+                    f for f in (self._excluded_experiments, points) if not f.empty
+                ]
+                self._excluded_experiments = (
+                    pd.concat(frames, axis=0).drop_duplicates().reset_index(drop=True)
+                )
+            elif not exclude and not self._excluded_experiments.empty:
+                # Remove the re-included points
+                merged = pd.merge(
+                    self._excluded_experiments,
+                    points,
+                    indicator=True,
+                    how="left",
+                )
+                self._excluded_experiments = self._excluded_experiments[
+                    merged["_merge"].eq("left_only").values
+                ].reset_index(drop=True)
 
         return points
 
@@ -540,34 +525,63 @@ class Campaign(SerialMixin):
         ):
             return cache
 
-        # Update recommendation meta data
-        if len(self._measurements_exp) > 0:
-            self.n_fits_done += 1
-            self._measurements_exp.fillna({"FitNr": self.n_fits_done}, inplace=True)
-
         # Prepare the search space according to the current campaign state
         if self.searchspace.type is SearchSpaceType.DISCRETE:
             # TODO: This implementation should at some point be hidden behind an
             #   appropriate public interface, like `SubspaceDiscrete.filter()`
-            mask_todrop = self._searchspace_metadata[_EXCLUDED].astype(bool)
-            if not self.allow_recommending_already_recommended:
-                mask_todrop |= self._searchspace_metadata[_RECOMMENDED]
-            if not self.allow_recommending_already_measured:
-                mask_todrop |= self._searchspace_metadata[_MEASURED]
+            candidates = self.searchspace.discrete.get_candidates()
+            mask_todrop = pd.Series(False, index=candidates.index)
+            if not self._excluded_experiments.empty:
+                mask_todrop |= (
+                    pd.merge(
+                        candidates,
+                        self._excluded_experiments,
+                        indicator=True,
+                        how="left",
+                    )["_merge"]
+                    .eq("both")
+                    .to_numpy()
+                )
+            if (
+                not self.allow_recommending_already_recommended
+                and not self._recommended_experiments.empty
+            ):
+                mask_todrop |= (
+                    pd.merge(
+                        candidates,
+                        self._recommended_experiments,
+                        indicator=True,
+                        how="left",
+                    )["_merge"]
+                    .eq("both")
+                    .to_numpy()
+                )
+            if (
+                not self.allow_recommending_already_measured
+                and not self._measurements.empty
+            ):
+                measured_idxs = fuzzy_row_match(
+                    candidates, self._measurements, self.parameters
+                )
+                mask_todrop.loc[measured_idxs] = True
             if (
                 not self.allow_recommending_pending_experiments
                 and pending_experiments is not None
             ):
-                mask_todrop |= pd.merge(
-                    self.searchspace.discrete.exp_rep,
-                    pending_experiments,
-                    indicator=True,
-                    how="left",
-                )["_merge"].eq("both")
+                mask_todrop |= (
+                    pd.merge(
+                        candidates,
+                        pending_experiments,
+                        indicator=True,
+                        how="left",
+                    )["_merge"]
+                    .eq("both")
+                    .to_numpy()
+                )
             searchspace = evolve(
                 self.searchspace,
-                discrete=FilteredSubspaceDiscrete.from_subspace(
-                    self.searchspace.discrete, ~mask_todrop.to_numpy()
+                discrete=evolve(
+                    self.searchspace.discrete, exp_rep=candidates.loc[~mask_todrop]
                 ),
             )
         else:
@@ -582,7 +596,7 @@ class Campaign(SerialMixin):
                 batch_size,
                 searchspace,
                 self.objective,
-                self._measurements_exp,
+                self.measurements,
                 pending_experiments,
             )
         is_nonpredictive = isinstance(recommender, NonPredictiveRecommender)
@@ -596,7 +610,7 @@ class Campaign(SerialMixin):
                     batch_size,
                     searchspace,
                     self.objective,
-                    self._measurements_exp,
+                    self.measurements,
                     None if is_nonpredictive else pending_experiments,
                 )
         except NotEnoughPointsLeftError as ex:
@@ -635,9 +649,19 @@ class Campaign(SerialMixin):
         ):
             self._cache_recommendation(rec)
 
-        # Update metadata
+        # Track recommended experiments (deduplicated)
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            self._searchspace_metadata.loc[rec.index, _RECOMMENDED] = True
+            param_cols = [p.name for p in self.parameters]
+            frames = [
+                f
+                for f in (self._recommended_experiments, rec[param_cols])
+                if not f.empty
+            ]
+            self._recommended_experiments = (
+                pd.concat(frames, axis=0, ignore_index=True)
+                .drop_duplicates()
+                .reset_index(drop=True)
+            )
 
         return rec
 
@@ -976,6 +1000,53 @@ def _drop_version(dict_: dict) -> dict:
     return dict_
 
 
+# >>>>>>>>>> Deprecation
+def _discard_legacy_fields(dict_: dict, /) -> dict:
+    """Discard legacy fields from a Campaign dictionary during structuring."""
+    dict_.pop("n_fits_done", None)
+    dict_.pop("n_batches_done", None)
+
+    # Migrate legacy "measurements_exp" key to "measurements"
+    if "measurements_exp" in dict_:
+        dict_["measurements"] = dict_.pop("measurements_exp")
+
+    # Strip FitNr/BatchNr columns from legacy measurements
+    if "measurements" in dict_:
+        meas = converter.structure(dict_["measurements"], pd.DataFrame)
+        cols_to_drop = [c for c in ("FitNr", "BatchNr") if c in meas.columns]
+        if cols_to_drop:
+            dict_["measurements"] = converter.unstructure(
+                meas.drop(columns=cols_to_drop)
+            )
+
+    # Migrate legacy _searchspace_metadata to new fields
+    if "searchspace_metadata" in dict_:
+        metadata = converter.structure(dict_.pop("searchspace_metadata"), pd.DataFrame)
+        if _RECOMMENDED in metadata.columns:
+            if "recommended_experiments" not in dict_:
+                recommended_idxs = metadata.index[metadata[_RECOMMENDED]]
+                if len(recommended_idxs) > 0:
+                    dict_["_legacy_recommended_idxs"] = recommended_idxs
+        if _EXCLUDED in metadata.columns:
+            if "excluded_experiments" not in dict_:
+                excluded_idxs = metadata.index[metadata[_EXCLUDED]]
+                if len(excluded_idxs) > 0:
+                    dict_["_legacy_excluded_idxs"] = excluded_idxs
+
+    return dict_
+
+
+# <<<<<<<<<< Deprecation
+
+
+def _prepare_for_structuring(dict_: dict, /) -> dict:
+    """Prepare a Campaign dictionary for structuring."""
+    dict_ = dict_.copy()
+    _drop_version(dict_)
+    _discard_legacy_fields(dict_)
+    return dict_
+
+
 # Register (un-)structure hooks
 unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
     Campaign, converter, _cattrs_include_init_false=True
@@ -986,9 +1057,37 @@ structure_hook = cattrs.gen.make_dict_structure_fn(
 converter.register_unstructure_hook(
     Campaign, lambda x: _add_version(unstructure_hook(x))
 )
-converter.register_structure_hook(
-    Campaign, lambda d, cl: structure_hook(_drop_version(d), cl)
-)
+
+
+def _structure_campaign(d: dict, cl: type) -> Campaign:
+    """Structure a Campaign from a dictionary, handling legacy migrations."""
+    prepared = _prepare_for_structuring(d)
+    legacy_recommended_idxs = prepared.pop("_legacy_recommended_idxs", None)
+    legacy_excluded_idxs = prepared.pop("_legacy_excluded_idxs", None)
+    campaign = structure_hook(prepared, cl)
+
+    # >>>>>>>>>> Deprecation
+    # Post-structure reconstruction from legacy metadata indices
+    if legacy_recommended_idxs is not None or legacy_excluded_idxs is not None:
+        candidates = campaign.searchspace.discrete.get_candidates()
+        if legacy_recommended_idxs is not None:
+            campaign._recommended_experiments = candidates.loc[
+                legacy_recommended_idxs
+            ].reset_index(drop=True)
+        if legacy_excluded_idxs is not None:
+            campaign._excluded_experiments = candidates.loc[
+                legacy_excluded_idxs
+            ].reset_index(drop=True)
+
+    # Fix schema of empty DataFrames from legacy serialization
+    if campaign._measurements.columns.empty:
+        campaign._measurements = campaign._default_measurements()
+    # <<<<<<<<<< Deprecation
+
+    return campaign
+
+
+converter.register_structure_hook(Campaign, _structure_campaign)
 
 
 # Converter for config validation

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -101,7 +101,7 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
     if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
 
-    if missing := {t.name for t in targets}.difference(data.columns):
+    if missing := {t.name for t in targets} - set(data.columns):
         raise ValueError(
             f"The input dataframe is missing columns for the following targets: "
             f"{missing}"
@@ -147,8 +147,10 @@ def validate_objective_input(data: pd.DataFrame, objective: Objective) -> None:
 
 def validate_parameter_input(
     data: pd.DataFrame,
-    parameters: Iterable[Parameter],
+    parameters: Sequence[Parameter],
     numerical_measurements_must_be_within_tolerance: bool = False,
+    *,
+    allow_extra: bool = True,
 ) -> None:
     """Validate input dataframe columns corresponding to parameters.
 
@@ -158,20 +160,30 @@ def validate_parameter_input(
         numerical_measurements_must_be_within_tolerance: If ``True``, numerical
             parameter values must match to parameter values within the
             parameter-specific tolerance.
+        allow_extra: If ``False``, the dataframe is not allowed to contain columns that
+            do not correspond to any parameter.
 
     Raises:
         ValueError: If the data is empty.
         ValueError: If the data misses columns for a parameter.
+        ValueError: If the data contains columns that do not correspond to any parameter
+            and the corresponding check is enabled.
         ValueError: If a parameter contains NaN.
         TypeError: If a parameter contains non-numeric values.
     """
     if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
 
-    if missing := {p.name for p in parameters}.difference(data.columns):
+    if missing := {p.name for p in parameters} - set(data.columns):
         raise ValueError(
             f"The input dataframe is missing columns for the following parameters: "
             f"{missing}"
+        )
+
+    if not allow_extra and (extra := set(data.columns) - {p.name for p in parameters}):
+        raise ValueError(
+            f"The input dataframe contains columns that do not correspond to any "
+            f"parameter: {extra}"
         )
 
     for p in parameters:

@@ -79,7 +79,7 @@ def extract_pi(
             f"Currently, only search spaces of type '{SearchSpaceType.DISCRETE}' are "
             f"accepted."
         )
-    candidates, _ = searchspace.discrete.get_candidates()
+    candidates = searchspace.discrete.get_candidates()
     acqf = ProbabilityOfImprovement()
     pi = self.acquisition_values(
         candidates, searchspace, objective, measurements, acquisition_function=acqf

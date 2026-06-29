@@ -18,6 +18,7 @@ from typing import (
 import attrs
 import cattrs
 import pandas as pd
+from cattrs.gen import make_dict_structure_fn
 from cattrs.strategies import configure_union_passthrough
 
 from baybe.utils.basic import find_subclass
@@ -229,8 +230,8 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
         # Call the constructor with the deserialized arguments
         return constructor(**specs)
 
-    # Otherwise, use the regular __init__ method
-    return converter.structure_attrs_fromdict(specs, cls)
+    # Otherwise, structure using the regular mechanism
+    return make_dict_structure_fn(cls, converter)(specs, cls)
 
 
 # Register custom (un-)structure hooks

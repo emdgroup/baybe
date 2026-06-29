@@ -222,7 +222,9 @@ def test_fps_utility_expected_errors(points, n_requested, initialization, match)
 
 def test_fps_recommender_utility_initialization_indices(searchspace):
     """FPS utilities return expected indices when initialization indices are used."""
-    points = searchspace.discrete.comp_rep.values
+    candidates = searchspace.discrete.get_candidates()
+    candidates_comp = searchspace.discrete.transform(candidates)
+    points = candidates_comp.values
     inds1 = farthest_point_sampling(points, 3, initialization=[0])
     inds2 = farthest_point_sampling(points, 3, initialization=[1, 2])
 
@@ -269,7 +271,9 @@ def test_fps_recommender_result_consistency(searchspace):
     """FPS utilities return consistent results."""
     from baybe._optional.fpsample import fps_sampling
 
-    points = searchspace.discrete.comp_rep.values
+    candidates = searchspace.discrete.get_candidates()
+    candidates_comp = searchspace.discrete.transform(candidates)
+    points = candidates_comp.values
     inds1 = fps_sampling(points, 3, start_idx=0).tolist()
     inds2 = farthest_point_sampling(
         points, 3, initialization=[0], random_tie_break=False

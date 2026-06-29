@@ -11,17 +11,27 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from pandas.testing import assert_series_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
+from baybe.constraints import (
+    ContinuousLinearConstraint,
+)
+from baybe.constraints.conditions import SubSelectionCondition
+from baybe.constraints.continuous import ContinuousCardinalityConstraint
+from baybe.constraints.discrete import (
+    DiscreteBatchConstraint,
+    DiscreteExcludeConstraint,
+)
 from baybe.exceptions import DeprecationError
 from baybe.kernels.basic import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
-from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.categorical import CategoricalParameter, TaskParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
@@ -29,6 +39,7 @@ from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
@@ -556,3 +567,356 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
     )
     with context:
         GaussianProcessSurrogate(*args).fit(searchspace, objective, measurements)
+
+
+@pytest.mark.parametrize(
+    "attr", ["n_fits_done", "n_batches_done"], ids=["fits", "batches"]
+)
+def test_deprecated_campaign_counters(campaign, attr):
+    """Accessing the deprecated campaign counter properties raises an error."""
+    with pytest.raises(DeprecationError, match=attr):
+        getattr(campaign, attr)
+
+
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+def test_legacy_campaign_counter_deserialization(ongoing_campaign):
+    """Deserializing a campaign with legacy counter fields and columns still works."""
+    from baybe.campaign import Campaign
+    from baybe.serialization import converter
+
+    # Serialize, then inject legacy fields
+    data = ongoing_campaign.to_dict()
+    assert "n_fits_done" not in data
+    assert "n_batches_done" not in data
+    data["n_fits_done"] = 3
+    data["n_batches_done"] = 2
+
+    # Inject legacy columns into measurements
+    # (use legacy key name "measurements_exp" to test migration hook)
+    meas = converter.structure(data.pop("measurements"), pd.DataFrame)
+    meas["FitNr"] = 1.0
+    meas["BatchNr"] = 1
+    data["measurements_exp"] = converter.unstructure(meas)
+
+    # Deserialization must not raise and legacy columns must be stripped
+    restored = Campaign.from_dict(data)
+    assert "FitNr" not in restored._measurements.columns
+    assert "BatchNr" not in restored._measurements.columns
+
+
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+def test_legacy_recommended_metadata_deserialization(ongoing_campaign):
+    """Legacy searchspace_metadata 'recommended' column migrates to new field."""
+    from baybe.campaign import _RECOMMENDED, Campaign
+    from baybe.serialization import converter
+
+    # Recommend to mark some entries as recommended
+    rec = ongoing_campaign.recommend(batch_size=2)
+    n_recommended = len(rec)
+
+    # Serialize and simulate legacy format (no recommended/excluded_experiments)
+    data = ongoing_campaign.to_dict()
+    del data["recommended_experiments"]
+    del data["excluded_experiments"]
+
+    # Construct legacy searchspace_metadata with a "recommended" column
+    exp_rep = ongoing_campaign.searchspace.discrete.get_candidates()
+    metadata = pd.DataFrame(False, index=exp_rep.index, columns=[_RECOMMENDED])
+    idxs = rec.index[:n_recommended]
+    metadata.loc[idxs, _RECOMMENDED] = True
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must reconstruct _recommended_experiments with correct content
+    restored = Campaign.from_dict(data)
+    expected = exp_rep.loc[idxs]
+    # Compare as sets of rows (order may differ)
+    restored_sorted = restored._recommended_experiments.sort_values(
+        restored._recommended_experiments.columns.tolist()
+    ).reset_index(drop=True)
+    expected_sorted = expected.sort_values(expected.columns.tolist()).reset_index(
+        drop=True
+    )
+    pd.testing.assert_frame_equal(restored_sorted, expected_sorted)
+
+
+def test_legacy_empty_dataframe_schema_deserialization():
+    """Legacy campaigns with schema-less empty DataFrames get correct columns."""
+    from baybe.campaign import Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy serialization: replace with column-less empty DataFrames
+    data = campaign.to_dict()
+    data["measurements"] = converter.unstructure(pd.DataFrame())
+
+    restored = Campaign.from_dict(data)
+    assert restored._measurements.columns.tolist() == ["x", "y"]
+    assert restored._recommended_experiments.columns.tolist() == ["x"]
+    assert restored._measurements.empty
+    assert restored._recommended_experiments.empty
+    assert restored == campaign
+
+
+def test_legacy_measured_metadata_deserialization():
+    """Legacy searchspace_metadata 'measured' column is discarded during loading."""
+    from baybe.campaign import _MEASURED, Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy format: searchspace_metadata with a "measured" column
+    data = campaign.to_dict()
+    metadata = pd.DataFrame(
+        {_MEASURED: [True, False, False]},
+        index=campaign.searchspace.discrete.get_candidates().index,
+    )
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must handle the legacy column without errors
+    restored = Campaign.from_dict(data)
+    assert restored == campaign
+
+
+def test_legacy_excluded_metadata_deserialization():
+    """Legacy searchspace_metadata 'excluded' column migrates to new field."""
+    from baybe.campaign import _EXCLUDED, Campaign
+    from baybe.parameters.numerical import NumericalDiscreteParameter
+    from baybe.serialization import converter
+    from baybe.targets.numerical import NumericalTarget
+
+    p = NumericalDiscreteParameter("x", [1, 2, 3])
+    t = NumericalTarget("y")
+    campaign = Campaign(p.to_searchspace(), t.to_objective())
+
+    # Simulate legacy format: searchspace_metadata with an "excluded" column,
+    # and no excluded_experiments field
+    data = campaign.to_dict()
+    del data["excluded_experiments"]
+    exp_rep = campaign.searchspace.discrete.get_candidates()
+    metadata = pd.DataFrame(
+        {_EXCLUDED: [True, False, True]},
+        index=exp_rep.index,
+    )
+    data["searchspace_metadata"] = converter.unstructure(metadata)
+
+    # Deserialization must reconstruct _excluded_experiments
+    restored = Campaign.from_dict(data)
+    excluded_idxs = metadata.index[metadata[_EXCLUDED]]
+    expected = exp_rep.loc[excluded_idxs].reset_index(drop=True)
+    pd.testing.assert_frame_equal(
+        restored._excluded_experiments.sort_values(
+            restored._excluded_experiments.columns.tolist()
+        ).reset_index(drop=True),
+        expected.sort_values(expected.columns.tolist()).reset_index(drop=True),
+    )
+
+
+@pytest.mark.parametrize("positional", [True, False])
+def test_deprecated_constraints_arguments(positional):
+    """Using the deprecated subspace constraint arguments raises a warning."""
+    p = NumericalContinuousParameter("p", (0, 1))
+    c = ContinuousLinearConstraint(["p"], "=", [0], 0)
+    c_lin_eq = ContinuousLinearConstraint(["p"], "=", [1], 0)
+    c_lin_ineq = ContinuousLinearConstraint(["p"], ">=", [1], 0)
+    c_nonlin = ContinuousCardinalityConstraint(["p"], 1)
+
+    with pytest.warns(DeprecationWarning):
+        if positional:
+            subspace = SubspaceContinuous(
+                parameters=(p,),
+                constraints=(c,),
+                constraints_lin_eq=(c_lin_eq,),
+                constraints_lin_ineq=(c_lin_ineq,),
+                constraints_nonlin=(c_nonlin,),
+            )
+        else:
+            subspace = SubspaceContinuous(
+                (p,),
+                (c, c_lin_eq),
+                (c_lin_ineq,),
+                (c_nonlin,),
+            )
+
+    assert c in subspace.constraints
+    assert c_lin_eq in subspace.constraints
+    assert c_lin_ineq in subspace.constraints
+    assert c_nonlin in subspace.constraints
+
+
+def test_deprecated_constraints_arguments_deserialization():
+    """Deserialization from legacy JSON with deprecated constraint attributes works."""
+    p1 = NumericalContinuousParameter("p", (0, 1))
+    c_lin_eq = ContinuousLinearConstraint(["p"], "=", [1], 1)
+    c_lin_ineq = ContinuousLinearConstraint(["p"], ">=", [1], 0)
+    c_nonlin = ContinuousCardinalityConstraint(["p"], 1)
+
+    # Construct the expected object using the modern interface
+    expected = SubspaceContinuous(
+        parameters=(p1,),
+        constraints=(c_lin_eq, c_lin_ineq, c_nonlin),
+    )
+
+    # Build a legacy dict with the deprecated constraint field names
+    legacy_dict = {
+        "type": "SubspaceContinuous",
+        "parameters": [p1.to_dict()],
+        "constraints_lin_eq": [c_lin_eq.to_dict()],
+        "constraints_lin_ineq": [c_lin_ineq.to_dict()],
+        "constraints_nonlin": [c_nonlin.to_dict()],
+    }
+
+    with pytest.warns(DeprecationWarning):
+        actual = SubspaceContinuous.from_dict(legacy_dict)
+
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("arg", "error"), [("empty_encoding", False), ("comp_rep", True)]
+)
+def test_deprecated_subspace_discrete_arguments(arg, error):
+    """Providing deprecated arguments to `SubspaceDiscrete` raises an error / a warning."""  # noqa
+    context = (
+        pytest.raises(DeprecationError, match=f"Providing '{arg}'")
+        if error
+        else pytest.warns(DeprecationWarning, match=f"Providing '{arg}'")
+    )
+    with context:
+        SubspaceDiscrete(parameters=[], exp_rep=pd.DataFrame(), **{arg: 0})
+
+
+def test_deprecated_empty_encoding_from_product():
+    """Passing `empty_encoding` to `SubspaceDiscrete.from_product` raises a warning."""  # noqa
+    with pytest.warns(DeprecationWarning, match="Providing 'empty_encoding'"):
+        SubspaceDiscrete.from_product(
+            parameters=[NumericalDiscreteParameter("p", [0, 1])],
+            empty_encoding=True,
+        )
+
+
+def test_deprecated_empty_encoding_from_dataframe():
+    """Passing `empty_encoding` to `SubspaceDiscrete.from_dataframe` raises a warning."""  # noqa
+    with pytest.warns(DeprecationWarning, match="Providing 'empty_encoding'"):
+        SubspaceDiscrete.from_dataframe(
+            parameters=[NumericalDiscreteParameter("p", [0, 1])],
+            df=pd.DataFrame({"p": [0, 1]}),
+            empty_encoding=True,
+        )
+
+
+def test_deprecated_discrete_subspace_deserialization():
+    """Deserialization from legacy JSON with `empty_encoding`/`comp_rep` works."""
+    p = NumericalDiscreteParameter("p", [0, 1])
+    expected = SubspaceDiscrete.from_product(parameters=[p])
+
+    # Build a legacy dict containing the deprecated fields
+    legacy_dict = expected.to_dict()
+    legacy_dict["empty_encoding"] = False
+    legacy_dict["comp_rep"] = legacy_dict["exp_rep"]
+
+    actual = SubspaceDiscrete.from_dict(legacy_dict)
+    assert actual == expected
+
+
+def test_deprecated_constraints_deserialization():
+    """Deserialization of legacy ``constraints`` key migrates batch constraints."""
+    p = NumericalDiscreteParameter("p", [0, 1, 2])
+    batch_c = DiscreteBatchConstraint(["p"])
+    expected = SubspaceDiscrete.from_product(parameters=[p], constraints=[batch_c])
+
+    # Simulate a legacy dict with `constraints` instead of `batch_constraints`
+    legacy_dict = expected.to_dict()
+    legacy_dict["constraints"] = [batch_c.to_dict()]
+    del legacy_dict["batch_constraints"]
+
+    with pytest.warns(DeprecationWarning, match="Providing 'constraints'"):
+        actual = SubspaceDiscrete.from_dict(legacy_dict)
+
+    assert actual == expected
+
+
+def test_deprecated_constraints_argument():
+    """Passing `constraints` to `SubspaceDiscrete` raises a deprecation warning."""
+    p = NumericalDiscreteParameter("p", [0, 1, 2])
+    batch_c = DiscreteBatchConstraint(["p"])
+    with pytest.warns(DeprecationWarning, match="Providing 'constraints'"):
+        subspace = SubspaceDiscrete(
+            parameters=[p],
+            exp_rep=pd.DataFrame({"p": [0, 1, 2]}),
+            constraints=[batch_c],
+        )
+    # The batch constraint must be migrated to `batch_constraints`
+    assert subspace.batch_constraints == (batch_c,)
+
+
+def test_deprecated_constraints_argument_from_product():
+    """Passing mixed constraints to ``from_product`` routes batch constraints correctly."""  # noqa: E501
+    p = CategoricalParameter("p", ["a", "b"])
+    q = CategoricalParameter("q", ["x", "y"])
+    batch_c = DiscreteBatchConstraint(["p"])
+    no_dup_c = DiscreteExcludeConstraint(["p"], [SubSelectionCondition(["a"])])
+
+    ss_both = SubspaceDiscrete.from_product(
+        parameters=[p, q], constraints=[batch_c, no_dup_c]
+    )
+    ss_none = SubspaceDiscrete.from_product(parameters=[p, q], constraints=[])
+    ss_with_batch = SubspaceDiscrete.from_product(
+        parameters=[p, q], constraints=[batch_c]
+    )
+    ss_without_batch = SubspaceDiscrete.from_product(
+        parameters=[p, q], constraints=[no_dup_c]
+    )
+
+    ss_both_candidates = ss_both.get_candidates()
+    ss_none_candidates = ss_none.get_candidates()
+    ss_with_batch_candidates = ss_with_batch.get_candidates()
+    ss_without_batch_candidates = ss_without_batch.get_candidates()
+    assert ss_both.batch_constraints == ss_with_batch.batch_constraints == (batch_c,)
+    assert ss_without_batch.batch_constraints == ss_none.batch_constraints == ()
+    assert_frame_equal(ss_both_candidates, ss_without_batch_candidates)
+    assert_frame_equal(ss_with_batch_candidates, ss_none_candidates)
+    assert len(ss_both_candidates) == 2
+    assert len(ss_none_candidates) == 4
+
+
+def test_deprecated_constraints_batch_property():
+    """Accessing ``constraints_batch`` emits a deprecation warning and delegates correctly."""  # noqa: E501
+    p = NumericalDiscreteParameter("p", [0, 1, 2])
+    batch_c = DiscreteBatchConstraint(["p"])
+    subspace = SubspaceDiscrete(
+        parameters=[p],
+        exp_rep=pd.DataFrame({"p": [0, 1, 2]}),
+        batch_constraints=(batch_c,),
+    )
+
+    with pytest.warns(DeprecationWarning, match="constraints_batch"):
+        result = subspace.constraints_batch
+
+    assert result == subspace.batch_constraints == (batch_c,)
+
+
+def test_deprecated_exp_rep_property():
+    """Accessing ``exp_rep`` on ``SubspaceDiscrete`` emits a deprecation warning."""
+    subspace = CategoricalParameter("p", ["a", "b"]).to_subspace()
+    with pytest.warns(DeprecationWarning, match="Accessing 'exp_rep'"):
+        result = subspace.exp_rep
+    assert_frame_equal(result, subspace.get_candidates())
+
+
+def test_deprecated_comp_rep_property():
+    """Accessing ``comp_rep`` on ``SubspaceDiscrete`` emits a deprecation warning."""
+    subspace = CategoricalParameter("p", ["a", "b"]).to_subspace()
+    with pytest.warns(DeprecationWarning, match="Accessing 'comp_rep'"):
+        result = subspace.comp_rep
+    assert_frame_equal(result, subspace.transform(subspace.get_candidates()))

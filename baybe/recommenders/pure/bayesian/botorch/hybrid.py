@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
+from attrs import evolve
 
 from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import (
@@ -30,7 +31,6 @@ if TYPE_CHECKING:
 def recommend_hybrid_without_subsets(
     recommender: BotorchRecommender,
     searchspace: SearchSpace,
-    candidates_exp: pd.DataFrame,
     batch_size: int,
 ) -> pd.DataFrame:
     """Recommend points using the ``optimize_acqf_mixed`` function of BoTorch.
@@ -49,8 +49,6 @@ def recommend_hybrid_without_subsets(
     Args:
         recommender: The recommender instance.
         searchspace: The search space in which the recommendations should be made.
-        candidates_exp: The experimental representation of the candidates
-            of the discrete subspace.
         batch_size: The size of the calculated batch.
 
     Raises:
@@ -83,7 +81,8 @@ def recommend_hybrid_without_subsets(
     from botorch.optim import optimize_acqf_mixed
 
     # Transform discrete candidates
-    candidates_comp = searchspace.discrete.transform(candidates_exp)
+    candidates = searchspace.discrete.get_candidates()
+    candidates_comp = searchspace.discrete.transform(candidates)
 
     # Calculate the number of samples from the given percentage
     n_candidates = math.ceil(
@@ -145,7 +144,7 @@ def recommend_hybrid_without_subsets(
     ).set_index("index")
 
     # Get experimental representation of discrete part
-    rec_disc_exp = searchspace.discrete.exp_rep.loc[merged.index]
+    rec_disc_exp = candidates.loc[merged.index]
 
     # Combine discrete and continuous parts
     rec_exp = pd.concat(
@@ -164,7 +163,6 @@ def recommend_hybrid_without_subsets(
 def recommend_hybrid_with_subsets(
     recommender: BotorchRecommender,
     searchspace: SearchSpace,
-    candidates_exp: pd.DataFrame,
     batch_size: int,
 ) -> pd.DataFrame:
     """Recommend from a hybrid space with subset constraints.
@@ -177,28 +175,23 @@ def recommend_hybrid_with_subsets(
     Args:
         recommender: The recommender instance.
         searchspace: The search space in which the recommendations should be made.
-        candidates_exp: The experimental representation of the candidates
-            of the discrete subspace.
         batch_size: The size of the calculated batch.
 
     Returns:
         The recommended points.
     """
-    from attrs import evolve
-
     subspace_c = searchspace.continuous
 
     # Get combined configurations, capped at max_n_subsets
     # NOTE: No min_discrete_candidates filtering in hybrid spaces because
     # optimize_acqf_mixed can produce multiple recommendations from a single
     # discrete candidate by varying continuous parameters.
+    candidates = searchspace.discrete.get_candidates()
     combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
     if searchspace.n_subsets <= recommender.max_n_subsets:
-        combined_masks = searchspace.subsets(candidates_exp)
+        combined_masks = searchspace.subsets()
     else:
-        combined_masks = searchspace.sample_subsets(
-            candidates_exp, recommender.max_n_subsets
-        )
+        combined_masks = searchspace.sample_subsets(recommender.max_n_subsets)
 
     def make_callable(
         d_mask: np.ndarray,
@@ -207,18 +200,21 @@ def recommend_hybrid_with_subsets(
         def optimize() -> tuple[pd.DataFrame, Tensor]:
             import torch
 
-            subset = candidates_exp.loc[d_mask]
-
-            if c_inactive_params:
-                mod_cont = subspace_c._enforce_cardinality_constraints(
-                    c_inactive_params
-                )
-            else:
-                mod_cont = subspace_c
-            mod_searchspace = evolve(searchspace, continuous=mod_cont)
+            mod_disc = evolve(
+                searchspace.discrete,
+                exp_rep=candidates.loc[d_mask],
+            )
+            mod_cont = (
+                subspace_c._enforce_cardinality_constraints(c_inactive_params)
+                if c_inactive_params
+                else subspace_c
+            )
+            mod_searchspace = evolve(
+                searchspace, discrete=mod_disc, continuous=mod_cont
+            )
 
             rec = recommend_hybrid_without_subsets(
-                recommender, mod_searchspace, subset, batch_size
+                recommender, mod_searchspace, batch_size
             )
 
             comp = mod_searchspace.transform(rec)

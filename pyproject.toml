@@ -32,10 +32,11 @@ dynamic = ['version']
 dependencies = [
     "attrs>=26.1.0",
     "botorch>=0.13.0,<1",
-    "cattrs>=25.2.0",
+    "cattrs>=26.1.0",
     "exceptiongroup",
     "gpytorch>=1.9.1,<2",
     "joblib>1.4.0,<2",
+    "narwhals>=2,<3",
     "numpy>=1.24.1,<3",
     "pandas>=2.1.0,<4",
     "scikit-learn>=1.1.1,<2",
@@ -166,6 +167,7 @@ benchmarking = [
 ]
 
 test = [
+    "baybe[polars]",
     "hypothesis[pandas]>=6.88.4",
     "tenacity>=8.5.0",
     "pytest>=7.2.0",
