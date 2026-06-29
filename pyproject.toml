@@ -189,3 +189,7 @@ packages = ["baybe"]
 
 [tool.uv]
 exclude-newer = "7 days"
+
+[tool.pyrefly]
+project-includes = ["baybe"]
+preset = "legacy"
