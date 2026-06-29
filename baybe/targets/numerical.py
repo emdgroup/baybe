@@ -13,7 +13,7 @@ import cattrs
 import pandas as pd
 from attrs import define, evolve, field, fields
 from attrs.validators import instance_of
-from typing_extensions import assert_never, override
+from typing_extensions import Self, assert_never, override
 
 from baybe.exceptions import IncompatibilityError
 from baybe.serialization import SerialMixin, converter
@@ -330,7 +330,7 @@ class NumericalTarget(Target, SerialMixin):
         mismatch_instead: bool = False,
         match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target to match a given value using an absolute transformation.
 
         Args:
@@ -345,7 +345,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied absolute matching transformation.
         """
-        return NumericalTarget(
+        return cls(
             name,
             AffineTransformation(shift=-match_value) | AbsoluteTransformation(),
             minimize=not mismatch_instead,
@@ -362,7 +362,7 @@ class NumericalTarget(Target, SerialMixin):
         mismatch_instead: bool = False,
         match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target to match a given value using a quadratic transformation.
 
         Args:
@@ -377,7 +377,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied quadratic matching transformation.
         """
-        return NumericalTarget.match_power(
+        return cls.match_power(
             name,
             match_value,
             exponent=2,
@@ -397,7 +397,7 @@ class NumericalTarget(Target, SerialMixin):
         mismatch_instead: bool = False,
         match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target to match a given value using a power transformation.
 
         Args:
@@ -413,7 +413,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied power matching transformation.
         """
-        return NumericalTarget(
+        return cls(
             name,
             AffineTransformation(shift=-match_value)
             | AbsoluteTransformation()
@@ -435,7 +435,7 @@ class NumericalTarget(Target, SerialMixin):
         mismatch_instead: bool = False,
         match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target to match a given value using a triangular transformation.
 
         Args:
@@ -480,7 +480,7 @@ class NumericalTarget(Target, SerialMixin):
         elif margins is not None:
             transformation = TriangularTransformation.from_margins(match_value, margins)
 
-        return NumericalTarget(
+        return cls(
             name, transformation, minimize=mismatch_instead, metadata=metadata
         )._hold_output(match_value, match_mode)
 
@@ -495,7 +495,7 @@ class NumericalTarget(Target, SerialMixin):
         mismatch_instead: bool = False,
         match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target to match a given value using a bell transformation.
 
         Args:
@@ -512,7 +512,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied bell matching transformation.
         """
-        return NumericalTarget(
+        return cls(
             name,
             BellTransformation(match_value, sigma),
             minimize=mismatch_instead,
@@ -529,7 +529,7 @@ class NumericalTarget(Target, SerialMixin):
         descending: bool = False,
         minimize: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target that is affine in a given range and clamped to 0/1 outside.
 
         Args:
@@ -546,7 +546,7 @@ class NumericalTarget(Target, SerialMixin):
         bounds = Interval.create(cutoffs).to_tuple()
         if descending:
             bounds = bounds[::-1]
-        return NumericalTarget(
+        return cls(
             name,
             AffineTransformation.from_values_mapped_to_unit_interval(*bounds).clamp(
                 0, 1
@@ -564,7 +564,7 @@ class NumericalTarget(Target, SerialMixin):
         *,
         minimize: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a sigmoid-transformed target.
 
         Args:
@@ -576,7 +576,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied sigmoid transformation.
         """
-        return NumericalTarget(
+        return cls(
             name,
             SigmoidTransformation.from_anchors(anchors),
             minimize=minimize,
@@ -661,9 +661,7 @@ class NumericalTarget(Target, SerialMixin):
         max = max if max is not None else float("inf")
         return self._append_transformation(ClampingTransformation(min, max))
 
-    def _hold_output(
-        self, abscissa: float, direction: MatchMode | str, /
-    ) -> NumericalTarget:
+    def _hold_output(self, abscissa: float, direction: MatchMode | str, /) -> Self:
         """Hold the target value beyond a certain abscissa value."""
         direction = MatchMode(direction)
 
@@ -676,13 +674,13 @@ class NumericalTarget(Target, SerialMixin):
 
         assert_never(direction)
 
-    def hold_output_left_from(self, abscissa: float, /) -> NumericalTarget:
+    def hold_output_left_from(self, abscissa: float, /) -> Self:
         """Hold the output of the target left from a given abscissa value."""
         return evolve(  # type: ignore[call-arg]
             self, transformation=self.transformation.hold_output_left_from(abscissa)
         )
 
-    def hold_output_right_from(self, abscissa: float, /) -> NumericalTarget:
+    def hold_output_right_from(self, abscissa: float, /) -> Self:
         """Hold the output of the target right from a given abscissa value."""
         return evolve(  # type: ignore[call-arg]
             self, transformation=self.transformation.hold_output_right_from(abscissa)
