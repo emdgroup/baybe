@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeAlias, TypeVar
 
 import pandas as pd
 from attrs import Attribute, define, field
-from typing_extensions import override
+from typing_extensions import TypeIs, override
 
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
@@ -94,6 +94,11 @@ def _is_gpytorch_component_class(obj: Any, /) -> bool:
     return issubclass(obj, (GPyTorchKernel, GPyTorchMean, GPyTorchLikelihood))
 
 
+def _is_gpytorch_component(obj: Any, /) -> TypeIs[GPyTorchGPComponent]:
+    """Check if an object is a GPyTorch component instance using lazy loading."""
+    return _is_gpytorch_component_class(type(obj))
+
+
 def _validate_component(instance: Any, attribute: Attribute, value: Any) -> None:
     """Validate that an object is a BayBE or a GPyTorch GP component."""
     if isinstance(value, BayBEGPComponent) or _is_gpytorch_component_class(type(value)):
@@ -156,7 +161,7 @@ def to_component_factory(
     Raises:
         TypeError: If the given component does not match the allowed types.
     """
-    if isinstance(obj, BayBEGPComponent) or _is_gpytorch_component_class(type(obj)):
+    if isinstance(obj, BayBEGPComponent) or _is_gpytorch_component(obj):
         if component_type is not None:
             allowed_types = component_type.get_types()
             if not isinstance(obj, allowed_types):
