@@ -198,3 +198,4 @@ project-excludes = [
     "baybe/recommenders/pure/nonpredictive/**",
     "baybe/simulation/**",
 ]
+errors = {unused-ignore = true}
