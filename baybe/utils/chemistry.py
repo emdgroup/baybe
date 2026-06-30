@@ -146,7 +146,9 @@ def smiles_to_fingerprint_features(
     return df
 
 
-def get_fingerprint_class(encoding: SubstanceEncoding) -> BaseFingerprintTransformer:
+def get_fingerprint_class(
+    encoding: SubstanceEncoding,
+) -> type[BaseFingerprintTransformer]:
     """Retrieve the fingerprint class corresponding to a given encoding.
 
     Args:
