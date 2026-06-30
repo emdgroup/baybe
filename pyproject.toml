@@ -197,6 +197,7 @@ project-excludes = [
     "baybe/recommenders/naive.py",
     "baybe/recommenders/pure/nonpredictive/**",
     "baybe/simulation/**",
+    "baybe/utils/dataframe.py",
 ]
 replace-imports-with-any = ["sklearn.*"]
 errors = {unused-ignore = true}
