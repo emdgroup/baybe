@@ -32,7 +32,7 @@ _T = TypeVar("_T")
 class _SurrogateGetter(Protocol):
     """An index-based mapping from strings to surrogates."""
 
-    def __getitem__(self, key: str) -> SurrogateProtocol: ...
+    def __getitem__(self, key: str, /) -> SurrogateProtocol: ...
 
 
 @define
@@ -48,7 +48,7 @@ class _ReplicationMapping(Generic[_T]):
     _data: dict[Any, _T] = field(init=False, factory=dict, eq=False)
     """An internal storage keeping track of already requested copies."""
 
-    def __getitem__(self, key: Any, /) -> _T:
+    def __getitem__(self, key: str, /) -> _T:
         """Create a new object copy upon first access."""
         if key not in self._data:
             self._data[key] = deepcopy(self.template)
