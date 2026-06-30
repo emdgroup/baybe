@@ -198,4 +198,5 @@ project-excludes = [
     "baybe/recommenders/pure/nonpredictive/**",
     "baybe/simulation/**",
 ]
+replace-imports-with-any = ["sklearn.*"]
 errors = {unused-ignore = true}
