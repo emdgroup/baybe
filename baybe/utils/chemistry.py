@@ -70,7 +70,7 @@ def _molecule_to_fingerprint_features(
     Returns:
         Array of fingerprint features.
     """
-    return encoder.transform([molecule])
+    return np.asarray(encoder.transform([molecule]))
 
 
 def smiles_to_fingerprint_features(
