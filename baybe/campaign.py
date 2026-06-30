@@ -671,6 +671,7 @@ class Campaign(SerialMixin):
                 f"provide a '{method_name}' method."
             )
 
+        # pyrefly: ignore[missing-attribute]
         return surrogate.posterior(candidates, joint=joint)
 
     def posterior_stats(
@@ -713,6 +714,7 @@ class Campaign(SerialMixin):
                 f"provide a '{method_name}' method."
             )
 
+        # pyrefly: ignore[missing-attribute]
         return surrogate.posterior_stats(candidates, stats)
 
     def get_surrogate(

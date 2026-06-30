@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field, fields
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
@@ -223,9 +223,9 @@ class SubspaceContinuous(SerialMixin):
         return SearchSpace(continuous=self)
 
     @classmethod
-    def empty(cls) -> SubspaceContinuous:
+    def empty(cls) -> Self:
         """Create an empty continuous subspace."""
-        return SubspaceContinuous(())
+        return cls(())
 
     @classmethod
     def from_parameter(cls, parameter: ContinuousParameter) -> SubspaceContinuous:
@@ -244,14 +244,14 @@ class SubspaceContinuous(SerialMixin):
         cls,
         parameters: Sequence[ContinuousParameter],
         constraints: Sequence[ContinuousConstraint] | None = None,
-    ) -> SubspaceContinuous:
+    ) -> Self:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         constraints = constraints or []
 
         if constraints:
             validate_constraints(constraints, parameters)
 
-        return SubspaceContinuous(
+        return cls(
             parameters=[p for p in parameters if p.is_continuous],
             constraints_lin_eq=[
                 c
@@ -269,7 +269,7 @@ class SubspaceContinuous(SerialMixin):
         )
 
     @classmethod
-    def from_bounds(cls, bounds: pd.DataFrame) -> SubspaceContinuous:
+    def from_bounds(cls, bounds: pd.DataFrame) -> Self:
         """Create a hyperrectangle-shaped continuous subspace with given bounds.
 
         Args:
@@ -288,7 +288,7 @@ class SubspaceContinuous(SerialMixin):
             NumericalContinuousParameter(cast(str, name), bound)
             for (name, bound) in bounds.items()
         ]
-        return SubspaceContinuous(parameters)
+        return cls(parameters)
 
     @classmethod
     def from_dataframe(
@@ -375,7 +375,7 @@ class SubspaceContinuous(SerialMixin):
         """The bounds used for scaling the surrogate model input."""
         return self.comp_rep_bounds
 
-    def _drop_parameters(self, parameter_names: Collection[str]) -> SubspaceContinuous:
+    def _drop_parameters(self, parameter_names: Collection[str]) -> Self:
         """Create a copy of the subspace with certain parameters removed.
 
         Args:
@@ -384,7 +384,8 @@ class SubspaceContinuous(SerialMixin):
         Returns:
             The reduced subspace.
         """
-        return SubspaceContinuous(
+        return evolve(
+            self,
             parameters=[p for p in self.parameters if p.name not in parameter_names],
             constraints_lin_eq=[
                 c._drop_parameters(parameter_names)
@@ -396,6 +397,7 @@ class SubspaceContinuous(SerialMixin):
                 for c in self.constraints_lin_ineq
                 if set(c.parameters) - set(parameter_names)
             ],
+            constraints_nonlin=[],
         )
 
     @property
@@ -419,7 +421,7 @@ class SubspaceContinuous(SerialMixin):
     def _enforce_cardinality_constraints(
         self,
         inactive_parameter_names: Collection[str],
-    ) -> SubspaceContinuous:
+    ) -> Self:
         """Create a copy of the subspace with fixed inactive parameters.
 
         The returned subspace requires no cardinality constraints since – for the

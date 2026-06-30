@@ -189,3 +189,15 @@ packages = ["baybe"]
 
 [tool.uv]
 exclude-newer = "7 days"
+
+[tool.pyrefly]
+preset = "legacy"
+project-includes = ["baybe"]
+project-excludes = [
+    "baybe/recommenders/naive.py",
+    "baybe/recommenders/pure/nonpredictive/**",
+    "baybe/simulation/**",
+    "baybe/utils/dataframe.py",
+]
+replace-imports-with-any = ["sklearn.*", "shap"]
+errors = {unused-ignore = true}

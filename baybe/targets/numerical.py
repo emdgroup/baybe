@@ -13,7 +13,7 @@ import cattrs
 import pandas as pd
 from attrs import define, evolve, field, fields
 from attrs.validators import instance_of
-from typing_extensions import assert_never, override
+from typing_extensions import Self, assert_never, override
 
 from baybe.exceptions import IncompatibilityError
 from baybe.serialization import SerialMixin, converter
@@ -161,31 +161,31 @@ class NumericalTarget(Target, SerialMixin):
             legacy.name, transformation, minimize=minimize, metadata=metadata
         )
 
-    def __neg__(self) -> NumericalTarget:
+    def __neg__(self) -> Self:
         return self.negate()
 
-    def __add__(self, other: Any) -> NumericalTarget:
+    def __add__(self, other: Any) -> Self:
         if isinstance(other, (int, float)):
             return self._append_transformation(AffineTransformation(shift=other))
         if isinstance(other, NumericalTarget):
             return combine_numerical_targets(self, other, operator=add)
         return NotImplemented
 
-    def __sub__(self, other: Any) -> NumericalTarget:
+    def __sub__(self, other: Any) -> Self:
         if isinstance(other, (int, float)):
             return self._append_transformation(AffineTransformation(shift=-other))
         if isinstance(other, NumericalTarget):
             return combine_numerical_targets(self, other, operator=sub)
         return NotImplemented
 
-    def __mul__(self, other: Any) -> NumericalTarget:
+    def __mul__(self, other: Any) -> Self:
         if isinstance(other, (int, float)):
             return self._append_transformation(AffineTransformation(factor=other))
         if isinstance(other, NumericalTarget):
             return combine_numerical_targets(self, other, operator=mul)
         return NotImplemented
 
-    def __truediv__(self, other: Any) -> NumericalTarget:
+    def __truediv__(self, other: Any) -> Self:
         if isinstance(other, (int, float)):
             return self._append_transformation(AffineTransformation(factor=1 / other))
         return NotImplemented
@@ -221,9 +221,7 @@ class NumericalTarget(Target, SerialMixin):
         return info
 
     @classmethod
-    def from_constructor_info(
-        cls, constructor_info: dict[str, Any], /
-    ) -> NumericalTarget:
+    def from_constructor_info(cls, constructor_info: dict[str, Any], /) -> Self:
         """A convenience constructor for re-creating targets from existing info.
 
         Args:
@@ -248,7 +246,7 @@ class NumericalTarget(Target, SerialMixin):
         *,
         minimize: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """A deprecation helper for creating targets using the modern interface.
 
         Args:
@@ -291,7 +289,7 @@ class NumericalTarget(Target, SerialMixin):
         transformation: TargetTransformation | None = None,
         *,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """A deprecation helper for creating targets using the legacy interface.
 
         Args:
@@ -330,7 +328,7 @@ class NumericalTarget(Target, SerialMixin):
         mismatch_instead: bool = False,
         match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target to match a given value using an absolute transformation.
 
         Args:
@@ -345,7 +343,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied absolute matching transformation.
         """
-        return NumericalTarget(
+        return cls(
             name,
             AffineTransformation(shift=-match_value) | AbsoluteTransformation(),
             minimize=not mismatch_instead,
@@ -362,7 +360,7 @@ class NumericalTarget(Target, SerialMixin):
         mismatch_instead: bool = False,
         match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target to match a given value using a quadratic transformation.
 
         Args:
@@ -377,7 +375,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied quadratic matching transformation.
         """
-        return NumericalTarget.match_power(
+        return cls.match_power(
             name,
             match_value,
             exponent=2,
@@ -397,7 +395,7 @@ class NumericalTarget(Target, SerialMixin):
         mismatch_instead: bool = False,
         match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target to match a given value using a power transformation.
 
         Args:
@@ -413,7 +411,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied power matching transformation.
         """
-        return NumericalTarget(
+        return cls(
             name,
             AffineTransformation(shift=-match_value)
             | AbsoluteTransformation()
@@ -435,7 +433,7 @@ class NumericalTarget(Target, SerialMixin):
         mismatch_instead: bool = False,
         match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target to match a given value using a triangular transformation.
 
         Args:
@@ -480,7 +478,7 @@ class NumericalTarget(Target, SerialMixin):
         elif margins is not None:
             transformation = TriangularTransformation.from_margins(match_value, margins)
 
-        return NumericalTarget(
+        return cls(
             name, transformation, minimize=mismatch_instead, metadata=metadata
         )._hold_output(match_value, match_mode)
 
@@ -495,7 +493,7 @@ class NumericalTarget(Target, SerialMixin):
         mismatch_instead: bool = False,
         match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target to match a given value using a bell transformation.
 
         Args:
@@ -512,7 +510,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied bell matching transformation.
         """
-        return NumericalTarget(
+        return cls(
             name,
             BellTransformation(match_value, sigma),
             minimize=mismatch_instead,
@@ -529,7 +527,7 @@ class NumericalTarget(Target, SerialMixin):
         descending: bool = False,
         minimize: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a target that is affine in a given range and clamped to 0/1 outside.
 
         Args:
@@ -546,7 +544,7 @@ class NumericalTarget(Target, SerialMixin):
         bounds = Interval.create(cutoffs).to_tuple()
         if descending:
             bounds = bounds[::-1]
-        return NumericalTarget(
+        return cls(
             name,
             AffineTransformation.from_values_mapped_to_unit_interval(*bounds).clamp(
                 0, 1
@@ -564,7 +562,7 @@ class NumericalTarget(Target, SerialMixin):
         *,
         minimize: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
-    ) -> NumericalTarget:
+    ) -> Self:
         """Create a sigmoid-transformed target.
 
         Args:
@@ -576,7 +574,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied sigmoid transformation.
         """
-        return NumericalTarget(
+        return cls(
             name,
             SigmoidTransformation.from_anchors(anchors),
             minimize=minimize,
@@ -598,7 +596,7 @@ class NumericalTarget(Target, SerialMixin):
         """Get the image of an interval (assuming transformation continuity)."""
         return self.transformation.get_image(interval)
 
-    def _append_transformation(self, transformation: Transformation) -> NumericalTarget:
+    def _append_transformation(self, transformation: Transformation) -> Self:
         """Append a new transformation.
 
         Args:
@@ -612,7 +610,7 @@ class NumericalTarget(Target, SerialMixin):
             transformation=ChainedTransformation([self.transformation, transformation]),
         )
 
-    def negate(self) -> NumericalTarget:
+    def negate(self) -> Self:
         """Apply a negation transformation to the target.
 
         Returns:
@@ -620,7 +618,7 @@ class NumericalTarget(Target, SerialMixin):
         """
         return self._append_transformation(AffineTransformation(factor=-1))
 
-    def normalize(self) -> NumericalTarget:
+    def normalize(self) -> Self:
         """Normalize the target to the unit interval using an affine transformation.
 
         Raises:
@@ -637,7 +635,7 @@ class NumericalTarget(Target, SerialMixin):
             AffineTransformation.from_values_mapped_to_unit_interval(*bounds.to_tuple())
         )
 
-    def abs(self) -> NumericalTarget:
+    def abs(self) -> Self:
         """Apply an absolute transformation to the target.
 
         Returns:
@@ -645,9 +643,7 @@ class NumericalTarget(Target, SerialMixin):
         """
         return self._append_transformation(AbsoluteTransformation())
 
-    def clamp(
-        self, min: float | None = None, max: float | None = None
-    ) -> NumericalTarget:
+    def clamp(self, min: float | None = None, max: float | None = None) -> Self:
         """Clamp the target to a given range.
 
         Args:
@@ -661,9 +657,7 @@ class NumericalTarget(Target, SerialMixin):
         max = max if max is not None else float("inf")
         return self._append_transformation(ClampingTransformation(min, max))
 
-    def _hold_output(
-        self, abscissa: float, direction: MatchMode | str, /
-    ) -> NumericalTarget:
+    def _hold_output(self, abscissa: float, direction: MatchMode | str, /) -> Self:
         """Hold the target value beyond a certain abscissa value."""
         direction = MatchMode(direction)
 
@@ -676,27 +670,25 @@ class NumericalTarget(Target, SerialMixin):
 
         assert_never(direction)
 
-    def hold_output_left_from(self, abscissa: float, /) -> NumericalTarget:
+    def hold_output_left_from(self, abscissa: float, /) -> Self:
         """Hold the output of the target left from a given abscissa value."""
         return evolve(  # type: ignore[call-arg]
             self, transformation=self.transformation.hold_output_left_from(abscissa)
         )
 
-    def hold_output_right_from(self, abscissa: float, /) -> NumericalTarget:
+    def hold_output_right_from(self, abscissa: float, /) -> Self:
         """Hold the output of the target right from a given abscissa value."""
         return evolve(  # type: ignore[call-arg]
             self, transformation=self.transformation.hold_output_right_from(abscissa)
         )
 
-    def hold_output_outside(
-        self, interval: ConvertibleToInterval, /
-    ) -> NumericalTarget:
+    def hold_output_outside(self, interval: ConvertibleToInterval, /) -> Self:
         """Hold the output of the target outside a given interval."""
         return evolve(  # type: ignore[call-arg]
             self, transformation=self.transformation.hold_output_outside(interval)
         )
 
-    def log(self) -> NumericalTarget:
+    def log(self) -> Self:
         """Apply a logarithmic transformation to the target.
 
         Returns:
@@ -704,7 +696,7 @@ class NumericalTarget(Target, SerialMixin):
         """
         return self._append_transformation(LogarithmicTransformation())
 
-    def exp(self) -> NumericalTarget:
+    def exp(self) -> Self:
         """Apply an exponential transformation to the target.
 
         Returns:
@@ -712,7 +704,7 @@ class NumericalTarget(Target, SerialMixin):
         """
         return self._append_transformation(ExponentialTransformation())
 
-    def power(self, exponent: int) -> NumericalTarget:
+    def power(self, exponent: int) -> Self:
         """Apply a power transformation to the target.
 
         Args:

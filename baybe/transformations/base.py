@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define
 from typing_extensions import override
@@ -15,8 +15,13 @@ from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import ConvertibleToInterval, Interval
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
+
+    TensorCallable = Callable[[Tensor], Tensor]
+    """Type alias for a torch-based function mapping from reals to reals."""
 
 
 _TTransformation = TypeVar("_TTransformation", bound="Transformation")
@@ -198,7 +203,7 @@ class Transformation(SerialMixin, ABC):
         if callable(other):
             from baybe.transformations.basic import CustomTransformation
 
-            return self | CustomTransformation(other)
+            return self | CustomTransformation(cast("TensorCallable", other))
         return NotImplemented
 
     @classmethod

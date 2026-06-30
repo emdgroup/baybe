@@ -11,8 +11,9 @@ from typing import TYPE_CHECKING, Any
 
 import cattrs
 import numpy as np
-from attrs import define, field
+from attrs import define, evolve, field
 from attrs.validators import deep_iterable, gt, in_, instance_of, lt
+from typing_extensions import Self
 
 from baybe.constraints.base import (
     CardinalityConstraint,
@@ -97,9 +98,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         """Whether this constraint models an equality (assumed inequality otherwise)."""
         return self.operator == "="
 
-    def _drop_parameters(
-        self, parameter_names: Collection[str]
-    ) -> ContinuousLinearConstraint:
+    def _drop_parameters(self, parameter_names: Collection[str]) -> Self:
         """Create a copy of the constraint with certain parameters removed.
 
         Args:
@@ -114,9 +113,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             for p, c in zip(self.parameters, self.coefficients, strict=True)
             if p not in parameter_names
         )
-        return ContinuousLinearConstraint(
-            parameters, self.operator, coefficients, self.rhs
-        )
+        return evolve(self, parameters=parameters, coefficients=coefficients)
 
     def to_botorch(
         self,
@@ -244,7 +241,10 @@ class ContinuousCardinalityConstraint(
     def inactive_parameter_combinations(self) -> Iterator[frozenset[str]]:
         """Get an iterator over all possible combinations of inactive parameters."""
         for n_inactive_parameters in self._inactive_set_sizes():
-            yield from combinations(self.parameters, n_inactive_parameters)
+            yield from (
+                frozenset(c)
+                for c in combinations(self.parameters, n_inactive_parameters)
+            )
 
     def sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample sets of inactive parameters according to the cardinality constraints.
@@ -264,7 +264,7 @@ class ContinuousCardinalityConstraint(
 
         # Probability of each set cardinality under the assumption that all possible
         # inactive parameter sets are equally likely
-        probabilities = n_configurations_per_cardinality / np.sum(
+        probabilities = np.array(n_configurations_per_cardinality) / np.sum(
             n_configurations_per_cardinality
         )
 

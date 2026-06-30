@@ -70,7 +70,7 @@ def _molecule_to_fingerprint_features(
     Returns:
         Array of fingerprint features.
     """
-    return encoder.transform([molecule])
+    return np.asarray(encoder.transform([molecule]))
 
 
 def smiles_to_fingerprint_features(
@@ -146,7 +146,9 @@ def smiles_to_fingerprint_features(
     return df
 
 
-def get_fingerprint_class(encoding: SubstanceEncoding) -> BaseFingerprintTransformer:
+def get_fingerprint_class(
+    encoding: SubstanceEncoding,
+) -> type[BaseFingerprintTransformer]:
     """Retrieve the fingerprint class corresponding to a given encoding.
 
     Args:
