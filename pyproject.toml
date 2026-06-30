@@ -199,5 +199,5 @@ project-excludes = [
     "baybe/simulation/**",
     "baybe/utils/dataframe.py",
 ]
-replace-imports-with-any = ["sklearn.*"]
+replace-imports-with-any = ["sklearn.*", "shap"]
 errors = {unused-ignore = true}
