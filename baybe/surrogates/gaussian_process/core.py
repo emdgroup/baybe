@@ -235,11 +235,25 @@ class GaussianProcessSurrogate(Surrogate):
         )
         module = importlib.import_module(module_name)
 
-        kernel = kernel_or_factory or getattr(module, "KERNEL_FACTORY")
-        mean = mean_or_factory or getattr(module, "MEAN_FACTORY")
-        likelihood = likelihood_or_factory or getattr(module, "LIKELIHOOD_FACTORY")
-        fit_criterion = fit_criterion_or_factory or getattr(
-            module, "FIT_CRITERION_FACTORY"
+        kernel = (
+            kernel_or_factory
+            if kernel_or_factory is not None
+            else getattr(module, "KERNEL_FACTORY")
+        )
+        mean = (
+            mean_or_factory
+            if mean_or_factory is not None
+            else getattr(module, "MEAN_FACTORY")
+        )
+        likelihood = (
+            likelihood_or_factory
+            if likelihood_or_factory is not None
+            else getattr(module, "LIKELIHOOD_FACTORY")
+        )
+        fit_criterion = (
+            fit_criterion_or_factory
+            if fit_criterion_or_factory is not None
+            else getattr(module, "FIT_CRITERION_FACTORY")
         )
 
         gp = cls(kernel, mean, likelihood, fit_criterion)
