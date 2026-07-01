@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import gc
-from abc import ABC
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 import pandas as pd
@@ -38,6 +37,7 @@ from baybe.recommenders.pure.bayesian.hybrid import (
 )
 from baybe.searchspace import (
     SearchSpace,
+    SearchSpaceType,
     SubspaceContinuous,
     SubspaceDiscrete,
 )
@@ -63,8 +63,19 @@ def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
 
 
 @define
-class BayesianRecommender(PureRecommender, ABC):
-    """An abstract class for Bayesian Recommenders."""
+class BayesianRecommender(PureRecommender):
+    """A recommender utilizing Bayesian optimization machinery.
+
+    This recommender makes use of a given optimizer to optimize acquisition
+    functions. It can be applied to all kinds of search spaces.
+    """
+
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
+    # See base class.
+
+    supports_discrete_subset_generating_constraints: ClassVar[bool] = True
+    # See base class.
 
     _surrogate_model: SurrogateProtocol = field(
         alias="surrogate_model",
@@ -80,7 +91,7 @@ class BayesianRecommender(PureRecommender, ABC):
 
     optimizer: OptimizerProtocol = field(
         alias="optimizer",
-        default=GradientOptimizer(),
+        factory=GradientOptimizer,
     )
     """The acquisition function optimizer."""
 

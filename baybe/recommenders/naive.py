@@ -9,7 +9,7 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
-from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.utils.dataframe import to_tensor
@@ -40,11 +40,11 @@ class NaiveHybridSpaceRecommender(PureRecommender):
     # problem that might come up when implementing new subclasses of PureRecommender
     disc_recommender: PureRecommender = field(factory=BayesianRecommender)
     """The recommender used for the discrete subspace. Default:
-    :class:`baybe.recommenders.pure.bayesian.base.BayesianRecommender`"""
+    :class:`baybe.recommenders.pure.bayesian.core.BayesianRecommender`"""
 
     cont_recommender: BayesianRecommender = field(factory=BayesianRecommender)
     """The recommender used for the continuous subspace. Default:
-    :class:`baybe.recommenders.pure.bayesian.base.BayesianRecommender`"""
+    :class:`baybe.recommenders.pure.bayesian.core.BayesianRecommender`"""
 
     @override
     def recommend(

@@ -24,7 +24,7 @@ from baybe.utils.sampling_algorithms import sample_numerical_df
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+    from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 
 
 def recommend_hybrid_without_subsets(

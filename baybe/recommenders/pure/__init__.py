@@ -4,8 +4,8 @@ Pure recommenders implement selection algorithms and can be queried for providin
 recommendations. They can be part of meta recommenders.
 """
 
-from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive import (
     FPSRecommender,
     GaussianMixtureClusteringRecommender,

@@ -15,7 +15,7 @@ from baybe.utils.dataframe import to_tensor
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+    from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 
 
 def recommend_discrete_with_subsets(
