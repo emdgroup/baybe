@@ -31,7 +31,7 @@ class OptimizerProtocol(Protocol):
         batch_size: int,
         acquisition_function: Optimand,
         searchspace: SearchSpace,
-        fixed_parameters: dict[int, float] | None = None,
+        fixed_parameters: dict[str, float] | None = None,
     ) -> tuple[Tensor, Tensor]:
         """Recommend a batch of points from the given search space.
 
@@ -39,9 +39,8 @@ class OptimizerProtocol(Protocol):
             batch_size: The size of the recommendation batch.
             acquisition_function: The acquisition function to be optimized.
             searchspace: The search space from which to generate recommendations.
-            fixed_parameters: A dictionary mapping parameter indices to fixed values.
+            fixed_parameters: A dictionary mapping parameter names to fixed values.
 
         Returns:
             The recommendations and corresponding acquisition values.
         """
-        ...
