@@ -141,8 +141,8 @@ with new_tab:
             help=(
                 "Inner GP input normalization:\n"
                 "- on: reuse the prior GP's bounds (absolute x-lengthscale transfer)\n"
-                "- off: rebuild for the new domain (relative x-lengthscale)\n"
-                "No effect when prior and new share the same X range."
+                "- off: refit on the anchor inputs' range (relative x-lengthscale)\n"
+                "No effect when the anchors span the same X range as the prior."
             ),
         )
         freeze_outcome_transform = st.toggle(

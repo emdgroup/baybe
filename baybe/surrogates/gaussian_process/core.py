@@ -322,9 +322,10 @@ class GaussianProcessSurrogate(Surrogate):
             freeze_input_transform: Controls the inner GP's input normalization.
                 ``True`` (default) reuses the pretrained GP's input transform, so the
                 inner kernel lengthscale is transferred in absolute input units.
-                ``False`` rebuilds the transform for the new search space, so the
-                lengthscale is interpreted relative to the new domain. Has no effect
-                when source and target share the same search space.
+                ``False`` refits the transform on the anchor inputs, so the
+                lengthscale is interpreted relative to the anchor data spread. Has no
+                effect when source and target share the same search space and the
+                anchors span it.
             freeze_outcome_transform: Controls the inner GP's output standardization.
                 ``True`` (default) reuses the pretrained GP's standardization, so the
                 inner output scale and the far-field reversion level are transferred
@@ -593,7 +594,7 @@ def _build_mean_transfer_gp(
         mean_kernel_init: How to initialize the inner mean/kernel/likelihood. See
             :meth:`GaussianProcessSurrogate.posterior_mean_function` for details.
         freeze_input_transform: Whether to reuse the pretrained input transform
-            (``True``) or rebuild it for the new context (``False``).
+            (``True``) or refit it on the anchor inputs' range (``False``).
         freeze_outcome_transform: Whether to reuse the pretrained output
             standardization (``True``) or standardize on the anchor targets
             (``False``). See
@@ -614,14 +615,15 @@ def _build_mean_transfer_gp(
 
     import botorch
 
-    # Input transform: reuse the pretrained one (the inner lengthscale is transferred
-    # in absolute input units) or rebuild it for the new search space (relative
-    # units). Unlike the outcome transform, BoTorch does not silently refit it, so
-    # this choice persists.
+    # Input transform: reuse the pretrained one (freeze = source bounds, absolute
+    # x-scaling) or refit it on the anchor inputs' empirical range (relative
+    # x-scaling), mirroring the outcome transform which refits on the anchor targets.
+    # Unlike the outcome transform, BoTorch does not silently refit the input
+    # transform, so this choice persists.
     if freeze_input_transform:
         input_transform = deepcopy(pretrained_model.input_transform)
     else:
-        input_transform = GaussianProcessSurrogate._make_input_transform(context)
+        input_transform = _make_anchor_input_transform(anchor_x_raw, context)
     input_transform.eval()
 
     # Outcome transform: deep-copied from the pretrained GP. NOTE: ``SingleTaskGP``
@@ -694,6 +696,43 @@ def _restore_source_outcome_transform(
     inner._is_trained = source._is_trained.detach().clone()
     standardized = ((anchor_y_raw - inner.means) / inner.stdvs).squeeze(-1)
     inner_gp.set_train_data(targets=standardized, strict=False)
+
+
+def _make_anchor_input_transform(
+    anchor_x_raw: Tensor, context: _ModelContext
+) -> Normalize:
+    """Create an input transform normalizing to the anchor inputs' empirical range.
+
+    Analogous to :meth:`GaussianProcessSurrogate._make_input_transform`, but the
+    ``Normalize`` bounds of the numerical columns are taken from the anchor inputs'
+    per-column min/max instead of the search-space bounds. This mirrors the outcome
+    transform (which, when refit, standardizes on the anchor targets), so that both
+    inner-GP transforms are derived from the anchor data when not frozen.
+
+    Args:
+        anchor_x_raw: The anchor inputs in raw parameter space.
+        context: Bundles the new GP's search space, objective and measurements.
+
+    Returns:
+        A ``Normalize`` transform whose numerical-column bounds span the anchor
+        inputs.
+    """
+    from botorch.models.transforms.input import Normalize
+
+    indices = context.numerical_indices
+    numerical = anchor_x_raw[:, indices]
+    bounds = context.parameter_bounds.clone()
+    lo, hi = numerical.amin(dim=0), numerical.amax(dim=0)
+    if bounds.shape[-1] == len(context.searchspace.comp_rep_columns):
+        # Full-width bounds: overwrite only the numerical columns.
+        bounds[0, indices] = lo
+        bounds[1, indices] = hi
+    else:
+        # Bounds already restricted to the numerical columns.
+        bounds[0], bounds[1] = lo, hi
+    return Normalize(
+        len(context.searchspace.comp_rep_columns), bounds=bounds, indices=indices
+    )
 
 
 def _build_posterior_mean_module(
