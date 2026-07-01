@@ -8,12 +8,13 @@ from typing import TYPE_CHECKING
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.recommenders.pure.bayesian.botorch.optimizers.basic import GradientOptimizer
+from baybe.searchspace import SearchSpaceType
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 
 if TYPE_CHECKING:
-    from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+    from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 
 
 def BotorchRecommender(
@@ -48,7 +49,7 @@ def BotorchRecommender(
     Returns:
         BayesianRecommender: Instance of `BayesianRecommender` with provided parameters.
     """
-    from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+    from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 
     if max_n_subspaces is not None:
         warnings.warn(
@@ -94,5 +95,7 @@ def BotorchRecommender(
         )
 
 
+BotorchRecommender.compatibility = SearchSpaceType.HYBRID  # type: ignore[attr-defined]
+BotorchRecommender.supports_discrete_subset_generating_constraints = True  # type: ignore[attr-defined]
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

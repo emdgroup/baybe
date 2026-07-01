@@ -13,6 +13,7 @@ from baybe.exceptions import IncompatibilityError, IncompatibleSearchSpaceError
 from baybe.recommenders.pure.bayesian.botorch.optimizers.base import OptimizerProtocol
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
+from baybe.settings import AutoBool
 from baybe.utils.basic import flatten
 
 if TYPE_CHECKING:
@@ -39,10 +40,11 @@ class GradientOptimizer(OptimizerProtocol):
     optimization.
     """
 
-    sequential_continuous: bool = field(default=True)
-    """Flag defining whether to apply sequential greedy or batch optimization in
-    **continuous** search spaces. In discrete/hybrid spaces, sequential greedy
-    optimization is applied automatically.
+    sequential_continuous: AutoBool = field(
+        default=AutoBool.AUTO,
+        converter=AutoBool.from_unstructured,  # type: ignore[misc]
+    )
+    """Flag defining whether to apply sequential greedy or batch optimization.
     """
 
     @override
@@ -51,7 +53,7 @@ class GradientOptimizer(OptimizerProtocol):
         batch_size: int,
         acquisition_function: Optimand,
         searchspace: SearchSpace,
-        fixed_parameters: dict[int, float] | None = None,
+        fixed_parameters: dict[str, float] | None = None,
     ) -> tuple[Tensor, Tensor]:
         """Recommend from a search space using gradient-based optimization.
 
@@ -67,7 +69,7 @@ class GradientOptimizer(OptimizerProtocol):
         Raises:
             IncompatibilityError: If the search space has interpoint constraints and the
                 ``sequential_continuous`` flag is set to ``True``.
-            NotImplementedError: If the search space has a discrete component.
+            IncompatibleSearchSpaceError: If search space has a discrete component.
             ValueError: If the search space has cardinality constraints.
         """
         import torch
@@ -76,14 +78,13 @@ class GradientOptimizer(OptimizerProtocol):
 
         if searchspace.type is not self.compatibility:
             raise IncompatibleSearchSpaceError(
-                f"'{self.__class__.__name__}' currently only supports "
-                f"continuous search spaces."
+                f"'{self.__class__.__name__}' only supports continuous search spaces."
             )
 
         # TODO: Add option for automatic choice once the "settings" PR is merged,
         #   which ships the necessary machinery
         if (
-            self.sequential_continuous
+            self.sequential_continuous is not AutoBool.FALSE
             and searchspace.continuous.has_interpoint_constraints
         ):
             raise IncompatibilityError(
@@ -93,17 +94,19 @@ class GradientOptimizer(OptimizerProtocol):
                 f"continuous subspace is not supported. "
             )
 
-        if not searchspace.discrete.is_empty:
-            raise NotImplementedError(
-                "Gradient-based optimization is not implemented "
-                "for non-empty discrete search spaces."
-            )
-
         if searchspace.continuous.n_subsets > 0:
             raise ValueError(
                 f"'{self.__class__.__name__}' "
                 f"expects a continuous subspace without cardinality constraints."
             )
+
+        if fixed_parameters:
+            param_names = [p.name for p in searchspace.continuous.parameters]
+            fixed_features = {
+                param_names.index(name): val for name, val in fixed_parameters.items()
+            }
+        else:
+            fixed_features = None
 
         points, acqf_values = optimize_acqf(
             acq_function=cast(BoAcquisitionFunction, acquisition_function),
@@ -113,7 +116,7 @@ class GradientOptimizer(OptimizerProtocol):
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
-            fixed_features=fixed_parameters or None,
+            fixed_features=fixed_features or None,
             equality_constraints=flatten(
                 c.to_botorch(
                     searchspace.continuous.parameters,
@@ -130,7 +133,7 @@ class GradientOptimizer(OptimizerProtocol):
                 for c in searchspace.continuous.constraints_lin_ineq
             )
             or None,
-            sequential=self.sequential_continuous,
+            sequential=self.sequential_continuous is not AutoBool.FALSE,
         )
 
         return points, acqf_values

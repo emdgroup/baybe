@@ -17,7 +17,7 @@ from baybe.searchspace.core import SearchSpace
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+    from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 
 
 def recommend_continuous_torch(
@@ -150,8 +150,8 @@ def recommend_continuous_without_cardinality_constraints(
         )
 
     fixed_parameters = {
-        idx: p.value
-        for (idx, p) in enumerate(subspace_continuous.parameters)
+        p.name: p.value
+        for p in subspace_continuous.parameters
         if isinstance(p, _FixedNumericalContinuousParameter)
     }
 
