@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
-from attrs.validators import ge, gt, instance_of
 from typing_extensions import override
 
 from baybe.acquisition import qLogEI, qLogNEHVI
@@ -46,7 +45,6 @@ from baybe.surrogates.base import (
     Surrogate,
     SurrogateProtocol,
 )
-from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
@@ -94,33 +92,6 @@ class BayesianRecommender(PureRecommender):
     )
     """The optimizer used to optimize the acquisition function."""
 
-    # TODO: Move fields to respective optimizers
-    hybrid_sampler: DiscreteSamplingMethod | None = field(
-        converter=optional(DiscreteSamplingMethod), default=None
-    )
-    """Strategy used for sampling the discrete subspace when performing hybrid search
-    space optimization."""
-
-    sampling_percentage: float = field(default=1.0)
-    """Percentage of discrete search space that is sampled when performing hybrid search
-    space optimization. Ignored when ``hybrid_sampler="None"``."""
-
-    n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
-    """Number of times gradient-based optimization is restarted from different initial
-    points. **Does not affect purely discrete optimization**.
-    """
-
-    n_raw_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
-    """Number of raw samples drawn for the initialization heuristic in gradient-based
-    optimization. **Does not affect purely discrete optimization**.
-    """
-
-    max_n_subsets: int = field(default=10, validator=[instance_of(int), ge(1)])
-    """Maximum number of subsets to evaluate when subset-generating constraints are
-    present (e.g., continuous cardinality constraints). If the total number of
-    subsets exceeds this limit, a random subset of that size is sampled for
-    optimization instead of performing an exhaustive search."""
-
     # TODO: The objective is currently only required for validating the recommendation
     #   context. Once multi-target support is complete, we might want to refactor
     #   the validation mechanism, e.g. by
@@ -132,20 +103,6 @@ class BayesianRecommender(PureRecommender):
 
     _botorch_acqf = field(default=None, init=False, eq=False)
     """The induced BoTorch acquisition function."""
-
-    @sampling_percentage.validator
-    def _validate_percentage(  # noqa: DOC101, DOC103
-        self, _: Any, value: float
-    ) -> None:
-        """Validate that the given value is in fact a percentage.
-
-        Raises:
-            ValueError: If ``value`` is not between 0 and 1.
-        """
-        if not 0 <= value <= 1:
-            raise ValueError(
-                f"Hybrid sampling percentage needs to be between 0 and 1 but is {value}"
-            )
 
     def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
