@@ -400,7 +400,7 @@ class SubspaceDiscrete(SerialMixin):
         # For a positive coefficient c the minimum contribution is c*min_raw; for a
         # negative coefficient the ordering flips and it becomes c*max_raw. Taking
         # min of both products handles any real coefficient correctly.
-        coeffs = np.asarray(simplex_coefficients, dtype=float)
+        coeffs = np.asarray(simplex_coefficients, dtype=active_settings.DTypeFloatNumpy)
         if not np.isfinite(coeffs).all():
             raise ValueError(
                 f"All simplex_coefficients passed to '{cls.from_simplex.__name__}' "
@@ -448,7 +448,7 @@ class SubspaceDiscrete(SerialMixin):
                 np.append(max_nonzero_upcoming, 0),
             )
         ):
-            values = np.asarray(param.values, dtype=float)
+            values = np.asarray(param.values, dtype=active_settings.DTypeFloatNumpy)
 
             if i == 0:
                 arr = values.reshape(-1, 1)
