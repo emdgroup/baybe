@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 @define(kw_only=True)
-class GradientOptimizer(OptimizerProtocol[SubspaceContinuous]):
+class ContinuousOptimizer(OptimizerProtocol[SubspaceContinuous]):
     """Optimizer wrapping BoTorch's :func:`botorch.optim.optimize_acqf`."""
 
     n_starts: int = field(validator=[instance_of(int), gt(0)], default=10)

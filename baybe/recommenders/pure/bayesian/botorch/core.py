@@ -7,7 +7,7 @@ import warnings
 from typing import TYPE_CHECKING
 
 from baybe.acquisition.base import AcquisitionFunction
-from baybe.optimizers import GradientOptimizer
+from baybe.optimizers import ContinuousOptimizer
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
@@ -72,7 +72,7 @@ def BotorchRecommender(
         return BayesianRecommender(
             surrogate_model=surrogate_model,
             acquisition_function=acquisition_function,
-            optimizer=GradientOptimizer(
+            optimizer=ContinuousOptimizer(
                 n_starts=n_restarts,
                 n_initial_samples=n_raw_samples,
                 sequential=sequential_continuous,

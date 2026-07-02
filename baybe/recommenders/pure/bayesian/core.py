@@ -21,7 +21,7 @@ from baybe.exceptions import (
     InfeasibilityError,
 )
 from baybe.objectives.base import Objective
-from baybe.optimizers import GradientOptimizer, OptimizerProtocol
+from baybe.optimizers import ContinuousOptimizer, OptimizerProtocol
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.continuous import (
     recommend_continuous_torch,
@@ -90,7 +90,7 @@ class BayesianRecommender(PureRecommender):
 
     optimizer: OptimizerProtocol = field(
         alias="optimizer",
-        factory=GradientOptimizer,
+        factory=ContinuousOptimizer,
     )
     """The optimizer used to optimize the acquisition function."""
 

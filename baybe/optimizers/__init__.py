@@ -1,9 +1,9 @@
 """Optimizers."""
 
 from baybe.optimizers.base import OptimizerProtocol
-from baybe.optimizers.continuous import GradientOptimizer
+from baybe.optimizers.continuous import ContinuousOptimizer
 
 __all__ = [
-    "GradientOptimizer",
+    "ContinuousOptimizer",
     "OptimizerProtocol",
 ]

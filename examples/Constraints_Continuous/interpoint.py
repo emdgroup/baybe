@@ -29,7 +29,7 @@ from matplotlib import pyplot as plt
 
 from baybe import Campaign, active_settings
 from baybe.constraints import ContinuousLinearConstraint
-from baybe.optimizers import GradientOptimizer
+from baybe.optimizers import ContinuousOptimizer
 from baybe.parameters import NumericalContinuousParameter
 from baybe.recommenders import BayesianRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
@@ -123,7 +123,7 @@ searchspace = SearchSpace.from_product(
 )
 objective = NumericalTarget(name="Reaction_Yield").to_objective()
 recommender = TwoPhaseMetaRecommender(
-    recommender=BayesianRecommender(optimizer=GradientOptimizer(sequential=False))
+    recommender=BayesianRecommender(optimizer=ContinuousOptimizer(sequential=False))
 )
 campaign = Campaign(
     searchspace=searchspace,
