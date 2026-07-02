@@ -161,7 +161,7 @@ def recommend_continuous_without_cardinality_constraints(
     #   For details: https://github.com/pytorch/botorch/issues/2042
     points, acqf_values = recommender.optimizer(
         batch_size=batch_size,
-        acquisition_function=recommender._botorch_acqf,
+        score_function=recommender._botorch_acqf,
         searchspace=SearchSpace(continuous=subspace_continuous),
         fixed_parameters=fixed_parameters,
     )

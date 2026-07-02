@@ -1,4 +1,4 @@
-"""Low-level optimizers of acquisition functions."""
+"""Low-level optimizers."""
 
 from __future__ import annotations
 
@@ -19,12 +19,12 @@ from baybe.utils.basic import flatten
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.recommenders.pure.bayesian.botorch.optimizers.base import Optimand
+    from baybe.recommenders.pure.bayesian.botorch.optimizers.base import ScoreFunction
 
 
 @define(kw_only=True)
 class GradientOptimizer(OptimizerProtocol):
-    """Acquisition function optimizer using gradient-based optimization."""
+    """Optimizer using gradient-based optimization."""
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.CONTINUOUS
@@ -51,27 +51,10 @@ class GradientOptimizer(OptimizerProtocol):
     def __call__(
         self,
         batch_size: int,
-        acquisition_function: Optimand,
+        score_function: ScoreFunction,
         searchspace: SearchSpace,
         fixed_parameters: dict[str, float] | None = None,
     ) -> tuple[Tensor, Tensor]:
-        """Recommend from a search space using gradient-based optimization.
-
-        Args:
-            batch_size: The size of the recommendation batch.
-            acquisition_function: The acquisition function to be optimized.
-            searchspace: The search space from which to generate recommendations.
-            fixed_parameters: A dictionary mapping parameter indices to fixed values.
-
-        Returns:
-            The recommendations and corresponding acquisition values.
-
-        Raises:
-            IncompatibilityError: If the search space has interpoint constraints and the
-                ``sequential_continuous`` flag is set to ``True``.
-            IncompatibleSearchSpaceError: If search space has a discrete component.
-            ValueError: If the search space has cardinality constraints.
-        """
         import torch
         from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
         from botorch.optim import optimize_acqf
@@ -109,7 +92,7 @@ class GradientOptimizer(OptimizerProtocol):
             fixed_features = None
 
         points, acqf_values = optimize_acqf(
-            acq_function=cast(BoAcquisitionFunction, acquisition_function),
+            acq_function=cast(BoAcquisitionFunction, score_function),
             bounds=torch.from_numpy(
                 searchspace.continuous.comp_rep_bounds.to_numpy(copy=True)
             ),

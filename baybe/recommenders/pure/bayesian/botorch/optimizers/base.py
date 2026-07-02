@@ -11,8 +11,8 @@ from baybe.searchspace.core import SearchSpaceType
 if TYPE_CHECKING:
     from torch import Tensor
 
-    Optimand: TypeAlias = Callable[[Tensor], Tensor]
-    "Type alias for the callable to be optimized."
+    ScoreFunction: TypeAlias = Callable[[Tensor], Tensor]
+    "Type alias for a callable to be optimized."
 
 
 @runtime_checkable
@@ -29,18 +29,18 @@ class OptimizerProtocol(Protocol):
     def __call__(
         self,
         batch_size: int,
-        acquisition_function: Optimand,
+        score_function: ScoreFunction,
         searchspace: SearchSpace,
         fixed_parameters: dict[str, float] | None = None,
     ) -> tuple[Tensor, Tensor]:
-        """Recommend a batch of points from the given search space.
+        """Optimize a given callable over the specified search space.
 
         Args:
-            batch_size: The size of the recommendation batch.
-            acquisition_function: The acquisition function to be optimized.
-            searchspace: The search space from which to generate recommendations.
+            batch_size: The number of points to find.
+            score_function: The callable to be optimized.
+            searchspace: The search space to optimize over.
             fixed_parameters: A dictionary mapping parameter names to fixed values.
 
         Returns:
-            The recommendations and corresponding acquisition values.
+            The optimal parameter configurations and their corresponding scores.
         """

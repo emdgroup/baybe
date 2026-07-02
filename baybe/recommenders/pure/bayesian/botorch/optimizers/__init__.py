@@ -1,4 +1,4 @@
-"""Acquisition function optimizers."""
+"""Optimizers."""
 
 from baybe.recommenders.pure.bayesian.botorch.optimizers.basic import GradientOptimizer
 

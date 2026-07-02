@@ -93,7 +93,7 @@ class BayesianRecommender(PureRecommender):
         alias="optimizer",
         factory=GradientOptimizer,
     )
-    """The acquisition function optimizer."""
+    """The optimizer used to optimize the acquisition function."""
 
     # TODO: Move fields to respective optimizers
     hybrid_sampler: DiscreteSamplingMethod | None = field(
