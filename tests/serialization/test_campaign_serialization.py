@@ -34,6 +34,8 @@ def test_valid_simplex_config(simplex_config):
 
 
 def test_invalid_simplex_config(simplex_config):
-    simplex_config = simplex_config.replace("0.0, ", "-1.0, 0.0, ")
+    simplex_config = simplex_config.replace(
+        '"max_sum": 1.0', '"simplex_coefficients": [1.0, 0.0], "max_sum": 1.0'
+    )
     with pytest.raises(ClassValidationError):
         Campaign.validate_config(simplex_config)

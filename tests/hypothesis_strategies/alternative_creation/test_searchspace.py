@@ -119,7 +119,7 @@ def test_discrete_searchspace_creation_from_degenerate_dataframe():
 @pytest.mark.parametrize("boundary_only", (False, True))
 @given(
     parameters=st.lists(
-        numerical_discrete_parameters(min_value=0.0, max_value=1.0),
+        numerical_discrete_parameters(min_value=-1.0, max_value=1.0),
         min_size=2,
         max_size=5,
         unique_by=lambda x: x.name,
@@ -208,6 +208,12 @@ _simplex_params = [
     NumericalDiscreteParameter(name="C", values=[0.0, 0.5, 1.0]),
 ]
 
+_simplex_params_negative = [
+    NumericalDiscreteParameter(name="A", values=[-1.0, -0.5, 0.0, 0.5, 1.0]),
+    NumericalDiscreteParameter(name="B", values=[-1.0, -0.5, 0.0, 0.5, 1.0]),
+    NumericalDiscreteParameter(name="C", values=[-1.0, -0.5, 0.0, 0.5, 1.0]),
+]
+
 
 def _brute_force_weighted_simplex(
     params, max_sum, coefficients, *, boundary_only=False, tol=1e-9
@@ -225,25 +231,40 @@ def _brute_force_weighted_simplex(
 
 
 @pytest.mark.parametrize(
-    ("coefficients", "max_sum", "boundary_only"),
+    ("params", "coefficients", "max_sum", "boundary_only"),
     [
-        param(None, 1.0, False, id="default"),
-        param([1.0, 1.0, 1.0], 1.0, False, id="explicit-ones"),
-        param([2.0, 1.0, 0.5], 1.5, False, id="positive"),
-        param([2.0, 1.0, 0.5], 1.5, True, id="positive-boundary"),
-        param([1.0, -0.5, 2.0], 1.0, False, id="mixed-sign"),
+        param(_simplex_params, None, 1.0, False, id="default"),
+        param(_simplex_params, [1.0, 1.0, 1.0], 1.0, False, id="explicit-ones"),
+        param(_simplex_params, [2.0, 1.0, 0.5], 1.5, False, id="positive"),
+        param(_simplex_params, [2.0, 1.0, 0.5], 1.5, True, id="positive-boundary"),
+        param(_simplex_params, [1.0, -0.5, 2.0], 1.0, False, id="mixed-sign"),
+        param(_simplex_params_negative, None, 0.5, False, id="negative-values-default"),
+        param(
+            _simplex_params_negative,
+            [1.0, -0.5, 2.0],
+            0.5,
+            False,
+            id="negative-values-mixed-sign",
+        ),
+        param(
+            _simplex_params_negative,
+            [1.0, 1.0, 1.0],
+            0.0,
+            True,
+            id="negative-values-boundary",
+        ),
     ],
 )
 def test_discrete_space_creation_from_simplex_coefficients(
-    coefficients, max_sum, boundary_only
+    params, coefficients, max_sum, boundary_only
 ):
     """Simplex subspace with coefficients matches brute-force and from_product."""
     coeffs = coefficients or [1.0, 1.0, 1.0]
-    cols = [p.name for p in _simplex_params]
+    cols = [p.name for p in params]
 
     # Ground truth via brute force
     expected = _brute_force_weighted_simplex(
-        _simplex_params, max_sum, coeffs, boundary_only=boundary_only
+        params, max_sum, coeffs, boundary_only=boundary_only
     )
     expected = expected.sort_values(cols).reset_index(drop=True)
 
@@ -251,7 +272,7 @@ def test_discrete_space_creation_from_simplex_coefficients(
     result_simplex = (
         SubspaceDiscrete.from_simplex(
             max_sum,
-            _simplex_params,
+            params,
             simplex_coefficients=coefficients,
             boundary_only=boundary_only,
         )
@@ -268,7 +289,7 @@ def test_discrete_space_creation_from_simplex_coefficients(
         coefficients=tuple(coeffs),
     )
     result_product = (
-        SubspaceDiscrete.from_product(_simplex_params, constraints=[constraint])
+        SubspaceDiscrete.from_product(params, constraints=[constraint])
         .exp_rep.sort_values(cols)
         .reset_index(drop=True)
     )

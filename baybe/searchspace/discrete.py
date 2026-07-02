@@ -295,7 +295,6 @@ class SubspaceDiscrete(SerialMixin):
             max_sum: The maximum (weighted) sum of the parameter values defining the
                 simplex size.
             simplex_parameters: The parameters to be used for the simplex construction.
-                Their values are required to be non-negative.
             simplex_coefficients: Optional coefficients for the weighted sum, one per
                 entry in ``simplex_parameters``. Defaults to all-ones, i.e. an
                 unweighted sum.
@@ -311,8 +310,6 @@ class SubspaceDiscrete(SerialMixin):
             tolerance: Numerical tolerance used to validate the simplex constraint.
 
         Raises:
-            ValueError: If the passed simplex parameters are not suitable for a simplex
-                construction.
             ValueError: If the length of ``simplex_coefficients`` does not match the
                 number of ``simplex_parameters``.
             ValueError: If ``simplex_coefficients`` contains any zeros.
@@ -388,19 +385,12 @@ class SubspaceDiscrete(SerialMixin):
             if len(simplex_parameters) < 1:
                 return cls.from_product(product_parameters, constraints)
 
-        # Validate non-negativity of raw parameter values (required by the algorithm)
-        min_raw = [min(p.values) for p in simplex_parameters]
-        max_raw = [max(p.values) for p in simplex_parameters]
-        if any(v < 0.0 for v in min_raw):
-            raise ValueError(
-                f"All simplex_parameters passed to '{cls.from_simplex.__name__}' "
-                f"must have non-negative values only."
-            )
-
         # Compute per-parameter minimum weighted contributions.
         # For a positive coefficient c the minimum contribution is c*min_raw; for a
         # negative coefficient the ordering flips and it becomes c*max_raw. Taking
         # min of both products handles any real coefficient correctly.
+        min_raw = [min(p.values) for p in simplex_parameters]
+        max_raw = [max(p.values) for p in simplex_parameters]
         coeffs = np.asarray(simplex_coefficients, dtype=active_settings.DTypeFloatNumpy)
         if not np.isfinite(coeffs).all():
             raise ValueError(
@@ -798,13 +788,6 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
         simplex_parameters = converter.structure(
             specs["simplex_parameters"], list[NumericalDiscreteParameter]
         )
-
-        if not all(min(p.values) >= 0.0 for p in simplex_parameters):
-            raise ValueError(
-                f"All simplex_parameters passed to "
-                f"'{SubspaceDiscrete.from_simplex.__name__}' must have non-negative "
-                f"values only."
-            )
 
         simplex_coefficients = specs.get("simplex_coefficients", None)
         if simplex_coefficients is not None:
