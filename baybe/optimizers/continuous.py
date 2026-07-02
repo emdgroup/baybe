@@ -108,6 +108,7 @@ class GradientOptimizer(OptimizerProtocol[SubspaceContinuous]):
             sequential=sequential,
         )
 
+        assert acqf_values is not None  # handle missing BoTorch function overload
         return points, acqf_values
 
 
