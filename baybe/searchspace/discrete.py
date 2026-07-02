@@ -435,7 +435,14 @@ class SubspaceDiscrete(SerialMixin):
         # discarded, because it is already clear that the total sum will be exceeded
         # once all joins are completed. Analogously, nonzero cardinality bounds are
         # checked at each step.
+        #
+        # Instead of materializing the full cross-product before filtering, we use
+        # broadcasting to compute the validity mask in 2D (n_old, n_new) and only
+        # materialize the surviving combinations. This avoids allocating large
+        # intermediate arrays that are mostly discarded.
         arr: np.ndarray
+        partial_sums: np.ndarray
+        nz_counts: np.ndarray
         for i, (
             param,
             min_sum_to_go,
@@ -450,39 +457,50 @@ class SubspaceDiscrete(SerialMixin):
             )
         ):
             values = np.asarray(param.values, dtype=active_settings.DTypeFloatNumpy)
-
-            if i == 0:
-                arr = values.reshape(-1, 1)
-            else:
-                n_old = arr.shape[0]
-                n_new = len(values)
-                arr = np.column_stack(
-                    [
-                        np.repeat(arr, n_new, axis=0),
-                        np.tile(values, n_old),
-                    ]
-                )
-
-            # Compute weighted row sums and build validity mask
-            row_sums = arr @ coeffs[: i + 1]
-            mask = row_sums <= (max_sum - min_sum_to_go) + tolerance
-
-            # Apply nonzero cardinality bounds
+            threshold = (max_sum - min_sum_to_go) + tolerance
             effective_min = min_nonzero - max_nonzero_to_go
             effective_max = max_nonzero - min_nonzero_to_go
-            if effective_min > 0 or effective_max < len(simplex_parameters):
-                n_nz = np.count_nonzero(arr, axis=1)
-                if effective_min > 0:
-                    mask &= n_nz >= effective_min
-                if effective_max < len(simplex_parameters):
-                    mask &= n_nz <= effective_max
 
-            arr = arr[mask]
+            if i == 0:
+                partial_sums = values * coeffs[0]
+                nz_counts = (values != 0.0).astype(np.intp)
+
+                # Apply constraints directly on first parameter
+                mask = partial_sums <= threshold
+                if effective_min > 0:
+                    mask &= nz_counts >= effective_min
+                if effective_max < len(simplex_parameters):
+                    mask &= nz_counts <= effective_max
+
+                arr = values[mask].reshape(-1, 1)
+                partial_sums = partial_sums[mask]
+                nz_counts = nz_counts[mask]
+                continue
+
+            # Compute weighted sums via broadcasting: (n_old, n_new)
+            new_contributions = values * coeffs[i]
+            total_sums = partial_sums[:, None] + new_contributions[None, :]
+
+            # Build 2D validity mask from sum constraint
+            mask_2d = total_sums <= threshold
+
+            # Cardinality check via broadcasting
+            new_nz = (values != 0.0).astype(np.intp)
+            total_nz = nz_counts[:, None] + new_nz[None, :]
+            if effective_min > 0:
+                mask_2d &= total_nz >= effective_min
+            if effective_max < len(simplex_parameters):
+                mask_2d &= total_nz <= effective_max
+
+            # Extract surviving indices and materialize only those rows
+            old_idx, new_idx = np.where(mask_2d)
+            arr = np.column_stack([arr[old_idx], values[new_idx].reshape(-1, 1)])
+            partial_sums = total_sums[old_idx, new_idx]
+            nz_counts = total_nz[old_idx, new_idx]
 
         # If requested, keep only the boundary values
         if boundary_only:
-            row_sums = arr @ coeffs
-            mask = np.abs(row_sums - max_sum) <= tolerance
+            mask = np.abs(partial_sums - max_sum) <= tolerance
             arr = arr[mask]
 
         # Wrap in DataFrame
