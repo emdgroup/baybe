@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 class GradientOptimizer(OptimizerProtocol[SubspaceContinuous]):
     """Optimizer using gradient-based optimization."""
 
-    n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
+    n_starts: int = field(validator=[instance_of(int), gt(0)], default=10)
     """Number of times gradient-based optimization is restarted from different initial
     points.
     """
@@ -86,7 +86,7 @@ class GradientOptimizer(OptimizerProtocol[SubspaceContinuous]):
             acq_function=cast(BoAcquisitionFunction, score_function),
             bounds=torch.from_numpy(space.comp_rep_bounds.to_numpy(copy=True)),
             q=batch_size,
-            num_restarts=self.n_restarts,
+            num_restarts=self.n_starts,
             raw_samples=self.n_raw_samples,
             fixed_features=fixed_features or None,
             equality_constraints=flatten(

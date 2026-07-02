@@ -73,7 +73,7 @@ def BotorchRecommender(
             surrogate_model=surrogate_model,
             acquisition_function=acquisition_function,
             optimizer=GradientOptimizer(
-                n_restarts=n_restarts,
+                n_starts=n_restarts,
                 n_raw_samples=n_raw_samples,
                 sequential=sequential_continuous,
             ),
