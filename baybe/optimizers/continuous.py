@@ -64,17 +64,16 @@ class GradientOptimizer(OptimizerProtocol):
                 f"'{self.__class__.__name__}' only supports continuous search spaces."
             )
 
-        # TODO: Add option for automatic choice once the "settings" PR is merged,
-        #   which ships the necessary machinery
-        if (
-            self.sequential_continuous is not AutoBool.FALSE
-            and searchspace.continuous.has_interpoint_constraints
-        ):
+        sequential_continuous = self.sequential_continuous.evaluate(
+            lambda: not searchspace.continuous.has_interpoint_constraints
+        )
+
+        if sequential_continuous and searchspace.continuous.has_interpoint_constraints:
             raise IncompatibilityError(
                 f"Setting the "
-                f"'{fields(self.__class__).sequential_continuous.name}' "
-                f"flag to ``True`` while interpoint constraints are present in the "
-                f"continuous subspace is not supported. "
+                f"'{fields(self.__class__).sequential_continuous.alias}' "
+                f"flag to 'True' while interpoint constraints are present is not "
+                f"supported. Set it to either 'False'/'Auto'."
             )
 
         if searchspace.continuous.n_subsets > 0:
@@ -118,7 +117,7 @@ class GradientOptimizer(OptimizerProtocol):
                 for c in searchspace.continuous.constraints_lin_ineq
             )
             or None,
-            sequential=self.sequential_continuous is not AutoBool.FALSE,
+            sequential=sequential_continuous,
         )
 
         return points, acqf_values
