@@ -315,6 +315,7 @@ class SubspaceDiscrete(SerialMixin):
                 construction.
             ValueError: If the length of ``simplex_coefficients`` does not match the
                 number of ``simplex_parameters``.
+            ValueError: If ``simplex_coefficients`` contains any zeros.
             ValueError: If the passed product parameters are not discrete.
             ValueError: If the passed simplex parameters and product parameters are
                 not disjoint.
