@@ -257,16 +257,16 @@ class ContinuousCardinalityConstraint(
             corresponding parameter names.
         """
         # The number of possible parameter configuration per set cardinality
-        n_configurations_per_cardinality = [
-            math.comb(len(self.parameters), n)
-            for n in range(self.min_cardinality, self.max_cardinality + 1)
-        ]
+        n_configs_per_cardinality = np.array(
+            [
+                math.comb(len(self.parameters), n)
+                for n in range(self.min_cardinality, self.max_cardinality + 1)
+            ]
+        )
 
         # Probability of each set cardinality under the assumption that all possible
         # inactive parameter sets are equally likely
-        probabilities = np.array(n_configurations_per_cardinality) / np.sum(
-            n_configurations_per_cardinality
-        )
+        probabilities = n_configs_per_cardinality / n_configs_per_cardinality.sum()
 
         # Sample the number of active/inactive parameters
         n_active_params = np.random.choice(
