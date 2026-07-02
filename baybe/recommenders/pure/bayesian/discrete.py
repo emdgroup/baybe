@@ -1,4 +1,4 @@
-"""Discrete recommendation routines for BotorchRecommender."""
+"""Discrete recommendation routines for BayesianRecommender."""
 
 from __future__ import annotations
 
@@ -15,11 +15,11 @@ from baybe.utils.dataframe import to_tensor
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
+    from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 
 
 def recommend_discrete_with_subsets(
-    recommender: BotorchRecommender,
+    recommender: BayesianRecommender,
     subspace_discrete: SubspaceDiscrete,
     candidates_exp: pd.DataFrame,
     batch_size: int,
@@ -76,7 +76,7 @@ def recommend_discrete_with_subsets(
 
 
 def recommend_discrete_without_subsets(
-    recommender: BotorchRecommender,
+    recommender: BayesianRecommender,
     subspace_discrete: SubspaceDiscrete,
     candidates_exp: pd.DataFrame,
     batch_size: int,

@@ -18,7 +18,7 @@ from baybe.exceptions import NoRecommendersLeftError
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
-from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.recommenders.pure.bayesian import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import (
@@ -52,7 +52,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     """The initial recommender used by the meta recommender."""
 
     recommender: RecommenderProtocol = field(
-        factory=BotorchRecommender, validator=instance_of(RecommenderProtocol)
+        factory=BayesianRecommender, validator=instance_of(RecommenderProtocol)
     )
     """The recommender used by the meta recommender after the switch."""
 

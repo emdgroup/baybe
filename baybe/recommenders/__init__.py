@@ -7,6 +7,7 @@ from baybe.recommenders.meta.sequential import (
 )
 from baybe.recommenders.naive import NaiveHybridSpaceRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.clustering import (
     GaussianMixtureClusteringRecommender,
     KMeansClusteringRecommender,
@@ -18,6 +19,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
 )
 
 __all__ = [
+    "BayesianRecommender",
     "BotorchRecommender",
     "FPSRecommender",
     "GaussianMixtureClusteringRecommender",

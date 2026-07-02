@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import gc
-from abc import ABC
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING, Any, ClassVar
 
+import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
+from attrs.validators import ge, gt, instance_of
 from typing_extensions import override
 
 from baybe.acquisition import qLogEI, qLogNEHVI
@@ -16,20 +18,41 @@ from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
 from baybe.exceptions import (
     IncompatibleAcquisitionFunctionError,
+    InfeasibilityError,
 )
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
-from baybe.searchspace import SearchSpace
+from baybe.recommenders.pure.bayesian.botorch.optimizers.base import OptimizerProtocol
+from baybe.recommenders.pure.bayesian.botorch.optimizers.basic import GradientOptimizer
+from baybe.recommenders.pure.bayesian.continuous import (
+    recommend_continuous_torch,
+)
+from baybe.recommenders.pure.bayesian.discrete import (
+    recommend_discrete_with_subsets,
+    recommend_discrete_without_subsets,
+)
+from baybe.recommenders.pure.bayesian.hybrid import (
+    recommend_hybrid_with_subsets,
+    recommend_hybrid_without_subsets,
+)
+from baybe.searchspace import (
+    SearchSpace,
+    SearchSpaceType,
+    SubspaceContinuous,
+    SubspaceDiscrete,
+)
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import (
     Surrogate,
     SurrogateProtocol,
 )
+from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
+    from torch import Tensor
 
 
 def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
@@ -40,8 +63,19 @@ def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
 
 
 @define
-class BayesianRecommender(PureRecommender, ABC):
-    """An abstract class for Bayesian Recommenders."""
+class BayesianRecommender(PureRecommender):
+    """A recommender utilizing Bayesian optimization machinery.
+
+    This recommender makes use of a given optimizer to optimize acquisition
+    functions. It can be applied to all kinds of search spaces.
+    """
+
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
+    # See base class.
+
+    supports_discrete_subset_generating_constraints: ClassVar[bool] = True
+    # See base class.
 
     _surrogate_model: SurrogateProtocol = field(
         alias="surrogate_model",
@@ -55,6 +89,39 @@ class BayesianRecommender(PureRecommender, ABC):
     )
     """The acquisition function. When omitted, a default is used."""
 
+    optimizer: OptimizerProtocol = field(
+        alias="optimizer",
+        factory=GradientOptimizer,
+    )
+    """The acquisition function optimizer."""
+
+    # TODO: Move fields to respective optimizers
+    hybrid_sampler: DiscreteSamplingMethod | None = field(
+        converter=optional(DiscreteSamplingMethod), default=None
+    )
+    """Strategy used for sampling the discrete subspace when performing hybrid search
+    space optimization."""
+
+    sampling_percentage: float = field(default=1.0)
+    """Percentage of discrete search space that is sampled when performing hybrid search
+    space optimization. Ignored when ``hybrid_sampler="None"``."""
+
+    n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
+    """Number of times gradient-based optimization is restarted from different initial
+    points. **Does not affect purely discrete optimization**.
+    """
+
+    n_raw_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
+    """Number of raw samples drawn for the initialization heuristic in gradient-based
+    optimization. **Does not affect purely discrete optimization**.
+    """
+
+    max_n_subsets: int = field(default=10, validator=[instance_of(int), ge(1)])
+    """Maximum number of subsets to evaluate when subset-generating constraints are
+    present (e.g., continuous cardinality constraints). If the total number of
+    subsets exceeds this limit, a random subset of that size is sampled for
+    optimization instead of performing an exhaustive search."""
+
     # TODO: The objective is currently only required for validating the recommendation
     #   context. Once multi-target support is complete, we might want to refactor
     #   the validation mechanism, e.g. by
@@ -66,6 +133,20 @@ class BayesianRecommender(PureRecommender, ABC):
 
     _botorch_acqf = field(default=None, init=False, eq=False)
     """The induced BoTorch acquisition function."""
+
+    @sampling_percentage.validator
+    def _validate_percentage(  # noqa: DOC101, DOC103
+        self, _: Any, value: float
+    ) -> None:
+        """Validate that the given value is in fact a percentage.
+
+        Raises:
+            ValueError: If ``value`` is not between 0 and 1.
+        """
+        if not 0 <= value <= 1:
+            raise ValueError(
+                f"Hybrid sampling percentage needs to be between 0 and 1 but is {value}"
+            )
 
     def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
@@ -195,6 +276,147 @@ class BayesianRecommender(PureRecommender, ABC):
                 ) from ex
             else:
                 raise
+
+    @override
+    def _recommend_discrete(
+        self,
+        subspace_discrete: SubspaceDiscrete,
+        candidates_exp: pd.DataFrame,
+        batch_size: int,
+    ) -> pd.Index:
+        """Generate recommendations from a discrete search space.
+
+        Dispatches to the appropriate optimization routine depending on whether
+        subset constraints are present.
+
+        Args:
+            subspace_discrete: The discrete subspace from which to generate
+                recommendations.
+            candidates_exp: The experimental representation of all discrete candidate
+                points to be considered.
+            batch_size: The size of the recommendation batch.
+
+        Returns:
+            The dataframe indices of the recommended points in the provided
+            experimental representation.
+        """
+        if subspace_discrete.n_subsets > 0:
+            return recommend_discrete_with_subsets(
+                self, subspace_discrete, candidates_exp, batch_size
+            )
+        return recommend_discrete_without_subsets(
+            self, subspace_discrete, candidates_exp, batch_size
+        )
+
+    @override
+    def _recommend_continuous(
+        self,
+        subspace_continuous: SubspaceContinuous,
+        batch_size: int,
+    ) -> pd.DataFrame:
+        """Generate recommendations from a continuous search space.
+
+        Args:
+            subspace_continuous: The continuous subspace from which to generate
+                recommendations.
+            batch_size: The size of the recommendation batch.
+
+        Raises:
+            IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
+                function is used with a batch size > 1.
+
+        Returns:
+            A dataframe containing the recommendations as individual rows.
+        """
+        assert self._objective is not None
+        if (
+            batch_size > 1
+            and not self._get_acquisition_function(self._objective).supports_batching
+        ):
+            raise IncompatibleAcquisitionFunctionError(
+                f"The '{self.__class__.__name__}' only works with Monte Carlo "
+                f"acquisition functions for batch sizes > 1."
+            )
+
+        points, _ = recommend_continuous_torch(self, subspace_continuous, batch_size)
+
+        return pd.DataFrame(points, columns=subspace_continuous.parameter_names)
+
+    @override
+    def _recommend_hybrid(
+        self,
+        searchspace: SearchSpace,
+        candidates_exp: pd.DataFrame,
+        batch_size: int,
+    ) -> pd.DataFrame:
+        """Generate recommendations from a hybrid search space.
+
+        Dispatches to the appropriate optimization routine depending on whether
+        subset constraints are present.
+
+        Args:
+            searchspace: The search space in which the recommendations should be made.
+            candidates_exp: The experimental representation of the candidates
+                of the discrete subspace.
+            batch_size: The size of the calculated batch.
+
+        Returns:
+            The recommended points.
+        """
+        if searchspace.n_subsets > 0:
+            return recommend_hybrid_with_subsets(
+                self, searchspace, candidates_exp, batch_size
+            )
+        return recommend_hybrid_without_subsets(
+            self, searchspace, candidates_exp, batch_size
+        )
+
+    def _optimize_over_subsets(
+        self,
+        subset_callables: Iterable[Callable[[], tuple[Any, Tensor]]],
+    ) -> tuple[Any, Tensor]:
+        """Optimize across subsets and return the result with the best acqf value.
+
+        Each callable performs optimization for one subset configuration and returns
+        a ``(result, acquisition_value)`` tuple. Subsets that raise
+        ``InfeasibilityError`` are silently skipped.
+
+        Args:
+            subset_callables: An iterable of zero-argument callables. Each callable
+                runs the optimization for one subset and returns
+                ``(result, acqf_value)``. It may raise ``InfeasibilityError`` if the
+                subset is infeasible.
+
+        Raises:
+            InfeasibilityError: If none of the subsets has a feasible solution.
+
+        Returns:
+            The result and acquisition value of the best subset.
+        """
+        from botorch.exceptions.errors import InfeasibilityError as BoInfeasibilityError
+
+        results_all: list = []
+        acqf_values_all: list[Tensor] = []
+
+        for optimize_fn in subset_callables:
+            try:
+                result, acqf_value = optimize_fn()
+                results_all.append(result)
+                acqf_values_all.append(acqf_value)
+            except (BoInfeasibilityError, InfeasibilityError):
+                pass
+
+        if not results_all:
+            raise InfeasibilityError(
+                "No feasible solution could be found. Potentially the specified "
+                "constraints are too restrictive, i.e. there may be too many "
+                "constraints or thresholds may have been set too tightly. "
+                "Consider relaxing the constraints to improve the chances "
+                "of finding a feasible solution."
+            )
+
+        best_idx = np.argmax(acqf_values_all)
+        return results_all[best_idx], acqf_values_all[best_idx]
 
     def acquisition_values(
         self,

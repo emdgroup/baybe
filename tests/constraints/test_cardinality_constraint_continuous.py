@@ -17,7 +17,7 @@ from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import MinimumCardinalityViolatedWarning
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
-from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace, SubspaceContinuous
 from baybe.targets import NumericalTarget

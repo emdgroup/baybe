@@ -4,7 +4,7 @@
 # {func}`register_hooks <baybe.utils.basic.register_hooks>` utility can be used to
 # extract the *Probability of Improvement (PI)* from a running campaign:
 # * We define a hook that is compatible with the
-#   {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.recommend>`
+#   {meth}`BayesianRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.core.BayesianRecommender.recommend>`
 #   interface and lets us extract the PI achieved after each experimental iteration,
 # * attach the hook to the recommender driving our campaign,
 # * and plot the evolving PI values after campaign completion.
@@ -29,7 +29,7 @@ from baybe.campaign import Campaign
 from baybe.objectives.base import Objective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import (
-    BotorchRecommender,
+    BayesianRecommender,
     RandomRecommender,
     TwoPhaseMetaRecommender,
 )
@@ -67,7 +67,7 @@ pi_per_iteration: list[np.ndarray] = []
 
 
 def extract_pi(
-    self: BotorchRecommender,
+    self: BayesianRecommender,
     searchspace: SearchSpace,
     objective: Objective | None = None,
     measurements: pd.DataFrame | None = None,
@@ -91,12 +91,12 @@ def extract_pi(
 
 # Next, we create our recommender and monkeypatch its `recommend` method:
 
-bayesian_recommender = BotorchRecommender(
+bayesian_recommender = BayesianRecommender(
     surrogate_model=GaussianProcessSurrogate(),
 )
 bayesian_recommender.recommend = MethodType(
     register_hooks(
-        BotorchRecommender.recommend,
+        BayesianRecommender.recommend,
         post_hooks=[extract_pi],
     ),
     bayesian_recommender,
@@ -107,7 +107,7 @@ recommender = TwoPhaseMetaRecommender(
 )
 
 # In this example, we use `MethodType` to bind the
-# {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.recommend>`
+# {meth}`BayesianRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.core.BayesianRecommender.recommend>`
 # **function** with our hook.
 # For more information, we refer to the [`basic example`](./basics.md) explaining the
 # hook mechanics.

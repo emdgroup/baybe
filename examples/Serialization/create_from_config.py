@@ -72,7 +72,7 @@ CONFIG = str(
             "type": "FPSRecommender"
         },
         "recommender": {
-            "type": "BotorchRecommender",
+            "type": "BayesianRecommender",
             "surrogate_model": {
                 "type": "GaussianProcessSurrogate"
             },

@@ -6,7 +6,7 @@ from baybe import Campaign
 from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import FPSRecommender, TwoPhaseMetaRecommender
-from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 
