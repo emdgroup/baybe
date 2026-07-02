@@ -148,10 +148,6 @@ def recommend_continuous_without_cardinality_constraints(
             f"expects a subspace without cardinality constraints."
         )
 
-    # NOTE: The explicit `or None` conversion is added as an additional safety net
-    #   because it is unclear if the corresponding presence checks for these
-    #   arguments is correctly implemented in all invoked BoTorch subroutines.
-    #   For details: https://github.com/pytorch/botorch/issues/2042
     points, acqf_values = recommender.optimizer(
         batch_size=batch_size,
         score_function=recommender._botorch_acqf,

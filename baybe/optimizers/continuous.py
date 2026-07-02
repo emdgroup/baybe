@@ -89,6 +89,10 @@ class GradientOptimizer(OptimizerProtocol):
             if isinstance(p, _FixedNumericalContinuousParameter)
         }
 
+        # NOTE: The explicit `or None` conversions are added as an additional safety net
+        #   because it is unclear if the corresponding presence checks for these
+        #   arguments is correctly implemented in all invoked BoTorch subroutines.
+        #   For details: https://github.com/pytorch/botorch/issues/2042
         points, acqf_values = optimize_acqf(
             acq_function=cast(BoAcquisitionFunction, score_function),
             bounds=torch.from_numpy(
