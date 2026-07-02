@@ -136,6 +136,7 @@ class GradientOptimizer(OptimizerProtocol):
             sequential=self.sequential_continuous is not AutoBool.FALSE,
         )
 
+        assert acqf_values is not None
         return points, acqf_values
 
 
