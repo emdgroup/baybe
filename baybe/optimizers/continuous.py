@@ -1,4 +1,4 @@
-"""Low-level optimizers."""
+"""Continuous optimizers."""
 
 from __future__ import annotations
 
@@ -24,24 +24,19 @@ if TYPE_CHECKING:
 
 @define(kw_only=True)
 class GradientOptimizer(OptimizerProtocol[SubspaceContinuous]):
-    """Optimizer using gradient-based optimization."""
+    """Optimizer wrapping BoTorch's :func:`botorch.optim.optimize_acqf`."""
 
     n_starts: int = field(validator=[instance_of(int), gt(0)], default=10)
-    """Number of times gradient-based optimization is restarted from different initial
-    points.
-    """
+    """The number of starting points used for the optimization."""
 
     n_initial_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
-    """Number of raw samples drawn for the initialization heuristic in gradient-based
-    optimization.
-    """
+    """The number of samples drawn for the starting point selection heuristic."""
 
     sequential: AutoBool = field(
         default=AutoBool.AUTO,
         converter=AutoBool.from_unstructured,  # type: ignore[misc]
     )
-    """Flag defining whether to apply sequential greedy or batch optimization.
-    """
+    """Flag defining whether to apply sequential greedy or joint optimization."""
 
     @override
     def __call__(
@@ -69,7 +64,7 @@ class GradientOptimizer(OptimizerProtocol[SubspaceContinuous]):
         if space.n_subsets > 0:
             raise ValueError(
                 f"'{self.__class__.__name__}' "
-                f"expects a continuous subspace without cardinality constraints."
+                f"expects single continuous space, i.e., containing no subsets."
             )
 
         fixed_features = {
