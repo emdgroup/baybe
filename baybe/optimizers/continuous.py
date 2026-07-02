@@ -31,7 +31,7 @@ class GradientOptimizer(OptimizerProtocol[SubspaceContinuous]):
     points.
     """
 
-    n_raw_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
+    n_initial_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
     """Number of raw samples drawn for the initialization heuristic in gradient-based
     optimization.
     """
@@ -87,7 +87,7 @@ class GradientOptimizer(OptimizerProtocol[SubspaceContinuous]):
             bounds=torch.from_numpy(space.comp_rep_bounds.to_numpy(copy=True)),
             q=batch_size,
             num_restarts=self.n_starts,
-            raw_samples=self.n_raw_samples,
+            raw_samples=self.n_initial_samples,
             fixed_features=fixed_features or None,
             equality_constraints=flatten(
                 c.to_botorch(
