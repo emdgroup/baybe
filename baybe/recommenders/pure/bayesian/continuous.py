@@ -29,8 +29,8 @@ def recommend_continuous_torch(
             recommender, subspace_continuous, batch_size
         )
     else:
-        return recommend_continuous_without_cardinality_constraints(
-            recommender, subspace_continuous, batch_size
+        return recommender.optimizer(
+            batch_size, recommender._botorch_acqf, subspace_continuous
         )
 
 
@@ -120,36 +120,3 @@ def recommend_continuous_with_cardinality_constraints(
         )
 
     return points, acqf_value
-
-
-def recommend_continuous_without_cardinality_constraints(
-    recommender: BayesianRecommender,
-    subspace_continuous: SubspaceContinuous,
-    batch_size: int,
-) -> tuple[Tensor, Tensor]:
-    """Recommend from a continuous search space without cardinality constraints.
-
-    Args:
-        recommender: The recommender instance.
-        subspace_continuous: The continuous subspace from which to generate
-            recommendations.
-        batch_size: The size of the recommendation batch.
-
-    Returns:
-        The recommendations and corresponding acquisition values.
-
-    Raises:
-        ValueError: If the continuous search space has cardinality constraints.
-    """
-    if subspace_continuous.n_subsets > 0:
-        raise ValueError(
-            f"'{recommend_continuous_without_cardinality_constraints.__name__}' "
-            f"expects a subspace without cardinality constraints."
-        )
-
-    points, acqf_values = recommender.optimizer(
-        batch_size=batch_size,
-        score_function=recommender._botorch_acqf,
-        space=subspace_continuous,
-    )
-    return points, acqf_values
