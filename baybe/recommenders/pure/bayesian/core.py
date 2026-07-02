@@ -21,9 +21,8 @@ from baybe.exceptions import (
     InfeasibilityError,
 )
 from baybe.objectives.base import Objective
+from baybe.optimizers import GradientOptimizer, OptimizerProtocol
 from baybe.recommenders.pure.base import PureRecommender
-from baybe.recommenders.pure.bayesian.botorch.optimizers.base import OptimizerProtocol
-from baybe.recommenders.pure.bayesian.botorch.optimizers.basic import GradientOptimizer
 from baybe.recommenders.pure.bayesian.continuous import (
     recommend_continuous_torch,
 )

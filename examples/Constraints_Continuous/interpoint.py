@@ -29,10 +29,10 @@ from matplotlib import pyplot as plt
 
 from baybe import Campaign, active_settings
 from baybe.constraints import ContinuousLinearConstraint
+from baybe.optimizers import GradientOptimizer
 from baybe.parameters import NumericalContinuousParameter
 from baybe.recommenders import BayesianRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
-from baybe.recommenders.pure.bayesian.botorch.optimizers.basic import GradientOptimizer
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements

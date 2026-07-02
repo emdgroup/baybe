@@ -10,7 +10,7 @@ from attrs.validators import gt, instance_of
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError, IncompatibleSearchSpaceError
-from baybe.recommenders.pure.bayesian.botorch.optimizers.base import OptimizerProtocol
+from baybe.optimizers.base import OptimizerProtocol
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.settings import AutoBool
@@ -19,7 +19,7 @@ from baybe.utils.basic import flatten
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.recommenders.pure.bayesian.botorch.optimizers.base import ScoreFunction
+    from baybe.optimizers.base import ScoreFunction
 
 
 @define(kw_only=True)

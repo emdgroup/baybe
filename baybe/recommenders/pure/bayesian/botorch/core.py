@@ -7,7 +7,7 @@ import warnings
 from typing import TYPE_CHECKING
 
 from baybe.acquisition.base import AcquisitionFunction
-from baybe.recommenders.pure.bayesian.botorch.optimizers.basic import GradientOptimizer
+from baybe.optimizers import GradientOptimizer
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
