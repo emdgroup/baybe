@@ -11,7 +11,6 @@ import pandas as pd
 from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import MinimumCardinalityViolatedWarning
 from baybe.searchspace import SubspaceContinuous
-from baybe.searchspace.core import SearchSpace
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -151,6 +150,6 @@ def recommend_continuous_without_cardinality_constraints(
     points, acqf_values = recommender.optimizer(
         batch_size=batch_size,
         score_function=recommender._botorch_acqf,
-        searchspace=SearchSpace(continuous=subspace_continuous),
+        space=subspace_continuous,
     )
     return points, acqf_values

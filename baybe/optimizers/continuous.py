@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, cast
 
 from attrs import define, field, fields
 from attrs.validators import gt, instance_of
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibilityError, IncompatibleSearchSpaceError
+from baybe.exceptions import IncompatibilityError
 from baybe.optimizers.base import OptimizerProtocol
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
-from baybe.searchspace import SearchSpace
-from baybe.searchspace.core import SearchSpaceType
+from baybe.searchspace import SubspaceContinuous
 from baybe.settings import AutoBool
 from baybe.utils.basic import flatten
 
@@ -24,12 +23,8 @@ if TYPE_CHECKING:
 
 
 @define(kw_only=True)
-class GradientOptimizer(OptimizerProtocol):
+class GradientOptimizer(OptimizerProtocol[SubspaceContinuous]):
     """Optimizer using gradient-based optimization."""
-
-    # Class variables
-    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.CONTINUOUS
-    # See base class.
 
     n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
     """Number of times gradient-based optimization is restarted from different initial
@@ -53,22 +48,17 @@ class GradientOptimizer(OptimizerProtocol):
         self,
         batch_size: int,
         score_function: ScoreFunction,
-        searchspace: SearchSpace,
+        space: SubspaceContinuous,
     ) -> tuple[Tensor, Tensor]:
         import torch
         from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
         from botorch.optim import optimize_acqf
 
-        if searchspace.type is not self.compatibility:
-            raise IncompatibleSearchSpaceError(
-                f"'{self.__class__.__name__}' only supports continuous search spaces."
-            )
-
         sequential = self.sequential.evaluate(
-            lambda: not searchspace.continuous.has_interpoint_constraints
+            lambda: not space.has_interpoint_constraints
         )
 
-        if sequential and searchspace.continuous.has_interpoint_constraints:
+        if sequential and space.has_interpoint_constraints:
             raise IncompatibilityError(
                 f"Setting the "
                 f"'{fields(self.__class__).sequential.alias}' "
@@ -76,7 +66,7 @@ class GradientOptimizer(OptimizerProtocol):
                 f"supported. Set it to either 'False'/'Auto'."
             )
 
-        if searchspace.continuous.n_subsets > 0:
+        if space.n_subsets > 0:
             raise ValueError(
                 f"'{self.__class__.__name__}' "
                 f"expects a continuous subspace without cardinality constraints."
@@ -84,7 +74,7 @@ class GradientOptimizer(OptimizerProtocol):
 
         fixed_features = {
             i: p.value
-            for i, p in enumerate(searchspace.continuous.parameters)
+            for i, p in enumerate(space.parameters)
             if isinstance(p, _FixedNumericalContinuousParameter)
         }
 
@@ -94,27 +84,25 @@ class GradientOptimizer(OptimizerProtocol):
         #   For details: https://github.com/pytorch/botorch/issues/2042
         points, acqf_values = optimize_acqf(
             acq_function=cast(BoAcquisitionFunction, score_function),
-            bounds=torch.from_numpy(
-                searchspace.continuous.comp_rep_bounds.to_numpy(copy=True)
-            ),
+            bounds=torch.from_numpy(space.comp_rep_bounds.to_numpy(copy=True)),
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
             fixed_features=fixed_features or None,
             equality_constraints=flatten(
                 c.to_botorch(
-                    searchspace.continuous.parameters,
+                    space.parameters,
                     batch_size=batch_size if c.is_interpoint else None,
                 )
-                for c in searchspace.continuous.constraints_lin_eq
+                for c in space.constraints_lin_eq
             )
             or None,
             inequality_constraints=flatten(
                 c.to_botorch(
-                    searchspace.continuous.parameters,
+                    space.parameters,
                     batch_size=batch_size if c.is_interpoint else None,
                 )
-                for c in searchspace.continuous.constraints_lin_ineq
+                for c in space.constraints_lin_ineq
             )
             or None,
             sequential=sequential,
