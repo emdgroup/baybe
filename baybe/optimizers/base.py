@@ -31,7 +31,6 @@ class OptimizerProtocol(Protocol):
         batch_size: int,
         score_function: ScoreFunction,
         searchspace: SearchSpace,
-        fixed_parameters: dict[str, float] | None = None,
     ) -> tuple[Tensor, Tensor]:
         """Optimize a given callable over the specified search space.
 
@@ -39,7 +38,6 @@ class OptimizerProtocol(Protocol):
             batch_size: The number of points to find.
             score_function: The callable to be optimized.
             searchspace: The search space to optimize over.
-            fixed_parameters: A dictionary mapping parameter names to fixed values.
 
         Returns:
             The optimal parameter configurations and their corresponding scores.

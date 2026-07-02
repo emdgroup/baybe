@@ -11,6 +11,7 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError, IncompatibleSearchSpaceError
 from baybe.optimizers.base import OptimizerProtocol
+from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.settings import AutoBool
@@ -53,7 +54,6 @@ class GradientOptimizer(OptimizerProtocol):
         batch_size: int,
         score_function: ScoreFunction,
         searchspace: SearchSpace,
-        fixed_parameters: dict[str, float] | None = None,
     ) -> tuple[Tensor, Tensor]:
         import torch
         from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
@@ -83,13 +83,11 @@ class GradientOptimizer(OptimizerProtocol):
                 f"expects a continuous subspace without cardinality constraints."
             )
 
-        if fixed_parameters:
-            param_names = [p.name for p in searchspace.continuous.parameters]
-            fixed_features = {
-                param_names.index(name): val for name, val in fixed_parameters.items()
-            }
-        else:
-            fixed_features = None
+        fixed_features = {
+            i: p.value
+            for i, p in enumerate(searchspace.continuous.parameters)
+            if isinstance(p, _FixedNumericalContinuousParameter)
+        }
 
         points, acqf_values = optimize_acqf(
             acq_function=cast(BoAcquisitionFunction, score_function),
