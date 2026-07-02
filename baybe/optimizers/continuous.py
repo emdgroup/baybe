@@ -41,7 +41,7 @@ class GradientOptimizer(OptimizerProtocol):
     optimization.
     """
 
-    sequential_continuous: AutoBool = field(
+    sequential: AutoBool = field(
         default=AutoBool.AUTO,
         converter=AutoBool.from_unstructured,  # type: ignore[misc]
     )
@@ -64,14 +64,14 @@ class GradientOptimizer(OptimizerProtocol):
                 f"'{self.__class__.__name__}' only supports continuous search spaces."
             )
 
-        sequential_continuous = self.sequential_continuous.evaluate(
+        sequential = self.sequential.evaluate(
             lambda: not searchspace.continuous.has_interpoint_constraints
         )
 
-        if sequential_continuous and searchspace.continuous.has_interpoint_constraints:
+        if sequential and searchspace.continuous.has_interpoint_constraints:
             raise IncompatibilityError(
                 f"Setting the "
-                f"'{fields(self.__class__).sequential_continuous.alias}' "
+                f"'{fields(self.__class__).sequential.alias}' "
                 f"flag to 'True' while interpoint constraints are present is not "
                 f"supported. Set it to either 'False'/'Auto'."
             )
@@ -117,7 +117,7 @@ class GradientOptimizer(OptimizerProtocol):
                 for c in searchspace.continuous.constraints_lin_ineq
             )
             or None,
-            sequential=sequential_continuous,
+            sequential=sequential,
         )
 
         return points, acqf_values

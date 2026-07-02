@@ -75,7 +75,7 @@ def BotorchRecommender(
             optimizer=GradientOptimizer(
                 n_restarts=n_restarts,
                 n_raw_samples=n_raw_samples,
-                sequential_continuous=sequential_continuous,
+                sequential=sequential_continuous,
             ),
             hybrid_sampler=hybrid_sampler,
             sampling_percentage=sampling_percentage,

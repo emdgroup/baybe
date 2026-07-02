@@ -123,9 +123,7 @@ searchspace = SearchSpace.from_product(
 )
 objective = NumericalTarget(name="Reaction_Yield").to_objective()
 recommender = TwoPhaseMetaRecommender(
-    recommender=BayesianRecommender(
-        optimizer=GradientOptimizer(sequential_continuous=False)
-    )
+    recommender=BayesianRecommender(optimizer=GradientOptimizer(sequential=False))
 )
 campaign = Campaign(
     searchspace=searchspace,
