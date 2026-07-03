@@ -147,7 +147,7 @@ mypy = [
 ]
 
 polars = [
-    "polars[pyarrow]>=0.19.19,<2",
+    "polars[pyarrow]>=0.20.8,<2",
 ]
 
 simulation = [
