@@ -9,7 +9,7 @@ from attrs import define, field, fields
 from attrs.validators import gt, instance_of
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, IncompatibleSearchSpaceError
 from baybe.optimizers.base import OptimizerProtocol
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.searchspace import SubspaceContinuous
@@ -62,7 +62,7 @@ class ContinuousOptimizer(OptimizerProtocol[SubspaceContinuous]):
             )
 
         if space.n_subsets > 0:
-            raise ValueError(
+            raise IncompatibleSearchSpaceError(
                 f"'{self.__class__.__name__}' "
                 f"expects single continuous space, i.e., containing no subsets."
             )
