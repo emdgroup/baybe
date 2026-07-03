@@ -144,8 +144,7 @@ def test_polars_label_duplicates(parameters, constraints):
 
     ldf = ldf.with_columns(
         pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
-        .list.eval(pl.element().n_unique())
-        .explode()
+        .list.n_unique()
         .alias("n_unique")
     )
     df = ldf.filter(pl.col("n_unique") != len(parameters)).collect()
