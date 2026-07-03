@@ -19,16 +19,20 @@ from baybe.exceptions import DeprecationError
 from baybe.kernels.basic import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
+from baybe.optimizers import ContinuousOptimizer
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.recommenders import BayesianRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace import SearchSpaceType
 from baybe.searchspace.core import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
@@ -152,7 +156,7 @@ def test_deprecated_meta_recommender_methods():
         "allow_recommending_pending_experiments",
     ],
 )
-@pytest.mark.parametrize("recommender_cls", [RandomRecommender, BotorchRecommender])
+@pytest.mark.parametrize("recommender_cls", [RandomRecommender, BayesianRecommender])
 def test_migrated_allow_flags(flag, recommender_cls):
     """Passing and accessing the migrated 'allow_*' flags raises an error."""
     with pytest.raises(DeprecationError, match=r"Passing 'allow_\*' flags"):
@@ -556,3 +560,51 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
     )
     with context:
         GaussianProcessSurrogate(*args).fit(searchspace, objective, measurements)
+
+
+def test_botorch_recommender_class_variable_access():
+    """Class variable emulation via the deprecation shim works."""
+    BotorchRecommender.compatibility is SearchSpaceType.HYBRID
+    assert BotorchRecommender.supports_discrete_subset_generating_constraints is True
+
+
+p_disc = NumericalDiscreteParameter("p_disc", [0, 1])
+p_cont = NumericalContinuousParameter("p_cont", (0, 1))
+
+
+@pytest.mark.parametrize(
+    "searchspace",
+    [
+        p_disc.to_searchspace(),
+        p_cont.to_searchspace(),
+        SearchSpace.from_product([p_disc, p_cont]),
+    ],
+    ids=lambda s: s.type,
+)
+def test_botorch_recommender(searchspace):
+    """Using the deprecated BotorchRecommender raises a warning and translates to
+    a BayesianRecommender instance.
+    """  # noqa
+    objective = NumericalTarget("t").to_objective()
+    measurements = create_fake_input(
+        searchspace.parameters, objective.targets, n_rows=2
+    )
+    pending_experiments = create_fake_input(
+        searchspace.parameters, objective.targets, n_rows=1
+    )
+
+    with pytest.warns(DeprecationWarning, match="'BotorchRecommender' is deprecated"):
+        recommender = BotorchRecommender(n_restarts=1, n_raw_samples=1)
+
+    assert isinstance(recommender, BayesianRecommender)
+    if searchspace.type is SearchSpaceType.DISCRETE:
+        assert recommender.optimizer == ContinuousOptimizer(
+            n_starts=1, n_initial_samples=1, sequential=True
+        )
+    elif searchspace.type is SearchSpaceType.HYBRID:
+        raise NotImplementedError(
+            "Needs to handle 'hybrid_sampler', 'sampling_percentage' and "
+            "'max_n_subsets/max_n_subspaces' arguments."
+        )
+
+    recommender.recommend(2, searchspace, objective, measurements, pending_experiments)
