@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, ClassVar
 import pandas as pd
 from attrs import Converter, define, field
 from attrs.converters import pipe
-from attrs.validators import instance_of, is_callable
+from attrs.validators import instance_of, is_callable, optional
 from typing_extensions import Self, override
 
 from baybe.exceptions import DeprecationError
@@ -112,10 +112,10 @@ class _ModelContext:
 
 
 def _mark_custom_kernel(
-    value: Kernel | KernelFactoryProtocol, self: GaussianProcessSurrogate
-) -> Kernel | KernelFactoryProtocol:
+    value: Kernel | KernelFactoryProtocol | None, self: GaussianProcessSurrogate
+) -> Kernel | KernelFactoryProtocol | None:
     """Mark the surrogate as using a custom kernel (for deprecation purposes)."""
-    if type(value) is not BayBEKernelFactory:
+    if value is not None and type(value) is not BayBEKernelFactory:
         self._custom_kernel = True
 
     return value
@@ -217,14 +217,14 @@ class GaussianProcessSurrogate(Surrogate):
     _custom_kernel: bool = field(init=False, default=False, repr=False, eq=False)
     # For deprecation only!
 
-    kernel_factory: KernelFactoryProtocol = field(
+    kernel_factory: KernelFactoryProtocol | None = field(
         alias="kernel_or_factory",
         converter=pipe(  # type: ignore[misc]
             Converter(_mark_custom_kernel, takes_self=True),  # type: ignore[call-overload]
             partial(to_component_factory, component_type=GPComponentType.KERNEL),
         ),
         factory=BayBEKernelFactory,
-        validator=is_callable(),
+        validator=optional(is_callable()),
     )
     """The factory used to create the kernel for the Gaussian process.
 
@@ -234,11 +234,11 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`gpytorch.kernels.Kernel`
     """
 
-    mean_factory: MeanFactoryProtocol = field(
+    mean_factory: MeanFactoryProtocol | None = field(
         alias="mean_or_factory",
         factory=BayBEMeanFactory,
         converter=partial(to_component_factory, component_type=GPComponentType.MEAN),  # type: ignore[misc]
-        validator=is_callable(),
+        validator=optional(is_callable()),
     )
     """The factory used to create the mean function for the Gaussian process.
 
@@ -247,13 +247,13 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`gpytorch.means.Mean`
     """
 
-    likelihood_factory: LikelihoodFactoryProtocol = field(
+    likelihood_factory: LikelihoodFactoryProtocol | None = field(
         alias="likelihood_or_factory",
         factory=BayBELikelihoodFactory,
         converter=partial(  # type: ignore[misc]
             to_component_factory, component_type=GPComponentType.LIKELIHOOD
         ),
-        validator=is_callable(),
+        validator=optional(is_callable()),
     )
     """The factory used to create the likelihood for the Gaussian process.
 
@@ -262,13 +262,13 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`gpytorch.likelihoods.Likelihood`
     """
 
-    fit_criterion_factory: FitCriterionFactoryProtocol = field(
+    fit_criterion_factory: FitCriterionFactoryProtocol | None = field(
         alias="fit_criterion_or_factory",
         factory=BayBEFitCriterionFactory,
         converter=partial(  # type: ignore[misc]
             to_component_factory, component_type=GPComponentType.CRITERION
         ),
-        validator=is_callable(),
+        validator=optional(is_callable()),
     )
     """The fitting criterion for Gaussian process hyperparameter optimization.
 
@@ -377,24 +377,28 @@ class GaussianProcessSurrogate(Surrogate):
         outcome_transform = Standardize(train_y.shape[-1])
 
         ### Mean
-        mean = self.mean_factory(
+        mean_factory = self.mean_factory or BayBEMeanFactory()
+        mean = mean_factory(
             context.searchspace, context.objective, context.measurements
         )
 
         ### Kernel
-        kernel = self.kernel_factory(
+        kernel_factory = self.kernel_factory or BayBEKernelFactory()
+        kernel = kernel_factory(
             context.searchspace, context.objective, context.measurements
         )
         if isinstance(kernel, Kernel):
             kernel = kernel.to_gpytorch(searchspace=context.searchspace)
 
         ### Likelihood
-        likelihood = self.likelihood_factory(
+        likelihood_factory = self.likelihood_factory or BayBELikelihoodFactory()
+        likelihood = likelihood_factory(
             context.searchspace, context.objective, context.measurements
         )
 
         ### Criterion
-        criterion = self.fit_criterion_factory(
+        fit_criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
+        criterion = fit_criterion_factory(
             context.searchspace, context.objective, context.measurements
         )
 
