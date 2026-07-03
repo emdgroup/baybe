@@ -1,6 +1,7 @@
 """Collection of basic kernels."""
 
 import gc
+from typing import Any
 
 from attrs import define, field
 from attrs.converters import optional as optional_c
@@ -213,6 +214,38 @@ class RQKernel(BasicKernel):
         validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
+
+
+@define(frozen=True)
+class IndexKernel(BasicKernel):
+    """An index kernel for transfer learning across tasks."""
+
+    num_tasks: int = field(validator=[instance_of(int), ge(2)])
+    """The number of tasks."""
+
+    rank: int = field(validator=[instance_of(int), ge(1)])
+    """The rank of the task covariance matrix."""
+
+    @rank.validator
+    def _validate_rank(self, _, rank: int):
+        if rank > self.num_tasks:
+            raise ValueError(
+                f"The rank of the task covariance matrix must be smaller than "
+                f"the number of tasks. Got rank {rank} > {self.num_tasks} tasks."
+            )
+
+
+@define(frozen=True)
+class PositiveIndexKernel(IndexKernel):
+    """A positive index kernel for transfer learning across tasks.
+
+    Enforces strictly positive correlations between tasks.
+    """
+
+    @override
+    @property
+    def _extra_gpytorch_kwargs(self) -> dict[str, Any]:
+        return {"unit_scale_for_target": False}
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

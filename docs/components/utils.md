@@ -90,7 +90,7 @@ In addition, BayBE can also be installed with its optional `polars` dependency
 The [`set_random_seed`](baybe.utils.random.set_random_seed) and
 [`temporary_seed`](baybe.utils.random.temporary_seed) utilities are deprecated
 and users should instead use the
-[Settings](./settings.md#random-seed-control) mechanism for random seed control.
+[Settings](../concepts/settings.md#random-seed-control) mechanism for random seed control.
 
 ## Adding Fake Target Measurements and Parameter Noise
 When creating test scripts, it is often useful to try the recommendation loop for a few

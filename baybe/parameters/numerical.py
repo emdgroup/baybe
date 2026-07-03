@@ -66,14 +66,19 @@ class NumericalDiscreteParameter(DiscreteParameter):
         if tolerance == 0.0:
             return
 
-        min_dist = np.diff(self._values).min()
+        with np.errstate(over="ignore"):
+            min_dist = np.diff(self._values).min()
         if min_dist == (eps := np.nextafter(0, 1)):
             raise NumericalUnderflowError(
                 f"The distance between any two parameter values must be at least "
                 f"twice the size of the used floating point resolution of {eps}."
             )
 
-        if tolerance >= (max_tol := min_dist / 2.0):
+        if np.isfinite(min_dist):
+            max_tol = min_dist / 2.0
+        else:
+            max_tol = np.finfo(np.float64).max
+        if tolerance >= max_tol:
             raise ValueError(
                 f"Parameter '{self.name}' is initialized with tolerance {tolerance} "
                 f"but due to the given parameter values {self.values}, the specified "
@@ -156,7 +161,7 @@ class NumericalContinuousParameter(ContinuousParameter):
 class _FixedNumericalContinuousParameter(ContinuousParameter):
     """Parameter class for fixed numerical parameters."""
 
-    is_numeric: ClassVar[bool] = True
+    is_numerical: ClassVar[bool] = True
     # See base class.
 
     value: float = field(converter=float)

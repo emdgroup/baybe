@@ -46,7 +46,6 @@ from sklearn.metrics.pairwise import (
     pairwise_distances_argmin,
 )
 from sklearn.utils import check_array, check_random_state
-from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import check_is_fitted
 
 from baybe.settings import active_settings
@@ -485,7 +484,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # pick the remaining n_clusters-1 points
         for cluster_index in range(1, n_clusters):
             rand_vals = random_state_.random_sample(n_local_trials) * current_pot
-            candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq), rand_vals)
+            candidate_ids = np.searchsorted(np.cumsum(closest_dist_sq), rand_vals)
 
             # Compute distances to center candidates
             distance_to_candidates = D[candidate_ids, :] ** 2

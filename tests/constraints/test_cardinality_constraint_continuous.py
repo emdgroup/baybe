@@ -231,6 +231,7 @@ def test_min_cardinality_warning():
         )
 
     with warnings.catch_warnings(record=True) as captured_warnings:
+        warnings.filterwarnings("always", category=MinimumCardinalityViolatedWarning)
         BotorchRecommender().recommend(
             BATCH_SIZE, searchspace, objective, prepare_measurements()
         )

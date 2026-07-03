@@ -1,7 +1,5 @@
 """Tests for basic input-output and iterative loop."""
 
-import warnings
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -34,10 +32,9 @@ from baybe.utils.dataframe import add_fake_measurements
 def test_bad_parameter_input_value(campaign, bad_val, fake_measurements):
     """Test attempting to read in an invalid parameter value."""
     col = campaign.parameters[0].name
-    with warnings.catch_warnings():
-        # Suppress FutureWarning from deliberately assigning invalid dtypes
-        warnings.simplefilter("ignore", FutureWarning)
-        fake_measurements.loc[fake_measurements.index[0], col] = bad_val
+    # Ensure assignment succeeds in pandas 3 where incompatible dtypes raise
+    fake_measurements[col] = fake_measurements[col].astype(object)
+    fake_measurements.loc[fake_measurements.index[0], col] = bad_val
     with pytest.raises((ValueError, TypeError)):
         campaign.add_measurements(fake_measurements)
 
@@ -56,10 +53,9 @@ def test_bad_target_input_value(campaign, bad_val):
     add_fake_measurements(rec, campaign.targets)
 
     col = campaign.targets[0].name
-    with warnings.catch_warnings():
-        # Suppress FutureWarning from deliberately assigning invalid dtypes
-        warnings.simplefilter("ignore", FutureWarning)
-        rec.loc[rec.index[0], col] = bad_val
+    # Ensure assignment succeeds in pandas 3 where incompatible dtypes raise
+    rec[col] = rec[col].astype(object)
+    rec.loc[rec.index[0], col] = bad_val
     with pytest.raises((ValueError, TypeError)):
         campaign.add_measurements(rec)
 

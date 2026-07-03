@@ -22,6 +22,7 @@ from baybe.utils.basic import to_tuple
 from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 if TYPE_CHECKING:
+    from baybe.parameters.enum import _ParameterKind
     from baybe.searchspace.continuous import SubspaceContinuous
     from baybe.searchspace.core import SearchSpace
     from baybe.searchspace.discrete import SubspaceDiscrete
@@ -77,6 +78,13 @@ class Parameter(ABC, SerialMixin):
     def is_discrete(self) -> bool:
         """Boolean indicating if this is a discrete parameter."""
         return isinstance(self, DiscreteParameter)
+
+    @property
+    def _kind(self) -> _ParameterKind:
+        """The kind of the parameter."""
+        from baybe.parameters.enum import _ParameterKind
+
+        return _ParameterKind.from_parameter(self)
 
     @property
     @abstractmethod

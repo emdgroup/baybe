@@ -203,7 +203,14 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 class ContinuousCardinalityConstraint(
     CardinalityConstraint, ContinuousNonlinearConstraint
 ):
-    """Class for continuous cardinality constraints."""
+    """Class for continuous cardinality constraints.
+
+    Notes:
+        This constraint can lead to overhead in the computation since optimization
+        results in individual optimizations over several subsets. If there are
+        multiple subset-generating constraints active, this can drastically increase
+        the computational cost due to the combinatorial explosion.
+    """
 
     relative_threshold: float = field(
         default=1e-3, converter=float, validator=[gt(0.0), lt(1.0)]
@@ -250,16 +257,16 @@ class ContinuousCardinalityConstraint(
             corresponding parameter names.
         """
         # The number of possible parameter configuration per set cardinality
-        n_configurations_per_cardinality = [
-            math.comb(len(self.parameters), n)
-            for n in range(self.min_cardinality, self.max_cardinality + 1)
-        ]
+        n_configs_per_cardinality = np.array(
+            [
+                math.comb(len(self.parameters), n)
+                for n in range(self.min_cardinality, self.max_cardinality + 1)
+            ]
+        )
 
         # Probability of each set cardinality under the assumption that all possible
         # inactive parameter sets are equally likely
-        probabilities = n_configurations_per_cardinality / np.sum(
-            n_configurations_per_cardinality
-        )
+        probabilities = n_configs_per_cardinality / n_configs_per_cardinality.sum()
 
         # Sample the number of active/inactive parameters
         n_active_params = np.random.choice(

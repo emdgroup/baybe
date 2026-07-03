@@ -6,6 +6,7 @@ from itertools import combinations
 from baybe.constraints.base import Constraint
 from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.constraints.discrete import (
+    DiscreteBatchConstraint,
     DiscreteDependenciesConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter
@@ -27,6 +28,7 @@ def validate_constraints(  # noqa: DOC101, DOC103
             :class:`baybe.constraints.discrete.DiscreteDependenciesConstraint` declared.
         ValueError: If any two continuous cardinality constraints have an overlapping
             parameter set.
+        ValueError: If multiple batch constraints reference the same parameter.
         ValueError: If any constraint contains an invalid parameter name.
         ValueError: If any continuous constraint includes a discrete parameter.
         ValueError: If any discrete constraint includes a continuous parameter.
@@ -45,6 +47,16 @@ def validate_constraints(  # noqa: DOC101, DOC103
         [con for con in constraints if isinstance(con, ContinuousCardinalityConstraint)]
     )
 
+    batch_param_names = [
+        c.parameters[0] for c in constraints if isinstance(c, DiscreteBatchConstraint)
+    ]
+    if duplicates := {n for n in batch_param_names if batch_param_names.count(n) > 1}:
+        raise ValueError(
+            f"Multiple '{DiscreteBatchConstraint.__name__}' instances reference "
+            f"the same parameter(s): {duplicates}. Each parameter can have at "
+            f"most one batch constraint."
+        )
+
     param_names_all = [p.name for p in parameters]
     param_names_discrete = [p.name for p in parameters if p.is_discrete]
     param_names_continuous = [p.name for p in parameters if p.is_continuous]
@@ -54,29 +66,30 @@ def validate_constraints(  # noqa: DOC101, DOC103
     ]
 
     for constraint in constraints:
-        if not all(p in param_names_all for p in constraint.parameters):
+        if not all(p in param_names_all for p in constraint._required_parameters):
             raise ValueError(
                 f"You are trying to create a constraint with at least one parameter "
                 f"name that does not exist in the list of defined parameters. "
-                f"Parameter list of the affected constraint: {constraint.parameters}"
+                f"Parameter list of the affected constraint: "
+                f"{constraint._required_parameters}"
             )
 
         if constraint.is_continuous and any(
-            p in param_names_discrete for p in constraint.parameters
+            p in param_names_discrete for p in constraint._required_parameters
         ):
             raise ValueError(
                 f"You are trying to initialize a continuous constraint over a "
                 f"parameter that is discrete. Parameter list of the affected "
-                f"constraint: {constraint.parameters}"
+                f"constraint: {constraint._required_parameters}"
             )
 
         if constraint.is_discrete and any(
-            p in param_names_continuous for p in constraint.parameters
+            p in param_names_continuous for p in constraint._required_parameters
         ):
             raise ValueError(
                 f"You are trying to initialize a discrete constraint over a parameter "
                 f"that is continuous. Parameter list of the affected constraint: "
-                f"{constraint.parameters}"
+                f"{constraint._required_parameters}"
             )
 
         if constraint.numerical_only and any(

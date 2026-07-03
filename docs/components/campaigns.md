@@ -96,7 +96,7 @@ used is strongly discouraged.
 **Note:** While the above distinction is true in the general case, it may not be 
 relevant for all configured settings, for instance, when the used recommender 
 is not capable of joint optimization. Currently, the 
-[BotorchRecommender](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender)
+[BotorchRecommender](baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender)
 is the only recommender available that performs joint optimization.
 ```
 
@@ -260,7 +260,7 @@ joint_acq_value = campaign.joint_acquisition_value(rec, qPSTD())
 While iterating your {class}`~baybe.campaign.Campaign`, you may be interested in
 monitoring the *non-dominated* configurations you have found along the way, to observe
 how the corresponding Pareto front evolves over successive experimentation rounds.
-{ref}`Like for objectives <userguide/objectives:Identifying Non-Dominated
+{ref}`Like for objectives <components/objectives:Identifying Non-Dominated
 Configurations>`, the
 {meth}`~baybe.campaign.Campaign.identify_non_dominated_configurations` method offers an
 easy interface for this purpose:
@@ -297,7 +297,7 @@ assert campaign == reconstructed
 ```
 
 General information on this topic can be found in our 
-[serialization user guide](/userguide/serialization).
+[serialization user guide](/concepts/serialization).
 For campaigns, however, this possibility is particularly noteworthy as it enables
 one of the most common workflows in this context –
 persisting the current state of a campaign for long-term storage and continuing the

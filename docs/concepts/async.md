@@ -48,7 +48,7 @@ function with `pending_experiments` will result in an
 
 For technical reasons, not every recommender is able to make use of `pending_experiments`.
 For instance,
-[`BotorchRecommender`](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender)
+[`BotorchRecommender`](baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender)
 takes all pending experiments into account, even if they do not match exactly with 
 points in the search space. 
 By contrast,

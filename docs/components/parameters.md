@@ -283,5 +283,5 @@ In many cases, this can drastically increase the optimization performance due to
 enlarged data corpus.
 
 ```{seealso}
-For details, refer to [transfer learning](./transfer_learning.md).
+For details, refer to [transfer learning](../concepts/transfer_learning.md).
 ```

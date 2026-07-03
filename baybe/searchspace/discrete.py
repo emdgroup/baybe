@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Collection, Sequence
-from itertools import compress
+import random
+import warnings
+from collections.abc import Collection, Iterator, Sequence
+from itertools import islice
 from math import prod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from cattrs import IterableValidationError
@@ -16,6 +19,7 @@ from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
+from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import DeprecationError
 from baybe.parameters import (
     CategoricalEncoding,
@@ -24,6 +28,7 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
+from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
 from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
@@ -38,8 +43,6 @@ from baybe.utils.dataframe import (
 from baybe.utils.memory import bytes_to_human_readable
 
 if TYPE_CHECKING:
-    import polars as pl
-
     from baybe.searchspace.core import SearchSpace
 
 
@@ -98,7 +101,13 @@ class SubspaceDiscrete(SerialMixin):
     """Flag encoding whether an empty encoding is used."""
 
     constraints: tuple[DiscreteConstraint, ...] = field(
-        converter=to_tuple, factory=tuple
+        converter=lambda x: to_tuple(
+            sorted(
+                x,
+                key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
+            )
+        ),
+        factory=tuple,
     )
     """A list of constraints for restricting the space."""
 
@@ -181,26 +190,12 @@ class SubspaceDiscrete(SerialMixin):
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
-        # Set defaults and order constraints
         constraints = constraints or []
-        constraints = sorted(
-            constraints,
-            key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
-        )
 
-        if active_settings.use_polars_for_constraints:
-            lazy_df = parameter_cartesian_prod_polars(parameters)
-            lazy_df, mask_missing = _apply_constraint_filter_polars(
-                lazy_df, constraints
-            )
-            df_records = lazy_df.collect().to_dicts()
-            df = pd.DataFrame.from_records(df_records)
-        else:
-            df = parameter_cartesian_prod_pandas(parameters)
-            mask_missing = [True] * len(constraints)
+        if constraints:
+            validate_constraints(constraints, parameters)
 
-        # Gather and use constraints not yet applied
-        _apply_constraint_filter_pandas(df, list(compress(constraints, mask_missing)))
+        df = build_constrained_product(parameters, constraints)
 
         return SubspaceDiscrete(
             parameters=parameters,
@@ -358,10 +353,16 @@ class SubspaceDiscrete(SerialMixin):
                 f"parameters: {overlap}."
             )
 
-        # Construct the product part of the space
-        product_space = parameter_cartesian_prod_pandas(product_parameters)
-        if not simplex_parameters:
-            return cls(parameters=product_parameters, exp_rep=product_space)
+        # Handle degenerate simplex cases
+        if len(simplex_parameters) < 2:
+            warnings.warn(
+                f"'{cls.from_simplex.__name__}' was called with less than 2 "
+                f"simplex parameters, so smart simplex construction has no effect."
+                f"Consider using '{cls.from_product.__name__}' instead.",
+                UserWarning,
+            )
+            if len(simplex_parameters) < 1:
+                return cls.from_product(product_parameters, constraints)
 
         # Validate non-negativity
         min_values = [min(p.values) for p in simplex_parameters]
@@ -471,12 +472,10 @@ class SubspaceDiscrete(SerialMixin):
         if boundary_only:
             drop_invalid(exp_rep, max_sum, boundary_only=True)
 
-        # Augment the Cartesian product created from all other parameter types
-        if product_parameters:
-            exp_rep = pd.merge(exp_rep, product_space, how="cross")
-
-        # Remove entries that violate parameter constraints:
-        _apply_constraint_filter_pandas(exp_rep, constraints)
+        # Merge product parameters and apply constraints incrementally
+        exp_rep = build_constrained_product(
+            product_parameters, constraints, initial_df=exp_rep
+        )
 
         return cls(
             parameters=[*simplex_parameters, *product_parameters],
@@ -578,6 +577,118 @@ class SubspaceDiscrete(SerialMixin):
             comp_rep_shape=(n_rows, n_cols_comp),
         )
 
+    @property
+    def constraints_batch(
+        self,
+    ) -> tuple[DiscreteBatchConstraint, ...]:
+        """The batch constraints of the subspace."""
+        return tuple(
+            c for c in self.constraints if isinstance(c, DiscreteBatchConstraint)
+        )
+
+    @property
+    def n_subsets(self) -> int:
+        """The number of possible subset configurations.
+
+        Returns 0 if no subset-generating constraints exist, indicating that
+        no decomposition is needed.
+        """
+        if not self.constraints_batch:
+            return 0
+        return prod(
+            len(self.get_parameters_by_name([c.parameters[0]])[0].active_values)
+            for c in self.constraints_batch
+        )
+
+    def subset_masks(
+        self,
+        candidates_exp: pd.DataFrame,
+        min_candidates: int | None = None,
+        mode: Literal["sequential", "shuffled", "replace"] = "shuffled",
+    ) -> Iterator[npt.NDArray[np.bool_]]:
+        """Get an iterator over all possible subset masks.
+
+        Collect masks from each subset-generating constraint, iterates the
+        Cartesian product, AND-reduces each combination, and yields feasible
+        combined masks.
+
+        Args:
+            candidates_exp: The experimental representation of candidate points.
+            min_candidates: If provided, combined masks selecting fewer rows
+                are silently skipped.
+            mode: The iteration strategy.
+
+                * ``"sequential"`` iterates all combinations in deterministic order.
+                * ``"shuffled"`` iterates all combinations exactly once in random order.
+                * ``"replace"`` samples with replacement, producing an infinite iterator
+                  where each draw is independent.
+
+        Raises:
+            ValueError: If an invalid mode is provided.
+
+        Yields:
+            A Boolean mask selecting the subset's rows.
+        """
+        if mode not in (allowed := {"sequential", "shuffled", "replace"}):
+            raise ValueError(f"Invalid {mode=}. Must be one of {allowed}.")
+
+        per_constraint: list[list[npt.NDArray[np.bool_]]]
+        if not (constraints := self.constraints_batch):
+            per_constraint = [[np.ones(len(candidates_exp), dtype=bool)]]
+        else:
+            per_constraint = [c.subset_masks(candidates_exp) for c in constraints]
+
+        total = prod(len(masks) for masks in per_constraint)
+
+        if mode == "replace":
+            candidates = list(range(total))
+            while candidates:
+                idx_pos = random.randint(0, len(candidates) - 1)
+                flat_idx = candidates[idx_pos]
+                combined = np.logical_and.reduce(
+                    select_via_flat_index(flat_idx, per_constraint)
+                )
+                if min_candidates is not None and combined.sum() < min_candidates:
+                    candidates[idx_pos] = candidates[-1]
+                    candidates.pop()
+                    continue
+                yield combined
+        else:
+            order = list(range(total))
+            if mode == "shuffled":
+                random.shuffle(order)
+            for flat_idx in order:
+                combined = np.logical_and.reduce(
+                    select_via_flat_index(flat_idx, per_constraint)
+                )
+                if min_candidates is not None and combined.sum() < min_candidates:
+                    continue
+                yield combined
+
+    def sample_subset_masks(
+        self,
+        candidates_exp: pd.DataFrame,
+        n: int,
+        min_candidates: int | None = None,
+    ) -> list[npt.NDArray[np.bool_]]:
+        """Sample subset masks (without replacement).
+
+        Args:
+            candidates_exp: The experimental representation of candidate points.
+            n: Number of masks to sample.
+            min_candidates: If provided, Subsets with fewer matching
+                candidates are skipped.
+
+        Returns:
+            A list of boolean masks.
+        """
+        return list(
+            islice(
+                self.subset_masks(candidates_exp, min_candidates),
+                n,
+            )
+        )
+
     def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Return the set of candidate parameter settings that can be tested.
 
@@ -632,113 +743,6 @@ class SubspaceDiscrete(SerialMixin):
             The named parameters.
         """
         return tuple(p for p in self.parameters if p.name in names)
-
-
-def _apply_constraint_filter_pandas(
-    df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
-) -> pd.DataFrame:
-    """Remove discrete search space entries based on constraints.
-
-    The filtering is done inplace, but the modified object is still returned.
-
-    Args:
-        df: The data in experimental representation to be modified inplace.
-        constraints: List of discrete constraints.
-
-    Returns:
-        The filtered dataframe.
-    """
-    # Remove entries that violate parameter constraints:
-    for constraint in (c for c in constraints if c.eval_during_creation):
-        idxs = constraint.get_invalid(df)
-        df.drop(index=idxs, inplace=True)
-    df.reset_index(inplace=True, drop=True)
-
-    return df
-
-
-def _apply_constraint_filter_polars(
-    ldf: pl.LazyFrame,
-    constraints: Sequence[DiscreteConstraint],
-) -> tuple[pl.LazyFrame, list[bool]]:
-    """Remove discrete search space entries based on constraints.
-
-    Note:
-        This will silently skip constraints that have no Polars implementation.
-
-    Args:
-        ldf: The data in experimental representation to be filtered.
-        constraints: Collection of discrete constraints.
-
-    Returns:
-        A tuple containing
-            * The Polars lazyframe with undesired rows removed
-            * A Boolean mask indicating which constraints have **not** been applied
-    """
-    mask_missing = []
-
-    for c in constraints:
-        try:
-            to_keep = c.get_invalid_polars().not_()
-            ldf = ldf.filter(to_keep)
-            mask_missing.append(False)
-        except NotImplementedError:
-            mask_missing.append(True)
-
-    return ldf, mask_missing
-
-
-def parameter_cartesian_prod_polars(
-    parameters: Sequence[DiscreteParameter],
-) -> pl.LazyFrame:
-    """Create the Cartesian product of discrete parameter values using Polars.
-
-    Args:
-        parameters: List of discrete parameter objects.
-
-    Returns:
-        A lazy dataframe containing all possible discrete parameter value combinations.
-    """
-    from baybe._optional.polars import polars as pl
-
-    if not parameters:
-        return pl.LazyFrame()
-
-    # Convert each parameter to a lazy dataframe for cross-join operation
-    param_frames = [pl.LazyFrame({p.name: p.active_values}) for p in parameters]
-
-    # Handling edge cases
-    if len(param_frames) == 1:
-        return param_frames[0]
-
-    # Cross-join parameters
-    res = param_frames[0]
-    for frame in param_frames[1:]:
-        res = res.join(frame, how="cross", force_parallel=True)
-
-    return res
-
-
-def parameter_cartesian_prod_pandas(
-    parameters: Sequence[DiscreteParameter],
-) -> pd.DataFrame:
-    """Create the Cartesian product of discrete parameter values using Pandas.
-
-    Args:
-        parameters: List of discrete parameter objects.
-
-    Returns:
-        A dataframe containing all possible discrete parameter value combinations.
-    """
-    if not parameters:
-        return pd.DataFrame()
-
-    index = pd.MultiIndex.from_product(
-        [p.active_values for p in parameters], names=[p.name for p in parameters]
-    )
-    ret = pd.DataFrame(index=index).reset_index()
-
-    return ret
 
 
 def validate_simplex_subspace_from_config(specs: dict, _) -> None:

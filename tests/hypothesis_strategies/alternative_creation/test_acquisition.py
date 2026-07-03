@@ -6,22 +6,22 @@ from baybe.acquisition.base import AcquisitionFunction
 from baybe.recommenders import BotorchRecommender
 from baybe.utils.basic import get_subclasses
 
-abbreviation_list = [
+abbreviations = [
     cl.abbreviation
     for cl in get_subclasses(AcquisitionFunction)
     if hasattr(cl, "abbreviation")
 ]
+fullnames = [cl.__name__ for cl in get_subclasses(AcquisitionFunction)]
+combined = sorted(set(abbreviations + fullnames))
 
-fullname_list = [cl.__name__ for cl in get_subclasses(AcquisitionFunction)]
 
-
-@pytest.mark.parametrize("acqf", abbreviation_list + fullname_list)
+@pytest.mark.parametrize("acqf", combined)
 def test_creation_from_string(acqf):
     """Tests the creation from strings."""
     AcquisitionFunction.from_dict({"type": acqf})
 
 
-@pytest.mark.parametrize("acqf", abbreviation_list + fullname_list)
+@pytest.mark.parametrize("acqf", combined)
 def test_string_usage_in_recommender(acqf):
     """Tests the recommender initialization with acqfs as string."""
     BotorchRecommender(acquisition_function=acqf)

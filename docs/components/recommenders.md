@@ -21,7 +21,7 @@ The Bayesian recommenders in BayBE are built on the foundation of the
 class, offering an array of possibilities with internal surrogate models and support
 for various acquisition functions.
 
-* The **[`BotorchRecommender`](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender)**
+* The **[`BotorchRecommender`](baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender)**
   is a powerful recommender based on BoTorch's optimization engine that can be applied
   to all kinds of search spaces. In continuous spaces, its `sequential_continuous` flag
   allows to choose between greedy sequential optimization and batch optimization as the
@@ -32,16 +32,16 @@ for various acquisition functions.
   spaces, as it does gradient-based optimization in the continuous part of the space
   while exhaustively evaluating configurations of the discrete subspace. You can customize this
   behavior to only sample a certain percentage of the discrete subspace via the
-  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.sampling_percentage`
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.sampling_percentage`
   argument and to choose different sampling algorithms via the
-  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.hybrid_sampler`
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.hybrid_sampler`
   argument.
 
   The gradient-based optimization part can also further be controlled by the
-  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.n_restarts` and
-  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.n_raw_samples`
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.n_restarts` and
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender.n_raw_samples`
   arguments. For details, please refer
-  to [BotorchRecommender](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender).
+  to [BotorchRecommender](baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender).
  
 * The **[`NaiveHybridSpaceRecommender`](baybe.recommenders.naive.NaiveHybridSpaceRecommender)**
   can be applied to all search spaces, but is intended to be used in hybrid spaces.

@@ -126,6 +126,9 @@ _desirabilty_targets = [
 
 
 @mark.slow
+@pytest.mark.filterwarnings(
+    "ignore::botorch.exceptions.warnings.BadInitialCandidatesWarning",
+)
 @mark.parametrize(
     "objective",
     [

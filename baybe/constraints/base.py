@@ -10,16 +10,8 @@ import pandas as pd
 from attrs import define, field
 from attrs.validators import ge, instance_of, min_len
 
-from baybe.constraints.deprecation import (
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
-)
-from baybe.serialization import (
-    SerialMixin,
-)
-from baybe.serialization.core import (
-    converter,
-)
+from baybe.serialization import SerialMixin
+from baybe.utils.basic import classproperty
 
 if TYPE_CHECKING:
     import polars as pl
@@ -77,6 +69,17 @@ class Constraint(ABC, SerialMixin):
         """Boolean indicating if this is a constraint over discrete parameters."""
         return isinstance(self, DiscreteConstraint)
 
+    @property
+    def _required_parameters(self) -> set[str]:
+        """All parameter names needed for full constraint evaluation.
+
+        For most constraints, this is simply the set of names from
+        :attr:`~baybe.constraints.base.Constraint.parameters`.
+        Constraints with additional parameter references (e.g., affected
+        parameters in dependency constraints) override this to include those.
+        """
+        return set(self.parameters)
+
 
 @define
 class DiscreteConstraint(Constraint, ABC):
@@ -93,29 +96,96 @@ class DiscreteConstraint(Constraint, ABC):
     eval_during_modeling: ClassVar[bool] = False
     # See base class.
 
-    def get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+    def _can_evaluate(self, available: set[str], /) -> bool:
+        """Indicate whether the constraint can be (partially) evaluated.
+
+        Called to decide if the constraint logic should be invoked at all. The default
+        implementation requires *all* parameters considered by the constraint to be
+        present. Subclasses that support useful partial filtering override this to
+        return ``True`` whenever a meaningful subset is available.
+
+        Args:
+            available: The set of column names present in the dataframe that
+                is about to be evaluated.
+
+        Returns:
+            ``True`` if the constraint can apply a meaningful partial filtering
+            given the *available* columns, ``False`` otherwise.
+        """
+        return self._required_parameters <= available
+
+    def get_valid(
+        self, df: pd.DataFrame, /, *, allow_missing: bool = False
+    ) -> pd.Index:
         """Get the indices of dataframe entries that are valid under the constraint.
 
         Args:
             df: A dataframe where each row represents a parameter configuration.
+            allow_missing: If ``False``, a :class:`ValueError` is raised when
+                the dataframe is missing required parameter columns. If
+                ``True``, the constraint performs partial filtering on the
+                available columns.
 
         Returns:
             The dataframe indices of rows that fulfill the constraint.
         """
-        invalid = self.get_invalid(df)
+        invalid = self.get_invalid(df, allow_missing=allow_missing)
         return df.index.drop(invalid)
 
-    @abstractmethod
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
+    def get_invalid(
+        self, df: pd.DataFrame, /, *, allow_missing: bool = False
+    ) -> pd.Index:
         """Get the indices of dataframe entries that are invalid under the constraint.
 
         Args:
-            data: A dataframe where each row represents a parameter configuration.
+            df: A dataframe where each row represents a parameter configuration.
+            allow_missing: If ``False``, a :class:`ValueError` is raised when
+                the dataframe is missing required parameter columns. If ``True``, the
+                subclass is asked whether it can perform (partial) constraint
+                evaluation; if not, an empty index is returned, signaling to the
+                caller `there are no entries to be excluded *yet*`.
+
+        Raises:
+            ValueError: If ``allow_missing`` is ``False`` and the dataframe
+                is missing required parameter columns.
 
         Returns:
             The dataframe indices of rows that violate the constraint.
         """
         # TODO: Should switch backends (pandas/polars/...) behind the scenes
+        available = set(df.columns)
+
+        if not allow_missing:
+            if missing := self._required_parameters - available:
+                raise ValueError(
+                    f"'{self.__class__.__name__}' requires columns {missing} "
+                    f"which are missing from the dataframe."
+                )
+        elif not self._can_evaluate(available):
+            return pd.Index([])
+
+        return self._get_invalid(df)
+
+    @abstractmethod
+    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
+        """Get the indices of invalid entries (core logic for subclasses).
+
+        This method is only called after it has been confirmed that the dataframe
+        contains sufficient columns for (at least partial) evaluation. Implementations
+        should therefore contain only the constraint's core filtering logic without
+        column-availability checks.
+
+        Args:
+            df: A dataframe where each row represents a parameter configuration.
+
+        Returns:
+            The dataframe indices of rows that violate the constraint.
+        """
+
+    @classproperty
+    def has_polars_implementation(cls) -> bool:
+        """Whether this constraint class has a Polars implementation."""
+        return cls.get_invalid_polars is not DiscreteConstraint.get_invalid_polars
 
     def get_invalid_polars(self) -> pl.Expr:
         """Translate the constraint to Polars expression identifying undesired rows.
@@ -209,27 +279,6 @@ class CardinalityConstraint(Constraint, ABC):
 
 class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
     """Abstract base class for continuous nonlinear constraints."""
-
-
-# >>>>> Deprecation handling
-_hook = converter.get_structure_hook(Constraint)
-
-
-def _deprecate_legacy_classes(dct: dict[str, Any], _) -> Constraint:
-    """Enable constraint configs using legacy class names."""
-    if dct["type"] == "ContinuousLinearEqualityConstraint":
-        dct.pop("type")
-        return ContinuousLinearEqualityConstraint(**dct)
-    elif dct["type"] == "ContinuousLinearInequalityConstraint":
-        dct.pop("type")
-        return ContinuousLinearInequalityConstraint(**dct)
-    return _hook(dct, _)
-
-
-converter.register_structure_hook_func(
-    lambda c: c is Constraint, _deprecate_legacy_classes
-)
-# <<<<< Deprecation handling
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

@@ -109,7 +109,7 @@ class RandomForestSurrogate(Surrogate):
 
             return torch.from_numpy(
                 self._predict_ensemble(
-                    self._model.estimators_, candidates_comp_scaled.numpy()
+                    self._model.estimators_, candidates_comp_scaled.detach().numpy()
                 )
             )
 

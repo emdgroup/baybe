@@ -1,0 +1,133 @@
+"""Smoothed EDBO preset (adapted from :cite:p:`Shields2021`)."""
+
+from __future__ import annotations
+
+import gc
+from typing import TYPE_CHECKING, ClassVar
+
+import numpy as np
+import pandas as pd
+from attrs import define
+from typing_extensions import override
+
+from baybe.kernels.basic import MaternKernel
+from baybe.kernels.composite import ScaleKernel
+from baybe.objectives.base import Objective
+from baybe.parameters.enum import _ParameterKind
+from baybe.priors.basic import GammaPrior
+from baybe.surrogates.gaussian_process.components.fit_criterion import (
+    _MLLForNonTLFitCriterionFactory,
+)
+from baybe.surrogates.gaussian_process.components.kernel import (
+    _enable_transfer_learning,
+    _PureKernelFactory,
+)
+from baybe.surrogates.gaussian_process.components.likelihood import (
+    LikelihoodFactoryProtocol,
+)
+from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
+
+if TYPE_CHECKING:
+    from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
+
+    from baybe.kernels.base import Kernel
+    from baybe.searchspace.core import SearchSpace
+
+
+# Boundaries for low and high dimension limits
+_DIM_LIMITS = (8, 75)
+
+
+@_enable_transfer_learning
+@define
+class SmoothedEDBOKernelFactory(_PureKernelFactory):
+    """A factory providing smoothed versions of EDBO kernels (adapted from :cite:p:`Shields2021`).
+
+    Takes the low and high dimensional limits of
+    :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`
+    and interpolates the prior moments linearly in between.
+    """  # noqa: E501
+
+    _uses_parameter_names: ClassVar[bool] = True
+    # See base class.
+
+    @override
+    def _make(
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+    ) -> Kernel:
+        effective_dims = self._get_effective_dimensionality(searchspace)
+
+        # Interpolate prior moments linearly between low D and high D regime.
+        # The high D regime itself is the average of the EDBO OHE and Mordred regime.
+        # Values outside the dimension limits will get the border value assigned.
+        lengthscale_prior = GammaPrior(
+            np.interp(effective_dims, _DIM_LIMITS, [1.2, 2.5]),
+            np.interp(effective_dims, _DIM_LIMITS, [1.1, 0.55]),
+        )
+        lengthscale_initial_value = np.interp(effective_dims, _DIM_LIMITS, [0.2, 6.0])
+        outputscale_prior = GammaPrior(
+            np.interp(effective_dims, _DIM_LIMITS, [5.0, 3.5]),
+            np.interp(effective_dims, _DIM_LIMITS, [0.5, 0.15]),
+        )
+        outputscale_initial_value = np.interp(effective_dims, _DIM_LIMITS, [8.0, 15.0])
+
+        return ScaleKernel(
+            MaternKernel(
+                nu=2.5,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_initial_value=lengthscale_initial_value,
+                parameter_names=self.get_parameter_names(searchspace),
+            ),
+            outputscale_prior=outputscale_prior,
+            outputscale_initial_value=outputscale_initial_value,
+        )
+
+
+class SmoothedEDBOMeanFactory(LazyConstantMeanFactory):
+    """A factory providing mean functions for the smoothed EDBO preset."""
+
+
+@define
+class SmoothedEDBOLikelihoodFactory(LikelihoodFactoryProtocol):
+    """A factory providing smoothed versions of EDBO likelihoods (adapted from :cite:p:`Shields2021`).
+
+    Takes the low and high dimensional limits of
+    :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOLikelihoodFactory`
+    and interpolates the prior moments linearly in between.
+    """  # noqa: E501
+
+    @override
+    def __call__(
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+    ) -> GPyTorchLikelihood:
+        import torch
+        from gpytorch.likelihoods import GaussianLikelihood
+
+        # Interpolate prior moments linearly between low D and high D regime.
+        # The high D regime itself is the average of the EDBO OHE and Mordred regime.
+        # Values outside the dimension limits will get the border value assigned.
+        effective_dims = len(
+            searchspace.get_comp_rep_parameter_indices(
+                lambda p: bool(p._kind & _ParameterKind.REGULAR)
+            )
+        )
+
+        prior = GammaPrior(
+            np.interp(effective_dims, _DIM_LIMITS, [1.05, 1.5]),
+            np.interp(effective_dims, _DIM_LIMITS, [0.5, 0.1]),
+        )
+        initial_value = np.interp(effective_dims, _DIM_LIMITS, [0.1, 5.0]).item()
+
+        likelihood = GaussianLikelihood(prior.to_gpytorch())
+        likelihood.noise = torch.tensor([initial_value])
+        return likelihood
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
+
+# Preset defaults
+KERNEL_FACTORY = SmoothedEDBOKernelFactory()
+MEAN_FACTORY = SmoothedEDBOMeanFactory()
+LIKELIHOOD_FACTORY = SmoothedEDBOLikelihoodFactory()
+FIT_CRITERION_FACTORY = _MLLForNonTLFitCriterionFactory()

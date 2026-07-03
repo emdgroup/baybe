@@ -112,13 +112,14 @@ If you have questions or problems, simply ask for advice.
 
 | Tool                                                                                            | Purpose                                   |
 |:------------------------------------------------------------------------------------------------|:------------------------------------------|
-| [ruff](https://docs.astral.sh/ruff/)                                                            | code linting and formatting               |
-| [mypy](https://mypy.readthedocs.io/)                                                            | static type checking                      |
-| [pytest](https://docs.pytest.org/)                                                              | testing                                   |
-| [pytest-cov](https://pytest-cov.readthedocs.io/)                                                | measuring test coverage                   |
-| [sphinx](https://www.sphinx-doc.org/)                                                           | generating our documentation              |
-| [pip-audit](https://github.com/pypa/pip-audit)                                                  | detecting vulnerabilities in dependencies |
-| [tox](https://tox.wiki/)                                                                        | orchestrating all the above               |
+| [mypy](https://mypy.readthedocs.io/)                                                            | check static types                        |
+| [pip-audit](https://github.com/pypa/pip-audit)                                                  | detect vulnerabilities in dependencies    |
+| [pytest](https://docs.pytest.org/)                                                              | run tests                                 |
+| [pytest-cov](https://pytest-cov.readthedocs.io/)                                                | measure test coverage                     |
+| [ruff](https://docs.astral.sh/ruff/)                                                            | lint and format code                      |
+| [sphinx](https://www.sphinx-doc.org/)                                                           | generate documentation                    |
+| [zizmor](https://woodruffw.github.io/zizmor/)                                                   | audit GitHub Actions workflows            |
+| [tox](https://tox.wiki/)                                                                        | orchestrate all the above                 |
 
 Executing a specific one of these tools is easiest by using the corresponding
 [tox](https://tox.wiki/) environment,

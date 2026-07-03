@@ -221,7 +221,7 @@ def test_hybridspace_ineq(campaign, n_iterations, batch_size):
         param(["A", "B"], [1.0, 2.0, 3.0], 0.0, ">=", id="ineq_too_many_coeffs"),
         param(["A", "B"], [1.0, 2.0], "bla", ">=", id="ineq_invalid_rhs"),
         param(["A", "B"], [1.0, 2.0], 0.0, "invalid", id="ineq_invalid_operator1"),
-        param(["A", "B"], [1.0, 2.0], 0.0, 2.0, id="ineq_invalid_operator1"),
+        param(["A", "B"], [1.0, 2.0], 0.0, 2.0, id="ineq_invalid_operator2"),
     ],
 )
 def test_invalid_constraints(parameters, coefficients, rhs, op):

@@ -95,10 +95,10 @@ def _make_hartmann_tl_benchmark(
 
         params: list[DiscreteParameter] = [
             NumericalDiscreteParameter(
-                name=name,
+                name=n,
                 values=tuple(points),
             )
-            for name, points in grid_locations.items()
+            for n, points in grid_locations.items()
         ]
         task_param = TaskParameter(
             name="Function",
