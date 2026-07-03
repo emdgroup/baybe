@@ -179,11 +179,9 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
     def get_invalid_polars(self) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
-        expr = (
-            pl.concat_list(pl.col(self.parameters))
-            .list.eval(pl.element().n_unique())
-            .explode()
-        ) != len(self.parameters)
+        expr = pl.concat_list(pl.col(self.parameters)).list.n_unique() != len(
+            self.parameters
+        )
 
         return expr
 
