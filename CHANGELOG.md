@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
 - Bumped polars to `>=0.20.8`
 - Bumped cattrs to `>=26.1.0`
+- `GaussianProcessSurrogate` is now a factory but can still be used as before
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
