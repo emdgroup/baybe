@@ -122,6 +122,77 @@ def _mark_custom_kernel(
 
 
 @define
+class _GaussianProcessSurrogate:
+    """Internal model builder for :class:`GaussianProcessSurrogate`.
+
+    Receives already-resolved GPyTorch components and performs straightforward
+    :class:`~botorch.models.SingleTaskGP` construction with no factory calls,
+    no context inspection, and no branching. Intended to be instantiated by
+    :class:`GaussianProcessSurrogate` at fit time once factory delegation is
+    in place, and never exposed to users or the serialization layer.
+    """
+
+    kernel: GPyTorchKernel = field(eq=False)
+    """The resolved GPyTorch kernel."""
+
+    mean: GPyTorchMean = field(eq=False)
+    """The resolved GPyTorch mean function."""
+
+    likelihood: GPyTorchLikelihood = field(eq=False)
+    """The resolved GPyTorch likelihood."""
+
+    criterion: FitCriterion = field()
+    """The resolved fitting criterion."""
+
+    # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
+    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
+    _model = field(init=False, default=None, eq=False)
+    """The fitted BoTorch model."""
+
+    def fit(
+        self,
+        train_x: Tensor,
+        train_y: Tensor,
+        *,
+        parameter_bounds: Tensor,
+        numerical_indices: list[int],
+    ) -> None:
+        """Build and fit the SingleTaskGP from the resolved components.
+
+        Args:
+            train_x: Training inputs in computational representation.
+            train_y: Training targets (pre-transformed).
+            parameter_bounds: Parameter bounds used for input normalization.
+            numerical_indices: Column indices of regular (non-task) input dimensions.
+        """
+        import botorch
+        from botorch.models.transforms import Normalize, Standardize
+
+        input_transform = Normalize(
+            train_x.shape[-1],
+            bounds=parameter_bounds,
+            indices=numerical_indices,
+        )
+        outcome_transform = Standardize(train_y.shape[-1])
+
+        self._model = botorch.models.SingleTaskGP(
+            train_x,
+            train_y,
+            input_transform=input_transform,
+            outcome_transform=outcome_transform,
+            mean_module=self.mean,
+            covar_module=self.kernel,
+            likelihood=self.likelihood,
+        )
+        mll = self.criterion.to_gpytorch(self._model.likelihood, self._model)
+        botorch.fit.fit_gpytorch_mll(mll)
+
+    def to_botorch(self) -> GPyTorchModel:
+        """Return the fitted BoTorch model."""
+        return self._model
+
+
+@define
 class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model."""
 
