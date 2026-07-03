@@ -614,7 +614,9 @@ def test_botorch_recommender(searchspace):
     ("legacy_dict", "expected"),
     [
         pytest.param(
-            {"type": "BotorchRecommender"}, BayesianRecommender(), id="no_args"
+            {"type": "BotorchRecommender"},
+            BayesianRecommender(optimizer=ContinuousOptimizer(sequential=True)),
+            id="no_args",
         ),
         pytest.param(
             {

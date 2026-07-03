@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import copy
 import warnings
 from typing import Any
-
-from cattrs.gen import make_dict_structure_fn
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.optimizers import ContinuousOptimizer
@@ -19,42 +16,28 @@ from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 
 # >>>>>>>>>> Deprecation
-# Field name remappings from legacy BotorchRecommender into the optimizer sub-dict
-_OPTIMIZER_FIELD_RENAMES = {
-    "n_restarts": "n_starts",
-    "n_raw_samples": "n_initial_samples",
-    "sequential_continuous": "sequential",
-}
 
 
 def _structure_botorch_recommender(
     val: dict[str, Any], cls: type
 ) -> BayesianRecommender:
-    """Structure hook that deserializes legacy ``BotorchRecommender`` dicts."""
-    warnings.warn(
-        f"'BotorchRecommender' is deprecated and will be removed in a future version. "
-        f"Please use '{BayesianRecommender.__name__}' instead.",
-        DeprecationWarning,
-        stacklevel=4,
-    )
+    """Structure hook that deserializes legacy ``BotorchRecommender`` dicts.
 
-    val = copy.deepcopy(val)  # copy to avoid mutating caller's dict
+    Reconstructs the legacy keyword arguments from the dict and delegates to the
+    :func:`BotorchRecommender` shim, which issues the deprecation warning and maps
+    everything to :class:`~baybe.recommenders.pure.bayesian.core.BayesianRecommender`.
+    """
+    # Structure typed nested fields; everything else is forwarded as-is
+    if "surrogate_model" in val:
+        val["surrogate_model"] = converter.structure(
+            val["surrogate_model"], SurrogateProtocol
+        )
+    if "acquisition_function" in val:
+        val["acquisition_function"] = converter.structure(
+            val["acquisition_function"], AcquisitionFunction
+        )
 
-    # Extract and rename any legacy optimizer fields that are explicitly present
-    optimizer_kwargs: dict[str, Any] = {}
-    for legacy_name, new_name in _OPTIMIZER_FIELD_RENAMES.items():
-        if legacy_name in val:
-            optimizer_kwargs[new_name] = val.pop(legacy_name)
-
-    # Drop legacy fields not yet supported on BayesianRecommender
-    for unsupported in ("hybrid_sampler", "sampling_percentage", "max_n_subsets"):
-        val.pop(unsupported, None)
-
-    val["optimizer"] = {"type": ContinuousOptimizer.__name__, **optimizer_kwargs}
-
-    return make_dict_structure_fn(BayesianRecommender, converter)(
-        val, BayesianRecommender
-    )
+    return BotorchRecommender(**val, _stacklevel=5)
 
 
 _existing_pure_recommender_hook = converter.get_structure_hook(PureRecommender)
@@ -86,13 +69,14 @@ def BotorchRecommender(
     n_raw_samples: int = 64,
     max_n_subsets: int = 10,
     max_n_subspaces: int | None = None,
+    _stacklevel: int = 2,
 ) -> BayesianRecommender:
     """Deprecated! Use :class:`~baybe.recommenders.pure.bayesian.core.BayesianRecommender` instead."""  # noqa
     warnings.warn(
         f"'BotorchRecommender' is deprecated and will be removed in a future version. "
         f"Please use '{BayesianRecommender.__name__}' instead.",
         DeprecationWarning,
-        stacklevel=2,
+        stacklevel=_stacklevel,
     )
 
     if max_n_subspaces is not None:
