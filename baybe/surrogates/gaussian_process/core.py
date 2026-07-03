@@ -223,7 +223,7 @@ class GaussianProcessSurrogate(Surrogate):
             Converter(_mark_custom_kernel, takes_self=True),  # type: ignore[call-overload]
             partial(to_component_factory, component_type=GPComponentType.KERNEL),
         ),
-        factory=BayBEKernelFactory,
+        default=None,
         validator=optional(is_callable()),
     )
     """The factory used to create the kernel for the Gaussian process.
@@ -236,7 +236,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     mean_factory: MeanFactoryProtocol | None = field(
         alias="mean_or_factory",
-        factory=BayBEMeanFactory,
+        default=None,
         converter=partial(to_component_factory, component_type=GPComponentType.MEAN),  # type: ignore[misc]
         validator=optional(is_callable()),
     )
@@ -249,7 +249,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     likelihood_factory: LikelihoodFactoryProtocol | None = field(
         alias="likelihood_or_factory",
-        factory=BayBELikelihoodFactory,
+        default=None,
         converter=partial(  # type: ignore[misc]
             to_component_factory, component_type=GPComponentType.LIKELIHOOD
         ),
@@ -264,7 +264,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     fit_criterion_factory: FitCriterionFactoryProtocol | None = field(
         alias="fit_criterion_or_factory",
-        factory=BayBEFitCriterionFactory,
+        default=None,
         converter=partial(  # type: ignore[misc]
             to_component_factory, component_type=GPComponentType.CRITERION
         ),
@@ -277,10 +277,8 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
     """
 
-    # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
-    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
-    _model = field(init=False, default=None, eq=False)
-    """The actual model."""
+    _inner: _GaussianProcessSurrogate | None = field(init=False, default=None, eq=False)
+    """The fitted internal model instance. Available after fitting."""
 
     @classmethod
     def from_preset(
@@ -319,7 +317,8 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def to_botorch(self) -> GPyTorchModel:
-        return self._model
+        assert self._inner is not None
+        return self._inner._model
 
     @override
     @staticmethod
@@ -337,13 +336,11 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
-        return self._model.posterior(candidates_comp_scaled)
+        assert self._inner is not None
+        return self._inner._model.posterior(candidates_comp_scaled)
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
-        import botorch
-        from botorch.models.transforms import Normalize, Standardize
-
         assert self._searchspace is not None  # provided by base class
         assert self._objective is not None  # provided by base class
         assert self._measurements is not None  # provided by base class
@@ -367,22 +364,12 @@ class GaussianProcessSurrogate(Surrogate):
                 f"environment variable to a truthy value."
             )
 
-        ### Input/output scaling
-        # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
-        input_transform = Normalize(
-            train_x.shape[-1],
-            bounds=context.parameter_bounds,
-            indices=context.numerical_indices,
-        )
-        outcome_transform = Standardize(train_y.shape[-1])
-
-        ### Mean
+        ### Component resolution
         mean_factory = self.mean_factory or BayBEMeanFactory()
         mean = mean_factory(
             context.searchspace, context.objective, context.measurements
         )
 
-        ### Kernel
         kernel_factory = self.kernel_factory or BayBEKernelFactory()
         kernel = kernel_factory(
             context.searchspace, context.objective, context.measurements
@@ -390,30 +377,26 @@ class GaussianProcessSurrogate(Surrogate):
         if isinstance(kernel, Kernel):
             kernel = kernel.to_gpytorch(searchspace=context.searchspace)
 
-        ### Likelihood
         likelihood_factory = self.likelihood_factory or BayBELikelihoodFactory()
         likelihood = likelihood_factory(
             context.searchspace, context.objective, context.measurements
         )
 
-        ### Criterion
         fit_criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
         criterion = fit_criterion_factory(
             context.searchspace, context.objective, context.measurements
         )
 
-        ### Model construction and fitting
-        self._model = botorch.models.SingleTaskGP(
+        ### Create internal instance with resolved components and delegate fitting
+        self._inner = _GaussianProcessSurrogate(
+            kernel=kernel, mean=mean, likelihood=likelihood, criterion=criterion
+        )
+        self._inner.fit(
             train_x,
             train_y,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            mean_module=mean,
-            covar_module=kernel,
-            likelihood=likelihood,
+            parameter_bounds=context.parameter_bounds,
+            numerical_indices=context.numerical_indices,
         )
-        mll = criterion.to_gpytorch(self._model.likelihood, self._model)
-        botorch.fit.fit_gpytorch_mll(mll)
 
     @override
     def __str__(self) -> str:
