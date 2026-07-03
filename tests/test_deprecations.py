@@ -608,3 +608,39 @@ def test_botorch_recommender(searchspace):
         )
 
     recommender.recommend(2, searchspace, objective, measurements, pending_experiments)
+
+
+@pytest.mark.parametrize(
+    ("legacy_dict", "expected"),
+    [
+        pytest.param(
+            {"type": "BotorchRecommender"}, BayesianRecommender(), id="no_args"
+        ),
+        pytest.param(
+            {
+                "type": "BotorchRecommender",
+                "surrogate_model": {"type": "GaussianProcessSurrogate"},
+                "acquisition_function": {"type": "qLogExpectedImprovement"},
+                "sequential_continuous": False,
+                "n_restarts": 1,
+                "n_raw_samples": 2,
+                "hybrid_sampler": "FPS",
+                "sampling_percentage": 0.5,
+                "max_n_subsets": 3,
+            },
+            BayesianRecommender(),  # optimizer to be provided once development complete
+            id="all_args",
+        ),
+    ],
+)
+def test_botorch_recommender_deserialization(legacy_dict, expected):
+    """Deserializing a legacy BotorchRecommender dict raises a warning and produces
+    an equivalent BayesianRecommender."""  # noqa
+    from baybe.recommenders.pure.base import PureRecommender
+    from baybe.serialization.core import converter
+
+    with pytest.warns(DeprecationWarning, match="'BotorchRecommender' is deprecated"):
+        result = converter.structure(legacy_dict, PureRecommender)
+
+    assert isinstance(result, BayesianRecommender)
+    assert result == expected
