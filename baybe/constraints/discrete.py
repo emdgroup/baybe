@@ -214,11 +214,7 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
     def get_invalid_polars(self) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
-        expr = (
-            pl.concat_list(pl.col(self.parameters))
-            .list.eval(pl.element().n_unique())
-            .explode()
-        ) != 1
+        expr = pl.concat_list(pl.col(self.parameters)).list.n_unique() != 1
 
         return expr
 
