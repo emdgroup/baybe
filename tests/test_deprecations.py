@@ -564,7 +564,7 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
 
 def test_botorch_recommender_class_variable_access():
     """Class variable emulation via the deprecation shim works."""
-    BotorchRecommender.compatibility is SearchSpaceType.HYBRID
+    assert BotorchRecommender.compatibility is SearchSpaceType.HYBRID
     assert BotorchRecommender.supports_discrete_subset_generating_constraints is True
 
 
