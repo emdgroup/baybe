@@ -15,8 +15,6 @@ from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 
-# >>>>>>>>>> Deprecation
-
 
 def _structure_botorch_recommender(
     val: dict[str, Any], cls: type
@@ -53,9 +51,6 @@ def _structure_pure_recommender_with_botorch_compat(
         val.pop("type")
         return _structure_botorch_recommender(val, cls)
     return _existing_pure_recommender_hook(val, cls)
-
-
-# <<<<<<<<<< Deprecation
 
 
 def BotorchRecommender(
