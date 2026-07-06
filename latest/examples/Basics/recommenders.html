@@ -1403,15 +1403,10 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-         Solvent               Base                        Ligand  \
-65   Butyl Ester  Potassium acetate                     BrettPhos   
-38   Butyl Ester    Cesium pivalate                     BrettPhos   
-372     p-Xylene    Cesium pivalate  Di-tert-butylphenylphosphine   
-
-     Temperature  Concentration  
-65          90.0          0.153  
-38          90.0          0.153  
-372        105.0          0.057  
+        Solvent                Base         Ligand  Temperature  Concentration
+61  Butyl Ester   Potassium acetate  (t-Bu)PhCPhos        120.0          0.100
+15  Butyl Ester      Cesium acetate      BrettPhos        120.0          0.057
+90  Butyl Ester  Potassium pivalate      BrettPhos         90.0          0.057
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1420,15 +1415,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent               Base                        Ligand  \
-65   Butyl Ester  Potassium acetate                     BrettPhos   
-38   Butyl Ester    Cesium pivalate                     BrettPhos   
-372     p-Xylene    Cesium pivalate  Di-tert-butylphenylphosphine   
+        Solvent                Base         Ligand  Temperature  \
+61  Butyl Ester   Potassium acetate  (t-Bu)PhCPhos        120.0   
+15  Butyl Ester      Cesium acetate      BrettPhos        120.0   
+90  Butyl Ester  Potassium pivalate      BrettPhos         90.0   
 
-     Temperature  Concentration      yield  
-65          90.0          0.153  90.388398  
-38          90.0          0.153 -64.602404  
-372        105.0          0.057 -92.454306  
+    Concentration      yield  
+61          0.100  47.831831  
+15          0.057  43.605028  
+90          0.057  27.447109  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

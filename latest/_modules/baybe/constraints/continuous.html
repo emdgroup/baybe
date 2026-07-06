@@ -1458,16 +1458,16 @@
 <span class="sd">            corresponding parameter names.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># The number of possible parameter configuration per set cardinality</span>
-        <span class="n">n_configurations_per_cardinality</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">math</span><span class="o">.</span><span class="n">comb</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">),</span> <span class="n">n</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_cardinality</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_cardinality</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="p">]</span>
+        <span class="n">n_configs_per_cardinality</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">math</span><span class="o">.</span><span class="n">comb</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">),</span> <span class="n">n</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_cardinality</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_cardinality</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
 
         <span class="c1"># Probability of each set cardinality under the assumption that all possible</span>
         <span class="c1"># inactive parameter sets are equally likely</span>
-        <span class="n">probabilities</span> <span class="o">=</span> <span class="n">n_configurations_per_cardinality</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
-            <span class="n">n_configurations_per_cardinality</span>
-        <span class="p">)</span>
+        <span class="n">probabilities</span> <span class="o">=</span> <span class="n">n_configs_per_cardinality</span> <span class="o">/</span> <span class="n">n_configs_per_cardinality</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
         <span class="c1"># Sample the number of active/inactive parameters</span>
         <span class="n">n_active_params</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
