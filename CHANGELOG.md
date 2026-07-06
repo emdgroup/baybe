@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - `recommend_continuous_without_cardinality_constraints` function.
-   Call `GradientOptimizer` instead.
+   Call `ContinuousOptimizer` instead.
 
 ### Deprecations
 - `BotorchRecommender` class. Use `BayesianRecommender` instead.
