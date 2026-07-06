@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
-from narwhals.stable.v2.typing import IntoDataFrame
 from narwhals.testing import assert_frame_equal
 from typing_extensions import assert_never
 
@@ -794,11 +793,6 @@ def normalize_input_dtypes(
     for col in cols_to_convert:
         df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
     return df
-
-
-def to_lazy(df: IntoDataFrame, /) -> nw.LazyFrame:
-    """Convert any dataframe to a :class:`~narwhals.LazyFrame`."""
-    return nw.from_native(df).lazy()
 
 
 def _df_equals(df1: nw.DataFrame, df2: nw.DataFrame, /) -> bool:

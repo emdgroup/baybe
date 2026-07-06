@@ -16,7 +16,7 @@ from baybe.parameters.utils import sort_parameters
 from baybe.searchspace.utils import build_constrained_product
 from baybe.searchspace.validation import validate_parameters
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import _df_equals, to_lazy
+from baybe.utils.dataframe import _df_equals
 from baybe.utils.validation import validate_parameter_input
 
 
@@ -59,7 +59,7 @@ class EmptyCandidates(CandidatesProtocol):
         # TODO: Replace hard-coded pandas type with `Settings`-based approach
         import pandas as pd
 
-        return to_lazy(pd.DataFrame())
+        return nw.from_native(pd.DataFrame()).lazy()
 
 
 @define(frozen=True)
@@ -109,7 +109,7 @@ class ProductCandidates(CandidatesProtocol):
 
         # TODO: Remove to lazy once build_constrained_product returns a nw.LazyFrame
         assert not isinstance(candidates_df, nw.LazyFrame)
-        return to_lazy(candidates_df)
+        return nw.from_native(candidates_df).lazy()
 
 
 @define(frozen=True)
