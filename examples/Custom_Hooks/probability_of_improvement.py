@@ -4,7 +4,7 @@
 # {func}`register_hooks <baybe.utils.basic.register_hooks>` utility can be used to
 # extract the *Probability of Improvement (PI)* from a running campaign:
 # * We define a hook that is compatible with the
-#   {meth}`BayesianRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.core.BayesianRecommender.recommend>`
+#   {meth}`BayesianRecommender.recommend <baybe.recommenders.pure.bayesian.core.BayesianRecommender.recommend>`
 #   interface and lets us extract the PI achieved after each experimental iteration,
 # * attach the hook to the recommender driving our campaign,
 # * and plot the evolving PI values after campaign completion.
@@ -107,7 +107,7 @@ recommender = TwoPhaseMetaRecommender(
 )
 
 # In this example, we use `MethodType` to bind the
-# {meth}`BayesianRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.core.BayesianRecommender.recommend>`
+# {meth}`BayesianRecommender.recommend <baybe.recommenders.pure.bayesian.core.BayesianRecommender.recommend>`
 # **function** with our hook.
 # For more information, we refer to the [`basic example`](./basics.md) explaining the
 # hook mechanics.
