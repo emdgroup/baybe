@@ -1389,11 +1389,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
 
-        <span class="n">expr</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">pl</span><span class="o">.</span><span class="n">concat_list</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span>
-            <span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">element</span><span class="p">()</span><span class="o">.</span><span class="n">n_unique</span><span class="p">())</span>
-            <span class="o">.</span><span class="n">explode</span><span class="p">()</span>
-        <span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+        <span class="n">expr</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">concat_list</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">n_unique</span><span class="p">()</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">expr</span></div>
 </div>
@@ -1432,11 +1430,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
 
-        <span class="n">expr</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">pl</span><span class="o">.</span><span class="n">concat_list</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span>
-            <span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">element</span><span class="p">()</span><span class="o">.</span><span class="n">n_unique</span><span class="p">())</span>
-            <span class="o">.</span><span class="n">explode</span><span class="p">()</span>
-        <span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span>
+        <span class="n">expr</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">concat_list</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">n_unique</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">1</span>
 
         <span class="k">return</span> <span class="n">expr</span></div>
 </div>
