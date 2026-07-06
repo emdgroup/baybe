@@ -120,6 +120,7 @@ class SubspaceDiscrete(SerialMixin):
         if (
             candidates is not UNSPECIFIED
             and not isinstance(candidates, CandidatesProtocol)
+            and isinstance(candidates, Collection)
             and all(isinstance(p, DiscreteParameter) for p in candidates)
         ):
             parameters = candidates
