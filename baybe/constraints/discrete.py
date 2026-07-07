@@ -374,9 +374,17 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
-        # At least two parameters are needed for any deduplication. When only a
-        # partial set is available, the constraint falls back to the always-safe
-        # label-dedup logic.
+        # When dependencies are present, partial permutation dedup is unsafe:
+        # the dependency logic changes which rows are permutation-equivalent
+        # (inactive parameters become irrelevant), so removing permutation
+        # duplicates before the dependency columns are available can discard
+        # configurations that should have been kept as canonical representatives.
+        if self.dependencies:
+            return self._required_parameters <= available
+        # Without dependencies, permutation dedup on a partial set is safe
+        # during incremental construction: since new columns are added via
+        # cross-product, rows that are permutation-equivalent on the available
+        # subset will produce identical expansions.
         return len(available & set(self.parameters)) >= 2
 
     @override
@@ -393,12 +401,12 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         df_eval = pd.concat(parts, axis=1)
         mask_duplicate_permutations = df_eval.duplicated(keep="first")
 
-        # Indices of duplicate permutations in the (already label-duplicate-free) df
+        # Indices of duplicate permutations
         inds_invalid = df_eval.index[mask_duplicate_permutations]
 
         # If there are dependencies connected to the invariant parameters evaluate them
         # here and remove resulting duplicates with a DependenciesConstraint
-        if self.dependencies:
+        if self.dependencies and self.dependencies._can_evaluate(set(df.columns)):
             self.dependencies.permutation_invariant = True
             inds_duplicate_independency_adjusted = self.dependencies.get_invalid(
                 df.drop(index=inds_invalid)
