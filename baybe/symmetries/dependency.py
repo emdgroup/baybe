@@ -13,7 +13,6 @@ from attrs.validators import deep_iterable, ge, instance_of, min_len
 from typing_extensions import override
 
 from baybe.constraints.conditions import Condition
-from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.symmetries.base import Symmetry
 from baybe.utils.augmentation import df_apply_dependency_augmentation
 from baybe.utils.conversion import normalize_convertible2str_sequence
@@ -62,7 +61,7 @@ class DependencySymmetry(Symmetry):
     @override
     @property
     def parameter_names(self) -> tuple[str, ...]:
-        return (self._parameter_name,)
+        return (self._parameter_name, *self.affected_parameter_names)
 
     @override
     def augment_measurements(
@@ -138,22 +137,9 @@ class DependencySymmetry(Symmetry):
             searchspace: The searchspace to validate against.
 
         Raises:
-            IncompatibleSearchSpaceError: If any of the affected parameters is
-                not present in the searchspace.
             TypeError: If the causing parameter is not discrete.
         """
         super().validate_searchspace_context(searchspace)
-
-        # Affected parameters must be in the searchspace
-        parameters_missing = set(self.affected_parameter_names).difference(
-            searchspace.parameter_names
-        )
-        if parameters_missing:
-            raise IncompatibleSearchSpaceError(
-                f"The symmetry of type '{self.__class__.__name__}' was set up "
-                f"with at least one parameter which is not present in the "
-                f"search space: {parameters_missing}."
-            )
 
         # Causing parameter must be discrete
         param = searchspace.get_parameters_by_name(self._parameter_name)[0]
