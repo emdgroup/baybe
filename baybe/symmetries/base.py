@@ -73,14 +73,11 @@ class Symmetry(SerialMixin, ABC):
             IncompatibleSearchSpaceError: If the symmetry affects parameters not
                 present in the searchspace.
         """
-        parameters_missing = set(self.parameter_names).difference(
-            searchspace.parameter_names
-        )
-        if parameters_missing:
+        if missing := set(self.parameter_names) - set(searchspace.parameter_names):
             raise IncompatibleSearchSpaceError(
                 f"The symmetry of type '{self.__class__.__name__}' was set up with the "
                 f"following parameters that are not present in the search space: "
-                f"{parameters_missing}."
+                f"{missing}."
             )
 
 
