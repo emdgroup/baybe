@@ -95,7 +95,8 @@ class Condition(ABC, SerialMixin):
     """Abstract base class for all conditions.
 
     Conditions always evaluate an expression regarding a single parameter.
-    Conditions are part of constraints and symmetries.
+    Conditions are part of :class:`~baybe.constraints.base.Constraint` and
+    :class:`~baybe.symmetries.base.Symmetry` objects.
     """
 
     @abstractmethod
