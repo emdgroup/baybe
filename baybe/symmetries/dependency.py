@@ -42,7 +42,7 @@ class DependencySymmetry(Symmetry):
     """The condition specifying the active range of the causing parameter."""
 
     affected_parameter_names: tuple[str, ...] = field(
-        converter=Converter(  # type: ignore[misc,call-overload]  # mypy: Converter
+        converter=Converter(  # type: ignore[misc,call-overload]
             normalize_convertible2str_sequence, takes_self=True, takes_field=True
         ),
         validator=(

@@ -32,10 +32,10 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
     # object variables
     _values: tuple[str | bool, ...] = field(
         alias="values",
-        converter=Converter(  # type: ignore[misc,call-overload]  # mypy: Converter
+        converter=Converter(  # type: ignore[misc,call-overload]
             normalize_convertible2str_sequence, takes_self=True, takes_field=True
         ),
-        validator=(  # type: ignore[arg-type]  # mypy: validator tuple
+        validator=(  # type: ignore[arg-type]
             validate_unique_values,
             deep_iterable(
                 member_validator=(instance_of((str, bool)), _validate_label_min_len),
