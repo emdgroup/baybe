@@ -141,8 +141,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 Only required by specific augmentation implementations.
 
         Returns:
-            A dataframe with the augmented measurements, including the original
-            ones.
+            A dataframe with the augmented measurements, including the original ones.
         """
         for s in self.symmetries:
             measurements = s.augment_measurements(measurements, parameters)
