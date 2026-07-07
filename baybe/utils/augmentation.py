@@ -8,6 +8,7 @@ import pandas as pd
 
 def df_apply_permutation_augmentation(
     df: pd.DataFrame,
+    /,
     permutation_groups: Sequence[Sequence[str]],
 ) -> pd.DataFrame:
     """Augment a dataframe if permutation invariant columns are present.
@@ -100,6 +101,7 @@ def df_apply_permutation_augmentation(
 
 def df_apply_mirror_augmentation(
     df: pd.DataFrame,
+    /,
     column: str,
     *,
     mirror_point: float = 0.0,
@@ -163,6 +165,7 @@ def df_apply_mirror_augmentation(
 
 def df_apply_dependency_augmentation(
     df: pd.DataFrame,
+    /,
     causing: tuple[str, Sequence],
     affected: Collection[tuple[str, Sequence]],
 ) -> pd.DataFrame:
