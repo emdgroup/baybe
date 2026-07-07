@@ -94,7 +94,7 @@ class SubspaceDiscrete(SerialMixin):
     """
 
     candidates: CandidatesProtocol = field(validator=instance_of(CandidatesProtocol))
-    """The subspace candidate generator."""
+    """The discrete candidates set spanning the subspace."""
 
     batch_constraints: tuple[DiscreteBatchConstraint, ...] = field(
         default=(),
