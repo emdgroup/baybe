@@ -139,7 +139,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
     """Activate the random seed when changing the attribute of the active settings."""
     if id(instance) == Settings._active_settings_id and value is not None:
-        _RandomState.from_seed(value, activate=True)
+        _RandomState.from_seed(value, activate=True)  # pyrefly: ignore[bad-argument-type]  # https://github.com/facebook/pyrefly/issues/3783
 
     return value
 

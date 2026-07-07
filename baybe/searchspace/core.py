@@ -12,7 +12,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
@@ -108,7 +108,7 @@ class SearchSpace(SerialMixin):
         parameters: Sequence[Parameter],
         constraints: Sequence[Constraint] | None = None,
         empty_encoding: bool = False,
-    ) -> SearchSpace:
+    ) -> Self:
         """Create a search space from a cartesian product.
 
         In the search space, optional subsequent constraints are applied.
@@ -150,14 +150,14 @@ class SearchSpace(SerialMixin):
             constraints=[c for c in constraints if c.is_continuous],  # type:ignore[misc]
         )
 
-        return SearchSpace(discrete=discrete, continuous=continuous)
+        return cls(discrete=discrete, continuous=continuous)
 
     @classmethod
     def from_dataframe(
         cls,
         df: pd.DataFrame,
         parameters: Sequence[Parameter],
-    ) -> SearchSpace:
+    ) -> Self:
         """Create a search space from a specified set of parameter configurations.
 
         The way in which the contents of the columns are interpreted depends on the
@@ -188,7 +188,7 @@ class SearchSpace(SerialMixin):
 
         validate_dataframe_active_values(df, disc_params)
 
-        return SearchSpace(
+        return cls(
             discrete=SubspaceDiscrete.from_dataframe(
                 df[[p.name for p in disc_params]],
                 disc_params,  # type:ignore[arg-type]

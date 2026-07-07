@@ -94,7 +94,11 @@ def compress_transformations(
         if t == id_:
             continue
 
-        last = aggregated.pop() if aggregated else None
+        if not aggregated:
+            aggregated.append(t)
+            continue
+
+        last = aggregated.pop()
         match (last, t):
             case AffineTransformation(), AffineTransformation():
                 # Two subsequent affine transformations
@@ -110,10 +114,8 @@ def compress_transformations(
                 aggregated.append(
                     evolve(t, peak=t.peak - last.shift, cutoffs=t.cutoffs - last.shift)
                 )
-            case (None, _):
-                aggregated.append(t)
-            case (l, _):
-                aggregated.append(l)
+            case _:
+                aggregated.append(last)
                 aggregated.append(t)
 
     # Handle edge case when there was only a single identity transformation
