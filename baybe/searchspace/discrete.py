@@ -430,45 +430,24 @@ class SubspaceDiscrete(SerialMixin):
         # broadcasting to compute the validity mask in 2D (n_old, n_new) and only
         # materialize the surviving combinations. This avoids allocating large
         # intermediate arrays that are mostly discarded.
-        arr: np.ndarray
-        partial_sums: np.ndarray
-        nz_counts: np.ndarray
-        for i, (
-            param,
-            min_sum_to_go,
-            min_nonzero_to_go,
-            max_nonzero_to_go,
-        ) in enumerate(
-            zip(
-                simplex_parameters,
-                np.append(min_sum_upcoming, 0),
-                np.append(min_nonzero_upcoming, 0),
-                np.append(max_nonzero_upcoming, 0),
-            )
+        arr = np.empty((1, 0), dtype=active_settings.DTypeFloatNumpy)
+        partial_sums = np.zeros(1, dtype=active_settings.DTypeFloatNumpy)
+        nz_counts = np.zeros(1, dtype=np.intp)
+
+        for coeff, param, min_sum_to_go, min_nonzero_to_go, max_nonzero_to_go in zip(
+            coeffs,
+            simplex_parameters,
+            np.append(min_sum_upcoming, 0.0),
+            np.append(min_nonzero_upcoming, 0),
+            np.append(max_nonzero_upcoming, 0),
         ):
             values = np.asarray(param.values, dtype=active_settings.DTypeFloatNumpy)
             threshold = (max_sum - min_sum_to_go) + tolerance
             effective_min = min_nonzero - max_nonzero_to_go
             effective_max = max_nonzero - min_nonzero_to_go
 
-            if i == 0:
-                partial_sums = values * coeffs[0]
-                nz_counts = (values != 0.0).astype(np.intp)
-
-                # Apply constraints directly on first parameter
-                mask = partial_sums <= threshold
-                if effective_min > 0:
-                    mask &= nz_counts >= effective_min
-                if effective_max < len(simplex_parameters):
-                    mask &= nz_counts <= effective_max
-
-                arr = values[mask].reshape(-1, 1)
-                partial_sums = partial_sums[mask]
-                nz_counts = nz_counts[mask]
-                continue
-
             # Compute weighted sums via broadcasting: (n_old, n_new)
-            new_contributions = values * coeffs[i]
+            new_contributions = values * coeff
             total_sums = partial_sums[:, None] + new_contributions[None, :]
 
             # Build 2D validity mask from sum constraint
@@ -484,7 +463,7 @@ class SubspaceDiscrete(SerialMixin):
 
             # Extract surviving indices and materialize only those rows
             old_idx, new_idx = np.where(mask_2d)
-            arr = np.column_stack([arr[old_idx], values[new_idx].reshape(-1, 1)])
+            arr = np.column_stack([arr[old_idx], values[new_idx]])
             partial_sums = total_sums[old_idx, new_idx]
             nz_counts = total_nz[old_idx, new_idx]
 
