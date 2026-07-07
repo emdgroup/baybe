@@ -1,4 +1,4 @@
-"""Hybrid recommendation routines for BotorchRecommender."""
+"""Hybrid recommendation routines for BayesianRecommender."""
 
 from __future__ import annotations
 
@@ -24,11 +24,11 @@ from baybe.utils.sampling_algorithms import sample_numerical_df
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
+    from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 
 
 def recommend_hybrid_without_subsets(
-    recommender: BotorchRecommender,
+    recommender: BayesianRecommender,
     searchspace: SearchSpace,
     candidates_exp: pd.DataFrame,
     batch_size: int,
@@ -162,7 +162,7 @@ def recommend_hybrid_without_subsets(
 
 
 def recommend_hybrid_with_subsets(
-    recommender: BotorchRecommender,
+    recommender: BayesianRecommender,
     searchspace: SearchSpace,
     candidates_exp: pd.DataFrame,
     batch_size: int,

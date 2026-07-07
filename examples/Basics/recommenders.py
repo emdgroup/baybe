@@ -20,7 +20,7 @@ from baybe import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import (
-    BotorchRecommender,
+    BayesianRecommender,
     RandomRecommender,
     TwoPhaseMetaRecommender,
 )
@@ -96,7 +96,7 @@ ACQ_FUNCTION = "qLogEI"
 
 recommender = TwoPhaseMetaRecommender(
     initial_recommender=INITIAL_RECOMMENDER,
-    recommender=BotorchRecommender(
+    recommender=BayesianRecommender(
         surrogate_model=SURROGATE_MODEL, acquisition_function=ACQ_FUNCTION
     ),
 )

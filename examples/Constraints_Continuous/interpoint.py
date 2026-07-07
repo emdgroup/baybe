@@ -30,8 +30,7 @@ from matplotlib import pyplot as plt
 from baybe import Campaign, active_settings
 from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters import NumericalContinuousParameter
-from baybe.recommenders import BotorchRecommender
-from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
+from baybe.recommenders import TwoPhaseMetaRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
@@ -121,9 +120,7 @@ searchspace = SearchSpace.from_product(
     constraints=intrapoint_constraints + interpoint_constraints,
 )
 objective = NumericalTarget(name="Reaction_Yield").to_objective()
-recommender = TwoPhaseMetaRecommender(
-    recommender=BotorchRecommender(sequential_continuous=False)
-)
+recommender = TwoPhaseMetaRecommender()
 campaign = Campaign(
     searchspace=searchspace,
     objective=objective,

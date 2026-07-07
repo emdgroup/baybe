@@ -5,6 +5,7 @@ recommendations. They can be part of meta recommenders.
 """
 
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive import (
     FPSRecommender,
     GaussianMixtureClusteringRecommender,
@@ -14,6 +15,7 @@ from baybe.recommenders.pure.nonpredictive import (
 )
 
 __all__ = [
+    "BayesianRecommender",
     "BotorchRecommender",
     "FPSRecommender",
     "GaussianMixtureClusteringRecommender",

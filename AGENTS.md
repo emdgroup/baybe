@@ -105,7 +105,7 @@ Custom `@classproperty` from `baybe.utils.basic` for class-level computed proper
 | Element | Convention | Examples |
 |---------|------------|---------|
 | Variables/functions | `snake_case` | `batch_size`, `add_measurements` |
-| Classes | `PascalCase` | `Campaign`, `BotorchRecommender` |
+| Classes | `PascalCase` | `Campaign`, `BayesianRecommender` |
 | Constants | `SCREAMING_SNAKE_CASE` | `_RECOMMENDED`, `_TYPE_FIELD` |
 | Private members | `_` prefix | `_cached_recommendation`, `_fit()` |
 | Booleans | `is_`/`has_`/`supports_` | `is_numerical`, `supports_transfer_learning` |

@@ -1,4 +1,4 @@
-"""Continuous recommendation routines for BotorchRecommender."""
+"""Continuous recommendation routines for BayesianRecommender."""
 
 from __future__ import annotations
 
@@ -7,25 +7,19 @@ from collections.abc import Callable, Collection, Iterable
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from attrs import fields
 
 from baybe.constraints.utils import is_cardinality_fulfilled
-from baybe.exceptions import (
-    IncompatibilityError,
-    MinimumCardinalityViolatedWarning,
-)
-from baybe.parameters.numerical import _FixedNumericalContinuousParameter
+from baybe.exceptions import MinimumCardinalityViolatedWarning
 from baybe.searchspace import SubspaceContinuous
-from baybe.utils.basic import flatten
 
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
+    from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 
 
 def recommend_continuous_torch(
-    recommender: BotorchRecommender,
+    recommender: BayesianRecommender,
     subspace_continuous: SubspaceContinuous,
     batch_size: int,
 ) -> tuple[Tensor, Tensor]:
@@ -35,13 +29,13 @@ def recommend_continuous_torch(
             recommender, subspace_continuous, batch_size
         )
     else:
-        return recommend_continuous_without_cardinality_constraints(
-            recommender, subspace_continuous, batch_size
+        return recommender.optimizer(
+            batch_size, recommender._botorch_acqf, subspace_continuous
         )
 
 
 def recommend_continuous_with_cardinality_constraints(
-    recommender: BotorchRecommender,
+    recommender: BayesianRecommender,
     subspace_continuous: SubspaceContinuous,
     batch_size: int,
 ) -> tuple[Tensor, Tensor]:
@@ -126,87 +120,3 @@ def recommend_continuous_with_cardinality_constraints(
         )
 
     return points, acqf_value
-
-
-def recommend_continuous_without_cardinality_constraints(
-    recommender: BotorchRecommender,
-    subspace_continuous: SubspaceContinuous,
-    batch_size: int,
-) -> tuple[Tensor, Tensor]:
-    """Recommend from a continuous search space without cardinality constraints.
-
-    Args:
-        recommender: The recommender instance.
-        subspace_continuous: The continuous subspace from which to generate
-            recommendations.
-        batch_size: The size of the recommendation batch.
-
-    Returns:
-        The recommendations and corresponding acquisition values.
-
-    Raises:
-        ValueError: If the continuous search space has cardinality constraints.
-    """
-    import torch
-    from botorch.optim import optimize_acqf
-
-    if subspace_continuous.n_subsets > 0:
-        raise ValueError(
-            f"'{recommend_continuous_without_cardinality_constraints.__name__}' "
-            f"expects a subspace without cardinality constraints."
-        )
-
-    fixed_parameters = {
-        idx: p.value
-        for (idx, p) in enumerate(subspace_continuous.parameters)
-        if isinstance(p, _FixedNumericalContinuousParameter)
-    }
-
-    # TODO: Add option for automatic choice once the "settings" PR is merged,
-    #   which ships the necessary machinery
-    if (
-        recommender.sequential_continuous
-        and subspace_continuous.has_interpoint_constraints
-    ):
-        from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
-
-        raise IncompatibilityError(
-            f"Setting the "
-            f"'{fields(BotorchRecommender).sequential_continuous.name}' "
-            f"flag to ``True`` while interpoint constraints are present in the "
-            f"continuous subspace is not supported. "
-        )
-
-    # NOTE: The explicit `or None` conversion is added as an additional safety net
-    #   because it is unclear if the corresponding presence checks for these
-    #   arguments is correctly implemented in all invoked BoTorch subroutines.
-    #   For details: https://github.com/pytorch/botorch/issues/2042
-    points, acqf_values = optimize_acqf(
-        acq_function=recommender._botorch_acqf,
-        bounds=torch.from_numpy(
-            subspace_continuous.comp_rep_bounds.to_numpy(copy=True)
-        ),
-        q=batch_size,
-        num_restarts=recommender.n_restarts,
-        raw_samples=recommender.n_raw_samples,
-        fixed_features=fixed_parameters or None,
-        equality_constraints=flatten(
-            c.to_botorch(
-                subspace_continuous.parameters,
-                batch_size=batch_size if c.is_interpoint else None,
-            )
-            for c in subspace_continuous.constraints_lin_eq
-        )
-        or None,
-        inequality_constraints=flatten(
-            c.to_botorch(
-                subspace_continuous.parameters,
-                batch_size=batch_size if c.is_interpoint else None,
-            )
-            for c in subspace_continuous.constraints_lin_ineq
-        )
-        or None,
-        sequential=recommender.sequential_continuous,
-    )
-    assert acqf_values is not None  # for mypy; guaranteed by optimize_acqf defaults
-    return points, acqf_values
