@@ -56,7 +56,7 @@ def fixture_recommender():
     from baybe.recommenders.pure.llm.llm import LLMRecommender
 
     return LLMRecommender(
-        model="gpt-3.5-turbo",
+        model="gpt-5.4",
         experiment_description="Test experiment",
         objective_description="Maximize yield",
     )
@@ -236,7 +236,7 @@ def test_feasibility_filtering(mock_completion, searchspace):
     from baybe.recommenders.pure.llm.llm import LLMRecommender
 
     recommender = LLMRecommender(
-        model="gpt-3.5-turbo",
+        model="gpt-5.4",
         experiment_description="Test",
         objective_description="Maximize yield",
         is_feasible_experiment=lambda row: row["temperature"] > 20.0,
@@ -282,7 +282,7 @@ def test_feasibility_filtering(mock_completion, searchspace):
 
 def test_initialization(recommender):
     """LLMRecommender initializes with correct attributes."""
-    assert recommender.model == "gpt-3.5-turbo"
+    assert recommender.model == "gpt-5.4"
     assert recommender.experiment_description == "Test experiment"
     assert recommender.objective_description == "Maximize yield"
 
@@ -291,4 +291,4 @@ def test_str_representation(recommender):
     """String representation includes key information."""
     s = str(recommender)
     assert "LLMRecommender" in s
-    assert "gpt-3.5-turbo" in s
+    assert "gpt-5.4" in s
