@@ -81,6 +81,8 @@ class ContinuousLinearConstraint(ContinuousConstraint):
                 "The given 'coefficients' list must have one floating point entry for "
                 "each entry in 'parameters'."
             )
+        if any(c == 0.0 for c in coefficients):
+            raise ValueError("All entries in 'coefficients' must be non-zero.")
 
     @coefficients.default
     def _default_coefficients(self) -> tuple[float, ...]:
