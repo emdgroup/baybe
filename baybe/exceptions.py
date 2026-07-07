@@ -74,6 +74,10 @@ class IncompatibleArgumentError(IncompatibilityError):
     """An incompatible argument was passed to a callable."""
 
 
+class IncompatibleKernelError(IncompatibilityError):
+    """A kernel specification conflicts with a parameter's override."""
+
+
 class NonGaussianityError(Exception):
     """An operation assuming Gaussianity is attempted on a non-Gaussian distribution."""
 
