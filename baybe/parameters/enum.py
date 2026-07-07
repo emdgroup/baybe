@@ -174,3 +174,13 @@ class SubstanceEncoding(ParameterEncoding):
 
     WHIM = "WHIM"
     """:class:`skfp.fingerprints.WHIMFingerprint`"""
+
+
+class TransferLearningMode(Enum):
+    """Transfer learning modes for TaskParameter."""
+
+    INDEX_KERNEL = "INDEX_KERNEL"
+    """:class:`gpytorch.kernels.IndexKernel` for unknown task correlations."""
+
+    POSITIVE_INDEX_KERNEL = "POSITIVE_INDEX_KERNEL"
+    """:class:`botorch.models.kernels.PositiveIndexKernel` for positive correlations."""

@@ -12,6 +12,7 @@ from baybe.parameters.categorical import (
     TaskParameter,
 )
 from baybe.parameters.custom import CustomDiscreteParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -160,8 +161,15 @@ def task_parameters(draw: st.DrawFn):
     values = draw(categories)
     active_values = draw(_active_values(values))
     param_metadata = draw(measurable_metadata())
+    override_transfer_learning_mode = draw(
+        st.one_of(st.none(), st.sampled_from(TransferLearningMode))
+    )
     return TaskParameter(
-        name=name, values=values, active_values=active_values, metadata=param_metadata
+        name=name,
+        values=values,
+        active_values=active_values,
+        metadata=param_metadata,
+        override_transfer_learning_mode=override_transfer_learning_mode,
     )
 
 

@@ -108,7 +108,7 @@ def aryl_halide_tl_substance_benchmark(
     """
     data = load_data()
 
-    searchspace = make_searchspace(
+    tl_searchspace = make_searchspace(
         data=data,
         source_tasks=source_tasks,
         target_tasks=target_tasks,
@@ -119,10 +119,7 @@ def aryl_halide_tl_substance_benchmark(
     initial_data = make_initial_data(data, source_tasks)
     objective = make_objective()
 
-    tl_campaign = Campaign(
-        searchspace=searchspace,
-        objective=objective,
-    )
+    tl_campaign = Campaign(searchspace=tl_searchspace, objective=objective)
     nontl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
 
     initial_data_samples = {}
@@ -134,12 +131,13 @@ def aryl_halide_tl_substance_benchmark(
 
     results = []
     for p in percentages:
+        scenarios = {
+            f"{int(100 * p)}_tl": tl_campaign,
+            f"{int(100 * p)}_naive": nontl_campaign,
+        }
         results.append(
             simulate_scenarios(
-                {
-                    f"{int(100 * p)}": tl_campaign,
-                    f"{int(100 * p)}_naive": nontl_campaign,
-                },
+                scenarios,
                 lookup,
                 initial_data=initial_data_samples[p],
                 batch_size=settings.batch_size,
@@ -148,9 +146,13 @@ def aryl_halide_tl_substance_benchmark(
                 random_seed=settings.random_seed,
             )
         )
+    scenarios_0 = {
+        "0_tl": tl_campaign,
+        "0_naive": nontl_campaign,
+    }
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": nontl_campaign},
+            scenarios_0,
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

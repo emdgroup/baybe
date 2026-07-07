@@ -131,17 +131,12 @@ def index_kernels(
     draw: st.DrawFn,
     parameter_names: Sequence[str] | None = None,
 ):
-    """A strategy that generates index kernels."""
+    """A strategy that generates index kernels (regular and positive)."""
+    cls = draw(st.sampled_from([IndexKernel, PositiveIndexKernel]))
     num_tasks = draw(st.integers(min_value=2, max_value=5))
     rank = draw(st.integers(min_value=1, max_value=num_tasks))
     names = draw(active_parameter_names(parameter_names))
-    if draw(st.booleans()):
-        return PositiveIndexKernel(
-            parameter_names=names,
-            num_tasks=num_tasks,
-            rank=rank,
-        )
-    return IndexKernel(parameter_names=names, num_tasks=num_tasks, rank=rank)
+    return cls(parameter_names=names, num_tasks=num_tasks, rank=rank)
 
 
 def base_kernels(parameter_names: Sequence[str] | None = None):
