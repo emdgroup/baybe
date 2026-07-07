@@ -35,7 +35,7 @@ class MirrorSymmetry(Symmetry):
 
     # object variables
     mirror_point: float = field(
-        default=0.0, converter=float, validator=validate_is_finite, kw_only=True
+        default=0.0, converter=float, validator=validate_is_finite
     )
     """The mirror point."""
 
