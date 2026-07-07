@@ -1271,6 +1271,8 @@
                 <span class="s2">&quot;The given &#39;coefficients&#39; list must have one floating point entry for &quot;</span>
                 <span class="s2">&quot;each entry in &#39;parameters&#39;.&quot;</span>
             <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">coefficients</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;All entries in &#39;coefficients&#39; must be non-zero.&quot;</span><span class="p">)</span>
 
     <span class="nd">@coefficients</span><span class="o">.</span><span class="n">default</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_default_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>

@@ -1479,6 +1479,8 @@
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">max_sum</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">simplex_parameters</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">NumericalDiscreteParameter</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">simplex_coefficients</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">product_parameters</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">DiscreteParameter</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">DiscreteConstraint</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">min_nonzero</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
@@ -1500,8 +1502,12 @@
 <span class="sd">        significantly faster construction.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            max_sum: The maximum sum of the parameter values defining the simplex size.</span>
+<span class="sd">            max_sum: The maximum (weighted) sum of the parameter values defining the</span>
+<span class="sd">                simplex size.</span>
 <span class="sd">            simplex_parameters: The parameters to be used for the simplex construction.</span>
+<span class="sd">            simplex_coefficients: Optional coefficients for the weighted sum, one per</span>
+<span class="sd">                entry in ``simplex_parameters``. Defaults to all-ones, i.e. an</span>
+<span class="sd">                unweighted sum.</span>
 <span class="sd">            product_parameters: Optional parameters that enter in form of a Cartesian</span>
 <span class="sd">                product.</span>
 <span class="sd">            constraints: See :class:`baybe.searchspace.core.SearchSpace`.</span>
@@ -1514,8 +1520,9 @@
 <span class="sd">            tolerance: Numerical tolerance used to validate the simplex constraint.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the passed simplex parameters are not suitable for a simplex</span>
-<span class="sd">                construction.</span>
+<span class="sd">            ValueError: If the length of ``simplex_coefficients`` does not match the</span>
+<span class="sd">                number of ``simplex_parameters``.</span>
+<span class="sd">            ValueError: If ``simplex_coefficients`` contains any zeros.</span>
 <span class="sd">            ValueError: If the passed product parameters are not discrete.</span>
 <span class="sd">            ValueError: If the passed simplex parameters and product parameters are</span>
 <span class="sd">                not disjoint.</span>
@@ -1535,6 +1542,8 @@
             <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">max_nonzero</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">max_nonzero</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplex_parameters</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">simplex_coefficients</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">simplex_coefficients</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplex_parameters</span><span class="p">)</span>
 
         <span class="c1"># Validate constraints</span>
         <span class="n">validate_constraints</span><span class="p">(</span><span class="n">constraints</span><span class="p">,</span> <span class="p">[</span><span class="o">*</span><span class="n">simplex_parameters</span><span class="p">,</span> <span class="o">*</span><span class="n">product_parameters</span><span class="p">])</span>
@@ -1552,6 +1561,18 @@
                 <span class="sa">f</span><span class="s2">&quot;All parameters passed via &#39;product_parameters&#39; &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;must be of subclasses of &#39;</span><span class="si">{</span><span class="n">DiscreteParameter</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
             <span class="p">)</span>
+
+        <span class="c1"># Validate coefficients length</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplex_coefficients</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplex_parameters</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&#39;simplex_coefficients&#39; must have one entry per &#39;simplex_parameters&#39; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;entry, but got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">simplex_coefficients</span><span class="p">)</span><span class="si">}</span><span class="s2"> coefficient(s) for &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">simplex_parameters</span><span class="p">)</span><span class="si">}</span><span class="s2"> parameter(s).&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Validate no zero coefficients</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">simplex_coefficients</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;All entries in &#39;simplex_coefficients&#39; must be non-zero.&quot;</span><span class="p">)</span>
 
         <span class="c1"># Validate no overlap between simplex parameters and product parameters</span>
         <span class="n">simplex_parameters_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">simplex_parameters</span><span class="p">}</span>
@@ -1574,113 +1595,95 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplex_parameters</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_product</span><span class="p">(</span><span class="n">product_parameters</span><span class="p">,</span> <span class="n">constraints</span><span class="p">)</span>
 
-        <span class="c1"># Validate non-negativity</span>
-        <span class="n">min_values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">simplex_parameters</span><span class="p">]</span>
-        <span class="n">max_values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">simplex_parameters</span><span class="p">]</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">min_values</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">):</span>
+        <span class="c1"># Compute per-parameter minimum weighted contributions.</span>
+        <span class="c1"># For a positive coefficient c the minimum contribution is c*min_raw; for a</span>
+        <span class="c1"># negative coefficient the ordering flips and it becomes c*max_raw. Taking</span>
+        <span class="c1"># min of both products handles any real coefficient correctly.</span>
+        <span class="n">min_raw</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">simplex_parameters</span><span class="p">]</span>
+        <span class="n">max_raw</span> <span class="o">=</span> <span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">simplex_parameters</span><span class="p">]</span>
+        <span class="n">coeffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">simplex_coefficients</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">active_settings</span><span class="o">.</span><span class="n">DTypeFloatNumpy</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">coeffs</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;All simplex_parameters passed to &#39;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">from_simplex</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;must have non-negative values only.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;All simplex_coefficients passed to &#39;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">from_simplex</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;must be finite numbers.&quot;</span>
             <span class="p">)</span>
+        <span class="n">min_weighted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">lo</span><span class="p">,</span> <span class="n">c</span> <span class="o">*</span> <span class="n">hi</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">coeffs</span><span class="p">,</span> <span class="n">min_raw</span><span class="p">,</span> <span class="n">max_raw</span><span class="p">)]</span>
+        <span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">drop_invalid</span><span class="p">(</span>
-            <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-            <span class="n">max_sum</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-            <span class="n">boundary_only</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-            <span class="n">min_nonzero</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">max_nonzero</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;Drop rows that violate the specified simplex constraint.</span>
+        <span class="c1"># Get the minimum weighted sum contributions to come in the upcoming joins (the</span>
+        <span class="c1"># first item is the minimum possible weighted sum of all parameters starting</span>
+        <span class="c1"># from the second parameter, the second item is the minimum possible weighted</span>
+        <span class="c1"># sum starting from the third parameter, and so on ...)</span>
+        <span class="n">min_sum_upcoming</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">min_weighted</span><span class="p">[:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
-<span class="sd">            Args:</span>
-<span class="sd">                df: The dataframe whose rows should satisfy the simplex constraint.</span>
-<span class="sd">                max_sum: The maximum row sum defining the simplex size.</span>
-<span class="sd">                boundary_only: Flag to control if the points represented by the rows</span>
-<span class="sd">                    may lie inside the simplex or on its boundary only.</span>
-<span class="sd">                min_nonzero: Minimum number of nonzero parameters required per row.</span>
-<span class="sd">                max_nonzero: Maximum number of nonzero parameters allowed per row.</span>
-<span class="sd">            &quot;&quot;&quot;</span>
-            <span class="c1"># Apply sum constraints</span>
-            <span class="n">row_sums</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">mask_violated</span> <span class="o">=</span> <span class="n">row_sums</span> <span class="o">&gt;</span> <span class="n">max_sum</span> <span class="o">+</span> <span class="n">tolerance</span>
-            <span class="k">if</span> <span class="n">boundary_only</span><span class="p">:</span>
-                <span class="n">mask_violated</span> <span class="o">|=</span> <span class="n">row_sums</span> <span class="o">&lt;</span> <span class="n">max_sum</span> <span class="o">-</span> <span class="n">tolerance</span>
+        <span class="c1"># Get the min/max number of nonzero values to come in the upcoming joins.</span>
+        <span class="c1"># Nonzero counting is based on raw parameter values, not weighted values,</span>
+        <span class="c1"># because the cardinality constraint counts zero/nonzero entries regardless</span>
+        <span class="c1"># of the coefficient signs.</span>
+        <span class="n">min_nonzero_upcoming</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">min_raw</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)[:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">max_nonzero_upcoming</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">max_raw</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)[:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
-            <span class="c1"># Apply optional nonzero constraints</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">min_nonzero</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">max_nonzero</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
-                <span class="n">n_nonzero</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">min_nonzero</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">mask_violated</span> <span class="o">|=</span> <span class="n">n_nonzero</span> <span class="o">&lt;</span> <span class="n">min_nonzero</span>
-                <span class="k">if</span> <span class="n">max_nonzero</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">mask_violated</span> <span class="o">|=</span> <span class="n">n_nonzero</span> <span class="o">&gt;</span> <span class="n">max_nonzero</span>
+        <span class="c1"># Incrementally build up the space as a numpy array, dropping invalid</span>
+        <span class="c1"># configurations along the way. Working with raw numpy avoids pandas overhead</span>
+        <span class="c1"># (index management, BlockManager, merge machinery) in the hot loop.</span>
+        <span class="c1">#</span>
+        <span class="c1"># After having cross-joined a new parameter, there must be enough &quot;room&quot; left</span>
+        <span class="c1"># for the remaining parameters to fit. That is, configurations of the current</span>
+        <span class="c1"># parameter subset that exceed the desired total value minus the minimum</span>
+        <span class="c1"># contribution to come from the yet-to-be-added parameters can be already</span>
+        <span class="c1"># discarded, because it is already clear that the total sum will be exceeded</span>
+        <span class="c1"># once all joins are completed. Analogously, nonzero cardinality bounds are</span>
+        <span class="c1"># checked at each step.</span>
+        <span class="c1">#</span>
+        <span class="c1"># Instead of materializing the full cross-product before filtering, we use</span>
+        <span class="c1"># broadcasting to compute the validity mask in 2D (n_old, n_new) and only</span>
+        <span class="c1"># materialize the surviving combinations. This avoids allocating large</span>
+        <span class="c1"># intermediate arrays that are mostly discarded.</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">active_settings</span><span class="o">.</span><span class="n">DTypeFloatNumpy</span><span class="p">)</span>
+        <span class="n">partial_sums</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">active_settings</span><span class="o">.</span><span class="n">DTypeFloatNumpy</span><span class="p">)</span>
+        <span class="n">nz_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">intp</span><span class="p">)</span>
 
-            <span class="c1"># Remove violating rows</span>
-            <span class="n">idxs_to_drop</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mask_violated</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
-            <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">idxs_to_drop</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="c1"># Get the minimum sum contributions to come in the upcoming joins (the</span>
-        <span class="c1"># first item is the minimum possible sum of all parameters starting from the</span>
-        <span class="c1"># second parameter, the second item is the minimum possible sum starting from</span>
-        <span class="c1"># the third parameter, and so on ...)</span>
-        <span class="n">min_sum_upcoming</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">min_values</span><span class="p">[:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-
-        <span class="c1"># Get the min/max number of nonzero values to come in the upcoming joins (the</span>
-        <span class="c1"># first item is the min/max number of nonzero parameters starting from the</span>
-        <span class="c1"># second parameter, the second item is the min/max number starting from</span>
-        <span class="c1"># the third parameter, and so on ...)</span>
-        <span class="n">min_nonzero_upcoming</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">min_values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)[:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">max_nonzero_upcoming</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">max_values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)[:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-
-        <span class="c1"># Incrementally build up the space, dropping invalid configuration along the</span>
-        <span class="c1"># way. More specifically:</span>
-        <span class="c1"># * After having cross-joined a new parameter, there must</span>
-        <span class="c1">#   be enough &quot;room&quot; left for the remaining parameters to fit. That is,</span>
-        <span class="c1">#   configurations of the current parameter subset that exceed the desired</span>
-        <span class="c1">#   total value minus the minimum contribution to come from the yet-to-be-added</span>
-        <span class="c1">#   parameters can be already discarded, because it is already clear that</span>
-        <span class="c1">#   the total sum will be exceeded once all joins are completed.</span>
-        <span class="c1"># * Analogously, there must be enough &quot;nonzero slots&quot; left for the yet to be</span>
-        <span class="c1">#   joined parameters, i.e. parameter subset configurations can be discarded</span>
-        <span class="c1">#   where the number of nonzero parameters already exceeds the maximum number</span>
-        <span class="c1">#   of nonzeros minus the number of nonzeros to come, because it is already</span>
-        <span class="c1">#   clear that the maximum will be exceeded once all joins are completed.</span>
-        <span class="c1"># * Similarly, it can be verified for each parameter that there are still</span>
-        <span class="c1">#   enough nonzero parameters to come to even reach the minimum</span>
-        <span class="c1">#   desired number of nonzero after all joins.</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span>
-            <span class="n">param</span><span class="p">,</span>
-            <span class="n">min_sum_to_go</span><span class="p">,</span>
-            <span class="n">min_nonzero_to_go</span><span class="p">,</span>
-            <span class="n">max_nonzero_to_go</span><span class="p">,</span>
-        <span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
-            <span class="nb">zip</span><span class="p">(</span>
-                <span class="n">simplex_parameters</span><span class="p">,</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">min_sum_upcoming</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">min_nonzero_upcoming</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">max_nonzero_upcoming</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">coeff</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">min_sum_to_go</span><span class="p">,</span> <span class="n">min_nonzero_to_go</span><span class="p">,</span> <span class="n">max_nonzero_to_go</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">coeffs</span><span class="p">,</span>
+            <span class="n">simplex_parameters</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">min_sum_upcoming</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">min_nonzero_upcoming</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">max_nonzero_upcoming</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
         <span class="p">):</span>
-            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">exp_rep</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">values</span><span class="p">})</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">exp_rep</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
-                    <span class="n">exp_rep</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">values</span><span class="p">}),</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;cross&quot;</span>
-                <span class="p">)</span>
-            <span class="n">drop_invalid</span><span class="p">(</span>
-                <span class="n">exp_rep</span><span class="p">,</span>
-                <span class="n">max_sum</span><span class="o">=</span><span class="n">max_sum</span> <span class="o">-</span> <span class="n">min_sum_to_go</span><span class="p">,</span>
-                <span class="c1"># the maximum possible number of nonzeros to come dictates if we</span>
-                <span class="c1"># can achieve our minimum constraint in the end:</span>
-                <span class="n">min_nonzero</span><span class="o">=</span><span class="n">min_nonzero</span> <span class="o">-</span> <span class="n">max_nonzero_to_go</span><span class="p">,</span>
-                <span class="c1"># the minimum possible number of nonzeros to come dictates if we</span>
-                <span class="c1"># can stay below the targeted maximum in the end:</span>
-                <span class="n">max_nonzero</span><span class="o">=</span><span class="n">max_nonzero</span> <span class="o">-</span> <span class="n">min_nonzero_to_go</span><span class="p">,</span>
-                <span class="n">boundary_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">active_settings</span><span class="o">.</span><span class="n">DTypeFloatNumpy</span><span class="p">)</span>
+            <span class="n">threshold</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_sum</span> <span class="o">-</span> <span class="n">min_sum_to_go</span><span class="p">)</span> <span class="o">+</span> <span class="n">tolerance</span>
+            <span class="n">effective_min</span> <span class="o">=</span> <span class="n">min_nonzero</span> <span class="o">-</span> <span class="n">max_nonzero_to_go</span>
+            <span class="n">effective_max</span> <span class="o">=</span> <span class="n">max_nonzero</span> <span class="o">-</span> <span class="n">min_nonzero_to_go</span>
+
+            <span class="c1"># Compute weighted sums via broadcasting: (n_old, n_new)</span>
+            <span class="n">new_contributions</span> <span class="o">=</span> <span class="n">values</span> <span class="o">*</span> <span class="n">coeff</span>
+            <span class="n">total_sums</span> <span class="o">=</span> <span class="n">partial_sums</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_contributions</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+
+            <span class="c1"># Build 2D validity mask from sum constraint</span>
+            <span class="n">mask_2d</span> <span class="o">=</span> <span class="n">total_sums</span> <span class="o">&lt;=</span> <span class="n">threshold</span>
+
+            <span class="c1"># Cardinality check via broadcasting</span>
+            <span class="n">new_nz</span> <span class="o">=</span> <span class="p">(</span><span class="n">values</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">intp</span><span class="p">)</span>
+            <span class="n">total_nz</span> <span class="o">=</span> <span class="n">nz_counts</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_nz</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="k">if</span> <span class="n">effective_min</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">mask_2d</span> <span class="o">&amp;=</span> <span class="n">total_nz</span> <span class="o">&gt;=</span> <span class="n">effective_min</span>
+            <span class="k">if</span> <span class="n">effective_max</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplex_parameters</span><span class="p">):</span>
+                <span class="n">mask_2d</span> <span class="o">&amp;=</span> <span class="n">total_nz</span> <span class="o">&lt;=</span> <span class="n">effective_max</span>
+
+            <span class="c1"># Extract surviving indices and materialize only those rows</span>
+            <span class="n">old_idx</span><span class="p">,</span> <span class="n">new_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask_2d</span><span class="p">)</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">arr</span><span class="p">[</span><span class="n">old_idx</span><span class="p">],</span> <span class="n">values</span><span class="p">[</span><span class="n">new_idx</span><span class="p">]])</span>
+            <span class="n">partial_sums</span> <span class="o">=</span> <span class="n">total_sums</span><span class="p">[</span><span class="n">old_idx</span><span class="p">,</span> <span class="n">new_idx</span><span class="p">]</span>
+            <span class="n">nz_counts</span> <span class="o">=</span> <span class="n">total_nz</span><span class="p">[</span><span class="n">old_idx</span><span class="p">,</span> <span class="n">new_idx</span><span class="p">]</span>
 
         <span class="c1"># If requested, keep only the boundary values</span>
         <span class="k">if</span> <span class="n">boundary_only</span><span class="p">:</span>
-            <span class="n">drop_invalid</span><span class="p">(</span><span class="n">exp_rep</span><span class="p">,</span> <span class="n">max_sum</span><span class="p">,</span> <span class="n">boundary_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">partial_sums</span> <span class="o">-</span> <span class="n">max_sum</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tolerance</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">arr</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="c1"># Wrap in DataFrame</span>
+        <span class="n">exp_rep</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">simplex_parameters</span><span class="p">])</span>
 
         <span class="c1"># Merge product parameters and apply constraints incrementally</span>
         <span class="n">exp_rep</span> <span class="o">=</span> <span class="n">build_constrained_product</span><span class="p">(</span>
@@ -1997,12 +2000,29 @@
             <span class="n">specs</span><span class="p">[</span><span class="s2">&quot;simplex_parameters&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">NumericalDiscreteParameter</span><span class="p">]</span>
         <span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">simplex_parameters</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;All simplex_parameters passed to &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">SubspaceDiscrete</span><span class="o">.</span><span class="n">from_simplex</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; must have non-negative &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;values only.&quot;</span>
-            <span class="p">)</span>
+        <span class="n">simplex_coefficients</span> <span class="o">=</span> <span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;simplex_coefficients&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">simplex_coefficients</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">simplex_coefficients</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span>
+                    <span class="n">simplex_coefficients</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">IterableValidationError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;&#39;simplex_coefficients&#39; must be a list of numeric values.&quot;</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplex_coefficients</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplex_parameters</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;&#39;simplex_coefficients&#39; must have one entry per &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;&#39;simplex_parameters&#39; entry, but got &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">simplex_coefficients</span><span class="p">)</span><span class="si">}</span><span class="s2"> coefficient(s) for &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">simplex_parameters</span><span class="p">)</span><span class="si">}</span><span class="s2"> parameter(s).&quot;</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">simplex_coefficients</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;All entries in &#39;simplex_coefficients&#39; must be non-zero.&quot;</span>
+                <span class="p">)</span>
 
         <span class="n">product_parameters</span> <span class="o">=</span> <span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;product_parameters&quot;</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">if</span> <span class="n">product_parameters</span><span class="p">:</span>
