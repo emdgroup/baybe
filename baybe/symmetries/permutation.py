@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from itertools import combinations
 from typing import TYPE_CHECKING, Any
 
@@ -111,7 +111,7 @@ class PermutationSymmetry(Symmetry):
     def augment_measurements(
         self,
         measurements: pd.DataFrame,
-        parameters: Iterable[Parameter] | None = None,
+        parameters: Sequence[Parameter] | None = None,
     ) -> pd.DataFrame:
         # See base class.
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -50,7 +50,7 @@ class Symmetry(SerialMixin, ABC):
     def augment_measurements(
         self,
         measurements: pd.DataFrame,
-        parameters: Iterable[Parameter] | None = None,
+        parameters: Sequence[Parameter] | None = None,
     ) -> pd.DataFrame:
         """Augment the given measurements according to the symmetry.
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Iterable
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
@@ -68,7 +68,7 @@ class DependencySymmetry(Symmetry):
     def augment_measurements(
         self,
         measurements: pd.DataFrame,
-        parameters: Iterable[Parameter] | None = None,
+        parameters: Sequence[Parameter] | None = None,
     ) -> pd.DataFrame:
         # See base class.
         if not self.use_data_augmentation:

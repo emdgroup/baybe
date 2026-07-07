@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from enum import Enum, auto
 from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypeAlias
 
@@ -131,7 +131,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     def augment_measurements(
         self,
         measurements: pd.DataFrame,
-        parameters: Iterable[Parameter] | None = None,
+        parameters: Sequence[Parameter] | None = None,
     ) -> pd.DataFrame:
         """Apply data augmentation to measurements.
 
