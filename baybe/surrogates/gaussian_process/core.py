@@ -15,11 +15,17 @@ from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
 from typing_extensions import Self, override
 
-from baybe.exceptions import DeprecationError, ModelNotTrainedError
+from baybe.exceptions import (
+    DeprecationError,
+    IncompatibleKernelError,
+    IncompatibleSearchSpaceError,
+    ModelNotTrainedError,
+)
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
@@ -279,6 +285,83 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._model is not None
         return self._model.posterior(candidates_comp_scaled)
 
+    def _resolve_kernel(self, context: _ModelContext) -> GPyTorchKernel:
+        """Resolve the GP kernel, dispatching on task parameter overrides.
+
+        Args:
+            context: The model context providing searchspace information.
+
+        Returns:
+            The constructed gpytorch kernel.
+
+        Raises:
+            IncompatibleKernelError: If the user specifies both an override on the
+                task parameter and a kernel factory that requires a task parameter.
+        """
+        from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
+
+        searchspace = context.searchspace
+        task_param = searchspace._task_parameter
+
+        if (
+            task_param is None
+            or (tl_override := task_param.override_transfer_learning_mode) is None
+        ):
+            # No override: let the factory handle everything (default path)
+            kernel_factory = self.kernel_factory or BayBEKernelFactory()
+            kernel = kernel_factory(
+                searchspace, context.objective, context.measurements
+            )
+            if isinstance(kernel, Kernel):
+                kernel = kernel.to_gpytorch(searchspace=searchspace)
+            return kernel
+
+        # Override is set: strip the task parameter and call the factory on the
+        # reduced searchspace, then attach the specified task kernel manually.
+        reduced_searchspace = searchspace._drop_parameters({task_param.name})
+
+        kernel_factory = self.kernel_factory or BayBEKernelFactory()
+        try:
+            base_kernel = kernel_factory(
+                reduced_searchspace, context.objective, context.measurements
+            )
+        except IncompatibleSearchSpaceError as ex:
+            raise IncompatibleKernelError(
+                f"The '{TaskParameter.__name__}' '{task_param.name}' specifies "
+                f"'override_transfer_learning_mode={tl_override.name}', but the "
+                f"provided kernel factory '{type(kernel_factory).__name__}' "
+                f"already operates on the task parameter itself."
+            ) from ex
+
+        if isinstance(base_kernel, Kernel):
+            base_kernel = base_kernel.to_gpytorch(searchspace=searchspace)
+
+        # Ensure the base kernel only acts on non-task dimensions
+        if base_kernel.active_dims is None:
+            import torch
+
+            base_kernel.active_dims = torch.tensor(
+                context.numerical_indices, dtype=torch.long
+            )
+
+        # Create the task kernel based on the override mode
+        n_tasks = searchspace.n_tasks
+        if tl_override is TransferLearningMode.POSITIVE_INDEX_KERNEL:
+            task_kernel_spec = PositiveIndexKernel(
+                num_tasks=n_tasks,
+                rank=n_tasks,
+                parameter_names=(task_param.name,),
+            )
+        elif tl_override is TransferLearningMode.INDEX_KERNEL:
+            task_kernel_spec = IndexKernel(
+                num_tasks=n_tasks,
+                rank=n_tasks,
+                parameter_names=(task_param.name,),
+            )
+
+        task_kernel = task_kernel_spec.to_gpytorch(searchspace=searchspace)
+        return base_kernel * task_kernel
+
     def _resolve_components(
         self, context: _ModelContext
     ) -> tuple[GPyTorchKernel, GPyTorchMean, GPyTorchLikelihood, FitCriterion]:
@@ -294,20 +377,15 @@ class GaussianProcessSurrogate(Surrogate):
         Returns:
             A tuple of (kernel, mean, likelihood, criterion).
         """
-        kernel_factory = self.kernel_factory or BayBEKernelFactory()
         mean_factory = self.mean_factory or BayBEMeanFactory()
         likelihood_factory = self.likelihood_factory or BayBELikelihoodFactory()
         criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
 
+        kernel = self._resolve_kernel(context)
+
         mean = mean_factory(
             context.searchspace, context.objective, context.measurements
         )
-
-        kernel = kernel_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-        if isinstance(kernel, Kernel):
-            kernel = kernel.to_gpytorch(searchspace=context.searchspace)
 
         likelihood = likelihood_factory(
             context.searchspace, context.objective, context.measurements
@@ -335,9 +413,18 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._measurements is not None  # provided by base class
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
+        # Check for custom kernel + multi-task clash (only relevant when no
+        # override_transfer_learning_mode is set, since the override mechanism
+        # handles task kernel attachment explicitly).
+        task_param = context.searchspace._task_parameter
+        has_tl_override = (
+            task_param is not None
+            and task_param.override_transfer_learning_mode is not None
+        )
         if (
             context.is_multitask
             and self._custom_kernel
+            and not has_tl_override
             and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
         ):
             raise DeprecationError(

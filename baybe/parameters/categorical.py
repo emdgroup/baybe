@@ -6,11 +6,11 @@ from functools import cached_property
 import numpy as np
 import pandas as pd
 from attrs import Converter, define, field
-from attrs.validators import deep_iterable, instance_of, min_len
+from attrs.validators import deep_iterable, instance_of, min_len, optional
 from typing_extensions import override
 
 from baybe.parameters.base import _DiscreteLabelLikeParameter
-from baybe.parameters.enum import CategoricalEncoding
+from baybe.parameters.enum import CategoricalEncoding, TransferLearningMode
 from baybe.parameters.validation import validate_unique_values
 from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple
@@ -89,6 +89,12 @@ class TaskParameter(CategoricalParameter):
 
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
+
+    override_transfer_learning_mode: TransferLearningMode | None = field(
+        default=None,
+        validator=optional(instance_of(TransferLearningMode)),
+    )
+    """Optional override for the transfer learning kernel mode."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
