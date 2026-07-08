@@ -1,5 +1,6 @@
 """Tests for the Gaussian Process surrogate."""
 
+import math
 import sys
 
 import pandas as pd
@@ -20,10 +21,14 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe import active_settings
+from baybe.exceptions import ModelNotTrainedError
 from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+)
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriterion
 from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
@@ -223,3 +228,95 @@ def test_botorch_preset(multitask: bool):
     posterior2 = _posterior_stats_botorch(sp, data)
 
     assert_frame_equal(posterior1, posterior2)
+
+
+_OBJECTIVE = NumericalTarget(name="y").to_objective()
+
+
+def _pm_searchspace(values: list[float]) -> SearchSpace:
+    return SearchSpace.from_product([NumericalDiscreteParameter("x1", values=values)])
+
+
+def _pm_measurements(xs: list[float], ys: list[float]) -> pd.DataFrame:
+    return pd.DataFrame({"x1": xs, "y": ys})
+
+
+def _predict_on_prior_mean(
+    pretrained: GaussianProcessSurrogate, xs: list[float]
+) -> pd.DataFrame:
+    """Build measurements where the targets follow the pretrained posterior mean."""
+    points = pd.DataFrame({"x1": xs})
+    with torch.no_grad():
+        targets = pretrained.posterior(points).mean
+    return pd.DataFrame({"x1": xs, "y": targets.numpy().ravel()})
+
+
+@pytest.fixture(name="pretrained")
+def fixture_pretrained() -> GaussianProcessSurrogate:
+    """A GP trained on a narrow search space with three points."""
+    surrogate = GaussianProcessSurrogate()
+    surrogate.fit(
+        _pm_searchspace([0.0, 2.5, 5.0]),
+        _OBJECTIVE,
+        _pm_measurements([0.0, 2.5, 5.0], [0.0, 5.0, 10.0]),
+    )
+    return surrogate
+
+
+@pytest.fixture(name="wider_searchspace")
+def fixture_wider_searchspace() -> SearchSpace:
+    return _pm_searchspace([0.0, 2.5, 5.0, 7.5, 10.0])
+
+
+@pytest.mark.parametrize(
+    "prebuilt",
+    [param(False, id="bound_method"), param(True, id="prebuilt_module")],
+)
+def test_posterior_mean_transfer(
+    pretrained: GaussianProcessSurrogate,
+    wider_searchspace: SearchSpace,
+    prebuilt: bool,
+) -> None:
+    """A pretrained posterior mean can seed a new GP's prior mean.
+
+    Whether the mean is supplied as a bound-method factory or as a pre-built mean
+    module, fitting a new GP on it:
+
+    * builds the new model,
+    * reproduces the pretrained posterior mean at a held-out point (the training
+      targets lie exactly on the pretrained mean, so the outer kernel sees zero
+      residual and the prior mean alone explains the data),
+    * leaves the pretrained surrogate's hyperparameters untouched.
+    """
+    expected = pretrained.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
+    pretrained_lengthscale = (
+        pretrained.to_botorch().covar_module.lengthscale.detach().clone()
+    )
+
+    new_meas = _predict_on_prior_mean(pretrained, [0.0, 10.0])
+    if prebuilt:
+        mean = pretrained.posterior_mean_function(
+            wider_searchspace, _OBJECTIVE, new_meas
+        )
+    else:
+        mean = pretrained.posterior_mean_function
+    new = GaussianProcessSurrogate(mean_or_factory=mean)
+    new.fit(wider_searchspace, _OBJECTIVE, new_meas)
+
+    assert new.to_botorch() is not None
+
+    actual = new.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
+    assert math.isclose(actual, expected, abs_tol=1e-4)
+
+    assert torch.equal(
+        pretrained.to_botorch().covar_module.lengthscale, pretrained_lengthscale
+    )
+
+
+def test_posterior_mean_raises_if_not_fitted() -> None:
+    """An untrained surrogate cannot produce a posterior mean function."""
+    ss = _pm_searchspace([0.0, 1.0])
+    with pytest.raises(ModelNotTrainedError, match="must be fitted"):
+        GaussianProcessSurrogate().posterior_mean_function(
+            ss, _OBJECTIVE, _pm_measurements([0.0, 1.0], [0.0, 1.0])
+        )
