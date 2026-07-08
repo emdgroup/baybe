@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import json
+import math
 import warnings
 from collections.abc import Callable
 from json import JSONDecodeError
@@ -12,10 +13,15 @@ from typing import Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
-from attrs.validators import instance_of, min_len
+from attrs.validators import ge, instance_of, min_len
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibilityError, LLMResponseError
+from baybe.exceptions import (
+    IncompatibilityError,
+    IncompatibleArgumentError,
+    LLMResponseError,
+    UnusedObjectWarning,
+)
 from baybe.objectives.base import Objective
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.numerical import NumericalContinuousParameter
@@ -129,6 +135,9 @@ Please provide a corrected JSON response that follows the required format:
 """
 
 
+_RESERVED_LITELLM_KEYS = frozenset({"model", "messages"})
+
+
 def _extract_parameter_info(
     parameters: tuple[Parameter, ...],
 ) -> list[SimpleNamespace]:
@@ -197,7 +206,7 @@ class LLMRecommender(NonPredictiveRecommender):
     If ``None``, uses the same model as the main recommendations.
     """
 
-    litellm_args: dict[str, Any] = field(factory=dict)
+    litellm_args: dict[str, Any] = field(factory=dict, converter=dict)
     """Additional arguments to pass to LiteLLM."""
 
     recovery_litellm_args: dict[str, Any] | None = field(default=None)
@@ -205,6 +214,28 @@ class LLMRecommender(NonPredictiveRecommender):
 
     If ``None``, uses the same arguments as the main recommendations.
     """
+
+    @litellm_args.validator
+    def _validate_litellm_args(self, attribute, value):  # noqa: DOC101, DOC103
+        """Validate litellm_args does not contain reserved keys."""
+        conflicts = _RESERVED_LITELLM_KEYS & set(value.keys())
+        if conflicts:
+            raise ValueError(
+                f"'litellm_args' must not contain keys that are set explicitly: "
+                f"{conflicts}. Use the dedicated class attributes instead."
+            )
+
+    @recovery_litellm_args.validator
+    def _validate_recovery_litellm_args(self, attribute, value):  # noqa: DOC101, DOC103
+        """Validate recovery_litellm_args does not contain reserved keys."""
+        if value is None:
+            return
+        conflicts = _RESERVED_LITELLM_KEYS & set(value.keys())
+        if conflicts:
+            raise ValueError(
+                f"'recovery_litellm_args' must not contain keys that are set "
+                f"explicitly: {conflicts}. Use the dedicated class attributes instead."
+            )
 
     related_data: pd.DataFrame | None = field(default=None)
     """Optional DataFrame containing data from similar optimization campaigns.
@@ -220,7 +251,7 @@ class LLMRecommender(NonPredictiveRecommender):
     filter for feasibility. Only feasible experiments are returned.
     """
 
-    overflow_experiments: int = field(default=0)
+    overflow_experiments: int = field(default=0, validator=(instance_of(int), ge(0)))
     """Number of additional experiments to request from the LLM.
 
     The LLM will be asked to generate ``batch_size + overflow_experiments``
@@ -354,6 +385,11 @@ class LLMRecommender(NonPredictiveRecommender):
         if not isinstance(suggestions, list):
             raise LLMResponseError("Response must be a JSON array")
 
+        if not suggestions:
+            raise LLMResponseError(
+                "Response contains an empty array with no suggestions."
+            )
+
         recommendations = []
         for suggestion in suggestions:
             if not isinstance(suggestion, dict):
@@ -391,9 +427,12 @@ class LLMRecommender(NonPredictiveRecommender):
             values = df[param.name]
 
             if isinstance(param, NumericalContinuousParameter):
-                if not all(isinstance(v, (int, float)) for v in values):
+                if not all(
+                    isinstance(v, (int, float)) and math.isfinite(v) for v in values
+                ):
                     raise LLMResponseError(
-                        f"Non-numeric values for continuous parameter: {param.name}"
+                        f"Non-finite or non-numeric values for continuous parameter: "
+                        f"{param.name}"
                     )
                 bounds = param.bounds.to_tuple()
                 min_val, max_val = bounds
@@ -404,12 +443,40 @@ class LLMRecommender(NonPredictiveRecommender):
 
             elif isinstance(param, DiscreteParameter):
                 allowed = list(param.values)
-                invalid = [v for v in values if v not in allowed]
-                if invalid:
-                    raise LLMResponseError(
-                        f"Invalid values {invalid} for parameter '{param.name}'. "
-                        f"Allowed values are: {allowed}"
-                    )
+                if param.is_numerical:
+                    allowed_floats = [float(a) for a in allowed]
+                    invalid = []
+                    canonical = []
+                    for v in values:
+                        try:
+                            fv = float(v)
+                        except (TypeError, ValueError):
+                            invalid.append(v)
+                            canonical.append(v)
+                            continue
+                        if fv in allowed_floats:
+                            canonical.append(allowed[allowed_floats.index(fv)])
+                        else:
+                            invalid.append(v)
+                            canonical.append(v)
+                    if invalid:
+                        raise LLMResponseError(
+                            f"Invalid values {invalid} for parameter "
+                            f"'{param.name}'. "
+                            f"Allowed values are: {allowed}"
+                        )
+                    df[param.name] = canonical
+                else:
+                    invalid = [v for v in values if v not in allowed]
+                    if invalid:
+                        raise LLMResponseError(
+                            f"Invalid values {invalid} for parameter "
+                            f"'{param.name}'. "
+                            f"Allowed values are: {allowed}"
+                        )
+                    # Categorical values from JSON are strings; cast to canonical
+                    allowed_map = {str(a): a for a in allowed}
+                    df[param.name] = [allowed_map.get(str(v), v) for v in values]
 
         return df
 
@@ -427,18 +494,36 @@ class LLMRecommender(NonPredictiveRecommender):
         Args:
             batch_size: The number of recommendations to generate.
             searchspace: The search space to generate recommendations for.
-            objective: Optional objective to optimize for.
+            objective: Not used by this recommender.
             measurements: Optional measurements to include in the prompt.
-            pending_experiments: Optional pending experiments to consider.
+            pending_experiments: Not supported by this recommender.
 
         Returns:
             A DataFrame containing the recommendations as individual rows.
 
         Raises:
+            IncompatibleArgumentError: If ``pending_experiments`` are provided.
             LLMResponseError: If the LLM response cannot be parsed or
                 recovery fails.
         """
         from baybe._optional.llm import completion
+
+        if pending_experiments is not None:
+            raise IncompatibleArgumentError(
+                f"Pending experiments were passed to "
+                f"'{self.__class__.__name__}.{self.recommend.__name__}' but "
+                f"'{self.__class__.__name__}' cannot use this information. If you "
+                f"want to exclude pending experiments, adjust the search space "
+                f"accordingly."
+            )
+        if objective is not None:
+            warnings.warn(
+                f"'{self.recommend.__name__}' was called with an explicit objective "
+                f"but '{self.__class__.__name__}' does not consider objectives, "
+                f"meaning that the argument is ignored.",
+                UnusedObjectWarning,
+                stacklevel=2,
+            )
 
         prompt = self._construct_prompt(searchspace, batch_size, measurements)
         response = completion(
