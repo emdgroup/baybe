@@ -9,6 +9,7 @@ from pytest import param
 
 from baybe.exceptions import IncompatibleKernelError, IncompatibleSearchSpaceError
 from baybe.kernels.basic import IndexKernel, MaternKernel, PositiveIndexKernel
+from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import (
     CategoricalParameter,
     TaskParameter,
@@ -120,12 +121,13 @@ def _make_dispatch_context(override_mode):
 
 
 @pytest.mark.parametrize(
-    ("override_mode", "kernel_or_factory", "expected_task_kernel_cls"),
+    ("override_mode", "kernel_or_factory", "expected_task_kernel_cls", "has_base"),
     [
         param(
             None,
             None,
             "PositiveIndexKernel",
+            True,
             id="no_override+default_factory",
         ),
         param(
@@ -136,38 +138,50 @@ def _make_dispatch_context(override_mode):
                 )
             ),
             "IndexKernel",
+            True,
             id="no_override+custom_icm_index_kernel_escape_hatch",
-        ),
-        param(
-            TransferLearningMode.POSITIVE_INDEX_KERNEL,
-            None,
-            "PositiveIndexKernel",
-            id="positive_index_override+default_factory",
-        ),
-        param(
-            TransferLearningMode.INDEX_KERNEL,
-            None,
-            "IndexKernel",
-            id="index_override+default_factory",
         ),
         param(
             TransferLearningMode.POSITIVE_INDEX_KERNEL,
             MaternKernel(),
             "PositiveIndexKernel",
+            True,
             id="positive_index_override+bare_baybe_matern",
         ),
         param(
             TransferLearningMode.INDEX_KERNEL,
-            gpytorch.kernels.MaternKernel(nu=2.5),
+            MaternKernel(),
             "IndexKernel",
-            id="index_override+bare_gpytorch_matern",
+            True,
+            id="index_override+bare_baybe_matern",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            MaternKernel(parameter_names=("x", "Task")),
+            "PositiveIndexKernel",
+            True,
+            id="positive_index_override+baybe_matern_with_task_name",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            ScaleKernel(MaternKernel()),
+            "PositiveIndexKernel",
+            True,
+            id="positive_index_override+scaled_baybe_matern",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",)),
+            "IndexKernel",
+            False,
+            id="index_override+task_only_index_kernel",
         ),
     ],
 )
-def test_resolve_kernel_dispatch(
-    monkeypatch, override_mode, kernel_or_factory, expected_task_kernel_cls
+def test_resolve_kernel_dispatch_success(
+    monkeypatch, override_mode, kernel_or_factory, expected_task_kernel_cls, has_base
 ):
-    """`_resolve_kernel` produces the expected task kernel for each dispatch branch."""
+    """`_resolve_kernel` produces the expected task kernel for supported inputs."""
     monkeypatch.setenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "True")
 
     context = _make_dispatch_context(override_mode)
@@ -178,36 +192,69 @@ def test_resolve_kernel_dispatch(
 
     kernel = surrogate._resolve_kernel(context)
 
-    # The resolved kernel is a product of base * task kernel
-    base_kernel, task_kernel = kernel.kernels
+    if has_base:
+        # The resolved kernel is a product of base * task kernel
+        _, task_kernel = kernel.kernels
+    else:
+        # Stripping left no non-task parameters -> only the task kernel remains
+        task_kernel = kernel
     assert type(task_kernel).__name__ == expected_task_kernel_cls
 
-    # Override branches must partition active dims so the task column isn't
-    # consumed by both halves of the product kernel.
+    # Override branches must partition active dims so the task kernel acts exactly
+    # on the task column.
     if override_mode is not None:
-        assert base_kernel.active_dims is not None
-        assert set(base_kernel.active_dims.tolist()) == set(context.numerical_indices)
+        assert task_kernel.active_dims is not None
+        assert set(task_kernel.active_dims.tolist()) == {context.task_idx}
 
 
 @pytest.mark.parametrize(
-    "override_mode",
+    ("override_mode", "kernel_or_factory"),
     [
-        param(TransferLearningMode.POSITIVE_INDEX_KERNEL, id="positive_index"),
-        param(TransferLearningMode.INDEX_KERNEL, id="index"),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            None,
+            id="positive_index_override+default_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            None,
+            id="index_override+default_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            gpytorch.kernels.MaternKernel(nu=2.5),
+            id="index_override+bare_gpytorch_matern",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            MaternKernel(parameter_names=("x",))
+            * IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",)),
+            id="override+product_kernel",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            ICMKernelFactory(
+                task_kernel_or_factory=IndexKernel(
+                    num_tasks=3, rank=3, parameter_names=("Task",)
+                )
+            ),
+            id="override+task_aware_factory",
+        ),
     ],
 )
-def test_resolve_kernel_overspecification_raises(monkeypatch, override_mode):
-    """Override + task-aware kernel factory raises `IncompatibleKernelError`."""
+def test_resolve_kernel_dispatch_raises(monkeypatch, override_mode, kernel_or_factory):
+    """`_resolve_kernel` raises for inputs incompatible with an override.
+
+    This covers raw gpytorch kernels, composite kernels, task-aware factories, and the
+    default factory (which returns a raw gpytorch kernel on non-substance spaces).
+    """
     monkeypatch.setenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "True")
 
     context = _make_dispatch_context(override_mode)
-    surrogate = GaussianProcessSurrogate(
-        kernel_or_factory=ICMKernelFactory(
-            task_kernel_or_factory=IndexKernel(
-                num_tasks=3, rank=3, parameter_names=("Task",)
-            )
-        )
+    kwargs = (
+        {} if kernel_or_factory is None else {"kernel_or_factory": kernel_or_factory}
     )
+    surrogate = GaussianProcessSurrogate(**kwargs)
 
-    with pytest.raises(IncompatibleKernelError, match="overspecification"):
+    with pytest.raises(IncompatibleKernelError):
         surrogate._resolve_kernel(context)

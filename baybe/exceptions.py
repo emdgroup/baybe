@@ -78,6 +78,10 @@ class IncompatibleKernelError(IncompatibilityError):
     """A kernel specification conflicts with a parameter's override."""
 
 
+class UnsupportedSearchSpaceAttributeError(AttributeError):
+    """Access to a blocked attribute on a reduced search space was attempted."""
+
+
 class NonGaussianityError(Exception):
     """An operation assuming Gaussianity is attempted on a non-Gaussian distribution."""
 
