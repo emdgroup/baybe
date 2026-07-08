@@ -374,8 +374,31 @@ class GaussianProcessSurrogate(Surrogate):
                 kernel = kernel.to_gpytorch(searchspace=searchspace)
             return kernel
 
-        # Override is set: build a task-free base kernel and attach the prescribed
-        # task kernel manually.
+        # Override is set: assemble the prescribed task kernel.
+        n_tasks = searchspace.n_tasks
+        if tl_override is TransferLearningMode.POSITIVE_INDEX_KERNEL:
+            task_kernel_spec: Kernel = PositiveIndexKernel(
+                num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
+            )
+        elif tl_override is TransferLearningMode.INDEX_KERNEL:
+            task_kernel_spec = IndexKernel(
+                num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
+            )
+        else:
+            raise RuntimeError(
+                f"Unhandled '{TransferLearningMode.__name__}' '{tl_override.name}'."
+            )
+
+        # Default factory: reuse the ICM machinery on the full searchspace, which
+        # builds the task-excluded base kernel and combines it with the prescribed
+        # task kernel. This avoids the reduced searchspace, on which the default
+        # factory's numerical kernel cannot resolve its active dimensions.
+        if type(self.kernel_factory) is BayBEKernelFactory:
+            icm = ICMKernelFactory(task_kernel_or_factory=task_kernel_spec)
+            return icm(searchspace, context.objective, context.measurements)
+
+        # Otherwise, build a task-free base kernel and attach the prescribed task
+        # kernel manually.
         non_task_names = tuple(
             p.name for p in searchspace.parameters if p.name != task_param.name
         )
@@ -424,21 +447,6 @@ class GaussianProcessSurrogate(Surrogate):
             if base_spec is None
             else base_spec.to_gpytorch(searchspace=searchspace)
         )
-
-        # Create the task kernel based on the override mode
-        n_tasks = searchspace.n_tasks
-        if tl_override is TransferLearningMode.POSITIVE_INDEX_KERNEL:
-            task_kernel_spec: Kernel = PositiveIndexKernel(
-                num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
-            )
-        elif tl_override is TransferLearningMode.INDEX_KERNEL:
-            task_kernel_spec = IndexKernel(
-                num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
-            )
-        else:
-            raise RuntimeError(
-                f"Unhandled '{TransferLearningMode.__name__}' '{tl_override.name}'."
-            )
 
         task_kernel = task_kernel_spec.to_gpytorch(searchspace=searchspace)
         return task_kernel if base_kernel is None else base_kernel * task_kernel
