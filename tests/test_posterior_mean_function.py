@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -80,7 +81,7 @@ def test_matches_pretrained_at_held_out_point(
 
     actual = new.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
 
-    assert abs(actual - expected) < 1e-4
+    assert math.isclose(actual, expected, abs_tol=1e-4)
 
 
 def test_raises_if_not_fitted() -> None:
