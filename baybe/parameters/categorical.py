@@ -94,7 +94,7 @@ class TaskParameter(CategoricalParameter):
         default=None,
         validator=optional(instance_of(TransferLearningMode)),
     )
-    """Optional override for the transfer learning kernel mode."""
+    """Optional override for the transfer learning mode."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

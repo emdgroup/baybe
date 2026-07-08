@@ -177,10 +177,10 @@ class SubstanceEncoding(ParameterEncoding):
 
 
 class TransferLearningMode(Enum):
-    """Transfer learning modes for TaskParameter."""
+    """Transfer learning modes for `TaskParameter`."""
 
     INDEX_KERNEL = "INDEX_KERNEL"
-    """:class:`gpytorch.kernels.IndexKernel` for unknown task correlations."""
+    """:class:`gpytorch.kernels.IndexKernel` for arbitrary correlations."""
 
     POSITIVE_INDEX_KERNEL = "POSITIVE_INDEX_KERNEL"
     """:class:`botorch.models.kernels.PositiveIndexKernel` for positive correlations."""

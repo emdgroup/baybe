@@ -74,8 +74,8 @@ class IncompatibleArgumentError(IncompatibilityError):
     """An incompatible argument was passed to a callable."""
 
 
-class IncompatibleKernelError(IncompatibilityError):
-    """A kernel specification conflicts with a parameter's override."""
+class IncompatibleOverrideError(IncompatibilityError):
+    """An override conflicts with another specification."""
 
 
 class UnsupportedSearchSpaceAttributeError(AttributeError):
