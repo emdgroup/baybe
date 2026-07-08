@@ -738,7 +738,7 @@ requires-dist = [
     { name = "joblib", specifier = ">1.4.0,<2" },
     { name = "jupyter", marker = "extra == 'docs'", specifier = ">=1.1.1" },
     { name = "jupytext", marker = "extra == 'docs'", specifier = ">=1.16.4" },
-    { name = "litellm", marker = "extra == 'llm'", specifier = ">=1.70.0" },
+    { name = "litellm", marker = "extra == 'llm'", specifier = ">=1.70.0,!=1.82.7,!=1.82.8" },
     { name = "matplotlib", marker = "extra == 'examples'", specifier = ">=3.7.3,!=3.9.1" },
     { name = "mypy", marker = "extra == 'mypy'", specifier = ">=1.19.1" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.0" },
