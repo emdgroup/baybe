@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe.exceptions import IncompatibleKernelError, IncompatibleSearchSpaceError
+from baybe.exceptions import IncompatibleOverrideError, IncompatibleSearchSpaceError
 from baybe.kernels.basic import IndexKernel, MaternKernel, PositiveIndexKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import (
@@ -256,5 +256,5 @@ def test_resolve_kernel_dispatch_raises(monkeypatch, override_mode, kernel_or_fa
     )
     surrogate = GaussianProcessSurrogate(**kwargs)
 
-    with pytest.raises(IncompatibleKernelError):
+    with pytest.raises(IncompatibleOverrideError):
         surrogate._resolve_kernel(context)

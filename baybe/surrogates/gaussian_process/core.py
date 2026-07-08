@@ -16,7 +16,7 @@ from typing_extensions import Self, override
 
 from baybe.exceptions import (
     DeprecationError,
-    IncompatibleKernelError,
+    IncompatibleOverrideError,
     IncompatibleSearchSpaceError,
     UnsupportedSearchSpaceAttributeError,
 )
@@ -139,7 +139,7 @@ def _strip_task_from_kernel(
             does not explicitly specify the parameters it acts on.
 
     Raises:
-        IncompatibleKernelError: If the kernel is a composite kernel other than a
+        IncompatibleOverrideError: If the kernel is a composite kernel other than a
             single-level scale kernel, which cannot be stripped unambiguously.
 
     Returns:
@@ -166,14 +166,14 @@ def _strip_task_from_kernel(
             kernel.base_kernel, task_name, non_task_names
         )
         if stripped is None:
-            raise IncompatibleKernelError(
+            raise IncompatibleOverrideError(
                 f"The scale kernel '{type(kernel).__name__}' acts only on the task "
                 f"parameter '{task_name}', which cannot be combined with an "
                 f"'override_transfer_learning_mode'."
             )
         return evolve(kernel, base_kernel=stripped)
 
-    raise IncompatibleKernelError(
+    raise IncompatibleOverrideError(
         f"Composite kernel '{type(kernel).__name__}' cannot be combined with an "
         f"'override_transfer_learning_mode'. Only basic kernels and scaled basic "
         f"kernels are supported."
@@ -334,9 +334,9 @@ class GaussianProcessSurrogate(Surrogate):
             context: The model context providing searchspace information.
 
         Raises:
-            IncompatibleKernelError: If a transfer learning override is combined with a
-                kernel or kernel factory that cannot be reduced to a task-free base
-                kernel operating on parameter names.
+            IncompatibleOverrideError: If a transfer learning override is combined
+                with a kernel or kernel factory that cannot be reduced to a task-free
+                base kernel operating on parameter names.
 
         Returns:
             The constructed gpytorch kernel.
@@ -380,7 +380,7 @@ class GaussianProcessSurrogate(Surrogate):
             # A fixed kernel was provided: strip the task parameter directly.
             component = self.kernel_factory.component
             if not isinstance(component, Kernel):
-                raise IncompatibleKernelError(incompatible_message)
+                raise IncompatibleOverrideError(incompatible_message)
             base_spec = _strip_task_from_kernel(
                 component, task_param.name, non_task_names
             )
@@ -398,9 +398,9 @@ class GaussianProcessSurrogate(Surrogate):
                 IncompatibleSearchSpaceError,
                 UnsupportedSearchSpaceAttributeError,
             ) as ex:
-                raise IncompatibleKernelError(incompatible_message) from ex
+                raise IncompatibleOverrideError(incompatible_message) from ex
             if not isinstance(factory_kernel, Kernel):
-                raise IncompatibleKernelError(incompatible_message)
+                raise IncompatibleOverrideError(incompatible_message)
             base_spec = factory_kernel
 
         # Convert the base kernel on the full searchspace so that parameter names
@@ -417,9 +417,13 @@ class GaussianProcessSurrogate(Surrogate):
             task_kernel_spec: Kernel = PositiveIndexKernel(
                 num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
             )
-        else:
+        elif tl_override is TransferLearningMode.INDEX_KERNEL:
             task_kernel_spec = IndexKernel(
                 num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
+            )
+        else:
+            raise RuntimeError(
+                f"Unhandled '{TransferLearningMode.__name__}' '{tl_override.name}'."
             )
 
         task_kernel = task_kernel_spec.to_gpytorch(searchspace=searchspace)
