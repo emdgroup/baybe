@@ -4,21 +4,24 @@ from __future__ import annotations
 
 import gc
 import json
+import warnings
 from collections.abc import Callable
 from json import JSONDecodeError
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
+from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
-from baybe.exceptions import LLMResponseError
+from baybe.exceptions import IncompatibilityError, LLMResponseError
 from baybe.objectives.base import Objective
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.recommenders.base import RecommenderProtocol
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
+from baybe.searchspace.core import SearchSpaceType
 from baybe.utils.conversion import to_string
 
 _PROMPT_TEMPLATE = """\
@@ -136,6 +139,9 @@ def _extract_parameter_info(
 
     Returns:
         A list of namespace objects containing parameter information.
+
+    Raises:
+        IncompatibilityError: If a parameter type is not supported.
     """
     infos = []
     for param in parameters:
@@ -152,24 +158,34 @@ def _extract_parameter_info(
             info["type"] = "discrete_numeric" if param.is_numerical else "categorical"
             info["values"] = list(param.values)
         else:
-            info["type"] = "unknown"
+            raise IncompatibilityError(
+                f"Parameter '{param.name}' has unsupported type "
+                f"'{type(param).__name__}' for "
+                f"'{LLMRecommender.__name__}'. Only "
+                f"'{NumericalContinuousParameter.__name__}' and "
+                f"'{DiscreteParameter.__name__}' subclasses are supported."
+            )
 
         infos.append(SimpleNamespace(**info))
 
     return infos
 
 
-@define
-class LLMRecommender(RecommenderProtocol):
+@define(slots=False)
+class LLMRecommender(NonPredictiveRecommender):
     """Recommender that uses a language model to suggest new experimental points."""
 
-    model: str = field()
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
+    # See base class.
+
+    model: str = field(validator=(instance_of(str), min_len(1)))
     """The LiteLLM model identifier to use for recommendations."""
 
-    experiment_description: str = field()
+    experiment_description: str = field(validator=(instance_of(str), min_len(1)))
     """Textual description of the experiment."""
 
-    objective_description: str = field()
+    objective_description: str = field(validator=(instance_of(str), min_len(1)))
     """Textual description of the optimization objective."""
 
     format_instructions: str | None = field(default=None)
@@ -181,10 +197,10 @@ class LLMRecommender(RecommenderProtocol):
     If ``None``, uses the same model as the main recommendations.
     """
 
-    litellm_args: dict = field(factory=dict)
+    litellm_args: dict[str, Any] = field(factory=dict)
     """Additional arguments to pass to LiteLLM."""
 
-    recovery_litellm_args: dict | None = field(default=None)
+    recovery_litellm_args: dict[str, Any] | None = field(default=None)
     """Optional arguments to pass to LiteLLM during recovery attempts.
 
     If ``None``, uses the same arguments as the main recommendations.
@@ -233,7 +249,11 @@ class LLMRecommender(RecommenderProtocol):
         total_experiments = batch_size + self.overflow_experiments
         parameters = _extract_parameter_info(searchspace.parameters)
 
-        template = Template(_PROMPT_TEMPLATE, trim_blocks=True, lstrip_blocks=True)
+        template = Template(
+            _PROMPT_TEMPLATE,
+            trim_blocks=True,
+            lstrip_blocks=True,
+        )
         return template.render(
             experiment_description=self.experiment_description,
             objective_description=self.objective_description,
@@ -276,19 +296,38 @@ class LLMRecommender(RecommenderProtocol):
             format_instructions=self.format_instructions,
         )
 
+        litellm_args = self.recovery_litellm_args or self.litellm_args
         try:
-            litellm_args = self.recovery_litellm_args or self.litellm_args
             response = completion(
                 model=self.recovery_model or self.model,
                 messages=[{"role": "user", "content": recovery_prompt}],
                 **litellm_args,
             )
-            return self._parse_llm_response(
-                response.choices[0].message.content, searchspace
-            )
         except Exception as e:
             raise LLMResponseError(
-                f"Failed to recover from malformed response: {e}"
+                f"Recovery LLM call failed ({type(e).__name__}): {e}. "
+                f"Original error: {error}"
+            ) from e
+
+        try:
+            content = response.choices[0].message.content
+        except (AttributeError, IndexError, TypeError) as e:
+            raise LLMResponseError(
+                f"Recovery response had unexpected structure: {e}. "
+                f"Original error: {error}"
+            ) from e
+
+        if content is None:
+            raise LLMResponseError(
+                f"Recovery returned empty content (None). Original error: {error}"
+            )
+
+        try:
+            return self._parse_llm_response(content, searchspace)
+        except LLMResponseError as e:
+            raise LLMResponseError(
+                f"Recovery produced another malformed response: {e}. "
+                f"Original error: {error}"
             ) from e
 
     def _parse_llm_response(
@@ -309,7 +348,7 @@ class LLMRecommender(RecommenderProtocol):
         """
         try:
             suggestions = json.loads(response)
-        except JSONDecodeError as e:
+        except (JSONDecodeError, TypeError) as e:
             raise LLMResponseError(f"Error parsing JSON output: {e}") from e
 
         if not isinstance(suggestions, list):
@@ -365,9 +404,11 @@ class LLMRecommender(RecommenderProtocol):
 
             elif isinstance(param, DiscreteParameter):
                 allowed = list(param.values)
-                if not all(v in allowed for v in values):
+                invalid = [v for v in values if v not in allowed]
+                if invalid:
                     raise LLMResponseError(
-                        f"Invalid values for parameter: {param.name}"
+                        f"Invalid values {invalid} for parameter '{param.name}'. "
+                        f"Allowed values are: {allowed}"
                     )
 
         return df
@@ -392,6 +433,10 @@ class LLMRecommender(RecommenderProtocol):
 
         Returns:
             A DataFrame containing the recommendations as individual rows.
+
+        Raises:
+            LLMResponseError: If the LLM response cannot be parsed or
+                recovery fails.
         """
         from baybe._optional.llm import completion
 
@@ -401,24 +446,44 @@ class LLMRecommender(RecommenderProtocol):
             messages=[{"role": "user", "content": prompt}],
             **self.litellm_args,
         )
+
         try:
-            output = self._parse_llm_response(
-                response.choices[0].message.content, searchspace
-            )
+            content = response.choices[0].message.content
+        except (AttributeError, IndexError, TypeError) as e:
+            raise LLMResponseError(
+                f"LLM returned an unexpected response structure: {e}"
+            ) from e
+
+        if content is None:
+            raise LLMResponseError("LLM returned empty content (None).")
+
+        try:
+            output = self._parse_llm_response(content, searchspace)
         except LLMResponseError as e:
-            output = self._attempt_recovery(
-                e, response.choices[0].message.content, searchspace
+            output = self._attempt_recovery(e, content, searchspace)
+
+        if len(output) < batch_size + self.overflow_experiments:
+            warnings.warn(
+                f"LLM returned {len(output)} suggestions instead of the "
+                f"requested {batch_size + self.overflow_experiments}.",
+                stacklevel=2,
             )
 
         if self.is_feasible_experiment is not None:
             feasible_mask = output.apply(self.is_feasible_experiment, axis=1)
             feasible_experiments = output[feasible_mask]
 
-            if len(feasible_experiments) >= batch_size:
-                return feasible_experiments.head(batch_size)
-            return feasible_experiments
+            if len(feasible_experiments) < batch_size:
+                warnings.warn(
+                    f"Only {len(feasible_experiments)} of {batch_size} requested "
+                    f"experiments passed the feasibility check. Consider increasing "
+                    f"overflow_experiments (currently {self.overflow_experiments}).",
+                    stacklevel=2,
+                )
 
-        return output
+            return feasible_experiments.head(batch_size)
+
+        return output.head(batch_size)
 
     @override
     def __str__(self) -> str:
