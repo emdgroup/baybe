@@ -82,6 +82,10 @@ class InfeasibilityError(Exception):
     """An optimization problem has no feasible solution."""
 
 
+class LLMResponseError(Exception):
+    """An error occurred while processing a language model response."""
+
+
 class NotEnoughPointsLeftError(Exception):
     """
     More recommendations are requested than there are viable parameter configurations

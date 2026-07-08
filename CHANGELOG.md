@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `KernelFactory` now obeys the more general `GPComponentFactoryProtocol`
 
 ### Added
+- `LLMRecommender` for LLM-based experimental design suggestions via LiteLLM
 - Support for Python 3.14
 - Support for pandas 3
 - `Settings` class for unified and streamlined settings management
