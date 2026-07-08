@@ -11,11 +11,7 @@ from hypothesis import given
 from pytest import param
 
 from baybe.kernels.base import BasicKernel, Kernel
-from baybe.kernels.basic import (
-    IndexKernel,
-    MaternKernel,
-    RBFKernel,
-)
+from baybe.kernels.basic import IndexKernel, MaternKernel, RBFKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace.core import SearchSpace
