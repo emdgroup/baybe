@@ -106,7 +106,7 @@ insights = [
 
 llm = [
     "jinja2>=3.1.0",
-    "litellm>=1.70.0",
+    "litellm>=1.70.0,!=1.82.7,!=1.82.8",
 ]
 
 docs = [
