@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the same pattern as `ContinuousLinearConstraint.coefficients`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
+- `TaskParameter.override_transfer_learning_mode` (and the corresponding
+  `TransferLearningMode` enum) for selecting the kernel that models the task
+  correlations in transfer learning, taking precedence over the task kernel of the
+  configured kernel factory. `INDEX_KERNEL` permits arbitrary correlations while
+  `POSITIVE_INDEX_KERNEL` enforces positive ones
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
