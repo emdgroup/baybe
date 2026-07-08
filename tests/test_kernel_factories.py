@@ -176,6 +176,20 @@ def _make_dispatch_context(override_mode):
             False,
             id="index_override+task_only_index_kernel",
         ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            None,
+            "PositiveIndexKernel",
+            True,
+            id="positive_index_override+default_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            None,
+            "IndexKernel",
+            True,
+            id="index_override+default_factory",
+        ),
     ],
 )
 def test_resolve_kernel_dispatch_success(
@@ -211,16 +225,6 @@ def test_resolve_kernel_dispatch_success(
     ("override_mode", "kernel_or_factory"),
     [
         param(
-            TransferLearningMode.POSITIVE_INDEX_KERNEL,
-            None,
-            id="positive_index_override+default_factory",
-        ),
-        param(
-            TransferLearningMode.INDEX_KERNEL,
-            None,
-            id="index_override+default_factory",
-        ),
-        param(
             TransferLearningMode.INDEX_KERNEL,
             gpytorch.kernels.MaternKernel(nu=2.5),
             id="index_override+bare_gpytorch_matern",
@@ -245,8 +249,7 @@ def test_resolve_kernel_dispatch_success(
 def test_resolve_kernel_dispatch_raises(monkeypatch, override_mode, kernel_or_factory):
     """`_resolve_kernel` raises for inputs incompatible with an override.
 
-    This covers raw gpytorch kernels, composite kernels, task-aware factories, and the
-    default factory (which returns a raw gpytorch kernel on non-substance spaces).
+    This covers raw gpytorch kernels, composite kernels, and task-aware factories.
     """
     monkeypatch.setenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "True")
 
