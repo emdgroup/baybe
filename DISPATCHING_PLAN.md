@@ -68,54 +68,55 @@ both searchspaces, so the lookup works correctly on the full one.
 
 ---
 
-## The Reduced SearchSpace: `_ParameterOnlySearchSpace`
+## The Reduced SearchSpace: `_ReducedSearchSpace`
 
 Full `SearchSpace.from_product` is expensive and constraint-aware. For the
-factory call we only need parameter information. Solution: a **private
-subclass** that exposes only parameter-related properties.
+factory call we only need parameter information. This already exists on `main`
+as the private subclass `_ReducedSearchSpace`, constructed via
+`SearchSpace._drop_parameters`.
 
 ```python
-class _ParameterOnlySearchSpace(SearchSpace):
-    """A lightweight searchspace view exposing only parameter information.
+class _ReducedSearchSpace(SearchSpace):
+    """A lightweight search space exposing only parameter information.
 
-    Raises NotImplementedError on any attempt to access constraints,
-    subspaces, or transform functionality.
+    Guards attribute access via ``__getattribute__``: only the names listed in
+    ``_ALLOWED_ATTRIBUTES`` are accessible; everything else raises
+    ``AttributeError``.
     """
 ```
 
-**Exposed (working) properties/methods:**
+**Exposed (whitelisted in `_ALLOWED_ATTRIBUTES`):**
 - `parameters`, `parameter_names`
-- `comp_rep_columns`, `comp_rep_bounds`, `scaling_bounds`
-- `get_comp_rep_parameter_indices(name)`
-- `n_tasks`, `task_idx`, `_task_parameter`
-- `type` (DISCRETE/CONTINUOUS/HYBRID)
+- `comp_rep_columns`
+- `discrete`, `continuous`
+- `constraints`
+- `type`
+- `n_tasks`, `_task_parameter`
+- `_get_n_comp_rep_columns(...)`, `get_parameters_by_name(...)`
 
-**Blocked (raise):**
-- `constraints`, `is_constrained`
+**Blocked (any other attribute raises `AttributeError`):**
 - `transform()`
+- `comp_rep_bounds`, `scaling_bounds`
+- `task_idx`
+- `get_comp_rep_parameter_indices(...)`
 - `discrete.exp_rep`, `discrete.comp_rep`
 - Any method requiring the full subspace internals
 
-**Constructor:** A method on `SearchSpace`:
+**Constructor:** Already available on `SearchSpace` (added on `main`):
 
 ```python
-def _without_parameters(
-    self, names: Collection[str]
-) -> _ParameterOnlySearchSpace:
-    """Return a parameter-only view without the named parameters."""
+def _drop_parameters(
+    self, names: Collection[str], /
+) -> _ReducedSearchSpace:
+    """Return a reduced search space without the named parameters."""
 ```
-
-This replaces the current `_without_task_parameter()` with a more general
-mechanism.
 
 ---
 
 ## Method Signature (Revised `_resolve_kernel`)
 
 ```python
-def _resolve_kernel(
-    self, context: _ModelContext, train_x: Tensor, train_y: Tensor
-) -> GPyTorchKernel:
+def _resolve_kernel(self, context: _ModelContext) -> GPyTorchKernel:
     """Resolve the GP kernel, applying TL override if specified."""
 ```
 
@@ -132,8 +133,8 @@ def _resolve_kernel(
       - component is ScaleKernel? → strip task from inner, re-wrap
       - component is BasicKernel? → strip task from parameter_names
    b. else (factory):
-      - Build reduced searchspace
-      - Call factory(reduced_ss, train_x, train_y)
+      - Build reduced searchspace via `_drop_parameters({task_name})`
+      - Call factory(reduced_ss, objective, measurements)
       - If result is gpytorch → RAISE
       - Else strip/convert as in (a)
 5. Convert stripped BayBE kernel → gpytorch via to_gpytorch(searchspace=FULL_ss)
@@ -170,24 +171,27 @@ surrogate = GaussianProcessSurrogate(kernel_or_factory=...)
 
 ### Verification of Case 9 (Default Factory)
 
-`BayBEKernelFactory._make` does:
-```python
-is_multitask = searchspace.task_idx is not None
-factory = ICMKernelFactory if is_multitask else BayBENumericalKernelFactory
-```
-On the reduced searchspace, `task_idx` is `None` → it uses
-`BayBENumericalKernelFactory` → returns a pure numerical kernel (no task
+On the reduced search space the task parameter is gone, so `n_tasks == 1` and
+`BayBEKernelFactory` dispatches to its numerical branch
+(`_BayBENumericalKernelFactory`) → returns a pure numerical kernel (no task
 component). This is exactly what we want.
+
+> **Caveat (see Analysis):** `_ReducedSearchSpace` whitelists only a small set
+> of attributes (`parameters`, `parameter_names`, `comp_rep_columns`,
+> `constraints`, `type`, `n_tasks`, `_task_parameter`, `_get_n_comp_rep_columns`,
+> `get_parameters_by_name`). It **blocks** `task_idx`, `comp_rep_bounds`,
+> `scaling_bounds`, and `get_comp_rep_parameter_indices`. Any factory reaching
+> for one of those on the reduced space raises `AttributeError`. The default
+> factory path is safe, but custom-scaled factories (e.g. `SmoothedEDBO`,
+> Case 3) must be verified against this whitelist.
 
 ---
 
 ## Implementation Steps
 
-1. **Add `_ParameterOnlySearchSpace`** (new private subclass in
-   `baybe/searchspace/core.py`)
-   - Minimal `from_product`-like init from a parameter list
-   - Override blocking properties to raise `NotImplementedError`
-   - Implement `_without_parameters(names)` on `SearchSpace` returning this type
+1. **`_ReducedSearchSpace` / `_drop_parameters`** — already present in
+   `baybe/searchspace/core.py` on `main`; no new subclass needed. Reuse
+   `SearchSpace._drop_parameters(names)` which returns a `_ReducedSearchSpace`.
 
 2. **Refactor `_resolve_kernel`** (in `baybe/surrogates/gaussian_process/core.py`)
    - Replace current "override raises on overspecification" logic
@@ -205,7 +209,8 @@ component). This is exactly what we want.
    - Add parametrized tests for all 11 cases above
    - Test that `_ParameterOnlySearchSpace` blocks constraint access
 
-5. **Update `_without_task_parameter`** → replace with `_without_parameters`
+5. **`_without_task_parameter` removal** → already done; `_resolve_kernel` now
+   uses `SearchSpace._drop_parameters({task_param.name})`.
 
 ---
 
@@ -215,10 +220,10 @@ component). This is exactly what we want.
    gpytorch/composite forbidden cases. The semantics change from
    "overspecification" to "unsupported kernel type with override".
 
-2. **`_ParameterOnlySearchSpace` scope**: Exposes `n_tasks`, `task_idx`,
-   `_task_parameter` etc. On the reduced view (task param removed) these return
+2. **`_ReducedSearchSpace` scope**: Exposes `n_tasks`, `_task_parameter`
+   etc. On the reduced view (task param removed) these return
    `None`/`1` as expected. This is exactly why Case 9 works: `BayBEKernelFactory`
-   sees `task_idx=None` → uses numerical-only factory.
+   sees no task parameter → uses numerical-only factory.
 
 3. **Factory output post-stripping**: NOT needed. The reduced searchspace
    doesn't contain the task parameter, so the factory cannot produce a kernel
@@ -236,3 +241,60 @@ component). This is exactly what we want.
 - Run relevant tests: `pytest tests/test_kernel_factories.py tests/test_kernels.py -x`
 - Add new parametrized test covering all 11 cases
 - Ensure `BayBEKernelFactory()` with override doesn't raise (regression for case 9)
+
+---
+
+## Known Limitation: Default Kernel Factory + Override
+
+### The problem
+
+When `override_transfer_learning_mode` is set, `_resolve_kernel` builds the base
+kernel by calling the provided kernel factory on a **reduced** search space
+(`SearchSpace._drop_parameters({task_name})`, a `_ReducedSearchSpace`) and then
+attaches the prescribed task kernel. `_ReducedSearchSpace` intentionally exposes only
+parameter-level information and blocks index-space methods such as
+`get_comp_rep_parameter_indices` (these only make sense against a concrete comp-rep
+column layout, which the reduced space no longer represents).
+
+The default `BayBEKernelFactory` dispatches (via `_dispatch`) to one of two numerical
+factories:
+
+- `_ChenNumericalKernelFactory` when a `SubstanceParameter` is present. It returns a
+  BayBE `Kernel` carrying `parameter_names` and defers index resolution to
+  `to_gpytorch`, so it **works** on the reduced search space.
+- `_CustomScaledNumericalKernelFactory` otherwise (the common case). It returns a
+  **raw gpytorch** `MaternKernel` and resolves `active_dims` eagerly via
+  `get_comp_rep_parameter_indices`. On the reduced search space this raises
+  `UnsupportedSearchSpaceAttributeError`, and even if it did not, its `active_dims`
+  would be computed against the reduced (task-free) layout, which is misaligned with
+  the full training tensor.
+
+Consequently, the default kernel factory cannot currently be combined with
+`override_transfer_learning_mode` on non-substance search spaces.
+
+### Current behaviour
+
+Consistent with the general rule "raise whenever the factory returns a gpytorch kernel
+(or otherwise cannot run on the reduced search space)", `_resolve_kernel` raises
+`IncompatibleKernelError` in this situation. The reduced-space call is wrapped to catch
+`IncompatibleSearchSpaceError` and `UnsupportedSearchSpaceAttributeError` (a dedicated
+`AttributeError` subclass raised by `_ReducedSearchSpace`) and re-raise a clear
+`IncompatibleKernelError`. Factories that return BayBE `Kernel`s (e.g. the
+Chen/substance branch, or user-provided BayBE-kernel factories) remain supported.
+
+### Proposed future solution: lengthscale-constraint support
+
+The only reason `_CustomScaledNumericalKernelFactory` cannot already return a BayBE
+`Kernel` (like `_ChenNumericalKernelFactory` does) is that it sets a gpytorch
+`lengthscale_constraint=GreaterThan(2.5e-2, transform=None,
+initial_value=lengthscale_prior.mode)`, and BayBE's `MaternKernel` has no field to
+express such a constraint.
+
+Adding lengthscale-constraint support to BayBE kernels — mirroring the existing `Prior`
+pattern (a small `SerialMixin` constraint type with `to_gpytorch()`, a
+`lengthscale_constraint` field on `MaternKernel`, and conversion in
+`Kernel.to_gpytorch` analogous to how priors are converted) — would let
+`_CustomScaledNumericalKernelFactory._make` return a **numerically identical** BayBE
+`Kernel`. That kernel would survive the reduced search space (it defers index
+resolution) and would make the default factory work with the override, removing this
+limitation without changing any GP fits. This is intentionally left as future work.
