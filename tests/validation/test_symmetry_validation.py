@@ -239,6 +239,17 @@ def searchspace(parameter_names):
             id="dep_causing_not_discrete",
         ),
         param(
+            ["n1", "c1"],
+            DependencySymmetry(
+                parameter_name="n1",
+                condition=ThresholdCondition(0.0, ">="),
+                affected_parameter_names=["c1"],
+            ),
+            ValueError,
+            r"n_discretization_points.*must be set explicitly",
+            id="dep_continuous_no_discretization",
+        ),
+        param(
             ["cat1", "n1", "n2"],
             PermutationSymmetry(**valid_config_perm),
             IncompatibleSearchSpaceError,

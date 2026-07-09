@@ -8,8 +8,9 @@ from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
-from attrs import Converter, define, field
+from attrs import Converter, define, field, fields
 from attrs.validators import deep_iterable, ge, instance_of, min_len
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.constraints.conditions import Condition
@@ -53,10 +54,11 @@ class DependencySymmetry(Symmetry):
     )
     """The parameters affected by the dependency."""
 
-    n_discretization_points: int = field(
-        default=3, validator=(instance_of(int), ge(2)), kw_only=True
+    n_discretization_points: int | None = field(
+        default=None, validator=optional_v((instance_of(int), ge(2))), kw_only=True
     )
-    """Number of points used when subsampling continuous parameter ranges."""
+    """Number of evenly spaced points used to sample from continuous parameter ranges
+    during augmentation. Must be set when any affected parameter is continuous."""
 
     @override
     @property
@@ -138,6 +140,8 @@ class DependencySymmetry(Symmetry):
 
         Raises:
             TypeError: If the causing parameter is not discrete.
+            ValueError: If any affected parameter is continuous and
+                ``n_discretization_points`` is not set.
         """
         super().validate_searchspace_context(searchspace)
 
@@ -149,6 +153,17 @@ class DependencySymmetry(Symmetry):
                 f"be discrete. However, the parameter '{param.name}' is of "
                 f"type '{param.__class__.__name__}' and is not discrete."
             )
+
+        # n_discretization_points is required when affected parameters are continuous
+        if self.n_discretization_points is None:
+            affected = searchspace.get_parameters_by_name(self.affected_parameter_names)
+            if any(not p.is_discrete for p in affected):
+                raise ValueError(
+                    f"'{fields(DependencySymmetry).n_discretization_points.alias}' "
+                    f"must be set explicitly when affected parameters are continuous. "
+                    f"It specifies the number of evenly spaced points used to sample "
+                    f"from the parameter's range for data augmentation."
+                )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
