@@ -205,7 +205,7 @@ class SubSelectionCondition(Condition):
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(1),
-            validate_unique_values,  # type: ignore
+            validate_unique_values,
         ],
     )
     """The internal list of items which are considered valid."""

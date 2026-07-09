@@ -2,11 +2,12 @@
 
 from typing import Any
 
+from attrs import Attribute
 from attrs.validators import gt, instance_of, lt
 
 
 def validate_unique_values(  # noqa: DOC101, DOC103
-    obj: Any, _: Any, value: list
+    obj: Any, _: Attribute, value: Any
 ) -> None:
     """Validate that there are no duplicates in ``value``.
 
@@ -20,7 +21,7 @@ def validate_unique_values(  # noqa: DOC101, DOC103
         )
 
 
-def validate_decorrelation(obj: Any, attribute: Any, value: float) -> None:
+def validate_decorrelation(obj: Any, attribute: Attribute, value: Any) -> None:
     """Validate the decorrelation."""
     instance_of((bool, float))(obj, attribute, value)
     if isinstance(value, float):

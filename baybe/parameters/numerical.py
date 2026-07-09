@@ -36,7 +36,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(2),
-            validate_unique_values,  # type: ignore
+            validate_unique_values,
             validate_is_finite,
         ],
     )
