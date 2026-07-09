@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections import Counter
-from collections.abc import Callable, Collection, Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -13,7 +12,6 @@ from attrs import Attribute
 
 from baybe.exceptions import IncompleteMeasurementsError
 from baybe.settings import active_settings
-from baybe.utils.dataframe import normalize_input_dtypes
 
 if TYPE_CHECKING:
     from baybe.objectives.base import Objective
@@ -261,6 +259,8 @@ def preprocess_dataframe(
         validate_objective_input(df, objective)
     else:
         targets = ()
+    from baybe.utils.dataframe import normalize_input_dtypes
+
     return normalize_input_dtypes(df, [*searchspace.parameters, *targets])
 
 
@@ -276,20 +276,4 @@ def validate_is_finite(  # noqa: DOC101, DOC103
         raise ValueError(
             f"Cannot assign the following values containing infinity/nan to "
             f"'{attribute.alias}': {value}."
-        )
-
-
-def validate_unique_values(  # noqa: DOC101, DOC103
-    _: Any, attribute: Attribute, value: Collection[str]
-) -> None:
-    """Validate that there are no duplicates in ``value``.
-
-    Raises:
-        ValueError: If there are duplicates in ``value``.
-    """
-    duplicates = [item for item, count in Counter(value).items() if count > 1]
-    if duplicates:
-        raise ValueError(
-            f"Entries appearing multiple times: {duplicates}. "
-            f"All entries of '{attribute.alias}' must be unique."
         )
