@@ -281,7 +281,7 @@ def validate_is_finite(  # noqa: DOC101, DOC103
 
 
 def validate_unique_values(  # noqa: DOC101, DOC103
-    _: Any, attribute: Attribute, value: Collection[str]
+    _: Any, attribute: Attribute, value: Collection
 ) -> None:
     """Validate that there are no duplicates in ``value``.
 

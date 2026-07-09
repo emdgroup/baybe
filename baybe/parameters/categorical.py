@@ -33,7 +33,7 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
     _values: tuple[str | bool, ...] = field(
         alias="values",
         converter=[  # type: ignore[misc]
-            Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
+            Converter(nonstring_to_tuple, takes_self=True, takes_field=True),  # type: ignore[call-overload]
             sort_tuple,
         ],
         validator=(

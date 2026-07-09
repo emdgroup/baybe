@@ -43,7 +43,7 @@ class DependencySymmetry(Symmetry):
 
     affected_parameter_names: tuple[str, ...] = field(
         converter=[  # type: ignore[misc]
-            Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
+            Converter(nonstring_to_tuple, takes_self=True, takes_field=True),  # type: ignore[call-overload]
             sort_tuple,
         ],
         validator=(
@@ -119,6 +119,7 @@ class DependencySymmetry(Symmetry):
             else:
                 # Use linear subsample of parameter bounds interval for augmentation.
                 # Note: The original value will not necessarily be part of this.
+                assert self.n_discretization_points is not None
                 vals = tuple(
                     np.linspace(
                         p.bounds.lower,  # type: ignore[attr-defined]
