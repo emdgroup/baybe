@@ -12,12 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   permutation groups instead of column groups
 
 ### Fixed
-- `DiscretePermutationInvarianceConstraint` no longer erroneously removes diagonal
-  points (e.g., where all permuted parameters have the same value)
+- `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
+  values of invariant points are degenerate
 
 ### Added
-- Symmetry classes (`PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry`)
-  for expressing invariances and configuring surrogate data augmentation
+- `Symmetry` concept for expressing symmetries of the optimization problem, including
+  `PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry` classes
 - `Parameter.is_equivalent` method for structural parameter comparison
 
 ### Changed
