@@ -16,7 +16,7 @@ def random_dataframes(draw: st.DrawFn):
     index_elements = st.one_of(_safe_text, st.integers(), finite_floats())
 
     @st.composite
-    def _random_column(draw):
+    def _random_column(draw: st.DrawFn):
         """Generate a random column with safe string elements."""
         name = draw(index_elements)
         dtype = draw(st.sampled_from([int, float, str]))
