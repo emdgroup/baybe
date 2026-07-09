@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from attrs.validators import min_len
+from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
 from baybe.parameters.base import _EncodedDiscreteParameter
@@ -26,7 +26,9 @@ class CustomDiscreteParameter(_EncodedDiscreteParameter):
     """
 
     # object variables
-    data: pd.DataFrame = field(validator=min_len(2), eq=eq_dataframe)
+    data: pd.DataFrame = field(
+        validator=(instance_of(pd.DataFrame), min_len(2)), eq=eq_dataframe
+    )
     """A mapping that provides the encoding for all available parameter values."""
 
     decorrelate: bool | float = field(

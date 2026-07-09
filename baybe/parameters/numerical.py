@@ -8,7 +8,7 @@ import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from attrs.validators import min_len
+from attrs.validators import ge, min_len
 from typing_extensions import override
 
 from baybe.exceptions import NumericalUnderflowError
@@ -16,6 +16,7 @@ from baybe.parameters.base import ContinuousParameter, DiscreteParameter
 from baybe.parameters.validation import validate_is_finite, validate_unique_values
 from baybe.settings import active_settings
 from baybe.utils.interval import InfiniteIntervalError, Interval
+from baybe.utils.validation import finite_float
 
 
 @define(frozen=True, slots=False)
@@ -41,7 +42,9 @@ class NumericalDiscreteParameter(DiscreteParameter):
     )
     """The values the parameter can take."""
 
-    tolerance: float = field(default=0.0, kw_only=True)
+    tolerance: float = field(
+        default=0.0, converter=float, validator=(finite_float, ge(0.0)), kw_only=True
+    )
     """The absolute tolerance used for deciding whether a value is in range. A tolerance
         larger than half the minimum distance between parameter values is not allowed
         because that could cause ambiguity when inputting data points later."""
@@ -163,7 +166,7 @@ class _FixedNumericalContinuousParameter(ContinuousParameter):
     is_numerical: ClassVar[bool] = True
     # See base class.
 
-    value: float = field(converter=float)
+    value: float = field(converter=float, validator=finite_float)
     """The fixed value of the parameter."""
 
     @property

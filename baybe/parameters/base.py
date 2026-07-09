@@ -8,15 +8,15 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
-from attrs import define, field
-from attrs.converters import optional as optional_c
+from attr.converters import optional as optional_c
+from attrs import Converter, define, field
 from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
 from baybe.serialization import (
     SerialMixin,
 )
-from baybe.utils.basic import to_tuple
+from baybe.utils.conversion import nonstring_to_tuple
 from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 if TYPE_CHECKING:
@@ -186,7 +186,11 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
     # object variables
     _active_values: tuple[str | bool, ...] | None = field(
         default=None,
-        converter=optional_c(to_tuple),
+        converter=optional_c(
+            Converter(  # type: ignore[misc, call-overload]
+                nonstring_to_tuple, takes_self=True, takes_field=True
+            )
+        ),
         kw_only=True,
         alias="active_values",
     )

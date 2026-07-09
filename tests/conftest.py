@@ -199,7 +199,7 @@ def fixture_parameters(
             name="Categorical_1_subset",
             values=("A", "B", "C"),
             encoding="OHE",
-            active_values=("A"),
+            active_values=("A",),
         ),
         CategoricalParameter(
             name="Categorical_2",
