@@ -129,6 +129,15 @@ class SubspaceDiscrete(SerialMixin):
                 exp_rep = batch_constraints
                 batch_constraints = ()
 
+        # Legacy input format requires both ``parameters`` and ``exp_rep`` together
+        if (parameters is UNSPECIFIED) != (exp_rep is UNSPECIFIED):
+            raise ValueError(
+                f"When using legacy constructor arguments for "
+                f"'{self.__class__.__name__}', provide both 'parameters' and 'exp_rep' "
+                f"together. Otherwise, use the '{fields(type(self)).candidates.alias}' "
+                f"argument."
+            )
+
         # --- parameters + exp_rep ---
         if parameters is not UNSPECIFIED and exp_rep is not UNSPECIFIED:
             name = fields(self.__class__).candidates.alias

@@ -59,6 +59,7 @@ from baybe.targets._deprecated import (
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.transformations.basic import AffineTransformation
+from baybe.utils.basic import UNSPECIFIED
 from baybe.utils.dataframe import create_fake_input
 from baybe.utils.random import set_random_seed, temporary_seed
 
@@ -807,6 +808,19 @@ def test_deprecated_parameters_exp_rep_conversion():
     with pytest.warns(DeprecationWarning, match="parameters.*exp_rep"):
         actual = SubspaceDiscrete(parameters=[p], exp_rep=df)
     assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("parameters", "exp_rep"),
+    [
+        pytest.param([NumericalDiscreteParameter("p", [0, 1])], UNSPECIFIED),
+        pytest.param(UNSPECIFIED, pd.DataFrame({"p": [0, 1]})),
+    ],
+)
+def test_partial_subspace_legacy_input(parameters, exp_rep):
+    """Providing only one of ``parameters`` and ``exp_rep`` raises a clear error."""
+    with pytest.raises(ValueError, match="provide both 'parameters' and 'exp_rep'"):
+        SubspaceDiscrete(parameters=parameters, exp_rep=exp_rep)
 
 
 @pytest.mark.parametrize(
