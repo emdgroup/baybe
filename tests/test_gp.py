@@ -241,18 +241,18 @@ def _pm_measurements(xs: list[float], ys: list[float]) -> pd.DataFrame:
     return pd.DataFrame({"x1": xs, "y": ys})
 
 
-def _predict_on_prior_mean(
-    pretrained: GaussianProcessSurrogate, xs: list[float]
+def _predict_on_posterior_mean(
+    pretrained_gp: GaussianProcessSurrogate, xs: list[float]
 ) -> pd.DataFrame:
-    """Build measurements where the targets follow the pretrained posterior mean."""
+    """Build measurements whose targets follow the pretrained GP posterior mean."""
     points = pd.DataFrame({"x1": xs})
     with torch.no_grad():
-        targets = pretrained.posterior(points).mean
+        targets = pretrained_gp.posterior(points).mean
     return pd.DataFrame({"x1": xs, "y": targets.numpy().ravel()})
 
 
-@pytest.fixture(name="pretrained")
-def fixture_pretrained() -> GaussianProcessSurrogate:
+@pytest.fixture(name="pretrained_gp")
+def fixture_pretrained_gp() -> GaussianProcessSurrogate:
     """A GP trained on a narrow search space with three points."""
     surrogate = GaussianProcessSurrogate()
     surrogate.fit(
@@ -273,43 +273,46 @@ def fixture_wider_searchspace() -> SearchSpace:
     [param(False, id="bound_method"), param(True, id="prebuilt_module")],
 )
 def test_posterior_mean_transfer(
-    pretrained: GaussianProcessSurrogate,
+    pretrained_gp: GaussianProcessSurrogate,
     wider_searchspace: SearchSpace,
     prebuilt: bool,
 ) -> None:
-    """A pretrained posterior mean can seed a new GP's prior mean.
+    """A pretrained GP posterior mean can seed the prior mean of a new GP.
 
-    Whether the mean is supplied as a bound-method factory or as a pre-built mean
-    module, fitting a new GP on it:
+    This test covers both ways of supplying the mean (bound-method factory and
+    pre-built module). It verifies that:
 
-    * builds the new model,
-    * reproduces the pretrained posterior mean at a held-out point (the training
-      targets lie exactly on the pretrained mean, so the outer kernel sees zero
-      residual and the prior mean alone explains the data),
-    * leaves the pretrained surrogate's hyperparameters untouched.
+    * Fitting the new GP builds a valid model.
+    * If the new GP is trained on targets generated from the pretrained GP
+      posterior mean, its posterior mean at a held-out point matches the
+      pretrained GP's posterior mean.
+    * Fitting the new GP leaves the pretrained GP's hyperparameters untouched.
+
+    The matching-mean expectation is specific to this constructed setup and is
+    not intended as a universal claim for arbitrary training data.
     """
-    expected = pretrained.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
+    expected = pretrained_gp.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
     pretrained_lengthscale = (
-        pretrained.to_botorch().covar_module.lengthscale.detach().clone()
+        pretrained_gp.to_botorch().covar_module.lengthscale.detach().clone()
     )
 
-    new_meas = _predict_on_prior_mean(pretrained, [0.0, 10.0])
+    new_measurements = _predict_on_posterior_mean(pretrained_gp, [0.0, 10.0])
     if prebuilt:
-        mean = pretrained.posterior_mean_function(
-            wider_searchspace, _OBJECTIVE, new_meas
+        mean = pretrained_gp.posterior_mean_function(
+            wider_searchspace, _OBJECTIVE, new_measurements
         )
     else:
-        mean = pretrained.posterior_mean_function
-    new = GaussianProcessSurrogate(mean_or_factory=mean)
-    new.fit(wider_searchspace, _OBJECTIVE, new_meas)
+        mean = pretrained_gp.posterior_mean_function
+    new_gp = GaussianProcessSurrogate(mean_or_factory=mean)
+    new_gp.fit(wider_searchspace, _OBJECTIVE, new_measurements)
 
-    assert new.to_botorch() is not None
+    assert new_gp.to_botorch() is not None
 
-    actual = new.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
+    actual = new_gp.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
     assert math.isclose(actual, expected, abs_tol=1e-4)
 
     assert torch.equal(
-        pretrained.to_botorch().covar_module.lengthscale, pretrained_lengthscale
+        pretrained_gp.to_botorch().covar_module.lengthscale, pretrained_lengthscale
     )
 
 
