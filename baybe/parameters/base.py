@@ -13,7 +13,6 @@ from attrs.converters import optional as optional_c
 from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
-from baybe.parameters.enum import ParameterEncoding
 from baybe.serialization import (
     SerialMixin,
 )
@@ -115,10 +114,6 @@ class Parameter(ABC, SerialMixin):
 class DiscreteParameter(Parameter, ABC):
     """Abstract class for discrete parameters."""
 
-    # class variables
-    encoding: ParameterEncoding | None = field(init=False, default=None)
-    """An optional encoding for the parameter."""
-
     @property
     @abstractmethod
     def values(self) -> tuple:
@@ -164,32 +159,17 @@ class DiscreteParameter(Parameter, ABC):
                 transformed.
 
         Returns:
-            A series containing the transformed values. The series name matches
-            that of the input.
+            A dataframe containing the transformed values.
         """
-        if self.encoding:
-            # replace each label with the corresponding encoding
-            transformed = pd.merge(
-                left=series.rename("Labels").to_frame(),
-                left_on="Labels",
-                right=self.comp_df,
-                right_index=True,
-                how="left",
-            ).drop(columns="Labels")
-        else:
-            transformed = series.to_frame()
-
-        return transformed
+        return series.to_frame()
 
     @override
     def summary(self) -> dict:
-        param_dict = dict(
+        return dict(
             Name=self.name,
             Type=self.__class__.__name__,
             nValues=len(self.values),
-            Encoding=self.encoding,
         )
-        return param_dict
 
 
 @define(frozen=True, slots=False)
@@ -248,6 +228,16 @@ class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
                 f"All active values must be valid parameter choices from: "
                 f"{self.values}, provided: {content}"
             )
+
+    @override
+    def transform(self, series: pd.Series, /) -> pd.DataFrame:
+        return pd.merge(
+            left=series.rename("Labels").to_frame(),
+            left_on="Labels",
+            right=self.comp_df,
+            right_index=True,
+            how="left",
+        ).drop(columns="Labels")
 
     @override
     def summary(self) -> dict:

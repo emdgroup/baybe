@@ -61,6 +61,10 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
         return self._values
 
     @override
+    def summary(self) -> dict:
+        return {**super().summary(), "Encoding": self.encoding}
+
+    @override
     @cached_property
     def comp_df(self) -> pd.DataFrame:
         if self.encoding is CategoricalEncoding.OHE:

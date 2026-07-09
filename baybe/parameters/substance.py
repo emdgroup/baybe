@@ -112,6 +112,10 @@ class SubstanceParameter(_DiscreteLabelLikeParameter):
             raise ExceptionGroup("duplicate substances", exceptions)
 
     @override
+    def summary(self) -> dict:
+        return {**super().summary(), "Encoding": self.encoding}
+
+    @override
     @property
     def values(self) -> tuple:
         """Returns the labels of the given set of molecules."""

@@ -11,7 +11,6 @@ from attrs.validators import min_len
 from typing_extensions import override
 
 from baybe.parameters.base import _DiscreteLabelLikeParameter
-from baybe.parameters.enum import CustomEncoding
 from baybe.parameters.validation import validate_decorrelation
 from baybe.settings import active_settings
 from baybe.utils.boolean import eq_dataframe
@@ -37,9 +36,6 @@ class CustomDiscreteParameter(_DiscreteLabelLikeParameter):
         - ``True``: The encoding is decorrelated using a default correlation threshold.
         - float in (0, 1): The encoding is decorrelated using the specified threshold.
     """
-
-    encoding: CustomEncoding = field(init=False, default=CustomEncoding.CUSTOM)
-    # See base class.
 
     @data.validator
     def _validate_custom_data(  # noqa: DOC101, DOC103
