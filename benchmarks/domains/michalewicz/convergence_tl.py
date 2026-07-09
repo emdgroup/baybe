@@ -26,9 +26,7 @@ from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSett
 from benchmarks.definition.base import RunMode
 
 
-def make_searchspace(
-    use_task_parameter: bool,
-) -> SearchSpace:
+def make_searchspace(use_task_parameter: bool) -> SearchSpace:
     """Create search space for the benchmark."""
     params: list[Parameter] = [
         NumericalContinuousParameter(
@@ -134,11 +132,14 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         "Target_Function": Michalewicz(dim=5, negate=True),
     }
     searchspace_nontl = make_searchspace(use_task_parameter=False)
-    tl_searchspace = make_searchspace(use_task_parameter=True)
+    searchspace_tl = make_searchspace(use_task_parameter=True)
 
     objective = make_objective()
-    tl_campaign = Campaign(searchspace=tl_searchspace, objective=objective)
-    nontl_campaign = Campaign(
+    campaign_tl = Campaign(
+        searchspace=searchspace_tl,
+        objective=objective,
+    )
+    campaign_nontl = Campaign(
         searchspace=searchspace_nontl,
         objective=objective,
     )
@@ -155,13 +156,9 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
 
     results = []
     for p in n_points:
-        scenarios = {
-            f"{p}_tl": tl_campaign,
-            f"{p}_naive": nontl_campaign,
-        }
         results.append(
             simulate_scenarios(
-                scenarios,
+                {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
                 lambda x: wrap_function(
                     functions["Target_Function"], "Target_Function", x
                 ),
@@ -172,13 +169,9 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
                 random_seed=settings.random_seed,
             )
         )
-    scenarios_0 = {
-        "0_tl": tl_campaign,
-        "0_naive": nontl_campaign,
-    }
     results.append(
         simulate_scenarios(
-            scenarios_0,
+            {"0": campaign_tl, "0_naive": campaign_nontl},
             lambda x: wrap_function(functions["Target_Function"], "Target_Function", x),
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,
