@@ -29,7 +29,9 @@ class CustomDiscreteParameter(_EncodedDiscreteParameter):
     data: pd.DataFrame = field(validator=min_len(2), eq=eq_dataframe)
     """A mapping that provides the encoding for all available parameter values."""
 
-    decorrelate: bool | float = field(default=True, validator=validate_decorrelation)
+    decorrelate: bool | float = field(
+        default=True, validator=validate_decorrelation, kw_only=True
+    )
     """Specifies the used decorrelation mode for the parameter encoding.
 
         - ``False``: The encoding is used as is.

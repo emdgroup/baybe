@@ -41,7 +41,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
     )
     """The values the parameter can take."""
 
-    tolerance: float = field(default=0.0)
+    tolerance: float = field(default=0.0, kw_only=True)
     """The absolute tolerance used for deciding whether a value is in range. A tolerance
         larger than half the minimum distance between parameter values is not allowed
         because that could cause ambiguity when inputting data points later."""

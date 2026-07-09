@@ -49,7 +49,14 @@ class SubstanceParameter(_EncodedDiscreteParameter):
     )
     """A mapping that provides the SMILES strings for all available parameter values."""
 
-    decorrelate: bool | float = field(default=True, validator=validate_decorrelation)
+    encoding: SubstanceEncoding = field(
+        default=SubstanceEncoding.MORDRED, converter=SubstanceEncoding, kw_only=True
+    )
+    # See base class.
+
+    decorrelate: bool | float = field(
+        default=True, validator=validate_decorrelation, kw_only=True
+    )
     """Specifies the used decorrelation mode for the parameter encoding.
 
         - ``False``: The encoding is used as is.
@@ -57,17 +64,14 @@ class SubstanceParameter(_EncodedDiscreteParameter):
         - float in (0, 1): The encoding is decorrelated using the specified threshold.
     """
 
-    encoding: SubstanceEncoding = field(
-        default=SubstanceEncoding.MORDRED, converter=SubstanceEncoding
-    )
-    # See base class.
-
     kwargs_fingerprint: dict[str, Any] = field(
-        factory=dict, validator=instance_of(dict)
+        factory=dict, validator=instance_of(dict), kw_only=True
     )
     """Keyword arguments passed to fingerprint generator."""
 
-    kwargs_conformer: dict[str, Any] = field(factory=dict, validator=instance_of(dict))
+    kwargs_conformer: dict[str, Any] = field(
+        factory=dict, validator=instance_of(dict), kw_only=True
+    )
     """Keyword arguments passed to conformer generator."""
 
     @data.validator

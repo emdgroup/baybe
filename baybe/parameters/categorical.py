@@ -50,7 +50,7 @@ class CategoricalParameter(_EncodedDiscreteParameter):
     # See base class.
 
     encoding: CategoricalEncoding = field(
-        default=CategoricalEncoding.OHE, converter=CategoricalEncoding
+        default=CategoricalEncoding.OHE, converter=CategoricalEncoding, kw_only=True
     )
     # See base class.
 
