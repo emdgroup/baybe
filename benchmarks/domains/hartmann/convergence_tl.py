@@ -100,22 +100,23 @@ def _make_hartmann_tl_benchmark(
             )
             for n, points in grid_locations.items()
         ]
-        searchspace_nontl = SearchSpace.from_product(parameters=params)
-        tl_searchspace = SearchSpace.from_product(
-            parameters=params
-            + [
-                TaskParameter(
-                    name="Function",
-                    values=("Target_Function", "Source_Function"),
-                    active_values=("Target_Function",),
-                )
-            ]
+        task_param = TaskParameter(
+            name="Function",
+            values=("Target_Function", "Source_Function"),
+            active_values=("Target_Function",),
         )
+        params_tl = params + [task_param]
+
+        searchspace_nontl = SearchSpace.from_product(parameters=params)
+        searchspace_tl = SearchSpace.from_product(parameters=params_tl)
 
         objective = SingleTargetObjective(
             target=NumericalTarget(name="Target", minimize=True)
         )
-        tl_campaign = Campaign(searchspace=tl_searchspace, objective=objective)
+        tl_campaign = Campaign(
+            searchspace=searchspace_tl,
+            objective=objective,
+        )
         nontl_campaign = Campaign(
             searchspace=searchspace_nontl,
             objective=objective,
@@ -155,13 +156,12 @@ def _make_hartmann_tl_benchmark(
 
         results = []
         for p in percentages:
-            scenarios = {
-                f"{int(100 * p)}_tl": tl_campaign,
-                f"{int(100 * p)}_naive": nontl_campaign,
-            }
             results.append(
                 simulate_scenarios(
-                    scenarios,
+                    {
+                        f"{int(100 * p)}": tl_campaign,
+                        f"{int(100 * p)}_naive": nontl_campaign,
+                    },
                     lookup,
                     initial_data=initial_data_samples[p],
                     batch_size=settings.batch_size,
@@ -170,13 +170,9 @@ def _make_hartmann_tl_benchmark(
                     random_seed=settings.random_seed,
                 )
             )
-        scenarios_0 = {
-            "0_tl": tl_campaign,
-            "0_naive": nontl_campaign,
-        }
         results.append(
             simulate_scenarios(
-                scenarios_0,
+                {"0": tl_campaign, "0_naive": nontl_campaign},
                 lookup,
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,

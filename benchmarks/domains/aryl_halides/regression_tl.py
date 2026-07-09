@@ -58,10 +58,7 @@ def _aryl_halide_tl_regr(
         DataFrame with benchmark results.
     """
 
-    def make_searchspace_wrapper(
-        data: pd.DataFrame,
-        use_task_parameter: bool,
-    ):
+    def make_searchspace_wrapper(data: pd.DataFrame, use_task_parameter: bool):
         if use_task_parameter:
             return make_searchspace(
                 data=data,
