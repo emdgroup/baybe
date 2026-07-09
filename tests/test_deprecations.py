@@ -982,3 +982,14 @@ def test_deprecated_comp_rep_property():
     with pytest.warns(DeprecationWarning, match="Accessing 'comp_rep'"):
         result = subspace.comp_rep
     assert_frame_equal(result, subspace.transform(subspace.get_candidates()))
+
+
+def test_deprecated_custom_encoding():
+    """Accessing ``CustomEncoding.CUSTOM`` emits a deprecation warning."""
+    from baybe.parameters.enum import CustomEncoding
+
+    with pytest.warns(DeprecationWarning, match="CustomEncoding"):
+        _ = CustomEncoding.CUSTOM
+
+    with pytest.warns(DeprecationWarning, match="CustomEncoding"):
+        CustomEncoding("CUSTOM")
