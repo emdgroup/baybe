@@ -67,15 +67,12 @@ class DependencySymmetry(Symmetry):
         return (self._parameter_name, *self.affected_parameter_names)
 
     @override
-    def augment_measurements(
+    def _augment_measurements(
         self,
         measurements: pd.DataFrame,
         parameters: Sequence[Parameter] | None = None,
     ) -> pd.DataFrame:
         # See base class.
-        if not self.use_data_augmentation:
-            return measurements
-
         if parameters is None:
             raise ValueError(
                 f"A '{self.__class__.__name__}' requires parameter objects "

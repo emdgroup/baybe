@@ -45,21 +45,15 @@ class MirrorSymmetry(Symmetry):
         return (self._parameter_name,)
 
     @override
-    def augment_measurements(
+    def _augment_measurements(
         self,
         measurements: pd.DataFrame,
         parameters: Sequence[Parameter] | None = None,
     ) -> pd.DataFrame:
         # See base class.
-
-        if not self.use_data_augmentation:
-            return measurements
-
-        measurements = df_apply_mirror_augmentation(
+        return df_apply_mirror_augmentation(
             measurements, self._parameter_name, mirror_point=self.mirror_point
         )
-
-        return measurements
 
     @override
     def validate_searchspace_context(self, searchspace: SearchSpace) -> None:

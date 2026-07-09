@@ -46,13 +46,36 @@ class Symmetry(SerialMixin, ABC):
         )
         return symmetry_dict
 
-    @abstractmethod
     def augment_measurements(
         self,
         measurements: pd.DataFrame,
         parameters: Sequence[Parameter] | None = None,
     ) -> pd.DataFrame:
         """Augment the given measurements according to the symmetry.
+
+        Args:
+            measurements: The dataframe containing the measurements to be augmented.
+            parameters: Optional parameter objects carrying additional information.
+                Only required by specific augmentation implementations.
+
+        Returns:
+            The augmented dataframe including the original measurements.
+        """
+        if not self.use_data_augmentation:
+            return measurements
+        return self._augment_measurements(measurements, parameters)
+
+    @abstractmethod
+    def _augment_measurements(
+        self,
+        measurements: pd.DataFrame,
+        parameters: Sequence[Parameter] | None = None,
+    ) -> pd.DataFrame:
+        """Augment measurements (core logic for subclasses).
+
+        This method is only called after confirming that data augmentation is
+        enabled. Implementations should contain only the augmentation logic
+        without checking ``use_data_augmentation``.
 
         Args:
             measurements: The dataframe containing the measurements to be augmented.

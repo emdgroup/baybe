@@ -108,21 +108,13 @@ class PermutationSymmetry(Symmetry):
         return tuple(name for group in self.permutation_groups for name in group)
 
     @override
-    def augment_measurements(
+    def _augment_measurements(
         self,
         measurements: pd.DataFrame,
         parameters: Sequence[Parameter] | None = None,
     ) -> pd.DataFrame:
         # See base class.
-
-        if not self.use_data_augmentation:
-            return measurements
-
-        measurements = df_apply_permutation_augmentation(
-            measurements, self.permutation_groups
-        )
-
-        return measurements
+        return df_apply_permutation_augmentation(measurements, self.permutation_groups)
 
     @override
     def validate_searchspace_context(self, searchspace: SearchSpace) -> None:
