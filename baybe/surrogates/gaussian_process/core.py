@@ -212,7 +212,7 @@ class GaussianProcessSurrogate(Surrogate):
     _custom_kernel: bool = field(init=False, default=False, repr=False, eq=False)
     # For deprecation only!
 
-    kernel_factory: KernelFactoryProtocol | None = field(
+    _kernel_factory: KernelFactoryProtocol | None = field(
         alias="kernel_or_factory",
         converter=pipe(  # type: ignore[misc]
             Converter(_mark_custom_kernel, takes_self=True),  # type: ignore[call-overload]
@@ -223,17 +223,11 @@ class GaussianProcessSurrogate(Surrogate):
             ),
         ),
         default=None,
+        repr=False,
         validator=optional(is_callable()),
     )
-    """The factory used to create the kernel for the Gaussian process.
 
-    Accepts:
-        * :class:`baybe.kernels.base.Kernel`
-        * :class:`.components.kernel.KernelFactory`
-        * :class:`gpytorch.kernels.Kernel`
-    """
-
-    mean_factory: MeanFactoryProtocol | None = field(
+    _mean_factory: MeanFactoryProtocol | None = field(
         alias="mean_or_factory",
         default=None,
         converter=lambda v: (
@@ -241,16 +235,11 @@ class GaussianProcessSurrogate(Surrogate):
             if v is None
             else to_component_factory(v, component_type=GPComponentType.MEAN)
         ),
+        repr=False,
         validator=optional(is_callable()),
     )
-    """The factory used to create the mean function for the Gaussian process.
 
-    Accepts:
-        * :class:`.components.mean.MeanFactory`
-        * :class:`gpytorch.means.Mean`
-    """
-
-    likelihood_factory: LikelihoodFactoryProtocol | None = field(
+    _likelihood_factory: LikelihoodFactoryProtocol | None = field(
         alias="likelihood_or_factory",
         default=None,
         converter=lambda v: (
@@ -258,16 +247,11 @@ class GaussianProcessSurrogate(Surrogate):
             if v is None
             else to_component_factory(v, component_type=GPComponentType.LIKELIHOOD)
         ),
+        repr=False,
         validator=optional(is_callable()),
     )
-    """The factory used to create the likelihood for the Gaussian process.
 
-    Accepts:
-        * :class:`.components.likelihood.LikelihoodFactory`
-        * :class:`gpytorch.likelihoods.Likelihood`
-    """
-
-    fit_criterion_factory: FitCriterionFactoryProtocol | None = field(
+    _fit_criterion_factory: FitCriterionFactoryProtocol | None = field(
         alias="fit_criterion_or_factory",
         default=None,
         converter=lambda v: (
@@ -275,17 +259,53 @@ class GaussianProcessSurrogate(Surrogate):
             if v is None
             else to_component_factory(v, component_type=GPComponentType.CRITERION)
         ),
+        repr=False,
         validator=optional(is_callable()),
     )
-    """The fitting criterion for Gaussian process hyperparameter optimization.
-
-    Accepts:
-        * :class:`.components.fit_criterion.FitCriterion`
-        * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
-    """
 
     _inner: _GaussianProcessSurrogate | None = field(init=False, default=None, eq=False)
     """The fitted internal model instance. Available after fitting."""
+
+    @property
+    def fit_criterion_factory(self) -> FitCriterionFactoryProtocol:
+        """The fitting criterion for Gaussian process hyperparameter optimization.
+
+        Accepts:
+            * :class:`.components.fit_criterion.FitCriterion`
+            * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
+        """
+        return self._fit_criterion_factory or BayBEFitCriterionFactory()
+
+    @property
+    def kernel_factory(self) -> KernelFactoryProtocol:
+        """The factory used to create the kernel for the Gaussian process.
+
+        Accepts:
+            * :class:`baybe.kernels.base.Kernel`
+            * :class:`.components.kernel.KernelFactory`
+            * :class:`gpytorch.kernels.Kernel`
+        """
+        return self._kernel_factory or BayBEKernelFactory()
+
+    @property
+    def likelihood_factory(self) -> LikelihoodFactoryProtocol:
+        """The factory used to create the likelihood for the Gaussian process.
+
+        Accepts:
+            * :class:`.components.likelihood.LikelihoodFactory`
+            * :class:`gpytorch.likelihoods.Likelihood`
+        """
+        return self._likelihood_factory or BayBELikelihoodFactory()
+
+    @property
+    def mean_factory(self) -> MeanFactoryProtocol:
+        """The factory used to create the mean function for the Gaussian process.
+
+        Accepts:
+            * :class:`.components.mean.MeanFactory`
+            * :class:`gpytorch.means.Mean`
+        """
+        return self._mean_factory or BayBEMeanFactory()
 
     @classmethod
     def from_preset(
@@ -372,25 +392,21 @@ class GaussianProcessSurrogate(Surrogate):
             )
 
         ### Component resolution
-        mean_factory = self.mean_factory or BayBEMeanFactory()
-        mean = mean_factory(
+        mean = self.mean_factory(
             context.searchspace, context.objective, context.measurements
         )
 
-        kernel_factory = self.kernel_factory or BayBEKernelFactory()
-        kernel = kernel_factory(
+        kernel = self.kernel_factory(
             context.searchspace, context.objective, context.measurements
         )
         if isinstance(kernel, Kernel):
             kernel = kernel.to_gpytorch(searchspace=context.searchspace)
 
-        likelihood_factory = self.likelihood_factory or BayBELikelihoodFactory()
-        likelihood = likelihood_factory(
+        likelihood = self.likelihood_factory(
             context.searchspace, context.objective, context.measurements
         )
 
-        fit_criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
-        criterion = fit_criterion_factory(
+        criterion = self.fit_criterion_factory(
             context.searchspace, context.objective, context.measurements
         )
 
