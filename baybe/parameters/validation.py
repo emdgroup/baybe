@@ -6,21 +6,6 @@ from attrs import Attribute
 from attrs.validators import gt, instance_of, lt
 
 
-def validate_unique_values(  # noqa: DOC101, DOC103
-    obj: Any, _: Attribute, value: Any
-) -> None:
-    """Validate that there are no duplicates in ``value``.
-
-    Raises:
-        ValueError: If there are duplicates in ``value``.
-    """
-    if len(set(value)) != len(value):
-        raise ValueError(
-            f"Cannot assign the following values containing duplicates to "
-            f"parameter {obj.name}: {value}."
-        )
-
-
 def validate_decorrelation(obj: Any, attribute: Attribute, value: Any) -> None:
     """Validate the decorrelation."""
     instance_of((bool, float))(obj, attribute, value)

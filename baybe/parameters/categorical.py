@@ -11,9 +11,9 @@ from typing_extensions import override
 
 from baybe.parameters.base import _DiscreteLabelLikeParameter
 from baybe.parameters.enum import CategoricalEncoding
-from baybe.parameters.validation import validate_unique_values
 from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple, sort_tuple
+from baybe.utils.validation import validate_unique_values
 
 
 def _validate_label_min_len(self, attr, value) -> None:

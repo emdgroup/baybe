@@ -18,13 +18,12 @@ from attrs.validators import optional as optional_v
 from numpy.typing import ArrayLike
 from typing_extensions import override
 
-from baybe.parameters.validation import validate_unique_values
 from baybe.serialization import (
     SerialMixin,
 )
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
-from baybe.utils.validation import finite_float
+from baybe.utils.validation import finite_float, validate_unique_values
 
 if TYPE_CHECKING:
     import polars as pl
