@@ -5,7 +5,6 @@ from __future__ import annotations
 import gc
 import importlib
 import os
-from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
@@ -222,7 +221,11 @@ class GaussianProcessSurrogate(Surrogate):
         alias="kernel_or_factory",
         converter=pipe(  # type: ignore[misc]
             Converter(_mark_custom_kernel, takes_self=True),  # type: ignore[call-overload]
-            partial(to_component_factory, component_type=GPComponentType.KERNEL),
+            lambda v: (
+                None
+                if v is None
+                else to_component_factory(v, component_type=GPComponentType.KERNEL)
+            ),
         ),
         default=None,
         validator=optional(is_callable()),
@@ -238,7 +241,11 @@ class GaussianProcessSurrogate(Surrogate):
     mean_factory: MeanFactoryProtocol | None = field(
         alias="mean_or_factory",
         default=None,
-        converter=partial(to_component_factory, component_type=GPComponentType.MEAN),  # type: ignore[misc]
+        converter=lambda v: (
+            None
+            if v is None
+            else to_component_factory(v, component_type=GPComponentType.MEAN)
+        ),
         validator=optional(is_callable()),
     )
     """The factory used to create the mean function for the Gaussian process.
@@ -251,8 +258,10 @@ class GaussianProcessSurrogate(Surrogate):
     likelihood_factory: LikelihoodFactoryProtocol | None = field(
         alias="likelihood_or_factory",
         default=None,
-        converter=partial(  # type: ignore[misc]
-            to_component_factory, component_type=GPComponentType.LIKELIHOOD
+        converter=lambda v: (
+            None
+            if v is None
+            else to_component_factory(v, component_type=GPComponentType.LIKELIHOOD)
         ),
         validator=optional(is_callable()),
     )
@@ -266,8 +275,10 @@ class GaussianProcessSurrogate(Surrogate):
     fit_criterion_factory: FitCriterionFactoryProtocol | None = field(
         alias="fit_criterion_or_factory",
         default=None,
-        converter=partial(  # type: ignore[misc]
-            to_component_factory, component_type=GPComponentType.CRITERION
+        converter=lambda v: (
+            None
+            if v is None
+            else to_component_factory(v, component_type=GPComponentType.CRITERION)
         ),
         validator=optional(is_callable()),
     )
