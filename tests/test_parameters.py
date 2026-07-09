@@ -87,6 +87,17 @@ def test_comp_df_custom():
     assert_frame_equal(p.comp_df, expected)
 
 
+def test_comp_df_custom_decorrelation():
+    """CustomDiscreteParameter drops correlated columns when decorrelate=True."""
+    data = pd.DataFrame(
+        # d2 = 2*d1 (perfectly correlated with d1), d3 independent
+        {"d1": [1.0, 2.0, 3.0], "d2": [2.0, 4.0, 6.0], "d3": [1.0, 4.0, 2.0]},
+        index=["A", "B", "C"],
+    )
+    p = CustomDiscreteParameter(name="mol", data=data, decorrelate=True)
+    assert tuple(p.comp_df.columns) == ("mol_d1", "mol_d3")
+
+
 @pytest.mark.skipif(
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
@@ -100,3 +111,14 @@ def test_comp_df_substance():
     comp = p.comp_df
     assert list(comp.index) == list(p.values)
     assert all(col.startswith("solvent_") for col in comp.columns)
+
+
+@pytest.mark.skipif(
+    not CHEM_INSTALLED, reason="Optional chem dependency not installed."
+)
+def test_comp_df_substance_decorrelation():
+    """SubstanceParameter drops correlated columns when decorrelate=True."""
+    data = {"water": "O", "ethanol": "CCO", "methanol": "CO"}
+    p_raw = SubstanceParameter(name="solvent", data=data, decorrelate=False)
+    p_decorr = SubstanceParameter(name="solvent", data=data, decorrelate=True)
+    assert len(p_decorr.comp_df.columns) < len(p_raw.comp_df.columns)
