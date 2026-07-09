@@ -186,10 +186,6 @@ class _GaussianProcessSurrogate:
         mll = self.criterion.to_gpytorch(self._model.likelihood, self._model)
         botorch.fit.fit_gpytorch_mll(mll)
 
-    def to_botorch(self) -> GPyTorchModel:
-        """Return the fitted BoTorch model."""
-        return self._model
-
 
 @define
 class GaussianProcessSurrogate(Surrogate):
