@@ -35,11 +35,7 @@ class _ParameterKind(Flag):
         return _ParameterKind.REGULAR
 
 
-class ParameterEncoding(Enum):
-    """Generic base class for all parameter encodings."""
-
-
-class CategoricalEncoding(ParameterEncoding):
+class CategoricalEncoding(Enum):
     """Available encodings for categorical parameters."""
 
     OHE = "OHE"
@@ -49,14 +45,14 @@ class CategoricalEncoding(ParameterEncoding):
     """Integer encoding."""
 
 
-class CustomEncoding(ParameterEncoding):
+class CustomEncoding(Enum):
     """Available encodings for custom parameters."""
 
     CUSTOM = "CUSTOM"
     """User-defined encoding."""
 
 
-class SubstanceEncoding(ParameterEncoding):
+class SubstanceEncoding(Enum):
     """Available encodings for substance parameters from
     `scikit-fingerprints <https://scikit-fingerprints.readthedocs.io/>`_ package.
     """  # noqa: D205
