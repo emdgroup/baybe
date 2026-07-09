@@ -173,8 +173,8 @@ class DiscreteParameter(Parameter, ABC):
 
 
 @define(frozen=True, slots=False)
-class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
-    """Abstract class for discrete label-like parameters.
+class _EncodedDiscreteParameter(DiscreteParameter, ABC):
+    """Abstract class for encoded discrete parameters.
 
     In general, these are parameters with non-numerical experimental representations.
     """

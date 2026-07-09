@@ -10,7 +10,7 @@ from attrs import define, field
 from attrs.validators import min_len
 from typing_extensions import override
 
-from baybe.parameters.base import _DiscreteLabelLikeParameter
+from baybe.parameters.base import _EncodedDiscreteParameter
 from baybe.parameters.validation import validate_decorrelation
 from baybe.settings import active_settings
 from baybe.utils.boolean import eq_dataframe
@@ -18,7 +18,7 @@ from baybe.utils.dataframe import df_uncorrelated_features
 
 
 @define(frozen=True, slots=False)
-class CustomDiscreteParameter(_DiscreteLabelLikeParameter):
+class CustomDiscreteParameter(_EncodedDiscreteParameter):
     """Custom parameters.
 
     For these parameters, the user can read in a precomputed representation for labels,
