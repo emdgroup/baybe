@@ -399,15 +399,16 @@ class GaussianProcessSurrogate(Surrogate):
         )
 
         ### Create internal instance with resolved components and delegate fitting
-        self._inner = _GaussianProcessSurrogate(
+        inner = _GaussianProcessSurrogate(
             kernel=kernel, mean=mean, likelihood=likelihood, criterion=criterion
         )
-        self._inner.fit(
+        inner.fit(
             train_x,
             train_y,
             parameter_bounds=context.parameter_bounds,
             numerical_indices=context.numerical_indices,
         )
+        self._inner = inner
 
     @override
     def __str__(self) -> str:
