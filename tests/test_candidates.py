@@ -78,6 +78,15 @@ def test_table_candidates_empty_rows():
     assert len(candidates_df) == 0
 
 
+def test_table_candidates_duplicate_rows():
+    """TableCandidates raises an error when the dataframe contains duplicate rows."""
+    parameters = [p_disc, p_cat]
+    data = create_fake_input(parameters, [], n_rows=1)
+    duplicate_data = pd.concat([data, data.iloc[[0]]], ignore_index=True)
+    with pytest.raises(ValueError, match="duplicate parameter configurations"):
+        TableCandidates(parameters, duplicate_data)
+
+
 @pytest.mark.parametrize(
     ("parameters", "dataframe", "error"),
     [

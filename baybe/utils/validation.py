@@ -152,6 +152,7 @@ def validate_parameter_input(
     *,
     allow_extra: bool = True,
     allow_empty: bool = False,
+    allow_duplicates: bool = False,
 ) -> None:
     """Validate input dataframe columns corresponding to parameters.
 
@@ -165,12 +166,17 @@ def validate_parameter_input(
             do not correspond to any parameter.
         allow_empty: If ``True``, an empty dataframe with the correct columns is
             accepted. If ``False``, an empty dataframe always raises.
+        allow_duplicates: If ``False``, the dataframe is not allowed to contain
+            duplicate parameter configurations (i.e., rows where the corresponding
+            parameter values coincide).
 
     Raises:
         ValueError: If the data is empty and ``allow_empty`` is ``False``.
         ValueError: If the data misses columns for a parameter.
         ValueError: If the data contains columns that do not correspond to any parameter
             and the corresponding check is enabled.
+        ValueError: If the data contains duplicate parameter configurations and the
+            corresponding check is enabled.
         ValueError: If a parameter contains NaN.
         TypeError: If a parameter contains non-numeric values.
     """
@@ -224,6 +230,14 @@ def validate_parameter_input(
                     f"to 'False' to disable this behavior."
                 )
 
+    if (
+        not allow_duplicates
+        and data.duplicated(subset=[p.name for p in parameters]).any()
+    ):
+        raise ValueError(
+            "The input dataframe must not contain duplicate parameter configurations."
+        )
+
 
 def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
     """Validate that the provided objects have unique names.
@@ -270,7 +284,10 @@ def preprocess_dataframe(
         return df
 
     validate_parameter_input(
-        df, searchspace.parameters, numerical_measurements_must_be_within_tolerance
+        df,
+        searchspace.parameters,
+        numerical_measurements_must_be_within_tolerance,
+        allow_duplicates=True,
     )
     if objective is not None:
         targets = objective.targets
