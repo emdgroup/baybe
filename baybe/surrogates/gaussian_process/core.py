@@ -85,6 +85,14 @@ class _ModelContext:
         return self.searchspace.task_idx
 
     @property
+    def tl_override(self) -> TransferLearningMode | None:
+        """The task parameter's transfer learning override, if any."""
+        task_param = self.searchspace._task_parameter
+        return (
+            None if task_param is None else task_param.override_transfer_learning_mode
+        )
+
+    @property
     def is_multitask(self) -> bool:
         """Indicates if model is to be operated in a multi-task context."""
         return self.n_task_dimensions > 0
@@ -348,11 +356,9 @@ class GaussianProcessSurrogate(Surrogate):
 
         searchspace = context.searchspace
         task_param = searchspace._task_parameter
+        tl_override = context.tl_override
 
-        if (
-            task_param is None
-            or (tl_override := task_param.override_transfer_learning_mode) is None
-        ):
+        if task_param is None or tl_override is None:
             # No override: let the factory handle everything (default path)
             kernel = self.kernel_factory(
                 searchspace, context.objective, context.measurements
@@ -370,10 +376,6 @@ class GaussianProcessSurrogate(Surrogate):
         elif tl_override is TransferLearningMode.INDEX_KERNEL:
             task_kernel_spec = IndexKernel(
                 num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
-            )
-        else:
-            raise RuntimeError(
-                f"Unhandled '{TransferLearningMode.__name__}' '{tl_override.name}'."
             )
 
         # Default factory: reuse the ICM machinery on the full searchspace, which
@@ -450,11 +452,7 @@ class GaussianProcessSurrogate(Surrogate):
         # Check for custom kernel + multi-task clash (only relevant when no
         # override_transfer_learning_mode is set, since the override mechanism
         # handles task kernel attachment explicitly).
-        task_param = context.searchspace._task_parameter
-        has_tl_override = (
-            task_param is not None
-            and task_param.override_transfer_learning_mode is not None
-        )
+        has_tl_override = context.tl_override is not None
         if (
             context.is_multitask
             and self._custom_kernel
