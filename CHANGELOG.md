@@ -21,10 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in version `0.18.0`
 - The `BOTORCH` GP preset now requires BoTorch `>= 0.18.0` and raises an
   `IncompatibilityError` if an older version is installed
-- Minimum required polars version increased to `0.20.8`
 - `DiscreteSumConstraint`, `ContinuousLinearConstraint`, and
   `SubspaceDiscrete.from_simplex` now forbid 0 as coefficients
 - `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
+- Bumped polars to `>=0.20.8`
+- Bumped cattrs to `>=26.1.0`
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
