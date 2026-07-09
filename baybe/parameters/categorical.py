@@ -13,7 +13,7 @@ from baybe.parameters.base import _DiscreteLabelLikeParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
 from baybe.settings import active_settings
-from baybe.utils.conversion import normalize_convertible2str_sequence
+from baybe.utils.conversion import nonstring_to_tuple, sort_tuple
 
 
 def _validate_label_min_len(self, attr, value) -> None:
@@ -32,9 +32,10 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
     # object variables
     _values: tuple[str | bool, ...] = field(
         alias="values",
-        converter=Converter(  # type: ignore[misc,call-overload]
-            normalize_convertible2str_sequence, takes_self=True, takes_field=True
-        ),
+        converter=[  # type: ignore[misc]
+            Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
+            sort_tuple,
+        ],
         validator=(
             validate_unique_values,
             deep_iterable(

@@ -16,7 +16,7 @@ from typing_extensions import override
 from baybe.constraints.conditions import Condition
 from baybe.symmetries.base import Symmetry
 from baybe.utils.augmentation import df_apply_dependency_augmentation
-from baybe.utils.conversion import normalize_convertible2str_sequence
+from baybe.utils.conversion import nonstring_to_tuple, sort_tuple
 from baybe.utils.validation import validate_unique_values
 
 if TYPE_CHECKING:
@@ -42,9 +42,10 @@ class DependencySymmetry(Symmetry):
     """The condition specifying the active range of the causing parameter."""
 
     affected_parameter_names: tuple[str, ...] = field(
-        converter=Converter(  # type: ignore[misc,call-overload]
-            normalize_convertible2str_sequence, takes_self=True, takes_field=True
-        ),
+        converter=[  # type: ignore[misc]
+            Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
+            sort_tuple,
+        ],
         validator=(
             validate_unique_values,
             deep_iterable(
