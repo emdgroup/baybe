@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
+from narwhals.dependencies import is_into_series
 from narwhals.testing import assert_frame_equal
 
 from baybe._optional.info import CHEM_INSTALLED
@@ -31,6 +32,10 @@ def _nw_series(name, values):
     return nw.new_series(name=name, values=values, backend=pl)
 
 
+def _list(name, values):
+    return list(values)
+
+
 @pytest.mark.parametrize(
     ("index_select", "series_factory"),
     [
@@ -38,6 +43,7 @@ def _nw_series(name, values):
         pytest.param([-1, 0], _pd_series, id="partial_input-pd"),
         pytest.param([-1, 0], _pl_series, id="partial_input-pl"),
         pytest.param([-1, 0], _nw_series, id="partial_input-nw"),
+        pytest.param([-1, 0], _list, id="partial_input-list"),
     ],
 )
 @pytest.mark.parametrize(
@@ -137,18 +143,17 @@ def test_transform(param, expected, index_select, series_factory):
         positions = expected.index.get_indexer(labels).tolist()
 
         series = series_factory(param.name, labels)
-        expected_backend = nw.get_native_namespace(series)
         result = param.transform(series)
+        result_backend = nw.get_native_namespace(result)
 
-        with pytest.raises(ValueError, match="does not match parameter name"):
-            param.transform(series_factory("wrong name", labels))
+        if is_into_series(series):
+            assert result_backend is nw.get_native_namespace(series)
+            with pytest.raises(ValueError, match="does not match parameter name"):
+                param.transform(series_factory("wrong name", labels))
 
-        assert nw.get_native_namespace(result) is expected_backend
         assert_frame_equal(
             result.collect(),
-            nw.from_native(expected)[positions]
-            .lazy()
-            .collect(backend=expected_backend),
+            nw.from_native(expected)[positions].lazy().collect(backend=result_backend),
         )
 
     assert isinstance(result, nw.LazyFrame)
