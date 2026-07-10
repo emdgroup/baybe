@@ -53,7 +53,7 @@ def test_empty_candidates():
 def test_table_candidates_generation(dataframe_factory):
     """TableCandidates generates the expected lazy dataframe."""
     parameters = [p_disc, p_cat]
-    data = create_fake_input(parameters, [], n_rows=4)
+    data = pd.DataFrame({"disc": [1, 2], "cat": ["a", "b"]})
     df = dataframe_factory(data)
     candidates = TableCandidates(parameters, df)
     candidates_ldf = candidates.to_lazy()
