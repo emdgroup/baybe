@@ -5,6 +5,7 @@ from __future__ import annotations
 import gc
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import narwhals.stable.v2 as nw
@@ -12,6 +13,7 @@ import pandas as pd
 from attr.converters import optional as optional_c
 from attrs import Converter, define, field
 from attrs.validators import instance_of, min_len
+from narwhals.dependencies import is_into_series
 from typing_extensions import override
 
 from baybe.serialization import (
@@ -152,7 +154,9 @@ class DiscreteParameter(Parameter, ABC):
     def is_in_range(self, item: Any) -> bool:
         return item in self.values
 
-    def transform(self, series: nw.IntoSeries | None = None, /) -> nw.LazyFrame:
+    def transform(
+        self, series: nw.IntoSeries | Iterable[Any] | None = None, /
+    ) -> nw.LazyFrame:
         """Transform parameter values to computational representation.
 
         Args:
@@ -167,12 +171,16 @@ class DiscreteParameter(Parameter, ABC):
             ValueError: If the series name does not match the parameter name.
         """
         if series is not None:
-            series = nw.from_native(series, series_only=True)
-            if series.name != self.name:
-                raise ValueError(
-                    f"The provided series name '{series.name}' does not match "
-                    f"parameter name '{self.name}'."
-                )
+            if is_into_series(series):
+                series = nw.from_native(series, series_only=True)
+                if series.name != self.name:
+                    raise ValueError(
+                        f"The provided series name '{series.name}' does not match "
+                        f"parameter name '{self.name}'."
+                    )
+            else:
+                # TODO[narwhalify]: use settings-based backend selection
+                series = nw.new_series(name=self.name, values=series, backend=pd)
         return self._transform(series)
 
     @abstractmethod
