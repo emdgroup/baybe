@@ -46,6 +46,6 @@ def test_degenerate_comp_df():
     }
     p = SubstanceParameter(name="p", data=dict_base, encoding="RDKITFINGERPRINT")
 
-    assert not p.transform().duplicated().any(), (
+    assert not p.transform().collect().is_duplicated().any(), (
         "A degenerate computational representation was not correctly treated."
     )
