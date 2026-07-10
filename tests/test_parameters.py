@@ -93,60 +93,45 @@ if CHEM_INSTALLED:
             ),
             id="custom",
         ),
+        pytest.param(
+            SubstanceParameter(
+                name="solvent",
+                data={"water": "O", "ethanol": "CCO", "methanol": "CO"},
+                decorrelate=False,
+                active_values=["water"],
+            )
+            if CHEM_INSTALLED
+            else None,
+            None,  # expected computed at runtime from transform()
+            id="substance",
+            marks=pytest.mark.skipif(
+                not CHEM_INSTALLED, reason="Optional chem dependency not installed."
+            ),
+        ),
     ],
 )
 def test_transform(param, expected, index_select, backend):
     """Parameter encodings return the correct rows, index and backend."""
+    if expected is None:
+        assert isinstance(param, SubstanceParameter)
+        expected = param.transform().collect().to_pandas()
+        assert all(col.startswith(f"{param.name}_") for col in expected.columns)
+
     if index_select is None:
         assert_frame_equal(param.transform(), nw.from_native(expected).lazy())
     else:
         labels = list(expected.index[index_select])
+        positions = expected.index.get_indexer(labels).tolist()
 
         nw_series = nw.new_series(name=param.name, values=labels, backend=backend)
         result = param.transform(nw_series)
-        result_collected = result.collect()
-        result_ns = nw.get_native_namespace(result_collected)
-
-        assert result_ns is backend
-        positions = expected.index.get_indexer(labels).tolist()
-        assert_frame_equal(
-            result_collected,
-            nw.from_native(expected)[positions].lazy().collect(backend=result_ns),
-        )
-
-
-@pytest.mark.skipif(
-    not CHEM_INSTALLED, reason="Optional chem dependency not installed."
-)
-@pytest.mark.parametrize(
-    ("subset", "backend"),
-    [
-        pytest.param(None, None, id="no_input"),
-        pytest.param(["methanol", "water"], pd, id="partial_input-pandas"),
-        pytest.param(["methanol", "water"], pl, id="partial_input-polars"),
-        pytest.param(["ethanol", "water", "methanol"], pd, id="full_input"),
-    ],
-)
-def test_transform_substance(subset, backend):
-    """SubstanceParameter encoding returns the correct rows, index and backend."""
-    data = {"water": "O", "ethanol": "CCO", "methanol": "CO"}
-    p = SubstanceParameter(
-        name="solvent", data=data, decorrelate=False, active_values=["water"]
-    )
-    full = p.transform().collect()
-    if subset is None:
-        assert list(full.to_pandas().index) == list(p.values)
-        assert all(col.startswith("solvent_") for col in full.columns)
-    else:
-        nw_series = nw.new_series(name=p.name, values=subset, backend=backend)
-        result = p.transform(nw_series).collect()
         result_ns = nw.get_native_namespace(result)
 
+        assert isinstance(result, nw.LazyFrame)
         assert result_ns is backend
-        positions = full.to_pandas().index.get_indexer(subset).tolist()
         assert_frame_equal(
-            result,
-            full[positions].lazy().collect(backend=result_ns),
+            result.collect(),
+            nw.from_native(expected)[positions].lazy().collect(backend=result_ns),
         )
 
 
