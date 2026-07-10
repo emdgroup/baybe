@@ -10,6 +10,7 @@ from itertools import islice
 from math import prod
 from typing import TYPE_CHECKING, Any, Literal
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -648,7 +649,9 @@ class SubspaceDiscrete(SerialMixin):
         """The minimum and maximum values of the computational representation."""
         if not self.parameters:
             return pd.DataFrame(index=["min", "max"])
-        df = pd.concat([p.transform() for p in self.parameters], axis=1)
+        df = nw.concat(
+            [p.transform().collect() for p in self.parameters], how="horizontal"
+        ).to_pandas()
         return pd.DataFrame({"min": df.min(), "max": df.max()}).T
 
     @property
@@ -656,7 +659,11 @@ class SubspaceDiscrete(SerialMixin):
         """The bounds used for scaling the surrogate model input."""
         return (
             pd.concat(
-                [p.transform().agg(["min", "max"]) for p in self.parameters], axis=1
+                [
+                    p.transform().collect().to_pandas().agg(["min", "max"])
+                    for p in self.parameters
+                ],
+                axis=1,
             )
             if self.parameters
             else pd.DataFrame(index=["min", "max"])
@@ -676,7 +683,7 @@ class SubspaceDiscrete(SerialMixin):
         """
         # Compute the dataframe shapes
         n_cols_exp = len(parameters)
-        n_cols_comp = sum(p.transform().shape[1] for p in parameters)
+        n_cols_comp = sum(len(p.comp_rep_columns) for p in parameters)
         n_rows = prod(len(p.active_values) for p in parameters)
 
         # Comp rep space is estimated as the size of float times the number of matrix
@@ -844,9 +851,13 @@ class SubspaceDiscrete(SerialMixin):
         # Transform the parameters
         dfs = []
         for param in parameters:
-            comp_df = param.transform(df[param.name])
-            dfs.append(comp_df)
-        return pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
+            lazy = param.transform(nw.from_native(df[param.name], series_only=True))
+            dfs.append(lazy)
+        return (
+            nw.concat([lf.collect() for lf in dfs], how="horizontal").to_pandas()
+            if dfs
+            else pd.DataFrame()
+        )
 
     def get_parameters_by_name(
         self, names: Sequence[str]

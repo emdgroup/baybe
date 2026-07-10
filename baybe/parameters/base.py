@@ -7,6 +7,7 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attr.converters import optional as optional_c
 from attrs import Converter, define, field
@@ -139,7 +140,7 @@ class DiscreteParameter(Parameter, ABC):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.transform()
+        return self.transform().collect().to_pandas()
 
     def to_subspace(self) -> SubspaceDiscrete:
         """Create a one-dimensional search space from the parameter."""
@@ -152,7 +153,7 @@ class DiscreteParameter(Parameter, ABC):
         return item in self.values
 
     @abstractmethod
-    def transform(self, series: pd.Series | None = None, /) -> pd.DataFrame:
+    def transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
         """Transform parameter values to computational representation.
 
         Args:
@@ -161,7 +162,7 @@ class DiscreteParameter(Parameter, ABC):
                 for all parameter values is returned.
 
         Returns:
-            A dataframe containing the transformed values.
+            A lazy frame containing the transformed values.
         """
 
     @override
@@ -216,17 +217,22 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
         return tuple(self._comp_df.columns)
 
     @override
-    def transform(self, series: pd.Series | None = None, /) -> pd.DataFrame:
+    def transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
         # TODO: Refactor this workaround once the parameter logic has been decoupled
         #  from comp_df materialization.
         if not hasattr(self, "_comp_df"):
             raise NotImplementedError()
 
         if series is None:
-            return self._comp_df
-        # NOTE: reindex is used instead of loc because the input series may contain
-        #   Booleans, which would result in wrong indexing
-        return self._comp_df.reindex(series.to_numpy()).set_index(series.index)
+            return nw.from_native(self._comp_df).lazy()
+
+        # We use pandas because _comp_df is a pandas-native workaround.
+        # We use reindex instead of loc because the input series may contain Booleans,
+        # which would result in wrong indexing.
+        pd_series = series.to_pandas()
+        return nw.from_native(
+            self._comp_df.reindex(pd_series.to_numpy()).set_index(pd_series.index)
+        ).lazy()
 
     @_active_values.validator
     def _validate_active_values(  # noqa: DOC101, DOC103

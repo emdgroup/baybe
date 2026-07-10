@@ -4,6 +4,7 @@ import gc
 from typing import Any, ClassVar
 
 import cattrs
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from attrs import define, field
@@ -97,10 +98,16 @@ class NumericalDiscreteParameter(DiscreteParameter):
         return (self.name,)
 
     @override
-    def transform(self, series: pd.Series | None = None, /) -> pd.DataFrame:
+    def transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
+        # TODO[narwhalify]: use settings-based backend selection
         if series is None:
-            series = pd.Series(self.values, index=self.values, name=self.name)
-        return series.to_frame().astype(active_settings.DTypeFloatNumpy)
+            pd_series = pd.Series(self.values, index=self.values, name=self.name)
+            return nw.from_native(
+                pd_series.to_frame().astype(active_settings.DTypeFloatNumpy)
+            ).lazy()
+
+        # TODO[narwhalify]: avoid hard-coded float type
+        return series.cast(nw.Float64).to_frame().lazy()
 
     @override
     def is_in_range(self, item: float) -> bool:

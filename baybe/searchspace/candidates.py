@@ -56,7 +56,7 @@ class EmptyCandidates(CandidatesProtocol):
 
     @override
     def to_lazy(self) -> nw.LazyFrame:
-        # TODO: Replace hard-coded pandas type with `Settings`-based approach
+        # TODO[narwhalify]: use settings-based backend selection
         import pandas as pd
 
         return nw.from_native(pd.DataFrame()).lazy()

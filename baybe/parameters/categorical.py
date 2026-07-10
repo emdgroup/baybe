@@ -2,6 +2,7 @@
 
 import gc
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from attrs import Converter, define, field
@@ -71,36 +72,48 @@ class CategoricalParameter(_EncodedDiscreteParameter):
                 f"{self.name}_{'b' if isinstance(val, bool) else ''}{val}"
                 for val in self.values
             )
-
         if self.encoding is CategoricalEncoding.INT:
             return (self.name,)
 
         assert_never(self.encoding)
 
     @override
-    def transform(self, series: pd.Series | None = None, /) -> pd.DataFrame:
-        vals = self.values if series is None else series.to_numpy()
-        index = pd.Index(self.values) if series is None else series.index
+    def transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
+        # TODO[narwhalify]: use settings-based backend selection
+        if series is None:
+            series = nw.from_native(
+                pd.Series(self.values, index=self.values, name=self.name),
+                series_only=True,
+            )
 
         if self.encoding is CategoricalEncoding.OHE:
+            # Create OHE representation
+            vals = series.to_numpy()
+            ns = nw.get_native_namespace(series)
             positions = {v: i for i, v in enumerate(self.values)}
             data = np.zeros(
                 (len(vals), len(self.values)), dtype=active_settings.DTypeFloatNumpy
             )
             for row, val in enumerate(vals):
                 data[row, positions[val]] = 1.0
-            return pd.DataFrame(data, index=index, columns=list(self.comp_rep_columns))
+            result = nw.from_numpy(data, schema=list(self.comp_rep_columns), backend=ns)
+
+            # Special handling for pandas backend to preserve index
+            # TODO[narwhalify]: needs to be dropped once we ingore indices in general
+            if ns is pd:
+                native = result.to_native()
+                native.index = series.to_pandas().index
+                result = nw.from_native(native)
+
+            return result.lazy()
 
         if self.encoding is CategoricalEncoding.INT:
-            mapping = {v: i for i, v in enumerate(self.values)}
-            return pd.DataFrame(
-                {
-                    self.name: pd.array(
-                        [mapping[v] for v in vals],
-                        dtype=active_settings.DTypeFloatNumpy,
-                    )
-                },
-                index=index,
+            # TODO[narwhalify]: avoid hard-coded float type
+            mapping = {v: float(i) for i, v in enumerate(self.values)}
+            return (
+                series.replace_strict(mapping, return_dtype=nw.Float64)
+                .to_frame()
+                .lazy()
             )
 
         assert_never(self.encoding)
