@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.batch_constraints` field for storing batch-level constraints
 - `SubspaceDiscrete.from_dataframe` now accepts `batch_constraints`
 - `validate_parameter_input` now accepts an `allow_empty` flag to permit zero-row input
+- `DiscreteParameter.transform` narwhalified: now accepts `narwhals`-compatible series,
+  arbitrary iterables, or `None`
 
 ### Changed
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
@@ -55,9 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   argument passing between methods
 - The `encoding` attribute has been removed from `DiscreteParameter` base class and
   now only exists on concrete subclasses that actually use it
-- `DiscreteParameter.transform` narwhalified: now accepts `narwhals`-compatible series,
-  arbitrary iterables, or `None`, and returns a `nw.LazyFrame` instead of a
-  `pd.DataFrame`
 - Passing a series to `DiscreteParameter.transform` whose name does not match the
   parameter name now raises a `ValueError`
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance

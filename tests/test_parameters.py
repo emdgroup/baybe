@@ -8,7 +8,7 @@ import pandas as pd
 import polars as pl
 import pytest
 from narwhals.dependencies import is_into_series
-from narwhals.testing import assert_frame_equal
+from narwhals.typing import IntoFrame
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.categorical import CategoricalParameter
@@ -18,6 +18,20 @@ from baybe.settings import active_settings
 
 if CHEM_INSTALLED:
     from baybe.parameters.substance import SubstanceParameter
+
+
+def _to_pd(frame: IntoFrame) -> pd.DataFrame:
+    """Normalize any native frame to pandas."""
+    return nw.from_native(frame).lazy().collect(backend=pd).to_native()
+
+
+def assert_frame_equal(left: IntoFrame, right: IntoFrame, **kwargs) -> None:
+    """Cross-backend frame equality assertion via pandas normalization."""
+    pd.testing.assert_frame_equal(
+        _to_pd(left).reset_index(drop=True),
+        _to_pd(right).reset_index(drop=True),
+        **kwargs,
+    )
 
 
 def _pd_series(name, values):
@@ -132,31 +146,25 @@ def test_transform(param, expected, index_select, series_factory):
     """Parameter encodings return the correct rows, index and backend."""
     if expected is None:
         assert isinstance(param, SubstanceParameter)
-        expected = param.transform().collect().to_pandas()
+        expected = param.transform()
         assert all(col.startswith(f"{param.name}_") for col in expected.columns)
 
     if index_select is None:
         result = param.transform()
-        assert_frame_equal(result, nw.from_native(expected).lazy())
+        assert_frame_equal(result, expected)
     else:
         labels = list(expected.index[index_select])
         positions = expected.index.get_indexer(labels).tolist()
 
         series = series_factory(param.name, labels)
         result = param.transform(series)
-        result_backend = nw.get_native_namespace(result)
 
         if is_into_series(series):
-            assert result_backend is nw.get_native_namespace(series)
+            assert nw.get_native_namespace(result) is nw.get_native_namespace(series)
             with pytest.raises(ValueError, match="does not match parameter name"):
                 param.transform(series_factory("wrong name", labels))
 
-        assert_frame_equal(
-            result.collect(),
-            nw.from_native(expected)[positions].lazy().collect(backend=result_backend),
-        )
-
-    assert isinstance(result, nw.LazyFrame)
+        assert_frame_equal(result, nw.from_native(expected)[positions])
 
 
 def test_decorrelation_custom():
@@ -167,7 +175,7 @@ def test_decorrelation_custom():
         index=["A", "B", "C"],
     )
     p = CustomDiscreteParameter(name="mol", data=data, decorrelate=True)
-    assert tuple(p.transform().collect_schema().names()) == ("mol_d1", "mol_d3")
+    assert tuple(p.transform().columns) == ("mol_d1", "mol_d3")
 
 
 @pytest.mark.skipif(
@@ -178,6 +186,4 @@ def test_decorrelation_substance():
     data = {"water": "O", "ethanol": "CCO", "methanol": "CO"}
     p_raw = SubstanceParameter(name="solvent", data=data, decorrelate=False)
     p_decorr = SubstanceParameter(name="solvent", data=data, decorrelate=True)
-    assert len(p_decorr.transform().collect_schema().names()) < len(
-        p_raw.transform().collect_schema().names()
-    )
+    assert len(p_decorr.transform().columns) < len(p_raw.transform().columns)

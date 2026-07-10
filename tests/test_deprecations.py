@@ -1028,4 +1028,4 @@ def test_deprecated_comp_df(param):
     """Accessing ``comp_df`` on any discrete parameter emits a deprecation warning."""
     with pytest.warns(DeprecationWarning, match="comp_df"):
         result = param.comp_df
-    assert_frame_equal(result, param.transform().collect().to_pandas())
+    assert_frame_equal(result, param.transform())

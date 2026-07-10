@@ -6,7 +6,7 @@ import gc
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import narwhals.stable.v2 as nw
 import pandas as pd
@@ -23,6 +23,10 @@ from baybe.utils.conversion import nonstring_to_tuple
 from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 if TYPE_CHECKING:
+    from typing import Any
+
+    from narwhals.typing import IntoFrame
+
     from baybe.parameters.enum import _ParameterKind
     from baybe.searchspace.continuous import SubspaceContinuous
     from baybe.searchspace.core import SearchSpace
@@ -142,7 +146,7 @@ class DiscreteParameter(Parameter, ABC):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.transform().collect().to_pandas()
+        return self._transform().collect().to_pandas()
 
     def to_subspace(self) -> SubspaceDiscrete:
         """Create a one-dimensional search space from the parameter."""
@@ -156,7 +160,7 @@ class DiscreteParameter(Parameter, ABC):
 
     def transform(
         self, series: nw.IntoSeries | Iterable[Any] | None = None, /
-    ) -> nw.LazyFrame:
+    ) -> IntoFrame:
         """Transform parameter values to computational representation.
 
         Args:
@@ -165,7 +169,8 @@ class DiscreteParameter(Parameter, ABC):
                 for all parameter values is returned.
 
         Returns:
-            A lazy frame containing the transformed values.
+            A native frame containing the transformed values, in the same backend as the
+            input series.
 
         Raises:
             ValueError: If the series name does not match the parameter name.
@@ -181,7 +186,7 @@ class DiscreteParameter(Parameter, ABC):
             else:
                 # TODO[narwhalify]: use settings-based backend selection
                 series = nw.new_series(name=self.name, values=series, backend=pd)
-        return self._transform(series)
+        return self._transform(series).to_native()
 
     @abstractmethod
     def _transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
