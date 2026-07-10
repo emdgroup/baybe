@@ -152,7 +152,7 @@ class DiscreteParameter(Parameter, ABC):
     def is_in_range(self, item: Any) -> bool:
         return item in self.values
 
-    def transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
+    def transform(self, series: nw.IntoSeries | None = None, /) -> nw.LazyFrame:
         """Transform parameter values to computational representation.
 
         Args:
@@ -166,11 +166,13 @@ class DiscreteParameter(Parameter, ABC):
         Raises:
             ValueError: If the series name does not match the parameter name.
         """
-        if series is not None and series.name != self.name:
-            raise ValueError(
-                f"The provided series name '{series.name}' does not match "
-                f"parameter name '{self.name}'."
-            )
+        if series is not None:
+            series = nw.from_native(series, series_only=True)
+            if series.name != self.name:
+                raise ValueError(
+                    f"The provided series name '{series.name}' does not match "
+                    f"parameter name '{self.name}'."
+                )
         return self._transform(series)
 
     @abstractmethod
