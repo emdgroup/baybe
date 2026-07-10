@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SearchSpace.sample_subsets`
 - `SubspaceDiscrete.get_candidates` now returns only the experimental representation
   instead of a tuple of experimental and computational representations
+- Optional/secondary fields of discrete parameter classes are now keyword-only
 
 ### Added
 - `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
@@ -52,6 +53,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and batch constraints (stored in `batch_constraints`)
 - Internal search space and recommender logic simplified by reducing indirection and
   argument passing between methods
+- The `encoding` attribute has been removed from `DiscreteParameter` base class and
+  now only exists on concrete subclasses that actually use it
+- `DiscreteParameter.transform` narhwalified: now accepts `narwhals`-compatible series,
+  arbitrary iterables, or `None`, and returns a `nw.LazyFrame` instead of a
+  `pd.DataFrame`
+- Passing a series to `DiscreteParameter.transform` whose name does not match the
+  parameter name now raises a `ValueError`
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
   kernel in multi-task scenarios, matching BoTorch's `MultiTaskGP` defaults introduced
   in version `0.18.0`
@@ -63,11 +71,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped polars to `>=0.20.8`
 - Bumped cattrs to `>=26.1.0`
 
-
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
+- Missing validators and converters were added to several parameter fields
+- `validate_parameter_input` no longer uses row-by-row iteration, fixing a significant
+  performance problem for large candidate sets 
 
 ### Deprecations
+- `DiscreteParameter.comp_df` property (use `transform()` instead)
+- `CustomEncoding` enum class
 - `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
 - `SubspaceDiscrete(parameters, exp_rep)` constructor call style
   (use `SubspaceDiscrete.from_dataframe(parameters, exp_rep)` or
