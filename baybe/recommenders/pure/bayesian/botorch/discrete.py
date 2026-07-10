@@ -11,6 +11,7 @@ import pandas as pd
 from attrs import evolve
 
 from baybe.searchspace import SubspaceDiscrete
+from baybe.searchspace.candidates import TableCandidates
 from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
@@ -57,7 +58,13 @@ def recommend_discrete_with_subsets(
         mask: np.ndarray,
     ) -> Callable[[], tuple[pd.DataFrame, Tensor]]:
         def optimize() -> tuple[pd.DataFrame, Tensor]:
-            subset_subspace = evolve(subspace_discrete, exp_rep=candidates.loc[mask])
+            # TODO: Replace with .filter() method to avoid materialization
+            subset_subspace = evolve(
+                subspace_discrete,
+                candidates=TableCandidates(
+                    subspace_discrete.parameters, candidates.loc[mask]
+                ),
+            )
 
             rec = recommend_discrete_without_subsets(
                 recommender, subset_subspace, batch_size

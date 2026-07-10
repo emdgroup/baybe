@@ -127,7 +127,11 @@ def make_base_structure_hook(base: type[_T]):
     def structure_base(val: dict[str, Any] | str, cls: type[_T]) -> _T:
         # Extract the type information from the given input and find
         # the corresponding class in the hierarchy
-        type_ = val if isinstance(val, str) else val.pop(_TYPE_FIELD)
+        if isinstance(val, str):
+            type_ = val
+        else:
+            val = val.copy()
+            type_ = val.pop(_TYPE_FIELD)
         subclass = find_subclass(base, type_)
 
         # Preserve generic type parameters from the abstract base class:

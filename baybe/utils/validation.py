@@ -151,6 +151,8 @@ def validate_parameter_input(
     numerical_measurements_must_be_within_tolerance: bool = False,
     *,
     allow_extra: bool = True,
+    allow_empty: bool = False,
+    allow_duplicates: bool = False,
 ) -> None:
     """Validate input dataframe columns corresponding to parameters.
 
@@ -162,16 +164,23 @@ def validate_parameter_input(
             parameter-specific tolerance.
         allow_extra: If ``False``, the dataframe is not allowed to contain columns that
             do not correspond to any parameter.
+        allow_empty: If ``True``, an empty dataframe with the correct columns is
+            accepted. If ``False``, an empty dataframe always raises.
+        allow_duplicates: If ``False``, the dataframe is not allowed to contain
+            duplicate parameter configurations (i.e., rows where the corresponding
+            parameter values coincide).
 
     Raises:
-        ValueError: If the data is empty.
+        ValueError: If the data is empty and ``allow_empty`` is ``False``.
         ValueError: If the data misses columns for a parameter.
         ValueError: If the data contains columns that do not correspond to any parameter
             and the corresponding check is enabled.
+        ValueError: If the data contains duplicate parameter configurations and the
+            corresponding check is enabled.
         ValueError: If a parameter contains NaN.
         TypeError: If a parameter contains non-numeric values.
     """
-    if data.empty:
+    if data.empty and not allow_empty:
         raise ValueError("The provided input dataframe cannot be empty.")
 
     if missing := {p.name for p in parameters} - set(data.columns):
@@ -185,6 +194,9 @@ def validate_parameter_input(
             f"The input dataframe contains columns that do not correspond to any "
             f"parameter: {extra}"
         )
+
+    if data.empty:
+        return
 
     for p in parameters:
         if data[p.name].isna().any():
@@ -217,6 +229,14 @@ def validate_parameter_input(
                     f"the flag 'numerical_measurements_must_be_within_tolerance' "
                     f"to 'False' to disable this behavior."
                 )
+
+    if (
+        not allow_duplicates
+        and data.duplicated(subset=[p.name for p in parameters]).any()
+    ):
+        raise ValueError(
+            "The input dataframe must not contain duplicate parameter configurations."
+        )
 
 
 def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
@@ -264,7 +284,10 @@ def preprocess_dataframe(
         return df
 
     validate_parameter_input(
-        df, searchspace.parameters, numerical_measurements_must_be_within_tolerance
+        df,
+        searchspace.parameters,
+        numerical_measurements_must_be_within_tolerance,
+        allow_duplicates=True,
     )
     if objective is not None:
         targets = objective.targets

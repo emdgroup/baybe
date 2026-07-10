@@ -1,11 +1,11 @@
 """Candidates module for managing lazy candidate generation."""
 
 import gc
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 import narwhals.stable.v2 as nw
 from attr.validators import deep_iterable, instance_of, min_len
-from attrs import Attribute, define, field
+from attrs import Attribute, cmp_using, define, field
 from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
@@ -16,10 +16,11 @@ from baybe.parameters.utils import sort_parameters
 from baybe.searchspace.utils import build_constrained_product
 from baybe.searchspace.validation import validate_parameters
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import to_lazy
+from baybe.utils.dataframe import _df_equals
 from baybe.utils.validation import validate_parameter_input
 
 
+@runtime_checkable
 class CandidatesProtocol(Protocol):
     """Type protocol specifying the interface candidate generators need to implement."""
 
@@ -37,6 +38,28 @@ class CandidatesProtocol(Protocol):
 
     def to_lazy(self) -> nw.LazyFrame:
         """Generate all candidates."""
+
+
+@define(frozen=True)
+class EmptyCandidates(CandidatesProtocol):
+    """Sentinel class representing an empty candidate set with no parameters."""
+
+    @override
+    @property
+    def parameters(self) -> tuple[DiscreteParameter, ...]:
+        return ()
+
+    @override
+    @property
+    def is_finite(self) -> bool:
+        return True
+
+    @override
+    def to_lazy(self) -> nw.LazyFrame:
+        # TODO: Replace hard-coded pandas type with `Settings`-based approach
+        import pandas as pd
+
+        return nw.from_native(pd.DataFrame()).lazy()
 
 
 @define(frozen=True)
@@ -86,7 +109,7 @@ class ProductCandidates(CandidatesProtocol):
 
         # TODO: Remove to lazy once build_constrained_product returns a nw.LazyFrame
         assert not isinstance(candidates_df, nw.LazyFrame)
-        return to_lazy(candidates_df)
+        return nw.from_native(candidates_df).lazy()
 
 
 @define(frozen=True)
@@ -103,14 +126,19 @@ class TableCandidates(CandidatesProtocol):
     )
     """See :attr:`CandidatesProtocol.parameters`."""
 
-    dataframe: nw.LazyFrame = field(converter=to_lazy)
+    dataframe: nw.DataFrame = field(
+        converter=lambda x: nw.from_native(x, eager_only=True),
+        eq=cmp_using(eq=_df_equals),
+    )
     """The dataframe containing the candidates."""
 
     @dataframe.validator
-    def _validate_dataframe(self, _: Attribute, value: nw.LazyFrame) -> None:  # noqa: DOC101, DOC103
-        # TODO: Remove collect().to_pandas() once validation on lazy frames is supported
+    def _validate_dataframe(self, _: Attribute, value: nw.DataFrame) -> None:  # noqa: DOC101, DOC103
         validate_parameter_input(
-            value.collect().to_pandas(), self.parameters, allow_extra=False
+            value.to_pandas(),
+            self.parameters,
+            allow_extra=False,
+            allow_empty=True,
         )
 
     @override
@@ -120,7 +148,7 @@ class TableCandidates(CandidatesProtocol):
 
     @override
     def to_lazy(self) -> nw.LazyFrame:
-        return self.dataframe
+        return self.dataframe.lazy()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

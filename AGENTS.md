@@ -313,6 +313,8 @@ For a full list of available tox environments and developer commands, see
 - CHANGELOG.md updated in every PR (CI enforced). Specific entries, complete
   sentences. Commit named "Update CHANGELOG" as last commit.
 - Use imperative in commit header, e.g. "Add", "Fix", "Rework", "Handle", "Adjust", etc.
+- Keep the commit header short (max ~72 characters). Move additional details to the
+  commit body.
 - Keep commit body short and informative. Do not add commit body if it has no
   additional info compared to the header.
 - Pre-commit must pass. Clean history: squash add/revert pairs, no debug prints.

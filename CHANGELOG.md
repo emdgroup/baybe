@@ -21,12 +21,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `narwhals` as a hard dependency
 - `CandidatesProtocol` as an interface for candidates generation
-- `TableCandidates` and `ProductCandidates` classes implementing `CandidatesProtocol`
+- `EmptyCandidates`, `TableCandidates` and `ProductCandidates` classes implementing
+  `CandidatesProtocol`
 - `DiscreteParameter.is_finite` property
 - `SubspaceDiscrete.batch_constraints` field for storing batch-level constraints
 - `SubspaceDiscrete.from_dataframe` now accepts `batch_constraints`
+- `validate_parameter_input` now accepts an `allow_empty` flag to permit zero-row input
 
 ### Changed
+- `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
+  attribute of type `CandidatesProtocol` instead of raw `parameters` and `exp_rep`
+  attributes, and `parameters` is now a read-only property delegating to it. The
+  associated constructor calls and all related legacy attributes have been deprecated. 
 - Internal `Campaign` state model simplified: recommended and excluded experiments
   are now stored as dataframes instead of being tracked as metadata flags
 - `SubspaceContinuous` now offers a simpler interface for passing constraints,
@@ -52,6 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecations
 - `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
+- `SubspaceDiscrete(parameters, exp_rep)` constructor call style
+  (use `SubspaceDiscrete.from_dataframe(parameters, exp_rep)` or
+  `SubspaceDiscrete(candidates=TableCandidates(parameters, exp_rep))` instead)
 - `SubspaceDiscrete` ignores any `empty_encoding` when provided
 - `SubspaceDiscrete` no longer accepts a `comp_rep` argument
 - `SubspaceDiscrete.constraints` attribute (use `batch_constraints` to provide and

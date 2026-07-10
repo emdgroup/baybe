@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
-from narwhals.stable.v2.typing import IntoDataFrame
+from narwhals.testing import assert_frame_equal
 from typing_extensions import assert_never
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
@@ -795,6 +795,11 @@ def normalize_input_dtypes(
     return df
 
 
-def to_lazy(df: IntoDataFrame, /) -> nw.LazyFrame:
-    """Convert any dataframe to a :class:`~narwhals.LazyFrame`."""
-    return nw.from_native(df).lazy()
+def _df_equals(df1: nw.DataFrame, df2: nw.DataFrame, /) -> bool:
+    """Check if two dataframes are equal."""
+    # https://github.com/narwhals-dev/narwhals/issues/3715
+    try:
+        assert_frame_equal(df1, df2)
+        return True
+    except AssertionError:
+        return False
