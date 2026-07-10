@@ -19,13 +19,25 @@ if CHEM_INSTALLED:
     from baybe.parameters.substance import SubstanceParameter
 
 
+def _pd_series(name, values):
+    return pd.Series(values, name=name)
+
+
+def _pl_series(name, values):
+    return pl.Series(name=name, values=values)
+
+
+def _nw_series(name, values):
+    return nw.new_series(name=name, values=values, backend=pl)
+
+
 @pytest.mark.parametrize(
-    ("index_select", "backend"),
+    ("index_select", "series_factory"),
     [
         pytest.param(None, None, id="no_input"),
-        pytest.param([-1, 0], pd, id="partial_input-pandas"),
-        pytest.param([-1, 0], pl, id="partial_input-polars"),
-        pytest.param(slice(None), pd, id="full_input"),
+        pytest.param([-1, 0], _pd_series, id="partial_input-pd"),
+        pytest.param([-1, 0], _pl_series, id="partial_input-pl"),
+        pytest.param([-1, 0], _nw_series, id="partial_input-nw"),
     ],
 )
 @pytest.mark.parametrize(
@@ -110,7 +122,7 @@ if CHEM_INSTALLED:
         ),
     ],
 )
-def test_transform(param, expected, index_select, backend):
+def test_transform(param, expected, index_select, series_factory):
     """Parameter encodings return the correct rows, index and backend."""
     if expected is None:
         assert isinstance(param, SubstanceParameter)
@@ -124,17 +136,19 @@ def test_transform(param, expected, index_select, backend):
         labels = list(expected.index[index_select])
         positions = expected.index.get_indexer(labels).tolist()
 
-        nw_series = nw.new_series(name=param.name, values=labels, backend=backend)
-        result = param.transform(nw_series)
-        result_ns = nw.get_native_namespace(result)
+        series = series_factory(param.name, labels)
+        expected_backend = nw.get_native_namespace(series)
+        result = param.transform(series)
 
         with pytest.raises(ValueError, match="does not match parameter name"):
-            param.transform(nw_series.alias(name="wrong name"))
+            param.transform(series_factory("wrong name", labels))
 
-        assert result_ns is backend
+        assert nw.get_native_namespace(result) is expected_backend
         assert_frame_equal(
             result.collect(),
-            nw.from_native(expected)[positions].lazy().collect(backend=result_ns),
+            nw.from_native(expected)[positions]
+            .lazy()
+            .collect(backend=expected_backend),
         )
 
     assert isinstance(result, nw.LazyFrame)
