@@ -280,19 +280,21 @@ class GaussianProcessSurrogate(Surrogate):
     ) -> GPyTorchMean:
         """Return a GPyTorch mean module representing the surrogate's posterior mean.
 
-        The bound method satisfies
-        :class:`~baybe.surrogates.gaussian_process.components.mean.MeanFactoryProtocol`
-        and can be passed directly to a new :class:`GaussianProcessSurrogate`, where
-        the surrogate's posterior mean acts as the new GP's prior mean.
-
         The returned mean module wraps a frozen copy of this surrogate's fitted GP.
         Its posterior mean is evaluated in the raw input space and mapped into the
-        new GP's standardized output space via the new GP's input/output transforms.
+        normalized input/output space defined by the given ``searchspace``,
+        ``objective``, and ``measurements``.
+
+        The module is intended and designed to be used as the prior mean of another
+        :class:`GaussianProcessSurrogate`, so that this surrogate's posterior mean
+        acts as that GP's prior mean. To this end, the bound method satisfies
+        :class:`~baybe.surrogates.gaussian_process.components.mean.MeanFactoryProtocol`
+        and can be passed to it directly.
 
         Args:
-            searchspace: The search space of the new GP being fitted.
-            objective: The objective of the new GP being fitted.
-            measurements: The training data of the new GP being fitted.
+            searchspace: The search space defining the module's input space.
+            objective: The objective defining the module's output space.
+            measurements: The data defining the module's input/output normalization.
 
         Returns:
             The posterior mean module.
