@@ -224,18 +224,11 @@ class GaussianProcessSurrogate(Surrogate):
         )
 
     @staticmethod
-    def _make_outcome_transform(context: _ModelContext) -> Standardize:
-        """Create the outcome transform for the Gaussian process."""
+    def _make_outcome_transform(train_y: Tensor) -> Standardize:
+        """Create the (unfitted) outcome transform for the Gaussian process."""
         from botorch.models.transforms.outcome import Standardize
 
-        train_y = to_tensor(
-            context.objective._pre_transform(context.measurements, allow_extra=True)
-        )
-        if train_y.ndim == 1:
-            train_y = train_y.unsqueeze(-1)
-        transform = Standardize(m=train_y.shape[-1])
-        transform(train_y)  # fits means/stdvs; GP will re-fit in train mode
-        return transform
+        return Standardize(m=train_y.shape[-1])
 
     @classmethod
     def from_preset(
@@ -310,9 +303,16 @@ class GaussianProcessSurrogate(Surrogate):
             )
 
         context = _ModelContext(searchspace, objective, measurements)
+
+        train_y = to_tensor(objective._pre_transform(measurements, allow_extra=True))
+        if train_y.ndim == 1:
+            train_y = train_y.unsqueeze(-1)
+
         input_transform = self._make_input_transform(context)
         input_transform.eval()
-        outcome_transform = self._make_outcome_transform(context)
+
+        outcome_transform = self._make_outcome_transform(train_y)
+        outcome_transform(train_y)  # fit means/stds; nothing else fits it here
         outcome_transform.eval()
 
         return _build_posterior_mean_module(
@@ -371,7 +371,7 @@ class GaussianProcessSurrogate(Surrogate):
         ### Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
         input_transform = self._make_input_transform(context)
-        outcome_transform = self._make_outcome_transform(context)
+        outcome_transform = self._make_outcome_transform(train_y)
 
         ### Mean
         mean = self.mean_factory(
