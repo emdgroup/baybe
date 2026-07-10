@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
-from pandas.testing import assert_frame_equal
+from narwhals.testing import assert_frame_equal
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.categorical import CategoricalParameter
@@ -18,11 +20,12 @@ if CHEM_INSTALLED:
 
 
 @pytest.mark.parametrize(
-    "index_select",
+    ("index_select", "backend"),
     [
-        pytest.param(None, id="no_input"),
-        pytest.param(slice(None), id="full_input"),
-        pytest.param([-1, 0], id="partial_input"),
+        pytest.param(None, None, id="no_input"),
+        pytest.param([-1, 0], pd, id="partial_input-pandas"),
+        pytest.param([-1, 0], pl, id="partial_input-polars"),
+        pytest.param(slice(None), pd, id="full_input"),
     ],
 )
 @pytest.mark.parametrize(
@@ -92,16 +95,23 @@ if CHEM_INSTALLED:
         ),
     ],
 )
-def test_transform(param, expected, index_select):
-    """Parameter encodings return the correct rows with the correct index."""
+def test_transform(param, expected, index_select, backend):
+    """Parameter encodings return the correct rows, index and backend."""
     if index_select is None:
-        assert_frame_equal(param.transform(), expected)
+        assert_frame_equal(param.transform(), nw.from_native(expected).lazy())
     else:
         labels = list(expected.index[index_select])
-        series = pd.Series(labels, index=range(10, 10 + len(labels)), name=param.name)
+
+        nw_series = nw.new_series(name=param.name, values=labels, backend=backend)
+        result = param.transform(nw_series)
+        result_collected = result.collect()
+        result_ns = nw.get_native_namespace(result_collected)
+
+        assert result_ns is backend
+        positions = expected.index.get_indexer(labels).tolist()
         assert_frame_equal(
-            param.transform(series),
-            expected.reindex(labels).set_index(series.index),
+            result_collected,
+            nw.from_native(expected)[positions].lazy().collect(backend=result_ns),
         )
 
 
@@ -109,28 +119,34 @@ def test_transform(param, expected, index_select):
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
 @pytest.mark.parametrize(
-    "subset",
+    ("subset", "backend"),
     [
-        pytest.param(None, id="no_input"),
-        pytest.param(["ethanol", "water", "methanol"], id="full_input"),
-        pytest.param(["methanol", "water"], id="partial_input"),
+        pytest.param(None, None, id="no_input"),
+        pytest.param(["methanol", "water"], pd, id="partial_input-pandas"),
+        pytest.param(["methanol", "water"], pl, id="partial_input-polars"),
+        pytest.param(["ethanol", "water", "methanol"], pd, id="full_input"),
     ],
 )
-def test_transform_substance(subset):
-    """SubstanceParameter encoding returns the correct rows with the correct index."""
+def test_transform_substance(subset, backend):
+    """SubstanceParameter encoding returns the correct rows, index and backend."""
     data = {"water": "O", "ethanol": "CCO", "methanol": "CO"}
     p = SubstanceParameter(
         name="solvent", data=data, decorrelate=False, active_values=["water"]
     )
-    full = p.transform()
+    full = p.transform().collect()
     if subset is None:
-        assert list(full.index) == list(p.values)
+        assert list(full.to_pandas().index) == list(p.values)
         assert all(col.startswith("solvent_") for col in full.columns)
     else:
-        series = pd.Series(subset, index=range(10, 10 + len(subset)), name=p.name)
+        nw_series = nw.new_series(name=p.name, values=subset, backend=backend)
+        result = p.transform(nw_series).collect()
+        result_ns = nw.get_native_namespace(result)
+
+        assert result_ns is backend
+        positions = full.to_pandas().index.get_indexer(subset).tolist()
         assert_frame_equal(
-            p.transform(series),
-            full.reindex(subset).set_index(series.index),
+            result,
+            full[positions].lazy().collect(backend=result_ns),
         )
 
 
@@ -142,7 +158,7 @@ def test_decorrelation_custom():
         index=["A", "B", "C"],
     )
     p = CustomDiscreteParameter(name="mol", data=data, decorrelate=True)
-    assert tuple(p.transform().columns) == ("mol_d1", "mol_d3")
+    assert tuple(p.transform().collect_schema().names()) == ("mol_d1", "mol_d3")
 
 
 @pytest.mark.skipif(
@@ -153,4 +169,6 @@ def test_decorrelation_substance():
     data = {"water": "O", "ethanol": "CCO", "methanol": "CO"}
     p_raw = SubstanceParameter(name="solvent", data=data, decorrelate=False)
     p_decorr = SubstanceParameter(name="solvent", data=data, decorrelate=True)
-    assert len(p_decorr.transform().columns) < len(p_raw.transform().columns)
+    assert len(p_decorr.transform().collect_schema().names()) < len(
+        p_raw.transform().collect_schema().names()
+    )
