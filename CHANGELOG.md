@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   argument passing between methods
 - The `encoding` attribute has been removed from `DiscreteParameter` base class and
   now only exists on concrete subclasses that actually use it
-- `DiscreteParameter.transform` narhwalified: now accepts `narwhals`-compatible series,
+- `DiscreteParameter.transform` narwhalified: now accepts `narwhals`-compatible series,
   arbitrary iterables, or `None`, and returns a `nw.LazyFrame` instead of a
   `pd.DataFrame`
 - Passing a series to `DiscreteParameter.transform` whose name does not match the
@@ -75,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deserialization with constructor selection now correctly respects converter settings
 - Missing validators and converters were added to several parameter fields
 - `validate_parameter_input` no longer uses row-by-row iteration, fixing a significant
-  performance problem for large candidate sets 
+  performance problem for large candidate sets
 
 ### Deprecations
 - `DiscreteParameter.comp_df` property (use `transform()` instead)

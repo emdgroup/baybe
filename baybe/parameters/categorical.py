@@ -99,7 +99,7 @@ class CategoricalParameter(_EncodedDiscreteParameter):
             result = nw.from_numpy(data, schema=list(self.comp_rep_columns), backend=ns)
 
             # Special handling for pandas backend to preserve index
-            # TODO[narwhalify]: needs to be dropped once we ingore indices in general
+            # TODO[narwhalify]: needs to be dropped once we ignore indices in general
             if ns is pd:
                 native = result.to_native()
                 native.index = series.to_pandas().index
