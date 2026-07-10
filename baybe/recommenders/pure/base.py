@@ -228,7 +228,10 @@ class PureRecommender(ABC, RecommenderProtocol):
         Returns:
             A dataframe containing the recommendations as individual rows.
         """
-        raise NotImplementedError("Hybrid recommendation is not implemented.")
+        raise NotImplementedError(
+            f"A hybrid search space was provided, but the used recommender "
+            f"'{self.__class__.__name__}' does not implement hybrid recommendation."
+        )
 
     def _recommend_with_discrete_parts(
         self,

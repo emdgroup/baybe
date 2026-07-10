@@ -202,10 +202,11 @@ nitpick_ignore_regex = [
     ("py:.*", "baybe.targets._deprecated.*"),
 ]
 
-# Ignore the following links when checking inks for viability
+# Ignore the following links when checking links for viability
 linkcheck_ignore = [
     r"https://github.com/b-shields/edbo/blob*",
     r"https://doi.org/10.26434/chemrxiv.10001986/v2",
+    r"https://doi.org/10.1039/D5DD00050E",
 ]
 
 

@@ -355,6 +355,8 @@ class SubspaceDiscrete(SerialMixin):
         cls,
         max_sum: float,
         simplex_parameters: Sequence[NumericalDiscreteParameter],
+        *,
+        simplex_coefficients: Sequence[float] | None = None,
         product_parameters: Sequence[DiscreteParameter] | None = None,
         constraints: Sequence[DiscreteConstraint] | None = None,
         min_nonzero: int = 0,
@@ -376,8 +378,12 @@ class SubspaceDiscrete(SerialMixin):
         significantly faster construction.
 
         Args:
-            max_sum: The maximum sum of the parameter values defining the simplex size.
+            max_sum: The maximum (weighted) sum of the parameter values defining the
+                simplex size.
             simplex_parameters: The parameters to be used for the simplex construction.
+            simplex_coefficients: Optional coefficients for the weighted sum, one per
+                entry in ``simplex_parameters``. Defaults to all-ones, i.e. an
+                unweighted sum.
             product_parameters: Optional parameters that enter in form of a Cartesian
                 product.
             constraints: See :class:`baybe.searchspace.core.SearchSpace`.
@@ -390,8 +396,9 @@ class SubspaceDiscrete(SerialMixin):
             tolerance: Numerical tolerance used to validate the simplex constraint.
 
         Raises:
-            ValueError: If the passed simplex parameters are not suitable for a simplex
-                construction.
+            ValueError: If the length of ``simplex_coefficients`` does not match the
+                number of ``simplex_parameters``.
+            ValueError: If ``simplex_coefficients`` contains any zeros.
             ValueError: If the passed product parameters are not discrete.
             ValueError: If the passed simplex parameters and product parameters are
                 not disjoint.
@@ -411,6 +418,8 @@ class SubspaceDiscrete(SerialMixin):
             constraints = []
         if max_nonzero is None:
             max_nonzero = len(simplex_parameters)
+        if simplex_coefficients is None:
+            simplex_coefficients = [1.0] * len(simplex_parameters)
 
         # Validate parameter types
         if not (
@@ -425,6 +434,18 @@ class SubspaceDiscrete(SerialMixin):
                 f"All parameters passed via 'product_parameters' "
                 f"must be of subclasses of '{DiscreteParameter.__name__}'."
             )
+
+        # Validate coefficients length
+        if len(simplex_coefficients) != len(simplex_parameters):
+            raise ValueError(
+                f"'simplex_coefficients' must have one entry per 'simplex_parameters' "
+                f"entry, but got {len(simplex_coefficients)} coefficient(s) for "
+                f"{len(simplex_parameters)} parameter(s)."
+            )
+
+        # Validate no zero coefficients
+        if any(c == 0.0 for c in simplex_coefficients):
+            raise ValueError("All entries in 'simplex_coefficients' must be non-zero.")
 
         # Validate no overlap between simplex parameters and product parameters
         simplex_parameters_names = {p.name for p in simplex_parameters}
@@ -453,113 +474,95 @@ class SubspaceDiscrete(SerialMixin):
             if len(simplex_parameters) < 1:
                 return cls.from_product(product_parameters, constraints)
 
-        # Validate non-negativity
-        min_values = [min(p.values) for p in simplex_parameters]
-        max_values = [max(p.values) for p in simplex_parameters]
-        if not (min(min_values) >= 0.0):
+        # Compute per-parameter minimum weighted contributions.
+        # For a positive coefficient c the minimum contribution is c*min_raw; for a
+        # negative coefficient the ordering flips and it becomes c*max_raw. Taking
+        # min of both products handles any real coefficient correctly.
+        min_raw = [min(p.values) for p in simplex_parameters]
+        max_raw = [max(p.values) for p in simplex_parameters]
+        coeffs = np.asarray(simplex_coefficients, dtype=active_settings.DTypeFloatNumpy)
+        if not np.isfinite(coeffs).all():
             raise ValueError(
-                f"All simplex_parameters passed to '{cls.from_simplex.__name__}' "
-                f"must have non-negative values only."
+                f"All simplex_coefficients passed to '{cls.from_simplex.__name__}' "
+                f"must be finite numbers."
             )
+        min_weighted = np.array(
+            [min(c * lo, c * hi) for c, lo, hi in zip(coeffs, min_raw, max_raw)]
+        )
 
-        def drop_invalid(
-            df: pd.DataFrame,
-            max_sum: float,
-            boundary_only: bool,
-            min_nonzero: int | None = None,
-            max_nonzero: int | None = None,
-        ) -> None:
-            """Drop rows that violate the specified simplex constraint.
+        # Get the minimum weighted sum contributions to come in the upcoming joins (the
+        # first item is the minimum possible weighted sum of all parameters starting
+        # from the second parameter, the second item is the minimum possible weighted
+        # sum starting from the third parameter, and so on ...)
+        min_sum_upcoming = np.cumsum(min_weighted[:0:-1])[::-1]
 
-            Args:
-                df: The dataframe whose rows should satisfy the simplex constraint.
-                max_sum: The maximum row sum defining the simplex size.
-                boundary_only: Flag to control if the points represented by the rows
-                    may lie inside the simplex or on its boundary only.
-                min_nonzero: Minimum number of nonzero parameters required per row.
-                max_nonzero: Maximum number of nonzero parameters allowed per row.
-            """
-            # Apply sum constraints
-            row_sums = df.sum(axis=1)
-            mask_violated = row_sums > max_sum + tolerance
-            if boundary_only:
-                mask_violated |= row_sums < max_sum - tolerance
+        # Get the min/max number of nonzero values to come in the upcoming joins.
+        # Nonzero counting is based on raw parameter values, not weighted values,
+        # because the cardinality constraint counts zero/nonzero entries regardless
+        # of the coefficient signs.
+        min_nonzero_upcoming = np.cumsum((np.asarray(min_raw) > 0.0)[:0:-1])[::-1]
+        max_nonzero_upcoming = np.cumsum((np.asarray(max_raw) > 0.0)[:0:-1])[::-1]
 
-            # Apply optional nonzero constraints
-            if (min_nonzero is not None) or (max_nonzero is not None):
-                n_nonzero = (df != 0.0).sum(axis=1)
-                if min_nonzero is not None:
-                    mask_violated |= n_nonzero < min_nonzero
-                if max_nonzero is not None:
-                    mask_violated |= n_nonzero > max_nonzero
+        # Incrementally build up the space as a numpy array, dropping invalid
+        # configurations along the way. Working with raw numpy avoids pandas overhead
+        # (index management, BlockManager, merge machinery) in the hot loop.
+        #
+        # After having cross-joined a new parameter, there must be enough "room" left
+        # for the remaining parameters to fit. That is, configurations of the current
+        # parameter subset that exceed the desired total value minus the minimum
+        # contribution to come from the yet-to-be-added parameters can be already
+        # discarded, because it is already clear that the total sum will be exceeded
+        # once all joins are completed. Analogously, nonzero cardinality bounds are
+        # checked at each step.
+        #
+        # Instead of materializing the full cross-product before filtering, we use
+        # broadcasting to compute the validity mask in 2D (n_old, n_new) and only
+        # materialize the surviving combinations. This avoids allocating large
+        # intermediate arrays that are mostly discarded.
+        arr = np.empty((1, 0), dtype=active_settings.DTypeFloatNumpy)
+        partial_sums = np.zeros(1, dtype=active_settings.DTypeFloatNumpy)
+        nz_counts = np.zeros(1, dtype=np.intp)
 
-            # Remove violating rows
-            idxs_to_drop = df[mask_violated].index
-            df.drop(index=idxs_to_drop, inplace=True)
-
-        # Get the minimum sum contributions to come in the upcoming joins (the
-        # first item is the minimum possible sum of all parameters starting from the
-        # second parameter, the second item is the minimum possible sum starting from
-        # the third parameter, and so on ...)
-        min_sum_upcoming = np.cumsum(min_values[:0:-1])[::-1]
-
-        # Get the min/max number of nonzero values to come in the upcoming joins (the
-        # first item is the min/max number of nonzero parameters starting from the
-        # second parameter, the second item is the min/max number starting from
-        # the third parameter, and so on ...)
-        min_nonzero_upcoming = np.cumsum((np.asarray(min_values) > 0.0)[:0:-1])[::-1]
-        max_nonzero_upcoming = np.cumsum((np.asarray(max_values) > 0.0)[:0:-1])[::-1]
-
-        # Incrementally build up the space, dropping invalid configuration along the
-        # way. More specifically:
-        # * After having cross-joined a new parameter, there must
-        #   be enough "room" left for the remaining parameters to fit. That is,
-        #   configurations of the current parameter subset that exceed the desired
-        #   total value minus the minimum contribution to come from the yet-to-be-added
-        #   parameters can be already discarded, because it is already clear that
-        #   the total sum will be exceeded once all joins are completed.
-        # * Analogously, there must be enough "nonzero slots" left for the yet to be
-        #   joined parameters, i.e. parameter subset configurations can be discarded
-        #   where the number of nonzero parameters already exceeds the maximum number
-        #   of nonzeros minus the number of nonzeros to come, because it is already
-        #   clear that the maximum will be exceeded once all joins are completed.
-        # * Similarly, it can be verified for each parameter that there are still
-        #   enough nonzero parameters to come to even reach the minimum
-        #   desired number of nonzero after all joins.
-        for i, (
-            param,
-            min_sum_to_go,
-            min_nonzero_to_go,
-            max_nonzero_to_go,
-        ) in enumerate(
-            zip(
-                simplex_parameters,
-                np.append(min_sum_upcoming, 0),
-                np.append(min_nonzero_upcoming, 0),
-                np.append(max_nonzero_upcoming, 0),
-            )
+        for coeff, param, min_sum_to_go, min_nonzero_to_go, max_nonzero_to_go in zip(
+            coeffs,
+            simplex_parameters,
+            np.append(min_sum_upcoming, 0.0),
+            np.append(min_nonzero_upcoming, 0),
+            np.append(max_nonzero_upcoming, 0),
         ):
-            if i == 0:
-                exp_rep = pd.DataFrame({param.name: param.values})
-            else:
-                exp_rep = pd.merge(
-                    exp_rep, pd.DataFrame({param.name: param.values}), how="cross"
-                )
-            drop_invalid(
-                exp_rep,
-                max_sum=max_sum - min_sum_to_go,
-                # the maximum possible number of nonzeros to come dictates if we
-                # can achieve our minimum constraint in the end:
-                min_nonzero=min_nonzero - max_nonzero_to_go,
-                # the minimum possible number of nonzeros to come dictates if we
-                # can stay below the targeted maximum in the end:
-                max_nonzero=max_nonzero - min_nonzero_to_go,
-                boundary_only=False,
-            )
+            values = np.asarray(param.values, dtype=active_settings.DTypeFloatNumpy)
+            threshold = (max_sum - min_sum_to_go) + tolerance
+            effective_min = min_nonzero - max_nonzero_to_go
+            effective_max = max_nonzero - min_nonzero_to_go
+
+            # Compute weighted sums via broadcasting: (n_old, n_new)
+            new_contributions = values * coeff
+            total_sums = partial_sums[:, None] + new_contributions[None, :]
+
+            # Build 2D validity mask from sum constraint
+            mask_2d = total_sums <= threshold
+
+            # Cardinality check via broadcasting
+            new_nz = (values != 0.0).astype(np.intp)
+            total_nz = nz_counts[:, None] + new_nz[None, :]
+            if effective_min > 0:
+                mask_2d &= total_nz >= effective_min
+            if effective_max < len(simplex_parameters):
+                mask_2d &= total_nz <= effective_max
+
+            # Extract surviving indices and materialize only those rows
+            old_idx, new_idx = np.where(mask_2d)
+            arr = np.column_stack([arr[old_idx], values[new_idx]])
+            partial_sums = total_sums[old_idx, new_idx]
+            nz_counts = total_nz[old_idx, new_idx]
 
         # If requested, keep only the boundary values
         if boundary_only:
-            drop_invalid(exp_rep, max_sum, boundary_only=True)
+            mask = np.abs(partial_sums - max_sum) <= tolerance
+            arr = arr[mask]
+
+        # Wrap in DataFrame
+        exp_rep = pd.DataFrame(arr, columns=[p.name for p in simplex_parameters])
 
         filtering_constraints = [c for c in constraints if c.eval_during_creation]
         batch_constraints_list = [c for c in constraints if c.eval_during_modeling]
@@ -879,12 +882,29 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
             specs["simplex_parameters"], list[NumericalDiscreteParameter]
         )
 
-        if not all(min(p.values) >= 0.0 for p in simplex_parameters):
-            raise ValueError(
-                f"All simplex_parameters passed to "
-                f"'{SubspaceDiscrete.from_simplex.__name__}' must have non-negative "
-                f"values only."
-            )
+        simplex_coefficients = specs.get("simplex_coefficients", None)
+        if simplex_coefficients is not None:
+            try:
+                simplex_coefficients = converter.structure(
+                    simplex_coefficients, list[float]
+                )
+            except (IterableValidationError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    "'simplex_coefficients' must be a list of numeric values."
+                ) from exc
+
+            if len(simplex_coefficients) != len(simplex_parameters):
+                raise ValueError(
+                    f"'simplex_coefficients' must have one entry per "
+                    f"'simplex_parameters' entry, but got "
+                    f"{len(simplex_coefficients)} coefficient(s) for "
+                    f"{len(simplex_parameters)} parameter(s)."
+                )
+
+            if any(c == 0.0 for c in simplex_coefficients):
+                raise ValueError(
+                    "All entries in 'simplex_coefficients' must be non-zero."
+                )
 
         product_parameters = specs.get("product_parameters", [])
         if product_parameters:

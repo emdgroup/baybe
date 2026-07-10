@@ -1,8 +1,14 @@
 """Test for imposing discrete constraints."""
 
+import itertools
 import math
 
+import pandas as pd
 import pytest
+from pytest import param
+
+from baybe.constraints.conditions import ThresholdCondition
+from baybe.constraints.discrete import DiscreteSumConstraint
 
 
 @pytest.fixture(
@@ -249,3 +255,31 @@ def test_cardinality(campaign):
     min_cardinality = 1
     max_cardinality = 2
     assert non_zeros.between(min_cardinality, max_cardinality).all()
+
+
+@pytest.mark.parametrize(
+    ("coefficients", "threshold", "operator", "n_invalid"),
+    [
+        param(None, 1.0, "<=", 3, id="default"),
+        param((1.0, 1.0), 1.0, "<=", 3, id="all-ones"),
+        param((2.0, 1.0), 1.0, "<=", 5, id="scaled"),
+        param((1.0, -1.0), 0.5, "<=", 1, id="negative"),
+        param((1.0, 1.0), 1.0, "=", 6, id="equality"),
+    ],
+)
+def test_sum_constraint_coefficients(coefficients, threshold, operator, n_invalid):
+    """DiscreteSumConstraint filters correctly with default and custom coefficients."""
+    kwargs = {} if coefficients is None else {"coefficients": coefficients}
+    constraint = DiscreteSumConstraint(
+        parameters=["A", "B"],
+        condition=ThresholdCondition(threshold=threshold, operator=operator),
+        **kwargs,
+    )
+    df = pd.DataFrame(
+        list(itertools.product([0.0, 0.5, 1.0], repeat=2)), columns=["A", "B"]
+    )
+    coeffs = coefficients or (1.0, 1.0)
+    weighted = df["A"] * coeffs[0] + df["B"] * coeffs[1]
+    expected = df.index[~ThresholdCondition(threshold, operator).evaluate(weighted)]
+    assert list(constraint.get_invalid(df)) == list(expected)
+    assert len(constraint.get_invalid(df)) == n_invalid

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Breaking Changes
+- All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
+  are now keyword-only
 - `Campaign.measurements` no longer contains `FitNr` or `BatchNr` metadata columns
 - `validate_parameter_names`, `validate_cardinality_constraints_are_nonoverlapping`
   and `validate_cardinality_constraint_parameter_bounds` are no longer available
@@ -19,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of a tuple of experimental and computational representations
 
 ### Added
+- `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
+  the same pattern as `ContinuousLinearConstraint.coefficients`
+- `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
+  weighted simplex sum constraints
 - `narwhals` as a hard dependency
 - `CandidatesProtocol` as an interface for candidates generation
 - `EmptyCandidates`, `TableCandidates` and `ProductCandidates` classes implementing
@@ -51,6 +57,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in version `0.18.0`
 - The `BOTORCH` GP preset now requires BoTorch `>= 0.18.0` and raises an
   `IncompatibilityError` if an older version is installed
+- `DiscreteSumConstraint`, `ContinuousLinearConstraint`, and
+  `SubspaceDiscrete.from_simplex` now forbid 0 as coefficients
+- `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
+- Bumped polars to `>=0.20.8`
+- Bumped cattrs to `>=26.1.0`
 
 
 ### Fixed
