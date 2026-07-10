@@ -1339,7 +1339,7 @@ It runs a single execution of a DoE loop for either a specific number of iterati
 Instead of a single campaign, this function expects a dictionary of campaigns, mapping scenario identifiers to <a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign" title="baybe.campaign.Campaign"><code class="xref py py-class docutils literal notranslate"><span class="pre">Campaign</span></code></a> objects.
 In addition to the keyword arguments available for <a class="reference internal" href="../_autosummary/baybe.simulation.core.simulate_experiment.html#baybe.simulation.core.simulate_experiment" title="baybe.simulation.core.simulate_experiment"><code class="xref py py-func docutils literal notranslate"><span class="pre">simulate_experiment()</span></code></a>, this function accepts the following arguments to define the simulation scope:</p>
 <ol class="arabic simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">n_mc_iterations</span></code>: Controls the Monte Carlo repetitions being perforemd for each campaign simulation. Multiple Monte Carlo runs are always advised to average out random effects (e.g. random intializations or measurement noise).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_mc_iterations</span></code>: Controls the Monte Carlo repetitions being performed for each campaign simulation. Multiple Monte Carlo runs are always advised to average out random effects (e.g. random initializations or measurement noise).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">initial_data</span></code>: A sequence of dataframes defining fixed starting conditions for the simulations in form of initial campaign data.</p></li>
 </ol>
 <div class="important admonition">
@@ -1347,7 +1347,7 @@ In addition to the keyword arguments available for <a class="reference internal"
 <ul class="simple">
 <li><p>When <code class="docutils literal notranslate"><span class="pre">n_mc_iterations</span></code> takes an integer value, the Cartesian product of all possible
 campaign rollouts is executed, i.e. each campaign is simulated with each initial data
-set (if provided) as many times as specifed.</p></li>
+set (if provided) as many times as specified.</p></li>
 <li><p>When <code class="docutils literal notranslate"><span class="pre">n_mc_iterations</span></code> is set to <code class="docutils literal notranslate"><span class="pre">None</span></code>, one Monte Carlo iteration is executed per
 initial data set, but unlike in the case of <code class="docutils literal notranslate"><span class="pre">n_mc_iterations=1</span></code>, the seed is
 automatically increased for each rollout to enable trajectory variation for simulations
