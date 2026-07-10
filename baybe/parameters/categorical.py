@@ -1,13 +1,12 @@
 """Categorical parameters."""
 
 import gc
-from functools import cached_property
 
 import numpy as np
 import pandas as pd
 from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
-from typing_extensions import override
+from typing_extensions import assert_never, override
 
 from baybe.parameters.base import _EncodedDiscreteParameter
 from baybe.parameters.enum import CategoricalEncoding
@@ -64,26 +63,47 @@ class CategoricalParameter(_EncodedDiscreteParameter):
     def summary(self) -> dict:
         return {**super().summary(), "Encoding": self.encoding}
 
-    @cached_property
-    def _comp_df(self) -> pd.DataFrame:
+    @override
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
         if self.encoding is CategoricalEncoding.OHE:
-            cols = [
+            return tuple(
                 f"{self.name}_{'b' if isinstance(val, bool) else ''}{val}"
                 for val in self.values
-            ]
-            comp_df = pd.DataFrame(
-                np.eye(len(self.values), dtype=active_settings.DTypeFloatNumpy),
-                columns=cols,
             )
-        elif self.encoding is CategoricalEncoding.INT:
-            comp_df = pd.DataFrame(
-                range(len(self.values)),
-                dtype=active_settings.DTypeFloatNumpy,
-                columns=[self.name],
-            )
-        comp_df.index = pd.Index(self.values)
 
-        return comp_df
+        if self.encoding is CategoricalEncoding.INT:
+            return (self.name,)
+
+        assert_never(self.encoding)
+
+    @override
+    def transform(self, series: pd.Series | None = None, /) -> pd.DataFrame:
+        vals = self.values if series is None else series.to_numpy()
+        index = pd.Index(self.values) if series is None else series.index
+
+        if self.encoding is CategoricalEncoding.OHE:
+            positions = {v: i for i, v in enumerate(self.values)}
+            data = np.zeros(
+                (len(vals), len(self.values)), dtype=active_settings.DTypeFloatNumpy
+            )
+            for row, val in enumerate(vals):
+                data[row, positions[val]] = 1.0
+            return pd.DataFrame(data, index=index, columns=list(self.comp_rep_columns))
+
+        if self.encoding is CategoricalEncoding.INT:
+            mapping = {v: i for i, v in enumerate(self.values)}
+            return pd.DataFrame(
+                {
+                    self.name: pd.array(
+                        [mapping[v] for v in vals],
+                        dtype=active_settings.DTypeFloatNumpy,
+                    )
+                },
+                index=index,
+            )
+
+        assert_never(self.encoding)
 
 
 @define(frozen=True, slots=False)
