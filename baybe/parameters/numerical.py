@@ -98,7 +98,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
         return (self.name,)
 
     @override
-    def transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
+    def _transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
         # TODO[narwhalify]: use settings-based backend selection
         if series is None:
             pd_series = pd.Series(self.values, index=self.values, name=self.name)

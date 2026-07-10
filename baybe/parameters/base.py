@@ -152,7 +152,6 @@ class DiscreteParameter(Parameter, ABC):
     def is_in_range(self, item: Any) -> bool:
         return item in self.values
 
-    @abstractmethod
     def transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
         """Transform parameter values to computational representation.
 
@@ -163,7 +162,20 @@ class DiscreteParameter(Parameter, ABC):
 
         Returns:
             A lazy frame containing the transformed values.
+
+        Raises:
+            ValueError: If the series name does not match the parameter name.
         """
+        if series is not None and series.name != self.name:
+            raise ValueError(
+                f"The provided series name '{series.name}' does not match "
+                f"parameter name '{self.name}'."
+            )
+        return self._transform(series)
+
+    @abstractmethod
+    def _transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
+        """See :meth:`transform`."""
 
     @override
     def summary(self) -> dict:
@@ -217,7 +229,7 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
         return tuple(self._comp_df.columns)
 
     @override
-    def transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
+    def _transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
         # TODO: Refactor this workaround once the parameter logic has been decoupled
         #  from comp_df materialization.
         if not hasattr(self, "_comp_df"):

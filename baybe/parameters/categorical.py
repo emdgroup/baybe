@@ -78,7 +78,7 @@ class CategoricalParameter(_EncodedDiscreteParameter):
         assert_never(self.encoding)
 
     @override
-    def transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
+    def _transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
         # TODO[narwhalify]: use settings-based backend selection
         if series is None:
             series = nw.from_native(

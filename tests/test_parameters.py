@@ -118,7 +118,8 @@ def test_transform(param, expected, index_select, backend):
         assert all(col.startswith(f"{param.name}_") for col in expected.columns)
 
     if index_select is None:
-        assert_frame_equal(param.transform(), nw.from_native(expected).lazy())
+        result = param.transform()
+        assert_frame_equal(result, nw.from_native(expected).lazy())
     else:
         labels = list(expected.index[index_select])
         positions = expected.index.get_indexer(labels).tolist()
@@ -127,12 +128,16 @@ def test_transform(param, expected, index_select, backend):
         result = param.transform(nw_series)
         result_ns = nw.get_native_namespace(result)
 
-        assert isinstance(result, nw.LazyFrame)
+        with pytest.raises(ValueError, match="does not match parameter name"):
+            param.transform(nw_series.alias(name="wrong name"))
+
         assert result_ns is backend
         assert_frame_equal(
             result.collect(),
             nw.from_native(expected)[positions].lazy().collect(backend=result_ns),
         )
+
+    assert isinstance(result, nw.LazyFrame)
 
 
 def test_decorrelation_custom():
