@@ -224,7 +224,9 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
 
         if series is None:
             return self._comp_df
-        return self._comp_df.loc[series.to_numpy()].set_index(series.index)  # type: ignore[attr-defined]
+        # NOTE: reindex is used instead of loc because the input series may contain
+        #   Booleans, which would result in wrong indexing
+        return self._comp_df.reindex(series.to_numpy()).set_index(series.index)
 
     @_active_values.validator
     def _validate_active_values(  # noqa: DOC101, DOC103
