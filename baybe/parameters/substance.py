@@ -126,9 +126,8 @@ class SubstanceParameter(_EncodedDiscreteParameter):
         """Returns the labels of the given set of molecules."""
         return tuple(self.data.keys())
 
-    @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:
+    def _comp_df(self) -> pd.DataFrame:
         from baybe.utils import chemistry
 
         vals = list(self.data.values())

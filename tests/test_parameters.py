@@ -17,19 +17,19 @@ if CHEM_INSTALLED:
     from baybe.parameters.substance import SubstanceParameter
 
 
-def test_comp_df_numerical():
-    """NumericalDiscreteParameter comp_df is the identity mapping of its values."""
+def test_transform_numerical():
+    """NumericalDiscreteParameter encoding is the identity mapping of its values."""
     p = NumericalDiscreteParameter(name="x", values=[1.0, 2.0, 3.0])
     expected = pd.DataFrame(
         {"x": [1.0, 2.0, 3.0]},
         index=pd.Index([1.0, 2.0, 3.0]),
         dtype=active_settings.DTypeFloatNumpy,
     )
-    assert_frame_equal(p.comp_df, expected)
+    assert_frame_equal(p.transform(), expected)
 
 
-def test_comp_df_categorical_ohe():
-    """CategoricalParameter OHE comp_df is an identity matrix, one column per value."""
+def test_transform_categorical_ohe():
+    """CategoricalParameter OHE encoding is an identity matrix, one column per value."""
     p = CategoricalParameter(
         name="color", values=["red", "green", "blue"], active_values=["red"]
     )
@@ -39,11 +39,11 @@ def test_comp_df_categorical_ohe():
         columns=["color_blue", "color_green", "color_red"],
         index=pd.Index(["blue", "green", "red"]),
     )
-    assert_frame_equal(p.comp_df, expected)
+    assert_frame_equal(p.transform(), expected)
 
 
-def test_comp_df_categorical_int():
-    """CategoricalParameter INT comp_df assigns consecutive integers to sorted values."""  # noqa: E501
+def test_transform_categorical_int():
+    """CategoricalParameter INT encoding assigns consecutive integers to sorted values."""  # noqa: E501
     p = CategoricalParameter(
         name="size", values=["S", "M", "L"], encoding="INT", active_values=["S"]
     )
@@ -53,10 +53,10 @@ def test_comp_df_categorical_int():
         index=pd.Index(["L", "M", "S"]),
         dtype=active_settings.DTypeFloatNumpy,
     )
-    assert_frame_equal(p.comp_df, expected)
+    assert_frame_equal(p.transform(), expected)
 
 
-def test_comp_df_categorical_ohe_bool():
+def test_transform_categorical_ohe_bool():
     """CategoricalParameter OHE with Boolean values uses 'b' prefix in column names."""
     p = CategoricalParameter(name="flag", values=[True, False], active_values=[True])
     # Values get sorted by (type_str, value): False before True
@@ -65,11 +65,11 @@ def test_comp_df_categorical_ohe_bool():
         columns=["flag_bFalse", "flag_bTrue"],
         index=pd.Index([False, True]),
     )
-    assert_frame_equal(p.comp_df, expected)
+    assert_frame_equal(p.transform(), expected)
 
 
-def test_comp_df_custom():
-    """CustomDiscreteParameter comp_df prefixes columns and preserves values."""
+def test_transform_custom():
+    """CustomDiscreteParameter encoding prefixes columns and preserves values."""
     p = CustomDiscreteParameter(
         name="mol",
         data=pd.DataFrame(
@@ -84,31 +84,31 @@ def test_comp_df_custom():
         index=pd.Index(["A", "B", "C"]),
         dtype=active_settings.DTypeFloatNumpy,
     )
-    assert_frame_equal(p.comp_df, expected)
+    assert_frame_equal(p.transform(), expected)
 
 
-def test_comp_df_custom_decorrelation():
-    """CustomDiscreteParameter drops correlated columns when decorrelate=True."""
+def test_decorrelation_custom():
+    """CustomDiscreteParameter encoding drops correlated columns when decorrelate=True."""  # noqa: E501
     data = pd.DataFrame(
         # d2 = 2*d1 (perfectly correlated with d1), d3 independent
         {"d1": [1.0, 2.0, 3.0], "d2": [2.0, 4.0, 6.0], "d3": [1.0, 4.0, 2.0]},
         index=["A", "B", "C"],
     )
     p = CustomDiscreteParameter(name="mol", data=data, decorrelate=True)
-    assert tuple(p.comp_df.columns) == ("mol_d1", "mol_d3")
+    assert tuple(p.transform().columns) == ("mol_d1", "mol_d3")
 
 
 @pytest.mark.skipif(
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
-def test_comp_df_substance():
-    """SubstanceParameter comp_df has one row per substance, indexed by label."""
+def test_transform_substance():
+    """SubstanceParameter encoding has one row per substance, indexed by label."""
     data = {"water": "O", "ethanol": "CCO", "methanol": "CO"}
     p = SubstanceParameter(
         name="solvent", data=data, decorrelate=False, active_values=["water"]
     )
 
-    comp = p.comp_df
+    comp = p.transform()
     assert list(comp.index) == list(p.values)
     assert all(col.startswith("solvent_") for col in comp.columns)
 
@@ -116,9 +116,9 @@ def test_comp_df_substance():
 @pytest.mark.skipif(
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
-def test_comp_df_substance_decorrelation():
+def test_decorrelation_substance():
     """SubstanceParameter drops correlated columns when decorrelate=True."""
     data = {"water": "O", "ethanol": "CCO", "methanol": "CO"}
     p_raw = SubstanceParameter(name="solvent", data=data, decorrelate=False)
     p_decorr = SubstanceParameter(name="solvent", data=data, decorrelate=True)
-    assert len(p_decorr.comp_df.columns) < len(p_raw.comp_df.columns)
+    assert len(p_decorr.transform().columns) < len(p_raw.transform().columns)

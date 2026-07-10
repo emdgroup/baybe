@@ -64,9 +64,8 @@ class CategoricalParameter(_EncodedDiscreteParameter):
     def summary(self) -> dict:
         return {**super().summary(), "Encoding": self.encoding}
 
-    @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:
+    def _comp_df(self) -> pd.DataFrame:
         if self.encoding is CategoricalEncoding.OHE:
             cols = [
                 f"{self.name}_{'b' if isinstance(val, bool) else ''}{val}"

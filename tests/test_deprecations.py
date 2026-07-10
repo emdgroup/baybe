@@ -30,6 +30,7 @@ from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.categorical import CategoricalParameter, TaskParameter
+from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
@@ -993,3 +994,38 @@ def test_deprecated_custom_encoding():
 
     with pytest.warns(DeprecationWarning, match="CustomEncoding"):
         CustomEncoding("CUSTOM")
+
+
+if CHEM_INSTALLED:
+    from baybe.parameters.substance import SubstanceParameter as _SubstanceParameter
+
+    _substance_param = _SubstanceParameter("p", {"water": "O", "ethanol": "CCO"})
+else:
+    _substance_param = None
+
+
+@pytest.mark.parametrize(
+    "param",
+    [
+        NumericalDiscreteParameter("p", [1.0, 2.0, 3.0]),
+        CategoricalParameter("p", ["a", "b"]),
+        TaskParameter("p", ["a", "b"]),
+        CustomDiscreteParameter(
+            "p",
+            data=pd.DataFrame({"d1": [1.0, 2.0], "d2": [3.0, 4.0]}, index=["a", "b"]),
+            decorrelate=False,
+        ),
+        pytest.param(
+            _substance_param,
+            marks=pytest.mark.skipif(
+                not CHEM_INSTALLED, reason="Optional chem dependency not installed."
+            ),
+        ),
+    ],
+    ids=type,
+)
+def test_deprecated_comp_df(param):
+    """Accessing ``comp_df`` on any discrete parameter emits a deprecation warning."""
+    with pytest.warns(DeprecationWarning, match="comp_df"):
+        result = param.comp_df
+    assert_frame_equal(result, param.transform())

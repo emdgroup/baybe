@@ -100,9 +100,8 @@ class CustomDiscreteParameter(_EncodedDiscreteParameter):
         """Returns the representing labels of the parameter."""
         return tuple(self.data.index)
 
-    @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:
+    def _comp_df(self) -> pd.DataFrame:
         # The encoding is directly provided by the user
         # We prepend the parameter name to the columns names to avoid potential
         # conflicts with other parameters

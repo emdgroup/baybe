@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from abc import ABC, abstractmethod
-from functools import cached_property
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
@@ -130,16 +130,16 @@ class DiscreteParameter(Parameter, ABC):
         """The values that are considered for recommendation."""
         return self.values
 
-    @cached_property
-    @abstractmethod
-    def comp_df(self) -> pd.DataFrame:
-        # TODO: Should be renamed to `comp_rep`
-        """Return the computational representation of the parameter."""
-
-    @override
     @property
-    def comp_rep_columns(self) -> tuple[str, ...]:
-        return tuple(self.comp_df.columns)
+    def comp_df(self) -> pd.DataFrame:
+        """Deprecated! Use :meth:`transform` instead."""
+        warnings.warn(
+            f"'{self.__class__.__name__}.comp_df' is deprecated and will be removed "
+            f"in a future version. Use '.{self.transform.__name__}()' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.transform()
 
     def to_subspace(self) -> SubspaceDiscrete:
         """Create a one-dimensional search space from the parameter."""
@@ -151,17 +151,18 @@ class DiscreteParameter(Parameter, ABC):
     def is_in_range(self, item: Any) -> bool:
         return item in self.values
 
-    def transform(self, series: pd.Series, /) -> pd.DataFrame:
+    @abstractmethod
+    def transform(self, series: pd.Series | None = None, /) -> pd.DataFrame:
         """Transform parameter values to computational representation.
 
         Args:
             series: The parameter values in experimental representation to be
-                transformed.
+                transformed. If ``None``, the full computational representation
+                for all parameter values is returned.
 
         Returns:
             A dataframe containing the transformed values.
         """
-        return series.to_frame()
 
     @override
     def summary(self) -> dict:
@@ -204,6 +205,27 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
 
         return self._active_values
 
+    @override
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        # TODO: Refactor this workaround once the parameter logic has been decoupled
+        #  from comp_df materialization.
+        if not hasattr(self, "_comp_df"):
+            raise NotImplementedError()
+
+        return tuple(self._comp_df.columns)
+
+    @override
+    def transform(self, series: pd.Series | None = None, /) -> pd.DataFrame:
+        # TODO: Refactor this workaround once the parameter logic has been decoupled
+        #  from comp_df materialization.
+        if not hasattr(self, "_comp_df"):
+            raise NotImplementedError()
+
+        if series is None:
+            return self._comp_df
+        return self._comp_df.loc[series.to_numpy()].set_index(series.index)  # type: ignore[attr-defined]
+
     @_active_values.validator
     def _validate_active_values(  # noqa: DOC101, DOC103
         self, _: Any, content: tuple[str | bool, ...]
@@ -232,16 +254,6 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
                 f"All active values must be valid parameter choices from: "
                 f"{self.values}, provided: {content}"
             )
-
-    @override
-    def transform(self, series: pd.Series, /) -> pd.DataFrame:
-        return pd.merge(
-            left=series.rename("Labels").to_frame(),
-            left_on="Labels",
-            right=self.comp_df,
-            right_index=True,
-            how="left",
-        ).drop(columns="Labels")
 
     @override
     def summary(self) -> dict:

@@ -648,14 +648,16 @@ class SubspaceDiscrete(SerialMixin):
         """The minimum and maximum values of the computational representation."""
         if not self.parameters:
             return pd.DataFrame(index=["min", "max"])
-        df = pd.concat([p.comp_df for p in self.parameters], axis=1)
+        df = pd.concat([p.transform() for p in self.parameters], axis=1)
         return pd.DataFrame({"min": df.min(), "max": df.max()}).T
 
     @property
     def scaling_bounds(self) -> pd.DataFrame:
         """The bounds used for scaling the surrogate model input."""
         return (
-            pd.concat([p.comp_df.agg(["min", "max"]) for p in self.parameters], axis=1)
+            pd.concat(
+                [p.transform().agg(["min", "max"]) for p in self.parameters], axis=1
+            )
             if self.parameters
             else pd.DataFrame(index=["min", "max"])
         )
@@ -674,7 +676,7 @@ class SubspaceDiscrete(SerialMixin):
         """
         # Compute the dataframe shapes
         n_cols_exp = len(parameters)
-        n_cols_comp = sum(p.comp_df.shape[1] for p in parameters)
+        n_cols_comp = sum(p.transform().shape[1] for p in parameters)
         n_rows = prod(len(p.active_values) for p in parameters)
 
         # Comp rep space is estimated as the size of float times the number of matrix

@@ -1,7 +1,6 @@
 """Numerical parameters."""
 
 import gc
-from functools import cached_property
 from typing import Any, ClassVar
 
 import cattrs
@@ -93,14 +92,15 @@ class NumericalDiscreteParameter(DiscreteParameter):
         return tuple(active_settings.DTypeFloatNumpy(itm) for itm in self._values)
 
     @override
-    @cached_property
-    def comp_df(self) -> pd.DataFrame:
-        comp_df = pd.DataFrame(
-            {self.name: self.values},
-            index=self.values,
-            dtype=active_settings.DTypeFloatNumpy,
-        )
-        return comp_df
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        return (self.name,)
+
+    @override
+    def transform(self, series: pd.Series | None = None, /) -> pd.DataFrame:
+        if series is None:
+            series = pd.Series(self.values, index=self.values, name=self.name)
+        return series.to_frame().astype(active_settings.DTypeFloatNumpy)
 
     @override
     def is_in_range(self, item: float) -> bool:
