@@ -51,7 +51,6 @@ from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
-    from botorch.models import SingleTaskGP
     from botorch.models.gpytorch import GPyTorchModel
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
@@ -121,103 +120,6 @@ def _mark_custom_kernel(
         self._custom_kernel = True
 
     return value
-
-
-@define
-class _GaussianProcessSurrogate:
-    """Internal model builder for :class:`GaussianProcessSurrogate`.
-
-    Receives already-resolved GPyTorch components and performs straightforward
-    :class:`~botorch.models.SingleTaskGP` construction with no factory calls,
-    no context inspection, and no branching. Never exposed to users or the
-    serialization layer.
-    """
-
-    kernel: GPyTorchKernel = field(eq=False)
-    """The resolved GPyTorch kernel."""
-
-    mean: GPyTorchMean = field(eq=False)
-    """The resolved GPyTorch mean function."""
-
-    likelihood: GPyTorchLikelihood = field(eq=False)
-    """The resolved GPyTorch likelihood."""
-
-    criterion: FitCriterion = field()
-    """The resolved fitting criterion."""
-
-    _model: SingleTaskGP | None = field(init=False, default=None, eq=False)
-    """The fitted BoTorch model."""
-
-    def fit(
-        self,
-        searchspace: SearchSpace,
-        objective: Objective,
-        measurements: pd.DataFrame,
-    ) -> None:
-        """Fit the GP from BayBE objects, satisfying :class:`SurrogateProtocol`.
-
-        Args:
-            searchspace: The search space the model is trained on.
-            objective: The objective for which the model is trained.
-            measurements: The training data in experimental representation.
-        """
-        from baybe.utils.dataframe import to_tensor
-
-        context = _ModelContext(searchspace, objective, measurements)
-        pre_transformed = objective._pre_transform(measurements, allow_extra=True)
-        train_x, train_y = to_tensor(
-            searchspace.transform(measurements, allow_extra=True), pre_transformed
-        )
-        self._fit_from_tensors(train_x, train_y, context)
-
-    def _fit_from_tensors(
-        self,
-        train_x: Tensor,
-        train_y: Tensor,
-        context: _ModelContext,
-    ) -> None:
-        """Build and fit the SingleTaskGP from pre-processed tensors.
-
-        This method exists as a performance optimisation for the case where the caller
-        (i.e. :class:`GaussianProcessSurrogate`) has already computed ``train_x`` and
-        ``train_y`` through the standard :class:`~baybe.surrogates.base.Surrogate`
-        pipeline and can pass them directly, avoiding a redundant second pass through
-        :meth:`~baybe.searchspace.core.SearchSpace.transform` and
-        :func:`~baybe.utils.dataframe.to_tensor` that would otherwise occur if
-        :meth:`fit` were called with the original BayBE objects instead.
-
-        Args:
-            train_x: Training inputs in computational representation.
-            train_y: Training targets (pre-transformed).
-            context: The model context providing bounds and index information.
-        """
-        import botorch
-        from botorch.models.transforms import Normalize, Standardize
-
-        input_transform = Normalize(
-            train_x.shape[-1],
-            bounds=context.parameter_bounds,
-            indices=context.numerical_indices,
-        )
-        outcome_transform = Standardize(train_y.shape[-1])
-
-        self._model = botorch.models.SingleTaskGP(
-            train_x,
-            train_y,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            mean_module=self.mean,
-            covar_module=self.kernel,
-            likelihood=self.likelihood,
-        )
-        mll = self.criterion.to_gpytorch(self._model.likelihood, self._model)
-        botorch.fit.fit_gpytorch_mll(mll)
-
-    def to_botorch(self) -> GPyTorchModel:
-        """Return the fitted BoTorch model, satisfying :class:`SurrogateProtocol`."""
-        if self._model is None:
-            raise RuntimeError(f"'{self.__class__.__name__}' has not been fitted yet.")
-        return self._model
 
 
 @define
@@ -307,8 +209,8 @@ class GaussianProcessSurrogate(Surrogate):
     ``FitCriterionFactoryProtocol``.
     """
 
-    _inner: _GaussianProcessSurrogate | None = field(init=False, default=None, eq=False)
-    """The fitted internal model instance. Available after fitting."""
+    _model = field(init=False, default=None, eq=False)
+    """The fitted BoTorch model."""
 
     @property
     def fit_criterion_factory(self) -> FitCriterionFactoryProtocol:
@@ -367,11 +269,11 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def to_botorch(self) -> GPyTorchModel:
-        if self._inner is None:
+        if self._model is None:
             raise ModelNotTrainedError(
                 "The surrogate must be trained before a BoTorch model can be created."
             )
-        return self._inner.to_botorch()
+        return self._model
 
     @override
     @staticmethod
@@ -389,8 +291,8 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
-        assert self._inner is not None
-        return self._inner.to_botorch().posterior(candidates_comp_scaled)
+        assert self._model is not None
+        return self._model.posterior(candidates_comp_scaled)
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
@@ -436,12 +338,27 @@ class GaussianProcessSurrogate(Surrogate):
             context.searchspace, context.objective, context.measurements
         )
 
-        ### Create internal instance with resolved components and delegate fitting
-        inner = _GaussianProcessSurrogate(
-            kernel=kernel, mean=mean, likelihood=likelihood, criterion=criterion
+        import botorch
+        from botorch.models.transforms import Normalize, Standardize
+
+        ### Construct and fit the GP model
+        input_transform = Normalize(
+            train_x.shape[-1],
+            bounds=context.parameter_bounds,
+            indices=context.numerical_indices,
         )
-        inner._fit_from_tensors(train_x, train_y, context)
-        self._inner = inner
+        outcome_transform = Standardize(train_y.shape[-1])
+        self._model = botorch.models.SingleTaskGP(
+            train_x,
+            train_y,
+            input_transform=input_transform,
+            outcome_transform=outcome_transform,
+            mean_module=mean,
+            covar_module=kernel,
+            likelihood=likelihood,
+        )
+        mll = criterion.to_gpytorch(self._model.likelihood, self._model)
+        botorch.fit.fit_gpytorch_mll(mll)
 
     @override
     def __str__(self) -> str:
