@@ -148,36 +148,56 @@ class _GaussianProcessSurrogate:
     _model: SingleTaskGP | None = field(init=False, default=None, eq=False)
     """The fitted BoTorch model."""
 
-    @property
-    def model(self) -> SingleTaskGP:
-        """The fitted BoTorch model."""
-        if self._model is None:
-            raise RuntimeError(f"'{self.__class__.__name__}' has not been fitted yet.")
-        return self._model
-
     def fit(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
+        """Fit the GP from BayBE objects, satisfying :class:`SurrogateProtocol`.
+
+        Args:
+            searchspace: The search space the model is trained on.
+            objective: The objective for which the model is trained.
+            measurements: The training data in experimental representation.
+        """
+        from baybe.utils.dataframe import to_tensor
+
+        context = _ModelContext(searchspace, objective, measurements)
+        pre_transformed = objective._pre_transform(measurements, allow_extra=True)
+        train_x, train_y = to_tensor(
+            searchspace.transform(measurements, allow_extra=True), pre_transformed
+        )
+        self._fit_from_tensors(train_x, train_y, context)
+
+    def _fit_from_tensors(
         self,
         train_x: Tensor,
         train_y: Tensor,
-        *,
-        parameter_bounds: Tensor,
-        numerical_indices: list[int],
+        context: _ModelContext,
     ) -> None:
-        """Build and fit the SingleTaskGP from the resolved components.
+        """Build and fit the SingleTaskGP from pre-processed tensors.
+
+        This method exists as a performance optimisation for the case where the caller
+        (i.e. :class:`GaussianProcessSurrogate`) has already computed ``train_x`` and
+        ``train_y`` through the standard :class:`~baybe.surrogates.base.Surrogate`
+        pipeline and can pass them directly, avoiding a redundant second pass through
+        :meth:`~baybe.searchspace.core.SearchSpace.transform` and
+        :func:`~baybe.utils.dataframe.to_tensor` that would otherwise occur if
+        :meth:`fit` were called with the original BayBE objects instead.
 
         Args:
             train_x: Training inputs in computational representation.
             train_y: Training targets (pre-transformed).
-            parameter_bounds: Parameter bounds used for input normalization.
-            numerical_indices: Column indices of regular (non-task) input dimensions.
+            context: The model context providing bounds and index information.
         """
         import botorch
         from botorch.models.transforms import Normalize, Standardize
 
         input_transform = Normalize(
             train_x.shape[-1],
-            bounds=parameter_bounds,
-            indices=numerical_indices,
+            bounds=context.parameter_bounds,
+            indices=context.numerical_indices,
         )
         outcome_transform = Standardize(train_y.shape[-1])
 
@@ -192,6 +212,12 @@ class _GaussianProcessSurrogate:
         )
         mll = self.criterion.to_gpytorch(self._model.likelihood, self._model)
         botorch.fit.fit_gpytorch_mll(mll)
+
+    def to_botorch(self) -> GPyTorchModel:
+        """Return the fitted BoTorch model, satisfying :class:`SurrogateProtocol`."""
+        if self._model is None:
+            raise RuntimeError(f"'{self.__class__.__name__}' has not been fitted yet.")
+        return self._model
 
 
 @define
@@ -345,7 +371,7 @@ class GaussianProcessSurrogate(Surrogate):
             raise ModelNotTrainedError(
                 "The surrogate must be trained before a BoTorch model can be created."
             )
-        return self._inner.model
+        return self._inner.to_botorch()
 
     @override
     @staticmethod
@@ -364,7 +390,7 @@ class GaussianProcessSurrogate(Surrogate):
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
         assert self._inner is not None
-        return self._inner.model.posterior(candidates_comp_scaled)
+        return self._inner.to_botorch().posterior(candidates_comp_scaled)
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
@@ -414,12 +440,7 @@ class GaussianProcessSurrogate(Surrogate):
         inner = _GaussianProcessSurrogate(
             kernel=kernel, mean=mean, likelihood=likelihood, criterion=criterion
         )
-        inner.fit(
-            train_x,
-            train_y,
-            parameter_bounds=context.parameter_bounds,
-            numerical_indices=context.numerical_indices,
-        )
+        inner._fit_from_tensors(train_x, train_y, context)
         self._inner = inner
 
     @override
