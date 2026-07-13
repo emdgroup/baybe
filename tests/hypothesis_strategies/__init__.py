@@ -8,6 +8,9 @@ from tests.hypothesis_strategies.kernels import kernels
 from tests.hypothesis_strategies.objectives import objectives
 from tests.hypothesis_strategies.parameters import parameters
 from tests.hypothesis_strategies.priors import priors
+from tests.hypothesis_strategies.surrogates import (
+    gaussian_process_surrogates as gaussian_process_surrogates,
+)
 from tests.hypothesis_strategies.targets import targets
 
 baybe_objects = st.one_of(
