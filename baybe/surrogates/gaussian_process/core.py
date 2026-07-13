@@ -13,7 +13,7 @@ from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
 from typing_extensions import Self, override
 
-from baybe.exceptions import DeprecationError
+from baybe.exceptions import DeprecationError, ModelNotTrainedError
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
@@ -347,7 +347,10 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def to_botorch(self) -> GPyTorchModel:
-        assert self._inner is not None
+        if self._inner is None:
+            raise ModelNotTrainedError(
+                "The surrogate must be trained before a BoTorch model can be created."
+            )
         return self._inner.model
 
     @override
