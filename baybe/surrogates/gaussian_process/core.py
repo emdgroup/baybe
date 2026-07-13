@@ -49,6 +49,7 @@ from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    from botorch.models import SingleTaskGP
     from botorch.models.gpytorch import GPyTorchModel
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
@@ -142,10 +143,15 @@ class _GaussianProcessSurrogate:
     criterion: FitCriterion = field()
     """The resolved fitting criterion."""
 
-    # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
-    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
-    _model = field(init=False, default=None, eq=False)
+    _model: SingleTaskGP | None = field(init=False, default=None, eq=False)
     """The fitted BoTorch model."""
+
+    @property
+    def model(self) -> SingleTaskGP:
+        """The fitted BoTorch model."""
+        if self._model is None:
+            raise RuntimeError(f"'{self.__class__.__name__}' has not been fitted yet.")
+        return self._model
 
     def fit(
         self,
@@ -342,7 +348,7 @@ class GaussianProcessSurrogate(Surrogate):
     @override
     def to_botorch(self) -> GPyTorchModel:
         assert self._inner is not None
-        return self._inner._model
+        return self._inner.model
 
     @override
     @staticmethod
@@ -361,7 +367,7 @@ class GaussianProcessSurrogate(Surrogate):
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
         assert self._inner is not None
-        return self._inner._model.posterior(candidates_comp_scaled)
+        return self._inner.model.posterior(candidates_comp_scaled)
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
