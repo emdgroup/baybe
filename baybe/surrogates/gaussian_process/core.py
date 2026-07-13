@@ -5,10 +5,12 @@ from __future__ import annotations
 import gc
 import importlib
 import os
+from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
 from attrs import Converter, define, field
+from attrs.converters import optional as optional_c
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
 from typing_extensions import Self, override
@@ -221,10 +223,8 @@ class GaussianProcessSurrogate(Surrogate):
         alias="kernel_or_factory",
         converter=pipe(  # type: ignore[misc]
             Converter(_mark_custom_kernel, takes_self=True),  # type: ignore[call-overload]
-            lambda v: (
-                None
-                if v is None
-                else to_component_factory(v, component_type=GPComponentType.KERNEL)
+            optional_c(
+                partial(to_component_factory, component_type=GPComponentType.KERNEL)
             ),
         ),
         default=None,
@@ -240,10 +240,8 @@ class GaussianProcessSurrogate(Surrogate):
     _mean_factory: MeanFactoryProtocol | None = field(
         alias="mean_or_factory",
         default=None,
-        converter=lambda v: (
-            None
-            if v is None
-            else to_component_factory(v, component_type=GPComponentType.MEAN)
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.MEAN)  # type: ignore[misc]
         ),
         repr=False,
         validator=optional(is_callable()),
@@ -256,10 +254,8 @@ class GaussianProcessSurrogate(Surrogate):
     _likelihood_factory: LikelihoodFactoryProtocol | None = field(
         alias="likelihood_or_factory",
         default=None,
-        converter=lambda v: (
-            None
-            if v is None
-            else to_component_factory(v, component_type=GPComponentType.LIKELIHOOD)
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.LIKELIHOOD)  # type: ignore[misc]
         ),
         repr=False,
         validator=optional(is_callable()),
@@ -273,10 +269,8 @@ class GaussianProcessSurrogate(Surrogate):
     _fit_criterion_factory: FitCriterionFactoryProtocol | None = field(
         alias="fit_criterion_or_factory",
         default=None,
-        converter=lambda v: (
-            None
-            if v is None
-            else to_component_factory(v, component_type=GPComponentType.CRITERION)
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.CRITERION)  # type: ignore[misc]
         ),
         repr=False,
         validator=optional(is_callable()),
