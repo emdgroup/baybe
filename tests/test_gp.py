@@ -29,6 +29,12 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriter
 from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
+from baybe.surrogates.gaussian_process.presets.baybe import (
+    BayBEFitCriterionFactory,
+    BayBEKernelFactory,
+    BayBELikelihoodFactory,
+    BayBEMeanFactory,
+)
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import create_fake_input, to_tensor
 
@@ -147,6 +153,30 @@ def test_gpytorch_component_serialization(component):
     msg = f"{type(obj).__name__}' is not supported"
     with pytest.raises(NotImplementedError, match=msg):
         GaussianProcessSurrogate(**component).to_dict()
+
+
+def test_legacy_serialization_backwards_compatibility():
+    """A dict serialized before the factory refactor can be deserialized.
+
+    Before this PR, ``GaussianProcessSurrogate`` stored concrete ``BayBEXFactory``
+    instances as field defaults. After the refactor the fields default to ``None``.
+    Existing serialized surrogates must still deserialize correctly.
+    """
+    # Dict captured from main prior to the factory refactor
+    legacy_dict = {
+        "type": "GaussianProcessSurrogate",
+        "kernel_or_factory": {"type": "BayBEKernelFactory", "parameter_selector": None},
+        "mean_or_factory": {"type": "BayBEMeanFactory"},
+        "likelihood_or_factory": {"type": "BayBELikelihoodFactory"},
+        "fit_criterion_or_factory": {"type": "BayBEFitCriterionFactory"},
+    }
+    gp = GaussianProcessSurrogate.from_dict(legacy_dict)
+    assert gp == GaussianProcessSurrogate(
+        kernel_or_factory=BayBEKernelFactory(),
+        mean_or_factory=BayBEMeanFactory(),
+        likelihood_or_factory=BayBELikelihoodFactory(),
+        fit_criterion_or_factory=BayBEFitCriterionFactory(),
+    )
 
 
 @pytest.mark.parametrize("preset", list(GaussianProcessPreset), ids=lambda p: p.name)
