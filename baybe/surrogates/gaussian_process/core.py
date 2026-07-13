@@ -126,9 +126,8 @@ class _GaussianProcessSurrogate:
 
     Receives already-resolved GPyTorch components and performs straightforward
     :class:`~botorch.models.SingleTaskGP` construction with no factory calls,
-    no context inspection, and no branching. Intended to be instantiated by
-    :class:`GaussianProcessSurrogate` at fit time once factory delegation is
-    in place, and never exposed to users or the serialization layer.
+    no context inspection, and no branching. Never exposed to users or the
+    serialization layer.
     """
 
     kernel: GPyTorchKernel = field(eq=False)
