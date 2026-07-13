@@ -227,6 +227,11 @@ class GaussianProcessSurrogate(Surrogate):
         repr=False,
         validator=optional(is_callable()),
     )
+    """The used kernel factory. ``None`` defers to the BayBE default.
+
+    Accepts a :class:`baybe.kernels.base.Kernel`, a ``KernelFactoryProtocol``, or a
+    :class:`gpytorch.kernels.Kernel`.
+    """
 
     _mean_factory: MeanFactoryProtocol | None = field(
         alias="mean_or_factory",
@@ -239,6 +244,10 @@ class GaussianProcessSurrogate(Surrogate):
         repr=False,
         validator=optional(is_callable()),
     )
+    """The used mean factory. ``None`` defers to the BayBE default.
+
+    Accepts a ``MeanFactoryProtocol`` or a :class:`gpytorch.means.Mean`.
+    """
 
     _likelihood_factory: LikelihoodFactoryProtocol | None = field(
         alias="likelihood_or_factory",
@@ -251,6 +260,11 @@ class GaussianProcessSurrogate(Surrogate):
         repr=False,
         validator=optional(is_callable()),
     )
+    """The used likelihood factory. ``None`` defers to the BayBE default.
+
+    Accepts a ``LikelihoodFactoryProtocol`` or a
+    :class:`gpytorch.likelihoods.Likelihood`.
+    """
 
     _fit_criterion_factory: FitCriterionFactoryProtocol | None = field(
         alias="fit_criterion_or_factory",
@@ -263,6 +277,11 @@ class GaussianProcessSurrogate(Surrogate):
         repr=False,
         validator=optional(is_callable()),
     )
+    """The used fit criterion factory. ``None`` defers to the BayBE default.
+
+    Accepts a :class:`.components.fit_criterion.FitCriterion` or a
+    ``FitCriterionFactoryProtocol``.
+    """
 
     _symmetries: tuple[Symmetry, ...] = field(factory=tuple, init=False, eq=False)
     """Symmetries for future architecture adjustments (e.g., invariant kernels)."""
@@ -272,43 +291,22 @@ class GaussianProcessSurrogate(Surrogate):
 
     @property
     def fit_criterion_factory(self) -> FitCriterionFactoryProtocol:
-        """The fitting criterion for Gaussian process hyperparameter optimization.
-
-        Accepts:
-            * :class:`.components.fit_criterion.FitCriterion`
-            * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
-        """
+        """The fit criterion factory used during model fitting."""
         return self._fit_criterion_factory or BayBEFitCriterionFactory()
 
     @property
     def kernel_factory(self) -> KernelFactoryProtocol:
-        """The factory used to create the kernel for the Gaussian process.
-
-        Accepts:
-            * :class:`baybe.kernels.base.Kernel`
-            * :class:`.components.kernel.KernelFactory`
-            * :class:`gpytorch.kernels.Kernel`
-        """
+        """The kernel factory used during model fitting."""
         return self._kernel_factory or BayBEKernelFactory()
 
     @property
     def likelihood_factory(self) -> LikelihoodFactoryProtocol:
-        """The factory used to create the likelihood for the Gaussian process.
-
-        Accepts:
-            * :class:`.components.likelihood.LikelihoodFactory`
-            * :class:`gpytorch.likelihoods.Likelihood`
-        """
+        """The likelihood factory used during model fitting."""
         return self._likelihood_factory or BayBELikelihoodFactory()
 
     @property
     def mean_factory(self) -> MeanFactoryProtocol:
-        """The factory used to create the mean function for the Gaussian process.
-
-        Accepts:
-            * :class:`.components.mean.MeanFactory`
-            * :class:`gpytorch.means.Mean`
-        """
+        """The mean factory used during model fitting."""
         return self._mean_factory or BayBEMeanFactory()
 
     @classmethod
