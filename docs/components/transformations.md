@@ -399,7 +399,7 @@ t = CustomTransformation(torch.sin)
 ```
 
 ````{admonition} Automatic Wrapping
-:note:
+:class: note
 
 When embedding custom transformations into another context, wrapping the `torch`
 callable into a {class}`~baybe.transformations.basic.CustomTransformation` happens
