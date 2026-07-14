@@ -11,7 +11,6 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError, IncompatibleSearchSpaceError
 from baybe.optimizers.base import OptimizerProtocol
-from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.settings import AutoBool
 from baybe.utils.basic import flatten
@@ -69,25 +68,11 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace]):
                 f"expects single continuous space, i.e., containing no subsets."
             )
 
-        # TODO: Unify with fixed_values depending on SearchSpace refactor
         bounds_df = space.comp_rep_bounds
-        internal_fixed = {
-            space.comp_rep_columns.index(p.name): p.value
-            for p in cont.parameters
-            if isinstance(p, _FixedNumericalContinuousParameter)
-        }
-        external_fixed = {
+        fixed_features = {
             space.comp_rep_columns.index(col): val
             for col, val in space.fixed_values.items()
-        }
-        overlap = internal_fixed.keys() & external_fixed.keys()
-        if overlap and any(internal_fixed[k] != external_fixed[k] for k in overlap):
-            conflicting = [space.comp_rep_columns[i] for i in sorted(overlap)]
-            raise ValueError(
-                f"Conflicting values for fixed parameters {conflicting}: "
-                f"cardinality constraints and external fixed_values disagree."
-            )
-        merged_fixed = {**internal_fixed, **external_fixed}
+        } or None
 
         # NOTE: The explicit `or None` conversions are added as an additional safety net
         #   because it is unclear if the corresponding presence checks for these
@@ -99,7 +84,7 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace]):
             q=batch_size,
             num_restarts=self.n_starts,
             raw_samples=self.n_initial_samples,
-            fixed_features=merged_fixed or None,
+            fixed_features=fixed_features,
             equality_constraints=flatten(
                 c.to_botorch(
                     cont.parameters,
