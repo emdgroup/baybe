@@ -91,7 +91,7 @@ class TaskParameter(CategoricalParameter):
     # See base class.
 
     override_transfer_learning_mode: TransferLearningMode | None = field(
-        default=None,
+        default=TransferLearningMode.RGPE,
         validator=optional(instance_of(TransferLearningMode)),
     )
     """Optional override for the transfer learning mode."""
