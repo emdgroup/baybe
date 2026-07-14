@@ -3,13 +3,13 @@
 from baybe.optimizers.base import OptimizerProtocol
 from baybe.optimizers.composite import (
     Alternating,
-    CompositionStrategy,
+    SequentialOptimizer,
 )
 from baybe.optimizers.continuous import ContinuousOptimizer
 
 __all__ = [
     "Alternating",
-    "CompositionStrategy",
+    "SequentialOptimizer",
     "ContinuousOptimizer",
     "OptimizerProtocol",
 ]
