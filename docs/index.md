@@ -23,14 +23,6 @@ FAQ <faq>
 :relative-docs: docs/
 ```
 
-```{eval-rst}
-.. autosummary::
-   :toctree: _autosummary
-   :template: custom-module-template.rst
-   :recursive:
-
-   baybe
-```
 
 ```{toctree}
 :maxdepth: 2
