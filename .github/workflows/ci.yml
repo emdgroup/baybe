@@ -86,14 +86,14 @@ jobs:
         with:
           persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-        with: {python-version: "3.10"}
+        with: {python-version: "3.11"}
       - name: Build Docs
         # Uses dummy examples for speed. Example correctness is validated by
         # the fulltest job. Full example execution happens in the docs.yml
         # deployment workflow on merge to main.
         run: |
           pip install tox-uv
-          tox -e docs-py310
+          tox -e docs-py311
 
   linkcheck:
     name: "Link Check"
@@ -105,7 +105,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-        with: {python-version: "3.10"}
+        with: {python-version: "3.11"}
       - name: Check external links
         run: |
           pip install tox-uv
