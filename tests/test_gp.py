@@ -231,9 +231,6 @@ def test_botorch_preset(multitask: bool):
     assert_frame_equal(posterior1, posterior2)
 
 
-_OBJECTIVE = NumericalTarget(name="y").to_objective()
-
-
 def _predict_on_posterior_mean(
     pretrained_gp: GaussianProcessSurrogate, xs: list[float]
 ) -> pd.DataFrame:
@@ -241,7 +238,7 @@ def _predict_on_posterior_mean(
     points = pd.DataFrame({"x1": xs})
     with torch.no_grad():
         targets = pretrained_gp.posterior(points).mean
-    return pd.DataFrame({"x1": xs, "y": targets.numpy().ravel()})
+    return pd.DataFrame({"x1": xs, "t": targets.numpy().ravel()})
 
 
 @pytest.fixture(name="pretrained_gp")
@@ -250,8 +247,8 @@ def fixture_pretrained_gp() -> GaussianProcessSurrogate:
     surrogate = GaussianProcessSurrogate()
     surrogate.fit(
         NumericalDiscreteParameter("x1", [0.0, 2.5, 5.0]).to_searchspace(),
-        _OBJECTIVE,
-        pd.DataFrame({"x1": [0.0, 2.5, 5.0], "y": [0.0, 5.0, 10.0]}),
+        objective,
+        pd.DataFrame({"x1": [0.0, 2.5, 5.0], "t": [0.0, 5.0, 10.0]}),
     )
     return surrogate
 
@@ -292,12 +289,12 @@ def test_posterior_mean_transfer(
     new_measurements = _predict_on_posterior_mean(pretrained_gp, [0.0, 10.0])
     if prebuilt:
         mean = pretrained_gp.posterior_mean_function(
-            wider_searchspace, _OBJECTIVE, new_measurements
+            wider_searchspace, objective, new_measurements
         )
     else:
         mean = pretrained_gp.posterior_mean_function
     new_gp = GaussianProcessSurrogate(mean_or_factory=mean)
-    new_gp.fit(wider_searchspace, _OBJECTIVE, new_measurements)
+    new_gp.fit(wider_searchspace, objective, new_measurements)
 
     assert new_gp.to_botorch() is not None
 
