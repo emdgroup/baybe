@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, cast
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from attrs import define, field
+from attrs import define, evolve, field
 from typing_extensions import override
 
 from baybe.constraints import validate_constraints
@@ -198,6 +198,94 @@ class SearchSpace(SerialMixin):
                 cont_params,  # type:ignore[arg-type]
             ),
         )
+
+    @property
+    def fixed_values(self) -> dict[str, float]:
+        """All fixed comp-rep columns across both subspaces.
+
+        Merges externally fixed values (set via :meth:`fix_parameters`) with
+        internally fixed values (from ``_FixedNumericalContinuousParameter``
+        created by cardinality constraints).
+
+        Raises:
+            ValueError: If cardinality constraints and external fixed values
+                disagree on the same column.
+
+        Returns:
+            Mapping from comp-rep column names to their fixed values.
+        """
+        from baybe.parameters.numerical import _FixedNumericalContinuousParameter
+
+        internal = {
+            p.name: p.value
+            for p in self.continuous.parameters
+            if isinstance(p, _FixedNumericalContinuousParameter)
+        }
+
+        overlap = internal.keys() & self.continuous._fixed_values.keys()
+        if overlap and any(
+            internal[k] != self.continuous._fixed_values[k] for k in overlap
+        ):
+            raise ValueError(
+                f"Conflicting fixed values for columns {sorted(overlap)}: "
+                f"cardinality constraints and external fixed values disagree."
+            )
+
+        return {
+            **self.discrete._fixed_values,
+            **internal,
+            **self.continuous._fixed_values,
+        }
+
+    def fix_parameters(self, values: dict[str, float]) -> SearchSpace:
+        """Return a copy with additional fixed comp-rep column values.
+
+        Args:
+            values: Mapping from comp-rep column names to their fixed values.
+
+        Returns:
+            A new search space with the given values added to the fixed set.
+        """
+        discrete_cols = set(self.discrete.comp_rep_columns)
+        continuous_cols = set(self.continuous.comp_rep_columns)
+
+        disc_fixed = {k: v for k, v in values.items() if k in discrete_cols}
+        cont_fixed = {k: v for k, v in values.items() if k in continuous_cols}
+
+        new_discrete = evolve(self.discrete)
+        new_discrete._fixed_values = {**self.discrete._fixed_values, **disc_fixed}
+
+        new_continuous = evolve(self.continuous)
+        new_continuous._fixed_values = {
+            **self.continuous._fixed_values,
+            **cont_fixed,
+        }
+
+        return evolve(self, discrete=new_discrete, continuous=new_continuous)
+
+    def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
+        """Draw random parameter configurations from the search space.
+
+        Discrete parameters are sampled uniformly from the candidate set.
+        Continuous parameters are sampled uniformly from their bounds.
+
+        Args:
+            batch_size: The number of configurations to sample.
+
+        Returns:
+            A dataframe with parameter configurations in experimental
+            representation.
+        """
+        dfs: list[pd.DataFrame] = []
+        if not self.discrete.is_empty:
+            dfs.append(
+                self.discrete.exp_rep.sample(batch_size, replace=True).reset_index(
+                    drop=True
+                )
+            )
+        if not self.continuous.is_empty:
+            dfs.append(self.continuous.sample_uniform(batch_size))
+        return pd.concat(dfs, axis=1)
 
     @property
     def parameters(self) -> tuple[Parameter, ...]:

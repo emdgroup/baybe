@@ -33,7 +33,10 @@ class OptimizerProtocol(Protocol, Generic[TSpace]):  # type: ignore[misc]
     __slots__ = ()
 
     def __call__(
-        self, batch_size: int, score_function: ScoreFunction, space: TSpace
+        self,
+        batch_size: int,
+        score_function: ScoreFunction,
+        space: TSpace,
     ) -> tuple[Tensor, Tensor]:
         """Optimize a given callable over the specified space.
 
