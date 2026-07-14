@@ -87,7 +87,7 @@ class Alternating(CompositionStrategy):
             yield from range(n_partitions)
 
 
-@define(kw_only=True)
+@define(frozen=True, slots=False, kw_only=True)
 class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     """Optimizer that allows stacking multiple optimizers."""
 
