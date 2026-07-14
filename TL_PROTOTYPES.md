@@ -366,3 +366,77 @@ leave-one-out batch), so all folds share the target model's hyperparameters.
   comparable output scale (as they do here, sharing the objective's output space).
 - **No `FilterFeatures`.** Like the other modes, RGPE strips the task column in
   `_posterior` (decision 5.3) and therefore does not support `fantasize`.
+
+## 12. Known issues and potential fixes
+
+Findings from a review of the branch (and in particular the RGPE commit). Ordered by
+severity.
+
+### 12.1 LOOCV GP is not actually "transform-free" (RGPE)
+
+**Where:** `_loocv_sample_preds` in `rgpe_transfer.py`.
+
+**Issue.** The function documents building a *"transform-free batch GP"* that reuses the
+target model's fitted kernel, mean and likelihood in the already-transformed
+(normalized-input / standardized-output) space. However, `SingleTaskGP` is constructed
+without an explicit `outcome_transform`, and current BoTorch (0.16.x) applies a
+**default `Standardize` outcome transform** in that case. Since `train_y_cv` is already
+in the target model's standardized space, each leave-one-out fold gets *re-standardized*
+per batch. The deep-copied kernel/mean/likelihood hyperparameters were fitted for the
+first standardization, so they no longer align exactly with the scale the LOO model
+sees — the opposite of the intended "share the fitted hyperparameters" behavior.
+
+**Impact.** Small in practice: re-standardizing already-≈unit-variance data is close to
+identity, and the ranking loss only depends on ordering (preserved by any monotonic
+transform), so results and tests are largely unaffected. But it contradicts the
+documented intent and slightly perturbs the estimated weights.
+
+**Fix.** Make the LOO GP explicitly transform-free:
+
+```python
+model = SingleTaskGP(
+    train_x_cv,
+    train_y_cv,
+    covar_module=deepcopy(target_model.covar_module),
+    mean_module=deepcopy(target_model.mean_module),
+    likelihood=deepcopy(target_model.likelihood),
+    outcome_transform=None,
+    input_transform=None,
+)
+```
+
+### 12.2 Redundant weight renormalization (RGPE)
+
+**Where:** `_posterior` in `rgpe_transfer.py`.
+
+**Issue.** The non-zero weights are renormalized (`weights[nonzero] / weights[nonzero].sum()`)
+before combining posteriors. In every branch the weights already sum to one (ranking
+weights are `bincount / num_samples`; the cold-start fallbacks are uniform), so the
+renormalization is a no-op and a minor, unnecessary deviation from the reference
+implementation.
+
+**Fix.** Optional — drop the renormalization and simply select the non-zero-weight
+models, or keep it as defensive code and note that it is a no-op.
+
+### 12.3 Weight dilution across many sources (RGPE)
+
+**Where:** conceptual, `_compute_rank_weights`.
+
+**Issue.** Like the basic reference implementation, the ensemble does not mitigate
+weight dilution: with many source tasks, the target model's weight can be driven toward
+zero even when it is the most relevant model. This is already called out in the class
+docstring as out of scope.
+
+**Fix.** None required for the prototype. If needed later, add the paper's dilution
+mitigation (e.g. discard source models whose ranking loss exceeds the target model's
+median loss before computing weights).
+
+### 12.4 Commit-message wording
+
+**Issue.** The commit title *"…no to one target point fallback to source for all TL
+modes"* is slightly imprecise: mean/residual transfer fall back to the source only at
+**zero** target points and build their target/residual GP from one point onward, while
+RGPE uses uniform weights at zero and one point. The behavior is correct; only the
+phrasing is loose.
+
+**Fix.** Purely cosmetic — no code change needed.
