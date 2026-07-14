@@ -201,8 +201,41 @@ class SearchSpace(SerialMixin):
 
     @property
     def fixed_values(self) -> dict[str, float]:
-        """Comp-rep column values held constant during optimization."""
-        return {**self.discrete.fixed_values, **self.continuous.fixed_values}
+        """All fixed comp-rep columns across both subspaces.
+
+        Merges externally fixed values (set via :meth:`fix_parameters`) with
+        internally fixed values (from ``_FixedNumericalContinuousParameter``
+        created by cardinality constraints).
+
+        Raises:
+            ValueError: If cardinality constraints and external fixed values
+                disagree on the same column.
+
+        Returns:
+            Mapping from comp-rep column names to their fixed values.
+        """
+        from baybe.parameters.numerical import _FixedNumericalContinuousParameter
+
+        internal = {
+            p.name: p.value
+            for p in self.continuous.parameters
+            if isinstance(p, _FixedNumericalContinuousParameter)
+        }
+
+        overlap = internal.keys() & self.continuous._fixed_values.keys()
+        if overlap and any(
+            internal[k] != self.continuous._fixed_values[k] for k in overlap
+        ):
+            raise ValueError(
+                f"Conflicting fixed values for columns {sorted(overlap)}: "
+                f"cardinality constraints and external fixed values disagree."
+            )
+
+        return {
+            **self.discrete._fixed_values,
+            **internal,
+            **self.continuous._fixed_values,
+        }
 
     def fix_parameters(self, values: dict[str, float]) -> SearchSpace:
         """Return a copy with additional fixed comp-rep column values.
@@ -219,17 +252,16 @@ class SearchSpace(SerialMixin):
         disc_fixed = {k: v for k, v in values.items() if k in discrete_cols}
         cont_fixed = {k: v for k, v in values.items() if k in continuous_cols}
 
-        return evolve(
-            self,
-            discrete=evolve(
-                self.discrete,
-                fixed_values={**self.discrete.fixed_values, **disc_fixed},
-            ),
-            continuous=evolve(
-                self.continuous,
-                fixed_values={**self.continuous.fixed_values, **cont_fixed},
-            ),
-        )
+        new_discrete = evolve(self.discrete)
+        new_discrete._fixed_values = {**self.discrete._fixed_values, **disc_fixed}
+
+        new_continuous = evolve(self.continuous)
+        new_continuous._fixed_values = {
+            **self.continuous._fixed_values,
+            **cont_fixed,
+        }
+
+        return evolve(self, discrete=new_discrete, continuous=new_continuous)
 
     def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
         """Draw random parameter configurations from the search space.
