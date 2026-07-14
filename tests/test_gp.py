@@ -2,6 +2,7 @@
 
 import math
 import sys
+from unittest.mock import Mock
 
 import pandas as pd
 import pytest
@@ -318,8 +319,5 @@ def test_posterior_mean_transfer(
 
 def test_posterior_mean_raises_if_not_fitted() -> None:
     """An untrained surrogate cannot produce a posterior mean function."""
-    ss = _pm_searchspace([0.0, 1.0])
     with pytest.raises(ModelNotTrainedError, match="must be fitted"):
-        GaussianProcessSurrogate().posterior_mean_function(
-            ss, _OBJECTIVE, _pm_measurements([0.0, 1.0], [0.0, 1.0])
-        )
+        GaussianProcessSurrogate().posterior_mean_function(Mock(), Mock(), Mock())
