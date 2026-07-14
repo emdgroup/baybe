@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Iterable
+from collections.abc import Collection, Generator, Iterable
 from typing import TYPE_CHECKING, TypeAlias
 
 from attrs import define, field
@@ -17,12 +18,7 @@ from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     to_parameter_selector,
 )
-from baybe.searchspace import (
-    SearchSpace,
-    SearchSpaceType,
-    SubspaceContinuous,
-    SubspaceDiscrete,
-)
+from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.validation import validate_optimizer_input
 
@@ -40,11 +36,8 @@ if TYPE_CHECKING:
     )
     """The type of input that indicates which parameters to optimize."""
 
-    Partition: TypeAlias = tuple[
-        SearchSpace | SubspaceContinuous | SubspaceDiscrete,
-        OptimizerProtocol,
-    ]
-    """A sub-space paired with the optimizer responsible for it."""
+    Partition: TypeAlias = tuple[frozenset[str], OptimizerProtocol]
+    """Parameter names paired with the optimizer responsible for them."""
 
 
 def _convert_components_to_selectors(
@@ -61,279 +54,41 @@ class CompositionStrategy(ABC, SerialMixin):
     """Base class for composite optimizer strategies."""
 
     @abstractmethod
-    def execute(
-        self,
-        partitions: list[Partition],
-        score_function: ScoreFunction,
-        space: SearchSpace,
-        batch_size: int,
-    ) -> tuple[Tensor, Tensor]:
-        """Execute the composition strategy.
+    def __call__(
+        self, n_partitions: int
+    ) -> Generator[int, tuple[Tensor, Tensor], None]:
+        """Yield partition indices to optimize in sequence.
+
+        The generator receives ``(point, score)`` from each optimization step
+        via :meth:`~Generator.send`, which strategies may use to decide the
+        next partition.
 
         Args:
-            partitions: The already-partitioned sub-spaces and their optimizers.
-            score_function: The function to be optimized.
-            space: The full search space.
-            batch_size: The number of points to find.
+            n_partitions: The number of available partitions.
 
-        Returns:
-            The optimal parameter configurations and their corresponding scores.
+        Yields:
+            The index of the partition to optimize next.
         """
 
 
 @define(frozen=True, slots=False)
 class Alternating(CompositionStrategy):
-    """Alternately optimize partitions, fixing others to current best.
-
-    Uses multiple random starts with convergence tracking, inspired by
-    BoTorch's ``optimize_acqf_mixed_alternating``. For batch sizes > 1,
-    candidates are generated sequentially with ``X_pending`` to ensure
-    diversity.
-    """
+    """Cycle through partitions for a fixed number of iterations."""
 
     n_iterations: int = field(default=3, validator=[instance_of(int), gt(0)])
-    """Maximum number of alternating rounds."""
-
-    n_starts: int = field(default=10, validator=[instance_of(int), gt(0)])
-    """Number of random starting points."""
-
-    convergence_tol: float = field(default=1e-8, validator=instance_of(float))
-    """Stop a start when improvement falls below this threshold."""
+    """Number of full alternating cycles."""
 
     @override
-    def execute(
-        self,
-        partitions: list[Partition],
-        score_function: ScoreFunction,
-        space: SearchSpace,
-        batch_size: int,
-    ) -> tuple[Tensor, Tensor]:
-        if len(partitions) == 1:
-            sub_space, optimizer = partitions[0]
-            return optimizer(batch_size, score_function, sub_space)
-
-        partition_cols = self._compute_partition_columns(partitions, space)
-
-        return self._optimize_batch(
-            partitions, score_function, space, partition_cols, batch_size
-        )
-
-    def _compute_partition_columns(
-        self,
-        partitions: list[Partition],
-        space: SearchSpace,
-    ) -> tuple[tuple[int, ...], ...]:
-        """Compute comp-rep column indices for each partition."""
-        return tuple(
-            space.get_comp_rep_parameter_indices(
-                lambda p, _ss=sub_space: p.name in _ss.parameter_names
-            )
-            for sub_space, _ in partitions
-        )
-
-    def _optimize_batch(
-        self,
-        partitions: list[Partition],
-        score_function: ScoreFunction,
-        space: SearchSpace,
-        partition_cols: tuple[tuple[int, ...], ...],
-        batch_size: int,
-    ) -> tuple[Tensor, Tensor]:
-        """Generate a batch of candidates using sequential greedy with X_pending.
-
-        Args:
-            partitions: The partitioned sub-spaces and their optimizers.
-            score_function: The function to be optimized.
-            space: The full search space.
-            partition_cols: Comp-rep column indices per partition.
-            batch_size: The number of points to find.
-
-        Returns:
-            The optimal parameter configurations and their corresponding scores.
-
-        Raises:
-            NotImplementedError: If the score function does not support X_pending
-                and the batch size is greater than 1.
-        """
-        import torch
-
-        if batch_size > 1 and not hasattr(score_function, "set_X_pending"):
-            raise NotImplementedError(
-                f"'{self.__class__.__name__}' requires a `score_function` that "
-                f"supports `set_X_pending` for batch sizes > 1."
-            )
-
-        bounds = torch.from_numpy(space.comp_rep_bounds.to_numpy(copy=True))
-        d_full = bounds.shape[1]
-        base_X_pending = getattr(score_function, "X_pending", None)
-        candidates = torch.empty(0, d_full, dtype=bounds.dtype)
-
-        for _q in range(batch_size):
-            new_candidate, _ = self._optimize_single_candidate(
-                partitions, score_function, space, bounds, partition_cols
-            )
-            candidates = torch.cat([candidates, new_candidate.unsqueeze(0)], dim=0)
-
-            if batch_size > 1:
-                pending = (
-                    torch.cat([base_X_pending, candidates], dim=0)
-                    if base_X_pending is not None
-                    else candidates
-                )
-                score_function.set_X_pending(pending)  # type: ignore[attr-defined]
-
-        if batch_size > 1:
-            score_function.set_X_pending(base_X_pending)  # type: ignore[attr-defined]
-
-        with torch.no_grad():
-            joint_scores = score_function(candidates.unsqueeze(0))
-
-        return candidates, joint_scores
-
-    def _optimize_single_candidate(
-        self,
-        partitions: list[Partition],
-        score_function: ScoreFunction,
-        space: SearchSpace,
-        bounds: Tensor,
-        partition_cols: tuple[tuple[int, ...], ...],
-    ) -> tuple[Tensor, Tensor]:
-        """Run multi-restart alternating optimization for a single candidate.
-
-        Args:
-            partitions: The partitioned sub-spaces and their optimizers.
-            score_function: The function to be optimized.
-            space: The full search space.
-            bounds: The comp-rep bounds tensor of shape ``(2, d)``.
-            partition_cols: Comp-rep column indices per partition.
-
-        Returns:
-            The best candidate and its score.
-        """
-        import torch
-
-        global_vectors = self._initialize_global_vectors(
-            partitions, partition_cols, bounds
-        )
-        current_scores = torch.full((self.n_starts,), float("-inf"), dtype=bounds.dtype)
-        done = torch.zeros(self.n_starts, dtype=torch.bool)
-
+    def __call__(
+        self, n_partitions: int
+    ) -> Generator[int, tuple[Tensor, Tensor], None]:
+        """Yield partition indices in round-robin for ``n_iterations`` cycles."""
         for _ in range(self.n_iterations):
-            prev_scores = current_scores.clone()
-
-            self._alternating_step(
-                partitions,
-                score_function,
-                space,
-                partition_cols,
-                global_vectors,
-                current_scores,
-                done,
-            )
-
-            improvement = current_scores[~done] - prev_scores[~done]
-            newly_done = improvement < self.convergence_tol
-            active_indices = (~done).nonzero(as_tuple=True)[0]
-            done[active_indices[newly_done]] = True
-
-            if done.all():
-                break
-
-        best_idx = torch.argmax(current_scores)
-        return global_vectors[best_idx], current_scores[best_idx]
-
-    def _alternating_step(
-        self,
-        partitions: list[Partition],
-        score_function: ScoreFunction,
-        space: SearchSpace,
-        partition_cols: tuple[tuple[int, ...], ...],
-        global_vectors: Tensor,
-        current_scores: Tensor,
-        done: Tensor,
-    ) -> None:
-        """Run one round of alternating optimization across all partitions.
-
-        Updates ``global_vectors`` and ``current_scores`` in place.
-
-        Args:
-            partitions: The partitioned sub-spaces and their optimizers.
-            score_function: The function to be optimized.
-            space: The full search space.
-            partition_cols: Comp-rep column indices per partition.
-            global_vectors: The current best vectors for all restarts.
-            current_scores: The current best scores for all restarts.
-            done: Convergence flags for each restart.
-        """
-        for i, (_sub_space, optimizer) in enumerate(partitions):
-            cols_i = partition_cols[i]
-            all_other_cols = [
-                col for j, cols in enumerate(partition_cols) if j != i for col in cols
-            ]
-
-            for r in (~done).nonzero(as_tuple=True)[0]:
-                fixed_features = {
-                    int(col): global_vectors[r, col].item() for col in all_other_cols
-                }
-                points, scores = optimizer(
-                    1,
-                    score_function,
-                    space,
-                    fixed_features=fixed_features,
-                )
-                for col in cols_i:
-                    global_vectors[r, col] = points[0, col]
-                current_scores[r] = scores.item()
-
-    def _initialize_global_vectors(
-        self,
-        partitions: list[Partition],
-        partition_cols: tuple[tuple[int, ...], ...],
-        bounds: Tensor,
-    ) -> Tensor:
-        """Initialize starting points, sampling appropriately per partition type.
-
-        Args:
-            partitions: The partitioned sub-spaces and their optimizers.
-            partition_cols: Comp-rep column indices per partition.
-            bounds: The comp-rep bounds tensor of shape ``(2, d)``.
-
-        Returns:
-            A tensor of shape ``(n_starts, d_full)`` with valid initial points.
-        """
-        import torch
-
-        from baybe.utils.dataframe import to_tensor
-
-        d_full = bounds.shape[1]
-        global_vectors = torch.empty(self.n_starts, d_full, dtype=bounds.dtype)
-
-        for (sub_space, _), cols in zip(partitions, partition_cols):
-            if isinstance(sub_space, SubspaceDiscrete):
-                samples = to_tensor(
-                    sub_space.comp_rep.sample(self.n_starts, replace=True)
-                )
-            elif isinstance(sub_space, SubspaceContinuous):
-                samples = to_tensor(sub_space.sample_uniform(self.n_starts))
-            else:
-                disc_samples = to_tensor(
-                    sub_space.discrete.comp_rep.sample(self.n_starts, replace=True)
-                )
-                cont_samples = to_tensor(
-                    sub_space.continuous.sample_uniform(self.n_starts)
-                )
-                samples = torch.cat([disc_samples, cont_samples], dim=1)
-
-            for j, col in enumerate(cols):
-                global_vectors[:, col] = samples[:, j]
-
-        return global_vectors
+            yield from range(n_partitions)
 
 
 @define(kw_only=True)
-class CompositeOptimizer(
-    OptimizerProtocol[SearchSpace | SubspaceContinuous | SubspaceDiscrete],
-):
+class CompositeOptimizer(OptimizerProtocol[SearchSpace]):
     """Optimizer that allows stacking multiple optimizers."""
 
     components: tuple[tuple[ParameterSelectorProtocol, OptimizerProtocol], ...] = field(
@@ -352,7 +107,7 @@ class CompositeOptimizer(
         self,
         space: SearchSpace,
     ) -> list[Partition]:
-        """Partition the search space and build sub-spaces per component.
+        """Resolve selectors to parameter name sets.
 
         Args:
             space: The full search space to partition.
@@ -362,7 +117,7 @@ class CompositeOptimizer(
             ValueError: If a constraint spans multiple partitions.
 
         Returns:
-            A list of (sub-space, optimizer) pairs.
+            A list of (parameter names, optimizer) pairs.
         """
         assigned: set[str] = set()
         partitions: list[Partition] = []
@@ -387,39 +142,125 @@ class CompositeOptimizer(
                         f"Constraint '{constraint}' spans multiple partitions."
                     )
 
-            sub_space = SearchSpace.from_product(
-                parameters=[p for p in space.parameters if p.name in selected_names],
-                constraints=[
-                    c
-                    for c in space.constraints
-                    if c._required_parameters <= selected_names
-                ],
+            partitions.append((frozenset(selected_names), optimizer))
+
+        all_param_names = {p.name for p in space.parameters}
+        unassigned = all_param_names - assigned
+        if unassigned:
+            warnings.warn(
+                f"Parameters {sorted(unassigned)} are not assigned to any "
+                f"optimizer component and will remain at their initial values.",
+                UserWarning,
+                stacklevel=2,
             )
 
-            if sub_space.type is SearchSpaceType.CONTINUOUS:
-                partitions.append((sub_space.continuous, optimizer))
-            elif sub_space.type is SearchSpaceType.DISCRETE:
-                partitions.append((sub_space.discrete, optimizer))
-            else:
-                partitions.append((sub_space, optimizer))
-
         return partitions
+
+    @staticmethod
+    def _sample_initial_point(space: SearchSpace) -> Tensor:
+        """Sample a random point from the space in comp-rep.
+
+        Args:
+            space: The search space to sample from.
+
+        Returns:
+            A 1-D tensor of length ``len(space.comp_rep_columns)``.
+        """
+        import torch
+
+        init_exp = space.sample_uniform(1)
+        init_comp = space.transform(init_exp)
+        return torch.tensor(init_comp.values[0], dtype=torch.float64)
+
+    def _optimize_single_point(
+        self,
+        space: SearchSpace,
+        partitions: list[Partition],
+        score_function: ScoreFunction,
+    ) -> tuple[Tensor, Tensor]:
+        """Optimize a single point.
+
+        Args:
+            space: The full search space.
+            partitions: Resolved partitions (parameter names + optimizer).
+            score_function: The callable to optimize.
+
+        Returns:
+            The optimized point ``(1, n_cols)`` and its score ``(1,)``.
+        """
+        comp_rep_columns = space.comp_rep_columns
+
+        optimizable_columns: list[frozenset[str]] = [
+            frozenset(
+                col
+                for p in space.parameters
+                if p.name in param_names
+                for col in p.comp_rep_columns
+            )
+            for param_names, _ in partitions
+        ]
+
+        current_point = self._sample_initial_point(space)
+
+        strategy = self.strategy(len(partitions))
+        partition_idx = next(strategy)
+
+        while True:
+            _, optimizer = partitions[partition_idx]
+            free_columns = optimizable_columns[partition_idx]
+
+            fixed_values = {
+                col: current_point[i].item()
+                for i, col in enumerate(comp_rep_columns)
+                if col not in free_columns
+            }
+            constrained_space = space.fix_parameters(fixed_values)
+
+            result_point, result_score = optimizer(1, score_function, constrained_space)
+
+            current_point = result_point.squeeze(0)
+
+            try:
+                partition_idx = strategy.send((result_point, result_score))
+            except StopIteration:
+                break
+
+        return current_point.unsqueeze(0), result_score
 
     @override
     def __call__(
         self,
         batch_size: int,
         score_function: ScoreFunction,
-        space: SearchSpace | SubspaceContinuous | SubspaceDiscrete,
-        fixed_features: dict[int, float] | None = None,
+        space: SearchSpace,
     ) -> tuple[Tensor, Tensor]:
-        if isinstance(space, SubspaceContinuous):
-            space = SearchSpace(continuous=space)
-        elif isinstance(space, SubspaceDiscrete):
-            space = SearchSpace(discrete=space)
+        import torch
 
         partitions = self._partition_parameters(space)
-        return self.strategy.execute(partitions, score_function, space, batch_size)
+        n_cols = len(space.comp_rep_columns)
+
+        base_X_pending = getattr(score_function, "X_pending", None)
+
+        points = torch.empty(batch_size, n_cols)
+        scores = torch.empty(batch_size)
+
+        for b in range(batch_size):
+            point, score = self._optimize_single_point(
+                space, partitions, score_function
+            )
+            points[b] = point.squeeze(0)
+            scores[b] = score.squeeze(0)
+
+            if b < batch_size - 1:
+                new_pending = points[: b + 1]
+                if base_X_pending is not None:
+                    new_pending = torch.cat([base_X_pending, new_pending], dim=0)
+                score_function.set_X_pending(new_pending)  # type: ignore[attr-defined]
+
+        if batch_size > 1:
+            score_function.set_X_pending(base_X_pending)  # type: ignore[attr-defined]
+
+        return points, scores
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
