@@ -88,7 +88,7 @@ class Alternating(CompositionStrategy):
 
 
 @define(kw_only=True)
-class CompositeOptimizer(OptimizerProtocol[SearchSpace]):
+class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     """Optimizer that allows stacking multiple optimizers."""
 
     components: tuple[tuple[ParameterSelectorProtocol, OptimizerProtocol], ...] = field(
