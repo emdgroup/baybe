@@ -43,8 +43,8 @@ class Transformation(SerialMixin, ABC):
         In accordance with the mathematical definition of a function's `codomain
         <https://en.wikipedia.org/wiki/Codomain>`_, we define the codomain of a given
         :class:`~baybe.utils.interval.Interval` under a certain (assumed continuous)
-        :class:`~Transformation` to be an :class:`~baybe.utils.interval.Interval`
-        guaranteed to contain all possible outcomes when the :class:`~Transformation` is
+        :class:`~baybe.transformations.base.Transformation` to be an :class:`~baybe.utils.interval.Interval`
+        guaranteed to contain all possible outcomes when the :class:`~baybe.transformations.base.Transformation` is
         applied to all points in the input :class:`~baybe.utils.interval.Interval`. In
         cases where the image cannot exactly be computed, it is often still possible to
         compute a codomain. The codomain always contains the image, but might be larger.
@@ -56,9 +56,9 @@ class Transformation(SerialMixin, ABC):
         In accordance with the mathematical definition of a function's `image
         <https://en.wikipedia.org/wiki/Image_(mathematics)>`_, we define the image of a
         given :class:`~baybe.utils.interval.Interval` under a certain (assumed
-        continuous) :class:`~Transformation` to be the smallest
+        continuous) :class:`~baybe.transformations.base.Transformation` to be the smallest
         :class:`~baybe.utils.interval.Interval` containing all possible outcomes when
-        the :class:`~Transformation` is applied to all points in the input
+        the :class:`~baybe.transformations.base.Transformation` is applied to all points in the input
         :class:`~baybe.utils.interval.Interval`.
         """
         # By default, it is assumed that the exact image of an interval cannot be

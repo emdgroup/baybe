@@ -159,7 +159,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     Accepts:
         * :class:`baybe.kernels.base.Kernel`
-        * :class:`.components.kernel.KernelFactory`
+        * :class:`.components.generic.PlainGPComponentFactory`
         * :class:`gpytorch.kernels.Kernel`
     """
 
@@ -172,7 +172,7 @@ class GaussianProcessSurrogate(Surrogate):
     """The factory used to create the mean function for the Gaussian process.
 
     Accepts:
-        * :class:`.components.mean.MeanFactory`
+        * :class:`.components.generic.PlainGPComponentFactory`
         * :class:`gpytorch.means.Mean`
     """
 
@@ -187,7 +187,7 @@ class GaussianProcessSurrogate(Surrogate):
     """The factory used to create the likelihood for the Gaussian process.
 
     Accepts:
-        * :class:`.components.likelihood.LikelihoodFactory`
+        * :class:`.components.generic.PlainGPComponentFactory`
         * :class:`gpytorch.likelihoods.Likelihood`
     """
 
@@ -203,7 +203,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     Accepts:
         * :class:`.components.fit_criterion.FitCriterion`
-        * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
+        * :class:`.components.generic.PlainGPComponentFactory`
     """
 
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
