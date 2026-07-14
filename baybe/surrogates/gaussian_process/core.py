@@ -9,16 +9,21 @@ from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
-from attrs import Converter, define, field
+from attrs import Converter, define, field, fields
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable
 from typing_extensions import Self, override
 
-from baybe.exceptions import DeprecationError, ModelNotTrainedError
+from baybe.exceptions import (
+    DeprecationError,
+    IncompatibleSurrogateError,
+    ModelNotTrainedError,
+)
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
@@ -52,6 +57,7 @@ from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     from botorch.models.gpytorch import GPyTorchModel
+    from botorch.models.model import Model
     from botorch.models.transforms.input import InputTransform, Normalize
     from botorch.models.transforms.outcome import OutcomeTransform, Standardize
     from botorch.posteriors import Posterior
@@ -120,6 +126,33 @@ def _mark_custom_kernel(
         self._custom_kernel = True
 
     return value
+
+
+def _tl_replacing_surrogate(
+    mode: TransferLearningMode | None,
+) -> type[Surrogate] | None:
+    """Return the surrogate class that replaces the GP for a given TL mode.
+
+    Some transfer learning modes are not realized by swapping the task kernel of the
+    Gaussian process but by an entirely different surrogate architecture that builds
+    a target model from one or more source models. This helper maps such modes to
+    their implementing surrogate class. Kernel-based modes and the absence of an
+    override are handled by the default Gaussian process itself and thus map to
+    ``None``.
+
+    Args:
+        mode: The transfer learning mode taken from the task parameter, or ``None``
+            if no override is specified.
+
+    Returns:
+        The surrogate class implementing the mode, or ``None`` if the mode is handled
+        by the default Gaussian process.
+    """
+    from baybe.surrogates.transfer_learning.mean_transfer import MeanTransferSurrogate
+
+    if mode is TransferLearningMode.MEAN_TRANSFER:
+        return MeanTransferSurrogate
+    return None
 
 
 @define
@@ -211,6 +244,16 @@ class GaussianProcessSurrogate(Surrogate):
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
+
+    # Type annotation omitted for the same reason as `_model` above.
+    _delegate = field(init=False, default=None, eq=False, repr=False)
+    """An internal surrogate this GP delegates to for surrogate-replacing TL modes.
+
+    Set during fitting when the task parameter requests a transfer learning mode (e.g.
+    :attr:`~baybe.parameters.enum.TransferLearningMode.MEAN_TRANSFER`) that requires a
+    different surrogate architecture. When set, model queries are routed to this
+    delegate instead of the GP's own botorch model.
+    """
 
     @staticmethod
     def _make_input_transform(context: _ModelContext) -> Normalize:
@@ -320,7 +363,9 @@ class GaussianProcessSurrogate(Surrogate):
         )
 
     @override
-    def to_botorch(self) -> GPyTorchModel:
+    def to_botorch(self) -> Model:
+        if self._delegate is not None:
+            return self._delegate.to_botorch()
         return self._model
 
     @override
@@ -339,6 +384,8 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
+        if self._delegate is not None:
+            return self._delegate._posterior(candidates_comp_scaled)
         return self._model.posterior(candidates_comp_scaled)
 
     @override
@@ -349,6 +396,29 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._objective is not None  # provided by base class
         assert self._measurements is not None  # provided by base class
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
+
+        # Transfer-learning dispatch based on the task parameter's override mode.
+        # Kernel-based modes (index / positive index) are resolved downstream by the
+        # task kernel factory; surrogate-replacing modes are delegated to a dedicated
+        # surrogate that builds a target model from source model(s).
+        task_param = context.searchspace._task_parameter
+        tl_mode = (
+            task_param.override_transfer_learning_mode
+            if task_param is not None
+            else None
+        )
+        if tl_mode is not None and self._custom_kernel:
+            raise IncompatibleSurrogateError(
+                f"The task parameter requests a transfer learning mode via "
+                f"'{fields(TaskParameter).override_transfer_learning_mode.alias}', "
+                f"which is only supported together with the default kernel of "
+                f"'{self.__class__.__name__}'. Please remove either the custom kernel "
+                f"or the transfer learning override."
+            )
+        if (delegate_cls := _tl_replacing_surrogate(tl_mode)) is not None:
+            self._delegate = delegate_cls()
+            self._delegate.fit(self._searchspace, self._objective, self._measurements)
+            return
 
         if (
             context.is_multitask

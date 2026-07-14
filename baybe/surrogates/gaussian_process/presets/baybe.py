@@ -12,10 +12,10 @@ from attrs import define, field
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
-from baybe.kernels.basic import PositiveIndexKernel
+from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
 from baybe.objectives.base import Objective
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.enum import _ParameterKind
+from baybe.parameters.enum import TransferLearningMode, _ParameterKind
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
@@ -223,11 +223,50 @@ class _BayBETaskKernelFactory(_PureKernelFactory):
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel:
-        return PositiveIndexKernel(
-            num_tasks=searchspace.n_tasks,
-            rank=searchspace.n_tasks,
-            parameter_names=self.get_parameter_names(searchspace),
+        """Create the task kernel, dispatching on the task parameter's TL mode.
+
+        The kernel is selected according to the
+        :attr:`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`
+        of the search space's task parameter. A missing override (``None``) falls back
+        to the default positive index kernel. Surrogate-replacing modes (such as
+        :attr:`~baybe.parameters.enum.TransferLearningMode.MEAN_TRANSFER`) never reach
+        this factory because they are intercepted via delegation in
+        :class:`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`
+        before any kernel is built.
+
+        Args:
+            searchspace: The search space providing the task parameter and task count.
+            objective: The objective. Unused, but required by the factory protocol.
+            measurements: The training data. Unused, but required by the protocol.
+
+        Returns:
+            An :class:`~baybe.kernels.basic.IndexKernel` for arbitrary task
+            correlations when the mode is
+            :attr:`~baybe.parameters.enum.TransferLearningMode.INDEX_KERNEL`, otherwise
+            a :class:`~baybe.kernels.basic.PositiveIndexKernel`.
+        """
+        task_param = searchspace._task_parameter
+        mode = (
+            task_param.override_transfer_learning_mode
+            if task_param is not None
+            else None
         )
+        num_tasks = searchspace.n_tasks
+        parameter_names = self.get_parameter_names(searchspace)
+
+        if mode is TransferLearningMode.INDEX_KERNEL:
+            return IndexKernel(
+                num_tasks=num_tasks,
+                rank=num_tasks,
+                parameter_names=parameter_names,
+            )
+        else:
+            # POSITIVE_INDEX_KERNEL or no override -> BayBE's default task kernel
+            return PositiveIndexKernel(
+                num_tasks=num_tasks,
+                rank=num_tasks,
+                parameter_names=parameter_names,
+            )
 
 
 @define
