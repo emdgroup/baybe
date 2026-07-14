@@ -609,9 +609,23 @@ class _ReducedSearchSpace(SearchSpace):
             "_get_n_comp_rep_columns",
             "get_parameters_by_name",
             "_ALLOWED_ATTRIBUTES",
+            # The following attributes are required to *fit* a Gaussian process on the
+            # reduced space (used by transfer learning surrogates that train a
+            # single-task GP on the non-task subspace). They are safe here because they
+            # rely on per-parameter logic or the correctly-columned (empty) comp-rep,
+            # not on the enumerated product:
+            "transform",
+            "scaling_bounds",
+            "get_comp_rep_parameter_indices",
+            # `task_idx` is an index-based property, which this reduced space otherwise
+            # deliberately forbids. It is whitelisted only because the task parameter
+            # has been dropped, so it ALWAYS returns `None` here and never performs an
+            # actual column lookup. This keeps the model context of a single-task GP
+            # fit working without exposing genuine index-based functionality.
+            "task_idx",
         }
     )
-    """Attributes accessible on this reduced search space."""
+    """Attributes accessible on this reduced search space (see inline notes)."""
 
     @override
     def __getattribute__(self, name: str):

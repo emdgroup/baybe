@@ -184,3 +184,12 @@ class TransferLearningMode(Enum):
 
     POSITIVE_INDEX_KERNEL = "POSITIVE_INDEX_KERNEL"
     """:class:`botorch.models.kernels.PositiveIndexKernel` for positive correlations."""
+
+    MEAN_TRANSFER = "MEAN_TRANSFER"
+    """Transfer of a source model's posterior mean as the target model's prior mean."""
+
+    RESIDUAL_LEARNING = "RESIDUAL_LEARNING"
+    """Learning of the target as a residual on top of a fixed source model."""
+
+    RGPE = "RGPE"
+    """Ranking-weighted Gaussian process ensemble of source and target models."""
