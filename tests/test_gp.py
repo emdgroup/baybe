@@ -234,14 +234,6 @@ def test_botorch_preset(multitask: bool):
 _OBJECTIVE = NumericalTarget(name="y").to_objective()
 
 
-def _pm_searchspace(values: list[float]) -> SearchSpace:
-    return SearchSpace.from_product([NumericalDiscreteParameter("x1", values=values)])
-
-
-def _pm_measurements(xs: list[float], ys: list[float]) -> pd.DataFrame:
-    return pd.DataFrame({"x1": xs, "y": ys})
-
-
 def _predict_on_posterior_mean(
     pretrained_gp: GaussianProcessSurrogate, xs: list[float]
 ) -> pd.DataFrame:
@@ -257,16 +249,16 @@ def fixture_pretrained_gp() -> GaussianProcessSurrogate:
     """A GP trained on a narrow search space with three points."""
     surrogate = GaussianProcessSurrogate()
     surrogate.fit(
-        _pm_searchspace([0.0, 2.5, 5.0]),
+        NumericalDiscreteParameter("x1", [0.0, 2.5, 5.0]).to_searchspace(),
         _OBJECTIVE,
-        _pm_measurements([0.0, 2.5, 5.0], [0.0, 5.0, 10.0]),
+        pd.DataFrame({"x1": [0.0, 2.5, 5.0], "y": [0.0, 5.0, 10.0]}),
     )
     return surrogate
 
 
 @pytest.fixture(name="wider_searchspace")
 def fixture_wider_searchspace() -> SearchSpace:
-    return _pm_searchspace([0.0, 2.5, 5.0, 7.5, 10.0])
+    return NumericalDiscreteParameter("x1", [0.0, 2.5, 5.0, 7.5, 10.0]).to_searchspace()
 
 
 @pytest.mark.parametrize(
