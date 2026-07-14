@@ -9,8 +9,10 @@ from baybe.surrogates.transfer_learning.mean_transfer import MeanTransferSurroga
 from baybe.surrogates.transfer_learning.residual_transfer import (
     ResidualTransferSurrogate,
 )
+from baybe.surrogates.transfer_learning.rgpe_transfer import RGPETransferSurrogate
 
 __all__ = [
     "MeanTransferSurrogate",
     "ResidualTransferSurrogate",
+    "RGPETransferSurrogate",
 ]

@@ -26,6 +26,7 @@ from baybe.surrogates.transfer_learning.mean_transfer import MeanTransferSurroga
 from baybe.surrogates.transfer_learning.residual_transfer import (
     ResidualTransferSurrogate,
 )
+from baybe.surrogates.transfer_learning.rgpe_transfer import RGPETransferSurrogate
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
 
@@ -148,7 +149,10 @@ def test_mean_transfer_requires_single_source_target(values, active_values, obje
     measurements = _make_measurements(values, objective)
     surrogate = GaussianProcessSurrogate()
 
-    with pytest.raises(IncompatibleSearchSpaceError, match="one source and one target"):
+    with pytest.raises(
+        IncompatibleSearchSpaceError,
+        match="one active .target. task value|at most 1 source task",
+    ):
         surrogate.fit(searchspace, objective, measurements)
 
 
@@ -301,3 +305,104 @@ def test_mean_transfer_rejects_fantasize_acquisition(objective):
 
     with pytest.raises(IncompatibleAcquisitionFunctionError, match="fantasiz"):
         campaign.recommend(batch_size=2)
+
+
+@pytest.mark.parametrize(
+    "surrogate_factory",
+    [
+        pytest.param(MeanTransferSurrogate, id="mean"),
+        pytest.param(ResidualTransferSurrogate, id="residual"),
+        pytest.param(RGPETransferSurrogate, id="rgpe"),
+    ],
+)
+def test_transfer_surrogate_cold_start_uses_source(surrogate_factory, objective):
+    """With no target data, the posterior falls back to the source model."""
+    searchspace = _make_task_searchspace(["source", "target"], ["target"])
+    # Only source measurements are available (cold start on the target task).
+    measurements = _make_measurements(["source"], objective)
+
+    surrogate = surrogate_factory()
+    surrogate.fit(searchspace, objective, measurements)
+
+    candidates = pd.DataFrame({"p": [0.1, 0.5, 0.9], "task": "target"})
+    reduced = candidates.drop(columns=["task"])
+    source_mean = surrogate._source_gp.posterior(reduced).mean
+
+    assert torch.allclose(surrogate.posterior(candidates).mean, source_mean, atol=1e-4)
+
+
+def test_rgpe_delegates(objective):
+    """An RGPE override makes the GP delegate to an RGPETransferSurrogate."""
+    searchspace = _make_task_searchspace(
+        ["s1", "s2", "target"], ["target"], TransferLearningMode.RGPE
+    )
+    measurements = _make_measurements(["s1", "s2", "target"], objective)
+    surrogate = GaussianProcessSurrogate()
+
+    surrogate.fit(searchspace, objective, measurements)
+
+    delegate = surrogate._delegate
+    assert isinstance(delegate, RGPETransferSurrogate)
+    assert len(delegate._source_gps) == 2
+    assert delegate._target_gp is not None
+
+    candidates = pd.DataFrame({"p": [0.1, 0.5, 0.9], "task": "target"})
+    posterior = surrogate.posterior(candidates)
+    assert posterior.mean.numel() == 3
+    assert (posterior.variance > 0).all()
+
+
+def test_rgpe_weights_are_a_convex_combination(objective):
+    """The RGPE weights are non-negative and sum to one over all ensemble members."""
+    searchspace = _make_task_searchspace(
+        ["s1", "s2", "target"], ["target"], TransferLearningMode.RGPE
+    )
+    measurements = _make_measurements(["s1", "s2", "target"], objective)
+    surrogate = RGPETransferSurrogate()
+    surrogate.fit(searchspace, objective, measurements)
+
+    weights = surrogate._weights
+    # One weight per source plus one for the target model.
+    assert weights.numel() == 3
+    assert (weights >= 0).all()
+    assert abs(weights.sum().item() - 1.0) < 1e-6
+
+
+def test_rgpe_cold_start_uses_uniform_source_weights(objective):
+    """With no target data, RGPE averages the source models uniformly."""
+    searchspace = _make_task_searchspace(["s1", "s2", "target"], ["target"])
+    measurements = _make_measurements(["s1", "s2"], objective)
+    surrogate = RGPETransferSurrogate()
+    surrogate.fit(searchspace, objective, measurements)
+
+    assert surrogate._target_gp is None
+    assert torch.allclose(surrogate._weights, torch.full((2,), 0.5))
+
+
+def test_rgpe_single_target_point_uses_uniform_weights(objective):
+    """With a single target point, RGPE averages all models uniformly."""
+    searchspace = _make_task_searchspace(["s1", "s2", "target"], ["target"])
+    measurements = _make_measurements(["s1", "s2"], objective)
+    target_point = pd.DataFrame({"p": [0.4], "task": ["target"], "t": [0.5]})
+    measurements = pd.concat([measurements, target_point], ignore_index=True)
+
+    surrogate = RGPETransferSurrogate()
+    surrogate.fit(searchspace, objective, measurements)
+
+    assert surrogate._target_gp is not None
+    assert torch.allclose(surrogate._weights, torch.full((3,), 1.0 / 3.0))
+
+
+def test_rgpe_campaign_recommend(objective):
+    """A default campaign with an RGPE override can produce recommendations."""
+    searchspace = _make_task_searchspace(
+        ["s1", "s2", "target"], ["target"], TransferLearningMode.RGPE
+    )
+    measurements = _make_measurements(["s1", "s2", "target"], objective)
+
+    campaign = Campaign(searchspace, objective)
+    campaign.add_measurements(measurements)
+    recommendation = campaign.recommend(batch_size=3)
+
+    assert len(recommendation) == 3
+    assert set(recommendation["task"]) == {"target"}

@@ -153,6 +153,7 @@ def _tl_replacing_surrogate(
     from baybe.surrogates.transfer_learning.residual_transfer import (
         ResidualTransferSurrogate,
     )
+    from baybe.surrogates.transfer_learning.rgpe_transfer import RGPETransferSurrogate
 
     if mode is TransferLearningMode.MEAN_TRANSFER:
         return MeanTransferSurrogate
@@ -160,6 +161,8 @@ def _tl_replacing_surrogate(
         return lambda: ResidualTransferSurrogate(propagate_source_uncertainty=False)
     if mode is TransferLearningMode.RESIDUAL_LEARNING_WITH_UNCERTAINTY:
         return lambda: ResidualTransferSurrogate(propagate_source_uncertainty=True)
+    if mode is TransferLearningMode.RGPE:
+        return RGPETransferSurrogate
     return None
 
 

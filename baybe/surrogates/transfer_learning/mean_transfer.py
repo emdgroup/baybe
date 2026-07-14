@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, evolve, field
 from typing_extensions import override
@@ -32,32 +32,44 @@ class MeanTransferSurrogate(_SourceTargetTransferSurrogate):
     incoming candidates so that they match the reduced space of the target model, whose
     posterior is then returned.
 
+    Cold start: if the target task has no measurements yet, the surrogate falls back to
+    the source GP's posterior (the best available estimate of the target without data).
+
     Note:
         Only a single source and a single target task are currently supported.
     """
 
+    _max_sources: ClassVar[int] = 1
+    # See base class.
+
     _target_gp: GaussianProcessSurrogate | None = field(
         init=False, default=None, eq=False, repr=False
     )
-    """The single-task GP trained on the target data. Available after fitting."""
+    """The single-task GP trained on the target data. ``None`` before fitting or when
+    the target task has no measurements yet (cold start)."""
 
     @override
     def _fit_target(
         self,
         reduced_searchspace: SearchSpace,
         objective: Objective,
-        source_measurements: pd.DataFrame,
         target_measurements: pd.DataFrame,
     ) -> None:
         """Fit the target GP using the source GP's posterior mean as its prior mean.
 
+        If the target task has no measurements yet, no target GP is built and the
+        surrogate falls back to the source GP at prediction time.
+
         Args:
             reduced_searchspace: The task-free search space for the target GP.
             objective: The objective (a single modeled quantity after replication).
-            source_measurements: The measurements belonging to the source task.
-            target_measurements: The measurements belonging to the target task.
+            target_measurements: The measurements belonging to the target task (may be
+                empty).
         """
-        assert self._source_gp is not None  # set by the base class
+        if target_measurements.empty:
+            self._target_gp = None
+            return
+
         self._target_gp = evolve(
             self.base_surrogate,
             mean_or_factory=self._source_gp.posterior_mean_function,
@@ -68,14 +80,18 @@ class MeanTransferSurrogate(_SourceTargetTransferSurrogate):
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
         """Return the target GP's posterior on the task-stripped candidates.
 
+        Falls back to the source GP's posterior during cold start (no target data).
+
         Args:
             candidates_comp_scaled: Candidate points in the computational representation
                 of the full search space (including the task column).
 
         Returns:
-            The posterior of the target Gaussian process at the given candidates.
+            The posterior of the target Gaussian process (or the source GP during cold
+            start) at the given candidates.
         """
-        assert self._target_gp is not None  # set during fitting
+        if self._target_gp is None:
+            return self._source_only_posterior(candidates_comp_scaled)
         reduced_candidates = self._strip_task(candidates_comp_scaled)
         return self._target_gp._posterior(reduced_candidates)
 

@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ResidualTransferSurrogate` implementing residual-learning transfer learning,
   dispatched automatically by `GaussianProcessSurrogate` for the `RESIDUAL_LEARNING` and
   `RESIDUAL_LEARNING_WITH_UNCERTAINTY` modes
+- `RGPETransferSurrogate` implementing the rank-weighted Gaussian process ensemble
+  (RGPE) transfer learning method, supporting multiple source tasks and dispatched
+  automatically by `GaussianProcessSurrogate` for the `RGPE` mode
+- Source-only cold-start fallback for the transfer-learning surrogates, allowing them to
+  predict from the source model(s) when no target measurements are available yet
 - `IncompatibleObjectiveError` raised when an objective is incompatible with the
   selected component, e.g. `ResidualTransferSurrogate` with a `DesirabilityObjective`
 

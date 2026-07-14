@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from attrs import define, evolve, field
 from attrs.validators import instance_of
@@ -31,9 +31,15 @@ class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
     source GP's posterior mean (computed in original target units). Predictions are the
     sum of the source and residual posterior means.
 
+    Cold start: if the target task has no measurements yet, the surrogate falls back to
+    the source GP's posterior (with no residual to add).
+
     Note:
         Only a single source and a single target task are currently supported.
     """
+
+    _max_sources: ClassVar[int] = 1
+    # See base class.
 
     propagate_source_uncertainty: bool = field(
         default=False, validator=instance_of(bool)
@@ -48,7 +54,8 @@ class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
     _residual_gp: GaussianProcessSurrogate | None = field(
         init=False, default=None, eq=False, repr=False
     )
-    """The single-task GP trained on the residuals. Available after fitting."""
+    """The single-task GP trained on the residuals. ``None`` before fitting or when
+    the target task has no measurements yet (cold start)."""
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
@@ -82,18 +89,22 @@ class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
         self,
         reduced_searchspace: SearchSpace,
         objective: Objective,
-        source_measurements: pd.DataFrame,
         target_measurements: pd.DataFrame,
     ) -> None:
         """Fit the residual GP on the target residuals w.r.t. the source posterior mean.
 
+        If the target task has no measurements yet, no residual GP is built and the
+        surrogate falls back to the source GP at prediction time.
+
         Args:
             reduced_searchspace: The task-free search space for the residual GP.
             objective: The objective (a single modeled quantity after replication).
-            source_measurements: The measurements belonging to the source task.
-            target_measurements: The measurements belonging to the target task.
+            target_measurements: The measurements belonging to the target task (may be
+                empty).
         """
-        assert self._source_gp is not None  # set by the base class
+        if target_measurements.empty:
+            self._residual_gp = None
+            return
 
         # Source posterior mean at the target inputs, in original target units.
         source_posterior = cast(
@@ -121,13 +132,14 @@ class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
         Returns:
             A posterior whose mean is the sum of the source and residual posterior
             means and whose covariance is the residual covariance (plus the source
-            covariance if ``propagate_source_uncertainty`` is set).
+            covariance if ``propagate_source_uncertainty`` is set). During cold start
+            (no target data), the source GP's posterior is returned.
         """
         from botorch.posteriors import GPyTorchPosterior
         from gpytorch.distributions import MultivariateNormal
 
-        assert self._source_gp is not None  # set during fitting
-        assert self._residual_gp is not None  # set during fitting
+        if self._residual_gp is None:
+            return self._source_only_posterior(candidates_comp_scaled)
 
         reduced_candidates = self._strip_task(candidates_comp_scaled)
         source_posterior = cast(

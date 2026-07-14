@@ -35,16 +35,16 @@ Switching `<MODE>` must change the TL behavior while the default
 | `MEAN_TRANSFER` | implemented | dedicated surrogate (`MeanTransferSurrogate`) |
 | `RESIDUAL_LEARNING` | implemented | `ResidualTransferSurrogate` (residual variance only) |
 | `RESIDUAL_LEARNING_WITH_UNCERTAINTY` | implemented | `ResidualTransferSurrogate` (source + residual variance) |
-| `RGPE` | placeholder | - (enum value only) |
+| `RGPE` | implemented | `RGPETransferSurrogate` (rank-weighted GP ensemble, multi-source) |
 
 The two families are fundamentally different and therefore dispatch at **different
 seams**:
 
 - **Kernel-based modes** (`INDEX_KERNEL`, `POSITIVE_INDEX_KERNEL`) only change which
   task kernel goes into the ICM kernel of the *same* Gaussian process.
-- **Surrogate-replacing modes** (`MEAN_TRANSFER`, and later `RESIDUAL_LEARNING`,
-  `RGPE`) need an entirely different surrogate architecture that builds a target model
-  from one or more source models.
+- **Surrogate-replacing modes** (`MEAN_TRANSFER`, `RESIDUAL_LEARNING`,
+  `RESIDUAL_LEARNING_WITH_UNCERTAINTY`, `RGPE`) need an entirely different surrogate
+  architecture that builds a target model from one or more source models.
 
 ## 3. Dispatching architecture
 
@@ -75,9 +75,10 @@ GP performs the dispatch itself. In `GaussianProcessSurrogate._fit`
 4. Otherwise, follow the normal single-model GP path (Case A handled downstream).
 
 `_posterior` and `to_botorch` route to `self._delegate` when it is set. The registry
-`_tl_replacing_surrogate(mode)` currently maps only `MEAN_TRANSFER ->
-MeanTransferSurrogate`; adding `RGPE`/`RESIDUAL_LEARNING` later is a one-line addition
-plus a new surrogate class.
+`_tl_replacing_surrogate(mode)` maps `MEAN_TRANSFER -> MeanTransferSurrogate`,
+`RESIDUAL_LEARNING` / `RESIDUAL_LEARNING_WITH_UNCERTAINTY` ->
+`ResidualTransferSurrogate` (with the appropriate `propagate_source_uncertainty` flag),
+and `RGPE -> RGPETransferSurrogate`.
 
 ## 4. `MeanTransferSurrogate`
 
@@ -193,7 +194,10 @@ either subset has no measurements.
 | `baybe/surrogates/gaussian_process/core.py` | Override guard, `_delegate`, routing of `_posterior`/`to_botorch`, `_tl_replacing_surrogate` |
 | `baybe/searchspace/core.py` | Widened `_ReducedSearchSpace` allowlist (documented) |
 | `baybe/surrogates/transfer_learning/__init__.py` | New subpackage |
+| `baybe/surrogates/transfer_learning/base.py` | Shared multi-source base `_SourceTargetTransferSurrogate` + cold-start fallback |
 | `baybe/surrogates/transfer_learning/mean_transfer.py` | New `MeanTransferSurrogate` |
+| `baybe/surrogates/transfer_learning/residual_transfer.py` | New `ResidualTransferSurrogate` |
+| `baybe/surrogates/transfer_learning/rgpe_transfer.py` | New `RGPETransferSurrogate` |
 | `baybe/surrogates/composite.py` | `to_botorch` decides by model type |
 | `tests/test_tl_prototypes.py` | New tests |
 | `CHANGELOG.md` | Entries |
@@ -210,21 +214,29 @@ either subset has no measurements.
 - Reduced search space exposes the newly allowed members and `task_idx is None`.
 - A full `Campaign.recommend` run with `MEAN_TRANSFER` (exercises the
   auto-replication / `CompositeSurrogate` path that unit tests bypass).
+- `RESIDUAL_LEARNING(_WITH_UNCERTAINTY)` delegation, `μ = μ_source + μ_residual`, and
+  that the uncertainty variant has a variance no smaller than the residual-only one.
+- `RGPE` delegation with multiple sources, that the weights form a convex combination
+  over `(sources..., target)`, and a full `Campaign.recommend` run.
+- Cold start: with only source data, every surrogate-replacing mode falls back to the
+  source posterior; RGPE additionally uses uniform weights (over the sources with no
+  target data, and over `(sources..., target)` with a single target point).
 
 ## 8. Known limitations / future work
 
 - `MEAN_TRANSFER` and `RESIDUAL_LEARNING(_WITH_UNCERTAINTY)` support exactly one source
-  and one target task.
+  and one target task. `RGPE` supports one or more source tasks and one target task.
 - No `fantasize` support for the surrogate-replacing modes (see 5.3); acquisition
   functions that require it (e.g. `qNIPV`) are not supported for these modes.
 - Residuals are computed in original target units and passed back through the
   objective's pre-transform when fitting the residual GP. This is exact for linear
   (min/max) `NumericalTarget`s and approximate for bounded/nonlinear target transforms.
-- `RGPE` is an enum placeholder only; it will add a new surrogate class plus one entry
-  in `_tl_replacing_surrogate`.
-- `MeanTransferSurrogate` and `ResidualTransferSurrogate` are exported from their
-  subpackage but not from the top-level `baybe.surrogates` public API (kept internal
-  while prototyping).
+- **Cold-start scale limitation:** with zero target points, the mean/residual modes
+  predict at the *source* output scale (see section 10). This self-corrects once at
+  least one target measurement is available.
+- `MeanTransferSurrogate`, `ResidualTransferSurrogate` and `RGPETransferSurrogate` are
+  exported from their subpackage but not from the top-level `baybe.surrogates` public
+  API (kept internal while prototyping).
 
 ## 9. Mean transfer vs. residual transfer: when are they the same model?
 
@@ -267,3 +279,90 @@ So the two are the **exact same model** if and only if **all** of the following 
 Hence the modes `MEAN_TRANSFER`, `RESIDUAL_LEARNING`, and
 `RESIDUAL_LEARNING_WITH_UNCERTAINTY` implement three distinct models that coincide only
 in the idealized zero-mean / equal-standardization / residual-only-variance limit.
+
+## 10. Shared multi-source base and the cold-start fallback
+
+All surrogate-replacing modes share the base class
+`_SourceTargetTransferSurrogate` (`baybe/surrogates/transfer_learning/base.py`). It:
+
+1. splits the measurements by task value into an ordered list of **source** subsets
+   (the non-active task values that actually have data) and a **target** subset (the
+   active task value, which **may be empty**),
+2. builds the reduced, task-free search space (`_drop_parameters`),
+3. fits one single-task GP per non-empty source (`_source_gps`), and
+4. delegates the target-specific logic to the abstract `_fit_target`.
+
+The number of source tasks is capped per subclass via the `_max_sources` class
+variable: `MeanTransferSurrogate` and `ResidualTransferSurrogate` set `_max_sources = 1`
+(one source, one target), while `RGPETransferSurrogate` leaves it unbounded. If no
+source task has data, the base raises `IncompatibleSearchSpaceError`.
+
+### Why a cold-start fallback is needed
+
+The default recommender uses a `TwoPhaseMetaRecommender` whose switch from the initial
+(random) recommender to the Bayesian one is driven by the **total** number of
+measurements, which for a TL campaign already includes all the *source* rows. As a
+result the surrogate can be invoked with **zero or one** *target* points even though
+the campaign has plenty of data. The initial random recommender does **not** protect
+the target model here, so the surrogate-replacing modes must degrade gracefully rather
+than fail.
+
+### Fallback behavior (source-only prediction)
+
+When the target subset is empty, the base exposes `_source_only_posterior`, which
+strips the task column and returns the (single) source GP's posterior directly. Mean and
+residual transfer route to it whenever their target/residual GP was not built. This is
+correct in units because the source and target GPs share the objective's output space.
+
+**Documented limitation.** With zero target points there is no target data to
+recalibrate the output scale, so the prediction is made at the *source* scale. This is
+the best available estimate before any target measurement and self-corrects as soon as
+one target point is observed.
+
+## 11. `RGPETransferSurrogate`
+
+Location: `baybe/surrogates/transfer_learning/rgpe_transfer.py`. RGPE (ranking-weighted
+GP ensemble, Feurer, Letham and Bakshy, ICML 2018 AutoML Workshop) fits one single-task
+GP per source task and, once enough target data is available, one on the target task.
+The ensemble posterior is a rank-weighted combination of the individual posteriors:
+
+    μ(x*) = Σ_i w_i · μ_i(x*)
+    Σ(x*) = Σ_i w_i² · Σ_i(x*)
+
+with non-negative weights `w_i` that sum to one (models with zero weight are dropped and
+the rest renormalized before combining).
+
+### Weight estimation
+
+The weights come from a **ranking loss** that counts, for each model, the number of
+mis-ordered pairs of observed target points. For the source models the predictions come
+directly from `model.posterior`; for the target model they come from
+**leave-one-out cross-validation** so that the target model is not unfairly favored by
+having seen the points it is scored on. The model with the lowest ranking loss on each
+Monte Carlo sample "wins" that sample, and the weight of a model is the fraction of
+samples it wins (`num_mc_samples`, default 256, drawn with a `SobolQMCNormalSampler`).
+
+Because the loss depends only on the *ordering* of predictions, the LOOCV is performed
+in the target model's transformed (normalized-input / standardized-output) space, which
+the monotonic output standardization leaves order-invariant. The LOOCV batch GP reuses
+the target model's fitted kernel, mean and likelihood (broadcast across the
+leave-one-out batch), so all folds share the target model's hyperparameters.
+
+### Cold start
+
+- **Zero target points:** no target GP is built; the weights are uniform over the source
+  GPs (this is the `_source_only`-style fallback generalized to several sources).
+- **One target point:** a target GP is built, but a single point cannot rank anything,
+  so the weights are uniform over `(sources..., target)`.
+- **Two or more target points:** the full ranking-based weights are used.
+
+### Design notes
+
+- **Inferred noise.** The inner GPs use BayBE's default inferred-noise
+  `GaussianProcessSurrogate` rather than the fixed-noise model of the original tutorial;
+  this keeps the ensemble consistent with the rest of BayBE.
+- **Scale robustness.** The rank weights are scale-invariant, but the posterior *mean*
+  combination `Σ w_i μ_i` still assumes the source and target models predict on a
+  comparable output scale (as they do here, sharing the objective's output space).
+- **No `FilterFeatures`.** Like the other modes, RGPE strips the task column in
+  `_posterior` (decision 5.3) and therefore does not support `fantasize`.
