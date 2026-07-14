@@ -117,6 +117,9 @@ class SubspaceDiscrete(SerialMixin):
     and thereby speed up construction. If not provided, the default hook will derive it
     from ``exp_rep``."""
 
+    fixed_values: dict[str, float] = field(factory=dict)
+    """Comp-rep column values held constant during optimization."""
+
     @override
     def __str__(self) -> str:
         if self.is_empty:
