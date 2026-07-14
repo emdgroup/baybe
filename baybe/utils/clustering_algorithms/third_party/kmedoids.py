@@ -101,8 +101,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Attributes:
         cluster_centers_ : array, shape = (n_clusters, n_features)
-                or None if metric == 'precomputed'
             Cluster centers, i.e. medoids (elements from the original dataset)
+            or None if metric == 'precomputed'.
 
         medoid_indices_ : array, shape = (n_clusters,)
             The indices of the medoid rows in X

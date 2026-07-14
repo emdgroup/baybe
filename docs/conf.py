@@ -4,9 +4,6 @@ from __future__ import annotations
 #
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
-import os
-import shutil
-
 from gpytorch.kernels import Kernel as GPyTorchKernel
 from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
 from gpytorch.means import Mean as GPyTorchMean
@@ -48,64 +45,12 @@ autodoc_type_aliases = {
 
 # >>>>>>>>>> NOTE END <<<<<<<<<<
 
-# -- Path setup --------------------------------------------------------------
-
-__location__ = os.path.dirname(__file__)
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-# Seems to be not necessary at the moment
-# sys.path.insert(0, os.path.join(__location__, "../examples"))
-
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "BayBE"
 copyright = "2022-2025 Merck KGaA, Darmstadt, Germany and/or its affiliates. All rights reserved."  # noqa
 author = "Merck KGaA, Darmstadt, Germany"
-
-
-# -- Run sphinx-apidoc -------------------------------------------------------
-# This hack is necessary since RTD does not issue `sphinx-apidoc` before running
-# `sphinx-build -b html . _build/html`. See Issue:
-# https://github.com/readthedocs/readthedocs.org/issues/1139
-# DON'T FORGET: Check the box "Install your project inside a virtualenv using
-# setup.py install" in the RTD Advanced Settings.
-# Additionally it helps us to avoid running apidoc manually
-
-try:  # for Sphinx >= 1.7
-    from sphinx.ext import apidoc
-except ImportError:
-    from sphinx import apidoc
-
-output_dir = os.path.join(__location__, "sdk")
-baybe_module_dir = os.path.join(__location__, "../baybe")
-try:
-    shutil.rmtree(output_dir)
-except FileNotFoundError:
-    pass
-
-try:
-    args = [
-        "--implicit-namespaces",
-        "-M",
-        "-T",
-        "-e",
-        "-f",
-        "-o",
-        output_dir,
-    ]
-
-    apidoc.main(
-        [
-            *args,
-            baybe_module_dir,
-            baybe_module_dir + "/__init__.py",
-        ]
-    )
-except Exception as e:
-    print(f"Running `sphinx-apidoc` failed!\n{e}")
 
 
 # -- General configuration ---------------------------------------------------
@@ -149,29 +94,63 @@ extensions.append("myst_parser")
 source_suffix = [".rst", ".md"]
 
 # Here, we define regex expressions for errors produced by nitpick that we want to
-# ignore.
+# ignore. The patterns are organized by category. IMPORTANT: Do NOT add catch-all
+# patterns that suppress all non-baybe references, as this hides broken internal
+# cross-references (see https://github.com/AVHopp/orga/issues/66).
 nitpick_ignore_regex = [
-    # Ignore everything that does not include baybe
-    (r"py:.*", r"^(?!.*baybe).*"),
-    # Ignore errors that are from inherited classes we cannot control
+    ##### External package references #####
+    # Qualified references to external packages whose internal module paths cannot be
+    # resolved via intersphinx (e.g. pandas.core.frame.DataFrame vs pandas.DataFrame).
+    (
+        r"py:.*",
+        r"(pandas|numpy|torch|botorch|gpytorch|scipy|sklearn|pathlib|polars|attr|joblib|matplotlib|skfp|rdkit|shap|xyzpy|typing)[\._].*",
+    ),  # noqa: E501
+    ##### Inherited torch.nn.Module docstring references #####
+    # Unqualified names from inherited external docstrings (torch, botorch, sklearn)
+    # that cannot be resolved outside their original documentation context.
+    (r"py:class", r"^(Tensor|Module|Parameter|Dropout|BatchNorm)$"),
+    (r"py:class", r"^(Posterior|MetadataRequest|Ignored)$"),
+    (r"py:attr", r"^(persistent|grad_input|grad_output|requires_grad)$"),
+    (r"py:attr", r"^(device|dtype|dst_type|non_blocking)$"),
+    (r"py:func", r"^(register_module_forward_hook|register_module_forward_pre_hook)$"),
+    (r"py:func", r"^(register_module_full_backward_hook)$"),
+    (r"py:func", r"^(register_module_full_backward_pre_hook|load_state_dict)$"),
+    (r"py:meth", r"^nn\.Module\.load_state_dict$"),
+    ##### Inherited sklearn/scipy docstring artifacts #####
+    # sklearn docstrings use informal type descriptions that Sphinx parses as refs.
+    (r"py:class", r"^(optional|shape|shape=|n_samples|n_features|n_query)$"),
+    (r"py:class", r"^(n_features_new|n_outputs|n_indexed|n_clusters)$"),
+    (r"py:class", r"^(array-like|ndarray|ndarray array|string)$"),
+    (r"py:class", r"^(estimator instance|sparse matrix\})$"),
+    (r"py:class", r"^(\{array-like|default=.*|\{\"default\")$"),
+    (r"py:class", r"^(dtype=np\.int64|if metric == 'precomputed')$"),
+    ##### Type aliases in TYPE_CHECKING blocks #####
+    # These exist only at type-checking time and cannot be resolved by Sphinx.
+    (r"py:class", r"^(GPComponent|TensorCallable|ConvertibleToFloat)$"),
+    (r"py:class", r"^(GPyTorchLikelihood|GPyTorchModel)$"),
+    (r"py:class", r"^(pd\.DataFrame|pl\.Expr)$"),
+    (r"py:class", r"^(TypeAliasForwardRef|P)$"),
+    (r"py:class", r"^\"(pandas|polars)\"\}?$"),
+    ##### BayBE-specific suppressions #####
+    # Inherited classes we cannot control
     (r"py:.*", r".*DTypeFloatONNX.*"),
-    # Ignore the functions that we manually delete from in child classes
+    # Serialization functions manually deleted from child classes
     (r"py:.*", r".*from_dict.*"),
     (r"py:.*", r".*from_json.*"),
     (r"py:.*", r".*to_dict.*"),
     (r"py:.*", r".*to_json.*"),
     (r"py:.*", r".*_T.*"),
-    # Ignore files for which no __init__ is available at all
+    # Classes for which no __init__ is available at all
     (r"py:.*", "baybe.constraints.conditions.Condition.__init__"),
     (r"py:.*", "baybe.serialization.mixin.SerialMixin.__init__"),
     (r"DeprecationWarning:", ""),
-    # Ignore the generics/aliases
+    # Generics/aliases
     (r"py:class", "baybe.utils.basic._C"),
     (r"py:class", "baybe.utils.basic._T"),
     (r"py:class", "baybe.utils.basic._U"),
     (r"py:class", "baybe.surrogates.composite._SurrogateGetter"),
     (r"ref:obj", "baybe.surrogates.base.ModelContext"),
-    # Ignore custom class properties
+    # Custom class properties
     (r"py:obj", "baybe.settings._AdoptedRandomSeed.*"),
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_batching"),
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_pending_experiments"),
@@ -208,8 +187,15 @@ linkcheck_ignore = [
 ]
 
 
-# Ignore the warnings that are given by autosectionlabel
-suppress_warnings = ["autosectionlabel.*"]
+# Ignore certain warning categories
+suppress_warnings = [
+    "autosectionlabel.*",
+    # Forward reference and guarded import warnings from sphinx-autodoc-typehints.
+    # These are unavoidable since heavy deps (torch, botorch, gpytorch) are lazy-loaded
+    # and only available in TYPE_CHECKING blocks at runtime.
+    "sphinx_autodoc_typehints.forward_reference",
+    "sphinx_autodoc_typehints.guarded_import",
+]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
