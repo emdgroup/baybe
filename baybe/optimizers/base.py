@@ -37,7 +37,6 @@ class OptimizerProtocol(Protocol, Generic[TSpace]):  # type: ignore[misc]
         batch_size: int,
         score_function: ScoreFunction,
         space: TSpace,
-        fixed_features: dict[int, float] | None = None,
     ) -> tuple[Tensor, Tensor]:
         """Optimize a given callable over the specified space.
 
@@ -45,7 +44,6 @@ class OptimizerProtocol(Protocol, Generic[TSpace]):  # type: ignore[misc]
             batch_size: The number of points to find.
             score_function: The callable to be optimized.
             space: The space to optimize over.
-            fixed_features: Dimensions that are held constant during optimization.
 
         Returns:
             The optimal parameter configurations and their corresponding scores.
