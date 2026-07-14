@@ -81,6 +81,13 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
             flds.sampling_fraction.name,
         )
 
+    @override
+    @classproperty
+    def _requires_fantasize(cls) -> bool:
+        # qNIPV calls `fantasize` on the botorch model to integrate the posterior
+        # variance, which requires a fantasize-capable model.
+        return True
+
     def get_integration_points(self, searchspace: SearchSpace) -> pd.DataFrame:
         """Sample points from a search space for integration purposes.
 

@@ -628,6 +628,26 @@ class _ReducedSearchSpace(SearchSpace):
     """Attributes accessible on this reduced search space (see inline notes)."""
 
     @override
+    def __attrs_post_init__(self):
+        """Validate that the reduced space is genuinely task-free.
+
+        Raises:
+            ValueError: If the reduced space still contains a task parameter. The
+                reduced space whitelists the index-based ``task_idx`` property only
+                under the guarantee that it always returns ``None`` here (see the
+                inline note next to ``_ALLOWED_ATTRIBUTES``). A non-``None``
+                ``task_idx`` would break that guarantee and the column mapping that
+                transfer learning surrogates rely on.
+        """
+        super().__attrs_post_init__()
+        if self.task_idx is not None:
+            raise ValueError(
+                f"'{self.__class__.__name__}' must not contain a task parameter, "
+                f"but 'task_idx' resolved to '{self.task_idx}'. Reduced search spaces "
+                f"are required to be task-free."
+            )
+
+    @override
     def __getattribute__(self, name: str):
         """Guard attribute access, allowing only parameter-related attributes."""
         if name.startswith("__"):

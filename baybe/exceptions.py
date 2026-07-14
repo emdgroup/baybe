@@ -62,6 +62,10 @@ class IncompatibleSurrogateError(IncompatibilityError):
     """An incompatible surrogate was selected."""
 
 
+class IncompatibleObjectiveError(IncompatibilityError):
+    """An incompatible objective was selected."""
+
+
 class IncompatibleAcquisitionFunctionError(IncompatibilityError):
     """An incompatible acquisition function was selected."""
 

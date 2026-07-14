@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterable
 from functools import cached_property
 from inspect import signature
 from types import MappingProxyType
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 import torch
@@ -13,7 +13,8 @@ from attrs.validators import instance_of, optional
 from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionObjective
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.models.model import Model
+from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.model import Model, ModelList
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
 )
@@ -30,6 +31,7 @@ from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
 from baybe.acquisition.utils import make_partitioning
 from baybe.exceptions import (
     IncompatibilityError,
+    IncompatibleAcquisitionFunctionError,
     IncompleteMeasurementsError,
     NonGaussianityError,
 )
@@ -95,6 +97,22 @@ flds = fields(BotorchAcquisitionArgs)
 """Shorthand for the argument field references."""
 
 
+def _supports_fantasize(model: Model) -> bool:
+    """Check whether a botorch model (or all its submodels) can fantasize.
+
+    Args:
+        model: The botorch model to inspect.
+
+    Returns:
+        ``True`` if the model supports fantasizing. Only GPyTorch-based models are
+        considered fantasize-capable; notably, this excludes the ``AdapterModel``
+        exposed by transfer learning surrogates that delegate.
+    """
+    if isinstance(model, ModelList):
+        return all(_supports_fantasize(cast(Model, m)) for m in model.models)
+    return isinstance(model, GPyTorchModel)
+
+
 @define
 class BotorchAcquisitionFunctionBuilder:
     """A class for building BoTorch acquisition functions from BayBE objects."""
@@ -127,6 +145,20 @@ class BotorchAcquisitionFunctionBuilder:
 
         # Pre-populate the acqf arguments with the content of the BayBE acqf
         self._args = BotorchAcquisitionArgs(model=self.surrogate.to_botorch(), **args)
+
+        # Fail early if the acquisition function needs to fantasize on the model but
+        # the surrogate exposes a model that does not support it (e.g. transfer
+        # learning surrogates delegating to an `AdapterModel`). This avoids a cryptic
+        # failure deep inside the botorch acquisition function later on.
+        if self.acqf._requires_fantasize and not _supports_fantasize(self._args.model):
+            raise IncompatibleAcquisitionFunctionError(
+                f"The acquisition function '{type(self.acqf).__name__}' requires a "
+                f"surrogate whose botorch model supports fantasizing, but the model "
+                f"exposed by '{type(self.surrogate).__name__}' "
+                f"('{type(self._args.model).__name__}') does not. This typically "
+                f"occurs with transfer learning surrogates that delegate to an "
+                f"internal model. Please choose a different acquisition function."
+            )
 
     @cached_property
     def _botorch_surrogate(self) -> Model:

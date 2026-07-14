@@ -23,12 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ResidualTransferSurrogate` implementing residual-learning transfer learning,
   dispatched automatically by `GaussianProcessSurrogate` for the `RESIDUAL_LEARNING` and
   `RESIDUAL_LEARNING_WITH_UNCERTAINTY` modes
+- `IncompatibleObjectiveError` raised when an objective is incompatible with the
+  selected component, e.g. `ResidualTransferSurrogate` with a `DesirabilityObjective`
 
 ### Changed
 - `TaskParameter.override_transfer_learning_mode` now selects the task kernel
   (`IndexKernel` for `INDEX_KERNEL`, `PositiveIndexKernel` for `POSITIVE_INDEX_KERNEL`)
   and raises an `IncompatibleSurrogateError` if combined with a custom kernel on
   `GaussianProcessSurrogate`
+- Acquisition functions that fantasize on the model (e.g. `qNIPV`) now raise an
+  `IncompatibleAcquisitionFunctionError` when combined with a surrogate whose model
+  does not support fantasizing (e.g. transfer learning surrogates that delegate)
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
   kernel in multi-task scenarios, matching BoTorch's `MultiTaskGP` defaults introduced
   in version `0.18.0`

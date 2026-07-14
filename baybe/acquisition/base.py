@@ -54,6 +54,11 @@ class AcquisitionFunction(ABC, SerialMixin):
         return cls.supports_batching
 
     @classproperty
+    def _requires_fantasize(cls) -> bool:
+        """Flag indicating whether the function fantasizes on the botorch model."""
+        return False
+
+    @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
         """Names of attributes that are not passed to the BoTorch constructor."""
         return ()

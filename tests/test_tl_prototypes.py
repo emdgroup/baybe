@@ -5,12 +5,20 @@ import pandas as pd
 import pytest
 import torch
 
+from baybe.acquisition.acqfs import qNegIntegratedPosteriorVariance
 from baybe.campaign import Campaign
-from baybe.exceptions import IncompatibleSearchSpaceError, IncompatibleSurrogateError
+from baybe.exceptions import (
+    IncompatibleAcquisitionFunctionError,
+    IncompatibleObjectiveError,
+    IncompatibleSearchSpaceError,
+    IncompatibleSurrogateError,
+)
 from baybe.kernels.basic import IndexKernel, MaternKernel, PositiveIndexKernel
+from baybe.objectives.desirability import DesirabilityObjective
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import TransferLearningMode
 from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets.baybe import _BayBETaskKernelFactory
@@ -253,3 +261,43 @@ def test_residual_transfer_campaign_recommend(objective):
 
     assert len(recommendation) == 3
     assert set(recommendation["task"]) == {"target"}
+
+
+def test_residual_transfer_rejects_desirability():
+    """Residual transfer with a `DesirabilityObjective` raises before fitting."""
+    objective = DesirabilityObjective(
+        [NumericalTarget("t1"), NumericalTarget("t2")],
+        require_normalization=False,
+        scalarizer="MEAN",
+    )
+    searchspace = _make_task_searchspace(["source", "target"], ["target"])
+    measurements = _make_measurements(["source", "target"], objective)
+
+    surrogate = ResidualTransferSurrogate()
+    with pytest.raises(IncompatibleObjectiveError, match="DesirabilityObjective"):
+        surrogate.fit(searchspace, objective, measurements)
+
+
+def test_reduced_searchspace_rejects_surviving_task():
+    """A reduced space that still contains a task parameter raises on construction."""
+    searchspace = _make_task_searchspace(["source", "target"], ["target"])
+    # Dropping the non-task parameter leaves the task parameter in place.
+    with pytest.raises(ValueError, match="must not contain a task parameter"):
+        searchspace._drop_parameters({"p"})
+
+
+def test_mean_transfer_rejects_fantasize_acquisition(objective):
+    """A fantasize-requiring acqf (qNIPV) is rejected for a delegating surrogate."""
+    searchspace = _make_task_searchspace(
+        ["source", "target"], ["target"], TransferLearningMode.MEAN_TRANSFER
+    )
+    measurements = _make_measurements(["source", "target"], objective)
+
+    recommender = BotorchRecommender(
+        acquisition_function=qNegIntegratedPosteriorVariance()
+    )
+    campaign = Campaign(searchspace, objective, recommender)
+    campaign.add_measurements(measurements)
+
+    with pytest.raises(IncompatibleAcquisitionFunctionError, match="fantasiz"):
+        campaign.recommend(batch_size=2)
