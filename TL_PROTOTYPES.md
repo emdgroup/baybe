@@ -33,7 +33,8 @@ Switching `<MODE>` must change the TL behavior while the default
 | `INDEX_KERNEL` | implemented | task kernel swap (`IndexKernel`) |
 | `POSITIVE_INDEX_KERNEL` | implemented (default) | task kernel swap (`PositiveIndexKernel`) |
 | `MEAN_TRANSFER` | implemented | dedicated surrogate (`MeanTransferSurrogate`) |
-| `RESIDUAL_LEARNING` | placeholder | - (enum value only) |
+| `RESIDUAL_LEARNING` | implemented | `ResidualTransferSurrogate` (residual variance only) |
+| `RESIDUAL_LEARNING_WITH_UNCERTAINTY` | implemented | `ResidualTransferSurrogate` (source + residual variance) |
 | `RGPE` | placeholder | - (enum value only) |
 
 The two families are fundamentally different and therefore dispatch at **different
@@ -212,10 +213,57 @@ either subset has no measurements.
 
 ## 8. Known limitations / future work
 
-- `MEAN_TRANSFER` supports exactly one source and one target task.
-- No `fantasize` support for `MEAN_TRANSFER` (see 5.3); acquisition functions that
-  require it (e.g. `qNIPV`) are not supported for this mode.
-- `RESIDUAL_LEARNING` and `RGPE` are enum placeholders only; each will add a new
-  surrogate class plus one entry in `_tl_replacing_surrogate`.
-- `MeanTransferSurrogate` is exported from its subpackage but not from the top-level
-  `baybe.surrogates` public API (kept internal while prototyping).
+- `MEAN_TRANSFER` and `RESIDUAL_LEARNING(_WITH_UNCERTAINTY)` support exactly one source
+  and one target task.
+- No `fantasize` support for the surrogate-replacing modes (see 5.3); acquisition
+  functions that require it (e.g. `qNIPV`) are not supported for these modes.
+- Residuals are computed in original target units and passed back through the
+  objective's pre-transform when fitting the residual GP. This is exact for linear
+  (min/max) `NumericalTarget`s and approximate for bounded/nonlinear target transforms.
+- `RGPE` is an enum placeholder only; it will add a new surrogate class plus one entry
+  in `_tl_replacing_surrogate`.
+- `MeanTransferSurrogate` and `ResidualTransferSurrogate` are exported from their
+  subpackage but not from the top-level `baybe.surrogates` public API (kept internal
+  while prototyping).
+
+## 9. Mean transfer vs. residual transfer: when are they the same model?
+
+Let the source model define a fixed mean function `m_s(x)` (the source GP's posterior
+mean). Consider a target GP with kernel `k`, noise `σ²`, training inputs `X` and outputs
+`y`.
+
+**Mean transfer** uses `m_s` as the *prior mean* of the target GP. Its posterior at
+`x*`:
+
+    μ_MT(x*) = m_s(x*) + k(x*,X)·(K + σ²I)⁻¹·(y − m_s(X))
+    Σ_MT(x*) = k(x*,x*) − k(x*,X)·(K + σ²I)⁻¹·k(X,x*)
+
+**Residual transfer** trains a *zero-mean* GP on residuals `r = y − m_s(X)` and adds the
+source mean back:
+
+    μ_RT(x*) = m_s(x*) + k(x*,X)·(K + σ²I)⁻¹·r
+             = m_s(x*) + k(x*,X)·(K + σ²I)⁻¹·(y − m_s(X)) = μ_MT(x*)
+    Σ_RT(x*) = k(x*,x*) − k(x*,X)·(K + σ²I)⁻¹·k(X,x*) = Σ_MT(x*)
+
+So the two are the **exact same model** if and only if **all** of the following hold:
+
+1. the residual GP uses a **zero mean** (not a constant mean),
+2. identical kernel, hyperparameters and noise are used for both,
+3. the **same output standardization** is applied (same shift/scale on `y` and on `r`),
+4. the residual variance alone is reported (no added source variance).
+
+**Why our implementations are genuinely distinct.** `MeanTransferSurrogate` and
+`ResidualTransferSurrogate` deliberately break conditions 1, 3 and (optionally) 4:
+
+- The residual GP uses BayBE's default **`ConstantMean`**, not a zero mean (breaks 1),
+  so it can absorb a constant offset in the residuals.
+- Output standardization (`Standardize`) is fit **on `y`** for mean transfer but **on
+  the residuals `r`** for residual transfer (breaks 3). Since residuals typically have a
+  smaller spread than `y`, the residual GP is fit on a different scale, which changes the
+  learned hyperparameters and hence the predictions.
+- `RESIDUAL_LEARNING_WITH_UNCERTAINTY` additionally sums the source and residual
+  variances (breaks 4), making the two residual variants differ from each other as well.
+
+Hence the modes `MEAN_TRANSFER`, `RESIDUAL_LEARNING`, and
+`RESIDUAL_LEARNING_WITH_UNCERTAINTY` implement three distinct models that coincide only
+in the idealized zero-mean / equal-standardization / residual-only-variance limit.

@@ -15,6 +15,9 @@ from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets.baybe import _BayBETaskKernelFactory
 from baybe.surrogates.transfer_learning.mean_transfer import MeanTransferSurrogate
+from baybe.surrogates.transfer_learning.residual_transfer import (
+    ResidualTransferSurrogate,
+)
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
 
@@ -173,4 +176,80 @@ def test_mean_transfer_campaign_recommend(objective):
 
     assert len(recommendation) == 3
     # Recommendations are made at the active (target) task only.
+    assert set(recommendation["task"]) == {"target"}
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected_propagate"),
+    [
+        pytest.param(TransferLearningMode.RESIDUAL_LEARNING, False, id="residual"),
+        pytest.param(
+            TransferLearningMode.RESIDUAL_LEARNING_WITH_UNCERTAINTY,
+            True,
+            id="residual_unc",
+        ),
+    ],
+)
+def test_residual_transfer_delegates(mode, expected_propagate, objective):
+    """A residual override makes the GP delegate to a configured ResidualTransfer."""
+    searchspace = _make_task_searchspace(["source", "target"], ["target"], mode)
+    measurements = _make_measurements(["source", "target"], objective)
+    surrogate = GaussianProcessSurrogate()
+    surrogate.fit(searchspace, objective, measurements)
+
+    assert isinstance(surrogate._delegate, ResidualTransferSurrogate)
+    assert surrogate._delegate.propagate_source_uncertainty is expected_propagate
+    assert surrogate._delegate._source_gp is not None
+    assert surrogate._delegate._residual_gp is not None
+
+
+def test_residual_transfer_mean_is_source_plus_residual(objective):
+    """The combined posterior mean equals the source mean plus the residual mean."""
+    searchspace = _make_task_searchspace(
+        ["source", "target"], ["target"], TransferLearningMode.RESIDUAL_LEARNING
+    )
+    measurements = _make_measurements(["source", "target"], objective)
+    surrogate = GaussianProcessSurrogate()
+    surrogate.fit(searchspace, objective, measurements)
+
+    candidates = pd.DataFrame({"p": [0.1, 0.5, 0.9], "task": "target"})
+    reduced = candidates.drop(columns=["task"])
+    delegate = surrogate._delegate
+
+    outer_mean = surrogate.posterior(candidates).mean
+    source_mean = delegate._source_gp.posterior(reduced).mean
+    residual_mean = delegate._residual_gp.posterior(reduced).mean
+    assert torch.allclose(outer_mean, source_mean + residual_mean, atol=1e-4)
+
+
+def test_residual_transfer_uncertainty_variant_has_larger_variance(objective):
+    """Adding source uncertainty yields a variance at least as large everywhere."""
+    searchspace = _make_task_searchspace(["source", "target"], ["target"])
+    measurements = _make_measurements(["source", "target"], objective)
+
+    residual_only = ResidualTransferSurrogate(propagate_source_uncertainty=False)
+    residual_unc = ResidualTransferSurrogate(propagate_source_uncertainty=True)
+    residual_only.fit(searchspace, objective, measurements)
+    residual_unc.fit(searchspace, objective, measurements)
+
+    candidates = pd.DataFrame({"p": [0.1, 0.5, 0.9], "task": "target"})
+    var_only = residual_only.posterior(candidates).variance
+    var_unc = residual_unc.posterior(candidates).variance
+
+    assert (var_unc >= var_only - 1e-6).all()
+    assert var_unc.sum() > var_only.sum()
+
+
+def test_residual_transfer_campaign_recommend(objective):
+    """A default campaign with a RESIDUAL_LEARNING override can recommend."""
+    searchspace = _make_task_searchspace(
+        ["source", "target"], ["target"], TransferLearningMode.RESIDUAL_LEARNING
+    )
+    measurements = _make_measurements(["source", "target"], objective)
+
+    campaign = Campaign(searchspace, objective)
+    campaign.add_measurements(measurements)
+    recommendation = campaign.recommend(batch_size=3)
+
+    assert len(recommendation) == 3
     assert set(recommendation["task"]) == {"target"}

@@ -191,5 +191,8 @@ class TransferLearningMode(Enum):
     RESIDUAL_LEARNING = "RESIDUAL_LEARNING"
     """Learning of the target as a residual on top of a fixed source model."""
 
+    RESIDUAL_LEARNING_WITH_UNCERTAINTY = "RESIDUAL_LEARNING_WITH_UNCERTAINTY"
+    """Like ``RESIDUAL_LEARNING``, but adding the source model's predictive variance."""
+
     RGPE = "RGPE"
     """Ranking-weighted Gaussian process ensemble of source and target models."""

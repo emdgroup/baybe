@@ -5,6 +5,7 @@ from __future__ import annotations
 import gc
 import importlib
 import os
+from collections.abc import Callable
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
@@ -130,28 +131,35 @@ def _mark_custom_kernel(
 
 def _tl_replacing_surrogate(
     mode: TransferLearningMode | None,
-) -> type[Surrogate] | None:
-    """Return the surrogate class that replaces the GP for a given TL mode.
+) -> Callable[[], Surrogate] | None:
+    """Return a factory for the surrogate that replaces the GP for a given TL mode.
 
     Some transfer learning modes are not realized by swapping the task kernel of the
     Gaussian process but by an entirely different surrogate architecture that builds
-    a target model from one or more source models. This helper maps such modes to
-    their implementing surrogate class. Kernel-based modes and the absence of an
-    override are handled by the default Gaussian process itself and thus map to
-    ``None``.
+    a target model from one or more source models. This helper maps such modes to a
+    zero-argument factory producing the implementing (and mode-configured) surrogate.
+    Kernel-based modes and the absence of an override are handled by the default
+    Gaussian process itself and thus map to ``None``.
 
     Args:
         mode: The transfer learning mode taken from the task parameter, or ``None``
             if no override is specified.
 
     Returns:
-        The surrogate class implementing the mode, or ``None`` if the mode is handled
-        by the default Gaussian process.
+        A factory creating the surrogate implementing the mode, or ``None`` if the
+        mode is handled by the default Gaussian process.
     """
     from baybe.surrogates.transfer_learning.mean_transfer import MeanTransferSurrogate
+    from baybe.surrogates.transfer_learning.residual_transfer import (
+        ResidualTransferSurrogate,
+    )
 
     if mode is TransferLearningMode.MEAN_TRANSFER:
         return MeanTransferSurrogate
+    if mode is TransferLearningMode.RESIDUAL_LEARNING:
+        return lambda: ResidualTransferSurrogate(propagate_source_uncertainty=False)
+    if mode is TransferLearningMode.RESIDUAL_LEARNING_WITH_UNCERTAINTY:
+        return lambda: ResidualTransferSurrogate(propagate_source_uncertainty=True)
     return None
 
 
@@ -415,8 +423,8 @@ class GaussianProcessSurrogate(Surrogate):
                 f"'{self.__class__.__name__}'. Please remove either the custom kernel "
                 f"or the transfer learning override."
             )
-        if (delegate_cls := _tl_replacing_surrogate(tl_mode)) is not None:
-            self._delegate = delegate_cls()
+        if (delegate_factory := _tl_replacing_surrogate(tl_mode)) is not None:
+            self._delegate = delegate_factory()
             self._delegate.fit(self._searchspace, self._objective, self._measurements)
             return
 

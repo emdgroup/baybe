@@ -6,7 +6,11 @@ models, dispatched via
 """
 
 from baybe.surrogates.transfer_learning.mean_transfer import MeanTransferSurrogate
+from baybe.surrogates.transfer_learning.residual_transfer import (
+    ResidualTransferSurrogate,
+)
 
 __all__ = [
     "MeanTransferSurrogate",
+    "ResidualTransferSurrogate",
 ]
