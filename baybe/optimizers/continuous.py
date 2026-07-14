@@ -12,7 +12,7 @@ from typing_extensions import override
 from baybe.exceptions import IncompatibilityError, IncompatibleSearchSpaceError
 from baybe.optimizers.base import OptimizerProtocol
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
-from baybe.searchspace import SearchSpace, SubspaceContinuous
+from baybe.searchspace import SearchSpace
 from baybe.settings import AutoBool
 from baybe.utils.basic import flatten
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 @define(kw_only=True)
-class ContinuousOptimizer(OptimizerProtocol[SearchSpace | SubspaceContinuous]):
+class ContinuousOptimizer(OptimizerProtocol[SearchSpace]):
     """Optimizer wrapping BoTorch's :func:`botorch.optim.optimize_acqf`."""
 
     n_starts: int = field(validator=[instance_of(int), gt(0)], default=10)
@@ -43,14 +43,13 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace | SubspaceContinuous]):
         self,
         batch_size: int,
         score_function: ScoreFunction,
-        space: SearchSpace | SubspaceContinuous,
-        fixed_features: dict[int, float] | None = None,
+        space: SearchSpace,
     ) -> tuple[Tensor, Tensor]:
         import torch
         from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
         from botorch.optim import optimize_acqf
 
-        cont = space.continuous if isinstance(space, SearchSpace) else space
+        cont = space.continuous
 
         sequential = self.sequential.evaluate(
             lambda: not cont.has_interpoint_constraints
@@ -70,22 +69,25 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace | SubspaceContinuous]):
                 f"expects single continuous space, i.e., containing no subsets."
             )
 
+        # TODO: Unify with fixed_values depending on SearchSpace refactor
         bounds_df = space.comp_rep_bounds
         internal_fixed = {
             space.comp_rep_columns.index(p.name): p.value
             for p in cont.parameters
             if isinstance(p, _FixedNumericalContinuousParameter)
         }
-        if fixed_features:
-            overlap = internal_fixed.keys() & fixed_features.keys()
-            if overlap and any(internal_fixed[k] != fixed_features[k] for k in overlap):
-                raise ValueError(
-                    f"Conflicting fixed features at indices {overlap}: internally "
-                    f"fixed dimensions received different external values."
-                )
-            merged_fixed = {**internal_fixed, **fixed_features}
-        else:
-            merged_fixed = internal_fixed
+        external_fixed = {
+            space.comp_rep_columns.index(col): val
+            for col, val in space.fixed_values.items()
+        }
+        overlap = internal_fixed.keys() & external_fixed.keys()
+        if overlap and any(internal_fixed[k] != external_fixed[k] for k in overlap):
+            conflicting = [space.comp_rep_columns[i] for i in sorted(overlap)]
+            raise ValueError(
+                f"Conflicting values for fixed parameters {conflicting}: "
+                f"cardinality constraints and external fixed_values disagree."
+            )
+        merged_fixed = {**internal_fixed, **external_fixed}
 
         # NOTE: The explicit `or None` conversions are added as an additional safety net
         #   because it is unclear if the corresponding presence checks for these
@@ -101,6 +103,7 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace | SubspaceContinuous]):
             equality_constraints=flatten(
                 c.to_botorch(
                     cont.parameters,
+                    idx_offset=len(space.discrete.comp_rep_columns),
                     batch_size=batch_size if c.is_interpoint else None,
                 )
                 for c in cont.constraints_lin_eq
@@ -109,6 +112,7 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace | SubspaceContinuous]):
             inequality_constraints=flatten(
                 c.to_botorch(
                     cont.parameters,
+                    idx_offset=len(space.discrete.comp_rep_columns),
                     batch_size=batch_size if c.is_interpoint else None,
                 )
                 for c in cont.constraints_lin_ineq
