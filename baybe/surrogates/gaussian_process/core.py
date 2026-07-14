@@ -459,8 +459,8 @@ def _build_posterior_mean_module(
         def train(self, mode: bool = True) -> _PosteriorMean:
             """Set training mode without propagating to the frozen inner GP.
 
-            The inner GP stays in eval so ``posterior(x)`` returns predictive
-            (not training) outputs and the outer optimizer cannot modify it.
+            The inner GP stays in eval mode so ``posterior(x)`` always returns
+            predictive outputs regardless of the outer GP's training state.
             """
             self.training = mode
             return self
