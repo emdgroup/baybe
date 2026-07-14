@@ -52,8 +52,9 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
     ) -> RecommenderProtocol:
         """Follow the meta recommender chain to the selected non-meta recommender.
 
-        Recursively calls :meth:`~baybe.recommenders.meta.base.MetaRecommender.select_recommender` until a
-        non-meta recommender is encountered, which is then returned.
+        Recursively calls
+        :meth:`~baybe.recommenders.meta.base.MetaRecommender.select_recommender`
+        until a non-meta recommender is encountered, which is then returned.
         Effectively, this extracts the recommender responsible for generating
         the recommendations for the specified context.
 

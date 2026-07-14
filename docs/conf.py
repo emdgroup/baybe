@@ -156,7 +156,10 @@ nitpick_ignore_regex = [
     ##### External package references #####
     # Qualified references to external packages whose internal module paths cannot be
     # resolved via intersphinx (e.g. pandas.core.frame.DataFrame vs pandas.DataFrame).
-    (r"py:.*", r"(pandas|numpy|torch|botorch|gpytorch|scipy|sklearn|pathlib|polars|attr|joblib|matplotlib|skfp|rdkit|shap|xyzpy|typing)[\._].*"),  # noqa: E501
+    (
+        r"py:.*",
+        r"(pandas|numpy|torch|botorch|gpytorch|scipy|sklearn|pathlib|polars|attr|joblib|matplotlib|skfp|rdkit|shap|xyzpy|typing)[\._].*",
+    ),  # noqa: E501
     ##### Inherited torch.nn.Module docstring references #####
     # Unqualified names from inherited external docstrings (torch, botorch, sklearn)
     # that cannot be resolved outside their original documentation context.
@@ -242,7 +245,8 @@ linkcheck_ignore = [
 # Ignore certain warning categories
 suppress_warnings = [
     "autosectionlabel.*",
-    # Forward reference warnings from sphinx-autodoc-typehints for TYPE_CHECKING imports.
+    # Forward reference warnings from sphinx-autodoc-typehints for
+    # TYPE_CHECKING imports.
     # These are unavoidable since heavy deps (torch, botorch, gpytorch) are lazy-loaded
     # and only available in TYPE_CHECKING blocks at runtime.
     "sphinx_autodoc_typehints.forward_reference",
