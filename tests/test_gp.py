@@ -282,9 +282,9 @@ def test_posterior_mean_transfer(
     not intended as a universal claim for arbitrary training data.
     """
     expected = pretrained_gp.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
-    pretrained_lengthscale = (
-        pretrained_gp.to_botorch().covar_module.lengthscale.detach().clone()
-    )
+    pretrained_params = {
+        k: v.detach().clone() for k, v in pretrained_gp.to_botorch().named_parameters()
+    }
 
     new_measurements = _predict_on_posterior_mean(pretrained_gp, [0.0, 10.0])
     if prebuilt:
@@ -301,9 +301,8 @@ def test_posterior_mean_transfer(
     actual = new_gp.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
     assert math.isclose(actual, expected, abs_tol=1e-4)
 
-    assert torch.equal(
-        pretrained_gp.to_botorch().covar_module.lengthscale, pretrained_lengthscale
-    )
+    for k, v in pretrained_gp.to_botorch().named_parameters():
+        assert torch.equal(v, pretrained_params[k])
 
 
 def test_posterior_mean_raises_if_not_fitted() -> None:
