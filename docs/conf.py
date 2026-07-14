@@ -190,11 +190,11 @@ linkcheck_ignore = [
 # Ignore certain warning categories
 suppress_warnings = [
     "autosectionlabel.*",
-    # Forward reference warnings from sphinx-autodoc-typehints for
-    # TYPE_CHECKING imports.
+    # Forward reference and guarded import warnings from sphinx-autodoc-typehints.
     # These are unavoidable since heavy deps (torch, botorch, gpytorch) are lazy-loaded
     # and only available in TYPE_CHECKING blocks at runtime.
     "sphinx_autodoc_typehints.forward_reference",
+    "sphinx_autodoc_typehints.guarded_import",
 ]
 
 # -- Options for HTML output -------------------------------------------------
