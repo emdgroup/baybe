@@ -279,6 +279,46 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._model is not None
         return self._model.posterior(candidates_comp_scaled)
 
+    def _resolve_components(
+        self, context: _ModelContext
+    ) -> tuple[GPyTorchKernel, GPyTorchMean, GPyTorchLikelihood, FitCriterion]:
+        """Resolve factory fields to concrete GPyTorch components.
+
+        Resolves ``None`` fields to BayBE defaults and calls the factories with
+        the given context. This handles the standard resolution path.
+
+        Args:
+            context: The model context providing searchspace, objective, and
+                measurements.
+
+        Returns:
+            A tuple of (kernel, mean, likelihood, criterion).
+        """
+        kernel_factory = self.kernel_factory or BayBEKernelFactory()
+        mean_factory = self.mean_factory or BayBEMeanFactory()
+        likelihood_factory = self.likelihood_factory or BayBELikelihoodFactory()
+        criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
+
+        mean = mean_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        kernel = kernel_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+        if isinstance(kernel, Kernel):
+            kernel = kernel.to_gpytorch(searchspace=context.searchspace)
+
+        likelihood = likelihood_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        criterion = criterion_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        return kernel, mean, likelihood, criterion
+
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         assert self._searchspace is not None  # provided by base class
@@ -304,29 +344,7 @@ class GaussianProcessSurrogate(Surrogate):
                 f"environment variable to a truthy value."
             )
 
-        ### Component resolution
-        kernel_factory = self.kernel_factory or BayBEKernelFactory()
-        mean_factory = self.mean_factory or BayBEMeanFactory()
-        likelihood_factory = self.likelihood_factory or BayBELikelihoodFactory()
-        criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
-
-        mean = mean_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-
-        kernel = kernel_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-        if isinstance(kernel, Kernel):
-            kernel = kernel.to_gpytorch(searchspace=context.searchspace)
-
-        likelihood = likelihood_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-
-        criterion = criterion_factory(
-            context.searchspace, context.objective, context.measurements
-        )
+        kernel, mean, likelihood, criterion = self._resolve_components(context)
 
         import botorch
         from botorch.models.transforms import Normalize, Standardize
