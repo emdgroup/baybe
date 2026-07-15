@@ -213,6 +213,15 @@ def test_presets(preset: GaussianProcessPreset):
     gp2.fit(searchspace, objective, measurements)
 
 
+def test_default_factories_are_none():
+    """Default construction leaves all factory fields as None."""
+    gp = GaussianProcessSurrogate()
+    assert gp.kernel_factory is None
+    assert gp.mean_factory is None
+    assert gp.likelihood_factory is None
+    assert gp.fit_criterion_factory is None
+
+
 def test_invalid_components():
     """Passing invalid component types raises errors."""
     with pytest.raises(TypeError, match="Component must be one of"):
