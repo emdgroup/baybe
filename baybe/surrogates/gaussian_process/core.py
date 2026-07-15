@@ -147,7 +147,7 @@ class GaussianProcessSurrogate(Surrogate):
     _custom_kernel: bool = field(init=False, default=False, repr=False, eq=False)
     # For deprecation only!
 
-    _kernel_factory: KernelFactoryProtocol | None = field(
+    kernel_factory: KernelFactoryProtocol | None = field(
         alias="kernel_or_factory",
         converter=pipe(  # type: ignore[misc]
             Converter(_mark_custom_kernel, takes_self=True),  # type: ignore[call-overload]
@@ -156,81 +156,66 @@ class GaussianProcessSurrogate(Surrogate):
             ),
         ),
         default=None,
-        repr=False,
         validator=optional(is_callable()),
     )
-    """The used kernel factory. ``None`` defers to the BayBE default.
+    """The kernel factory. ``None`` defers to context-dependent auto-selection.
 
-    Accepts a :class:`baybe.kernels.base.Kernel`, a ``KernelFactoryProtocol``, or a
-    :class:`gpytorch.kernels.Kernel`.
+    Accepts:
+        * :class:`baybe.kernels.base.Kernel`
+        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a
+          kernel
+        * :class:`gpytorch.kernels.Kernel`
     """
 
-    _mean_factory: MeanFactoryProtocol | None = field(
+    mean_factory: MeanFactoryProtocol | None = field(
         alias="mean_or_factory",
         default=None,
         converter=optional_c(
             partial(to_component_factory, component_type=GPComponentType.MEAN)  # type: ignore[misc]
         ),
-        repr=False,
         validator=optional(is_callable()),
     )
-    """The used mean factory. ``None`` defers to the BayBE default.
+    """The mean factory. ``None`` defers to context-dependent auto-selection.
 
-    Accepts a ``MeanFactoryProtocol`` or a :class:`gpytorch.means.Mean`.
+    Accepts:
+        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a mean
+        * :class:`gpytorch.means.Mean`
     """
 
-    _likelihood_factory: LikelihoodFactoryProtocol | None = field(
+    likelihood_factory: LikelihoodFactoryProtocol | None = field(
         alias="likelihood_or_factory",
         default=None,
         converter=optional_c(
             partial(to_component_factory, component_type=GPComponentType.LIKELIHOOD)  # type: ignore[misc]
         ),
-        repr=False,
         validator=optional(is_callable()),
     )
-    """The used likelihood factory. ``None`` defers to the BayBE default.
+    """The likelihood factory. ``None`` defers to context-dependent auto-selection.
 
-    Accepts a ``LikelihoodFactoryProtocol`` or a
-    :class:`gpytorch.likelihoods.Likelihood`.
+    Accepts:
+        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a
+          likelihood
+        * :class:`gpytorch.likelihoods.Likelihood`
     """
 
-    _fit_criterion_factory: FitCriterionFactoryProtocol | None = field(
+    fit_criterion_factory: FitCriterionFactoryProtocol | None = field(
         alias="fit_criterion_or_factory",
         default=None,
         converter=optional_c(
             partial(to_component_factory, component_type=GPComponentType.CRITERION)  # type: ignore[misc]
         ),
-        repr=False,
         validator=optional(is_callable()),
     )
-    """The used fit criterion factory. ``None`` defers to the BayBE default.
+    """The fit criterion factory. ``None`` defers to context-dependent auto-selection.
 
-    Accepts a :class:`.components.fit_criterion.FitCriterion` or a
-    ``FitCriterionFactoryProtocol``.
+    Accepts:
+        * :class:`.components.fit_criterion.FitCriterion`
+        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a
+          fit criterion
     """
 
     _model = field(init=False, default=None, eq=False)
     """The fitted BoTorch model."""
-
-    @property
-    def fit_criterion_factory(self) -> FitCriterionFactoryProtocol:
-        """The fit criterion factory used during model fitting."""
-        return self._fit_criterion_factory or BayBEFitCriterionFactory()
-
-    @property
-    def kernel_factory(self) -> KernelFactoryProtocol:
-        """The kernel factory used during model fitting."""
-        return self._kernel_factory or BayBEKernelFactory()
-
-    @property
-    def likelihood_factory(self) -> LikelihoodFactoryProtocol:
-        """The likelihood factory used during model fitting."""
-        return self._likelihood_factory or BayBELikelihoodFactory()
-
-    @property
-    def mean_factory(self) -> MeanFactoryProtocol:
-        """The mean factory used during model fitting."""
-        return self._mean_factory or BayBEMeanFactory()
 
     @classmethod
     def from_preset(
@@ -320,21 +305,26 @@ class GaussianProcessSurrogate(Surrogate):
             )
 
         ### Component resolution
-        mean = self.mean_factory(
+        kernel_factory = self.kernel_factory or BayBEKernelFactory()
+        mean_factory = self.mean_factory or BayBEMeanFactory()
+        likelihood_factory = self.likelihood_factory or BayBELikelihoodFactory()
+        criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
+
+        mean = mean_factory(
             context.searchspace, context.objective, context.measurements
         )
 
-        kernel = self.kernel_factory(
+        kernel = kernel_factory(
             context.searchspace, context.objective, context.measurements
         )
         if isinstance(kernel, Kernel):
             kernel = kernel.to_gpytorch(searchspace=context.searchspace)
 
-        likelihood = self.likelihood_factory(
+        likelihood = likelihood_factory(
             context.searchspace, context.objective, context.measurements
         )
 
-        criterion = self.fit_criterion_factory(
+        criterion = criterion_factory(
             context.searchspace, context.objective, context.measurements
         )
 
@@ -363,11 +353,19 @@ class GaussianProcessSurrogate(Surrogate):
     @override
     def __str__(self) -> str:
         fields = [
-            to_string("Kernel factory", self.kernel_factory, single_line=True),
-            to_string("Mean factory", self.mean_factory, single_line=True),
-            to_string("Likelihood factory", self.likelihood_factory, single_line=True),
             to_string(
-                "Fit criterion factory", self.fit_criterion_factory, single_line=True
+                "Kernel factory", self.kernel_factory or "auto", single_line=True
+            ),
+            to_string("Mean factory", self.mean_factory or "auto", single_line=True),
+            to_string(
+                "Likelihood factory",
+                self.likelihood_factory or "auto",
+                single_line=True,
+            ),
+            to_string(
+                "Fit criterion factory",
+                self.fit_criterion_factory or "auto",
+                single_line=True,
             ),
         ]
         return to_string(super().__str__(), *fields)
