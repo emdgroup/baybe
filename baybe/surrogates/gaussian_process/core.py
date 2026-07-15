@@ -319,6 +319,42 @@ class GaussianProcessSurrogate(Surrogate):
 
         return kernel, mean, likelihood, criterion
 
+    def _fit_standard(
+        self,
+        train_x: Tensor,
+        train_y: Tensor,
+        context: _ModelContext,
+    ) -> None:
+        """Fit a standard SingleTaskGP with resolved components.
+
+        Args:
+            train_x: Training inputs in computational representation.
+            train_y: Training targets (pre-transformed).
+            context: The model context providing bounds and index information.
+        """
+        kernel, mean, likelihood, criterion = self._resolve_components(context)
+
+        import botorch
+        from botorch.models.transforms import Normalize, Standardize
+
+        input_transform = Normalize(
+            train_x.shape[-1],
+            bounds=context.parameter_bounds,
+            indices=context.numerical_indices,
+        )
+        outcome_transform = Standardize(train_y.shape[-1])
+        self._model = botorch.models.SingleTaskGP(
+            train_x,
+            train_y,
+            input_transform=input_transform,
+            outcome_transform=outcome_transform,
+            mean_module=mean,
+            covar_module=kernel,
+            likelihood=likelihood,
+        )
+        mll = criterion.to_gpytorch(self._model.likelihood, self._model)
+        botorch.fit.fit_gpytorch_mll(mll)
+
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         assert self._searchspace is not None  # provided by base class
@@ -344,29 +380,7 @@ class GaussianProcessSurrogate(Surrogate):
                 f"environment variable to a truthy value."
             )
 
-        kernel, mean, likelihood, criterion = self._resolve_components(context)
-
-        import botorch
-        from botorch.models.transforms import Normalize, Standardize
-
-        ### Construct and fit the GP model
-        input_transform = Normalize(
-            train_x.shape[-1],
-            bounds=context.parameter_bounds,
-            indices=context.numerical_indices,
-        )
-        outcome_transform = Standardize(train_y.shape[-1])
-        self._model = botorch.models.SingleTaskGP(
-            train_x,
-            train_y,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            mean_module=mean,
-            covar_module=kernel,
-            likelihood=likelihood,
-        )
-        mll = criterion.to_gpytorch(self._model.likelihood, self._model)
-        botorch.fit.fit_gpytorch_mll(mll)
+        self._fit_standard(train_x, train_y, context)
 
     @override
     def __str__(self) -> str:
