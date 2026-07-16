@@ -315,7 +315,7 @@ class GaussianProcessSurrogate(Surrogate):
         outcome_transform(train_y)  # fit means/stds; nothing else fits it here
         outcome_transform.eval()
 
-        return _build_posterior_mean_module(
+        return _make_posterior_mean_module(
             self._model, input_transform, outcome_transform
         )
 
@@ -421,12 +421,12 @@ class GaussianProcessSurrogate(Surrogate):
         return to_string(super().__str__(), *fields)
 
 
-def _build_posterior_mean_module(
+def _make_posterior_mean_module(
     model: GPyTorchModel,
     input_transform: Normalize,
     outcome_transform: Standardize,
 ) -> GPyTorchMean:
-    """Build a :class:`gpytorch.means.Mean` wrapping a frozen copy of a GP.
+    """Make a :class:`gpytorch.means.Mean` wrapping a frozen copy of a GP.
 
     Args:
         model: The fitted GP whose posterior mean becomes the new GP's prior mean.
