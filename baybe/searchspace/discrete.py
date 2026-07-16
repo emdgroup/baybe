@@ -50,6 +50,8 @@ from baybe.utils.dataframe import (
 from baybe.utils.memory import bytes_to_human_readable
 
 if TYPE_CHECKING:
+    from narwhals.typing import IntoDataFrame
+
     from baybe.searchspace.core import SearchSpace
 
 
@@ -645,8 +647,9 @@ class SubspaceDiscrete(SerialMixin):
         return tuple(col for p in self.parameters for col in p.comp_rep_columns)
 
     @property
-    def comp_rep_bounds(self) -> pd.DataFrame:
+    def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
+        # TODO[narwhalify]: use settings-based backend selection
         if not self.parameters:
             return pd.DataFrame(index=["min", "max"])
         df = pd.concat(
@@ -659,8 +662,9 @@ class SubspaceDiscrete(SerialMixin):
         return pd.DataFrame({"min": df.min(), "max": df.max()}).T
 
     @property
-    def scaling_bounds(self) -> pd.DataFrame:
+    def scaling_bounds(self) -> IntoDataFrame:
         """The bounds used for scaling the surrogate model input."""
+        # TODO[narwhalify]: use settings-based backend selection
         return (
             pd.concat(
                 [

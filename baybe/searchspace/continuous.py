@@ -40,6 +40,7 @@ from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 
 if TYPE_CHECKING:
+    from narwhals.typing import IntoDataFrame
     from torch import Tensor
 
     from baybe.searchspace.core import SearchSpace
@@ -364,8 +365,9 @@ class SubspaceContinuous(SerialMixin):
         return frozenset(chain(*names_per_constraint))
 
     @property
-    def comp_rep_bounds(self) -> pd.DataFrame:
+    def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
+        # TODO[narwhalify]: use settings-based backend selection
         return pd.DataFrame(
             {p.name: p.bounds.to_tuple() for p in self.parameters},
             index=["min", "max"],
@@ -373,7 +375,7 @@ class SubspaceContinuous(SerialMixin):
         )
 
     @property
-    def scaling_bounds(self) -> pd.DataFrame:
+    def scaling_bounds(self) -> IntoDataFrame:
         """The bounds used for scaling the surrogate model input."""
         return self.comp_rep_bounds
 

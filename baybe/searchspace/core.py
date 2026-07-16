@@ -34,6 +34,8 @@ from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    from narwhals.typing import IntoDataFrame
+
     from baybe.parameters.selectors import ParameterSelectorProtocol
 
 
@@ -220,16 +222,18 @@ class SearchSpace(SerialMixin):
         return self.discrete.comp_rep_columns + self.continuous.comp_rep_columns
 
     @property
-    def comp_rep_bounds(self) -> pd.DataFrame:
+    def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
+        # TODO[narwhalify]: use settings-based backend selection
         return pd.concat(
             [self.discrete.comp_rep_bounds, self.continuous.comp_rep_bounds],
             axis=1,
         )
 
     @property
-    def scaling_bounds(self) -> pd.DataFrame:
+    def scaling_bounds(self) -> IntoDataFrame:
         """The bounds used for scaling the surrogate model input."""
+        # TODO[narwhalify]: use settings-based backend selection
         return pd.concat(
             [self.discrete.scaling_bounds, self.continuous.scaling_bounds], axis=1
         )
