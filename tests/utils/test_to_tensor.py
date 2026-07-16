@@ -1,7 +1,12 @@
 """Tests for the to_tensor utility."""
 
+from collections.abc import Callable
+from typing import TypeAlias
+
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 import torch
 from pytest import param
@@ -9,15 +14,74 @@ from pytest import param
 from baybe.settings import active_settings
 from baybe.utils.dataframe import to_tensor
 
+_AnyDataFrame: TypeAlias = pd.DataFrame | pl.DataFrame | nw.DataFrame
+_AnySeries: TypeAlias = pd.Series | pl.Series | nw.Series
+
 
 @pytest.fixture(
     name="torch_dtype",
     autouse=True,
     params=[param(False, id="float64"), param(True, id="float32")],
 )
-def fixture_torch_dtype(request, monkeypatch):
+def fixture_torch_dtype(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Run every test under all torch float precisions."""
     monkeypatch.setattr(active_settings, "use_single_precision_torch", request.param)
+
+
+def _pandas_dataframe_constructor(data: dict) -> pd.DataFrame:
+    return pd.DataFrame(data)
+
+
+def _polars_dataframe_constructor(data: dict) -> pl.DataFrame:
+    return pl.DataFrame(data)
+
+
+def _narwhals_dataframe_constructor(data: dict) -> nw.DataFrame:
+    return nw.from_native(pl.DataFrame(data), eager_only=True)
+
+
+def _pandas_series_constructor(name: str, values: list) -> pd.Series:
+    return pd.Series(values, name=name)
+
+
+def _polars_series_constructor(name: str, values: list) -> pl.Series:
+    return pl.Series(name, values)
+
+
+def _narwhals_series_constructor(name: str, values: list) -> nw.Series:
+    return nw.from_native(pl.Series(name, values), series_only=True)
+
+
+@pytest.fixture(
+    name="dataframe_constructor",
+    params=[
+        param(_pandas_dataframe_constructor, id="pandas"),
+        param(_polars_dataframe_constructor, id="polars"),
+        param(_narwhals_dataframe_constructor, id="narwhals"),
+    ],
+)
+def fixture_dataframe_constructor(
+    request: pytest.FixtureRequest,
+) -> Callable[[dict], _AnyDataFrame]:
+    """Parametrize over DataFrame backends."""
+    return request.param
+
+
+@pytest.fixture(
+    name="series_constructor",
+    params=[
+        param(_pandas_series_constructor, id="pandas"),
+        param(_polars_series_constructor, id="polars"),
+        param(_narwhals_series_constructor, id="narwhals"),
+    ],
+)
+def fixture_series_constructor(
+    request: pytest.FixtureRequest,
+) -> Callable[[str, list], _AnySeries]:
+    """Parametrize over Series backends."""
+    return request.param
 
 
 # -------------------------------------------------------------------------------------
@@ -51,7 +115,7 @@ def _ref_1d() -> torch.Tensor:
         param(2.5, 2.5, id="float"),
     ],
 )
-def test_to_tensor_scalar(value, expected):
+def test_to_tensor_scalar(value: int | float, expected: float):
     """to_tensor converts scalars to 0-D tensors of the configured dtype."""
     result = to_tensor(value)
     assert result.dtype == active_settings.DTypeFloatTorch
@@ -92,7 +156,7 @@ def test_to_tensor_ndarray_readonly():
 
 
 # -------------------------------------------------------------------------------------
-# Pandas
+# DataFrames
 # -------------------------------------------------------------------------------------
 
 
@@ -107,9 +171,9 @@ def test_to_tensor_ndarray_readonly():
         ),
     ],
 )
-def test_to_tensor_pandas_dataframe(data, expected_values):
-    """to_tensor converts pandas DataFrames, including mixed-dtype columns."""
-    result = to_tensor(pd.DataFrame(data))
+def test_to_tensor_dataframe(data, expected_values, dataframe_constructor):
+    """to_tensor converts DataFrames from all supported backends."""
+    result = to_tensor(dataframe_constructor(data))
     reference = (
         _ref_2d()
         if expected_values is None
@@ -119,20 +183,24 @@ def test_to_tensor_pandas_dataframe(data, expected_values):
     assert torch.allclose(result, reference)
 
 
-def test_to_tensor_pandas_dataframe_negative_strides():
-    """to_tensor handles pandas DataFrames backed by negatively-strided arrays."""
+def test_to_tensor_dataframe_negative_strides(dataframe_constructor):
+    """to_tensor handles DataFrames backed by negatively-strided arrays."""
     series = pd.Series(_SERIES_DATA, name="x")
     dataframe = series[::-1].to_frame()
     assert any(stride < 0 for stride in dataframe.to_numpy().strides)
-    result = to_tensor(dataframe)
+    result = to_tensor(dataframe_constructor(dataframe.to_dict(orient="list")))
     assert torch.allclose(result, _ref_1d().flip(0).unsqueeze(1))
     assert result.is_contiguous()
 
 
-def test_to_tensor_pandas_series():
-    """to_tensor converts a pandas Series."""
-    series = pd.Series(_SERIES_DATA, name="x")
-    assert torch.allclose(to_tensor(series), _ref_1d())
+# -------------------------------------------------------------------------------------
+# Series
+# -------------------------------------------------------------------------------------
+
+
+def test_to_tensor_series(series_constructor):
+    """to_tensor converts Series from all supported backends."""
+    assert torch.allclose(to_tensor(series_constructor("x", _SERIES_DATA)), _ref_1d())
 
 
 # -------------------------------------------------------------------------------------
