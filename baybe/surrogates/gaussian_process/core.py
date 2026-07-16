@@ -271,18 +271,17 @@ class GaussianProcessSurrogate(Surrogate):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> GPyTorchMean:
-        """Return a GPyTorch mean module representing the surrogate's posterior mean.
+        """Return a GPyTorch :class:`~gpytorch.means.Mean` representing the surrogate's posterior mean.
 
-        The returned mean module wraps a frozen copy of this surrogate's fitted GP.
+        The returned mean module wraps a frozen copy of the surrogate's fitted GP.
         Its posterior mean is evaluated in the raw input space and mapped into the
         normalized input/output space defined by the given ``searchspace``,
         ``objective``, and ``measurements``.
 
         The module is intended and designed to be used as the prior mean of another
-        :class:`GaussianProcessSurrogate`, so that this surrogate's posterior mean
-        acts as that GP's prior mean. To this end, the bound method satisfies
+        :class:`GaussianProcessSurrogate`. To this end, the bound method satisfies
         :class:`~baybe.surrogates.gaussian_process.components.mean.MeanFactoryProtocol`
-        and can be passed to it directly.
+        and can be passed directly as a mean factory to the new GP.
 
         Args:
             searchspace: The search space defining the module's input space.
@@ -294,7 +293,7 @@ class GaussianProcessSurrogate(Surrogate):
 
         Raises:
             ModelNotTrainedError: If the surrogate has not been fitted yet.
-        """
+        """  # noqa: E501
         if self._model is None:
             raise ModelNotTrainedError(
                 f"'{self.__class__.__name__}' must be fitted before its "
@@ -429,15 +428,17 @@ def _make_posterior_mean_module(
     """Make a :class:`gpytorch.means.Mean` wrapping a frozen copy of a GP.
 
     Args:
-        model: The fitted GP whose posterior mean becomes the new GP's prior mean.
-            It is deep-copied and frozen so that fitting the new GP cannot alter it.
+        model: The fitted GP whose posterior mean is to be extracted.
+            The GP is deep-copied and frozen so that using its mean in another GP does
+            does not alter the original model and the extracted mean module remains
+            unaffected when training the new GP.
         input_transform: The new GP's input transform; used to un-normalize the
-            inputs ``x`` arriving at ``forward`` so the wrapped GP sees raw inputs.
-        outcome_transform: The new GP's outcome transform; used to standardize the
+            inputs arriving at ``forward`` so the wrapped GP sees raw inputs.
+        outcome_transform: The new GP's outcome transform. Used to standardize the
             wrapped GP's raw-space predictions into the new GP's output space.
 
     Returns:
-        A mean module suitable for use as ``mean_module`` of the new GP.
+        A mean module readz for use in a new GP.
     """
     from copy import deepcopy
 
@@ -459,8 +460,8 @@ def _make_posterior_mean_module(
         def train(self, mode: bool = True) -> _PosteriorMean:
             """Set training mode without propagating to the frozen inner GP.
 
-            The inner GP stays in eval mode so ``posterior(x)`` always returns
-            predictive outputs regardless of the outer GP's training state.
+            The inner GP stays in eval mode so that evaluation of the posterior always
+            returns predictive outputs regardless of the outer GP's training state.
             """
             self.training = mode
             return self
