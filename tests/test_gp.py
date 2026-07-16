@@ -1,9 +1,9 @@
 """Tests for the Gaussian Process surrogate."""
 
-import math
 import sys
 from unittest.mock import Mock
 
+import numpy as np
 import pandas as pd
 import pytest
 import torch
@@ -231,14 +231,19 @@ def test_botorch_preset(multitask: bool):
     assert_frame_equal(posterior1, posterior2)
 
 
+# Parameter ranges
+_RANGE_NARROW = tuple(range(6))
+_RANGE_WIDE = tuple(range(11))
+
+
 def _predict_on_posterior_mean(
-    pretrained_gp: GaussianProcessSurrogate, xs: list[float]
+    pretrained_gp: GaussianProcessSurrogate, x: list[float]
 ) -> pd.DataFrame:
     """Build measurements whose targets follow the pretrained GP posterior mean."""
-    points = pd.DataFrame({"x1": xs})
-    with torch.no_grad():
-        targets = pretrained_gp.posterior(points).mean
-    return pd.DataFrame({"x1": xs, "t": targets.numpy().ravel()})
+    points = pd.DataFrame({"x": x})
+    return points.assign(
+        t=pretrained_gp.posterior_stats(points, stats=["mean"])["t_mean"]
+    )
 
 
 @pytest.fixture(name="pretrained_gp")
@@ -246,16 +251,11 @@ def fixture_pretrained_gp() -> GaussianProcessSurrogate:
     """A GP trained on a narrow search space with three points."""
     surrogate = GaussianProcessSurrogate()
     surrogate.fit(
-        NumericalDiscreteParameter("x1", [0.0, 2.5, 5.0]).to_searchspace(),
+        NumericalDiscreteParameter("x", _RANGE_NARROW).to_searchspace(),
         objective,
-        pd.DataFrame({"x1": [0.0, 2.5, 5.0], "t": [0.0, 5.0, 10.0]}),
+        pd.DataFrame({"x": list(_RANGE_NARROW), "t": [2 * x for x in _RANGE_NARROW]}),
     )
     return surrogate
-
-
-@pytest.fixture(name="wider_searchspace")
-def fixture_wider_searchspace() -> SearchSpace:
-    return NumericalDiscreteParameter("x1", [0.0, 2.5, 5.0, 7.5, 10.0]).to_searchspace()
 
 
 @pytest.mark.parametrize(
@@ -263,9 +263,7 @@ def fixture_wider_searchspace() -> SearchSpace:
     [param(False, id="bound_method"), param(True, id="prebuilt_module")],
 )
 def test_posterior_mean_transfer(
-    pretrained_gp: GaussianProcessSurrogate,
-    wider_searchspace: SearchSpace,
-    prebuilt: bool,
+    pretrained_gp: GaussianProcessSurrogate, prebuilt: bool
 ) -> None:
     """A pretrained GP posterior mean can seed the prior mean of a new GP.
 
@@ -281,26 +279,38 @@ def test_posterior_mean_transfer(
     The matching-mean expectation is specific to this constructed setup and is
     not intended as a universal claim for arbitrary training data.
     """
-    expected = pretrained_gp.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
+    # Record hyperparameters for later comparison
     pretrained_params = {
         k: v.detach().clone() for k, v in pretrained_gp.to_botorch().named_parameters()
     }
 
-    new_measurements = _predict_on_posterior_mean(pretrained_gp, [0.0, 10.0])
+    # Train/test data
+    x_train_reduced = [_RANGE_WIDE[0], _RANGE_WIDE[-1]]
+    y_train_reduced = _predict_on_posterior_mean(pretrained_gp, x_train_reduced)
+    x_test = list(_RANGE_WIDE[1:-1])
+
+    # Build a new GP with the pretrained mean on a wider search space (to ensure
+    # that input normalization is applied correctly)
+    wider_searchspace = NumericalDiscreteParameter("x", _RANGE_WIDE).to_searchspace()
     if prebuilt:
         mean = pretrained_gp.posterior_mean_function(
-            wider_searchspace, objective, new_measurements
+            wider_searchspace, objective, y_train_reduced
         )
     else:
         mean = pretrained_gp.posterior_mean_function
     new_gp = GaussianProcessSurrogate(mean_or_factory=mean)
-    new_gp.fit(wider_searchspace, objective, new_measurements)
+    new_gp.fit(wider_searchspace, objective, y_train_reduced)
 
     assert new_gp.to_botorch() is not None
 
-    actual = new_gp.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
-    assert math.isclose(actual, expected, abs_tol=1e-4)
+    # Predictions must exactly match the pretrained mean since the new training data of
+    # the new GP lies exactly on the mean and hence no corrections are applied
+    candidates = pd.DataFrame({"x": x_test})
+    expected = pretrained_gp.posterior_stats(candidates, stats=["mean"])["t_mean"]
+    actual = new_gp.posterior_stats(candidates, stats=["mean"])["t_mean"]
+    assert np.allclose(actual, expected)
 
+    # Assert that the hyperparameters of the original GP are unchanged
     for k, v in pretrained_gp.to_botorch().named_parameters():
         assert torch.equal(v, pretrained_params[k])
 
