@@ -5,19 +5,26 @@ from __future__ import annotations
 import functools
 import warnings
 from collections.abc import Callable, Collection, Iterable, Sequence
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    TypeAlias,
+    TypeVar,
+    overload,
+)
 
 import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from narwhals.testing import assert_frame_equal
-from typing_extensions import assert_never
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
 from baybe.parameters.base import Parameter
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
+    from narwhals.typing import IntoDataFrame, IntoSeries
     from torch import Tensor
 
     from baybe.targets.base import Target
@@ -25,19 +32,21 @@ if TYPE_CHECKING:
     _T = TypeVar("_T", bound=Parameter | Target)
     _ArrayLike = TypeVar("_ArrayLike", np.ndarray, Tensor)
 
-_ConvertibleToTensor = int | float | np.ndarray | pd.Series | pd.DataFrame
+    _IntoTensor: TypeAlias = (
+        int | float | np.ndarray | nw.Series | nw.DataFrame | IntoSeries | IntoDataFrame
+    )
 
 
 @overload
-def to_tensor(x: _ConvertibleToTensor, /) -> Tensor: ...
+def to_tensor(x: _IntoTensor, /) -> Tensor: ...
 
 
 @overload
-def to_tensor(*x: _ConvertibleToTensor) -> tuple[Tensor, ...]: ...
+def to_tensor(*x: _IntoTensor) -> tuple[Tensor, ...]: ...
 
 
-def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
-    """Convert ints, floats, numpy arrays and pandas series/dataframes to tensors.
+def to_tensor(*x: _IntoTensor) -> Tensor | tuple[Tensor, ...]:
+    """Convert ints, floats, numpy arrays and series/dataframes to tensors.
 
     Args:
         *x: The int(s)/float(s)/array(s)/series/dataframe(s) to be converted.
@@ -53,9 +62,11 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
 
     from baybe.utils.torch import torch_to_numpy_dtype_mapping
 
-    numpy_dtype = torch_to_numpy_dtype_mapping[active_settings.DTypeFloatTorch]
+    torch_dtype = active_settings.DTypeFloatTorch
+    nw_dtype = nw.Float32 if torch_dtype == torch.float32 else nw.Float64
+    numpy_dtype = torch_to_numpy_dtype_mapping[torch_dtype]
 
-    def _convert(x: _ConvertibleToTensor, /) -> Tensor:
+    def _convert(x: _IntoTensor, /) -> Tensor:
         match x:
             case int() | float():
                 return torch.tensor(x, dtype=active_settings.DTypeFloatTorch)
@@ -67,22 +78,12 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
                 if not x.flags.writeable:
                     x = x.copy()
                 tensor = torch.from_numpy(x)
-            case pd.Series() | pd.DataFrame():
-                # We already coerce to the target dtype during the dataframe-to-numpy
-                # conversion since this step might otherwise return an array of type
-                # `object` in case of mixed column types, which would cause the
-                # subsequent numpy-to-torch conversion to fail. This happens, for
-                # example, when the dataframe contains Boolean and integer columns.
-
-                # tensors with negative strides are not supported by PyTorch
-                fix_strides = any(s < 0 for s in x.to_numpy().strides)
-                array = x.to_numpy(numpy_dtype, copy=fix_strides)
-                # Copy if read-only (possible under pandas 3 Copy-on-Write)
-                if not array.flags.writeable:
-                    array = array.copy()
-                tensor = torch.from_numpy(array)
+            case nw.DataFrame():
+                return _convert(x.select(nw.all().cast(nw_dtype)).to_numpy())
+            case nw.Series():
+                return _convert(x.cast(nw_dtype).to_numpy())
             case _:
-                assert_never(x)
+                return _convert(nw.from_native(x, allow_series=True))
 
         # The `contiguous` call brings us closest to getting reproducible
         # results downstream in the torch ecosystem
