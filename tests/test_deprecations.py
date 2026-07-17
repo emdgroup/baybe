@@ -731,7 +731,7 @@ def test_legacy_excluded_metadata_deserialization():
 def test_deprecated_constraints_arguments(positional):
     """Using the deprecated subspace constraint arguments raises a warning."""
     p = NumericalContinuousParameter("p", (0, 1))
-    c = ContinuousLinearConstraint(["p"], "=", [0], 0)
+    c = ContinuousLinearConstraint(["p"], "=", [1], 0)
     c_lin_eq = ContinuousLinearConstraint(["p"], "=", [1], 0)
     c_lin_ineq = ContinuousLinearConstraint(["p"], ">=", [1], 0)
     c_nonlin = ContinuousCardinalityConstraint(["p"], 1)
