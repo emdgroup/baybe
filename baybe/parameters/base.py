@@ -6,7 +6,7 @@ import gc
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, overload
 
 import narwhals.stable.v2 as nw
 import pandas as pd
@@ -25,6 +25,7 @@ from baybe.utils.metadata import MeasurableMetadata, to_metadata
 if TYPE_CHECKING:
     from typing import Any
 
+    import polars as pl
     from narwhals.typing import IntoDataFrame
 
     from baybe.parameters.enum import _ParameterKind
@@ -162,6 +163,15 @@ class DiscreteParameter(Parameter, ABC):
     @override
     def is_in_range(self, item: Any) -> bool:
         return item in self.values
+
+    @overload
+    def transform(self, series: None = None, /) -> IntoDataFrame: ...
+    @overload
+    def transform(self, series: pd.Series[Any], /) -> pd.DataFrame: ...
+    @overload
+    def transform(self, series: pl.Series, /) -> pl.DataFrame: ...
+    @overload
+    def transform(self, series: Iterable[Any], /) -> IntoDataFrame: ...  # type: ignore[overload-cannot-match]
 
     def transform(
         self, series: nw.IntoSeries | Iterable[Any] | None = None, /
