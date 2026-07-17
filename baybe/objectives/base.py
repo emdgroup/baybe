@@ -7,6 +7,7 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
 
@@ -23,6 +24,7 @@ from baybe.utils.validation import validate_target_input
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
+    from narwhals.typing import IntoDataFrameT
 
 
 # TODO: Reactive slots in all classes once cached_property is supported:
@@ -160,12 +162,12 @@ class Objective(ABC, SerialMixin):
 
     def _pre_transform(
         self,
-        df: pd.DataFrame,
+        df: IntoDataFrameT,
         /,
         *,
         allow_missing: bool = False,
         allow_extra: bool = False,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         """Pre-transform the target values prior to predictive modeling.
 
         For details on the method arguments, see :meth:`transform`.
@@ -174,17 +176,17 @@ class Objective(ABC, SerialMixin):
         targets = get_transform_objects(
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
-        return df[[t.name for t in targets]]
+        return nw.from_native(df).select([t.name for t in targets]).to_native()
 
     def transform(
         self,
-        df: pd.DataFrame | None = None,
+        df: IntoDataFrameT | None = None,
         /,
         *,
         allow_missing: bool = False,
         allow_extra: bool | None = None,
         data: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         """Evaluate the objective on the target columns of the given dataframe.
 
         Args:
@@ -214,7 +216,7 @@ class Objective(ABC, SerialMixin):
             )
 
         if data is not None:
-            df = data
+            df = data  # type: ignore[assignment]
             warnings.warn(
                 "Providing the dataframe via the `data` argument is deprecated and "
                 "will be removed in a future version. Please pass your dataframe "
@@ -222,12 +224,13 @@ class Objective(ABC, SerialMixin):
                 DeprecationWarning,
             )
 
-        # Mypy does not infer from the above that `df` must be a dataframe here
-        assert isinstance(df, pd.DataFrame)
+        assert df is not None
+
+        nw_df = nw.from_native(df)
 
         if allow_extra is None:
             allow_extra = True
-            if set(df.columns) - {p.name for p in self.targets}:
+            if set(nw_df.columns) - {p.name for p in self.targets}:
                 warnings.warn(
                     "For backward compatibility, the new `allow_extra` flag is set "
                     "to `True` when left unspecified. However, this behavior will be "
@@ -237,7 +240,7 @@ class Objective(ABC, SerialMixin):
                 )
         # <<<<<<<<<< Deprecation
         targets = get_transform_objects(
-            df,
+            nw_df,
             self._oriented_targets,  # <-- important to use oriented version
             allow_missing=allow_missing,
             allow_extra=allow_extra,
@@ -245,14 +248,21 @@ class Objective(ABC, SerialMixin):
 
         import torch
 
+        ns = nw.get_native_namespace(nw_df)
         with torch.no_grad():
             transformed = self._full_transformation(
-                to_tensor(df[[t.name for t in targets]])
+                to_tensor(nw_df.select([t.name for t in targets]))
             )
 
-        return pd.DataFrame(
-            transformed.numpy(), columns=self.output_names, index=df.index
-        )
+        # TODO[narwhalify]: drop index handling once pandas index is removed globally
+        if ns is pd:
+            return pd.DataFrame(  # type: ignore[return-value]
+                transformed.numpy(),
+                columns=self.output_names,
+                index=nw_df.to_pandas().index,
+            )
+
+        return ns.from_numpy(transformed.numpy(), schema=self.output_names)
 
     def identify_non_dominated_configurations(
         self, configurations: pd.DataFrame, /
