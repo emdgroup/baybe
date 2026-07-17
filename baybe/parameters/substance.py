@@ -4,12 +4,14 @@ import gc
 from functools import cached_property
 from typing import Any
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
 from baybe.parameters.base import _EncodedDiscreteParameter
+from baybe.parameters.custom import _encoding_table_from_comp_df
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.basic import group_duplicate_values
@@ -160,6 +162,15 @@ class SubstanceParameter(_EncodedDiscreteParameter):
         add_noise_to_perturb_degenerate_rows(comp_df)
 
         return comp_df
+
+    @override
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        return tuple(self._comp_df.columns)
+
+    @override
+    def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
+        return _encoding_table_from_comp_df(self._comp_df, values)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

@@ -269,31 +269,6 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
 
         return self._active_values
 
-    @override
-    @property
-    def comp_rep_columns(self) -> tuple[str, ...]:
-        # TODO: Refactor this workaround once the parameter logic has been decoupled
-        #  from comp_df materialization.
-        if not hasattr(self, "_comp_df"):
-            raise NotImplementedError()
-
-        return tuple(self._comp_df.columns)
-
-    @override
-    def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
-        # TODO: Refactor this workaround once the parameter logic has been decoupled
-        #  from comp_df materialization.
-        if not hasattr(self, "_comp_df"):
-            raise NotImplementedError()
-
-        # _comp_df is always pandas-backed; filter and convert to the input backend
-        return (
-            nw.from_native(self._comp_df.reset_index(names=_JOIN_KEY), eager_only=True)
-            .filter(nw.col(_JOIN_KEY).is_in(values))
-            .lazy()
-            .collect(backend=nw.get_native_namespace(values))
-        )
-
     @_active_values.validator
     def _validate_active_values(  # noqa: DOC101, DOC103
         self, _: Any, content: tuple[str | bool, ...]
