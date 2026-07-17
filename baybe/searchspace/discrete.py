@@ -10,6 +10,7 @@ from itertools import islice
 from math import prod
 from typing import TYPE_CHECKING, Any, Literal
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -648,7 +649,13 @@ class SubspaceDiscrete(SerialMixin):
         """The minimum and maximum values of the computational representation."""
         if not self.parameters:
             return pd.DataFrame(index=["min", "max"])
-        df = pd.concat([p.transform() for p in self.parameters], axis=1)
+        df = pd.concat(
+            [
+                nw.from_native(p.transform(), eager_only=True).to_pandas()
+                for p in self.parameters
+            ],
+            axis=1,
+        )
         return pd.DataFrame({"min": df.min(), "max": df.max()}).T
 
     @property
@@ -656,7 +663,12 @@ class SubspaceDiscrete(SerialMixin):
         """The bounds used for scaling the surrogate model input."""
         return (
             pd.concat(
-                [p.transform().agg(["min", "max"]) for p in self.parameters],
+                [
+                    nw.from_native(p.transform(), eager_only=True)
+                    .to_pandas()
+                    .agg(["min", "max"])
+                    for p in self.parameters
+                ],
                 axis=1,
             )
             if self.parameters
@@ -843,7 +855,10 @@ class SubspaceDiscrete(SerialMixin):
         )
 
         # Transform the parameters
-        dfs = [param.transform(df[param.name]) for param in parameters]
+        dfs = [
+            nw.from_native(param.transform(df[param.name]), eager_only=True).to_pandas()
+            for param in parameters
+        ]
         return pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
     def get_parameters_by_name(
