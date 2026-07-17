@@ -1,10 +1,12 @@
 """Binary targets."""
 
+from __future__ import annotations
+
 import gc
 import warnings
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
-import numpy as np
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
@@ -14,6 +16,9 @@ from baybe.exceptions import InvalidTargetValueError
 from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
 from baybe.utils.validation import validate_not_nan
+
+if TYPE_CHECKING:
+    from narwhals.typing import IntoSeriesT
 
 ChoiceValue: TypeAlias = bool | int | float | str
 """Types of values that a :class:`BinaryTarget` can take."""
@@ -57,8 +62,8 @@ class BinaryTarget(Target, SerialMixin):
 
     @override
     def transform(
-        self, series: pd.Series | None = None, /, *, data: pd.DataFrame | None = None
-    ) -> pd.Series:
+        self, series: IntoSeriesT | None = None, /, *, data: pd.DataFrame | None = None
+    ) -> IntoSeriesT:
         # >>>>>>>>>> Deprecation
         if not ((series is None) ^ (data is None)):
             raise ValueError(
@@ -67,7 +72,7 @@ class BinaryTarget(Target, SerialMixin):
 
         if data is not None:
             assert data.shape[1] == 1
-            series = data.iloc[:, 0]
+            series = data.iloc[:, 0]  # type: ignore[assignment]
             warnings.warn(
                 "Providing a dataframe via the `data` argument is deprecated and "
                 "will be removed in a future version. Please pass your data "
@@ -75,27 +80,31 @@ class BinaryTarget(Target, SerialMixin):
                 DeprecationWarning,
             )
 
-        # Mypy does not infer from the above that `series` must be a series here
-        assert isinstance(series, pd.Series)
+        assert series is not None
         # <<<<<<<<<< Deprecation
 
+        nw_series = nw.from_native(series, series_only=True)
+        choices = [self.success_value, self.failure_value]
+
         # Validate target values
-        invalid = series[
-            ~series.isin([self.success_value, self.failure_value]).to_numpy()
-        ]
+        invalid = nw_series.filter(~nw_series.is_in(choices))
         if len(invalid) > 0:
             raise InvalidTargetValueError(
                 f"The following values entered for target '{self.name}' are not in the "
                 f"set of accepted choice values "
-                f"{set((self.success_value, self.failure_value))}: {set(invalid)}"
+                f"{set(choices)}: {set(invalid.to_list())}"
             )
 
         # Transform
-        success_idx = series == self.success_value
-        return pd.Series(
-            np.where(success_idx, _SUCCESS_VALUE_COMP, _FAILURE_VALUE_COMP),
-            index=series.index,
-            name=series.name,
+        return (
+            nw_series.to_frame()
+            .select(
+                nw.when(nw.col(nw_series.name) == self.success_value)
+                .then(_SUCCESS_VALUE_COMP)
+                .otherwise(_FAILURE_VALUE_COMP)
+                .alias(nw_series.name)
+            )[nw_series.name]
+            .to_native()
         )
 
     @override
