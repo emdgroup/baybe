@@ -1,12 +1,7 @@
 """Tests for the to_tensor utility."""
 
-from collections.abc import Callable
-from typing import TypeAlias
-
-import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
-import polars as pl
 import pytest
 import torch
 from pytest import param
@@ -14,74 +9,10 @@ from pytest import param
 from baybe.settings import active_settings
 from baybe.utils.dataframe import to_tensor
 
-_AnyDataFrame: TypeAlias = pd.DataFrame | pl.DataFrame | nw.DataFrame
-_AnySeries: TypeAlias = pd.Series | pl.Series | nw.Series
 
-
-@pytest.fixture(
-    name="torch_dtype",
-    autouse=True,
-    params=[param(False, id="float64"), param(True, id="float32")],
-)
-def fixture_torch_dtype(
-    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Run every test under all torch float precisions."""
-    monkeypatch.setattr(active_settings, "use_single_precision_torch", request.param)
-
-
-def _pandas_dataframe_constructor(data: dict) -> pd.DataFrame:
-    return pd.DataFrame(data)
-
-
-def _polars_dataframe_constructor(data: dict) -> pl.DataFrame:
-    return pl.DataFrame(data)
-
-
-def _narwhals_dataframe_constructor(data: dict) -> nw.DataFrame:
-    return nw.from_native(pl.DataFrame(data), eager_only=True)
-
-
-def _pandas_series_constructor(name: str, values: list) -> pd.Series:
-    return pd.Series(values, name=name)
-
-
-def _polars_series_constructor(name: str, values: list) -> pl.Series:
-    return pl.Series(name, values)
-
-
-def _narwhals_series_constructor(name: str, values: list) -> nw.Series:
-    return nw.from_native(pl.Series(name, values), series_only=True)
-
-
-@pytest.fixture(
-    name="dataframe_constructor",
-    params=[
-        param(_pandas_dataframe_constructor, id="pandas"),
-        param(_polars_dataframe_constructor, id="polars"),
-        param(_narwhals_dataframe_constructor, id="narwhals"),
-    ],
-)
-def fixture_dataframe_constructor(
-    request: pytest.FixtureRequest,
-) -> Callable[[dict], _AnyDataFrame]:
-    """Parametrize over DataFrame backends."""
-    return request.param
-
-
-@pytest.fixture(
-    name="series_constructor",
-    params=[
-        param(_pandas_series_constructor, id="pandas"),
-        param(_polars_series_constructor, id="polars"),
-        param(_narwhals_series_constructor, id="narwhals"),
-    ],
-)
-def fixture_series_constructor(
-    request: pytest.FixtureRequest,
-) -> Callable[[str, list], _AnySeries]:
-    """Parametrize over Series backends."""
-    return request.param
+@pytest.fixture(autouse=True)
+def fixture_apply_torch_dtype(torch_dtype: None) -> None:
+    """Run every test in this module under all torch float precisions."""
 
 
 # -------------------------------------------------------------------------------------

@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import os
 import time
+from collections.abc import Callable
 from copy import deepcopy
 from itertools import chain
+from typing import TypeAlias
 from unittest.mock import Mock
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 import torch
 from botorch.exceptions import ModelFittingError
@@ -986,3 +990,80 @@ def select_recommender(
     return meta_recommender.select_recommender(
         batch_size=1, searchspace=searchspace, measurements=df
     )
+
+
+# ── Torch dtype ──────────────────────────────────────────────────────────────
+
+
+@pytest.fixture(
+    name="torch_dtype",
+    params=[
+        pytest.param(False, id="float64"),
+        pytest.param(True, id="float32"),
+    ],
+)
+def fixture_torch_dtype(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Parametrize over torch float precisions."""
+    monkeypatch.setattr(active_settings, "use_single_precision_torch", request.param)
+
+
+# ── Backend constructors ──────────────────────────────────────────────────────
+
+_AnyDataFrame: TypeAlias = pd.DataFrame | pl.DataFrame | nw.DataFrame
+_AnySeries: TypeAlias = pd.Series | pl.Series | nw.Series
+
+
+def _pandas_dataframe_constructor(data: dict) -> pd.DataFrame:
+    return pd.DataFrame(data)
+
+
+def _polars_dataframe_constructor(data: dict) -> pl.DataFrame:
+    return pl.DataFrame(data)
+
+
+def _narwhals_dataframe_constructor(data: dict) -> nw.DataFrame:
+    return nw.from_native(pl.DataFrame(data), eager_only=True)
+
+
+def _pandas_series_constructor(name: str, values: list) -> pd.Series:
+    return pd.Series(values, name=name)
+
+
+def _polars_series_constructor(name: str, values: list) -> pl.Series:
+    return pl.Series(name, values)
+
+
+def _narwhals_series_constructor(name: str, values: list) -> nw.Series:
+    return nw.from_native(pl.Series(name, values), series_only=True)
+
+
+@pytest.fixture(
+    name="dataframe_constructor",
+    params=[
+        pytest.param(_pandas_dataframe_constructor, id="pandas"),
+        pytest.param(_polars_dataframe_constructor, id="polars"),
+        pytest.param(_narwhals_dataframe_constructor, id="narwhals"),
+    ],
+)
+def fixture_dataframe_constructor(
+    request: pytest.FixtureRequest,
+) -> Callable[[dict], _AnyDataFrame]:
+    """Parametrize over DataFrame backends."""
+    return request.param
+
+
+@pytest.fixture(
+    name="series_constructor",
+    params=[
+        pytest.param(_pandas_series_constructor, id="pandas"),
+        pytest.param(_polars_series_constructor, id="polars"),
+        pytest.param(_narwhals_series_constructor, id="narwhals"),
+    ],
+)
+def fixture_series_constructor(
+    request: pytest.FixtureRequest,
+) -> Callable[[str, list], _AnySeries]:
+    """Parametrize over Series backends."""
+    return request.param
