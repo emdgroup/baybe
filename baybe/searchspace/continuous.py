@@ -11,6 +11,7 @@ from itertools import chain
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 import cattrs.gen
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field, fields
@@ -40,7 +41,7 @@ from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 
 if TYPE_CHECKING:
-    from narwhals.typing import IntoDataFrame
+    from narwhals.typing import IntoDataFrame, IntoDataFrameT
     from torch import Tensor
 
     from baybe.searchspace.core import SearchSpace
@@ -493,20 +494,24 @@ class SubspaceContinuous(SerialMixin):
 
     def transform(
         self,
-        df: pd.DataFrame,
+        df: IntoDataFrameT,
         /,
         *,
         allow_missing: bool = False,
         allow_extra: bool = False,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         """See :func:`baybe.searchspace.core.SearchSpace.transform`."""
-        # Extract the parameters to be transformed
+        # Extract the parameters corresponding to the columns to be transformed
         parameters = get_transform_objects(
             df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
-        # Transform the parameters
-        return df[[p.name for p in parameters]]
+        # Transformation is no-op: simply extract the relevant columns
+        return (
+            nw.from_native(df, eager_only=True)
+            .select([p.name for p in parameters])
+            .to_native()
+        )
 
     def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
         """Draw uniform random parameter configurations from the continuous space.
