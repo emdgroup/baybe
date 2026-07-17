@@ -25,7 +25,7 @@ from baybe.utils.metadata import MeasurableMetadata, to_metadata
 if TYPE_CHECKING:
     from typing import Any
 
-    from narwhals.typing import IntoFrame
+    from narwhals.typing import IntoDataFrame
 
     from baybe.parameters.enum import _ParameterKind
     from baybe.searchspace.continuous import SubspaceContinuous
@@ -34,6 +34,9 @@ if TYPE_CHECKING:
 
 # TODO: Reactive slots in all classes once cached_property is supported:
 #   https://github.com/python-attrs/attrs/issues/164
+
+# Sentinel column name used internally during joins to avoid name conflicts
+_JOIN_KEY = "__join_key__"
 
 
 @define(frozen=True, slots=False)
@@ -146,7 +149,9 @@ class DiscreteParameter(Parameter, ABC):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self._transform().collect().to_pandas()
+        return pd.DataFrame(
+            nw.from_native(self.transform(), eager_only=True).to_pandas()
+        )
 
     def to_subspace(self) -> SubspaceDiscrete:
         """Create a one-dimensional search space from the parameter."""
@@ -160,7 +165,7 @@ class DiscreteParameter(Parameter, ABC):
 
     def transform(
         self, series: nw.IntoSeries | Iterable[Any] | None = None, /
-    ) -> IntoFrame:
+    ) -> IntoDataFrame:
         """Transform parameter values to computational representation.
 
         Args:
@@ -169,28 +174,59 @@ class DiscreteParameter(Parameter, ABC):
                 for all parameter values is returned.
 
         Returns:
-            A native frame containing the transformed values, in the same backend as the
-            input series.
+            A native eager frame containing the transformed values, in the same
+            backend as the input series.
 
         Raises:
             ValueError: If the series name does not match the parameter name.
         """
-        if series is not None:
-            if is_into_series(series):
-                series = nw.from_native(series, series_only=True)
-                if series.name != self.name:
-                    raise ValueError(
-                        f"The provided series name '{series.name}' does not match "
-                        f"parameter name '{self.name}'."
-                    )
-            else:
-                # TODO[narwhalify]: use settings-based backend selection
-                series = nw.new_series(name=self.name, values=series, backend=pd)
-        return self._transform(series).to_native()
+        if series is None:
+            # TODO[narwhalify]: use settings-based backend selection
+            # TODO[narwhalify]: drop pandas index
+            series = nw.from_native(
+                pd.Series(list(self.values), index=list(self.values), name=self.name),
+                series_only=True,
+            )
+        elif is_into_series(series):
+            series = nw.from_native(series, series_only=True)
+            if series.name != self.name:
+                raise ValueError(
+                    f"The provided series name '{series.name}' does not match "
+                    f"parameter name '{self.name}'."
+                )
+        else:
+            # TODO[narwhalify]: use settings-based backend selection
+            series = nw.new_series(name=self.name, values=series, backend=pd)
+
+        table = self._encoding_table(series.unique())
+        result = (
+            series.rename(_JOIN_KEY)
+            .to_frame()
+            .join(table, on=_JOIN_KEY, how="left")
+            .drop(_JOIN_KEY)
+        )
+
+        # TODO[narwhalify]: drop once pandas index handling is removed globally
+        if nw.get_native_namespace(series) is pd:
+            native = result.to_native()
+            native.index = series.to_pandas().index
+            return native
+
+        return result.to_native()
 
     @abstractmethod
-    def _transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
-        """See :meth:`transform`."""
+    def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
+        """Create the encoding table for the given unique parameter values.
+
+        The returned dataframe must use :data:`_JOIN_KEY` as the key column (holding the
+        experimental values) plus one column per entry in :attr:`comp_rep_columns`.
+
+        Args:
+            values: The unique experimental values to encode.
+
+        Returns:
+            A dataframe mapping parameter values to their encoded representation.
+        """
 
     @override
     def summary(self) -> dict:
@@ -244,22 +280,19 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
         return tuple(self._comp_df.columns)
 
     @override
-    def _transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
+    def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
         # TODO: Refactor this workaround once the parameter logic has been decoupled
         #  from comp_df materialization.
         if not hasattr(self, "_comp_df"):
             raise NotImplementedError()
 
-        if series is None:
-            return nw.from_native(self._comp_df).lazy()
-
-        # We use pandas because _comp_df is a pandas-native workaround.
-        # We use reindex instead of loc because the input series may contain Booleans,
-        # which would result in wrong indexing.
-        pd_series = series.to_pandas()
-        return nw.from_native(
-            self._comp_df.reindex(pd_series.to_numpy()).set_index(pd_series.index)
-        ).lazy()
+        # _comp_df is always pandas-backed; filter and convert to the input backend
+        return (
+            nw.from_native(self._comp_df.reset_index(names=_JOIN_KEY), eager_only=True)
+            .filter(nw.col(_JOIN_KEY).is_in(values))
+            .lazy()
+            .collect(backend=nw.get_native_namespace(values))
+        )
 
     @_active_values.validator
     def _validate_active_values(  # noqa: DOC101, DOC103

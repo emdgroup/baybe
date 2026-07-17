@@ -6,13 +6,12 @@ from typing import Any, ClassVar
 import cattrs
 import narwhals.stable.v2 as nw
 import numpy as np
-import pandas as pd
 from attrs import define, field
 from attrs.validators import ge, min_len
 from typing_extensions import override
 
 from baybe.exceptions import NumericalUnderflowError
-from baybe.parameters.base import ContinuousParameter, DiscreteParameter
+from baybe.parameters.base import _JOIN_KEY, ContinuousParameter, DiscreteParameter
 from baybe.parameters.validation import validate_is_finite, validate_unique_values
 from baybe.settings import active_settings
 from baybe.utils.interval import InfiniteIntervalError, Interval
@@ -98,16 +97,13 @@ class NumericalDiscreteParameter(DiscreteParameter):
         return (self.name,)
 
     @override
-    def _transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
-        # TODO[narwhalify]: use settings-based backend selection
-        if series is None:
-            pd_series = pd.Series(self.values, index=self.values, name=self.name)
-            return nw.from_native(
-                pd_series.to_frame().astype(active_settings.DTypeFloatNumpy)
-            ).lazy()
-
+    def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
         # TODO[narwhalify]: avoid hard-coded float type
-        return series.cast(nw.Float64).to_frame().lazy()
+        return (
+            values.rename(_JOIN_KEY)
+            .to_frame()
+            .with_columns(nw.col(_JOIN_KEY).cast(nw.Float64).alias(self.name))
+        )
 
     @override
     def is_in_range(self, item: float) -> bool:

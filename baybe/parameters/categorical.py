@@ -3,16 +3,13 @@
 import gc
 
 import narwhals.stable.v2 as nw
-import numpy as np
-import pandas as pd
 from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import assert_never, override
 
-from baybe.parameters.base import _EncodedDiscreteParameter
+from baybe.parameters.base import _JOIN_KEY, _EncodedDiscreteParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
-from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple
 
 
@@ -78,42 +75,29 @@ class CategoricalParameter(_EncodedDiscreteParameter):
         assert_never(self.encoding)
 
     @override
-    def _transform(self, series: nw.Series | None = None, /) -> nw.LazyFrame:
-        # TODO[narwhalify]: use settings-based backend selection
-        if series is None:
-            series = nw.from_native(
-                pd.Series(self.values, index=self.values, name=self.name),
-                series_only=True,
-            )
-
+    def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
         if self.encoding is CategoricalEncoding.OHE:
-            # Create OHE representation
-            vals = series.to_numpy()
-            ns = nw.get_native_namespace(series)
-            positions = {v: i for i, v in enumerate(self.values)}
-            data = np.zeros(
-                (len(vals), len(self.values)), dtype=active_settings.DTypeFloatNumpy
+            # TODO[narwhalify]: avoid hard-coded float type
+            return (
+                values.rename(_JOIN_KEY)
+                .to_frame()
+                .with_columns(
+                    (nw.col(_JOIN_KEY) == v).cast(nw.Float64).alias(ohe_col)
+                    for v, ohe_col in zip(self.values, self.comp_rep_columns)
+                )
             )
-            for row, val in enumerate(vals):
-                data[row, positions[val]] = 1.0
-            result = nw.from_numpy(data, schema=list(self.comp_rep_columns), backend=ns)
-
-            # Special handling for pandas backend to preserve index
-            # TODO[narwhalify]: needs to be dropped once we ignore indices in general
-            if ns is pd:
-                native = result.to_native()
-                native.index = series.to_pandas().index
-                result = nw.from_native(native)
-
-            return result.lazy()
 
         if self.encoding is CategoricalEncoding.INT:
             # TODO[narwhalify]: avoid hard-coded float type
             mapping = {v: float(i) for i, v in enumerate(self.values)}
             return (
-                series.replace_strict(mapping, return_dtype=nw.Float64)
+                values.rename(_JOIN_KEY)
                 .to_frame()
-                .lazy()
+                .with_columns(
+                    nw.col(_JOIN_KEY)
+                    .replace_strict(mapping, return_dtype=nw.Float64)
+                    .alias(self.name)
+                )
             )
 
         assert_never(self.encoding)
