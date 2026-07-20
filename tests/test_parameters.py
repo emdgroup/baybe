@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
-from narwhals.dependencies import is_into_series
-from narwhals.typing import IntoFrame
+from narwhals.stable.v2.dependencies import is_into_series
+from narwhals.stable.v2.typing import IntoFrame
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.categorical import CategoricalParameter

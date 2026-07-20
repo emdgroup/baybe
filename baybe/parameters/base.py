@@ -13,7 +13,7 @@ import pandas as pd
 from attr.converters import optional as optional_c
 from attrs import Converter, define, field
 from attrs.validators import instance_of, min_len
-from narwhals.dependencies import is_into_series
+from narwhals.stable.v2.dependencies import is_into_series
 from typing_extensions import override
 
 from baybe.serialization import (
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     import polars as pl
-    from narwhals.typing import IntoDataFrame
+    from narwhals.stable.v2.typing import IntoDataFrame
 
     from baybe.parameters.enum import _ParameterKind
     from baybe.searchspace.continuous import SubspaceContinuous
