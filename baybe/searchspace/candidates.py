@@ -15,6 +15,7 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import sort_parameters
 from baybe.searchspace.utils import build_constrained_product
 from baybe.searchspace.validation import validate_parameters
+from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import _df_equals
 from baybe.utils.validation import validate_parameter_input
@@ -56,10 +57,9 @@ class EmptyCandidates(CandidatesProtocol):
 
     @override
     def to_lazy(self) -> nw.LazyFrame:
-        # TODO: Replace hard-coded pandas type with `Settings`-based approach
-        import pandas as pd
-
-        return nw.from_native(pd.DataFrame()).lazy()
+        backend = active_settings.default_dataframe_backend
+        # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3808
+        return nw.from_dict({}, backend=backend).lazy()  # type: ignore[arg-type]
 
 
 @define(frozen=True)
