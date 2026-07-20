@@ -164,8 +164,8 @@ def _convert_cache_directory(
 
 def _get_default_dataframe_backend() -> nw.Implementation:
     """Get the default dataframe backend."""
-    ranking = [nw.Implementation.POLARS, nw.Implementation.PANDAS]
-    ranking = ranking + list(set(nw.Implementation) - set(ranking))
+    preferred = [nw.Implementation.POLARS, nw.Implementation.PANDAS]
+    ranking = preferred + [b for b in nw.Implementation if b not in preferred]
     for backend in ranking:
         try:
             importlib.import_module(backend.value)
