@@ -215,7 +215,9 @@ class Settings(_SlottedContextDecorator):
     """The directory used for persistent caching on disk. Set to ``""`` or ``None`` to disable caching."""  # noqa: E501
 
     _default_dataframe_backend: nw.Implementation | None = field(
-        default=None, converter=optional_c(nw.Implementation)
+        alias="default_dataframe_backend",
+        default=None,
+        converter=optional_c(nw.Implementation),
     )
     """Controls which backend is used when constructing dataframes from scratch. Set to ``None`` to apply automatic selection."""  # noqa: E501
 
