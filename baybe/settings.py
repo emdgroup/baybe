@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import importlib
 import os
 import tempfile
 import warnings
@@ -11,6 +12,7 @@ from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
+import narwhals.stable.v2 as nw
 import numpy as np
 from attrs import Attribute, Converter, Factory, define, field, fields
 from attrs.setters import validate
@@ -195,6 +197,11 @@ class Settings(_SlottedContextDecorator):
     )
     """The directory used for persistent caching on disk. Set to ``""`` or ``None`` to disable caching."""  # noqa: E501
 
+    default_dataframe_backend: nw.Implementation = field(
+        default=nw.Implementation.POLARS, converter=nw.Implementation
+    )
+    """Controls which backend is used when constructing dataframes from scratch."""
+
     parallelize_simulation_runs: bool = field(default=True, validator=instance_of(bool))
     """Controls if simulation runs with `xyzpy <https://xyzpy.readthedocs.io/>`_ are executed in parallel."""  # noqa: E501
 
@@ -274,6 +281,16 @@ class Settings(_SlottedContextDecorator):
 
     def __exit__(self, *args) -> None:
         self.restore_previous()
+
+    @default_dataframe_backend.validator
+    def _validate_default_dataframe_backend(self, _: Attribute, value: Any) -> None:
+        try:
+            importlib.import_module(value.value)
+        except ImportError:
+            raise OptionalImportError(
+                f"The '{fields(Settings).default_dataframe_backend.alias}' cannot "
+                f"be set to '{value.value}' because the latter is not installed."
+            )
 
     @_use_polars_for_constraints.validator
     def _validate_use_polars_for_constraints(self, _, value: AutoBool) -> None:
