@@ -183,5 +183,9 @@ class InfiniteSpaceError(Exception):
     """An operation requires a finite search space but the space is infinite."""
 
 
+class InfiniteParameterError(Exception):
+    """A parameter has an infinite number of values and cannot be enumerated."""
+
+
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
