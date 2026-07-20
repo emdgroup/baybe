@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 import narwhals.stable.v2 as nw
 import numpy as np
 from attrs import Attribute, Converter, Factory, define, field, fields
+from attrs.converters import optional as optional_c
 from attrs.setters import validate
 from attrs.validators import instance_of
 from attrs.validators import optional as optional_v
@@ -161,6 +162,22 @@ def _convert_cache_directory(
         ) from ex
 
 
+def _get_default_dataframe_backend() -> nw.Implementation:
+    """Get the default dataframe backend."""
+    ranking = [nw.Implementation.POLARS, nw.Implementation.PANDAS]
+    ranking = ranking + list(set(nw.Implementation) - set(ranking))
+    for backend in ranking:
+        try:
+            importlib.import_module(backend.value)
+            return backend
+        except ImportError:
+            continue
+    raise ModuleNotFoundError(
+        "None of the supported dataframe backends is installed. Please install any "
+        "backend supported by narwhals: https://narwhals-dev.github.io/narwhals/"
+    )
+
+
 @define(kw_only=True, field_transformer=adjust_defaults)
 class Settings(_SlottedContextDecorator):
     """BayBE settings."""
@@ -197,10 +214,10 @@ class Settings(_SlottedContextDecorator):
     )
     """The directory used for persistent caching on disk. Set to ``""`` or ``None`` to disable caching."""  # noqa: E501
 
-    default_dataframe_backend: nw.Implementation = field(
-        default=nw.Implementation.POLARS, converter=nw.Implementation
+    _default_dataframe_backend: nw.Implementation | None = field(
+        default=None, converter=optional_c(nw.Implementation)
     )
-    """Controls which backend is used when constructing dataframes from scratch."""
+    """Controls which backend is used when constructing dataframes from scratch. Set to ``None`` to apply automatic selection."""  # noqa: E501
 
     parallelize_simulation_runs: bool = field(default=True, validator=instance_of(bool))
     """Controls if simulation runs with `xyzpy <https://xyzpy.readthedocs.io/>`_ are executed in parallel."""  # noqa: E501
@@ -282,13 +299,15 @@ class Settings(_SlottedContextDecorator):
     def __exit__(self, *args) -> None:
         self.restore_previous()
 
-    @default_dataframe_backend.validator
+    @_default_dataframe_backend.validator
     def _validate_default_dataframe_backend(self, _: Attribute, value: Any) -> None:
+        if value is None:
+            return
         try:
             importlib.import_module(value.value)
         except ImportError:
             raise OptionalImportError(
-                f"The '{fields(Settings).default_dataframe_backend.alias}' cannot "
+                f"The '{fields(Settings)._default_dataframe_backend.alias}' cannot "
                 f"be set to '{value.value}' because the latter is not installed."
             )
 
@@ -305,6 +324,17 @@ class Settings(_SlottedContextDecorator):
             raise OptionalImportError(
                 _MISSING_PACKAGE_ERROR_MESSAGE.format(package_name="fpsample")
             )
+
+    @property
+    def default_dataframe_backend(self) -> nw.Implementation:
+        """The dataframe backend used for constructing dataframes from scratch."""
+        if self._default_dataframe_backend is None:
+            self._default_dataframe_backend = _get_default_dataframe_backend()
+        return self._default_dataframe_backend
+
+    @default_dataframe_backend.setter
+    def default_dataframe_backend(self, value: nw.Implementation | None, /) -> None:
+        self._default_dataframe_backend = value
 
     @property
     def use_polars_for_constraints(self) -> bool:
