@@ -307,11 +307,11 @@ class Settings(_SlottedContextDecorator):
             return
         try:
             importlib.import_module(value.value)
-        except ImportError:
+        except ImportError as ex:
             raise OptionalImportError(
                 f"The '{fields(Settings)._default_dataframe_backend.alias}' cannot "
                 f"be set to '{value.value}' because the latter is not installed."
-            )
+            ) from ex
 
     @_use_polars_for_constraints.validator
     def _validate_use_polars_for_constraints(self, _, value: AutoBool) -> None:
