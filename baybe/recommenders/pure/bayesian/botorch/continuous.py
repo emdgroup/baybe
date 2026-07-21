@@ -17,6 +17,7 @@ from baybe.exceptions import (
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.searchspace import SubspaceContinuous
 from baybe.utils.basic import flatten
+from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -147,7 +148,6 @@ def recommend_continuous_without_cardinality_constraints(
     Raises:
         ValueError: If the continuous search space has cardinality constraints.
     """
-    import torch
     from botorch.optim import optimize_acqf
 
     if subspace_continuous.n_subsets > 0:
@@ -183,9 +183,7 @@ def recommend_continuous_without_cardinality_constraints(
     #   For details: https://github.com/pytorch/botorch/issues/2042
     points, acqf_values = optimize_acqf(
         acq_function=recommender._botorch_acqf,
-        bounds=torch.from_numpy(
-            subspace_continuous.comp_rep_bounds.to_numpy(copy=True)
-        ),
+        bounds=to_tensor(subspace_continuous.comp_rep_bounds),
         q=batch_size,
         num_restarts=recommender.n_restarts,
         raw_samples=recommender.n_raw_samples,
