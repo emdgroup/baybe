@@ -19,6 +19,7 @@ from typing_extensions import override
 from baybe.serialization import (
     SerialMixin,
 )
+from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple
 from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
@@ -190,14 +191,8 @@ class DiscreteParameter(Parameter, ABC):
         Raises:
             ValueError: If the series name does not match the parameter name.
         """
-        if series is None:
-            # TODO[narwhalify]: use settings-based backend selection
-            # TODO[narwhalify]: drop pandas index
-            series = nw.from_native(
-                pd.Series(list(self.values), index=list(self.values), name=self.name),
-                series_only=True,
-            )
-        elif is_into_series(series):
+        all_values = series is None
+        if is_into_series(series):
             series = nw.from_native(series, series_only=True)
             if series.name != self.name:
                 raise ValueError(
@@ -205,8 +200,12 @@ class DiscreteParameter(Parameter, ABC):
                     f"parameter name '{self.name}'."
                 )
         else:
-            # TODO[narwhalify]: use settings-based backend selection
-            series = nw.new_series(name=self.name, values=series, backend=pd)
+            # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3808
+            series = nw.new_series(
+                name=self.name,
+                values=self.values if all_values else series,
+                backend=active_settings.default_dataframe_backend,  # type: ignore[arg-type]
+            )
 
         table = self._encoding_table(series.unique())
         result = (
@@ -219,7 +218,7 @@ class DiscreteParameter(Parameter, ABC):
         # TODO[narwhalify]: drop once pandas index handling is removed globally
         if nw.get_native_namespace(series) is pd:
             native = result.to_native()
-            native.index = series.to_pandas().index
+            native.index = series.to_list() if all_values else series.to_pandas().index
             return native
 
         return result.to_native()

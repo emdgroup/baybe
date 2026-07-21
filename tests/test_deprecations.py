@@ -7,6 +7,7 @@ from itertools import pairwise
 from pathlib import Path
 from unittest.mock import patch
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 import pytest
@@ -1028,4 +1029,5 @@ def test_deprecated_comp_df(param):
     """Accessing ``comp_df`` on any discrete parameter emits a deprecation warning."""
     with pytest.warns(DeprecationWarning, match="comp_df"):
         result = param.comp_df
-    assert_frame_equal(result, param.transform())
+    expected = nw.from_native(param.transform(), eager_only=True).to_pandas()
+    assert_frame_equal(result, expected)

@@ -146,7 +146,8 @@ def test_transform(param, expected, index_select, series_factory):
     """Parameter encodings return the correct rows, index and backend."""
     if expected is None:
         assert isinstance(param, SubstanceParameter)
-        expected = param.transform()
+        expected = nw.from_native(param.transform(), eager_only=True).to_pandas()
+        expected.index = pd.Index(param.values)
         assert all(col.startswith(f"{param.name}_") for col in expected.columns)
 
     if index_select is None:
