@@ -87,10 +87,10 @@ def test_values_raises_without_max_length():
 
 
 def test_enumerate_values_raises_without_max_length():
-    """Accessing _enumerate_values on an infinite SequenceParameter raises an error."""
+    """Calling _enumerate_values on an infinite SequenceParameter raises an error."""
     p = SequenceParameter(name="seq", alphabet=_DNA, encoder=_DummyEncoder())
     with pytest.raises(InfiniteParameterError):
-        _ = p._enumerate_values
+        _ = p._enumerate_values()
 
 
 def test_values_enumerates_with_max_length():
