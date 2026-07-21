@@ -3,49 +3,20 @@
 from __future__ import annotations
 
 import gc
+from collections.abc import Callable
 from functools import cached_property
 from itertools import chain, product
-from typing import Protocol, runtime_checkable
 
 import narwhals.stable.v2 as nw
 from attrs import define, field
-from attrs.validators import instance_of, optional
+from attrs.validators import instance_of, is_callable, optional
+from narwhals.stable.v2.typing import DataFrameT, SeriesT
 from typing_extensions import override
 
 from baybe.exceptions import InfiniteParameterError
-from baybe.parameters.base import _JOIN_KEY, _EncodedDiscreteParameter
+from baybe.parameters.base import _EncodedDiscreteParameter
 
-
-@runtime_checkable
-class SequenceEncoderProtocol(Protocol):
-    """Protocol for sequence encoder callables.
-
-    The callable receives the sequence values and the name of the key column it
-    must include in the returned DataFrame. The key column must contain the
-    original input values (used as join key in :meth:`DiscreteParameter.transform`).
-    """
-
-    __slots__ = ()
-
-    def encode(
-        self, values: nw.Series, alphabet: tuple[str, ...], *, key: str, name: str
-    ) -> nw.DataFrame:
-        """Encode the given sequence values.
-
-        Args:
-            values: The unique sequence values to encode.
-            alphabet: The alphabet of the sequence parameter.
-            key: The column name to use for the original values in the returned
-                DataFrame.
-            name: The name of the parameter, which should be used for the
-                encoded representation column in the returned DataFrame.
-
-        Returns:
-            A DataFrame with the key column containing the original values and
-            one column named after the parameter containing the encoded
-            representation.
-        """
-        ...
+SequenceEncoderCallable = Callable[[SeriesT], DataFrameT]
 
 
 @define(frozen=True, slots=False)
@@ -55,10 +26,10 @@ class SequenceParameter(_EncodedDiscreteParameter):
     alphabet: tuple[str, ...] = field(converter=tuple, validator=instance_of(tuple))
     """The alphabet of the sequence parameter."""
 
-    encoder: SequenceEncoderProtocol = field(
-        validator=instance_of(SequenceEncoderProtocol)
-    )
-    """The encoder function for the sequence parameter."""
+    encoder: SequenceEncoderCallable = field(validator=is_callable())
+    """The encoder function for the sequence parameter.
+    It should take a Series of sequences and return a DataFrame with
+    the encoded representation in exactly the same order as the input Series."""
 
     min_length: int = field(default=0, validator=instance_of(int), kw_only=True)
     """The minimum length of the sequence parameter."""
@@ -161,28 +132,7 @@ class SequenceParameter(_EncodedDiscreteParameter):
 
     @override
     def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
-        encoded = self.encoder.encode(
-            values, self.alphabet, key=_JOIN_KEY, name=self.name
-        )
-
-        if _JOIN_KEY not in encoded.columns:
-            raise ValueError(
-                f"The encoder for parameter '{self.name}' must return a DataFrame "
-                f"with a column named '{_JOIN_KEY}' containing the original values."
-            )
-        if self.name not in encoded.columns:
-            raise ValueError(
-                f"The encoder for parameter '{self.name}' must return a DataFrame "
-                f"with a column named '{self.name}' containing the encoded "
-                f"representation."
-            )
-        if set(encoded[_JOIN_KEY].to_list()) != set(values.to_list()):
-            raise ValueError(
-                f"The encoder for parameter '{self.name}' must return a DataFrame "
-                f"whose '{_JOIN_KEY}' column contains exactly the input values."
-            )
-
-        return encoded
+        return self.encoder(values)
 
     @override
     def is_in_range(self, item: str) -> bool:
