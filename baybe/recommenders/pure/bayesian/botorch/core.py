@@ -156,9 +156,8 @@ class BotorchRecommender(BayesianRecommender):
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.Index:
+    ) -> pd.DataFrame:
         """Generate recommendations from a discrete search space.
 
         Dispatches to the appropriate optimization routine depending on whether
@@ -167,21 +166,15 @@ class BotorchRecommender(BayesianRecommender):
         Args:
             subspace_discrete: The discrete subspace from which to generate
                 recommendations.
-            candidates_exp: The experimental representation of all discrete candidate
-                points to be considered.
             batch_size: The size of the recommendation batch.
 
         Returns:
-            The dataframe indices of the recommended points in the provided
-            experimental representation.
+            A dataframe containing the recommendations as a subset of rows from the
+            provided experimental representation.
         """
         if subspace_discrete.n_subsets > 0:
-            return recommend_discrete_with_subsets(
-                self, subspace_discrete, candidates_exp, batch_size
-            )
-        return recommend_discrete_without_subsets(
-            self, subspace_discrete, candidates_exp, batch_size
-        )
+            return recommend_discrete_with_subsets(self, subspace_discrete, batch_size)
+        return recommend_discrete_without_subsets(self, subspace_discrete, batch_size)
 
     @override
     def _recommend_continuous(
@@ -221,7 +214,6 @@ class BotorchRecommender(BayesianRecommender):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         """Generate recommendations from a hybrid search space.
@@ -231,20 +223,14 @@ class BotorchRecommender(BayesianRecommender):
 
         Args:
             searchspace: The search space in which the recommendations should be made.
-            candidates_exp: The experimental representation of the candidates
-                of the discrete subspace.
             batch_size: The size of the calculated batch.
 
         Returns:
             The recommended points.
         """
         if searchspace.n_subsets > 0:
-            return recommend_hybrid_with_subsets(
-                self, searchspace, candidates_exp, batch_size
-            )
-        return recommend_hybrid_without_subsets(
-            self, searchspace, candidates_exp, batch_size
-        )
+            return recommend_hybrid_with_subsets(self, searchspace, batch_size)
+        return recommend_hybrid_without_subsets(self, searchspace, batch_size)
 
     def _optimize_over_subsets(
         self,

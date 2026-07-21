@@ -11,7 +11,7 @@ from pandas.testing import assert_index_equal
 from pytest import param
 
 from baybe.acquisition import qLogEI, qLogNEHVI, qTS, qUCB
-from baybe.campaign import _EXCLUDED, Campaign
+from baybe.campaign import Campaign
 from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.discrete import DiscreteExcludeConstraint
 from baybe.exceptions import IncompatibilityError, NotEnoughPointsLeftError
@@ -91,7 +91,7 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
     ids=["dataframe", "constraints"],
 )
 def test_candidate_toggling(constraints, exclude, complement):
-    """Toggling discrete candidates updates the campaign metadata accordingly."""
+    """Toggling discrete candidates updates the exclusion state accordingly."""
     subspace = SubspaceDiscrete.from_product(
         [
             NumericalDiscreteParameter("a", [0, 1]),
@@ -99,22 +99,33 @@ def test_candidate_toggling(constraints, exclude, complement):
         ]
     )
     campaign = Campaign(subspace)
+    all_candidates = campaign.searchspace.discrete.get_candidates()
 
-    # Set metadata to opposite of targeted value so that we can verify the effect later
-    campaign._searchspace_metadata[_EXCLUDED] = not exclude
+    # Set initial state to the opposite of the targeted value
+    if not exclude:
+        # Pre-exclude all candidates so that we can test re-inclusion
+        campaign.toggle_discrete_candidates(all_candidates, exclude=True)
 
     # Toggle the candidates
     campaign.toggle_discrete_candidates(constraints, exclude, complement=complement)
 
-    # Extract row indices of candidates whose metadata should have been toggled
-    matches = campaign.searchspace.discrete.exp_rep["a"] == 0
-    idx = matches.index[~matches if complement else matches]
+    # Determine which candidates should be affected by the toggle
+    matches = all_candidates["a"] == 0
+    toggled_idx = matches.index[~matches if complement else matches]
+    toggled_rows = all_candidates.loc[toggled_idx]
 
-    # Assert that metadata is set correctly
-    target = campaign._searchspace_metadata.loc[idx, _EXCLUDED]
-    other = campaign._searchspace_metadata[_EXCLUDED].drop(index=idx)
-    assert all(target == exclude)  # must contain the updated values
-    assert all(other != exclude)  # must contain the original values
+    if exclude:
+        # The toggled rows should be excluded, the rest should not
+        assert len(campaign._excluded_experiments) == len(toggled_rows)
+        merged = pd.merge(campaign._excluded_experiments, toggled_rows, how="inner")
+        assert len(merged) == len(toggled_rows)
+    else:
+        # The toggled rows should be re-included, the rest should remain excluded
+        expected_remaining = len(all_candidates) - len(toggled_rows)
+        assert len(campaign._excluded_experiments) == expected_remaining
+
+    # Assert that recommendation with toggled candidates still works
+    campaign.recommend(1)
 
 
 @pytest.mark.parametrize(
@@ -276,7 +287,6 @@ def test_update_measurements(ongoing_campaign):
     meas = ongoing_campaign.measurements
     assert meas.iloc[0, updated.columns.get_loc(p_name)] == 1337
     assert meas.iloc[0, updated.columns.get_loc(t_name)] == 1337
-    assert meas.iloc[[0], updated.columns.get_loc("FitNr")].isna().all()
     assert ongoing_campaign._cached_recommendation is None
 
 
@@ -400,7 +410,7 @@ def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
 @pytest.mark.parametrize("batch_size", [3], ids=["b3"])
 def test_acquisition_value_computation(ongoing_campaign: Campaign):
     """Acquisition values have the expected shape."""
-    df = ongoing_campaign.searchspace.discrete.exp_rep
+    df = ongoing_campaign.searchspace.discrete.get_candidates()
     assert not df.empty
 
     # Using campaign acquisition function

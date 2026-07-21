@@ -18,6 +18,7 @@ from typing import (
 import attrs
 import cattrs
 import pandas as pd
+from cattrs.gen import make_dict_structure_fn
 from cattrs.strategies import configure_union_passthrough
 
 from baybe.utils.basic import find_subclass
@@ -126,7 +127,11 @@ def make_base_structure_hook(base: type[_T]):
     def structure_base(val: dict[str, Any] | str, cls: type[_T]) -> _T:
         # Extract the type information from the given input and find
         # the corresponding class in the hierarchy
-        type_ = val if isinstance(val, str) else val.pop(_TYPE_FIELD)
+        if isinstance(val, str):
+            type_ = val
+        else:
+            val = val.copy()
+            type_ = val.pop(_TYPE_FIELD)
         subclass = find_subclass(base, type_)
 
         # Preserve generic type parameters from the abstract base class:
@@ -229,8 +234,8 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
         # Call the constructor with the deserialized arguments
         return constructor(**specs)
 
-    # Otherwise, use the regular __init__ method
-    return converter.structure_attrs_fromdict(specs, cls)
+    # Otherwise, structure using the regular mechanism
+    return make_dict_structure_fn(cls, converter)(specs, cls)
 
 
 # Register custom (un-)structure hooks

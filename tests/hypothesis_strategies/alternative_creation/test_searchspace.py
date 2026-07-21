@@ -17,7 +17,6 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace import SearchSpace, SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from tests.hypothesis_strategies.parameters import numerical_discrete_parameters
@@ -113,7 +112,7 @@ def test_discrete_searchspace_creation_from_degenerate_dataframe():
     """A degenerate dataframe with index but no columns yields an empty space."""
     df = pd.DataFrame(index=[0])
     subspace = SubspaceDiscrete.from_dataframe(df)
-    assert_frame_equal(subspace.exp_rep, pd.DataFrame())
+    assert_frame_equal(subspace.get_candidates(), pd.DataFrame())
 
 
 @pytest.mark.parametrize("boundary_only", (False, True))
@@ -144,22 +143,23 @@ def test_discrete_space_creation_from_simplex_inner(parameters, boundary_only):
         max_sum, parameters, boundary_only=boundary_only, tolerance=tolerance
     )
 
+    candidates = subspace.get_candidates()
     if boundary_only:
-        assert np.allclose(subspace.exp_rep.sum(axis=1), max_sum, atol=tolerance)
+        assert np.allclose(candidates.sum(axis=1), max_sum, atol=tolerance)
     else:
-        assert (subspace.exp_rep.sum(axis=1) <= max_sum + tolerance).all()
+        assert (candidates.sum(axis=1) <= max_sum + tolerance).all()
 
 
 p_d1 = NumericalDiscreteParameter(name="d1", values=[0.0, 0.5, 1.0])
 p_d2 = NumericalDiscreteParameter(name="d2", values=[0.0, 0.5, 1.0])
-p_t1 = TaskParameter(name="t1", values=["A", "B"])
-p_t2 = TaskParameter(name="t2", values=["A", "B"])
+p_c1 = CategoricalParameter(name="c1", values=["A", "B"])
+p_c2 = CategoricalParameter(name="c2", values=["A", "B"])
 
 
 @pytest.mark.parametrize(
     ("simplex_parameters", "product_parameters", "n_elements"),
     [
-        param([p_d1, p_d2], [p_t1, p_t2], 6 * 4, id="both"),
+        param([p_d1, p_d2], [p_c1, p_c2], 6 * 4, id="both"),
         param([p_d1, p_d2], [], 6, id="simplex-only"),
     ],
 )
@@ -174,10 +174,11 @@ def test_discrete_space_creation_from_simplex_mixed(
         product_parameters=product_parameters,
         boundary_only=False,
     )
-    assert len(subspace.exp_rep) == n_elements  # <-- (# simplex part) x (# task part)
-    assert not any(subspace.exp_rep.duplicated())
-    assert len(subspace.parameters) == len(subspace.exp_rep.columns)
-    assert all(p.name in subspace.exp_rep.columns for p in subspace.parameters)
+    candidates = subspace.get_candidates()
+    assert len(candidates) == n_elements  # <-- (# simplex part) x (# task part)
+    assert not any(candidates.duplicated())
+    assert len(subspace.parameters) == len(candidates.columns)
+    assert all(p.name in candidates.columns for p in subspace.parameters)
 
 
 @pytest.mark.parametrize("boundary_only", (False, True))
@@ -193,13 +194,14 @@ def test_discrete_space_creation_from_simplex_restricted(boundary_only):
         max_nonzero=4,
         boundary_only=True,
     )
-    n_nonzero = (subspace.exp_rep > 0.0).sum(axis=1)
+    candidates = subspace.get_candidates()
+    n_nonzero = (candidates > 0.0).sum(axis=1)
     if boundary_only:
-        assert np.allclose(subspace.exp_rep.sum(axis=1), 1.0)
+        assert np.allclose(candidates.sum(axis=1), 1.0)
     assert n_nonzero.min() == 2
     assert n_nonzero.max() == 4
-    assert len(subspace.parameters) == len(subspace.exp_rep.columns)
-    assert all(p.name in subspace.exp_rep.columns for p in subspace.parameters)
+    assert len(subspace.parameters) == len(candidates.columns)
+    assert all(p.name in candidates.columns for p in subspace.parameters)
 
 
 _simplex_params = [
@@ -263,23 +265,26 @@ def test_discrete_space_creation_from_simplex_coefficients(
     cols = [p.name for p in params]
 
     # Ground truth via brute force
-    expected = _brute_force_weighted_simplex(
-        params, max_sum, coeffs, boundary_only=boundary_only
-    )
-    expected = expected.sort_values(cols).reset_index(drop=True)
-
-    # from_simplex
-    result_simplex = (
-        SubspaceDiscrete.from_simplex(
-            max_sum,
-            params,
-            simplex_coefficients=coefficients,
-            boundary_only=boundary_only,
+    expected = (
+        _brute_force_weighted_simplex(
+            params, max_sum, coeffs, boundary_only=boundary_only
         )
-        .exp_rep.sort_values(cols)
+        .sort_values(cols)
         .reset_index(drop=True)
     )
-    assert_frame_equal(result_simplex, expected, check_dtype=False)
+
+    # from_simplex
+    result_simplex = SubspaceDiscrete.from_simplex(
+        max_sum,
+        params,
+        simplex_coefficients=coefficients,
+        boundary_only=boundary_only,
+    ).get_candidates()
+    assert_frame_equal(
+        result_simplex.sort_values(cols).reset_index(drop=True),
+        expected,
+        check_dtype=False,
+    )
 
     # from_product with equivalent constraint
     operator = "=" if boundary_only else "<="
@@ -288,12 +293,14 @@ def test_discrete_space_creation_from_simplex_coefficients(
         condition=ThresholdCondition(threshold=max_sum, operator=operator),
         coefficients=tuple(coeffs),
     )
-    result_product = (
-        SubspaceDiscrete.from_product(params, constraints=[constraint])
-        .exp_rep.sort_values(cols)
-        .reset_index(drop=True)
+    result_product = SubspaceDiscrete.from_product(
+        params, constraints=[constraint]
+    ).get_candidates()
+    assert_frame_equal(
+        result_product.sort_values(cols).reset_index(drop=True),
+        expected,
+        check_dtype=False,
     )
-    assert_frame_equal(result_product, expected, check_dtype=False)
 
 
 @pytest.mark.parametrize(

@@ -4,22 +4,44 @@ import gc
 from functools import cached_property
 from typing import Any
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from attrs.validators import min_len
+from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
-from baybe.parameters.base import _DiscreteLabelLikeParameter
-from baybe.parameters.enum import CustomEncoding
+from baybe.parameters.base import _JOIN_KEY, _EncodedDiscreteParameter
 from baybe.parameters.validation import validate_decorrelation
 from baybe.settings import active_settings
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import df_uncorrelated_features
 
 
+def _encoding_table_from_comp_df(
+    comp_df: pd.DataFrame, values: nw.Series, /
+) -> nw.DataFrame:
+    """Build a narwhals encoding table from a pandas-backed exhaustive encoding table.
+
+    Args:
+        comp_df: A pandas dataframe whose index holds all experimental parameter values
+            and whose columns hold the encoded representation.
+        values: The unique experimental values to include in the table.
+
+    Returns:
+        A narwhals dataframe with :data:`~baybe.parameters.base._JOIN_KEY` as the
+        key column, converted to the same backend as ``values``.
+    """
+    return (
+        nw.from_native(comp_df.reset_index(names=_JOIN_KEY), eager_only=True)
+        .filter(nw.col(_JOIN_KEY).is_in(values))
+        .lazy()
+        .collect(backend=nw.get_native_namespace(values))
+    )
+
+
 @define(frozen=True, slots=False)
-class CustomDiscreteParameter(_DiscreteLabelLikeParameter):
+class CustomDiscreteParameter(_EncodedDiscreteParameter):
     """Custom parameters.
 
     For these parameters, the user can read in a precomputed representation for labels,
@@ -27,19 +49,20 @@ class CustomDiscreteParameter(_DiscreteLabelLikeParameter):
     """
 
     # object variables
-    data: pd.DataFrame = field(validator=min_len(2), eq=eq_dataframe)
+    data: pd.DataFrame = field(
+        validator=(instance_of(pd.DataFrame), min_len(2)), eq=eq_dataframe
+    )
     """A mapping that provides the encoding for all available parameter values."""
 
-    decorrelate: bool | float = field(default=True, validator=validate_decorrelation)
+    decorrelate: bool | float = field(
+        default=True, validator=validate_decorrelation, kw_only=True
+    )
     """Specifies the used decorrelation mode for the parameter encoding.
 
         - ``False``: The encoding is used as is.
         - ``True``: The encoding is decorrelated using a default correlation threshold.
         - float in (0, 1): The encoding is decorrelated using the specified threshold.
     """
-
-    encoding: CustomEncoding = field(init=False, default=CustomEncoding.CUSTOM)
-    # See base class.
 
     @data.validator
     def _validate_custom_data(  # noqa: DOC101, DOC103
@@ -100,9 +123,8 @@ class CustomDiscreteParameter(_DiscreteLabelLikeParameter):
         """Returns the representing labels of the parameter."""
         return tuple(self.data.index)
 
-    @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:
+    def _comp_df(self) -> pd.DataFrame:
         # The encoding is directly provided by the user
         # We prepend the parameter name to the columns names to avoid potential
         # conflicts with other parameters
@@ -118,6 +140,15 @@ class CustomDiscreteParameter(_DiscreteLabelLikeParameter):
                 comp_df = df_uncorrelated_features(comp_df, threshold=self.decorrelate)
 
         return comp_df
+
+    @override
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        return tuple(self._comp_df.columns)
+
+    @override
+    def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
+        return _encoding_table_from_comp_df(self._comp_df, values)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

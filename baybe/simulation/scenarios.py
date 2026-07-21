@@ -283,9 +283,13 @@ def _simulate_groupby(
     #   space constructor, the integer-based indexing provides a second safety net.
     #   Hence, the "reset_index" call.
     if groupby is None:
-        groups = ((None, campaign.searchspace.discrete.exp_rep.reset_index()),)
+        groups = ((None, campaign.searchspace.discrete.get_candidates().reset_index()),)
     else:
-        groups = campaign.searchspace.discrete.exp_rep.reset_index().groupby(groupby)
+        groups = (
+            campaign.searchspace.discrete.get_candidates()
+            .reset_index()
+            .groupby(groupby)
+        )
 
     # Simulate all subgroups
     dfs = []

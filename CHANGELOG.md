@@ -8,14 +8,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 - All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
   are now keyword-only
+- `Campaign.measurements` no longer contains `FitNr` or `BatchNr` metadata columns
+- `validate_parameter_names`, `validate_cardinality_constraints_are_nonoverlapping`
+  and `validate_cardinality_constraint_parameter_bounds` are no longer available
+  as public utilities
+- `is_constrained` property removed from `SubspaceDiscrete`, `SubspaceContinuous`,
+  and `SearchSpace`
+- `candidates_exp` argument removed from `SubspaceDiscrete.subset_masks`,
+  `SubspaceDiscrete.sample_subset_masks`, `SearchSpace.subsets`, and
+  `SearchSpace.sample_subsets`
+- `SubspaceDiscrete.get_candidates` now returns only the experimental representation
+  instead of a tuple of experimental and computational representations
+- Optional/secondary fields of discrete parameter classes are now keyword-only
 
 ### Added
 - `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
   the same pattern as `ContinuousLinearConstraint.coefficients`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
+- `narwhals` as a hard dependency
+- `CandidatesProtocol` as an interface for candidates generation
+- `EmptyCandidates`, `TableCandidates` and `ProductCandidates` classes implementing
+  `CandidatesProtocol`
+- `DiscreteParameter.is_finite` property
+- `SubspaceDiscrete.batch_constraints` field for storing batch-level constraints
+- `SubspaceDiscrete.from_dataframe` now accepts `batch_constraints`
+- `validate_parameter_input` now accepts an `allow_empty` flag to permit zero-row input
+- `Settings.default_dataframe_backend` attribute for convenient dataframe backend choice
+- `DiscreteParameter.transform` narwhalified: now accepts `narwhals`-compatible series,
+  arbitrary iterables, or `None`
 
 ### Changed
+- `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
+  attribute of type `CandidatesProtocol` instead of raw `parameters` and `exp_rep`
+  attributes, and `parameters` is now a read-only property delegating to it. The
+  associated constructor calls and all related legacy attributes have been deprecated. 
+- Internal `Campaign` state model simplified: recommended and excluded experiments
+  are now stored as dataframes instead of being tracked as metadata flags
+- `SubspaceContinuous` now offers a simpler interface for passing constraints,
+  no longer requiring users to manually group constraints according to their type
+- Parameter and constraint validation has been streamlined, using `validate_parameters`
+  and `validate_constraints` as the only remaining public entry points
+- `_recommend_discrete` and kin now return a `pd.DataFrame` subselection of the
+  candidates instead of a `pd.Index`
+- `SubspaceDiscrete.from_product` and `SubspaceDiscrete.from_simplex` now split
+  their `constraints` argument into filtering constraints (applied during construction)
+  and batch constraints (stored in `batch_constraints`)
+- Internal search space and recommender logic simplified by reducing indirection and
+  argument passing between methods
+- The `encoding` attribute has been removed from `DiscreteParameter` base class and
+  now only exists on concrete subclasses that actually use it
+- Passing a series to `DiscreteParameter.transform` whose name does not match the
+  parameter name now raises a `ValueError`
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
   kernel in multi-task scenarios, matching BoTorch's `MultiTaskGP` defaults introduced
   in version `0.18.0`
@@ -26,6 +70,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
 - Bumped polars to `>=0.20.8`
 - Bumped cattrs to `>=26.1.0`
+
+### Fixed
+- Deserialization with constructor selection now correctly respects converter settings
+- Missing validators and converters were added to several parameter fields
+- `validate_parameter_input` no longer uses row-by-row iteration, fixing a significant
+  performance problem for large candidate sets
+
+### Deprecations
+- `DiscreteParameter.comp_df` property (use `transform()` instead)
+- `CustomEncoding` enum class
+- `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
+- `SubspaceDiscrete(parameters, exp_rep)` constructor call style
+  (use `SubspaceDiscrete.from_dataframe(parameters, exp_rep)` or
+  `SubspaceDiscrete(candidates=TableCandidates(parameters, exp_rep))` instead)
+- `SubspaceDiscrete` ignores any `empty_encoding` when provided
+- `SubspaceDiscrete` no longer accepts a `comp_rep` argument
+- `SubspaceDiscrete.constraints` attribute (use `batch_constraints` to provide and
+  access batch-level constraints; filtering constraints are only needed during subspace
+  construction and are thus no longer stored).
+- `SubspaceDiscrete.constraints_batch` property (use `batch_constraints` instead)
+- `SubspaceDiscrete.exp_rep` attribute (use `get_candidates()` instead)
+- `SubspaceDiscrete.comp_rep` attribute (use `transform(get_candidates())` instead)
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
@@ -92,12 +158,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Broken cache validation for certain `Campaign.recommend` cases
 - `ContinuousCardinalityConstraint` now works in hybrid search spaces
+- Typo in `_FixedNumericalContinuousParameter` where `is_numeric` was used
+  instead of `is_numerical`
 - `SHAPInsight` breaking with `numpy>=2.4` due to no longer accepted implicit array to 
   scalar conversion
 - Using `np.isclose` for assessing equality of `Interval` bounds instead of hard
   equality check
-- Typo in `_FixedNumericalContinuousParameter` where `is_numeric` was used
-  instead of `is_numerical`
 
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization

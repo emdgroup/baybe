@@ -10,7 +10,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
+exclude-newer = "2026-06-12T12:57:26.466234Z"
 exclude-newer-span = "P7D"
 
 [[package]]
@@ -207,6 +207,7 @@ dependencies = [
     { name = "exceptiongroup" },
     { name = "gpytorch" },
     { name = "joblib" },
+    { name = "narwhals" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pandas" },
@@ -389,6 +390,7 @@ simulation = [
 ]
 test = [
     { name = "hypothesis", extra = ["pandas"] },
+    { name = "polars", extra = ["pyarrow"] },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "tenacity" },
@@ -411,6 +413,7 @@ requires-dist = [
     { name = "baybe", extras = ["onnx"], marker = "extra == 'benchmarking'" },
     { name = "baybe", extras = ["onnx"], marker = "extra == 'extras'" },
     { name = "baybe", extras = ["polars"], marker = "extra == 'extras'" },
+    { name = "baybe", extras = ["polars"], marker = "extra == 'test'" },
     { name = "baybe", extras = ["simulation"], marker = "extra == 'benchmarking'" },
     { name = "baybe", extras = ["simulation"], marker = "extra == 'extras'" },
     { name = "baybe", extras = ["test"], marker = "extra == 'dev'" },
@@ -430,6 +433,7 @@ requires-dist = [
     { name = "matplotlib", marker = "extra == 'examples'", specifier = ">=3.7.3,!=3.9.1" },
     { name = "mypy", marker = "extra == 'mypy'", specifier = ">=1.19.1" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.0" },
+    { name = "narwhals", specifier = ">=2,<3" },
     { name = "ngboost", marker = "extra == 'extras'", specifier = ">=0.3.12,<1" },
     { name = "numpy", specifier = ">=1.24.1,<3" },
     { name = "onnx", marker = "extra == 'onnx'", specifier = ">=1.16.0" },
@@ -3085,11 +3089,11 @@ wheels = [
 
 [[package]]
 name = "narwhals"
-version = "2.15.0"
+version = "2.20.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/47/6d/b57c64e5038a8cf071bce391bb11551657a74558877ac961e7fa905ece27/narwhals-2.15.0.tar.gz", hash = "sha256:a9585975b99d95084268445a1fdd881311fa26ef1caa18020d959d5b2ff9a965", size = 603479, upload-time = "2026-01-06T08:10:13.27Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/f3/257adc69a71011b4c8cda321b00f02c5bf1980ae38ffd05a58d9632d4de8/narwhals-2.20.0.tar.gz", hash = "sha256:c10994975fa7dc5a68c2cffcddbd5908fc8ebb2d463c5bab085309c0ee1f551e", size = 627848, upload-time = "2026-04-20T12:11:45.427Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/2e/cf2ffeb386ac3763526151163ad7da9f1b586aac96d2b4f7de1eaebf0c61/narwhals-2.15.0-py3-none-any.whl", hash = "sha256:cbfe21ca19d260d9fd67f995ec75c44592d1f106933b03ddd375df7ac841f9d6", size = 432856, upload-time = "2026-01-06T08:10:11.511Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/69/f24d3d1c38ad69e256138b4ec2452a8c7cf66be49dc214771ae99dd4f0a0/narwhals-2.20.0-py3-none-any.whl", hash = "sha256:16e750ea5507d4ba6e8d03455b5f93a535e0405976561baea235bca5dc9f475d", size = 449373, upload-time = "2026-04-20T12:11:43.596Z" },
 ]
 
 [[package]]

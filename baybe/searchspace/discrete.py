@@ -10,12 +10,14 @@ from itertools import islice
 from math import prod
 from typing import TYPE_CHECKING, Any, Literal
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
+from attrs.validators import deep_iterable, instance_of
 from cattrs import IterableValidationError
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
@@ -27,13 +29,18 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
 )
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
+from baybe.parameters.utils import get_parameters_from_dataframe
+from baybe.searchspace.candidates import (
+    CandidatesProtocol,
+    EmptyCandidates,
+    ProductCandidates,
+    TableCandidates,
+)
 from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
-from baybe.searchspace.validation import validate_parameter_names, validate_parameters
+from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
-from baybe.utils.basic import to_tuple
-from baybe.utils.boolean import eq_dataframe
+from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     get_transform_objects,
@@ -83,39 +90,105 @@ class MemorySize:
 class SubspaceDiscrete(SerialMixin):
     """Class for managing discrete subspaces.
 
-    Builds the subspace from parameter definitions and optional constraints, keeps
-    track of search metadata, and provides access to candidate sets and different
-    parameter views.
+    Builds the subspace from parameter definitions and optional constraints,
+    and provides access to candidate sets and different parameter views.
     """
 
-    parameters: tuple[DiscreteParameter, ...] = field(
-        converter=sort_parameters,
-        validator=lambda _, __, x: validate_parameter_names(x),
+    candidates: CandidatesProtocol = field(validator=instance_of(CandidatesProtocol))
+    """The discrete candidates set spanning the subspace."""
+
+    batch_constraints: tuple[DiscreteBatchConstraint, ...] = field(
+        default=(),
+        converter=to_tuple,
+        validator=deep_iterable(member_validator=instance_of(DiscreteBatchConstraint)),
     )
-    """The list of parameters of the subspace."""
+    """Constraints operating on the recommendation batch level."""
 
-    exp_rep: pd.DataFrame = field(eq=eq_dataframe)
-    """The experimental representation of the subspace."""
+    # >>>>>>>>>> Deprecation
+    def __init__(
+        self,
+        candidates: CandidatesProtocol = UNSPECIFIED,  # type: ignore[assignment]
+        batch_constraints: Collection[DiscreteBatchConstraint] = (),
+        *,
+        parameters: Sequence[DiscreteParameter] | UnspecifiedType = UNSPECIFIED,
+        exp_rep: pd.DataFrame | UnspecifiedType = UNSPECIFIED,
+        empty_encoding: bool | UnspecifiedType = UNSPECIFIED,
+        constraints: Sequence[DiscreteConstraint] | UnspecifiedType = UNSPECIFIED,
+        comp_rep: Any | UnspecifiedType = UNSPECIFIED,
+    ) -> None:
+        # Detect legacy positional calls: SubspaceDiscrete([p, ...], df) where
+        # the parameters list and exp_rep DataFrame were passed as positional args.
+        if (
+            candidates is not UNSPECIFIED
+            and not isinstance(candidates, CandidatesProtocol)
+            and isinstance(candidates, Collection)
+            and all(isinstance(p, DiscreteParameter) for p in candidates)
+        ):
+            parameters = candidates
+            candidates = UNSPECIFIED
+            if isinstance(batch_constraints, pd.DataFrame):
+                exp_rep = batch_constraints
+                batch_constraints = ()
 
-    empty_encoding: bool = field(default=False)
-    """Flag encoding whether an empty encoding is used."""
-
-    constraints: tuple[DiscreteConstraint, ...] = field(
-        converter=lambda x: to_tuple(
-            sorted(
-                x,
-                key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
+        # Legacy input format requires both ``parameters`` and ``exp_rep`` together
+        if (parameters is UNSPECIFIED) != (exp_rep is UNSPECIFIED):
+            raise ValueError(
+                f"When using legacy constructor arguments for "
+                f"'{self.__class__.__name__}', provide both 'parameters' and 'exp_rep' "
+                f"together. Otherwise, use the '{fields(type(self)).candidates.alias}' "
+                f"argument."
             )
-        ),
-        factory=tuple,
-    )
-    """A list of constraints for restricting the space."""
 
-    comp_rep: pd.DataFrame = field(eq=eq_dataframe)
-    """The computational representation of the space. Technically not required but added
-    as an optional initializer argument to allow ingestion from e.g. serialized objects
-    and thereby speed up construction. If not provided, the default hook will derive it
-    from ``exp_rep``."""
+        # --- parameters + exp_rep ---
+        if parameters is not UNSPECIFIED and exp_rep is not UNSPECIFIED:
+            name = fields(self.__class__).candidates.alias
+            warnings.warn(
+                f"Providing 'parameters' and 'exp_rep' to '{self.__class__.__name__}' "
+                f"has been deprecated and support will be dropped in a future version. "
+                f"Please use the new '{name}' interface instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            candidates = TableCandidates(
+                parameters, normalize_input_dtypes(exp_rep, parameters)
+            )
+
+        # --- empty_encoding ---
+        if empty_encoding is not UNSPECIFIED:
+            _deprecate_argument("empty_encoding", error=False, stacklevel=3)
+
+        # --- comp_rep ---
+        if comp_rep is not UNSPECIFIED:
+            _deprecate_argument("comp_rep", error=True, stacklevel=3)
+
+        # --- constraints ---
+        if constraints is not UNSPECIFIED:
+            warnings.warn(
+                _make_constraints_deprecation_msg(),
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            batch_from_legacy: list[DiscreteBatchConstraint] = [
+                c for c in constraints if isinstance(c, DiscreteBatchConstraint)
+            ]
+            if n_non_batch := len(constraints) - len(batch_from_legacy):
+                warnings.warn(
+                    f"You provided {n_non_batch} filtering constraint(s) via "
+                    f"'constraints' but filtering constraints are (and always have "
+                    f"been) ignored when entered via '__init__'. The latter assumes "
+                    f"that all filtering constraints have already been applied to the "
+                    f"given experimental candidate representation. To avoid this "
+                    f"warning, either drop the filtering constraints or use one of "
+                    f"the alternative constructors.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+            if batch_from_legacy:
+                batch_constraints = tuple(batch_constraints) + tuple(batch_from_legacy)
+
+        self.__attrs_init__(candidates=candidates, batch_constraints=batch_constraints)  # type: ignore[attr-defined]
+
+    # <<<<<<<<<< Deprecation
 
     @override
     def __str__(self) -> str:
@@ -124,40 +197,28 @@ class SubspaceDiscrete(SerialMixin):
 
         # Convert the lists to dataFrames to be able to use pretty_printing
         param_list = [param.summary() for param in self.parameters]
-        constraints_list = [constr.summary() for constr in self.constraints]
+        batch_constraints_list = [constr.summary() for constr in self.batch_constraints]
         param_df = pd.DataFrame(param_list)
-        constraints_df = pd.DataFrame(constraints_list)
+        batch_constraints_df = pd.DataFrame(batch_constraints_list)
 
         fields = [
             to_string(
                 "Discrete Parameters",
                 pretty_print_df(param_df, max_colwidth=None),
             ),
-            to_string("Experimental Representation", pretty_print_df(self.exp_rep)),
-            to_string("Constraints", pretty_print_df(constraints_df)),
-            to_string("Computational Representation", pretty_print_df(self.comp_rep)),
+            to_string("Batch Constraints", pretty_print_df(batch_constraints_df)),
         ]
         return to_string(self.__class__.__name__, *fields)
 
-    @exp_rep.validator
-    def _validate_exp_rep(  # noqa: DOC101, DOC103
-        self, _: Any, exp_rep: pd.DataFrame
-    ) -> None:
-        """Validate the experimental representation.
+    @property
+    def parameters(self) -> tuple[DiscreteParameter, ...]:
+        """The parameters spanning the subspace."""
+        return self.candidates.parameters
 
-        Raises:
-            ValueError: If the index of the provided dataframe contains duplicates.
-        """
-        if exp_rep.index.has_duplicates:
-            raise ValueError(
-                "The index of this search space contains duplicates. "
-                "This is not allowed, as it can lead to hard-to-detect bugs."
-            )
-
-    @comp_rep.default
-    def _default_comp_rep(self) -> pd.DataFrame:
-        """Create the default computational representation."""
-        return self.transform(self.exp_rep)
+    @batch_constraints.validator
+    def _validate_batch_constraints(self, _, __) -> None:  # noqa: DOC101, DOC103
+        """Validate batch constraints."""
+        validate_constraints(self.batch_constraints, self.parameters)
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no continuous part."""
@@ -166,12 +227,12 @@ class SubspaceDiscrete(SerialMixin):
         return SearchSpace(discrete=self)
 
     @classmethod
-    def empty(cls) -> SubspaceDiscrete:
+    def empty(cls) -> Self:
         """Create an empty discrete subspace."""
-        return SubspaceDiscrete(parameters=[], exp_rep=pd.DataFrame())
+        return cls(candidates=EmptyCandidates())
 
     @classmethod
-    def from_parameter(cls, parameter: DiscreteParameter) -> SubspaceDiscrete:
+    def from_parameter(cls, parameter: DiscreteParameter) -> Self:
         """Create a subspace from a single parameter.
 
         Args:
@@ -187,21 +248,39 @@ class SubspaceDiscrete(SerialMixin):
         cls,
         parameters: Sequence[DiscreteParameter],
         constraints: Sequence[DiscreteConstraint] | None = None,
-        empty_encoding: bool = False,
-    ) -> SubspaceDiscrete:
+        empty_encoding: bool | None = None,
+    ) -> Self:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
-        constraints = constraints or []
+        validate_parameters(parameters, allow_empty=True)
 
-        if constraints:
+        if constraints is None:
+            constraints = []
+        else:
+            constraints = sorted(
+                constraints,
+                key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+            )
             validate_constraints(constraints, parameters)
 
-        df = build_constrained_product(parameters, constraints)
+        filtering_constraints = [c for c in constraints if c.eval_during_creation]
+        batch_constraints = [c for c in constraints if c.eval_during_modeling]
+        assert len(filtering_constraints) + len(batch_constraints) == len(
+            constraints
+        ), (
+            "The constraints could not be fully partitioned into filtering and batch "
+            "constraints. The current logic assumes that each constraint belongs "
+            "exactly to one type."
+        )
 
-        return SubspaceDiscrete(
-            parameters=parameters,
-            constraints=constraints,
-            exp_rep=df,
-            empty_encoding=empty_encoding,
+        extra = {"empty_encoding": empty_encoding} if empty_encoding is not None else {}
+        return cls(
+            candidates=(
+                EmptyCandidates()
+                if not parameters
+                else ProductCandidates(parameters, filtering_constraints)
+            ),
+            batch_constraints=batch_constraints,
+            **extra,
         )
 
     @classmethod
@@ -209,8 +288,9 @@ class SubspaceDiscrete(SerialMixin):
         cls,
         df: pd.DataFrame,
         parameters: Sequence[DiscreteParameter] | None = None,
-        empty_encoding: bool = False,
-    ) -> SubspaceDiscrete:
+        batch_constraints: Collection[DiscreteBatchConstraint] = (),
+        empty_encoding: bool | None = None,
+    ) -> Self:
         """Create a discrete subspace with a specified set of configurations.
 
         Args:
@@ -226,7 +306,9 @@ class SubspaceDiscrete(SerialMixin):
                 fallback. For both types, default values are used for their optional
                 arguments. For more details, see
                 :func:`baybe.parameters.utils.get_parameters_from_dataframe`.
-            empty_encoding: See :func:`baybe.searchspace.core.SearchSpace.from_product`.
+            batch_constraints: Optional batch constraints to be applied at
+                recommendation time.
+            empty_encoding: Ignore! For backwards compatibility only.
 
         Returns:
             The created discrete subspace.
@@ -254,7 +336,7 @@ class SubspaceDiscrete(SerialMixin):
         if df.shape[1] == 0:
             return cls.empty()
 
-        # Get the full list of both explicitly and implicitly defined parameter
+        # Get the full list of both explicitly and implicitly defined parameters
         parameters = get_parameters_from_dataframe(
             df, discrete_parameter_factory, parameters
         )
@@ -262,7 +344,12 @@ class SubspaceDiscrete(SerialMixin):
         # Ensure dtype consistency
         df = normalize_input_dtypes(df, parameters)
 
-        return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)
+        extra = {"empty_encoding": empty_encoding} if empty_encoding is not None else {}
+        return cls(
+            candidates=TableCandidates(parameters, df),
+            batch_constraints=batch_constraints,
+            **extra,
+        )
 
     @classmethod
     def from_simplex(
@@ -277,7 +364,7 @@ class SubspaceDiscrete(SerialMixin):
         max_nonzero: int | None = None,
         boundary_only: bool = False,
         tolerance: float = 1e-6,
-    ) -> SubspaceDiscrete:
+    ) -> Self:
         """Efficiently create discrete simplex subspaces.
 
         The same result can be achieved using
@@ -335,9 +422,6 @@ class SubspaceDiscrete(SerialMixin):
         if simplex_coefficients is None:
             simplex_coefficients = [1.0] * len(simplex_parameters)
 
-        # Validate constraints
-        validate_constraints(constraints, [*simplex_parameters, *product_parameters])
-
         # Validate parameter types
         if not (
             all(isinstance(p, NumericalDiscreteParameter) for p in simplex_parameters)
@@ -372,6 +456,12 @@ class SubspaceDiscrete(SerialMixin):
                 f"Parameter sets passed via 'simplex_parameters' and "
                 f"'product_parameters' must be disjoint but share the following "
                 f"parameters: {overlap}."
+            )
+
+        # Validate constraints
+        if constraints:
+            validate_constraints(
+                constraints, [*simplex_parameters, *product_parameters]
             )
 
         # Handle degenerate simplex cases
@@ -475,15 +565,27 @@ class SubspaceDiscrete(SerialMixin):
         # Wrap in DataFrame
         exp_rep = pd.DataFrame(arr, columns=[p.name for p in simplex_parameters])
 
-        # Merge product parameters and apply constraints incrementally
-        exp_rep = build_constrained_product(
-            product_parameters, constraints, initial_df=exp_rep
+        filtering_constraints = [c for c in constraints if c.eval_during_creation]
+        batch_constraints_list = [c for c in constraints if c.eval_during_modeling]
+        assert len(filtering_constraints) + len(batch_constraints_list) == len(
+            constraints
+        ), (
+            "The constraints could not be fully partitioned into filtering and batch "
+            "constraints. The current logic assumes that each constraint belongs "
+            "exactly to one type."
         )
 
+        # Merge product parameters and apply filtering constraints incrementally
+        exp_rep = build_constrained_product(
+            product_parameters, filtering_constraints, initial_df=exp_rep
+        )
+
+        all_parameters = [*simplex_parameters, *product_parameters]
         return cls(
-            parameters=[*simplex_parameters, *product_parameters],
-            exp_rep=exp_rep,
-            constraints=constraints,
+            # TODO: Investigate how off-the-shelf query optimization performs against
+            #   our custom TableCandidates construction
+            candidates=TableCandidates(all_parameters, exp_rep),
+            batch_constraints=batch_constraints_list,
         )
 
     @property
@@ -504,33 +606,71 @@ class SubspaceDiscrete(SerialMixin):
         return len(self.parameters) == 0
 
     @property
-    def is_constrained(self) -> bool:
-        """Boolean indicating if the subspace has any constraints."""
-        return len(self.constraints) > 0
-
-    @property
     def parameter_names(self) -> tuple[str, ...]:
         """Return tuple of parameter names."""
         return tuple(p.name for p in self.parameters)
 
+    # >>>>>>>>>> Deprecation
+    @property
+    def exp_rep(self) -> pd.DataFrame:
+        """Deprecated! Use :meth:`get_candidates` instead."""
+        get_candidates = type(self).get_candidates.__name__
+        warnings.warn(
+            f"Accessing 'exp_rep' is deprecated and will be removed in a future "
+            f"version. Use '{get_candidates}()' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_candidates()
+
+    @property
+    def comp_rep(self) -> pd.DataFrame:
+        """Deprecated! Use :meth:`transform` with :meth:`get_candidates` instead."""
+        cls = type(self)
+        transform = cls.transform.__name__
+        get_candidates = cls.get_candidates.__name__
+        warnings.warn(
+            f"Accessing 'comp_rep' is deprecated and will be removed in a future "
+            f"version. Use '{transform}({get_candidates}())' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.transform(self.get_candidates())
+
+    # <<<<<<<<<< Deprecation
+
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:
         """The columns spanning the computational representation."""
-        # We go via `comp_rep` here instead of using the columns of the individual
-        # parameters because the search space potentially uses only a subset of the
-        # columns due to decorrelation
-        return tuple(self.comp_rep.columns)
+        return tuple(col for p in self.parameters for col in p.comp_rep_columns)
 
     @property
     def comp_rep_bounds(self) -> pd.DataFrame:
         """The minimum and maximum values of the computational representation."""
-        return pd.DataFrame({"min": self.comp_rep.min(), "max": self.comp_rep.max()}).T
+        if not self.parameters:
+            return pd.DataFrame(index=["min", "max"])
+        df = pd.concat(
+            [
+                nw.from_native(p.transform(), eager_only=True).to_pandas()
+                for p in self.parameters
+            ],
+            axis=1,
+        )
+        return pd.DataFrame({"min": df.min(), "max": df.max()}).T
 
     @property
     def scaling_bounds(self) -> pd.DataFrame:
         """The bounds used for scaling the surrogate model input."""
         return (
-            pd.concat([p.comp_df.agg(["min", "max"]) for p in self.parameters], axis=1)
+            pd.concat(
+                [
+                    nw.from_native(p.transform(), eager_only=True)
+                    .to_pandas()
+                    .agg(["min", "max"])
+                    for p in self.parameters
+                ],
+                axis=1,
+            )
             if self.parameters
             else pd.DataFrame(index=["min", "max"])
         )
@@ -549,7 +689,7 @@ class SubspaceDiscrete(SerialMixin):
         """
         # Compute the dataframe shapes
         n_cols_exp = len(parameters)
-        n_cols_comp = sum(p.comp_df.shape[1] for p in parameters)
+        n_cols_comp = sum(len(p.comp_rep_columns) for p in parameters)
         n_rows = prod(len(p.active_values) for p in parameters)
 
         # Comp rep space is estimated as the size of float times the number of matrix
@@ -580,14 +720,20 @@ class SubspaceDiscrete(SerialMixin):
             comp_rep_shape=(n_rows, n_cols_comp),
         )
 
+    # >>>>>>>>>> Deprecation
     @property
-    def constraints_batch(
-        self,
-    ) -> tuple[DiscreteBatchConstraint, ...]:
-        """The batch constraints of the subspace."""
-        return tuple(
-            c for c in self.constraints if isinstance(c, DiscreteBatchConstraint)
+    def constraints_batch(self) -> tuple[DiscreteBatchConstraint, ...]:
+        """Deprecated! Use :attr:`batch_constraints` instead."""
+        replacement = fields(type(self)).batch_constraints.name
+        warnings.warn(
+            f"Accessing 'constraints_batch' is deprecated and will be disabled in a "
+            f"future version. Use '{replacement}' instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
+        return self.batch_constraints
+
+    # <<<<<<<<<< Deprecation
 
     @property
     def n_subsets(self) -> int:
@@ -596,16 +742,15 @@ class SubspaceDiscrete(SerialMixin):
         Returns 0 if no subset-generating constraints exist, indicating that
         no decomposition is needed.
         """
-        if not self.constraints_batch:
+        if not self.batch_constraints:
             return 0
         return prod(
             len(self.get_parameters_by_name([c.parameters[0]])[0].active_values)
-            for c in self.constraints_batch
+            for c in self.batch_constraints
         )
 
     def subset_masks(
         self,
-        candidates_exp: pd.DataFrame,
         min_candidates: int | None = None,
         mode: Literal["sequential", "shuffled", "replace"] = "shuffled",
     ) -> Iterator[npt.NDArray[np.bool_]]:
@@ -616,7 +761,6 @@ class SubspaceDiscrete(SerialMixin):
         combined masks.
 
         Args:
-            candidates_exp: The experimental representation of candidate points.
             min_candidates: If provided, combined masks selecting fewer rows
                 are silently skipped.
             mode: The iteration strategy.
@@ -636,10 +780,12 @@ class SubspaceDiscrete(SerialMixin):
             raise ValueError(f"Invalid {mode=}. Must be one of {allowed}.")
 
         per_constraint: list[list[npt.NDArray[np.bool_]]]
-        if not (constraints := self.constraints_batch):
-            per_constraint = [[np.ones(len(candidates_exp), dtype=bool)]]
+        if not self.batch_constraints:
+            per_constraint = [[np.ones(len(self.get_candidates()), dtype=bool)]]
         else:
-            per_constraint = [c.subset_masks(candidates_exp) for c in constraints]
+            per_constraint = [
+                c.subset_masks(self.get_candidates()) for c in self.batch_constraints
+            ]
 
         total = prod(len(masks) for masks in per_constraint)
 
@@ -670,14 +816,12 @@ class SubspaceDiscrete(SerialMixin):
 
     def sample_subset_masks(
         self,
-        candidates_exp: pd.DataFrame,
         n: int,
         min_candidates: int | None = None,
     ) -> list[npt.NDArray[np.bool_]]:
         """Sample subset masks (without replacement).
 
         Args:
-            candidates_exp: The experimental representation of candidate points.
             n: Number of masks to sample.
             min_candidates: If provided, Subsets with fewer matching
                 candidates are skipped.
@@ -687,19 +831,14 @@ class SubspaceDiscrete(SerialMixin):
         """
         return list(
             islice(
-                self.subset_masks(candidates_exp, min_candidates),
+                self.subset_masks(min_candidates),
                 n,
             )
         )
 
-    def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:
-        """Return the set of candidate parameter settings that can be tested.
-
-        Returns:
-            The candidate parameter settings both in experimental and computational
-            representation.
-        """
-        return self.exp_rep, self.comp_rep
+    def get_candidates(self) -> pd.DataFrame:
+        """Return all candidate parameter configurations."""
+        return self.candidates.to_lazy().collect().to_pandas()
 
     def transform(
         self,
@@ -715,24 +854,12 @@ class SubspaceDiscrete(SerialMixin):
             df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
-        # If the transformed values are not required, return an empty dataframe
-        if self.empty_encoding or len(df) < 1:
-            return pd.DataFrame(index=df.index)
-
         # Transform the parameters
-        dfs = []
-        for param in parameters:
-            comp_df = param.transform(df[param.name])
-            dfs.append(comp_df)
-        comp_rep = pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
-
-        # If the computational representation has already been built (with potentially
-        # removing some columns, e.g. due to decorrelation or dropping constant ones),
-        # any subsequent transformation should yield the same columns.
-        try:
-            return comp_rep[self.comp_rep.columns]
-        except AttributeError:
-            return comp_rep
+        dfs = [
+            nw.from_native(param.transform(df[param.name]), eager_only=True).to_pandas()
+            for param in parameters
+        ]
+        return pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
     def get_parameters_by_name(
         self, names: Sequence[str]
@@ -753,13 +880,15 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
     # Validate product inputs without constructing it
     if specs.get("constructor", None) == "from_product":
         parameters = converter.structure(specs["parameters"], list[DiscreteParameter])
-        validate_parameters(parameters)
+        validate_parameters(parameters, allow_empty=True)
 
-        constraints = specs.get("constraints", [])
-        if constraints:
-            constraints = converter.structure(
-                specs["constraints"], list[DiscreteConstraint]
-            )
+        # Support both the current `constraints` key (deprecated) and
+        # the new `batch_constraints` key for forward/backward compatibility
+        constraints_raw = specs.get("constraints", []) or specs.get(
+            "batch_constraints", []
+        )
+        if constraints_raw:
+            constraints = converter.structure(constraints_raw, list[DiscreteConstraint])
             validate_constraints(constraints, parameters)
 
     # Validate simplex inputs without constructing it
@@ -800,11 +929,13 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
 
         validate_parameters(simplex_parameters + product_parameters)
 
-        constraints = specs.get("constraints", [])
-        if constraints:
-            constraints = converter.structure(
-                specs["constraints"], list[DiscreteConstraint]
-            )
+        # Support both the current `constraints` key (deprecated) and
+        # the new `batch_constraints` key for forward/backward compatibility
+        constraints_raw = specs.get("constraints", []) or specs.get(
+            "batch_constraints", []
+        )
+        if constraints_raw:
+            constraints = converter.structure(constraints_raw, list[DiscreteConstraint])
             validate_constraints(constraints, simplex_parameters + product_parameters)
 
     # For all other types, validate by construction
@@ -812,8 +943,96 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
         converter.structure(specs, SubspaceDiscrete)
 
 
-# Register deserialization hook
-converter.register_structure_hook(SubspaceDiscrete, select_constructor_hook)
+# >>>>>>>>>> Deprecation
+def _deprecate_argument(arg: str, *, error: bool, stacklevel: int) -> None:
+    """Raise a ``DeprecationError`` or emit a ``DeprecationWarning`` for a dropped argument."""  # noqa: E501
+    msg = (
+        f"Providing '{arg}' to '{SubspaceDiscrete.__name__}' is no longer "
+        f"supported. To proceed, simply drop the argument."
+    )
+    if error:
+        raise DeprecationError(msg)
+    warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
+
+
+def _make_constraints_deprecation_msg() -> str:
+    """Generate the constraints deprecation message."""
+    batch_constraints_alias = fields(SubspaceDiscrete).batch_constraints.alias
+    return (
+        f"Providing 'constraints' to '{SubspaceDiscrete.__name__}' is no longer "
+        f"supported. Please update your code as follows:\n"
+        f"  • Use '{batch_constraints_alias}' for '{DiscreteBatchConstraint.__name__}' "
+        f"objects. Any batch constraints you have provided have been extracted "
+        f"automatically for you. This automatic extraction is temporary and will be "
+        f"removed in a future version.\n"
+        f"  • Filtering constraints can simply be dropped. Instead, make sure you "
+        f"construct the experimental representation to satisfy them."
+    )
+
+
+def _structure_subspace_discrete(specs: dict, cls: type) -> SubspaceDiscrete:
+    """Structure hook supporting legacy key migration."""
+    specs = specs.copy()
+
+    # Migrate legacy ``parameters`` + ``exp_rep`` format to ``candidates``
+    if "exp_rep" in specs:
+        name = fields(SubspaceDiscrete).candidates.alias
+        warnings.warn(
+            f"Deserializing a '{SubspaceDiscrete.__name__}' from the legacy "
+            f"'parameters' + 'exp_rep' format is deprecated and support will be "
+            f"removed in a future version. Please re-serialize your objects to use "
+            f"the new '{name}' format.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        parameters = converter.structure(
+            specs.pop("parameters"), list[DiscreteParameter]
+        )
+        exp_rep_df = converter.structure(specs.pop("exp_rep"), pd.DataFrame)
+        specs["candidates"] = converter.unstructure(
+            TableCandidates(parameters, exp_rep_df),
+            unstructure_as=CandidatesProtocol,
+        )
+
+    # Drop legacy ``empty_encoding`` key
+    if "empty_encoding" in specs:
+        _deprecate_argument("empty_encoding", error=False, stacklevel=2)
+        specs.pop("empty_encoding")
+
+    # Reject legacy ``comp_rep`` key
+    if "comp_rep" in specs:
+        _deprecate_argument("comp_rep", error=True, stacklevel=2)
+
+    # Migrate legacy ``constraints`` key to ``batch_constraints``
+    if "constraints" in specs and specs["constraints"] is not None:
+        warnings.warn(
+            _make_constraints_deprecation_msg(),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        legacy_constraints = converter.structure(
+            specs.pop("constraints"), list[DiscreteConstraint]
+        )
+        batch_from_legacy = [
+            c for c in legacy_constraints if isinstance(c, DiscreteBatchConstraint)
+        ]
+        if batch_from_legacy:
+            existing = specs.get("batch_constraints", [])
+            existing_structured = converter.structure(
+                existing, list[DiscreteBatchConstraint]
+            )
+            specs["batch_constraints"] = [
+                c.to_dict() for c in existing_structured + batch_from_legacy
+            ]
+    else:
+        specs.pop("constraints", None)
+    return select_constructor_hook(specs, cls)
+
+
+# Uncomment when removing the deprecation:
+# converter.register_structure_hook(SubspaceDiscrete, select_constructor_hook)
+converter.register_structure_hook(SubspaceDiscrete, _structure_subspace_discrete)
+# <<<<<<<<<< Deprecation
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

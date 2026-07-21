@@ -7,8 +7,10 @@ import warnings
 from collections.abc import Callable, Collection, Iterable, Sequence
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
+from narwhals.testing import assert_frame_equal
 from typing_extensions import assert_never
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
@@ -791,3 +793,13 @@ def normalize_input_dtypes(
     for col in cols_to_convert:
         df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
     return df
+
+
+def _df_equals(df1: nw.DataFrame, df2: nw.DataFrame, /) -> bool:
+    """Check if two dataframes are equal."""
+    # https://github.com/narwhals-dev/narwhals/issues/3715
+    try:
+        assert_frame_equal(df1, df2)
+        return True
+    except AssertionError:
+        return False

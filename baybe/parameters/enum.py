@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
-from enum import Enum, Flag, auto
+import warnings
+from enum import Enum, EnumMeta, Flag, auto
 from typing import TYPE_CHECKING
+
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from baybe.parameters.base import Parameter
@@ -35,11 +38,7 @@ class _ParameterKind(Flag):
         return _ParameterKind.REGULAR
 
 
-class ParameterEncoding(Enum):
-    """Generic base class for all parameter encodings."""
-
-
-class CategoricalEncoding(ParameterEncoding):
+class CategoricalEncoding(Enum):
     """Available encodings for categorical parameters."""
 
     OHE = "OHE"
@@ -49,14 +48,36 @@ class CategoricalEncoding(ParameterEncoding):
     """Integer encoding."""
 
 
-class CustomEncoding(ParameterEncoding):
-    """Available encodings for custom parameters."""
+# >>>>>>>>>> Deprecation
+class _DeprecatedCustomEncodingMeta(EnumMeta):
+    """Metaclass that emits a deprecation warning on member access."""
+
+    _msg = "'CustomEncoding' is deprecated and will be removed in a future version."
+
+    @override
+    def __getattribute__(cls, name: str) -> object:
+        obj = super().__getattribute__(name)
+        if isinstance(obj, cls):
+            warnings.warn(cls._msg, DeprecationWarning, stacklevel=2)
+        return obj
+
+    @override
+    def __call__(cls, *args, **kwargs):
+        warnings.warn(cls._msg, DeprecationWarning, stacklevel=2)
+        return super().__call__(*args, **kwargs)
+
+
+class CustomEncoding(Enum, metaclass=_DeprecatedCustomEncodingMeta):
+    """Deprecated!"""
 
     CUSTOM = "CUSTOM"
     """User-defined encoding."""
 
 
-class SubstanceEncoding(ParameterEncoding):
+# <<<<<<<<<< Deprecation
+
+
+class SubstanceEncoding(Enum):
     """Available encodings for substance parameters from
     `scikit-fingerprints <https://scikit-fingerprints.readthedocs.io/>`_ package.
     """  # noqa: D205

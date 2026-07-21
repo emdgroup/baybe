@@ -58,10 +58,9 @@ More specific conventions for subdirectories:
 ### attrs Only
 All domain classes use `attrs` `@define`. No dataclasses, no Pydantic.
 - Immutable value objects (parameters, kernels, priors, transformations, objectives,
-  targets): `@define(frozen=True, slots=False)`.
+  targets): `@define(frozen=True)`.
 - Mutable stateful objects (campaign, surrogates, recommenders): `@define`.
-- `slots=False` required with `frozen=True` when `cached_property` is needed. See 
-  `attrs` issue #164
+- `slots=False` is required when `cached_property` is needed. See `attrs` issue #164
 - Also use `slots=False` when monkeypatching is needed (e.g., `register_hooks`)
 
 ### Inheritance: ABC + SerialMixin + Protocol
@@ -71,14 +70,25 @@ All domain classes use `attrs` `@define`. No dataclasses, no Pydantic.
 3. Concrete classes: Inherit from ABC.
 
 ### Fields and Methods
-- Use `field()` with `validator=`, `converter=`, `default=`, `factory=`, `alias=`.
+- Use `field()` with arguments in this order: 1) `alias=` (if needed), 2) `init=`
+  (if needed), 3) `default=` / `factory=`, 4) `converter=`, 5) `validator=`.
 - Private fields: `_` prefix, typically `init=False`.
 - Store each piece of information once — no data duplication.
 - Use `attrs.evolve()` for modified copies of frozen objects.
 - Use `on_setattr` hooks for cache invalidation on mutable objects.
+- Use `kw_only=True` deliberately: only when positional construction would be
+  ambiguous or error-prone (e.g., multiple fields of the same type, or
+  optional/secondary fields that should not be passed positionally). Do not
+  apply `kw_only` to all fields by default.
 - `ClassVar[bool]` for capability flags (`supports_transfer_learning`, etc.).
-- Order class content like this: 1) Attributes, 2) validators and post_init, 3)
-  properties, 4) methods. Within each group use alphabetical order.
+- Order class content like this: 1) Attributes, 2) default and validator methods,
+  3) `__attrs_post_init__`, 4) properties, 5) methods.
+  - Attributes are ordered by functionality/importance (primary identity fields
+    first, optional/secondary fields last), not alphabetically.
+  - Default and validator methods mirror the attribute order. For a given
+    attribute, the default method (`_default_<attr>`) comes before its validator
+    (`_validate_<attr>`).
+  - Regular methods are ordered alphabetically.
 
 ### Attribute Docstrings
 String literals immediately below field declarations, blank lines between attributes.
@@ -97,6 +107,17 @@ Every module using `@define` must end with:
 ### Factory Classmethods
 Name descriptively: `from_product`, `from_dataframe`, `from_parameter`, `from_config`,
 `from_json`, `from_dict`, `from_preset`.
+
+Use `Self` return type and `cls()` construction for proper subclass support:
+```python
+from typing_extensions import Self
+
+@classmethod
+def from_parameter(cls, parameter: DiscreteParameter) -> Self:
+    """Create a subspace from a single parameter."""
+    return cls(parameters=[parameter], ...)  # Use cls(), not ClassName()
+```
+This ensures subclasses return their own type, not the base class type.
 
 ### classproperty
 Custom `@classproperty` from `baybe.utils.basic` for class-level computed properties.
@@ -227,11 +248,24 @@ Three tiers:
 
 ## 11. Validation Patterns
 - Inline validators: `field(validator=(instance_of(str), min_len(1)))`, `in_()`,
-  `deep_iterable()`, custom `finite_float`, `gt()`.
+  `deep_iterable()`, custom `finite_float`, `gt()`. Order validators from simplest
+  to most complex: cheap structural checks (e.g., `min_len`, `instance_of`) before
+  expensive semantic checks (e.g., cross-field consistency, name uniqueness).
 - Method validators: `@_field.validator` with `# noqa: DOC101, DOC103` for
   validators needing `self` access.
-- Cross-field: `__attrs_post_init__` when validation involves multiple fields.
+- Cross-field: `__attrs_post_init__` is a last resort. Method validators
+  (`@field.validator`) already receive `self` and can read other already-set
+  attributes, so most cross-field checks belong there instead. When one field
+  must be compatible with another, attach the validator to the later field —
+  attrs sets fields in declaration order, so earlier fields are always available
+  via `self` at that point. When one attribute's value must be adjusted after
+  all fields are set — which is typically a workaround and should itself be
+  questioned — `__attrs_post_init__` is acceptable.
 - Converters: `field(converter=to_searchspace)` for automatic type coercion.
+- If a converter already guarantees a specific type (e.g., `converter=list`
+  always produces a `list`, a custom converter always returns a known type),
+  omit any `instance_of(...)` validator for that same type — the check is
+  redundant.
 - Reusable validators in `baybe/utils/validation.py`: `finite_float`,
   `non_nan_float`, `non_inf_float`, `validate_not_nan`, `validate_target_input`,
   `validate_parameter_input`, `validate_object_names`.
@@ -279,6 +313,8 @@ For a full list of available tox environments and developer commands, see
 - CHANGELOG.md updated in every PR (CI enforced). Specific entries, complete
   sentences. Commit named "Update CHANGELOG" as last commit.
 - Use imperative in commit header, e.g. "Add", "Fix", "Rework", "Handle", "Adjust", etc.
+- Keep the commit header short (max ~72 characters). Move additional details to the
+  commit body.
 - Keep commit body short and informative. Do not add commit body if it has no
   additional info compared to the header.
 - Pre-commit must pass. Clean history: squash add/revert pairs, no debug prints.
@@ -296,6 +332,7 @@ For a full list of available tox environments and developer commands, see
 - No hardcoded enum values in comments — link the enum.
 - No private field names in user-facing messages — use public alias.
 - No hardcoded class names in repr/errors — use `self.__class__.__name__`.
+- No hardcoded class names in classmethods — use `cls()` and return `Self`.
 - No silent errors. No mutation of caller-provided dicts.
 - No silent defaults or "best effort" fallbacks — if input is invalid, raise.
 - No proceeding past failed preconditions into expensive computation.

@@ -7,8 +7,8 @@ from typing import TypeVar
 import pandas as pd
 
 from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
-from baybe.parameters import TaskParameter
-from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
+from baybe.parameters.base import Parameter, _EncodedDiscreteParameter
+from baybe.parameters.categorical import TaskParameter
 from baybe.utils.dataframe import get_transform_objects
 
 try:  # For python < 3.11, use the exceptiongroup backport
@@ -19,38 +19,33 @@ except NameError:
 _T = TypeVar("_T", bound=Parameter)
 
 
-def validate_parameter_names(  # noqa: DOC101, DOC103
-    parameters: Collection[Parameter],
-) -> None:
-    """Validate the parameter names.
+def validate_parameters(
+    parameters: Collection[Parameter], *, allow_empty: bool = False
+) -> None:  # noqa: DOC101, DOC103
+    """Validate the parameters.
+
+    Args:
+        parameters: The parameters to validate.
+        allow_empty: Whether to allow an empty parameter collection.
 
     Raises:
         ValueError: If the given list contains parameters with the same name.
-    """
-    param_names = [p.name for p in parameters]
-    if len(set(param_names)) != len(param_names):
-        raise ValueError("All parameters must have unique names.")
-
-
-def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC101, DOC103
-    """Validate the parameters.
-
-    Raises:
-        EmptySearchSpaceError: If the parameter list is empty.
+        EmptySearchSpaceError: If no parameter is provided and empty
+            collections are explicitly disallowed.
         NotImplementedError: If more than one
             :class:`baybe.parameters.categorical.TaskParameter` is requested.
     """
-    if not parameters:
+    if not allow_empty and not parameters:
         raise EmptySearchSpaceError("At least one parameter must be provided.")
 
-    # TODO [16932]: Remove once more task parameters are supported
     if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
         raise NotImplementedError(
             "Currently, at most one task parameter can be considered."
         )
 
-    # Assert: unique names
-    validate_parameter_names(parameters)
+    param_names = [p.name for p in parameters]
+    if len(set(param_names)) != len(param_names):
+        raise ValueError("All parameters must have unique names.")
 
 
 def validate_dataframe_active_values(
@@ -70,7 +65,7 @@ def validate_dataframe_active_values(
     exceptions: list[IncompatibilityError] = []
 
     for param in parameters:
-        if isinstance(param, _DiscreteLabelLikeParameter):
+        if isinstance(param, _EncodedDiscreteParameter):
             df_values = set(df[param.name])
             active_values = set(param.active_values)
             if invalid_values := df_values - active_values:
