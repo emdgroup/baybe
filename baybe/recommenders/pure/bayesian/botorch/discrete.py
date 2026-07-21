@@ -123,25 +123,17 @@ def recommend_discrete_without_subsets(
 
     from botorch.optim import optimize_acqf_discrete
 
-    # Determine the next set of points to be tested
     candidates = subspace_discrete.get_candidates()
     candidates_comp = subspace_discrete.transform(candidates)
-    points, _ = optimize_acqf_discrete(
-        recommender._botorch_acqf, batch_size, to_tensor(candidates_comp)
+    choices = to_tensor(candidates_comp)
+
+    points, _ = optimize_acqf_discrete(recommender._botorch_acqf, batch_size, choices)
+
+    # Recover the positional index of each selected point in the candidate set.
+    # Operating directly on the BoTorch output avoids introducing any further
+    # imprecision beyond what the optimizer itself produces.
+    row_idxs = (
+        (choices.unsqueeze(0) == points.unsqueeze(1)).all(dim=-1).int().argmax(dim=1)
     )
 
-    # Retrieve the rows from the subspace corresponding to the selected points
-    # IMPROVE: The merging procedure is conceptually similar to what
-    #   `SearchSpace._match_measurement_with_searchspace_indices` does, though using
-    #   a simpler matching logic. When refactoring the SearchSpace class to
-    #   handle continuous parameters, a corresponding utility could be extracted.
-    idxs = pd.Index(
-        pd.merge(
-            pd.DataFrame(points, columns=candidates_comp.columns),
-            candidates_comp.reset_index(),
-            on=list(candidates_comp),
-            how="left",
-        )["index"]
-    )
-
-    return candidates.loc[idxs]
+    return candidates.iloc[row_idxs.numpy()].reset_index(drop=True)

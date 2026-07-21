@@ -85,9 +85,7 @@ def recommend_hybrid_without_subsets(
     candidates_comp = searchspace.discrete.transform(candidates)
 
     # Calculate the number of samples from the given percentage
-    n_candidates = math.ceil(
-        recommender.sampling_percentage * len(candidates_comp.index)
-    )
+    n_candidates = math.ceil(recommender.sampling_percentage * len(candidates_comp))
 
     # Potential sampling of discrete candidates
     if recommender.hybrid_sampler is not None:
@@ -97,9 +95,10 @@ def recommend_hybrid_without_subsets(
 
     # Prepare all considered discrete configurations in the
     # List[Dict[int, float]] format expected by BoTorch.
-    num_comp_columns = len(candidates_comp.columns)
-    candidates_comp.columns = list(range(num_comp_columns))
-    fixed_features_list = candidates_comp.to_dict("records")
+    n_comp_columns = len(candidates_comp.columns)
+    fixed_features_df = candidates_comp.copy()
+    fixed_features_df.columns = list(range(n_comp_columns))
+    fixed_features_list = fixed_features_df.to_dict("records")
 
     # Actual call of the BoTorch optimization routine
     # NOTE: The explicit `or None` conversion is added as an additional safety net
@@ -116,7 +115,7 @@ def recommend_hybrid_without_subsets(
         equality_constraints=flatten(
             c.to_botorch(
                 searchspace.continuous.parameters,
-                idx_offset=len(candidates_comp.columns),
+                idx_offset=n_comp_columns,
                 batch_size=batch_size if c.is_interpoint else None,
             )
             for c in searchspace.continuous.constraints_lin_eq
@@ -125,7 +124,7 @@ def recommend_hybrid_without_subsets(
         inequality_constraints=flatten(
             c.to_botorch(
                 searchspace.continuous.parameters,
-                idx_offset=num_comp_columns,
+                idx_offset=n_comp_columns,
                 batch_size=batch_size if c.is_interpoint else None,
             )
             for c in searchspace.continuous.constraints_lin_ineq
@@ -133,25 +132,27 @@ def recommend_hybrid_without_subsets(
         or None,
     )
 
-    # Align candidates with search space index. Done via including the search space
-    # index during the merge, which is used later for back-translation into the
-    # experimental representation
-    merged = pd.merge(
-        pd.DataFrame(points),
-        candidates_comp.reset_index(),
-        on=list(candidates_comp.columns),
-        how="left",
-    ).set_index("index")
+    # Recover the positional index of the discrete part of each recommended point.
+    # Operating directly on the BoTorch output avoids introducing any further
+    # imprecision beyond what the optimizer itself produces.
+    disc_choices = to_tensor(candidates_comp)
+    disc_points = points[:, :n_comp_columns]
+    row_idxs = (
+        (disc_choices.unsqueeze(0) == disc_points.unsqueeze(1))
+        .all(dim=-1)
+        .int()
+        .argmax(dim=1)
+    )
 
-    # Get experimental representation of discrete part
-    rec_disc_exp = candidates.loc[merged.index]
-
-    # Combine discrete and continuous parts
+    # Combine the discrete part in experimental representation with the
+    # optimized continuous part from the BoTorch output
+    rec_disc_exp = candidates.iloc[row_idxs.numpy()].reset_index(drop=True)
     rec_exp = pd.concat(
         [
             rec_disc_exp,
-            merged.iloc[:, num_comp_columns:].set_axis(
-                searchspace.continuous.parameter_names, axis=1
+            pd.DataFrame(
+                points[:, n_comp_columns:].numpy(),
+                columns=searchspace.continuous.parameter_names,
             ),
         ],
         axis=1,
