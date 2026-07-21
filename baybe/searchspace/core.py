@@ -225,19 +225,24 @@ class SearchSpace(SerialMixin):
     @property
     def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
-        # TODO[narwhalify]: use settings-based backend selection
-        return pd.concat(
-            [self.discrete.comp_rep_bounds, self.continuous.comp_rep_bounds],
-            axis=1,
-        )
+        return nw.concat(
+            [
+                nw.from_native(self.discrete.comp_rep_bounds, eager_only=True),
+                nw.from_native(self.continuous.comp_rep_bounds, eager_only=True),
+            ],
+            how="horizontal",
+        ).to_native()
 
     @property
     def scaling_bounds(self) -> IntoDataFrame:
         """The bounds used for scaling the surrogate model input."""
-        # TODO[narwhalify]: use settings-based backend selection
-        return pd.concat(
-            [self.discrete.scaling_bounds, self.continuous.scaling_bounds], axis=1
-        )
+        return nw.concat(
+            [
+                nw.from_native(self.discrete.scaling_bounds, eager_only=True),
+                nw.from_native(self.continuous.scaling_bounds, eager_only=True),
+            ],
+            how="horizontal",
+        ).to_native()
 
     @property
     def parameter_names(self) -> tuple[str, ...]:

@@ -649,35 +649,23 @@ class SubspaceDiscrete(SerialMixin):
     @property
     def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
-        # TODO[narwhalify]: use settings-based backend selection
+        # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3808
+        backend = active_settings.default_dataframe_backend
+
         if not self.parameters:
-            return pd.DataFrame(index=["min", "max"])
-        df = pd.concat(
-            [
-                nw.from_native(p.transform(), eager_only=True).to_pandas()
-                for p in self.parameters
-            ],
-            axis=1,
-        )
-        return pd.DataFrame({"min": df.min(), "max": df.max()}).T
+            return nw.from_dict({}, backend=backend).to_native()  # type: ignore[arg-type]
+
+        bounds: dict[str, tuple] = {}
+        for p in self.parameters:
+            df = nw.from_native(p.transform(), eager_only=True)
+            for col in df.columns:
+                bounds[col] = (df[col].min(), df[col].max())
+        return nw.from_dict(bounds, backend=backend).to_native()  # type: ignore[arg-type]
 
     @property
     def scaling_bounds(self) -> IntoDataFrame:
         """The bounds used for scaling the surrogate model input."""
-        # TODO[narwhalify]: use settings-based backend selection
-        return (
-            pd.concat(
-                [
-                    nw.from_native(p.transform(), eager_only=True)
-                    .to_pandas()
-                    .agg(["min", "max"])
-                    for p in self.parameters
-                ],
-                axis=1,
-            )
-            if self.parameters
-            else pd.DataFrame(index=["min", "max"])
-        )
+        return self.comp_rep_bounds
 
     @staticmethod
     def estimate_product_space_size(

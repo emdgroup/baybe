@@ -368,12 +368,11 @@ class SubspaceContinuous(SerialMixin):
     @property
     def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
-        # TODO[narwhalify]: use settings-based backend selection
-        return pd.DataFrame(
+        # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3808
+        return nw.from_dict(
             {p.name: p.bounds.to_tuple() for p in self.parameters},
-            index=["min", "max"],
-            dtype=active_settings.DTypeFloatNumpy,
-        )
+            backend=active_settings.default_dataframe_backend,  # type: ignore[arg-type]
+        ).to_native()
 
     @property
     def scaling_bounds(self) -> IntoDataFrame:
@@ -539,11 +538,15 @@ class SubspaceContinuous(SerialMixin):
             return pd.DataFrame(index=pd.RangeIndex(0, batch_size))
 
         if not self.constraints:
-            return self._sample_from_bounds(batch_size, self.comp_rep_bounds.to_numpy())
+            return self._sample_from_bounds(
+                batch_size,
+                nw.from_native(self.comp_rep_bounds, eager_only=True).to_numpy(),
+            )
 
         if len(self.constraints_cardinality) == 0:
             return self._sample_from_polytope(
-                batch_size, self.comp_rep_bounds.to_numpy()
+                batch_size,
+                nw.from_native(self.comp_rep_bounds, eager_only=True).to_numpy(),
             )
 
         return self._sample_from_polytope_with_cardinality_constraints(batch_size)
@@ -721,7 +724,8 @@ class SubspaceContinuous(SerialMixin):
     def full_factorial(self) -> pd.DataFrame:
         """Get the full factorial of the continuous space."""
         index = pd.MultiIndex.from_product(
-            self.comp_rep_bounds.values.T.tolist(), names=self.parameter_names
+            nw.from_native(self.comp_rep_bounds, eager_only=True).to_numpy().T.tolist(),
+            names=self.parameter_names,
         )
 
         return pd.DataFrame(index=index).reset_index()
