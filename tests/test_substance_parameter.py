@@ -1,5 +1,6 @@
 """Tests for the substance parameter."""
 
+import narwhals.stable.v2 as nw
 import pytest
 from pytest import param
 
@@ -46,6 +47,6 @@ def test_degenerate_comp_df():
     }
     p = SubstanceParameter(name="p", data=dict_base, encoding="RDKITFINGERPRINT")
 
-    assert not p.transform().collect().is_duplicated().any(), (
+    assert not nw.from_native(p.transform(), eager_only=True).is_duplicated().any(), (
         "A degenerate computational representation was not correctly treated."
     )
