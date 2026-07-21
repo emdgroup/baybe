@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 from functools import cached_property
 from itertools import chain, product
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 import narwhals.stable.v2 as nw
 from attrs import define, field
@@ -28,7 +28,7 @@ class SequenceEncoderProtocol(Protocol):
     __slots__ = ()
 
     def encode(
-        self, values: nw.Series, alphabet: tuple[str], *, key: str, name: str
+        self, values: nw.Series, alphabet: tuple[str, ...], *, key: str, name: str
     ) -> nw.DataFrame:
         """Encode the given sequence values.
 
@@ -52,7 +52,7 @@ class SequenceEncoderProtocol(Protocol):
 class SequenceParameter(_EncodedDiscreteParameter):
     """Parameter class for sequence parameters."""
 
-    alphabet: tuple[str] = field(converter=tuple, validator=instance_of(tuple))
+    alphabet: tuple[str, ...] = field(converter=tuple, validator=instance_of(tuple))
     """The alphabet of the sequence parameter."""
 
     encoder: SequenceEncoderProtocol = field(
@@ -60,14 +60,16 @@ class SequenceParameter(_EncodedDiscreteParameter):
     )
     """The encoder function for the sequence parameter."""
 
-    min_length: int = field(default=0, validator=instance_of(int))
+    min_length: int = field(default=0, validator=instance_of(int), kw_only=True)
     """The minimum length of the sequence parameter."""
 
-    max_length: int | None = field(default=None, validator=optional(instance_of(int)))
+    max_length: int | None = field(
+        default=None, validator=optional(instance_of(int)), kw_only=True
+    )
     """Optional maximum length of the sequence parameter."""
 
     @alphabet.validator
-    def _validate_alphabet(self, _: object, value: tuple[str]) -> None:
+    def _validate_alphabet(self, _: object, value: tuple[str, ...]) -> None:
         """Validate the alphabet."""
         if not value:
             raise ValueError("Alphabet cannot be empty.")
@@ -93,35 +95,6 @@ class SequenceParameter(_EncodedDiscreteParameter):
             raise ValueError(
                 f"Maximum length ({value}) must be greater than or equal to "
                 f"minimum length ({self.min_length})."
-            )
-
-    @_EncodedDiscreteParameter._active_values.validator
-    def _validate_active_values(self, _: Any, content: tuple[str | bool, ...]) -> None:  # noqa: DOC101, DOC103
-        """Validate the active parameter values.
-
-        If no such list is provided, no validation is being performed. In particular,
-        the errors listed below are only relevant if the ``values`` list is provided.
-
-        Raises:
-            ValueError: If an empty active parameters list is provided.
-            ValueError: If the active parameter values are not unique.
-            ValueError: If not all active values are valid parameter choices.
-        """
-        if content is None:
-            return
-
-        if len(content) == 0:
-            raise ValueError(
-                "If an active parameters list is provided, it must not be empty."
-            )
-        if len(set(content)) != len(content):
-            raise ValueError("The active parameter values must be unique.")
-        if any(
-            not isinstance(item, str) or not self.is_in_range(item) for item in content
-        ):
-            raise ValueError(
-                "All active values must be within the specified alphabet"
-                "and length and valid strings."
             )
 
     @override
@@ -207,6 +180,8 @@ class SequenceParameter(_EncodedDiscreteParameter):
 
     @override
     def is_in_range(self, item: str) -> bool:
+        if not isinstance(item, str):
+            return False
         item_length = len(item)
         if (
             not item

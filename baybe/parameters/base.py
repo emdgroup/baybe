@@ -301,10 +301,10 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
             )
         if len(set(content)) != len(content):
             raise ValueError("The active parameter values must be unique.")
-        if not all(v in self.values for v in content):
+        if not all(self.is_in_range(v) for v in content):
             raise ValueError(
-                f"All active values must be valid parameter choices from: "
-                f"{self.values}, provided: {content}"
+                f"All active values must be valid parameter choices, "
+                f"provided: {content}"
             )
 
     @override
