@@ -90,7 +90,7 @@ class SequenceParameter(_EncodedDiscreteParameter):
         """
         if not self.is_finite:
             raise InfiniteParameterError(
-                "Cannot enumerate values for a SequenceParameter "
+                f"Cannot enumerate values for a {self.__class__.__name__} "
                 "without an explicit maximum length."
             )
         assert self.max_length is not None, (
@@ -110,7 +110,7 @@ class SequenceParameter(_EncodedDiscreteParameter):
     def values(self) -> tuple[tuple[str, ...], ...]:
         if not self.is_finite:
             raise InfiniteParameterError(
-                "Cannot enumerate values for a SequenceParameter "
+                f"Cannot enumerate values for a {self.__class__.__name__} "
                 "without an explicit maximum length."
             )
         return self._enumerate_values
