@@ -18,9 +18,18 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.parameters.sequence import SequenceEncoderProtocol, SequenceParameter
 from baybe.parameters.substance import SubstanceParameter
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.interval import InfiniteIntervalError
+
+
+class _DummyEncoder(SequenceEncoderProtocol):
+    """Minimal encoder satisfying SequenceEncoderProtocol for validation tests."""
+
+    def encode(self, values, alphabet, *, key, name):
+        """Stub encode method."""
+
 
 try:  # For python < 3.11, use the exceptiongroup backport
     ExceptionGroup
@@ -113,6 +122,28 @@ def test_invalid_encoding_categorical_parameter():
     """Providing an invalid encoding raises an exception."""
     with pytest.raises(ValueError):
         CategoricalParameter(name="invalid_encoding", values=["A", "B"], encoding="enc")
+
+
+@pytest.mark.parametrize(
+    ("override", "error"),
+    [
+        param({"alphabet": set()}, ValueError, id="empty_alphabet"),
+        param({"alphabet": {"AB"}}, ValueError, id="multi_char_token"),
+        param({"encoder": object()}, TypeError, id="non_encoder_object"),
+        param({"min_length": -1}, ValueError, id="negative_min_length"),
+        param({"max_length": 0}, ValueError, id="max_length_zero"),
+        param({"min_length": 3, "max_length": 2}, ValueError, id="max_less_than_min"),
+    ],
+)
+def test_invalid_sequence_parameter(override, error):
+    """Providing invalid arguments to SequenceParameter raises an exception."""
+    defaults = {
+        "name": "seq",
+        "alphabet": {"A", "C", "G", "T"},
+        "encoder": _DummyEncoder(),
+    }
+    with pytest.raises(error):
+        SequenceParameter(**{**defaults, **override})
 
 
 @pytest.mark.parametrize(
