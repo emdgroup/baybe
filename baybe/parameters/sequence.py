@@ -21,7 +21,7 @@ from attrs.validators import (
 from narwhals.stable.v2.typing import DataFrameT, SeriesT
 from typing_extensions import override
 
-from baybe.exceptions import InfiniteParameterError
+from baybe.exceptions import InfiniteSpaceError
 from baybe.parameters.base import _EncodedDiscreteParameter
 from baybe.utils.conversion import nonstring_to_tuple
 
@@ -86,10 +86,10 @@ class SequenceParameter(_EncodedDiscreteParameter):
             A tuple of all possible values.
 
         Raises:
-            InfiniteParameterError: If the parameter has no maximum length.
+            InfiniteSpaceError: If the parameter has no maximum length.
         """
         if not self.is_finite:
-            raise InfiniteParameterError(
+            raise InfiniteSpaceError(
                 f"Cannot enumerate values for a {self.__class__.__name__} "
                 "without an explicit maximum length."
             )
@@ -109,7 +109,7 @@ class SequenceParameter(_EncodedDiscreteParameter):
     @override
     def values(self) -> tuple[tuple[str, ...], ...]:
         if not self.is_finite:
-            raise InfiniteParameterError(
+            raise InfiniteSpaceError(
                 f"Cannot enumerate values for a {self.__class__.__name__} "
                 "without an explicit maximum length."
             )
