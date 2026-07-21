@@ -1,11 +1,14 @@
 """Base classes for all pure recommenders."""
 
+from __future__ import annotations
+
 import gc
 from abc import ABC
 from collections.abc import Callable
-from typing import Any, ClassVar, NoReturn
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn
 
 import cattrs
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
 from cattrs.gen import make_dict_unstructure_fn
@@ -25,6 +28,9 @@ from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.serialization.core import add_type, converter
 from baybe.utils.boolean import is_abstract
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
 
 _DEPRECATION_ERROR_MESSAGE = (
     "The attribute '{}' is no longer available for recommenders. "
@@ -107,15 +113,15 @@ class PureRecommender(ABC, RecommenderProtocol):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> pd.DataFrame:
         if objective is not None:
             validate_object_names(searchspace.parameters + objective.targets)
 
         if measurements is not None:
             measurements = preprocess_dataframe(
-                measurements,
+                nw.from_native(measurements, eager_only=True).to_pandas(),
                 searchspace,
                 objective,
                 numerical_measurements_must_be_within_tolerance=False,
@@ -123,7 +129,7 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         if pending_experiments is not None:
             pending_experiments = preprocess_dataframe(
-                pending_experiments,
+                nw.from_native(pending_experiments, eager_only=True).to_pandas(),
                 searchspace,
                 numerical_measurements_must_be_within_tolerance=False,
             )

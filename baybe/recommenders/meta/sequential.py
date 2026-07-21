@@ -3,10 +3,12 @@
 #  this file will resolve type errors
 # mypy: disable-error-code="arg-type"
 
+from __future__ import annotations
+
 import gc
 from abc import abstractmethod
 from collections.abc import Iterable, Iterator
-from typing import Any, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
 import cattrs
 import pandas as pd
@@ -27,6 +29,9 @@ from baybe.serialization import (
     converter,
 )
 from baybe.utils.conversion import to_string
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
 
 _T = TypeVar("_T")
 
@@ -77,8 +82,8 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> RecommenderProtocol:
         n_data = len(measurements) if measurements is not None else 0
         if (n_data >= self.switch_after) or (
@@ -131,8 +136,8 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> RecommenderProtocol:
         # If the training dataset size has decreased, something went wrong
         if (
@@ -160,8 +165,8 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> pd.DataFrame:
         recommendation = super().recommend(
             batch_size, searchspace, objective, measurements, pending_experiments

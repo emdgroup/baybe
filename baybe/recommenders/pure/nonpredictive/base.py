@@ -1,10 +1,13 @@
 """Base class for all nonpredictive recommenders."""
 
+from __future__ import annotations
+
 import gc
 import warnings
 from abc import ABC
+from typing import TYPE_CHECKING
 
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import define
 from typing_extensions import override
 
@@ -12,6 +15,10 @@ from baybe.exceptions import IncompatibleArgumentError, UnusedObjectWarning
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace.core import SearchSpace
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from narwhals.stable.v2.typing import IntoDataFrame
 
 
 @define
@@ -24,8 +31,8 @@ class NonPredictiveRecommender(PureRecommender, ABC):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> pd.DataFrame:
         if pending_experiments is not None:
             raise IncompatibleArgumentError(
@@ -35,7 +42,9 @@ class NonPredictiveRecommender(PureRecommender, ABC):
                 f"experiments from the candidate set, adjust the search space "
                 f"accordingly."
             )
-        if (measurements is not None) and not measurements.empty:
+        if (measurements is not None) and len(
+            nw.from_native(measurements, eager_only=True)
+        ) > 0:
             warnings.warn(
                 f"'{self.recommend.__name__}' was called with a non-empty "
                 f"set of measurements but '{self.__class__.__name__}' does not "

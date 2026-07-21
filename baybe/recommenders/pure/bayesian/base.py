@@ -6,6 +6,7 @@ import gc
 from abc import ABC
 from typing import TYPE_CHECKING
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
@@ -30,6 +31,7 @@ from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
+    from narwhals.stable.v2.typing import IntoDataFrame
 
 
 def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
@@ -132,8 +134,8 @@ class BayesianRecommender(PureRecommender, ABC):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> pd.DataFrame:
         if objective is None:
             raise NotImplementedError(
@@ -143,6 +145,8 @@ class BayesianRecommender(PureRecommender, ABC):
 
         validate_object_names(searchspace.parameters + objective.targets)
 
+        if measurements is not None:
+            measurements = nw.from_native(measurements, eager_only=True).to_pandas()
         if (measurements is None) or measurements.empty:
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
@@ -158,7 +162,7 @@ class BayesianRecommender(PureRecommender, ABC):
 
         if pending_experiments is not None:
             pending_experiments = preprocess_dataframe(
-                pending_experiments,
+                nw.from_native(pending_experiments, eager_only=True).to_pandas(),
                 searchspace,
                 numerical_measurements_must_be_within_tolerance=False,
             )

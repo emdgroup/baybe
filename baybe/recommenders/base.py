@@ -1,11 +1,16 @@
 """Base protocol for all recommenders."""
 
-from typing import Protocol, runtime_checkable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 import pandas as pd
 
 from baybe.objectives.base import Objective
 from baybe.searchspace import SearchSpace
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
 
 
 @runtime_checkable
@@ -21,8 +26,8 @@ class RecommenderProtocol(Protocol):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> pd.DataFrame:
         """Recommend a batch of points from the given search space.
 
