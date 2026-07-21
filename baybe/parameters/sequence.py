@@ -69,7 +69,9 @@ class SequenceParameter(_EncodedDiscreteParameter):
     """Optional maximum length of the sequence parameter."""
 
     @alphabet.validator
-    def _validate_alphabet(self, _: object, value: tuple[str, ...]) -> None:
+    def _validate_alphabet(  # noqa: DOC101, DOC103
+        self, _: object, value: tuple[str, ...]
+    ) -> None:
         """Validate the alphabet."""
         if not value:
             raise ValueError("Alphabet cannot be empty.")
@@ -79,13 +81,17 @@ class SequenceParameter(_EncodedDiscreteParameter):
             )
 
     @min_length.validator
-    def _validate_min_length(self, _: object, value: int) -> None:
+    def _validate_min_length(  # noqa: DOC101, DOC103
+        self, _: object, value: int
+    ) -> None:
         """Validate the minimum length."""
         if value < 0:
             raise ValueError("Minimum length cannot be negative.")
 
     @max_length.validator
-    def _validate_max_length(self, _: object, value: int | None) -> None:
+    def _validate_max_length(  # noqa: DOC101, DOC103
+        self, _: object, value: int | None
+    ) -> None:
         """Validate the maximum length."""
         if value is None:
             return
