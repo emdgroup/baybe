@@ -66,9 +66,9 @@ class SequenceParameter(_EncodedDiscreteParameter):
     @override
     @property
     def is_finite(self) -> bool:
-        """Indicates whether the parameter has a finite number of values."""
         return self.max_length is not None
 
+    @cached_property
     def _enumerate_values(self) -> tuple[str, ...]:
         """Enumerate all possible values of the sequence parameter.
 
@@ -95,28 +95,19 @@ class SequenceParameter(_EncodedDiscreteParameter):
         )
         return tuple(all_values)
 
+    @property
     @override
-    @cached_property
     def values(self) -> tuple:
-        """The values the parameter can take.
-
-        Returns:
-            A tuple of all possible values.
-
-        Raises:
-            InfiniteParameterError: If the parameter has no maximum length.
-        """
         if not self.is_finite:
             raise InfiniteParameterError(
                 "Cannot enumerate values for a SequenceParameter "
                 "without an explicit maximum length."
             )
-        return self._enumerate_values()
+        return self._enumerate_values
 
-    @override
     @property
+    @override
     def comp_rep_columns(self) -> tuple[str, ...]:
-        """The columns spanning the computational representation."""
         return (self.name,)
 
     @override
