@@ -139,8 +139,10 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         )
 
         # Glue the solutions together and return them
-        rec_cont.index = disc_rec.index
-        rec_exp = pd.concat([disc_rec, rec_cont], axis=1)
+        rec_exp = pd.concat(
+            [disc_rec.reset_index(drop=True), rec_cont.reset_index(drop=True)],
+            axis=1,
+        )
         return rec_exp
 
 

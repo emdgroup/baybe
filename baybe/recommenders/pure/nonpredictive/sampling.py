@@ -65,8 +65,10 @@ class RandomRecommender(NonPredictiveRecommender):
         if not is_hybrid:
             return disc_random
 
-        cont_random.index = disc_random.index
-        return pd.concat([disc_random, cont_random], axis=1)
+        return pd.concat(
+            [disc_random.reset_index(drop=True), cont_random.reset_index(drop=True)],
+            axis=1,
+        )
 
     @override
     def __str__(self) -> str:
@@ -174,7 +176,7 @@ class FPSRecommender(NonPredictiveRecommender):
                 initialization=self.initialization.value,
                 random_tie_break=self.random_tie_break,
             )
-        return candidates.iloc[ilocs]
+        return candidates.iloc[ilocs].reset_index(drop=True)
 
     @override
     def __str__(self) -> str:
