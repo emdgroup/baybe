@@ -11,6 +11,7 @@ from itertools import chain
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 import cattrs.gen
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field, fields
@@ -40,6 +41,7 @@ from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 
 if TYPE_CHECKING:
+    from narwhals.typing import IntoDataFrame, IntoDataFrameT
     from torch import Tensor
 
     from baybe.searchspace.core import SearchSpace
@@ -364,16 +366,16 @@ class SubspaceContinuous(SerialMixin):
         return frozenset(chain(*names_per_constraint))
 
     @property
-    def comp_rep_bounds(self) -> pd.DataFrame:
+    def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
-        return pd.DataFrame(
+        # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3808
+        return nw.from_dict(
             {p.name: p.bounds.to_tuple() for p in self.parameters},
-            index=["min", "max"],
-            dtype=active_settings.DTypeFloatNumpy,
-        )
+            backend=active_settings.default_dataframe_backend,  # type: ignore[arg-type]
+        ).to_native()
 
     @property
-    def scaling_bounds(self) -> pd.DataFrame:
+    def scaling_bounds(self) -> IntoDataFrame:
         """The bounds used for scaling the surrogate model input."""
         return self.comp_rep_bounds
 
@@ -491,20 +493,24 @@ class SubspaceContinuous(SerialMixin):
 
     def transform(
         self,
-        df: pd.DataFrame,
+        df: IntoDataFrameT,
         /,
         *,
         allow_missing: bool = False,
         allow_extra: bool = False,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         """See :func:`baybe.searchspace.core.SearchSpace.transform`."""
-        # Extract the parameters to be transformed
+        # Extract the parameters corresponding to the columns to be transformed
         parameters = get_transform_objects(
             df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
-        # Transform the parameters
-        return df[[p.name for p in parameters]]
+        # Transformation is no-op: simply extract the relevant columns
+        return (
+            nw.from_native(df, eager_only=True)
+            .select([p.name for p in parameters])
+            .to_native()
+        )
 
     def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
         """Draw uniform random parameter configurations from the continuous space.
@@ -532,11 +538,15 @@ class SubspaceContinuous(SerialMixin):
             return pd.DataFrame(index=pd.RangeIndex(0, batch_size))
 
         if not self.constraints:
-            return self._sample_from_bounds(batch_size, self.comp_rep_bounds.to_numpy())
+            return self._sample_from_bounds(
+                batch_size,
+                nw.from_native(self.comp_rep_bounds, eager_only=True).to_numpy(),
+            )
 
         if len(self.constraints_cardinality) == 0:
             return self._sample_from_polytope(
-                batch_size, self.comp_rep_bounds.to_numpy()
+                batch_size,
+                nw.from_native(self.comp_rep_bounds, eager_only=True).to_numpy(),
             )
 
         return self._sample_from_polytope_with_cardinality_constraints(batch_size)
@@ -714,7 +724,8 @@ class SubspaceContinuous(SerialMixin):
     def full_factorial(self) -> pd.DataFrame:
         """Get the full factorial of the continuous space."""
         index = pd.MultiIndex.from_product(
-            self.comp_rep_bounds.values.T.tolist(), names=self.parameter_names
+            nw.from_native(self.comp_rep_bounds, eager_only=True).to_numpy().T.tolist(),
+            names=self.parameter_names,
         )
 
         return pd.DataFrame(index=index).reset_index()

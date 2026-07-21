@@ -6,7 +6,6 @@ import gc
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
 from typing_extensions import override
@@ -17,6 +16,8 @@ from baybe.serialization import (
 from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 if TYPE_CHECKING:
+    from narwhals.typing import IntoSeriesT
+
     from baybe.objectives import SingleTargetObjective
 
 
@@ -54,7 +55,7 @@ class Target(ABC, SerialMixin):
         return SingleTargetObjective(self)
 
     @abstractmethod
-    def transform(self, series: pd.Series, /) -> pd.Series:
+    def transform(self, series: IntoSeriesT, /) -> IntoSeriesT:
         """Transform target measurements to computational representation.
 
         Args:

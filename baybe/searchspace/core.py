@@ -8,6 +8,7 @@ from enum import Enum
 from itertools import product
 from typing import TYPE_CHECKING, ClassVar
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -34,6 +35,8 @@ from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    from narwhals.typing import IntoDataFrame, IntoDataFrameT
+
     from baybe.parameters.selectors import ParameterSelectorProtocol
 
 
@@ -220,19 +223,26 @@ class SearchSpace(SerialMixin):
         return self.discrete.comp_rep_columns + self.continuous.comp_rep_columns
 
     @property
-    def comp_rep_bounds(self) -> pd.DataFrame:
+    def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
-        return pd.concat(
-            [self.discrete.comp_rep_bounds, self.continuous.comp_rep_bounds],
-            axis=1,
-        )
+        return nw.concat(
+            [
+                nw.from_native(self.discrete.comp_rep_bounds, eager_only=True),
+                nw.from_native(self.continuous.comp_rep_bounds, eager_only=True),
+            ],
+            how="horizontal",
+        ).to_native()
 
     @property
-    def scaling_bounds(self) -> pd.DataFrame:
+    def scaling_bounds(self) -> IntoDataFrame:
         """The bounds used for scaling the surrogate model input."""
-        return pd.concat(
-            [self.discrete.scaling_bounds, self.continuous.scaling_bounds], axis=1
-        )
+        return nw.concat(
+            [
+                nw.from_native(self.discrete.scaling_bounds, eager_only=True),
+                nw.from_native(self.continuous.scaling_bounds, eager_only=True),
+            ],
+            how="horizontal",
+        ).to_native()
 
     @property
     def parameter_names(self) -> tuple[str, ...]:
@@ -445,12 +455,12 @@ class SearchSpace(SerialMixin):
 
     def transform(
         self,
-        df: pd.DataFrame,
+        df: IntoDataFrameT,
         /,
         *,
         allow_missing: bool = False,
         allow_extra: bool = False,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         """Transform parameters from experimental to computational representation.
 
         Args:
@@ -471,25 +481,33 @@ class SearchSpace(SerialMixin):
         # be "extra" columns, so we drop them first. However, in this step, we can
         # ignore if columns are not complete since a proper error will be raised in the
         # corresponding transformation step of each space below.
-        df_disc_in = df.drop(
-            columns=list(self.continuous.parameter_names), errors="ignore"
+        nw_df = nw.from_native(df, eager_only=True)
+        existing = set(nw_df.columns)
+        df_disc_in = nw_df.drop(
+            [c for c in self.continuous.parameter_names if c in existing]
         )
-        df_cont_in = df.drop(
-            columns=list(self.discrete.parameter_names), errors="ignore"
-        )
-
-        # Transform subspaces separately
-        df_disc_out = self.discrete.transform(
-            df_disc_in, allow_missing=allow_missing, allow_extra=allow_extra
-        )
-        df_cont_out = self.continuous.transform(
-            df_cont_in, allow_missing=allow_missing, allow_extra=allow_extra
+        df_cont_in = nw_df.drop(
+            [c for c in self.discrete.parameter_names if c in existing]
         )
 
-        # Combine Subspaces
-        comp_rep = pd.concat([df_disc_out, df_cont_out], axis=1)
-
-        return comp_rep
+        # Transform subspaces separately and combine
+        return nw.concat(
+            [
+                nw.from_native(
+                    self.discrete.transform(
+                        df_disc_in, allow_missing=allow_missing, allow_extra=allow_extra
+                    ),
+                    eager_only=True,
+                ),
+                nw.from_native(
+                    self.continuous.transform(
+                        df_cont_in, allow_missing=allow_missing, allow_extra=allow_extra
+                    ),
+                    eager_only=True,
+                ),
+            ],
+            how="horizontal",
+        ).to_native()
 
     @property
     def constraints_augmentable(self) -> tuple[Constraint, ...]:

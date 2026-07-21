@@ -50,6 +50,8 @@ from baybe.utils.dataframe import (
 from baybe.utils.memory import bytes_to_human_readable
 
 if TYPE_CHECKING:
+    from narwhals.typing import IntoDataFrame, IntoDataFrameT
+
     from baybe.searchspace.core import SearchSpace
 
 
@@ -645,35 +647,25 @@ class SubspaceDiscrete(SerialMixin):
         return tuple(col for p in self.parameters for col in p.comp_rep_columns)
 
     @property
-    def comp_rep_bounds(self) -> pd.DataFrame:
+    def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
+        # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3808
+        backend = active_settings.default_dataframe_backend
+
         if not self.parameters:
-            return pd.DataFrame(index=["min", "max"])
-        df = pd.concat(
-            [
-                nw.from_native(p.transform(), eager_only=True).to_pandas()
-                for p in self.parameters
-            ],
-            axis=1,
-        )
-        return pd.DataFrame({"min": df.min(), "max": df.max()}).T
+            return nw.from_dict({}, backend=backend).to_native()  # type: ignore[arg-type]
+
+        bounds: dict[str, tuple] = {}
+        for p in self.parameters:
+            df = nw.from_native(p.transform(), eager_only=True)
+            for col in df.columns:
+                bounds[col] = (df[col].min(), df[col].max())
+        return nw.from_dict(bounds, backend=backend).to_native()  # type: ignore[arg-type]
 
     @property
-    def scaling_bounds(self) -> pd.DataFrame:
+    def scaling_bounds(self) -> IntoDataFrame:
         """The bounds used for scaling the surrogate model input."""
-        return (
-            pd.concat(
-                [
-                    nw.from_native(p.transform(), eager_only=True)
-                    .to_pandas()
-                    .agg(["min", "max"])
-                    for p in self.parameters
-                ],
-                axis=1,
-            )
-            if self.parameters
-            else pd.DataFrame(index=["min", "max"])
-        )
+        return self.comp_rep_bounds
 
     @staticmethod
     def estimate_product_space_size(
@@ -842,24 +834,29 @@ class SubspaceDiscrete(SerialMixin):
 
     def transform(
         self,
-        df: pd.DataFrame,
+        df: IntoDataFrameT,
         /,
         *,
         allow_missing: bool = False,
         allow_extra: bool = False,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         """See :func:`baybe.searchspace.core.SearchSpace.transform`."""
-        # Extract the parameters to be transformed
+        nw_df = nw.from_native(df, eager_only=True)
+
+        # Extract the parameters corresponding to the columns to be transformed
         parameters = get_transform_objects(
-            df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
+            nw_df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
-        # Transform the parameters
-        dfs = [
-            nw.from_native(param.transform(df[param.name]), eager_only=True).to_pandas()
-            for param in parameters
-        ]
-        return pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
+        if not parameters:
+            return nw_df.drop(nw_df.columns).to_native()
+
+        # Transform columns one by one and concatenate
+        parts = [param.transform(nw_df[param.name]) for param in parameters]
+        return nw.concat(
+            [nw.from_native(part, eager_only=True) for part in parts],
+            how="horizontal",
+        ).to_native()
 
     def get_parameters_by_name(
         self, names: Sequence[str]

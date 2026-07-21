@@ -48,6 +48,7 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
 )
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
+from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     from botorch.models.gpytorch import GPyTorchModel
@@ -97,9 +98,7 @@ class _ModelContext:
     @property
     def parameter_bounds(self) -> Tensor:
         """Get the search space parameter bounds in BoTorch Format."""
-        import torch
-
-        return torch.from_numpy(self.searchspace.scaling_bounds.to_numpy(copy=True))
+        return to_tensor(self.searchspace.scaling_bounds)
 
     @property
     def numerical_indices(self) -> list[int]:

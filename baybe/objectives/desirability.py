@@ -32,6 +32,7 @@ if TYPE_CHECKING:
         MCAcquisitionObjective,
         ScalarizedPosteriorTransform,
     )
+    from narwhals.typing import IntoDataFrameT
     from torch import Tensor
 
 _OUTPUT_NAME = "Desirability"
@@ -322,12 +323,12 @@ class DesirabilityObjective(Objective):
     @override
     def _pre_transform(
         self,
-        df: pd.DataFrame,
+        df: IntoDataFrameT,
         /,
         *,
         allow_missing: bool = False,
         allow_extra: bool = False,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         if not self.as_pre_transformation:
             return super()._pre_transform(
                 df, allow_missing=allow_missing, allow_extra=allow_extra

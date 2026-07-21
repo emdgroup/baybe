@@ -1,5 +1,6 @@
 """Tests for the searchspace module."""
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 import pytest
@@ -58,21 +59,20 @@ def test_bounds_order():
     searchspace = SearchSpace.from_product(parameters=parameters)
     expected = np.array([[1.0, 7.0, 4.0, 10.0], [3.0, 9.0, 6.0, 12.0]])
     assert np.array_equal(
-        searchspace.comp_rep_bounds.values,
+        searchspace.comp_rep_bounds.to_numpy(),
         expected,
     )
 
 
 def test_empty_parameter_bounds():
-    """Asserts that the correct bounds are produced for empty search spaces.
-
-    Also checks for the correct shapes.
-    """
+    """Asserts that bounds can be evaluated for empty search spaces."""
     searchspace_discrete = SubspaceDiscrete.empty()
     searchspace_continuous = SubspaceContinuous.empty()
-    expected = pd.DataFrame(np.empty((2, 0)), index=["min", "max"])
-    pd.testing.assert_frame_equal(searchspace_discrete.comp_rep_bounds, expected)
-    pd.testing.assert_frame_equal(searchspace_continuous.comp_rep_bounds, expected)
+    for bounds in [
+        searchspace_discrete.comp_rep_bounds,
+        searchspace_continuous.comp_rep_bounds,
+    ]:
+        assert nw.from_native(bounds, eager_only=True).is_empty()
 
 
 def test_discrete_searchspace_creation_from_dataframe():
@@ -369,7 +369,7 @@ def test_sample_from_polytope_with_interpoint_constraints(
 
     # Test batch_size=1 and batch_size>1 as those the first one is a special case
     for batch_size in [1, 42]:
-        bounds = subspace.comp_rep_bounds.values
+        bounds = subspace.comp_rep_bounds.to_numpy()
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
         constraint_result = calculation(samples)
@@ -408,7 +408,7 @@ def test_sample_from_polytope_mixed_constraints_with_interpoint():
 
     # Test batch size of 1 as well as one small and one large batch size
     for batch_size in [1, 2, 42]:
-        bounds = subspace.comp_rep_bounds.values
+        bounds = subspace.comp_rep_bounds.to_numpy()
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
         # Verify regular constraint is satisfied for each row
