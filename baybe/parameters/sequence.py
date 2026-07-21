@@ -10,6 +10,7 @@ from itertools import chain, product
 import narwhals.stable.v2 as nw
 from attrs import Converter, define, field
 from attrs.validators import (
+    and_,
     deep_iterable,
     ge,
     instance_of,
@@ -32,9 +33,16 @@ class SequenceParameter(_EncodedDiscreteParameter):
     """Parameter class for sequence parameters."""
 
     alphabet: tuple[str, ...] = field(
-        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
+        converter=Converter(
+            lambda value, self, field: tuple(
+                sorted(nonstring_to_tuple(value, type(self), field))
+            ),
+            takes_self=True,
+            takes_field=True,
+        ),
         validator=deep_iterable(
-            member_validator=instance_of(str), iterable_validator=min_len(1)
+            member_validator=and_(instance_of(str), min_len(1)),
+            iterable_validator=min_len(1),
         ),
     )
     """The alphabet of the sequence parameter."""
@@ -45,12 +53,14 @@ class SequenceParameter(_EncodedDiscreteParameter):
     the encoded representation in exactly the same order as the input Series."""
 
     min_length: int = field(default=0, validator=ge(0), kw_only=True)
-    """The minimum length of the sequence parameter."""
+    """The minimum number of letters from the alphabet for
+    constructing a sequence."""
 
     max_length: int | None = field(
         default=None, validator=optional(ge(1)), kw_only=True
     )
-    """Optional maximum length of the sequence parameter."""
+    """Optional maximum number of letters from the alphabet for constructing
+    a sequence. If provided, the parameter becomes finite."""
 
     @max_length.validator
     def _validate_max_length(  # noqa: DOC101, DOC103
@@ -69,7 +79,7 @@ class SequenceParameter(_EncodedDiscreteParameter):
         return self.max_length is not None
 
     @cached_property
-    def _enumerate_values(self) -> tuple[str, ...]:
+    def _enumerate_values(self) -> tuple[tuple[str, ...], ...]:
         """Enumerate all possible values of the sequence parameter.
 
         Returns:
@@ -87,9 +97,9 @@ class SequenceParameter(_EncodedDiscreteParameter):
             "max_length must be set for finite parameters."
         )
         all_values = map(
-            "".join,
+            tuple,
             chain.from_iterable(
-                product(sorted(self.alphabet), repeat=length)
+                product(self.alphabet, repeat=length)
                 for length in range(self.min_length, self.max_length + 1)
             ),
         )
@@ -97,7 +107,7 @@ class SequenceParameter(_EncodedDiscreteParameter):
 
     @property
     @override
-    def values(self) -> tuple:
+    def values(self) -> tuple[tuple[str, ...], ...]:
         if not self.is_finite:
             raise InfiniteParameterError(
                 "Cannot enumerate values for a SequenceParameter "
@@ -115,14 +125,12 @@ class SequenceParameter(_EncodedDiscreteParameter):
         return self.encoder(values)
 
     @override
-    def is_in_range(self, item: str) -> bool:
-        if not isinstance(item, str):
+    def is_in_range(self, item: tuple[str, ...]) -> bool:
+        if not isinstance(item, tuple):
             return False
-        item_length = len(item)
-        if (
-            not item
-            or item_length < self.min_length
-            or (self.max_length is not None and item_length > self.max_length)
+        length = len(item)
+        if length < self.min_length or (
+            self.max_length is not None and length > self.max_length
         ):
             return False
 
