@@ -8,13 +8,21 @@ from functools import cached_property
 from itertools import chain, product
 
 import narwhals.stable.v2 as nw
-from attrs import define, field
-from attrs.validators import instance_of, is_callable, optional
+from attrs import Converter, define, field
+from attrs.validators import (
+    deep_iterable,
+    ge,
+    instance_of,
+    is_callable,
+    min_len,
+    optional,
+)
 from narwhals.stable.v2.typing import DataFrameT, SeriesT
 from typing_extensions import override
 
 from baybe.exceptions import InfiniteParameterError
 from baybe.parameters.base import _EncodedDiscreteParameter
+from baybe.utils.conversion import nonstring_to_tuple
 
 SequenceEncoderCallable = Callable[[SeriesT], DataFrameT]
 
@@ -23,7 +31,12 @@ SequenceEncoderCallable = Callable[[SeriesT], DataFrameT]
 class SequenceParameter(_EncodedDiscreteParameter):
     """Parameter class for sequence parameters."""
 
-    alphabet: tuple[str, ...] = field(converter=tuple, validator=instance_of(tuple))
+    alphabet: tuple[str, ...] = field(
+        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
+        validator=deep_iterable(
+            member_validator=instance_of(str), iterable_validator=min_len(1)
+        ),
+    )
     """The alphabet of the sequence parameter."""
 
     encoder: SequenceEncoderCallable = field(validator=is_callable())
@@ -31,44 +44,20 @@ class SequenceParameter(_EncodedDiscreteParameter):
     It should take a Series of sequences and return a DataFrame with
     the encoded representation in exactly the same order as the input Series."""
 
-    min_length: int = field(default=0, validator=instance_of(int), kw_only=True)
+    min_length: int = field(default=0, validator=ge(0), kw_only=True)
     """The minimum length of the sequence parameter."""
 
     max_length: int | None = field(
-        default=None, validator=optional(instance_of(int)), kw_only=True
+        default=None, validator=optional(ge(1)), kw_only=True
     )
     """Optional maximum length of the sequence parameter."""
-
-    @alphabet.validator
-    def _validate_alphabet(  # noqa: DOC101, DOC103
-        self, _: object, value: tuple[str, ...]
-    ) -> None:
-        """Validate the alphabet."""
-        if not value:
-            raise ValueError("Alphabet cannot be empty.")
-        if any(len(ch) != 1 for ch in value):
-            raise ValueError(
-                "All characters in the alphabet must be single characters."
-            )
-
-    @min_length.validator
-    def _validate_min_length(  # noqa: DOC101, DOC103
-        self, _: object, value: int
-    ) -> None:
-        """Validate the minimum length."""
-        if value < 0:
-            raise ValueError("Minimum length cannot be negative.")
 
     @max_length.validator
     def _validate_max_length(  # noqa: DOC101, DOC103
         self, _: object, value: int | None
     ) -> None:
         """Validate the maximum length."""
-        if value is None:
-            return
-        if value < 1:
-            raise ValueError("Maximum length must be a positive integer.")
-        if value < self.min_length:
+        if value is not None and value < self.min_length:
             raise ValueError(
                 f"Maximum length ({value}) must be greater than or equal to "
                 f"minimum length ({self.min_length})."
