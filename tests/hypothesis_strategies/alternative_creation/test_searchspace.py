@@ -265,23 +265,26 @@ def test_discrete_space_creation_from_simplex_coefficients(
     cols = [p.name for p in params]
 
     # Ground truth via brute force
-    expected = _brute_force_weighted_simplex(
-        params, max_sum, coeffs, boundary_only=boundary_only
-    )
-    expected = expected.sort_values(cols).reset_index(drop=True)
-
-    # from_simplex
-    result_simplex = (
-        SubspaceDiscrete.from_simplex(
-            max_sum,
-            params,
-            simplex_coefficients=coefficients,
-            boundary_only=boundary_only,
+    expected = (
+        _brute_force_weighted_simplex(
+            params, max_sum, coeffs, boundary_only=boundary_only
         )
-        .exp_rep.sort_values(cols)
+        .sort_values(cols)
         .reset_index(drop=True)
     )
-    assert_frame_equal(result_simplex, expected, check_dtype=False)
+
+    # from_simplex
+    result_simplex = SubspaceDiscrete.from_simplex(
+        max_sum,
+        params,
+        simplex_coefficients=coefficients,
+        boundary_only=boundary_only,
+    ).get_candidates()
+    assert_frame_equal(
+        result_simplex.sort_values(cols).reset_index(drop=True),
+        expected,
+        check_dtype=False,
+    )
 
     # from_product with equivalent constraint
     operator = "=" if boundary_only else "<="
@@ -290,12 +293,14 @@ def test_discrete_space_creation_from_simplex_coefficients(
         condition=ThresholdCondition(threshold=max_sum, operator=operator),
         coefficients=tuple(coeffs),
     )
-    result_product = (
-        SubspaceDiscrete.from_product(params, constraints=[constraint])
-        .exp_rep.sort_values(cols)
-        .reset_index(drop=True)
+    result_product = SubspaceDiscrete.from_product(
+        params, constraints=[constraint]
+    ).get_candidates()
+    assert_frame_equal(
+        result_product.sort_values(cols).reset_index(drop=True),
+        expected,
+        check_dtype=False,
     )
-    assert_frame_equal(result_product, expected, check_dtype=False)
 
 
 @pytest.mark.parametrize(

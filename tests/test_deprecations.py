@@ -7,6 +7,7 @@ from itertools import pairwise
 from pathlib import Path
 from unittest.mock import patch
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 import pytest
@@ -30,6 +31,7 @@ from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.categorical import CategoricalParameter, TaskParameter
+from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
@@ -730,7 +732,7 @@ def test_legacy_excluded_metadata_deserialization():
 def test_deprecated_constraints_arguments(positional):
     """Using the deprecated subspace constraint arguments raises a warning."""
     p = NumericalContinuousParameter("p", (0, 1))
-    c = ContinuousLinearConstraint(["p"], "=", [0], 0)
+    c = ContinuousLinearConstraint(["p"], "=", [1], 0)
     c_lin_eq = ContinuousLinearConstraint(["p"], "=", [1], 0)
     c_lin_ineq = ContinuousLinearConstraint(["p"], ">=", [1], 0)
     c_nonlin = ContinuousCardinalityConstraint(["p"], 1)
@@ -982,3 +984,50 @@ def test_deprecated_comp_rep_property():
     with pytest.warns(DeprecationWarning, match="Accessing 'comp_rep'"):
         result = subspace.comp_rep
     assert_frame_equal(result, subspace.transform(subspace.get_candidates()))
+
+
+def test_deprecated_custom_encoding():
+    """Accessing ``CustomEncoding.CUSTOM`` emits a deprecation warning."""
+    from baybe.parameters.enum import CustomEncoding
+
+    with pytest.warns(DeprecationWarning, match="CustomEncoding"):
+        _ = CustomEncoding.CUSTOM
+
+    with pytest.warns(DeprecationWarning, match="CustomEncoding"):
+        CustomEncoding("CUSTOM")
+
+
+if CHEM_INSTALLED:
+    from baybe.parameters.substance import SubstanceParameter as _SubstanceParameter
+
+    _substance_param = _SubstanceParameter("p", {"water": "O", "ethanol": "CCO"})
+else:
+    _substance_param = None
+
+
+@pytest.mark.parametrize(
+    "param",
+    [
+        NumericalDiscreteParameter("p", [1.0, 2.0, 3.0]),
+        CategoricalParameter("p", ["a", "b"]),
+        TaskParameter("p", ["a", "b"]),
+        CustomDiscreteParameter(
+            "p",
+            data=pd.DataFrame({"d1": [1.0, 2.0], "d2": [3.0, 4.0]}, index=["a", "b"]),
+            decorrelate=False,
+        ),
+        pytest.param(
+            _substance_param,
+            marks=pytest.mark.skipif(
+                not CHEM_INSTALLED, reason="Optional chem dependency not installed."
+            ),
+        ),
+    ],
+    ids=type,
+)
+def test_deprecated_comp_df(param):
+    """Accessing ``comp_df`` on any discrete parameter emits a deprecation warning."""
+    with pytest.warns(DeprecationWarning, match="comp_df"):
+        result = param.comp_df
+    expected = nw.from_native(param.transform(), eager_only=True).to_pandas()
+    assert_frame_equal(result, expected)

@@ -4,12 +4,14 @@ import gc
 from functools import cached_property
 from typing import Any
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
-from baybe.parameters.base import _DiscreteLabelLikeParameter
+from baybe.parameters.base import _EncodedDiscreteParameter
+from baybe.parameters.custom import _encoding_table_from_comp_df
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.basic import group_duplicate_values
@@ -29,7 +31,7 @@ Smiles = str
 
 
 @define(frozen=True, slots=False)
-class SubstanceParameter(_DiscreteLabelLikeParameter):
+class SubstanceParameter(_EncodedDiscreteParameter):
     """Generic substances that are treated with cheminformatics descriptors.
 
     Only a decorrelated subset of descriptors should be used as otherwise this can
@@ -45,11 +47,19 @@ class SubstanceParameter(_DiscreteLabelLikeParameter):
         validator=deep_mapping(
             mapping_validator=min_len(2),
             key_validator=(instance_of(str), min_len(1)),
+            value_validator=instance_of(Smiles),
         ),
     )
     """A mapping that provides the SMILES strings for all available parameter values."""
 
-    decorrelate: bool | float = field(default=True, validator=validate_decorrelation)
+    encoding: SubstanceEncoding = field(
+        default=SubstanceEncoding.MORDRED, converter=SubstanceEncoding, kw_only=True
+    )
+    # See base class.
+
+    decorrelate: bool | float = field(
+        default=True, validator=validate_decorrelation, kw_only=True
+    )
     """Specifies the used decorrelation mode for the parameter encoding.
 
         - ``False``: The encoding is used as is.
@@ -57,17 +67,14 @@ class SubstanceParameter(_DiscreteLabelLikeParameter):
         - float in (0, 1): The encoding is decorrelated using the specified threshold.
     """
 
-    encoding: SubstanceEncoding = field(
-        default=SubstanceEncoding.MORDRED, converter=SubstanceEncoding
-    )
-    # See base class.
-
     kwargs_fingerprint: dict[str, Any] = field(
-        factory=dict, validator=instance_of(dict)
+        factory=dict, validator=instance_of(dict), kw_only=True
     )
     """Keyword arguments passed to fingerprint generator."""
 
-    kwargs_conformer: dict[str, Any] = field(factory=dict, validator=instance_of(dict))
+    kwargs_conformer: dict[str, Any] = field(
+        factory=dict, validator=instance_of(dict), kw_only=True
+    )
     """Keyword arguments passed to conformer generator."""
 
     @data.validator
@@ -112,14 +119,17 @@ class SubstanceParameter(_DiscreteLabelLikeParameter):
             raise ExceptionGroup("duplicate substances", exceptions)
 
     @override
+    def summary(self) -> dict:
+        return {**super().summary(), "Encoding": self.encoding}
+
+    @override
     @property
     def values(self) -> tuple:
         """Returns the labels of the given set of molecules."""
         return tuple(self.data.keys())
 
-    @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:
+    def _comp_df(self) -> pd.DataFrame:
         from baybe.utils import chemistry
 
         vals = list(self.data.values())
@@ -152,6 +162,15 @@ class SubstanceParameter(_DiscreteLabelLikeParameter):
         add_noise_to_perturb_degenerate_rows(comp_df)
 
         return comp_df
+
+    @override
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        return tuple(self._comp_df.columns)
+
+    @override
+    def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
+        return _encoding_table_from_comp_df(self._comp_df, values)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

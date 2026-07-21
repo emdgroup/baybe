@@ -10,6 +10,7 @@ from itertools import islice
 from math import prod
 from typing import TYPE_CHECKING, Any, Literal
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -648,14 +649,28 @@ class SubspaceDiscrete(SerialMixin):
         """The minimum and maximum values of the computational representation."""
         if not self.parameters:
             return pd.DataFrame(index=["min", "max"])
-        df = pd.concat([p.comp_df for p in self.parameters], axis=1)
+        df = pd.concat(
+            [
+                nw.from_native(p.transform(), eager_only=True).to_pandas()
+                for p in self.parameters
+            ],
+            axis=1,
+        )
         return pd.DataFrame({"min": df.min(), "max": df.max()}).T
 
     @property
     def scaling_bounds(self) -> pd.DataFrame:
         """The bounds used for scaling the surrogate model input."""
         return (
-            pd.concat([p.comp_df.agg(["min", "max"]) for p in self.parameters], axis=1)
+            pd.concat(
+                [
+                    nw.from_native(p.transform(), eager_only=True)
+                    .to_pandas()
+                    .agg(["min", "max"])
+                    for p in self.parameters
+                ],
+                axis=1,
+            )
             if self.parameters
             else pd.DataFrame(index=["min", "max"])
         )
@@ -674,7 +689,7 @@ class SubspaceDiscrete(SerialMixin):
         """
         # Compute the dataframe shapes
         n_cols_exp = len(parameters)
-        n_cols_comp = sum(p.comp_df.shape[1] for p in parameters)
+        n_cols_comp = sum(len(p.comp_rep_columns) for p in parameters)
         n_rows = prod(len(p.active_values) for p in parameters)
 
         # Comp rep space is estimated as the size of float times the number of matrix
@@ -840,10 +855,10 @@ class SubspaceDiscrete(SerialMixin):
         )
 
         # Transform the parameters
-        dfs = []
-        for param in parameters:
-            comp_df = param.transform(df[param.name])
-            dfs.append(comp_df)
+        dfs = [
+            nw.from_native(param.transform(df[param.name]), eager_only=True).to_pandas()
+            for param in parameters
+        ]
         return pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
     def get_parameters_by_name(

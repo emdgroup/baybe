@@ -211,24 +211,26 @@ def validate_parameter_input(
             )
 
         # Check if all rows have valid inputs matching allowed parameter values
-        for ind, row in data.iterrows():
-            valid = True
-            if p.is_numerical:
-                if numerical_measurements_must_be_within_tolerance:
-                    valid &= p.is_in_range(row[p.name])
-            else:
-                valid &= p.is_in_range(row[p.name])
-            if not valid:
-                raise ValueError(
-                    f"Input data on row with the index {row.name} has invalid "
-                    f"values in parameter '{p.name}'. "
-                    f"For categorical parameters, values need to exactly match a "
-                    f"valid choice defined in your config. "
-                    f"For numerical parameters, a match is accepted only if "
-                    f"the input value is within the specified tolerance/range. Set "
-                    f"the flag 'numerical_measurements_must_be_within_tolerance' "
-                    f"to 'False' to disable this behavior."
-                )
+        if p.is_numerical:
+            valid = (
+                not numerical_measurements_must_be_within_tolerance
+                or data[p.name].map(p.is_in_range).all()
+            )
+        else:
+            from baybe.parameters.base import _EncodedDiscreteParameter
+
+            assert isinstance(p, _EncodedDiscreteParameter)
+            valid = data[p.name].isin(p.values).all()
+        if not valid:
+            raise ValueError(
+                f"The provided dataframe has invalid values for parameter '{p.name}'. "
+                f"For categorical parameters, values need to exactly match a "
+                f"valid choice defined in your config. "
+                f"For numerical parameters, a match is accepted only if "
+                f"the input value is within the specified tolerance/range. Set "
+                f"the flag 'numerical_measurements_must_be_within_tolerance' "
+                f"to 'False' to disable this behavior."
+            )
 
     if (
         not allow_duplicates

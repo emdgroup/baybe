@@ -7,7 +7,7 @@ from typing import TypeVar
 import pandas as pd
 
 from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
-from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
+from baybe.parameters.base import Parameter, _EncodedDiscreteParameter
 from baybe.parameters.categorical import TaskParameter
 from baybe.utils.dataframe import get_transform_objects
 
@@ -65,7 +65,7 @@ def validate_dataframe_active_values(
     exceptions: list[IncompatibilityError] = []
 
     for param in parameters:
-        if isinstance(param, _DiscreteLabelLikeParameter):
+        if isinstance(param, _EncodedDiscreteParameter):
             df_values = set(df[param.name])
             active_values = set(param.active_values)
             if invalid_values := df_values - active_values:
