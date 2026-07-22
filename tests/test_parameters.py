@@ -14,6 +14,7 @@ from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.categorical import CategoricalParameter
 from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
+from baybe.parameters.sequence import SequenceParameter
 from baybe.settings import active_settings
 
 if CHEM_INSTALLED:
@@ -124,6 +125,19 @@ def _list(name, values):
                 dtype=active_settings.DTypeFloatNumpy,
             ),
             id="custom",
+        ),
+        pytest.param(
+            SequenceParameter(
+                name="seq",
+                alphabet=("A", "C"),
+                encoder=lambda values: pd.DataFrame(
+                    {"seq": ["".join(v) for v in values]}
+                ),
+                min_length=1,
+                max_length=1,
+            ),
+            pd.DataFrame({"seq": ["A", "C"]}, index=pd.Index(["A", "C"])),
+            id="sequence",
         ),
         pytest.param(
             SubstanceParameter(
