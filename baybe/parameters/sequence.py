@@ -33,7 +33,7 @@ class SequenceParameter(_EncodedDiscreteParameter):
     """Parameter class for sequence parameters."""
 
     alphabet: tuple[str, ...] = field(
-        converter=Converter(
+        converter=Converter(  # type: ignore
             lambda value, self, field: tuple(
                 sorted(nonstring_to_tuple(value, type(self), field))
             ),
