@@ -18,14 +18,14 @@ from attrs.validators import (
     min_len,
     optional,
 )
-from narwhals.stable.v2.typing import DataFrameT, SeriesT
+from narwhals.stable.v2.typing import IntoFrameT, IntoSeriesT
 from typing_extensions import override
 
 from baybe.exceptions import InfiniteSpaceError
-from baybe.parameters.base import _EncodedDiscreteParameter
+from baybe.parameters.base import _JOIN_KEY, _EncodedDiscreteParameter
 from baybe.utils.conversion import nonstring_to_tuple
 
-SequenceEncoderCallable = Callable[[SeriesT], DataFrameT]
+SequenceEncoderCallable = Callable[[IntoSeriesT], IntoFrameT]
 
 
 @define(frozen=True, slots=False)
@@ -126,7 +126,12 @@ class SequenceParameter(_EncodedDiscreteParameter):
 
     @override
     def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
-        return self.encoder(values)
+        result = nw.from_native(self.encoder(values), eager_only=True)
+        return (
+            result.lazy()
+            .collect(backend=nw.get_native_namespace(values))
+            .with_columns(values.rename(_JOIN_KEY))
+        )
 
     @override
     def is_in_range(self, item: tuple[str, ...]) -> bool:
