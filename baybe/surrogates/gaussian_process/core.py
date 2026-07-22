@@ -459,16 +459,6 @@ def _make_posterior_mean_module(
             self.gp = frozen_model
 
         @override
-        def train(self, mode: bool = True) -> _PosteriorMean:
-            """Set training mode without propagating to the frozen inner GP.
-
-            The inner GP stays in eval mode so that evaluation of the posterior always
-            returns predictive outputs regardless of the outer GP's training state.
-            """
-            self.training = mode
-            return self
-
-        @override
         def forward(self, x: Tensor) -> Tensor:
             """Compute the prior mean in the new GP's standardized output space."""
             x_raw = input_transform.untransform(x)
