@@ -14,22 +14,8 @@ from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.categorical import CategoricalParameter
 from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from baybe.parameters.sequence import SequenceEncoderProtocol, SequenceParameter
+from baybe.parameters.sequence import SequenceParameter
 from baybe.settings import active_settings
-
-
-class _SequenceEncoder(SequenceEncoderProtocol):
-    def encode(
-        self,
-        values: nw.Series,
-        _alphabet: frozenset[str],
-        *,
-        key: str,
-        name: str,
-    ) -> nw.DataFrame:
-        """Passthrough encoder: returns a two-column frame with key and name columns."""
-        return values.rename(key).to_frame().with_columns(values.rename(name))
-
 
 if CHEM_INSTALLED:
     from baybe.parameters.substance import SubstanceParameter
@@ -143,8 +129,10 @@ def _list(name, values):
         pytest.param(
             SequenceParameter(
                 name="seq",
-                alphabet={"A", "C"},
-                encoder=_SequenceEncoder(),
+                alphabet=("A", "C"),
+                encoder=lambda values: pd.DataFrame(
+                    {"seq": ["".join(v) for v in values]}
+                ),
                 min_length=1,
                 max_length=1,
             ),

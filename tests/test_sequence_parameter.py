@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import narwhals.stable.v2 as nw
+import pandas as pd
+import polars as pl
 import pytest
 
 from baybe.exceptions import InfiniteSpaceError
+from baybe.parameters.base import _JOIN_KEY
 from baybe.parameters.sequence import SequenceParameter
 
 _DNA = ("A", "C", "G", "T")
@@ -154,3 +157,34 @@ def test_summary_with_max_length():
     assert "Alphabet" in s
     assert s["MaxLength"] == 1
     assert s["nValues"] == len(_DNA)
+
+
+@pytest.mark.parametrize(
+    ("series", "dataframe"),
+    [
+        pytest.param(
+            pd.Series(["A", "C"], name="seq"),
+            pd.DataFrame({"seq": ["A", "C"]}),
+            id="pandas",
+        ),
+        pytest.param(
+            pl.Series("seq", ["A", "C"]),
+            pl.DataFrame({"seq": ["A", "C"]}),
+            id="polars",
+        ),
+    ],
+)
+def test_different_dataframe_backends(series, dataframe):
+    """Test that the encoding table works with different DataFrame backends."""
+    p = SequenceParameter(
+        name="seq",
+        alphabet=_DNA,
+        encoder=lambda _: dataframe,
+        min_length=1,
+        max_length=1,
+    )
+    encoding_table = p._encoding_table(nw.from_native(series, series_only=True))
+    assert encoding_table.shape[0] == 2
+    assert "seq" in encoding_table.columns
+    assert set(encoding_table["seq"]) == {"A", "C"}
+    assert _JOIN_KEY in encoding_table.columns
