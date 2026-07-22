@@ -133,6 +133,9 @@ Custom `@classproperty` from `baybe.utils.basic` for class-level computed proper
 - Method names start with verbs. Comments capitalize first word.
 - Always capitalize words that correspond to names of inventors, e.g. `Bayesian`,
   `Boolean` or `Gaussian`
+- Use `make_` prefix for functions/methods that construct and return a **new** object.
+  Use `get_` prefix for functions/methods that retrieve and return an **already existing**
+  object. Never use `build_` as a substitute for either.
 
 ## 5. Type Annotations
 - **Full coverage**: All signatures including returns. Every field annotated.
