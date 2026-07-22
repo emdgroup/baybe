@@ -66,7 +66,11 @@ class SequenceParameter(_EncodedDiscreteParameter):
     def _validate_max_length(  # noqa: DOC101, DOC103
         self, _: object, value: int | None
     ) -> None:
-        """Validate the maximum length."""
+        """Validate the maximum length.
+
+        Raises:
+            ValueError: If the maximum length is less than the minimum length.
+        """
         if value is not None and value < self.min_length:
             raise ValueError(
                 f"Maximum length ({value}) must be greater than or equal to "
@@ -105,8 +109,8 @@ class SequenceParameter(_EncodedDiscreteParameter):
         )
         return tuple(all_values)
 
-    @property
     @override
+    @property
     def values(self) -> tuple[tuple[str, ...], ...]:
         if not self.is_finite:
             raise InfiniteSpaceError(
