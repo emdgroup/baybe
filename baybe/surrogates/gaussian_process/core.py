@@ -271,17 +271,19 @@ class GaussianProcessSurrogate(Surrogate):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> GPyTorchMean:
-        """Return a GPyTorch :class:`~gpytorch.means.Mean` representing the surrogate's posterior mean.
+        """Create a mean module from the surrogate's fitted posterior.
 
-        The returned mean module wraps a frozen copy of the surrogate's fitted GP.
-        Its posterior mean is evaluated in the raw input space and mapped into the
-        normalized input/output space defined by the given ``searchspace``,
-        ``objective``, and ``measurements``.
+        The returned :class:`~gpytorch.means.Mean` is meant to be used as the
+        prior mean of a new :class:`GaussianProcessSurrogate`. When that new GP
+        calls the mean, its inputs have already been normalized with respect to
+        the provided ``searchspace``. The mean module first unnormalizes those
+        inputs using ``searchspace``. It then evaluates the posterior mean of
+        the surrogate on which this method was called and standardizes the
+        result using the output scaling defined by ``objective`` and
+        ``measurements``.
 
-        The module is intended and designed to be used as the prior mean of another
-        :class:`GaussianProcessSurrogate`. To this end, the bound method satisfies
-        :class:`~baybe.surrogates.gaussian_process.components.mean.MeanFactoryProtocol`
-        and can be passed directly as a mean factory to the new GP.
+        Passing the bound method itself as ``mean_or_factory`` lets another
+        :class:`GaussianProcessSurrogate` build the same module at fit time.
 
         Args:
             searchspace: The search space defining the module's input space.
@@ -293,7 +295,7 @@ class GaussianProcessSurrogate(Surrogate):
 
         Raises:
             ModelNotTrainedError: If the surrogate has not been fitted yet.
-        """  # noqa: E501
+        """
         if self._model is None:
             raise ModelNotTrainedError(
                 f"'{self.__class__.__name__}' must be fitted before its "
