@@ -75,7 +75,7 @@ class Symmetry(SerialMixin, ABC):
 
         This method is only called after confirming that data augmentation is
         enabled. Implementations should contain only the augmentation logic
-        without checking ``use_data_augmentation``.
+        without checking :attr:`~baybe.symmetries.base.Symmetry.use_data_augmentation`.
 
         Args:
             measurements: The dataframe containing the measurements to be augmented.
