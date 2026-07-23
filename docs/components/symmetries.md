@@ -28,10 +28,10 @@ on which symmetry is responsible.
 If the surrogate model receives such augmented points, it can learn the symmetry. This
 has the advantage that it can improve predictions for unseen points and is fully 
 model-agnostic. Downsides are increased training time and potential computational 
-challenges arising from a fit on substantially more points. It is thus possible to 
-control the data augmentation behavior of any {class}`~baybe.symmetries.base.Symmetry` by 
-setting its {attr}`~baybe.symmetries.base.Symmetry.use_data_augmentation` attribute
-(`True` by default).
+challenges arising from a fit on substantially more points. Data augmentation is
+controlled by assigning symmetries to the
+{attr}`~baybe.recommenders.pure.bayesian.base.BayesianRecommender.symmetries`
+attribute of the recommender.
 
 Below we illustrate the effect of data augmentation for the different symmetries
 supported by BayBE:

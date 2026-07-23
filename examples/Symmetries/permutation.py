@@ -134,20 +134,19 @@ print(f"{'With Constraint:':<35} {len(searchspace_constrained.discrete.exp_rep)}
 # not exactly 2 due to the (still included) points on the diagonal.
 
 # BayBE can automatically perform this augmentation if configured to do so.
-# Specifically, surrogate models have the
-# {attr}`~baybe.surrogates.base.Surrogate.symmetries` attribute. If any of
-# these symmetries has `use_data_augmentation=True` (enabled by default),
-# BayBE will automatically augment measurements internally before performing the model
-# fit. To construct symmetries quickly, we use the `to_symmetry` method of the
-# constraint.
+# Specifically, the recommender has a
+# {attr}`~baybe.recommenders.pure.bayesian.base.BayesianRecommender.symmetries`
+# attribute. When symmetries are present, BayBE will automatically augment
+# measurements internally before performing the model fit. To construct symmetries
+# quickly, we use the `to_symmetry` method of the constraint.
 
-symmetry = constraint.to_symmetry(use_data_augmentation=True)
+symmetry = constraint.to_symmetry()
 recommender_plain = TwoPhaseMetaRecommender(
     recommender=BotorchRecommender(surrogate_model=NGBoostSurrogate())
 )
 recommender_symmetric = TwoPhaseMetaRecommender(
     recommender=BotorchRecommender(
-        surrogate_model=NGBoostSurrogate(symmetries=[symmetry])
+        surrogate_model=NGBoostSurrogate(), symmetries=[symmetry]
     )
 )
 

@@ -364,11 +364,10 @@ of the surrogate model to begin with.
 In certain situations like [mixture modeling](/examples/Mixtures/slot_based),
 symmetries are present. Data augmentation is a model-agnostic way of enabling the 
 surrogate model to learn such symmetries effectively, which might result in a better 
-performance, similar as e.g. for image classification models. BayBE 
-`Surrogate`[baybe.surrogates.base.Surrogate] models automatically perform data 
-augmentation if 
-{attr}`~baybe.surrogates.base.Surrogate.symmetries` with 
-`use_data_augmentation=True` are present. This means you can add a data point in
-any acceptable representation and BayBE will train the model on this point plus 
-augmented points that can be generated from it. To see the effect in practice, refer to 
+performance, similar as e.g. for image classification models. BayBE automatically
+performs data augmentation when symmetries are assigned to the
+{attr}`~baybe.recommenders.pure.bayesian.base.BayesianRecommender.symmetries`
+attribute of the recommender. This means you can add a data point in any acceptable
+representation and BayBE will train the model on this point plus augmented points that
+can be generated from it. To see the effect in practice, refer to
 [this example](/examples/Symmetries/permutation).
