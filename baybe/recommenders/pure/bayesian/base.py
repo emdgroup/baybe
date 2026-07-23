@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
+from attrs.validators import deep_iterable, instance_of
 from typing_extensions import override
 
 from baybe.acquisition import qLogEI, qLogNEHVI
@@ -26,6 +27,7 @@ from baybe.surrogates.base import (
     Surrogate,
     SurrogateProtocol,
 )
+from baybe.symmetries.base import Symmetry
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
@@ -55,6 +57,14 @@ class BayesianRecommender(PureRecommender, ABC):
     )
     """The acquisition function. When omitted, a default is used."""
 
+    symmetries: tuple[Symmetry, ...] = field(
+        factory=tuple,
+        converter=tuple,
+        validator=deep_iterable(member_validator=instance_of(Symmetry)),
+        kw_only=True,
+    )
+    """Symmetries triggering data augmentation during model fitting."""
+
     # TODO: The objective is currently only required for validating the recommendation
     #   context. Once multi-target support is complete, we might want to refactor
     #   the validation mechanism, e.g. by
@@ -72,22 +82,6 @@ class BayesianRecommender(PureRecommender, ABC):
         if self.acquisition_function is None:
             return qLogNEHVI() if objective.is_multi_output else qLogEI()
         return self.acquisition_function
-
-    def _get_surrogate_for_augmentation(self) -> Surrogate | None:
-        """Get the Surrogate instance for augmentation/validation, if available."""
-        from baybe.surrogates.composite import CompositeSurrogate, _ReplicationMapping
-
-        model = self._surrogate_model
-        if isinstance(model, Surrogate):
-            return model
-        if isinstance(model, CompositeSurrogate):
-            # All inner surrogates are copies of the same template
-            surrogates = model.surrogates
-            if isinstance(surrogates, _ReplicationMapping):
-                template = surrogates.template
-                if isinstance(template, Surrogate):
-                    return template
-        return None
 
     def get_surrogate(
         self,
@@ -117,12 +111,9 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"{len(objective.targets)}-target multi-output context."
             )
 
-        # Perform data augmentation if configured
-        surrogate_for_augmentation = self._get_surrogate_for_augmentation()
-        if surrogate_for_augmentation is not None:
-            measurements = surrogate_for_augmentation.augment_measurements(
-                measurements, searchspace.parameters
-            )
+        # Perform data augmentation
+        for s in self.symmetries:
+            measurements = s.augment_measurements(measurements, searchspace)
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = acqf.to_botorch(
@@ -165,12 +156,6 @@ class BayesianRecommender(PureRecommender, ABC):
             )
 
         validate_object_names(searchspace.parameters + objective.targets)
-
-        # Validate compatibility of surrogate symmetries with searchspace
-        surrogate_for_validation = self._get_surrogate_for_augmentation()
-        if surrogate_for_validation is not None:
-            for s in surrogate_for_validation.symmetries:
-                s.validate_searchspace_context(searchspace)
 
         # Experimental input validation
         if (measurements is None) or measurements.empty:
