@@ -46,6 +46,7 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBELikelihoodFactory,
     BayBEMeanFactory,
 )
+from baybe.symmetries.base import Symmetry
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 
@@ -206,6 +207,9 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
     """
 
+    _symmetries: tuple[Symmetry, ...] = field(factory=tuple, init=False, eq=False)
+    """Symmetries for future architecture adjustments (e.g., invariant kernels)."""
+
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
@@ -277,6 +281,15 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._searchspace is not None  # provided by base class
         assert self._objective is not None  # provided by base class
         assert self._measurements is not None  # provided by base class
+
+        # Symmetry-aware architecture adjustment (planned for future implementation)
+        if self._symmetries:
+            raise NotImplementedError(
+                "Symmetry-aware surrogate architecture is not yet implemented."
+            )
+            for s in self._symmetries:
+                s.validate_searchspace_context(self._searchspace)
+
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
         if (
