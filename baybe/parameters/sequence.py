@@ -9,7 +9,7 @@ from itertools import chain, product
 from typing import TypeAlias
 
 import narwhals.stable.v2 as nw
-from attrs import Converter, define, field
+from attrs import Attribute, Converter, define, field
 from attrs.validators import (
     and_,
     deep_iterable,
@@ -39,9 +39,9 @@ class SequenceParameter(_EncodedDiscreteParameter):
     """Parameter class for sequence parameters."""
 
     alphabet: tuple[str, ...] = field(
-        converter=Converter(  # type: ignore
+        converter=Converter(  # type: ignore[misc]
             lambda value, self, field: tuple(
-                sorted(nonstring_to_tuple(value, type(self), field))
+                sorted(nonstring_to_tuple(value, self, field))
             ),
             takes_self=True,
             takes_field=True,
@@ -51,36 +51,29 @@ class SequenceParameter(_EncodedDiscreteParameter):
             iterable_validator=min_len(1),
         ),
     )
-    """The alphabet of the sequence parameter."""
+    """The alphabet defining the tokens used to construct the sequences."""
 
     encoder: Encoder = field(validator=is_callable())
-    """The encoder function for the sequence parameter.
-    It should take a Series of sequences and return a DataFrame with
-    the encoded representation in exactly the same order as the input Series."""
+    """The used sequence encoder."""
 
-    min_length: int = field(default=0, validator=ge(0), kw_only=True)
-    """The minimum number of letters from the alphabet for
-    constructing a sequence."""
+    min_length: int = field(
+        default=0, validator=and_(instance_of(int), ge(0)), kw_only=True
+    )
+    """The minimum token length of the constructed sequences."""
 
     max_length: int | None = field(
-        default=None, validator=optional(ge(1)), kw_only=True
+        default=None, validator=optional(and_(instance_of(int), ge(1))), kw_only=True
     )
-    """Optional maximum number of letters from the alphabet for constructing
-    a sequence. If provided, the parameter becomes finite."""
+    """Optional maximum token length of the constructed sequences."""
 
     @max_length.validator
     def _validate_max_length(  # noqa: DOC101, DOC103
-        self, _: object, value: int | None
+        self, _: Attribute, value: int | None
     ) -> None:
-        """Validate the maximum length.
-
-        Raises:
-            ValueError: If the maximum length is less than the minimum length.
-        """
         if value is not None and value < self.min_length:
             raise ValueError(
-                f"Maximum length ({value}) must be greater than or equal to "
-                f"minimum length ({self.min_length})."
+                f"The maximum sequence length ({value}) must be greater than or "
+                f"equal to the minimum sequence length ({self.min_length})."
             )
 
     @override
