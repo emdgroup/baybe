@@ -6,6 +6,7 @@ import gc
 from collections.abc import Callable
 from functools import cached_property
 from itertools import chain, product
+from typing import TypeAlias
 
 import narwhals.stable.v2 as nw
 from attrs import Converter, define, field
@@ -25,7 +26,12 @@ from baybe.exceptions import InfiniteSpaceError
 from baybe.parameters.base import _JOIN_KEY, _EncodedDiscreteParameter
 from baybe.utils.conversion import nonstring_to_tuple
 
-SequenceEncoderCallable = Callable[[IntoSeriesT], IntoFrameT]
+Encoder: TypeAlias = Callable[[IntoSeriesT], IntoFrameT]
+"""The protocol defining the contract for encoders.
+
+Takes a series of values and returns the corresponding encoded representations as
+a dataframe, where the row order matches the order of the input series.
+"""
 
 
 @define(frozen=True, slots=False)
@@ -47,7 +53,7 @@ class SequenceParameter(_EncodedDiscreteParameter):
     )
     """The alphabet of the sequence parameter."""
 
-    encoder: SequenceEncoderCallable = field(validator=is_callable())
+    encoder: Encoder = field(validator=is_callable())
     """The encoder function for the sequence parameter.
     It should take a Series of sequences and return a DataFrame with
     the encoded representation in exactly the same order as the input Series."""

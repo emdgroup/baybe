@@ -11,7 +11,7 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.parameters.sequence import SequenceEncoderCallable, SequenceParameter
+from baybe.parameters.sequence import Encoder, SequenceParameter
 from baybe.parameters.substance import SubstanceParameter
 from baybe.utils.metadata import MeasurableMetadata
 
@@ -20,6 +20,7 @@ __all__ = [
     "CategoricalParameter",
     "CustomDiscreteParameter",
     "CustomEncoding",
+    "Encoder",
     "MeasurableMetadata",
     "NumericalContinuousParameter",
     "NumericalDiscreteParameter",
@@ -27,5 +28,4 @@ __all__ = [
     "SubstanceEncoding",
     "SubstanceParameter",
     "TaskParameter",
-    "SequenceEncoderCallable",
 ]
