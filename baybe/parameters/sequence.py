@@ -19,14 +19,14 @@ from attrs.validators import (
     min_len,
     optional,
 )
-from narwhals.stable.v2.typing import IntoFrameT, IntoSeriesT
+from narwhals.stable.v2.typing import IntoDataFrame, IntoSeries
 from typing_extensions import override
 
 from baybe.exceptions import InfiniteSpaceError
 from baybe.parameters.base import _JOIN_KEY, _EncodedDiscreteParameter
 from baybe.utils.conversion import nonstring_to_tuple
 
-Encoder: TypeAlias = Callable[[IntoSeriesT], IntoFrameT]
+Encoder: TypeAlias = Callable[[IntoSeries], IntoDataFrame]
 """The protocol defining the contract for encoders.
 
 Takes a series of values and returns the corresponding encoded representations as
