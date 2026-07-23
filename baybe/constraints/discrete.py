@@ -315,19 +315,11 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
         return inds_bad
 
-    def to_symmetries(
-        self, use_data_augmentation: bool = True
-    ) -> tuple[DependencySymmetry, ...]:
+    def to_symmetries(self) -> tuple[DependencySymmetry, ...]:
         """Convert to :class:`~baybe.symmetries.dependency.DependencySymmetry` objects.
 
         Create one symmetry object per dependency relationship, i.e., per
         (parameter, condition, affected_parameters) triple.
-
-        Args:
-            use_data_augmentation: Flag indicating whether the resulting symmetry
-                objects should apply data augmentation. ``True`` means that
-                measurement augmentation will be performed by replacing inactive
-                affected parameter values with all possible values.
 
         Returns:
             A tuple of dependency symmetries, one for each dependency in the
@@ -340,7 +332,6 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
                 parameter_name=p,
                 condition=c,
                 affected_parameter_names=aps,
-                use_data_augmentation=use_data_augmentation,
             )
             for p, c, aps in zip(
                 self.parameters, self.conditions, self.affected_parameters, strict=True
@@ -415,18 +406,12 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
 
         return inds_invalid
 
-    def to_symmetry(self, use_data_augmentation: bool = True) -> PermutationSymmetry:
+    def to_symmetry(self) -> PermutationSymmetry:
         """Convert to a :class:`~baybe.symmetries.permutation.PermutationSymmetry`.
 
         The constraint's parameters form the primary permutation group. If
         dependencies are attached, their parameters are added as an additional
         group that is permuted in lockstep.
-
-        Args:
-            use_data_augmentation: Flag indicating whether the resulting symmetry
-                object should apply data augmentation. ``True`` means that
-                measurement augmentation will be performed by generating all
-                permutations of parameter values within each group.
 
         Returns:
             The corresponding permutation symmetry.
@@ -436,10 +421,7 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         groups = [self.parameters]
         if self.dependencies:
             groups.append(list(self.dependencies.parameters))
-        return PermutationSymmetry(
-            permutation_groups=groups,
-            use_data_augmentation=use_data_augmentation,
-        )
+        return PermutationSymmetry(permutation_groups=groups)
 
 
 @define

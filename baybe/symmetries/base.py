@@ -8,8 +8,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from attrs import define, field
-from attrs.validators import instance_of
+from attrs import define
 
 from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.serialization import SerialMixin
@@ -27,11 +26,6 @@ class Symmetry(SerialMixin, ABC):
     the presence of invariances.
     """
 
-    use_data_augmentation: bool = field(
-        default=True, validator=instance_of(bool), kw_only=True
-    )
-    """Flag indicating whether data augmentation is to be used."""
-
     @property
     @abstractmethod
     def parameter_names(self) -> tuple[str, ...]:
@@ -39,12 +33,10 @@ class Symmetry(SerialMixin, ABC):
 
     def summary(self) -> dict:
         """Return a custom summarization of the symmetry."""
-        symmetry_dict = dict(
+        return dict(
             Type=self.__class__.__name__,
             Affected_Parameters=self.parameter_names,
-            Data_Augmentation=self.use_data_augmentation,
         )
-        return symmetry_dict
 
     def augment_measurements(
         self,
@@ -61,8 +53,6 @@ class Symmetry(SerialMixin, ABC):
         Returns:
             The augmented dataframe including the original measurements.
         """
-        if not self.use_data_augmentation:
-            return measurements
         return self._augment_measurements(measurements, parameters)
 
     @abstractmethod
@@ -72,10 +62,6 @@ class Symmetry(SerialMixin, ABC):
         parameters: Sequence[Parameter] | None = None,
     ) -> pd.DataFrame:
         """Augment measurements (core logic for subclasses).
-
-        This method is only called after confirming that data augmentation is
-        enabled. Implementations should contain only the augmentation logic
-        without checking :attr:`~baybe.symmetries.base.Symmetry.use_data_augmentation`.
 
         Args:
             measurements: The dataframe containing the measurements to be augmented.
