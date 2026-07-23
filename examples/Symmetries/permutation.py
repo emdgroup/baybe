@@ -101,13 +101,13 @@ axs[0].set_ylabel("y");
 # Remove entries that are "duplicated" in the sense of already being represented by
 # another invariant point.
 
-# If the surrogate is additionally configured with `symmetries` that use
-# `use_data_augmentation=True`, the model will be fit with an extended set of points,
-# including augmented ones. So as a user, you don't have to generate permutations and
-# add them manually. Depending on the surrogate model, this might have different
-# impacts. For example, we can expect a strong effect for tree-based models because their splits are
-# always parallel to the parameter axes. Thus, without augmented measurements, it is
-# easy to fall into suboptimal splits and overfit. We illustrate this by using the
+# If the recommender is additionally configured with `symmetries`, the model will be
+# fit with an extended set of points, including augmented ones. So as a user, you don't
+# have to generate permutations and add them manually. Depending on the surrogate model,
+# this might have different impacts. For example, we can expect a strong effect for
+# tree-based models because their splits are always parallel to the parameter axes.
+# Thus, without augmented measurements, it is easy to fall into suboptimal splits and
+# overfit. We illustrate this by using the
 # {class}`~baybe.surrogates.ngboost.NGBoostSurrogate`.
 
 # ## The Optimization Problem
@@ -144,7 +144,7 @@ symmetry = constraint.to_symmetry()
 recommender_plain = TwoPhaseMetaRecommender(
     recommender=BotorchRecommender(surrogate_model=NGBoostSurrogate())
 )
-recommender_symmetric = TwoPhaseMetaRecommender(
+recommender_augmented = TwoPhaseMetaRecommender(
     recommender=BotorchRecommender(
         surrogate_model=NGBoostSurrogate(), symmetries=[symmetry]
     )
@@ -155,17 +155,17 @@ recommender_symmetric = TwoPhaseMetaRecommender(
 
 campaign_plain = Campaign(searchspace_plain, objective, recommender_plain)
 campaign_c = Campaign(searchspace_constrained, objective, recommender_plain)
-campaign_s = Campaign(searchspace_plain, objective, recommender_symmetric)
-campaign_cs = Campaign(searchspace_constrained, objective, recommender_symmetric)
+campaign_s = Campaign(searchspace_plain, objective, recommender_augmented)
+campaign_cs = Campaign(searchspace_constrained, objective, recommender_augmented)
 
 # ## Simulating the Optimization Loop
 
 
 scenarios = {
-    "Unconstrained, Unsymmetric": campaign_plain,
-    "Constrained, Unsymmetric": campaign_c,
-    "Unconstrained, Symmetric": campaign_s,
-    "Constrained, Symmetric": campaign_cs,
+    "Unconstrained, Not augmented": campaign_plain,
+    "Constrained, Not augmented": campaign_c,
+    "Unconstrained, Augmented": campaign_s,
+    "Constrained, Augmented": campaign_cs,
 }
 
 results = simulate_scenarios(
@@ -179,6 +179,9 @@ results = simulate_scenarios(
         "Num_Experiments": "# Experiments",
     }
 )
+split = results["Scenario"].str.split(", ", expand=True)
+results["Constrained"] = np.where(split[0] == "Constrained", "Yes", "No")
+results["Augmented"] = np.where(split[1] == "Augmented", "Yes", "No")
 
 # ## Results
 
@@ -188,8 +191,10 @@ sns.lineplot(
     data=results,
     x="# Experiments",
     y="$f(x,y)$ (cumulative best)",
-    hue="Scenario",
-    marker="o",
+    hue="Constrained",
+    style="Augmented",
+    markers=True,
+    dashes=False,
     ax=axs[1],
 )
 axs[1].xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -201,7 +206,7 @@ plt.show()
 # We find that the campaigns utilizing the permutation invariance constraint
 # perform better than the ones without. This can be attributed simply to the reduced
 # number of searchspace points they operate on. However, this effect is rather minor
-# compared to the effect of symmetry.
+# compared to the effect of augmentation.
 
 # Furthermore, there is a strong impact on whether data augmentation is used or not,
 # the effect we expected for a tree-based surrogate model. Indeed, the campaign with
