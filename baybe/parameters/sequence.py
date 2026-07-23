@@ -81,24 +81,15 @@ class SequenceParameter(_EncodedDiscreteParameter):
     def is_finite(self) -> bool:
         return self.max_length is not None
 
+    @override
     @cached_property
-    def _enumerate_values(self) -> tuple[tuple[str, ...], ...]:
-        """Enumerate all possible values of the sequence parameter.
-
-        Returns:
-            A tuple of all possible values.
-
-        Raises:
-            InfiniteSpaceError: If the parameter has no maximum length.
-        """
+    def values(self) -> tuple[tuple[str, ...], ...]:
         if not self.is_finite:
             raise InfiniteSpaceError(
-                f"Cannot enumerate values for a {self.__class__.__name__} "
-                "without an explicit maximum length."
+                f"Cannot enumerate the sequences of a '{self.__class__.__name__}' "
+                "that has no explicit maximum length."
             )
-        assert self.max_length is not None, (
-            "max_length must be set for finite parameters."
-        )
+        assert self.max_length is not None
         all_values = map(
             tuple,
             chain.from_iterable(
@@ -107,16 +98,6 @@ class SequenceParameter(_EncodedDiscreteParameter):
             ),
         )
         return tuple(all_values)
-
-    @override
-    @property
-    def values(self) -> tuple[tuple[str, ...], ...]:
-        if not self.is_finite:
-            raise InfiniteSpaceError(
-                f"Cannot enumerate values for a {self.__class__.__name__} "
-                "without an explicit maximum length."
-            )
-        return self._enumerate_values
 
     @property
     @override
