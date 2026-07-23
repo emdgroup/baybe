@@ -24,7 +24,6 @@ def mirror_symmetries(draw: st.DrawFn, parameter_pool: list[Parameter] | None = 
 
     return MirrorSymmetry(
         parameter_name=parameter_name,
-        use_data_augmentation=draw(st.booleans()),
         mirror_point=draw(finite_floats()),
     )
 
@@ -71,10 +70,7 @@ def permutation_symmetries(
         remaining_names = [n for n in remaining_names if n not in group]
         all_groups.append(group)
 
-    return PermutationSymmetry(
-        permutation_groups=all_groups,
-        use_data_augmentation=draw(st.booleans()),
-    )
+    return PermutationSymmetry(permutation_groups=all_groups)
 
 
 @st.composite
@@ -107,7 +103,6 @@ def dependency_symmetries(
         condition=draw(st.one_of(threshold_conditions(), sub_selection_conditions())),
         affected_parameter_names=draw(affected_strat),
         n_discretization_points=draw(st.integers(min_value=2)),
-        use_data_augmentation=draw(st.booleans()),
     )
 
 

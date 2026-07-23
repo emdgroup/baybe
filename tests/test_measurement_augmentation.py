@@ -6,7 +6,6 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import pytest
-from attrs import evolve
 from pandas.testing import assert_frame_equal
 
 from baybe.acquisition import qLogEI
@@ -48,14 +47,13 @@ from baybe.utils.dataframe import create_fake_input
 )
 def test_measurement_augmentation(
     parameters,
-    surrogate_model,
     objective,
     constraints,
     dep_aug,
     perm_aug,
     mirror_aug,
 ):
-    """Measurement augmentation is performed if configured."""
+    """Measurement augmentation is performed for present symmetries."""
     original_to_botorch = qLogEI.to_botorch
     called_args_list = []
 
@@ -71,13 +69,21 @@ def test_measurement_augmentation(
             if isinstance(c, DiscretePermutationInvarianceConstraint)
         )
         c_dep = c_perm.dependencies
-        s_perm = c_perm.to_symmetry(perm_aug)
-        s_deps = c_dep.to_symmetries(dep_aug)  # this is a tuple of multiple
-        s_mirror = MirrorSymmetry("Num_disc_2", use_data_augmentation=mirror_aug)
+
+        # Build the list of symmetries based on the parametrization
+        symmetries = []
+        if dep_aug:
+            symmetries.extend(c_dep.to_symmetries())
+        if perm_aug:
+            symmetries.append(c_perm.to_symmetry())
+        s_mirror = MirrorSymmetry("Num_disc_2")
+        if mirror_aug:
+            symmetries.append(s_mirror)
+
         searchspace = SearchSpace.from_product(parameters, constraints)
-        surrogate = evolve(surrogate_model, symmetries=[*s_deps, s_perm, s_mirror])
         recommender = BotorchRecommender(
-            surrogate_model=surrogate, acquisition_function=qLogEI()
+            acquisition_function=qLogEI(),
+            symmetries=symmetries,
         )
 
         # Perform call and watch measurements
@@ -133,7 +139,8 @@ def test_continuous_dependency_augmentation(n_points, mixed):
         affected_parameter_names=("cat1", "c1") if mixed else ("c1",),
         n_discretization_points=n_points,
     )
-    dfa = s.augment_measurements(df, ps)
+    searchspace = SearchSpace.from_product(ps)
+    dfa = s.augment_measurements(df, searchspace)
 
     # Calculate expectation. The first row is not affected and contributes one point.
     # The second row is degenerate and contributes `n_points` values for c1 and 3

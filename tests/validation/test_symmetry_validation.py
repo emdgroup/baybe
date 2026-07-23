@@ -1,7 +1,6 @@
 """Validation tests for symmetry."""
 
 import numpy as np
-import pandas as pd
 import pytest
 from pytest import param
 
@@ -14,7 +13,6 @@ from baybe.parameters import (
 )
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
-from baybe.surrogates import GaussianProcessSurrogate
 from baybe.symmetries import DependencySymmetry, MirrorSymmetry, PermutationSymmetry
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
@@ -164,13 +162,6 @@ valid_config_dep = {
             "must be a sequence but cannot be a string",
             id="dep_affected_bare_string",
         ),
-        param(
-            PermutationSymmetry,
-            {"permutation_groups": [["a", "b"]], "use_data_augmentation": 1},
-            TypeError,
-            "must be <class 'bool'>",
-            id="use_aug_not_bool",
-        ),
     ],
 )
 def test_configuration(cls, config, error, msg):
@@ -276,9 +267,7 @@ def searchspace(parameter_names):
 )
 def test_searchspace_context(searchspace, symmetry, error, msg):
     """Configurations not compatible with the searchspace raise an expected error."""
-    recommender = BotorchRecommender(
-        surrogate_model=GaussianProcessSurrogate(symmetries=(symmetry,))
-    )
+    recommender = BotorchRecommender(symmetries=(symmetry,))
     t = NumericalTarget("t")
     measurements = create_fake_input(searchspace.parameters, [t])
 
@@ -286,17 +275,3 @@ def test_searchspace_context(searchspace, symmetry, error, msg):
         recommender.recommend(
             1, searchspace, t.to_objective(), measurements=measurements
         )
-
-
-def test_dependency_augmentation_requires_parameters():
-    """DependencySymmetry.augment_measurements raises when parameters is None."""
-    s = DependencySymmetry(**valid_config_dep)
-    df = pd.DataFrame({"n1": [0], "n2": [1], "cat1": ["a"]})
-    with pytest.raises(ValueError, match="requires parameter objects"):
-        s.augment_measurements(df)
-
-
-def test_surrogate_rejects_non_symmetry():
-    """Surrogate.symmetries rejects non-Symmetry members."""
-    with pytest.raises(TypeError, match="must be <class"):
-        GaussianProcessSurrogate(symmetries=("not_a_symmetry",))
