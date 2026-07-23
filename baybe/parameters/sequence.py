@@ -102,7 +102,8 @@ class SequenceParameter(_EncodedDiscreteParameter):
     @property
     @override
     def comp_rep_columns(self) -> tuple[str, ...]:
-        return (self.name,)
+        # TODO: Override can be dropped once method is removed from base class
+        raise NotImplementedError()
 
     @override
     def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
