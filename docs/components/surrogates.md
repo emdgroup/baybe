@@ -356,18 +356,3 @@ Note that BayBE has a dedicated [Insights module](./insights.md) that offers cer
 analytical tools and visualizations out-of-the-box, without requiring manual extraction
 of the surrogate model to begin with.
 ```
-
-
-(surrogate_data_augmentation)=
-## Data Augmentation
-
-In certain situations like [mixture modeling](/examples/Mixtures/slot_based),
-symmetries are present. Data augmentation is a model-agnostic way of enabling the 
-surrogate model to learn such symmetries effectively, which might result in a better 
-performance, similar as e.g. for image classification models. BayBE automatically
-performs data augmentation when symmetries are assigned to the
-{attr}`~baybe.recommenders.pure.bayesian.base.BayesianRecommender.symmetries`
-attribute of the recommender. This means you can add a data point in any acceptable
-representation and BayBE will train the model on this point plus augmented points that
-can be generated from it. To see the effect in practice, refer to
-[this example](/examples/Symmetries/permutation).
