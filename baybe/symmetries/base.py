@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -14,7 +13,6 @@ from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.serialization import SerialMixin
 
 if TYPE_CHECKING:
-    from baybe.parameters.base import Parameter
     from baybe.searchspace import SearchSpace
 
 
@@ -41,32 +39,31 @@ class Symmetry(SerialMixin, ABC):
     def augment_measurements(
         self,
         measurements: pd.DataFrame,
-        parameters: Sequence[Parameter] | None = None,
+        searchspace: SearchSpace,
     ) -> pd.DataFrame:
         """Augment the given measurements according to the symmetry.
 
         Args:
             measurements: The dataframe containing the measurements to be augmented.
-            parameters: Optional parameter objects carrying additional information.
-                Only required by specific augmentation implementations.
+            searchspace: The searchspace providing parameter context for augmentation.
 
         Returns:
             The augmented dataframe including the original measurements.
         """
-        return self._augment_measurements(measurements, parameters)
+        self.validate_searchspace_context(searchspace)
+        return self._augment_measurements(measurements, searchspace)
 
     @abstractmethod
     def _augment_measurements(
         self,
         measurements: pd.DataFrame,
-        parameters: Sequence[Parameter] | None = None,
+        searchspace: SearchSpace,
     ) -> pd.DataFrame:
         """Augment measurements (core logic for subclasses).
 
         Args:
             measurements: The dataframe containing the measurements to be augmented.
-            parameters: Optional parameter objects carrying additional information.
-                Only required by specific augmentation implementations.
+            searchspace: The searchspace providing parameter context for augmentation.
 
         Returns:
             The augmented dataframe including the original measurements.

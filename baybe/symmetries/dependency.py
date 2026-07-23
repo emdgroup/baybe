@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -20,7 +19,6 @@ from baybe.utils.conversion import nonstring_to_tuple, sort_tuple
 from baybe.utils.validation import validate_unique_values
 
 if TYPE_CHECKING:
-    from baybe.parameters.base import Parameter
     from baybe.searchspace import SearchSpace
 
 
@@ -70,15 +68,9 @@ class DependencySymmetry(Symmetry):
     def _augment_measurements(
         self,
         measurements: pd.DataFrame,
-        parameters: Sequence[Parameter] | None = None,
+        searchspace: SearchSpace,
     ) -> pd.DataFrame:
         # See base class.
-        if parameters is None:
-            raise ValueError(
-                f"A '{self.__class__.__name__}' requires parameter objects "
-                f"for data augmentation."
-            )
-
         from baybe.parameters.base import DiscreteParameter
 
         # The 'causing' entry describes the parameters and the value
@@ -87,11 +79,8 @@ class DependencySymmetry(Symmetry):
         # values are active, i.e. not degenerate. Hence, here we get the
         # values that are not active, as rows containing them should be
         # augmented.
-        param = next(
-            cast(DiscreteParameter, p)
-            for p in parameters
-            if p.name == self._parameter_name
-        )
+        param = searchspace.get_parameters_by_name((self._parameter_name,))[0]
+        assert isinstance(param, DiscreteParameter)
 
         causing_values = [
             x
@@ -109,10 +98,11 @@ class DependencySymmetry(Symmetry):
         # the corresponding condition for the causing parameter is met.
         affected: list[tuple[str, tuple[float, ...]]] = []
         for pn in self.affected_parameter_names:
-            p = next(p for p in parameters if p.name == pn)
+            p = searchspace.get_parameters_by_name((pn,))[0]
             if p.is_discrete:
                 # Use all values for augmentation
-                vals = cast(DiscreteParameter, p).values
+                assert isinstance(p, DiscreteParameter)
+                vals = p.values
             else:
                 # Use linear subsample of parameter bounds interval for augmentation.
                 # Note: The original value will not necessarily be part of this.
@@ -126,9 +116,7 @@ class DependencySymmetry(Symmetry):
                 )
             affected.append((p.name, vals))
 
-        measurements = df_apply_dependency_augmentation(measurements, causing, affected)
-
-        return measurements
+        return df_apply_dependency_augmentation(measurements, causing, affected)
 
     @override
     def validate_searchspace_context(self, searchspace: SearchSpace) -> None:

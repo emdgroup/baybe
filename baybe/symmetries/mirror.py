@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -16,7 +15,6 @@ from baybe.utils.augmentation import df_apply_mirror_augmentation
 from baybe.utils.validation import validate_is_finite
 
 if TYPE_CHECKING:
-    from baybe.parameters.base import Parameter
     from baybe.searchspace import SearchSpace
 
 
@@ -48,7 +46,7 @@ class MirrorSymmetry(Symmetry):
     def _augment_measurements(
         self,
         measurements: pd.DataFrame,
-        parameters: Sequence[Parameter] | None = None,
+        searchspace: SearchSpace,
     ) -> pd.DataFrame:
         # See base class.
         return df_apply_mirror_augmentation(

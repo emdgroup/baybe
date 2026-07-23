@@ -16,7 +16,6 @@ from baybe.symmetries.base import Symmetry
 from baybe.utils.augmentation import df_apply_permutation_augmentation
 
 if TYPE_CHECKING:
-    from baybe.parameters.base import Parameter
     from baybe.searchspace import SearchSpace
 
 
@@ -111,7 +110,7 @@ class PermutationSymmetry(Symmetry):
     def _augment_measurements(
         self,
         measurements: pd.DataFrame,
-        parameters: Sequence[Parameter] | None = None,
+        searchspace: SearchSpace,
     ) -> pd.DataFrame:
         # See base class.
         return df_apply_permutation_augmentation(measurements, self.permutation_groups)
