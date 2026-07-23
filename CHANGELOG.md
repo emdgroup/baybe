@@ -17,7 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `Symmetry` concept for expressing symmetries of the optimization problem, including
-  `PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry` classes
+  `PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry` classes, which trigger
+  automatic data augmentation when assigned to the `symmetries` attribute of a
+  `BayesianRecommender`
 - `Parameter.is_equivalent` method for structural parameter comparison
 
 ### Changed
