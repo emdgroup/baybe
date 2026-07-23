@@ -6,8 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Breaking Changes
-- `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
-  instead of a single tuple (needed for interpoint constraints)
+- All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
+  are now keyword-only
 - `df_apply_permutation_augmentation` has a different interface and now expects
   permutation groups instead of column groups
 
@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   values of invariant points are degenerate
 
 ### Added
+- `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
+  the same pattern as `ContinuousLinearConstraint.coefficients`
+- `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
+  weighted simplex sum constraints
 - `Symmetry` concept for expressing symmetries of the optimization problem, including
   `PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry` classes, which trigger
   automatic data augmentation when assigned to the `symmetries` attribute of a
@@ -28,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in version `0.18.0`
 - The `BOTORCH` GP preset now requires BoTorch `>= 0.18.0` and raises an
   `IncompatibilityError` if an older version is installed
+- `DiscreteSumConstraint`, `ContinuousLinearConstraint`, and
+  `SubspaceDiscrete.from_simplex` now forbid 0 as coefficients
+- `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
+- Bumped polars to `>=0.20.8`
+- Bumped cattrs to `>=26.1.0`
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
