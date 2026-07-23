@@ -71,7 +71,6 @@ class DependencySymmetry(Symmetry):
         searchspace: SearchSpace,
     ) -> pd.DataFrame:
         # See base class.
-        from baybe.parameters.base import DiscreteParameter
 
         # The 'causing' entry describes the parameters and the value
         # for which one or more affected parameters become degenerate.
@@ -79,8 +78,7 @@ class DependencySymmetry(Symmetry):
         # values are active, i.e. not degenerate. Hence, here we get the
         # values that are not active, as rows containing them should be
         # augmented.
-        param = searchspace.get_parameters_by_name((self._parameter_name,))[0]
-        assert isinstance(param, DiscreteParameter)
+        param = searchspace.discrete.get_parameters_by_name((self._parameter_name,))[0]
 
         causing_values = [
             x
@@ -98,15 +96,23 @@ class DependencySymmetry(Symmetry):
         # the corresponding condition for the causing parameter is met.
         affected: list[tuple[str, tuple[float, ...]]] = []
         for pn in self.affected_parameter_names:
+            from baybe.parameters.base import DiscreteParameter
+
             p = searchspace.get_parameters_by_name((pn,))[0]
-            if p.is_discrete:
-                # Use all values for augmentation
-                assert isinstance(p, DiscreteParameter)
+            if isinstance(p, DiscreteParameter):
                 vals = p.values
             else:
+                if self.n_discretization_points is None:
+                    raise ValueError(
+                        f"'{fields(DependencySymmetry).n_discretization_points.alias}' "
+                        f"must be set explicitly when affected parameters are "
+                        f"continuous. It specifies the number of evenly spaced points "
+                        f"used to sample from the parameter's range for data "
+                        f"augmentation."
+                    )
+
                 # Use linear subsample of parameter bounds interval for augmentation.
                 # Note: The original value will not necessarily be part of this.
-                assert self.n_discretization_points is not None
                 vals = tuple(
                     np.linspace(
                         p.bounds.lower,  # type: ignore[attr-defined]
@@ -127,8 +133,6 @@ class DependencySymmetry(Symmetry):
 
         Raises:
             TypeError: If the causing parameter is not discrete.
-            ValueError: If any affected parameter is continuous and
-                ``n_discretization_points`` is not set.
         """
         super().validate_searchspace_context(searchspace)
 
@@ -140,17 +144,6 @@ class DependencySymmetry(Symmetry):
                 f"be discrete. However, the parameter '{param.name}' is of "
                 f"type '{param.__class__.__name__}' and is not discrete."
             )
-
-        # n_discretization_points is required when affected parameters are continuous
-        if self.n_discretization_points is None:
-            affected = searchspace.get_parameters_by_name(self.affected_parameter_names)
-            if any(not p.is_discrete for p in affected):
-                raise ValueError(
-                    f"'{fields(DependencySymmetry).n_discretization_points.alias}' "
-                    f"must be set explicitly when affected parameters are continuous. "
-                    f"It specifies the number of evenly spaced points used to sample "
-                    f"from the parameter's range for data augmentation."
-                )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
