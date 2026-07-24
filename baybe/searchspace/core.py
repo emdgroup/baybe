@@ -16,7 +16,10 @@ from typing_extensions import override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
-from baybe.exceptions import InfeasibilityError
+from baybe.exceptions import (
+    InfeasibilityError,
+    UnsupportedSearchSpaceAttributeError,
+)
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
@@ -621,7 +624,7 @@ class _ReducedSearchSpace(SearchSpace):
         allowed = object.__getattribute__(self, "_ALLOWED_ATTRIBUTES")
         if name in allowed:
             return object.__getattribute__(self, name)
-        raise AttributeError(
+        raise UnsupportedSearchSpaceAttributeError(
             f"'{object.__getattribute__(self, '__class__').__name__}' does not "
             f"support attribute '{name}'. Only parameter information is available."
         )
