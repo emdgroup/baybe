@@ -101,13 +101,14 @@ axs[0].set_ylabel("y");
 # Remove entries that are "duplicated" in the sense of already being represented by
 # another invariant point.
 
-# If the recommender is additionally configured with `symmetries`, the model will be
-# fit with an extended set of points, including augmented ones. So as a user, you don't
-# have to generate permutations and add them manually. Depending on the surrogate model,
-# this might have different impacts. For example, we can expect a strong effect for
-# tree-based models because their splits are always parallel to the parameter axes.
-# Thus, without augmented measurements, it is easy to fall into suboptimal splits and
-# overfit. We illustrate this by using the
+# If a compatible recommender is additionally configured with
+# {attr}`~baybe.recommenders.pure.bayesian.base.BayesianRecommender.symmetries`, the
+# model will be fit with an extended set of points, including augmented ones. So as a
+# user, you don't have to generate permutations and add them manually. Depending on the
+# surrogate model, this might have different impacts. For example, we can expect a
+# strong effect for tree-based models because their splits are always parallel to the
+# parameter axes. Thus, without augmented measurements, it is easy to fall into
+# suboptimal splits and overfit. We illustrate this by using the
 # {class}`~baybe.surrogates.ngboost.NGBoostSurrogate`.
 
 # ## The Optimization Problem
@@ -138,7 +139,7 @@ print(f"{'With Constraint:':<35} {len(searchspace_constrained.discrete.exp_rep)}
 # {attr}`~baybe.recommenders.pure.bayesian.base.BayesianRecommender.symmetries`
 # attribute. When symmetries are present, BayBE will automatically augment
 # measurements internally before performing the model fit. To construct symmetries
-# quickly, we use the `to_symmetry` method of the constraint.
+# conveniently, we use the `to_symmetry` method of the constraint.
 
 symmetry = constraint.to_symmetry()
 recommender_plain = TwoPhaseMetaRecommender(
@@ -204,13 +205,6 @@ plt.tight_layout()
 plt.show()
 
 # We find that the campaigns utilizing the permutation invariance constraint
-# perform better than the ones without. This can be attributed simply to the reduced
-# number of searchspace points they operate on. However, this effect is rather minor
-# compared to the effect of augmentation.
-
-# Furthermore, there is a strong impact on whether data augmentation is used or not,
-# the effect we expected for a tree-based surrogate model. Indeed, the campaign with
-# constraint but without augmentation is barely better than the campaign not utilizing
-# the constraint at all. Conversely, the data-augmented campaign has a clearly superior
-# performance. The best result is achieved by using both constraints and data
-# augmentation.
+# perform similar to the ones without. However, the much stronger impact comes from
+# whether data augmentation is used or not, the effect we expected for a tree-based
+# surrogate model.

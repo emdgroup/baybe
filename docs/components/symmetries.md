@@ -1,12 +1,14 @@
 # Symmetry
 {class}`~baybe.symmetries.base.Symmetry` is a concept tied to the structure of the searchspace.
 It is thus closely related to a {class}`~baybe.constraints.base.Constraint`, but has a
-different purpose in BayBE. If the searchspace is symmetric in any sense, you can
-exclude the degenerate parts via a constraint. But this would not change the modeling
-process. The role of a {class}`~baybe.symmetries.base.Symmetry` is exactly this: Influence how
-the surrogate model is constructed to include the knowledge about the symmetry. This 
-can be applied independently of constraints. For an example of the influence of
-symmetries and constraints on the optimization of a permutation invariant function,
+different purpose in BayBE:
+- **Constraint**: Excludes parts of the searchspace from recommendation. If a problem
+  shows invariance, you can use constraints to exclude redundant regions from the search.
+- **Symmetry**: Influences the way the problem is modeled, for example by applying
+  symmetry-aware data augmentation. This can be applied independently of constraints.
+
+For an example of the influence of constraints and/or data augmentation via symmetries
+on the optimization of a permutation invariant function,
 [see here](/examples/Symmetries/permutation).
 
 ## Definitions
