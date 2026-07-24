@@ -117,8 +117,8 @@ def test_mean_transfer_delegates(objective):
     assert posterior.mean.numel() == 3
 
 
-def test_mean_transfer_matches_inner_target_gp(objective):
-    """The outer posterior equals the inner target GP posterior on stripped inputs."""
+def test_mean_transfer_mean_is_source_plus_target(objective):
+    """The outer posterior mean equals the source mean plus the target residual mean."""
     searchspace = _make_task_searchspace(
         ["source", "target"], ["target"], TransferLearningMode.MEAN_TRANSFER
     )
@@ -128,36 +128,12 @@ def test_mean_transfer_matches_inner_target_gp(objective):
 
     candidates = pd.DataFrame({"p": [0.1, 0.5, 0.9], "task": "target"})
     reduced_candidates = candidates.drop(columns=["task"])
+    delegate = surrogate._delegate
 
     outer_mean = surrogate.posterior(candidates).mean
-    inner_mean = surrogate._delegate._target_gp.posterior(reduced_candidates).mean
-    assert torch.allclose(outer_mean, inner_mean, atol=1e-4)
-
-
-def test_mean_transfer_cache_populated_correctly(objective):
-    """Cached training mean equals direct source GP evaluation at training points."""
-    searchspace = _make_task_searchspace(
-        ["source", "target"], ["target"], TransferLearningMode.MEAN_TRANSFER
-    )
-    measurements = _make_measurements(["source", "target"], objective)
-    surrogate = GaussianProcessSurrogate()
-    surrogate.fit(searchspace, objective, measurements)
-
-    delegate = surrogate._delegate
-    assert isinstance(delegate, MeanTransferSurrogate)
-    target_gp = delegate._target_gp
-    assert target_gp is not None
-    mean_module = target_gp._model.mean_module
-
-    # Cache must be populated after fitting
-    assert mean_module._train_mean_cache is not None
-
-    # Reference: re-evaluate at the same normalized training inputs without the cache
-    train_x_norm = target_gp._model.train_inputs[0]
-    with torch.no_grad():
-        reference = mean_module._eval_source_gp(train_x_norm)
-
-    assert torch.allclose(mean_module._train_mean_cache, reference, atol=1e-6)
+    source_mean = delegate._source_gp.posterior(reduced_candidates).mean
+    target_mean = delegate._target_gp.posterior(reduced_candidates).mean
+    assert torch.allclose(outer_mean, source_mean + target_mean, atol=1e-4)
 
 
 @pytest.mark.parametrize(
