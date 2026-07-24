@@ -33,7 +33,6 @@ from baybe.surrogates.gaussian_process.components.generic import (
 from baybe.surrogates.gaussian_process.components.kernel import (
     ICMKernelFactory,
     KernelFactoryProtocol,
-    is_task_aware_kernel,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
     LikelihoodFactoryProtocol,
@@ -102,12 +101,6 @@ class _ModelContext:
         import torch
 
         return torch.from_numpy(self.searchspace.scaling_bounds.to_numpy(copy=True))
-
-    @property
-    def has_prior_mean_transfer(self) -> bool:
-        """Indicates if the context requires prior-mean transfer learning."""
-        # TODO: Implement once TransferMode enum exists on TaskParameter
-        return False
 
     @property
     def numerical_indices(self) -> list[int]:
@@ -326,90 +319,17 @@ class GaussianProcessSurrogate(Surrogate):
 
         return kernel, mean, likelihood, criterion
 
-    def _fit_prior_mean(
-        self,
-        train_x: Tensor,
-        train_y: Tensor,
-        context: _ModelContext,
-    ) -> None:
-        """Fit using internal prior-mean transfer learning.
-
-        This path is taken when the search space contains a ``TaskParameter``
-        with ``transfer_mode == TransferMode.PRIOR_MEAN``. The surrogate:
-
-        1. Splits measurements by task (source vs target)
-        2. Trains a source GP on source-task data (using the user's factory
-           fields — including ``mean_factory`` if provided — for the source GP)
-        3. Extracts the source GP's posterior mean via
-           ``posterior_mean_function`` (the mechanism from PR #823)
-        4. Builds a target GP on non-task dimensions with the extracted mean
-           as its prior mean
-
-        A task-aware kernel (e.g. ``ICMKernelFactory``) competes with
-        prior-mean transfer for handling the task dimension and raises an
-        error. The user's ``mean_factory`` (if provided) is used for the
-        source GP, not the target GP.
-
-        Args:
-            train_x: Training inputs in computational representation.
-            train_y: Training targets (pre-transformed).
-            context: The model context providing bounds and index information.
-
-        Raises:
-            IncompatibleSurrogateError: If a task-aware kernel factory is set.
-            NotImplementedError: Always (not yet implemented).
-        """
-        from baybe.exceptions import IncompatibleSurrogateError
-
-        if is_task_aware_kernel(self.kernel_factory):
-            raise IncompatibleSurrogateError(
-                f"Cannot combine prior-mean transfer learning with a "
-                f"task-aware kernel factory "
-                f"({type(self.kernel_factory).__name__}). These are competing "
-                f"mechanisms for handling the task dimension."
-            )
-        raise NotImplementedError(
-            "Internal prior-mean transfer learning dispatch is not yet implemented."
-        )
-
-    def _fit_standard(
-        self,
-        train_x: Tensor,
-        train_y: Tensor,
-        context: _ModelContext,
-    ) -> None:
-        """Fit a standard SingleTaskGP with resolved components.
-
-        Args:
-            train_x: Training inputs in computational representation.
-            train_y: Training targets (pre-transformed).
-            context: The model context providing bounds and index information.
-        """
-        kernel, mean, likelihood, criterion = self._resolve_components(context)
-
-        import botorch
-        from botorch.models.transforms import Normalize, Standardize
-
-        input_transform = Normalize(
-            train_x.shape[-1],
-            bounds=context.parameter_bounds,
-            indices=context.numerical_indices,
-        )
-        outcome_transform = Standardize(train_y.shape[-1])
-        self._model = botorch.models.SingleTaskGP(
-            train_x,
-            train_y,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            mean_module=mean,
-            covar_module=kernel,
-            likelihood=likelihood,
-        )
-        mll = criterion.to_gpytorch(self._model.likelihood, self._model)
-        botorch.fit.fit_gpytorch_mll(mll)
-
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        """Fit a SingleTaskGP with resolved components.
+
+        Args:
+            train_x: Training inputs in computational representation.
+            train_y: Training targets (pre-transformed).
+
+        Raises:
+            DeprecationError: If a custom kernel is used in a multi-task context.
+        """
         assert self._searchspace is not None  # provided by base class
         assert self._objective is not None  # provided by base class
         assert self._measurements is not None  # provided by base class
@@ -433,11 +353,28 @@ class GaussianProcessSurrogate(Surrogate):
                 f"environment variable to a truthy value."
             )
 
-        # Dispatch
-        if context.has_prior_mean_transfer:
-            self._fit_prior_mean(train_x, train_y, context)
-        else:
-            self._fit_standard(train_x, train_y, context)
+        kernel, mean, likelihood, criterion = self._resolve_components(context)
+
+        import botorch
+        from botorch.models.transforms import Normalize, Standardize
+
+        input_transform = Normalize(
+            train_x.shape[-1],
+            bounds=context.parameter_bounds,
+            indices=context.numerical_indices,
+        )
+        outcome_transform = Standardize(train_y.shape[-1])
+        self._model = botorch.models.SingleTaskGP(
+            train_x,
+            train_y,
+            input_transform=input_transform,
+            outcome_transform=outcome_transform,
+            mean_module=mean,
+            covar_module=kernel,
+            likelihood=likelihood,
+        )
+        mll = criterion.to_gpytorch(self._model.likelihood, self._model)
+        botorch.fit.fit_gpytorch_mll(mll)
 
     @override
     def __str__(self) -> str:

@@ -335,15 +335,3 @@ class ICMKernelFactory(_MetaKernelFactory):
             )
 
         return base_kernel * task_kernel
-
-
-def is_task_aware_kernel(factory: KernelFactoryProtocol | None) -> bool:
-    """Check if a kernel factory handles the task dimension itself.
-
-    Args:
-        factory: The kernel factory to check, or ``None``.
-
-    Returns:
-        ``True`` if the factory is a task-aware kernel factory.
-    """
-    return isinstance(factory, ICMKernelFactory)
