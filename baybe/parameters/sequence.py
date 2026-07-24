@@ -78,6 +78,19 @@ class SequenceParameter(_EncodedDiscreteParameter):
         return self.max_length is not None
 
     @override
+    def __len__(self) -> int:
+        if not self.is_finite:
+            raise InfiniteSpaceError(
+                f"Cannot determine the number of sequences of a "
+                f"'{self.__class__.__name__}' that has no explicit maximum length."
+            )
+        assert self.max_length is not None
+        return sum(
+            len(self.alphabet) ** length
+            for length in range(self.min_length, self.max_length + 1)
+        )
+
+    @override
     @cached_property
     def values(self) -> tuple[tuple[str, ...], ...]:
         if not self.is_finite:
@@ -127,7 +140,7 @@ class SequenceParameter(_EncodedDiscreteParameter):
         )
         if self.max_length is not None:
             information["MaxLength"] = self.max_length
-            information["nValues"] = len(self.values)
+            information["nValues"] = len(self)
         return information
 
 

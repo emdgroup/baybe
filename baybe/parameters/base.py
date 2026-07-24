@@ -16,6 +16,7 @@ from attrs.validators import instance_of, min_len
 from narwhals.stable.v2.dependencies import is_into_series
 from typing_extensions import override
 
+from baybe.exceptions import InfiniteSpaceError
 from baybe.serialization import (
     SerialMixin,
 )
@@ -131,11 +132,18 @@ class DiscreteParameter(Parameter, ABC):
     def values(self) -> tuple:
         """The values the parameter can take."""
 
+    def __len__(self) -> int:
+        """Return the number of values the parameter can take."""
+        return len(self.values)
+
     @property
     def is_finite(self) -> bool:
         """Indicates whether the parameter has a finite number of values."""
-        len(self.values)  # <-- raises an error if the parameter is infinite
-        return True
+        try:
+            len(self)
+            return True
+        except InfiniteSpaceError:
+            return False
 
     @property
     def active_values(self) -> tuple:
@@ -242,7 +250,7 @@ class DiscreteParameter(Parameter, ABC):
         return dict(
             Name=self.name,
             Type=self.__class__.__name__,
-            nValues=len(self.values),
+            nValues=len(self),
         )
 
 
