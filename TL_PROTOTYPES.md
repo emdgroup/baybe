@@ -440,3 +440,46 @@ RGPE uses uniform weights at zero and one point. The behavior is correct; only t
 phrasing is loose.
 
 **Fix.** Purely cosmetic — no code change needed.
+
+### 12.5 `MeanTransferSurrogate` OOM on large continuous benchmarks
+
+**Where:** `_build_posterior_mean_module` → `_PosteriorMean.forward` in
+`baybe/surrogates/gaussian_process/core.py`.
+
+**Issue.** The target GP's `mean_module` wraps a deep copy of the fitted source GP.
+During `fit_gpytorch_mll`, GPyTorch calls `mean_module(train_x_norm)` at every gradient
+step (~100–200 iterations). Each call invokes `frozen_model.posterior(x_raw)`, which
+allocates the source GP's full `n_source × n_source` kernel matrix. On large continuous
+search spaces (e.g. the hartmann benchmarks with large source datasets) this triggers
+an OOM kill (exit code 137).
+
+**Root cause.** `train_x_norm` — the target training inputs in the outer GP's
+normalized space — is a **fixed constant** throughout MLL optimization. The source GP is
+frozen (all `requires_grad = False`). Therefore `forward(train_x_norm)` produces the
+same value every gradient step, yet the kernel matrix is reallocated each time.
+
+**Fix** (implemented). Lazy caching inside `_PosteriorMean`:
+
+- A `_train_mean_cache: Tensor | None` attribute is added to `_PosteriorMean`.
+- `forward()` branches on `self.training`:
+  - **Training mode** (MLL fitting): on the first call, compute and store the result
+    under `torch.no_grad()`; return the cached tensor on all subsequent calls.
+  - **Eval mode** (prediction): always call the source GP, as `x` is now arbitrary.
+- `train(mode=True)` resets `_train_mean_cache = None` so a fresh `.fit()` call
+  repopulates the cache from the new target GP's training inputs.
+- The expensive `self.gp.posterior(x_raw)` call is extracted into a private helper
+  `_eval_source_gp(x)` shared by both branches.
+
+**Correctness.** The cached tensor is detached (no gradient flows from it), which is
+correct because no gradient was ever intended to reach the frozen source GP. Gradients
+for the target GP's kernel and likelihood hyperparameters flow normally through the
+covariance matrix. The `self.training` flag is a reliable signal: `fit_gpytorch_mll`
+sets `model.train()` before optimization and `model.eval()` before posterior calls.
+
+**Memory note.** The source GP deep copy is still held in memory for prediction time,
+so the double-model memory footprint is unchanged. The fix eliminates the
+O(n_optimizer_steps) × O(n_source²) repeated kernel-matrix allocations during fitting.
+
+**Test.** `test_mean_transfer_cache_populated_correctly` in `tests/test_tl_prototypes.py`
+verifies that `_train_mean_cache` equals a direct call to `_eval_source_gp(train_x_norm)`
+after fitting.
