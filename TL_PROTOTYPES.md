@@ -485,3 +485,95 @@ O(n_optimizer_steps) × O(n_source²) repeated kernel-matrix allocations during 
 **Test.** `test_mean_transfer_cache_populated_correctly` in `tests/test_tl_prototypes.py`
 verifies that `_train_mean_cache` equals a direct call to `_eval_source_gp(train_x_norm)`
 after fitting.
+
+## 13. Multi-source `ResidualTransferSurrogate`
+
+### Algorithm
+
+`ResidualTransferSurrogate` was extended from single-source to multi-source using a
+**GP boosting chain**: each GP in the chain corrects the residuals of the previous
+stack. Sources are processed in the order imposed by `TaskParameter.values` (always
+alphabetical, since `CategoricalParameter` sorts its values on construction).
+
+Given sources `[A, B, …]` (alphabetical) and a target task:
+
+```
+chain = []
+
+# First source: fit on raw data
+gp_A.fit(reduced_searchspace, objective, data_A)
+chain = [gp_A]
+
+# Subsequent sources: fit on residuals w.r.t. current chain sum
+r_B  = y_B  - (μ_A(X_B))
+gp_B.fit(reduced_searchspace, objective, (X_B, r_B))
+chain = [gp_A, gp_B]
+
+# Target: fit on residuals w.r.t. full source chain sum
+r_T  = y_T  - (μ_A(X_T) + μ_B(X_T))
+gp_T.fit(reduced_searchspace, objective, (X_T, r_T))
+chain = [gp_A, gp_B, gp_T]
+```
+
+Prediction at `x*`:
+
+    μ(x*) = μ_A(x*) + μ_B(x*) + μ_T(x*)
+
+Variance without propagation (only last GP):
+
+    Σ(x*) = Σ_T(x*)
+
+Variance with propagation (all GPs independent, sum):
+
+    Σ(x*) = Σ_A(x*) + Σ_B(x*) + Σ_T(x*)
+
+The single-source case is a degenerate chain of length 2: `[gp_source, gp_target]`,
+which produces identical results to the previous implementation.
+
+### Cold start
+
+If the target task has no measurements, the chain contains only the source GPs
+(no target residual GP is appended). The prediction is the sum of all source GP
+posteriors. For a single source this matches the previous `_source_only_posterior`
+fallback exactly.
+
+### Implementation details
+
+The chain is built entirely in an overridden `_fit` method, bypassing the base class's
+source-fitting loop (which would fit all source GPs on raw data). Key points:
+
+- `_max_sources` is removed — no cap on the number of sources.
+- `_residual_gp: GaussianProcessSurrogate | None` is replaced by
+  `_gp_chain: tuple[GaussianProcessSurrogate, ...]`.
+- `_make_residual_measurements(gps, measurements)` is a helper that evaluates the sum
+  of posterior means of a list of GPs at `measurements` input points and subtracts from
+  the target column(s), returning a residualised copy of the DataFrame.
+- `_fit_target` is kept as a no-op to satisfy the abstract base class; it is never
+  called because `_fit` is overridden.
+- `_posterior` sums means via `torch.stack([...]).sum(dim=0)` and sums covariances
+  (when propagating) via `functools.reduce(operator.add, ...)`, both avoiding
+  Python's `sum()` initialising from `int(0)`.
+
+### Source ordering caveat
+
+The chain order is determined by `task_param.values`, which is always sorted
+alphabetically. Users cannot control the chain order by specifying values in a different
+declaration order. Task names should be chosen accordingly if ordering matters
+(e.g. `"1_baseline"`, `"2_finetuned"`, `"3_target"`).
+
+### Tests
+
+New and updated tests in `tests/test_tl_prototypes.py`:
+
+- `test_residual_transfer_delegates` — updated to check `len(_gp_chain) == 2`
+  (single-source: source GP + target residual GP).
+- `test_residual_transfer_mean_is_source_plus_residual` — updated to sum over
+  `_gp_chain` instead of accessing `_source_gp`/`_residual_gp` directly.
+- `test_residual_transfer_cold_start_uses_source_chain` — verifies that with no target
+  data `_gp_chain` has length 1 and the posterior equals the single source GP's output.
+- `test_residual_transfer_multisource_chain_length` — 2 sources + target → chain
+  length 3.
+- `test_residual_transfer_multisource_mean_is_chain_sum` — outer mean equals sum of
+  individual GP means with 2 sources.
+- `test_residual_transfer_multisource_uncertainty_variant_has_larger_variance` — same
+  variance ordering property as the single-source variant, with 2 sources.

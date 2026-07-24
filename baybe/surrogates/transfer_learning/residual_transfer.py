@@ -198,7 +198,10 @@ class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
 
         mean = torch.stack([p.mean for p in posteriors]).sum(dim=0)
         covariance = (
-            reduce(operator.add, (p.distribution.lazy_covariance_matrix for p in posteriors))
+            reduce(
+                operator.add,
+                (p.distribution.lazy_covariance_matrix for p in posteriors),
+            )
             if self.propagate_source_uncertainty
             else posteriors[-1].distribution.lazy_covariance_matrix
         )
