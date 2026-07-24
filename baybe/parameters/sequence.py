@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Callable
 from functools import cached_property
 from itertools import chain, product
-from typing import TypeAlias
 
 import narwhals.stable.v2 as nw
 from attrs import Attribute, Converter, define, field
@@ -15,23 +13,15 @@ from attrs.validators import (
     deep_iterable,
     ge,
     instance_of,
-    is_callable,
     min_len,
     optional,
 )
-from narwhals.stable.v2.typing import IntoDataFrame, IntoSeries
 from typing_extensions import override
 
 from baybe.exceptions import InfiniteSpaceError
 from baybe.parameters.base import _JOIN_KEY, _EncodedDiscreteParameter
+from baybe.parameters.encoding import _Encoder
 from baybe.utils.conversion import nonstring_to_tuple
-
-Encoder: TypeAlias = Callable[[IntoSeries], IntoDataFrame]
-"""The protocol defining the contract for encoders.
-
-Takes a series of values and returns the corresponding encoded representations as
-a dataframe, where the row order matches the order of the input series.
-"""
 
 
 @define(frozen=True, slots=False)
@@ -53,8 +43,14 @@ class SequenceParameter(_EncodedDiscreteParameter):
     )
     """The alphabet defining the tokens used to construct the sequences."""
 
-    encoder: Encoder = field(validator=is_callable())
-    """The used sequence encoder."""
+    encoder: _Encoder = field(
+        converter=lambda v: v if isinstance(v, _Encoder) else _Encoder(encoder=v),
+    )
+    """The encoder used to map sequence values to their computational representation.
+
+    Can be implemented in any narwhals-supported dataframe backend since an
+    automatically applied wrapper layer handles backend conversion when necessary.
+    """
 
     min_length: int = field(
         default=0, validator=and_(instance_of(int), ge(0)), kw_only=True
@@ -107,12 +103,7 @@ class SequenceParameter(_EncodedDiscreteParameter):
 
     @override
     def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
-        result = nw.from_native(self.encoder(values), eager_only=True)
-        return (
-            result.lazy()
-            .collect(backend=nw.get_native_namespace(values))
-            .with_columns(values.rename(_JOIN_KEY))
-        )
+        return self.encoder(values).with_columns(values.rename(_JOIN_KEY))
 
     @override
     def is_in_range(self, item: tuple[str, ...]) -> bool:

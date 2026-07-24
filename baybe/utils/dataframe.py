@@ -11,6 +11,7 @@ import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from narwhals.testing import assert_frame_equal
+from narwhals.typing import IntoDataFrame, IntoSeries
 from typing_extensions import assert_never
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
@@ -309,6 +310,42 @@ def df_uncorrelated_features(
         data[exclude_list] = df.loc[:, exclude_list]
 
     return data
+
+
+_SeriesOrFrameT = TypeVar(
+    "_SeriesOrFrameT", nw.Series, nw.DataFrame, IntoSeries, IntoDataFrame
+)
+
+
+def _df_with_backend(
+    obj: _SeriesOrFrameT, backend: nw.Implementation, /
+) -> _SeriesOrFrameT:
+    """Convert a native/narwhals Series/DataFrame to a different native backend.
+
+    Args:
+        obj: The native/narwhals Series/DataFrame to convert.
+        backend: The target backend to convert to.
+
+    Returns:
+        The input object converted to specified backend.
+    """
+    # TODO: Replace once built-in solution is available
+    # https://github.com/narwhals-dev/narwhals/issues/3812
+
+    if is_native := not isinstance(obj, nw.Series | nw.DataFrame):
+        obj = nw.from_native(obj, allow_series=True)
+
+    if isinstance(obj, nw.Series):
+        name = obj.name
+        frame = nw.from_dict(obj.to_frame().to_dict(), backend=backend)
+        result = frame[name]
+    else:
+        result = nw.from_dict(obj.to_dict(), backend=backend)
+
+    if is_native:
+        return result.to_native()
+
+    return result
 
 
 def add_noise_to_perturb_degenerate_rows(
