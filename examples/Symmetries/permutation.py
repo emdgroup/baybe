@@ -195,6 +195,8 @@ sns.lineplot(
     hue="Constrained",
     style="Augmented",
     markers=True,
+    markevery=2,
+    markersize=10,
     dashes=False,
     ax=axs[1],
 )
