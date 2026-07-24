@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, ClassVar, cast
+import operator
+from functools import reduce
+from typing import TYPE_CHECKING, cast
 
 from attrs import define, evolve, field
 from attrs.validators import instance_of
@@ -24,57 +26,71 @@ if TYPE_CHECKING:
 
 @define
 class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
-    """A transfer learning surrogate that learns the target as a residual.
+    """A transfer learning surrogate that learns the target as a GP boosting chain.
 
-    Fits a single-task source Gaussian process on the source subset, then a single-task
-    residual Gaussian process on the residuals of the target data with respect to the
-    source GP's posterior mean (computed in original target units). Predictions are the
-    sum of the source and residual posterior means.
+    Fits a sequence of Gaussian processes, where each GP corrects the residuals of all
+    previous ones. Source tasks are processed in alphabetical order (the order imposed
+    by :class:`~baybe.parameters.categorical.TaskParameter`):
 
-    Cold start: if the target task has no measurements yet, the surrogate falls back to
-    the source GP's posterior (with no residual to add).
+    - The **first source GP** is fitted on the raw first-source measurements.
+    - Each **subsequent source GP** is fitted on the residuals of those measurements
+      w.r.t. the sum of all previous GPs in the chain.
+    - The **target GP** is fitted on the residuals of the target measurements w.r.t.
+      the sum of all source GPs in the chain.
+
+    Predictions are the sum of the posterior means of all GPs in the chain.
+
+    Cold start: if the target task has no measurements yet, the chain contains only
+    source GPs and predictions are their combined posterior mean.
 
     Note:
-        Only a single source and a single target task are currently supported.
+        Multiple source tasks and a single target task are supported.
+        Source tasks with no measurements are silently skipped.
+        :class:`~baybe.objectives.desirability.DesirabilityObjective` is not supported
+        because residuals are computed per raw target column.
     """
-
-    _max_sources: ClassVar[int] = 1
-    # See base class.
 
     propagate_source_uncertainty: bool = field(
         default=False, validator=instance_of(bool)
     )
-    """Whether to add the source GP's variance to the residual GP's variance.
+    """Whether to sum the variances of all GPs in the chain.
 
-    If ``False``, the source model is treated as a fixed mean function and only the
-    residual GP contributes to the predictive variance. If ``True``, source and
-    residual GPs are treated as independent and their variances are summed.
+    If ``False``, only the last GP in the chain contributes to the predictive
+    variance (the earlier GPs are treated as fixed mean functions). If ``True``,
+    all GPs are treated as independent and their variances are summed.
     """
 
-    _residual_gp: GaussianProcessSurrogate | None = field(
-        init=False, default=None, eq=False, repr=False
+    _gp_chain: tuple[GaussianProcessSurrogate, ...] = field(
+        init=False, factory=tuple, eq=False, repr=False
     )
-    """The single-task GP trained on the residuals. ``None`` before fitting or when
-    the target task has no measurements yet (cold start)."""
+    """The fitted GP chain.
+
+    The first entry is fitted on the raw data of the first source task. Each subsequent
+    entry is fitted on the residuals of those measurements w.r.t. the sum of all
+    previous GPs. The last entry covers the target task if target data is available;
+    otherwise the chain contains only source GPs (cold start). Empty before fitting.
+    """
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
-        """Reject incompatible objectives, then run the shared fitting logic.
+        """Build the GP chain from source and target measurements.
 
         Args:
             train_x: Computational-representation inputs prepared by the base class.
-            train_y: Target values prepared by the base class.
+                Not used directly; measurements are re-split internally.
+            train_y: Target values prepared by the base class. Not used directly.
 
         Raises:
             IncompatibleObjectiveError: If the objective is a
-                :class:`~baybe.objectives.desirability.DesirabilityObjective`. The
-                residual is computed by subtracting a single source posterior mean from
-                the raw target column(s), which is only meaningful for a single modeled
-                target and not for the aggregated, multi-target desirability value.
+                :class:`~baybe.objectives.desirability.DesirabilityObjective`.
         """
         from baybe.objectives.desirability import DesirabilityObjective
+        from baybe.surrogates.gaussian_process.core import _ModelContext
 
         assert self._objective is not None  # provided by base class
+        assert self._searchspace is not None  # provided by base class
+        assert self._measurements is not None  # provided by base class
+
         if isinstance(self._objective, DesirabilityObjective):
             raise IncompatibleObjectiveError(
                 f"'{self.__class__.__name__}' does not support "
@@ -82,7 +98,33 @@ class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
                 f"per target and cannot be formed from an aggregated desirability "
                 f"value. Please use a single-target objective instead."
             )
-        super()._fit(train_x, train_y)
+
+        reduced_searchspace, sources, target_measurements = self._split_measurements()
+
+        context = _ModelContext(self._searchspace, self._objective, self._measurements)
+        self._numerical_indices = context.numerical_indices
+
+        chain: list[GaussianProcessSurrogate] = []
+        for i, (_, source_measurements) in enumerate(sources):
+            gp = evolve(self.base_surrogate)
+            measurements = (
+                source_measurements
+                if i == 0
+                else self._make_residual_measurements(chain, source_measurements)
+            )
+            gp.fit(reduced_searchspace, self._objective, measurements)
+            chain.append(gp)
+
+        if not target_measurements.empty:
+            gp = evolve(self.base_surrogate)
+            gp.fit(
+                reduced_searchspace,
+                self._objective,
+                self._make_residual_measurements(chain, target_measurements),
+            )
+            chain.append(gp)
+
+        self._gp_chain = tuple(chain)
 
     @override
     def _fit_target(
@@ -91,73 +133,76 @@ class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
         objective: Objective,
         target_measurements: pd.DataFrame,
     ) -> None:
-        """Fit the residual GP on the target residuals w.r.t. the source posterior mean.
+        # The chain is built in _fit, which is overridden and does not call super().
+        # This method is therefore never invoked; it exists only to satisfy the
+        # abstract base class.
+        pass
 
-        If the target task has no measurements yet, no residual GP is built and the
-        surrogate falls back to the source GP at prediction time.
+    def _make_residual_measurements(
+        self,
+        gps: list[GaussianProcessSurrogate],
+        measurements: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Return measurements with target columns replaced by chain residuals.
+
+        Computes the sum of posterior means of all GPs in ``gps`` at the input
+        points of ``measurements`` and subtracts it from the target column(s).
 
         Args:
-            reduced_searchspace: The task-free search space for the residual GP.
-            objective: The objective (a single modeled quantity after replication).
-            target_measurements: The measurements belonging to the target task (may be
-                empty).
+            gps: Fitted GPs whose posterior means are summed to form the baseline.
+            measurements: Raw measurements to residualise.
+
+        Returns:
+            A copy of ``measurements`` with target column(s) replaced by residuals.
         """
-        if target_measurements.empty:
-            self._residual_gp = None
-            return
+        assert self._objective is not None
 
-        # Source posterior mean at the target inputs, in original target units.
-        source_posterior = cast(
-            "GPyTorchPosterior", self._source_gp.posterior(target_measurements)
+        stack_mean = sum(
+            cast("GPyTorchPosterior", gp.posterior(measurements))
+            .mean.detach()
+            .cpu()
+            .numpy()
+            .reshape(-1)
+            for gp in gps
         )
-        source_mean = source_posterior.mean.detach().cpu().numpy().reshape(-1)
-
-        residual_measurements = target_measurements.copy()
-        for target in objective.targets:
+        residual_measurements = measurements.copy()
+        for target in self._objective.targets:
             residual_measurements[target.name] = (
-                target_measurements[target.name].to_numpy() - source_mean
+                measurements[target.name].to_numpy() - stack_mean
             )
-
-        self._residual_gp = evolve(self.base_surrogate)
-        self._residual_gp.fit(reduced_searchspace, objective, residual_measurements)
+        return residual_measurements
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
-        """Return the combined source-plus-residual posterior on stripped candidates.
+        """Return the chain posterior on task-stripped candidates.
 
         Args:
             candidates_comp_scaled: Candidate points in the computational representation
                 of the full search space (including the task column).
 
         Returns:
-            A posterior whose mean is the sum of the source and residual posterior
-            means and whose covariance is the residual covariance (plus the source
-            covariance if ``propagate_source_uncertainty`` is set). During cold start
-            (no target data), the source GP's posterior is returned.
+            A posterior whose mean is the sum of all GP means in the chain and whose
+            covariance is that of the last GP only (or the sum of all GP covariances if
+            :attr:`propagate_source_uncertainty` is set).
         """
         from botorch.posteriors import GPyTorchPosterior
         from gpytorch.distributions import MultivariateNormal
 
-        if self._residual_gp is None:
-            return self._source_only_posterior(candidates_comp_scaled)
-
         reduced_candidates = self._strip_task(candidates_comp_scaled)
-        source_posterior = cast(
-            "GPyTorchPosterior", self._source_gp._posterior(reduced_candidates)
-        )
-        residual_posterior = cast(
-            "GPyTorchPosterior", self._residual_gp._posterior(reduced_candidates)
-        )
+        posteriors = [
+            cast("GPyTorchPosterior", gp._posterior(reduced_candidates))
+            for gp in self._gp_chain
+        ]
 
-        mean = source_posterior.mean + residual_posterior.mean
-        covariance = residual_posterior.distribution.lazy_covariance_matrix
-        if self.propagate_source_uncertainty:
-            covariance = (
-                covariance + source_posterior.distribution.lazy_covariance_matrix
-            )
+        import torch
 
-        combined = MultivariateNormal(mean.squeeze(-1), covariance)
-        return GPyTorchPosterior(combined)
+        mean = torch.stack([p.mean for p in posteriors]).sum(dim=0)
+        covariance = (
+            reduce(operator.add, (p.distribution.lazy_covariance_matrix for p in posteriors))
+            if self.propagate_source_uncertainty
+            else posteriors[-1].distribution.lazy_covariance_matrix
+        )
+        return GPyTorchPosterior(MultivariateNormal(mean.squeeze(-1), covariance))
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

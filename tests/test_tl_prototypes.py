@@ -237,8 +237,7 @@ def test_residual_transfer_delegates(mode, expected_propagate, objective):
 
     assert isinstance(surrogate._delegate, ResidualTransferSurrogate)
     assert surrogate._delegate.propagate_source_uncertainty is expected_propagate
-    assert surrogate._delegate._source_gp is not None
-    assert surrogate._delegate._residual_gp is not None
+    assert len(surrogate._delegate._gp_chain) == 2  # source GP + target residual GP
 
 
 def test_residual_transfer_mean_is_source_plus_residual(objective):
@@ -255,9 +254,8 @@ def test_residual_transfer_mean_is_source_plus_residual(objective):
     delegate = surrogate._delegate
 
     outer_mean = surrogate.posterior(candidates).mean
-    source_mean = delegate._source_gp.posterior(reduced).mean
-    residual_mean = delegate._residual_gp.posterior(reduced).mean
-    assert torch.allclose(outer_mean, source_mean + residual_mean, atol=1e-4)
+    chain_sum = sum(gp.posterior(reduced).mean for gp in delegate._gp_chain)
+    assert torch.allclose(outer_mean, chain_sum, atol=1e-4)
 
 
 def test_residual_transfer_uncertainty_variant_has_larger_variance(objective):
@@ -308,6 +306,55 @@ def test_residual_transfer_rejects_desirability():
         surrogate.fit(searchspace, objective, measurements)
 
 
+def test_residual_transfer_multisource_chain_length(objective):
+    """_gp_chain has one entry per source with data plus one for the target."""
+    searchspace = _make_task_searchspace(
+        ["s1", "s2", "target"], ["target"], TransferLearningMode.RESIDUAL_LEARNING
+    )
+    measurements = _make_measurements(["s1", "s2", "target"], objective)
+    surrogate = GaussianProcessSurrogate()
+    surrogate.fit(searchspace, objective, measurements)
+
+    assert len(surrogate._delegate._gp_chain) == 3  # s1 + s2_residual + target_residual
+
+
+def test_residual_transfer_multisource_mean_is_chain_sum(objective):
+    """Posterior mean equals the sum of individual GP means in the chain."""
+    searchspace = _make_task_searchspace(
+        ["s1", "s2", "target"], ["target"], TransferLearningMode.RESIDUAL_LEARNING
+    )
+    measurements = _make_measurements(["s1", "s2", "target"], objective)
+    surrogate = GaussianProcessSurrogate()
+    surrogate.fit(searchspace, objective, measurements)
+
+    candidates = pd.DataFrame({"p": [0.1, 0.5, 0.9], "task": "target"})
+    reduced = candidates.drop(columns=["task"])
+
+    outer_mean = surrogate.posterior(candidates).mean
+    chain_sum = sum(gp.posterior(reduced).mean for gp in surrogate._delegate._gp_chain)
+    assert torch.allclose(outer_mean, chain_sum, atol=1e-4)
+
+
+def test_residual_transfer_multisource_uncertainty_variant_has_larger_variance(
+    objective,
+):
+    """With propagation, total variance >= residual-only variance (multi-source)."""
+    searchspace = _make_task_searchspace(["s1", "s2", "target"], ["target"])
+    measurements = _make_measurements(["s1", "s2", "target"], objective)
+
+    residual_only = ResidualTransferSurrogate(propagate_source_uncertainty=False)
+    residual_unc = ResidualTransferSurrogate(propagate_source_uncertainty=True)
+    residual_only.fit(searchspace, objective, measurements)
+    residual_unc.fit(searchspace, objective, measurements)
+
+    candidates = pd.DataFrame({"p": [0.1, 0.5, 0.9], "task": "target"})
+    var_only = residual_only.posterior(candidates).variance
+    var_unc = residual_unc.posterior(candidates).variance
+
+    assert (var_unc >= var_only - 1e-6).all()
+    assert var_unc.sum() > var_only.sum()
+
+
 def test_reduced_searchspace_rejects_surviving_task():
     """A reduced space that still contains a task parameter raises on construction."""
     searchspace = _make_task_searchspace(["source", "target"], ["target"])
@@ -337,7 +384,6 @@ def test_mean_transfer_rejects_fantasize_acquisition(objective):
     "surrogate_factory",
     [
         pytest.param(MeanTransferSurrogate, id="mean"),
-        pytest.param(ResidualTransferSurrogate, id="residual"),
         pytest.param(RGPETransferSurrogate, id="rgpe"),
     ],
 )
@@ -355,6 +401,22 @@ def test_transfer_surrogate_cold_start_uses_source(surrogate_factory, objective)
     source_mean = surrogate._source_gp.posterior(reduced).mean
 
     assert torch.allclose(surrogate.posterior(candidates).mean, source_mean, atol=1e-4)
+
+
+def test_residual_transfer_cold_start_uses_source_chain(objective):
+    """With no target data, residual posterior equals the source chain sum."""
+    searchspace = _make_task_searchspace(["source", "target"], ["target"])
+    measurements = _make_measurements(["source"], objective)
+
+    surrogate = ResidualTransferSurrogate()
+    surrogate.fit(searchspace, objective, measurements)
+
+    candidates = pd.DataFrame({"p": [0.1, 0.5, 0.9], "task": "target"})
+    reduced = candidates.drop(columns=["task"])
+    # Cold start: only one source GP in the chain.
+    assert len(surrogate._gp_chain) == 1
+    chain_mean = surrogate._gp_chain[0].posterior(reduced).mean
+    assert torch.allclose(surrogate.posterior(candidates).mean, chain_mean, atol=1e-4)
 
 
 def test_rgpe_delegates(objective):

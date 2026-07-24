@@ -33,8 +33,8 @@ Switching `<MODE>` must change the TL behavior while the default
 | `INDEX_KERNEL` | implemented | task kernel swap (`IndexKernel`) |
 | `POSITIVE_INDEX_KERNEL` | implemented (default) | task kernel swap (`PositiveIndexKernel`) |
 | `MEAN_TRANSFER` | implemented | dedicated surrogate (`MeanTransferSurrogate`) |
-| `RESIDUAL_LEARNING` | implemented | `ResidualTransferSurrogate` (residual variance only) |
-| `RESIDUAL_LEARNING_WITH_UNCERTAINTY` | implemented | `ResidualTransferSurrogate` (source + residual variance) |
+| `RESIDUAL_LEARNING` | implemented | `ResidualTransferSurrogate` (residual variance only, multi-source) |
+| `RESIDUAL_LEARNING_WITH_UNCERTAINTY` | implemented | `ResidualTransferSurrogate` (full chain variance, multi-source) |
 | `RGPE` | implemented | `RGPETransferSurrogate` (rank-weighted GP ensemble, multi-source) |
 
 The two families are fundamentally different and therefore dispatch at **different
@@ -224,8 +224,9 @@ either subset has no measurements.
 
 ## 8. Known limitations / future work
 
-- `MEAN_TRANSFER` and `RESIDUAL_LEARNING(_WITH_UNCERTAINTY)` support exactly one source
-  and one target task. `RGPE` supports one or more source tasks and one target task.
+- `MEAN_TRANSFER` supports exactly one source and one target task. `RESIDUAL_LEARNING`
+  and `RESIDUAL_LEARNING_WITH_UNCERTAINTY)` support one or more sources and one target
+  task (see section 13). `RGPE` supports one or more source tasks and one target task.
 - No `fantasize` support for the surrogate-replacing modes (see 5.3); acquisition
   functions that require it (e.g. `qNIPV`) are not supported for these modes.
 - Residuals are computed in original target units and passed back through the
@@ -293,8 +294,8 @@ All surrogate-replacing modes share the base class
 4. delegates the target-specific logic to the abstract `_fit_target`.
 
 The number of source tasks is capped per subclass via the `_max_sources` class
-variable: `MeanTransferSurrogate` and `ResidualTransferSurrogate` set `_max_sources = 1`
-(one source, one target), while `RGPETransferSurrogate` leaves it unbounded. If no
+variable: `MeanTransferSurrogate` sets `_max_sources = 1` (one source, one target),
+while `ResidualTransferSurrogate` and `RGPETransferSurrogate` leave it unbounded. If no
 source task has data, the base raises `IncompatibleSearchSpaceError`.
 
 ### Why a cold-start fallback is needed
@@ -310,9 +311,10 @@ than fail.
 ### Fallback behavior (source-only prediction)
 
 When the target subset is empty, the base exposes `_source_only_posterior`, which
-strips the task column and returns the (single) source GP's posterior directly. Mean and
-residual transfer route to it whenever their target/residual GP was not built. This is
-correct in units because the source and target GPs share the objective's output space.
+strips the task column and returns the (single) source GP's posterior directly.
+`MeanTransferSurrogate` routes to it when no target data is present. `ResidualTransfer`
+handles cold start internally: with no target data the chain contains only source GPs
+and their sum is returned directly (see section 13).
 
 **Documented limitation.** With zero target points there is no target data to
 recalibrate the output scale, so the prediction is made at the *source* scale. This is
