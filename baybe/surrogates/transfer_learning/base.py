@@ -159,8 +159,8 @@ class _SourceTargetTransferSurrogate(Surrogate, ABC):
         Returns:
             The reduced (task-free) search space, an ordered list of
             ``(task_value, measurements)`` pairs for the source tasks that have data
-            (sorted by task value), and the target-task measurements (which may be
-            empty).
+            (in the order they appear in the task parameter's values), and the
+            target-task measurements (which may be empty).
 
         Raises:
             IncompatibleSearchSpaceError: If the search space has no task parameter,
@@ -204,7 +204,8 @@ class _SourceTargetTransferSurrogate(Surrogate, ABC):
         task_name = task_param.name
         sources = [
             (value, subset)
-            for value in sorted(source_values)
+            for value in task_param.values
+            if value in source_values
             if not (subset := measurements[measurements[task_name] == value]).empty
         ]
         if not sources:
