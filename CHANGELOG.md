@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
 - Bumped polars to `>=0.20.8`
 - Bumped cattrs to `>=26.1.0`
+- The factory fields of `GaussianProcessSurrogate` (`kernel_factory`,
+  `mean_factory`, `likelihood_factory`, `fit_criterion_factory`) now default to
+  `None`, meaning "auto-select based on context at fit time". Accessing a field
+  before fitting may return `None` instead of a concrete factory
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes

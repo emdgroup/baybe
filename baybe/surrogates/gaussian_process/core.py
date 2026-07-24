@@ -10,11 +10,12 @@ from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
 from attrs import Converter, define, field
+from attrs.converters import optional as optional_c
 from attrs.converters import pipe
-from attrs.validators import instance_of, is_callable
+from attrs.validators import instance_of, is_callable, optional
 from typing_extensions import Self, override
 
-from baybe.exceptions import DeprecationError
+from baybe.exceptions import DeprecationError, ModelNotTrainedError
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
@@ -112,10 +113,10 @@ class _ModelContext:
 
 
 def _mark_custom_kernel(
-    value: Kernel | KernelFactoryProtocol, self: GaussianProcessSurrogate
-) -> Kernel | KernelFactoryProtocol:
+    value: Kernel | KernelFactoryProtocol | None, self: GaussianProcessSurrogate
+) -> Kernel | KernelFactoryProtocol | None:
     """Mark the surrogate as using a custom kernel (for deprecation purposes)."""
-    if type(value) is not BayBEKernelFactory:
+    if value is not None and type(value) is not BayBEKernelFactory:
         self._custom_kernel = True
 
     return value
@@ -146,70 +147,75 @@ class GaussianProcessSurrogate(Surrogate):
     _custom_kernel: bool = field(init=False, default=False, repr=False, eq=False)
     # For deprecation only!
 
-    kernel_factory: KernelFactoryProtocol = field(
+    kernel_factory: KernelFactoryProtocol | None = field(
         alias="kernel_or_factory",
         converter=pipe(  # type: ignore[misc]
             Converter(_mark_custom_kernel, takes_self=True),  # type: ignore[call-overload]
-            partial(to_component_factory, component_type=GPComponentType.KERNEL),
+            optional_c(
+                partial(to_component_factory, component_type=GPComponentType.KERNEL)
+            ),
         ),
-        factory=BayBEKernelFactory,
-        validator=is_callable(),
+        default=None,
+        validator=optional(is_callable()),
     )
-    """The factory used to create the kernel for the Gaussian process.
+    """The kernel factory. ``None`` defers to context-dependent auto-selection.
 
     Accepts:
         * :class:`baybe.kernels.base.Kernel`
-        * :class:`.components.kernel.KernelFactory`
+        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a
+          kernel
         * :class:`gpytorch.kernels.Kernel`
     """
 
-    mean_factory: MeanFactoryProtocol = field(
+    mean_factory: MeanFactoryProtocol | None = field(
         alias="mean_or_factory",
-        factory=BayBEMeanFactory,
-        converter=partial(to_component_factory, component_type=GPComponentType.MEAN),  # type: ignore[misc]
-        validator=is_callable(),
+        default=None,
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.MEAN)  # type: ignore[misc]
+        ),
+        validator=optional(is_callable()),
     )
-    """The factory used to create the mean function for the Gaussian process.
+    """The mean factory. ``None`` defers to context-dependent auto-selection.
 
     Accepts:
-        * :class:`.components.mean.MeanFactory`
+        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a mean
         * :class:`gpytorch.means.Mean`
     """
 
-    likelihood_factory: LikelihoodFactoryProtocol = field(
+    likelihood_factory: LikelihoodFactoryProtocol | None = field(
         alias="likelihood_or_factory",
-        factory=BayBELikelihoodFactory,
-        converter=partial(  # type: ignore[misc]
-            to_component_factory, component_type=GPComponentType.LIKELIHOOD
+        default=None,
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.LIKELIHOOD)  # type: ignore[misc]
         ),
-        validator=is_callable(),
+        validator=optional(is_callable()),
     )
-    """The factory used to create the likelihood for the Gaussian process.
+    """The likelihood factory. ``None`` defers to context-dependent auto-selection.
 
     Accepts:
-        * :class:`.components.likelihood.LikelihoodFactory`
+        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a
+          likelihood
         * :class:`gpytorch.likelihoods.Likelihood`
     """
 
-    fit_criterion_factory: FitCriterionFactoryProtocol = field(
+    fit_criterion_factory: FitCriterionFactoryProtocol | None = field(
         alias="fit_criterion_or_factory",
-        factory=BayBEFitCriterionFactory,
-        converter=partial(  # type: ignore[misc]
-            to_component_factory, component_type=GPComponentType.CRITERION
+        default=None,
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.CRITERION)  # type: ignore[misc]
         ),
-        validator=is_callable(),
+        validator=optional(is_callable()),
     )
-    """The fitting criterion for Gaussian process hyperparameter optimization.
+    """The fit criterion factory. ``None`` defers to context-dependent auto-selection.
 
     Accepts:
         * :class:`.components.fit_criterion.FitCriterion`
-        * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
+        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a
+          fit criterion
     """
 
-    # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
-    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
-    """The actual model."""
+    """The fitted BoTorch model."""
 
     @classmethod
     def from_preset(
@@ -248,6 +254,10 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def to_botorch(self) -> GPyTorchModel:
+        if self._model is None:
+            raise ModelNotTrainedError(
+                "The surrogate must be trained before a BoTorch model can be created."
+            )
         return self._model
 
     @override
@@ -266,13 +276,60 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
+        assert self._model is not None
         return self._model.posterior(candidates_comp_scaled)
+
+    def _resolve_components(
+        self, context: _ModelContext
+    ) -> tuple[GPyTorchKernel, GPyTorchMean, GPyTorchLikelihood, FitCriterion]:
+        """Resolve factory fields to concrete GPyTorch components.
+
+        Resolves ``None`` fields to BayBE defaults and calls the factories with
+        the given context. This handles the standard resolution path.
+
+        Args:
+            context: The model context providing searchspace, objective, and
+                measurements.
+
+        Returns:
+            A tuple of (kernel, mean, likelihood, criterion).
+        """
+        kernel_factory = self.kernel_factory or BayBEKernelFactory()
+        mean_factory = self.mean_factory or BayBEMeanFactory()
+        likelihood_factory = self.likelihood_factory or BayBELikelihoodFactory()
+        criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
+
+        mean = mean_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        kernel = kernel_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+        if isinstance(kernel, Kernel):
+            kernel = kernel.to_gpytorch(searchspace=context.searchspace)
+
+        likelihood = likelihood_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        criterion = criterion_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        return kernel, mean, likelihood, criterion
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
-        import botorch
-        from botorch.models.transforms import Normalize, Standardize
+        """Fit a SingleTaskGP with resolved components.
 
+        Args:
+            train_x: Training inputs in computational representation.
+            train_y: Training targets (pre-transformed).
+
+        Raises:
+            DeprecationError: If a custom kernel is used in a multi-task context.
+        """
         assert self._searchspace is not None  # provided by base class
         assert self._objective is not None  # provided by base class
         assert self._measurements is not None  # provided by base class
@@ -296,38 +353,17 @@ class GaussianProcessSurrogate(Surrogate):
                 f"environment variable to a truthy value."
             )
 
-        ### Input/output scaling
-        # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
+        kernel, mean, likelihood, criterion = self._resolve_components(context)
+
+        import botorch
+        from botorch.models.transforms import Normalize, Standardize
+
         input_transform = Normalize(
             train_x.shape[-1],
             bounds=context.parameter_bounds,
             indices=context.numerical_indices,
         )
         outcome_transform = Standardize(train_y.shape[-1])
-
-        ### Mean
-        mean = self.mean_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-
-        ### Kernel
-        kernel = self.kernel_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-        if isinstance(kernel, Kernel):
-            kernel = kernel.to_gpytorch(searchspace=context.searchspace)
-
-        ### Likelihood
-        likelihood = self.likelihood_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-
-        ### Criterion
-        criterion = self.fit_criterion_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-
-        ### Model construction and fitting
         self._model = botorch.models.SingleTaskGP(
             train_x,
             train_y,
@@ -343,11 +379,19 @@ class GaussianProcessSurrogate(Surrogate):
     @override
     def __str__(self) -> str:
         fields = [
-            to_string("Kernel factory", self.kernel_factory, single_line=True),
-            to_string("Mean factory", self.mean_factory, single_line=True),
-            to_string("Likelihood factory", self.likelihood_factory, single_line=True),
             to_string(
-                "Fit criterion factory", self.fit_criterion_factory, single_line=True
+                "Kernel factory", self.kernel_factory or "auto", single_line=True
+            ),
+            to_string("Mean factory", self.mean_factory or "auto", single_line=True),
+            to_string(
+                "Likelihood factory",
+                self.likelihood_factory or "auto",
+                single_line=True,
+            ),
+            to_string(
+                "Fit criterion factory",
+                self.fit_criterion_factory or "auto",
+                single_line=True,
             ),
         ]
         return to_string(super().__str__(), *fields)
