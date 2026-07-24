@@ -523,6 +523,7 @@ def _build_posterior_mean_module(
     from copy import deepcopy
 
     import gpytorch
+    import torch
 
     frozen_model = deepcopy(model)
     for param in frozen_model.parameters():
@@ -535,6 +536,7 @@ def _build_posterior_mean_module(
         def __init__(self) -> None:
             super().__init__()
             self.gp = frozen_model
+            self._train_mean_cache: Tensor | None = None
 
         @override
         def train(self, mode: bool = True) -> _PosteriorMean:
@@ -542,17 +544,44 @@ def _build_posterior_mean_module(
 
             The inner GP stays in eval so ``posterior(x)`` returns predictive
             (not training) outputs and the outer optimizer cannot modify it.
+            Resets the training-point cache when switching back to training mode
+            so that a fresh fit always starts from a clean state.
             """
+            if mode:
+                self._train_mean_cache = None
             self.training = mode
             return self
 
-        @override
-        def forward(self, x: Tensor) -> Tensor:
-            """Compute the prior mean in the new GP's standardized output space."""
+        def _eval_source_gp(self, x: Tensor) -> Tensor:
+            """Evaluate the frozen source GP posterior mean in the outer GP's output space.
+
+            Args:
+                x: Candidate inputs in the outer GP's normalized input space.
+
+            Returns:
+                The source GP posterior mean standardized into the outer GP's output space.
+            """
             x_raw = input_transform.untransform(x)
             posterior_mean = self.gp.posterior(x_raw).mean
             standardized, _ = outcome_transform(posterior_mean)
             return standardized.squeeze(-1)
+
+        @override
+        def forward(self, x: Tensor) -> Tensor:
+            """Compute the prior mean in the new GP's standardized output space.
+
+            During MLL optimization (training mode) ``x`` is always the fixed
+            target training inputs, so the expensive source GP call is made once
+            and the result is cached for all subsequent gradient steps. In eval
+            mode (prediction), ``x`` is arbitrary and the source GP is always
+            called.
+            """
+            if self.training:
+                if self._train_mean_cache is None:
+                    with torch.no_grad():
+                        self._train_mean_cache = self._eval_source_gp(x).detach()
+                return self._train_mean_cache
+            return self._eval_source_gp(x)
 
     return _PosteriorMean()
 

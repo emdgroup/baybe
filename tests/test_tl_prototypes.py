@@ -134,6 +134,32 @@ def test_mean_transfer_matches_inner_target_gp(objective):
     assert torch.allclose(outer_mean, inner_mean, atol=1e-4)
 
 
+def test_mean_transfer_cache_populated_correctly(objective):
+    """Cached training mean equals direct source GP evaluation at training points."""
+    searchspace = _make_task_searchspace(
+        ["source", "target"], ["target"], TransferLearningMode.MEAN_TRANSFER
+    )
+    measurements = _make_measurements(["source", "target"], objective)
+    surrogate = GaussianProcessSurrogate()
+    surrogate.fit(searchspace, objective, measurements)
+
+    delegate = surrogate._delegate
+    assert isinstance(delegate, MeanTransferSurrogate)
+    target_gp = delegate._target_gp
+    assert target_gp is not None
+    mean_module = target_gp._model.mean_module
+
+    # Cache must be populated after fitting
+    assert mean_module._train_mean_cache is not None
+
+    # Reference: re-evaluate at the same normalized training inputs without the cache
+    train_x_norm = target_gp._model.train_inputs[0]
+    with torch.no_grad():
+        reference = mean_module._eval_source_gp(train_x_norm)
+
+    assert torch.allclose(mean_module._train_mean_cache, reference, atol=1e-6)
+
+
 @pytest.mark.parametrize(
     ("values", "active_values"),
     [
