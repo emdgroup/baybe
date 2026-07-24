@@ -10,6 +10,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from baybe.constraints import (
+    DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteCardinalityConstraint,
     DiscreteDependenciesConstraint,
     DiscreteExcludeConstraint,
@@ -224,6 +225,16 @@ def _mixed_scenario() -> tuple[
 def test_constrained_cartesian_product(scenario):
     """Verify incremental and naive product construction produce identical results."""
     parameters, constraints = scenario()
+
+    # Sort constraints in the same order used by the production code. This is
+    # necessary because some constraints (e.g., PermutationInvariance with
+    # dependencies) use ``duplicated(keep="first")``, making their outcome
+    # sensitive to which rows have already been removed by earlier constraints.
+    # A fixed ordering ensures both paths operate on the same intermediate state.
+    constraints = sorted(
+        constraints,
+        key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
+    )
 
     # Naive approach: full product then filter
     df_naive = parameter_cartesian_prod_pandas(parameters)

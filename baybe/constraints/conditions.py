@@ -18,13 +18,12 @@ from attrs.validators import optional as optional_v
 from numpy.typing import ArrayLike
 from typing_extensions import override
 
-from baybe.parameters.validation import validate_unique_values
 from baybe.serialization import (
     SerialMixin,
 )
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
-from baybe.utils.validation import finite_float
+from baybe.utils.validation import finite_float, validate_unique_values
 
 if TYPE_CHECKING:
     import polars as pl
@@ -95,7 +94,8 @@ class Condition(ABC, SerialMixin):
     """Abstract base class for all conditions.
 
     Conditions always evaluate an expression regarding a single parameter.
-    Conditions are part of constraints, a constraint can have multiple conditions.
+    Conditions are part of :class:`~baybe.constraints.base.Constraint` and
+    :class:`~baybe.symmetries.base.Symmetry` objects.
     """
 
     @abstractmethod
@@ -204,7 +204,7 @@ class SubSelectionCondition(Condition):
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(1),
-            validate_unique_values,  # type: ignore
+            validate_unique_values,
         ],
     )
     """The internal list of items which are considered valid."""

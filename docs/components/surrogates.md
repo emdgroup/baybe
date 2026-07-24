@@ -356,4 +356,3 @@ Note that BayBE has a dedicated [Insights module](./insights.md) that offers cer
 analytical tools and visualizations out-of-the-box, without requiring manual extraction
 of the surrogate model to begin with.
 ```
-

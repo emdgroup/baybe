@@ -32,6 +32,9 @@ from baybe.utils.validation import finite_float
 if TYPE_CHECKING:
     import polars as pl
 
+    from baybe.symmetries.dependency import DependencySymmetry
+    from baybe.symmetries.permutation import PermutationSymmetry
+
 
 @define
 class DiscreteExcludeConstraint(DiscreteConstraint):
@@ -271,10 +274,6 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     a single constraint.
     """
 
-    # class variables
-    eval_during_augmentation: ClassVar[bool] = True
-    # See base class
-
     # object variables
     conditions: list[Condition] = field()
     """The list of individual conditions."""
@@ -353,23 +352,40 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
         return inds_bad
 
+    def to_symmetries(self) -> tuple[DependencySymmetry, ...]:
+        """Convert to :class:`~baybe.symmetries.dependency.DependencySymmetry` objects.
+
+        Create one symmetry object per dependency relationship, i.e., per
+        (parameter, condition, affected_parameters) triple.
+
+        Returns:
+            A tuple of dependency symmetries, one for each dependency in the
+            constraint.
+        """
+        from baybe.symmetries.dependency import DependencySymmetry
+
+        return tuple(
+            DependencySymmetry(
+                parameter_name=p,
+                condition=c,
+                affected_parameter_names=aps,
+            )
+            for p, c, aps in zip(
+                self.parameters, self.conditions, self.affected_parameters, strict=True
+            )
+        )
+
 
 @define
 class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     """Constraint class for declaring that a set of parameters is permutation invariant.
 
     More precisely, this means that, ``(val_from_param1, val_from_param2)`` is
-    equivalent to ``(val_from_param2, val_from_param1)``. Since it does not make sense
-    to have this constraint with duplicated labels, this implementation also internally
-    applies the :class:`baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`.
+    equivalent to ``(val_from_param2, val_from_param1)``.
 
     *Note:* This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
     """
-
-    # class variables
-    eval_during_augmentation: ClassVar[bool] = True
-    # See base class
 
     # object variables
     dependencies: DiscreteDependenciesConstraint | None = field(default=None)
@@ -386,31 +402,23 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
-        # At least two parameters are needed for any deduplication. When only a
-        # partial set is available, the constraint falls back to the always-safe
-        # label-dedup logic.
+        # When dependencies are present, partial permutation dedup is unsafe:
+        # the dependency logic changes which rows are permutation-equivalent
+        # (inactive parameters become irrelevant), so removing permutation
+        # duplicates before the dependency columns are available can discard
+        # configurations that should have been kept as canonical representatives.
+        if self.dependencies:
+            return self._required_parameters <= available
+        # Without dependencies, permutation dedup on a partial set is safe
+        # during incremental construction: since new columns are added via
+        # cross-product, rows that are permutation-equivalent on the available
+        # subset will produce identical expansions.
         return len(available & set(self.parameters)) >= 2
 
     @override
     def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
         cols = set(df.columns)
         params = [p for p in self.parameters if p in cols]
-        # When dependencies exist, permutation dedup on a partial set of
-        # parameters is not safe because the dependency logic can change
-        # which permutations are equivalent. In this case, only the
-        # label-dedup part (which is always safe incrementally) is applied.
-        if self.dependencies:
-            if not self._required_parameters <= cols:
-                return DiscreteNoLabelDuplicatesConstraint(
-                    parameters=params
-                ).get_invalid(df)
-
-        # Get indices of entries with duplicate label entries. These will also be
-        # dropped by this constraint.
-        mask_duplicate_labels = pd.Series(False, index=df.index)
-        mask_duplicate_labels[
-            DiscreteNoLabelDuplicatesConstraint(parameters=params).get_invalid(df)
-        ] = True
 
         # Merge a permutation invariant representation of all affected parameters with
         # the other parameters and indicate duplicates. This ensures that variation in
@@ -418,21 +426,15 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         other_params = df.columns.drop(params).tolist()
         frozen = df[params].apply(cast(Callable, frozenset), axis=1)
         parts = [df[other_params].copy(), frozen] if other_params else [frozen]
-        df_eval = pd.concat(parts, axis=1).loc[
-            ~mask_duplicate_labels  # only consider label-duplicate-free part
-        ]
+        df_eval = pd.concat(parts, axis=1)
         mask_duplicate_permutations = df_eval.duplicated(keep="first")
 
-        # Indices of entries with label-duplicates
-        inds_duplicate_labels = df.index[mask_duplicate_labels]
-
-        # Indices of duplicate permutations in the (already label-duplicate-free) df
-        inds_duplicate_permutations = df_eval.index[mask_duplicate_permutations]
+        # Indices of duplicate permutations
+        inds_invalid = df_eval.index[mask_duplicate_permutations]
 
         # If there are dependencies connected to the invariant parameters evaluate them
         # here and remove resulting duplicates with a DependenciesConstraint
-        inds_invalid = inds_duplicate_labels.union(inds_duplicate_permutations)
-        if self.dependencies:
+        if self.dependencies and self.dependencies._can_evaluate(set(df.columns)):
             self.dependencies.permutation_invariant = True
             inds_duplicate_independency_adjusted = self.dependencies.get_invalid(
                 df.drop(index=inds_invalid)
@@ -440,6 +442,23 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
             inds_invalid = inds_invalid.union(inds_duplicate_independency_adjusted)
 
         return inds_invalid
+
+    def to_symmetry(self) -> PermutationSymmetry:
+        """Convert to a :class:`~baybe.symmetries.permutation.PermutationSymmetry`.
+
+        The constraint's parameters form the primary permutation group. If
+        dependencies are attached, their parameters are added as an additional
+        group that is permuted in lockstep.
+
+        Returns:
+            The corresponding permutation symmetry.
+        """
+        from baybe.symmetries.permutation import PermutationSymmetry
+
+        groups = [self.parameters]
+        if self.dependencies:
+            groups.append(list(self.dependencies.parameters))
+        return PermutationSymmetry(permutation_groups=groups)
 
 
 @define

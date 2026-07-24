@@ -40,6 +40,7 @@ Parameters <parameters>
 Recommenders <recommenders>
 Search Spaces <searchspace>
 Surrogates <surrogates>
+Symmetries <symmetries>
 Targets <targets>
 Transformations <transformations>
 Utilities <utils>
