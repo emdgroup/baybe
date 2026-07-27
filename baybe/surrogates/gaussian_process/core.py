@@ -218,6 +218,8 @@ class GaussianProcessSurrogate(Surrogate):
     _symmetries: tuple[Symmetry, ...] = field(factory=tuple, init=False, eq=False)
     """Symmetries for future architecture adjustments (e.g., invariant kernels)."""
 
+    # TODO: type should be SingleTaskGP | None but is currently omitted due to:
+    #   https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
     """The fitted BoTorch model."""
 
