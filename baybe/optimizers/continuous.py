@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from attrs import define, field, fields
 from attrs.validators import gt, instance_of
@@ -45,7 +45,6 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace]):
         space: SearchSpace,
     ) -> tuple[Tensor, Tensor]:
         import torch
-        from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
         from botorch.optim import optimize_acqf
 
         cont = space.continuous
@@ -79,7 +78,7 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace]):
         #   arguments is correctly implemented in all invoked BoTorch subroutines.
         #   For details: https://github.com/pytorch/botorch/issues/2042
         points, acqf_values = optimize_acqf(
-            acq_function=cast(BoAcquisitionFunction, score_function),
+            acq_function=score_function,
             bounds=torch.from_numpy(bounds_df.to_numpy(copy=True)),
             q=batch_size,
             num_restarts=self.n_starts,

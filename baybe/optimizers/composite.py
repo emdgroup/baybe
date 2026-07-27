@@ -258,10 +258,10 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
                 new_pending = points[: b + 1]
                 if base_X_pending is not None:
                     new_pending = torch.cat([base_X_pending, new_pending], dim=0)
-                score_function.set_X_pending(new_pending)  # type: ignore[attr-defined]
+                score_function.set_X_pending(new_pending)
 
         if batch_size > 1:
-            score_function.set_X_pending(base_X_pending)  # type: ignore[attr-defined]
+            score_function.set_X_pending(base_X_pending)
 
         return points, scores
 

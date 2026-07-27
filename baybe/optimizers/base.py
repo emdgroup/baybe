@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import (
     TYPE_CHECKING,
     Generic,
@@ -18,9 +17,10 @@ TSpace = TypeVar("TSpace", bound=SearchSpace | SubspaceDiscrete | SubspaceContin
 "The type of space to optimize over."
 
 if TYPE_CHECKING:
+    from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from torch import Tensor
 
-    ScoreFunction: TypeAlias = Callable[[Tensor], Tensor]
+    ScoreFunction: TypeAlias = BoAcquisitionFunction
     "Type alias for a callable to be optimized."
 
 
