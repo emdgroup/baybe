@@ -213,6 +213,32 @@ def test_presets(preset: GaussianProcessPreset):
     gp2.fit(searchspace, objective, measurements)
 
 
+def test_default_components():
+    """The all-None GP resolves to the BayBE defaults and fits identically."""
+    gp_auto = GaussianProcessSurrogate()
+
+    # All factory fields default to None (deferred auto-selection)
+    assert gp_auto.kernel_factory is None
+    assert gp_auto.mean_factory is None
+    assert gp_auto.likelihood_factory is None
+    assert gp_auto.fit_criterion_factory is None
+
+    gp_explicit = GaussianProcessSurrogate(
+        kernel_or_factory=BayBEKernelFactory(),
+        mean_or_factory=BayBEMeanFactory(),
+        likelihood_or_factory=BayBELikelihoodFactory(),
+        fit_criterion_or_factory=BayBEFitCriterionFactory(),
+    )
+
+    gp_auto.fit(searchspace, objective, measurements)
+    gp_explicit.fit(searchspace, objective, measurements)
+
+    assert_frame_equal(
+        gp_auto.posterior_stats(measurements),
+        gp_explicit.posterior_stats(measurements),
+    )
+
+
 def test_invalid_components():
     """Passing invalid component types raises errors."""
     with pytest.raises(TypeError, match="Component must be one of"):
