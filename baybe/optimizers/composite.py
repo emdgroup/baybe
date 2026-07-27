@@ -90,7 +90,13 @@ class Alternating(CompositionStrategy):
 
 @define(frozen=True, slots=False, kw_only=True)
 class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
-    """Optimizer that allows stacking multiple optimizers."""
+    """Optimizer that combines multiple optimizers over different search space parts.
+
+    Each part of the search space is assigned to a dedicated optimizer. Points are
+    optimized one at a time: for each point, the strategy cycles through the parts,
+    optimizing one part while holding the others fixed. This means batch points are
+    produced sequentially, not jointly.
+    """
 
     components: tuple[tuple[ParameterSelectorProtocol, OptimizerProtocol], ...] = field(
         converter=_convert_components_to_selectors,
