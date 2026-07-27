@@ -8,12 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 - All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
   are now keyword-only
+- `df_apply_permutation_augmentation` has a different interface and now expects
+  permutation groups instead of column groups
+
+### Fixed
+- `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
+  values of invariant points are degenerate
 
 ### Added
 - `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
   the same pattern as `ContinuousLinearConstraint.coefficients`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
+- `Symmetry` concept for expressing symmetries of the optimization problem, including
+  `PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry` classes, which trigger
+  automatic data augmentation when assigned to the `symmetries` attribute of a
+  `BayesianRecommender`
+- `Parameter.is_equivalent` method for structural parameter comparison
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
