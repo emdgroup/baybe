@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     )
     """The type of input that indicates which parameters to optimize."""
 
-    Partition: TypeAlias = tuple[frozenset[str], OptimizerProtocol]
+    SearchSpacePart: TypeAlias = tuple[frozenset[str], OptimizerProtocol]
     """Parameter names paired with the optimizer responsible for them."""
 
 
@@ -54,37 +54,33 @@ class CompositionStrategy(ABC, SerialMixin):
     """Base class for composite optimizer strategies."""
 
     @abstractmethod
-    def __call__(
-        self, n_partitions: int
-    ) -> Generator[int, tuple[Tensor, Tensor], None]:
-        """Yield partition indices to optimize in sequence.
+    def __call__(self, n_parts: int) -> Generator[int, tuple[Tensor, Tensor], None]:
+        """Yield part indices to optimize in sequence.
 
         The generator receives ``(point, score)`` from each optimization step
         via :meth:`~Generator.send`, which strategies may use to decide the
-        next partition.
+        next part.
 
         Args:
-            n_partitions: The number of available partitions.
+            n_parts: The number of parts in the partition.
 
         Yields:
-            The index of the partition to optimize next.
+            The index of the part to optimize next.
         """
 
 
 @define(frozen=True, slots=False)
 class Alternating(CompositionStrategy):
-    """Cycle through partitions for a fixed number of iterations."""
+    """Cycle through parts for a fixed number of iterations."""
 
     n_iterations: int = field(default=3, validator=[instance_of(int), gt(0)])
     """Number of full alternating cycles."""
 
     @override
-    def __call__(
-        self, n_partitions: int
-    ) -> Generator[int, tuple[Tensor, Tensor], None]:
-        """Yield partition indices in round-robin for ``n_iterations`` cycles."""
+    def __call__(self, n_parts: int) -> Generator[int, tuple[Tensor, Tensor], None]:
+        """Yield part indices in round-robin for ``n_iterations`` cycles."""
         for _ in range(self.n_iterations):
-            yield from range(n_partitions)
+            yield from range(n_parts)
 
 
 @define(frozen=True, slots=False, kw_only=True)
@@ -103,24 +99,24 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     )
     """The strategy to use for combining the optimizers."""
 
-    def _partition_parameters(
+    def _split_parameters(
         self,
         space: SearchSpace,
-    ) -> list[Partition]:
+    ) -> list[SearchSpacePart]:
         """Resolve selectors to parameter name sets.
 
         Args:
-            space: The full search space to partition.
+            space: The full search space to split.
 
         Raises:
             ValueError: If a parameter is matched by multiple components.
-            ValueError: If a constraint spans multiple partitions.
+            ValueError: If a constraint spans multiple parts.
 
         Returns:
             A list of (parameter names, optimizer) pairs.
         """
         assigned: set[str] = set()
-        partitions: list[Partition] = []
+        parts: list[SearchSpacePart] = []
 
         for selector, optimizer in self.components:
             selected_names = {p.name for p in space.parameters if selector(p)}
@@ -138,11 +134,9 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
             for constraint in space.constraints:
                 required = constraint._required_parameters
                 if required & selected_names and not required <= selected_names:
-                    raise ValueError(
-                        f"Constraint '{constraint}' spans multiple partitions."
-                    )
+                    raise ValueError(f"Constraint '{constraint}' spans multiple parts.")
 
-            partitions.append((frozenset(selected_names), optimizer))
+            parts.append((frozenset(selected_names), optimizer))
 
         all_param_names = {p.name for p in space.parameters}
         unassigned = all_param_names - assigned
@@ -154,7 +148,7 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
                 stacklevel=2,
             )
 
-        return partitions
+        return parts
 
     @staticmethod
     def _sample_initial_point(space: SearchSpace) -> Tensor:
@@ -175,14 +169,14 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     def _optimize_single_point(
         self,
         space: SearchSpace,
-        partitions: list[Partition],
+        parts: list[SearchSpacePart],
         score_function: ScoreFunction,
     ) -> tuple[Tensor, Tensor]:
         """Optimize a single point.
 
         Args:
             space: The full search space.
-            partitions: Resolved partitions (parameter names + optimizer).
+            parts: Resolved parts (parameter names + optimizer).
             score_function: The callable to optimize.
 
         Returns:
@@ -197,17 +191,17 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
                 if p.name in param_names
                 for col in p.comp_rep_columns
             )
-            for param_names, _ in partitions
+            for param_names, _ in parts
         ]
 
         current_point = self._sample_initial_point(space)
 
-        strategy = self.strategy(len(partitions))
-        partition_idx = next(strategy)
+        strategy = self.strategy(len(parts))
+        part_idx = next(strategy)
 
         while True:
-            _, optimizer = partitions[partition_idx]
-            free_columns = optimizable_columns[partition_idx]
+            _, optimizer = parts[part_idx]
+            free_columns = optimizable_columns[part_idx]
 
             fixed_values = {
                 col: current_point[i].item()
@@ -221,7 +215,7 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
             current_point = result_point.squeeze(0)
 
             try:
-                partition_idx = strategy.send((result_point, result_score))
+                part_idx = strategy.send((result_point, result_score))
             except StopIteration:
                 break
 
@@ -236,7 +230,7 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     ) -> tuple[Tensor, Tensor]:
         import torch
 
-        partitions = self._partition_parameters(space)
+        parts = self._split_parameters(space)
         n_cols = len(space.comp_rep_columns)
 
         base_X_pending = getattr(score_function, "X_pending", None)
@@ -245,9 +239,7 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
         scores = torch.empty(batch_size)
 
         for b in range(batch_size):
-            point, score = self._optimize_single_point(
-                space, partitions, score_function
-            )
+            point, score = self._optimize_single_point(space, parts, score_function)
             points[b] = point.squeeze(0)
             scores[b] = score.squeeze(0)
 
