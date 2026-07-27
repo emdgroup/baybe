@@ -200,12 +200,11 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def fixed_values(self) -> dict[str, float]:
+    def _fixed_values(self) -> dict[str, float]:
         """All fixed comp-rep columns across both subspaces.
 
-        Merges externally fixed values (set via :meth:`fix_parameters`) with
-        internally fixed values (from ``_FixedNumericalContinuousParameter``
-        created by cardinality constraints).
+        Merges externally fixed values (set via :meth:`_fix_parameters`) with
+        internally fixed values (from cardinality constraints).
 
         Raises:
             ValueError: If cardinality constraints and external fixed values
@@ -237,11 +236,15 @@ class SearchSpace(SerialMixin):
             **self.continuous._fixed_values,
         }
 
-    def fix_parameters(self, values: dict[str, float]) -> SearchSpace:
+    def _fix_parameters(self, values: dict[str, float]) -> SearchSpace:
         """Return a copy with additional fixed comp-rep column values.
 
         Args:
             values: Mapping from comp-rep column names to their fixed values.
+
+        Raises:
+            ValueError: If any key is not a valid comp-rep column name.
+            ValueError: If a column is already fixed to a different value.
 
         Returns:
             A new search space with the given values added to the fixed set.
@@ -249,8 +252,24 @@ class SearchSpace(SerialMixin):
         discrete_cols = set(self.discrete.comp_rep_columns)
         continuous_cols = set(self.continuous.comp_rep_columns)
 
+        unknown = set(values) - discrete_cols - continuous_cols
+        if unknown:
+            raise ValueError(f"Unknown comp-rep columns: {sorted(unknown)}")
+
         disc_fixed = {k: v for k, v in values.items() if k in discrete_cols}
         cont_fixed = {k: v for k, v in values.items() if k in continuous_cols}
+
+        for existing, new in [
+            (self.discrete._fixed_values, disc_fixed),
+            (self.continuous._fixed_values, cont_fixed),
+        ]:
+            conflicts = {
+                k for k in existing.keys() & new.keys() if existing[k] != new[k]
+            }
+            if conflicts:
+                raise ValueError(
+                    f"Conflicting fixed values for columns {sorted(conflicts)}."
+                )
 
         new_discrete = evolve(self.discrete)
         new_discrete._fixed_values = {**self.discrete._fixed_values, **disc_fixed}

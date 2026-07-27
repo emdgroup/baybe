@@ -219,7 +219,7 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
                 for i, col in enumerate(comp_rep_columns)
                 if col not in free_columns
             }
-            constrained_space = space.fix_parameters(fixed_values)
+            constrained_space = space._fix_parameters(fixed_values)
 
             result_point, result_score = optimizer(1, score_function, constrained_space)
             current_point = result_point.squeeze(0)
