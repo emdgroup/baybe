@@ -75,7 +75,7 @@ class CompositionStrategy(ABC, SerialMixin):
 
 
 @define(frozen=True, slots=False)
-class Alternating(CompositionStrategy):
+class AlternatingCompositionStrategy(CompositionStrategy):
     """Cycle through parts for a fixed number of iterations."""
 
     n_iterations: int = field(default=3, validator=[instance_of(int), gt(0)])
@@ -105,7 +105,7 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     """Parameter selectors and their respective optimizers to be combined."""
 
     strategy: CompositionStrategy = field(
-        factory=Alternating,
+        factory=AlternatingCompositionStrategy,
         validator=instance_of(CompositionStrategy),
     )
     """The strategy to use for combining the optimizers."""
