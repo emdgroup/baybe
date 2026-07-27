@@ -1,0 +1,46 @@
+MirrorSymmetry
+==============
+
+.. currentmodule:: baybe.symmetries.mirror
+
+.. autoclass:: MirrorSymmetry
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~MirrorSymmetry.__init__
+   
+      ~MirrorSymmetry.augment_measurements
+   
+      ~MirrorSymmetry.from_dict
+   
+      ~MirrorSymmetry.from_json
+   
+      ~MirrorSymmetry.summary
+   
+      ~MirrorSymmetry.to_dict
+   
+      ~MirrorSymmetry.to_json
+   
+      ~MirrorSymmetry.validate_searchspace_context
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~MirrorSymmetry.mirror_point
+      ~MirrorSymmetry.parameter_names
+   
+   

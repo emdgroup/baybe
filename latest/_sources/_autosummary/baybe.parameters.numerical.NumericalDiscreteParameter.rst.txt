@@ -21,6 +21,8 @@ NumericalDiscreteParameter
    
       ~NumericalDiscreteParameter.from_json
    
+      ~NumericalDiscreteParameter.is_equivalent
+   
       ~NumericalDiscreteParameter.is_in_range
    
       ~NumericalDiscreteParameter.summary

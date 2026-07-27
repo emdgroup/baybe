@@ -21,6 +21,8 @@ CategoricalParameter
    
       ~CategoricalParameter.from_json
    
+      ~CategoricalParameter.is_equivalent
+   
       ~CategoricalParameter.is_in_range
    
       ~CategoricalParameter.summary

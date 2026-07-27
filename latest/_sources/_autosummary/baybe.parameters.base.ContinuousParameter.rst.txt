@@ -21,6 +21,8 @@ ContinuousParameter
    
       ~ContinuousParameter.from_json
    
+      ~ContinuousParameter.is_equivalent
+   
       ~ContinuousParameter.is_in_range
    
       ~ContinuousParameter.summary

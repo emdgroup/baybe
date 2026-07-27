@@ -15,8 +15,6 @@ baybe.parameters.validation
       :toctree:                                       
    
       validate_decorrelation
-      validate_is_finite
-      validate_unique_values
    
    
 

@@ -1,0 +1,46 @@
+PermutationSymmetry
+===================
+
+.. currentmodule:: baybe.symmetries.permutation
+
+.. autoclass:: PermutationSymmetry
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PermutationSymmetry.__init__
+   
+      ~PermutationSymmetry.augment_measurements
+   
+      ~PermutationSymmetry.from_dict
+   
+      ~PermutationSymmetry.from_json
+   
+      ~PermutationSymmetry.summary
+   
+      ~PermutationSymmetry.to_dict
+   
+      ~PermutationSymmetry.to_json
+   
+      ~PermutationSymmetry.validate_searchspace_context
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PermutationSymmetry.permutation_groups
+      ~PermutationSymmetry.parameter_names
+   
+   

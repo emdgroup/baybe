@@ -44,7 +44,6 @@ DiscreteBatchConstraint
 
    .. autosummary::
    
-      ~DiscreteBatchConstraint.eval_during_augmentation
       ~DiscreteBatchConstraint.eval_during_creation
       ~DiscreteBatchConstraint.eval_during_modeling
       ~DiscreteBatchConstraint.has_polars_implementation

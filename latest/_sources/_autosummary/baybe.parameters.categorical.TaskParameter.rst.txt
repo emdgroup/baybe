@@ -21,6 +21,8 @@ TaskParameter
    
       ~TaskParameter.from_json
    
+      ~TaskParameter.is_equivalent
+   
       ~TaskParameter.is_in_range
    
       ~TaskParameter.summary

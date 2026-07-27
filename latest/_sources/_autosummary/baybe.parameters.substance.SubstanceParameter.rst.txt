@@ -21,6 +21,8 @@ SubstanceParameter
    
       ~SubstanceParameter.from_json
    
+      ~SubstanceParameter.is_equivalent
+   
       ~SubstanceParameter.is_in_range
    
       ~SubstanceParameter.summary

@@ -21,6 +21,8 @@ Parameter
    
       ~Parameter.from_json
    
+      ~Parameter.is_equivalent
+   
       ~Parameter.is_in_range
    
       ~Parameter.summary

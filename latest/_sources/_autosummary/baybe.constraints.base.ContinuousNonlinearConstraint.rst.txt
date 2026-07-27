@@ -36,7 +36,6 @@ ContinuousNonlinearConstraint
 
    .. autosummary::
    
-      ~ContinuousNonlinearConstraint.eval_during_augmentation
       ~ContinuousNonlinearConstraint.eval_during_creation
       ~ContinuousNonlinearConstraint.eval_during_modeling
       ~ContinuousNonlinearConstraint.is_continuous

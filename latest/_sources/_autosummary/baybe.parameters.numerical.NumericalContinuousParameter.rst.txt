@@ -21,6 +21,8 @@ NumericalContinuousParameter
    
       ~NumericalContinuousParameter.from_json
    
+      ~NumericalContinuousParameter.is_equivalent
+   
       ~NumericalContinuousParameter.is_in_range
    
       ~NumericalContinuousParameter.summary

@@ -15,6 +15,7 @@ baybe.utils.augmentation
       :toctree:                                       
    
       df_apply_dependency_augmentation
+      df_apply_mirror_augmentation
       df_apply_permutation_augmentation
    
    

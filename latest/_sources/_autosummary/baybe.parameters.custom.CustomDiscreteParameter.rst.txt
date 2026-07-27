@@ -21,6 +21,8 @@ CustomDiscreteParameter
    
       ~CustomDiscreteParameter.from_json
    
+      ~CustomDiscreteParameter.is_equivalent
+   
       ~CustomDiscreteParameter.is_in_range
    
       ~CustomDiscreteParameter.summary

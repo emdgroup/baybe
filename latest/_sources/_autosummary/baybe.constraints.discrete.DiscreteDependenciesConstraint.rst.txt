@@ -33,6 +33,8 @@ DiscreteDependenciesConstraint
    
       ~DiscreteDependenciesConstraint.to_json
    
+      ~DiscreteDependenciesConstraint.to_symmetries
+   
    
    
 
@@ -45,7 +47,6 @@ DiscreteDependenciesConstraint
       ~DiscreteDependenciesConstraint.conditions
       ~DiscreteDependenciesConstraint.affected_parameters
       ~DiscreteDependenciesConstraint.permutation_invariant
-      ~DiscreteDependenciesConstraint.eval_during_augmentation
       ~DiscreteDependenciesConstraint.eval_during_creation
       ~DiscreteDependenciesConstraint.eval_during_modeling
       ~DiscreteDependenciesConstraint.has_polars_implementation

@@ -36,7 +36,6 @@ ContinuousConstraint
 
    .. autosummary::
    
-      ~ContinuousConstraint.eval_during_augmentation
       ~ContinuousConstraint.eval_during_creation
       ~ContinuousConstraint.eval_during_modeling
       ~ContinuousConstraint.is_continuous

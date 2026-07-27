@@ -38,7 +38,6 @@ CardinalityConstraint
    
       ~CardinalityConstraint.min_cardinality
       ~CardinalityConstraint.max_cardinality
-      ~CardinalityConstraint.eval_during_augmentation
       ~CardinalityConstraint.is_continuous
       ~CardinalityConstraint.is_discrete
       ~CardinalityConstraint.numerical_only

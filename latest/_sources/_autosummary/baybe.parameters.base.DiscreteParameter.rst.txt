@@ -21,6 +21,8 @@ DiscreteParameter
    
       ~DiscreteParameter.from_json
    
+      ~DiscreteParameter.is_equivalent
+   
       ~DiscreteParameter.is_in_range
    
       ~DiscreteParameter.summary

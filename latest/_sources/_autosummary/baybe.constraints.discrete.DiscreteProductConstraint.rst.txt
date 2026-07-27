@@ -43,7 +43,6 @@ DiscreteProductConstraint
    .. autosummary::
    
       ~DiscreteProductConstraint.condition
-      ~DiscreteProductConstraint.eval_during_augmentation
       ~DiscreteProductConstraint.eval_during_creation
       ~DiscreteProductConstraint.eval_during_modeling
       ~DiscreteProductConstraint.has_polars_implementation

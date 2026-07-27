@@ -43,7 +43,6 @@ DiscreteCustomConstraint
    .. autosummary::
    
       ~DiscreteCustomConstraint.validator
-      ~DiscreteCustomConstraint.eval_during_augmentation
       ~DiscreteCustomConstraint.eval_during_creation
       ~DiscreteCustomConstraint.eval_during_modeling
       ~DiscreteCustomConstraint.has_polars_implementation
