@@ -51,52 +51,39 @@ def _convert_components_to_selectors(
 
 @define(frozen=True, slots=False)
 class CompositionStrategy(ABC, SerialMixin):
-    """Base class for composite optimizer strategies."""
+    """Base class for composite optimizer strategies.
+
+    A composition strategy controls both which parts of the search space exist
+    and the order in which they are optimized. It owns the component definitions
+    (parameter selectors paired with optimizers) and yields resolved
+    ``(parameter_names, optimizer)`` pairs on each iteration.
+    """
 
     @abstractmethod
-    def __call__(self, n_parts: int) -> Generator[int, tuple[Tensor, Tensor], None]:
-        """Yield part indices to optimize in sequence.
+    def __call__(
+        self, space: SearchSpace
+    ) -> Generator[SearchSpacePart, tuple[Tensor, Tensor], None]:
+        """Yield search space parts to optimize in sequence.
 
-        A composition strategy controls the order in which parts of the search
-        space are optimized. Each time it yields an index ``i``, the caller
-        optimizes part ``i`` while holding all other parts fixed. After each
-        optimization step, the caller sends back the resulting ``(point, score)``
-        pair via :meth:`~Generator.send`. The strategy may use this feedback to
-        decide which part to optimize next (e.g., adaptive strategies) or ignore
-        it (e.g., fixed schedules). The generator terminates by returning when
-        the optimization sequence is complete.
+        Each time the generator yields a ``(parameter_names, optimizer)`` pair,
+        the caller optimizes that part while holding all other parameters fixed.
+        After each optimization step, the caller sends back the resulting
+        ``(point, score)`` pair via :meth:`~Generator.send`. The strategy may
+        use this feedback to decide which part to optimize next (e.g., adaptive
+        strategies) or ignore it (e.g., fixed schedules). The generator
+        terminates by returning when the optimization sequence is complete.
 
         Args:
-            n_parts: The number of parts in the partition.
+            space: The full search space to partition.
 
         Yields:
-            The index of the part to optimize next.
+            The next (parameter names, optimizer) pair to optimize.
         """
 
 
-@define(frozen=True, slots=False)
-class AlternatingCompositionStrategy(CompositionStrategy):
-    """Cycle through parts for a fixed number of iterations."""
-
-    n_iterations: int = field(default=3, validator=[instance_of(int), gt(0)])
-    """Number of full alternating cycles."""
-
-    @override
-    def __call__(self, n_parts: int) -> Generator[int, tuple[Tensor, Tensor], None]:
-        """Yield part indices in round-robin for ``n_iterations`` cycles."""
-        for _ in range(self.n_iterations):
-            yield from range(n_parts)
-
-
 @define(frozen=True, slots=False, kw_only=True)
-class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
-    """Optimizer that combines multiple optimizers over different search space parts.
-
-    Each part of the search space is assigned to a dedicated optimizer. Points are
-    optimized one at a time: for each point, the strategy cycles through the parts,
-    optimizing one part while holding the others fixed. This means batch points are
-    produced sequentially, not jointly.
-    """
+class AlternatingCompositionStrategy(CompositionStrategy):
+    """Cycle through parts in round-robin for a fixed number of iterations."""
 
     components: tuple[tuple[ParameterSelectorProtocol, OptimizerProtocol], ...] = field(
         converter=_convert_components_to_selectors,
@@ -104,11 +91,8 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     )
     """Parameter selectors and their respective optimizers to be combined."""
 
-    strategy: CompositionStrategy = field(
-        factory=AlternatingCompositionStrategy,
-        validator=instance_of(CompositionStrategy),
-    )
-    """The strategy to use for combining the optimizers."""
+    n_iterations: int = field(default=3, validator=[instance_of(int), gt(0)])
+    """Number of full alternating cycles."""
 
     def _split_parameters(
         self,
@@ -161,6 +145,31 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
 
         return parts
 
+    @override
+    def __call__(
+        self, space: SearchSpace
+    ) -> Generator[SearchSpacePart, tuple[Tensor, Tensor], None]:
+        """Yield parts in round-robin for ``n_iterations`` cycles."""
+        parts = self._split_parameters(space)
+        for _ in range(self.n_iterations):
+            yield from parts
+
+
+@define(frozen=True, slots=False, kw_only=True)
+class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
+    """Optimizer that combines multiple optimizers over different search space parts.
+
+    Each part of the search space is assigned to a dedicated optimizer. Points are
+    optimized one at a time: for each point, the strategy cycles through the parts,
+    optimizing one part while holding the others fixed. This means batch points are
+    produced sequentially, not jointly.
+    """
+
+    strategy: CompositionStrategy = field(
+        validator=instance_of(CompositionStrategy),
+    )
+    """The strategy controlling which parts are optimized and in what order."""
+
     @staticmethod
     def _sample_initial_point(space: SearchSpace) -> Tensor:
         """Sample a random point from the space in comp-rep.
@@ -180,40 +189,31 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     def _optimize_single_point(
         self,
         space: SearchSpace,
-        parts: list[SearchSpacePart],
+        strategy_gen: Generator[SearchSpacePart, tuple[Tensor, Tensor], None],
         score_function: ScoreFunction,
     ) -> tuple[Tensor, Tensor]:
         """Optimize a single point.
 
         Args:
             space: The full search space.
-            parts: Resolved parts (parameter names + optimizer).
+            strategy_gen: A generator yielding (parameter names, optimizer) pairs.
             score_function: The callable to optimize.
 
         Returns:
             The optimized point ``(1, n_cols)`` and its score ``(1,)``.
         """
         comp_rep_columns = space.comp_rep_columns
+        current_point = self._sample_initial_point(space)
 
-        optimizable_columns: list[frozenset[str]] = [
-            frozenset(
+        param_names, optimizer = next(strategy_gen)
+
+        while True:
+            free_columns = frozenset(
                 col
                 for p in space.parameters
                 if p.name in param_names
                 for col in p.comp_rep_columns
             )
-            for param_names, _ in parts
-        ]
-
-        current_point = self._sample_initial_point(space)
-
-        strategy = self.strategy(len(parts))
-        part_idx = next(strategy)
-
-        while True:
-            _, optimizer = parts[part_idx]
-            free_columns = optimizable_columns[part_idx]
-
             fixed_values = {
                 col: current_point[i].item()
                 for i, col in enumerate(comp_rep_columns)
@@ -222,11 +222,10 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
             constrained_space = space.fix_parameters(fixed_values)
 
             result_point, result_score = optimizer(1, score_function, constrained_space)
-
             current_point = result_point.squeeze(0)
 
             try:
-                part_idx = strategy.send((result_point, result_score))
+                param_names, optimizer = strategy_gen.send((result_point, result_score))
             except StopIteration:
                 break
 
@@ -241,16 +240,17 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     ) -> tuple[Tensor, Tensor]:
         import torch
 
-        parts = self._split_parameters(space)
         n_cols = len(space.comp_rep_columns)
-
         base_X_pending = getattr(score_function, "X_pending", None)
 
         points = torch.empty(batch_size, n_cols)
         scores = torch.empty(batch_size)
 
         for b in range(batch_size):
-            point, score = self._optimize_single_point(space, parts, score_function)
+            strategy_gen = self.strategy(space)
+            point, score = self._optimize_single_point(
+                space, strategy_gen, score_function
+            )
             points[b] = point.squeeze(0)
             scores[b] = score.squeeze(0)
 
