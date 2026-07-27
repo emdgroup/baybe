@@ -57,9 +57,14 @@ class CompositionStrategy(ABC, SerialMixin):
     def __call__(self, n_parts: int) -> Generator[int, tuple[Tensor, Tensor], None]:
         """Yield part indices to optimize in sequence.
 
-        The generator receives ``(point, score)`` from each optimization step
-        via :meth:`~Generator.send`, which strategies may use to decide the
-        next part.
+        A composition strategy controls the order in which parts of the search
+        space are optimized. Each time it yields an index ``i``, the caller
+        optimizes part ``i`` while holding all other parts fixed. After each
+        optimization step, the caller sends back the resulting ``(point, score)``
+        pair via :meth:`~Generator.send`. The strategy may use this feedback to
+        decide which part to optimize next (e.g., adaptive strategies) or ignore
+        it (e.g., fixed schedules). The generator terminates by returning when
+        the optimization sequence is complete.
 
         Args:
             n_parts: The number of parts in the partition.
