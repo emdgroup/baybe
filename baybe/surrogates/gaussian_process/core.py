@@ -236,7 +236,22 @@ class GaussianProcessSurrogate(Surrogate):
         | FitCriterionFactoryProtocol
         | None = None,
     ) -> Self:
-        """Create a Gaussian process surrogate from one of the defined presets."""
+        """Create a Gaussian process surrogate from one of the defined presets.
+
+        Unlike the regular constructor, where a ``None`` value for a factory argument
+        defers to context-dependent auto-selection at fit time, a ``None`` value here
+        falls back to the corresponding default of the chosen preset.
+
+        Args:
+            preset: The preset to use.
+            kernel_or_factory: The kernel (factory) to use.
+            mean_or_factory: The mean (factory) to use.
+            likelihood_or_factory: The likelihood (factory) to use.
+            fit_criterion_or_factory: The fit criterion (factory) to use.
+
+        Returns:
+            The Gaussian process surrogate configured according to the preset.
+        """
         preset = GaussianProcessPreset(preset)
 
         module_name = (
