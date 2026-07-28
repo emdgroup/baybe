@@ -159,12 +159,11 @@ class GaussianProcessSurrogate(Surrogate):
         default=None,
         validator=optional(is_callable()),
     )
-    """The kernel factory. ``None`` defers to context-dependent auto-selection.
+    """The factory used to create the kernel for the Gaussian process.
 
     Accepts:
         * :class:`baybe.kernels.base.Kernel`
-        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a
-          kernel
+        * :class:`.components.kernel.KernelFactoryProtocol`
         * :class:`gpytorch.kernels.Kernel`
     """
 
@@ -176,10 +175,10 @@ class GaussianProcessSurrogate(Surrogate):
         ),
         validator=optional(is_callable()),
     )
-    """The mean factory. ``None`` defers to context-dependent auto-selection.
+    """The factory used to create the mean function for the Gaussian process.
 
     Accepts:
-        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a mean
+        * :class:`.components.mean.MeanFactoryProtocol`
         * :class:`gpytorch.means.Mean`
     """
 
@@ -191,11 +190,10 @@ class GaussianProcessSurrogate(Surrogate):
         ),
         validator=optional(is_callable()),
     )
-    """The likelihood factory. ``None`` defers to context-dependent auto-selection.
+    """The factory used to create the likelihood for the Gaussian process.
 
     Accepts:
-        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a
-          likelihood
+        * :class:`.components.likelihood.LikelihoodFactoryProtocol`
         * :class:`gpytorch.likelihoods.Likelihood`
     """
 
@@ -207,12 +205,11 @@ class GaussianProcessSurrogate(Surrogate):
         ),
         validator=optional(is_callable()),
     )
-    """The fit criterion factory. ``None`` defers to context-dependent auto-selection.
+    """The fitting criterion for Gaussian process hyperparameter optimization.
 
     Accepts:
         * :class:`.components.fit_criterion.FitCriterion`
-        * Any :class:`~.components.generic.GPComponentFactoryProtocol` returning a
-          fit criterion
+        * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
     """
 
     _symmetries: tuple[Symmetry, ...] = field(factory=tuple, init=False, eq=False)
