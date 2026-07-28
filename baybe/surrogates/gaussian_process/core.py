@@ -327,15 +327,6 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
-        """Fit a SingleTaskGP with resolved components.
-
-        Args:
-            train_x: Training inputs in computational representation.
-            train_y: Training targets (pre-transformed).
-
-        Raises:
-            DeprecationError: If a custom kernel is used in a multi-task context.
-        """
         assert self._searchspace is not None  # ensured by base class
         assert self._objective is not None  # ensured by base class
         assert self._measurements is not None  # ensured by base class
