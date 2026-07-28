@@ -279,6 +279,9 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
+        # The base class only routes here through `posterior`/`posterior_stats`, which
+        # raise unless the surrogate has been fitted. Fitting sets `_model`, so it is
+        # ensured to be available here — the assert merely informs the type checker.
         assert self._model is not None
         return self._model.posterior(candidates_comp_scaled)
 
@@ -333,9 +336,9 @@ class GaussianProcessSurrogate(Surrogate):
         Raises:
             DeprecationError: If a custom kernel is used in a multi-task context.
         """
-        assert self._searchspace is not None  # provided by base class
-        assert self._objective is not None  # provided by base class
-        assert self._measurements is not None  # provided by base class
+        assert self._searchspace is not None  # ensured by base class
+        assert self._objective is not None  # ensured by base class
+        assert self._measurements is not None  # ensured by base class
 
         # Symmetry-aware architecture adjustment (planned for future implementation)
         if self._symmetries:
