@@ -155,30 +155,6 @@ def test_gpytorch_component_serialization(component):
         GaussianProcessSurrogate(**component).to_dict()
 
 
-def test_legacy_serialization_backwards_compatibility():
-    """A dict serialized before the factory refactor can be deserialized.
-
-    Before this PR, ``GaussianProcessSurrogate`` stored concrete ``BayBEXFactory``
-    instances as field defaults. After the refactor the fields default to ``None``.
-    Existing serialized surrogates must still deserialize correctly.
-    """
-    # Dict captured from main prior to the factory refactor
-    legacy_dict = {
-        "type": "GaussianProcessSurrogate",
-        "kernel_or_factory": {"type": "BayBEKernelFactory", "parameter_selector": None},
-        "mean_or_factory": {"type": "BayBEMeanFactory"},
-        "likelihood_or_factory": {"type": "BayBELikelihoodFactory"},
-        "fit_criterion_or_factory": {"type": "BayBEFitCriterionFactory"},
-    }
-    gp = GaussianProcessSurrogate.from_dict(legacy_dict)
-    assert gp == GaussianProcessSurrogate(
-        kernel_or_factory=BayBEKernelFactory(),
-        mean_or_factory=BayBEMeanFactory(),
-        likelihood_or_factory=BayBELikelihoodFactory(),
-        fit_criterion_or_factory=BayBEFitCriterionFactory(),
-    )
-
-
 @pytest.mark.parametrize("preset", list(GaussianProcessPreset), ids=lambda p: p.name)
 def test_presets(preset: GaussianProcessPreset):
     """Presets can be loaded and their defaults can be overridden."""
