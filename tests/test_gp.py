@@ -8,7 +8,6 @@ import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import MultiTaskGP, SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
-from exceptions import ModelNotTrainedError
 from gpytorch.kernels import MaternKernel as GPyTorchMaternKernel
 from gpytorch.kernels import RBFKernel as GPyTorchRBFKernel
 from gpytorch.kernels import ScaleKernel as GPyTorchScaleKernel
@@ -21,6 +20,7 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe import active_settings
+from baybe.exceptions import ModelNotTrainedError
 from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import TaskParameter
