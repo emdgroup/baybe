@@ -288,7 +288,7 @@ class GaussianProcessSurrogate(Surrogate):
     def _resolve_components(
         self, context: _ModelContext
     ) -> tuple[GPyTorchKernel, GPyTorchMean, GPyTorchLikelihood, FitCriterion]:
-        """Resolve factory fields to concrete GPyTorch components.
+        """Resolve factory fields to concrete components.
 
         Resolves ``None`` fields to BayBE defaults and calls the factories with
         the given context. This handles the standard resolution path.
