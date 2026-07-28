@@ -163,7 +163,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     Accepts:
         * :class:`baybe.kernels.base.Kernel`
-        * :class:`.components.kernel.KernelFactoryProtocol`
+        * :obj:`.components.kernel.KernelFactoryProtocol`
         * :class:`gpytorch.kernels.Kernel`
     """
 
@@ -178,7 +178,7 @@ class GaussianProcessSurrogate(Surrogate):
     """The factory used to create the mean function for the Gaussian process.
 
     Accepts:
-        * :class:`.components.mean.MeanFactoryProtocol`
+        * :obj:`.components.mean.MeanFactoryProtocol`
         * :class:`gpytorch.means.Mean`
     """
 
@@ -193,7 +193,7 @@ class GaussianProcessSurrogate(Surrogate):
     """The factory used to create the likelihood for the Gaussian process.
 
     Accepts:
-        * :class:`.components.likelihood.LikelihoodFactoryProtocol`
+        * :obj:`.components.likelihood.LikelihoodFactoryProtocol`
         * :class:`gpytorch.likelihoods.Likelihood`
     """
 
@@ -209,7 +209,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     Accepts:
         * :class:`.components.fit_criterion.FitCriterion`
-        * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
+        * :obj:`.components.fit_criterion.FitCriterionFactoryProtocol`
     """
 
     _symmetries: tuple[Symmetry, ...] = field(factory=tuple, init=False, eq=False)
