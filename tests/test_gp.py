@@ -8,6 +8,7 @@ import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import MultiTaskGP, SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
+from exceptions import ModelNotTrainedError
 from gpytorch.kernels import MaternKernel as GPyTorchMaternKernel
 from gpytorch.kernels import RBFKernel as GPyTorchRBFKernel
 from gpytorch.kernels import ScaleKernel as GPyTorchScaleKernel
@@ -255,3 +256,9 @@ def test_botorch_preset(multitask: bool):
     posterior2 = _posterior_stats_botorch(sp, data)
 
     assert_frame_equal(posterior1, posterior2)
+
+
+def test_to_botorch_before_fit():
+    """Attempting to access an untrained surrogate raises an error."""
+    with pytest.raises(ModelNotTrainedError):
+        GaussianProcessSurrogate().to_botorch()
