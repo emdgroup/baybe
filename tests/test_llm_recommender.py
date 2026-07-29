@@ -142,6 +142,36 @@ def test_recommend_with_measurements(
 
 
 @patch("baybe._optional.llm.completion")
+def test_recommend_with_pending_experiments(
+    mock_completion, recommender, searchspace, valid_response
+):
+    """Pending experiments are accepted and included in the prompt."""
+    mock_completion.return_value = valid_response
+
+    pending_experiments = pd.DataFrame(
+        {
+            "temperature": [10.0, 15.0],
+            "pressure": [1.0, 2.0],
+            "n_cycles": [2, 4],
+            "catalyst": ["A", "C"],
+        }
+    )
+
+    recommendations = recommender.recommend(
+        batch_size=3,
+        searchspace=searchspace,
+        pending_experiments=pending_experiments,
+    )
+
+    assert isinstance(recommendations, pd.DataFrame)
+    assert len(recommendations) == 3
+    prompt_content = mock_completion.call_args.kwargs.get(
+        "messages", mock_completion.call_args[1]["messages"]
+    )[0]["content"]
+    assert "PENDING EXPERIMENTS" in prompt_content
+
+
+@patch("baybe._optional.llm.completion")
 def test_recommend_with_related_data(mock_completion, searchspace, valid_response):
     """Related data is included in the prompt when provided."""
     from baybe.recommenders.pure.llm.llm import LLMRecommender
