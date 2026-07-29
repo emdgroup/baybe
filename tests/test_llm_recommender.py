@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from baybe._optional.info import LLM_INSTALLED
-from baybe.exceptions import LLMResponseError
+from baybe.exceptions import LLMResponseError, LLMResponseWarning
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -169,6 +169,26 @@ def test_recommend_with_pending_experiments(
         "messages", mock_completion.call_args[1]["messages"]
     )[0]["content"]
     assert "PENDING EXPERIMENTS" in prompt_content
+
+
+@patch("baybe._optional.llm.completion")
+def test_recommend_with_objective(
+    mock_completion, recommender, searchspace, valid_response
+):
+    """A passed objective is rendered into the prompt."""
+    from baybe.objectives.single import SingleTargetObjective
+    from baybe.targets.numerical import NumericalTarget
+
+    mock_completion.return_value = valid_response
+    objective = SingleTargetObjective(NumericalTarget("yield", minimize=False))
+
+    recommender.recommend(batch_size=3, searchspace=searchspace, objective=objective)
+
+    prompt_content = mock_completion.call_args.kwargs.get(
+        "messages", mock_completion.call_args[1]["messages"]
+    )[0]["content"]
+    assert "OPTIMIZATION TARGETS" in prompt_content
+    assert "yield" in prompt_content
 
 
 @patch("baybe._optional.llm.completion")
@@ -380,7 +400,16 @@ def test_batch_size_warning_when_llm_returns_fewer(
         )
     )
 
-    with pytest.warns(UserWarning, match="instead of the requested"):
+    with pytest.warns(LLMResponseWarning, match="instead of the requested"):
+        recommender.recommend(batch_size=3, searchspace=searchspace)
+
+
+@patch("baybe._optional.llm.completion")
+def test_completion_failure_wrapped(mock_completion, recommender, searchspace):
+    """A failing completion call is wrapped in an LLMResponseError."""
+    mock_completion.side_effect = RuntimeError("boom")
+
+    with pytest.raises(LLMResponseError, match="call to the language model failed"):
         recommender.recommend(batch_size=3, searchspace=searchspace)
 
 

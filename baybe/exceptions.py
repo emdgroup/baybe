@@ -15,6 +15,10 @@ class InputDataTypeWarning(UserWarning):
     """An input has unexpected data type."""
 
 
+class LLMResponseWarning(UserWarning):
+    """A language model response did not fully meet the request."""
+
+
 class UnusedObjectWarning(UserWarning):
     """
     A method or function was called with undesired arguments which indicates an
