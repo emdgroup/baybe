@@ -12,7 +12,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
-from attrs.validators import ge, instance_of, min_len
+from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
 from baybe.exceptions import (
@@ -258,13 +258,6 @@ class LLMRecommender(PureRecommender):
     similar experiments.
     """
 
-    overflow_experiments: int = field(default=0, validator=(instance_of(int), ge(0)))
-    """Number of additional experiments to request from the LLM.
-
-    The LLM will be asked to generate ``batch_size + overflow_experiments``
-    experiments, of which the first ``batch_size`` are returned.
-    """
-
     def _construct_prompt(
         self,
         searchspace: SearchSpace,
@@ -285,7 +278,6 @@ class LLMRecommender(PureRecommender):
         """
         from baybe._optional.llm import Template
 
-        total_experiments = batch_size + self.overflow_experiments
         parameters = _extract_parameter_info(searchspace.parameters)
 
         template = Template(
@@ -300,7 +292,7 @@ class LLMRecommender(PureRecommender):
             measurements=measurements,
             pending_experiments=pending_experiments,
             related_data=self.related_data,
-            batch_size=total_experiments,
+            batch_size=batch_size,
             format_instructions=self.format_instructions,
         )
 
@@ -563,10 +555,10 @@ class LLMRecommender(PureRecommender):
         except LLMResponseError as e:
             output = self._attempt_recovery(e, content, searchspace)
 
-        if len(output) < batch_size + self.overflow_experiments:
+        if len(output) < batch_size:
             warnings.warn(
                 f"LLM returned {len(output)} suggestions instead of the "
-                f"requested {batch_size + self.overflow_experiments}.",
+                f"requested {batch_size}.",
                 stacklevel=2,
             )
 
@@ -584,9 +576,6 @@ class LLMRecommender(PureRecommender):
                 "Optimization Objective", self.objective_description, single_line=True
             ),
             to_string("Related Data", self.related_data, single_line=True),
-            to_string(
-                "Overflow Experiments", self.overflow_experiments, single_line=True
-            ),
         ]
         return to_string(self.__class__.__name__, *fields)
 
