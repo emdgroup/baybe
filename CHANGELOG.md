@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
   values of invariant points are degenerate
+- Multi-output surrogate compatibility check in `Surrogate.fit` now correctly uses the
+  number of required models instead of the number of transform outputs
 
 ### Added
 - `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
