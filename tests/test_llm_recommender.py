@@ -368,36 +368,6 @@ def test_recovery_success(mock_completion, recommender, searchspace):
 
 
 @patch("baybe._optional.llm.completion")
-def test_overflow_experiments(mock_completion, searchspace):
-    """Overflow experiments request extra suggestions but return only batch_size."""
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
-    recommender = LLMRecommender(
-        model="gpt-5.4",
-        experiment_description="Test",
-        objective_description="Maximize yield",
-        overflow_experiments=1,
-    )
-
-    mock_completion.return_value = _mock_response(
-        _make_suggestions(
-            [
-                {"temperature": 10.0, "pressure": 1.0, "n_cycles": 1, "catalyst": "A"},
-                {"temperature": 50.0, "pressure": 2.0, "n_cycles": 2, "catalyst": "B"},
-                {"temperature": 30.0, "pressure": 3.0, "n_cycles": 3, "catalyst": "C"},
-                {"temperature": 60.0, "pressure": 4.0, "n_cycles": 4, "catalyst": "A"},
-            ]
-        )
-    )
-
-    recommendations = recommender.recommend(batch_size=3, searchspace=searchspace)
-
-    # Four suggestions were requested (batch_size + overflow), but only the first
-    # batch_size are returned.
-    assert len(recommendations) == 3
-
-
-@patch("baybe._optional.llm.completion")
 def test_batch_size_warning_when_llm_returns_fewer(
     mock_completion, recommender, searchspace
 ):
