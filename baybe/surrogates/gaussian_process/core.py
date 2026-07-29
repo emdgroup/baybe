@@ -294,9 +294,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
-        # The base class only routes here through `posterior`/`posterior_stats`, which
-        # raise unless the surrogate has been fitted. Fitting sets `_model`, so it is
-        # ensured to be available here — the assert merely informs the type checker.
+        # Model being fit is guaranteed by the call in `posterior`
         assert self._model is not None
         return self._model.posterior(candidates_comp_scaled)
 
