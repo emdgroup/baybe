@@ -18,7 +18,7 @@ from typing_extensions import override
 from baybe.exceptions import (
     IncompatibilityError,
     LLMResponseError,
-    UnusedObjectWarning,
+    LLMResponseWarning,
 )
 from baybe.objectives.base import Objective
 from baybe.parameters.base import DiscreteParameter, Parameter
@@ -39,6 +39,10 @@ EXPERIMENT DESCRIPTION:
 OPTIMIZATION OBJECTIVE:
 {{ objective_description }}
 
+{% if objective is not none %}
+OPTIMIZATION TARGETS:
+{{ objective }}
+{% endif %}
 PARAMETERS:
 {% for param in parameters %}
 Parameter: {{ param.name }}
@@ -262,6 +266,7 @@ class LLMRecommender(PureRecommender):
         self,
         searchspace: SearchSpace,
         batch_size: int,
+        objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> str:
@@ -270,6 +275,7 @@ class LLMRecommender(PureRecommender):
         Args:
             searchspace: The search space to generate recommendations for.
             batch_size: The number of recommendations to generate.
+            objective: Optional objective to include in the prompt.
             measurements: Optional measurements to include in the prompt.
             pending_experiments: Optional pending experiments to include in the prompt.
 
@@ -288,6 +294,7 @@ class LLMRecommender(PureRecommender):
         return template.render(
             experiment_description=self.experiment_description,
             objective_description=self.objective_description,
+            objective=objective,
             parameters=parameters,
             measurements=measurements,
             pending_experiments=pending_experiments,
@@ -495,7 +502,7 @@ class LLMRecommender(PureRecommender):
         Args:
             batch_size: The number of recommendations to generate.
             searchspace: The search space to generate recommendations for.
-            objective: Not used by this recommender.
+            objective: Optional objective to include in the prompt.
             measurements: Optional measurements to include in the prompt.
             pending_experiments: Optional pending experiments to include in the prompt.
 
@@ -503,19 +510,10 @@ class LLMRecommender(PureRecommender):
             A DataFrame containing the recommendations as individual rows.
 
         Raises:
-            LLMResponseError: If the LLM response cannot be parsed or
-                recovery fails.
+            LLMResponseError: If the call to the language model fails, or if its
+                response cannot be parsed and recovery fails.
         """
         from baybe._optional.llm import completion
-
-        if objective is not None:
-            warnings.warn(
-                f"'{self.recommend.__name__}' was called with an explicit objective "
-                f"but '{self.__class__.__name__}' does not consider objectives, "
-                f"meaning that the argument is ignored.",
-                UnusedObjectWarning,
-                stacklevel=2,
-            )
 
         if measurements is not None:
             measurements = preprocess_dataframe(
@@ -532,13 +530,20 @@ class LLMRecommender(PureRecommender):
             )
 
         prompt = self._construct_prompt(
-            searchspace, batch_size, measurements, pending_experiments
+            searchspace, batch_size, objective, measurements, pending_experiments
         )
-        response = completion(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            **self.litellm_args,
-        )
+        try:
+            response = completion(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                **self.litellm_args,
+            )
+        except Exception as e:
+            raise LLMResponseError(
+                f"The call to the language model failed ({type(e).__name__}): {e}. "
+                f"Check your API credentials, network connection, and the model "
+                f"identifier '{self.model}'."
+            ) from e
 
         try:
             content = response.choices[0].message.content
@@ -559,6 +564,7 @@ class LLMRecommender(PureRecommender):
             warnings.warn(
                 f"LLM returned {len(output)} suggestions instead of the "
                 f"requested {batch_size}.",
+                LLMResponseWarning,
                 stacklevel=2,
             )
 
