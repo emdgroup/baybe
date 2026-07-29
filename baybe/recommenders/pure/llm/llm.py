@@ -6,7 +6,6 @@ import gc
 import json
 import math
 import warnings
-from collections.abc import Callable
 from json import JSONDecodeError
 from types import SimpleNamespace
 from typing import Any, ClassVar
@@ -259,19 +258,11 @@ class LLMRecommender(PureRecommender):
     similar experiments.
     """
 
-    is_feasible_experiment: Callable[[pd.Series], bool] | None = field(default=None)
-    """Optional function to check if an experiment is feasible.
-
-    If provided, the recommender will request additional experiments and
-    filter for feasibility. Only feasible experiments are returned.
-    """
-
     overflow_experiments: int = field(default=0, validator=(instance_of(int), ge(0)))
     """Number of additional experiments to request from the LLM.
 
     The LLM will be asked to generate ``batch_size + overflow_experiments``
-    experiments. After filtering for feasibility, the first ``batch_size``
-    feasible experiments will be returned.
+    experiments, of which the first ``batch_size`` are returned.
     """
 
     def _construct_prompt(
@@ -579,20 +570,6 @@ class LLMRecommender(PureRecommender):
                 stacklevel=2,
             )
 
-        if self.is_feasible_experiment is not None:
-            feasible_mask = output.apply(self.is_feasible_experiment, axis=1)
-            feasible_experiments = output[feasible_mask]
-
-            if len(feasible_experiments) < batch_size:
-                warnings.warn(
-                    f"Only {len(feasible_experiments)} of {batch_size} requested "
-                    f"experiments passed the feasibility check. Consider increasing "
-                    f"overflow_experiments (currently {self.overflow_experiments}).",
-                    stacklevel=2,
-                )
-
-            return feasible_experiments.head(batch_size)
-
         return output.head(batch_size)
 
     @override
@@ -609,11 +586,6 @@ class LLMRecommender(PureRecommender):
             to_string("Related Data", self.related_data, single_line=True),
             to_string(
                 "Overflow Experiments", self.overflow_experiments, single_line=True
-            ),
-            to_string(
-                "Feasibility Check",
-                "Enabled" if self.is_feasible_experiment is not None else "Disabled",
-                single_line=True,
             ),
         ]
         return to_string(self.__class__.__name__, *fields)
