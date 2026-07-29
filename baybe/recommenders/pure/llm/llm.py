@@ -18,17 +18,17 @@ from typing_extensions import override
 
 from baybe.exceptions import (
     IncompatibilityError,
-    IncompatibleArgumentError,
     LLMResponseError,
     UnusedObjectWarning,
 )
 from baybe.objectives.base import Objective
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.utils.conversion import to_string
+from baybe.utils.validation import preprocess_dataframe
 
 _PROMPT_TEMPLATE = """\
 You are an expert experimental design assistant. Your task is to suggest new \
@@ -61,6 +61,13 @@ Unit: {{ param.unit }}
 {% if measurements is not none and not measurements.empty %}
 PREVIOUS MEASUREMENTS:
 {{ measurements.to_string(index=False) }}
+{% endif %}
+
+{% if pending_experiments is not none and not pending_experiments.empty %}
+PENDING EXPERIMENTS:
+The following experiments have already been proposed and are awaiting results.
+Do not recommend these again.
+{{ pending_experiments.to_string(index=False) }}
 {% endif %}
 
 {% if related_data is not none and not related_data.empty %}
@@ -181,8 +188,16 @@ def _extract_parameter_info(
 
 
 @define(slots=False)
-class LLMRecommender(NonPredictiveRecommender):
-    """Recommender that uses a language model to suggest new experimental points."""
+class LLMRecommender(PureRecommender):
+    """Recommender that uses a language model to suggest new experimental points.
+
+    Unlike other pure recommenders, this recommender does not implement the
+    ``_recommend_discrete``/``_recommend_continuous``/``_recommend_hybrid`` hooks.
+    The language model returns a complete set of parameter configurations that already
+    constitutes the recommendation, so there is no per-subspace selection step to
+    delegate to those hooks. Instead, :meth:`recommend` is fully overridden and builds
+    the result directly from the model response.
+    """
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
@@ -264,6 +279,7 @@ class LLMRecommender(NonPredictiveRecommender):
         searchspace: SearchSpace,
         batch_size: int,
         measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> str:
         """Construct the prompt for the language model.
 
@@ -271,6 +287,7 @@ class LLMRecommender(NonPredictiveRecommender):
             searchspace: The search space to generate recommendations for.
             batch_size: The number of recommendations to generate.
             measurements: Optional measurements to include in the prompt.
+            pending_experiments: Optional pending experiments to include in the prompt.
 
         Returns:
             The constructed prompt.
@@ -290,6 +307,7 @@ class LLMRecommender(NonPredictiveRecommender):
             objective_description=self.objective_description,
             parameters=parameters,
             measurements=measurements,
+            pending_experiments=pending_experiments,
             related_data=self.related_data,
             batch_size=total_experiments,
             format_instructions=self.format_instructions,
@@ -496,26 +514,17 @@ class LLMRecommender(NonPredictiveRecommender):
             searchspace: The search space to generate recommendations for.
             objective: Not used by this recommender.
             measurements: Optional measurements to include in the prompt.
-            pending_experiments: Not supported by this recommender.
+            pending_experiments: Optional pending experiments to include in the prompt.
 
         Returns:
             A DataFrame containing the recommendations as individual rows.
 
         Raises:
-            IncompatibleArgumentError: If ``pending_experiments`` are provided.
             LLMResponseError: If the LLM response cannot be parsed or
                 recovery fails.
         """
         from baybe._optional.llm import completion
 
-        if pending_experiments is not None:
-            raise IncompatibleArgumentError(
-                f"Pending experiments were passed to "
-                f"'{self.__class__.__name__}.{self.recommend.__name__}' but "
-                f"'{self.__class__.__name__}' cannot use this information. If you "
-                f"want to exclude pending experiments, adjust the search space "
-                f"accordingly."
-            )
         if objective is not None:
             warnings.warn(
                 f"'{self.recommend.__name__}' was called with an explicit objective "
@@ -525,7 +534,23 @@ class LLMRecommender(NonPredictiveRecommender):
                 stacklevel=2,
             )
 
-        prompt = self._construct_prompt(searchspace, batch_size, measurements)
+        if measurements is not None:
+            measurements = preprocess_dataframe(
+                measurements,
+                searchspace,
+                numerical_measurements_must_be_within_tolerance=False,
+            )
+
+        if pending_experiments is not None:
+            pending_experiments = preprocess_dataframe(
+                pending_experiments,
+                searchspace,
+                numerical_measurements_must_be_within_tolerance=False,
+            )
+
+        prompt = self._construct_prompt(
+            searchspace, batch_size, measurements, pending_experiments
+        )
         response = completion(
             model=self.model,
             messages=[{"role": "user", "content": prompt}],
