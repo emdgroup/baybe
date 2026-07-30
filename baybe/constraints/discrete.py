@@ -502,11 +502,6 @@ class DiscreteBatchConstraint(DiscreteConstraint):
         the computational cost due to the combinatorial explosion.
     """
 
-    # Class variables
-    eval_during_creation: ClassVar[bool] = False
-    eval_during_modeling: ClassVar[bool] = True
-    numerical_only: ClassVar[bool] = False
-
     def __attrs_post_init__(self):
         """Validate that exactly one parameter is specified."""
         if len(self.parameters) != 1:
