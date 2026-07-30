@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `BayesianRecommender`
 - `Parameter.is_equivalent` method for structural parameter comparison
 - `CategoricalFidelityParameter` and `NumericalDiscreteFidelityParameter` classes
+- Multi-fidelity support in `GaussianProcessSurrogate`: categorical fidelity via
+  ICM/index kernels and numerical discrete fidelity via BoTorch's
+  `SingleTaskMultiFidelityGP`
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance

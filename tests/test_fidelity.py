@@ -3,7 +3,6 @@
 import pandas as pd
 import pytest
 from gpytorch.likelihoods import GaussianLikelihood
-from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
 from pytest import param
 
 from baybe.exceptions import IncompatibleSurrogateError
@@ -13,14 +12,8 @@ from baybe.parameters.fidelity import (
     NumericalDiscreteFidelityParameter,
 )
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from baybe.recommenders import BotorchRecommender
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriterion
-from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
-from baybe.surrogates.gaussian_process.multi_fidelity import (
-    GaussianProcessSurrogateSTMF,
-)
 from baybe.surrogates.gaussian_process.presets.core import GaussianProcessPreset
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
@@ -43,10 +36,6 @@ measurements_num_fid = create_fake_input(
 measurements_cat_fid = create_fake_input(
     searchspace_cat_fid.parameters, objective.targets, n_rows=20
 )
-
-
-def _dummy_likelihood_factory(*_args, **_kwargs) -> GPyTorchLikelihood:
-    return GaussianLikelihood()
 
 
 def test_categorical_fidelity_parameter_construction():
@@ -155,82 +144,15 @@ def test_invalid_fidelity_parameter_combinations(parameters, match):
         SearchSpace.from_product(parameters)
 
 
-def test_standard_gp_rejects_numerical_fidelity():
-    """GaussianProcessSurrogate raises when fitted on a numerical fidelity space."""
-    surrogate = GaussianProcessSurrogate()
-    with pytest.raises(IncompatibleSurrogateError, match="STMF"):
-        surrogate.fit(searchspace_num_fid, objective, measurements_num_fid)
-
-
-def test_stmf_rejects_categorical_fidelity():
-    """STMF raises an error when fitted on a categorical fidelity search space."""
-    surrogate = GaussianProcessSurrogateSTMF()
-    measurements_cat_fid = create_fake_input(
-        searchspace_cat_fid.parameters, objective.targets, n_rows=20
-    )
-    with pytest.raises(IncompatibleSurrogateError, match="GaussianProcessSurrogate"):
-        surrogate.fit(searchspace_cat_fid, objective, measurements_cat_fid)
-
-
 @pytest.mark.parametrize(
-    ("surrogate", "searchspace", "measurements", "match"),
+    "parameters",
     [
-        param(
-            GaussianProcessSurrogate(),
-            searchspace_num_fid,
-            measurements_num_fid,
-            "STMF",
-            id="standard_gp_numerical_fidelity",
-        ),
-        param(
-            GaussianProcessSurrogateSTMF(),
-            searchspace_cat_fid,
-            measurements_cat_fid,
-            "GaussianProcessSurrogate",
-            id="stmf_categorical_fidelity",
-        ),
+        param([TaskParameter("task", values=["a", "b"])], id="task_only"),
+        param([_cat_fid_param], id="categorical_fidelity_only"),
+        param([_num_fid_param], id="numerical_fidelity_only"),
     ],
 )
-def test_surrogate_rejects_wrong_fidelity_repeatedly(
-    surrogate, searchspace, measurements, match
-):
-    """Repeated wrong-fidelity fits raise instead of returning from the cache."""
-    for _ in range(2):
-        with pytest.raises(IncompatibleSurrogateError, match=match):
-            surrogate.fit(searchspace, objective, measurements)
-
-
-def test_stmf_rejects_single_fidelity():
-    """STMF raises an error when fitted on a single-fidelity search space."""
-    searchspace = SearchSpace.from_product([_design_param])
-    measurements = create_fake_input(
-        searchspace.parameters, objective.targets, n_rows=20
-    )
-    with pytest.raises(IncompatibleSurrogateError, match="NumericalDiscrete"):
-        GaussianProcessSurrogateSTMF().fit(searchspace, objective, measurements)
-
-
-@pytest.mark.parametrize(
-    ("surrogate", "parameters"),
-    [
-        param(
-            GaussianProcessSurrogate(),
-            [TaskParameter("task", values=["a", "b"])],
-            id="task_only",
-        ),
-        param(
-            GaussianProcessSurrogate(),
-            [_cat_fid_param],
-            id="categorical_fidelity_only",
-        ),
-        param(
-            GaussianProcessSurrogateSTMF(),
-            [_num_fid_param],
-            id="numerical_fidelity_only",
-        ),
-    ],
-)
-def test_surrogate_rejects_index_only_searchspace(surrogate, parameters):
+def test_surrogate_rejects_index_only_searchspace(parameters):
     """GP surrogates raise for search spaces without regular model inputs."""
     searchspace = SearchSpace.from_product(parameters)
     measurements = create_fake_input(
@@ -238,136 +160,14 @@ def test_surrogate_rejects_index_only_searchspace(surrogate, parameters):
     )
 
     with pytest.raises(IncompatibleSurrogateError, match="non-task/non-fidelity"):
-        surrogate.fit(searchspace, objective, measurements)
+        GaussianProcessSurrogate().fit(searchspace, objective, measurements)
 
 
-@pytest.mark.parametrize(
-    ("component", "factory_attr", "expected_type"),
-    [
-        param(
-            {"likelihood_or_factory": GaussianLikelihood()},
-            "likelihood_factory",
-            PlainGPComponentFactory,
-            id="gpytorch_likelihood",
-        ),
-        param(
-            {"likelihood_or_factory": _dummy_likelihood_factory},
-            "likelihood_factory",
-            type(_dummy_likelihood_factory),
-            id="likelihood_factory_callable",
-        ),
-        param(
-            {"fit_criterion_or_factory": FitCriterion.MARGINAL_LOG_LIKELIHOOD},
-            "fit_criterion_factory",
-            PlainGPComponentFactory,
-            id="fit_criterion_enum",
-        ),
-    ],
-)
-def test_stmf_component_construction(component, factory_attr, expected_type):
-    """STMF accepts GPyTorch objects and callables and wraps them correctly."""
-    stmf = GaussianProcessSurrogateSTMF(**component)
-    assert isinstance(getattr(stmf, factory_attr), expected_type)
-
-
-def test_stmf_fit():
-    """GaussianProcessSurrogateSTMF can be fitted on a numerical fidelity space."""
-    surrogate = GaussianProcessSurrogateSTMF()
-    surrogate.fit(searchspace_num_fid, objective, measurements_num_fid)
-    stats = surrogate.posterior_stats(measurements_num_fid)
-    assert set(stats.columns) == {"t_mean", "t_std"}
-    assert len(stats) == len(measurements_num_fid)
-
-
-@pytest.mark.parametrize(
-    ("searchspace", "measurements", "expected_surrogate_type"),
-    [
-        param(
-            searchspace_num_fid,
-            measurements_num_fid,
-            GaussianProcessSurrogateSTMF,
-            id="numerical_fidelity_dispatches_to_stmf",
-        ),
-        param(
-            searchspace_cat_fid,
-            create_fake_input(
-                searchspace_cat_fid.parameters,
-                NumericalTarget("t").to_objective().targets,
-                n_rows=20,
-            ),
-            GaussianProcessSurrogate,
-            id="categorical_fidelity_dispatches_to_standard_gp",
-        ),
-    ],
-)
-def test_recommender_surrogate_dispatch(
-    searchspace, measurements, expected_surrogate_type
-):
-    """BotorchRecommender auto-selects the correct surrogate for fidelity spaces."""
-    recommender = BotorchRecommender()
-    surrogate = recommender.get_surrogate(searchspace, objective, measurements)
-    # The surrogate is wrapped in a CompositeSurrogate — check the inner template type
-    assert isinstance(surrogate.surrogates.template, expected_surrogate_type)
-
-
-@pytest.mark.parametrize(
-    (
-        "first_searchspace",
-        "first_measurements",
-        "first_expected_type",
-        "second_searchspace",
-        "second_measurements",
-        "second_expected_type",
-    ),
-    [
-        param(
-            searchspace_cat_fid,
-            measurements_cat_fid,
-            GaussianProcessSurrogate,
-            searchspace_num_fid,
-            measurements_num_fid,
-            GaussianProcessSurrogateSTMF,
-            id="categorical_to_numerical",
-        ),
-        param(
-            searchspace_num_fid,
-            measurements_num_fid,
-            GaussianProcessSurrogateSTMF,
-            searchspace_cat_fid,
-            measurements_cat_fid,
-            GaussianProcessSurrogate,
-            id="numerical_to_categorical",
-        ),
-    ],
-)
-def test_recommender_default_surrogate_redispatch(
-    first_searchspace,
-    first_measurements,
-    first_expected_type,
-    second_searchspace,
-    second_measurements,
-    second_expected_type,
-):
-    """BotorchRecommender updates auto-selected surrogates when the context changes."""
-    recommender = BotorchRecommender()
-
-    surrogate = recommender.get_surrogate(
-        first_searchspace, objective, first_measurements
-    )
-    assert isinstance(surrogate.surrogates.template, first_expected_type)
-
-    surrogate = recommender.get_surrogate(
-        second_searchspace, objective, second_measurements
-    )
-    assert isinstance(surrogate.surrogates.template, second_expected_type)
-
-
-def test_recommender_explicit_surrogate_is_not_redispatched():
-    """BotorchRecommender does not replace an explicitly provided surrogate."""
-    recommender = BotorchRecommender(surrogate_model=GaussianProcessSurrogate())
-
-    with pytest.raises(IncompatibleSurrogateError, match="STMF"):
-        recommender.get_surrogate(searchspace_num_fid, objective, measurements_num_fid)
+def test_gp_rejects_custom_components_numerical_fidelity():
+    """Custom components are rejected for numerical multi-fidelity search spaces."""
+    surrogate = GaussianProcessSurrogate(likelihood_or_factory=GaussianLikelihood())
+    with pytest.raises(IncompatibleSurrogateError, match="custom components"):
+        surrogate.fit(searchspace_num_fid, objective, measurements_num_fid)
 
 
 def test_standard_gp_fit_categorical_fidelity():
@@ -377,6 +177,18 @@ def test_standard_gp_fit_categorical_fidelity():
     stats = surrogate.posterior_stats(measurements_cat_fid)
     assert set(stats.columns) == {"t_mean", "t_std"}
     assert len(stats) == len(measurements_cat_fid)
+
+
+def test_standard_gp_fit_numerical_fidelity():
+    """GaussianProcessSurrogate fits numerical fidelity via the BoTorch MF model."""
+    from botorch.models import SingleTaskMultiFidelityGP
+
+    surrogate = GaussianProcessSurrogate()
+    surrogate.fit(searchspace_num_fid, objective, measurements_num_fid)
+    assert isinstance(surrogate.to_botorch(), SingleTaskMultiFidelityGP)
+    stats = surrogate.posterior_stats(measurements_num_fid)
+    assert set(stats.columns) == {"t_mean", "t_std"}
+    assert len(stats) == len(measurements_num_fid)
 
 
 @pytest.mark.parametrize(

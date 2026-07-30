@@ -21,15 +21,11 @@ from baybe.exceptions import (
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
-from baybe.searchspace.core import SearchSpaceFidelityType
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import (
     Surrogate,
     SurrogateProtocol,
-)
-from baybe.surrogates.gaussian_process.multi_fidelity import (
-    GaussianProcessSurrogateSTMF,
 )
 from baybe.symmetries.base import Symmetry
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
@@ -49,16 +45,12 @@ def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
 class BayesianRecommender(PureRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
 
-    _surrogate_model: SurrogateProtocol | None = field(
+    _surrogate_model: SurrogateProtocol = field(
         alias="surrogate_model",
-        default=None,
-        converter=optional(_autoreplicate),
+        factory=GaussianProcessSurrogate,
+        converter=_autoreplicate,
     )
-    """The surrogate model. When omitted, a default is selected based on the search
-    space: :class:`~baybe.surrogates.gaussian_process.multi_fidelity.
-    GaussianProcessSurrogateSTMF` for numerical discrete fidelity spaces,
-    :class:`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`
-    otherwise."""
+    """The surrogate model."""
 
     acquisition_function: AcquisitionFunction | None = field(
         default=None, converter=optional(convert_acqf)
@@ -85,21 +77,6 @@ class BayesianRecommender(PureRecommender, ABC):
     _botorch_acqf = field(default=None, init=False, eq=False)
     """The induced BoTorch acquisition function."""
 
-    _default_surrogate_model_cls: type[Surrogate] | None = field(
-        default=None, init=False, eq=False
-    )
-    """The class of the current auto-selected default surrogate."""
-
-    @staticmethod
-    def _get_default_surrogate_model_cls(searchspace: SearchSpace) -> type[Surrogate]:
-        """Select the default surrogate class for the given search space."""
-        if (
-            searchspace.fidelity_type
-            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
-        ):
-            return GaussianProcessSurrogateSTMF
-        return GaussianProcessSurrogate
-
     def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
         if self.acquisition_function is None:
@@ -113,15 +90,6 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame,
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
-        # Lazy dispatch: select or update auto-created defaults.
-        default_surrogate_model_cls = self._get_default_surrogate_model_cls(searchspace)
-        if self._surrogate_model is None or (
-            self._default_surrogate_model_cls is not None
-            and self._default_surrogate_model_cls is not default_surrogate_model_cls
-        ):
-            self._surrogate_model = _autoreplicate(default_surrogate_model_cls())
-            self._default_surrogate_model_cls = default_surrogate_model_cls
-
         # This fit applies internal caching and does not necessarily involve computation
         self._surrogate_model.fit(searchspace, objective, measurements)
         return self._surrogate_model

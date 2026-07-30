@@ -22,7 +22,6 @@ from baybe.exceptions import (
 from baybe.kernels.base import Kernel
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.fidelity import NumericalDiscreteFidelityParameter
 from baybe.searchspace.core import SearchSpaceFidelityType
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
@@ -268,22 +267,29 @@ class GaussianProcessSurrogate(Surrogate):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
-        # Numerical multi-fidelity search spaces are handled by a dedicated surrogate.
+        _validate_searchspace_has_non_index_input(searchspace, self.__class__.__name__)
+
+        # Numerical multi-fidelity spaces are delegated to BoTorch's dedicated
+        # ``SingleTaskMultiFidelityGP``, which builds its own components. Custom
+        # components would therefore be silently ignored, so we reject them.
         if (
             searchspace.fidelity_type
             == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+        ) and any(
+            factory is not None
+            for factory in (
+                self.kernel_factory,
+                self.mean_factory,
+                self.likelihood_factory,
+                self.fit_criterion_factory,
+            )
         ):
-            from baybe.surrogates.gaussian_process.multi_fidelity import (
-                GaussianProcessSurrogateSTMF,
-            )
-
             raise IncompatibleSurrogateError(
-                f"'{self.__class__.__name__}' does not support "
-                f"'{NumericalDiscreteFidelityParameter.__name__}'. "
-                f"Use '{GaussianProcessSurrogateSTMF.__name__}' instead."
+                f"'{self.__class__.__name__}' does not support custom components "
+                f"(kernel, mean, likelihood, or fit criterion) for numerical "
+                f"multi-fidelity search spaces, which are delegated to BoTorch's "
+                f"'SingleTaskMultiFidelityGP'."
             )
-
-        _validate_searchspace_has_non_index_input(searchspace, self.__class__.__name__)
 
         if (
             searchspace.task_idx is not None
@@ -357,8 +363,6 @@ class GaussianProcessSurrogate(Surrogate):
 
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
-        kernel, mean, likelihood, criterion = self._resolve_components(context)
-
         import botorch
         from botorch.models.transforms import Normalize, Standardize
 
@@ -368,6 +372,28 @@ class GaussianProcessSurrogate(Surrogate):
             indices=context.numerical_indices,
         )
         outcome_transform = Standardize(train_y.shape[-1])
+
+        # Numerical multi-fidelity is delegated directly to BoTorch's dedicated model,
+        # which handles the fidelity dimension and its components internally.
+        if (
+            context.searchspace.fidelity_type
+            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+        ):
+            from gpytorch.mlls import ExactMarginalLogLikelihood
+
+            assert context.fidelity_idx is not None
+            self._model = botorch.models.SingleTaskMultiFidelityGP(
+                train_x,
+                train_y,
+                input_transform=input_transform,
+                outcome_transform=outcome_transform,
+                data_fidelities=(context.fidelity_idx,),
+            )
+            mll = ExactMarginalLogLikelihood(self._model.likelihood, self._model)
+            botorch.fit.fit_gpytorch_mll(mll)
+            return
+
+        kernel, mean, likelihood, criterion = self._resolve_components(context)
         self._model = botorch.models.SingleTaskGP(
             train_x,
             train_y,
