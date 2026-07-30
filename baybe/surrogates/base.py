@@ -82,7 +82,7 @@ class SurrogateProtocol(Protocol):
 class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Abstract base class for all surrogate models."""
 
-    supports_transfer_learning: ClassVar[bool] = False
+    supports_transfer_learning: ClassVar[bool]
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
@@ -427,6 +427,14 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 f"'.{self.replicate.__name__}' method."
             )
 
+        # When the context is unchanged, no retraining is necessary
+        if (
+            searchspace == self._searchspace
+            and objective == self._objective
+            and hash(measurements) == self._measurements_hash
+        ):
+            return
+
         # Check if transfer learning capabilities are needed
         if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
             raise ValueError(
@@ -444,14 +452,6 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             )
 
         self._validate_fit_context(searchspace, objective, measurements)
-
-        # When the context is unchanged, no retraining is necessary
-        if (
-            searchspace == self._searchspace
-            and objective == self._objective
-            and hash(measurements) == self._measurements_hash
-        ):
-            return
 
         # Block partial measurements
         handle_missing_values(measurements, [t.name for t in objective.targets])
