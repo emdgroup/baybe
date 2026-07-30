@@ -14,21 +14,11 @@ from baybe.searchspace import SearchSpaceType
 from baybe.utils.basic import get_subclasses
 from tests.serialization.utils import assert_roundtrip_consistency
 
-
-def _try_default_construct(cls):
-    """Try to construct a recommender with no arguments, return None on failure."""
-    try:
-        return cls()
-    except TypeError:
-        return None
-
-
 valid_discrete_non_predictive_recommenders = [
-    rec
+    cls()
     for cls in get_subclasses(NonPredictiveRecommender)
     if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
-    and (rec := _try_default_construct(cls)) is not None
 ]
 valid_discrete_bayesian_recommenders = [
     cls()

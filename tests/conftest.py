@@ -67,6 +67,7 @@ from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.botorch import (
     BotorchRecommender,
 )
+from baybe.recommenders.pure.llm.llm import LLMRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
@@ -74,13 +75,34 @@ from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
 from baybe.targets.binary import BinaryTarget
-from baybe.utils.basic import hilberts_factory
+from baybe.utils.basic import get_subclasses, hilberts_factory
 from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import (
     add_fake_measurements,
     add_parameter_noise,
     create_fake_input,
 )
+
+# Recommenders excluded from automatic subclass enumeration because they cannot be
+# default-constructed
+RECOMMENDERS_EXCLUDED_FROM_AUTOTEST: frozenset[type] = frozenset({LLMRecommender})
+
+
+def default_constructible_recommenders(base: type) -> list[type]:
+    """Return subclasses of ``base`` that can be constructed without arguments.
+
+    Args:
+        base: The recommender base class whose subclasses are enumerated.
+
+    Returns:
+        The subclasses of ``base`` excluding those that cannot be default-constructed.
+    """
+    return [
+        cls
+        for cls in get_subclasses(base)
+        if cls not in RECOMMENDERS_EXCLUDED_FROM_AUTOTEST
+    ]
+
 
 # Hypothesis settings
 hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
