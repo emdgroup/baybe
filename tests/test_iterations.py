@@ -57,7 +57,7 @@ from baybe.surrogates.linear import BayesianLinearSurrogate
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import create_fake_input
-from tests.conftest import run_iterations
+from tests.conftest import default_constructible_recommenders, run_iterations
 
 
 @pytest.fixture
@@ -93,7 +93,7 @@ valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecom
 #  allows no training data
 valid_discrete_recommenders = [
     TwoPhaseMetaRecommender(recommender=cls())
-    for cls in get_subclasses(PureRecommender)
+    for cls in default_constructible_recommenders(PureRecommender)
     if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
@@ -101,7 +101,7 @@ valid_discrete_recommenders = [
 #  allows no training data
 valid_continuous_recommenders = [
     TwoPhaseMetaRecommender(recommender=cls())
-    for cls in get_subclasses(PureRecommender)
+    for cls in default_constructible_recommenders(PureRecommender)
     if cls.compatibility
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
@@ -206,7 +206,7 @@ def _dedup_ids(ids: list[str]) -> list[str]:
 #  allows no training data
 valid_hybrid_recommenders = [
     TwoPhaseMetaRecommender(recommender=cls())
-    for cls in get_subclasses(PureRecommender)
+    for cls in default_constructible_recommenders(PureRecommender)
     if cls.compatibility == SearchSpaceType.HYBRID
 ]
 # List of BotorchRecommenders with different sampling strategies.
