@@ -15,7 +15,14 @@ from tests.hypothesis_strategies.surrogates import gaussian_process_surrogates
 from tests.serialization.utils import assert_roundtrip_consistency
 
 
-@pytest.mark.parametrize("surrogate_cls", get_subclasses(Surrogate))
+@pytest.mark.parametrize(
+    "surrogate_cls",
+    [
+        c
+        for c in get_subclasses(Surrogate)
+        if not issubclass(c, GaussianProcessSurrogate)
+    ],
+)
 def test_surrogate_roundtrip(request, surrogate_cls: type[Surrogate]):
     """A serialization roundtrip yields an equivalent object."""
     if issubclass(surrogate_cls, CustomONNXSurrogate):
