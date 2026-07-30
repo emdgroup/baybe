@@ -88,3 +88,10 @@ def test_is_in_range(item, expected):
     """In-range check validates element-level alphabet membership and length."""
     p = SequenceParameter("seq", _DNA, encoder=_encoder, min_length=2, max_length=4)
     assert p.is_in_range(item) is expected
+
+
+def test_equality_modulo_alphabet_ordering():
+    """Alphabet ordering does not affect equality of parameters."""
+    p1 = SequenceParameter("seq", ("A", "C", "G", "T"), encoder=_encoder)
+    p2 = SequenceParameter("seq", ("T", "G", "C", "A"), encoder=_encoder)
+    assert p1 == p2
