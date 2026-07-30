@@ -54,7 +54,7 @@ from examples.utils import create_example_plots
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 
 BATCH_SIZE = 1
-N_WARMSTART_EXPERIMENTS = 10  # experiments handled by the LLM before switching
+N_WARMSTART_EXPERIMENTS = 1  # experiments handled by the LLM before switching
 N_DOE_ITERATIONS = 2 if SMOKE_TEST else 3
 # Kept low to bound the number of (potentially costly) LLM calls.
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 3
