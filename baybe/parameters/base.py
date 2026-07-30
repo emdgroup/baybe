@@ -269,7 +269,7 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
     _active_values: tuple[str | bool, ...] | None = field(
         default=None,
         converter=optional_c(
-            Converter(  # type: ignore[misc, call-overload]
+            Converter(  # type: ignore[misc]
                 nonstring_to_tuple, takes_self=True, takes_field=True
             )
         ),
