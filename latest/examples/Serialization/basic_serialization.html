@@ -1361,11 +1361,9 @@ None           NaN</p>
 </pre></div>
 </div>
 <p>ocessSurrogate(_searchspace=None, _objective=None, _measurements=None,
-_measurements_hash=None, _input_scaler=None, _output_scaler=None,
-kernel_factory=BayBEKernelFactory(parameter_selector=None),
-mean_factory=BayBEMeanFactory(), likelihood_factory=BayBELikelihoodFactory(),
-fit_criterion_factory=BayBEFitCriterionFactory(), _symmetries=(), _model=None),
-_data={}), _modeled_quantity_names=None)
+_measurements_hash=None, _input_scaler=None, _output_scaler=None, kernel_factory=None,
+mean_factory=None, likelihood_factory=None, fit_criterion_factory=None, _symmetries=(),
+_model=None), _data={}), _modeled_quantity_names=None)
 Acquisition function: None
 Compatibility: SearchSpaceType.HYBRID
 Sequential continuous: True
@@ -1462,11 +1460,9 @@ None           NaN</p>
 </pre></div>
 </div>
 <p>ocessSurrogate(_searchspace=None, _objective=None, _measurements=None,
-_measurements_hash=None, _input_scaler=None, _output_scaler=None,
-kernel_factory=BayBEKernelFactory(parameter_selector=None),
-mean_factory=BayBEMeanFactory(), likelihood_factory=BayBELikelihoodFactory(),
-fit_criterion_factory=BayBEFitCriterionFactory(), _symmetries=(), _model=None),
-_data={}), _modeled_quantity_names=None)
+_measurements_hash=None, _input_scaler=None, _output_scaler=None, kernel_factory=None,
+mean_factory=None, likelihood_factory=None, fit_criterion_factory=None, _symmetries=(),
+_model=None), _data={}), _modeled_quantity_names=None)
 Acquisition function: None
 Compatibility: SearchSpaceType.HYBRID
 Sequential continuous: True
@@ -1498,8 +1494,8 @@ create and compare some recommendations in both campaigns.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommendation from original object:
    Granularity  Pressure[bar]  Temperature[degree_C]
-6       coarse            1.0             166.666667
-80      medium           10.0             100.000000
+66      medium            1.0             166.666667
+50        fine           10.0             100.000000
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recommendation from recreated object:&quot;</span><span class="p">)</span>
@@ -1508,8 +1504,8 @@ create and compare some recommendations in both campaigns.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommendation from recreated object:
    Granularity  Pressure[bar]  Temperature[degree_C]
-3       coarse            1.0             133.333333
-89      medium           10.0             200.000000
+16      coarse            5.0             166.666667
+80      medium           10.0             100.000000
 </pre></div>
 </div>
 </section>

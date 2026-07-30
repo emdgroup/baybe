@@ -1351,11 +1351,9 @@ Therefore one does not need to specify all of them to create a recommender objec
 </pre></div>
 </div>
 <p>ssSurrogate(_searchspace=None, _objective=None, _measurements=None,
-_measurements_hash=None, _input_scaler=None, _output_scaler=None,
-kernel_factory=BayBEKernelFactory(parameter_selector=None),
-mean_factory=BayBEMeanFactory(), likelihood_factory=BayBELikelihoodFactory(),
-fit_criterion_factory=BayBEFitCriterionFactory(), _symmetries=(), _model=None),
-_data={}), _modeled_quantity_names=None)
+_measurements_hash=None, _input_scaler=None, _output_scaler=None, kernel_factory=None,
+mean_factory=None, likelihood_factory=None, fit_criterion_factory=None, _symmetries=(),
+_model=None), _data={}), _modeled_quantity_names=None)
 Acquisition function: qLogExpectedImprovement()
 Compatibility: SearchSpaceType.HYBRID
 Sequential continuous: True
@@ -1429,15 +1427,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-         Solvent             Base                        Ligand  Temperature  \
-340     p-Xylene   Cesium acetate                     BrettPhos        120.0   
-361     p-Xylene  Cesium pivalate                     BrettPhos         90.0   
-45   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine         90.0   
+           Solvent                Base         Ligand  Temperature  \
+380       p-Xylene   Potassium acetate  (t-Bu)PhCPhos         90.0   
+97     Butyl Ester  Potassium pivalate      BrettPhos        120.0   
+191  Butyornitrile  Potassium pivalate  (t-Bu)PhCPhos         90.0   
 
      Concentration  
-340          0.100  
-361          0.100  
-45           0.057  
+380          0.153  
+97           0.100  
+191          0.153  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1446,15 +1444,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent             Base                        Ligand  Temperature  \
-340     p-Xylene   Cesium acetate                     BrettPhos        120.0   
-361     p-Xylene  Cesium pivalate                     BrettPhos         90.0   
-45   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine         90.0   
+           Solvent                Base         Ligand  Temperature  \
+380       p-Xylene   Potassium acetate  (t-Bu)PhCPhos         90.0   
+97     Butyl Ester  Potassium pivalate      BrettPhos        120.0   
+191  Butyornitrile  Potassium pivalate  (t-Bu)PhCPhos         90.0   
 
      Concentration      yield  
-340          0.100 -83.267016  
-361          0.100  17.052711  
-45           0.057  75.013944  
+380          0.153 -57.725792  
+97           0.100  91.670930  
+191          0.153  56.819016  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
