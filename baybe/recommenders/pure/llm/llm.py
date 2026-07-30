@@ -73,14 +73,6 @@ Do not recommend these again.
 {{ pending_experiments.to_string(index=False) }}
 {% endif %}
 
-{% if related_data is not none and not related_data.empty %}
-RELATED DATA:
-Here is data from other optimization campaigns.
-It might be useful to learn from these experiments or not.
-Use it as you see fit.
-{{ related_data.to_string(index=False) }}
-{% endif %}
-
 Please suggest {{ batch_size }} new experimental conditions that are likely to \
 improve the optimization objective.
 For each suggestion, provide:
@@ -276,13 +268,6 @@ class LLMRecommender(PureRecommender):
                 f"explicitly: {conflicts}. Use the dedicated class attributes instead."
             )
 
-    related_data: pd.DataFrame | None = field(default=None)
-    """Optional DataFrame containing data from similar optimization campaigns.
-
-    This data can be used to inform the recommendations by learning from
-    similar experiments.
-    """
-
     def _construct_prompt(
         self,
         searchspace: SearchSpace,
@@ -319,7 +304,6 @@ class LLMRecommender(PureRecommender):
             parameters=parameters,
             measurements=measurements,
             pending_experiments=pending_experiments,
-            related_data=self.related_data,
             batch_size=batch_size,
             format_instructions=self.format_instructions,
         )
@@ -605,7 +589,6 @@ class LLMRecommender(PureRecommender):
             to_string(
                 "Optimization Objective", self.objective_description, single_line=True
             ),
-            to_string("Related Data", self.related_data, single_line=True),
         ]
         return to_string(self.__class__.__name__, *fields)
 
