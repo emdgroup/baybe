@@ -176,7 +176,11 @@ class Objective(ABC, SerialMixin):
         targets = get_transform_objects(
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
-        return nw.from_native(df).select([t.name for t in targets]).to_native()
+        return (
+            nw.from_native(df, eager_only=True)
+            .select([t.name for t in targets])
+            .to_native()
+        )
 
     def transform(
         self,
@@ -226,7 +230,7 @@ class Objective(ABC, SerialMixin):
 
         assert df is not None
 
-        nw_df = nw.from_native(df)
+        nw_df = nw.from_native(df, eager_only=True)
 
         if allow_extra is None:
             allow_extra = True
