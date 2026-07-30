@@ -33,7 +33,7 @@ from unittest.mock import patch
 import pandas as pd
 import seaborn as sns
 
-from baybe import Campaign
+from baybe import Campaign, Settings
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import (
@@ -55,7 +55,7 @@ SMOKE_TEST = "SMOKE_TEST" in os.environ
 
 BATCH_SIZE = 1
 N_WARMSTART_EXPERIMENTS = 1  # experiments handled by the LLM before switching
-N_DOE_ITERATIONS = 2 if SMOKE_TEST else 3
+N_DOE_ITERATIONS = 1 if SMOKE_TEST else 3
 # Kept low to bound the number of (potentially costly) LLM calls.
 N_MC_ITERATIONS = 1 if SMOKE_TEST else 3
 
@@ -202,6 +202,9 @@ llm_context = (
     if SMOKE_TEST
     else nullcontext()
 )
+
+if SMOKE_TEST:
+    Settings(parallelize_simulation_runs=False).activate()
 
 
 ### Running the Comparison
