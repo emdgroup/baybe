@@ -8,14 +8,7 @@ from itertools import chain, product
 
 import narwhals.stable.v2 as nw
 from attrs import Attribute, Converter, define, field
-from attrs.validators import (
-    and_,
-    deep_iterable,
-    ge,
-    instance_of,
-    min_len,
-    optional,
-)
+from attrs.validators import deep_iterable, ge, instance_of, min_len, optional
 from typing_extensions import override
 
 from baybe.exceptions import InfiniteSpaceError
@@ -37,7 +30,7 @@ class SequenceParameter(_EncodedDiscreteParameter):
             takes_field=True,
         ),
         validator=deep_iterable(
-            member_validator=and_(instance_of(str), min_len(1)),
+            member_validator=(instance_of(str), min_len(1)),
             iterable_validator=min_len(1),
         ),
     )
