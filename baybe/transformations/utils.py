@@ -152,7 +152,7 @@ def sum_affine_transformations(
     affines = [tr for tr, is_aff in zip(transformations, is_affine) if is_aff]
     non_affines = [tr for tr, is_aff in zip(transformations, is_affine) if not is_aff]
 
-    # Compute the combined affine transformation coeffiecients
+    # Compute the combined affine transformation coefficients
     factor = sum(
         tr.factor if isinstance(tr, AffineTransformation) else 1.0 for tr in affines
     )

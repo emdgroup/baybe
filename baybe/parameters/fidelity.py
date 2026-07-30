@@ -18,11 +18,10 @@ from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import (
     validate_contains_exactly_one,
     validate_equal_length,
-    validate_is_finite,
-    validate_unique_values,
 )
 from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple
+from baybe.utils.validation import validate_is_finite, validate_unique_values
 
 
 def _convert_zeta(

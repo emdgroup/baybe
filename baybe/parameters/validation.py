@@ -3,7 +3,6 @@
 from collections.abc import Callable, Collection
 from typing import Any
 
-import numpy as np
 from attrs import Attribute, fields_dict
 from attrs.validators import gt, instance_of, lt
 
@@ -16,36 +15,6 @@ def validate_decorrelation(obj: Parameter, attribute: Attribute, value: float) -
     if isinstance(value, float):
         gt(0.0)(obj, attribute, value)
         lt(1.0)(obj, attribute, value)
-
-
-def validate_unique_values(  # noqa: DOC101, DOC103
-    obj: Parameter, attribute: Attribute, values: Collection[Any]
-) -> None:
-    """Validate that the input contains only unique elements.
-
-    Raises:
-        ValueError: If the input contains duplicates.
-    """
-    if len(set(values)) != len(values):
-        raise ValueError(
-            f"The '{attribute.alias}' attribute of parameter '{obj.name}' must contain "
-            f"only unique elements. Given: {values}."
-        )
-
-
-def validate_is_finite(  # noqa: DOC101, DOC103
-    obj: Parameter, attribute: Attribute, values: Collection[float]
-) -> None:
-    """Validate that the input contains no infinity/nan.
-
-    Raises:
-        ValueError: If the input contains infinity/nan.
-    """
-    if not all(np.isfinite(np.asarray(values))):
-        raise ValueError(
-            f"The '{attribute.alias}' attribute of parameter '{obj.name}' must not "
-            f"contain infinity/nan elements. Given: {values}."
-        )
 
 
 def validate_contains_exactly_one(
