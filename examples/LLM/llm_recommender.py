@@ -57,7 +57,7 @@ BATCH_SIZE = 1
 N_WARMSTART_EXPERIMENTS = 1  # experiments handled by the LLM before switching
 N_DOE_ITERATIONS = 2 if SMOKE_TEST else 3
 # Kept low to bound the number of (potentially costly) LLM calls.
-N_MC_ITERATIONS = 2 if SMOKE_TEST else 3
+N_MC_ITERATIONS = 1 if SMOKE_TEST else 3
 
 # LiteLLM reads the provider credentials from the environment. In CI (``SMOKE_TEST``) we
 # fall back to a mocked LLM so the example runs offline; otherwise a real model is queried.
