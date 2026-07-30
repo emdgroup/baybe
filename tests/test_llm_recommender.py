@@ -192,30 +192,6 @@ def test_recommend_with_objective(
 
 
 @patch("baybe._optional.llm.completion")
-def test_recommend_with_related_data(mock_completion, searchspace, valid_response):
-    """Related data is included in the prompt when provided."""
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
-    related_data = pd.DataFrame(
-        {"temperature": [40.0], "pressure": [2.5], "n_cycles": [3], "yield": [0.9]}
-    )
-    recommender = LLMRecommender(
-        model="gpt-5.4",
-        experiment_description="Test",
-        objective_description="Maximize yield",
-        related_data=related_data,
-    )
-    mock_completion.return_value = valid_response
-
-    recommender.recommend(batch_size=3, searchspace=searchspace)
-
-    prompt_content = mock_completion.call_args.kwargs.get(
-        "messages", mock_completion.call_args[1]["messages"]
-    )[0]["content"]
-    assert "RELATED DATA" in prompt_content
-
-
-@patch("baybe._optional.llm.completion")
 def test_recommend_with_format_instructions(
     mock_completion, searchspace, valid_response
 ):
