@@ -347,6 +347,59 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
             "unknown parameter names",
             id="unknown_parameter",
         ),
+        pytest.param(
+            json.dumps({"explanation": "Test", "parameters": {}}),
+            "Response must be a JSON array",
+            id="not_a_list",
+        ),
+        pytest.param(
+            json.dumps([]),
+            "empty array with no suggestions",
+            id="empty_array",
+        ),
+        pytest.param(
+            json.dumps(["a string"]),
+            "Each suggestion must be a JSON object",
+            id="suggestion_not_dict",
+        ),
+        pytest.param(
+            json.dumps([{"explanation": "Test", "parameters": [1, 2]}]),
+            "Parameters must be a JSON object",
+            id="parameters_not_dict",
+        ),
+        pytest.param(
+            json.dumps(
+                [
+                    {
+                        "parameters": {
+                            "temperature": 25.0,
+                            "pressure": 2.0,
+                            "n_cycles": 1,
+                            "catalyst": "A",
+                        }
+                    }
+                ]
+            ),
+            "must contain an 'explanation' field",
+            id="missing_explanation",
+        ),
+        pytest.param(
+            json.dumps(
+                [
+                    {
+                        "explanation": "Test",
+                        "parameters": {
+                            "temperature": "hot",
+                            "pressure": 2.0,
+                            "n_cycles": 1,
+                            "catalyst": "A",
+                        },
+                    }
+                ]
+            ),
+            "Non-finite or non-numeric values",
+            id="non_numeric_continuous",
+        ),
     ],
 )
 def test_parse_llm_response_errors(
