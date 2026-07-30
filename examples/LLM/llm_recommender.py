@@ -18,7 +18,7 @@
 # early experiments are usually random. An LLM can do better: needing no training data, it
 # exploits literature and chemistry priors and understands the parameter semantics (names,
 # units, allowed values) to propose sensible starting points. Once enough data exists, we
-# switch to a {class}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender` via a
+# switch to a {class}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender` via a
 # {class}`~baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender`.
 
 
