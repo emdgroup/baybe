@@ -190,6 +190,27 @@ def _extract_parameter_info(
     return infos
 
 
+def _extract_json_array(response: str) -> str:
+    """Extract the JSON array payload from a raw language model response.
+
+    Language models frequently wrap their output in Markdown code fences or add
+    surrounding prose despite instructions to the contrary. This helper isolates the
+    outermost ``[...]`` block so that such responses can still be parsed.
+
+    Args:
+        response: The raw response text.
+
+    Returns:
+        The substring spanning the outermost JSON array, or the original text if no
+        array delimiters are found.
+    """
+    start = response.find("[")
+    end = response.rfind("]")
+    if start != -1 and end != -1 and start < end:
+        return response[start : end + 1]
+    return response
+
+
 @define(slots=False)
 class LLMRecommender(PureRecommender):
     """Recommender that uses a language model to suggest new experimental points.
@@ -385,8 +406,11 @@ class LLMRecommender(PureRecommender):
             LLMResponseError: If the response cannot be parsed or
                 contains invalid values.
         """
+        payload = (
+            _extract_json_array(response) if isinstance(response, str) else response
+        )
         try:
-            suggestions = json.loads(response)
+            suggestions = json.loads(payload)
         except (JSONDecodeError, TypeError) as e:
             raise LLMResponseError(f"Error parsing JSON output: {e}") from e
 
