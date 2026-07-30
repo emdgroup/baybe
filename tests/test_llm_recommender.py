@@ -386,6 +386,25 @@ def test_parse_llm_response_errors(
         recommender._parse_llm_response(response_content, searchspace)
 
 
+@pytest.mark.parametrize(
+    "wrapper",
+    [
+        "```json\n{payload}\n```",
+        "```\n{payload}\n```",
+        "Here are the suggestions:\n{payload}\nHope this helps!",
+    ],
+    ids=["json_fence", "bare_fence", "surrounding_prose"],
+)
+def test_parse_llm_response_strips_wrappers(wrapper, recommender, searchspace):
+    """Markdown fences and surrounding prose are stripped before JSON parsing."""
+    payload = _make_suggestions(
+        [{"temperature": 25.0, "pressure": 2.0, "n_cycles": 1, "catalyst": "A"}]
+    )
+    df = recommender._parse_llm_response(wrapper.format(payload=payload), searchspace)
+    assert len(df) == 1
+    assert df["catalyst"].iloc[0] == "A"
+
+
 @patch("baybe._optional.llm.completion")
 def test_recommend_invalid_response_with_failed_recovery(
     mock_completion, recommender, searchspace
