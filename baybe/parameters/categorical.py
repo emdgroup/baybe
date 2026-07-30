@@ -49,7 +49,7 @@ class CategoricalParameter(_EncodedDiscreteParameter):
     encoding: CategoricalEncoding = field(
         default=CategoricalEncoding.OHE, converter=CategoricalEncoding, kw_only=True
     )
-    # See base class.
+    """The encoding used the generate the parameters computational representation."""
 
     @override
     @property
@@ -108,7 +108,7 @@ class TaskParameter(CategoricalParameter):
     """Parameter class for task parameters."""
 
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
-    # See base class.
+    """The encoding used the generate the parameters computational representation."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

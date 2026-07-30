@@ -55,7 +55,7 @@ class SubstanceParameter(_EncodedDiscreteParameter):
     encoding: SubstanceEncoding = field(
         default=SubstanceEncoding.MORDRED, converter=SubstanceEncoding, kw_only=True
     )
-    # See base class.
+    """The encoding used the generate the parameters computational representation."""
 
     decorrelate: bool | float = field(
         default=True, validator=validate_decorrelation, kw_only=True
