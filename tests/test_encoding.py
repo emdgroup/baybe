@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Never
+from typing import Any
 
 import narwhals.stable.v2 as nw
 import pandas as pd
 import polars as pl
 import pytest
 from exceptiongroup import ExceptionGroup
+from typing_extensions import Never
 
 from baybe.parameters.encoding import _Encoder
 
