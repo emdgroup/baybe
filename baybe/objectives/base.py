@@ -266,7 +266,9 @@ class Objective(ABC, SerialMixin):
                 index=nw_df.to_pandas().index,
             )
 
-        return ns.from_numpy(transformed.numpy(), schema=self.output_names)
+        return nw.from_numpy(
+            transformed.unsqueeze(-1).numpy(), schema=self.output_names, backend=ns
+        ).to_native()
 
     def identify_non_dominated_configurations(
         self, configurations: pd.DataFrame, /
