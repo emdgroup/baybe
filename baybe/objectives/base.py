@@ -267,7 +267,10 @@ class Objective(ABC, SerialMixin):
             )
 
         return nw.from_numpy(
-            transformed.unsqueeze(-1).numpy(), schema=self.output_names, backend=ns
+            # For 1-D transforms, we explicitly reshape to 2-D to please nw.from_numpy
+            transformed.numpy().reshape(-1, len(self.output_names)),
+            schema=self.output_names,
+            backend=ns,
         ).to_native()
 
     def identify_non_dominated_configurations(
