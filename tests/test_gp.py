@@ -20,6 +20,7 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe import active_settings
+from baybe.exceptions import ModelNotTrainedError
 from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import TaskParameter
@@ -29,6 +30,12 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriter
 from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
+from baybe.surrogates.gaussian_process.presets.baybe import (
+    BayBEFitCriterionFactory,
+    BayBEKernelFactory,
+    BayBELikelihoodFactory,
+    BayBEMeanFactory,
+)
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import create_fake_input, to_tensor
 
@@ -183,6 +190,32 @@ def test_presets(preset: GaussianProcessPreset):
     gp2.fit(searchspace, objective, measurements)
 
 
+def test_default_components():
+    """The all-None GP resolves to the BayBE defaults and fits identically."""
+    gp_auto = GaussianProcessSurrogate()
+
+    # All factory fields default to None (deferred auto-selection)
+    assert gp_auto.kernel_factory is None
+    assert gp_auto.mean_factory is None
+    assert gp_auto.likelihood_factory is None
+    assert gp_auto.fit_criterion_factory is None
+
+    gp_explicit = GaussianProcessSurrogate(
+        kernel_or_factory=BayBEKernelFactory(),
+        mean_or_factory=BayBEMeanFactory(),
+        likelihood_or_factory=BayBELikelihoodFactory(),
+        fit_criterion_or_factory=BayBEFitCriterionFactory(),
+    )
+
+    gp_auto.fit(searchspace, objective, measurements)
+    gp_explicit.fit(searchspace, objective, measurements)
+
+    assert_frame_equal(
+        gp_auto.posterior_stats(measurements),
+        gp_explicit.posterior_stats(measurements),
+    )
+
+
 def test_invalid_components():
     """Passing invalid component types raises errors."""
     with pytest.raises(TypeError, match="Component must be one of"):
@@ -223,3 +256,9 @@ def test_botorch_preset(multitask: bool):
     posterior2 = _posterior_stats_botorch(sp, data)
 
     assert_frame_equal(posterior1, posterior2)
+
+
+def test_to_botorch_before_fit():
+    """Attempting to access an untrained surrogate raises an error."""
+    with pytest.raises(ModelNotTrainedError):
+        GaussianProcessSurrogate().to_botorch()
