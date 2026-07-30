@@ -3,11 +3,7 @@
 from __future__ import annotations
 
 import gc
-import json
-import math
 import warnings
-from json import JSONDecodeError
-from types import SimpleNamespace
 from typing import Any, ClassVar
 
 import pandas as pd
@@ -15,192 +11,17 @@ from attrs import define, field
 from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
-from baybe.exceptions import (
-    IncompatibilityError,
-    LLMResponseError,
-    LLMResponseWarning,
-)
+from baybe.exceptions import LLMResponseError, LLMResponseWarning
 from baybe.objectives.base import Objective
-from baybe.parameters.base import DiscreteParameter, Parameter
-from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.llm._parsing import parse_llm_response
+from baybe.recommenders.pure.llm._prompts import build_prompt, build_recovery_prompt
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.utils.conversion import to_string
 from baybe.utils.validation import preprocess_dataframe
 
-_PROMPT_TEMPLATE = """\
-You are an expert experimental design assistant. Your task is to suggest new \
-experimental conditions based on the following information:
-
-EXPERIMENT DESCRIPTION:
-{{ experiment_description }}
-
-OPTIMIZATION OBJECTIVE:
-{{ objective_description }}
-
-{% if objective is not none %}
-OPTIMIZATION TARGETS:
-{{ objective }}
-{% endif %}
-PARAMETERS:
-{% for param in parameters %}
-Parameter: {{ param.name }}
-{% if param.description is not none %}
-Description: {{ param.description }}
-{% endif %}
-Type: {{ param.type }}
-{% if param.type == 'continuous' %}
-Bounds: [{{ param.bounds[0] }}, {{ param.bounds[1] }}]
-{% else %}
-Allowed values: {{ param.values }}
-{% endif %}
-{% if param.unit is not none %}
-Unit: {{ param.unit }}
-{% endif %}
-
-{% endfor %}
-
-{% if measurements is not none and not measurements.empty %}
-PREVIOUS MEASUREMENTS:
-{{ measurements.to_string(index=False) }}
-{% endif %}
-
-{% if pending_experiments is not none and not pending_experiments.empty %}
-PENDING EXPERIMENTS:
-The following experiments have already been proposed and are awaiting results.
-Do not recommend these again.
-{{ pending_experiments.to_string(index=False) }}
-{% endif %}
-
-Please suggest {{ batch_size }} new experimental conditions that are likely to \
-improve the optimization objective.
-For each suggestion, provide:
-1. A brief explanation of why you chose these values
-2. The values for each parameter
-
-{% if format_instructions is not none %}
-{{ format_instructions }}
-{% else %}
-Format your response as a JSON array of objects with the following structure \
-(no backticks):
-[
-  {
-    "explanation": "Brief explanation of the suggestion",
-    "parameters": {
-      "param1": value1,
-      "param2": value2,
-      ...
-    }
-  },
-  ...
-]
-{% endif %}
-"""
-
-_RECOVERY_PROMPT_TEMPLATE = """\
-The previous response was malformed and could not be parsed as JSON. Please \
-correct the response to match the required format.
-
-ERROR: {{ error }}
-
-ORIGINAL RESPONSE:
-{{ original_response }}
-
-PARAMETERS:
-{% for param in parameters %}
-Parameter: {{ param.name }}
-Type: {{ param.type }}
-{% if param.type == 'continuous' %}
-Bounds: [{{ param.bounds[0] }}, {{ param.bounds[1] }}]
-{% else %}
-Allowed values: {{ param.values }}
-{% endif %}
-{% endfor %}
-
-Please provide a corrected JSON response that follows the required format:
-{% if format_instructions is not none %}
-{{ format_instructions }}
-{% else %}
-[
-  {
-    "explanation": "Brief explanation of the suggestion",
-    "parameters": {
-      "param1": value1,
-      "param2": value2,
-      ...
-    }
-  },
-  ...
-]
-{% endif %}\
-"""
-
-
 _RESERVED_LITELLM_KEYS = frozenset({"model", "messages"})
-
-
-def _extract_parameter_info(
-    parameters: tuple[Parameter, ...],
-) -> list[SimpleNamespace]:
-    """Extract parameter information for prompt construction.
-
-    Args:
-        parameters: The parameters from the search space.
-
-    Returns:
-        A list of namespace objects containing parameter information.
-
-    Raises:
-        IncompatibilityError: If a parameter type is not supported.
-    """
-    infos = []
-    for param in parameters:
-        info: dict[str, Any] = {
-            "name": param.name,
-            "description": param.description,
-            "unit": param.unit,
-        }
-
-        if isinstance(param, NumericalContinuousParameter):
-            info["type"] = "continuous"
-            info["bounds"] = param.bounds.to_tuple()
-        elif isinstance(param, DiscreteParameter):
-            info["type"] = "discrete_numeric" if param.is_numerical else "categorical"
-            info["values"] = list(param.values)
-        else:
-            raise IncompatibilityError(
-                f"Parameter '{param.name}' has unsupported type "
-                f"'{type(param).__name__}' for "
-                f"'{LLMRecommender.__name__}'. Only "
-                f"'{NumericalContinuousParameter.__name__}' and "
-                f"'{DiscreteParameter.__name__}' subclasses are supported."
-            )
-
-        infos.append(SimpleNamespace(**info))
-
-    return infos
-
-
-def _extract_json_array(response: str) -> str:
-    """Extract the JSON array payload from a raw language model response.
-
-    Language models frequently wrap their output in Markdown code fences or add
-    surrounding prose despite instructions to the contrary. This helper isolates the
-    outermost ``[...]`` block so that such responses can still be parsed.
-
-    Args:
-        response: The raw response text.
-
-    Returns:
-        The substring spanning the outermost JSON array, or the original text if no
-        array delimiters are found.
-    """
-    start = response.find("[")
-    end = response.rfind("]")
-    if start != -1 and end != -1 and start < end:
-        return response[start : end + 1]
-    return response
 
 
 @define(slots=False)
@@ -288,25 +109,31 @@ class LLMRecommender(PureRecommender):
         Returns:
             The constructed prompt.
         """
-        from baybe._optional.llm import Template
-
-        parameters = _extract_parameter_info(searchspace.parameters)
-
-        template = Template(
-            _PROMPT_TEMPLATE,
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
-        return template.render(
+        return build_prompt(
+            searchspace,
+            recommender_name=self.__class__.__name__,
+            batch_size=batch_size,
             experiment_description=self.experiment_description,
             objective_description=self.objective_description,
             objective=objective,
-            parameters=parameters,
             measurements=measurements,
             pending_experiments=pending_experiments,
-            batch_size=batch_size,
             format_instructions=self.format_instructions,
         )
+
+    def _parse_llm_response(
+        self, response: str, searchspace: SearchSpace
+    ) -> pd.DataFrame:
+        """Parse the LLM response into a DataFrame of recommendations.
+
+        Args:
+            response: The response from the language model.
+            searchspace: The search space to validate recommendations against.
+
+        Returns:
+            A DataFrame containing the parsed recommendations.
+        """
+        return parse_llm_response(response, searchspace)
 
     def _attempt_recovery(
         self,
@@ -327,16 +154,13 @@ class LLMRecommender(PureRecommender):
         Raises:
             LLMResponseError: If recovery fails.
         """
-        from baybe._optional.llm import Template, completion
+        from baybe._optional.llm import completion
 
-        parameters = _extract_parameter_info(searchspace.parameters)
-        template = Template(
-            _RECOVERY_PROMPT_TEMPLATE, trim_blocks=True, lstrip_blocks=True
-        )
-        recovery_prompt = template.render(
-            error=str(error),
+        recovery_prompt = build_recovery_prompt(
+            searchspace,
+            recommender_name=self.__class__.__name__,
+            error=error,
             original_response=original_response,
-            parameters=parameters,
             format_instructions=self.format_instructions,
         )
 
@@ -373,128 +197,6 @@ class LLMRecommender(PureRecommender):
                 f"Recovery produced another malformed response: {e}. "
                 f"Original error: {error}"
             ) from e
-
-    def _parse_llm_response(
-        self, response: str, searchspace: SearchSpace
-    ) -> pd.DataFrame:
-        """Parse the LLM response into a DataFrame of recommendations.
-
-        Args:
-            response: The response from the language model.
-            searchspace: The search space to validate recommendations against.
-
-        Returns:
-            A DataFrame containing the parsed recommendations.
-
-        Raises:
-            LLMResponseError: If the response cannot be parsed or
-                contains invalid values.
-        """
-        payload = (
-            _extract_json_array(response) if isinstance(response, str) else response
-        )
-        try:
-            suggestions = json.loads(payload)
-        except (JSONDecodeError, TypeError) as e:
-            raise LLMResponseError(f"Error parsing JSON output: {e}") from e
-
-        if not isinstance(suggestions, list):
-            raise LLMResponseError("Response must be a JSON array")
-
-        if not suggestions:
-            raise LLMResponseError(
-                "Response contains an empty array with no suggestions."
-            )
-
-        recommendations = []
-        for suggestion in suggestions:
-            if not isinstance(suggestion, dict):
-                raise LLMResponseError("Each suggestion must be a JSON object")
-
-            if "parameters" not in suggestion:
-                raise LLMResponseError(
-                    "Each suggestion must contain a 'parameters' field"
-                )
-
-            if "explanation" not in suggestion:
-                raise LLMResponseError(
-                    "Each suggestion must contain an 'explanation' field"
-                )
-
-            params = suggestion["parameters"]
-            if not isinstance(params, dict):
-                raise LLMResponseError("Parameters must be a JSON object")
-
-            param_names = {p.name for p in searchspace.parameters}
-            unknown = set(params.keys()) - param_names
-            if unknown:
-                raise LLMResponseError(
-                    f"Response contains unknown parameter names: {unknown}"
-                )
-
-            recommendations.append(params)
-
-        df = pd.DataFrame(recommendations)
-
-        for param in searchspace.parameters:
-            if param.name not in df.columns:
-                raise LLMResponseError(f"Missing parameter: {param.name}")
-
-            values = df[param.name]
-
-            if isinstance(param, NumericalContinuousParameter):
-                if not all(
-                    isinstance(v, (int, float)) and math.isfinite(v) for v in values
-                ):
-                    raise LLMResponseError(
-                        f"Non-finite or non-numeric values for continuous parameter: "
-                        f"{param.name}"
-                    )
-                bounds = param.bounds.to_tuple()
-                min_val, max_val = bounds
-                if not all(min_val <= v <= max_val for v in values):
-                    raise LLMResponseError(
-                        f"Values for {param.name} outside bounds [{min_val}, {max_val}]"
-                    )
-
-            elif isinstance(param, DiscreteParameter):
-                allowed = list(param.values)
-                if param.is_numerical:
-                    allowed_floats = [float(a) for a in allowed]
-                    invalid = []
-                    canonical = []
-                    for v in values:
-                        try:
-                            fv = float(v)
-                        except (TypeError, ValueError):
-                            invalid.append(v)
-                            canonical.append(v)
-                            continue
-                        if fv in allowed_floats:
-                            canonical.append(allowed[allowed_floats.index(fv)])
-                        else:
-                            invalid.append(v)
-                            canonical.append(v)
-                    if invalid:
-                        raise LLMResponseError(
-                            f"Invalid values {invalid} for parameter "
-                            f"'{param.name}'. "
-                            f"Allowed values are: {allowed}"
-                        )
-                    df[param.name] = canonical
-                else:
-                    invalid = [v for v in values if v not in allowed]
-                    if invalid:
-                        raise LLMResponseError(
-                            f"Invalid values {invalid} for parameter "
-                            f"'{param.name}'. "
-                            f"Allowed values are: {allowed}"
-                        )
-                    # Categorical values from JSON are strings; cast to canonical
-                    allowed_map = {str(a): a for a in allowed}
-                    df[param.name] = [allowed_map.get(str(v), v) for v in values]
-
-        return df
 
     @override
     def recommend(
