@@ -245,7 +245,7 @@ def test_invalid_data_custom_parameter(data, active_values):
         param("l", [0], [0], ValueError, "cannot be a string", id="string"),
         param([1, "h"], [0, 1], [0, 1], TypeError, "1 that is", id="non_cat"),
         param(["l"], [0], [0], ValueError, "must be >= 2", id="value_len"),
-        param(["l", "l"], [0, 1], [0, 1], ValueError, "unique elements", id="dupl"),
+        param(["l", "l"], [0, 1], [0, 1], ValueError, "must be unique", id="dupl"),
         param(["l", "h"], [0], [0, 1], ValueError, "'costs' do not mat", id="cost_len"),
         param(["l", "h"], [0, -1], [0, 1], ValueError, "must be >= 0.0", id="neg_cost"),
         param(["l", "h"], [0, np.inf], [0, 1], ValueError, "infinity/n", id="inf_cost"),
@@ -266,7 +266,7 @@ def test_invalid_categorical_fidelity_parameter(values, costs, zeta, error, matc
     ("values", "costs", "match"),
     [
         param([1], [0], "must be >= 2", id="value_len"),
-        param([0, 0, 1], [0, 1, 2], "unique elements", id="duplicates"),
+        param([0, 0, 1], [0, 1, 2], "must be unique", id="duplicates"),
         param([1, np.nan], [0, 1], "infinity/nan", id="nan_fidelity"),
         param([1, 2], [0, 1], "must be <= 1.0", id="fidelity_too_high"),
         param([1, -1], [0, 1], "must be >= 0.0", id="fidelity_too_low"),
