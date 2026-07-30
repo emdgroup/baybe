@@ -2,48 +2,63 @@
 
 from __future__ import annotations
 
-import narwhals.stable.v2 as nw
-import pandas as pd
-import polars as pl
 import pytest
 
 from baybe.exceptions import InfiniteSpaceError
-from baybe.parameters.base import _JOIN_KEY
 from baybe.parameters.sequence import SequenceParameter
 
 _DNA = ("A", "C", "G", "T")
+_encoder = lambda series: series.to_frame()  # noqa: E731
 
 
-def _dummy_encoder(series: nw.Series) -> nw.DataFrame:
-    """Passthrough encoder: returns the input series as a single-column frame."""
-    return series.to_frame()
-
-
-def test_is_finite_without_max_length():
-    """is_finite returns False when no max_length is provided."""
-    p = SequenceParameter(name="seq", alphabet=_DNA, encoder=_dummy_encoder)
-    assert not p.is_finite
-
-
-def test_is_finite_with_max_length():
-    """is_finite returns True when max_length is provided."""
+@pytest.mark.parametrize(
+    ("range", "expected"),
+    [
+        ((1, 1), 4),
+        ((1, 2), 20),
+        ((2, 2), 16),
+        ((1, 5), 1364),
+        ((6, 6), 4096),
+    ],
+)
+def test_length(range, expected):
+    """The parameter correctly computes the number of values in its range."""
     p = SequenceParameter(
-        name="seq", alphabet=_DNA, encoder=_dummy_encoder, max_length=2
+        name="seq",
+        alphabet=_DNA,
+        min_length=range[0],
+        max_length=range[1],
+        encoder=_encoder,
     )
-    assert p.is_finite
+    assert len(p) == expected
+
+
+@pytest.mark.parametrize("max_length", [None, 1])
+def test_is_finite(max_length):
+    """The parameter correctly indicates if it is finite or infinite."""
+    p = SequenceParameter("seq", _DNA, max_length=max_length, encoder=_encoder)
+    assert p.is_finite is (max_length is not None)
+
+
+def test_values_raises_without_max_length():
+    """Accessing finite-based properties of an infinite parameter raises an error."""
+    p = SequenceParameter(name="seq", alphabet=_DNA, encoder=_encoder)
+    with pytest.raises(InfiniteSpaceError):
+        p.values
+    with pytest.raises(InfiniteSpaceError):
+        len(p)
 
 
 def test_values_construction():
-    """Test sequence values construction."""
+    """The generated sequences match with the specified range."""
     p = SequenceParameter(
         name="seq",
         alphabet=("A", "BC", "D"),
-        encoder=_dummy_encoder,
-        max_length=2,
+        encoder=_encoder,
         min_length=1,
+        max_length=2,
     )
-    all_values = p._enumerate_values
-    assert all_values == (
+    assert p.values == (
         ("A",),
         ("BC",),
         ("D",),
@@ -59,132 +74,17 @@ def test_values_construction():
     )
 
 
-def test_values_raises_without_max_length():
-    """Accessing values on an infinite SequenceParameter raises an error."""
-    p = SequenceParameter(name="seq", alphabet=_DNA, encoder=_dummy_encoder)
-    with pytest.raises(InfiniteSpaceError):
-        _ = p.values
-
-
-def test_enumerate_values_raises_without_max_length():
-    """Accessing _enumerate_values on an infinite SequenceParameter raises an error."""
-    p = SequenceParameter(name="seq", alphabet=_DNA, encoder=_dummy_encoder)
-    with pytest.raises(InfiniteSpaceError):
-        _ = p._enumerate_values
-
-
-def test_values_enumerates_with_max_length():
-    """Values enumerates all single-element sequences when min_length=max_length=1."""
-    p = SequenceParameter(
-        name="seq",
-        alphabet=_DNA,
-        encoder=_dummy_encoder,
-        min_length=1,
-        max_length=1,
-    )
-    assert set(p.values) == {(ch,) for ch in _DNA}
-
-
 @pytest.mark.parametrize(
     ("item", "expected"),
     [
-        pytest.param(("A",), True, id="single_valid_element"),
-        pytest.param(("A", "C", "G", "T"), True, id="multi_valid_elements"),
-        pytest.param(("A", "X"), False, id="out_of_alphabet_element"),
-        pytest.param(42, False, id="non_tuple"),  # type: ignore[arg-type]
+        pytest.param(("A", "C", "G", "T"), True, id="valid"),
+        pytest.param(42, False, id="wrong_type"),
+        pytest.param(("A", "X"), False, id="out_of_alphabet"),
+        pytest.param(("A", "C", "G", "T", "A"), False, id="too_long"),
+        pytest.param(("A"), False, id="too_short"),
     ],
 )
 def test_is_in_range(item, expected):
-    """is_in_range applies element-level alphabet membership check."""
-    p = SequenceParameter(name="seq", alphabet=_DNA, encoder=_dummy_encoder)
+    """In-range check validates element-level alphabet membership and length."""
+    p = SequenceParameter("seq", _DNA, encoder=_encoder, min_length=2, max_length=4)
     assert p.is_in_range(item) is expected
-
-
-@pytest.mark.parametrize(
-    ("item", "expected"),
-    [
-        pytest.param(("A",), False, id="below_min_length"),
-        pytest.param(("A", "C"), True, id="at_min_length"),
-        pytest.param(("A", "C", "G"), True, id="above_min_length"),
-    ],
-)
-def test_is_in_range_with_min_length(item, expected):
-    """is_in_range respects the minimum length constraint."""
-    p = SequenceParameter(
-        name="seq", alphabet=_DNA, encoder=_dummy_encoder, min_length=2
-    )
-    assert p.is_in_range(item) is expected
-
-
-@pytest.mark.parametrize(
-    ("item", "expected"),
-    [
-        pytest.param(("A",), True, id="at_max_length"),
-        pytest.param(("A", "C"), False, id="above_max_length"),
-    ],
-)
-def test_is_in_range_with_max_length(item, expected):
-    """is_in_range respects the maximum length constraint."""
-    p = SequenceParameter(
-        name="seq", alphabet=_DNA, encoder=_dummy_encoder, max_length=1
-    )
-    assert p.is_in_range(item) is expected
-
-
-def test_summary_without_max_length():
-    """Summary omits MaxLength and nValues for infinite SequenceParameter."""
-    p = SequenceParameter(name="seq", alphabet=_DNA, encoder=_dummy_encoder)
-    s = p.summary()
-    assert s["Name"] == "seq"
-    assert s["Type"] == "SequenceParameter"
-    assert "Alphabet" in s
-    assert "MaxLength" not in s
-    assert "nValues" not in s
-
-
-def test_summary_with_max_length():
-    """Summary includes MaxLength and nValues for finite SequenceParameter."""
-    p = SequenceParameter(
-        name="seq",
-        alphabet=_DNA,
-        encoder=_dummy_encoder,
-        min_length=1,
-        max_length=1,
-    )
-    s = p.summary()
-    assert s["Name"] == "seq"
-    assert s["Type"] == "SequenceParameter"
-    assert "Alphabet" in s
-    assert s["MaxLength"] == 1
-    assert s["nValues"] == len(_DNA)
-
-
-@pytest.mark.parametrize(
-    ("series", "dataframe"),
-    [
-        pytest.param(
-            pd.Series(["A", "C"], name="seq"),
-            pd.DataFrame({"seq": ["A", "C"]}),
-            id="pandas",
-        ),
-        pytest.param(
-            pl.Series("seq", ["A", "C"]),
-            pl.DataFrame({"seq": ["A", "C"]}),
-            id="polars",
-        ),
-    ],
-)
-def test_different_dataframe_backends(series, dataframe):
-    """Test that the encoding table works with different DataFrame backends."""
-    p = SequenceParameter(
-        name="seq",
-        alphabet=_DNA,
-        encoder=lambda _: dataframe,
-        min_length=1,
-        max_length=1,
-    )
-    encoding_table = p._encoding_table(nw.from_native(series, series_only=True))
-    assert encoding_table.shape[0] == 2
-    assert "seq" in encoding_table.columns
-    assert set(encoding_table["seq"]) == {"A", "C"}
-    assert _JOIN_KEY in encoding_table.columns

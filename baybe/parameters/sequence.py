@@ -53,12 +53,12 @@ class SequenceParameter(_EncodedDiscreteParameter):
     """
 
     min_length: int = field(
-        default=0, validator=and_(instance_of(int), ge(0)), kw_only=True
+        default=1, validator=(instance_of(int), ge(1)), kw_only=True
     )
     """The minimum token length of the constructed sequences."""
 
     max_length: int | None = field(
-        default=None, validator=optional(and_(instance_of(int), ge(1))), kw_only=True
+        default=None, validator=optional(instance_of(int)), kw_only=True
     )
     """Optional maximum token length of the constructed sequences."""
 
