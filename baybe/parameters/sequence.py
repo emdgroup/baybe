@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+from collections.abc import Sequence
 from functools import cached_property
 from itertools import chain, product
 
@@ -112,8 +113,10 @@ class SequenceParameter(_EncodedDiscreteParameter):
         return self.encoder(values).with_columns(values.rename(_JOIN_KEY))
 
     @override
-    def is_in_range(self, item: tuple[str, ...]) -> bool:
-        if not isinstance(item, tuple):
+    def is_in_range(self, item: Sequence[str]) -> bool:
+        try:
+            item = nonstring_to_tuple(item)
+        except (TypeError, ValueError):
             return False
         length = len(item)
         if length < self.min_length or (

@@ -78,10 +78,12 @@ def test_values_construction():
     ("item", "expected"),
     [
         pytest.param(("A", "C", "G", "T"), True, id="valid"),
+        pytest.param(("A", "C", "G", "T"), True, id="valid_non_tuple"),
+        pytest.param("ACGT", False, id="plain_string"),
         pytest.param(42, False, id="wrong_type"),
         pytest.param(("A", "X"), False, id="out_of_alphabet"),
         pytest.param(("A", "C", "G", "T", "A"), False, id="too_long"),
-        pytest.param(("A"), False, id="too_short"),
+        pytest.param(("A",), False, id="too_short"),
     ],
 )
 def test_is_in_range(item, expected):
