@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gc
-import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Generator, Iterable
 from typing import TYPE_CHECKING, TypeAlias
@@ -104,13 +103,11 @@ class AlternatingCompositionStrategy(CompositionStrategy):
             space: The full search space to split.
 
         Raises:
-            ValueError: If a parameter is matched by multiple components.
             ValueError: If a constraint spans multiple parts.
 
         Returns:
             A list of (parameter names, optimizer) pairs.
         """
-        assigned: set[str] = set()
         parts: list[SearchSpacePart] = []
 
         for selector, optimizer in self.components:
@@ -119,29 +116,12 @@ class AlternatingCompositionStrategy(CompositionStrategy):
             if not selected_names:
                 continue
 
-            overlap = assigned & selected_names
-            if overlap:
-                raise ValueError(
-                    f"Parameters {overlap} are matched by multiple components."
-                )
-            assigned.update(selected_names)
-
             for constraint in space.constraints:
                 required = constraint._required_parameters
                 if required & selected_names and not required <= selected_names:
                     raise ValueError(f"Constraint '{constraint}' spans multiple parts.")
 
             parts.append((frozenset(selected_names), optimizer))
-
-        all_param_names = {p.name for p in space.parameters}
-        unassigned = all_param_names - assigned
-        if unassigned:
-            warnings.warn(
-                f"Parameters {sorted(unassigned)} are not assigned to any "
-                f"optimizer component and will remain at their initial values.",
-                UserWarning,
-                stacklevel=2,
-            )
 
         return parts
 
