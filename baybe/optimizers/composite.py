@@ -78,21 +78,21 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
         self, searchspace: SearchSpace
     ) -> Generator[OptimizationStep, OptimizationResult, None]:
         """Yield steps in round-robin for the specified number of cycles."""
+        active_steps = [
+            step
+            for step in self.steps
+            if any(step.selector(p) for p in searchspace.parameters)
+        ]
+        n_skipped = len(self.steps) - len(active_steps)
+        if n_skipped:
+            warnings.warn(
+                f"{n_skipped} of {len(self.steps)} optimization step(s) matched no "
+                "parameters in the given search space and will be skipped.",
+                UserWarning,
+                stacklevel=2,
+            )
         for _ in range(self.n_cycles):
-            for step in self.steps:
-                selected_names = {
-                    p.name for p in searchspace.parameters if step.selector(p)
-                }
-                if not selected_names:
-                    warnings.warn(
-                        "A parameter selector matched no parameters in the "
-                        "given search space and the corresponding optimizer "
-                        "is skipped.",
-                        UserWarning,
-                        stacklevel=2,
-                    )
-                    continue
-                yield step
+            yield from active_steps
 
 
 @define(frozen=True)
