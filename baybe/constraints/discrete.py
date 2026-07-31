@@ -86,6 +86,54 @@ class DiscreteExcludeConstraint(DiscretePruningConstraint):
 
 
 @define
+class DiscreteFilteringConstraint(DiscretePruningConstraint):
+    """Class for modelling filtering constraints (inclusion-by-default).
+
+    The constraint's conditions define which entries are **kept** in the search space.
+    Set ``exclude=True`` to invert this and keep the complement instead (equivalent to
+    the deprecated ``DiscreteExcludeConstraint``).
+    """
+
+    # object variables
+    conditions: list[Condition] = field(validator=min_len(1))
+    """List of individual conditions."""
+
+    combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
+    """Operator encoding how to combine the individual conditions."""
+
+    @override
+    def _can_evaluate(self, available: set[str], /) -> bool:
+        # Partial evaluation soundness depends on the combiner and the exclude flag.
+        # The "drop" predicate is monotone (safe for partial) iff
+        # (combiner == "OR") == self.exclude.
+        present = available & set(self.parameters)
+        if not present:
+            return False
+        partial_ok = (self.combiner == "OR") == self.exclude
+        if not partial_ok and present != set(self.parameters):
+            return False
+        return True
+
+    @override
+    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+        pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in df]
+        satisfied = [cond.evaluate(df[p]) for p, cond in pairs]
+        res = reduce(_valid_logic_combiners[self.combiner], satisfied)
+
+        return df.index[res]
+
+    @override
+    def _get_valid_polars(self) -> pl.Expr:
+        from baybe._optional.polars import polars as pl
+
+        satisfied = []
+        for k, cond in enumerate(self.conditions):
+            satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
+
+        return pl.reduce(_valid_logic_combiners[self.combiner], satisfied)
+
+
+@define
 class DiscreteSumConstraint(DiscretePruningConstraint):
     """Class for modelling sum constraints.
 
