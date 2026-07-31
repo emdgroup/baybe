@@ -510,14 +510,6 @@ class DiscreteBatchConstraint(DiscreteConstraint):
                 f"but {len(self.parameters)} were provided: {self.parameters}."
             )
 
-    @override
-    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
-        # Always returns an empty index because this constraint operates at the
-        # batch level, not the row level. Individual rows are never invalid; the
-        # constraint is enforced at recommendation time by subsetting candidates
-        # into subsets.
-        return pd.Index([])
-
     def subset_masks(
         self, candidates_exp: pd.DataFrame, /
     ) -> list[npt.NDArray[np.bool_]]:
