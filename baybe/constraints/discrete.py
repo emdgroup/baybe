@@ -40,9 +40,14 @@ if TYPE_CHECKING:
     from baybe.symmetries.permutation import PermutationSymmetry
 
 
+# >>>>>>>>>> Deprecation
 @define
 class DiscreteExcludeConstraint(DiscretePruningConstraint):
-    """Class for modelling exclusion constraints."""
+    """Class for modelling exclusion constraints.
+
+    .. deprecated::
+        Use :class:`DiscreteFilteringConstraint` with ``exclude=True`` instead.
+    """
 
     # object variables
     conditions: list[Condition] = field(validator=min_len(1))
@@ -50,6 +55,19 @@ class DiscreteExcludeConstraint(DiscretePruningConstraint):
 
     combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
     """Operator encoding how to combine the individual conditions."""
+
+    def __attrs_post_init__(self):
+        """Emit deprecation warning."""
+        import warnings
+
+        warnings.warn(
+            f"'{self.__class__.__name__}' is deprecated. Use "
+            f"'DiscreteFilteringConstraint' with 'exclude=True' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    # <<<<<<<<<< Deprecation
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
@@ -648,6 +666,19 @@ DISCRETE_CONSTRAINTS_PRUNING_ORDER = (
 # Prevent (de-)serialization of custom constraints
 converter.register_unstructure_hook(DiscreteCustomConstraint, block_serialization_hook)
 converter.register_structure_hook(DiscreteCustomConstraint, block_deserialization_hook)
+
+
+def _structure_exclude_as_filtering(val: dict, _) -> DiscreteFilteringConstraint:
+    """Redirect legacy DiscreteExcludeConstraint to DiscreteFilteringConstraint."""
+    val = dict(val)
+    val.pop("type", None)
+    val.setdefault("exclude", True)
+    return converter.structure(val, DiscreteFilteringConstraint)
+
+
+converter.register_structure_hook(
+    DiscreteExcludeConstraint, _structure_exclude_as_filtering
+)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

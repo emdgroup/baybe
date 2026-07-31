@@ -556,3 +556,44 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
     )
     with context:
         GaussianProcessSurrogate(*args).fit(searchspace, objective, measurements)
+
+
+def test_discrete_exclude_constraint_deprecation():
+    """Constructing a DiscreteExcludeConstraint emits a DeprecationWarning."""
+    from baybe.constraints import SubSelectionCondition
+    from baybe.constraints.discrete import (
+        DiscreteExcludeConstraint,
+        DiscreteFilteringConstraint,
+    )
+
+    with pytest.warns(DeprecationWarning, match="DiscreteExcludeConstraint"):
+        c = DiscreteExcludeConstraint(
+            parameters=["A"],
+            conditions=[SubSelectionCondition(selection=["a"])],
+        )
+    # Verify it behaves equivalently to DiscreteFilteringConstraint(exclude=True)
+    ref = DiscreteFilteringConstraint(
+        parameters=["A"],
+        conditions=[SubSelectionCondition(selection=["a"])],
+        exclude=True,
+    )
+    df = pd.DataFrame({"A": ["a", "b", "c"]})
+    assert list(c.get_invalid(df)) == list(ref.get_invalid(df))
+
+
+def test_discrete_exclude_constraint_deserialization():
+    """Legacy DiscreteExcludeConstraint deserializes to DiscreteFilteringConstraint."""
+    from baybe.constraints.discrete import DiscreteFilteringConstraint
+    from baybe.serialization import converter
+
+    legacy_dict = {
+        "type": "DiscreteExcludeConstraint",
+        "parameters": ["A"],
+        "conditions": [{"type": "SubSelectionCondition", "selection": ["a"]}],
+        "combiner": "AND",
+    }
+    from baybe.constraints.base import DiscretePruningConstraint
+
+    result = converter.structure(legacy_dict, DiscretePruningConstraint)
+    assert isinstance(result, DiscreteFilteringConstraint)
+    assert result.exclude is True
