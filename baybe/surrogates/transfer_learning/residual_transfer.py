@@ -11,7 +11,6 @@ from attrs import define, evolve, field
 from attrs.validators import instance_of
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibleObjectiveError
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.transfer_learning.base import _SourceTargetTransferSurrogate
 
@@ -46,8 +45,6 @@ class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
     Note:
         Multiple source tasks and a single target task are supported.
         Source tasks with no measurements are silently skipped.
-        :class:`~baybe.objectives.desirability.DesirabilityObjective` is not supported
-        because residuals are computed per raw target column.
     """
 
     propagate_source_uncertainty: bool = field(
@@ -79,25 +76,12 @@ class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
             train_x: Computational-representation inputs prepared by the base class.
                 Not used directly; measurements are re-split internally.
             train_y: Target values prepared by the base class. Not used directly.
-
-        Raises:
-            IncompatibleObjectiveError: If the objective is a
-                :class:`~baybe.objectives.desirability.DesirabilityObjective`.
         """
-        from baybe.objectives.desirability import DesirabilityObjective
         from baybe.surrogates.gaussian_process.core import _ModelContext
 
         assert self._objective is not None  # provided by base class
         assert self._searchspace is not None  # provided by base class
         assert self._measurements is not None  # provided by base class
-
-        if isinstance(self._objective, DesirabilityObjective):
-            raise IncompatibleObjectiveError(
-                f"'{self.__class__.__name__}' does not support "
-                f"'{DesirabilityObjective.__name__}', because residuals are computed "
-                f"per target and cannot be formed from an aggregated desirability "
-                f"value. Please use a single-target objective instead."
-            )
 
         reduced_searchspace, sources, target_measurements = self._split_measurements()
 

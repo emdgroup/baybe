@@ -9,12 +9,10 @@ from baybe.acquisition.acqfs import qNegIntegratedPosteriorVariance
 from baybe.campaign import Campaign
 from baybe.exceptions import (
     IncompatibleAcquisitionFunctionError,
-    IncompatibleObjectiveError,
     IncompatibleSearchSpaceError,
     IncompatibleSurrogateError,
 )
 from baybe.kernels.basic import IndexKernel, MaternKernel, PositiveIndexKernel
-from baybe.objectives.desirability import DesirabilityObjective
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import TransferLearningMode
 from baybe.parameters.numerical import NumericalContinuousParameter
@@ -265,21 +263,6 @@ def test_residual_transfer_campaign_recommend(objective):
 
     assert len(recommendation) == 3
     assert set(recommendation["task"]) == {"target"}
-
-
-def test_residual_transfer_rejects_desirability():
-    """Residual transfer with a `DesirabilityObjective` raises before fitting."""
-    objective = DesirabilityObjective(
-        [NumericalTarget("t1"), NumericalTarget("t2")],
-        require_normalization=False,
-        scalarizer="MEAN",
-    )
-    searchspace = _make_task_searchspace(["source", "target"], ["target"])
-    measurements = _make_measurements(["source", "target"], objective)
-
-    surrogate = ResidualTransferSurrogate()
-    with pytest.raises(IncompatibleObjectiveError, match="DesirabilityObjective"):
-        surrogate.fit(searchspace, objective, measurements)
 
 
 def test_residual_transfer_multisource_chain_length(objective):
