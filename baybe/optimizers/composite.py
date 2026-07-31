@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Generator, Iterable
 from typing import TYPE_CHECKING, TypeAlias
@@ -114,6 +115,12 @@ class AlternatingCompositionStrategy(CompositionStrategy):
             selected_names = {p.name for p in space.parameters if selector(p)}
 
             if not selected_names:
+                warnings.warn(
+                    "A component's selector matched no parameters in the given "
+                    "search space and will be ignored.",
+                    UserWarning,
+                    stacklevel=2,
+                )
                 continue
 
             for constraint in space.constraints:
