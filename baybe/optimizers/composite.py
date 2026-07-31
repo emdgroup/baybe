@@ -103,9 +103,6 @@ class AlternatingCompositionStrategy(CompositionStrategy):
         Args:
             space: The full search space to split.
 
-        Raises:
-            ValueError: If a constraint spans multiple parts.
-
         Returns:
             A list of (parameter names, optimizer) pairs.
         """
@@ -122,11 +119,6 @@ class AlternatingCompositionStrategy(CompositionStrategy):
                     stacklevel=2,
                 )
                 continue
-
-            for constraint in space.constraints:
-                required = constraint._required_parameters
-                if required & selected_names and not required <= selected_names:
-                    raise ValueError(f"Constraint '{constraint}' spans multiple parts.")
 
             parts.append((frozenset(selected_names), optimizer))
 
