@@ -94,44 +94,24 @@ class AlternatingCompositionStrategy(CompositionStrategy):
     n_iterations: int = field(default=3, validator=[instance_of(int), gt(0)])
     """Number of full alternating cycles."""
 
-    def _split_parameters(
-        self,
-        space: SearchSpace,
-    ) -> list[SearchSpacePart]:
-        """Resolve selectors to parameter name sets.
-
-        Args:
-            space: The full search space to split.
-
-        Returns:
-            A list of (parameter names, optimizer) pairs.
-        """
-        parts: list[SearchSpacePart] = []
-
-        for selector, optimizer in self.components:
-            selected_names = {p.name for p in space.parameters if selector(p)}
-
-            if not selected_names:
-                warnings.warn(
-                    "A parameter selector matched no parameters in the given search "
-                    "space and the corresponding optimizer is skipped.",
-                    UserWarning,
-                    stacklevel=2,
-                )
-                continue
-
-            parts.append((frozenset(selected_names), optimizer))
-
-        return parts
-
     @override
     def __call__(
         self, space: SearchSpace
     ) -> Generator[SearchSpacePart, tuple[Tensor, Tensor], None]:
         """Yield parts in round-robin for ``n_iterations`` cycles."""
-        parts = self._split_parameters(space)
         for _ in range(self.n_iterations):
-            yield from parts
+            for selector, optimizer in self.components:
+                selected_names = {p.name for p in space.parameters if selector(p)}
+                if not selected_names:
+                    warnings.warn(
+                        "A parameter selector matched no parameters in the "
+                        "given search space and the corresponding optimizer "
+                        "is skipped.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+                    continue
+                yield (frozenset(selected_names), optimizer)
 
 
 @define(frozen=True, slots=False, kw_only=True)
