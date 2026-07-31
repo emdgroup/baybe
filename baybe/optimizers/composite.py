@@ -48,7 +48,7 @@ class OptimizationSchedule(ABC, SerialMixin):
 
     @abstractmethod
     def __call__(
-        self, space: SearchSpace
+        self, searchspace: SearchSpace
     ) -> Generator[OptimizationStep, tuple[Tensor, Tensor], None]:
         """Yield optimization steps to apply in sequence.
 
@@ -60,7 +60,7 @@ class OptimizationSchedule(ABC, SerialMixin):
         schedules). The generator terminates by returning when the sequence is complete.
 
         Args:
-            space: The full search space to optimize over.
+            searchspace: The full search space to optimize over.
 
         Yields:
             The next optimization step to apply.
@@ -79,12 +79,14 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
 
     @override
     def __call__(
-        self, space: SearchSpace
+        self, searchspace: SearchSpace
     ) -> Generator[OptimizationStep, tuple[Tensor, Tensor], None]:
         """Yield steps in round-robin for ``n_cycles`` cycles."""
         for _ in range(self.n_cycles):
             for step in self.steps:
-                selected_names = {p.name for p in space.parameters if step.selector(p)}
+                selected_names = {
+                    p.name for p in searchspace.parameters if step.selector(p)
+                }
                 if not selected_names:
                     warnings.warn(
                         "A parameter selector matched no parameters in the "
@@ -98,7 +100,7 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
 
 
 @define(frozen=True)
-class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
+class SequentialOptimizer(OptimizerProtocol):
     """Optimizer that combines multiple optimizers over different search space parts.
 
     Each part of the search space is assigned to a dedicated optimizer. Points are
@@ -114,14 +116,14 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
 
     def _optimize_single_point(
         self,
-        space: SearchSpace,
+        searchspace: SearchSpace,
         schedule_gen: Generator[OptimizationStep, tuple[Tensor, Tensor], None],
         score_function: ScoreFunction,
     ) -> tuple[Tensor, Tensor]:
         """Optimize a single point.
 
         Args:
-            space: The full search space.
+            searchspace: The full search space.
             schedule_gen: A generator yielding optimization steps.
             score_function: The callable to optimize.
 
@@ -129,16 +131,16 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
             The optimized point ``(n_cols,)`` and its score as a scalar tensor.
         """
         current_point: dict[str, Any] = {
-            str(k): v for k, v in space.sample_uniform(1).iloc[0].items()
+            str(k): v for k, v in searchspace.sample_uniform(1).iloc[0].items()
         }
         step = next(schedule_gen)
 
         while True:
-            free_names = {p.name for p in space.parameters if step.selector(p)}
+            free_names = {p.name for p in searchspace.parameters if step.selector(p)}
             fixed_values = {
                 k: v for k, v in current_point.items() if k not in free_names
             }
-            constrained_space = space._fix_parameters(**fixed_values)
+            constrained_space = searchspace._fix_parameters(**fixed_values)
 
             result_point, result_score = step.optimizer(
                 1, score_function, constrained_space
@@ -147,8 +149,8 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
             result_score = result_score.squeeze(0)
 
             # Merge optimized free-parameter values back into current exp-rep point.
-            result_comp = dict(zip(space.comp_rep_columns, result_point.tolist()))
-            current_point.update(space._comp_rep_to_exp_rep(result_comp))
+            result_comp = dict(zip(searchspace.comp_rep_columns, result_point.tolist()))
+            current_point.update(searchspace._comp_rep_to_exp_rep(result_comp))
 
             try:
                 step = schedule_gen.send((result_point, result_score))
@@ -162,19 +164,21 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
         self,
         batch_size: int,
         score_function: ScoreFunction,
-        space: SearchSpace,
+        searchspace: SearchSpace,
     ) -> tuple[Tensor, Tensor]:
         import torch
 
-        n_cols = len(space.comp_rep_columns)
+        n_cols = len(searchspace.comp_rep_columns)
         base_X_pending = score_function.X_pending
 
         points = torch.empty(batch_size, n_cols)
         scores = torch.empty(batch_size)
 
         for b in range(batch_size):
-            step = self.schedule(space)
-            point, score = self._optimize_single_point(space, step, score_function)
+            step = self.schedule(searchspace)
+            point, score = self._optimize_single_point(
+                searchspace, step, score_function
+            )
             points[b], scores[b] = point, score
 
             pending = points[: b + 1]

@@ -11,7 +11,7 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError, IncompatibleSearchSpaceError
 from baybe.optimizers.base import OptimizerProtocol
-from baybe.searchspace import SearchSpace
+from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.settings import AutoBool
 from baybe.utils.basic import flatten
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 @define(kw_only=True)
-class ContinuousOptimizer(OptimizerProtocol[SearchSpace]):
+class ContinuousOptimizer(OptimizerProtocol):
     """Optimizer wrapping BoTorch's :func:`botorch.optim.optimize_acqf`."""
 
     n_starts: int = field(validator=[instance_of(int), gt(0)], default=10)
@@ -42,18 +42,24 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace]):
         self,
         batch_size: int,
         score_function: ScoreFunction,
-        space: SearchSpace,
+        searchspace: SearchSpace,
     ) -> tuple[Tensor, Tensor]:
         import torch
         from botorch.optim import optimize_acqf
 
-        cont = space.continuous
+        if searchspace.type != SearchSpaceType.CONTINUOUS:
+            raise IncompatibleSearchSpaceError(
+                f"'{self.__class__.__name__}' requires a purely continuous search "
+                f"space, but the provided search space has a discrete component."
+            )
+
+        subspace = searchspace.continuous
 
         sequential = self.sequential.evaluate(
-            lambda: not cont.has_interpoint_constraints
+            lambda: not subspace.has_interpoint_constraints
         )
 
-        if sequential and cont.has_interpoint_constraints:
+        if sequential and subspace.has_interpoint_constraints:
             raise IncompatibilityError(
                 f"Setting the "
                 f"'{fields(self.__class__).sequential.alias}' "
@@ -61,14 +67,14 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace]):
                 f"supported. Set it to either 'False'/'Auto'."
             )
 
-        if cont.n_subsets > 0:
+        if subspace.n_subsets > 0:
             raise IncompatibleSearchSpaceError(
                 f"'{self.__class__.__name__}' "
                 f"expects single continuous space, i.e., containing no subsets."
             )
 
-        bounds_df = space.comp_rep_bounds
-        fixed_features = space._fixed_values or None
+        bounds_df = searchspace.comp_rep_bounds
+        fixed_features = searchspace._fixed_values or None
 
         # NOTE: The explicit `or None` conversions are added as an additional safety net
         #   because it is unclear if the corresponding presence checks for these
@@ -83,20 +89,20 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace]):
             fixed_features=fixed_features,
             equality_constraints=flatten(
                 c.to_botorch(
-                    cont.parameters,
-                    idx_offset=len(space.discrete.comp_rep_columns),
+                    subspace.parameters,
+                    idx_offset=len(searchspace.discrete.comp_rep_columns),
                     batch_size=batch_size if c.is_interpoint else None,
                 )
-                for c in cont.constraints_lin_eq
+                for c in subspace.constraints_lin_eq
             )
             or None,
             inequality_constraints=flatten(
                 c.to_botorch(
-                    cont.parameters,
-                    idx_offset=len(space.discrete.comp_rep_columns),
+                    subspace.parameters,
+                    idx_offset=len(searchspace.discrete.comp_rep_columns),
                     batch_size=batch_size if c.is_interpoint else None,
                 )
-                for c in cont.constraints_lin_ineq
+                for c in subspace.constraints_lin_ineq
             )
             or None,
             sequential=sequential,
