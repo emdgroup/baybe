@@ -27,6 +27,8 @@ GaussianProcessSurrogate
    
       ~GaussianProcessSurrogate.posterior
    
+      ~GaussianProcessSurrogate.posterior_mean_function
+   
       ~GaussianProcessSurrogate.posterior_stats
    
       ~GaussianProcessSurrogate.replicate

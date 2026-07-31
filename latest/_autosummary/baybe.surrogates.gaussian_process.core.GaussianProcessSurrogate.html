@@ -1247,19 +1247,22 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior</span></code></a>(candidates, *[, joint])</p></td>
 <td><p>Compute the posterior for candidates in experimental representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_stats" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior_stats</span></code></a>(candidates[, stats])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_mean_function" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_mean_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior_mean_function</span></code></a>(searchspace, ...)</p></td>
+<td><p>Create a GPyTorch mean module representing the surrogate's posterior mean.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_stats" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior_stats</span></code></a>(candidates[, stats])</p></td>
 <td><p>Return posterior statistics for each target.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.replicate" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.replicate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">replicate</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.replicate" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.replicate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">replicate</span></code></a>()</p></td>
 <td><p>Make the surrogate handle multiple targets via replication.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_botorch" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_botorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_botorch" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_botorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch</span></code></a>()</p></td>
 <td><p>Create the botorch-ready representation of the fitted model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_dict" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_dict" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
 <td><p>Create an object's dictionary representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_json" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_json" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
 <td><p>Create an object's JSON representation.</p></td>
 </tr>
 </tbody>
@@ -1429,6 +1432,43 @@ distribution at the given candidate points, where the posterior is also
 described in <strong>experimental representation</strong>. That is, the posterior values
 lie in the same domain as the modelled targets/objective on which the
 surrogate was trained via <a class="reference internal" href="baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.fit" title="baybe.surrogates.base.Surrogate.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.surrogates.base.Surrogate.fit()</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_mean_function">
+<span class="sig-name descname"><span class="pre">posterior_mean_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">searchspace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace" title="baybe.searchspace.core.SearchSpace"><span class="pre">SearchSpace</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.objectives.base.Objective.html#baybe.objectives.base.Objective" title="baybe.objectives.base.Objective"><span class="pre">Objective</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">measurements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/surrogates/gaussian_process/core.html#GaussianProcessSurrogate.posterior_mean_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_mean_function" title="Link to this definition">¶</a></dt>
+<dd><p>Create a GPyTorch mean module representing the surrogate’s posterior mean.</p>
+<p>The method can be used to create the mean for a new
+<a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">GaussianProcessSurrogate</span></code></a> in two ways:</p>
+<ul class="simple">
+<li><p><strong>Eagerly:</strong> By calling the method and passing the returned module to a GP.</p></li>
+<li><dl class="simple">
+<dt><strong>Lazily:</strong> By passing the bound method itself, without eagerly calling it.</dt><dd><p>This works because the method signature complies with
+<code class="xref py py-class docutils literal notranslate"><span class="pre">MeanFactoryProtocol</span></code>, i.e., the new GP will use it
+as a factory and call it automatically at fit time.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>If the mean-providing GP has not been fitted at call time, its prior mean module
+is returned instead (which coincides with the posterior in this case) and a
+<a class="reference external" href="https://docs.python.org/3/library/exceptions.html#UserWarning" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">UserWarning</span></code></a> is emitted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span class="target" id="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_mean_function.params.searchspace"></span><strong>searchspace</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace" title="baybe.searchspace.core.SearchSpace"><code class="xref py py-class docutils literal notranslate"><span class="pre">SearchSpace</span></code></a></span>) – The search space of the <em>new</em> GP.</p></li>
+<li><p><span class="target" id="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_mean_function.params.objective"></span><strong>objective</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.objectives.base.Objective.html#baybe.objectives.base.Objective" title="baybe.objectives.base.Objective"><code class="xref py py-class docutils literal notranslate"><span class="pre">Objective</span></code></a></span>) – The objective of the <em>new</em> GP.</p></li>
+<li><p><span class="target" id="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_mean_function.params.measurements"></span><strong>measurements</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span>) – The training data of the <em>new</em> GP.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type">GPyTorchMean</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A mean module ready to be used as the mean of a new
+<a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">GaussianProcessSurrogate</span></code></a>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1677,6 +1717,7 @@ learning.</p>
 <li><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.from_json"><code class="docutils literal notranslate"><span class="pre">GaussianProcessSurrogate.from_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.from_preset"><code class="docutils literal notranslate"><span class="pre">GaussianProcessSurrogate.from_preset()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior"><code class="docutils literal notranslate"><span class="pre">GaussianProcessSurrogate.posterior()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_mean_function"><code class="docutils literal notranslate"><span class="pre">GaussianProcessSurrogate.posterior_mean_function()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior_stats"><code class="docutils literal notranslate"><span class="pre">GaussianProcessSurrogate.posterior_stats()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.replicate"><code class="docutils literal notranslate"><span class="pre">GaussianProcessSurrogate.replicate()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_botorch"><code class="docutils literal notranslate"><span class="pre">GaussianProcessSurrogate.to_botorch()</span></code></a></li>
