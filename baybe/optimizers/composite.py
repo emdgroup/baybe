@@ -126,7 +126,7 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
             score_function: The callable to optimize.
 
         Returns:
-            The optimized point ``(1, n_cols)`` and its score ``(1,)``.
+            The optimized point ``(n_cols,)`` and its score as a scalar tensor.
         """
         current_point: dict[str, Any] = {
             str(k): v for k, v in space.sample_uniform(1).iloc[0].items()
@@ -143,11 +143,11 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
             result_point, result_score = step.optimizer(
                 1, score_function, constrained_space
             )
+            result_point = result_point.squeeze(0)
+            result_score = result_score.squeeze(0)
 
             # Merge optimized free-parameter values back into current exp-rep point.
-            result_comp = dict(
-                zip(space.comp_rep_columns, result_point.squeeze(0).tolist())
-            )
+            result_comp = dict(zip(space.comp_rep_columns, result_point.tolist()))
             current_point.update(space._comp_rep_to_exp_rep(result_comp))
 
             try:
@@ -167,7 +167,7 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
         import torch
 
         n_cols = len(space.comp_rep_columns)
-        base_X_pending = getattr(score_function, "X_pending", None)
+        base_X_pending = score_function.X_pending
 
         points = torch.empty(batch_size, n_cols)
         scores = torch.empty(batch_size)
@@ -175,17 +175,14 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
         for b in range(batch_size):
             step = self.schedule(space)
             point, score = self._optimize_single_point(space, step, score_function)
-            points[b] = point.squeeze(0)
-            scores[b] = score.squeeze(0)
+            points[b], scores[b] = point, score
 
-            if b < batch_size - 1:
-                new_pending = points[: b + 1]
-                if base_X_pending is not None:
-                    new_pending = torch.cat([base_X_pending, new_pending], dim=0)
-                score_function.set_X_pending(new_pending)
+            pending = points[: b + 1]
+            if base_X_pending is not None:
+                pending = torch.cat([base_X_pending, pending], dim=0)
+            score_function.set_X_pending(pending)
 
-        if batch_size > 1:
-            score_function.set_X_pending(base_X_pending)
+        score_function.set_X_pending(base_X_pending)
 
         return points, scores
 
