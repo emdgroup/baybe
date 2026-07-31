@@ -81,3 +81,13 @@ def test_broken_encoder_raises_exception_group():
     enc = _Encoder(encoder=broken_encoder)
     with pytest.raises(ExceptionGroup, match="failed for all tried backends"):
         enc(_nw_series())
+
+
+def test_equality_after_encoding():
+    """Encoders still compare equal once the implementation backend has been cached."""
+    encoder = lambda s: s.to_frame()  # noqa: E731
+    e1 = _Encoder(encoder)
+    e2 = _Encoder(encoder)
+    assert e1 == e2
+    e1(_nw_series())
+    assert e1 == e2
