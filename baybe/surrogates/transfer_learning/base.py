@@ -22,11 +22,23 @@ if TYPE_CHECKING:
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import Posterior
+    from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
     from baybe.objectives.base import Objective
     from baybe.parameters.base import Parameter
     from baybe.searchspace.core import SearchSpace
+
+
+def _zero_mean_factory(
+    searchspace: SearchSpace,
+    objective: Objective,
+    measurements: pd.DataFrame,
+) -> GPyTorchMean:
+    """Return a zero mean function, independent of the given search space and data."""
+    from gpytorch.means import ZeroMean
+
+    return ZeroMean()
 
 
 @define

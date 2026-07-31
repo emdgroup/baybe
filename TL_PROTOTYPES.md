@@ -266,10 +266,9 @@ So the two are the **exact same model** if and only if **all** of the following 
 4. the residual variance alone is reported (no added source variance).
 
 **Why our implementations are genuinely distinct.** `MeanTransferSurrogate` and
-`ResidualTransferSurrogate` deliberately break conditions 1, 3 and (optionally) 4:
+`ResidualTransferSurrogate` satisfy condition 1 (the residual GP uses a **zero mean**)
+but deliberately break condition 3 and (optionally) condition 4:
 
-- The residual GP uses BayBE's default **`ConstantMean`**, not a zero mean (breaks 1),
-  so it can absorb a constant offset in the residuals.
 - Output standardization (`Standardize`) is fit **on `y`** for mean transfer but **on
   the residuals `r`** for residual transfer (breaks 3). Since residuals typically have a
   smaller spread than `y`, the residual GP is fit on a different scale, which changes the
@@ -279,7 +278,7 @@ So the two are the **exact same model** if and only if **all** of the following 
 
 Hence the modes `MEAN_TRANSFER`, `RESIDUAL_LEARNING`, and
 `RESIDUAL_LEARNING_WITH_UNCERTAINTY` implement three distinct models that coincide only
-in the idealized zero-mean / equal-standardization / residual-only-variance limit.
+in the idealized equal-standardization / residual-only-variance limit.
 
 ## 10. Shared multi-source base and the cold-start fallback
 

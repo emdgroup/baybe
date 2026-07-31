@@ -115,8 +115,12 @@ def test_mean_transfer_delegates(objective):
     assert posterior.mean.numel() == 3
 
 
-def test_mean_transfer_mean_is_source_plus_target(objective):
-    """The outer posterior mean equals the source mean plus the target residual mean."""
+def test_mean_transfer_mean_equals_target_gp(objective):
+    """The outer posterior mean equals the target GP posterior mean.
+
+    The source posterior mean is baked into the target GP as its prior mean, so the
+    target GP's own posterior already represents the combined mean-transfer prediction.
+    """
     searchspace = _make_task_searchspace(
         ["source", "target"], ["target"], TransferLearningMode.MEAN_TRANSFER
     )
@@ -129,9 +133,8 @@ def test_mean_transfer_mean_is_source_plus_target(objective):
     delegate = surrogate._delegate
 
     outer_mean = surrogate.posterior(candidates).mean
-    source_mean = delegate._source_gp.posterior(reduced_candidates).mean
     target_mean = delegate._target_gp.posterior(reduced_candidates).mean
-    assert torch.allclose(outer_mean, source_mean + target_mean, atol=1e-4)
+    assert torch.allclose(outer_mean, target_mean, atol=1e-4)
 
 
 @pytest.mark.parametrize(

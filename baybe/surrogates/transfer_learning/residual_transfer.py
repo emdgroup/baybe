@@ -12,7 +12,10 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
-from baybe.surrogates.transfer_learning.base import _SourceTargetTransferSurrogate
+from baybe.surrogates.transfer_learning.base import (
+    _SourceTargetTransferSurrogate,
+    _zero_mean_factory,
+)
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -36,6 +39,10 @@ class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
       w.r.t. the sum of all previous GPs in the chain.
     - The **target GP** is fitted on the residuals of the target measurements w.r.t.
       the sum of all source GPs in the chain.
+
+    Every residual GP (all GPs except the first source GP) uses a **zero prior mean**,
+    reflecting that the residuals it models are centered around zero; only the first
+    source GP, which is fitted on raw data, keeps the default constant mean.
 
     Predictions are the sum of the posterior means of all GPs in the chain.
 
@@ -90,17 +97,19 @@ class ResidualTransferSurrogate(_SourceTargetTransferSurrogate):
 
         chain: list[GaussianProcessSurrogate] = []
         for i, (_, source_measurements) in enumerate(sources):
-            gp = evolve(self.base_surrogate)
-            measurements = (
-                source_measurements
-                if i == 0
-                else self._make_residual_measurements(chain, source_measurements)
-            )
+            if i == 0:
+                gp = evolve(self.base_surrogate)
+                measurements = source_measurements
+            else:
+                gp = evolve(self.base_surrogate, mean_or_factory=_zero_mean_factory)
+                measurements = self._make_residual_measurements(
+                    chain, source_measurements
+                )
             gp.fit(reduced_searchspace, self._objective, measurements)
             chain.append(gp)
 
         if not target_measurements.empty:
-            gp = evolve(self.base_surrogate)
+            gp = evolve(self.base_surrogate, mean_or_factory=_zero_mean_factory)
             gp.fit(
                 reduced_searchspace,
                 self._objective,

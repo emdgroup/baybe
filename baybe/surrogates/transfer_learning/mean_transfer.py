@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, evolve, field
 from typing_extensions import override
@@ -13,23 +13,11 @@ from baybe.surrogates.transfer_learning.base import _SourceTargetTransferSurroga
 
 if TYPE_CHECKING:
     import pandas as pd
-    from botorch.posteriors import GPyTorchPosterior, Posterior
-    from gpytorch.means import Mean as GPyTorchMean
+    from botorch.posteriors import Posterior
     from torch import Tensor
 
     from baybe.objectives.base import Objective
     from baybe.searchspace.core import SearchSpace
-
-
-def _zero_mean_factory(
-    searchspace: SearchSpace,
-    objective: Objective,
-    measurements: pd.DataFrame,
-) -> GPyTorchMean:
-    """Return a zero mean function, independent of the given search space and data."""
-    from gpytorch.means import ZeroMean
-
-    return ZeroMean()
 
 
 @define
@@ -37,20 +25,19 @@ class MeanTransferSurrogate(_SourceTargetTransferSurrogate):
     """A transfer learning surrogate that transfers a source model's posterior mean.
 
     Fits a single-task source Gaussian process on the source subset and a single-task
-    target Gaussian process on the residuals of the target data w.r.t. the source GP's
-    posterior mean (in original target units). Predictions are the sum of the source
-    and target posterior means.
+    target Gaussian process on the target subset, using the source GP's posterior mean
+    as the *prior mean* of the target GP. The target GP therefore models the target
+    data directly (in original target units) while being anchored to the source
+    predictions, and its posterior already incorporates the transferred source mean.
 
-    This is structurally equivalent to :class:`ResidualTransferSurrogate` but uses a
-    zero prior mean for the target GP rather than a constant mean, reflecting the
-    assumption that the source GP fully accounts for the mean of the target function
-    and the target GP corrects only for remaining residual variation.
-
-    The key difference from :class:`ResidualTransferSurrogate` is the output
-    standardization: the target GP here standardizes the original target values
-    ``y_target`` (not the residuals), so the kernel hyperparameters are learned on the
-    original output scale rather than the residual scale. See section 9 of
-    ``TL_PROTOTYPES.md`` for the mathematical relationship between the two approaches.
+    This differs from :class:`ResidualTransferSurrogate`, which instead fits a
+    zero-mean GP on the residuals ``y_target - μ_source(X_target)`` and adds the source
+    mean back at prediction time. The two coincide in the idealized limit but differ in
+    practice through their output standardization: the target GP here standardizes the
+    original target values ``y_target``, whereas the residual GP standardizes the
+    (typically smaller-spread) residuals, so the two learn kernel hyperparameters on
+    different output scales. See section 9 of ``TL_PROTOTYPES.md`` for the mathematical
+    relationship between the two approaches.
 
     Cold start: if the target task has no measurements yet, the surrogate falls back to
     the source GP's posterior (the best available estimate of the target without data).
@@ -65,8 +52,8 @@ class MeanTransferSurrogate(_SourceTargetTransferSurrogate):
     _target_gp: GaussianProcessSurrogate | None = field(
         init=False, default=None, eq=False, repr=False
     )
-    """The single-task GP trained on the target residuals. ``None`` before fitting or
-    when the target task has no measurements yet (cold start)."""
+    """The single-task target GP anchored to the source posterior mean. ``None`` before
+    fitting or when the target task has no measurements yet (cold start)."""
 
     @override
     def _fit_target(
@@ -75,12 +62,13 @@ class MeanTransferSurrogate(_SourceTargetTransferSurrogate):
         objective: Objective,
         target_measurements: pd.DataFrame,
     ) -> None:
-        """Fit the target GP on the residuals w.r.t. the source GP's posterior mean.
+        """Fit the target GP using the source GP's posterior mean as its prior mean.
 
-        The target GP uses a zero prior mean and is trained on
-        ``y_target - μ_source(X_target)``. The source GP mean is added back explicitly
-        at prediction time, keeping the two GP evaluations independent and avoiding a
-        nested GP call inside the target GP's posterior machinery.
+        The target GP is trained on the original target measurements with the source
+        posterior mean ``μ_source`` as its prior mean, so its posterior directly
+        represents the transferred prediction. The source mean is supplied lazily via
+        the source GP's ``posterior_mean_function`` method, which the target GP
+        evaluates and caches during hyperparameter optimization.
 
         If the target task has no measurements yet, no target GP is built and the
         surrogate falls back to the source GP at prediction time.
@@ -95,33 +83,19 @@ class MeanTransferSurrogate(_SourceTargetTransferSurrogate):
             self._target_gp = None
             return
 
-        # Source posterior mean at the target inputs, in original target units.
-        source_posterior = cast(
-            "GPyTorchPosterior", self._source_gp.posterior(target_measurements)
-        )
-        source_mean = source_posterior.mean.detach().cpu().numpy().reshape(-1)
-
-        # Fit the target GP on residuals with a zero prior mean. The source mean is
-        # added back in _posterior, so the two GP evaluations remain independent.
-        residual_measurements = target_measurements.copy()
-        for target in objective.targets:
-            residual_measurements[target.name] = (
-                target_measurements[target.name].to_numpy() - source_mean
-            )
-
         self._target_gp = evolve(
-            self.base_surrogate, mean_or_factory=_zero_mean_factory
+            self.base_surrogate,
+            mean_or_factory=self._source_gp.posterior_mean_function,
         )
-        self._target_gp.fit(reduced_searchspace, objective, residual_measurements)
+        self._target_gp.fit(reduced_searchspace, objective, target_measurements)
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
-        """Return the combined source-plus-target posterior on task-stripped candidates.
+        """Return the target GP posterior on task-stripped candidates.
 
-        The source GP and target GP are evaluated independently — the source GP is
-        never called from within the target GP's posterior machinery. This avoids
-        a nested GP evaluation that would allocate extra memory proportional to the
-        number of candidates × the source training set size.
+        Because the source posterior mean is baked into the target GP as its prior
+        mean, the target GP's own posterior already is the combined mean-transfer
+        prediction; no explicit source-plus-target combination is needed.
 
         Falls back to the source GP's posterior during cold start (no target data).
 
@@ -130,28 +104,13 @@ class MeanTransferSurrogate(_SourceTargetTransferSurrogate):
                 of the full search space (including the task column).
 
         Returns:
-            A posterior whose mean is the sum of the source and target posterior means
-            and whose covariance is that of the target GP alone.
+            The target GP's posterior (or the source GP's posterior during cold start).
         """
-        from botorch.posteriors import GPyTorchPosterior
-        from gpytorch.distributions import MultivariateNormal
-
         if self._target_gp is None:
             return self._source_only_posterior(candidates_comp_scaled)
 
         reduced_candidates = self._strip_task(candidates_comp_scaled)
-
-        source_posterior = cast(
-            "GPyTorchPosterior", self._source_gp._posterior(reduced_candidates)
-        )
-        target_posterior = cast(
-            "GPyTorchPosterior", self._target_gp._posterior(reduced_candidates)
-        )
-
-        mean = source_posterior.mean + target_posterior.mean
-        covariance = target_posterior.distribution.lazy_covariance_matrix
-
-        return GPyTorchPosterior(MultivariateNormal(mean.squeeze(-1), covariance))
+        return self._target_gp._posterior(reduced_candidates)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
