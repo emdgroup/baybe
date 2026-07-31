@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Removed
 - `eval_during_creation` / `eval_during_modeling` constraint class variables
+- Dead `DiscreteBatchConstraint._get_invalid` placeholder
 
 ### Breaking Changes
 - All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
@@ -32,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `BayesianRecommender`
 - `Parameter.is_equivalent` method for structural parameter comparison
 - `posterior_mean_function` method to `GaussianProcessSurrogate`
+- `exclude` keyword-only flag available on all discrete filtering constraints,
+  inverting the specification to keep the complement
+- `DiscreteSelectionConstraint` as the condition-based filtering constraint
+  (inclusion-by-default; replaces `DiscreteExcludeConstraint`)
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
@@ -48,6 +53,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `mean_factory`, `likelihood_factory`, `fit_criterion_factory`) now default to
   `None`, meaning "auto-select based on context at fit time". Accessing a field
   before fitting may return `None` instead of a concrete factory.
+- Discrete filtering constraints now uniformly define what is **kept** in the search
+  space; set `exclude=True` to invert and keep the complement instead
+- Renamed `exclusion_constraints` example to `selection_constraints`
+
+### Deprecations
+- `DiscreteExcludeConstraint` in favor of
+  `DiscreteSelectionConstraint(..., exclude=True)`
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
