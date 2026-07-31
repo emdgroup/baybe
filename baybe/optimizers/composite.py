@@ -16,6 +16,7 @@ from baybe.optimizers.base import OptimizerProtocol
 from baybe.parameters.selectors import ParameterSelectorProtocol, to_parameter_selector
 from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
+from baybe.settings import active_settings
 
 if TYPE_CHECKING:
     from baybe.optimizers.base import OptimizationResult, ScoreFunction
@@ -167,8 +168,8 @@ class SequentialOptimizer(OptimizerProtocol):
         n_cols = len(searchspace.comp_rep_columns)
         base_X_pending = score_function.X_pending
 
-        points = torch.empty(batch_size, n_cols)
-        scores = torch.empty(batch_size)
+        points = torch.empty(batch_size, n_cols, dtype=active_settings.DTypeFloatTorch)
+        scores = torch.empty(batch_size, dtype=active_settings.DTypeFloatTorch)
 
         for b in range(batch_size):
             steps = self.schedule(searchspace)
