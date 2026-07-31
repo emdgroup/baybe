@@ -13,10 +13,7 @@ from attrs.validators import gt, instance_of, min_len
 from typing_extensions import override
 
 from baybe.optimizers.base import OptimizerProtocol
-from baybe.parameters.selectors import (
-    ParameterSelectorProtocol,
-    to_parameter_selector,
-)
+from baybe.parameters.selectors import ParameterSelectorProtocol, to_parameter_selector
 from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
 
@@ -29,7 +26,7 @@ class OptimizationStep(SerialMixin):
     """A parameter selector paired with the optimizer responsible for it."""
 
     selector: ParameterSelectorProtocol = field(converter=to_parameter_selector)
-    """The selector identifying which parameters this component optimizes."""
+    """The selector identifying which parameters this step optimizes."""
 
     optimizer: OptimizerProtocol = field(validator=instance_of(OptimizerProtocol))
     """The optimizer to apply to the selected parameters."""
@@ -73,13 +70,13 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
     """The optimization steps to be cycled through."""
 
     n_cycles: int = field(default=1, validator=[instance_of(int), gt(0)])
-    """Number of full cycles."""
+    """The number of full cycles to perform."""
 
     @override
     def __call__(
         self, searchspace: SearchSpace
     ) -> Generator[OptimizationStep, OptimizationResult, None]:
-        """Yield steps in round-robin for ``n_cycles`` cycles."""
+        """Yield steps in round-robin for the specified number of cycles."""
         for _ in range(self.n_cycles):
             for step in self.steps:
                 selected_names = {
@@ -99,18 +96,19 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
 
 @define(frozen=True)
 class SequentialOptimizer(OptimizerProtocol):
-    """Optimizer that combines multiple optimizers over different search space parts.
+    """An optimizer that sequentially optimizes over specified subspaces.
 
-    Each part of the search space is assigned to a dedicated optimizer. Points are
-    optimized one at a time: for each point, the strategy cycles through the parts,
-    optimizing one part while holding the others fixed. This means batch points are
-    produced sequentially, not jointly.
+    Each subspace is assigned to a dedicated optimizer in the form of an
+    :class:`~OptimizationSchedule`. The subspaces are then optimized sequentially
+    according to the schedule, holding the respective other part of the search space
+    fixed. For batch optimization, the same schedule is applied repeatedly per point,
+    resulting in a greedy optimization strategy.
     """
 
     schedule: OptimizationSchedule = field(
         validator=instance_of(OptimizationSchedule),
     )
-    """The schedule controlling which parts are optimized and in what order."""
+    """The schedule controlling which subspaces are optimized and in what order."""
 
     def _optimize_single_point(
         self,
@@ -126,7 +124,7 @@ class SequentialOptimizer(OptimizerProtocol):
             steps: A generator yielding optimization steps.
 
         Returns:
-            The optimized point ``(n_cols,)`` and its score as a scalar tensor.
+            The optimization result for a single point of the batch.
         """
         current_point: dict[str, Any] = {
             str(k): v for k, v in searchspace.sample_uniform(1).iloc[0].items()
