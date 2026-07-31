@@ -114,16 +114,16 @@ class SequentialOptimizer(OptimizerProtocol):
 
     def _optimize_single_point(
         self,
-        searchspace: SearchSpace,
-        schedule_gen: Generator[OptimizationStep, OptimizationResult, None],
         score_function: ScoreFunction,
+        searchspace: SearchSpace,
+        steps: Generator[OptimizationStep, OptimizationResult, None],
     ) -> OptimizationResult:
         """Optimize a single point.
 
         Args:
-            searchspace: The full search space.
-            schedule_gen: A generator yielding optimization steps.
             score_function: The callable to optimize.
+            searchspace: The full search space.
+            steps: A generator yielding optimization steps.
 
         Returns:
             The optimized point ``(n_cols,)`` and its score as a scalar tensor.
@@ -131,7 +131,7 @@ class SequentialOptimizer(OptimizerProtocol):
         current_point: dict[str, Any] = {
             str(k): v for k, v in searchspace.sample_uniform(1).iloc[0].items()
         }
-        step = next(schedule_gen)
+        step = next(steps)
 
         while True:
             free_names = {p.name for p in searchspace.parameters if step.selector(p)}
@@ -151,7 +151,7 @@ class SequentialOptimizer(OptimizerProtocol):
             current_point.update(searchspace._comp_rep_to_exp_rep(result_comp))
 
             try:
-                step = schedule_gen.send((result_point, result_score))
+                step = steps.send((result_point, result_score))
             except StopIteration:
                 break
 
@@ -173,9 +173,9 @@ class SequentialOptimizer(OptimizerProtocol):
         scores = torch.empty(batch_size)
 
         for b in range(batch_size):
-            step = self.schedule(searchspace)
+            steps = self.schedule(searchspace)
             point, score = self._optimize_single_point(
-                searchspace, step, score_function
+                score_function, searchspace, steps
             )
             points[b], scores[b] = point, score
 
