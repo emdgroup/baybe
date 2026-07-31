@@ -38,58 +38,53 @@ class OptimizationStep(SerialMixin):
 
 
 @define(frozen=True, slots=False)
-class CompositionStrategy(ABC, SerialMixin):
-    """Base class for composite optimizer strategies.
+class OptimizationSchedule(ABC, SerialMixin):
+    """Base class for optimization schedules.
 
-    A composition strategy controls both which parts of the search space exist
-    and the order in which they are optimized. It owns the component definitions
-    (parameter selectors paired with optimizers) and yields
-    :class:`OptimizationStep` instances on each iteration.
+    An optimization schedule controls which parts of the search space are optimized
+    and in what order. It yields :class:`OptimizationStep` instances on each
+    iteration, one step at a time.
     """
 
     @abstractmethod
     def __call__(
         self, space: SearchSpace
     ) -> Generator[OptimizationStep, tuple[Tensor, Tensor], None]:
-        """Yield optimizer components to apply in sequence.
+        """Yield optimization steps to apply in sequence.
 
         Each time the generator yields an :class:`OptimizationStep`, the caller
         resolves the selector against the space, optimizes the free parameters while
         holding all others fixed, and sends back the resulting ``(point, score)`` pair
-        via :meth:`~Generator.send`. The strategy may use this feedback to decide which
-        component to yield next (e.g., adaptive strategies) or ignore it (e.g., fixed
+        via :meth:`~Generator.send`. The schedule may use this feedback to decide which
+        step to yield next (e.g., adaptive schedules) or ignore it (e.g., fixed
         schedules). The generator terminates by returning when the sequence is complete.
 
         Args:
             space: The full search space to optimize over.
 
         Yields:
-            The next optimizer component to apply.
+            The next optimization step to apply.
         """
 
 
 @define(frozen=True, slots=False, kw_only=True)
-class AlternatingCompositionStrategy(CompositionStrategy):
-    """Cycle through components in round-robin for a fixed number of iterations."""
+class CyclicOptimizationSchedule(OptimizationSchedule):
+    """Cycle through steps in round-robin for a fixed number of cycles."""
 
-    components: tuple[OptimizationStep, ...] = field(
-        validator=min_len(1),
-    )
-    """The optimizer components to be cycled through."""
+    steps: tuple[OptimizationStep, ...] = field(validator=min_len(1))
+    """The optimization steps to be cycled through."""
 
-    n_iterations: int = field(default=3, validator=[instance_of(int), gt(0)])
-    """Number of full alternating cycles."""
+    n_cycles: int = field(default=3, validator=[instance_of(int), gt(0)])
+    """Number of full cycles."""
 
     @override
     def __call__(
         self, space: SearchSpace
     ) -> Generator[OptimizationStep, tuple[Tensor, Tensor], None]:
-        """Yield components in round-robin for ``n_iterations`` cycles."""
-        for _ in range(self.n_iterations):
-            for component in self.components:
-                selected_names = {
-                    p.name for p in space.parameters if component.selector(p)
-                }
+        """Yield steps in round-robin for ``n_cycles`` cycles."""
+        for _ in range(self.n_cycles):
+            for step in self.steps:
+                selected_names = {p.name for p in space.parameters if step.selector(p)}
                 if not selected_names:
                     warnings.warn(
                         "A parameter selector matched no parameters in the "
@@ -99,7 +94,7 @@ class AlternatingCompositionStrategy(CompositionStrategy):
                         stacklevel=2,
                     )
                     continue
-                yield component
+                yield step
 
 
 @define(frozen=True, slots=False, kw_only=True)
@@ -112,10 +107,10 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     produced sequentially, not jointly.
     """
 
-    strategy: CompositionStrategy = field(
-        validator=instance_of(CompositionStrategy),
+    schedule: OptimizationSchedule = field(
+        validator=instance_of(OptimizationSchedule),
     )
-    """The strategy controlling which parts are optimized and in what order."""
+    """The schedule controlling which parts are optimized and in what order."""
 
     @staticmethod
     def _sample_initial_point(space: SearchSpace) -> Tensor:
@@ -136,14 +131,14 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     def _optimize_single_point(
         self,
         space: SearchSpace,
-        strategy_gen: Generator[OptimizationStep, tuple[Tensor, Tensor], None],
+        schedule_gen: Generator[OptimizationStep, tuple[Tensor, Tensor], None],
         score_function: ScoreFunction,
     ) -> tuple[Tensor, Tensor]:
         """Optimize a single point.
 
         Args:
             space: The full search space.
-            strategy_gen: A generator yielding optimizer components.
+            schedule_gen: A generator yielding optimization steps.
             score_function: The callable to optimize.
 
         Returns:
@@ -152,7 +147,7 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
         comp_rep_columns = space.comp_rep_columns
         current_point = self._sample_initial_point(space)
 
-        component = next(strategy_gen)
+        component = next(schedule_gen)
 
         while True:
             selected_names = {p.name for p in space.parameters if component.selector(p)}
@@ -175,7 +170,7 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
             current_point = result_point.squeeze(0)
 
             try:
-                component = strategy_gen.send((result_point, result_score))
+                component = schedule_gen.send((result_point, result_score))
             except StopIteration:
                 break
 
@@ -197,9 +192,9 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
         scores = torch.empty(batch_size)
 
         for b in range(batch_size):
-            strategy_gen = self.strategy(space)
+            schedule_gen = self.schedule(space)
             point, score = self._optimize_single_point(
-                space, strategy_gen, score_function
+                space, schedule_gen, score_function
             )
             points[b] = point.squeeze(0)
             scores[b] = score.squeeze(0)

@@ -2,15 +2,15 @@
 
 from baybe.optimizers.base import OptimizerProtocol
 from baybe.optimizers.composite import (
-    AlternatingCompositionStrategy,
+    CyclicOptimizationSchedule,
     OptimizationStep,
     SequentialOptimizer,
 )
 from baybe.optimizers.continuous import ContinuousOptimizer
 
 __all__ = [
-    "AlternatingCompositionStrategy",
     "ContinuousOptimizer",
+    "CyclicOptimizationSchedule",
     "OptimizationStep",
     "OptimizerProtocol",
     "SequentialOptimizer",
