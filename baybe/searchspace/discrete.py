@@ -17,7 +17,7 @@ from attrs import define, field
 from cattrs import IterableValidationError
 from typing_extensions import Self, override
 
-from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
+from baybe.constraints import DISCRETE_CONSTRAINTS_PRUNING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
 from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import DeprecationError
@@ -104,7 +104,11 @@ class SubspaceDiscrete(SerialMixin):
         converter=lambda x: to_tuple(
             sorted(
                 x,
-                key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
+                key=lambda c: (
+                    DISCRETE_CONSTRAINTS_PRUNING_ORDER.index(c.__class__)
+                    if c.__class__ in DISCRETE_CONSTRAINTS_PRUNING_ORDER
+                    else len(DISCRETE_CONSTRAINTS_PRUNING_ORDER)
+                ),
             )
         ),
         factory=tuple,

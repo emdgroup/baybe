@@ -10,10 +10,10 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from baybe.constraints import (
-    DISCRETE_CONSTRAINTS_FILTERING_ORDER,
+    DISCRETE_CONSTRAINTS_PRUNING_ORDER,
     DiscreteCardinalityConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteExcludeConstraint,
+    DiscreteFilteringConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
@@ -63,7 +63,7 @@ def _linked_parameters_scenario() -> tuple[
     return params, constraints
 
 
-def _exclude_scenario(
+def _filtering_scenario(
     combiner: str,
 ) -> tuple[Sequence[DiscreteParameter], Sequence[DiscreteConstraint]]:
     params = [
@@ -72,13 +72,14 @@ def _exclude_scenario(
         CategoricalParameter(name="C", values=["c1", "c2", "c3"]),
     ]
     constraints = [
-        DiscreteExcludeConstraint(
+        DiscreteFilteringConstraint(
             parameters=["A", "B"],
             conditions=[
                 SubSelectionCondition(selection=["a1"]),
                 SubSelectionCondition(selection=["b1"]),
             ],
             combiner=combiner,
+            exclude=True,
         )
     ]
     return params, constraints
@@ -209,8 +210,8 @@ def _mixed_scenario() -> tuple[
         pytest.param(_no_constraints_scenario, id="no_constraints"),
         pytest.param(_no_label_duplicates_scenario, id="no_label_duplicates"),
         pytest.param(_linked_parameters_scenario, id="linked_parameters"),
-        pytest.param(partial(_exclude_scenario, "OR"), id="exclude_or"),
-        pytest.param(partial(_exclude_scenario, "AND"), id="exclude_and"),
+        pytest.param(partial(_filtering_scenario, "OR"), id="filtering_or"),
+        pytest.param(partial(_filtering_scenario, "AND"), id="filtering_and"),
         pytest.param(_cardinality_scenario, id="cardinality"),
         pytest.param(_sum_scenario, id="sum"),
         pytest.param(_dependencies_scenario, id="dependencies"),
@@ -233,7 +234,7 @@ def test_constrained_cartesian_product(scenario):
     # A fixed ordering ensures both paths operate on the same intermediate state.
     constraints = sorted(
         constraints,
-        key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
+        key=lambda c: DISCRETE_CONSTRAINTS_PRUNING_ORDER.index(c.__class__),
     )
 
     # Naive approach: full product then filter

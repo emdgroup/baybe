@@ -630,10 +630,11 @@ class DiscreteCardinalityConstraint(DiscretePruningConstraint, CardinalityConstr
         return df.index[mask_good]
 
 
-# Constraints are approximately ordered according to increasing computational effort
-# to minimize total time in their sequential application
-DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
+# Pruning constraints are approximately ordered according to increasing computational
+# effort to minimize total time in their sequential application
+DISCRETE_CONSTRAINTS_PRUNING_ORDER = (
     DiscreteExcludeConstraint,
+    DiscreteFilteringConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteSumConstraint,
@@ -642,7 +643,6 @@ DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscreteCustomConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteBatchConstraint,
 )
 
 # Prevent (de-)serialization of custom constraints

@@ -8,9 +8,8 @@ from typing import TYPE_CHECKING, TypeVar
 import numpy as np
 import pandas as pd
 
-from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
-from baybe.constraints.base import DiscreteConstraint
-from baybe.constraints.discrete import DiscreteBatchConstraint
+from baybe.constraints import DISCRETE_CONSTRAINTS_PRUNING_ORDER
+from baybe.constraints.base import DiscreteConstraint, DiscretePruningConstraint
 from baybe.parameters.base import DiscreteParameter
 
 if TYPE_CHECKING:
@@ -194,7 +193,7 @@ def parameter_cartesian_prod_pandas_constrained(
     """
     # Filter to constraints that should be applied during creation
     filtering_constraints = [
-        c for c in constraints if not isinstance(c, DiscreteBatchConstraint)
+        c for c in constraints if isinstance(c, DiscretePruningConstraint)
     ]
 
     # Fast path: no constraints and no initial dataframe
@@ -205,7 +204,7 @@ def parameter_cartesian_prod_pandas_constrained(
     ordered_params = optimize_parameter_order(parameters, filtering_constraints)
 
     # Determine which parameter names each constraint needs for completion
-    pending: list[tuple[DiscreteConstraint, set[str]]] = [
+    pending: list[tuple[DiscretePruningConstraint, set[str]]] = [
         (c, c._required_parameters) for c in filtering_constraints
     ]
 
@@ -226,7 +225,7 @@ def parameter_cartesian_prod_pandas_constrained(
             df = pd.merge(df, param_df, how="cross")
 
         available = set(df.columns)
-        still_pending: list[tuple[DiscreteConstraint, set[str]]] = []
+        still_pending: list[tuple[DiscretePruningConstraint, set[str]]] = []
 
         for constraint, all_params in pending:
             idxs = constraint.get_invalid(df, allow_missing=True)
@@ -255,7 +254,7 @@ def parameter_cartesian_prod_pandas_constrained(
 
 
 def _apply_constraint_filter_pandas(
-    df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
+    df: pd.DataFrame, constraints: Collection[DiscretePruningConstraint]
 ) -> pd.DataFrame:
     """Remove discrete search space entries based on constraints.
 
@@ -263,15 +262,12 @@ def _apply_constraint_filter_pandas(
 
     Args:
         df: The data in experimental representation to be modified inplace.
-        constraints: List of discrete constraints.
+        constraints: Pruning constraints to apply.
 
     Returns:
         The filtered dataframe.
     """
-    # Remove entries that violate parameter constraints:
-    for constraint in (
-        c for c in constraints if not isinstance(c, DiscreteBatchConstraint)
-    ):
+    for constraint in constraints:
         idxs = constraint.get_invalid(df)
         df.drop(index=idxs, inplace=True)
     df.reset_index(inplace=True, drop=True)
@@ -281,13 +277,13 @@ def _apply_constraint_filter_pandas(
 
 def _apply_constraint_filter_polars(
     ldf: pl.LazyFrame,
-    constraints: Sequence[DiscreteConstraint],
+    constraints: Sequence[DiscretePruningConstraint],
 ) -> pl.LazyFrame:
     """Remove discrete search space entries based on constraints.
 
     Args:
         ldf: The data in experimental representation to be filtered.
-        constraints: Collection of discrete constraints.
+        constraints: Pruning constraints to apply.
 
     Returns:
         The Polars lazyframe with undesired rows removed.
@@ -322,18 +318,20 @@ def build_constrained_product(
     """
     from baybe.settings import active_settings
 
-    constraints = sorted(
-        constraints,
-        key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+    pruning_constraints = sorted(
+        (c for c in constraints if isinstance(c, DiscretePruningConstraint)),
+        key=lambda x: DISCRETE_CONSTRAINTS_PRUNING_ORDER.index(x.__class__),
     )
 
     remaining_params = list(parameters)
-    remaining_constraints = list(constraints)
+    remaining_constraints = list(pruning_constraints)
 
     if active_settings.use_polars_for_constraints:
         from baybe._optional.polars import polars as pl
 
-        polars_constraints = [c for c in constraints if c.has_polars_implementation]
+        polars_constraints = [
+            c for c in pruning_constraints if c.has_polars_implementation
+        ]
 
         # Determine which parameters are needed by Polars-capable constraints
         polars_param_names: set[str] = set()
@@ -355,7 +353,7 @@ def build_constrained_product(
                 p for p in parameters if p.name not in polars_param_names
             ]
             remaining_constraints = [
-                c for c in constraints if not c.has_polars_implementation
+                c for c in pruning_constraints if not c.has_polars_implementation
             ]
 
     return parameter_cartesian_prod_pandas_constrained(
