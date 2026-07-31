@@ -33,7 +33,7 @@ from baybe.constraints import (
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteExcludeConstraint,
+    DiscreteFilteringConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
@@ -466,29 +466,32 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             conditions=[SubSelectionCondition(selection=["right"])],
             affected_parameters=[["Frame_A", "Frame_B"]],
         ),
-        "Constraint_4": DiscreteExcludeConstraint(
+        "Constraint_4": DiscreteFilteringConstraint(
             parameters=["Temperature", "Solvent_1"],
             combiner="AND",
             conditions=[
                 ThresholdCondition(threshold=151, operator=">"),
                 SubSelectionCondition(selection=list(mock_substances)[:2]),
             ],
+            exclude=True,
         ),
-        "Constraint_5": DiscreteExcludeConstraint(
+        "Constraint_5": DiscreteFilteringConstraint(
             parameters=["Pressure", "Solvent_1"],
             combiner="AND",
             conditions=[
                 ThresholdCondition(threshold=5, operator=">"),
                 SubSelectionCondition(selection=list(mock_substances)[-2:]),
             ],
+            exclude=True,
         ),
-        "Constraint_6": DiscreteExcludeConstraint(
+        "Constraint_6": DiscreteFilteringConstraint(
             parameters=["Pressure", "Temperature"],
             combiner="AND",
             conditions=[
                 ThresholdCondition(threshold=3, operator="<"),
                 ThresholdCondition(threshold=120, operator=">"),
             ],
+            exclude=True,
         ),
         "Constraint_7": DiscreteNoLabelDuplicatesConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
