@@ -8,12 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 - All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
   are now keyword-only
+- `df_apply_permutation_augmentation` has a different interface and now expects
+  permutation groups instead of column groups
+
+### Fixed
+- `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
+  values of invariant points are degenerate
+- Multi-output surrogate compatibility check in `Surrogate.fit` now correctly uses the
+  number of required models instead of the number of transform outputs
 
 ### Added
 - `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
   the same pattern as `ContinuousLinearConstraint.coefficients`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
+- `Symmetry` concept for expressing symmetries of the optimization problem, including
+  `PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry` classes, which trigger
+  automatic data augmentation when assigned to the `symmetries` attribute of a
+  `BayesianRecommender`
+- `Parameter.is_equivalent` method for structural parameter comparison
 - `posterior_mean_function` method to `GaussianProcessSurrogate`
 - `TransferLearningMode` values `MEAN_TRANSFER`, `RESIDUAL_LEARNING`,
   `RESIDUAL_LEARNING_WITH_UNCERTAINTY`, and `RGPE`
@@ -49,6 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
 - Bumped polars to `>=0.20.8`
 - Bumped cattrs to `>=26.1.0`
+- The factory fields of `GaussianProcessSurrogate` (`kernel_factory`,
+  `mean_factory`, `likelihood_factory`, `fit_criterion_factory`) now default to
+  `None`, meaning "auto-select based on context at fit time". Accessing a field
+  before fitting may return `None` instead of a concrete factory.
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes

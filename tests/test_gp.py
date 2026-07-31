@@ -1,8 +1,8 @@
 """Tests for the Gaussian Process surrogate."""
 
-import math
 import sys
 
+import numpy as np
 import pandas as pd
 import pytest
 import torch
@@ -34,6 +34,12 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriter
 from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
+from baybe.surrogates.gaussian_process.presets.baybe import (
+    BayBEFitCriterionFactory,
+    BayBEKernelFactory,
+    BayBELikelihoodFactory,
+    BayBEMeanFactory,
+)
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import create_fake_input, to_tensor
 
@@ -188,6 +194,32 @@ def test_presets(preset: GaussianProcessPreset):
     gp2.fit(searchspace, objective, measurements)
 
 
+def test_default_components():
+    """The all-None GP resolves to the BayBE defaults and fits identically."""
+    gp_auto = GaussianProcessSurrogate()
+
+    # All factory fields default to None (deferred auto-selection)
+    assert gp_auto.kernel_factory is None
+    assert gp_auto.mean_factory is None
+    assert gp_auto.likelihood_factory is None
+    assert gp_auto.fit_criterion_factory is None
+
+    gp_explicit = GaussianProcessSurrogate(
+        kernel_or_factory=BayBEKernelFactory(),
+        mean_or_factory=BayBEMeanFactory(),
+        likelihood_or_factory=BayBELikelihoodFactory(),
+        fit_criterion_or_factory=BayBEFitCriterionFactory(),
+    )
+
+    gp_auto.fit(searchspace, objective, measurements)
+    gp_explicit.fit(searchspace, objective, measurements)
+
+    assert_frame_equal(
+        gp_auto.posterior_stats(measurements),
+        gp_explicit.posterior_stats(measurements),
+    )
+
+
 def test_invalid_components():
     """Passing invalid component types raises errors."""
     with pytest.raises(TypeError, match="Component must be one of"):
@@ -230,25 +262,25 @@ def test_botorch_preset(multitask: bool):
     assert_frame_equal(posterior1, posterior2)
 
 
-_OBJECTIVE = NumericalTarget(name="y").to_objective()
+def test_to_botorch_before_fit():
+    """Attempting to access an untrained surrogate raises an error."""
+    with pytest.raises(ModelNotTrainedError):
+        GaussianProcessSurrogate().to_botorch()
 
 
-def _pm_searchspace(values: list[float]) -> SearchSpace:
-    return SearchSpace.from_product([NumericalDiscreteParameter("x1", values=values)])
-
-
-def _pm_measurements(xs: list[float], ys: list[float]) -> pd.DataFrame:
-    return pd.DataFrame({"x1": xs, "y": ys})
+# Parameter ranges
+_RANGE_NARROW = tuple(range(6))
+_RANGE_WIDE = tuple(range(11))
 
 
 def _predict_on_posterior_mean(
-    pretrained_gp: GaussianProcessSurrogate, xs: list[float]
+    pretrained_gp: GaussianProcessSurrogate, x: list[float]
 ) -> pd.DataFrame:
     """Build measurements whose targets follow the pretrained GP posterior mean."""
-    points = pd.DataFrame({"x1": xs})
-    with torch.no_grad():
-        targets = pretrained_gp.posterior(points).mean
-    return pd.DataFrame({"x1": xs, "y": targets.numpy().ravel()})
+    points = pd.DataFrame({"x": x})
+    return points.assign(
+        t=pretrained_gp.posterior_stats(points, stats=["mean"])["t_mean"]
+    )
 
 
 @pytest.fixture(name="pretrained_gp")
@@ -256,16 +288,11 @@ def fixture_pretrained_gp() -> GaussianProcessSurrogate:
     """A GP trained on a narrow search space with three points."""
     surrogate = GaussianProcessSurrogate()
     surrogate.fit(
-        _pm_searchspace([0.0, 2.5, 5.0]),
-        _OBJECTIVE,
-        _pm_measurements([0.0, 2.5, 5.0], [0.0, 5.0, 10.0]),
+        NumericalDiscreteParameter("x", _RANGE_NARROW).to_searchspace(),
+        objective,
+        pd.DataFrame({"x": list(_RANGE_NARROW), "t": [2 * x for x in _RANGE_NARROW]}),
     )
     return surrogate
-
-
-@pytest.fixture(name="wider_searchspace")
-def fixture_wider_searchspace() -> SearchSpace:
-    return _pm_searchspace([0.0, 2.5, 5.0, 7.5, 10.0])
 
 
 @pytest.mark.parametrize(
@@ -273,9 +300,7 @@ def fixture_wider_searchspace() -> SearchSpace:
     [param(False, id="bound_method"), param(True, id="prebuilt_module")],
 )
 def test_posterior_mean_transfer(
-    pretrained_gp: GaussianProcessSurrogate,
-    wider_searchspace: SearchSpace,
-    prebuilt: bool,
+    pretrained_gp: GaussianProcessSurrogate, prebuilt: bool
 ) -> None:
     """A pretrained GP posterior mean can seed the prior mean of a new GP.
 
@@ -291,35 +316,46 @@ def test_posterior_mean_transfer(
     The matching-mean expectation is specific to this constructed setup and is
     not intended as a universal claim for arbitrary training data.
     """
-    expected = pretrained_gp.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
-    pretrained_lengthscale = (
-        pretrained_gp.to_botorch().covar_module.lengthscale.detach().clone()
-    )
+    # Record hyperparameters for later comparison
+    pretrained_params = {
+        k: v.detach().clone() for k, v in pretrained_gp.to_botorch().named_parameters()
+    }
 
-    new_measurements = _predict_on_posterior_mean(pretrained_gp, [0.0, 10.0])
+    # Train/test data
+    x_train_reduced = [_RANGE_WIDE[0], _RANGE_WIDE[-1]]
+    y_train_reduced = _predict_on_posterior_mean(pretrained_gp, x_train_reduced)
+    x_test = list(_RANGE_WIDE[1:-1])
+
+    # Build a new GP with the pretrained mean on a wider search space (to ensure
+    # that input normalization is applied correctly)
+    wider_searchspace = NumericalDiscreteParameter("x", _RANGE_WIDE).to_searchspace()
     if prebuilt:
         mean = pretrained_gp.posterior_mean_function(
-            wider_searchspace, _OBJECTIVE, new_measurements
+            wider_searchspace, objective, y_train_reduced
         )
     else:
         mean = pretrained_gp.posterior_mean_function
     new_gp = GaussianProcessSurrogate(mean_or_factory=mean)
-    new_gp.fit(wider_searchspace, _OBJECTIVE, new_measurements)
+    new_gp.fit(wider_searchspace, objective, y_train_reduced)
 
     assert new_gp.to_botorch() is not None
 
-    actual = new_gp.posterior(pd.DataFrame({"x1": [2.5]})).mean.item()
-    assert math.isclose(actual, expected, abs_tol=1e-4)
+    # Predictions must exactly match the pretrained mean since the new training data of
+    # the new GP lies exactly on the mean and hence no corrections are applied
+    candidates = pd.DataFrame({"x": x_test})
+    expected = pretrained_gp.posterior_stats(candidates, stats=["mean"])["t_mean"]
+    actual = new_gp.posterior_stats(candidates, stats=["mean"])["t_mean"]
+    assert np.allclose(actual, expected)
 
-    assert torch.equal(
-        pretrained_gp.to_botorch().covar_module.lengthscale, pretrained_lengthscale
-    )
+    # Assert that the hyperparameters of the original GP are unchanged
+    for k, v in pretrained_gp.to_botorch().named_parameters():
+        assert torch.equal(v, pretrained_params[k])
 
 
-def test_posterior_mean_raises_if_not_fitted() -> None:
-    """An untrained surrogate cannot produce a posterior mean function."""
-    ss = _pm_searchspace([0.0, 1.0])
-    with pytest.raises(ModelNotTrainedError, match="must be fitted"):
-        GaussianProcessSurrogate().posterior_mean_function(
-            ss, _OBJECTIVE, _pm_measurements([0.0, 1.0], [0.0, 1.0])
+def test_posterior_mean_warns_if_not_fitted() -> None:
+    """An untrained surrogate warns and returns the prior mean instead."""
+    with pytest.warns(UserWarning, match="has not been fitted yet"):
+        mean = GaussianProcessSurrogate().posterior_mean_function(
+            searchspace, objective, measurements
         )
+    assert mean is not None
