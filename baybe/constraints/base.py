@@ -79,7 +79,7 @@ class DiscreteConstraint(Constraint, ABC):
     """Abstract base class for discrete constraints."""
 
 
-@define
+@define(slots=False)
 class DiscretePruningConstraint(DiscreteConstraint, ABC):
     """Abstract base class for discrete constraints that prune the search space.
 
