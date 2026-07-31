@@ -74,7 +74,7 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
     steps: tuple[OptimizationStep, ...] = field(validator=min_len(1))
     """The optimization steps to be cycled through."""
 
-    n_cycles: int = field(default=3, validator=[instance_of(int), gt(0)])
+    n_cycles: int = field(default=1, validator=[instance_of(int), gt(0)])
     """Number of full cycles."""
 
     @override
