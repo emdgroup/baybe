@@ -116,8 +116,8 @@ class AlternatingCompositionStrategy(CompositionStrategy):
 
             if not selected_names:
                 warnings.warn(
-                    "A component's selector matched no parameters in the given "
-                    "search space and will be ignored.",
+                    "A parameter selector matched no parameters in the given search "
+                    "space and the corresponding optimizer is skipped.",
                     UserWarning,
                     stacklevel=2,
                 )
