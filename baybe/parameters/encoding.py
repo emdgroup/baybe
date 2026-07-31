@@ -52,7 +52,9 @@ class _Encoder:
     )
     """The user-provided encoder."""
 
-    _implementation: nw.Implementation | None = field(default=None, init=False)
+    _implementation: nw.Implementation | None = field(
+        default=None, init=False, eq=False
+    )
     """The inferred native backend, cached after the first successful call."""
 
     def __call__(self, series: nw.Series, /) -> nw.DataFrame:
