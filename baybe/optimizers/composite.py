@@ -6,7 +6,7 @@ import gc
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Generator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from attrs import define, field
 from attrs.validators import gt, instance_of, min_len
@@ -112,22 +112,6 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     )
     """The schedule controlling which parts are optimized and in what order."""
 
-    @staticmethod
-    def _sample_initial_point(space: SearchSpace) -> Tensor:
-        """Sample a random point from the space in comp-rep.
-
-        Args:
-            space: The search space to sample from.
-
-        Returns:
-            A 1-D tensor of length ``len(space.comp_rep_columns)``.
-        """
-        import torch
-
-        init_exp = space.sample_uniform(1)
-        init_comp = space.transform(init_exp)
-        return torch.tensor(init_comp.values[0], dtype=torch.float64)
-
     def _optimize_single_point(
         self,
         space: SearchSpace,
@@ -144,37 +128,34 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
         Returns:
             The optimized point ``(1, n_cols)`` and its score ``(1,)``.
         """
-        comp_rep_columns = space.comp_rep_columns
-        current_point = self._sample_initial_point(space)
-
-        component = next(schedule_gen)
+        current_point: dict[str, Any] = {
+            str(k): v for k, v in space.sample_uniform(1).iloc[0].items()
+        }
+        step = next(schedule_gen)
 
         while True:
-            selected_names = {p.name for p in space.parameters if component.selector(p)}
-            free_columns = frozenset(
-                col
-                for p in space.parameters
-                if p.name in selected_names
-                for col in p.comp_rep_columns
-            )
+            free_names = {p.name for p in space.parameters if step.selector(p)}
             fixed_values = {
-                col: current_point[i].item()
-                for i, col in enumerate(comp_rep_columns)
-                if col not in free_columns
+                k: v for k, v in current_point.items() if k not in free_names
             }
-            constrained_space = space._fix_parameters(fixed_values)
+            constrained_space = space._fix_parameters(**fixed_values)
 
-            result_point, result_score = component.optimizer(
+            result_point, result_score = step.optimizer(
                 1, score_function, constrained_space
             )
-            current_point = result_point.squeeze(0)
+
+            # Merge optimized free-parameter values back into current exp-rep point.
+            result_comp = dict(
+                zip(space.comp_rep_columns, result_point.squeeze(0).tolist())
+            )
+            current_point.update(space._comp_rep_to_exp_rep(result_comp))
 
             try:
-                component = schedule_gen.send((result_point, result_score))
+                step = schedule_gen.send((result_point, result_score))
             except StopIteration:
                 break
 
-        return current_point.unsqueeze(0), result_score
+        return result_point, result_score
 
     @override
     def __call__(
@@ -192,10 +173,8 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
         scores = torch.empty(batch_size)
 
         for b in range(batch_size):
-            schedule_gen = self.schedule(space)
-            point, score = self._optimize_single_point(
-                space, schedule_gen, score_function
-            )
+            step = self.schedule(space)
+            point, score = self._optimize_single_point(space, step, score_function)
             points[b] = point.squeeze(0)
             scores[b] = score.squeeze(0)
 

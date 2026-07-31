@@ -68,10 +68,7 @@ class ContinuousOptimizer(OptimizerProtocol[SearchSpace]):
             )
 
         bounds_df = space.comp_rep_bounds
-        fixed_features = {
-            space.comp_rep_columns.index(col): val
-            for col, val in space._fixed_values.items()
-        } or None
+        fixed_features = space._fixed_values or None
 
         # NOTE: The explicit `or None` conversions are added as an additional safety net
         #   because it is unclear if the corresponding presence checks for these

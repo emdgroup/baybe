@@ -81,7 +81,7 @@ class SubspaceContinuous(SerialMixin):
     """Nonlinear constraints."""
 
     _fixed_values: dict[str, float] = field(factory=dict, init=False)
-    """Comp-rep column values held constant during optimization."""
+    """Exp-rep parameter values held constant during optimization."""
 
     @override
     def __str__(self) -> str:

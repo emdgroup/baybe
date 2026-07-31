@@ -6,7 +6,7 @@ import gc
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
 from itertools import product
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -200,87 +200,92 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def _fixed_values(self) -> dict[str, float]:
-        """All fixed comp-rep columns across both subspaces.
+    def _fixed_values(self) -> dict[int, float]:
+        """Fixed comp-rep column indices and their values.
 
-        Merges externally fixed values (set via :meth:`_fix_parameters`) with
-        internally fixed values (from cardinality constraints).
-
-        Raises:
-            ValueError: If cardinality constraints and external fixed values
-                disagree on the same column.
+        Merges externally fixed values from both subspaces, transforms them to
+        computational representation, and maps each resulting column to its
+        positional index in :attr:`comp_rep_columns`.
 
         Returns:
-            Mapping from comp-rep column names to their fixed values.
+            Mapping from comp-rep column index to fixed value.
         """
-        from baybe.parameters.numerical import _FixedNumericalContinuousParameter
-
-        internal = {
-            p.name: p.value
-            for p in self.continuous.parameters
-            if isinstance(p, _FixedNumericalContinuousParameter)
-        }
-
-        overlap = internal.keys() & self.continuous._fixed_values.keys()
-        if overlap and any(
-            internal[k] != self.continuous._fixed_values[k] for k in overlap
-        ):
-            raise ValueError(
-                f"Conflicting fixed values for columns {sorted(overlap)}: "
-                f"cardinality constraints and external fixed values disagree."
-            )
-
+        exp_values = {**self.discrete._fixed_values, **self.continuous._fixed_values}
+        if not exp_values:
+            return {}
+        comp_rep = self.transform(pd.DataFrame([exp_values]), allow_missing=True)
+        comp_row = comp_rep.iloc[0]
         return {
-            **self.discrete._fixed_values,
-            **internal,
-            **self.continuous._fixed_values,
+            idx: comp_row[self.comp_rep_columns[idx]]
+            for name in exp_values
+            for idx in self.get_comp_rep_parameter_indices(name)
         }
 
-    def _fix_parameters(self, values: dict[str, float]) -> SearchSpace:
-        """Return a copy with additional fixed comp-rep column values.
+    def _fix_parameters(self, **values: Any) -> SearchSpace:
+        """Return a copy with parameters fixed to the given experimental values.
+
+        Only the parameters passed as keyword arguments are fixed; all others
+        remain free. Any previously fixed values are replaced, not accumulated.
 
         Args:
-            values: Mapping from comp-rep column names to their fixed values.
+            **values: Parameter names mapped to their experimental-representation
+                values to fix.
 
         Raises:
-            ValueError: If any key is not a valid comp-rep column name.
-            ValueError: If a column is already fixed to a different value.
+            ValueError: If any key is not a valid parameter name.
 
         Returns:
-            A new search space with the given values added to the fixed set.
+            A new search space with the specified parameters fixed.
         """
-        discrete_cols = set(self.discrete.comp_rep_columns)
-        continuous_cols = set(self.continuous.comp_rep_columns)
+        if unknown := set(values) - {p.name for p in self.parameters}:
+            raise ValueError(f"Unknown parameter names: {unknown}")
 
-        unknown = set(values) - discrete_cols - continuous_cols
-        if unknown:
-            raise ValueError(f"Unknown comp-rep columns: {sorted(unknown)}")
-
-        disc_fixed = {k: v for k, v in values.items() if k in discrete_cols}
-        cont_fixed = {k: v for k, v in values.items() if k in continuous_cols}
-
-        for existing, new in [
-            (self.discrete._fixed_values, disc_fixed),
-            (self.continuous._fixed_values, cont_fixed),
-        ]:
-            conflicts = {
-                k for k in existing.keys() & new.keys() if existing[k] != new[k]
-            }
-            if conflicts:
-                raise ValueError(
-                    f"Conflicting fixed values for columns {sorted(conflicts)}."
-                )
-
-        new_discrete = evolve(self.discrete)
-        new_discrete._fixed_values = {**self.discrete._fixed_values, **disc_fixed}
-
-        new_continuous = evolve(self.continuous)
-        new_continuous._fixed_values = {
-            **self.continuous._fixed_values,
-            **cont_fixed,
+        discrete = evolve(self.discrete)
+        discrete._fixed_values = {
+            k: v for k, v in values.items() if k in self.discrete.parameter_names
         }
 
-        return evolve(self, discrete=new_discrete, continuous=new_continuous)
+        continuous = evolve(self.continuous)
+        continuous._fixed_values = {
+            k: v for k, v in values.items() if k in self.continuous.parameter_names
+        }
+
+        return evolve(self, discrete=discrete, continuous=continuous)
+
+    def _comp_rep_to_exp_rep(self, comp_rep: dict[str, float]) -> dict[str, Any]:
+        """Convert a single comp-rep point to experimental representation.
+
+        For discrete parameters, the matching exp-rep row is looked up from the
+        candidate set. For continuous parameters, values are read directly since
+        their comp-rep equals their exp-rep.
+
+        Args:
+            comp_rep: A mapping from comp-rep column names to their values.
+
+        Returns:
+            A mapping from parameter names to their experimental-representation values.
+        """
+        result: dict[str, Any] = {}
+
+        if not self.discrete.is_empty:
+            disc_comp_cols = list(self.discrete.comp_rep_columns)
+            query = pd.DataFrame([{c: comp_rep[c] for c in disc_comp_cols}])
+            matched = self.discrete.comp_rep[disc_comp_cols].merge(
+                query, on=disc_comp_cols, how="inner"
+            )
+            result.update(
+                {
+                    str(k): v
+                    for k, v in self.discrete.exp_rep.loc[matched.index].iloc[0].items()
+                }
+            )
+
+        if not self.continuous.is_empty:
+            result.update(
+                {name: comp_rep[name] for name in self.continuous.parameter_names}
+            )
+
+        return result
 
     def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
         """Draw random parameter configurations from the search space.
