@@ -12,6 +12,7 @@ from attrs import define, field
 from attrs.validators import gt, instance_of, min_len
 from typing_extensions import override
 
+from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.optimizers.base import OptimizerProtocol
 from baybe.parameters.selectors import ParameterSelectorProtocol, to_parameter_selector
 from baybe.searchspace import SearchSpace
@@ -83,8 +84,12 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
             for step in self.steps
             if any(step.selector(p) for p in searchspace.parameters)
         ]
-        n_skipped = len(self.steps) - len(active_steps)
-        if n_skipped:
+        if not active_steps:
+            raise IncompatibleSearchSpaceError(
+                "No optimization can be performed because none of the specified steps "
+                "matched any parameter in the given search space."
+            )
+        if n_skipped := len(self.steps) - len(active_steps):
             warnings.warn(
                 f"{n_skipped} of {len(self.steps)} optimization step(s) matched no "
                 "parameters in the given search space and will be skipped.",
