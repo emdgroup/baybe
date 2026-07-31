@@ -21,6 +21,8 @@ if TYPE_CHECKING:
 class EncoderProtocol(Protocol):
     """Type protocol specifying the interface encoders need to implement."""
 
+    # Use slots so that derived classes also remain slotted
+    # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
     __slots__ = ()
 
     def __call__(self, series: IntoSeries, /) -> IntoDataFrame:
