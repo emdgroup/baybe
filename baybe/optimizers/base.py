@@ -14,14 +14,14 @@ from typing import (
 from baybe.searchspace import SearchSpace, SubspaceContinuous, SubspaceDiscrete
 
 TSpace = TypeVar("TSpace", bound=SearchSpace | SubspaceDiscrete | SubspaceContinuous)
-"The type of space to optimize over."
+"""The type of space to optimize over."""
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from torch import Tensor
 
     ScoreFunction: TypeAlias = BoAcquisitionFunction
-    "Type alias for a callable to be optimized."
+    """Type alias for a callable to be optimized."""
 
 
 @runtime_checkable
