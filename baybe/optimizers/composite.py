@@ -21,9 +21,7 @@ from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
 
 if TYPE_CHECKING:
-    from torch import Tensor
-
-    from baybe.optimizers.base import ScoreFunction
+    from baybe.optimizers.base import OptimizationResult, ScoreFunction
 
 
 @define(frozen=True)
@@ -49,7 +47,7 @@ class OptimizationSchedule(ABC, SerialMixin):
     @abstractmethod
     def __call__(
         self, searchspace: SearchSpace
-    ) -> Generator[OptimizationStep, tuple[Tensor, Tensor], None]:
+    ) -> Generator[OptimizationStep, OptimizationResult, None]:
         """Yield optimization steps to apply in sequence.
 
         Each time the generator yields an :class:`OptimizationStep`, the caller
@@ -80,7 +78,7 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
     @override
     def __call__(
         self, searchspace: SearchSpace
-    ) -> Generator[OptimizationStep, tuple[Tensor, Tensor], None]:
+    ) -> Generator[OptimizationStep, OptimizationResult, None]:
         """Yield steps in round-robin for ``n_cycles`` cycles."""
         for _ in range(self.n_cycles):
             for step in self.steps:
@@ -117,9 +115,9 @@ class SequentialOptimizer(OptimizerProtocol):
     def _optimize_single_point(
         self,
         searchspace: SearchSpace,
-        schedule_gen: Generator[OptimizationStep, tuple[Tensor, Tensor], None],
+        schedule_gen: Generator[OptimizationStep, OptimizationResult, None],
         score_function: ScoreFunction,
-    ) -> tuple[Tensor, Tensor]:
+    ) -> OptimizationResult:
         """Optimize a single point.
 
         Args:
@@ -165,7 +163,7 @@ class SequentialOptimizer(OptimizerProtocol):
         batch_size: int,
         score_function: ScoreFunction,
         searchspace: SearchSpace,
-    ) -> tuple[Tensor, Tensor]:
+    ) -> OptimizationResult:
         import torch
 
         n_cols = len(searchspace.comp_rep_columns)

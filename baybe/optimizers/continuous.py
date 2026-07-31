@@ -16,9 +16,7 @@ from baybe.settings import AutoBool
 from baybe.utils.basic import flatten
 
 if TYPE_CHECKING:
-    from torch import Tensor
-
-    from baybe.optimizers.base import ScoreFunction
+    from baybe.optimizers.base import OptimizationResult, ScoreFunction
 
 
 @define(kw_only=True)
@@ -43,7 +41,7 @@ class ContinuousOptimizer(OptimizerProtocol):
         batch_size: int,
         score_function: ScoreFunction,
         searchspace: SearchSpace,
-    ) -> tuple[Tensor, Tensor]:
+    ) -> OptimizationResult:
         import torch
         from botorch.optim import optimize_acqf
 

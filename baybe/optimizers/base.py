@@ -13,6 +13,13 @@ if TYPE_CHECKING:
     ScoreFunction: TypeAlias = BoAcquisitionFunction
     """Type alias for a callable to be optimized."""
 
+    OptimizationResult: TypeAlias = tuple[Tensor, Tensor]
+    """Type alias for the result of an optimization call.
+
+    The first tensor holds the optimal parameter configurations in computational
+    representation, the second holds the corresponding acquisition function scores.
+    """
+
 
 @runtime_checkable
 class OptimizerProtocol(Protocol):
@@ -24,7 +31,7 @@ class OptimizerProtocol(Protocol):
 
     def __call__(
         self, batch_size: int, score_function: ScoreFunction, searchspace: SearchSpace
-    ) -> tuple[Tensor, Tensor]:
+    ) -> OptimizationResult:
         """Optimize a given callable over the specified space.
 
         Args:
