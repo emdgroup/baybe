@@ -298,10 +298,14 @@ class SearchSpace(SerialMixin):
         """
         dfs: list[pd.DataFrame] = []
         if not self.discrete.is_empty:
-            dfs.append(self.discrete.exp_rep.sample(batch_size, replace=True))
+            dfs.append(
+                self.discrete.exp_rep.sample(batch_size, replace=True).reset_index(
+                    drop=True
+                )
+            )
         if not self.continuous.is_empty:
             dfs.append(self.continuous.sample_uniform(batch_size))
-        return pd.concat(dfs, axis=1, ignore_index=True)
+        return pd.concat(dfs, axis=1)
 
     @property
     def parameters(self) -> tuple[Parameter, ...]:
