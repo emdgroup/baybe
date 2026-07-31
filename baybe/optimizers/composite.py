@@ -5,48 +5,36 @@ from __future__ import annotations
 import gc
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Generator, Iterable
-from typing import TYPE_CHECKING, TypeAlias
+from collections.abc import Generator
+from typing import TYPE_CHECKING
 
 from attrs import define, field
 from attrs.validators import gt, instance_of, min_len
 from typing_extensions import override
 
 from baybe.optimizers.base import OptimizerProtocol
-from baybe.parameters.base import Parameter
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     to_parameter_selector,
 )
 from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
-from baybe.utils.validation import validate_optimizer_input
 
 if TYPE_CHECKING:
     from torch import Tensor
 
     from baybe.optimizers.base import ScoreFunction
 
-    ParameterIndicator: TypeAlias = (
-        str
-        | Collection[str]
-        | type[Parameter]
-        | Collection[type[Parameter]]
-        | ParameterSelectorProtocol
-    )
-    """The type of input that indicates which parameters to optimize."""
 
-    SearchSpacePart: TypeAlias = tuple[frozenset[str], OptimizerProtocol]
-    """Parameter names paired with the optimizer responsible for them."""
+@define(frozen=True)
+class OptimizationStep(SerialMixin):
+    """A parameter selector paired with the optimizer responsible for it."""
 
+    selector: ParameterSelectorProtocol = field(converter=to_parameter_selector)
+    """The selector identifying which parameters this component optimizes."""
 
-def _convert_components_to_selectors(
-    raw: Iterable[tuple[ParameterIndicator, OptimizerProtocol]],
-) -> tuple[tuple[ParameterSelectorProtocol, OptimizerProtocol], ...]:
-    """Convert raw component specifications to normalized selector-optimizer pairs."""
-    return tuple(
-        (to_parameter_selector(selector), optimizer) for selector, optimizer in raw
-    )
+    optimizer: OptimizerProtocol = field(validator=instance_of(OptimizerProtocol))
+    """The optimizer to apply to the selected parameters."""
 
 
 @define(frozen=True, slots=False)
@@ -55,41 +43,39 @@ class CompositionStrategy(ABC, SerialMixin):
 
     A composition strategy controls both which parts of the search space exist
     and the order in which they are optimized. It owns the component definitions
-    (parameter selectors paired with optimizers) and yields resolved
-    ``(parameter_names, optimizer)`` pairs on each iteration.
+    (parameter selectors paired with optimizers) and yields
+    :class:`OptimizationStep` instances on each iteration.
     """
 
     @abstractmethod
     def __call__(
         self, space: SearchSpace
-    ) -> Generator[SearchSpacePart, tuple[Tensor, Tensor], None]:
-        """Yield search space parts to optimize in sequence.
+    ) -> Generator[OptimizationStep, tuple[Tensor, Tensor], None]:
+        """Yield optimizer components to apply in sequence.
 
-        Each time the generator yields a ``(parameter_names, optimizer)`` pair,
-        the caller optimizes that part while holding all other parameters fixed.
-        After each optimization step, the caller sends back the resulting
-        ``(point, score)`` pair via :meth:`~Generator.send`. The strategy may
-        use this feedback to decide which part to optimize next (e.g., adaptive
-        strategies) or ignore it (e.g., fixed schedules). The generator
-        terminates by returning when the optimization sequence is complete.
+        Each time the generator yields an :class:`OptimizationStep`, the caller
+        resolves the selector against the space, optimizes the free parameters while
+        holding all others fixed, and sends back the resulting ``(point, score)`` pair
+        via :meth:`~Generator.send`. The strategy may use this feedback to decide which
+        component to yield next (e.g., adaptive strategies) or ignore it (e.g., fixed
+        schedules). The generator terminates by returning when the sequence is complete.
 
         Args:
-            space: The full search space to partition.
+            space: The full search space to optimize over.
 
         Yields:
-            The next (parameter names, optimizer) pair to optimize.
+            The next optimizer component to apply.
         """
 
 
 @define(frozen=True, slots=False, kw_only=True)
 class AlternatingCompositionStrategy(CompositionStrategy):
-    """Cycle through parts in round-robin for a fixed number of iterations."""
+    """Cycle through components in round-robin for a fixed number of iterations."""
 
-    components: tuple[tuple[ParameterSelectorProtocol, OptimizerProtocol], ...] = field(
-        converter=_convert_components_to_selectors,
-        validator=[min_len(1), validate_optimizer_input],
+    components: tuple[OptimizationStep, ...] = field(
+        validator=min_len(1),
     )
-    """Parameter selectors and their respective optimizers to be combined."""
+    """The optimizer components to be cycled through."""
 
     n_iterations: int = field(default=3, validator=[instance_of(int), gt(0)])
     """Number of full alternating cycles."""
@@ -97,11 +83,13 @@ class AlternatingCompositionStrategy(CompositionStrategy):
     @override
     def __call__(
         self, space: SearchSpace
-    ) -> Generator[SearchSpacePart, tuple[Tensor, Tensor], None]:
-        """Yield parts in round-robin for ``n_iterations`` cycles."""
+    ) -> Generator[OptimizationStep, tuple[Tensor, Tensor], None]:
+        """Yield components in round-robin for ``n_iterations`` cycles."""
         for _ in range(self.n_iterations):
-            for selector, optimizer in self.components:
-                selected_names = {p.name for p in space.parameters if selector(p)}
+            for component in self.components:
+                selected_names = {
+                    p.name for p in space.parameters if component.selector(p)
+                }
                 if not selected_names:
                     warnings.warn(
                         "A parameter selector matched no parameters in the "
@@ -111,7 +99,7 @@ class AlternatingCompositionStrategy(CompositionStrategy):
                         stacklevel=2,
                     )
                     continue
-                yield (frozenset(selected_names), optimizer)
+                yield component
 
 
 @define(frozen=True, slots=False, kw_only=True)
@@ -148,14 +136,14 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     def _optimize_single_point(
         self,
         space: SearchSpace,
-        strategy_gen: Generator[SearchSpacePart, tuple[Tensor, Tensor], None],
+        strategy_gen: Generator[OptimizationStep, tuple[Tensor, Tensor], None],
         score_function: ScoreFunction,
     ) -> tuple[Tensor, Tensor]:
         """Optimize a single point.
 
         Args:
             space: The full search space.
-            strategy_gen: A generator yielding (parameter names, optimizer) pairs.
+            strategy_gen: A generator yielding optimizer components.
             score_function: The callable to optimize.
 
         Returns:
@@ -164,13 +152,14 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
         comp_rep_columns = space.comp_rep_columns
         current_point = self._sample_initial_point(space)
 
-        param_names, optimizer = next(strategy_gen)
+        component = next(strategy_gen)
 
         while True:
+            selected_names = {p.name for p in space.parameters if component.selector(p)}
             free_columns = frozenset(
                 col
                 for p in space.parameters
-                if p.name in param_names
+                if p.name in selected_names
                 for col in p.comp_rep_columns
             )
             fixed_values = {
@@ -180,11 +169,13 @@ class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
             }
             constrained_space = space._fix_parameters(fixed_values)
 
-            result_point, result_score = optimizer(1, score_function, constrained_space)
+            result_point, result_score = component.optimizer(
+                1, score_function, constrained_space
+            )
             current_point = result_point.squeeze(0)
 
             try:
-                param_names, optimizer = strategy_gen.send((result_point, result_score))
+                component = strategy_gen.send((result_point, result_score))
             except StopIteration:
                 break
 
