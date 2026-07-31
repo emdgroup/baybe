@@ -62,7 +62,7 @@ def test_callable_not_retried_after_backend_cached():
 
     encoder = _Encoder(encoder=counting_encoder)
 
-    # The first call my trigger several inner calls to determine the backend
+    # The first call may trigger several inner calls to determine the backend
     encoder(_nw_series())
     initial_call_count = call_count
     assert initial_call_count > 0

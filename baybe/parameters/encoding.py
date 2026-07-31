@@ -32,7 +32,7 @@ class EncoderProtocol(Protocol):
             series: A series in an arbitrary backend, containing the values to encode.
 
         Returns:
-            A dataframe containing thee encoded representations of the input values, in
+            A dataframe containing the encoded representations of the input values, in
             the same backend as the input series and with the same row order.
         """
 
