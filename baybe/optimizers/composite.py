@@ -67,7 +67,7 @@ class OptimizationSchedule(ABC, SerialMixin):
         """
 
 
-@define(frozen=True, slots=False, kw_only=True)
+@define(frozen=True)
 class CyclicOptimizationSchedule(OptimizationSchedule):
     """Cycle through steps in round-robin for a fixed number of cycles."""
 
@@ -97,7 +97,7 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
                 yield step
 
 
-@define(frozen=True, slots=False, kw_only=True)
+@define(frozen=True)
 class SequentialOptimizer(OptimizerProtocol[SearchSpace]):
     """Optimizer that combines multiple optimizers over different search space parts.
 
