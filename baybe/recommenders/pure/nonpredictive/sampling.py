@@ -34,15 +34,11 @@ class RandomRecommender(NonPredictiveRecommender):
         candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
-        is_hybrid = searchspace.type is SearchSpaceType.HYBRID
-
-        # Sample continuous part if applicable
-        if is_hybrid or searchspace.type is SearchSpaceType.CONTINUOUS:
-            cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
-            if searchspace.type is SearchSpaceType.CONTINUOUS:
-                return cont_random
+        if searchspace.type is SearchSpaceType.CONTINUOUS:
+            return searchspace.continuous.sample_uniform(batch_size=batch_size)
 
         # Restrict to a random subset if subset-generating constraints are present
+        is_hybrid = searchspace.type is SearchSpaceType.HYBRID
         if searchspace.discrete.n_subsets > 0:
             masks = searchspace.discrete.sample_subset_masks(
                 candidates_exp,
@@ -65,6 +61,7 @@ class RandomRecommender(NonPredictiveRecommender):
         if not is_hybrid:
             return disc_random
 
+        cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
         cont_random.index = disc_random.index
         return pd.concat([disc_random, cont_random], axis=1)
 
