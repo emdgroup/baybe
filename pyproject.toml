@@ -191,7 +191,6 @@ packages = ["baybe"]
 exclude-newer = "7 days"
 
 [tool.pyrefly]
-preset = "legacy"
 project-includes = ["baybe"]
 project-excludes = [
     "baybe/recommenders/naive.py",
