@@ -140,6 +140,11 @@ def farthest_point_sampling(
     ):
         inv_sort_idx = np.argsort(sort_idx)
         selected_point_indices = [inv_sort_idx[x] for x in initialization]
+    else:
+        raise ValueError(
+            f"Unknown initialization type. Expected 'farthest', 'random', or a "
+            f"collection of integers. Provided: {initialization=}"
+        )
 
     # Initialize the list of remaining points
     remaining_point_indices = list(range(n_points))
