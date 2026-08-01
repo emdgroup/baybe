@@ -16,6 +16,7 @@ from attrs import Attribute, Converter, Factory, define, field, fields
 from attrs.setters import validate
 from attrs.validators import instance_of
 from attrs.validators import optional as optional_v
+from typing_extensions import override
 
 from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
 from baybe.exceptions import NotAllowedError, OptionalImportError
@@ -274,10 +275,12 @@ class Settings(_SlottedContextDecorator):
             }
         )
 
+    @override
     def __enter__(self) -> Settings:
         self.activate()
         return self
 
+    @override
     def __exit__(self, *args) -> None:
         self.restore_previous()
 
