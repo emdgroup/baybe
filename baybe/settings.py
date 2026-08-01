@@ -402,13 +402,12 @@ class Settings(_SlottedContextDecorator):
 
     def overwrite(self, target: Settings, keep_random_state: bool = False) -> None:
         """Overwrite the settings of another :class:`Settings` object."""
-        if keep_random_state:
-            state = _RandomState()
+        state = _RandomState() if keep_random_state else None
 
         for fld in self._settings_attributes:
             setattr(target, fld.name, getattr(self, fld.name))
 
-        if keep_random_state:
+        if state is not None:
             state.activate()
 
 
