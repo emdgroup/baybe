@@ -316,11 +316,12 @@ class ICMKernelFactory(_MetaKernelFactory):
         all_idcs = set(range(len(searchspace.comp_rep_columns)))
         allowed_task_idcs = {searchspace.task_idx}
         allowed_base_idcs = all_idcs - allowed_task_idcs
+        # TODO[typing]: https://github.com/facebook/pyrefly/issues/3988
         base_idcs = (
-            set(d.tolist()) if (d := base_kernel.active_dims) is not None else all_idcs
+            set(d.tolist()) if (d := base_kernel.active_dims) is not None else all_idcs  # pyrefly: ignore[not-callable]
         )
         task_idcs = (
-            set(d.tolist()) if (d := task_kernel.active_dims) is not None else all_idcs
+            set(d.tolist()) if (d := task_kernel.active_dims) is not None else all_idcs  # pyrefly: ignore[not-callable]
         )
 
         if not base_idcs <= allowed_base_idcs:
