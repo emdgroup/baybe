@@ -195,7 +195,6 @@ exclude-newer = "7 days"
 project-includes = ["baybe"]
 project-excludes = [
     "baybe/recommenders/naive.py",
-    "baybe/recommenders/pure/nonpredictive/**",
     "baybe/simulation/**",
     "baybe/utils/dataframe.py",
     "baybe/utils/clustering_algorithms/third_party/kmedoids.py",
