@@ -78,6 +78,12 @@ class _SlottedContextDecorator:
     def _recreate_cm(self):
         return self
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info: object) -> bool | None:
+        return None
+
     def __call__(self, func):
         @wraps(func)
         def inner(*args, **kwds):
