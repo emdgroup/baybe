@@ -71,7 +71,7 @@ class RandomRecommender(NonPredictiveRecommender):
         return to_string(self.__class__.__name__, *fields)
 
 
-class FPSInitialization(Enum):
+class FPSInitialization(str, Enum):
     """Initialization methods for farthest point sampling."""
 
     FARTHEST = "farthest"
