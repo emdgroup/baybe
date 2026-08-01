@@ -466,17 +466,16 @@ class NumericalTarget(Target, SerialMixin):
             cutoffs = Interval.create(cutoffs)
             match_value = cutoffs.center
 
-        if sum(x is not None for x in (cutoffs, width, margins)) != 1:
-            raise ValueError(
-                "Exactly one of 'cutoffs', 'width', or 'margins' must be provided."
-            )
-
         if cutoffs is not None:
             transformation = TriangularTransformation(cutoffs, match_value)
         elif width is not None:
             transformation = TriangularTransformation.from_width(match_value, width)
         elif margins is not None:
             transformation = TriangularTransformation.from_margins(match_value, margins)
+        else:
+            raise ValueError(
+                "Exactly one of 'cutoffs', 'width', or 'margins' must be provided."
+            )
 
         return cls(
             name, transformation, minimize=mismatch_instead, metadata=metadata
