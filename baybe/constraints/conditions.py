@@ -165,10 +165,10 @@ class ThresholdCondition(Condition):
                     f"or <= 0.0, but was {value}."
                 )
 
-    def _make_operator_function(self):
+    def _make_operator_function(self) -> Callable[..., Any]:
         """Generate a function using operators to filter out undesired rows."""
 
-        def evaluate(x: ArrayLike, /, **kwargs) -> Callable:
+        def evaluate(x: ArrayLike, /, **kwargs) -> Any:
             """Evaluate the condition on a given input."""
             return _threshold_operators[self.operator](x, self.threshold, **kwargs)
 
