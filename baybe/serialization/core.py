@@ -11,6 +11,7 @@ from typing import (
     Any,
     NoReturn,
     TypeVar,
+    cast,
     get_args,
     get_type_hints,
 )
@@ -134,7 +135,7 @@ def make_base_structure_hook(base: type[_T]):
         # apply the same parameters to subclass (e.g., SubClass[Kernel])
         if type_args := get_args(cls):
             try:
-                subclass = subclass[type_args]
+                subclass = cast(Any, subclass)[type_args]
             except TypeError:
                 # Subclass is not a generic class --> use it as is
                 pass
