@@ -215,7 +215,7 @@ class BotorchRecommender(BayesianRecommender):
 
         points, _ = recommend_continuous_torch(self, subspace_continuous, batch_size)
 
-        return pd.DataFrame(points, columns=subspace_continuous.parameter_names)
+        return pd.DataFrame(points.numpy(), columns=subspace_continuous.parameter_names)
 
     @override
     def _recommend_hybrid(

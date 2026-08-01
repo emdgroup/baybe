@@ -570,7 +570,7 @@ class SubspaceContinuous(SerialMixin):
                 batch_size, bounds_tensor
             )
 
-        return pd.DataFrame(points, columns=self.parameter_names)
+        return pd.DataFrame(points.numpy(), columns=self.parameter_names)
 
     def _sample_from_polytope_with_interpoint_constraints(
         self, batch_size: int, bounds: Tensor
