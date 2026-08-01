@@ -200,4 +200,7 @@ project-excludes = [
     "baybe/utils/clustering_algorithms/third_party/kmedoids.py",
 ]
 replace-imports-with-any = ["sklearn.*", "shap"]
-errors = {unused-ignore = true}
+
+[tool.pyrefly.errors]
+unused-ignore = "error"
+missing-override-decorator = "error"
