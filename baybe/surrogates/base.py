@@ -151,7 +151,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
     @staticmethod
     def _make_parameter_scaler_factory(
-        parameter: Parameter,
+        parameter: Parameter, /
     ) -> type[InputTransform] | None:
         """Return the scaler factory to be used for the given parameter.
 

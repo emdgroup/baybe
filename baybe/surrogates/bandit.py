@@ -21,6 +21,7 @@ from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
+    from botorch.models.transforms.input import InputTransform
     from botorch.posteriors import Posterior, TorchPosterior
     from torch import Tensor
 
@@ -115,7 +116,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
 
     @override
     @staticmethod
-    def _make_parameter_scaler_factory(_: Parameter):
+    def _make_parameter_scaler_factory(_: Parameter, /) -> type[InputTransform] | None:
         # Due to enforced one-hot encoding, no input scaling is needed.
         return None
 
