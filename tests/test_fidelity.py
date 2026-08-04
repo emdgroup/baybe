@@ -1,5 +1,7 @@
 """Tests for fidelity parameters."""
 
+import sys
+
 import pandas as pd
 import pytest
 from gpytorch.likelihoods import GaussianLikelihood
@@ -31,10 +33,10 @@ searchspace_cat_fid = SearchSpace.from_product([_design_param, _cat_fid_param])
 
 objective = NumericalTarget("t").to_objective()
 measurements_num_fid = create_fake_input(
-    searchspace_num_fid.parameters, objective.targets, n_rows=20
+    searchspace_num_fid.parameters, objective.targets, n_rows=3
 )
 measurements_cat_fid = create_fake_input(
-    searchspace_cat_fid.parameters, objective.targets, n_rows=20
+    searchspace_cat_fid.parameters, objective.targets, n_rows=3
 )
 
 
@@ -156,7 +158,7 @@ def test_surrogate_rejects_index_only_searchspace(parameters):
     """GP surrogates raise for search spaces without regular model inputs."""
     searchspace = SearchSpace.from_product(parameters)
     measurements = create_fake_input(
-        searchspace.parameters, objective.targets, n_rows=20
+        searchspace.parameters, objective.targets, n_rows=3
     )
 
     with pytest.raises(IncompatibleSurrogateError, match="non-task/non-fidelity"):
@@ -193,7 +195,16 @@ def test_standard_gp_fit_numerical_fidelity():
 
 @pytest.mark.parametrize(
     "preset",
-    list(GaussianProcessPreset),
+    [
+        param(
+            preset,
+            marks=pytest.mark.skipif(
+                preset is GaussianProcessPreset.BOTORCH and sys.version_info < (3, 11),
+                reason="BoTorch >=0.18.0 requires Python >=3.11.",
+            ),
+        )
+        for preset in GaussianProcessPreset
+    ],
     ids=lambda preset: preset.value,
 )
 def test_gp_presets_fit_categorical_fidelity(preset):
