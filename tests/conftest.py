@@ -32,9 +32,8 @@ from baybe.constraints import (
     ContinuousLinearConstraint,
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
+    DiscreteDegeneracyConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteLinkedParametersConstraint,
-    DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
     DiscreteSelectionConstraint,
@@ -506,7 +505,7 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             ],
             exclude=True,
         ),
-        "Constraint_7": DiscreteNoLabelDuplicatesConstraint(
+        "Constraint_7": DiscreteDegeneracyConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
         ),
         "Constraint_8": DiscreteSumConstraint(
@@ -548,8 +547,10 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             min_cardinality=1,
             max_cardinality=2,
         ),
-        "Constraint_15": DiscreteLinkedParametersConstraint(
+        "Constraint_15": DiscreteDegeneracyConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+            n_max_occurrences=2,
+            exclude=True,
         ),
         "ContiConstraint_1": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
