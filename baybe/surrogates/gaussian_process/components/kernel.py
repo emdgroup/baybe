@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
 from attrs import define, field, fields
-from attrs.converters import optional
-from attrs.validators import is_callable
+from attrs.converters import optional as optional_c
+from attrs.validators import is_callable, optional
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSearchSpaceError
@@ -67,7 +67,7 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
     """The parameter kinds supported by the kernel factory."""
 
     parameter_selector: ParameterSelectorProtocol | None = field(
-        default=None, converter=optional(to_parameter_selector)
+        default=None, converter=optional_c(to_parameter_selector)
     )
     """An optional selector to specify which parameters are considered by the kernel."""
 
@@ -267,12 +267,19 @@ class ICMKernelFactory(_MetaKernelFactory):
     )
     """The factory for the base kernel operating on numerical input features."""
 
-    task_kernel_factory: KernelFactoryProtocol = field(
+    task_kernel_factory: KernelFactoryProtocol | None = field(
         alias="task_kernel_or_factory",
-        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),  # type: ignore[misc]
-        validator=is_callable(),
+        default=None,
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.KERNEL)  # type: ignore[misc]
+        ),
+        validator=optional(is_callable()),
     )
-    """The factory for the task kernel operating on the task indices."""
+    """The factory for the index kernel operating on the task/fidelity indices.
+
+    If ``None``, the appropriate use-case default is resolved at call time based on the
+    search space (a task kernel for transfer learning, a categorical fidelity kernel for
+    multi-fidelity)."""
 
     @base_kernel_factory.default
     def _default_base_kernel_factory(self) -> KernelFactoryProtocol:
@@ -285,16 +292,6 @@ class ICMKernelFactory(_MetaKernelFactory):
                 (TaskParameter, CategoricalFidelityParameter),
                 exclude=True,
             )
-        )
-
-    @task_kernel_factory.default
-    def _default_task_kernel_factory(self) -> KernelFactoryProtocol:
-        from baybe.surrogates.gaussian_process.presets.baybe import (
-            _BayBEIndexKernelFactory,
-        )
-
-        return _BayBEIndexKernelFactory(
-            TypeSelector((TaskParameter, CategoricalFidelityParameter))
         )
 
     @base_kernel_factory.validator
@@ -320,22 +317,53 @@ class ICMKernelFactory(_MetaKernelFactory):
                 f"must support only task or fidelity parameters."
             )
 
+    @staticmethod
+    def _default_index_factory(is_task: bool) -> KernelFactoryProtocol:
+        """Return the use-case default index kernel factory.
+
+        Args:
+            is_task: Whether the index kernel operates on a task parameter (transfer
+                learning) rather than a categorical fidelity parameter.
+
+        Returns:
+            The default index kernel factory for the respective use case.
+        """
+        from baybe.surrogates.gaussian_process.presets.baybe import (
+            _BayBECategoricalFidelityKernelFactory,
+            _BayBETaskKernelFactory,
+        )
+
+        return (
+            _BayBETaskKernelFactory()
+            if is_task
+            else (_BayBECategoricalFidelityKernelFactory())
+        )
+
     @override
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-        if searchspace.task_idx is None and (
+        is_task = searchspace.task_type is SearchSpaceTaskType.CATEGORICALMULTITASK
+        is_categorical_fidelity = (
             searchspace.fidelity_type
-            is not SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
-        ):
+            is SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+        )
+        if not (is_task or is_categorical_fidelity):
             raise IncompatibleSearchSpaceError(
                 f"'{type(self).__name__}' can only be used with a searchspace that "
                 f"contains a '{TaskParameter.__name__}' or a "
                 f"'{CategoricalFidelityParameter.__name__}'."
             )
 
+        # Resolve the use-case default index kernel factory when none is provided.
+        # Exactly one of the two index cases holds here (guaranteed by the guard above
+        # and by the search space validation forbidding combined task/fidelity spaces).
+        index_kernel_factory = self.task_kernel_factory or self._default_index_factory(
+            is_task
+        )
+
         base_kernel = self.base_kernel_factory(searchspace, objective, measurements)
-        index_kernel = self.task_kernel_factory(searchspace, objective, measurements)
+        index_kernel = index_kernel_factory(searchspace, objective, measurements)
         if isinstance(base_kernel, Kernel):
             base_kernel = base_kernel.to_gpytorch(searchspace)
         if isinstance(index_kernel, Kernel):

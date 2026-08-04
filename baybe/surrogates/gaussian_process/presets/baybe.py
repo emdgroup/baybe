@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import math
+from abc import ABC, abstractmethod
 from itertools import chain
 from typing import TYPE_CHECKING, ClassVar, TypeVar
 
@@ -16,13 +17,18 @@ from baybe.kernels.basic import PositiveIndexKernel
 from baybe.objectives.base import Objective
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import _ParameterKind
+from baybe.parameters.fidelity import CategoricalFidelityParameter
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
     to_parameter_selector,
 )
 from baybe.parameters.substance import SubstanceParameter
-from baybe.searchspace.core import SearchSpace, SearchSpaceFidelityType
+from baybe.searchspace.core import (
+    SearchSpace,
+    SearchSpaceFidelityType,
+    SearchSpaceTaskType,
+)
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     FitCriterionFactoryProtocol,
@@ -204,20 +210,49 @@ BayBEKernelFactory = _enable_index_kernel(
 
 
 @define
-class _BayBEIndexKernelFactory(_PureKernelFactory):
-    """The default index kernel factory for GP surrogates.
+class _BayBEIndexKernelFactory(_PureKernelFactory, ABC):
+    """Shared core for BayBE index kernel factories.
 
-    Handles both task parameters (transfer learning) and categorical fidelity
-    parameters (multi-fidelity), which both use a :class:`~baybe.kernels.basic.
-    PositiveIndexKernel` to model free-form correlations between their levels.
+    Transfer learning (task parameters) and categorical multi-fidelity (categorical
+    fidelity parameters) both model free-form correlations between their index levels
+    via a :class:`~baybe.kernels.basic.PositiveIndexKernel`. This base captures that
+    shared construction, while subclasses specialize the supported parameter kind, the
+    default parameter selector, and the number of index levels. The fact that both
+    use cases currently map to the same kernel architecture is incidental and must not
+    leak into a shared use-case interface.
     """
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
-    _supported_parameter_kinds: ClassVar[_ParameterKind] = (
-        _ParameterKind.TASK | _ParameterKind.FIDELITY
-    )
+    @override
+    def _make(
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+    ) -> Kernel:
+        n_index = self._n_index(searchspace)
+        return PositiveIndexKernel(
+            num_tasks=n_index,
+            rank=n_index,
+            parameter_names=self.get_parameter_names(searchspace),
+        )
+
+    @abstractmethod
+    def _n_index(self, searchspace: SearchSpace) -> int:
+        """Return the number of index levels handled by the factory.
+
+        Args:
+            searchspace: The search space.
+
+        Returns:
+            The number of index levels.
+        """
+
+
+@define
+class _BayBETaskKernelFactory(_BayBEIndexKernelFactory):
+    """The default task (transfer learning) index kernel factory for GP surrogates."""
+
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.TASK
     # See base class.
 
     parameter_selector: ParameterSelectorProtocol | None = field(
@@ -227,19 +262,26 @@ class _BayBEIndexKernelFactory(_PureKernelFactory):
     # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
-    def _make(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
-    ) -> Kernel:
-        n_index = (
-            searchspace.n_tasks
-            if searchspace.task_idx is not None
-            else searchspace.n_fidelities
-        )
-        return PositiveIndexKernel(
-            num_tasks=n_index,
-            rank=n_index,
-            parameter_names=self.get_parameter_names(searchspace),
-        )
+    def _n_index(self, searchspace: SearchSpace) -> int:
+        return searchspace.n_tasks
+
+
+@define
+class _BayBECategoricalFidelityKernelFactory(_BayBEIndexKernelFactory):
+    """The default categorical multi-fidelity index kernel factory for GP surrogates."""
+
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.FIDELITY
+    # See base class.
+
+    parameter_selector: ParameterSelectorProtocol | None = field(
+        factory=lambda: TypeSelector([CategoricalFidelityParameter]),
+        converter=to_parameter_selector,
+    )
+    # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
+
+    @override
+    def _n_index(self, searchspace: SearchSpace) -> int:
+        return searchspace.n_fidelities
 
 
 @define
@@ -286,11 +328,11 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> FitCriterion:
-        # Use LOO whenever the model uses an IndexKernel structure — i.e., for
+        # Use LOO whenever the model uses an index kernel structure — i.e., for
         # transfer learning (TaskParameter) and categorical multi-fidelity
         # (CategoricalFidelityParameter).
         uses_index_kernel = (
-            searchspace.task_idx is not None
+            searchspace.task_type is SearchSpaceTaskType.CATEGORICALMULTITASK
             or searchspace.fidelity_type
             is SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
         )

@@ -23,8 +23,9 @@ from baybe.surrogates.gaussian_process.components.kernel import (
 )
 from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEKernelFactory,
-    _BayBEIndexKernelFactory,
+    _BayBECategoricalFidelityKernelFactory,
     _BayBENumericalKernelFactory,
+    _BayBETaskKernelFactory,
 )
 from baybe.targets.numerical import NumericalTarget
 
@@ -42,22 +43,34 @@ _SELECT_ALL = lambda parameter: True  # noqa: E731
             id="regular_rejects_task",
         ),
         param(
-            _BayBEIndexKernelFactory(parameter_selector=_SELECT_ALL),
+            _BayBETaskKernelFactory(parameter_selector=_SELECT_ALL),
             [CategoricalParameter("cat", ["a", "b"])],
             IncompatibleSearchSpaceError,
             id="task_rejects_categorical",
         ),
         param(
-            _BayBEIndexKernelFactory(parameter_selector=_SELECT_ALL),
+            _BayBETaskKernelFactory(parameter_selector=_SELECT_ALL),
             [NumericalDiscreteParameter("num", [1, 2, 3])],
             IncompatibleSearchSpaceError,
             id="task_rejects_numerical_discrete",
         ),
         param(
-            _BayBEIndexKernelFactory(parameter_selector=_SELECT_ALL),
+            _BayBETaskKernelFactory(parameter_selector=_SELECT_ALL),
             [NumericalContinuousParameter("cont", (0, 1))],
             IncompatibleSearchSpaceError,
             id="task_rejects_numerical_continuous",
+        ),
+        param(
+            _BayBECategoricalFidelityKernelFactory(parameter_selector=_SELECT_ALL),
+            [TaskParameter("task", ["t1", "t2"])],
+            IncompatibleSearchSpaceError,
+            id="fidelity_rejects_task",
+        ),
+        param(
+            _BayBECategoricalFidelityKernelFactory(parameter_selector=_SELECT_ALL),
+            [NumericalDiscreteParameter("num", [1, 2, 3])],
+            IncompatibleSearchSpaceError,
+            id="fidelity_rejects_numerical_discrete",
         ),
         param(
             BayBEKernelFactory(),
@@ -108,7 +121,7 @@ def test_factory_parameter_kind_validation(factory, parameters, error):
 def test_enable_index_kernel_guard():
     """_enable_index_kernel raises when the factory already supports task/fidelity."""
     with pytest.raises(TypeError, match="already supports task or fidelity"):
-        _enable_index_kernel(_BayBEIndexKernelFactory)
+        _enable_index_kernel(_BayBETaskKernelFactory)
 
 
 _icm_guard_message = "contains a 'TaskParameter' or a 'CategoricalFidelityParameter'"
