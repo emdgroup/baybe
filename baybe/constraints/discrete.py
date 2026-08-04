@@ -293,84 +293,41 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
         return counts.list.first() <= self.n_max_occurrences
 
 
-class DiscreteNoLabelDuplicatesConstraint(DiscreteFilteringConstraint):
-    """Constraint class for keeping entries where all labels are unique.
+# >>>>>>>>>> Deprecation
+def DiscreteNoLabelDuplicatesConstraint(  # noqa: N802
+    *args, **kwargs
+) -> DiscreteDegeneracyConstraint:
+    """A ``DiscreteDegeneracyConstraint`` alias for backward compatibility."""  # noqa: D401
+    import warnings
 
-    This can be useful to remove entries that arise from e.g. a permutation invariance
-    as for instance here:
-
-    - A,B,C,D would be kept
-    - A,A,B,C would be removed
-    - A,A,B,B would be removed
-    - A,A,B,A would be removed
-    - A,C,A,C would be removed
-    - A,C,B,C would be removed
-    """
-
-    @override
-    def _can_evaluate(self, available: set[str], /) -> bool:
-        # exclude=False (keep all-distinct rows): a duplicate seen in a subset
-        # stays a duplicate, so rows can be dropped early.
-        # exclude=True (keep rows with a duplicate): a row that looks distinct so
-        # far may still gain a duplicate from a later column, so all parameters
-        # must be present first.
-        if self.exclude:
-            return self._required_parameters <= available
-        return len(available & set(self.parameters)) >= 2
-
-    @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        params = [p for p in self.parameters if p in df]
-        mask_good = df[params].nunique(axis=1) == len(params)
-
-        return df.index[mask_good]
-
-    @override
-    def _get_matching_rows_polars(self) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
-
-        expr = pl.concat_list(pl.col(self.parameters)).list.n_unique() == len(
-            self.parameters
-        )
-
-        return expr
+    warnings.warn(
+        "'DiscreteNoLabelDuplicatesConstraint' is deprecated and will be removed "
+        "in a future version. Use 'DiscreteDegeneracyConstraint' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return DiscreteDegeneracyConstraint(*args, **kwargs)
 
 
-@define
-class DiscreteLinkedParametersConstraint(DiscreteFilteringConstraint):
-    """Constraint class for linking the values of parameters.
+def DiscreteLinkedParametersConstraint(  # noqa: N802
+    parameters, *args, **kwargs
+) -> DiscreteDegeneracyConstraint:
+    """A ``DiscreteDegeneracyConstraint`` alias for backward compatibility."""  # noqa: D401
+    import warnings
 
-    This constraint type effectively allows generating parameter sets that relate to
-    the same underlying quantity, e.g. two parameters that represent the same molecule
-    using different encodings. Linking the parameters keeps only entries where all
-    parameter values are identical.
-    """
+    warnings.warn(
+        "'DiscreteLinkedParametersConstraint' is deprecated and will be removed "
+        "in a future version. Use 'DiscreteDegeneracyConstraint' with "
+        "'n_max_occurrences=len(parameters)-1' and 'exclude=True' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return DiscreteDegeneracyConstraint(
+        parameters, *args, n_max_occurrences=len(parameters) - 1, exclude=True, **kwargs
+    )
 
-    @override
-    def _can_evaluate(self, available: set[str], /) -> bool:
-        # exclude=False (keep all-identical rows): values that already differ in a
-        # subset stay different, so rows can be dropped early.
-        # exclude=True (keep non-identical rows): a row that looks identical so far
-        # may still differ once a later column is added, so all parameters must be
-        # present first.
-        if self.exclude:
-            return self._required_parameters <= available
-        return len(available & set(self.parameters)) >= 2
 
-    @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        params = [p for p in self.parameters if p in set(df.columns)]
-        mask_good = df[params].nunique(axis=1) == 1
-
-        return df.index[mask_good]
-
-    @override
-    def _get_matching_rows_polars(self) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
-
-        expr = pl.concat_list(pl.col(self.parameters)).list.n_unique() == 1
-
-        return expr
+# <<<<<<<<<< Deprecation
 
 
 @define
@@ -686,8 +643,7 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
 # effort to minimize total time in their sequential application
 DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscreteSelectionConstraint,
-    DiscreteNoLabelDuplicatesConstraint,
-    DiscreteLinkedParametersConstraint,
+    DiscreteDegeneracyConstraint,
     DiscreteSumConstraint,
     DiscreteProductConstraint,
     DiscreteCardinalityConstraint,
@@ -707,6 +663,15 @@ def _structure_constraint_compat(val: dict, cls: type) -> Constraint:
     if val.get(_TYPE_FIELD) == "DiscreteExcludeConstraint":
         val = dict(val)  # copy before mutating
         val[_TYPE_FIELD] = "DiscreteSelectionConstraint"
+        val.setdefault("exclude", True)
+    elif val.get(_TYPE_FIELD) == "DiscreteNoLabelDuplicatesConstraint":
+        val = dict(val)  # copy before mutating
+        val[_TYPE_FIELD] = "DiscreteDegeneracyConstraint"
+    elif val.get(_TYPE_FIELD) == "DiscreteLinkedParametersConstraint":
+        val = dict(val)  # copy before mutating
+        val[_TYPE_FIELD] = "DiscreteDegeneracyConstraint"
+        if (params := val.get("parameters")) is not None and len(params) >= 2:
+            val.setdefault("n_max_occurrences", len(params) - 1)
         val.setdefault("exclude", True)
     return make_base_structure_hook(cls)(val, cls)
 
