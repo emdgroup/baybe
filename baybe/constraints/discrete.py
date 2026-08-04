@@ -72,9 +72,11 @@ class DiscreteFilteringConstraint(DiscretePruningConstraint):
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
-        # Partial evaluation soundness depends on the combiner and the exclude flag.
-        # The "drop" predicate is monotone (safe for partial) iff
-        # (combiner == "OR") == self.exclude.
+        # A row can be dropped early during incremental construction only if a
+        # later column can never change that decision. This is the case exactly
+        # when (combiner == "OR") == exclude: an OR match, once found, stays;
+        # an AND failure, once found, stays. Otherwise, all parameters must be
+        # present first.
         present = available & set(self.parameters)
         if not present:
             return False
@@ -231,11 +233,11 @@ class DiscreteNoLabelDuplicatesConstraint(DiscretePruningConstraint):
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
-        # When exclude=False, duplicate detection on a subset is safe: duplicates
-        # in a subset will also be duplicates in the full set (monotone).
-        # When exclude=True, the predicate is non-monotone (a row all-distinct on
-        # a subset can gain a duplicate when more columns arrive), so all
-        # parameters are required.
+        # exclude=False (keep all-distinct rows): a duplicate seen in a subset
+        # stays a duplicate, so rows can be dropped early.
+        # exclude=True (keep rows with a duplicate): a row that looks distinct so
+        # far may still gain a duplicate from a later column, so all parameters
+        # must be present first.
         if self.exclude:
             return self._required_parameters <= available
         return len(available & set(self.parameters)) >= 2
@@ -270,10 +272,11 @@ class DiscreteLinkedParametersConstraint(DiscretePruningConstraint):
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
-        # When exclude=False, linked-parameter checking on a subset is safe: if
-        # values differ in a subset, they will also differ in the full set (monotone).
-        # When exclude=True, a row all-identical on a subset can become
-        # non-identical when more columns arrive (non-monotone), so all params needed.
+        # exclude=False (keep all-identical rows): values that already differ in a
+        # subset stay different, so rows can be dropped early.
+        # exclude=True (keep non-identical rows): a row that looks identical so far
+        # may still differ once a later column is added, so all parameters must be
+        # present first.
         if self.exclude:
             return self._required_parameters <= available
         return len(available & set(self.parameters)) >= 2
@@ -431,8 +434,9 @@ class DiscretePermutationInvarianceConstraint(DiscretePruningConstraint):
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
-        # Under exclude=True, partial evaluation is non-monotone (canonical
-        # representatives can change), so all parameters are required.
+        # With exclude=True we keep the duplicate permutations. Which row is
+        # the canonical one can still change as later columns are added, so all
+        # parameters must be present before deciding.
         if self.exclude:
             return self._required_parameters <= available
         # When dependencies are present, partial permutation dedup is unsafe:
@@ -574,9 +578,9 @@ class DiscreteCardinalityConstraint(DiscretePruningConstraint, CardinalityConstr
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
-        # Under exclude=True, the "satisfies bounds" predicate is non-monotone
-        # (nonzero count can grow, flipping a row from within-bounds to
-        # out-of-bounds), so all parameters are required.
+        # With exclude=True we keep the rows violating the bounds. Whether a row
+        # satisfies the bounds can still change as later columns are added (the
+        # nonzero count only grows), so all parameters must be present first.
         if self.exclude:
             return self._required_parameters <= available
         # The max-cardinality check is safe on any non-empty subset: the
