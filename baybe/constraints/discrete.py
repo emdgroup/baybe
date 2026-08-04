@@ -89,7 +89,7 @@ class DiscreteFilteringConstraint(DiscretePruningConstraint):
         return True
 
     @override
-    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in df]
         satisfied = [cond.evaluate(df[p]) for p, cond in pairs]
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
@@ -97,7 +97,7 @@ class DiscreteFilteringConstraint(DiscretePruningConstraint):
         return df.index[res]
 
     @override
-    def _get_valid_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
         satisfied = []
@@ -162,7 +162,7 @@ class DiscreteSumConstraint(DiscretePruningConstraint):
             raise ValueError("All entries in 'coefficients' must be non-zero.")
 
     @override
-    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = pd.Series(
             sum(
                 df[p].to_numpy() * c for p, c in zip(self.parameters, self.coefficients)
@@ -174,7 +174,7 @@ class DiscreteSumConstraint(DiscretePruningConstraint):
         return df.index[mask_good]
 
     @override
-    def _get_valid_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
         weighted = [pl.col(p) * c for p, c in zip(self.parameters, self.coefficients)]
@@ -201,14 +201,14 @@ class DiscreteProductConstraint(DiscretePruningConstraint):
     # present. This could be expressed via a _can_evaluate override.
 
     @override
-    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = df[self.parameters].prod(axis=1)
         mask_good = self.condition.evaluate(evaluate_df)
 
         return df.index[mask_good]
 
     @override
-    def _get_valid_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
         op = _threshold_operators[self.condition.operator]
@@ -246,14 +246,14 @@ class DiscreteNoLabelDuplicatesConstraint(DiscretePruningConstraint):
         return len(available & set(self.parameters)) >= 2
 
     @override
-    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         params = [p for p in self.parameters if p in df]
         mask_good = df[params].nunique(axis=1) == len(params)
 
         return df.index[mask_good]
 
     @override
-    def _get_valid_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
         expr = pl.concat_list(pl.col(self.parameters)).list.n_unique() == len(
@@ -284,14 +284,14 @@ class DiscreteLinkedParametersConstraint(DiscretePruningConstraint):
         return len(available & set(self.parameters)) >= 2
 
     @override
-    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         params = [p for p in self.parameters if p in set(df.columns)]
         mask_good = df[params].nunique(axis=1) == 1
 
         return df.index[mask_good]
 
     @override
-    def _get_valid_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
         expr = pl.concat_list(pl.col(self.parameters)).list.n_unique() == 1
@@ -347,7 +347,7 @@ class DiscreteDependenciesConstraint(DiscretePruningConstraint):
         return params
 
     @override
-    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         # Build an invariant indicator for each affected parameter: pair each value
         # with the value of the parameter it depends on. For rows where the dependency
         # condition is not met, use None as a sentinel so that all such rows with the
@@ -454,7 +454,7 @@ class DiscretePermutationInvarianceConstraint(DiscretePruningConstraint):
         return len(available & set(self.parameters)) >= 2
 
     @override
-    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         cols = set(df.columns)
         params = [p for p in self.parameters if p in cols]
 
@@ -510,7 +510,7 @@ class DiscreteCustomConstraint(DiscretePruningConstraint):
     you want to keep/remove."""
 
     @override
-    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         mask_good = self.validator(df[self.parameters])
 
         return df.index[mask_good]
@@ -589,7 +589,7 @@ class DiscreteCardinalityConstraint(DiscretePruningConstraint, CardinalityConstr
         return bool(available & set(self.parameters))
 
     @override
-    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         params = [p for p in self.parameters if p in set(df.columns)]
         all_present = len(params) == len(self.parameters)
 

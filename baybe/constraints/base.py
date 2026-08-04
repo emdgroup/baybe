@@ -88,9 +88,9 @@ class DiscretePruningConstraint(DiscreteConstraint, ABC):
     specification instead defines which entries are **pruned** and the complement is
     kept.
 
-    Subclasses implement :meth:`_get_valid` (and optionally :meth:`_get_valid_polars`)
-    to express positive "valid rows" logic. The base class derives the removal set and
-    applies the ``exclude`` inversion.
+    Subclasses implement :meth:`_get_matching_rows` (and optionally
+    :meth:`_get_matching_rows_polars`) to express positive matching-rows logic. The
+    base class derives the removal set and applies the ``exclude`` inversion.
     """
 
     # object variables
@@ -166,42 +166,36 @@ class DiscretePruningConstraint(DiscreteConstraint, ABC):
         elif not self._can_evaluate(available):
             return pd.Index([])
 
-        return self._get_invalid(df)
-
-    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
-        """Derive the invalid set from ``_get_valid``, applying ``exclude`` inversion.
-
-        This method is concrete on the base class and should not be overridden.
-        Subclasses implement :meth:`_get_valid` instead.
-        """
-        valid = self._get_valid(df)
+        matching = self._get_matching_rows(df)
         if self.exclude:
-            return valid
-        return df.index.drop(valid)
+            return matching
+        return df.index.drop(matching)
 
     @abstractmethod
-    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
-        """Get the indices of valid entries (core logic for subclasses).
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
+        """Get the indices of rows matching the constraint's specification.
+
+        Subclasses implement this to express which rows their specification keeps
+        (as if ``exclude=False``). The ``exclude`` inversion is applied by the base
+        class in :meth:`get_invalid` / :meth:`get_invalid_polars`, not here.
 
         This method is only called after it has been confirmed that the dataframe
-        contains sufficient columns for (at least partial) evaluation. Implementations
-        should contain only the constraint's core positive-selection logic without
-        column-availability checks.
-
-        The returned index represents the rows that the constraint's specification
-        considers **valid** (to be kept when ``exclude=False``).
+        contains sufficient columns for (at least partial) evaluation.
 
         Args:
             df: A dataframe where each row represents a parameter configuration.
 
         Returns:
-            The dataframe indices of rows that fulfill the constraint's specification.
+            The dataframe indices of rows that the specification matches/keeps.
         """
 
     @classproperty
     def has_polars_implementation(cls) -> bool:
         """Whether this constraint class has a Polars implementation."""
-        return cls._get_valid_polars is not DiscretePruningConstraint._get_valid_polars
+        return (
+            cls._get_matching_rows_polars
+            is not DiscretePruningConstraint._get_matching_rows_polars
+        )
 
     def get_invalid_polars(self) -> pl.Expr:
         """Translate the constraint to a Polars expression identifying rows to remove.
@@ -209,19 +203,21 @@ class DiscretePruningConstraint(DiscreteConstraint, ABC):
         Returns:
             The Polars expression to pass to :meth:`polars.LazyFrame.filter`.
         """
-        valid_expr = self._get_valid_polars()
+        matching_expr = self._get_matching_rows_polars()
         if self.exclude:
-            return valid_expr
-        return ~valid_expr
+            return matching_expr
+        return ~matching_expr
 
-    def _get_valid_polars(self) -> pl.Expr:
-        """Translate the constraint to a Polars expression identifying valid rows.
+    def _get_matching_rows_polars(self) -> pl.Expr:
+        """Translate the constraint to a Polars expression identifying matching rows.
 
-        Subclasses with a Polars implementation override this method.
+        Subclasses with a Polars implementation override this method. The expression
+        should evaluate to ``True`` for rows that the specification matches/keeps
+        (as if ``exclude=False``). The ``exclude`` inversion is applied by the base
+        class in :meth:`get_invalid_polars`, not here.
 
         Returns:
-            A Polars expression that evaluates to ``True`` for rows that the
-            constraint's specification considers valid.
+            A Polars expression that evaluates to ``True`` for matching rows.
 
         Raises:
             NotImplementedError: If the constraint class does not have a Polars
