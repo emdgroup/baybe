@@ -25,7 +25,11 @@ from baybe.parameters.selectors import (
     TypeSelector,
     to_parameter_selector,
 )
-from baybe.searchspace.core import SearchSpace, SearchSpaceFidelityType
+from baybe.searchspace.core import (
+    SearchSpace,
+    SearchSpaceFidelityType,
+    SearchSpaceTaskType,
+)
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
@@ -222,8 +226,9 @@ def _enable_index_kernel(
             target_cls._supported_parameter_kinds = broadened_kinds
             self.parameter_selector = original_selector
 
-        if searchspace.task_idx is not None or (
-            searchspace.fidelity_type
+        if (
+            searchspace.task_type is SearchSpaceTaskType.CATEGORICALMULTITASK
+            or searchspace.fidelity_type
             is SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
         ):
             icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
