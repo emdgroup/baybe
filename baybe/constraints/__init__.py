@@ -1,6 +1,5 @@
 """BayBE constraints."""
 
-from baybe.constraints.base import DiscretePruningConstraint
 from baybe.constraints.conditions import SubSelectionCondition, ThresholdCondition
 from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
@@ -42,7 +41,6 @@ __all__ = [
     "DiscreteProductConstraint",
     "DiscreteSumConstraint",
     # --- Other --- #
-    "DiscretePruningConstraint",
     "validate_constraints",
     "DISCRETE_CONSTRAINTS_PRUNING_ORDER",
 ]
