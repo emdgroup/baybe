@@ -292,7 +292,7 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
         uses_index_kernel = (
             searchspace.task_idx is not None
             or searchspace.fidelity_type
-            == SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+            is SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
         )
         return (
             FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD

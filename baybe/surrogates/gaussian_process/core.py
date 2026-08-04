@@ -274,7 +274,7 @@ class GaussianProcessSurrogate(Surrogate):
         # components would therefore be silently ignored, so we reject them.
         if (
             searchspace.fidelity_type
-            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+            is SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
         ) and any(
             factory is not None
             for factory in (
@@ -377,7 +377,7 @@ class GaussianProcessSurrogate(Surrogate):
         # which handles the fidelity dimension and its components internally.
         if (
             context.searchspace.fidelity_type
-            == SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+            is SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
         ):
             from gpytorch.mlls import ExactMarginalLogLikelihood
 

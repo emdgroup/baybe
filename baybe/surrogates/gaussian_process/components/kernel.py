@@ -224,7 +224,7 @@ def _enable_index_kernel(
 
         if searchspace.task_idx is not None or (
             searchspace.fidelity_type
-            == SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+            is SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
         ):
             icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
             return icm(searchspace, objective, measurements)
@@ -321,7 +321,7 @@ class ICMKernelFactory(_MetaKernelFactory):
     ) -> Kernel | GPyTorchKernel:
         if searchspace.task_idx is None and (
             searchspace.fidelity_type
-            != SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+            is not SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
         ):
             raise IncompatibleSearchSpaceError(
                 f"'{type(self).__name__}' can only be used with a searchspace that "

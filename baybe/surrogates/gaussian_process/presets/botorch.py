@@ -95,7 +95,7 @@ class BotorchKernelFactory(_PureKernelFactory):
         if (fidelity_idx := searchspace.fidelity_idx) is not None:
             if (
                 searchspace.fidelity_type
-                != SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+                is not SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
             ):
                 from baybe.exceptions import IncompatibleSearchSpaceError
 
