@@ -296,66 +296,29 @@ DiscreteSumConstraint(
 
 An end to end example can be found [here](../../examples/Constraints_Discrete/prodsum_constraints).
 
-#### DiscreteNoLabelDuplicatesConstraint
-Sometimes, duplicated labels in several parameters are undesirable.
-Consider an example with two solvents that describe different mixture
-components.
-These might have the exact same or overlapping sets of possible values, e.g.
-`["Water", "THF", "Octanol"]`.
-It would not necessarily be reasonable to allow values in which both solvents show the
-same label/component.
-The [`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint)
-keeps only those entries whose labels are all distinct:
+#### DiscreteDegeneracyConstraint
+The [`DiscreteDegeneracyConstraint`](baybe.constraints.discrete.DiscreteDegeneracyConstraint)
+controls value repetition across a group of parameters. It keeps only rows where no
+single value appears more than ``n_max_occurrences`` times (default: 1, i.e. all values
+must be distinct).
+
+The following example ensures that no solvent label is used more than once across three
+mixture slots:
 
 ```python
-from baybe.constraints import DiscreteNoLabelDuplicatesConstraint
+from baybe.constraints import DiscreteDegeneracyConstraint
 
-DiscreteNoLabelDuplicatesConstraint(parameters=["Solvent_1", "Solvent_2"])
+DiscreteDegeneracyConstraint(parameters=["Solvent_1", "Solvent_2", "Solvent_3"])
 ```
 
-With this constraint, combinations with duplicated labels are removed:
+|   | Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteDegeneracyConstraint |
+|---|-----------|-----------|-----------|-----------------------------------|
+| 1 | Water     | Water     | THF       | removed (Water appears twice)     |
+| 2 | THF       | Water     | Octanol   | kept                              |
+| 3 | Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times) |
 
-|   | Solvent_1 | Solvent_2 | With DiscreteNoLabelDuplicatesConstraint |
-|---|-----------|-----------|------------------------------------------|
-| 1 | Water     | Water     | removed                                  |
-| 2 | THF       | Water     | kept                                     |
-| 3 | Octanol   | Octanol   | removed                                  |
-
-The usage of `DiscreteNoLabelDuplicatesConstraint` is part of the
+The usage of `DiscreteDegeneracyConstraint` is part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
-
-#### DiscreteLinkedParametersConstraint
-The [`DiscreteLinkedParametersConstraint`](baybe.constraints.discrete.DiscreteLinkedParametersConstraint)
-is, in a sense, the opposite of the
-[`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint).
-It keeps **only** entries where the linked parameters share the same label.
-This can be useful, for instance, in situations where we have one parameter but would
-like to include it with several encodings:
-```python
-from baybe.parameters import SubstanceParameter
-from baybe.constraints import DiscreteLinkedParametersConstraint
-
-dict_solvents = {"Water": "O", "THF": "C1CCOC1", "Octanol": "CCCCCCCCO"}
-solvent_encoding1 = SubstanceParameter(
-    name="Solvent_RDKIT_enc",
-    data=dict_solvents,
-    encoding="RDKIT",
-)
-solvent_encoding2 = SubstanceParameter(
-    name="Solvent_MORDRED_enc",
-    data=dict_solvents,
-    encoding="MORDRED",
-)
-DiscreteLinkedParametersConstraint(
-    parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"]
-)
-```
-
-|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteLinkedParametersConstraint |
-|---|-------------------|---------------------|-----------------------------------------|
-| 1 | Water             | Water               | kept                                    |
-| 2 | THF               | Water               | removed                                 |
-| 3 | Octanol           | Octanol             | kept                                    |
 
 #### DiscreteDependenciesConstraint
 A dependency is a situation where parameters depend on other parameters.
