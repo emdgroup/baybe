@@ -12,9 +12,8 @@ from pandas.testing import assert_frame_equal
 from baybe.constraints import (
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteCardinalityConstraint,
+    DiscreteDegeneracyConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteLinkedParametersConstraint,
-    DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteSelectionConstraint,
     DiscreteSumConstraint,
@@ -46,9 +45,7 @@ def _no_label_duplicates_scenario() -> tuple[
 ]:
     values = ["x", "y", "z", "w"]
     params = [CategoricalParameter(name=f"P{i}", values=values) for i in range(4)]
-    constraints = [
-        DiscreteNoLabelDuplicatesConstraint(parameters=[p.name for p in params])
-    ]
+    constraints = [DiscreteDegeneracyConstraint(parameters=[p.name for p in params])]
     return params, constraints
 
 
@@ -58,7 +55,11 @@ def _linked_parameters_scenario() -> tuple[
     values = ["a", "b", "c"]
     params = [CategoricalParameter(name=f"P{i}", values=values) for i in range(3)]
     constraints = [
-        DiscreteLinkedParametersConstraint(parameters=[p.name for p in params])
+        DiscreteDegeneracyConstraint(
+            parameters=[p.name for p in params],
+            n_max_occurrences=len(params) - 1,
+            exclude=True,
+        )
     ]
     return params, constraints
 
@@ -179,7 +180,7 @@ def _permutation_invariance_with_dependencies_scenario() -> tuple[
             parameters=amount_names,
             condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.1),
         ),
-        DiscreteNoLabelDuplicatesConstraint(parameters=label_names),
+        DiscreteDegeneracyConstraint(parameters=label_names),
     ]
     return params, constraints
 
@@ -195,7 +196,7 @@ def _mixed_scenario() -> tuple[
         NumericalDiscreteParameter(name="Num2", values=[0.0, 50.0, 100.0]),
     ]
     constraints = [
-        DiscreteNoLabelDuplicatesConstraint(parameters=["Cat1", "Cat2", "Cat3"]),
+        DiscreteDegeneracyConstraint(parameters=["Cat1", "Cat2", "Cat3"]),
         DiscreteSumConstraint(
             parameters=["Num1", "Num2"],
             condition=ThresholdCondition(threshold=100, operator="<="),

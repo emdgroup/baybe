@@ -47,8 +47,8 @@ import numpy as np
 import pandas as pd
 
 from baybe.constraints import (
+    DiscreteDegeneracyConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteSumConstraint,
     ThresholdCondition,
@@ -126,9 +126,9 @@ parameters = [
 # having two slots with the same substance or having only one slot with the combined
 # amounts. Thus, we want to make sure that there are no such duplicate label entries,
 # which can be achieved using a
-# {class}`~baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`:
+# {class}`~baybe.constraints.discrete.DiscreteDegeneracyConstraint`:
 
-no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
+no_duplicates_constraint = DiscreteDegeneracyConstraint(
     parameters=["Slot1_Label", "Slot2_Label", "Slot3_Label"]
 )
 
