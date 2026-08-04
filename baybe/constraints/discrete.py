@@ -41,66 +41,22 @@ if TYPE_CHECKING:
 
 
 # >>>>>>>>>> Deprecation
-@define
-class DiscreteExcludeConstraint(DiscretePruningConstraint):
-    """Class for modelling exclusion constraints.
+def DiscreteExcludeConstraint(  # noqa: N802
+    *args, **kwargs
+) -> DiscreteFilteringConstraint:
+    """A ``DiscreteFilteringConstraint`` alias for backward compatibility."""  # noqa: D401
+    import warnings
 
-    .. deprecated::
-        Use :class:`DiscreteFilteringConstraint` with ``exclude=True`` instead.
-    """
+    warnings.warn(
+        "'DiscreteExcludeConstraint' is deprecated and will be removed in a future "
+        "version. Use 'DiscreteFilteringConstraint' with 'exclude=True' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return DiscreteFilteringConstraint(*args, **kwargs, exclude=True)
 
-    # object variables
-    conditions: list[Condition] = field(validator=min_len(1))
-    """List of individual conditions."""
 
-    combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
-    """Operator encoding how to combine the individual conditions."""
-
-    def __attrs_post_init__(self):
-        """Emit deprecation warning."""
-        import warnings
-
-        warnings.warn(
-            f"'{self.__class__.__name__}' is deprecated. Use "
-            f"'DiscreteFilteringConstraint' with 'exclude=True' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-    # <<<<<<<<<< Deprecation
-
-    @override
-    def _can_evaluate(self, available: set[str], /) -> bool:
-        # Partial evaluation soundness depends on the combiner and the exclude flag.
-        # The "drop" predicate is monotone (safe for partial) iff
-        # (combiner == "OR") == self.exclude.
-        present = available & set(self.parameters)
-        if not present:
-            return False
-        partial_ok = (self.combiner == "OR") == self.exclude
-        if not partial_ok and present != set(self.parameters):
-            return False
-        return True
-
-    @override
-    def _get_valid(self, df: pd.DataFrame, /) -> pd.Index:
-        pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in df]
-        satisfied = [cond.evaluate(df[p]) for p, cond in pairs]
-        res = reduce(_valid_logic_combiners[self.combiner], satisfied)
-
-        return df.index[~res]
-
-    @override
-    def _get_valid_polars(self) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
-
-        satisfied = []
-        for k, cond in enumerate(self.conditions):
-            satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
-
-        expr = pl.reduce(_valid_logic_combiners[self.combiner], satisfied)
-
-        return ~expr
+# <<<<<<<<<< Deprecation
 
 
 @define
@@ -651,7 +607,6 @@ class DiscreteCardinalityConstraint(DiscretePruningConstraint, CardinalityConstr
 # Pruning constraints are approximately ordered according to increasing computational
 # effort to minimize total time in their sequential application
 DISCRETE_CONSTRAINTS_PRUNING_ORDER = (
-    DiscreteExcludeConstraint,
     DiscreteFilteringConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscreteLinkedParametersConstraint,
@@ -668,16 +623,36 @@ converter.register_unstructure_hook(DiscreteCustomConstraint, block_serializatio
 converter.register_structure_hook(DiscreteCustomConstraint, block_deserialization_hook)
 
 
-def _structure_exclude_as_filtering(val: dict, _) -> DiscreteFilteringConstraint:
-    """Redirect legacy DiscreteExcludeConstraint to DiscreteFilteringConstraint."""
-    val = dict(val)
-    val.pop("type", None)
-    val.setdefault("exclude", True)
-    return converter.structure(val, DiscreteFilteringConstraint)
+def _structure_pruning_constraint(val: dict | str, cls):
+    """Structure hook for DiscretePruningConstraint with legacy name redirect."""
+    from baybe.serialization.core import _TYPE_FIELD
+    from baybe.utils.basic import find_subclass
+
+    if isinstance(val, str):
+        type_ = val
+        val = {}
+    else:
+        val = dict(val)
+        type_ = val.pop(_TYPE_FIELD, None)
+
+    # If no type field is present, structure directly as the target class
+    # using the attrs-generated hook from cattrs
+    if type_ is None:
+        fn = cattrs.gen.make_dict_structure_fn(cls, converter)
+        return fn(val, cls)
+
+    # Redirect legacy DiscreteExcludeConstraint to DiscreteFilteringConstraint
+    if type_ == "DiscreteExcludeConstraint":
+        val.setdefault("exclude", True)
+        type_ = "DiscreteFilteringConstraint"
+
+    subclass = find_subclass(DiscretePruningConstraint, type_)
+    fn = converter.get_structure_hook(subclass)
+    return fn(val, subclass)
 
 
 converter.register_structure_hook(
-    DiscreteExcludeConstraint, _structure_exclude_as_filtering
+    DiscretePruningConstraint, _structure_pruning_constraint
 )
 
 # Collect leftover original slotted classes processed by `attrs.define`
