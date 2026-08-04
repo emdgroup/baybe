@@ -49,10 +49,7 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBELikelihoodFactory,
     BayBEMeanFactory,
 )
-from baybe.surrogates.gaussian_process.utils import (
-    _ModelContext,
-    _validate_searchspace_has_non_index_input,
-)
+from baybe.surrogates.gaussian_process.utils import _ModelContext
 from baybe.symmetries.base import Symmetry
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
@@ -267,7 +264,15 @@ class GaussianProcessSurrogate(Surrogate):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
-        _validate_searchspace_has_non_index_input(searchspace, self.__class__.__name__)
+        # A GP needs at least one non-task/non-fidelity input to model.
+        if not any(
+            i not in (searchspace.task_idx, searchspace.fidelity_idx)
+            for i in range(len(searchspace.comp_rep_columns))
+        ):
+            raise IncompatibleSurrogateError(
+                f"'{self.__class__.__name__}' requires at least one "
+                f"non-task/non-fidelity parameter."
+            )
 
         # BoTorch's ``SingleTaskMultiFidelityGP`` builds its own mean, kernel, and
         # likelihood, so custom versions of those would be silently ignored and are
