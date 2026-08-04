@@ -374,7 +374,7 @@ class SearchSpace(SerialMixin):
             return SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
         if isinstance(fidelity_param, NumericalDiscreteFidelityParameter):
             return SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
-        raise RuntimeError("This line should be impossible to reach.")
+        raise RuntimeError("Unknown/unexpected search space fidelity type.")
 
     @property
     def n_subsets(self) -> int:

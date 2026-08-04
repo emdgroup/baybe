@@ -135,7 +135,7 @@ def _enable_index_kernel(
 
     When the search space contains a task parameter or a categorical fidelity
     parameter, the decorated factory automatically composes its kernel with
-    BayBE's default ICM kernel (IndexKernel × base kernel). Otherwise, the
+    BayBE's default ICM kernel (index kernel × base kernel). Otherwise, the
     factory behaves unchanged.
 
     This is used for both transfer learning (``TaskParameter``) and categorical
@@ -156,7 +156,7 @@ def _enable_index_kernel(
         TypeError: If the factory already supports task or fidelity parameters.
 
     Returns:
-        The decorated kernel factory class with IndexKernel support enabled.
+        The decorated kernel factory class with index kernel support enabled.
     """
     _extended_kinds = _ParameterKind.TASK | _ParameterKind.FIDELITY
     if cls._supported_parameter_kinds & _extended_kinds:

@@ -87,7 +87,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     learning."""
 
     supports_multi_fidelity: ClassVar[bool] = False
-    """Class variable encoding whether or not the surrogate supports multi fidelity
+    """Class variable encoding whether or not the surrogate supports multi-fidelity
     Bayesian optimization."""
 
     supports_multi_output: ClassVar[bool] = False
@@ -443,12 +443,12 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 f"support transfer learning."
             )
 
-        # Check if multi fidelity capabilities are needed
+        # Check if multi-fidelity capabilities are needed
         if (searchspace.n_fidelities > 1) and (not self.supports_multi_fidelity):
             raise ValueError(
                 f"The search space contains fidelity parameters but the selected "
                 f"surrogate model type ({self.__class__.__name__}) does not "
-                f"support multi fidelity Bayesian optimisation."
+                f"support multi-fidelity Bayesian optimization."
             )
 
         self._validate_fit_context(searchspace, objective, measurements)
@@ -499,7 +499,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 single_line=True,
             ),
             to_string(
-                "Supports Multi Fidelity",
+                "Supports Multi-Fidelity",
                 self.supports_multi_fidelity,
                 single_line=True,
             ),
