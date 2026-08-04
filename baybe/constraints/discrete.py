@@ -12,7 +12,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
-from attrs.validators import deep_iterable, in_, min_len
+from attrs.validators import deep_iterable, ge, in_, instance_of, min_len
 from typing_extensions import override
 
 from baybe.constraints.base import (
@@ -232,6 +232,65 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
 
         # Apply the threshold operator on expr and the condition threshold
         return op(expr, self.condition.threshold)
+
+
+@define
+class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
+    """Class for constraining value repetition across parameters.
+
+    Keeps only rows where no single value appears more than ``n_max_occurrences``
+    times across the specified parameters.
+    """
+
+    # object variables
+    n_max_occurrences: int = field(
+        default=1, validator=[instance_of(int), ge(1)], kw_only=True
+    )
+    """Maximum number of times any single value may appear in a row."""
+
+    @n_max_occurrences.validator
+    def _validate_n_max_occurrences(  # noqa: DOC101, DOC103
+        self, _: Any, value: int
+    ) -> None:
+        """Validate n_max_occurrences against the number of parameters.
+
+        Raises:
+            ValueError: If ``n_max_occurrences`` is not smaller than the number of
+                parameters.
+        """
+        if value >= len(self.parameters):
+            raise ValueError(
+                f"'n_max_occurrences' must be less than the number of parameters "
+                f"({len(self.parameters)}), but got {value}."
+            )
+
+    @override
+    def _can_evaluate(self, available: set[str], /) -> bool:
+        # exclude=False: a value that exceeds the occurrence limit in a subset stays
+        # above the limit, so rows can be dropped early.
+        # exclude=True: a row within the limit so far may exceed it once a later
+        # column is added, so all parameters must be present first.
+        if self.exclude:
+            return self._required_parameters <= available
+        return len(available & set(self.parameters)) >= 2
+
+    @override
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
+        params = [p for p in self.parameters if p in df]
+        max_counts = df[params].apply(lambda row: row.value_counts().max(), axis=1)
+        mask_good = max_counts <= self.n_max_occurrences
+
+        return df.index[mask_good]
+
+    @override
+    def _get_matching_rows_polars(self) -> pl.Expr:
+        from baybe._optional.polars import polars as pl
+
+        # Count occurrences of each value; check that the max is within the limit
+        counts = pl.concat_list(pl.col(self.parameters)).list.eval(
+            pl.element().value_counts().struct.field("count").max()
+        )
+        return counts.list.first() <= self.n_max_occurrences
 
 
 class DiscreteNoLabelDuplicatesConstraint(DiscreteFilteringConstraint):
