@@ -61,12 +61,7 @@ def DiscreteExcludeConstraint(  # noqa: N802
 
 @define
 class DiscreteFilteringConstraint(DiscretePruningConstraint):
-    """Class for modelling filtering constraints (inclusion-by-default).
-
-    The constraint's conditions define which entries are **kept** in the search space.
-    Set ``exclude=True`` to invert this and keep the complement instead (equivalent to
-    the deprecated ``DiscreteExcludeConstraint``).
-    """
+    """Class for filtering search space entries based on conditions."""
 
     # object variables
     conditions: list[Condition] = field(validator=min_len(1))
