@@ -4,6 +4,7 @@ import sys
 
 import pandas as pd
 import pytest
+from botorch.models import SingleTaskGP, SingleTaskMultiFidelityGP
 from gpytorch.likelihoods import GaussianLikelihood
 from pytest import param
 
@@ -172,25 +173,30 @@ def test_gp_rejects_custom_components_numerical_fidelity():
         surrogate.fit(searchspace_num_fid, objective, measurements_num_fid)
 
 
-def test_standard_gp_fit_categorical_fidelity():
-    """GaussianProcessSurrogate can be fitted on a categorical fidelity space."""
+@pytest.mark.parametrize(
+    ("searchspace", "measurements", "expected_model"),
+    [
+        param(
+            searchspace_cat_fid, measurements_cat_fid, SingleTaskGP, id="categorical"
+        ),
+        param(
+            searchspace_num_fid,
+            measurements_num_fid,
+            SingleTaskMultiFidelityGP,
+            id="numerical",
+        ),
+    ],
+)
+def test_standard_gp_fit_fidelity(searchspace, measurements, expected_model):
+    """GaussianProcessSurrogate fits a fidelity space with the expected model."""
     surrogate = GaussianProcessSurrogate()
-    surrogate.fit(searchspace_cat_fid, objective, measurements_cat_fid)
-    stats = surrogate.posterior_stats(measurements_cat_fid)
+    surrogate.fit(searchspace, objective, measurements)
+    # Exact type check: SingleTaskMultiFidelityGP subclasses SingleTaskGP, so the
+    # categorical case must not accidentally match the multi-fidelity model.
+    assert type(surrogate.to_botorch()) is expected_model
+    stats = surrogate.posterior_stats(measurements)
     assert set(stats.columns) == {"t_mean", "t_std"}
-    assert len(stats) == len(measurements_cat_fid)
-
-
-def test_standard_gp_fit_numerical_fidelity():
-    """GaussianProcessSurrogate fits numerical fidelity via the BoTorch MF model."""
-    from botorch.models import SingleTaskMultiFidelityGP
-
-    surrogate = GaussianProcessSurrogate()
-    surrogate.fit(searchspace_num_fid, objective, measurements_num_fid)
-    assert isinstance(surrogate.to_botorch(), SingleTaskMultiFidelityGP)
-    stats = surrogate.posterior_stats(measurements_num_fid)
-    assert set(stats.columns) == {"t_mean", "t_std"}
-    assert len(stats) == len(measurements_num_fid)
+    assert len(stats) == len(measurements)
 
 
 @pytest.mark.parametrize(
