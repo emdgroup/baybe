@@ -103,9 +103,14 @@ class BotorchKernelFactory(_PureKernelFactory):
                     f"'{type(self).__name__}' supports fidelity parameters "
                     f"only for '{CategoricalFidelityParameter.__name__}'."
                 )
+            # Distinct fidelity levels of the same system are expected to be positively
+            # correlated, so we use the same prior as BoTorch's 'MultiTaskGP' applies to
+            # the task index kernel (BoTorch has no categorical multi-fidelity model).
+            fidelity_prior = BetaPrior(concentration1=2.5, concentration0=1.5)
             index_kernel = PositiveIndexKernel(
                 num_tasks=searchspace.n_fidelities,
                 rank=searchspace.n_fidelities,
+                task_prior=fidelity_prior,
                 active_dims=[fidelity_idx],
             )
             return ICMKernelFactory(base_kernel, index_kernel)(
