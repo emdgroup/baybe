@@ -269,9 +269,9 @@ class GaussianProcessSurrogate(Surrogate):
     ) -> None:
         _validate_searchspace_has_non_index_input(searchspace, self.__class__.__name__)
 
-        # Numerical multi-fidelity spaces are delegated to BoTorch's dedicated
-        # ``SingleTaskMultiFidelityGP``, which builds its own components. Custom
-        # components would therefore be silently ignored, so we reject them.
+        # BoTorch's ``SingleTaskMultiFidelityGP`` builds its own mean, kernel, and
+        # likelihood, so custom versions of those would be silently ignored and are
+        # rejected.
         if (
             searchspace.fidelity_type
             is SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
@@ -281,14 +281,12 @@ class GaussianProcessSurrogate(Surrogate):
                 self.kernel_factory,
                 self.mean_factory,
                 self.likelihood_factory,
-                self.fit_criterion_factory,
             )
         ):
             raise IncompatibleSurrogateError(
                 f"'{self.__class__.__name__}' does not support custom components "
-                f"(kernel, mean, likelihood, or fit criterion) for numerical "
-                f"multi-fidelity search spaces, which are delegated to BoTorch's "
-                f"'SingleTaskMultiFidelityGP'."
+                f"(kernel, mean, or likelihood) for numerical multi-fidelity search "
+                f"spaces, which are delegated to BoTorch's 'SingleTaskMultiFidelityGP'."
             )
 
         if (
@@ -379,8 +377,6 @@ class GaussianProcessSurrogate(Surrogate):
             context.searchspace.fidelity_type
             is SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
         ):
-            from gpytorch.mlls import ExactMarginalLogLikelihood
-
             assert context.fidelity_idx is not None
             self._model = botorch.models.SingleTaskMultiFidelityGP(
                 train_x,
@@ -389,7 +385,11 @@ class GaussianProcessSurrogate(Surrogate):
                 outcome_transform=outcome_transform,
                 data_fidelities=(context.fidelity_idx,),
             )
-            mll = ExactMarginalLogLikelihood(self._model.likelihood, self._model)
+            criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
+            criterion = criterion_factory(
+                context.searchspace, context.objective, context.measurements
+            )
+            mll = criterion.to_gpytorch(self._model.likelihood, self._model)
             botorch.fit.fit_gpytorch_mll(mll)
             return
 
