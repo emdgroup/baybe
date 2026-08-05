@@ -394,6 +394,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         measurements: pd.DataFrame,
     ) -> None:
         """Validate the surrogate fit context before mutating cached state."""
+        # Optional hook with a no-op default: only surrogates that impose
+        # constraints on the fit context override it (e.g. GP models).
 
     @override
     def fit(
