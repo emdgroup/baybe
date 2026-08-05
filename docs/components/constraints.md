@@ -317,6 +317,39 @@ DiscreteDegeneracyConstraint(parameters=["Solvent_1", "Solvent_2", "Solvent_3"])
 | 2 | THF       | Water     | Octanol   | kept                              |
 | 3 | Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times) |
 
+The constraint can also be used to ensure that **only rows with identical values are
+kept**, by combining a high ``n_max_occurrences`` with ``exclude=True``. This is useful,
+for instance, when we have one parameter but would like to include it with several
+encodings, which then must all refer to the same underlying value:
+
+```python
+from baybe.parameters import SubstanceParameter
+from baybe.constraints import DiscreteDegeneracyConstraint
+
+dict_solvents = {"Water": "O", "THF": "C1CCOC1", "Octanol": "CCCCCCCCO"}
+solvent_encoding1 = SubstanceParameter(
+    name="Solvent_RDKIT_enc",
+    data=dict_solvents,
+    encoding="RDKIT",
+)
+solvent_encoding2 = SubstanceParameter(
+    name="Solvent_MORDRED_enc",
+    data=dict_solvents,
+    encoding="MORDRED",
+)
+DiscreteDegeneracyConstraint(
+    parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"],
+    n_max_occurrences=1,  # = number of parameters - 1
+    exclude=True,
+)
+```
+
+|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteDegeneracyConstraint (exclude) |
+|---|-------------------|---------------------|---------------------------------------------|
+| 1 | Water             | Water               | kept                                        |
+| 2 | THF               | Water               | pruned                                      |
+| 3 | Octanol           | Octanol             | kept                                        |
+
 The usage of `DiscreteDegeneracyConstraint` is part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
