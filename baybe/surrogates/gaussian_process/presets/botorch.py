@@ -10,6 +10,7 @@ import pandas as pd
 from attrs import define
 from typing_extensions import override
 
+from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.enum import _ParameterKind
@@ -97,8 +98,6 @@ class BotorchKernelFactory(_PureKernelFactory):
                 searchspace.fidelity_type
                 is not SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
             ):
-                from baybe.exceptions import IncompatibleSearchSpaceError
-
                 raise IncompatibleSearchSpaceError(
                     f"'{type(self).__name__}' supports fidelity parameters "
                     f"only for '{CategoricalFidelityParameter.__name__}'."
