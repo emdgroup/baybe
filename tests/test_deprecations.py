@@ -620,60 +620,41 @@ def test_concrete_constraint_rejects_mismatched_type():
         converter.structure(payload, DiscreteCardinalityConstraint)
 
 
-def test_discrete_no_label_duplicates_deprecation():
-    """Constructing DiscreteNoLabelDuplicatesConstraint emits a DeprecationWarning."""
-    from baybe.constraints.discrete import (
-        DiscreteDegeneracyConstraint,
-        DiscreteNoLabelDuplicatesConstraint,
-    )
-
-    with pytest.warns(DeprecationWarning, match="DiscreteNoLabelDuplicatesConstraint"):
-        c = DiscreteNoLabelDuplicatesConstraint(parameters=["A", "B", "C"])
-    assert isinstance(c, DiscreteDegeneracyConstraint)
-    assert c.n_max_occurrences == 1
-    assert c.exclude is False
-
-
-def test_discrete_no_label_duplicates_deserialization():
-    """Legacy DiscreteNoLabelDuplicatesConstraint deserializes correctly."""
+@pytest.mark.parametrize(
+    ("legacy_name", "kwargs", "expected"),
+    [
+        pytest.param(
+            "DiscreteNoLabelDuplicatesConstraint",
+            {"parameters": ["A", "B", "C"]},
+            {"n_max_occurrences": 1, "exclude": False},
+            id="no_label_duplicates",
+        ),
+        pytest.param(
+            "DiscreteLinkedParametersConstraint",
+            {"parameters": ["A", "B", "C"]},
+            {"n_max_occurrences": 2, "exclude": True},
+            id="linked_parameters",
+        ),
+    ],
+)
+def test_degeneracy_constraint_deprecation(legacy_name, kwargs, expected):
+    """Deprecated degeneracy constraints map to DiscreteDegeneracyConstraint."""
+    import baybe.constraints.discrete as m
     from baybe.constraints.base import DiscreteFilteringConstraint
     from baybe.constraints.discrete import DiscreteDegeneracyConstraint
     from baybe.serialization import converter
 
-    legacy_dict = {
-        "type": "DiscreteNoLabelDuplicatesConstraint",
-        "parameters": ["A", "B", "C"],
-    }
-    result = converter.structure(legacy_dict, DiscreteFilteringConstraint)
-    assert isinstance(result, DiscreteDegeneracyConstraint)
-    assert result.n_max_occurrences == 1
-
-
-def test_discrete_linked_parameters_deprecation():
-    """Constructing DiscreteLinkedParametersConstraint emits a DeprecationWarning."""
-    from baybe.constraints.discrete import (
-        DiscreteDegeneracyConstraint,
-        DiscreteLinkedParametersConstraint,
-    )
-
-    with pytest.warns(DeprecationWarning, match="DiscreteLinkedParametersConstraint"):
-        c = DiscreteLinkedParametersConstraint(parameters=["A", "B", "C"])
+    # Construction path: warns and returns correctly configured new object
+    with pytest.warns(DeprecationWarning, match=legacy_name):
+        c = getattr(m, legacy_name)(**kwargs)
     assert isinstance(c, DiscreteDegeneracyConstraint)
-    assert c.n_max_occurrences == 2
-    assert c.exclude is True
+    assert c.n_max_occurrences == expected["n_max_occurrences"]
+    assert c.exclude is expected["exclude"]
 
-
-def test_discrete_linked_parameters_deserialization():
-    """Legacy DiscreteLinkedParametersConstraint deserializes correctly."""
-    from baybe.constraints.base import DiscreteFilteringConstraint
-    from baybe.constraints.discrete import DiscreteDegeneracyConstraint
-    from baybe.serialization import converter
-
-    legacy_dict = {
-        "type": "DiscreteLinkedParametersConstraint",
-        "parameters": ["A", "B", "C"],
-    }
-    result = converter.structure(legacy_dict, DiscreteFilteringConstraint)
+    # Deserialization path: legacy type name maps to the new object
+    result = converter.structure(
+        {"type": legacy_name, **kwargs}, DiscreteFilteringConstraint
+    )
     assert isinstance(result, DiscreteDegeneracyConstraint)
-    assert result.n_max_occurrences == 2
-    assert result.exclude is True
+    assert result.n_max_occurrences == expected["n_max_occurrences"]
+    assert result.exclude is expected["exclude"]
