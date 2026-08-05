@@ -270,14 +270,9 @@ class SearchSpace(SerialMixin):
         if not self.discrete.is_empty:
             disc_comp_cols = list(self.discrete.comp_rep_columns)
             query = pd.DataFrame([{c: comp_rep[c] for c in disc_comp_cols}])
-            matched = self.discrete.comp_rep[disc_comp_cols].merge(
-                query, on=disc_comp_cols, how="inner"
-            )
+            mask = (self.discrete.comp_rep[disc_comp_cols] == query.iloc[0]).all(axis=1)
             result.update(
-                {
-                    str(k): v
-                    for k, v in self.discrete.exp_rep.loc[matched.index].iloc[0].items()
-                }
+                {str(k): v for k, v in self.discrete.exp_rep.loc[mask].iloc[0].items()}
             )
 
         if not self.continuous.is_empty:
