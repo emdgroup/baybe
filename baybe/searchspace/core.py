@@ -319,7 +319,7 @@ class SearchSpace(SerialMixin):
         """Column index of the task parameter in computational representation."""
         if (task_param := self._task_parameter) is None:
             return None
-        # TODO [11611]: The current approach has three limitations:
+        # TODO: The current approach has three limitations:
         #   1.  It matches by column name and thus assumes that the parameter name
         #       is used as the column name.
         #   2.  It relies on the current implementation detail that discrete parameters
