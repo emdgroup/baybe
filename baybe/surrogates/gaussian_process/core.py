@@ -304,8 +304,8 @@ class GaussianProcessSurrogate(Surrogate):
         ):
             raise IncompatibleSurrogateError(
                 f"'{self.__class__.__name__}' does not support custom components "
-                f"(kernel, mean, or likelihood) for numerical multi-fidelity search "
-                f"spaces, which are delegated to BoTorch's 'SingleTaskMultiFidelityGP'."
+                f"for numerical multi-fidelity search spaces, which are delegated "
+                f"to BoTorch's 'SingleTaskMultiFidelityGP'."
             )
 
         if (
