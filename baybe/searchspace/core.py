@@ -287,26 +287,6 @@ class SearchSpace(SerialMixin):
 
         return result
 
-    def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
-        """Draw uniform random parameter configurations from the search space.
-
-        Args:
-            batch_size: The number of parameter configurations to be sampled.
-
-        Returns:
-            A dataframe with parameter configurations in experimental representation.
-        """
-        dfs: list[pd.DataFrame] = []
-        if not self.discrete.is_empty:
-            dfs.append(
-                self.discrete.exp_rep.sample(batch_size, replace=True).reset_index(
-                    drop=True
-                )
-            )
-        if not self.continuous.is_empty:
-            dfs.append(self.continuous.sample_uniform(batch_size))
-        return pd.concat(dfs, axis=1)
-
     @property
     def parameters(self) -> tuple[Parameter, ...]:
         """Return the list of parameters of the search space."""

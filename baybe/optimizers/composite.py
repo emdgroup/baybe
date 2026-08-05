@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Generator
 from typing import TYPE_CHECKING, Any
 
+import pandas as pd
 from attrs import define, field
 from attrs.validators import gt, instance_of, min_len
 from typing_extensions import override
@@ -132,8 +133,15 @@ class SequentialOptimizer(OptimizerProtocol):
         Returns:
             The optimization result for a single point of the batch.
         """
+        dfs: list[pd.DataFrame] = []
+        if not self.discrete.is_empty:
+            dfs.append(
+                self.discrete.exp_rep.sample(1, replace=True).reset_index(drop=True)
+            )
+        if not self.continuous.is_empty:
+            dfs.append(self.continuous.sample_uniform(1))
         current_point: dict[str, Any] = {
-            str(k): v for k, v in searchspace.sample_uniform(1).iloc[0].items()
+            str(k): v for k, v in pd.concat(dfs, axis=1).iloc[0].items()
         }
         step = next(steps)
 
