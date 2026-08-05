@@ -277,9 +277,32 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
     @override
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         params = [p for p in self.parameters if p in df]
-        max_counts = df[params].apply(lambda row: row.value_counts().max(), axis=1)
-        mask_good = max_counts <= self.n_max_occurrences
 
+        # Encode all values to integer codes with a single global mapping so that
+        # equality matches pandas semantics exactly (avoids false duplicates that a
+        # naive string cast would introduce, e.g. int 1 vs. str "1"). Sorting the
+        # integer codes per row groups equal values together.
+        block = df[params].to_numpy()
+        codes = pd.factorize(block.ravel())[0].reshape(block.shape)
+        sorted_codes = np.sort(codes, axis=1)
+
+        # Mark the start of each run of equal values along the sorted row, then
+        # assign an increasing run id to every position via a cumulative sum.
+        is_run_start = np.empty(sorted_codes.shape, dtype=bool)
+        is_run_start[:, 0] = True
+        is_run_start[:, 1:] = sorted_codes[:, 1:] != sorted_codes[:, :-1]
+        run_ids = np.cumsum(is_run_start, axis=1)
+
+        # The largest run (i.e. the highest per-value multiplicity) is found by
+        # counting, for each possible run id, how many positions carry it. This
+        # loop runs over the (small) number of parameters, not the dataframe rows.
+        max_multiplicity = np.zeros(sorted_codes.shape[0], dtype=int)
+        for run_id in range(1, sorted_codes.shape[1] + 1):
+            max_multiplicity = np.maximum(
+                max_multiplicity, (run_ids == run_id).sum(axis=1)
+            )
+
+        mask_good = max_multiplicity <= self.n_max_occurrences
         return df.index[mask_good]
 
     @override
