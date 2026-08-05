@@ -635,9 +635,17 @@ def _structure_pruning_constraint(val: dict | str, cls):
         val = dict(val)
         type_ = val.pop(_TYPE_FIELD, None)
 
-    # If no type field is present, structure directly as the target class
-    # using the attrs-generated hook from cattrs
+    # If no type field is present, only structuring into a concrete class is
+    # possible (e.g. nested constraint fields); structuring into the abstract base
+    # requires a type discriminator.
     if type_ is None:
+        import inspect
+
+        if inspect.isabstract(cls):
+            raise ValueError(
+                f"Missing required '{_TYPE_FIELD}' field for structuring a "
+                f"'{cls.__name__}'."
+            )
         fn = cattrs.gen.make_dict_structure_fn(cls, converter)
         return fn(val, cls)
 
