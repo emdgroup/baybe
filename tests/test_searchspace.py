@@ -10,8 +10,7 @@ from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
-    DiscreteSumConstraint,
-    ThresholdCondition,
+    DiscreteLinearConstraint,
 )
 from baybe.exceptions import (
     EmptySearchSpaceError,
@@ -228,9 +227,10 @@ def test_invalid_constraint_parameter_combos():
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
-                DiscreteSumConstraint(
+                DiscreteLinearConstraint(
                     parameters=["d1", "d2", "c1"],
-                    condition=ThresholdCondition(threshold=1.0, operator=">"),
+                    operator=">",
+                    rhs=1.0,
                 )
             ],
         )
@@ -240,9 +240,10 @@ def test_invalid_constraint_parameter_combos():
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
-                DiscreteSumConstraint(
+                DiscreteLinearConstraint(
                     parameters=["d1", "e7", "c1"],
-                    condition=ThresholdCondition(threshold=1.0, operator=">"),
+                    operator=">",
+                    rhs=1.0,
                 )
             ],
         )
@@ -262,9 +263,10 @@ def test_invalid_constraint_parameter_combos():
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
-                DiscreteSumConstraint(
+                DiscreteLinearConstraint(
                     parameters=["cat1", "d1", "d2"],
-                    condition=ThresholdCondition(threshold=1.0, operator=">"),
+                    operator=">",
+                    rhs=1.0,
                 )
             ],
         )
