@@ -3,14 +3,13 @@
 import pytest
 from pytest import param
 
-from baybe.constraints.conditions import ThresholdCondition
 from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
 )
 from baybe.constraints.discrete import (
+    DiscreteLinearConstraint,
     DiscreteRepetitionConstraint,
-    DiscreteSumConstraint,
 )
 
 
@@ -76,9 +75,10 @@ def test_invalid_max_repetitions(kwargs, error, match):
 def test_invalid_coefficients(coefficients, match):
     """Invalid coefficients raise a ValueError."""
     with pytest.raises(ValueError, match=match):
-        DiscreteSumConstraint(
+        DiscreteLinearConstraint(
             parameters=["A", "B", "C"],
-            condition=ThresholdCondition(threshold=1.0, operator="<="),
+            operator="<=",
+            rhs=1.0,
             coefficients=coefficients,
         )
     with pytest.raises(ValueError, match=match):

@@ -13,10 +13,10 @@ from baybe.constraints import (
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteCardinalityConstraint,
     DiscreteDependenciesConstraint,
+    DiscreteLinearConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteRepetitionConstraint,
     DiscreteSelectionConstraint,
-    DiscreteSumConstraint,
     SubSelectionCondition,
     ThresholdCondition,
 )
@@ -129,9 +129,11 @@ def _sum_scenario() -> tuple[Sequence[DiscreteParameter], Sequence[DiscreteConst
         for i in range(3)
     ]
     constraints = [
-        DiscreteSumConstraint(
+        DiscreteLinearConstraint(
             parameters=[p.name for p in params],
-            condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.1),
+            operator="=",
+            rhs=100,
+            tolerance=0.1,
         )
     ]
     return params, constraints
@@ -196,9 +198,11 @@ def _permutation_invariance_with_dependencies_scenario() -> tuple[
                 affected_parameters=[[n] for n in label_names],
             ),
         ),
-        DiscreteSumConstraint(
+        DiscreteLinearConstraint(
             parameters=amount_names,
-            condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.1),
+            operator="=",
+            rhs=100,
+            tolerance=0.1,
         ),
         DiscreteRepetitionConstraint(parameters=label_names, n_max_repetitions=1),
     ]
@@ -219,9 +223,10 @@ def _mixed_scenario() -> tuple[
         DiscreteRepetitionConstraint(
             parameters=["Cat1", "Cat2", "Cat3"], n_max_repetitions=1
         ),
-        DiscreteSumConstraint(
+        DiscreteLinearConstraint(
             parameters=["Num1", "Num2"],
-            condition=ThresholdCondition(threshold=100, operator="<="),
+            operator="<=",
+            rhs=100,
         ),
     ]
     return params, constraints

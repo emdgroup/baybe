@@ -8,7 +8,7 @@ import pytest
 from pytest import param
 
 from baybe.constraints.conditions import ThresholdCondition
-from baybe.constraints.discrete import DiscreteSumConstraint
+from baybe.constraints.discrete import DiscreteLinearConstraint
 
 
 @pytest.fixture(
@@ -294,11 +294,12 @@ def test_cardinality(campaign):
     ],
 )
 def test_sum_constraint_coefficients(coefficients, threshold, operator, n_invalid):
-    """DiscreteSumConstraint filters correctly with default and custom coefficients."""
+    """DiscreteLinearConstraint filters with default and custom coefficients."""
     kwargs = {} if coefficients is None else {"coefficients": coefficients}
-    constraint = DiscreteSumConstraint(
+    constraint = DiscreteLinearConstraint(
         parameters=["A", "B"],
-        condition=ThresholdCondition(threshold=threshold, operator=operator),
+        operator=operator,
+        rhs=threshold,
         **kwargs,
     )
     df = pd.DataFrame(
