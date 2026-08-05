@@ -53,6 +53,7 @@ def DiscreteExcludeConstraint(  # noqa: N802
         DeprecationWarning,
         stacklevel=2,
     )
+    kwargs.pop("exclude", None)
     return DiscreteFilteringConstraint(*args, **kwargs, exclude=True)
 
 
