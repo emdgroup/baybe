@@ -225,6 +225,11 @@ class _BayBEIndexKernelFactory(_PureKernelFactory, ABC):
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = (
+        _ParameterKind.TASK | _ParameterKind.FIDELITY
+    )
+    # See base class.
+
     @override
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
