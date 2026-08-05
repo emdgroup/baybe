@@ -368,13 +368,15 @@ class SearchSpace(SerialMixin):
     @property
     def fidelity_type(self) -> SearchSpaceFidelityType:
         """Return the fidelity type of the search space."""
-        if (fidelity_param := self._fidelity_parameter) is None:
-            return SearchSpaceFidelityType.SINGLEFIDELITY
-        if isinstance(fidelity_param, CategoricalFidelityParameter):
-            return SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
-        if isinstance(fidelity_param, NumericalDiscreteFidelityParameter):
-            return SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
-        raise RuntimeError("Unknown/unexpected search space fidelity type.")
+        match self._fidelity_parameter:
+            case None:
+                return SearchSpaceFidelityType.SINGLEFIDELITY
+            case CategoricalFidelityParameter():
+                return SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+            case NumericalDiscreteFidelityParameter():
+                return SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+            case _:
+                raise RuntimeError("Unknown/unexpected search space fidelity type.")
 
     @property
     def n_subsets(self) -> int:
