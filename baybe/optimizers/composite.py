@@ -98,7 +98,8 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
                 stacklevel=2,
             )
         for _ in range(self.n_cycles):
-            yield from active_steps
+            for step in active_steps:
+                _ = yield step
 
 
 @define(frozen=True)
