@@ -60,7 +60,7 @@ class SearchSpaceType(Enum):
 
 
 class SearchSpaceTaskType(Enum):
-    """Enum class for different types of task and/or fidelity subspaces."""
+    """Enum class for different types of task subspaces."""
 
     SINGLETASK = "SINGLETASK"
     """Flag for search spaces with a single task, meaning no task parameter."""

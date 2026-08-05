@@ -264,6 +264,20 @@ class GaussianProcessSurrogate(Surrogate):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
+        """Reject fit contexts incompatible with the Gaussian process model.
+
+        Args:
+            searchspace: The search space in which experiments are conducted.
+            objective: The objective to be optimized.
+            measurements: The training data in experimental representation.
+
+        Raises:
+            IncompatibleSurrogateError: If the search space has no
+                non-task/non-fidelity parameter.
+            IncompatibleSurrogateError: If custom components are combined with a
+                numerical multi-fidelity search space.
+            DeprecationError: If a custom kernel is combined with a task parameter.
+        """
         # A GP needs at least one non-task/non-fidelity input to model.
         if not any(
             i not in (searchspace.task_idx, searchspace.fidelity_idx)
