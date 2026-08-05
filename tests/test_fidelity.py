@@ -217,3 +217,18 @@ def test_gp_presets_fit_categorical_fidelity(preset):
     """All GP presets can be fitted on a categorical fidelity space."""
     surrogate = GaussianProcessSurrogate.from_preset(preset)
     surrogate.fit(searchspace_cat_fid, objective, measurements_cat_fid)
+
+
+@pytest.mark.parametrize(
+    "preset", list(GaussianProcessPreset), ids=lambda preset: preset.value
+)
+def test_gp_presets_reject_numerical_fidelity(preset):
+    """No GP preset can be fitted on a numerical fidelity space.
+
+    Numerical multi-fidelity spaces are delegated to BoTorch's
+    ``SingleTaskMultiFidelityGP``, which builds its own components. Since every
+    preset supplies explicit component factories, fitting must be rejected.
+    """
+    surrogate = GaussianProcessSurrogate.from_preset(preset)
+    with pytest.raises(IncompatibleSurrogateError, match="custom components"):
+        surrogate.fit(searchspace_num_fid, objective, measurements_num_fid)
