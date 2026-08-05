@@ -201,7 +201,7 @@ class DiscretePruningConstraint(DiscreteConstraint, ABC):
         """Translate the constraint to a Polars expression identifying rows to remove.
 
         Returns:
-            The Polars expression to pass to :meth:`polars.LazyFrame.filter`.
+            The Polars expression.
         """
         matching_expr = self._get_matching_rows_polars()
         if self.exclude:
