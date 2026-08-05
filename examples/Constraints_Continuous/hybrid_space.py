@@ -19,8 +19,7 @@ from botorch.test_functions import Rastrigin
 from baybe import Campaign
 from baybe.constraints import (
     ContinuousLinearConstraint,
-    DiscreteSumConstraint,
-    ThresholdCondition,
+    DiscreteLinearConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
@@ -76,11 +75,11 @@ parameters = [
 # - $1.0*x_3 - 1.0*x_4 = 2.0$
 
 constraints = [
-    DiscreteSumConstraint(
+    DiscreteLinearConstraint(
         parameters=["x_1", "x_2"],
-        condition=ThresholdCondition(
-            threshold=1.0, operator="==", tolerance=STRIDE / 2.0
-        ),
+        operator="==",
+        rhs=1.0,
+        tolerance=STRIDE / 2.0,
     ),
     ContinuousLinearConstraint(
         parameters=["x_3", "x_4"], operator="=", coefficients=(1.0, -1.0), rhs=2.0
