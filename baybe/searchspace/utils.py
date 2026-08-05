@@ -192,20 +192,20 @@ def parameter_cartesian_prod_pandas_constrained(
         A dataframe containing all valid parameter combinations.
     """
     # Filter to constraints that should be applied during creation
-    filtering_constraints = [
+    pruning_constraints = [
         c for c in constraints if isinstance(c, DiscretePruningConstraint)
     ]
 
     # Fast path: no constraints and no initial dataframe
-    if not filtering_constraints and initial_df is None:
+    if not pruning_constraints and initial_df is None:
         return parameter_cartesian_prod_pandas(parameters)
 
     # Compute optimal parameter order
-    ordered_params = optimize_parameter_order(parameters, filtering_constraints)
+    ordered_params = optimize_parameter_order(parameters, pruning_constraints)
 
     # Determine which parameter names each constraint needs for completion
     pending: list[tuple[DiscretePruningConstraint, set[str]]] = [
-        (c, c._required_parameters) for c in filtering_constraints
+        (c, c._required_parameters) for c in pruning_constraints
     ]
 
     # Initialize the dataframe
