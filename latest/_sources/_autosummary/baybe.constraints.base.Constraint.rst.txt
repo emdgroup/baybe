@@ -40,7 +40,5 @@ Constraint
       ~Constraint.is_continuous
       ~Constraint.is_discrete
       ~Constraint.numerical_only
-      ~Constraint.eval_during_creation
-      ~Constraint.eval_during_modeling
    
    

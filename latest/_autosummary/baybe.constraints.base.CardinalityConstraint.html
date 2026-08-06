@@ -1281,12 +1281,6 @@ containing the specified parameters.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.base.CardinalityConstraint.parameters" title="baybe.constraints.base.CardinalityConstraint.parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code></a></p></td>
 <td><p>The list of parameters used for the constraint.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.base.CardinalityConstraint.eval_during_creation" title="baybe.constraints.base.CardinalityConstraint.eval_during_creation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_creation</span></code></a></p></td>
-<td><p>Class variable encoding whether the condition is evaluated during creation.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.base.CardinalityConstraint.eval_during_modeling" title="baybe.constraints.base.CardinalityConstraint.eval_during_modeling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_modeling</span></code></a></p></td>
-<td><p>Class variable encoding whether the condition is evaluated during modeling.</p></td>
-</tr>
 </tbody>
 </table>
 </div>
@@ -1400,18 +1394,6 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.base.CardinalityConstraint.eval_during_creation">
-<span class="sig-name descname"><span class="pre">eval_during_creation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a><span class="pre">]</span></em><a class="headerlink" href="#baybe.constraints.base.CardinalityConstraint.eval_during_creation" title="Link to this definition">¶</a></dt>
-<dd><p>Class variable encoding whether the condition is evaluated during creation.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.base.CardinalityConstraint.eval_during_modeling">
-<span class="sig-name descname"><span class="pre">eval_during_modeling</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a><span class="pre">]</span></em><a class="headerlink" href="#baybe.constraints.base.CardinalityConstraint.eval_during_modeling" title="Link to this definition">¶</a></dt>
-<dd><p>Class variable encoding whether the condition is evaluated during modeling.</p>
-</dd></dl>
-
 <dl class="py property">
 <dt class="sig sig-object py" id="baybe.constraints.base.CardinalityConstraint.is_continuous">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_continuous</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#baybe.constraints.base.CardinalityConstraint.is_continuous" title="Link to this definition">¶</a></dt>
@@ -1516,8 +1498,6 @@ parameters.</p>
 <li><a class="reference internal" href="#baybe.constraints.base.CardinalityConstraint.summary"><code class="docutils literal notranslate"><span class="pre">CardinalityConstraint.summary()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.base.CardinalityConstraint.to_dict"><code class="docutils literal notranslate"><span class="pre">CardinalityConstraint.to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.base.CardinalityConstraint.to_json"><code class="docutils literal notranslate"><span class="pre">CardinalityConstraint.to_json()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.base.CardinalityConstraint.eval_during_creation"><code class="docutils literal notranslate"><span class="pre">CardinalityConstraint.eval_during_creation</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.base.CardinalityConstraint.eval_during_modeling"><code class="docutils literal notranslate"><span class="pre">CardinalityConstraint.eval_during_modeling</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.base.CardinalityConstraint.is_continuous"><code class="docutils literal notranslate"><span class="pre">CardinalityConstraint.is_continuous</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.base.CardinalityConstraint.is_discrete"><code class="docutils literal notranslate"><span class="pre">CardinalityConstraint.is_discrete</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.base.CardinalityConstraint.max_cardinality"><code class="docutils literal notranslate"><span class="pre">CardinalityConstraint.max_cardinality</span></code></a></li>

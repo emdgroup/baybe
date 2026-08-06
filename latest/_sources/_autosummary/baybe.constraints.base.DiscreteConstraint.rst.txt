@@ -42,8 +42,6 @@ DiscreteConstraint
 
    .. autosummary::
    
-      ~DiscreteConstraint.eval_during_creation
-      ~DiscreteConstraint.eval_during_modeling
       ~DiscreteConstraint.has_polars_implementation
       ~DiscreteConstraint.is_continuous
       ~DiscreteConstraint.is_discrete

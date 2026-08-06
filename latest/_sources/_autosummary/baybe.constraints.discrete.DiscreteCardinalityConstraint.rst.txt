@@ -42,8 +42,6 @@ DiscreteCardinalityConstraint
 
    .. autosummary::
    
-      ~DiscreteCardinalityConstraint.eval_during_creation
-      ~DiscreteCardinalityConstraint.eval_during_modeling
       ~DiscreteCardinalityConstraint.has_polars_implementation
       ~DiscreteCardinalityConstraint.is_continuous
       ~DiscreteCardinalityConstraint.is_discrete

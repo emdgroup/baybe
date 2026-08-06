@@ -42,8 +42,6 @@ ContinuousLinearConstraint
       ~ContinuousLinearConstraint.coefficients
       ~ContinuousLinearConstraint.rhs
       ~ContinuousLinearConstraint.is_interpoint
-      ~ContinuousLinearConstraint.eval_during_creation
-      ~ContinuousLinearConstraint.eval_during_modeling
       ~ContinuousLinearConstraint.is_continuous
       ~ContinuousLinearConstraint.is_discrete
       ~ContinuousLinearConstraint.is_eq

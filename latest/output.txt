@@ -6,11 +6,11 @@ misc/contributing_link.md:16: [redirected with Found] https://github.com/emdgrou
 misc/contributing_link.md:143: [redirected with Found] https://hypothesis.readthedocs.io/ to https://hypothesis.readthedocs.io/en/latest/
 misc/contributing_link.md:116: [redirected with Found] https://mypy.readthedocs.io/ to https://mypy.readthedocs.io/en/stable/
 misc/contributing_link.md:119: [redirected with Found] https://pytest-cov.readthedocs.io/ to https://pytest-cov.readthedocs.io/en/latest/
-misc/changelog_link.md:711: [redirected permanently] https://github.com/pytorch/botorch/pull/2293 to https://github.com/meta-pytorch/botorch/pull/2293
-_autosummary/baybe.parameters.enum.rst:1: [redirected with Found] https://scikit-fingerprints.readthedocs.io/ to https://scikit-fingerprints.readthedocs.io/stable/
 components/parameters.md:157: [redirected with Found] https://scikit-fingerprints.readthedocs.io to https://scikit-fingerprints.readthedocs.io/stable/
+_autosummary/baybe.parameters.enum.rst:1: [redirected with Found] https://scikit-fingerprints.readthedocs.io/ to https://scikit-fingerprints.readthedocs.io/stable/
+misc/changelog_link.md:714: [redirected permanently] https://github.com/pytorch/botorch/pull/2293 to https://github.com/meta-pytorch/botorch/pull/2293
 index.md:420: [redirected with Found] https://shap.readthedocs.io/ to https://shap.readthedocs.io/en/latest/
 misc/contributing_link.md:123: [redirected with Found] https://tox.wiki/ to https://tox.wiki/en/4.58.0/
-_autosummary/baybe.settings.Settings.rst:1: [redirected with Found] https://xyzpy.readthedocs.io/ to https://xyzpy.readthedocs.io/en/latest/
 misc/contributing_link.md:121: [redirected with Found] https://www.sphinx-doc.org/ to https://www.sphinx-doc.org/en/master/
 misc/contributing_link.md:139: [redirected with Found] https://www.attrs.org/ to https://www.attrs.org/en/stable/
+_autosummary/baybe.settings.Settings.rst:1: [redirected with Found] https://xyzpy.readthedocs.io/ to https://xyzpy.readthedocs.io/en/latest/

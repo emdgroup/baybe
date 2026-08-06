@@ -1271,12 +1271,6 @@ in-/equality constraints over a continuous parameter space.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_interpoint" title="baybe.constraints.continuous.ContinuousLinearConstraint.is_interpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_interpoint</span></code></a></p></td>
 <td><p>Flag for defining an interpoint constraint.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_creation" title="baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_creation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_creation</span></code></a></p></td>
-<td><p>Class variable encoding whether the condition is evaluated during creation.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_modeling" title="baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_modeling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_modeling</span></code></a></p></td>
-<td><p>Class variable encoding whether the condition is evaluated during modeling.</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_continuous" title="baybe.constraints.continuous.ContinuousLinearConstraint.is_continuous"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_continuous</span></code></a></p></td>
 <td><p>Boolean indicating if this is a constraint over continuous parameters.</p></td>
 </tr>
@@ -1446,18 +1440,6 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 <dd><p>In-/equality coefficient for each entry in <code class="docutils literal notranslate"><span class="pre">parameters</span></code>.</p>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_creation">
-<span class="sig-name descname"><span class="pre">eval_during_creation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar[bool]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_creation" title="Link to this definition">¶</a></dt>
-<dd><p>Class variable encoding whether the condition is evaluated during creation.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_modeling">
-<span class="sig-name descname"><span class="pre">eval_during_modeling</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar[bool]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_modeling" title="Link to this definition">¶</a></dt>
-<dd><p>Class variable encoding whether the condition is evaluated during modeling.</p>
-</dd></dl>
-
 <dl class="py property">
 <dt class="sig sig-object py" id="baybe.constraints.continuous.ContinuousLinearConstraint.is_continuous">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_continuous</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_continuous" title="Link to this definition">¶</a></dt>
@@ -1582,8 +1564,6 @@ coefficients for <cite>&lt;=</cite>.</p>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.to_dict"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.to_json"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.to_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.coefficients"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.coefficients</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_creation"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.eval_during_creation</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.eval_during_modeling"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.eval_during_modeling</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_continuous"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.is_continuous</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_discrete"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.is_discrete</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.continuous.ContinuousLinearConstraint.is_eq"><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.is_eq</span></code></a></li>

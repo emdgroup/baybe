@@ -42,7 +42,5 @@ CardinalityConstraint
       ~CardinalityConstraint.is_discrete
       ~CardinalityConstraint.numerical_only
       ~CardinalityConstraint.parameters
-      ~CardinalityConstraint.eval_during_creation
-      ~CardinalityConstraint.eval_during_modeling
    
    

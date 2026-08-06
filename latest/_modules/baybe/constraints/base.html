@@ -1238,13 +1238,6 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all constraints.&quot;&quot;&quot;</span>
 
     <span class="c1"># class variables</span>
-    <span class="c1"># TODO: it might turn out these are not needed at a later development stage</span>
-    <span class="n">eval_during_creation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class variable encoding whether the condition is evaluated during creation.&quot;&quot;&quot;</span>
-
-    <span class="n">eval_during_modeling</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class variable encoding whether the condition is evaluated during modeling.&quot;&quot;&quot;</span>
-
     <span class="n">numerical_only</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class variable encoding whether the constraint is valid only for numerical</span>
 <span class="sd">    parameters.&quot;&quot;&quot;</span>
@@ -1310,13 +1303,6 @@
 <span class="sd">    Discrete constraints use conditions and chain them together to filter unwanted</span>
 <span class="sd">    entries from the search space.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># class variables</span>
-    <span class="n">eval_during_creation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="c1"># See base class.</span>
-
-    <span class="n">eval_during_modeling</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="c1"># See base class.</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_can_evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">available</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Indicate whether the constraint can be (partially) evaluated.</span>
@@ -1441,12 +1427,6 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for continuous constraints.&quot;&quot;&quot;</span>
 
     <span class="c1"># class variables</span>
-    <span class="n">eval_during_creation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="c1"># See base class.</span>
-
-    <span class="n">eval_during_modeling</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="c1"># See base class.</span>
-
     <span class="n">numerical_only</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
 
     <span class="c1"># See base class.</span>

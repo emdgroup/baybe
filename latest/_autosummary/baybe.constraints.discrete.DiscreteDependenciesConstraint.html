@@ -1278,12 +1278,6 @@ a single constraint.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.permutation_invariant" title="baybe.constraints.discrete.DiscreteDependenciesConstraint.permutation_invariant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">permutation_invariant</span></code></a></p></td>
 <td><p>Flag that indicates whether the affected parameters are permutation invariant.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.eval_during_creation" title="baybe.constraints.discrete.DiscreteDependenciesConstraint.eval_during_creation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_creation</span></code></a></p></td>
-<td><p>Class variable encoding whether the condition is evaluated during creation.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.eval_during_modeling" title="baybe.constraints.discrete.DiscreteDependenciesConstraint.eval_during_modeling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_modeling</span></code></a></p></td>
-<td><p>Class variable encoding whether the condition is evaluated during modeling.</p></td>
-</tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_polars_implementation</span></code></p></td>
 <td><p></p></td>
 </tr>
@@ -1510,18 +1504,6 @@ constraint.</p>
 <dd><p>The list of individual conditions.</p>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteDependenciesConstraint.eval_during_creation">
-<span class="sig-name descname"><span class="pre">eval_during_creation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.eval_during_creation" title="Link to this definition">¶</a></dt>
-<dd><p>Class variable encoding whether the condition is evaluated during creation.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteDependenciesConstraint.eval_during_modeling">
-<span class="sig-name descname"><span class="pre">eval_during_modeling</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.eval_during_modeling" title="Link to this definition">¶</a></dt>
-<dd><p>Class variable encoding whether the condition is evaluated during modeling.</p>
-</dd></dl>
-
 <dl class="py property">
 <dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteDependenciesConstraint.is_continuous">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_continuous</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.is_continuous" title="Link to this definition">¶</a></dt>
@@ -1627,8 +1609,6 @@ This should not be changed by the user but by other constraints using the class.
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.to_symmetries"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.to_symmetries()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.affected_parameters"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.affected_parameters</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.conditions"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.conditions</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.eval_during_creation"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.eval_during_creation</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.eval_during_modeling"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.eval_during_modeling</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.is_continuous"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.is_continuous</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.is_discrete"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.is_discrete</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.numerical_only"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.numerical_only</span></code></a></li>

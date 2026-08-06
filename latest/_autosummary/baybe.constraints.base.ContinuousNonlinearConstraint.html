@@ -1254,12 +1254,6 @@
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.base.ContinuousNonlinearConstraint.eval_during_creation" title="baybe.constraints.base.ContinuousNonlinearConstraint.eval_during_creation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_creation</span></code></a></p></td>
-<td><p>Class variable encoding whether the condition is evaluated during creation.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.base.ContinuousNonlinearConstraint.eval_during_modeling" title="baybe.constraints.base.ContinuousNonlinearConstraint.eval_during_modeling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval_during_modeling</span></code></a></p></td>
-<td><p>Class variable encoding whether the condition is evaluated during modeling.</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.base.ContinuousNonlinearConstraint.is_continuous" title="baybe.constraints.base.ContinuousNonlinearConstraint.is_continuous"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_continuous</span></code></a></p></td>
 <td><p>Boolean indicating if this is a constraint over continuous parameters.</p></td>
 </tr>
@@ -1385,18 +1379,6 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.base.ContinuousNonlinearConstraint.eval_during_creation">
-<span class="sig-name descname"><span class="pre">eval_during_creation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#baybe.constraints.base.ContinuousNonlinearConstraint.eval_during_creation" title="Link to this definition">¶</a></dt>
-<dd><p>Class variable encoding whether the condition is evaluated during creation.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.base.ContinuousNonlinearConstraint.eval_during_modeling">
-<span class="sig-name descname"><span class="pre">eval_during_modeling</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#baybe.constraints.base.ContinuousNonlinearConstraint.eval_during_modeling" title="Link to this definition">¶</a></dt>
-<dd><p>Class variable encoding whether the condition is evaluated during modeling.</p>
-</dd></dl>
-
 <dl class="py property">
 <dt class="sig sig-object py" id="baybe.constraints.base.ContinuousNonlinearConstraint.is_continuous">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_continuous</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#baybe.constraints.base.ContinuousNonlinearConstraint.is_continuous" title="Link to this definition">¶</a></dt>
@@ -1489,8 +1471,6 @@ parameters.</p>
 <li><a class="reference internal" href="#baybe.constraints.base.ContinuousNonlinearConstraint.summary"><code class="docutils literal notranslate"><span class="pre">ContinuousNonlinearConstraint.summary()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.base.ContinuousNonlinearConstraint.to_dict"><code class="docutils literal notranslate"><span class="pre">ContinuousNonlinearConstraint.to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.base.ContinuousNonlinearConstraint.to_json"><code class="docutils literal notranslate"><span class="pre">ContinuousNonlinearConstraint.to_json()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.base.ContinuousNonlinearConstraint.eval_during_creation"><code class="docutils literal notranslate"><span class="pre">ContinuousNonlinearConstraint.eval_during_creation</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.base.ContinuousNonlinearConstraint.eval_during_modeling"><code class="docutils literal notranslate"><span class="pre">ContinuousNonlinearConstraint.eval_during_modeling</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.base.ContinuousNonlinearConstraint.is_continuous"><code class="docutils literal notranslate"><span class="pre">ContinuousNonlinearConstraint.is_continuous</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.base.ContinuousNonlinearConstraint.is_discrete"><code class="docutils literal notranslate"><span class="pre">ContinuousNonlinearConstraint.is_discrete</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.base.ContinuousNonlinearConstraint.numerical_only"><code class="docutils literal notranslate"><span class="pre">ContinuousNonlinearConstraint.numerical_only</span></code></a></li>
