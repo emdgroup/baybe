@@ -22,13 +22,6 @@ class Constraint(ABC, SerialMixin):
     """Abstract base class for all constraints."""
 
     # class variables
-    # TODO: it might turn out these are not needed at a later development stage
-    eval_during_creation: ClassVar[bool]
-    """Class variable encoding whether the condition is evaluated during creation."""
-
-    eval_during_modeling: ClassVar[bool]
-    """Class variable encoding whether the condition is evaluated during modeling."""
-
     numerical_only: ClassVar[bool] = False
     """Class variable encoding whether the constraint is valid only for numerical
     parameters."""
@@ -88,13 +81,6 @@ class DiscreteConstraint(Constraint, ABC):
     Discrete constraints use conditions and chain them together to filter unwanted
     entries from the search space.
     """
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    # See base class.
-
-    eval_during_modeling: ClassVar[bool] = False
-    # See base class.
 
     def _can_evaluate(self, available: set[str], /) -> bool:
         """Indicate whether the constraint can be (partially) evaluated.
@@ -207,12 +193,6 @@ class ContinuousConstraint(Constraint, ABC):
     """Abstract base class for continuous constraints."""
 
     # class variables
-    eval_during_creation: ClassVar[bool] = False
-    # See base class.
-
-    eval_during_modeling: ClassVar[bool] = True
-    # See base class.
-
     numerical_only: ClassVar[bool] = True
     # See base class.
 
