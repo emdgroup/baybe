@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Removed
-- Internal `eval_during_creation` / `eval_during_modeling` constraint class variables
+- `eval_during_creation` / `eval_during_modeling` constraint class variables
 
 ### Breaking Changes
 - All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
