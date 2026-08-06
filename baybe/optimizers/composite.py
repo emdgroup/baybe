@@ -13,7 +13,10 @@ from attrs import define, field
 from attrs.validators import gt, instance_of, min_len
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibleSearchSpaceError
+from baybe.exceptions import (
+    IncompatibleAcquisitionFunctionError,
+    IncompatibleSearchSpaceError,
+)
 from baybe.optimizers.base import OptimizerProtocol
 from baybe.parameters.selectors import ParameterSelectorProtocol, to_parameter_selector
 from baybe.searchspace import SearchSpace
@@ -182,19 +185,33 @@ class SequentialOptimizer(OptimizerProtocol):
         searchspace: SearchSpace,
     ) -> OptimizationResult:
         import torch
+        from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 
         n_cols = len(searchspace.comp_rep_columns)
-        base_X_pending = score_function.X_pending
-
         points = torch.empty(batch_size, n_cols, dtype=active_settings.DTypeFloatTorch)
         scores = torch.empty(batch_size, dtype=active_settings.DTypeFloatTorch)
 
-        for b in range(batch_size):
+        if batch_size == 1:
             steps = self.schedule(searchspace)
-            point, score = self._optimize_single_point(
+            points[0], scores[0] = self._optimize_single_point(
                 score_function, searchspace, steps
             )
-            points[b], scores[b] = point, score
+            return points, scores
+
+        if not isinstance(score_function, MCAcquisitionFunction):
+            raise IncompatibleAcquisitionFunctionError(
+                f"'{type(self).__name__}' requires a Monte Carlo acquisition "
+                f"function for batch sizes greater than 1 but got an acquisition "
+                f"function of type '{type(score_function).__name__}'."
+            )
+
+        base_X_pending = score_function.X_pending
+
+        for b in range(batch_size):
+            steps = self.schedule(searchspace)
+            points[b], scores[b] = self._optimize_single_point(
+                score_function, searchspace, steps
+            )
 
             pending = points[: b + 1]
             if base_X_pending is not None:
