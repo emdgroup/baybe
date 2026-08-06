@@ -135,15 +135,19 @@ class SequentialOptimizer(OptimizerProtocol):
             The optimization result for a single point of the batch.
         """
         dfs: list[pd.DataFrame] = []
-        if not self.discrete.is_empty:
+        if not searchspace.discrete.is_empty:
             dfs.append(
-                self.discrete.exp_rep.sample(1, replace=True).reset_index(drop=True)
+                searchspace.discrete.exp_rep.sample(1, replace=True).reset_index(
+                    drop=True
+                )
             )
-        if not self.continuous.is_empty:
-            dfs.append(self.continuous.sample_uniform(1))
+        if not searchspace.continuous.is_empty:
+            dfs.append(searchspace.continuous.sample_uniform(1))
+
         current_point: dict[str, Any] = {
             str(k): v for k, v in pd.concat(dfs, axis=1).iloc[0].items()
         }
+
         step = next(steps)
 
         while True:
