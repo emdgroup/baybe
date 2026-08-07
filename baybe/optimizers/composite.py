@@ -132,7 +132,7 @@ class BlockCoordinateOptimizer(OptimizerProtocol):
         Args:
             score_function: The callable to optimize.
             searchspace: The full search space.
-            steps: A generator yielding optimization steps.
+            steps: A generator yielding :class:`~OptimizationStep`s.
 
         Returns:
             The optimization result for a single point of the batch.
