@@ -397,7 +397,6 @@ class SubspaceContinuous(SerialMixin):
                 for c in self.constraints_lin_ineq
                 if set(c.parameters) - set(parameter_names)
             ],
-            constraints_nonlin=[],
         )
 
     @property
