@@ -237,7 +237,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
 
     @tolerance.validator
     def _validate_tolerance(  # noqa: DOC101, DOC103
-        self, _: Any, value: float | None
+        self, attribute: Any, value: float | None
     ) -> None:
         """Validate the tolerance.
 
@@ -247,12 +247,15 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
         """
         if self.operator not in _valid_tolerance_operators and value is not None:
             raise ValueError(
-                f"Setting the tolerance is only valid with the following operators: "
-                f"{_valid_tolerance_operators}, but got operator '{self.operator}'."
+                f"Setting the '{attribute.alias}' is only valid with the following "
+                f"operators: {_valid_tolerance_operators}, but got operator "
+                f"'{self.operator}'."
             )
         if self.operator in _valid_tolerance_operators and value is not None:
             if value <= 0.0:
-                raise ValueError(f"Tolerance must be positive, but got {value}.")
+                raise ValueError(
+                    f"'{attribute.alias}' must be positive, but got {value}."
+                )
 
     def _build_condition(self) -> ThresholdCondition:
         """Build the internal threshold condition from the constraint fields."""
@@ -343,17 +346,22 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
         """Resolve the deprecated ``condition`` field and validate."""
         import warnings
 
+        flds = fields(type(self))
+
         # >>>>>>>>>> Deprecation
         if self.condition is not None:
             if self.operator != "":
                 raise ValueError(
-                    "Cannot specify both 'condition' and 'operator'. "
-                    "Use the new interface ('operator', 'rhs', 'tolerance') instead."
+                    f"Cannot specify both '{flds.condition.alias}' and "
+                    f"'{flds.operator.alias}'. Use the new interface "
+                    f"('{flds.operator.alias}', '{flds.rhs.alias}', "
+                    f"'{flds.tolerance.alias}') instead."
                 )
             warnings.warn(
-                "Passing 'condition' to 'DiscreteProductConstraint' is deprecated "
-                "and will be removed in a future version. Use 'operator' and 'rhs' "
-                "(and optionally 'tolerance') instead.",
+                f"Passing '{flds.condition.alias}' to '{type(self).__name__}' is "
+                f"deprecated and will be removed in a future version. Use "
+                f"'{flds.operator.alias}' and '{flds.rhs.alias}' (and optionally "
+                f"'{flds.tolerance.alias}') instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -366,8 +374,8 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
         # Validate operator
         if self.operator not in _threshold_operators:
             raise ValueError(
-                f"'operator' must be one of {list(_threshold_operators)}, "
-                f"but got '{self.operator}'."
+                f"'{flds.operator.alias}' must be one of "
+                f"{list(_threshold_operators)}, but got '{self.operator}'."
             )
 
         # Validate tolerance
@@ -376,15 +384,18 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
             and self.tolerance is not None
         ):
             raise ValueError(
-                f"Setting the tolerance is only valid with the following operators: "
-                f"{_valid_tolerance_operators}, but got operator '{self.operator}'."
+                f"Setting the '{flds.tolerance.alias}' is only valid with the "
+                f"following operators: {_valid_tolerance_operators}, but got "
+                f"operator '{self.operator}'."
             )
         if (
             self.operator in _valid_tolerance_operators
             and self.tolerance is not None
             and self.tolerance <= 0.0
         ):
-            raise ValueError(f"Tolerance must be positive, but got {self.tolerance}.")
+            raise ValueError(
+                f"'{flds.tolerance.alias}' must be positive, but got {self.tolerance}."
+            )
 
     def _build_condition(self) -> ThresholdCondition:
         """Build the internal threshold condition from the constraint fields."""
@@ -421,8 +432,8 @@ def DiscreteSumConstraint(  # noqa: N802
     import warnings
 
     warnings.warn(
-        "'DiscreteSumConstraint' is deprecated and will be removed in a future "
-        "version. Use 'DiscreteLinearConstraint' instead.",
+        f"'DiscreteSumConstraint' is deprecated and will be removed in a future "
+        f"version. Use '{DiscreteLinearConstraint.__name__}' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -433,8 +444,8 @@ def DiscreteSumConstraint(  # noqa: N802
         tolerance = condition.tolerance
     else:
         raise TypeError(
-            "Missing required argument 'condition'. Use 'DiscreteLinearConstraint' "
-            "with 'operator' and 'rhs' instead."
+            f"Missing required argument 'condition'. Use "
+            f"'{DiscreteLinearConstraint.__name__}' with 'operator' and 'rhs' instead."
         )
 
     new_kwargs: dict[str, Any] = {
