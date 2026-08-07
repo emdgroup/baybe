@@ -150,8 +150,8 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
 class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     """Class for modelling linear (weighted-sum) constraints on discrete parameters.
 
-    The constraint evaluates whether the weighted sum of the specified parameters
-    satisfies the given threshold condition, expressed via ``operator`` and ``rhs``.
+    The constraint compares the (optionally weighted) sum of the specified parameters
+    against ``rhs`` using the given ``operator``.
 
     Examples:
         >>> df = pd.DataFrame({"A": [1.0, 3.0, 5.0], "B": [2.0, 1.0, 3.0]})
@@ -290,8 +290,8 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
 class DiscreteProductConstraint(DiscreteFilteringConstraint):
     """Class for modelling product constraints on discrete parameters.
 
-    The constraint evaluates whether the product of the specified parameters
-    satisfies the given threshold condition, expressed via ``operator`` and ``rhs``.
+    The constraint compares the product of the specified parameters against ``rhs``
+    using the given ``operator``.
 
     Examples:
         >>> df = pd.DataFrame({"A": [2.0, 3.0, 5.0], "B": [3.0, 2.0, 2.0]})
