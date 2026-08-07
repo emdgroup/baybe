@@ -211,16 +211,9 @@ def validate_parameter_input(
             )
 
         # Check if all rows have valid inputs matching allowed parameter values
-        if p.is_numerical:
-            valid = (
-                not numerical_measurements_must_be_within_tolerance
-                or data[p.name].map(p.is_in_range).all()
-            )
-        else:
-            from baybe.parameters.base import _EncodedDiscreteParameter
-
-            assert isinstance(p, _EncodedDiscreteParameter)
-            valid = data[p.name].isin(p.values).all()
+        valid = (
+            p.is_numerical and not numerical_measurements_must_be_within_tolerance
+        ) or data[p.name].map(p.is_in_range).all()
         if not valid:
             raise ValueError(
                 f"The provided dataframe has invalid values for parameter '{p.name}'. "

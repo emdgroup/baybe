@@ -16,6 +16,7 @@ from attrs.validators import instance_of, min_len
 from narwhals.stable.v2.dependencies import is_into_series
 from typing_extensions import override
 
+from baybe.exceptions import InfiniteSpaceError
 from baybe.serialization import (
     SerialMixin,
 )
@@ -131,11 +132,18 @@ class DiscreteParameter(Parameter, ABC):
     def values(self) -> tuple:
         """The values the parameter can take."""
 
+    def __len__(self) -> int:
+        """Return the number of values the parameter can take."""
+        return len(self.values)
+
     @property
     def is_finite(self) -> bool:
         """Indicates whether the parameter has a finite number of values."""
-        len(self.values)  # <-- raises an error if the parameter is infinite
-        return True
+        try:
+            len(self)
+            return True
+        except InfiniteSpaceError:
+            return False
 
     @property
     def active_values(self) -> tuple:
@@ -242,7 +250,7 @@ class DiscreteParameter(Parameter, ABC):
         return dict(
             Name=self.name,
             Type=self.__class__.__name__,
-            nValues=len(self.values),
+            nValues=len(self),
         )
 
 
@@ -261,7 +269,7 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
     _active_values: tuple[str | bool, ...] | None = field(
         default=None,
         converter=optional_c(
-            Converter(  # type: ignore[misc, call-overload]
+            Converter(  # type: ignore[misc]
                 nonstring_to_tuple, takes_self=True, takes_field=True
             )
         ),
@@ -301,10 +309,10 @@ class _EncodedDiscreteParameter(DiscreteParameter, ABC):
             )
         if len(set(content)) != len(content):
             raise ValueError("The active parameter values must be unique.")
-        if not all(v in self.values for v in content):
+        if invalid := [v for v in content if not self.is_in_range(v)]:
             raise ValueError(
-                f"All active values must be valid parameter choices from: "
-                f"{self.values}, provided: {content}"
+                f"All active values must be valid parameter choices. "
+                f"Provided invalid values: {invalid}"
             )
 
     @override

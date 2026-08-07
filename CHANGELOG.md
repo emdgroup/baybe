@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional/secondary fields of discrete parameter classes are now keyword-only
 
 ### Added
+- `SequenceParameter` class for modeling parameters whose values are configurable-length
+  token sequences from a predefined alphabet
+- `EncoderProtocol` as a public interface for specifying parameter encoders
 - `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
   the same pattern as `ContinuousLinearConstraint.coefficients`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
@@ -30,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CandidatesProtocol` as an interface for candidates generation
 - `EmptyCandidates`, `TableCandidates` and `ProductCandidates` classes implementing
   `CandidatesProtocol`
-- `DiscreteParameter.is_finite` property
+- `DiscreteParameter.__len__` and `DiscreteParameter.is_finite` property
 - `SubspaceDiscrete.batch_constraints` field for storing batch-level constraints
 - `SubspaceDiscrete.from_dataframe` now accepts `batch_constraints`
 - `validate_parameter_input` now accepts an `allow_empty` flag to permit zero-row input

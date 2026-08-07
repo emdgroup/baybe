@@ -102,6 +102,15 @@ def make_base_unstructure_hook(base: type[_T]):
                 pass
 
         dct = hook(obj)
+
+        # The hook must return a dictionary since it is intended to be applied to
+        # serializable container classes (e.g. attrs classes)
+        if not isinstance(dct, dict):
+            raise TypeError(
+                f"Expected a type of '{base.__name__}' that supports serialization. "
+                f"Passed object: {obj!r} (type: {type(obj).__name__})",
+            )
+
         return _add_type_to_dict(dct, obj.__class__.__name__)
 
     return unstructure_base

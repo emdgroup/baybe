@@ -276,7 +276,7 @@ class SearchSpace(SerialMixin):
         if (task_param := self._task_parameter) is None:
             # When there are no task parameters, we effectively have a single task
             return 1
-        return len(task_param.values)
+        return len(task_param)
 
     @property
     def n_subsets(self) -> int:

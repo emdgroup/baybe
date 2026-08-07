@@ -32,13 +32,36 @@ def fraction_to_float(value: str | float | Fraction, /) -> float:
     return float(value)
 
 
-def nonstring_to_tuple(x: Sequence[_T], self: type, field: Attribute) -> tuple[_T, ...]:
-    """Convert a sequence to tuple but raise an exception for string input."""
+def nonstring_to_tuple(
+    x: Sequence[_T],
+    self: object = None,
+    field: Attribute | None = None,
+    /,
+) -> tuple[_T, ...]:
+    """Convert a sequence to tuple but raise an exception for string input.
+
+    Can be used for plain conversion or as a converter for an attrs field.
+
+    Args:
+        x: The sequence to be converted.
+        self: The object owning the field, used for error reporting. When provided,
+            its class name is included in the error message.
+        field: The field descriptor, used for error reporting. When provided, its
+            alias is included in the error message.
+
+    Returns:
+        The tuple representation of the given sequence.
+
+    Raises:
+        ValueError: If the provided value is a string.
+    """
     if isinstance(x, str):
-        raise ValueError(
-            f"Argument passed to '{field.alias}' of class '{self.__class__.__name__}' "
-            f"must be a sequence but cannot be a string."
+        context = (
+            "Argument"
+            + (f" '{field.alias}'" if field is not None else "")
+            + (f" of class '{self.__class__.__name__}'" if self is not None else "")
         )
+        raise ValueError(f"{context} must be a sequence but cannot be a string.")
     return tuple(x)
 
 
