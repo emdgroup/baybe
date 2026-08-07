@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   number of required models instead of the number of transform outputs
 
 ### Added
-- `optimizers` subpackage with `OptimizerProtocol` and `ContinuousOptimizer`
+- `optimizers` subpackage with `OptimizerProtocol`, `OptimizationSchedule`, `ContinuousOptimizer` and `BlockCoordinateOptimizer`
 - `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
   the same pattern as `ContinuousLinearConstraint.coefficients`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
