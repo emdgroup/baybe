@@ -231,7 +231,7 @@ def discrete_product_constraints(
         tolerance = draw(st.one_of(st.none(), finite_floats().filter(lambda x: x > 0)))
 
     return DiscreteProductConstraint(
-        params, operator, rhs=rhs, tolerance=tolerance, exclude=exclude
+        params, operator=operator, rhs=rhs, tolerance=tolerance, exclude=exclude
     )
 
 
