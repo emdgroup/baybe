@@ -107,10 +107,10 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
 
 @define(frozen=True)
 class BlockCoordinateOptimizer(OptimizerProtocol):
-    """An optimizer that sequentially optimizes over specified subspaces.
+    """An optimizer that performs block optimization over specified subspaces.
 
     Each subspace is assigned to a dedicated optimizer in the form of an
-    :class:`~OptimizationSchedule`. The subspaces are then optimized sequentially
+    :class:`~OptimizationSchedule`. The subspaces are then optimized block-wise
     according to the schedule, holding the respective other part of the search space
     fixed. For batch optimization, the same schedule is applied repeatedly per point,
     resulting in a greedy optimization strategy.
