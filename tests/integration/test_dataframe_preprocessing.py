@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.utils.dataframe import add_fake_measurements
 from baybe.utils.validation import validate_parameter_input
 
@@ -25,5 +25,5 @@ def test_dataframes_are_preprocessed_only_once(mock, campaign):
     assert mock.call_count == 1
 
     # However, calling the recommender directly triggers preprocessing
-    BotorchRecommender().recommend(1, campaign.searchspace, campaign.objective, df)
+    BayesianRecommender().recommend(1, campaign.searchspace, campaign.objective, df)
     assert mock.call_count == 2

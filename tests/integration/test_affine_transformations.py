@@ -9,7 +9,7 @@ from baybe.acquisition import ProbabilityOfImprovement
 from baybe.exceptions import IncompatibilityError
 from baybe.objectives import DesirabilityObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.recommenders import BotorchRecommender
+from baybe.recommenders import BayesianRecommender
 from baybe.targets import NumericalTarget
 
 searchspace = NumericalContinuousParameter("p", (0, 1)).to_searchspace()
@@ -36,7 +36,7 @@ measurements = pd.DataFrame({"p": [0.1], "t1": [0.2], "t2": [0.3]})
 def test_analytic_acqf_with_affine_target(objective, allowed):
     """Analytic acquisition functions can be used with affine target transformations."""
     with nullcontext() if allowed else pytest.raises(IncompatibilityError):
-        BotorchRecommender().acquisition_values(
+        BayesianRecommender().acquisition_values(
             candidates,
             searchspace,
             objective,

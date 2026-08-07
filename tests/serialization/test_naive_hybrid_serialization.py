@@ -5,9 +5,6 @@ import pytest
 from baybe.campaign import Campaign
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.naive import NaiveHybridSpaceRecommender
-from baybe.recommenders.pure.bayesian.botorch import (
-    BotorchRecommender,
-)
 from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
@@ -31,7 +28,7 @@ valid_discrete_bayesian_recommenders = [
 valid_naive_hybrid_recommenders = [
     TwoPhaseMetaRecommender(
         recommender=NaiveHybridSpaceRecommender(
-            disc_recommender=disc, cont_recommender=BotorchRecommender()
+            disc_recommender=disc, cont_recommender=BayesianRecommender()
         )
     )
     for disc in [

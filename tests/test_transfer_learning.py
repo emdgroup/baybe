@@ -7,7 +7,7 @@ import pytest
 
 from baybe import Campaign
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
-from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 
@@ -35,7 +35,7 @@ def campaign(
     ]
     searchspace = SearchSpace.from_product(parameters=parameters)
     objective = NumericalTarget(name="y").to_objective()
-    recommender = BotorchRecommender()
+    recommender = BayesianRecommender()
     lookup = pd.DataFrame(
         {
             "x": [1.0, 2.0, 3.0, 4.0],

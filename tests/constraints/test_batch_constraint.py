@@ -13,7 +13,7 @@ from baybe.exceptions import (
     UnusedObjectWarning,
 )
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from baybe.recommenders import BotorchRecommender
+from baybe.recommenders import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
@@ -35,7 +35,7 @@ _params = [
 @pytest.mark.parametrize(
     "recommender",
     [
-        param(BotorchRecommender(), id="botorch"),
+        param(BayesianRecommender(), id="bayesian"),
         param(RandomRecommender(), id="random"),
     ],
 )
@@ -119,7 +119,7 @@ def test_batch_constraint_all_subsets_too_small():
 
     # Each d0 subset has 3 candidates, batch_size=4 exceeds all
     with pytest.raises(InfeasibilityError):
-        BotorchRecommender().recommend(
+        BayesianRecommender().recommend(
             4, searchspace, TARGET.to_objective(), measurements
         )
 

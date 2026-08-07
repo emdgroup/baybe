@@ -13,7 +13,7 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.recommenders import BotorchRecommender
+from baybe.recommenders import BayesianRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
@@ -90,7 +90,7 @@ def test_subset_constraints_hybrid(constraints):
     searchspace = SearchSpace.from_product(_all_params, constraints)
     measurements = create_fake_input(_all_params, [TARGET], n_rows=3)
 
-    rec = BotorchRecommender().recommend(
+    rec = BayesianRecommender().recommend(
         BATCH_SIZE, searchspace, TARGET.to_objective(), measurements
     )
 
