@@ -251,7 +251,8 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
                 f"operators: {_valid_tolerance_operators}, but got operator "
                 f"'{self.operator}'."
             )
-        if self.operator in _valid_tolerance_operators and value is not None:
+        if value is not None:
+            finite_float(self, attribute, value)
             if value <= 0.0:
                 raise ValueError(
                     f"'{attribute.alias}' must be positive, but got {value}."
@@ -396,14 +397,13 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
                 f"following operators: {_valid_tolerance_operators}, but got "
                 f"operator '{self.operator}'."
             )
-        if (
-            self.operator in _valid_tolerance_operators
-            and self.tolerance is not None
-            and self.tolerance <= 0.0
-        ):
-            raise ValueError(
-                f"'{flds.tolerance.alias}' must be positive, but got {self.tolerance}."
-            )
+        if self.tolerance is not None:
+            finite_float(self, flds.tolerance, self.tolerance)
+            if self.tolerance <= 0.0:
+                raise ValueError(
+                    f"'{flds.tolerance.alias}' must be positive, "
+                    f"but got {self.tolerance}."
+                )
 
     def _build_condition(self) -> ThresholdCondition:
         """Build the internal threshold condition from the constraint fields."""
