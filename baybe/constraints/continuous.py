@@ -50,7 +50,9 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
         validator=deep_iterable(member_validator=finite_float),
     )
-    """In-/equality coefficient for each entry in ``parameters``."""
+    """The coefficients for the weighted sum, one per entry in ``parameters``.
+
+    Defaults to all-ones, i.e. an unweighted sum."""
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
