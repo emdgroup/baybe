@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from torch import Tensor
 
     ScoreFunction: TypeAlias = BoAcquisitionFunction
-    """Type alias for a callable to be optimized."""
+    """Type alias for a callable that scores (batches of) candidates."""
 
     OptimizationResult: TypeAlias = tuple[Tensor, Tensor]
     """Type alias for the result of an optimization call.
