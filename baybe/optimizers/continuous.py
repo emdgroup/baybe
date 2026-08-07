@@ -11,7 +11,7 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError, IncompatibleSearchSpaceError
 from baybe.optimizers.base import OptimizerProtocol
-from baybe.searchspace import SearchSpace, SearchSpaceType
+from baybe.searchspace import SearchSpace
 from baybe.settings import AutoBool
 from baybe.utils.basic import flatten
 
@@ -44,12 +44,6 @@ class ContinuousOptimizer(OptimizerProtocol):
     ) -> OptimizationResult:
         import torch
         from botorch.optim import optimize_acqf
-
-        if searchspace.type != SearchSpaceType.CONTINUOUS:
-            raise IncompatibleSearchSpaceError(
-                f"'{self.__class__.__name__}' requires a purely continuous search "
-                f"space, but the provided search space has a discrete component."
-            )
 
         subspace = searchspace.continuous
 
