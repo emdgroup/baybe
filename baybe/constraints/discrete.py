@@ -115,8 +115,8 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         # - OR with exclude=True: once a present condition holds, the row is
         #   permanently marked for removal (an OR match stays).
         # For XOR, the combined result can flip as further operands arrive, so
-        # all parameters must be present first. All other cases must likewise
-        # wait for every parameter.
+        # all parameters must be present before evaluating. All other cases must
+        # likewise wait for every parameter.
         present = available & set(self.parameters)
         if not present:
             return False
