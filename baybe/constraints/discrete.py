@@ -322,25 +322,33 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     # See base class.
 
     # object variables
-    operator: str = field(default="", validator=instance_of(str))
+    # >>>>>>>>>> Deprecation
+    # NOTE: `condition` occupies its original (second) positional slot so that the
+    # previously valid call `DiscreteProductConstraint(parameters, condition)` keeps
+    # working (with a deprecation warning). The new-interface fields are therefore
+    # keyword-only until the deprecated `condition` field is removed.
+    condition: ThresholdCondition | None = field(default=None)
+    """Deprecated. Use ``operator``, ``rhs``, and ``tolerance`` instead."""
+
+    # <<<<<<<<<< Deprecation
+
+    operator: str = field(default="", validator=instance_of(str), kw_only=True)
     """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
-    rhs: float = field(default=0.0, converter=float, validator=finite_float)
+    rhs: float = field(
+        default=0.0, converter=float, validator=finite_float, kw_only=True
+    )
     """Right-hand side value of the comparison."""
 
     tolerance: float | None = field(
-        default=None, converter=lambda x: float(x) if x is not None else None
+        default=None,
+        converter=lambda x: float(x) if x is not None else None,
+        kw_only=True,
     )
     """Numerical tolerance for equality/inequality operators that support it.
 
     Only applicable when ``operator`` is one of ``"="``, ``"=="``, ``"!="``.
     Set to a reasonable default when left as ``None``."""
-
-    # >>>>>>>>>> Deprecation
-    condition: ThresholdCondition | None = field(default=None, kw_only=True)
-    """Deprecated. Use ``operator``, ``rhs``, and ``tolerance`` instead."""
-
-    # <<<<<<<<<< Deprecation
 
     def __attrs_post_init__(self):
         """Resolve the deprecated ``condition`` field and validate."""
