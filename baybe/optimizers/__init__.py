@@ -2,9 +2,9 @@
 
 from baybe.optimizers.base import OptimizerProtocol
 from baybe.optimizers.composite import (
+    BlockCoordinateOptimizer,
     CyclicOptimizationSchedule,
     OptimizationStep,
-    SequentialOptimizer,
 )
 from baybe.optimizers.continuous import ContinuousOptimizer
 
@@ -13,5 +13,5 @@ __all__ = [
     "CyclicOptimizationSchedule",
     "OptimizationStep",
     "OptimizerProtocol",
-    "SequentialOptimizer",
+    "BlockCoordinateOptimizer",
 ]

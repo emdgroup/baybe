@@ -106,7 +106,7 @@ class CyclicOptimizationSchedule(OptimizationSchedule):
 
 
 @define(frozen=True)
-class SequentialOptimizer(OptimizerProtocol):
+class BlockCoordinateOptimizer(OptimizerProtocol):
     """An optimizer that sequentially optimizes over specified subspaces.
 
     Each subspace is assigned to a dedicated optimizer in the form of an
