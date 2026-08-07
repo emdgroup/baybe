@@ -187,6 +187,8 @@ class SequentialOptimizer(OptimizerProtocol):
         import torch
         from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 
+        from baybe.exceptions import IncompatibleSearchSpaceError
+
         n_cols = len(searchspace.comp_rep_columns)
         points = torch.empty(batch_size, n_cols, dtype=active_settings.DTypeFloatTorch)
         scores = torch.empty(batch_size, dtype=active_settings.DTypeFloatTorch)
@@ -197,6 +199,12 @@ class SequentialOptimizer(OptimizerProtocol):
                 score_function, searchspace, steps
             )
             return points, scores
+
+        if searchspace.continuous.has_interpoint_constraints:
+            raise IncompatibleSearchSpaceError(
+                f"'{self.__class__.__name__}' does not support batch optimization when "
+                f"interpoint constraints are present in the search space."
+            )
 
         if not isinstance(score_function, MCAcquisitionFunction):
             raise IncompatibleAcquisitionFunctionError(
