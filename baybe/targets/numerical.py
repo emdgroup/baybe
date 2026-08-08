@@ -729,11 +729,7 @@ class NumericalTarget(Target, SerialMixin):
 
     @override
     def transform(
-        self,
-        series: IntoSeriesT | None = None,
-        /,
-        *,
-        data: pd.DataFrame | None = None,
+        self, series: IntoSeriesT | None = None, /, *, data: pd.DataFrame | None = None
     ) -> IntoSeriesT:
         # >>>>>>>>>> Deprecation
         if not ((series is None) ^ (data is None)):
