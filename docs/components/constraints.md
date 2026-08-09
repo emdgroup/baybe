@@ -230,33 +230,34 @@ identified by the `parameters` member, which expects a list of parameter names a
 strings.
 All of these parameters must be present in the search space specification.
 
-(pruning-constraints)=
-### Pruning Constraints
-Most discrete constraints are **pruning constraints**, derived from the abstract
-{class}`~baybe.constraints.base.DiscretePruningConstraint`. A pruning constraint reduces
-the search space, and its specification always describes what is **kept**: the entries
-matching the constraint remain in the search space and everything else is pruned.
+(filtering-constraints)=
+### Filtering Constraints
+Most discrete constraints are **filtering constraints**, derived from the abstract
+{class}`~baybe.constraints.base.DiscreteFilteringConstraint`. A filtering constraint
+reduces the search space, and its specification always describes what is **kept**: the
+entries matching the constraint remain in the search space and everything else is
+removed.
 
 This behavior can be inverted with the keyword-only ``exclude`` flag, which is available
-on all pruning constraints and defaults to ``False``. With ``exclude=True``, the same
-specification instead defines what is **pruned**, keeping the complement.
+on all filtering constraints and defaults to ``False``. With ``exclude=True``, the same
+specification instead defines what is **removed**, keeping the complement.
 
-#### DiscreteFilteringConstraint
-The [`DiscreteFilteringConstraint`](baybe.constraints.discrete.DiscreteFilteringConstraint)
-keeps search space elements that match its conditions and prunes all others.
+#### DiscreteSelectionConstraint
+The [`DiscreteSelectionConstraint`](baybe.constraints.discrete.DiscreteSelectionConstraint)
+keeps search space elements that match its conditions and removes all others.
 
 The following example keeps only entries where "Ethanol" and "DMF" are combined with
 temperatures above 150. By setting ``exclude=True``, the same specification instead
-prunes exactly those entries, which might be desirable if these combinations are
+removes exactly those entries, which might be desirable if these combinations are
 chemically unstable at such temperatures:
 ```python
 from baybe.constraints import (
-    DiscreteFilteringConstraint,
+    DiscreteSelectionConstraint,
     ThresholdCondition,
     SubSelectionCondition,
 )
 
-DiscreteFilteringConstraint(
+DiscreteSelectionConstraint(
     parameters=["Temperature", "Solvent"],  # names of the affected parameters
     combiner="AND",  # specifies how the conditions are logically combined
     conditions=[  # requires one condition for each entry in parameters
@@ -264,13 +265,13 @@ DiscreteFilteringConstraint(
         SubSelectionCondition(selection=["Ethanol", "DMF"]),
     ],
     # exclude=False (default) KEEPS the matching entries;
-    # exclude=True prunes them and keeps everything else.
+    # exclude=True removes them and keeps everything else.
     exclude=True,
 )
 ```
 
 A more detailed example can be found
-[here](../../examples/Constraints_Discrete/filtering_constraints).
+[here](../../examples/Constraints_Discrete/selection_constraints).
 
 #### DiscreteSumConstraint and DiscreteProductConstraint
 [`DiscreteSumConstraint`](baybe.constraints.discrete.DiscreteSumConstraint)
@@ -312,13 +313,13 @@ from baybe.constraints import DiscreteNoLabelDuplicatesConstraint
 DiscreteNoLabelDuplicatesConstraint(parameters=["Solvent_1", "Solvent_2"])
 ```
 
-With this constraint, combinations with duplicated labels are pruned:
+With this constraint, combinations with duplicated labels are removed:
 
 |   | Solvent_1 | Solvent_2 | With DiscreteNoLabelDuplicatesConstraint |
 |---|-----------|-----------|------------------------------------------|
-| 1 | Water     | Water     | pruned                                   |
+| 1 | Water     | Water     | removed                                  |
 | 2 | THF       | Water     | kept                                     |
-| 3 | Octanol   | Octanol   | pruned                                   |
+| 3 | Octanol   | Octanol   | removed                                  |
 
 The usage of `DiscreteNoLabelDuplicatesConstraint` is part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
@@ -353,7 +354,7 @@ DiscreteLinkedParametersConstraint(
 |   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteLinkedParametersConstraint |
 |---|-------------------|---------------------|-----------------------------------------|
 | 1 | Water             | Water               | kept                                    |
-| 2 | THF               | Water               | pruned                                  |
+| 2 | THF               | Water               | removed                                 |
 | 3 | Octanol           | Octanol             | kept                                    |
 
 #### DiscreteDependenciesConstraint
@@ -550,8 +551,8 @@ the corresponding object or higher-level objects containing it.
 ```
 
 ### DiscreteBatchConstraint
-Unlike the [pruning constraints](#pruning-constraints) described above, the
-{class}`~baybe.constraints.discrete.DiscreteBatchConstraint` is not a pruning constraint
+Unlike the [filtering constraints](#filtering-constraints) described above, the
+{class}`~baybe.constraints.discrete.DiscreteBatchConstraint` is not a filtering constraint
 and does not filter candidates from the search space. Instead, it controls how recommendations are generated at
 batch level: it ensures that **all experiments in a recommended batch share the same
 value** for the constrained parameter.

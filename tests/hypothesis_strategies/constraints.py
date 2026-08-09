@@ -13,11 +13,11 @@ from baybe.constraints.continuous import (
 )
 from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
-    DiscreteFilteringConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
+    DiscreteSelectionConstraint,
     DiscreteSumConstraint,
 )
 from baybe.parameters.base import DiscreteParameter
@@ -33,10 +33,10 @@ _nonzero_finite_floats = finite_floats().filter(lambda x: x != 0.0)
 
 
 @st.composite
-def discrete_filtering_constraints(
+def discrete_selection_constraints(
     draw: st.DrawFn, parameters: list[DiscreteParameter] | None = None
 ):
-    """Generate :class:`baybe.constraints.discrete.DiscreteFilteringConstraint`."""
+    """Generate :class:`baybe.constraints.discrete.DiscreteSelectionConstraint`."""
     if parameters is None:
         parameter_names = draw(st.lists(st.text(), unique=True, min_size=1))
         conditions = draw(
@@ -60,7 +60,7 @@ def discrete_filtering_constraints(
 
     combiner = draw(st.sampled_from(list(_valid_logic_combiners)))
     exclude = draw(st.booleans())
-    return DiscreteFilteringConstraint(
+    return DiscreteSelectionConstraint(
         parameter_names, conditions, combiner, exclude=exclude
     )
 
@@ -251,7 +251,7 @@ continuous_linear_inequality_constraints = partial(
 
 constraints = st.one_of(
     [
-        discrete_filtering_constraints(),
+        discrete_selection_constraints(),
         discrete_dependencies_constraints(),
         discrete_permutation_invariance_constraints(),
         discrete_sum_constraints(),

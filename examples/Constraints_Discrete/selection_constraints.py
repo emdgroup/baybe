@@ -1,6 +1,6 @@
-## Example for using filtering constraints in discrete searchspaces
+## Example for using selection constraints in discrete searchspaces
 
-# This example shows how a filtering constraint can be created for a discrete searchspace.
+# This example shows how a selection constraint can be created for a discrete searchspace.
 # This can be used if some parameter values are incompatible with values of another parameter.
 
 # This example assumes some basic familiarity with using BayBE.
@@ -12,7 +12,7 @@ import numpy as np
 
 from baybe import Campaign
 from baybe.constraints import (
-    DiscreteFilteringConstraint,
+    DiscreteSelectionConstraint,
     SubSelectionCondition,
     ThresholdCondition,
 )
@@ -60,7 +60,7 @@ parameters = [solvent, speed, temperature, pressure]
 # This constraint simulates a situation where solvents `C2` and `C4` are not
 # compatible with temperatures larger than 151 and should thus be excluded.
 
-constraint_1 = DiscreteFilteringConstraint(
+constraint_1 = DiscreteSelectionConstraint(
     parameters=["Temp", "Solv"],
     combiner="AND",
     conditions=[
@@ -73,7 +73,7 @@ constraint_1 = DiscreteFilteringConstraint(
 # This constraint simulates a situation where solvents `C5` and `C6` are not
 # compatible with pressures larger than 5 and should thus be excluded.
 
-constraint_2 = DiscreteFilteringConstraint(
+constraint_2 = DiscreteSelectionConstraint(
     parameters=["Pressure", "Solv"],
     combiner="AND",
     conditions=[
@@ -86,7 +86,7 @@ constraint_2 = DiscreteFilteringConstraint(
 # This constraint simulates a situation where pressures below 3 should never be
 # combined with temperatures above 120.
 
-constraint_3 = DiscreteFilteringConstraint(
+constraint_3 = DiscreteSelectionConstraint(
     parameters=["Pressure", "Temp"],
     combiner="AND",
     conditions=[

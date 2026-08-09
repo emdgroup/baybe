@@ -6,17 +6,17 @@ from baybe.constraints.continuous import (
     ContinuousLinearConstraint,
 )
 from baybe.constraints.discrete import (
-    DISCRETE_CONSTRAINTS_PRUNING_ORDER,
+    DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteBatchConstraint,
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
     DiscreteExcludeConstraint,
-    DiscreteFilteringConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
+    DiscreteSelectionConstraint,
     DiscreteSumConstraint,
 )
 from baybe.constraints.validation import validate_constraints
@@ -34,7 +34,7 @@ __all__ = [
     "DiscreteCustomConstraint",
     "DiscreteDependenciesConstraint",
     "DiscreteExcludeConstraint",
-    "DiscreteFilteringConstraint",
+    "DiscreteSelectionConstraint",
     "DiscreteLinkedParametersConstraint",
     "DiscreteNoLabelDuplicatesConstraint",
     "DiscretePermutationInvarianceConstraint",
@@ -42,5 +42,5 @@ __all__ = [
     "DiscreteSumConstraint",
     # --- Other --- #
     "validate_constraints",
-    "DISCRETE_CONSTRAINTS_PRUNING_ORDER",
+    "DISCRETE_CONSTRAINTS_FILTERING_ORDER",
 ]

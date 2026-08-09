@@ -10,13 +10,13 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from baybe.constraints import (
-    DISCRETE_CONSTRAINTS_PRUNING_ORDER,
+    DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteCardinalityConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteFilteringConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
+    DiscreteSelectionConstraint,
     DiscreteSumConstraint,
     SubSelectionCondition,
     ThresholdCondition,
@@ -72,7 +72,7 @@ def _filtering_scenario(
         CategoricalParameter(name="C", values=["c1", "c2", "c3"]),
     ]
     constraints = [
-        DiscreteFilteringConstraint(
+        DiscreteSelectionConstraint(
             parameters=["A", "B"],
             conditions=[
                 SubSelectionCondition(selection=["a1"]),
@@ -248,7 +248,7 @@ def test_constrained_cartesian_product(scenario):
     # A fixed ordering ensures both paths operate on the same intermediate state.
     constraints = sorted(
         constraints,
-        key=lambda c: DISCRETE_CONSTRAINTS_PRUNING_ORDER.index(c.__class__),
+        key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
     )
 
     # Naive approach: full product then filter

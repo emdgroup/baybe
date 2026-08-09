@@ -5,7 +5,7 @@ from contextlib import nullcontext
 import pytest
 from pytest import param
 
-from baybe.constraints import DiscreteFilteringConstraint, SubSelectionCondition
+from baybe.constraints import DiscreteSelectionConstraint, SubSelectionCondition
 from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import (
     IncompatibilityError,
@@ -133,7 +133,7 @@ def test_batch_constraint_all_subsets_too_small():
         param(
             2,
             2,
-            DiscreteFilteringConstraint(
+            DiscreteSelectionConstraint(
                 parameters=["d0", "d1"],
                 conditions=[
                     SubSelectionCondition(selection=[0.0]),

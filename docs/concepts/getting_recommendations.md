@@ -104,7 +104,7 @@ may be preferred over the other, but generally these mechanisms exist:
   searchspace_reduced = SearchSpace.from_product(
       parameters=[CategoricalParameter("p", ["A", "B", "C"])],
       constraints=[
-          DiscreteFilteringConstraint(["p"], [SubSelectionCondition(["C"])], exclude=True)
+          DiscreteSelectionConstraint(["p"], [SubSelectionCondition(["C"])], exclude=True)
       ],
   )
   ~~~

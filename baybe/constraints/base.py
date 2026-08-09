@@ -80,12 +80,12 @@ class DiscreteConstraint(Constraint, ABC):
 
 
 @define(slots=False)
-class DiscretePruningConstraint(DiscreteConstraint, ABC):
-    """Abstract base class for discrete constraints that prune the search space.
+class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
+    """Abstract base class for discrete constraints that filter the search space.
 
-    A pruning constraint's specification defines which entries are **kept** in the
+    A filtering constraint's specification defines which entries are **kept** in the
     search space. The keyword-only ``exclude`` flag inverts this: when ``True``, the
-    specification instead defines which entries are **pruned** and the complement is
+    specification instead defines which entries are **removed** and the complement is
     kept.
 
     Subclasses implement :meth:`_get_matching_rows` (and optionally
@@ -194,7 +194,7 @@ class DiscretePruningConstraint(DiscreteConstraint, ABC):
         """Whether this constraint class has a Polars implementation."""
         return (
             cls._get_matching_rows_polars
-            is not DiscretePruningConstraint._get_matching_rows_polars
+            is not DiscreteFilteringConstraint._get_matching_rows_polars
         )
 
     def get_invalid_polars(self) -> pl.Expr:

@@ -33,11 +33,11 @@ from baybe.constraints import (
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteFilteringConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
+    DiscreteSelectionConstraint,
     DiscreteSumConstraint,
     SubSelectionCondition,
     ThresholdCondition,
@@ -466,7 +466,7 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             conditions=[SubSelectionCondition(selection=["right"])],
             affected_parameters=[["Frame_A", "Frame_B"]],
         ),
-        "Constraint_4": DiscreteFilteringConstraint(
+        "Constraint_4": DiscreteSelectionConstraint(
             parameters=["Temperature", "Solvent_1"],
             combiner="AND",
             conditions=[
@@ -475,7 +475,7 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             ],
             exclude=True,
         ),
-        "Constraint_5": DiscreteFilteringConstraint(
+        "Constraint_5": DiscreteSelectionConstraint(
             parameters=["Pressure", "Solvent_1"],
             combiner="AND",
             conditions=[
@@ -484,7 +484,7 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             ],
             exclude=True,
         ),
-        "Constraint_6": DiscreteFilteringConstraint(
+        "Constraint_6": DiscreteSelectionConstraint(
             parameters=["Pressure", "Temperature"],
             combiner="AND",
             conditions=[

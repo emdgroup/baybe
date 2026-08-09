@@ -19,7 +19,7 @@ from baybe.constraints.base import (
     CardinalityConstraint,
     Constraint,  # Deprecation: only used by the legacy (de)serialization block below
     DiscreteConstraint,
-    DiscretePruningConstraint,
+    DiscreteFilteringConstraint,
 )
 from baybe.constraints.conditions import (
     Condition,
@@ -44,25 +44,25 @@ if TYPE_CHECKING:
 # >>>>>>>>>> Deprecation
 def DiscreteExcludeConstraint(  # noqa: N802
     *args, **kwargs
-) -> DiscreteFilteringConstraint:
-    """A ``DiscreteFilteringConstraint`` alias for backward compatibility."""  # noqa: D401
+) -> DiscreteSelectionConstraint:
+    """A ``DiscreteSelectionConstraint`` alias for backward compatibility."""  # noqa: D401
     import warnings
 
     warnings.warn(
         "'DiscreteExcludeConstraint' is deprecated and will be removed in a future "
-        "version. Use 'DiscreteFilteringConstraint' with 'exclude=True' instead.",
+        "version. Use 'DiscreteSelectionConstraint' with 'exclude=True' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
     kwargs.pop("exclude", None)
-    return DiscreteFilteringConstraint(*args, **kwargs, exclude=True)
+    return DiscreteSelectionConstraint(*args, **kwargs, exclude=True)
 
 
 # <<<<<<<<<< Deprecation
 
 
 @define
-class DiscreteFilteringConstraint(DiscretePruningConstraint):
+class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     """Class for filtering search space entries based on conditions."""
 
     # object variables
@@ -113,7 +113,7 @@ class DiscreteFilteringConstraint(DiscretePruningConstraint):
 
 
 @define
-class DiscreteSumConstraint(DiscretePruningConstraint):
+class DiscreteSumConstraint(DiscreteFilteringConstraint):
     """Class for modelling sum constraints.
 
     The constraint evaluates whether the (optionally weighted) sum of the specified
@@ -187,7 +187,7 @@ class DiscreteSumConstraint(DiscretePruningConstraint):
 
 
 @define
-class DiscreteProductConstraint(DiscretePruningConstraint):
+class DiscreteProductConstraint(DiscreteFilteringConstraint):
     """Class for modelling product constraints."""
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
@@ -225,18 +225,18 @@ class DiscreteProductConstraint(DiscretePruningConstraint):
         return op(expr, self.condition.threshold)
 
 
-class DiscreteNoLabelDuplicatesConstraint(DiscretePruningConstraint):
+class DiscreteNoLabelDuplicatesConstraint(DiscreteFilteringConstraint):
     """Constraint class for keeping entries where all labels are unique.
 
     This can be useful to remove entries that arise from e.g. a permutation invariance
     as for instance here:
 
     - A,B,C,D would be kept
-    - A,A,B,C would be pruned
-    - A,A,B,B would be pruned
-    - A,A,B,A would be pruned
-    - A,C,A,C would be pruned
-    - A,C,B,C would be pruned
+    - A,A,B,C would be removed
+    - A,A,B,B would be removed
+    - A,A,B,A would be removed
+    - A,C,A,C would be removed
+    - A,C,B,C would be removed
     """
 
     @override
@@ -269,7 +269,7 @@ class DiscreteNoLabelDuplicatesConstraint(DiscretePruningConstraint):
 
 
 @define
-class DiscreteLinkedParametersConstraint(DiscretePruningConstraint):
+class DiscreteLinkedParametersConstraint(DiscreteFilteringConstraint):
     """Constraint class for linking the values of parameters.
 
     This constraint type effectively allows generating parameter sets that relate to
@@ -306,7 +306,7 @@ class DiscreteLinkedParametersConstraint(DiscretePruningConstraint):
 
 
 @define
-class DiscreteDependenciesConstraint(DiscretePruningConstraint):
+class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
     """Constraint that specifies dependencies between parameters.
 
     For instance some parameters might only be relevant when another parameter has a
@@ -417,7 +417,7 @@ class DiscreteDependenciesConstraint(DiscretePruningConstraint):
 
 
 @define
-class DiscretePermutationInvarianceConstraint(DiscretePruningConstraint):
+class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
     """Constraint class for declaring that a set of parameters is permutation invariant.
 
     More precisely, this means that, ``(val_from_param1, val_from_param2)`` is
@@ -507,7 +507,7 @@ class DiscretePermutationInvarianceConstraint(DiscretePruningConstraint):
 
 
 @define
-class DiscreteCustomConstraint(DiscretePruningConstraint):
+class DiscreteCustomConstraint(DiscreteFilteringConstraint):
     """Class for user-defined custom constraints."""
 
     # object variables
@@ -577,7 +577,7 @@ class DiscreteBatchConstraint(DiscreteConstraint):
 
 
 @define
-class DiscreteCardinalityConstraint(DiscretePruningConstraint, CardinalityConstraint):
+class DiscreteCardinalityConstraint(DiscreteFilteringConstraint, CardinalityConstraint):
     """Class for discrete cardinality constraints."""
 
     # Class variables
@@ -611,10 +611,10 @@ class DiscreteCardinalityConstraint(DiscretePruningConstraint, CardinalityConstr
         return df.index[mask_good]
 
 
-# Pruning constraints are approximately ordered according to increasing computational
+# Filtering constraints are approximately ordered according to increasing computational
 # effort to minimize total time in their sequential application
-DISCRETE_CONSTRAINTS_PRUNING_ORDER = (
-    DiscreteFilteringConstraint,
+DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
+    DiscreteSelectionConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteSumConstraint,
@@ -651,7 +651,7 @@ def _redirect_legacy_constraint_type(type_: str, val: dict) -> str:
     """
     if type_ == "DiscreteExcludeConstraint":
         val.setdefault("exclude", True)
-        return "DiscreteFilteringConstraint"
+        return "DiscreteSelectionConstraint"
     return type_
 
 

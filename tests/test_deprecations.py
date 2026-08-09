@@ -563,7 +563,7 @@ def test_discrete_exclude_constraint_deprecation():
     from baybe.constraints import SubSelectionCondition
     from baybe.constraints.discrete import (
         DiscreteExcludeConstraint,
-        DiscreteFilteringConstraint,
+        DiscreteSelectionConstraint,
     )
 
     with pytest.warns(DeprecationWarning, match="DiscreteExcludeConstraint"):
@@ -571,8 +571,8 @@ def test_discrete_exclude_constraint_deprecation():
             parameters=["A"],
             conditions=[SubSelectionCondition(selection=["a"])],
         )
-    # Verify it behaves equivalently to DiscreteFilteringConstraint(exclude=True)
-    ref = DiscreteFilteringConstraint(
+    # Verify it behaves equivalently to DiscreteSelectionConstraint(exclude=True)
+    ref = DiscreteSelectionConstraint(
         parameters=["A"],
         conditions=[SubSelectionCondition(selection=["a"])],
         exclude=True,
@@ -583,12 +583,12 @@ def test_discrete_exclude_constraint_deprecation():
 
 @pytest.mark.parametrize(
     "annotation",
-    ["Constraint", "DiscreteConstraint", "DiscretePruningConstraint"],
+    ["Constraint", "DiscreteConstraint", "DiscreteFilteringConstraint"],
 )
 def test_discrete_exclude_constraint_deserialization(annotation):
     """Legacy DiscreteExcludeConstraint deserializes regardless of the annotation."""
     from baybe.constraints import base as base_module
-    from baybe.constraints.discrete import DiscreteFilteringConstraint
+    from baybe.constraints.discrete import DiscreteSelectionConstraint
     from baybe.serialization import converter
 
     legacy_dict = {
@@ -599,7 +599,7 @@ def test_discrete_exclude_constraint_deserialization(annotation):
     }
     target = getattr(base_module, annotation)
     result = converter.structure(legacy_dict, target)
-    assert isinstance(result, DiscreteFilteringConstraint)
+    assert isinstance(result, DiscreteSelectionConstraint)
     assert result.exclude is True
 
 
@@ -611,7 +611,7 @@ def test_concrete_constraint_rejects_mismatched_type():
     from baybe.serialization import converter
 
     payload = {
-        "type": "DiscreteFilteringConstraint",
+        "type": "DiscreteSelectionConstraint",
         "parameters": ["A"],
         "conditions": [{"type": "SubSelectionCondition", "selection": ["a"]}],
         "combiner": "AND",
