@@ -581,8 +581,13 @@ def test_discrete_exclude_constraint_deprecation():
     assert list(c.get_invalid(df)) == list(ref.get_invalid(df))
 
 
-def test_discrete_exclude_constraint_deserialization():
-    """Legacy DiscreteExcludeConstraint deserializes to DiscreteFilteringConstraint."""
+@pytest.mark.parametrize(
+    "annotation",
+    ["Constraint", "DiscreteConstraint", "DiscretePruningConstraint"],
+)
+def test_discrete_exclude_constraint_deserialization(annotation):
+    """Legacy DiscreteExcludeConstraint deserializes regardless of the annotation."""
+    from baybe.constraints import base as base_module
     from baybe.constraints.discrete import DiscreteFilteringConstraint
     from baybe.serialization import converter
 
@@ -592,8 +597,24 @@ def test_discrete_exclude_constraint_deserialization():
         "conditions": [{"type": "SubSelectionCondition", "selection": ["a"]}],
         "combiner": "AND",
     }
-    from baybe.constraints.base import DiscretePruningConstraint
-
-    result = converter.structure(legacy_dict, DiscretePruningConstraint)
+    target = getattr(base_module, annotation)
+    result = converter.structure(legacy_dict, target)
     assert isinstance(result, DiscreteFilteringConstraint)
     assert result.exclude is True
+
+
+def test_concrete_constraint_rejects_mismatched_type():
+    """Structuring into a concrete class rejects a mismatched ``type`` field."""
+    from baybe.constraints.discrete import (
+        DiscreteCardinalityConstraint,
+    )
+    from baybe.serialization import converter
+
+    payload = {
+        "type": "DiscreteFilteringConstraint",
+        "parameters": ["A"],
+        "conditions": [{"type": "SubSelectionCondition", "selection": ["a"]}],
+        "combiner": "AND",
+    }
+    with pytest.raises(ValueError, match="does not match the target"):
+        converter.structure(payload, DiscreteCardinalityConstraint)
