@@ -309,8 +309,23 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
     def _get_matching_rows_polars(self) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
-        # Count occurrences of each value; check that the max is within the limit
-        counts = pl.concat_list(pl.col(self.parameters)).list.eval(
+        def _tag(value):
+            """Encode a value with a type tag mirroring pandas equality semantics."""
+            if value is None:
+                return None
+            if isinstance(value, str):
+                return f"s:{value}"
+            # Numbers (incl. bool) compare equal by numeric value, matching the
+            # pandas ``factorize`` grouping used by the pandas implementation.
+            return f"n:{float(value)!r}"
+
+        # Tag each value by (type, value) so that, e.g., a categorical "1" and a
+        # numeric 1.0 are treated as distinct - identical to the pandas backend.
+        tagged = [
+            pl.col(p).map_elements(_tag, return_dtype=pl.String)
+            for p in self.parameters
+        ]
+        counts = pl.concat_list(tagged).list.eval(
             pl.element().value_counts().struct.field("count").max()
         )
         return counts.list.first() <= self.n_max_occurrences
