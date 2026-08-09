@@ -345,6 +345,9 @@ def DiscreteLinkedParametersConstraint(  # noqa: N802
         DeprecationWarning,
         stacklevel=2,
     )
+    # The legacy constraint had no 'exclude' argument; drop any stray value to
+    # avoid colliding with the fixed 'exclude=True' below.
+    kwargs.pop("exclude", None)
     return DiscreteDegeneracyConstraint(
         parameters, *args, n_max_occurrences=len(parameters) - 1, exclude=True, **kwargs
     )
