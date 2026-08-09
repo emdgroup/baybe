@@ -64,7 +64,7 @@ def _linked_parameters_scenario() -> tuple[
 
 
 def _filtering_scenario(
-    combiner: str,
+    combiner: str, exclude: bool
 ) -> tuple[Sequence[DiscreteParameter], Sequence[DiscreteConstraint]]:
     params = [
         CategoricalParameter(name="A", values=["a1", "a2", "a3"]),
@@ -79,7 +79,7 @@ def _filtering_scenario(
                 SubSelectionCondition(selection=["b1"]),
             ],
             combiner=combiner,
-            exclude=True,
+            exclude=exclude,
         )
     ]
     return params, constraints
@@ -210,8 +210,22 @@ def _mixed_scenario() -> tuple[
         pytest.param(_no_constraints_scenario, id="no_constraints"),
         pytest.param(_no_label_duplicates_scenario, id="no_label_duplicates"),
         pytest.param(_linked_parameters_scenario, id="linked_parameters"),
-        pytest.param(partial(_filtering_scenario, "OR"), id="filtering_or"),
-        pytest.param(partial(_filtering_scenario, "AND"), id="filtering_and"),
+        pytest.param(partial(_filtering_scenario, "OR", False), id="filtering_or_keep"),
+        pytest.param(
+            partial(_filtering_scenario, "OR", True), id="filtering_or_exclude"
+        ),
+        pytest.param(
+            partial(_filtering_scenario, "AND", False), id="filtering_and_keep"
+        ),
+        pytest.param(
+            partial(_filtering_scenario, "AND", True), id="filtering_and_exclude"
+        ),
+        pytest.param(
+            partial(_filtering_scenario, "XOR", False), id="filtering_xor_keep"
+        ),
+        pytest.param(
+            partial(_filtering_scenario, "XOR", True), id="filtering_xor_exclude"
+        ),
         pytest.param(_cardinality_scenario, id="cardinality"),
         pytest.param(_sum_scenario, id="sum"),
         pytest.param(_dependencies_scenario, id="dependencies"),

@@ -74,14 +74,20 @@ class DiscreteFilteringConstraint(DiscretePruningConstraint):
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
         # A row can be dropped early during incremental construction only if a
-        # later column can never change that decision. This is the case exactly
-        # when (combiner == "OR") == exclude: an OR match, once found, stays;
-        # an AND failure, once found, stays. Otherwise, all parameters must be
-        # present first.
+        # later column can never change that decision. This holds exactly for:
+        # - AND with exclude=False: once a present condition fails, the row is
+        #   permanently dropped (an AND failure stays).
+        # - OR with exclude=True: once a present condition holds, the row is
+        #   permanently marked for removal (an OR match stays).
+        # For XOR, the combined result can flip as further operands arrive, so
+        # all parameters must be present first. All other cases must likewise
+        # wait for every parameter.
         present = available & set(self.parameters)
         if not present:
             return False
-        partial_ok = (self.combiner == "OR") == self.exclude
+        partial_ok = (self.combiner == "AND" and not self.exclude) or (
+            self.combiner == "OR" and self.exclude
+        )
         if not partial_ok and present != set(self.parameters):
             return False
         return True
