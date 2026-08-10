@@ -189,6 +189,8 @@ class BlockCoordinateOptimizer(OptimizerProtocol):
         import torch
         from botorch.acquisition import AnalyticAcquisitionFunction
 
+        from baybe.constraints import DiscreteBatchConstraint
+
         n_cols = len(searchspace.comp_rep_columns)
         points = torch.empty(batch_size, n_cols, dtype=active_settings.DTypeFloatTorch)
         scores = torch.empty(batch_size, dtype=active_settings.DTypeFloatTorch)
@@ -204,6 +206,12 @@ class BlockCoordinateOptimizer(OptimizerProtocol):
             raise IncompatibleSearchSpaceError(
                 f"'{self.__class__.__name__}' does not support batch recommendation "
                 f"when interpoint constraints are present."
+            )
+
+        if any(isinstance(c, DiscreteBatchConstraint) for c in searchspace.constraints):
+            raise IncompatibleSearchSpaceError(
+                f"'{self.__class__.__name__}' does not support batch recommendation "
+                f"when discrete batch constraints are present."
             )
 
         if isinstance(score_function, AnalyticAcquisitionFunction):
