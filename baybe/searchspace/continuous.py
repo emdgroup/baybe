@@ -368,10 +368,9 @@ class SubspaceContinuous(SerialMixin):
     @property
     def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
-        # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3808
         return nw.from_dict(
             {p.name: p.bounds.to_tuple() for p in self.parameters},
-            backend=active_settings.default_dataframe_backend,  # type: ignore[arg-type]
+            backend=active_settings.default_dataframe_backend,
         ).to_native()
 
     @property

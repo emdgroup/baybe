@@ -6,19 +6,20 @@ import gc
 import importlib
 import os
 import tempfile
+import typing
 import warnings
 from copy import deepcopy
 from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
 import narwhals.stable.v2 as nw
 import numpy as np
 from attrs import Attribute, Converter, Factory, define, field, fields
-from attrs.converters import optional as optional_c
 from attrs.setters import validate
-from attrs.validators import instance_of
+from attrs.validators import in_, instance_of
 from attrs.validators import optional as optional_v
+from narwhals.typing import EagerAllowed
 
 from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
 from baybe.exceptions import NotAllowedError, OptionalImportError
@@ -162,14 +163,17 @@ def _convert_cache_directory(
         ) from ex
 
 
-def _get_default_dataframe_backend() -> nw.Implementation:
+def _get_default_dataframe_backend() -> EagerAllowed:
     """Get the default dataframe backend."""
+    eager_impls = [
+        a for a in typing.get_args(EagerAllowed) if isinstance(a, nw.Implementation)
+    ]
     preferred = [nw.Implementation.POLARS, nw.Implementation.PANDAS]
-    ranking = preferred + [b for b in nw.Implementation if b not in preferred]
+    ranking = preferred + [b for b in eager_impls if b not in preferred]
     for backend in ranking:
         try:
             importlib.import_module(backend.value)
-            return backend
+            return cast("EagerAllowed", backend)
         except ImportError:
             continue
     raise ModuleNotFoundError(
@@ -214,10 +218,10 @@ class Settings(_SlottedContextDecorator):
     )
     """The directory used for persistent caching on disk. Set to ``""`` or ``None`` to disable caching."""  # noqa: E501
 
-    _default_dataframe_backend: nw.Implementation | None = field(
+    _default_dataframe_backend: EagerAllowed | None = field(
         alias="default_dataframe_backend",
         default=None,
-        converter=optional_c(nw.Implementation),
+        validator=optional_v(in_(typing.get_args(EagerAllowed))),
     )
     """Controls which backend is used when constructing dataframes from scratch. Set to ``None`` to apply automatic selection."""  # noqa: E501
 
@@ -305,12 +309,13 @@ class Settings(_SlottedContextDecorator):
     def _validate_default_dataframe_backend(self, _: Attribute, value: Any) -> None:
         if value is None:
             return
+        module_name = value if isinstance(value, str) else value.value
         try:
-            importlib.import_module(value.value)
+            importlib.import_module(module_name)
         except ImportError as ex:
             raise OptionalImportError(
                 f"The '{fields(Settings)._default_dataframe_backend.alias}' cannot "
-                f"be set to '{value.value}' because the latter is not installed."
+                f"be set to '{module_name}' because the latter is not installed."
             ) from ex
 
     @_use_polars_for_constraints.validator
@@ -328,14 +333,14 @@ class Settings(_SlottedContextDecorator):
             )
 
     @property
-    def default_dataframe_backend(self) -> nw.Implementation:
+    def default_dataframe_backend(self) -> EagerAllowed:
         """The dataframe backend used for constructing dataframes from scratch."""
         if self._default_dataframe_backend is None:
             self._default_dataframe_backend = _get_default_dataframe_backend()
         return self._default_dataframe_backend
 
     @default_dataframe_backend.setter
-    def default_dataframe_backend(self, value: nw.Implementation | None, /) -> None:
+    def default_dataframe_backend(self, value: EagerAllowed | None, /) -> None:
         self._default_dataframe_backend = value
 
     @property

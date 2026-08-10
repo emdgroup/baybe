@@ -200,11 +200,10 @@ class DiscreteParameter(Parameter, ABC):
                     f"parameter name '{self.name}'."
                 )
         else:
-            # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3808
             series = nw.new_series(
                 name=self.name,
                 values=self.values if all_values else series,
-                backend=active_settings.default_dataframe_backend,  # type: ignore[arg-type]
+                backend=active_settings.default_dataframe_backend,
             )
 
         table = self._encoding_table(series.unique())
