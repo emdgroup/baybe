@@ -112,7 +112,9 @@ class BlockCoordinateOptimizer(OptimizerProtocol):
     Each subspace is assigned to a dedicated optimizer in the form of an
     :class:`~OptimizationSchedule`. The subspaces are then optimized block-wise
     according to the schedule, holding the respective other part of the search space
-    fixed. For batch optimization, the same schedule is applied repeatedly per point,
+    fixed. See also: https://en.wikipedia.org/wiki/Coordinate_descent
+
+    For batch optimization, the same schedule is applied repeatedly per point,
     resulting in a greedy optimization strategy.
     """
 
