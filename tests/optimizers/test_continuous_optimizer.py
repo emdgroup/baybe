@@ -14,17 +14,17 @@ from baybe.optimizers.continuous import ContinuousOptimizer
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 
-_P1 = NumericalContinuousParameter("x1", bounds=(0, 1))
-_P2 = NumericalContinuousParameter("x2", bounds=(-1, 0))
+_PC1 = NumericalContinuousParameter("x1", bounds=(0, 1))
+_PC2 = NumericalContinuousParameter("x2", bounds=(-1, 0))
 
 _PATCH_TARGET = "botorch.optim.optimize_acqf"
 _MOCK_PTS = torch.zeros(1, 2)
 _MOCK_SCORES = torch.zeros(1)
 _MOCK_RESULT = (_MOCK_PTS, _MOCK_SCORES)
 
-_SS = SearchSpace.from_product([_P1, _P2])
+_SS = SearchSpace.from_product([_PC1, _PC2])
 _SS_EQ = SearchSpace.from_product(
-    [_P1, _P2],
+    [_PC1, _PC2],
     constraints=[
         ContinuousLinearConstraint(
             parameters=["x1", "x2"], coefficients=[1.0, 1.0], operator="=", rhs=0.3
@@ -32,7 +32,7 @@ _SS_EQ = SearchSpace.from_product(
     ],
 )
 _SS_INEQ = SearchSpace.from_product(
-    [_P1, _P2],
+    [_PC1, _PC2],
     constraints=[
         ContinuousLinearConstraint(
             parameters=["x1", "x2"], coefficients=[1.0, 1.0], operator=">=", rhs=0.3
@@ -40,7 +40,7 @@ _SS_INEQ = SearchSpace.from_product(
     ],
 )
 _SS_INTERPOINT = SearchSpace.from_product(
-    [_P1, _P2],
+    [_PC1, _PC2],
     constraints=[
         ContinuousLinearConstraint(
             parameters=["x1"],
