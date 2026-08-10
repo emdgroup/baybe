@@ -270,10 +270,7 @@ class SearchSpace(SerialMixin):
         if not self.discrete.is_empty:
             disc_comp_cols = list(self.discrete.comp_rep_columns)
             query = pd.DataFrame([{c: comp_rep[c] for c in disc_comp_cols}])
-            mask = np.isclose(
-                self.discrete.comp_rep[disc_comp_cols].values,
-                query.iloc[0].values,
-            ).all(axis=1)
+            mask = (self.discrete.comp_rep[disc_comp_cols] == query.iloc[0]).all(axis=1)
             result.update(
                 {str(k): v for k, v in self.discrete.exp_rep.loc[mask].iloc[0].items()}
             )
