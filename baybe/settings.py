@@ -163,7 +163,7 @@ def _convert_cache_directory(
         ) from ex
 
 
-def _get_default_dataframe_backend() -> EagerAllowed:
+def _get_default_dataframe_backend() -> nw.Implementation:
     """Get the default dataframe backend."""
     eager_impls = [
         a for a in typing.get_args(EagerAllowed) if isinstance(a, nw.Implementation)
@@ -173,7 +173,7 @@ def _get_default_dataframe_backend() -> EagerAllowed:
     for backend in ranking:
         try:
             importlib.import_module(backend.value)
-            return cast("EagerAllowed", backend)
+            return backend
         except ImportError:
             continue
     raise ModuleNotFoundError(
@@ -218,7 +218,7 @@ class Settings(_SlottedContextDecorator):
     )
     """The directory used for persistent caching on disk. Set to ``""`` or ``None`` to disable caching."""  # noqa: E501
 
-    _default_dataframe_backend: EagerAllowed | None = field(
+    _default_dataframe_backend: nw.Implementation | None = field(
         alias="default_dataframe_backend",
         default=None,
         validator=optional_v(in_(typing.get_args(EagerAllowed))),
@@ -337,10 +337,10 @@ class Settings(_SlottedContextDecorator):
         """The dataframe backend used for constructing dataframes from scratch."""
         if self._default_dataframe_backend is None:
             self._default_dataframe_backend = _get_default_dataframe_backend()
-        return self._default_dataframe_backend
+        return cast(EagerAllowed, self._default_dataframe_backend)
 
     @default_dataframe_backend.setter
-    def default_dataframe_backend(self, value: EagerAllowed | None, /) -> None:
+    def default_dataframe_backend(self, value: nw.Implementation | None, /) -> None:
         self._default_dataframe_backend = value
 
     @property
