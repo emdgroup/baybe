@@ -187,7 +187,7 @@ class BlockCoordinateOptimizer(OptimizerProtocol):
         searchspace: SearchSpace,
     ) -> OptimizationResult:
         import torch
-        from botorch.acquisition.monte_carlo import MCAcquisitionFunction
+        from botorch.acquisition import AnalyticAcquisitionFunction
 
         n_cols = len(searchspace.comp_rep_columns)
         points = torch.empty(batch_size, n_cols, dtype=active_settings.DTypeFloatTorch)
@@ -206,10 +206,10 @@ class BlockCoordinateOptimizer(OptimizerProtocol):
                 f"when interpoint constraints are present."
             )
 
-        if not isinstance(score_function, MCAcquisitionFunction):
+        if isinstance(score_function, AnalyticAcquisitionFunction):
             raise IncompatibleAcquisitionFunctionError(
-                f"'{type(self).__name__}' requires a Monte Carlo acquisition "
-                f"function for batch sizes greater than 1 but got an acquisition "
+                f"'{type(self).__name__}' does not support analytic acquisition "
+                f"functions for batch sizes greater than 1 but got an acquisition "
                 f"function of type '{type(score_function).__name__}'."
             )
 
