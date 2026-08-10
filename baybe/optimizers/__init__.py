@@ -9,9 +9,9 @@ from baybe.optimizers.composite import (
 from baybe.optimizers.continuous import ContinuousOptimizer
 
 __all__ = [
+    "BlockCoordinateOptimizer",
     "ContinuousOptimizer",
     "CyclicOptimizationSchedule",
     "OptimizationStep",
     "OptimizerProtocol",
-    "BlockCoordinateOptimizer",
 ]
