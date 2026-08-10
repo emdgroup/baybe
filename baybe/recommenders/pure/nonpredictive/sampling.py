@@ -1,6 +1,5 @@
 """Recommenders based on sampling."""
 
-from enum import Enum
 from typing import ClassVar
 
 import numpy as np
@@ -14,7 +13,7 @@ from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.settings import Settings, active_settings
 from baybe.utils.conversion import to_string
-from baybe.utils.sampling_algorithms import farthest_point_sampling
+from baybe.utils.sampling_algorithms import FPSInitialization, farthest_point_sampling
 
 
 class RandomRecommender(NonPredictiveRecommender):
@@ -71,16 +70,6 @@ class RandomRecommender(NonPredictiveRecommender):
         return to_string(self.__class__.__name__, *fields)
 
 
-class FPSInitialization(str, Enum):
-    """Initialization methods for farthest point sampling."""
-
-    FARTHEST = "farthest"
-    """Selects the first two points with the largest distance."""
-
-    RANDOM = "random"
-    """Selects the first point uniformly at random."""
-
-
 @define
 class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling.
@@ -101,7 +90,7 @@ class FPSRecommender(NonPredictiveRecommender):
     """See :func:`~baybe.utils.sampling_algorithms.farthest_point_sampling`.
 
     If the optional package 'fpsample' is used, only
-    :attr:`~baybe.recommenders.pure.nonpredictive.sampling.FPSInitialization.FARTHEST`
+    :attr:`~baybe.utils.sampling_algorithms.FPSInitialization.FARTHEST`
     is supported.
     """
 
@@ -168,7 +157,7 @@ class FPSRecommender(NonPredictiveRecommender):
             ilocs = farthest_point_sampling(
                 candidates_scaled,
                 batch_size,
-                initialization=self.initialization.value,
+                initialization=self.initialization,
                 random_tie_break=self.random_tie_break,
             )
         return candidates_comp.index[ilocs]

@@ -12,10 +12,22 @@ import pandas as pd
 from baybe.utils.basic import is_all_instance
 
 
+class FPSInitialization(Enum):
+    """Initialization methods for farthest point sampling."""
+
+    FARTHEST = "farthest"
+    """Selects the first two points with the largest distance."""
+
+    RANDOM = "random"
+    """Selects the first point uniformly at random."""
+
+
 def farthest_point_sampling(
     points: np.ndarray,
     n_samples: int = 1,
-    initialization: Literal["farthest", "random"] | Collection[int] = "farthest",
+    initialization: FPSInitialization
+    | Literal["farthest", "random"]
+    | Collection[int] = "farthest",
     random_tie_break: bool = True,
 ) -> list[int]:
     """Select a subset of points using farthest point sampling.
@@ -54,7 +66,6 @@ def farthest_point_sampling(
         ValueError: Indices for initialization are not unique.
         ValueError: More initialization indices than available points are provided.
         ValueError: Initialization indices are out of bounds.
-        ValueError: Unknown initialization method.
         ValueError: More points are requested than available.
     """
     # Input validation
@@ -76,6 +87,9 @@ def farthest_point_sampling(
     if points.shape[-1] == 0:
         raise ValueError("The provided input space must be at least one-dimensional.")
 
+    if isinstance(initialization, str):
+        initialization = FPSInitialization(initialization)
+
     if isinstance(initialization, Collection) and is_all_instance(initialization, int):
         if duplicates := {k for k, v in Counter(initialization).items() if v > 1}:
             raise ValueError(
@@ -96,11 +110,6 @@ def farthest_point_sampling(
                 f"range of available points (0 to {n_points - 1}) but contains "
                 f"out-of-bounds indices: {problematic_indices}"
             )
-    elif initialization not in {"farthest", "random"}:
-        raise ValueError(
-            f"Unknown initialization type. Expected 'farthest', 'random', or a "
-            f"collection of integers. Provided: {initialization=}"
-        )
 
     if n_samples > n_points:
         raise ValueError(
@@ -126,25 +135,18 @@ def farthest_point_sampling(
     np.fill_diagonal(dist_matrix, -np.inf)
 
     # Initialize the point selection
-    if initialization == "random":
-        selected_point_indices = [np.random.randint(0, n_points)]
-    elif initialization == "farthest":
+    if isinstance(initialization, Collection) and is_all_instance(initialization, int):
+        inv_sort_idx = np.argsort(sort_idx)
+        selected_point_indices = [inv_sort_idx[x] for x in initialization]
+    elif initialization is FPSInitialization.FARTHEST:
         idx_1d = np.argmax(dist_matrix)
         selected_point_indices = list(
             map(int, np.unravel_index(idx_1d, dist_matrix.shape))
         )
         if n_samples == 1:
             return [sort_idx[selected_point_indices[0]]]
-    elif isinstance(initialization, Collection) and is_all_instance(
-        initialization, int
-    ):
-        inv_sort_idx = np.argsort(sort_idx)
-        selected_point_indices = [inv_sort_idx[x] for x in initialization]
     else:
-        raise ValueError(
-            f"Unknown initialization type. Expected 'farthest', 'random', or a "
-            f"collection of integers. Provided: {initialization=}"
-        )
+        selected_point_indices = [np.random.randint(0, n_points)]
 
     # Initialize the list of remaining points
     remaining_point_indices = list(range(n_points))

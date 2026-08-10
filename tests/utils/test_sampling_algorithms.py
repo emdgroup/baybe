@@ -13,13 +13,11 @@ from pytest import param
 from sklearn.metrics import pairwise_distances
 
 from baybe._optional.info import FPSAMPLE_INSTALLED
-from baybe.recommenders.pure.nonpredictive.sampling import (
-    FPSInitialization,
-    FPSRecommender,
-)
+from baybe.recommenders.pure.nonpredictive.sampling import FPSRecommender
 from baybe.settings import Settings
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
+    FPSInitialization,
     farthest_point_sampling,
     sample_numerical_df,
 )
@@ -209,7 +207,7 @@ _valid_points = np.array([[1, 1], [2, 2], [3, 3]])
             _valid_points,
             3,
             "bla",
-            "Unknown initialization type.",
+            "'bla' is not a valid FPSInitialization",
             id="unknown_init",
         ),
     ],
