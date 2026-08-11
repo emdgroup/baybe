@@ -51,6 +51,12 @@ class ContinuousOptimizer(OptimizerProtocol):
             lambda: not subspace.has_interpoint_constraints
         )
 
+        if subspace.is_empty:
+            raise IncompatibleSearchSpaceError(
+                f"'{self.__class__.__name__}' expects a non-empty continuous space, "
+                f"i.e., containing at least one continuous parameter."
+            )
+
         if sequential and subspace.has_interpoint_constraints:
             raise IncompatibilityError(
                 f"Setting the "

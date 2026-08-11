@@ -20,7 +20,6 @@ _P2 = NumericalContinuousParameter("x2", bounds=(-1, 0))
 _PD = NumericalDiscreteParameter("d", values=[1, 2, 3])
 
 _SS_DISCRETE = SearchSpace.from_product([_PD])
-_SS_HYBRID = SearchSpace.from_product([_P1, _PD])
 _SS_SUBSETS = SearchSpace.from_product(
     [_P1, _P2],
     constraints=[
@@ -74,9 +73,8 @@ def test_sequential():
 @pytest.mark.parametrize(
     ("searchspace", "match"),
     [
-        param(_SS_DISCRETE, "discrete component", id="discrete_only"),
-        param(_SS_HYBRID, "discrete component", id="hybrid"),
-        param(_SS_SUBSETS, "subsets", id="with_subsets"),
+        param(_SS_DISCRETE, "non-empty continuous space", id="discrete_only"),
+        param(_SS_SUBSETS, "containing no subsets", id="with_subsets"),
     ],
 )
 def test_raises_on_incompatible_searchspace(searchspace, match):
