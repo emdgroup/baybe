@@ -207,6 +207,10 @@ class SearchSpace(SerialMixin):
         computational representation, and maps each resulting column to its
         positional index in :attr:`comp_rep_columns`.
 
+        Note:
+            There is no concept of batching on this level, i.e., each column is fixed to
+            a single value.
+
         Returns:
             Mapping from comp-rep column index to fixed value.
         """
