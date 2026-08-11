@@ -209,7 +209,7 @@ class BasicKernel(Kernel, ABC):
         ),
         kw_only=True,
     )
-    """An optional set of names specifiying the parameters the kernel should act on."""
+    """An optional set of names specifying the parameters the kernel should act on."""
 
     @override
     @classproperty

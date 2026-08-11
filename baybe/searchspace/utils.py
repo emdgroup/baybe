@@ -10,6 +10,7 @@ import pandas as pd
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
 from baybe.constraints.base import DiscreteConstraint
+from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.parameters.base import DiscreteParameter
 
 if TYPE_CHECKING:
@@ -192,7 +193,9 @@ def parameter_cartesian_prod_pandas_constrained(
         A dataframe containing all valid parameter combinations.
     """
     # Filter to constraints that should be applied during creation
-    filtering_constraints = [c for c in constraints if c.eval_during_creation]
+    filtering_constraints = [
+        c for c in constraints if not isinstance(c, DiscreteBatchConstraint)
+    ]
 
     # Fast path: no constraints and no initial dataframe
     if not filtering_constraints and initial_df is None:
@@ -266,7 +269,9 @@ def _apply_constraint_filter_pandas(
         The filtered dataframe.
     """
     # Remove entries that violate parameter constraints:
-    for constraint in (c for c in constraints if c.eval_during_creation):
+    for constraint in (
+        c for c in constraints if not isinstance(c, DiscreteBatchConstraint)
+    ):
         idxs = constraint.get_invalid(df)
         df.drop(index=idxs, inplace=True)
     df.reset_index(inplace=True, drop=True)

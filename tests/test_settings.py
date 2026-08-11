@@ -168,7 +168,7 @@ def test_sequential_setting_via_activation(original_values):
     # The growing collection of all modified attributes
     modified: dict[str, Any] = {}
 
-    # We iterate over the random seed last because changing it does not propagete to
+    # We iterate over the random seed last because changing it does not propagate to
     # the subsequent settings objects
     attrs = sorted(
         Settings._settings_attributes,
@@ -354,7 +354,7 @@ def test_random_seed_control():
 
     # Restoring previous settings also restores the corresponding stored seed attribute
     # value. However, the random state is only restored if the overwriting settings
-    # object expliciltly requested a specific seed value. The reasoning is:
+    # object explicitly requested a specific seed value. The reasoning is:
     # * When a user provides a seed argument, they expect that the RNG is affected
     # * BUT: When they only provide arguments for other settings, they do not have
     #   random number generation in focus hence they would not expect that activation or

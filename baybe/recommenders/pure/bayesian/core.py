@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
+from attrs.validators import deep_iterable, instance_of
 from typing_extensions import override
 
 from baybe.acquisition import qLogEI, qLogNEHVI
@@ -45,6 +46,7 @@ from baybe.surrogates.base import (
     Surrogate,
     SurrogateProtocol,
 )
+from baybe.symmetries.base import Symmetry
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
@@ -92,6 +94,14 @@ class BayesianRecommender(PureRecommender):
     )
     """The optimizer used to optimize the acquisition function."""
 
+    symmetries: tuple[Symmetry, ...] = field(
+        factory=tuple,
+        converter=tuple,
+        validator=deep_iterable(member_validator=instance_of(Symmetry)),
+        kw_only=True,
+    )
+    """Symmetries triggering data augmentation during model fitting."""
+
     # TODO: The objective is currently only required for validating the recommendation
     #   context. Once multi-target support is complete, we might want to refactor
     #   the validation mechanism, e.g. by
@@ -138,6 +148,10 @@ class BayesianRecommender(PureRecommender):
                 f"{len(objective.targets)}-target multi-output context."
             )
 
+        # Perform data augmentation
+        for s in self.symmetries:
+            measurements = s.augment_measurements(measurements, searchspace)
+
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = acqf.to_botorch(
             surrogate,
@@ -180,6 +194,7 @@ class BayesianRecommender(PureRecommender):
 
         validate_object_names(searchspace.parameters + objective.targets)
 
+        # Experimental input validation
         if (measurements is None) or measurements.empty:
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "

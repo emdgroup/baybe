@@ -32,7 +32,7 @@ dynamic = ['version']
 dependencies = [
     "attrs>=26.1.0",
     "botorch>=0.13.0,<1",
-    "cattrs>=25.2.0",
+    "cattrs>=26.1.0",
     "exceptiongroup",
     "gpytorch>=1.9.1,<2",
     "joblib>1.4.0,<2",
@@ -96,7 +96,7 @@ dev = [
     "pip-audit>=2.5.5",
     "setuptools-scm>=7.1.0",
     "tox-uv>=1.7.0",
-    "uv>=0.11.3",
+    "uv>=0.11.25",
 ]
 
 insights = [
@@ -134,8 +134,8 @@ lint = [
     "pre-commit==4.2.0", # see DEV TOOLS NOTE
     "pydoclint==0.5.5", # see DEV TOOLS NOTE
     "pyupgrade==3.21.2", # see DEV TOOLS NOTE
-    "ruff==0.15.9", # see DEV TOOLS NOTE
-    "zizmor==1.25.2", # see DEV TOOLS NOTE
+    "ruff==0.15.20", # see DEV TOOLS NOTE
+    "zizmor==1.26.1", # see DEV TOOLS NOTE
 ]
 
 mypy = [
@@ -147,7 +147,7 @@ mypy = [
 ]
 
 polars = [
-    "polars[pyarrow]>=0.19.19,<2",
+    "polars[pyarrow]>=0.20.8,<2",
 ]
 
 simulation = [

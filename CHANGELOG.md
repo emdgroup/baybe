@@ -5,15 +5,54 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Added
-- `optimizers` subpackage with `OptimizerProtocol` and `ContinuousOptimizer`
+### Deprecations
+- `BotorchRecommender` class. Use `BayesianRecommender` instead.
 
 ### Removed
+- `eval_during_creation` / `eval_during_modeling` constraint class variables
 - `recommend_continuous_without_cardinality_constraints` function.
    Call `ContinuousOptimizer` instead.
 
-### Deprecations
-- `BotorchRecommender` class. Use `BayesianRecommender` instead.
+### Breaking Changes
+- All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
+  are now keyword-only
+- `df_apply_permutation_augmentation` has a different interface and now expects
+  permutation groups instead of column groups
+
+### Fixed
+- `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
+  values of invariant points are degenerate
+- Multi-output surrogate compatibility check in `Surrogate.fit` now correctly uses the
+  number of required models instead of the number of transform outputs
+
+### Added
+- `optimizers` subpackage with `OptimizerProtocol` and `ContinuousOptimizer`
+- `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
+  the same pattern as `ContinuousLinearConstraint.coefficients`
+- `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
+  weighted simplex sum constraints
+- `Symmetry` concept for expressing symmetries of the optimization problem, including
+  `PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry` classes, which trigger
+  automatic data augmentation when assigned to the `symmetries` attribute of a
+  `BayesianRecommender`
+- `Parameter.is_equivalent` method for structural parameter comparison
+- `posterior_mean_function` method to `GaussianProcessSurrogate`
+
+### Changed
+- `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
+  kernel in multi-task scenarios, matching BoTorch's `MultiTaskGP` defaults introduced
+  in version `0.18.0`
+- The `BOTORCH` GP preset now requires BoTorch `>= 0.18.0` and raises an
+  `IncompatibilityError` if an older version is installed
+- `DiscreteSumConstraint`, `ContinuousLinearConstraint`, and
+  `SubspaceDiscrete.from_simplex` now forbid 0 as coefficients
+- `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
+- Bumped polars to `>=0.20.8`
+- Bumped cattrs to `>=26.1.0`
+- The factory fields of `GaussianProcessSurrogate` (`kernel_factory`,
+  `mean_factory`, `likelihood_factory`, `fit_criterion_factory`) now default to
+  `None`, meaning "auto-select based on context at fit time". Accessing a field
+  before fitting may return `None` instead of a concrete factory.
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
