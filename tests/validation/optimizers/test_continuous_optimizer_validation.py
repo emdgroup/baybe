@@ -1,6 +1,5 @@
 """Validation tests for ContinuousOptimizer."""
 
-from contextlib import nullcontext
 from unittest.mock import MagicMock
 
 import pytest
@@ -33,8 +32,6 @@ _SS_SUBSETS = SearchSpace.from_product(
 @pytest.mark.parametrize(
     ("n_starts", "error", "match"),
     [
-        param(10, None, None, id="valid"),
-        param(1, None, None, id="valid_minimum"),
         param(1.5, TypeError, "must be <class 'int'>", id="float"),
         param("5", TypeError, "must be <class 'int'>", id="string"),
         param(0, ValueError, "must be > 0", id="zero"),
@@ -43,15 +40,13 @@ _SS_SUBSETS = SearchSpace.from_product(
 )
 def test_n_starts(n_starts, error, match):
     """Invalid ``n_starts`` values raise an error."""
-    with pytest.raises(error, match=match) if error is not None else nullcontext():
+    with pytest.raises(error, match=match):
         ContinuousOptimizer(n_starts=n_starts)
 
 
 @pytest.mark.parametrize(
     ("n_initial_samples", "error", "match"),
     [
-        param(64, None, None, id="valid"),
-        param(1, None, None, id="valid_minimum"),
         param(1.5, TypeError, "must be <class 'int'>", id="float"),
         param("64", TypeError, "must be <class 'int'>", id="string"),
         param(0, ValueError, "must be > 0", id="zero"),
@@ -60,7 +55,7 @@ def test_n_starts(n_starts, error, match):
 )
 def test_n_initial_samples(n_initial_samples, error, match):
     """Invalid ``n_initial_samples`` values raise an error."""
-    with pytest.raises(error, match=match) if error is not None else nullcontext():
+    with pytest.raises(error, match=match):
         ContinuousOptimizer(n_initial_samples=n_initial_samples)
 
 

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from attrs import define, field
-from attrs.validators import gt, instance_of, min_len
+from attrs.validators import deep_iterable, gt, instance_of, min_len
 from typing_extensions import override
 
 from baybe.constraints import DiscreteBatchConstraint
@@ -23,6 +23,7 @@ from baybe.parameters.selectors import ParameterSelectorProtocol, to_parameter_s
 from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
 from baybe.settings import active_settings
+from baybe.utils.basic import to_tuple
 
 if TYPE_CHECKING:
     from baybe.optimizers.base import OptimizationResult, ScoreFunction
@@ -73,7 +74,10 @@ class OptimizationSchedule(ABC, SerialMixin):
 class CyclicOptimizationSchedule(OptimizationSchedule):
     """Cycle through steps in round-robin for a fixed number of cycles."""
 
-    steps: tuple[OptimizationStep, ...] = field(validator=min_len(1))
+    steps: tuple[OptimizationStep, ...] = field(
+        converter=to_tuple,
+        validator=[min_len(1), deep_iterable(instance_of(OptimizationStep))],
+    )
     """The optimization steps to be cycled through."""
 
     n_cycles: int = field(default=1, validator=[instance_of(int), gt(0)])
