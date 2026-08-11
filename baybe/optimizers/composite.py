@@ -13,6 +13,7 @@ from attrs import define, field
 from attrs.validators import gt, instance_of, min_len
 from typing_extensions import override
 
+from baybe.constraints import DiscreteBatchConstraint
 from baybe.exceptions import (
     IncompatibleAcquisitionFunctionError,
     IncompatibleSearchSpaceError,
@@ -189,8 +190,6 @@ class BlockCoordinateOptimizer(OptimizerProtocol):
         import torch
         from botorch.acquisition import AnalyticAcquisitionFunction
 
-        from baybe.constraints import DiscreteBatchConstraint
-
         n_cols = len(searchspace.comp_rep_columns)
         points = torch.empty(batch_size, n_cols, dtype=active_settings.DTypeFloatTorch)
         scores = torch.empty(batch_size, dtype=active_settings.DTypeFloatTorch)
@@ -204,21 +203,21 @@ class BlockCoordinateOptimizer(OptimizerProtocol):
 
         if searchspace.continuous.has_interpoint_constraints:
             raise IncompatibleSearchSpaceError(
-                f"'{self.__class__.__name__}' does not support batch recommendation "
+                f"'{type(self).__name__}' does not support batch recommendation "
                 f"when interpoint constraints are present."
             )
 
         if any(isinstance(c, DiscreteBatchConstraint) for c in searchspace.constraints):
             raise IncompatibleSearchSpaceError(
-                f"'{self.__class__.__name__}' does not support batch recommendation "
+                f"'{type(self).__name__}' does not support batch recommendation "
                 f"when discrete batch constraints are present."
             )
 
         if isinstance(score_function, AnalyticAcquisitionFunction):
             raise IncompatibleAcquisitionFunctionError(
-                f"'{type(self).__name__}' does not support analytic acquisition "
-                f"functions for batch sizes greater than 1 but got an acquisition "
-                f"function of type '{type(score_function).__name__}'."
+                f"'{type(self).__name__}' does not support batch recommendation "
+                f"for analytic acquisition functions but was called with an "
+                f"acquisition function of type '{type(score_function).__name__}'."
             )
 
         base_X_pending = score_function.X_pending
