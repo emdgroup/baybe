@@ -408,7 +408,7 @@ def test_sample_from_polytope_mixed_constraints_with_interpoint():
 
     # Test batch size of 1 as well as one small and one large batch size
     for batch_size in [1, 2, 42]:
-        bounds = subspace.comp_rep_bounds.to_numpy()
+        bounds = nw.from_native(subspace.comp_rep_bounds, eager_only=True).to_numpy()
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
         # Verify regular constraint is satisfied for each row
