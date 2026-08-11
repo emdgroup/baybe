@@ -41,7 +41,6 @@ def _structure_botorch_recommender(
 _existing_pure_recommender_hook = converter.get_structure_hook(PureRecommender)
 
 
-@converter.register_structure_hook
 def _structure_pure_recommender_with_botorch_compat(
     val: dict[str, Any] | str, cls: type[PureRecommender]
 ) -> PureRecommender:
@@ -51,6 +50,12 @@ def _structure_pure_recommender_with_botorch_compat(
         val.pop("type")
         return _structure_botorch_recommender(val, cls)
     return _existing_pure_recommender_hook(val, cls)
+
+
+converter.register_structure_hook_func(
+    lambda cls: cls is PureRecommender,
+    _structure_pure_recommender_with_botorch_compat,
+)
 
 
 def BotorchRecommender(
