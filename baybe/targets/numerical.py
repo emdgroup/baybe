@@ -744,6 +744,7 @@ class NumericalTarget(Target, SerialMixin):
                 DeprecationWarning,
             )
 
+        # Mypy does not infer from the above that `series` must be a series here
         assert series is not None
         # <<<<<<<<<< Deprecation
 
