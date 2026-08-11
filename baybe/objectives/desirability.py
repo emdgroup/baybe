@@ -32,7 +32,7 @@ if TYPE_CHECKING:
         MCAcquisitionObjective,
         ScalarizedPosteriorTransform,
     )
-    from narwhals.typing import IntoDataFrameT
+    from narwhals.stable.v2.typing import IntoDataFrameT
     from torch import Tensor
 
 _OUTPUT_NAME = "Desirability"

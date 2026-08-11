@@ -24,7 +24,7 @@ from baybe.utils.validation import validate_target_input
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
-    from narwhals.typing import IntoDataFrameT
+    from narwhals.stable.v2.typing import IntoDataFrameT
 
 
 # TODO: Reactive slots in all classes once cached_property is supported:

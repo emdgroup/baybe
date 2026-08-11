@@ -41,7 +41,7 @@ from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 
 if TYPE_CHECKING:
-    from narwhals.typing import IntoDataFrame, IntoDataFrameT
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
     from torch import Tensor
 
     from baybe.searchspace.core import SearchSpace

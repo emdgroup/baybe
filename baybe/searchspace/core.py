@@ -35,7 +35,7 @@ from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
-    from narwhals.typing import IntoDataFrame, IntoDataFrameT
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
 
     from baybe.parameters.selectors import ParameterSelectorProtocol
 

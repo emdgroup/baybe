@@ -54,7 +54,7 @@ from baybe.utils.metadata import (
 )
 
 if TYPE_CHECKING:
-    from narwhals.typing import IntoSeriesT
+    from narwhals.stable.v2.typing import IntoSeriesT
 
 
 @define

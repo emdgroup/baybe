@@ -18,7 +18,7 @@ from baybe.targets.base import Target
 from baybe.utils.validation import validate_not_nan
 
 if TYPE_CHECKING:
-    from narwhals.typing import IntoSeriesT
+    from narwhals.stable.v2.typing import IntoSeriesT
 
 ChoiceValue: TypeAlias = bool | int | float | str
 """Types of values that a :class:`BinaryTarget` can take."""

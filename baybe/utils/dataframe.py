@@ -24,7 +24,7 @@ from baybe.parameters.base import Parameter
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
-    from narwhals.typing import IntoDataFrame, IntoSeries
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoSeries
     from torch import Tensor
 
     from baybe.targets.base import Target

@@ -50,7 +50,7 @@ from baybe.utils.dataframe import (
 from baybe.utils.memory import bytes_to_human_readable
 
 if TYPE_CHECKING:
-    from narwhals.typing import IntoDataFrame, IntoDataFrameT
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
 
     from baybe.searchspace.core import SearchSpace
 

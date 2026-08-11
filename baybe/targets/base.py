@@ -16,7 +16,7 @@ from baybe.serialization import (
 from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 if TYPE_CHECKING:
-    from narwhals.typing import IntoSeriesT
+    from narwhals.stable.v2.typing import IntoSeriesT
 
     from baybe.objectives import SingleTargetObjective
 
