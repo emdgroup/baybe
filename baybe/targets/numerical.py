@@ -7,7 +7,7 @@ import inspect
 import warnings
 from collections.abc import Sequence
 from operator import add, mul, sub
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import cattrs
 import narwhals.stable.v2 as nw
@@ -108,12 +108,9 @@ def _translate_legacy_arguments(
             modern_transformation = BellTransformation(bounds.center, width)
         else:
             # Use transformation from what would have been the appropriate calls
-            modern_transformation = cast(
-                Transformation,
-                NumericalTarget.match_triangular(
-                    "dummy", cutoffs=bounds
-                ).transformation,
-            )
+            modern_transformation = NumericalTarget.match_triangular(
+                "dummy", cutoffs=bounds
+            ).transformation
         return (modern_transformation, False)
 
 
