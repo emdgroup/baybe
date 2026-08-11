@@ -180,6 +180,11 @@ Custom `@classproperty` from `baybe.utils.basic` for class-level computed proper
 - `TYPE_CHECKING` guard: Imports only for annotations go inside
   `if TYPE_CHECKING:`.
 - Aliasing: BoTorch types use `Bo` prefix (e.g., `BoAcquisitionFunction`).
+- narwhals: Always import via the stable v2 API — never use the bare `narwhals`
+  namespace. Use `import narwhals.stable.v2 as nw` for runtime imports,
+  `from narwhals.stable.v2.typing import ...` for type annotations (under
+  `TYPE_CHECKING`), and `from narwhals.testing import ...` for test utilities
+  (`narwhals.testing` has no stable v2 variant).
 - Remove unused imports immediately. Module-level imports preferred except for
   optional dependency gating.
 
