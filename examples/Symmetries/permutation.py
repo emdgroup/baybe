@@ -16,10 +16,7 @@ from matplotlib.ticker import MaxNLocator
 from baybe import Campaign, Settings
 from baybe.constraints import DiscretePermutationInvarianceConstraint
 from baybe.parameters import NumericalDiscreteParameter
-from baybe.recommenders import (
-    BotorchRecommender,
-    TwoPhaseMetaRecommender,
-)
+from baybe.recommenders import BayesianRecommender, TwoPhaseMetaRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.surrogates import NGBoostSurrogate
@@ -143,10 +140,10 @@ print(f"{'With Constraint:':<35} {len(searchspace_constrained.discrete.exp_rep)}
 
 symmetry = constraint.to_symmetry()
 recommender_plain = TwoPhaseMetaRecommender(
-    recommender=BotorchRecommender(surrogate_model=NGBoostSurrogate())
+    recommender=BayesianRecommender(surrogate_model=NGBoostSurrogate())
 )
 recommender_augmented = TwoPhaseMetaRecommender(
-    recommender=BotorchRecommender(
+    recommender=BayesianRecommender(
         surrogate_model=NGBoostSurrogate(), symmetries=[symmetry]
     )
 )
