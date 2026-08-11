@@ -4,7 +4,7 @@ import pytest
 
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.recommenders import (
-    BotorchRecommender,
+    BayesianRecommender,
     FPSRecommender,
     RandomRecommender,
     SequentialMetaRecommender,
@@ -13,7 +13,7 @@ from baybe.recommenders import (
 from baybe.recommenders.meta.sequential import StreamingSequentialMetaRecommender
 from tests.conftest import select_recommender
 
-RECOMMENDERS = [RandomRecommender(), FPSRecommender(), BotorchRecommender()]
+RECOMMENDERS = [RandomRecommender(), FPSRecommender(), BayesianRecommender()]
 
 
 @pytest.mark.parametrize("remain_switched", [False, True])

@@ -5,9 +5,6 @@ import pytest
 from baybe.campaign import Campaign
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.naive import NaiveHybridSpaceRecommender
-from baybe.recommenders.pure.bayesian.botorch import (
-    BotorchRecommender,
-)
 from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
@@ -20,23 +17,17 @@ valid_discrete_non_predictive_recommenders = [
     if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
 ]
-valid_discrete_bayesian_recommenders = [
-    cls()
-    for cls in get_subclasses(BayesianRecommender)
-    if cls.compatibility
-    in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
-]
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
 #  allows no training data
 valid_naive_hybrid_recommenders = [
     TwoPhaseMetaRecommender(
         recommender=NaiveHybridSpaceRecommender(
-            disc_recommender=disc, cont_recommender=BotorchRecommender()
+            disc_recommender=disc, cont_recommender=BayesianRecommender()
         )
     )
     for disc in [
         *valid_discrete_non_predictive_recommenders,
-        *valid_discrete_bayesian_recommenders,
+        BayesianRecommender(),
     ]
 ]
 

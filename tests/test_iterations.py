@@ -39,9 +39,6 @@ from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.naive import NaiveHybridSpaceRecommender
 from baybe.recommenders.pure.base import PureRecommender
-from baybe.recommenders.pure.bayesian.botorch import (
-    BotorchRecommender,
-)
 from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
@@ -168,17 +165,13 @@ def _make_recommender_id(recommender) -> str:
     """Return a unique strict_parametrization_ids-compatible ID for a recommender.
 
     For TwoPhaseMetaRecommender wrappers, the inner recommender type (and its key
-    config for BotorchRecommender / NaiveHybridSpaceRecommender) is used to produce
+    config for BayesianRecommender / NaiveHybridSpaceRecommender) is used to produce
     a more informative ID than the outer wrapper class name alone.
     """
     if isinstance(recommender, TwoPhaseMetaRecommender):
         inner = recommender.recommender
         if isinstance(inner, NaiveHybridSpaceRecommender):
             return f"Naive_{inner.disc_recommender.__class__.__name__}"
-        if isinstance(inner, BotorchRecommender):
-            sampler = inner.hybrid_sampler or "None"
-            pct = str(inner.sampling_percentage).replace(".", "p")
-            return f"Botorch_{sampler}_{pct}"
         return inner.__class__.__name__
     return recommender.__class__.__name__
 
@@ -209,25 +202,6 @@ valid_hybrid_recommenders = [
     for cls in get_subclasses(PureRecommender)
     if cls.compatibility == SearchSpaceType.HYBRID
 ]
-# List of BotorchRecommenders with different sampling strategies.
-sampling_strategies = [
-    # Valid combinations
-    (None, 0.0),
-    (None, 1.0),
-    ("FPS", 0.2),
-    ("FPS", 0.5),
-    ("Random", 0.2),
-    ("Random", 0.5),
-]
-# TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
-#  allows no training data
-valid_hybrid_sequential_greedy_recommenders = [
-    TwoPhaseMetaRecommender(
-        recommender=BotorchRecommender(hybrid_sampler=sampler, sampling_percentage=per)
-    )
-    for sampler, per in sampling_strategies
-]
-
 valid_discrete_non_predictive_recommenders = [
     cls()
     for cls in get_subclasses(NonPredictiveRecommender)
@@ -235,28 +209,21 @@ valid_discrete_non_predictive_recommenders = [
     in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
 ]
 
-valid_discrete_bayesian_recommenders = [
-    cls()
-    for cls in get_subclasses(BayesianRecommender)
-    if cls.compatibility
-    in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
-]
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
 #  allows no training data
 valid_naive_hybrid_recommenders = [
     TwoPhaseMetaRecommender(
         recommender=NaiveHybridSpaceRecommender(
-            disc_recommender=disc, cont_recommender=BotorchRecommender()
+            disc_recommender=disc, cont_recommender=BayesianRecommender()
         )
     )
     for disc in [
         *valid_discrete_non_predictive_recommenders,
-        *valid_discrete_bayesian_recommenders,
+        BayesianRecommender(),
     ]
 ]
 
 valid_hybrid_recommenders.extend(valid_naive_hybrid_recommenders)
-valid_hybrid_recommenders.extend(valid_hybrid_sequential_greedy_recommenders)
 
 valid_meta_recommenders = get_subclasses(MetaRecommender)
 

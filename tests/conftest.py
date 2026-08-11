@@ -47,6 +47,7 @@ from baybe.kernels import MaternKernel
 from baybe.objectives import ParetoObjective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
+from baybe.optimizers import ContinuousOptimizer
 from baybe.parameters import (
     CategoricalParameter,
     CustomDiscreteParameter,
@@ -64,9 +65,7 @@ from baybe.recommenders.meta.sequential import (
     TwoPhaseMetaRecommender,
 )
 from baybe.recommenders.pure.base import PureRecommender
-from baybe.recommenders.pure.bayesian.botorch import (
-    BotorchRecommender,
-)
+from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
@@ -241,7 +240,7 @@ def fixture_parameters(
         NumericalDiscreteParameter(
             name="Fraction_1",
             values=tuple(np.linspace(0, 100, n_grid_points)),
-            tolerance=0.2,
+            tolerance=0.5,
         ),
         NumericalDiscreteParameter(
             name="Fraction_2",
@@ -688,7 +687,7 @@ def fixture_default_twophase_meta_recommender(recommender, initial_recommender):
 def fixture_default_sequential_meta_recommender():
     """The default ```SequentialMetaRecommender```."""
     return SequentialMetaRecommender(
-        recommenders=[RandomRecommender(), BotorchRecommender()],
+        recommenders=[RandomRecommender(), BayesianRecommender()],
         mode="reuse_last",
     )
 
@@ -697,7 +696,9 @@ def fixture_default_sequential_meta_recommender():
 def fixture_default_streaming_sequential_meta_recommender():
     """The default ```StreamingSequentialMetaRecommender```."""
     return StreamingSequentialMetaRecommender(
-        recommenders=chain((RandomRecommender(),), hilberts_factory(BotorchRecommender))
+        recommenders=chain(
+            (RandomRecommender(),), hilberts_factory(BayesianRecommender)
+        )
     )
 
 
@@ -741,7 +742,7 @@ def fixture_recommender(initial_recommender, surrogate_model, acqf):
     """The default recommender to be used if not specified differently."""
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
-        recommender=BotorchRecommender(
+        recommender=BayesianRecommender(
             surrogate_model=surrogate_model, acquisition_function=acqf
         ),
     )
@@ -752,10 +753,10 @@ def fixture_non_sequential_recommender(initial_recommender, surrogate_model, acq
     """A recommender for non-sequential optimization."""
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
-        recommender=BotorchRecommender(
+        recommender=BayesianRecommender(
             surrogate_model=surrogate_model,
             acquisition_function=acqf,
-            sequential_continuous=False,
+            optimizer=ContinuousOptimizer(sequential=False),
         ),
     )
 
@@ -838,7 +839,7 @@ def fixture_default_config():
                 "type": "RandomRecommender"
             },
             "recommender": {
-                "type": "BotorchRecommender",
+                "type": "BayesianRecommender",
                 "acquisition_function": "qEI"
             },
             "switch_after": 1

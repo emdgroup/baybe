@@ -6,7 +6,7 @@ import pytest
 from pytest import param
 
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
-from baybe.recommenders import BotorchRecommender
+from baybe.recommenders import BayesianRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
@@ -83,7 +83,7 @@ def test_recommendation_is_not_ordered(n_values, n_parameters):
         ],
     )
     objective = NumericalTarget(name="t").to_objective()
-    recommender = BotorchRecommender()
+    recommender = BayesianRecommender()
 
     # Add first and last point as measurement, target value is the sum of all parameters
     measurements = df.iloc[[0, -1], :]

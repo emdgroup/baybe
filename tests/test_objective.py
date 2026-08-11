@@ -11,7 +11,7 @@ from baybe.objectives.enum import Scalarizer
 from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.recommenders import BotorchRecommender
+from baybe.recommenders import BayesianRecommender
 from baybe.targets import NumericalTarget
 from baybe.transformations import ClampingTransformation
 from baybe.transformations.basic import IdentityTransformation
@@ -143,7 +143,7 @@ def test_single_objective_recommendation(target, opt):
     """Recommendations yield expected results with and without bounded objective."""
     searchspace = NumericalContinuousParameter("p", [0, 1]).to_searchspace()
     objective = target.to_objective()
-    recommender = BotorchRecommender()
+    recommender = BayesianRecommender()
     measurements = pd.DataFrame(
         {"p": np.linspace(0, 1, 100), "t": np.linspace(0, 1, 100)}
     )

@@ -13,9 +13,9 @@ from typing_extensions import override
 
 from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
-from baybe.parameters.validation import validate_is_finite, validate_unique_values
 from baybe.settings import active_settings
 from baybe.utils.interval import InfiniteIntervalError, Interval
+from baybe.utils.validation import validate_is_finite, validate_unique_values
 
 
 @define(frozen=True, slots=False)
@@ -35,7 +35,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(2),
-            validate_unique_values,  # type: ignore
+            validate_unique_values,
             validate_is_finite,
         ],
     )

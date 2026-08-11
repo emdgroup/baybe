@@ -3,7 +3,7 @@
 import pytest
 
 from baybe.acquisition.base import AcquisitionFunction
-from baybe.recommenders import BotorchRecommender
+from baybe.recommenders import BayesianRecommender
 from baybe.utils.basic import get_subclasses
 
 abbreviations = [
@@ -24,4 +24,4 @@ def test_creation_from_string(acqf):
 @pytest.mark.parametrize("acqf", combined)
 def test_string_usage_in_recommender(acqf):
     """Tests the recommender initialization with acqfs as string."""
-    BotorchRecommender(acquisition_function=acqf)
+    BayesianRecommender(acquisition_function=acqf)

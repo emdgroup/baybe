@@ -14,7 +14,7 @@ from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates import (
     BayesianLinearSurrogate,
@@ -78,7 +78,7 @@ def test_caching_via_recommender(mock, objective):
     """Surrogates are correctly cached when requested via a recommender."""
     searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
     measurements = create_fake_input(searchspace.parameters, objective.targets)
-    recommender = BotorchRecommender(GaussianProcessSurrogate())
+    recommender = BayesianRecommender(surrogate_model=GaussianProcessSurrogate())
 
     for _ in range(2):
         recommender.get_surrogate(searchspace, objective, measurements)
@@ -102,7 +102,7 @@ def test_composite_surrogates(surrogate):
     searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
     objective = ParetoObjective([t1, t2])
     measurements = pd.DataFrame({"p": [0, 1], "t1": [0, 1], "t2": [0, 1]})
-    BotorchRecommender(surrogate_model=surrogate).recommend(
+    BayesianRecommender(surrogate_model=surrogate).recommend(
         2, searchspace, objective, measurements
     )
 
@@ -242,3 +242,34 @@ def test_batching_incompatibility(
         match="cannot be used for joint posterior evaluation",
     ):
         surrogate.posterior(measurements, joint=True)
+
+
+@pytest.mark.parametrize(
+    "objective",
+    [
+        param(
+            DesirabilityObjective(
+                [NumericalTarget("t1"), NumericalTarget("t2")],
+                scalarizer="MEAN",
+                require_normalization=False,
+                as_pre_transformation=False,
+            ),
+            id="desirability",
+        ),
+        param(
+            ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2")]),
+            id="pareto",
+        ),
+    ],
+)
+def test_multi_model_incompatibility(objective: Objective):
+    """Single-output surrogates reject multi-model objectives in fit."""
+    searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
+    measurements = create_fake_input(searchspace.parameters, objective.targets)
+    surrogate = GaussianProcessSurrogate()
+
+    with pytest.raises(
+        IncompatibleSurrogateError,
+        match="single-output surrogate",
+    ):
+        surrogate.fit(searchspace, objective, measurements)

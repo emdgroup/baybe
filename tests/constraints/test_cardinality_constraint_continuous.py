@@ -16,7 +16,6 @@ from baybe.constraints.continuous import (
 from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import MinimumCardinalityViolatedWarning
 from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.recommenders import BotorchRecommender
 from baybe.recommenders.pure.bayesian.core import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace, SubspaceContinuous
@@ -232,7 +231,7 @@ def test_min_cardinality_warning():
 
     with warnings.catch_warnings(record=True) as captured_warnings:
         warnings.filterwarnings("always", category=MinimumCardinalityViolatedWarning)
-        BotorchRecommender().recommend(
+        BayesianRecommender().recommend(
             BATCH_SIZE, searchspace, objective, prepare_measurements()
         )
     assert any(
@@ -274,7 +273,7 @@ def test_empty_constraints_after_cardinality_constraint():
     subspace.sample_uniform(1)
 
 
-@pytest.mark.parametrize("recommender", [RandomRecommender(), BotorchRecommender()])
+@pytest.mark.parametrize("recommender", [RandomRecommender(), BayesianRecommender()])
 def test_cardinality_constraint(recommender):
     """Cardinality constraints are taken into account by the recommender."""
     MIN_CARDINALITY = 4

@@ -10,7 +10,7 @@ from pytest import param
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import IncompatibleAcquisitionFunctionError, UnusedObjectWarning
 from baybe.recommenders import (
-    BotorchRecommender,
+    BayesianRecommender,
     FPSRecommender,
     GaussianMixtureClusteringRecommender,
     KMeansClusteringRecommender,
@@ -53,32 +53,32 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
         ),
         param(
             _discrete_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
+            TwoPhaseMetaRecommender(recommender=BayesianRecommender()),
             id="botorch_discrete",
         ),
         param(
             _continuous_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
+            TwoPhaseMetaRecommender(recommender=BayesianRecommender()),
             id="botorch_continuous",
         ),
         param(
             _hybrid_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
+            TwoPhaseMetaRecommender(recommender=BayesianRecommender()),
             id="botorch_hybrid",
         ),
         param(
             _discrete_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
+            TwoPhaseMetaRecommender(recommender=BayesianRecommender()),
             id="botorch_discrete_allow",
         ),
         param(
             _continuous_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
+            TwoPhaseMetaRecommender(recommender=BayesianRecommender()),
             id="botorch_continuous_allow",
         ),
         param(
             _hybrid_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
+            TwoPhaseMetaRecommender(recommender=BayesianRecommender()),
             id="botorch_hybrid_allow",
         ),
         param(
@@ -149,7 +149,7 @@ acqfs_non_pending = [
 def test_invalid_acqf(searchspace, objective, batch_size, acqf, fake_measurements):
     """Test exception raised for acqfs that don't support pending experiments."""
     recommender = TwoPhaseMetaRecommender(
-        recommender=BotorchRecommender(acquisition_function=acqf)
+        recommender=BayesianRecommender(acquisition_function=acqf)
     )
 
     # Create fake measurements and pending experiments

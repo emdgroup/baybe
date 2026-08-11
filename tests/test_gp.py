@@ -1,5 +1,8 @@
 """Tests for the Gaussian Process surrogate."""
 
+import sys
+
+import numpy as np
 import pandas as pd
 import pytest
 import torch
@@ -18,15 +21,25 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe import active_settings
+from baybe.exceptions import ModelNotTrainedError
 from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+)
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriterion
 from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
+from baybe.surrogates.gaussian_process.presets.baybe import (
+    BayBEFitCriterionFactory,
+    BayBEKernelFactory,
+    BayBELikelihoodFactory,
+    BayBEMeanFactory,
+)
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import create_fake_input, to_tensor
 
@@ -181,6 +194,32 @@ def test_presets(preset: GaussianProcessPreset):
     gp2.fit(searchspace, objective, measurements)
 
 
+def test_default_components():
+    """The all-None GP resolves to the BayBE defaults and fits identically."""
+    gp_auto = GaussianProcessSurrogate()
+
+    # All factory fields default to None (deferred auto-selection)
+    assert gp_auto.kernel_factory is None
+    assert gp_auto.mean_factory is None
+    assert gp_auto.likelihood_factory is None
+    assert gp_auto.fit_criterion_factory is None
+
+    gp_explicit = GaussianProcessSurrogate(
+        kernel_or_factory=BayBEKernelFactory(),
+        mean_or_factory=BayBEMeanFactory(),
+        likelihood_or_factory=BayBELikelihoodFactory(),
+        fit_criterion_or_factory=BayBEFitCriterionFactory(),
+    )
+
+    gp_auto.fit(searchspace, objective, measurements)
+    gp_explicit.fit(searchspace, objective, measurements)
+
+    assert_frame_equal(
+        gp_auto.posterior_stats(measurements),
+        gp_explicit.posterior_stats(measurements),
+    )
+
+
 def test_invalid_components():
     """Passing invalid component types raises errors."""
     with pytest.raises(TypeError, match="Component must be one of"):
@@ -195,13 +234,16 @@ def test_invalid_components():
         GaussianProcessSurrogate(fit_criterion_or_factory=MaternKernel())
 
 
-# NOTE: BOTORCH and HVARFNER presets coincide at the moment but BOTORCH settings can
-#   change in the future. If that happens, the test below will start to fail and the
-#   HVARFNER parametrization needs to be dropped.
-@pytest.mark.parametrize("preset", ["BOTORCH", "HVARFNER"], ids=["botorch", "hvarfner"])
+# NOTE: The BOTORCH preset tracks BoTorch's GP defaults while the HVARFNER preset
+#   implements BoTorch's static Hvarfner et al. (2024) parametrization. Therefore, the
+#   presets diverge as BoTorch evolves (e.g., BetaPrior added in 0.18.0).
+@pytest.mark.skipif(
+    sys.version_info < (3, 11),
+    reason="BoTorch >=0.18.0 requires Python >=3.11.",
+)
 @pytest.mark.parametrize("multitask", [False, True], ids=["single-task", "multi-task"])
-def test_botorch_preset(multitask: bool, preset: str):
-    """The BoTorch/Hvarfner presets exactly mimic BoTorch's behavior."""
+def test_botorch_preset(multitask: bool):
+    """The BoTorch preset exactly mimics BoTorch's MultiTaskGP/SingleTaskGP behavior."""
     if multitask:
         sp = searchspace_mt
         data = measurements_mt
@@ -210,7 +252,7 @@ def test_botorch_preset(multitask: bool, preset: str):
         data = measurements
 
     active_settings.random_seed = 1337
-    gp = GaussianProcessSurrogate.from_preset(preset)
+    gp = GaussianProcessSurrogate.from_preset("BOTORCH")
     gp.fit(sp, objective, data)
     posterior1 = gp.posterior_stats(data)
 
@@ -218,3 +260,102 @@ def test_botorch_preset(multitask: bool, preset: str):
     posterior2 = _posterior_stats_botorch(sp, data)
 
     assert_frame_equal(posterior1, posterior2)
+
+
+def test_to_botorch_before_fit():
+    """Attempting to access an untrained surrogate raises an error."""
+    with pytest.raises(ModelNotTrainedError):
+        GaussianProcessSurrogate().to_botorch()
+
+
+# Parameter ranges
+_RANGE_NARROW = tuple(range(6))
+_RANGE_WIDE = tuple(range(11))
+
+
+def _predict_on_posterior_mean(
+    pretrained_gp: GaussianProcessSurrogate, x: list[float]
+) -> pd.DataFrame:
+    """Build measurements whose targets follow the pretrained GP posterior mean."""
+    points = pd.DataFrame({"x": x})
+    return points.assign(
+        t=pretrained_gp.posterior_stats(points, stats=["mean"])["t_mean"]
+    )
+
+
+@pytest.fixture(name="pretrained_gp")
+def fixture_pretrained_gp() -> GaussianProcessSurrogate:
+    """A GP trained on a narrow search space with three points."""
+    surrogate = GaussianProcessSurrogate()
+    surrogate.fit(
+        NumericalDiscreteParameter("x", _RANGE_NARROW).to_searchspace(),
+        objective,
+        pd.DataFrame({"x": list(_RANGE_NARROW), "t": [2 * x for x in _RANGE_NARROW]}),
+    )
+    return surrogate
+
+
+@pytest.mark.parametrize(
+    "prebuilt",
+    [param(False, id="bound_method"), param(True, id="prebuilt_module")],
+)
+def test_posterior_mean_transfer(
+    pretrained_gp: GaussianProcessSurrogate, prebuilt: bool
+) -> None:
+    """A pretrained GP posterior mean can seed the prior mean of a new GP.
+
+    This test covers both ways of supplying the mean (bound-method factory and
+    pre-built module). It verifies that:
+
+    * Fitting the new GP builds a valid model.
+    * If the new GP is trained on targets generated from the pretrained GP
+      posterior mean, its posterior mean at a held-out point matches the
+      pretrained GP's posterior mean.
+    * Fitting the new GP leaves the pretrained GP's hyperparameters untouched.
+
+    The matching-mean expectation is specific to this constructed setup and is
+    not intended as a universal claim for arbitrary training data.
+    """
+    # Record hyperparameters for later comparison
+    pretrained_params = {
+        k: v.detach().clone() for k, v in pretrained_gp.to_botorch().named_parameters()
+    }
+
+    # Train/test data
+    x_train_reduced = [_RANGE_WIDE[0], _RANGE_WIDE[-1]]
+    y_train_reduced = _predict_on_posterior_mean(pretrained_gp, x_train_reduced)
+    x_test = list(_RANGE_WIDE[1:-1])
+
+    # Build a new GP with the pretrained mean on a wider search space (to ensure
+    # that input normalization is applied correctly)
+    wider_searchspace = NumericalDiscreteParameter("x", _RANGE_WIDE).to_searchspace()
+    if prebuilt:
+        mean = pretrained_gp.posterior_mean_function(
+            wider_searchspace, objective, y_train_reduced
+        )
+    else:
+        mean = pretrained_gp.posterior_mean_function
+    new_gp = GaussianProcessSurrogate(mean_or_factory=mean)
+    new_gp.fit(wider_searchspace, objective, y_train_reduced)
+
+    assert new_gp.to_botorch() is not None
+
+    # Predictions must exactly match the pretrained mean since the new training data of
+    # the new GP lies exactly on the mean and hence no corrections are applied
+    candidates = pd.DataFrame({"x": x_test})
+    expected = pretrained_gp.posterior_stats(candidates, stats=["mean"])["t_mean"]
+    actual = new_gp.posterior_stats(candidates, stats=["mean"])["t_mean"]
+    assert np.allclose(actual, expected)
+
+    # Assert that the hyperparameters of the original GP are unchanged
+    for k, v in pretrained_gp.to_botorch().named_parameters():
+        assert torch.equal(v, pretrained_params[k])
+
+
+def test_posterior_mean_warns_if_not_fitted() -> None:
+    """An untrained surrogate warns and returns the prior mean instead."""
+    with pytest.warns(UserWarning, match="has not been fitted yet"):
+        mean = GaussianProcessSurrogate().posterior_mean_function(
+            searchspace, objective, measurements
+        )
+    assert mean is not None
