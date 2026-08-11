@@ -13,15 +13,15 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.searchspace.continuous import SubspaceContinuous
+from baybe.searchspace import SearchSpace
 
 _P1 = NumericalContinuousParameter("x1", bounds=(0, 1))
 _P2 = NumericalContinuousParameter("x2", bounds=(-1, 0))
 _PD = NumericalDiscreteParameter("d", values=[1, 2, 3])
 
-_SS_DISCRETE = SubspaceContinuous.from_product([_PD])
-_SS_HYBRID = SubspaceContinuous.from_product([_P1, _PD])
-_SS_SUBSETS = SubspaceContinuous.from_product(
+_SS_DISCRETE = SearchSpace.from_product([_PD])
+_SS_HYBRID = SearchSpace.from_product([_P1, _PD])
+_SS_SUBSETS = SearchSpace.from_product(
     [_P1, _P2],
     constraints=[
         ContinuousCardinalityConstraint(
