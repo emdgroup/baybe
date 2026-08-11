@@ -19,7 +19,7 @@ from attrs import Attribute, Converter, Factory, define, field, fields
 from attrs.setters import validate
 from attrs.validators import in_, instance_of
 from attrs.validators import optional as optional_v
-from narwhals.stable.v2.typing import EagerAllowed
+from narwhals.typing import EagerAllowed  # not available in narwhals.stable.v2.typing
 
 from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
 from baybe.exceptions import NotAllowedError, OptionalImportError
