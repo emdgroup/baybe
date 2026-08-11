@@ -281,6 +281,7 @@ class GaussianProcessSurrogate(Surrogate):
         )
         module = importlib.import_module(module_name)
 
+        # TODO[typing]: https://github.com/facebook/pyrefly/issues/4467
         kernel = (
             kernel_or_factory
             if kernel_or_factory is not None
