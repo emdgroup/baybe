@@ -18,7 +18,7 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.recommenders import BotorchRecommender
+from baybe.recommenders import BayesianRecommender
 from baybe.searchspace import SearchSpace
 from baybe.symmetries import DependencySymmetry, MirrorSymmetry
 from baybe.utils.dataframe import create_fake_input
@@ -81,7 +81,7 @@ def test_measurement_augmentation(
             symmetries.append(s_mirror)
 
         searchspace = SearchSpace.from_product(parameters, constraints)
-        recommender = BotorchRecommender(
+        recommender = BayesianRecommender(
             acquisition_function=qLogEI(),
             symmetries=symmetries,
         )

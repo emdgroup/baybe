@@ -11,7 +11,7 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.recommenders import BotorchRecommender
+from baybe.recommenders import BayesianRecommender
 from baybe.searchspace import SearchSpace
 from baybe.symmetries import DependencySymmetry, MirrorSymmetry, PermutationSymmetry
 from baybe.targets import NumericalTarget
@@ -267,7 +267,7 @@ def searchspace(parameter_names):
 )
 def test_searchspace_context(searchspace, symmetry, error, msg):
     """Configurations not compatible with the searchspace raise an expected error."""
-    recommender = BotorchRecommender(symmetries=(symmetry,))
+    recommender = BayesianRecommender(symmetries=(symmetry,))
     t = NumericalTarget("t")
     measurements = create_fake_input(searchspace.parameters, [t])
 
