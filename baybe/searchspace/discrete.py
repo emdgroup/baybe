@@ -656,9 +656,9 @@ class SubspaceDiscrete(SerialMixin):
 
         bounds: dict[str, tuple] = {}
         for p in self.parameters:
-            df = nw.from_native(p.transform(), eager_only=True)
-            for col in df.columns:
-                bounds[col] = (df[col].min(), df[col].max())
+            nw_df = nw.from_native(p.transform(), eager_only=True)
+            for col in nw_df.columns:
+                bounds[col] = (nw_df[col].min(), nw_df[col].max())
         return nw.from_dict(bounds, backend=backend).to_native()
 
     @property
