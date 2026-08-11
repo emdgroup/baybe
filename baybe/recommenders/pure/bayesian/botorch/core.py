@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import warnings
+from collections.abc import Sequence
 from typing import Any
 
 from baybe.acquisition.base import AcquisitionFunction
@@ -13,6 +14,7 @@ from baybe.searchspace import SearchSpaceType
 from baybe.serialization.core import converter
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+from baybe.symmetries.base import Symmetry
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 
 
@@ -69,6 +71,7 @@ def BotorchRecommender(
     n_raw_samples: int = 64,
     max_n_subsets: int = 10,
     max_n_subspaces: int | None = None,
+    symmetries: Sequence[Symmetry] | None = None,
     _stacklevel: int = 2,
 ) -> BayesianRecommender:
     """Deprecated! Use :class:`~baybe.recommenders.pure.bayesian.core.BayesianRecommender` instead."""  # noqa
