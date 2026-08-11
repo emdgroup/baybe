@@ -7,9 +7,10 @@ import inspect
 import warnings
 from collections.abc import Sequence
 from operator import add, mul, sub
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any
 
 import cattrs
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, evolve, field, fields
 from attrs.validators import instance_of
@@ -51,6 +52,9 @@ from baybe.utils.metadata import (
     MeasurableMetadata,
     to_metadata,
 )
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoSeriesT
 
 
 @define
@@ -104,12 +108,9 @@ def _translate_legacy_arguments(
             modern_transformation = BellTransformation(bounds.center, width)
         else:
             # Use transformation from what would have been the appropriate calls
-            modern_transformation = cast(
-                Transformation,
-                NumericalTarget.match_triangular(
-                    "dummy", cutoffs=bounds
-                ).transformation,
-            )
+            modern_transformation = NumericalTarget.match_triangular(
+                "dummy", cutoffs=bounds
+            ).transformation
         return (modern_transformation, False)
 
 
@@ -725,8 +726,8 @@ class NumericalTarget(Target, SerialMixin):
 
     @override
     def transform(
-        self, series: pd.Series | None = None, /, *, data: pd.DataFrame | None = None
-    ) -> pd.Series:
+        self, series: IntoSeriesT | None = None, /, *, data: pd.DataFrame | None = None
+    ) -> IntoSeriesT:
         # >>>>>>>>>> Deprecation
         if not ((series is None) ^ (data is None)):
             raise ValueError(
@@ -735,7 +736,7 @@ class NumericalTarget(Target, SerialMixin):
 
         if data is not None:
             assert data.shape[1] == 1
-            series = data.iloc[:, 0]
+            series = data.iloc[:, 0]  # type: ignore[assignment]
             warnings.warn(
                 "Providing a dataframe via the `data` argument is deprecated and "
                 "will be removed in a future version. Please pass your data "
@@ -744,16 +745,26 @@ class NumericalTarget(Target, SerialMixin):
             )
 
         # Mypy does not infer from the above that `series` must be a series here
-        assert isinstance(series, pd.Series)
+        assert series is not None
         # <<<<<<<<<< Deprecation
 
         from baybe.utils.dataframe import to_tensor
 
-        return pd.Series(
-            self.transformation(to_tensor(series)),
-            index=series.index,
-            name=series.name,
+        nw_series = nw.from_native(series, series_only=True)
+        ns = nw.get_native_namespace(nw_series)
+        result = nw.new_series(
+            name=nw_series.name,
+            values=self.transformation(to_tensor(series)).numpy(),
+            backend=ns,
         )
+
+        # TODO[narwhalify]: drop once pandas index handling is removed globally
+        if ns is pd:
+            native = result.to_native()
+            native.index = nw_series.to_pandas().index
+            return native
+
+        return result.to_native()
 
     @override
     def summary(self):

@@ -8,8 +8,9 @@ from attrs import evolve
 from pandas.testing import assert_series_equal
 from pytest import param
 
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, InvalidTargetValueError
 from baybe.targets import MatchMode
+from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
 from baybe.transformations.basic import (
     AffineTransformation,
@@ -135,3 +136,58 @@ def test_valid_combination(operator):
     """Targets with the same attributes (except transformation) can be combined."""
     t = NumericalTarget("t")
     operator(t, evolve(t, transformation=ExponentialTransformation()))
+
+
+# ── NumericalTarget.transform ─────────────────────────────────────────────────
+
+
+def test_numerical_target_transform_identity(series_constructor):
+    """NumericalTarget.transform with identity transformation returns input values."""
+    t = NumericalTarget("t")
+    result = t.transform(series_constructor("t", [1.0, 2.0, 3.0]))
+    assert list(result) == pytest.approx([1.0, 2.0, 3.0])
+
+
+def test_numerical_target_transform_affine(series_constructor):
+    """NumericalTarget.transform applies affine transformation correctly."""
+    t = NumericalTarget("t") * 2 + 1
+    result = t.transform(series_constructor("t", [1.0, 2.0, 3.0]))
+    assert list(result) == pytest.approx([3.0, 5.0, 7.0])
+
+
+def test_numerical_target_transform_index_preserved():
+    """NumericalTarget.transform preserves a non-default pandas index."""
+    t = NumericalTarget("t")
+    series = pd.Series([1.0, 2.0, 3.0], name="t", index=[10, 20, 30])
+    assert list(t.transform(series).index) == [10, 20, 30]
+
+
+# ── BinaryTarget.transform ────────────────────────────────────────────────────
+
+
+def test_binary_target_transform_values(series_constructor):
+    """BinaryTarget.transform maps success/failure values to 1.0/0.0."""
+    t = BinaryTarget(name="t")
+    result = t.transform(series_constructor("t", [True, False, True]))
+    assert list(result) == pytest.approx([1.0, 0.0, 1.0])
+
+
+def test_binary_target_transform_custom_values(series_constructor):
+    """BinaryTarget.transform works with custom success/failure values."""
+    t = BinaryTarget(name="t", success_value="yes", failure_value="no")
+    result = t.transform(series_constructor("t", ["yes", "no", "yes"]))
+    assert list(result) == pytest.approx([1.0, 0.0, 1.0])
+
+
+def test_binary_target_transform_index_preserved():
+    """BinaryTarget.transform preserves a non-default pandas index."""
+    t = BinaryTarget(name="t")
+    series = pd.Series([True, False, True], name="t", index=[10, 20, 30])
+    assert list(t.transform(series).index) == [10, 20, 30]
+
+
+def test_binary_target_transform_invalid_values():
+    """BinaryTarget.transform raises on values outside the choice set."""
+    t = BinaryTarget(name="t")
+    with pytest.raises(InvalidTargetValueError, match="not in the set of accepted"):
+        t.transform(pd.Series([True, "bad"], name="t"))

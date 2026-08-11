@@ -78,7 +78,6 @@ def recommend_hybrid_without_subsets(
             f"acquisition functions for batch sizes > 1."
         )
 
-    import torch
     from botorch.optim import optimize_acqf_mixed
 
     # Transform discrete candidates
@@ -109,7 +108,7 @@ def recommend_hybrid_without_subsets(
     #   For details: https://github.com/pytorch/botorch/issues/2042
     points, _ = optimize_acqf_mixed(
         acq_function=recommender._botorch_acqf,
-        bounds=torch.from_numpy(searchspace.comp_rep_bounds.to_numpy(copy=True)),
+        bounds=to_tensor(searchspace.comp_rep_bounds),
         q=batch_size,
         num_restarts=recommender.n_restarts,
         raw_samples=recommender.n_raw_samples,

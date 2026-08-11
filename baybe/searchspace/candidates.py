@@ -58,8 +58,7 @@ class EmptyCandidates(CandidatesProtocol):
     @override
     def to_lazy(self) -> nw.LazyFrame:
         backend = active_settings.default_dataframe_backend
-        # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3808
-        return nw.from_dict({}, backend=backend).lazy()  # type: ignore[arg-type]
+        return nw.from_dict({}, backend=backend).lazy()
 
 
 @define(frozen=True)

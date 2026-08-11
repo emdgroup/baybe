@@ -1,6 +1,6 @@
 """Tests for candidate generators."""
 
-import narwhals as nw
+import narwhals.stable.v2 as nw
 import pandas as pd
 import polars as pl
 import pytest

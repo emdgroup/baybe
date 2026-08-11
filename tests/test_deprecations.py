@@ -98,7 +98,7 @@ def test_deprecated_get_transform_parameters():
     with pytest.warns(
         DeprecationWarning, match="'get_transform_parameters' has been deprecated"
     ):
-        get_transform_parameters(pd.DataFrame(), [])
+        get_transform_parameters([], pd.DataFrame())
 
 
 def test_target_transform_interface():
