@@ -35,7 +35,7 @@ pytestmark = pytest.mark.skipif(
 INVALID_VALUES: dict[str, tuple[Any, type[Exception], str]] = {
     "cache_campaign_recommendations": (0, TypeError, "must be <class 'bool'>"),
     "cache_directory": (0, TypeError, "Expected 'None' or a path-like"),
-    "default_dataframe_backend": ("x", ValueError, "'x' is not a valid Implementation"),
+    "default_dataframe_backend": ("x", ValueError, "must be in"),
     "parallelize_simulation_runs": (0, TypeError, "must be <class 'bool'>"),
     "preprocess_dataframes": (0, TypeError, "must be <class 'bool'>"),
     "random_seed": (0.0, TypeError, "must be <class 'int'>"),
