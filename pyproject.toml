@@ -90,7 +90,7 @@ dev = [
     "baybe[examples]",
     "baybe[docs]",
     "baybe[lint]",
-    "baybe[mypy]",
+    "baybe[typecheck]",
     "baybe[test]",
     "baybe[benchmarking]",
     "pip-audit>=2.5.5",
@@ -141,10 +141,14 @@ lint = [
 mypy = [
     "mypy>=1.19.1",
     "pandas-stubs>=2.2.2.240603",
-    "pyrefly>=1.2.0,<2",
     "types-seaborn>=0.13.2.20240618",
     "types-psutil>=7.0.0.20250801",
     "types-tqdm"
+]
+
+typecheck = [
+    "baybe[mypy]",
+    "pyrefly>=1.2.0,<2",
 ]
 
 polars = [
