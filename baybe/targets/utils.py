@@ -12,12 +12,12 @@ from attrs import AttrsInstance, evolve, fields, fields_dict
 from baybe.transformations.basic import IdentityTransformation
 
 _T = TypeVar("_T", bound=AttrsInstance)
-_TNumericalTarget = TypeVar("_TNumericalTarget", bound="NumericalTarget")
 
 if TYPE_CHECKING:
     from baybe.targets.numerical import NumericalTarget
 
     P = ParamSpec("P")
+    _TNumericalTarget = TypeVar("_TNumericalTarget", bound=NumericalTarget)
 
 
 def _validate_numerical_target_combination(
