@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
 from attrs import evolve
 
 from baybe.searchspace import SubspaceDiscrete
@@ -15,6 +14,7 @@ from baybe.searchspace.candidates import TableCandidates
 from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
     from torch import Tensor
 
     from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
@@ -24,7 +24,7 @@ def recommend_discrete_with_subsets(
     recommender: BotorchRecommender,
     subspace_discrete: SubspaceDiscrete,
     batch_size: int,
-) -> pd.DataFrame:
+) -> IntoDataFrame:
     """Recommend from a discrete space with subset-generating constraints.
 
     Splits the candidate set into subsets according to subset-generating constraints,
@@ -56,8 +56,8 @@ def recommend_discrete_with_subsets(
 
     def make_callable(
         mask: np.ndarray,
-    ) -> Callable[[], tuple[pd.DataFrame, Tensor]]:
-        def optimize() -> tuple[pd.DataFrame, Tensor]:
+    ) -> Callable[[], tuple[IntoDataFrame, Tensor]]:
+        def optimize() -> tuple[IntoDataFrame, Tensor]:
             # TODO: Replace with .filter() method to avoid materialization
             subset_subspace = evolve(
                 subspace_discrete,
@@ -86,7 +86,7 @@ def recommend_discrete_without_subsets(
     recommender: BotorchRecommender,
     subspace_discrete: SubspaceDiscrete,
     batch_size: int,
-) -> pd.DataFrame:
+) -> IntoDataFrame:
     """Generate recommendations from a discrete search space.
 
     Args:

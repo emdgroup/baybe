@@ -1,7 +1,9 @@
 """Recommenders based on sampling."""
 
+from __future__ import annotations
+
 from enum import Enum
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 import pandas as pd
@@ -13,6 +15,9 @@ from baybe.exceptions import InfeasibilityError
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.settings import Settings, active_settings
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
 from baybe.utils.conversion import to_string
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 
@@ -32,7 +37,7 @@ class RandomRecommender(NonPredictiveRecommender):
         self,
         searchspace: SearchSpace,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         is_hybrid = searchspace.type is SearchSpaceType.HYBRID
 
         # Sample continuous part if applicable
@@ -149,7 +154,7 @@ class FPSRecommender(NonPredictiveRecommender):
         self,
         subspace_discrete: SubspaceDiscrete,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         # Fit scaler on entire search space
         from sklearn.preprocessing import StandardScaler
 

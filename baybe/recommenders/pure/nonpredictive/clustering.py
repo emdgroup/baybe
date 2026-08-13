@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
-import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
@@ -16,6 +15,8 @@ from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    import pandas as pd
+    from narwhals.stable.v2.typing import IntoDataFrame
     from sklearn.base import ClusterMixin
 
 
@@ -102,7 +103,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         self,
         subspace_discrete: SubspaceDiscrete,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         # Fit scaler on entire search space
         from sklearn.preprocessing import StandardScaler
 

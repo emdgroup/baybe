@@ -40,6 +40,7 @@ from baybe.utils.conversion import to_string
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
     from torch import Tensor
 
 
@@ -157,7 +158,7 @@ class BotorchRecommender(BayesianRecommender):
         self,
         subspace_discrete: SubspaceDiscrete,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a discrete search space.
 
         Dispatches to the appropriate optimization routine depending on whether
@@ -181,7 +182,7 @@ class BotorchRecommender(BayesianRecommender):
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a continuous search space.
 
         Args:
@@ -215,7 +216,7 @@ class BotorchRecommender(BayesianRecommender):
         self,
         searchspace: SearchSpace,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a hybrid search space.
 
         Dispatches to the appropriate optimization routine depending on whether

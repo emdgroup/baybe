@@ -24,6 +24,7 @@ from baybe.utils.dataframe import to_tensor
 from baybe.utils.sampling_algorithms import sample_numerical_df
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
     from torch import Tensor
 
     from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
@@ -33,7 +34,7 @@ def recommend_hybrid_without_subsets(
     recommender: BotorchRecommender,
     searchspace: SearchSpace,
     batch_size: int,
-) -> pd.DataFrame:
+) -> IntoDataFrame:
     """Recommend points using the ``optimize_acqf_mixed`` function of BoTorch.
 
     This functions samples points from the discrete subspace, performs optimization
@@ -165,7 +166,7 @@ def recommend_hybrid_with_subsets(
     recommender: BotorchRecommender,
     searchspace: SearchSpace,
     batch_size: int,
-) -> pd.DataFrame:
+) -> IntoDataFrame:
     """Recommend from a hybrid space with subset constraints.
 
     Uses ``SearchSpace.subsets()`` to enumerate the Cartesian
@@ -197,8 +198,8 @@ def recommend_hybrid_with_subsets(
     def make_callable(
         d_mask: np.ndarray,
         c_inactive_params: frozenset[str],
-    ) -> Callable[[], tuple[pd.DataFrame, Tensor]]:
-        def optimize() -> tuple[pd.DataFrame, Tensor]:
+    ) -> Callable[[], tuple[IntoDataFrame, Tensor]]:
+        def optimize() -> tuple[IntoDataFrame, Tensor]:
             import torch
 
             # TODO: Replace with .filter() method to avoid materialization
@@ -223,9 +224,7 @@ def recommend_hybrid_with_subsets(
 
             comp = mod_searchspace.transform(rec)
             with torch.no_grad():
-                acqf_value = recommender._botorch_acqf(
-                    to_tensor(comp.values).unsqueeze(0)
-                )
+                acqf_value = recommender._botorch_acqf(to_tensor(comp).unsqueeze(0))
             return rec, acqf_value
 
         return optimize

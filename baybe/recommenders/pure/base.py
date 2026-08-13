@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, NoReturn
 
 import cattrs
 import narwhals.stable.v2 as nw
-import pandas as pd
 from attrs import define, field
 from cattrs.gen import make_dict_unstructure_fn
 from typing_extensions import override
@@ -32,7 +31,7 @@ from baybe.utils.dataframe import _df_with_backend
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrameT
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
 
 _DEPRECATION_ERROR_MESSAGE = (
     "The attribute '{}' is no longer available for recommenders. "
@@ -158,7 +157,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         subspace_discrete: SubspaceDiscrete,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a discrete search space.
 
         Args:
@@ -194,7 +193,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a continuous search space.
 
         Args:
@@ -229,7 +228,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         searchspace: SearchSpace,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a hybrid search space.
 
         If the recommender does not implement additional functions for discrete and
@@ -256,7 +255,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         searchspace: SearchSpace,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Obtain recommendations in search spaces with a discrete part.
 
         Convenience helper which sequentially performs the following tasks: get discrete
