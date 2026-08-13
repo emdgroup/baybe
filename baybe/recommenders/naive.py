@@ -1,8 +1,11 @@
 """Naive recommender for hybrid spaces."""
 
-import gc
-from typing import ClassVar
+from __future__ import annotations
 
+import gc
+from typing import TYPE_CHECKING, ClassVar
+
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
 from typing_extensions import override
@@ -13,7 +16,11 @@ from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType
-from baybe.utils.dataframe import to_tensor
+from baybe.settings import active_settings
+from baybe.utils.dataframe import _df_with_backend, to_tensor
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrameT
 
 
 @define
@@ -53,10 +60,17 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         from baybe.acquisition.partial import PartialAcquisitionFunction
+
+        reference = measurements if measurements is not None else pending_experiments
+        backend = (
+            nw.get_native_namespace(reference)
+            if reference is not None
+            else active_settings.default_dataframe_backend
+        )
 
         disc_is_bayesian = isinstance(self.disc_recommender, BayesianRecommender)
         if not disc_is_bayesian and not isinstance(
@@ -92,11 +106,23 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         cont_part = searchspace.continuous.sample_uniform(1)
         cont_part_tensor = to_tensor(cont_part).unsqueeze(-2)
 
+        # Convert to pandas for BoTorch internals (acqf setup requires pd.DataFrame)
+        measurements_pd = (
+            nw.from_native(measurements, eager_only=True).to_pandas()
+            if measurements is not None
+            else None
+        )
+        pending_experiments_pd = (
+            nw.from_native(pending_experiments, eager_only=True).to_pandas()
+            if pending_experiments is not None
+            else None
+        )
+
         # We now check whether the discrete recommender is bayesian.
         if isinstance(self.disc_recommender, BayesianRecommender):
             # Get access to the recommenders acquisition function
             self.disc_recommender._setup_botorch_acqf(
-                searchspace, objective, measurements, pending_experiments
+                searchspace, objective, measurements_pd, pending_experiments_pd
             )
 
             # Construct the partial acquisition function that attaches cont_part
@@ -122,7 +148,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
         # Setup a fresh acquisition function for the continuous recommender
         self.cont_recommender._setup_botorch_acqf(
-            searchspace, objective, measurements, pending_experiments
+            searchspace, objective, measurements_pd, pending_experiments_pd
         )
 
         # Construct the continuous space as a standalone space
@@ -143,7 +169,9 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             [disc_rec.reset_index(drop=True), rec_cont.reset_index(drop=True)],
             axis=1,
         )
-        return rec_exp
+        return _df_with_backend(
+            nw.from_native(rec_exp, eager_only=True), backend
+        ).to_native()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
