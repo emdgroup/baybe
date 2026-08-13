@@ -4,6 +4,7 @@
 ci:
   autoupdate_schedule: quarterly
   autofix_prs: false
+  skip: [pyrefly-check]
 
 repos:
 - repo: https://github.com/pycqa/flake8
