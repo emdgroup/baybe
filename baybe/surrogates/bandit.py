@@ -134,7 +134,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         beta_params_for_candidates = self._posterior_beta_parameters().T[
             candidates.argmax(-1)
         ]
-        concentration1, concentration0 = beta_params_for_candidates.unbind(-1)
+        concentration1, concentration0 = beta_params_for_candidates.split(1, -1)
         return TorchPosterior(Beta(concentration1, concentration0))
 
     @override
