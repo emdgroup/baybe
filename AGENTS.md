@@ -266,11 +266,11 @@ Three tiers:
 | `zizmor` | `.pre-commit-config.yaml` | GitHub Actions security audit |
 
 Pre-commit hooks: pydoclint, ruff (lint+format), uv-lock, pyupgrade, zizmor.
-Tox environments: `fulltest`, `coretest`, `lint`, `mypy`, `audit`, `docs`.
+Tox environments: `fulltest`, `coretest`, `lint`, `typecheck`, `audit`, `docs`.
 Coverage: 70% overall, 45% per-file minimum.
 CI runs on push/PR to `main`/`dev/**`: changelog check, lint, typecheck, audit,
 coretest, fulltest. Docs and benchmarks on releases.
-For each development, ensure `tox -e mypy-py310` and `pyrefly check` run without problems.
+For each development, ensure `tox -e typecheck-py310` runs without problems.
 The entire test suite is too expensive to run all the time, but you should select
 relevant tests from `tests/` or newly created tests to validate your developments.
 For a full list of available tox environments and developer commands, see

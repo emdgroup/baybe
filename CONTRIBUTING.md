@@ -55,8 +55,7 @@ we recommend the following workflow:
    ```
 
    Other tox tests that are useful to verify your work locally are `tox -e lint-py314`,
-   `tox -e mypy-py314` and `tox -e coretest-py314`. Additionally, run `pyrefly check`
-   to verify the secondary type checker passes as well.
+   `tox -e typecheck-py314` and `tox -e coretest-py314`.
 
    If you want to challenge your machine, you can run all checks in all Python versions
    in parallel via:
