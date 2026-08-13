@@ -6,7 +6,6 @@ import gc
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-import pandas as pd
 from attrs import define
 from typing_extensions import override
 
@@ -20,7 +19,7 @@ from baybe.serialization import SerialMixin
 from baybe.utils.validation import validate_object_names
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrame
+    from narwhals.stable.v2.typing import IntoDataFrameT
 
 
 @define
@@ -38,8 +37,8 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
-        measurements: IntoDataFrame | None = None,
-        pending_experiments: IntoDataFrame | None = None,
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> RecommenderProtocol:
         """Select a recommender for the given experimentation context.
 
@@ -52,8 +51,8 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
-        measurements: IntoDataFrame | None = None,
-        pending_experiments: IntoDataFrame | None = None,
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> RecommenderProtocol:
         """Follow the meta recommender chain to the selected non-meta recommender.
 
@@ -100,9 +99,9 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: IntoDataFrame | None = None,
-        pending_experiments: IntoDataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         """See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
         if objective is not None:
             validate_object_names(searchspace.parameters + objective.targets)

@@ -26,11 +26,13 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.serialization.core import add_type, converter
+from baybe.settings import active_settings
 from baybe.utils.boolean import is_abstract
+from baybe.utils.dataframe import _df_with_backend
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrame
+    from narwhals.stable.v2.typing import IntoDataFrameT
 
 _DEPRECATION_ERROR_MESSAGE = (
     "The attribute '{}' is no longer available for recommenders. "
@@ -113,15 +115,22 @@ class PureRecommender(ABC, RecommenderProtocol):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: IntoDataFrame | None = None,
-        pending_experiments: IntoDataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         if objective is not None:
             validate_object_names(searchspace.parameters + objective.targets)
 
+        reference = measurements if measurements is not None else pending_experiments
+        backend = (
+            nw.get_native_namespace(reference)
+            if reference is not None
+            else active_settings.default_dataframe_backend
+        )
+
         if measurements is not None:
             measurements = preprocess_dataframe(
-                nw.from_native(measurements, eager_only=True).to_pandas(),
+                measurements,
                 searchspace,
                 objective,
                 numerical_measurements_must_be_within_tolerance=False,
@@ -129,17 +138,21 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         if pending_experiments is not None:
             pending_experiments = preprocess_dataframe(
-                nw.from_native(pending_experiments, eager_only=True).to_pandas(),
+                pending_experiments,
                 searchspace,
                 numerical_measurements_must_be_within_tolerance=False,
             )
 
         if searchspace.type is SearchSpaceType.CONTINUOUS:
-            return self._recommend_continuous(
+            rec = self._recommend_continuous(
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
             )
         else:
-            return self._recommend_with_discrete_parts(searchspace, batch_size)
+            rec = self._recommend_with_discrete_parts(searchspace, batch_size)
+
+        return _df_with_backend(
+            nw.from_native(rec, eager_only=True), backend
+        ).to_native()
 
     def _recommend_discrete(
         self,

@@ -11,7 +11,6 @@ from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
 import cattrs
-import pandas as pd
 from attrs import Factory, define, field, fields
 from attrs.validators import deep_iterable, ge, in_, instance_of
 from typing_extensions import override
@@ -31,7 +30,7 @@ from baybe.serialization import (
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrame
+    from narwhals.stable.v2.typing import IntoDataFrameT
 
 _T = TypeVar("_T")
 
@@ -82,8 +81,8 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
-        measurements: IntoDataFrame | None = None,
-        pending_experiments: IntoDataFrame | None = None,
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> RecommenderProtocol:
         n_data = len(measurements) if measurements is not None else 0
         if (n_data >= self.switch_after) or (
@@ -136,8 +135,8 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
-        measurements: IntoDataFrame | None = None,
-        pending_experiments: IntoDataFrame | None = None,
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> RecommenderProtocol:
         # If the training dataset size has decreased, something went wrong
         if (
@@ -165,9 +164,9 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: IntoDataFrame | None = None,
-        pending_experiments: IntoDataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         recommendation = super().recommend(
             batch_size, searchspace, objective, measurements, pending_experiments
         )

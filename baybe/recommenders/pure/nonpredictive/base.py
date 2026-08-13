@@ -17,8 +17,7 @@ from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace.core import SearchSpace
 
 if TYPE_CHECKING:
-    import pandas as pd
-    from narwhals.stable.v2.typing import IntoDataFrame
+    from narwhals.stable.v2.typing import IntoDataFrameT
 
 
 @define
@@ -31,9 +30,9 @@ class NonPredictiveRecommender(PureRecommender, ABC):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: IntoDataFrame | None = None,
-        pending_experiments: IntoDataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         if pending_experiments is not None:
             raise IncompatibleArgumentError(
                 f"Pending experiments were passed to '{self.__class__.__name__}"

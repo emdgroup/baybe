@@ -25,6 +25,7 @@ from baybe.settings import active_settings
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame, IntoSeries
+    from narwhals.typing import IntoBackend
     from torch import Tensor
 
     from baybe.targets.base import Target
@@ -799,9 +800,7 @@ def normalize_input_dtypes(
     return df
 
 
-def _df_with_backend(
-    obj: _SeriesOrFrameT, backend: nw.Implementation, /
-) -> _SeriesOrFrameT:
+def _df_with_backend(obj: _SeriesOrFrameT, backend: IntoBackend, /) -> _SeriesOrFrameT:
     """Convert a narwhals Series/DataFrame to a different native backend.
 
     Args:

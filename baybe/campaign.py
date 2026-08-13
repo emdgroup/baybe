@@ -10,6 +10,7 @@ from functools import reduce
 from typing import TYPE_CHECKING, Any, NoReturn, TypeVar
 
 import cattrs
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import Attribute, define, evolve, field, fields, setters
 from attrs.converters import optional
@@ -649,6 +650,8 @@ class Campaign(SerialMixin):
             raise NotEnoughPointsLeftError(
                 f"{str(ex)} Consider setting {message}."
             ) from ex
+
+        rec = nw.from_native(rec, eager_only=True).to_pandas()
 
         if (
             active_settings.cache_campaign_recommendations
