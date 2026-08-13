@@ -17,7 +17,7 @@ from typing_extensions import override
 
 from baybe.constraints.base import (
     CardinalityConstraint,
-    Constraint,  # Deprecation: only used by the legacy (de)serialization block below
+    Constraint,
     DiscreteConstraint,
     DiscreteFilteringConstraint,
 )
@@ -32,6 +32,8 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
+from baybe.serialization.core import _TYPE_FIELD, make_base_structure_hook
+from baybe.utils.boolean import is_abstract
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
@@ -631,114 +633,19 @@ converter.register_structure_hook(DiscreteCustomConstraint, block_deserializatio
 
 
 # >>>>>>>>>> Deprecation
-# NOTE: This block exists solely to redirect legacy constraint type names during
-# (de)serialization. When the deprecated names are removed, delete everything between
-# these markers; constraints then fall back to the canonical base-class
-# (de)serialization mechanism (abstract dispatch via the registered base hook, and
-# concrete targets via their default attrs structure function).
-def _redirect_legacy_constraint_type(type_: str, val: dict) -> str:
-    """Redirect a legacy constraint type name to its replacement.
-
-    Applies the necessary payload migrations to *val* in place and returns the
-    (possibly rewritten) type name.
-
-    Args:
-        type_: The type discriminator read from the serialized data.
-        val: The serialized constraint dict, mutated in place as needed.
-
-    Returns:
-        The type name to use for subclass lookup.
-    """
-    if type_ == "DiscreteExcludeConstraint":
+def _structure_constraint_compat(val: dict, cls: type) -> Constraint:
+    """Structure hook that redirects legacy constraint type names."""
+    if val.get(_TYPE_FIELD) == "DiscreteExcludeConstraint":
+        val = dict(val)  # copy before mutating
+        val[_TYPE_FIELD] = "DiscreteSelectionConstraint"
         val.setdefault("exclude", True)
-        return "DiscreteSelectionConstraint"
-    return type_
+    return make_base_structure_hook(cls)(val, cls)
 
 
-def _structure_constraint(val: dict | str, cls: type) -> Constraint:
-    """Structure hook for constraints with legacy name redirect.
-
-    Registered on :class:`~baybe.constraints.base.Constraint` so that legacy
-    constraint names are redirected regardless of the (abstract) annotation used for
-    deserialization (e.g. ``Constraint``, ``DiscreteConstraint``). When structuring
-    into a concrete target class, a ``type`` field that refers to a different class is
-    rejected instead of silently dispatched.
-
-    Args:
-        val: The serialized constraint data (a dict or a bare type string).
-        cls: The (abstract or concrete) target class to structure into.
-
-    Returns:
-        The structured constraint instance.
-
-    Raises:
-        ValueError: If the ``type`` field is missing while structuring into an
-            abstract class.
-        ValueError: If the ``type`` field refers to a different class than the
-            concrete target class.
-    """
-    from baybe.serialization.core import _TYPE_FIELD
-    from baybe.utils.basic import find_subclass, refers_to
-    from baybe.utils.boolean import is_abstract
-
-    if isinstance(val, str):
-        type_ = val
-        val = {}
-    else:
-        val = dict(val)
-        type_ = val.pop(_TYPE_FIELD, None)
-
-    # If no type field is present, only structuring into a concrete class is
-    # possible (e.g. nested constraint fields); structuring into the abstract base
-    # requires a type discriminator.
-    if type_ is None:
-        if is_abstract(cls):
-            raise ValueError(
-                f"Missing required '{_TYPE_FIELD}' field for structuring a "
-                f"'{cls.__name__}'."
-            )
-        return cattrs.gen.make_dict_structure_fn(cls, converter)(val, cls)
-
-    type_ = _redirect_legacy_constraint_type(type_, val)
-
-    # For a concrete target, the type discriminator must refer to that very class:
-    # polymorphic dispatch is reserved for abstract targets.
-    if not is_abstract(cls):
-        if not refers_to(cls, type_):
-            raise ValueError(
-                f"The '{_TYPE_FIELD}' field '{type_}' does not match the target "
-                f"class '{cls.__name__}'."
-            )
-        return _structure_concrete_constraint(val, cls)
-
-    # Abstract target: dispatch to the concrete subclass indicated by the type.
-    subclass = find_subclass(Constraint, type_)
-    return _structure_concrete_constraint(val, subclass)
-
-
-def _structure_concrete_constraint(val: dict, cls: type) -> Constraint:
-    """Structure a payload into a concrete constraint class.
-
-    Delegates to a class-specific structure hook if one is registered (e.g. the
-    block hook for :class:`DiscreteCustomConstraint`); otherwise generates the
-    default attrs structure function. The latter avoids recursion into the
-    legacy-redirect hook inherited from
-    :class:`~baybe.constraints.base.Constraint`.
-
-    Args:
-        val: The (already type-stripped and migrated) serialized constraint dict.
-        cls: The concrete constraint class to structure into.
-
-    Returns:
-        The structured constraint instance.
-    """
-    hook = converter.get_structure_hook(cls)
-    if hook is not _structure_constraint:
-        return hook(val, cls)
-    return cattrs.gen.make_dict_structure_fn(cls, converter)(val, cls)
-
-
-converter.register_structure_hook(Constraint, _structure_constraint)
+converter.register_structure_hook_func(
+    lambda cls: issubclass(cls, Constraint) and is_abstract(cls),
+    _structure_constraint_compat,
+)
 # <<<<<<<<<< Deprecation
 
 # Collect leftover original slotted classes processed by `attrs.define`

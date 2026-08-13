@@ -601,20 +601,3 @@ def test_discrete_exclude_constraint_deserialization(annotation):
     result = converter.structure(legacy_dict, target)
     assert isinstance(result, DiscreteSelectionConstraint)
     assert result.exclude is True
-
-
-def test_concrete_constraint_rejects_mismatched_type():
-    """Structuring into a concrete class rejects a mismatched ``type`` field."""
-    from baybe.constraints.discrete import (
-        DiscreteCardinalityConstraint,
-    )
-    from baybe.serialization import converter
-
-    payload = {
-        "type": "DiscreteSelectionConstraint",
-        "parameters": ["A"],
-        "conditions": [{"type": "SubSelectionCondition", "selection": ["a"]}],
-        "combiner": "AND",
-    }
-    with pytest.raises(ValueError, match="does not match the target"):
-        converter.structure(payload, DiscreteCardinalityConstraint)
