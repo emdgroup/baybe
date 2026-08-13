@@ -37,6 +37,5 @@ repos:
     - id: pyrefly-check
       name: pyrefly
       pass_filenames: false  # full check, not just changed files
-      additional_dependencies:
-        - "baybe[dev]"
+      language: system
 
