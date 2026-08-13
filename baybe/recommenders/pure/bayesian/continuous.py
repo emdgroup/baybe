@@ -30,7 +30,7 @@ def recommend_continuous_torch(
         )
     else:
         return recommender.optimizer(
-            batch_size, recommender._botorch_acqf, subspace_continuous
+            batch_size, recommender._botorch_acqf, subspace_continuous.to_searchspace()
         )
 
 

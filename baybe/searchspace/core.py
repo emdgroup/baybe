@@ -6,12 +6,12 @@ import gc
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
 from itertools import product
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from attrs import define, field
+from attrs import define, evolve, field
 from typing_extensions import override
 
 from baybe.constraints import validate_constraints
@@ -198,6 +198,93 @@ class SearchSpace(SerialMixin):
                 cont_params,  # type:ignore[arg-type]
             ),
         )
+
+    @property
+    def _fixed_values(self) -> dict[int, float]:
+        """Fixed comp-rep column indices and their values.
+
+        Merges externally fixed values from both subspaces, transforms them to
+        computational representation, and maps each resulting column to its
+        positional index in :attr:`comp_rep_columns`.
+
+        Note:
+            There is no concept of batching on this level, i.e., each column is fixed to
+            a single value.
+
+        Returns:
+            Mapping from comp-rep column index to fixed value.
+        """
+        exp_values = {**self.discrete._fixed_values, **self.continuous._fixed_values}
+        if not exp_values:
+            return {}
+        comp_rep = self.transform(pd.DataFrame([exp_values]), allow_missing=True)
+        comp_row = comp_rep.iloc[0]
+        return {
+            idx: comp_row[self.comp_rep_columns[idx]]
+            for name in exp_values
+            for idx in self.get_comp_rep_parameter_indices(name)
+        }
+
+    def _fix_parameters(self, **values: Any) -> SearchSpace:
+        """Return a copy with parameters fixed to the given experimental values.
+
+        Only the parameters passed as keyword arguments are fixed; all others
+        remain free. Any previously fixed values are replaced, not accumulated.
+
+        Args:
+            **values: Parameter names mapped to their experimental-representation
+                values to fix.
+
+        Raises:
+            ValueError: If any key is not a valid parameter name.
+
+        Returns:
+            A new search space with the specified parameters fixed.
+        """
+        if unknown := set(values) - {p.name for p in self.parameters}:
+            raise ValueError(f"Unknown parameter names: {unknown}")
+
+        discrete = evolve(self.discrete)
+        discrete._fixed_values = {
+            k: v for k, v in values.items() if k in self.discrete.parameter_names
+        }
+
+        continuous = evolve(self.continuous)
+        continuous._fixed_values = {
+            k: v for k, v in values.items() if k in self.continuous.parameter_names
+        }
+
+        return evolve(self, discrete=discrete, continuous=continuous)
+
+    def _comp_rep_to_exp_rep(self, comp_rep: dict[str, float]) -> dict[str, Any]:
+        """Convert a single comp-rep point to experimental representation.
+
+        For discrete parameters, the matching exp-rep row is looked up from the
+        candidate set. For continuous parameters, values are read directly since
+        their comp-rep equals their exp-rep.
+
+        Args:
+            comp_rep: A mapping from comp-rep column names to their values.
+
+        Returns:
+            A mapping from parameter names to their experimental-representation values.
+        """
+        result: dict[str, Any] = {}
+
+        if not self.discrete.is_empty:
+            disc_comp_cols = list(self.discrete.comp_rep_columns)
+            query = pd.DataFrame([{c: comp_rep[c] for c in disc_comp_cols}])
+            mask = (self.discrete.comp_rep[disc_comp_cols] == query.iloc[0]).all(axis=1)
+            result.update(
+                {str(k): v for k, v in self.discrete.exp_rep.loc[mask].iloc[0].items()}
+            )
+
+        if not self.continuous.is_empty:
+            result.update(
+                {name: comp_rep[name] for name in self.continuous.parameter_names}
+            )
+
+        return result
 
     @property
     def parameters(self) -> tuple[Parameter, ...]:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from attrs import define, field, fields
 from attrs.validators import gt, instance_of
@@ -11,19 +11,16 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError, IncompatibleSearchSpaceError
 from baybe.optimizers.base import OptimizerProtocol
-from baybe.parameters.numerical import _FixedNumericalContinuousParameter
-from baybe.searchspace import SubspaceContinuous
+from baybe.searchspace import SearchSpace
 from baybe.settings import AutoBool
 from baybe.utils.basic import flatten
 
 if TYPE_CHECKING:
-    from torch import Tensor
-
-    from baybe.optimizers.base import ScoreFunction
+    from baybe.optimizers.base import OptimizationResult, ScoreFunction
 
 
 @define(kw_only=True)
-class ContinuousOptimizer(OptimizerProtocol[SubspaceContinuous]):
+class ContinuousOptimizer(OptimizerProtocol):
     """Optimizer wrapping BoTorch's :func:`botorch.optim.optimize_acqf`."""
 
     n_starts: int = field(validator=[instance_of(int), gt(0)], default=10)
@@ -43,17 +40,24 @@ class ContinuousOptimizer(OptimizerProtocol[SubspaceContinuous]):
         self,
         batch_size: int,
         score_function: ScoreFunction,
-        space: SubspaceContinuous,
-    ) -> tuple[Tensor, Tensor]:
+        searchspace: SearchSpace,
+    ) -> OptimizationResult:
         import torch
-        from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
         from botorch.optim import optimize_acqf
 
+        subspace = searchspace.continuous
+
         sequential = self.sequential.evaluate(
-            lambda: not space.has_interpoint_constraints
+            lambda: not subspace.has_interpoint_constraints
         )
 
-        if sequential and space.has_interpoint_constraints:
+        if subspace.is_empty:
+            raise IncompatibleSearchSpaceError(
+                f"'{self.__class__.__name__}' expects a non-empty continuous space, "
+                f"i.e., containing at least one continuous parameter."
+            )
+
+        if sequential and subspace.has_interpoint_constraints:
             raise IncompatibilityError(
                 f"Setting the "
                 f"'{fields(self.__class__).sequential.alias}' "
@@ -61,43 +65,42 @@ class ContinuousOptimizer(OptimizerProtocol[SubspaceContinuous]):
                 f"supported. Set it to either 'False'/'Auto'."
             )
 
-        if space.n_subsets > 0:
+        if subspace.n_subsets > 0:
             raise IncompatibleSearchSpaceError(
                 f"'{self.__class__.__name__}' "
                 f"expects single continuous space, i.e., containing no subsets."
             )
 
-        fixed_features = {
-            i: p.value
-            for i, p in enumerate(space.parameters)
-            if isinstance(p, _FixedNumericalContinuousParameter)
-        }
+        bounds_df = searchspace.comp_rep_bounds
+        fixed_features = searchspace._fixed_values or None
 
         # NOTE: The explicit `or None` conversions are added as an additional safety net
         #   because it is unclear if the corresponding presence checks for these
         #   arguments is correctly implemented in all invoked BoTorch subroutines.
         #   For details: https://github.com/pytorch/botorch/issues/2042
         points, acqf_values = optimize_acqf(
-            acq_function=cast(BoAcquisitionFunction, score_function),
-            bounds=torch.from_numpy(space.comp_rep_bounds.to_numpy(copy=True)),
+            acq_function=score_function,
+            bounds=torch.from_numpy(bounds_df.to_numpy(copy=True)),
             q=batch_size,
             num_restarts=self.n_starts,
             raw_samples=self.n_initial_samples,
-            fixed_features=fixed_features or None,
+            fixed_features=fixed_features,
             equality_constraints=flatten(
                 c.to_botorch(
-                    space.parameters,
+                    subspace.parameters,
+                    idx_offset=len(searchspace.discrete.comp_rep_columns),
                     batch_size=batch_size if c.is_interpoint else None,
                 )
-                for c in space.constraints_lin_eq
+                for c in subspace.constraints_lin_eq
             )
             or None,
             inequality_constraints=flatten(
                 c.to_botorch(
-                    space.parameters,
+                    subspace.parameters,
+                    idx_offset=len(searchspace.discrete.comp_rep_columns),
                     batch_size=batch_size if c.is_interpoint else None,
                 )
-                for c in space.constraints_lin_ineq
+                for c in subspace.constraints_lin_ineq
             )
             or None,
             sequential=sequential,

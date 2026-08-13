@@ -294,3 +294,29 @@ def validate_unique_values(  # noqa: DOC101, DOC103
             f"Entries appearing multiple times: {duplicates}. "
             f"All entries of '{attribute.alias}' must be unique."
         )
+
+
+def validate_optimizer_input(self: Any, attribute: Attribute, value: Any) -> None:
+    """Attrs-compatible validator to evaluate composite optimizer input."""
+    from baybe.optimizers.base import OptimizerProtocol
+    from baybe.parameters.selectors import ParameterSelectorProtocol
+
+    for i, entry in enumerate(value):
+        if not isinstance(entry, tuple) or len(entry) != 2:
+            raise TypeError(
+                f"Each entry in '{attribute.name}' must be a tuple of "
+                f"({ParameterSelectorProtocol.__name__}, "
+                f"{OptimizerProtocol.__name__}), got '{entry!r}'."
+            )
+        if not isinstance(entry[0], ParameterSelectorProtocol):
+            raise TypeError(
+                f"Entry {i} in '{attribute.name}': expected a "
+                f"'{ParameterSelectorProtocol.__name__}' as first element, "
+                f"got '{type(entry[0]).__name__}'."
+            )
+        if not isinstance(entry[1], OptimizerProtocol):
+            raise TypeError(
+                f"Entry {i} in '{attribute.name}': expected an "
+                f"'{OptimizerProtocol.__name__}' as second element, "
+                f"got '{type(entry[1]).__name__}'."
+            )

@@ -3,7 +3,7 @@
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Collection
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
@@ -14,6 +14,7 @@ from baybe.utils.basic import to_tuple
 from baybe.utils.conversion import nonstring_to_tuple
 
 
+@runtime_checkable
 class ParameterSelectorProtocol(Protocol):
     """Type protocol specifying the interface parameter selectors need to implement."""
 

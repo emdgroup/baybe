@@ -2,30 +2,27 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import (
-    TYPE_CHECKING,
-    Generic,
-    Protocol,
-    TypeAlias,
-    TypeVar,
-    runtime_checkable,
-)
+from typing import TYPE_CHECKING, Protocol, TypeAlias, runtime_checkable
 
-from baybe.searchspace import SearchSpace, SubspaceContinuous, SubspaceDiscrete
-
-TSpace = TypeVar("TSpace", bound=SearchSpace | SubspaceDiscrete | SubspaceContinuous)
-"The type of space to optimize over."
+from baybe.searchspace import SearchSpace
 
 if TYPE_CHECKING:
+    from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from torch import Tensor
 
-    ScoreFunction: TypeAlias = Callable[[Tensor], Tensor]
-    "Type alias for a callable to be optimized."
+    ScoreFunction: TypeAlias = BoAcquisitionFunction
+    """Type alias for a callable that scores (batches of) candidates."""
+
+    OptimizationResult: TypeAlias = tuple[Tensor, Tensor]
+    """Type alias for the result of an optimization call.
+
+    The first tensor holds the optimal parameter configurations in computational
+    representation, the second holds the corresponding acquisition function scores.
+    """
 
 
 @runtime_checkable
-class OptimizerProtocol(Protocol, Generic[TSpace]):  # type: ignore[misc]
+class OptimizerProtocol(Protocol):
     """Type protocol specifying the interface optimizers need to implement."""
 
     # Use slots so that derived classes also remain slotted
@@ -33,14 +30,14 @@ class OptimizerProtocol(Protocol, Generic[TSpace]):  # type: ignore[misc]
     __slots__ = ()
 
     def __call__(
-        self, batch_size: int, score_function: ScoreFunction, space: TSpace
-    ) -> tuple[Tensor, Tensor]:
+        self, batch_size: int, score_function: ScoreFunction, searchspace: SearchSpace
+    ) -> OptimizationResult:
         """Optimize a given callable over the specified space.
 
         Args:
             batch_size: The number of points to find.
             score_function: The callable to be optimized.
-            space: The space to optimize over.
+            searchspace: The space to optimize over.
 
         Returns:
             The optimal parameter configurations and their corresponding scores.

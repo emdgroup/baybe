@@ -117,6 +117,9 @@ class SubspaceDiscrete(SerialMixin):
     and thereby speed up construction. If not provided, the default hook will derive it
     from ``exp_rep``."""
 
+    _fixed_values: dict[str, Any] = field(factory=dict, init=False)
+    """Exp-rep parameter values held constant during optimization."""
+
     @override
     def __str__(self) -> str:
         if self.is_empty:
