@@ -163,3 +163,30 @@ class TestBlockCoordinateOptimizer:
             mock_score_fn.set_X_pending.call_count == 4
         )  # 3 greedy updates + 1 restore
         assert mock_score_fn.set_X_pending.call_args[0][0] is original_pending
+
+    def test_block_coordinate_mechanism(self, mock_score_fn):
+        """Each inner optimizer sees a space with the expected free/fixed parameters."""
+        step1_x1_value = 0.5
+        inner1 = MagicMock(
+            return_value=(torch.tensor([[step1_x1_value, 0.0]]), torch.zeros(1))
+        )
+        inner2 = MagicMock(return_value=(torch.tensor([[0.0, -0.5]]), torch.zeros(1)))
+
+        steps = (
+            OptimizationStep(selector="x1", optimizer=inner1),
+            OptimizationStep(selector="x2", optimizer=inner2),
+        )
+        schedule = CyclicOptimizationSchedule(steps=steps, n_cycles=1)
+        bco = BlockCoordinateOptimizer(schedule=schedule)
+        bco(1, mock_score_fn, _SS)
+
+        # Step 1: x1 is free, so x2 must be fixed to some value
+        space_seen_by_step1 = inner1.call_args[0][2]
+        assert "x2" in space_seen_by_step1.continuous._fixed_values
+        assert "x1" not in space_seen_by_step1.continuous._fixed_values
+
+        # Step 2: x2 is free, so x1 must be fixed to exactly what Step 1 returned.
+        space_seen_by_step2 = inner2.call_args[0][2]
+        assert "x1" in space_seen_by_step2.continuous._fixed_values
+        assert "x2" not in space_seen_by_step2.continuous._fixed_values
+        assert space_seen_by_step2.continuous._fixed_values["x1"] == step1_x1_value
