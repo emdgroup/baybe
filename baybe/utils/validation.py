@@ -13,7 +13,7 @@ from attrs import Attribute
 
 from baybe.exceptions import IncompleteMeasurementsError
 from baybe.settings import active_settings
-from baybe.utils.dataframe import normalize_input_dtypes
+from baybe.utils.dataframe import _df_with_backend, normalize_input_dtypes
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrameT
@@ -304,8 +304,6 @@ def preprocess_dataframe(
     else:
         targets = ()
     result_pd = normalize_input_dtypes(df_pd, [*searchspace.parameters, *targets])
-    result_nw = nw.from_native(result_pd, eager_only=True)
-    return nw.from_dict(
-        {col: result_nw[col] for col in result_nw.columns},
-        backend=nw.get_native_namespace(df),
+    return _df_with_backend(
+        nw.from_native(result_pd, eager_only=True), df_nw.implementation
     ).to_native()

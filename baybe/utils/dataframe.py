@@ -36,6 +36,8 @@ if TYPE_CHECKING:
         int | float | np.ndarray | nw.Series | nw.DataFrame | IntoSeries | IntoDataFrame
     )
 
+_SeriesOrFrameT = TypeVar("_SeriesOrFrameT", nw.Series, nw.DataFrame)
+
 
 @overload
 def to_tensor(x: _IntoTensor, /) -> Tensor: ...
@@ -795,6 +797,27 @@ def normalize_input_dtypes(
     for col in cols_to_convert:
         df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
     return df
+
+
+def _df_with_backend(
+    obj: _SeriesOrFrameT, backend: nw.Implementation, /
+) -> _SeriesOrFrameT:
+    """Convert a narwhals Series/DataFrame to a different native backend.
+
+    Args:
+        obj: The narwhals Series/DataFrame to convert.
+        backend: The target backend to convert to.
+
+    Returns:
+        The input object converted to the specified backend.
+    """
+    # TODO: Replace once built-in solution is available
+    # https://github.com/narwhals-dev/narwhals/issues/3812
+
+    if isinstance(obj, nw.Series):
+        name = obj.name
+        return nw.from_dict(obj.to_frame().to_dict(), backend=backend)[name]  # type: ignore[return-value]
+    return nw.from_dict(obj.to_dict(), backend=backend)  # type: ignore[return-value]
 
 
 def _df_equals(df1: nw.DataFrame, df2: nw.DataFrame, /) -> bool:
