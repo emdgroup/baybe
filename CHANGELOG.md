@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Protein DMS single-mutant optimization benchmarks (`protein_<dataset>`) for eleven
   deep mutational scanning datasets, encoding sequences via `ESMpp_small` mean-pooled
   embeddings and recording score convergence together with instance- and
-  position-retrieval metrics
+  position-retrieval metrics.
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
