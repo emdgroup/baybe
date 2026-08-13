@@ -7,11 +7,11 @@ from collections.abc import Callable
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec, TypeVar
 
-from attrs import evolve, fields, fields_dict
+from attrs import AttrsInstance, evolve, fields, fields_dict
 
 from baybe.transformations.basic import IdentityTransformation
 
-_T = TypeVar("_T")
+_T = TypeVar("_T", bound=AttrsInstance)
 _TNumericalTarget = TypeVar("_TNumericalTarget", bound="NumericalTarget")
 
 if TYPE_CHECKING:
