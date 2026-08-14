@@ -136,7 +136,7 @@ def test_fidelity_parameter_transform(parameter, series, expected):
                     "f", values=["lo", "hi"], costs=[1, 10], zeta=[0.5, 0.0]
                 ),
             ],
-            "Combining task.*fidelity",
+            "task parameters with fidelity parameters",
             id="task_plus_fidelity",
         ),
     ],
@@ -162,7 +162,7 @@ def test_surrogate_rejects_index_only_searchspace(parameters):
         searchspace.parameters, objective.targets, n_rows=3
     )
 
-    with pytest.raises(IncompatibleSurrogateError, match="non-task/non-fidelity"):
+    with pytest.raises(IncompatibleSurrogateError, match="at least one regular"):
         GaussianProcessSurrogate().fit(searchspace, objective, measurements)
 
 

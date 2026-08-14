@@ -22,6 +22,7 @@ from baybe.exceptions import (
 from baybe.kernels.base import Kernel
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.enum import _ParameterKind
 from baybe.searchspace.core import SearchSpaceFidelityType
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
@@ -264,14 +265,10 @@ class GaussianProcessSurrogate(Surrogate):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
-        # A GP needs at least one non-task/non-fidelity input to model.
-        if not any(
-            i not in (searchspace.task_idx, searchspace.fidelity_idx)
-            for i in range(len(searchspace.comp_rep_columns))
-        ):
+        # A GP needs at least one regular parameter to model.
+        if not any(p._kind is _ParameterKind.REGULAR for p in searchspace.parameters):
             raise IncompatibleSurrogateError(
-                f"'{self.__class__.__name__}' requires at least one "
-                f"non-task/non-fidelity parameter."
+                f"'{self.__class__.__name__}' requires at least one regular parameter."
             )
 
         # BoTorch's ``SingleTaskMultiFidelityGP`` builds its own mean, kernel, and
