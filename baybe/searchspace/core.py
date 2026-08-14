@@ -333,7 +333,8 @@ class SearchSpace(SerialMixin):
         """Column index of the fidelity parameter in computational representation."""
         if (fidelity_param := self._fidelity_parameter) is None:
             return None
-        # TODO: Refactor the comp-rep index lookup as described in `task_idx`.
+        # TODO: Adjustment after merge of candidates rework necessary (refactor the
+        #   comp-rep index lookup as described in `task_idx`).
         return cast(int, self.discrete.comp_rep.columns.get_loc(fidelity_param.name))
 
     @property

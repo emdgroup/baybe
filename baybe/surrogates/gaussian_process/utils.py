@@ -76,6 +76,7 @@ class _ModelContext:
     @property
     def numerical_indices(self) -> list[int]:
         """The indices of the regular numerical model inputs."""
+        # TODO: Adjustment after merge of candidates rework necessary
         return [
             i
             for i in range(len(self.searchspace.comp_rep_columns))
