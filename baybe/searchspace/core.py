@@ -12,7 +12,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
-from typing_extensions import override
+from typing_extensions import assert_never, override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
@@ -376,7 +376,7 @@ class SearchSpace(SerialMixin):
             case NumericalDiscreteFidelityParameter():
                 return SearchSpaceFidelityType.NUMERICAL_DISCRETE_MULTI_FIDELITY
             case _:
-                raise RuntimeError("Unknown/unexpected search space fidelity type.")
+                assert_never(self._fidelity_parameter)
 
     @property
     def n_subsets(self) -> int:
