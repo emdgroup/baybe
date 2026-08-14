@@ -7,8 +7,8 @@ import warnings
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
+import narwhals.stable.v2 as nw
 import numpy as np
-import pandas as pd
 from attrs import evolve
 
 from baybe.constraints.utils import is_cardinality_fulfilled
@@ -19,8 +19,9 @@ from baybe.exceptions import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.candidates import TableCandidates
+from baybe.settings import active_settings
 from baybe.utils.basic import flatten
-from baybe.utils.dataframe import to_tensor
+from baybe.utils.dataframe import _df_with_backend, to_tensor
 from baybe.utils.sampling_algorithms import sample_numerical_df
 
 if TYPE_CHECKING:
@@ -82,24 +83,28 @@ def recommend_hybrid_without_subsets(
     from botorch.optim import optimize_acqf_mixed
 
     # Transform discrete candidates
-    candidates = searchspace.discrete.get_candidates()
-    candidates_comp = searchspace.discrete.transform(candidates)
+    candidates = nw.from_native(searchspace.discrete.get_candidates(), eager_only=True)
+    candidates_comp = nw.from_native(searchspace.discrete.transform(candidates))
 
     # Calculate the number of samples from the given percentage
     n_candidates = math.ceil(recommender.sampling_percentage * len(candidates_comp))
 
     # Potential sampling of discrete candidates
     if recommender.hybrid_sampler is not None:
-        candidates_comp = sample_numerical_df(
-            candidates_comp, n_candidates, method=recommender.hybrid_sampler
+        candidates_comp = nw.from_native(
+            sample_numerical_df(
+                candidates_comp.to_pandas(),
+                n_candidates,
+                method=recommender.hybrid_sampler,
+            ),
         )
 
     # Prepare all considered discrete configurations in the
     # List[Dict[int, float]] format expected by BoTorch.
     n_comp_columns = len(candidates_comp.columns)
-    fixed_features_df = candidates_comp.copy()
-    fixed_features_df.columns = list(range(n_comp_columns))
-    fixed_features_list = fixed_features_df.to_dict("records")
+    fixed_features_list = [
+        dict(enumerate(row)) for row in candidates_comp.to_numpy().tolist()
+    ]
 
     # Actual call of the BoTorch optimization routine
     # NOTE: The explicit `or None` conversion is added as an additional safety net
@@ -112,7 +117,7 @@ def recommend_hybrid_without_subsets(
         q=batch_size,
         num_restarts=recommender.n_restarts,
         raw_samples=recommender.n_raw_samples,
-        fixed_features_list=fixed_features_list,  # type: ignore[arg-type]
+        fixed_features_list=fixed_features_list,
         equality_constraints=flatten(
             c.to_botorch(
                 searchspace.continuous.parameters,
@@ -147,19 +152,15 @@ def recommend_hybrid_without_subsets(
 
     # Combine the discrete part in experimental representation with the
     # optimized continuous part from the BoTorch output
-    rec_disc_exp = candidates.iloc[row_idxs.numpy()].reset_index(drop=True)
-    rec_exp = pd.concat(
-        [
-            rec_disc_exp,
-            pd.DataFrame(
-                points[:, n_comp_columns:].numpy(),
-                columns=searchspace.continuous.parameter_names,
-            ),
-        ],
-        axis=1,
+    rec_cont = nw.from_numpy(
+        points[:, n_comp_columns:].numpy(),
+        schema=searchspace.continuous.parameter_names,
+        backend=active_settings.default_dataframe_backend,
     )
-
-    return rec_exp
+    rec_disc_exp = _df_with_backend(
+        candidates[row_idxs.tolist()], active_settings.default_dataframe_backend
+    )
+    return nw.concat([rec_disc_exp, rec_cont], how="horizontal").to_native()
 
 
 def recommend_hybrid_with_subsets(
@@ -188,7 +189,7 @@ def recommend_hybrid_with_subsets(
     # NOTE: No min_discrete_candidates filtering in hybrid spaces because
     # optimize_acqf_mixed can produce multiple recommendations from a single
     # discrete candidate by varying continuous parameters.
-    candidates = searchspace.discrete.get_candidates()
+    candidates = nw.from_native(searchspace.discrete.get_candidates(), eager_only=True)
     combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
     if searchspace.n_subsets <= recommender.max_n_subsets:
         combined_masks = searchspace.subsets()
@@ -206,7 +207,8 @@ def recommend_hybrid_with_subsets(
             mod_disc = evolve(
                 searchspace.discrete,
                 candidates=TableCandidates(
-                    searchspace.discrete.parameters, candidates.loc[d_mask]
+                    searchspace.discrete.parameters,
+                    candidates.filter(d_mask.tolist()).to_native(),
                 ),
             )
             mod_cont = (
@@ -234,7 +236,9 @@ def recommend_hybrid_with_subsets(
 
     # Post-check minimum cardinality on continuous columns
     if subspace_c.constraints_cardinality and not is_cardinality_fulfilled(
-        best_rec[list(subspace_c.parameter_names)],
+        nw.from_native(best_rec, eager_only=True)
+        .select(subspace_c.parameter_names)
+        .to_pandas(),
         subspace_c,
         check_maximum=False,
     ):

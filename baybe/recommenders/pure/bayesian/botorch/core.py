@@ -7,8 +7,8 @@ import warnings
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any, ClassVar
 
+import narwhals.stable.v2 as nw
 import numpy as np
-import pandas as pd
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, gt, instance_of
@@ -36,6 +36,7 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
+from baybe.settings import active_settings
 from baybe.utils.conversion import to_string
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 
@@ -209,7 +210,11 @@ class BotorchRecommender(BayesianRecommender):
 
         points, _ = recommend_continuous_torch(self, subspace_continuous, batch_size)
 
-        return pd.DataFrame(points, columns=subspace_continuous.parameter_names)
+        return nw.from_numpy(
+            points.numpy(),
+            schema=subspace_continuous.parameter_names,
+            backend=active_settings.default_dataframe_backend,
+        ).to_native()
 
     @override
     def _recommend_hybrid(

@@ -5,8 +5,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, ClassVar
 
+import narwhals.stable.v2 as nw
 import numpy as np
-import pandas as pd
 from attrs import define, field, fields
 from attrs.validators import instance_of
 from typing_extensions import override
@@ -15,6 +15,7 @@ from baybe.exceptions import InfeasibilityError
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.settings import Settings, active_settings
+from baybe.utils.dataframe import _df_with_backend
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame
@@ -38,15 +39,24 @@ class RandomRecommender(NonPredictiveRecommender):
         searchspace: SearchSpace,
         batch_size: int,
     ) -> IntoDataFrame:
+        backend = active_settings.default_dataframe_backend
         is_hybrid = searchspace.type is SearchSpaceType.HYBRID
 
         # Sample continuous part if applicable
         if is_hybrid or searchspace.type is SearchSpaceType.CONTINUOUS:
-            cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
+            cont_random = _df_with_backend(
+                nw.from_native(
+                    searchspace.continuous.sample_uniform(batch_size=batch_size),
+                    eager_only=True,
+                ),
+                backend,
+            )
             if searchspace.type is SearchSpaceType.CONTINUOUS:
-                return cont_random
+                return cont_random.to_native()
 
-        candidates_exp = searchspace.discrete.get_candidates()
+        candidates_exp = nw.from_native(
+            searchspace.discrete.get_candidates(), eager_only=True
+        )
 
         # Restrict to a random subset if subset-generating constraints are present
         if searchspace.discrete.n_subsets > 0:
@@ -60,20 +70,20 @@ class RandomRecommender(NonPredictiveRecommender):
                     "subset-generating constraints. All subsets have fewer "
                     f"candidates than the requested {batch_size=}."
                 )
-            candidates_exp = candidates_exp.loc[masks[0]]
+            candidates_exp = candidates_exp.filter(masks[0].tolist())
 
-        disc_random = candidates_exp.sample(
-            n=batch_size,
-            replace=is_hybrid or len(candidates_exp) < batch_size,
+        disc_random = _df_with_backend(
+            candidates_exp.sample(
+                n=batch_size,
+                with_replacement=is_hybrid or len(candidates_exp) < batch_size,
+            ),
+            backend,
         )
 
         if not is_hybrid:
-            return disc_random
+            return disc_random.to_native()
 
-        return pd.concat(
-            [disc_random.reset_index(drop=True), cont_random.reset_index(drop=True)],
-            axis=1,
-        )
+        return nw.concat([disc_random, cont_random], how="horizontal").to_native()
 
     @override
     def __str__(self) -> str:

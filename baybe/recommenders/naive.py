@@ -6,7 +6,6 @@ import gc
 from typing import TYPE_CHECKING, ClassVar
 
 import narwhals.stable.v2 as nw
-import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
@@ -165,13 +164,14 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         )
 
         # Glue the solutions together and return them
-        rec_exp = pd.concat(
-            [disc_rec.reset_index(drop=True), rec_cont.reset_index(drop=True)],
-            axis=1,
+        rec_exp = nw.concat(
+            [
+                _df_with_backend(nw.from_native(disc_rec, eager_only=True), backend),
+                _df_with_backend(nw.from_native(rec_cont, eager_only=True), backend),
+            ],
+            how="horizontal",
         )
-        return _df_with_backend(
-            nw.from_native(rec_exp, eager_only=True), backend
-        ).to_native()
+        return rec_exp.to_native()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
