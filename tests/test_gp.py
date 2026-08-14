@@ -307,9 +307,17 @@ def test_surrogate_rejects_index_only_searchspace(parameters):
         GaussianProcessSurrogate().fit(searchspace, objective, measurements)
 
 
-def test_gp_rejects_custom_components_numerical_fidelity():
+@pytest.mark.parametrize(
+    "component",
+    [
+        param({"kernel_or_factory": baybe_kernel}, id="kernel"),
+        param({"mean_or_factory": ConstantMean()}, id="mean"),
+        param({"likelihood_or_factory": GaussianLikelihood()}, id="likelihood"),
+    ],
+)
+def test_gp_rejects_custom_components_numerical_fidelity(component):
     """Custom components are rejected for numerical multi-fidelity search spaces."""
-    surrogate = GaussianProcessSurrogate(likelihood_or_factory=GaussianLikelihood())
+    surrogate = GaussianProcessSurrogate(**component)
     with pytest.raises(IncompatibleSurrogateError, match="custom components"):
         surrogate.fit(searchspace_num_fid, objective, measurements_num_fid)
 
