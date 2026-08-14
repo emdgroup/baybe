@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 import warnings
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 import narwhals.stable.v2 as nw
 import numpy as np
@@ -43,6 +43,8 @@ from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame
     from torch import Tensor
+
+_T = TypeVar("_T")
 
 
 @define(kw_only=True)
@@ -240,8 +242,8 @@ class BotorchRecommender(BayesianRecommender):
 
     def _optimize_over_subsets(
         self,
-        subset_callables: Iterable[Callable[[], tuple[Any, Tensor]]],
-    ) -> tuple[Any, Tensor]:
+        subset_callables: Iterable[Callable[[], tuple[_T, Tensor]]],
+    ) -> tuple[_T, Tensor]:
         """Optimize across subsets and return the result with the best acqf value.
 
         Each callable performs optimization for one subset configuration and returns
@@ -262,7 +264,7 @@ class BotorchRecommender(BayesianRecommender):
         """
         from botorch.exceptions.errors import InfeasibilityError as BoInfeasibilityError
 
-        results_all: list = []
+        results_all: list[_T] = []
         acqf_values_all: list[Tensor] = []
 
         for optimize_fn in subset_callables:
