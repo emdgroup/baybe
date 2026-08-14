@@ -88,7 +88,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
     supports_multi_fidelity: ClassVar[bool] = False
     """Class variable encoding whether or not the surrogate supports multi-fidelity
-    Bayesian optimization."""
+    optimization."""
 
     supports_multi_output: ClassVar[bool] = False
     """Class variable encoding whether or not the surrogate is multi-output
