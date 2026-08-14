@@ -25,9 +25,8 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.serialization.core import add_type, converter
-from baybe.settings import active_settings
 from baybe.utils.boolean import is_abstract
-from baybe.utils.dataframe import _df_with_backend
+from baybe.utils.dataframe import _df_with_backend, _infer_backend
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
@@ -120,12 +119,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         if objective is not None:
             validate_object_names(searchspace.parameters + objective.targets)
 
-        reference = measurements if measurements is not None else pending_experiments
-        backend = (
-            nw.get_native_namespace(reference)
-            if reference is not None
-            else active_settings.default_dataframe_backend
-        )
+        backend = _infer_backend(measurements, pending_experiments)
 
         if measurements is not None:
             measurements = preprocess_dataframe(

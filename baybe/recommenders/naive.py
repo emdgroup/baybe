@@ -15,8 +15,7 @@ from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType
-from baybe.settings import active_settings
-from baybe.utils.dataframe import _df_with_backend, to_tensor
+from baybe.utils.dataframe import _df_with_backend, _infer_backend, to_tensor
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrameT
@@ -64,12 +63,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
     ) -> IntoDataFrameT:
         from baybe.acquisition.partial import PartialAcquisitionFunction
 
-        reference = measurements if measurements is not None else pending_experiments
-        backend = (
-            nw.get_native_namespace(reference)
-            if reference is not None
-            else active_settings.default_dataframe_backend
-        )
+        backend = _infer_backend(measurements, pending_experiments)
 
         disc_is_bayesian = isinstance(self.disc_recommender, BayesianRecommender)
         if not disc_is_bayesian and not isinstance(

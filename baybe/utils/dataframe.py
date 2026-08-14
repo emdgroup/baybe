@@ -24,7 +24,7 @@ from baybe.parameters.base import Parameter
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrame, IntoSeries
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoFrame, IntoSeries
     from narwhals.typing import IntoBackend
     from torch import Tensor
 
@@ -798,6 +798,25 @@ def normalize_input_dtypes(
     for col in cols_to_convert:
         df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
     return df
+
+
+def _infer_backend(*frames: IntoFrame | None) -> IntoBackend:
+    """Infer the dataframe backend from the first non-``None`` frame.
+
+    Falls back to :attr:`~baybe.settings.Settings.default_dataframe_backend` if all
+    provided frames are ``None``.
+
+    Args:
+        *frames: The frames to inspect. Accepts both eager and lazy frames.
+            Any of them may be ``None``.
+
+    Returns:
+        The inferred backend.
+    """
+    for frame in frames:
+        if frame is not None:
+            return nw.get_native_namespace(frame)
+    return active_settings.default_dataframe_backend
 
 
 def _df_with_backend(obj: _SeriesOrFrameT, backend: IntoBackend, /) -> _SeriesOrFrameT:
