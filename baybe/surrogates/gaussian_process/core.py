@@ -288,10 +288,14 @@ class GaussianProcessSurrogate(Surrogate):
                 self.likelihood_factory,
             )
         ):
+            from botorch.models import SingleTaskMultiFidelityGP
+
             raise IncompatibleSurrogateError(
                 f"'{self.__class__.__name__}' does not support custom components "
-                f"for numerical multi-fidelity search spaces, which are delegated "
-                f"to BoTorch's 'SingleTaskMultiFidelityGP'."
+                f"(kernel, mean, or likelihood) for numerical multi-fidelity search "
+                f"spaces. Such search spaces are handled internally by BoTorch's "
+                f"'{SingleTaskMultiFidelityGP.__name__}', which builds these "
+                f"components on its own."
             )
 
         if (
