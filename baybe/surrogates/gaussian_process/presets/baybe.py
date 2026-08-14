@@ -37,7 +37,7 @@ from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
-    _enable_index_kernel,
+    _enable_mechanism,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -203,7 +203,7 @@ class _BayBENumericalKernelFactory(_PureKernelFactory):
         return factory(searchspace, objective, measurements)
 
 
-BayBEKernelFactory = _enable_index_kernel(
+BayBEKernelFactory = _enable_mechanism(transfer_learning=True, multi_fidelity=True)(
     _BayBENumericalKernelFactory, "BayBEKernelFactory"
 )
 """The default kernel factory for GP surrogates."""

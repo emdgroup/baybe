@@ -1,5 +1,6 @@
 """Deprecation tests."""
 
+import copy
 import os
 import warnings
 from contextlib import nullcontext
@@ -16,7 +17,7 @@ from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
 from baybe.exceptions import DeprecationError
-from baybe.kernels.basic import MaternKernel
+from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.categorical import TaskParameter
@@ -32,7 +33,9 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace.core import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
+from baybe.serialization.core import converter
 from baybe.settings import Settings
+from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.targets import NumericalTarget as ModernTarget
@@ -556,3 +559,45 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
     )
     with context:
         GaussianProcessSurrogate(*args).fit(searchspace, objective, measurements)
+
+
+def test_icm_task_kernel_or_factory_deprecation():
+    """The renamed 'task_kernel_or_factory' argument is accepted with a warning."""
+    index_kernel = RBFKernel()
+
+    with pytest.warns(DeprecationWarning, match="task_kernel_or_factory"):
+        deprecated = ICMKernelFactory(task_kernel_or_factory=index_kernel)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        renamed = ICMKernelFactory(index_kernel_or_factory=index_kernel)
+    assert deprecated == renamed
+
+    with pytest.raises(ValueError, match="not both"):
+        ICMKernelFactory(
+            index_kernel_or_factory=index_kernel,
+            task_kernel_or_factory=index_kernel,
+        )
+
+
+def test_icm_task_kernel_or_factory_serialization_deprecation():
+    """A serialized config using the legacy key still deserializes (with a warning)."""
+    factory = ICMKernelFactory(
+        base_kernel_or_factory=MaternKernel(), index_kernel_or_factory=RBFKernel()
+    )
+    serialized = converter.unstructure(factory)
+
+    assert "task_kernel_or_factory" not in serialized
+    assert "index_kernel_or_factory" in serialized
+
+    legacy = {
+        "base_kernel_or_factory": copy.deepcopy(serialized["base_kernel_or_factory"]),
+        "task_kernel_or_factory": copy.deepcopy(serialized["index_kernel_or_factory"]),
+    }
+    with pytest.warns(DeprecationWarning, match="task_kernel_or_factory"):
+        restored = converter.structure(legacy, ICMKernelFactory)
+    assert restored == factory
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        assert converter.structure(serialized, ICMKernelFactory) == factory

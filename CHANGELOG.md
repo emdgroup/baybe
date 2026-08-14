@@ -48,6 +48,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `None`, meaning "auto-select based on context at fit time". Accessing a field
   before fitting may return `None` instead of a concrete factory.
 
+### Deprecations
+- The `task_kernel_or_factory` argument of `ICMKernelFactory` has been renamed to
+  `index_kernel_or_factory` since it now also carries fidelity indices. The old name is
+  still accepted (also in serialized configs) but emits a `DeprecationWarning`
+
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
 - `GaussianProcessSurrogate` no longer automatically adds a task kernel in multi-task

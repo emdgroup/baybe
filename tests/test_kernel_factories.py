@@ -19,7 +19,7 @@ from baybe.parameters.numerical import (
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.kernel import (
     ICMKernelFactory,
-    _enable_index_kernel,
+    _enable_mechanism,
 )
 from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEKernelFactory,
@@ -118,10 +118,60 @@ def test_factory_parameter_kind_validation(factory, parameters, error):
         factory(searchspace, objective, measurements)
 
 
-def test_enable_index_kernel_guard():
-    """_enable_index_kernel raises when the factory already supports task/fidelity."""
+def test_enable_mechanism_guard():
+    """_enable_mechanism raises when the factory already supports task/fidelity."""
     with pytest.raises(TypeError, match="already supports task or fidelity"):
-        _enable_index_kernel(_BayBETaskKernelFactory)
+        _enable_mechanism(transfer_learning=True, multi_fidelity=True)(
+            _BayBETaskKernelFactory
+        )
+
+
+def test_enable_mechanism_requires_a_mechanism():
+    """_enable_mechanism raises when no mechanism is enabled."""
+    with pytest.raises(ValueError, match="At least one mechanism"):
+        _enable_mechanism()
+
+
+@pytest.mark.parametrize(
+    ("transfer_learning", "multi_fidelity", "parameters"),
+    [
+        param(
+            True,
+            False,
+            [
+                NumericalContinuousParameter("x", (0, 1)),
+                CategoricalFidelityParameter(
+                    "fid", ["lo", "hi"], costs=[1, 10], zeta=[0.5, 0.0]
+                ),
+            ],
+            id="transfer_learning_only_rejects_fidelity",
+        ),
+        param(
+            False,
+            True,
+            [
+                NumericalContinuousParameter("x", (0, 1)),
+                TaskParameter("task", ["t1", "t2"]),
+            ],
+            id="multi_fidelity_only_rejects_task",
+        ),
+    ],
+)
+def test_enable_mechanism_single_mechanism_gating(
+    transfer_learning, multi_fidelity, parameters
+):
+    """A single enabled mechanism rejects the index kind of the disabled mechanism."""
+    factory_cls = _enable_mechanism(
+        transfer_learning=transfer_learning, multi_fidelity=multi_fidelity
+    )(_BayBENumericalKernelFactory, "_GatedKernelFactory")
+    factory = factory_cls()
+
+    searchspace = SearchSpace.from_product(parameters)
+    objective = NumericalTarget("y").to_objective()
+    measurements = pd.DataFrame()
+
+    with pytest.raises(IncompatibleSearchSpaceError, match="does not support"):
+        factory(searchspace, objective, measurements)
 
 
 _icm_guard_message = "contains a 'TaskParameter' or a 'CategoricalFidelityParameter'"
