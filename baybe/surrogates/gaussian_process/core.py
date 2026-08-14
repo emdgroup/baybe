@@ -398,20 +398,17 @@ class GaussianProcessSurrogate(Surrogate):
             criterion = criterion_factory(
                 context.searchspace, context.objective, context.measurements
             )
-            mll = criterion.to_gpytorch(self._model.likelihood, self._model)
-            botorch.fit.fit_gpytorch_mll(mll)
-            return
-
-        kernel, mean, likelihood, criterion = self._resolve_components(context)
-        self._model = botorch.models.SingleTaskGP(
-            train_x,
-            train_y,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            mean_module=mean,
-            covar_module=kernel,
-            likelihood=likelihood,
-        )
+        else:
+            kernel, mean, likelihood, criterion = self._resolve_components(context)
+            self._model = botorch.models.SingleTaskGP(
+                train_x,
+                train_y,
+                input_transform=input_transform,
+                outcome_transform=outcome_transform,
+                mean_module=mean,
+                covar_module=kernel,
+                likelihood=likelihood,
+            )
         mll = criterion.to_gpytorch(self._model.likelihood, self._model)
         botorch.fit.fit_gpytorch_mll(mll)
 
