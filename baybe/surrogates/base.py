@@ -450,7 +450,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             raise ValueError(
                 f"The search space contains fidelity parameters but the selected "
                 f"surrogate model type ({self.__class__.__name__}) does not "
-                f"support multi-fidelity Bayesian optimization."
+                f"support multi-fidelity optimization."
             )
 
         self._validate_fit_context(searchspace, objective, measurements)
