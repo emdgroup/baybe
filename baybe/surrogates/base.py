@@ -396,7 +396,12 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         """Validate the surrogate fit context.
 
         Optional hook with a no-op default. Surrogates that impose constraints on the
-        fit context can override it.
+        fit context can override it to reject contexts incompatible with the model.
+
+        Args:
+            searchspace: The search space in which experiments are conducted.
+            objective: The objective to be optimized.
+            measurements: The training data in experimental representation.
         """
 
     @override
