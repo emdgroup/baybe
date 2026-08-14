@@ -227,9 +227,9 @@ def _enable_index_kernel(
             self.parameter_selector = original_selector
 
         if (
-            searchspace.task_type is SearchSpaceTaskType.CATEGORICALMULTITASK
+            searchspace.task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
             or searchspace.fidelity_type
-            is SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+            is SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
         ):
             icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
             return icm(searchspace, objective, measurements)
@@ -343,10 +343,10 @@ class ICMKernelFactory(_MetaKernelFactory):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-        is_task = searchspace.task_type is SearchSpaceTaskType.CATEGORICALMULTITASK
+        is_task = searchspace.task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
         is_categorical_fidelity = (
             searchspace.fidelity_type
-            is SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+            is SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
         )
         if not (is_task or is_categorical_fidelity):
             raise IncompatibleSearchSpaceError(

@@ -62,23 +62,23 @@ class SearchSpaceType(Enum):
 class SearchSpaceTaskType(Enum):
     """Enum class for different types of task subspaces."""
 
-    SINGLETASK = "SINGLETASK"
+    SINGLE_TASK = "SINGLE_TASK"
     """Flag for search spaces with a single task, meaning no task parameter."""
 
-    CATEGORICALMULTITASK = "CATEGORICALMULTITASK"
+    CATEGORICAL_MULTI_TASK = "CATEGORICAL_MULTI_TASK"
     """Flag for search spaces with a categorical task parameter."""
 
 
 class SearchSpaceFidelityType(Enum):
     """Enum class for different types of fidelity subspaces."""
 
-    SINGLEFIDELITY = "SINGLEFIDELITY"
+    SINGLE_FIDELITY = "SINGLE_FIDELITY"
     """Flag for search spaces with a single fidelity, meaning no fidelity parameter."""
 
-    NUMERICALDISCRETEMULTIFIDELITY = "NUMERICALDISCRETEMULTIFIDELITY"
+    NUMERICAL_DISCRETE_MULTI_FIDELITY = "NUMERICAL_DISCRETE_MULTI_FIDELITY"
     """Flag for search spaces with a discrete numerical (ordered) fidelity parameter."""
 
-    CATEGORICALMULTIFIDELITY = "CATEGORICALMULTIFIDELITY"
+    CATEGORICAL_MULTI_FIDELITY = "CATEGORICAL_MULTI_FIDELITY"
     """Flag for search spaces with a categorical (unordered) fidelity parameter."""
 
 
@@ -362,19 +362,19 @@ class SearchSpace(SerialMixin):
     def task_type(self) -> SearchSpaceTaskType:
         """Return the task type of the search space."""
         if self._task_parameter is None:
-            return SearchSpaceTaskType.SINGLETASK
-        return SearchSpaceTaskType.CATEGORICALMULTITASK
+            return SearchSpaceTaskType.SINGLE_TASK
+        return SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
 
     @property
     def fidelity_type(self) -> SearchSpaceFidelityType:
         """Return the fidelity type of the search space."""
         match self._fidelity_parameter:
             case None:
-                return SearchSpaceFidelityType.SINGLEFIDELITY
+                return SearchSpaceFidelityType.SINGLE_FIDELITY
             case CategoricalFidelityParameter():
-                return SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+                return SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
             case NumericalDiscreteFidelityParameter():
-                return SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+                return SearchSpaceFidelityType.NUMERICAL_DISCRETE_MULTI_FIDELITY
             case _:
                 raise RuntimeError("Unknown/unexpected search space fidelity type.")
 

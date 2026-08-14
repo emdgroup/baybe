@@ -337,9 +337,9 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
         # transfer learning (TaskParameter) and categorical multi-fidelity
         # (CategoricalFidelityParameter).
         uses_index_kernel = (
-            searchspace.task_type is SearchSpaceTaskType.CATEGORICALMULTITASK
+            searchspace.task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
             or searchspace.fidelity_type
-            is SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+            is SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
         )
         return (
             FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD

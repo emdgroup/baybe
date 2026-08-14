@@ -96,7 +96,7 @@ class BotorchKernelFactory(_PureKernelFactory):
         if (fidelity_idx := searchspace.fidelity_idx) is not None:
             if (
                 searchspace.fidelity_type
-                is not SearchSpaceFidelityType.CATEGORICALMULTIFIDELITY
+                is not SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
             ):
                 raise IncompatibleSearchSpaceError(
                     f"'{type(self).__name__}' supports fidelity parameters "

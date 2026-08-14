@@ -293,7 +293,7 @@ class GaussianProcessSurrogate(Surrogate):
         # rejected.
         if (
             searchspace.fidelity_type
-            is SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+            is SearchSpaceFidelityType.NUMERICAL_DISCRETE_MULTI_FIDELITY
         ) and any(
             factory is not None
             for factory in (
@@ -394,7 +394,7 @@ class GaussianProcessSurrogate(Surrogate):
         # which handles the fidelity dimension and its components internally.
         if (
             context.searchspace.fidelity_type
-            is SearchSpaceFidelityType.NUMERICALDISCRETEMULTIFIDELITY
+            is SearchSpaceFidelityType.NUMERICAL_DISCRETE_MULTI_FIDELITY
         ):
             assert context.fidelity_idx is not None
             self._model = botorch.models.SingleTaskMultiFidelityGP(
