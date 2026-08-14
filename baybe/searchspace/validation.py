@@ -44,7 +44,7 @@ def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC
         NotImplementedError: If more than one
             :class:`baybe.parameters.categorical.TaskParameter` is requested.
         NotImplementedError: If more than one fidelity parameter is present.
-        NotImplementedError: If task and fidelity parameters are combined.
+        NotImplementedError: If task and fidelity parameters are used together.
     """
     if not parameters:
         raise EmptySearchSpaceError("At least one parameter must be provided.")
@@ -70,7 +70,7 @@ def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC
 
     if task_params and fidelity_params:
         raise NotImplementedError(
-            "Combining task parameters with fidelity parameters is not supported."
+            "Using task parameters with fidelity parameters is not supported."
         )
 
     # Assert: unique names
