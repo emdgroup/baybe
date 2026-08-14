@@ -329,7 +329,7 @@ class SearchSpace(SerialMixin):
         return cast(int, self.discrete.comp_rep.columns.get_loc(task_param.name))
 
     @property
-    def fidelity_idx(self) -> int | None:
+    def _fidelity_idx(self) -> int | None:
         """Column index of the fidelity parameter in computational representation."""
         if (fidelity_param := self._fidelity_parameter) is None:
             return None
@@ -350,7 +350,7 @@ class SearchSpace(SerialMixin):
         return len(task_param.values)
 
     @property
-    def n_fidelities(self) -> int:
+    def _n_fidelities(self) -> int:
         """The number of fidelities encoded in the search space."""
         # TODO: Generalize the fidelity-count semantics to multiple fidelity
         # parameters, consistent with the task-count semantics in `n_tasks`.
@@ -367,7 +367,7 @@ class SearchSpace(SerialMixin):
         return SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
 
     @property
-    def fidelity_type(self) -> SearchSpaceFidelityType:
+    def _fidelity_type(self) -> SearchSpaceFidelityType:
         """Return the fidelity type of the search space."""
         match self._fidelity_parameter:
             case None:

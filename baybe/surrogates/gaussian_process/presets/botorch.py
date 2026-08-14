@@ -93,9 +93,9 @@ class BotorchKernelFactory(_PureKernelFactory):
                 searchspace, objective, measurements
             )
 
-        if (fidelity_idx := searchspace.fidelity_idx) is not None:
+        if (fidelity_idx := searchspace._fidelity_idx) is not None:
             if (
-                searchspace.fidelity_type
+                searchspace._fidelity_type
                 is not SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
             ):
                 raise IncompatibleSearchSpaceError(
@@ -107,8 +107,8 @@ class BotorchKernelFactory(_PureKernelFactory):
             # the task index kernel (BoTorch has no categorical multi-fidelity model).
             fidelity_prior = BetaPrior(concentration1=2.5, concentration0=1.5)
             index_kernel = PositiveIndexKernel(
-                num_tasks=searchspace.n_fidelities,
-                rank=searchspace.n_fidelities,
+                num_tasks=searchspace._n_fidelities,
+                rank=searchspace._n_fidelities,
                 task_prior=fidelity_prior,
                 active_dims=[fidelity_idx],
             )

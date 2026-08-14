@@ -453,7 +453,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             )
 
         # Check if multi-fidelity capabilities are needed
-        if (searchspace.n_fidelities > 1) and (not self.supports_multi_fidelity):
+        if (searchspace._n_fidelities > 1) and (not self.supports_multi_fidelity):
             raise ValueError(
                 f"The search space contains fidelity parameters but the selected "
                 f"surrogate model type ({self.__class__.__name__}) does not "

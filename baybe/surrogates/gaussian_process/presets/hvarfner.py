@@ -76,16 +76,16 @@ class HvarfnerKernelFactory(_PureKernelFactory):
         if (task_idx := searchspace.task_idx) is not None:
             n_index_levels = searchspace.n_tasks
             index_dim = task_idx
-        elif (fidelity_idx := searchspace.fidelity_idx) is not None:
+        elif (fidelity_idx := searchspace._fidelity_idx) is not None:
             if (
-                searchspace.fidelity_type
+                searchspace._fidelity_type
                 is not SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
             ):
                 raise IncompatibleSearchSpaceError(
                     f"'{type(self).__name__}' supports fidelity parameters only for "
                     f"'{CategoricalFidelityParameter.__name__}'."
                 )
-            n_index_levels = searchspace.n_fidelities
+            n_index_levels = searchspace._n_fidelities
             index_dim = fidelity_idx
         else:
             return base_kernel

@@ -275,7 +275,7 @@ class GaussianProcessSurrogate(Surrogate):
         # likelihood, so custom versions of those would be silently ignored and are
         # rejected.
         if (
-            searchspace.fidelity_type
+            searchspace._fidelity_type
             is SearchSpaceFidelityType.NUMERICAL_DISCRETE_MULTI_FIDELITY
         ) and any(
             factory is not None
@@ -380,7 +380,7 @@ class GaussianProcessSurrogate(Surrogate):
         # Numerical multi-fidelity is delegated directly to BoTorch's dedicated model,
         # which handles the fidelity dimension and its components internally.
         if (
-            context.searchspace.fidelity_type
+            context.searchspace._fidelity_type
             is SearchSpaceFidelityType.NUMERICAL_DISCRETE_MULTI_FIDELITY
         ):
             assert context.fidelity_idx is not None

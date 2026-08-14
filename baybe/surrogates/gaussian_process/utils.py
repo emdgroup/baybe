@@ -54,17 +54,17 @@ class _ModelContext:
     def n_fidelity_dimensions(self) -> int:
         """The number of fidelity dimensions."""
         # TODO: Generalize to multiple fidelity parameters
-        return 1 if self.searchspace.fidelity_idx is not None else 0
+        return 1 if self.searchspace._fidelity_idx is not None else 0
 
     @property
     def fidelity_idx(self) -> int | None:
         """The computational column index of the fidelity parameter, if available."""
-        return self.searchspace.fidelity_idx
+        return self.searchspace._fidelity_idx
 
     @property
     def n_fidelities(self) -> int:
         """The number of fidelities."""
-        return self.searchspace.n_fidelities
+        return self.searchspace._n_fidelities
 
     @property
     def parameter_bounds(self) -> Tensor:

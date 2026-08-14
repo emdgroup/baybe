@@ -229,7 +229,7 @@ def _enable_index_kernel(
 
         if (
             searchspace.task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
-            or searchspace.fidelity_type
+            or searchspace._fidelity_type
             is SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
         ):
             icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
@@ -346,7 +346,7 @@ class ICMKernelFactory(_MetaKernelFactory):
     ) -> Kernel | GPyTorchKernel:
         is_task = searchspace.task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
         is_categorical_fidelity = (
-            searchspace.fidelity_type
+            searchspace._fidelity_type
             is SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
         )
         if not (is_task or is_categorical_fidelity):
@@ -376,7 +376,7 @@ class ICMKernelFactory(_MetaKernelFactory):
         index_idx = (
             searchspace.task_idx
             if searchspace.task_idx is not None
-            else searchspace.fidelity_idx
+            else searchspace._fidelity_idx
         )
         all_idcs = set(range(len(searchspace.comp_rep_columns)))
         allowed_index_idcs = {index_idx}
