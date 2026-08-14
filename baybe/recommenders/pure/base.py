@@ -5,10 +5,9 @@ from __future__ import annotations
 import gc
 from abc import ABC
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, ClassVar, NoReturn
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, cast
 
 import cattrs
-import narwhals.stable.v2 as nw
 from attrs import define, field
 from cattrs.gen import make_dict_unstructure_fn
 from typing_extensions import override
@@ -25,8 +24,9 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.serialization.core import add_type, converter
+from baybe.settings import Settings
 from baybe.utils.boolean import is_abstract
-from baybe.utils.dataframe import _df_with_backend, _infer_backend
+from baybe.utils.dataframe import _infer_backend
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
@@ -136,16 +136,13 @@ class PureRecommender(ABC, RecommenderProtocol):
                 numerical_measurements_must_be_within_tolerance=False,
             )
 
-        if searchspace.type is SearchSpaceType.CONTINUOUS:
-            rec = self._recommend_continuous(
-                subspace_continuous=searchspace.continuous, batch_size=batch_size
-            )
-        else:
-            rec = self._recommend_with_discrete_parts(searchspace, batch_size)
+        with Settings(default_dataframe_backend=backend):
+            if searchspace.type is SearchSpaceType.CONTINUOUS:
+                rec = self._recommend_continuous(searchspace.continuous, batch_size)
+            else:
+                rec = self._recommend_with_discrete_parts(searchspace, batch_size)
 
-        return _df_with_backend(
-            nw.from_native(rec, eager_only=True), backend
-        ).to_native()
+        return cast(IntoDataFrameT, rec)
 
     def _recommend_discrete(
         self,
