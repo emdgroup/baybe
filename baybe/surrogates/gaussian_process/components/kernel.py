@@ -11,7 +11,8 @@ from typing import TYPE_CHECKING, ClassVar
 import pandas as pd
 from attrs import define, field, fields
 from attrs.converters import optional as optional_c
-from attrs.validators import is_callable, optional
+from attrs.validators import is_callable
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSearchSpaceError
@@ -273,7 +274,7 @@ class ICMKernelFactory(_MetaKernelFactory):
         converter=optional_c(
             partial(to_component_factory, component_type=GPComponentType.KERNEL)  # type: ignore[misc]
         ),
-        validator=optional(is_callable()),
+        validator=optional_v(is_callable()),
     )
     """The factory for the index kernel operating on the task/fidelity indices.
 
