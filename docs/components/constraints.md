@@ -235,7 +235,7 @@ All of these parameters must be present in the search space specification.
 Most discrete constraints are **filtering constraints**, derived from the abstract
 {class}`~baybe.constraints.base.DiscreteFilteringConstraint`. A filtering constraint
 reduces the search space, and its specification always describes what is **kept**: the
-entries matching the constraint remain in the search space and everything else is
+entries matching the constraint remain in the search space – everything else is
 removed.
 
 This behavior can be inverted with the keyword-only ``exclude`` flag, which is available
