@@ -66,6 +66,7 @@ def farthest_point_sampling(
         ValueError: Indices for initialization are not unique.
         ValueError: More initialization indices than available points are provided.
         ValueError: Initialization indices are out of bounds.
+        ValueError: Unknown initialization method.
         ValueError: More points are requested than available.
     """
     # Input validation
@@ -87,9 +88,6 @@ def farthest_point_sampling(
     if points.shape[-1] == 0:
         raise ValueError("The provided input space must be at least one-dimensional.")
 
-    if isinstance(initialization, str):
-        initialization = FPSInitialization(initialization)
-
     if isinstance(initialization, Collection) and is_all_instance(initialization, int):
         if duplicates := {k for k, v in Counter(initialization).items() if v > 1}:
             raise ValueError(
@@ -110,6 +108,14 @@ def farthest_point_sampling(
                 f"range of available points (0 to {n_points - 1}) but contains "
                 f"out-of-bounds indices: {problematic_indices}"
             )
+    else:
+        try:
+            initialization = FPSInitialization(initialization)
+        except ValueError as ex:
+            raise ValueError(
+                f"Unknown initialization type. Expected 'farthest', 'random', or a "
+                f"collection of integers. Provided: {initialization=}"
+            ) from ex
 
     if n_samples > n_points:
         raise ValueError(
@@ -135,9 +141,8 @@ def farthest_point_sampling(
     np.fill_diagonal(dist_matrix, -np.inf)
 
     # Initialize the point selection
-    if isinstance(initialization, Collection) and is_all_instance(initialization, int):
-        inv_sort_idx = np.argsort(sort_idx)
-        selected_point_indices = [inv_sort_idx[x] for x in initialization]
+    if initialization is FPSInitialization.RANDOM:
+        selected_point_indices = [np.random.randint(0, n_points)]
     elif initialization is FPSInitialization.FARTHEST:
         idx_1d = np.argmax(dist_matrix)
         selected_point_indices = list(
@@ -145,8 +150,9 @@ def farthest_point_sampling(
         )
         if n_samples == 1:
             return [sort_idx[selected_point_indices[0]]]
-    else:
-        selected_point_indices = [np.random.randint(0, n_points)]
+    else:  # initialization is Collection[int]
+        inv_sort_idx = np.argsort(sort_idx)
+        selected_point_indices = [inv_sort_idx[x] for x in initialization]
 
     # Initialize the list of remaining points
     remaining_point_indices = list(range(n_points))
