@@ -10,7 +10,7 @@ from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
-from attrs import Converter, define, field
+from attrs import Converter, define, field, fields
 from attrs.converters import optional as optional_c
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
@@ -182,14 +182,14 @@ def _strip_task_from_kernel(
             raise IncompatibleOverrideError(
                 f"The scale kernel '{type(kernel).__name__}' acts only on the task "
                 f"parameter '{task_name}', which cannot be combined with an "
-                f"'override_transfer_learning_mode'."
+                f"'{fields(TaskParameter).override_transfer_learning_mode.name}'."
             )
         return evolve(kernel, base_kernel=stripped)
 
     raise IncompatibleOverrideError(
         f"Composite kernel '{type(kernel).__name__}' cannot be combined with an "
-        f"'override_transfer_learning_mode'. Only basic kernels and scaled basic "
-        f"kernels are supported."
+        f"'{fields(TaskParameter).override_transfer_learning_mode.name}'. Only basic "
+        f"kernels and scaled basic kernels are supported."
     )
 
 
@@ -508,7 +508,8 @@ class GaussianProcessSurrogate(Surrogate):
         effective_factory = self.kernel_factory
         incompatible_message = (
             f"The '{TaskParameter.__name__}' '{task_param.name}' specifies "
-            f"'override_transfer_learning_mode={tl_override.name}', which requires a "
+            f"'{fields(TaskParameter).override_transfer_learning_mode.name}="
+            f"{tl_override.name}', which requires a "
             f"kernel (factory) that yields a task-free BayBE kernel operating on "
             f"parameter names. The provided kernel factory "
             f"'{type(effective_factory).__name__}' does not satisfy this (e.g., it "
