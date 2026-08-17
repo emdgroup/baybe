@@ -14,7 +14,7 @@ from attrs import Converter, define, field, fields
 from attrs.converters import optional as optional_c
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
-from typing_extensions import Self, override
+from typing_extensions import Self, assert_never, override
 
 from baybe.exceptions import (
     DeprecationError,
@@ -481,14 +481,18 @@ class GaussianProcessSurrogate(Surrogate):
 
         # Override is set: assemble the prescribed task kernel.
         n_tasks = searchspace.n_tasks
-        if tl_override is TransferLearningMode.POSITIVE_INDEX_KERNEL:
-            task_kernel_spec: Kernel = PositiveIndexKernel(
-                num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
-            )
-        elif tl_override is TransferLearningMode.INDEX_KERNEL:
-            task_kernel_spec = IndexKernel(
-                num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
-            )
+        task_kernel_spec: Kernel
+        match tl_override:
+            case TransferLearningMode.POSITIVE_INDEX_KERNEL:
+                task_kernel_spec = PositiveIndexKernel(
+                    num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
+                )
+            case TransferLearningMode.INDEX_KERNEL:
+                task_kernel_spec = IndexKernel(
+                    num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
+                )
+            case _:
+                assert_never(tl_override)
 
         # Default factory (None or explicit BayBEKernelFactory): reuse the ICM
         # machinery on the full searchspace, which builds the task-excluded base
