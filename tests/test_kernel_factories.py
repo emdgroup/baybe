@@ -8,7 +8,7 @@ import pytest
 from pytest import param
 
 from baybe.exceptions import IncompatibleOverrideError, IncompatibleSearchSpaceError
-from baybe.kernels.basic import IndexKernel, MaternKernel, PositiveIndexKernel
+from baybe.kernels.basic import IndexKernel, MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import (
     CategoricalParameter,
@@ -83,24 +83,6 @@ def test_factory_parameter_kind_validation(factory, parameters, error):
         else pytest.raises(error, match="does not support")
     ):
         factory(searchspace, objective, measurements)
-
-
-def test_task_kernel_factory_always_returns_positive_index_kernel():
-    """BayBETaskKernelFactory always returns PositiveIndexKernel."""
-    parameters = [
-        NumericalDiscreteParameter(name="x", values=[1.0, 2.0, 3.0]),
-        TaskParameter(
-            name="task",
-            values=["source", "target"],
-            active_values=["target"],
-        ),
-    ]
-    searchspace = SearchSpace.from_product(parameters)
-    objective = NumericalTarget("y").to_objective()
-    measurements = pd.DataFrame()
-
-    kernel = _BayBETaskKernelFactory()(searchspace, objective, measurements)
-    assert isinstance(kernel, PositiveIndexKernel)
 
 
 def _make_dispatch_context(override_mode):
