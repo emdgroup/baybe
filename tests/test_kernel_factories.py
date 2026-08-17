@@ -159,6 +159,13 @@ def _make_dispatch_context(override_mode):
             id="index_override+task_only_index_kernel",
         ),
         param(
+            TransferLearningMode.INDEX_KERNEL,
+            ScaleKernel(IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",))),
+            "IndexKernel",
+            False,
+            id="index_override+scaled_task_only_index_kernel",
+        ),
+        param(
             TransferLearningMode.POSITIVE_INDEX_KERNEL,
             None,
             "PositiveIndexKernel",

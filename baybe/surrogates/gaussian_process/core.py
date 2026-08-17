@@ -141,15 +141,16 @@ def _mark_custom_kernel(
 
 
 def _strip_task_from_kernel(
-    kernel: Kernel, task_name: str, non_task_names: tuple[str, ...]
+    kernel: Kernel, searchspace: SearchSpace, task_name: str, /
 ) -> Kernel | None:
     """Remove the task parameter from the parameters a BayBE kernel acts on.
 
     Args:
         kernel: The kernel whose task dependence should be removed.
+        searchspace: The full search space, used to derive the non-task parameter
+            names when the kernel does not explicitly specify the parameters it
+            acts on.
         task_name: The name of the task parameter to strip.
-        non_task_names: The names of all non-task parameters, used when the kernel
-            does not explicitly specify the parameters it acts on.
 
     Raises:
         IncompatibleOverrideError: If the kernel is a composite kernel other than a
@@ -157,15 +158,22 @@ def _strip_task_from_kernel(
 
     Returns:
         The stripped kernel, or ``None`` if stripping leaves no non-task parameters
-        (i.e., the kernel acted on the task parameter only).
+        (i.e., the kernel acted on the task parameter only), in which case the
+        caller should use the prescribed task kernel alone.
     """
     from attrs import evolve
 
     from baybe.kernels.base import BasicKernel
     from baybe.kernels.composite import ScaleKernel
 
+    non_task_names = tuple(
+        name for name in searchspace.parameter_names if name != task_name
+    )
+
     if isinstance(kernel, BasicKernel):
         if kernel.parameter_names is None:
+            if not non_task_names:
+                return None
             return evolve(kernel, parameter_names=non_task_names)
         if task_name not in kernel.parameter_names:
             return kernel
@@ -175,16 +183,10 @@ def _strip_task_from_kernel(
         return evolve(kernel, parameter_names=remaining)
 
     if isinstance(kernel, ScaleKernel):
-        stripped = _strip_task_from_kernel(
-            kernel.base_kernel, task_name, non_task_names
-        )
-        if stripped is None:
-            raise IncompatibleOverrideError(
-                f"The scale kernel '{type(kernel).__name__}' acts only on the task "
-                f"parameter '{task_name}', which cannot be combined with an "
-                f"'{fields(TaskParameter).override_transfer_learning_mode.name}'."
-            )
-        return evolve(kernel, base_kernel=stripped)
+        stripped = _strip_task_from_kernel(kernel.base_kernel, searchspace, task_name)
+        # A scale kernel wrapping only the task parameter collapses to nothing:
+        # the prescribed task kernel is then used on its own.
+        return None if stripped is None else evolve(kernel, base_kernel=stripped)
 
     raise IncompatibleOverrideError(
         f"Composite kernel '{type(kernel).__name__}' cannot be combined with an "
@@ -502,9 +504,6 @@ class GaussianProcessSurrogate(Surrogate):
 
         # Otherwise, build a task-free base kernel and attach the prescribed task
         # kernel manually.
-        non_task_names = tuple(
-            p.name for p in searchspace.parameters if p.name != task_param.name
-        )
         effective_factory = self.kernel_factory
         incompatible_message = (
             f"The '{TaskParameter.__name__}' '{task_param.name}' specifies "
@@ -522,9 +521,7 @@ class GaussianProcessSurrogate(Surrogate):
             component = self.kernel_factory.component
             if not isinstance(component, Kernel):
                 raise IncompatibleOverrideError(incompatible_message)
-            base_spec = _strip_task_from_kernel(
-                component, task_param.name, non_task_names
-            )
+            base_spec = _strip_task_from_kernel(component, searchspace, task_param.name)
         else:
             # Call the factory on a reduced (task-free) searchspace so that it
             # produces only the base kernel. Factories that need computational
