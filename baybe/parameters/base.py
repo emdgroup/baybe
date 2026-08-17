@@ -207,20 +207,13 @@ class DiscreteParameter(Parameter, ABC):
             )
 
         table = self._encoding_table(series.unique())
-        result = (
+        return (
             series.rename(_JOIN_KEY)
             .to_frame()
             .join(table, on=_JOIN_KEY, how="left")
             .drop(_JOIN_KEY)
+            .to_native()
         )
-
-        # TODO[narwhalify]: drop once pandas index handling is removed globally
-        if nw.get_native_namespace(series) is pd:
-            native = result.to_native()
-            native.index = series.to_list() if all_values else series.to_pandas().index
-            return native
-
-        return result.to_native()
 
     @abstractmethod
     def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:

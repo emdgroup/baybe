@@ -252,25 +252,16 @@ class Objective(ABC, SerialMixin):
 
         import torch
 
-        ns = nw.get_native_namespace(nw_df)
         with torch.no_grad():
             transformed = self._full_transformation(
                 to_tensor(nw_df.select([t.name for t in targets]))
-            )
-
-        # TODO[narwhalify]: drop index handling once pandas index is removed globally
-        if ns is pd:
-            return pd.DataFrame(  # type: ignore[return-value]
-                transformed.numpy(),
-                columns=self.output_names,
-                index=nw_df.to_pandas().index,
             )
 
         return nw.from_numpy(
             # For 1-D transforms, we explicitly reshape to 2-D to please nw.from_numpy
             transformed.numpy().reshape(-1, len(self.output_names)),
             schema=self.output_names,
-            backend=ns,
+            backend=nw.get_native_namespace(nw_df),
         ).to_native()
 
     def identify_non_dominated_configurations(

@@ -49,11 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no longer requiring users to manually group constraints according to their type
 - Parameter and constraint validation has been streamlined, using `validate_parameters`
   and `validate_constraints` as the only remaining public entry points
-- Dataframe indices are no longer used as information carriers anywhere, and candidates
-  from discrete subspaces are no longer assumed to be in any particular order. In
-  particular, recommendation dataframes no longer reflect discrete subspace positions
-  via their index, and `_recommend_discrete` and kin now return a `pd.DataFrame`
-  subselection of the candidates instead of a `pd.Index`.
+- For pandas users: series/dataframe indices are no longer used as information carriers
+  anywhere and, accordingly, they are not guaranteed to be preserved during
+  method/function calls. In particular, recommendation dataframes no longer reflect
+  discrete subspace locations via their index. Similarly, `_recommend_discrete` and kin
+  now return a dataframe-based subselection instead of a `pd.Index`.
 - `SubspaceDiscrete.from_product` and `SubspaceDiscrete.from_simplex` now split
   their `constraints` argument into filtering constraints (applied during construction)
   and batch constraints (stored in `batch_constraints`)

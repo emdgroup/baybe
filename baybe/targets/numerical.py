@@ -751,20 +751,11 @@ class NumericalTarget(Target, SerialMixin):
         from baybe.utils.dataframe import to_tensor
 
         nw_series = nw.from_native(series, series_only=True)
-        ns = nw.get_native_namespace(nw_series)
-        result = nw.new_series(
+        return nw.new_series(
             name=nw_series.name,
             values=self.transformation(to_tensor(series)).numpy(),
-            backend=ns,
-        )
-
-        # TODO[narwhalify]: drop once pandas index handling is removed globally
-        if ns is pd:
-            native = result.to_native()
-            native.index = nw_series.to_pandas().index
-            return native
-
-        return result.to_native()
+            backend=nw.get_native_namespace(nw_series),
+        ).to_native()
 
     @override
     def summary(self):
