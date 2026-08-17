@@ -61,7 +61,7 @@
    :template: custom-module-template.rst
    :recursive:
 {% for item in modules %}
-{% if not item in ("baybe.objectives.deprecation", "baybe.recommenders.pure.bayesian.sequential_greedy", "baybe.utils.clustering_algorithms.third_party.kmedoids") %}
+{% if not item in ("kmedoids",) %}
    {{ item }}
 {%- endif %}
 {%- endfor %}
