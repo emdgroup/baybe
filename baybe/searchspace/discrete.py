@@ -105,6 +105,10 @@ class SubspaceDiscrete(SerialMixin):
             sorted(
                 x,
                 key=lambda c: (
+                    # TODO: The else branch is currently there to handle searchspace
+                    #  constraints that are not filtering constraints, hence have no
+                    #  entry in the order list. This can be removed in case
+                    #  non-filtering constraints are moved out of the searchspace.
                     DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__)
                     if c.__class__ in DISCRETE_CONSTRAINTS_FILTERING_ORDER
                     else len(DISCRETE_CONSTRAINTS_FILTERING_ORDER)
