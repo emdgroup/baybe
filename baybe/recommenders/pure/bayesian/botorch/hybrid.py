@@ -93,7 +93,7 @@ def recommend_hybrid_without_subsets(
     if recommender.hybrid_sampler is not None:
         candidates_comp = nw.from_native(
             sample_numerical_df(
-                candidates_comp.to_pandas(),
+                candidates_comp.to_native(),
                 n_candidates,
                 method=recommender.hybrid_sampler,
             ),
