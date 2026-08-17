@@ -151,8 +151,6 @@ source_suffix = [".rst", ".md"]
 # Here, we define regex expressions for errors produced by nitpick that we want to
 # ignore.
 nitpick_ignore_regex = [
-    # Ignore everything that does not include baybe
-    (r"py:.*", r"^(?!.*baybe).*"),
     # Ignore errors that are from inherited classes we cannot control
     (r"py:.*", r".*DTypeFloatONNX.*"),
     # Ignore the functions that we manually delete from in child classes
