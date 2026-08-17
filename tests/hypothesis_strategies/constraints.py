@@ -132,8 +132,9 @@ def discrete_dependencies_constraints(
             p not in affected_parameter_names[k] for k, p in enumerate(parameter_names)
         ), "Affected parameters cannot overlap with the parameters they depend on"
 
+    exclude = draw(st.booleans())
     return DiscreteDependenciesConstraint(
-        parameter_names, conditions, affected_parameter_names
+        parameter_names, conditions, affected_parameter_names, exclude=exclude
     )
 
 
@@ -162,7 +163,10 @@ def discrete_permutation_invariance_constraints(
             )
         )
 
-    return DiscretePermutationInvarianceConstraint(parameter_names, dependencies)
+    exclude = draw(st.booleans())
+    return DiscretePermutationInvarianceConstraint(
+        parameter_names, dependencies, exclude=exclude
+    )
 
 
 @st.composite
@@ -184,16 +188,22 @@ def _discrete_constraints(
         assert len(parameter_names) == len(set(parameter_names))
         params = parameter_names
 
+    exclude = draw(st.booleans())
+
     if constraint_type is DiscreteSumConstraint:
         condition = draw(threshold_conditions())
         if draw(st.booleans()):
             coefficients = draw(st.tuples(*([_nonzero_finite_floats] * len(params))))
-            return DiscreteSumConstraint(params, condition, coefficients)
-        return DiscreteSumConstraint(params, condition)
+            return DiscreteSumConstraint(
+                params, condition, coefficients, exclude=exclude
+            )
+        return DiscreteSumConstraint(params, condition, exclude=exclude)
     elif constraint_type is DiscreteProductConstraint:
-        return DiscreteProductConstraint(params, draw(threshold_conditions()))
+        return DiscreteProductConstraint(
+            params, draw(threshold_conditions()), exclude=exclude
+        )
     else:
-        return constraint_type(params)
+        return constraint_type(params, exclude=exclude)
 
 
 discrete_sum_constraints = partial(_discrete_constraints, DiscreteSumConstraint)
