@@ -139,7 +139,6 @@ myst_heading_anchors = 4
 templates_path = ["templates"]
 # Tell sphinx which files should be excluded
 exclude_patterns = ["sdk", "AGENTS.md", "CLAUDE.md", "**/AGENTS.md", "**/CLAUDE.md"]
-autodoc_exclude_modules = ["baybe.utils.clustering_algorithms.third_party.kmedoids"]
 
 # Enable markdown
 # Note that we do not need additional configuration here.
