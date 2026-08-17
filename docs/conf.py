@@ -4,9 +4,6 @@ from __future__ import annotations
 #
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
-import os
-import shutil
-
 from gpytorch.kernels import Kernel as GPyTorchKernel
 from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
 from gpytorch.means import Mean as GPyTorchMean
@@ -48,64 +45,12 @@ autodoc_type_aliases = {
 
 # >>>>>>>>>> NOTE END <<<<<<<<<<
 
-# -- Path setup --------------------------------------------------------------
-
-__location__ = os.path.dirname(__file__)
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-# Seems to be not necessary at the moment
-# sys.path.insert(0, os.path.join(__location__, "../examples"))
-
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "BayBE"
 copyright = "2022-2025 Merck KGaA, Darmstadt, Germany and/or its affiliates. All rights reserved."  # noqa
 author = "Merck KGaA, Darmstadt, Germany"
-
-
-# -- Run sphinx-apidoc -------------------------------------------------------
-# This hack is necessary since RTD does not issue `sphinx-apidoc` before running
-# `sphinx-build -b html . _build/html`. See Issue:
-# https://github.com/readthedocs/readthedocs.org/issues/1139
-# DON'T FORGET: Check the box "Install your project inside a virtualenv using
-# setup.py install" in the RTD Advanced Settings.
-# Additionally it helps us to avoid running apidoc manually
-
-try:  # for Sphinx >= 1.7
-    from sphinx.ext import apidoc
-except ImportError:
-    from sphinx import apidoc
-
-output_dir = os.path.join(__location__, "sdk")
-baybe_module_dir = os.path.join(__location__, "../baybe")
-try:
-    shutil.rmtree(output_dir)
-except FileNotFoundError:
-    pass
-
-try:
-    args = [
-        "--implicit-namespaces",
-        "-M",
-        "-T",
-        "-e",
-        "-f",
-        "-o",
-        output_dir,
-    ]
-
-    apidoc.main(
-        [
-            *args,
-            baybe_module_dir,
-            baybe_module_dir + "/__init__.py",
-        ]
-    )
-except Exception as e:
-    print(f"Running `sphinx-apidoc` failed!\n{e}")
 
 
 # -- General configuration ---------------------------------------------------
