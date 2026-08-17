@@ -23,6 +23,7 @@ baseline, under two equal-budget batch schedules (many small vs. few large batch
 from __future__ import annotations
 
 import json
+import warnings
 from collections.abc import Callable
 from copy import deepcopy
 
@@ -63,6 +64,11 @@ EMBEDDING_MODEL = "ESMpp_small"
 # Top-fraction thresholds at which retrieval metrics are evaluated.
 RETRIEVAL_THRESHOLDS = (0.05, 0.10, 0.20)
 
+# Target number of features for random-projection dimensionality reduction of the
+# embeddings, applied to all datasets. Set to ``None`` to disable the reduction and
+# use the full embedding representation.
+REDUCED_FEATURES: int | None = 50
+
 
 def _load_dataset(dataset: str) -> tuple[pd.DataFrame, pd.DataFrame, float]:
     """Load the mutation table, embeddings and score skewness for a dataset.
@@ -79,6 +85,43 @@ def _load_dataset(dataset: str) -> tuple[pd.DataFrame, pd.DataFrame, float]:
     with open(directory / "metadata.json") as file:
         skewness = json.load(file)["score_skewness"]
     return mutations, embeddings, skewness
+
+
+def _reduce_dimensionality(
+    embeddings: pd.DataFrame, n_features: int, seed: int
+) -> pd.DataFrame:
+    """Reduce the embedding dimensionality via a random Gaussian projection.
+
+    Multiplies the ``(n_sequences, n_original_features)`` embedding matrix by a random
+    ``(n_original_features, n_features)`` Gaussian matrix, yielding a lower-dimensional
+    representation in the style of randomized linear algebra. The projection is always
+    applied; if the requested number of features is not smaller than the current one,
+    a warning is emitted since the representation is not actually reduced.
+
+    Args:
+        embeddings: The embedding matrix indexed by sequence.
+        n_features: Target number of features after reduction.
+        seed: Random seed for constructing the projection matrix.
+
+    Returns:
+        The reduced embedding matrix indexed by sequence.
+    """
+    n_original = embeddings.shape[1]
+    if n_features >= n_original:
+        warnings.warn(
+            f"The requested number of features ({n_features}) is not smaller than the "
+            f"original number of features ({n_original}); the random projection does "
+            f"not reduce the dimensionality.",
+            stacklevel=2,
+        )
+    rng = np.random.default_rng(seed)
+    projection = rng.standard_normal((n_original, n_features)) / np.sqrt(n_features)
+    reduced = embeddings.to_numpy() @ projection
+    return pd.DataFrame(
+        reduced,
+        index=embeddings.index,
+        columns=[f"feature_{i}" for i in range(n_features)],
+    )
 
 
 def compute_instance_retrieval(
@@ -188,12 +231,19 @@ def _budget_schedules(
     return schedules
 
 
-def _run_dataset(dataset: str, settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
+def _run_dataset(
+    dataset: str,
+    settings: ConvergenceBenchmarkSettings,
+    n_reduced_features: int | None = None,
+) -> pd.DataFrame:
     """Run the protein optimization benchmark for a single dataset.
 
     Args:
         dataset: Name of the DMS dataset.
         settings: Configuration settings for the convergence benchmark.
+        n_reduced_features: Target number of features for random-projection
+            dimensionality reduction of the embeddings. If ``None``, no reduction is
+            applied and the full embedding representation is used.
 
     Returns:
         A dataframe with the score convergence and retrieval metrics per iteration.
@@ -207,14 +257,16 @@ def _run_dataset(dataset: str, settings: ConvergenceBenchmarkSettings) -> pd.Dat
     sequences = mutations["seq"].to_numpy()
 
     encoding = embeddings.set_axis(sequences, axis="index")
+    if n_reduced_features is not None:
+        encoding = _reduce_dimensionality(
+            encoding, n_reduced_features, settings.random_seed
+        )
     searchspace = SearchSpace.from_product(
         [CustomDiscreteParameter(name="seq", data=encoding, decorrelate=False)]
     )
     objective = NumericalTarget(name="score").to_objective()
     templates = {
-        "Default Recommender": Campaign(
-            searchspace=searchspace, objective=objective
-        ),
+        "Default Recommender": Campaign(searchspace=searchspace, objective=objective),
         "Random Recommender": Campaign(
             searchspace=searchspace,
             objective=objective,
@@ -280,18 +332,22 @@ def _run_dataset(dataset: str, settings: ConvergenceBenchmarkSettings) -> pd.Dat
 
 def _make_benchmark_function(
     dataset: str,
+    n_reduced_features: int | None = REDUCED_FEATURES,
 ) -> Callable[[ConvergenceBenchmarkSettings], pd.DataFrame]:
     """Create the benchmark callable for a single dataset.
 
     Args:
         dataset: Name of the DMS dataset.
+        n_reduced_features: Target number of features for random-projection
+            dimensionality reduction of the embeddings. If ``None``, no reduction is
+            applied and the full embedding representation is used.
 
     Returns:
         A benchmark function with a dataset-specific name and docstring.
     """
 
     def benchmark(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
-        return _run_dataset(dataset, settings)
+        return _run_dataset(dataset, settings, n_reduced_features)
 
     benchmark.__name__ = f"protein_{dataset}"
     benchmark.__doc__ = (
@@ -326,7 +382,7 @@ benchmark_config = ConvergenceBenchmarkSettings(
 
 PROTEIN_BENCHMARKS = [
     ConvergenceBenchmark(
-        function=_make_benchmark_function(dataset),
+        function=_make_benchmark_function(dataset, n_reduced_features=REDUCED_FEATURES),
         settings=benchmark_config,
     )
     for dataset in DATASETS
