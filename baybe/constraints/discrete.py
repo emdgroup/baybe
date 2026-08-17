@@ -45,19 +45,26 @@ if TYPE_CHECKING:
 
 # >>>>>>>>>> Deprecation
 def DiscreteExcludeConstraint(  # noqa: N802
-    *args, **kwargs
+    parameters: list[str],
+    conditions: list[Condition],
+    combiner: str = "AND",
 ) -> DiscreteSelectionConstraint:
     """A ``DiscreteSelectionConstraint`` alias for backward compatibility."""  # noqa: D401
     import warnings
 
     warnings.warn(
-        "'DiscreteExcludeConstraint' is deprecated and will be removed in a future "
-        "version. Use 'DiscreteSelectionConstraint' with 'exclude=True' instead.",
+        f"'{DiscreteExcludeConstraint.__name__}' is deprecated and will be removed "
+        f"in a future version. Use '{DiscreteSelectionConstraint.__name__}' with "
+        f"'exclude=True' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    kwargs.pop("exclude", None)
-    return DiscreteSelectionConstraint(*args, **kwargs, exclude=True)
+    return DiscreteSelectionConstraint(
+        parameters=parameters,
+        conditions=conditions,
+        combiner=combiner,
+        exclude=True,
+    )
 
 
 # <<<<<<<<<< Deprecation
