@@ -262,7 +262,7 @@ def _apply_constraint_filter_pandas(
 
     Args:
         df: The data in experimental representation to be modified inplace.
-        constraints: Pruning constraints to apply.
+        constraints: Filtering constraints to apply.
 
     Returns:
         The filtered dataframe.
@@ -283,7 +283,7 @@ def _apply_constraint_filter_polars(
 
     Args:
         ldf: The data in experimental representation to be filtered.
-        constraints: Pruning constraints to apply.
+        constraints: Filtering constraints to apply.
 
     Returns:
         The Polars lazyframe with undesired rows removed.
