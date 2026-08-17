@@ -5,11 +5,12 @@ from __future__ import annotations
 import gc
 from abc import ABC
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, cast
+from typing import Any, ClassVar, NoReturn, cast
 
 import cattrs
 from attrs import define, field
 from cattrs.gen import make_dict_unstructure_fn
+from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
 from typing_extensions import override
 
 from baybe.exceptions import (
@@ -28,9 +29,6 @@ from baybe.settings import Settings
 from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import _infer_backend
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
-
-if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
 
 _DEPRECATION_ERROR_MESSAGE = (
     "The attribute '{}' is no longer available for recommenders. "
