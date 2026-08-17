@@ -1,10 +1,10 @@
-"""Utility for checking the links of the documentation."""
+"""Utility for checking the external links of the documentation."""
 
 from subprocess import check_call
 
 
 def check_links() -> None:
-    """Check whether the links of the documentation are valid."""
+    """Check whether the external links of the documentation are valid."""
     link_call = [
         "sphinx-build",
         "-b",
@@ -14,3 +14,7 @@ def check_links() -> None:
     ]
 
     check_call(link_call)
+
+
+if __name__ == "__main__":
+    check_links()
