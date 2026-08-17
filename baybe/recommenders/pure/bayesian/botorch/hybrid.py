@@ -238,7 +238,7 @@ def recommend_hybrid_with_subsets(
     if subspace_c.constraints_cardinality and not is_cardinality_fulfilled(
         nw.from_native(best_rec, eager_only=True)
         .select(subspace_c.parameter_names)
-        .to_pandas(),
+        .to_native(),
         subspace_c,
         check_maximum=False,
     ):
