@@ -5,8 +5,9 @@ from functools import cached_property
 
 import numpy as np
 import pandas as pd
+from attr.converters import optional as optional_c
 from attrs import Converter, define, field
-from attrs.validators import deep_iterable, instance_of, min_len, optional
+from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
 from baybe.parameters.base import _DiscreteLabelLikeParameter
@@ -89,7 +90,7 @@ class TaskParameter(CategoricalParameter):
 
     override_transfer_learning_mode: TransferLearningMode | None = field(
         default=None,
-        validator=optional(instance_of(TransferLearningMode)),
+        converter=optional_c(TransferLearningMode),
     )
     """Optional override for the transfer learning mode."""
 
