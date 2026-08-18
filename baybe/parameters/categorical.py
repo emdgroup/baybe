@@ -92,7 +92,16 @@ class TaskParameter(CategoricalParameter):
         default=None,
         converter=optional_c(TransferLearningMode),
     )
-    """Optional override for the transfer learning mode."""
+    """Optional override for how the task dimension is modeled.
+
+    Only applies to :class:`.GaussianProcessSurrogate`. When ``None``, the surrogate's
+    kernel factory decides how the task dimension is treated. When set, the surrogate
+    attaches the requested task kernel to a task-free base kernel derived from the
+    configured factory.
+
+    If the configured factory does not reduce to a task-free base kernel, an
+    :class:`.IncompatibleOverrideError` is raised.
+    """
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
