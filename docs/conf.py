@@ -181,11 +181,18 @@ linkcheck_ignore = [
     r"https://github.com/b-shields/edbo/blob*",
     r"https://doi.org/10.26434/chemrxiv.10001986/v2",
     r"https://doi.org/10.1039/D5DD00050E",
+    # Wikipedia aggressively rate-limits automated requests (HTTP 403), which would
+    # cause false failures now that linkcheck gates the documentation build.
+    r"https://en\.wikipedia\.org/.*",
 ]
 
 # Bound the time spent on any single external link so that a slow or unresponsive
 # host cannot stall the linkcheck job.
 linkcheck_timeout = 30
+
+# Retry transient failures before declaring a link broken, since linkcheck now gates
+# the documentation build.
+linkcheck_retries = 3
 
 
 # Ignore certain warning categories
