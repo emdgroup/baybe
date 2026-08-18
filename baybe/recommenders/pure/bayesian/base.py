@@ -10,6 +10,7 @@ import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
+from narwhals.stable.v2.typing import IntoDataFrameT
 from typing_extensions import override
 
 from baybe.acquisition import qLogEI, qLogNEHVI
@@ -31,7 +32,6 @@ from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
-    from narwhals.stable.v2.typing import IntoDataFrameT
 
 
 def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:

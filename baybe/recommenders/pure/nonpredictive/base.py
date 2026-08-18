@@ -5,19 +5,16 @@ from __future__ import annotations
 import gc
 import warnings
 from abc import ABC
-from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
 from attrs import define
+from narwhals.stable.v2.typing import IntoDataFrameT
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibleArgumentError, UnusedObjectWarning
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace.core import SearchSpace
-
-if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrameT
 
 
 @define
