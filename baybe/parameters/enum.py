@@ -183,4 +183,4 @@ class TransferLearningMode(Enum):
     """:class:`gpytorch.kernels.IndexKernel` for arbitrary correlations."""
 
     POSITIVE_INDEX_KERNEL = "POSITIVE_INDEX_KERNEL"
-    """:class:`botorch.models.kernels.PositiveIndexKernel` for positive correlations."""
+    """:class:`botorch.models.kernels.positive_index.PositiveIndexKernel` for positive correlations."""
