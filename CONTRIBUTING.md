@@ -112,8 +112,8 @@ If you have questions or problems, simply ask for advice.
 
 | Tool                                                                                            | Purpose                                   |
 |:------------------------------------------------------------------------------------------------|:------------------------------------------|
-| [mypy](https://mypy.readthedocs.io/)                                                            | check static types                        |
-| [pyrefly](https://pyrefly.org/)                                                                 | secondary static type checker             |
+| [mypy](https://mypy.readthedocs.io/)                                                            | static type checker                        |
+| [pyrefly](https://pyrefly.org/)                                                                 | static type checker             |
 | [pip-audit](https://github.com/pypa/pip-audit)                                                  | detect vulnerabilities in dependencies    |
 | [pytest](https://docs.pytest.org/)                                                              | run tests                                 |
 | [pytest-cov](https://pytest-cov.readthedocs.io/)                                                | measure test coverage                     |
