@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `BayesianRecommender`
 - `Parameter.is_equivalent` method for structural parameter comparison
 - `posterior_mean_function` method to `GaussianProcessSurrogate`
+- Dedicated job for checking internal links in the documentation
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
