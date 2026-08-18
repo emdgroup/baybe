@@ -25,6 +25,9 @@ class _ParameterKind(Flag):
     FIDELITY = auto()
     """Fidelity parameter for multi-fidelity modelling."""
 
+    GENERALITY = auto()
+    """Generality parameter for context-aggregated optimization."""
+
     @staticmethod
     def from_parameter(parameter: Parameter) -> _ParameterKind:
         """Determine the kind of a parameter from its type."""
