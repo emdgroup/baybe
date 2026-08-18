@@ -282,25 +282,11 @@ class GaussianProcessSurrogate(Surrogate):
         module = importlib.import_module(module_name)
 
         # TODO[typing]: https://github.com/facebook/pyrefly/issues/4467
-        kernel = (
-            kernel_or_factory
-            if kernel_or_factory is not None
-            else getattr(module, "KERNEL_FACTORY")
-        )
-        mean = (
-            mean_or_factory
-            if mean_or_factory is not None
-            else getattr(module, "MEAN_FACTORY")
-        )
-        likelihood = (
-            likelihood_or_factory
-            if likelihood_or_factory is not None
-            else getattr(module, "LIKELIHOOD_FACTORY")
-        )
-        fit_criterion = (
-            fit_criterion_or_factory
-            if fit_criterion_or_factory is not None
-            else getattr(module, "FIT_CRITERION_FACTORY")
+        kernel = kernel_or_factory or getattr(module, "KERNEL_FACTORY")  # pyrefly: ignore[not-callable]
+        mean = mean_or_factory or getattr(module, "MEAN_FACTORY")  # pyrefly: ignore[not-callable]
+        likelihood = likelihood_or_factory or getattr(module, "LIKELIHOOD_FACTORY")  # pyrefly: ignore[not-callable]
+        fit_criterion = fit_criterion_or_factory or getattr(
+            module, "FIT_CRITERION_FACTORY"
         )
 
         gp = cls(kernel, mean, likelihood, fit_criterion)
