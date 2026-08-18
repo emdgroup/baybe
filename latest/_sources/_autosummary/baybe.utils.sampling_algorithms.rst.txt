@@ -28,6 +28,7 @@ baybe.utils.sampling\_algorithms
       :template: custom-class-template.rst              
    
       DiscreteSamplingMethod
+      FPSInitialization
    
    
 

@@ -19,7 +19,6 @@ baybe.recommenders.pure.nonpredictive.sampling
       :toctree:                                       
       :template: custom-class-template.rst              
    
-      FPSInitialization
       FPSRecommender
       RandomRecommender
    
