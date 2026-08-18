@@ -32,6 +32,8 @@ jobs:
         with: {python-version: "3.11"}
       - name: Install tox
         run: pip install tox-uv
+      - name: Check external links
+        run: tox -e linkcheck
       - name: Build Docs
         run: tox -e docs-py311 -- -r
       - name: Configure sphinx bot for pushing and fetch branches
