@@ -33,6 +33,24 @@ from baybe.targets.numerical import NumericalTarget
 _SELECT_ALL = lambda parameter: True  # noqa: E731
 
 
+def _task_free_matern_factory(searchspace, objective, measurements):
+    """A callable kernel factory returning a task-free BayBE kernel.
+
+    It names the remaining parameters of the (reduced) search space it is called on,
+    so that the produced base kernel never covers the task column.
+    """
+    return MaternKernel(parameter_names=tuple(searchspace.parameter_names))
+
+
+def _gpytorch_returning_factory(searchspace, objective, measurements):
+    """A callable kernel factory returning a raw gpytorch kernel.
+
+    Such factories are unsupported in combination with an override, since a raw
+    gpytorch kernel does not operate on parameter names.
+    """
+    return gpytorch.kernels.MaternKernel(nu=2.5)
+
+
 @pytest.mark.parametrize(
     ("factory", "parameters", "error"),
     [
@@ -167,6 +185,20 @@ def _make_dispatch_context(override_mode):
         ),
         param(
             TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            _task_free_matern_factory,
+            "PositiveIndexKernel",
+            True,
+            id="positive_index_override+callable_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            _task_free_matern_factory,
+            "IndexKernel",
+            True,
+            id="index_override+callable_factory",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
             None,
             "PositiveIndexKernel",
             True,
@@ -197,17 +229,20 @@ def test_resolve_kernel_dispatch_success(
 
     if has_base:
         # The resolved kernel is a product of base * task kernel
-        _, task_kernel = kernel.kernels
+        base_kernel, task_kernel = kernel.kernels
     else:
         # Stripping left no non-task parameters -> only the task kernel remains
-        task_kernel = kernel
+        base_kernel, task_kernel = None, kernel
     assert type(task_kernel).__name__ == expected_task_kernel_cls
 
     # Override branches must partition active dims so the task kernel acts exactly
-    # on the task column.
+    # on the task column, while the base kernel stays task-free.
     if override_mode is not None:
         assert task_kernel.active_dims is not None
         assert set(task_kernel.active_dims.tolist()) == {context.task_idx}
+        if base_kernel is not None:
+            assert base_kernel.active_dims is not None
+            assert context.task_idx not in base_kernel.active_dims.tolist()
 
 
 @pytest.mark.parametrize(
@@ -232,6 +267,11 @@ def test_resolve_kernel_dispatch_success(
                 )
             ),
             id="override+task_aware_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            _gpytorch_returning_factory,
+            id="override+factory_returning_gpytorch",
         ),
     ],
 )
