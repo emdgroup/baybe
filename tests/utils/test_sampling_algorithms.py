@@ -207,7 +207,7 @@ _valid_points = np.array([[1, 1], [2, 2], [3, 3]])
             _valid_points,
             3,
             "bla",
-            "'bla' is not a valid FPSInitialization",
+            r"Unknown initialization type.*initialization='bla'",
             id="unknown_init",
         ),
     ],
