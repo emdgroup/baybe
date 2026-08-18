@@ -547,7 +547,10 @@ class GaussianProcessSurrogate(Surrogate):
                 raise IncompatibleOverrideError(incompatible_message) from ex
             if not isinstance(factory_kernel, Kernel):
                 raise IncompatibleOverrideError(incompatible_message)
-            base_spec = factory_kernel
+            # Normalize to an explicitly task-free spec.
+            base_spec = _strip_task_from_kernel(
+                factory_kernel, searchspace, task_param.name
+            )
 
         # Convert the base kernel on the full searchspace so that parameter names
         # resolve to the correct computational column indices.

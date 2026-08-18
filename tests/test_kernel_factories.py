@@ -51,6 +51,23 @@ def _gpytorch_returning_factory(searchspace, objective, measurements):
     return gpytorch.kernels.MaternKernel(nu=2.5)
 
 
+def _unnamed_matern_factory(searchspace, objective, measurements):
+    """A callable kernel factory returning an unnamed BayBE kernel.
+
+    A ``parameter_names=None`` kernel spans all columns on full-space conversion,
+    so the override path must normalize it to stay task-free.
+    """
+    return MaternKernel()
+
+
+def _task_named_matern_factory(searchspace, objective, measurements):
+    """A callable kernel factory returning a kernel that names the task parameter.
+
+    The override path must strip the task name so the base kernel stays task-free.
+    """
+    return MaternKernel(parameter_names=("x", "Task"))
+
+
 @pytest.mark.parametrize(
     ("factory", "parameters", "error"),
     [
@@ -196,6 +213,20 @@ def _make_dispatch_context(override_mode):
             "IndexKernel",
             True,
             id="index_override+callable_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            _unnamed_matern_factory,
+            "IndexKernel",
+            True,
+            id="index_override+unnamed_callable_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            _task_named_matern_factory,
+            "IndexKernel",
+            True,
+            id="index_override+task_named_callable_factory",
         ),
         param(
             TransferLearningMode.POSITIVE_INDEX_KERNEL,
