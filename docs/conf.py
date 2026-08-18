@@ -183,6 +183,10 @@ linkcheck_ignore = [
     r"https://doi.org/10.1039/D5DD00050E",
 ]
 
+# Bound the time spent on any single external link so that a slow or unresponsive
+# host cannot stall the linkcheck job.
+linkcheck_timeout = 30
+
 
 # Ignore certain warning categories
 suppress_warnings = [

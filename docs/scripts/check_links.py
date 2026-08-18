@@ -11,6 +11,8 @@ def check_links() -> None:
         "linkcheck",
         "docs",
         "docs/build",
+        "-j",  # Build in parallel
+        "auto",
     ]
 
     check_call(link_call)
