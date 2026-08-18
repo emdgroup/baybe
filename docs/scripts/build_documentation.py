@@ -127,6 +127,8 @@ def build_documentation(
         build_dir,
         "-n",  # Being nitpicky
         "-W",  # Fail when encountering an error or a warning
+        "-j",  # Build in parallel
+        "auto",
     ]
 
     if force:
