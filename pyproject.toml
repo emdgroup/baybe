@@ -90,7 +90,7 @@ dev = [
     "baybe[examples]",
     "baybe[docs]",
     "baybe[lint]",
-    "baybe[mypy]",
+    "baybe[typecheck]",
     "baybe[test]",
     "baybe[benchmarking]",
     "pip-audit>=2.5.5",
@@ -146,6 +146,11 @@ mypy = [
     "types-tqdm"
 ]
 
+typecheck = [
+    "baybe[mypy]",
+    "pyrefly>=1.2.0,<2",
+]
+
 polars = [
     "polars[pyarrow]>=0.20.8,<2",
 ]
@@ -189,3 +194,17 @@ packages = ["baybe"]
 
 [tool.uv]
 exclude-newer = "7 days"
+
+[tool.pyrefly]
+project-includes = ["baybe"]
+project-excludes = [
+    "baybe/recommenders/naive.py",
+    "baybe/simulation/**",
+    "baybe/utils/dataframe.py",
+    "baybe/utils/clustering_algorithms/third_party/kmedoids.py",
+]
+replace-imports-with-any = ["sklearn.*", "shap"]
+
+[tool.pyrefly.errors]
+unused-ignore = "error"
+missing-override-decorator = "error"

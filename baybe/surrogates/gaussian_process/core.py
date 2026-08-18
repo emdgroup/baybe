@@ -281,9 +281,10 @@ class GaussianProcessSurrogate(Surrogate):
         )
         module = importlib.import_module(module_name)
 
-        kernel = kernel_or_factory or getattr(module, "KERNEL_FACTORY")
-        mean = mean_or_factory or getattr(module, "MEAN_FACTORY")
-        likelihood = likelihood_or_factory or getattr(module, "LIKELIHOOD_FACTORY")
+        # TODO[typing]: https://github.com/facebook/pyrefly/issues/4467
+        kernel = kernel_or_factory or getattr(module, "KERNEL_FACTORY")  # pyrefly: ignore[not-callable]
+        mean = mean_or_factory or getattr(module, "MEAN_FACTORY")  # pyrefly: ignore[not-callable]
+        likelihood = likelihood_or_factory or getattr(module, "LIKELIHOOD_FACTORY")  # pyrefly: ignore[not-callable]
         fit_criterion = fit_criterion_or_factory or getattr(
             module, "FIT_CRITERION_FACTORY"
         )
@@ -358,9 +359,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     @staticmethod
-    def _make_parameter_scaler_factory(
-        parameter: Parameter,
-    ) -> type[InputTransform] | None:
+    def _make_parameter_scaler_factory(_: Parameter, /) -> type[InputTransform] | None:
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         return None
 

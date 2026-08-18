@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -26,8 +26,7 @@ if TYPE_CHECKING:
     from botorch.acquisition.objective import ScalarizedPosteriorTransform
     from torch import Tensor
 
-    TensorCallable = Callable[[Tensor], Tensor]
-    """Type alias for a torch-based function mapping from reals to reals."""
+    from baybe.transformations.base import TensorCallable
 
 
 @define(frozen=True)

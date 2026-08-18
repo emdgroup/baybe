@@ -99,7 +99,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     _measurements: pd.DataFrame | None = field(init=False, default=None, eq=False)
     """The measurements used for training. Available after fitting."""
 
-    _measurements_hash: str = field(init=False, default=None, eq=False)
+    _measurements_hash: str | None = field(init=False, default=None, eq=False)
     """The hash of the data the surrogate was trained on."""
 
     _input_scaler: ColumnTransformer | None = field(init=False, default=None, eq=False)
@@ -151,7 +151,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
     @staticmethod
     def _make_parameter_scaler_factory(
-        parameter: Parameter,
+        parameter: Parameter, /
     ) -> type[InputTransform] | None:
         """Return the scaler factory to be used for the given parameter.
 

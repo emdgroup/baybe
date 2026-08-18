@@ -21,6 +21,7 @@ from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
+    from botorch.models.transforms.input import InputTransform
     from botorch.posteriors import Posterior, TorchPosterior
     from torch import Tensor
 
@@ -50,7 +51,8 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         """
         from torch.distributions import Beta
 
-        return Beta(*self._posterior_beta_parameters()).mode
+        concentration1, concentration0 = self._posterior_beta_parameters().unbind(0)
+        return Beta(concentration1, concentration0).mode
 
     def posterior_means(self) -> Tensor:
         """Compute the posterior mean win rates for all arms.
@@ -61,7 +63,8 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         """
         from torch.distributions import Beta
 
-        return Beta(*self._posterior_beta_parameters()).mean
+        concentration1, concentration0 = self._posterior_beta_parameters().unbind(0)
+        return Beta(concentration1, concentration0).mean
 
     def _posterior_beta_parameters(self) -> Tensor:
         """Compute the posterior parameters of the beta distribution.
@@ -113,7 +116,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
 
     @override
     @staticmethod
-    def _make_parameter_scaler_factory(_: Parameter):
+    def _make_parameter_scaler_factory(_: Parameter, /) -> type[InputTransform] | None:
         # Due to enforced one-hot encoding, no input scaling is needed.
         return None
 
@@ -131,7 +134,8 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         beta_params_for_candidates = self._posterior_beta_parameters().T[
             candidates.argmax(-1)
         ]
-        return TorchPosterior(Beta(*beta_params_for_candidates.split(1, -1)))
+        concentration1, concentration0 = beta_params_for_candidates.split(1, -1)
+        return TorchPosterior(Beta(concentration1, concentration0))
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor, _: Any = None) -> None:

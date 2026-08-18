@@ -13,7 +13,7 @@ experimental design. It targets Python 3.10+.
 | Tensor backend | `torch` |
 | Numerics | `numpy`, `pandas`, `scipy`, `scikit-learn` |
 | Testing | `pytest`, `hypothesis` |
-| Linting/formatting | `ruff`, `mypy`, `pydoclint`, `pyupgrade` |
+| Linting/formatting | `ruff`, `mypy`, `pyrefly`, `pydoclint`, `pyupgrade` |
 
 ### Directory Layout
 - `baybe/` — Main source package with many subpackages containing structures and objects
@@ -260,16 +260,17 @@ Three tiers:
 |------|--------|---------|
 | `flake8`+`pydoclint` | `pydoclint.toml` | Docstring consistency (DOC rules only) |
 | `mypy` | `mypy.ini` | Type checking. `explicit-override`, `unused-ignore` enabled. |
+| `pyrefly` | `pyproject.toml` `[tool.pyrefly]` | Secondary type checker. Run via `pyrefly check`. |
 | `pyupgrade` | `.pre-commit-config.yaml` | Python 3.10+ syntax |
 | `ruff` | `ruff.toml` | Lint (D, E4, E7, E9, E501, F, I, W, PL) + format. Line length 88. |
 | `zizmor` | `.pre-commit-config.yaml` | GitHub Actions security audit |
 
 Pre-commit hooks: pydoclint, ruff (lint+format), uv-lock, pyupgrade, zizmor.
-Tox environments: `fulltest`, `coretest`, `lint`, `mypy`, `audit`, `docs`.
+Tox environments: `fulltest`, `coretest`, `lint`, `typecheck`, `audit`, `docs`.
 Coverage: 70% overall, 45% per-file minimum.
 CI runs on push/PR to `main`/`dev/**`: changelog check, lint, typecheck, audit,
 coretest, fulltest. Docs and benchmarks on releases.
-For each development, ensure `tox -e mypy-py310` runs without problems.
+For each development, ensure `tox -e typecheck-py310` runs without problems.
 The entire test suite is too expensive to run all the time, but you should select
 relevant tests from `tests/` or newly created tests to validate your developments.
 For a full list of available tox environments and developer commands, see

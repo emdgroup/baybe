@@ -16,6 +16,7 @@ from attrs import Attribute, Converter, Factory, define, field, fields
 from attrs.setters import validate
 from attrs.validators import instance_of
 from attrs.validators import optional as optional_v
+from typing_extensions import override
 
 from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
 from baybe.exceptions import NotAllowedError, OptionalImportError
@@ -78,6 +79,12 @@ class _SlottedContextDecorator:
     def _recreate_cm(self):
         return self
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info: object) -> bool | None:
+        return None
+
     def __call__(self, func):
         @wraps(func)
         def inner(*args, **kwds):
@@ -139,7 +146,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
     """Activate the random seed when changing the attribute of the active settings."""
     if id(instance) == Settings._active_settings_id and value is not None:
-        _RandomState.from_seed(value, activate=True)
+        _RandomState.from_seed(value, activate=True)  # pyrefly: ignore[bad-argument-type]  # https://github.com/facebook/pyrefly/issues/3783
 
     return value
 
@@ -268,10 +275,12 @@ class Settings(_SlottedContextDecorator):
             }
         )
 
+    @override
     def __enter__(self) -> Settings:
         self.activate()
         return self
 
+    @override
     def __exit__(self, *args) -> None:
         self.restore_previous()
 
@@ -396,13 +405,12 @@ class Settings(_SlottedContextDecorator):
 
     def overwrite(self, target: Settings, keep_random_state: bool = False) -> None:
         """Overwrite the settings of another :class:`Settings` object."""
-        if keep_random_state:
-            state = _RandomState()
+        state = _RandomState() if keep_random_state else None
 
         for fld in self._settings_attributes:
             setattr(target, fld.name, getattr(self, fld.name))
 
-        if keep_random_state:
+        if state is not None:
             state.activate()
 
 

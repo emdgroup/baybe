@@ -10,7 +10,8 @@ from functools import singledispatchmethod
 from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
-from attrs import cmp_using, define, field
+from attrs import cmp_using, define, evolve, field
+from typing_extensions import Self
 
 from baybe.serialization import SerialMixin, converter
 from baybe.settings import active_settings
@@ -125,9 +126,10 @@ class Interval(SerialMixin):
         """Overloaded implementation for creating an interval from an iterable."""
         return Interval(*bounds)
 
-    def clamp(self, min: float = float("-inf"), max: float = float("inf")) -> Interval:
+    def clamp(self, min: float = float("-inf"), max: float = float("inf")) -> Self:
         """Clamp the interval to a specified range."""
-        return Interval(
+        return evolve(
+            self,
             lower=builtins.max(self.lower, min),
             upper=builtins.min(self.upper, max),
         )
@@ -163,11 +165,11 @@ class Interval(SerialMixin):
             or (self.lower < number < self.upper)
         )
 
-    def __add__(self, other: float | int) -> Interval:
+    def __add__(self, other: float | int) -> Self:
         """Shift bounds via scalar addition."""
-        return Interval(self.lower + other, self.upper + other)
+        return evolve(self, lower=self.lower + other, upper=self.upper + other)
 
-    def __sub__(self, other: float | int) -> Interval:
+    def __sub__(self, other: float | int) -> Self:
         """Shift bounds via scalar subtraction."""
         return self + (-other)
 

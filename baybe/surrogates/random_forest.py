@@ -81,9 +81,7 @@ class RandomForestSurrogate(Surrogate):
 
     @override
     @staticmethod
-    def _make_parameter_scaler_factory(
-        parameter: Parameter,
-    ) -> type[InputTransform] | None:
+    def _make_parameter_scaler_factory(_: Parameter, /) -> type[InputTransform] | None:
         # Tree-like models do not require any input scaling
         return None
 
