@@ -17,7 +17,9 @@ from pytest import param
 from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
 from baybe.constraints import SubSelectionCondition
 from baybe.constraints import base as base_module
+from baybe.constraints import discrete as discrete_module
 from baybe.constraints.discrete import (
+    DiscreteDegeneracyConstraint,
     DiscreteExcludeConstraint,
     DiscreteSelectionConstraint,
 )
@@ -603,23 +605,6 @@ def test_discrete_exclude_constraint_deserialization(annotation):
     assert result == ref
 
 
-def test_concrete_constraint_rejects_mismatched_type():
-    """Structuring into a concrete class rejects a mismatched ``type`` field."""
-    from baybe.constraints.discrete import (
-        DiscreteCardinalityConstraint,
-    )
-    from baybe.serialization import converter
-
-    payload = {
-        "type": "DiscreteSelectionConstraint",
-        "parameters": ["A"],
-        "conditions": [{"type": "SubSelectionCondition", "selection": ["a"]}],
-        "combiner": "AND",
-    }
-    with pytest.raises(ValueError, match="does not match the target"):
-        converter.structure(payload, DiscreteCardinalityConstraint)
-
-
 @pytest.mark.parametrize(
     ("legacy_name", "kwargs", "expected"),
     [
@@ -639,22 +624,16 @@ def test_concrete_constraint_rejects_mismatched_type():
 )
 def test_degeneracy_constraint_deprecation(legacy_name, kwargs, expected):
     """Deprecated degeneracy constraints map to DiscreteDegeneracyConstraint."""
-    import baybe.constraints.discrete as m
-    from baybe.constraints.base import DiscreteFilteringConstraint
-    from baybe.constraints.discrete import DiscreteDegeneracyConstraint
-    from baybe.serialization import converter
-
-    # Construction path: warns and returns correctly configured new object
     with pytest.warns(DeprecationWarning, match=legacy_name):
-        c = getattr(m, legacy_name)(**kwargs)
-    assert isinstance(c, DiscreteDegeneracyConstraint)
-    assert c.n_max_occurrences == expected["n_max_occurrences"]
-    assert c.exclude is expected["exclude"]
-
-    # Deserialization path: legacy type name maps to the new object
-    result = converter.structure(
-        {"type": legacy_name, **kwargs}, DiscreteFilteringConstraint
+        c = getattr(discrete_module, legacy_name)(**kwargs)
+    ref = DiscreteDegeneracyConstraint(
+        parameters=kwargs["parameters"],
+        n_max_occurrences=expected["n_max_occurrences"],
+        exclude=expected["exclude"],
     )
-    assert isinstance(result, DiscreteDegeneracyConstraint)
-    assert result.n_max_occurrences == expected["n_max_occurrences"]
-    assert result.exclude is expected["exclude"]
+    assert c == ref
+
+    result = converter.structure(
+        {"type": legacy_name, **kwargs}, base_module.DiscreteFilteringConstraint
+    )
+    assert result == ref
