@@ -30,6 +30,7 @@ from baybe.recommenders.pure.bayesian.discrete import (
     recommend_discrete_with_subsets,
     recommend_discrete_without_subsets,
 )
+from baybe.recommenders.pure.bayesian.generality import recommend_generality
 from baybe.recommenders.pure.bayesian.hybrid import (
     recommend_hybrid_with_subsets,
     recommend_hybrid_without_subsets,
@@ -247,6 +248,16 @@ class BayesianRecommender(PureRecommender):
                 ) from ex
             else:
                 raise
+
+    @override
+    def _recommend_generality(
+        self,
+        searchspace: SearchSpace,
+        batch_size: int,
+        measurements: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
+        """Generate recommendations for search spaces with a generality parameter."""
+        return recommend_generality(self, searchspace, batch_size, measurements)
 
     @override
     def _recommend_discrete(
