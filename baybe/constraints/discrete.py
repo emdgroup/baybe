@@ -451,9 +451,12 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
-        # With exclude=True we keep the duplicate permutations. Which row is
-        # the canonical one can still change as later columns are added, so all
-        # parameters must be present before deciding.
+        # TODO: Potentially enable early filtering for all situations once
+        #  sentinel/null values have been introduced instead of arbitrarily keeping one
+        #  concrete row.
+        # With exclude=True, all parameters must be present to identify the one
+        # canonical kept row (due to keep='first' in the deduplication). This is to
+        # make the result consistent with the kept row in the exclude=False case.
         if self.exclude:
             return self._required_parameters <= available
         # When dependencies are present, partial permutation dedup is unsafe:
