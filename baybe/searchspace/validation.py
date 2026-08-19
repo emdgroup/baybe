@@ -7,7 +7,7 @@ from typing import TypeVar
 import pandas as pd
 
 from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
-from baybe.parameters import TaskParameter
+from baybe.parameters import GeneralityParameter, TaskParameter
 from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
 from baybe.utils.dataframe import get_transform_objects
 
@@ -39,6 +39,8 @@ def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC
         EmptySearchSpaceError: If the parameter list is empty.
         NotImplementedError: If more than one
             :class:`baybe.parameters.categorical.TaskParameter` is requested.
+        IncompatibilityError: If both a TaskParameter and a GeneralityParameter
+            are present.
     """
     if not parameters:
         raise EmptySearchSpaceError("At least one parameter must be provided.")
@@ -47,6 +49,19 @@ def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC
     if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
         raise NotImplementedError(
             "Currently, at most one task parameter can be considered."
+        )
+
+    n_generality = len([p for p in parameters if isinstance(p, GeneralityParameter)])
+    if n_generality > 1:
+        raise NotImplementedError(
+            "Currently, at most one generality parameter can be considered."
+        )
+
+    has_task = any(isinstance(p, TaskParameter) for p in parameters)
+    if has_task and n_generality > 0:
+        raise IncompatibilityError(
+            "TaskParameter and GeneralityParameter cannot be used in the same "
+            "search space."
         )
 
     # Assert: unique names
