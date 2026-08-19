@@ -79,7 +79,7 @@ class DiscreteConstraint(Constraint, ABC):
     """Abstract base class for discrete constraints."""
 
 
-@define(slots=False)
+@define
 class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
     """Abstract base class for discrete constraints that filter the search space.
 
@@ -237,7 +237,7 @@ class ContinuousConstraint(Constraint, ABC):
     # See base class.
 
 
-@define
+@define(slots=False)
 class CardinalityConstraint(Constraint, ABC):
     r"""Abstract base class for cardinality constraints.
 
