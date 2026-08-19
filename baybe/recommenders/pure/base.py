@@ -128,6 +128,13 @@ class PureRecommender(ABC, RecommenderProtocol):
                 numerical_measurements_must_be_within_tolerance=False,
             )
 
+        if searchspace._generality_parameter is not None:
+            return self._recommend_generality(
+                searchspace=searchspace,
+                batch_size=batch_size,
+                measurements=measurements,
+            )
+
         if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
@@ -243,6 +250,31 @@ class PureRecommender(ABC, RecommenderProtocol):
         raise NotImplementedError(
             f"A hybrid search space was provided, but the used recommender "
             f"'{self.__class__.__name__}' does not implement hybrid recommendation."
+        )
+
+    def _recommend_generality(
+        self,
+        searchspace: SearchSpace,
+        batch_size: int,
+        measurements: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
+        """Generate recommendations for search spaces with a generality parameter.
+
+        Args:
+            searchspace: The search space containing the generality parameter.
+            batch_size: The size of the recommendation batch.
+            measurements: The preprocessed measurements.
+
+        Raises:
+            NotImplementedError: If the function is not implemented by the child class.
+
+        Returns:
+            A dataframe containing the recommendations as individual rows.
+        """
+        raise NotImplementedError(
+            f"A generality parameter is present in the search space, but the used "
+            f"recommender '{self.__class__.__name__}' does not implement generality "
+            f"recommendation."
         )
 
     def _recommend_with_discrete_parts(
