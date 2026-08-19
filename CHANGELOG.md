@@ -52,10 +52,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `mean_factory`, `likelihood_factory`, `fit_criterion_factory`) now default to
   `None`, meaning "auto-select based on context at fit time". Accessing a field
   before fitting may return `None` instead of a concrete factory.
+<<<<<<< HEAD
 - Discrete filtering constraints now uniformly define what is **kept** in the search
   space; set `exclude=True` to invert and keep the complement instead
 - Renamed `exclusion_constraints` example to `selection_constraints`
 - Use Python 3.11 for building the documentation
+=======
+>>>>>>> 918867a44 (Remove CHANGELOG entry)
 
 ### Deprecations
 - `DiscreteExcludeConstraint` in favor of
