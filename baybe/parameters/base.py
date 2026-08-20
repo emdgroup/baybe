@@ -206,14 +206,16 @@ class DiscreteParameter(Parameter, ABC):
                 backend=active_settings.default_dataframe_backend,
             )
 
+        from baybe.utils.dataframe import _copy_index
+
         table = self._encoding_table(series.unique())
-        return (
+        out = (
             series.rename(_JOIN_KEY)
             .to_frame()
             .join(table, on=_JOIN_KEY, how="left")
             .drop(_JOIN_KEY)
-            .to_native()
         )
+        return out.to_native() if all_values else _copy_index(out, series).to_native()
 
     @abstractmethod
     def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:

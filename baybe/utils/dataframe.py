@@ -819,6 +819,30 @@ def _infer_backend(*frames: IntoFrame | None) -> IntoBackend:
     return active_settings.default_dataframe_backend
 
 
+def _copy_index(
+    output: _SeriesOrFrameT, source: nw.DataFrame | nw.Series, /
+) -> _SeriesOrFrameT:
+    """Copy the pandas index from one series/dataframe to another.
+
+    For non-pandas backends this is a no-op, since they have no index concept.
+
+    Args:
+        output: The narwhals Series or DataFrame to copy the index onto.
+        source: The narwhals Series or DataFrame whose index is to be copied.
+
+    Returns:
+        The output with the index copied from the source.
+    """
+    # TODO: Replace once built-in solution is available
+    # https://github.com/narwhals-dev/narwhals/issues/3693
+    # https://github.com/narwhals-dev/narwhals/issues/3864
+    if (index := nw.maybe_get_index(source)) is not None:
+        return nw.maybe_set_index(
+            output, index=nw.from_native(pd.Series(index), series_only=True)
+        )
+    return output
+
+
 def _df_with_backend(obj: _SeriesOrFrameT, backend: IntoBackend, /) -> _SeriesOrFrameT:
     """Convert a narwhals Series/DataFrame to a different native backend.
 

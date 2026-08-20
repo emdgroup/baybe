@@ -15,7 +15,7 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
-from baybe.utils.dataframe import get_transform_objects, to_tensor
+from baybe.utils.dataframe import _copy_index, get_transform_objects, to_tensor
 from baybe.utils.dataframe import (
     handle_missing_values as df_handle_missing_values,
 )
@@ -257,12 +257,14 @@ class Objective(ABC, SerialMixin):
                 to_tensor(nw_df.select([t.name for t in targets]))
             )
 
-        return nw.from_numpy(
+        out = nw.from_numpy(
             # For 1-D transforms, we explicitly reshape to 2-D to please nw.from_numpy
             transformed.numpy().reshape(-1, len(self.output_names)),
             schema=self.output_names,
             backend=nw.get_native_namespace(nw_df),
-        ).to_native()
+        )
+
+        return _copy_index(out, nw_df).to_native()
 
     def identify_non_dominated_configurations(
         self, configurations: pd.DataFrame, /

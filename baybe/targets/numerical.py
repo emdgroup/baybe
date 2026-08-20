@@ -46,6 +46,7 @@ from baybe.transformations import (
     convert_transformation,
 )
 from baybe.utils.boolean import UncertainBool
+from baybe.utils.dataframe import _copy_index, to_tensor
 from baybe.utils.interval import ConvertibleToInterval, Interval
 from baybe.utils.metadata import (
     ConvertibleToMeasurableMetadata,
@@ -748,14 +749,13 @@ class NumericalTarget(Target, SerialMixin):
         assert series is not None
         # <<<<<<<<<< Deprecation
 
-        from baybe.utils.dataframe import to_tensor
-
         nw_series = nw.from_native(series, series_only=True)
-        return nw.new_series(
+        out = nw.new_series(
             name=nw_series.name,
             values=self.transformation(to_tensor(series)).numpy(),
             backend=nw.get_native_namespace(nw_series),
-        ).to_native()
+        )
+        return _copy_index(out, nw_series).to_native()
 
     @override
     def summary(self):
