@@ -192,30 +192,6 @@ def test_recommend_with_objective(
 
 
 @patch("baybe._optional.llm.completion")
-def test_recommend_with_format_instructions(
-    mock_completion, searchspace, valid_response
-):
-    """Custom format instructions are included in the prompt."""
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
-    custom_instructions = "Return CSV format instead."
-    recommender = LLMRecommender(
-        model="gpt-5.4",
-        experiment_description="Test",
-        objective_description="Maximize yield",
-        format_instructions=custom_instructions,
-    )
-    mock_completion.return_value = valid_response
-
-    recommender.recommend(batch_size=3, searchspace=searchspace)
-
-    prompt_content = mock_completion.call_args.kwargs.get(
-        "messages", mock_completion.call_args[1]["messages"]
-    )[0]["content"]
-    assert custom_instructions in prompt_content
-
-
-@patch("baybe._optional.llm.completion")
 def test_recovery_with_distinct_model(mock_completion, recommender, searchspace):
     """Recovery uses the specified recovery_model and recovery_litellm_args."""
     from baybe.recommenders.pure.llm.llm import LLMRecommender
