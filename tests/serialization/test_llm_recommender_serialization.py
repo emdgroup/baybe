@@ -17,7 +17,6 @@ def test_llm_recommender_roundtrip():
             model="dummy-provider/dummy-model",
             experiment_description="Optimize a direct arylation reaction.",
             objective_description="Maximize the reaction yield.",
-            format_instructions="Return a JSON array only.",
             recovery_model="dummy-provider/dummy-recovery-model",
             litellm_args={"temperature": 0.2},
             recovery_litellm_args={"temperature": 0.0},

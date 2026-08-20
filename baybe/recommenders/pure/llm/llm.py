@@ -49,9 +49,6 @@ class LLMRecommender(PureRecommender):
     objective_description: str = field(validator=(instance_of(str), min_len(1)))
     """Textual description of the optimization objective."""
 
-    format_instructions: str | None = field(default=None)
-    """Optional custom instructions for formatting the LLM's response."""
-
     recovery_model: str | None = field(default=None)
     """Optional model to use for recovery attempts.
 
@@ -118,7 +115,6 @@ class LLMRecommender(PureRecommender):
             objective=objective,
             measurements=measurements,
             pending_experiments=pending_experiments,
-            format_instructions=self.format_instructions,
         )
 
     def _parse_llm_response(
@@ -161,7 +157,6 @@ class LLMRecommender(PureRecommender):
             recommender_name=self.__class__.__name__,
             error=error,
             original_response=original_response,
-            format_instructions=self.format_instructions,
         )
 
         litellm_args = (
