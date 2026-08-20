@@ -85,7 +85,7 @@ from baybe.utils.dataframe import (
 
 # Recommenders excluded from automatic subclass enumeration because they cannot be
 # default-constructed
-RECOMMENDERS_EXCLUDED_FROM_AUTOTEST: frozenset[type] = frozenset({LLMRecommender})
+RECOMMENDERS_EXCLUDED_FROM_AUTOTEST: set[type] = {LLMRecommender}
 
 
 def default_constructible_recommenders(base: type) -> list[type]:
