@@ -49,7 +49,7 @@ autodoc_type_aliases = {
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "BayBE"
-copyright = "2022-2025 Merck KGaA, Darmstadt, Germany and/or its affiliates. All rights reserved."  # noqa
+copyright = "2022-2026 Merck KGaA, Darmstadt, Germany and/or its affiliates. All rights reserved."  # noqa
 author = "Merck KGaA, Darmstadt, Germany"
 
 
