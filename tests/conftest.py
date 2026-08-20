@@ -88,14 +88,15 @@ from baybe.utils.dataframe import (
 RECOMMENDERS_EXCLUDED_FROM_AUTOTEST: set[type] = {LLMRecommender}
 
 
-def default_constructible_recommenders(base: type) -> list[type]:
-    """Return subclasses of ``base`` that can be constructed without arguments.
+def autotestable_recommenders(base: type) -> list[type]:
+    """Return subclasses of ``base`` eligible for automatic testing.
 
     Args:
         base: The recommender base class whose subclasses are enumerated.
 
     Returns:
-        The subclasses of ``base`` excluding those that cannot be default-constructed.
+        The subclasses of ``base`` excluding those in
+        :data:`RECOMMENDERS_EXCLUDED_FROM_AUTOTEST`.
     """
     return [
         cls
