@@ -164,7 +164,11 @@ class LLMRecommender(PureRecommender):
             format_instructions=self.format_instructions,
         )
 
-        litellm_args = self.recovery_litellm_args or self.litellm_args
+        litellm_args = (
+            self.recovery_litellm_args
+            if self.recovery_litellm_args is not None
+            else self.litellm_args
+        )
         try:
             response = completion(
                 model=self.recovery_model or self.model,
