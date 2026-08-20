@@ -21,7 +21,14 @@ from baybe.searchspace.core import SearchSpaceType
 from baybe.utils.conversion import to_string
 from baybe.utils.validation import preprocess_dataframe
 
+# Keys that are wired in by the recommender itself and must not be overridden.
 _RESERVED_LITELLM_KEYS = frozenset({"model", "messages"})
+
+# Credential keys that LiteLLM accepts inline but must be supplied via environment
+# variables instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY). Blocking them at
+# construction time prevents accidental exposure in logs, __str__, and serialized
+# campaign files.
+_CREDENTIAL_LITELLM_KEYS = frozenset({"api_key", "api_base", "api_version"})
 
 
 @define(slots=False)
@@ -56,27 +63,41 @@ class LLMRecommender(PureRecommender):
     """
 
     litellm_args: dict[str, Any] = field(factory=dict, converter=dict)
-    """Additional arguments to pass to LiteLLM."""
+    """Additional arguments to pass to LiteLLM (e.g. ``temperature``, ``max_tokens``).
+
+    API credentials must **not** be passed here — they would be stored in plain text
+    and appear in logs and serialized campaign files. Configure them via the
+    environment variables that LiteLLM reads automatically based on the model prefix
+    (e.g. ``OPENAI_API_KEY``, ``ANTHROPIC_API_KEY``).
+    """
 
     recovery_litellm_args: dict[str, Any] | None = field(default=None)
     """Optional arguments to pass to LiteLLM during recovery attempts.
 
-    If ``None``, uses the same arguments as the main recommendations.
+    If ``None``, uses the same arguments as the main recommendations. The same
+    credential restriction as for :attr:`litellm_args` applies.
     """
 
     @litellm_args.validator
     def _validate_litellm_args(self, attribute, value):  # noqa: DOC101, DOC103
-        """Validate litellm_args does not contain reserved keys."""
+        """Validate litellm_args does not contain reserved or credential keys."""
         conflicts = _RESERVED_LITELLM_KEYS & set(value.keys())
         if conflicts:
             raise ValueError(
                 f"'litellm_args' must not contain keys that are set explicitly: "
                 f"{conflicts}. Use the dedicated class attributes instead."
             )
+        cred_conflicts = _CREDENTIAL_LITELLM_KEYS & set(value.keys())
+        if cred_conflicts:
+            raise ValueError(
+                f"'litellm_args' must not contain credential keys {cred_conflicts}. "
+                f"Supply credentials via environment variables instead "
+                f"(e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY)."
+            )
 
     @recovery_litellm_args.validator
     def _validate_recovery_litellm_args(self, attribute, value):  # noqa: DOC101, DOC103
-        """Validate recovery_litellm_args does not contain reserved keys."""
+        """Validate recovery_litellm_args has no reserved or credential keys."""
         if value is None:
             return
         conflicts = _RESERVED_LITELLM_KEYS & set(value.keys())
@@ -84,6 +105,13 @@ class LLMRecommender(PureRecommender):
             raise ValueError(
                 f"'recovery_litellm_args' must not contain keys that are set "
                 f"explicitly: {conflicts}. Use the dedicated class attributes instead."
+            )
+        cred_conflicts = _CREDENTIAL_LITELLM_KEYS & set(value.keys())
+        if cred_conflicts:
+            raise ValueError(
+                f"'recovery_litellm_args' must not contain credential keys "
+                f"{cred_conflicts}. Supply credentials via environment variables "
+                f"instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY)."
             )
 
     def _construct_prompt(
