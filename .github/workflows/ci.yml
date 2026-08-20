@@ -82,7 +82,7 @@ jobs:
           persist-credentials: false
       - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
-          args: --root-dir ${{ github.workspace }} --config lychee.toml baybe docs examples README.md CONTRIBUTING.md CHANGELOG.md
+          args: --verbose --root-dir ${{ github.workspace }} --config lychee.toml baybe docs examples README.md CONTRIBUTING.md CHANGELOG.md
 
   build-docs:
     name: "Build Docs"
