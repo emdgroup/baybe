@@ -16,8 +16,8 @@ from typing_extensions import override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
-from baybe.exceptions import InfeasibilityError
-from baybe.parameters import TaskParameter
+from baybe.exceptions import IncompatibilityError, InfeasibilityError
+from baybe.parameters import GeneralityParameter, TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
@@ -33,6 +33,8 @@ from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    from torch import Tensor
+
     from baybe.parameters.selectors import ParameterSelectorProtocol
 
 
@@ -380,6 +382,68 @@ class SearchSpace(SerialMixin):
             # When there are no task parameters, we effectively have a single task
             return 1
         return len(task_param.values)
+
+    @property
+    def _generality_parameter(self) -> GeneralityParameter | None:
+        """The (single) generality parameter of the space, if it exists."""
+        params = [p for p in self.parameters if isinstance(p, GeneralityParameter)]
+
+        if not params:
+            return None
+
+        assert len(params) == 1
+        return params[0]
+
+    def _split_by_generality(
+        self,
+    ) -> tuple[SearchSpace, list[int], list[int], Tensor]:
+        """Split the search space into design subspace and generality context.
+
+        Separates the generality (context) parameter from the design parameters
+        and computes the associated comp-rep column indices and context values.
+
+        Raises:
+            IncompatibilityError: If constraints involve both design and generality
+                parameters.
+
+        Returns:
+            A tuple of (design_subspace, x_col_indices, w_col_indices, w_values)
+            where the indices refer to column positions in the full comp-rep and
+            w_values is the comp-rep encoding of all context values, shape (r, d_w).
+        """
+        import torch
+
+        gen_param = self._generality_parameter
+
+        x_params = [p for p in self.parameters if p.name != gen_param.name]
+        x_param_names = {p.name for p in x_params}
+
+        for c in self.constraints:
+            c_params = set(c.parameters)
+            if gen_param.name in c_params and bool(c_params & x_param_names):
+                raise IncompatibilityError(
+                    "Constraints involving both design parameters and the context "
+                    "parameter are not supported for generality optimization."
+                )
+
+        sample_row = self.discrete.exp_rep.head(1)
+        full_comp = self.transform(sample_row, allow_extra=True)
+        full_columns = list(full_comp.columns)
+
+        w_comp_columns = list(gen_param.comp_df.columns)
+        w_col_indices = [full_columns.index(c) for c in w_comp_columns]
+        x_col_indices = [i for i in range(len(full_columns)) if i not in w_col_indices]
+
+        w_values = torch.tensor(gen_param.comp_df.values, dtype=torch.float)
+
+        x_constraints = [
+            c for c in self.constraints if set(c.parameters) <= x_param_names
+        ]
+        design_subspace = SearchSpace.from_product(
+            parameters=x_params, constraints=x_constraints
+        )
+
+        return design_subspace, x_col_indices, w_col_indices, w_values
 
     @property
     def n_subsets(self) -> int:

@@ -9,7 +9,9 @@ from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
-from baybe.parameters.base import _DiscreteLabelLikeParameter
+from baybe.aggregation.aggregations import MeanAggregation
+from baybe.aggregation.base import AggregationFunction
+from baybe.parameters.base import DiscreteParameter, _DiscreteLabelLikeParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple, sort_tuple
@@ -86,6 +88,34 @@ class TaskParameter(CategoricalParameter):
 
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
+
+
+@define(frozen=True, slots=False)
+class GeneralityParameter(_DiscreteLabelLikeParameter):
+    """Parameter marking a discrete parameter as the context dimension."""
+
+    context: DiscreteParameter = field()
+    """Parameter for the contexts."""
+
+    aggregation: AggregationFunction = field(factory=MeanAggregation)
+    """Aggregation mode over contexts."""
+
+    @property
+    def encoding(self):
+        """The encoding of the context parameter."""
+        return self.context.encoding
+
+    @override
+    @property
+    def values(self) -> tuple:
+        """The values of the context parameter."""
+        return self.context.values
+
+    @override
+    @cached_property
+    def comp_df(self) -> pd.DataFrame:
+        """The comp_df of the context parameter."""
+        return self.context.comp_df
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
