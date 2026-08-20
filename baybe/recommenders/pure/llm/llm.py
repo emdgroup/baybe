@@ -19,7 +19,7 @@ from baybe.recommenders.pure.llm._prompts import build_prompt, build_recovery_pr
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.utils.conversion import to_string
-from baybe.utils.validation import preprocess_dataframe
+from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 # Keys that are wired in by the recommender itself and must not be overridden.
 _RESERVED_LITELLM_KEYS = frozenset({"model", "messages"})
@@ -252,10 +252,14 @@ class LLMRecommender(PureRecommender):
         """
         from baybe._optional.llm import completion
 
+        if objective is not None:
+            validate_object_names(searchspace.parameters + objective.targets)
+
         if measurements is not None:
             measurements = preprocess_dataframe(
                 measurements,
                 searchspace,
+                objective,
                 numerical_measurements_must_be_within_tolerance=False,
             )
 
