@@ -59,7 +59,7 @@ from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import create_fake_input
 from tests.conftest import (
     FAST_OPTIMIZATION_SETTINGS,
-    default_constructible_recommenders,
+    autotestable_recommenders,
     run_iterations,
 )
 
@@ -111,7 +111,7 @@ def _make_pure_recommender(cls: type[PureRecommender]) -> PureRecommender:
 #  allows no training data
 valid_discrete_recommenders = [
     TwoPhaseMetaRecommender(recommender=_make_pure_recommender(cls))
-    for cls in default_constructible_recommenders(PureRecommender)
+    for cls in autotestable_recommenders(PureRecommender)
     if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
@@ -119,7 +119,7 @@ valid_discrete_recommenders = [
 #  allows no training data
 valid_continuous_recommenders = [
     TwoPhaseMetaRecommender(recommender=_make_pure_recommender(cls))
-    for cls in default_constructible_recommenders(PureRecommender)
+    for cls in autotestable_recommenders(PureRecommender)
     if cls.compatibility
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
@@ -224,7 +224,7 @@ def _dedup_ids(ids: list[str]) -> list[str]:
 #  allows no training data
 valid_hybrid_recommenders = [
     TwoPhaseMetaRecommender(recommender=_make_pure_recommender(cls))
-    for cls in default_constructible_recommenders(PureRecommender)
+    for cls in autotestable_recommenders(PureRecommender)
     if cls.compatibility == SearchSpaceType.HYBRID
 ]
 # List of BotorchRecommenders with different sampling strategies.
