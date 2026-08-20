@@ -1,16 +1,18 @@
-"""Utility for checking the links of the documentation."""
+"""Utility for checking the cross-references of the documentation."""
 
 from subprocess import check_call
 
 
 def check_links() -> None:
-    """Check whether the links of the documentation are valid."""
-    link_call = [
-        "sphinx-build",
-        "-b",
-        "linkcheck",
-        "docs",
-        "docs/build",
-    ]
-
-    check_call(link_call)
+    """Check that documentation cross-references resolve (external links: lychee)."""
+    check_call(
+        [
+            "sphinx-build",
+            "-b",
+            "dummy",
+            "docs",
+            "docs/build",
+            "-n",
+            "-W",
+        ]
+    )
