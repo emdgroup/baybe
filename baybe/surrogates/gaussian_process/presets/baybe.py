@@ -268,7 +268,7 @@ class _BayBETaskKernelFactory(_BayBEIndexKernelFactory):
 
     @override
     def _n_index(self, searchspace: SearchSpace) -> int:
-        return searchspace.n_tasks
+        return searchspace._n_tasks
 
 
 @define
@@ -337,7 +337,7 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
         # transfer learning (TaskParameter) and categorical multi-fidelity
         # (CategoricalFidelityParameter).
         uses_index_kernel = (
-            searchspace.task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
+            searchspace._task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
             or searchspace._fidelity_type
             is SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
         )

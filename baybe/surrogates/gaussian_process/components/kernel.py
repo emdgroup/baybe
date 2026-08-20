@@ -266,7 +266,7 @@ def _enable_mechanism(
             # only triggers on the parameter that activates it.
             if (
                 transfer_learning
-                and searchspace.task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
+                and searchspace._task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
             ) or (
                 multi_fidelity
                 and searchspace._fidelity_type
@@ -425,7 +425,7 @@ class ICMKernelFactory(_MetaKernelFactory):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-        is_task = searchspace.task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
+        is_task = searchspace._task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
         is_categorical_fidelity = (
             searchspace._fidelity_type
             is SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
@@ -455,8 +455,8 @@ class ICMKernelFactory(_MetaKernelFactory):
         # The index dimension is either the task or the categorical fidelity column —
         # exactly one is non-None after the guard at the start of this method.
         index_idx = (
-            searchspace.task_idx
-            if searchspace.task_idx is not None
+            searchspace._task_idx
+            if searchspace._task_idx is not None
             else searchspace._fidelity_idx
         )
         all_idcs = set(range(len(searchspace.comp_rep_columns)))

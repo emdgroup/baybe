@@ -97,7 +97,7 @@ def _posterior_stats_botorch(
     # >>>>> Code adapted from BoTorch landing page: https://botorch.org/ >>>>>
     # NOTE: We normalize according to the searchspace bounds to ensure consistency with
     #       the BayBE GP implementation.
-    if searchspace.n_tasks == 1:
+    if searchspace._n_tasks == 1:
         gp = SingleTaskGP(
             train_X=train_X,
             train_Y=train_Y,
@@ -108,14 +108,14 @@ def _posterior_stats_botorch(
             outcome_transform=Standardize(m=1),
         )
     else:
-        assert searchspace.task_idx is not None
+        assert searchspace._task_idx is not None
         non_task_idcs = [
-            i for i in range(train_X.shape[-1]) if i != searchspace.task_idx
+            i for i in range(train_X.shape[-1]) if i != searchspace._task_idx
         ]
         gp = MultiTaskGP(
             train_X=train_X,
             train_Y=train_Y,
-            task_feature=searchspace.task_idx,
+            task_feature=searchspace._task_idx,
             input_transform=Normalize(
                 d=len(searchspace.comp_rep_columns),
                 indices=non_task_idcs,

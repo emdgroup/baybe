@@ -44,7 +44,7 @@ def test_reduced_comp_rep_columns(reduced_searchspace):
 
 def test_reduced_n_tasks(reduced_searchspace):
     """Verify that n_tasks is 1 when no task parameter is present."""
-    assert reduced_searchspace.n_tasks == 1
+    assert reduced_searchspace._n_tasks == 1
 
 
 def test_reduced_get_n_comp_rep_columns(reduced_searchspace):

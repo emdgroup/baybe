@@ -81,11 +81,11 @@ class BotorchKernelFactory(_PureKernelFactory):
         )
 
         # Single-index case: task or categorical fidelity
-        if (task_idx := searchspace.task_idx) is not None:
+        if (task_idx := searchspace._task_idx) is not None:
             task_prior = BetaPrior(concentration1=2.5, concentration0=1.5)
             index_kernel = PositiveIndexKernel(
-                num_tasks=searchspace.n_tasks,
-                rank=searchspace.n_tasks,
+                num_tasks=searchspace._n_tasks,
+                rank=searchspace._n_tasks,
                 task_prior=task_prior,
                 active_dims=[task_idx],
             )

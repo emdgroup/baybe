@@ -445,7 +445,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             return
 
         # Check if transfer learning capabilities are needed
-        if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
+        if (searchspace._n_tasks > 1) and (not self.supports_transfer_learning):
             raise ValueError(
                 f"The search space contains task parameters but the selected "
                 f"surrogate model type ({self.__class__.__name__}) does not "

@@ -296,7 +296,7 @@ class GaussianProcessSurrogate(Surrogate):
             )
 
         if (
-            searchspace.task_idx is not None
+            searchspace._task_idx is not None
             and self._custom_kernel
             and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
         ):

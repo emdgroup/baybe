@@ -73,8 +73,8 @@ class HvarfnerKernelFactory(_PureKernelFactory):
         )
 
         # Single-index case
-        if (task_idx := searchspace.task_idx) is not None:
-            n_index_levels = searchspace.n_tasks
+        if (task_idx := searchspace._task_idx) is not None:
+            n_index_levels = searchspace._n_tasks
             index_dim = task_idx
         elif (fidelity_idx := searchspace._fidelity_idx) is not None:
             if (
@@ -113,12 +113,12 @@ class HvarfnerMeanFactory(MeanFactoryProtocol):
             HadamardConstantMean,
         )
 
-        if searchspace.n_tasks == 1:
+        if searchspace._n_tasks == 1:
             return ConstantMean()
 
-        assert searchspace.task_idx is not None
+        assert searchspace._task_idx is not None
         return HadamardConstantMean(
-            ConstantMean(), searchspace.n_tasks, searchspace.task_idx
+            ConstantMean(), searchspace._n_tasks, searchspace._task_idx
         )
 
 
@@ -130,7 +130,7 @@ class HvarfnerLikelihoodFactory(LikelihoodFactoryProtocol):
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> GPyTorchLikelihood:
 
-        if searchspace.n_tasks == 1:
+        if searchspace._n_tasks == 1:
             from botorch.models.utils.gpytorch_modules import (
                 get_gaussian_likelihood_with_lognormal_prior,
             )
@@ -141,9 +141,9 @@ class HvarfnerLikelihoodFactory(LikelihoodFactoryProtocol):
             make_botorch_multitask_likelihood,
         )
 
-        assert searchspace.task_idx is not None
+        assert searchspace._task_idx is not None
         return make_botorch_multitask_likelihood(
-            num_tasks=searchspace.n_tasks, task_feature=searchspace.task_idx
+            num_tasks=searchspace._n_tasks, task_feature=searchspace._task_idx
         )
 
 

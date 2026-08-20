@@ -315,7 +315,7 @@ class SearchSpace(SerialMixin):
         return params[0]
 
     @property
-    def task_idx(self) -> int | None:
+    def _task_idx(self) -> int | None:
         """Column index of the task parameter in computational representation."""
         if (task_param := self._task_parameter) is None:
             return None
@@ -334,11 +334,11 @@ class SearchSpace(SerialMixin):
         if (fidelity_param := self._fidelity_parameter) is None:
             return None
         # TODO: Adjustment after merge of candidates rework necessary (refactor the
-        #   comp-rep index lookup as described in `task_idx`).
+        #   comp-rep index lookup as described in `_task_idx`).
         return cast(int, self.discrete.comp_rep.columns.get_loc(fidelity_param.name))
 
     @property
-    def n_tasks(self) -> int:
+    def _n_tasks(self) -> int:
         """The number of tasks encoded in the search space."""
         # TODO [16932]: This approach only works for a single task parameter. For
         #  multiple task parameters, we need to align what the output should even
@@ -353,14 +353,14 @@ class SearchSpace(SerialMixin):
     def _n_fidelities(self) -> int:
         """The number of fidelities encoded in the search space."""
         # TODO: Generalize the fidelity-count semantics to multiple fidelity
-        # parameters, consistent with the task-count semantics in `n_tasks`.
+        # parameters, consistent with the task-count semantics in `_n_tasks`.
         if (fidelity_param := self._fidelity_parameter) is None:
             # No fidelity parameter means we effectively have a single fidelity.
             return 1
         return len(fidelity_param.values)
 
     @property
-    def task_type(self) -> SearchSpaceTaskType:
+    def _task_type(self) -> SearchSpaceTaskType:
         """Return the task type of the search space."""
         if self._task_parameter is None:
             return SearchSpaceTaskType.SINGLE_TASK
@@ -685,7 +685,7 @@ class _ReducedSearchSpace(SearchSpace):
             "constraints",
             "type",
             "_task_parameter",
-            "n_tasks",
+            "_n_tasks",
             "_get_n_comp_rep_columns",
             "get_parameters_by_name",
             "_ALLOWED_ATTRIBUTES",

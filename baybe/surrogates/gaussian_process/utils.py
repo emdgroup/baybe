@@ -32,7 +32,7 @@ class _ModelContext:
     @property
     def task_idx(self) -> int | None:
         """The computational column index of the task parameter, if available."""
-        return self.searchspace.task_idx
+        return self.searchspace._task_idx
 
     @property
     def is_multitask(self) -> bool:
@@ -48,7 +48,7 @@ class _ModelContext:
     @property
     def n_tasks(self) -> int:
         """The number of tasks."""
-        return self.searchspace.n_tasks
+        return self.searchspace._n_tasks
 
     @property
     def n_fidelity_dimensions(self) -> int:
