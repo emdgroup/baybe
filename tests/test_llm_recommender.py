@@ -464,6 +464,50 @@ def test_initialization_validation():
         )
 
 
+@pytest.mark.parametrize(
+    "key",
+    ["model", "messages"],
+    ids=["reserved_model", "reserved_messages"],
+)
+def test_litellm_args_rejects_reserved_keys(key):
+    """Reserved LiteLLM keys raise during construction."""
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    with pytest.raises(ValueError, match="must not contain keys that are set"):
+        LLMRecommender(
+            model="m",
+            experiment_description="desc",
+            objective_description="obj",
+            litellm_args={key: "value"},
+        )
+
+
+@pytest.mark.parametrize(
+    "key",
+    ["api_key", "api_base", "api_version"],
+    ids=["api_key", "api_base", "api_version"],
+)
+def test_litellm_args_rejects_credential_keys(key):
+    """Credential keys in litellm_args raise during construction."""
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    with pytest.raises(ValueError, match="must not contain credential keys"):
+        LLMRecommender(
+            model="m",
+            experiment_description="desc",
+            objective_description="obj",
+            litellm_args={key: "secret"},
+        )
+
+    with pytest.raises(ValueError, match="must not contain credential keys"):
+        LLMRecommender(
+            model="m",
+            experiment_description="desc",
+            objective_description="obj",
+            recovery_litellm_args={key: "secret"},
+        )
+
+
 def test_str_representation(recommender):
     """String representation includes key information."""
     s = str(recommender)
