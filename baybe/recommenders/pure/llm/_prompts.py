@@ -65,9 +65,6 @@ For each suggestion, provide:
 1. A brief explanation of why you chose these values
 2. The values for each parameter
 
-{% if format_instructions is not none %}
-{{ format_instructions }}
-{% else %}
 Format your response as a JSON array of objects with the following structure \
 (no backticks):
 [
@@ -81,7 +78,6 @@ Format your response as a JSON array of objects with the following structure \
   },
   ...
 ]
-{% endif %}
 """
 
 _RECOVERY_PROMPT_TEMPLATE = """\
@@ -105,9 +101,6 @@ Allowed values: {{ param.values }}
 {% endfor %}
 
 Please provide a corrected JSON response that follows the required format:
-{% if format_instructions is not none %}
-{{ format_instructions }}
-{% else %}
 [
   {
     "explanation": "Brief explanation of the suggestion",
@@ -118,8 +111,7 @@ Please provide a corrected JSON response that follows the required format:
     }
   },
   ...
-]
-{% endif %}\
+]\
 """
 
 
@@ -176,7 +168,6 @@ def build_prompt(
     objective: Objective | None,
     measurements: pd.DataFrame | None,
     pending_experiments: pd.DataFrame | None,
-    format_instructions: str | None,
 ) -> str:
     """Construct the main prompt for the language model.
 
@@ -189,7 +180,6 @@ def build_prompt(
         objective: Optional objective to include in the prompt.
         measurements: Optional measurements to include in the prompt.
         pending_experiments: Optional pending experiments to include in the prompt.
-        format_instructions: Optional custom response-formatting instructions.
 
     Returns:
         The constructed prompt.
@@ -206,7 +196,6 @@ def build_prompt(
         measurements=measurements,
         pending_experiments=pending_experiments,
         batch_size=batch_size,
-        format_instructions=format_instructions,
     )
 
 
@@ -216,7 +205,6 @@ def build_recovery_prompt(
     recommender_name: str,
     error: Exception,
     original_response: str,
-    format_instructions: str | None,
 ) -> str:
     """Construct the recovery prompt asking the model to correct a malformed response.
 
@@ -225,7 +213,6 @@ def build_recovery_prompt(
         recommender_name: The name of the recommender, used in error messages.
         error: The error that occurred during parsing.
         original_response: The original malformed response.
-        format_instructions: Optional custom response-formatting instructions.
 
     Returns:
         The constructed recovery prompt.
@@ -238,5 +225,4 @@ def build_recovery_prompt(
         error=str(error),
         original_response=original_response,
         parameters=parameters,
-        format_instructions=format_instructions,
     )
