@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 import math
+import warnings
 from json import JSONDecodeError
 
 import pandas as pd
 
-from baybe.exceptions import LLMResponseError
+from baybe.exceptions import LLMResponseError, LLMResponseWarning
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
@@ -46,7 +47,14 @@ def parse_llm_response(response: str, searchspace: SearchSpace) -> pd.DataFrame:
         A DataFrame containing the parsed recommendations.
 
     Raises:
-        LLMResponseError: If the response cannot be parsed or contains invalid values.
+        LLMResponseError: If the response cannot be parsed, contains invalid parameter
+            values, or violates any discrete constraint (including batch constraints)
+            present in the search space.
+
+    Warns:
+        LLMResponseWarning: If the search space contains continuous constraints.
+            Continuous constraints cannot be validated after the fact, so compliance
+            of the LLM suggestions with such constraints is not guaranteed.
     """
     payload = extract_json_array(response) if isinstance(response, str) else response
     try:
@@ -143,5 +151,38 @@ def parse_llm_response(response: str, searchspace: SearchSpace) -> pd.DataFrame:
                 # Categorical values from JSON are strings; cast to canonical
                 allowed_map = {str(a): a for a in allowed}
                 df[param.name] = [allowed_map.get(str(v), v) for v in values]
+
+    continuous_constraints = (
+        *searchspace.continuous.constraints_lin_eq,
+        *searchspace.continuous.constraints_lin_ineq,
+        *searchspace.continuous.constraints_nonlin,
+    )
+    if continuous_constraints:
+        names = ", ".join(f"'{type(c).__name__}'" for c in continuous_constraints)
+        warnings.warn(
+            f"The search space contains continuous constraints ({names}) that cannot "
+            f"be validated. The LLM suggestions may violate these constraints.",
+            LLMResponseWarning,
+            stacklevel=2,
+        )
+
+    for constraint in searchspace.discrete.constraints:
+        invalid_idx = constraint.get_invalid(df)
+        if not invalid_idx.empty:
+            raise LLMResponseError(
+                f"{len(invalid_idx)} suggestion(s) violate the "
+                f"'{type(constraint).__name__}' constraint on parameters "
+                f"{constraint.parameters}."
+            )
+
+    for constraint in searchspace.discrete.constraints_batch:
+        param_name = constraint.parameters[0]
+        unique_values = df[param_name].unique()
+        if len(unique_values) > 1:
+            raise LLMResponseError(
+                f"Suggestions violate 'DiscreteBatchConstraint' on parameter "
+                f"'{param_name}': all suggestions in a batch must share the same "
+                f"value, but received {list(unique_values)}."
+            )
 
     return df
