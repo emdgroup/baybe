@@ -22,12 +22,23 @@ experimental conditions based on the following information:
 EXPERIMENT DESCRIPTION:
 {{ experiment_description }}
 
-OPTIMIZATION OBJECTIVE:
-{{ objective_description }}
-
 {% if objective is not none %}
+{% if objective.metadata.description is not none %}
+OPTIMIZATION OBJECTIVE:
+{{ objective.metadata.description }}
+
+{% endif %}
 OPTIMIZATION TARGETS:
-{{ objective }}
+{% for target in objective.targets %}
+Target: {{ target.name }}
+{% if target.metadata.description is not none %}
+Description: {{ target.metadata.description }}
+{% endif %}
+{% if target.metadata.unit is not none %}
+Unit: {{ target.metadata.unit }}
+{% endif %}
+
+{% endfor %}
 {% endif %}
 PARAMETERS:
 {% for param in parameters %}
@@ -164,7 +175,6 @@ def build_prompt(
     recommender_name: str,
     batch_size: int,
     experiment_description: str,
-    objective_description: str,
     objective: Objective | None,
     measurements: pd.DataFrame | None,
     pending_experiments: pd.DataFrame | None,
@@ -176,8 +186,10 @@ def build_prompt(
         recommender_name: The name of the recommender, used in error messages.
         batch_size: The number of recommendations to generate.
         experiment_description: Textual description of the experiment.
-        objective_description: Textual description of the optimization objective.
-        objective: Optional objective to include in the prompt.
+        objective: Optional objective to include in the prompt. Set
+            :attr:`baybe.objectives.base.Objective.metadata` to provide the
+            language model with a description of what to optimize and per-target
+            context such as units and descriptions.
         measurements: Optional measurements to include in the prompt.
         pending_experiments: Optional pending experiments to include in the prompt.
 
@@ -190,7 +202,6 @@ def build_prompt(
     template = Template(_PROMPT_TEMPLATE, trim_blocks=True, lstrip_blocks=True)
     return template.render(
         experiment_description=experiment_description,
-        objective_description=objective_description,
         objective=objective,
         parameters=parameters,
         measurements=measurements,
