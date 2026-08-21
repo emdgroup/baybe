@@ -27,6 +27,7 @@ from baybe.kernels.basic import (
 )
 from baybe.kernels.composite import ScaleKernel
 from baybe.objectives.pareto import ParetoObjective
+from baybe.parameters import NumericalContinuousParameter
 from baybe.priors import (
     GammaPrior,
     HalfCauchyPrior,
@@ -368,6 +369,25 @@ def test_non_batching_acqfs(ongoing_campaign, n_iterations, batch_size):
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_kernels(ongoing_campaign, n_iterations, batch_size):
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        [
+            NumericalContinuousParameter("x1", (0, 1)),
+            NumericalContinuousParameter("x2", (0, 1), kernel_override=RBFKernel()),
+        ]
+    ],
+    ids=["parameter_kernel_override"],
+)
+@pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
+def test_parameter_kernel_override_iteration(
+    ongoing_campaign, n_iterations, batch_size
+):
+    """A complete optimization iteration supports a parameter kernel override."""
     run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
