@@ -161,6 +161,9 @@ kernel = ScaleKernel(
 kernel = MaternKernel(parameter_names=["Param_A", "Param_B"])
 ```
 
+For a convenience interface that assigns a kernel directly to one parameter, see
+{ref}`parameter_kernel_overrides`.
+
 #### Presets
 
 Providing customized GP configurations on the component level is powerful for expert
