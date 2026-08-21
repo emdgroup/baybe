@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gc
-import warnings
 from typing import Any, ClassVar
 
 import pandas as pd
@@ -11,7 +10,7 @@ from attrs import define, field
 from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
-from baybe.exceptions import LLMResponseError, LLMResponseWarning
+from baybe.exceptions import LLMResponseError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.llm._parsing import parse_llm_response
@@ -247,8 +246,9 @@ class LLMRecommender(PureRecommender):
             A DataFrame containing the recommendations as individual rows.
 
         Raises:
-            LLMResponseError: If the call to the language model fails, or if its
-                response cannot be parsed and recovery fails.
+            LLMResponseError: If the call to the language model fails, if its
+                response cannot be parsed and recovery fails, or if the number of
+                suggestions is less than the requested batch size.
         """
         from baybe._optional.llm import completion
 
@@ -302,11 +302,9 @@ class LLMRecommender(PureRecommender):
             output = self._attempt_recovery(e, content, searchspace)
 
         if len(output) < batch_size:
-            warnings.warn(
+            raise LLMResponseError(
                 f"LLM returned {len(output)} suggestions instead of the "
-                f"requested {batch_size}.",
-                LLMResponseWarning,
-                stacklevel=2,
+                f"requested {batch_size}."
             )
 
         return output.head(batch_size)
