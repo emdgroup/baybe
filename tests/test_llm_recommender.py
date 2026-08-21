@@ -465,33 +465,21 @@ def test_initialization_validation():
 
 
 @pytest.mark.parametrize(
-    "key",
-    ["model", "messages"],
-    ids=["reserved_model", "reserved_messages"],
+    ("key", "phrase"),
+    [
+        ("api_key", "credential keys"),
+        ("api_base", "credential keys"),
+        ("api_version", "credential keys"),
+        ("model", "keys that are set"),
+        ("messages", "keys that are set"),
+    ],
+    ids=["api_key", "api_base", "api_version", "model", "messages"],
 )
-def test_litellm_args_rejects_reserved_keys(key):
-    """Reserved LiteLLM keys raise during construction."""
+def test_construction_rejects_protected_keys(key, phrase):
+    """Credential or preset keys raise during construction."""
     from baybe.recommenders.pure.llm.llm import LLMRecommender
 
-    with pytest.raises(ValueError, match="must not contain keys that are set"):
-        LLMRecommender(
-            model="m",
-            experiment_description="desc",
-            objective_description="obj",
-            litellm_args={key: "value"},
-        )
-
-
-@pytest.mark.parametrize(
-    "key",
-    ["api_key", "api_base", "api_version"],
-    ids=["api_key", "api_base", "api_version"],
-)
-def test_litellm_args_rejects_credential_keys(key):
-    """Credential keys in litellm_args raise during construction."""
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
-    with pytest.raises(ValueError, match="must not contain credential keys"):
+    with pytest.raises(ValueError, match=f"must not contain {phrase}"):
         LLMRecommender(
             model="m",
             experiment_description="desc",
@@ -499,7 +487,7 @@ def test_litellm_args_rejects_credential_keys(key):
             litellm_args={key: "secret"},
         )
 
-    with pytest.raises(ValueError, match="must not contain credential keys"):
+    with pytest.raises(ValueError, match=f"must not contain {phrase}"):
         LLMRecommender(
             model="m",
             experiment_description="desc",
