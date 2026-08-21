@@ -540,6 +540,25 @@ def test_parse_llm_response_rejects_batch_constraint_violation():
         rec._parse_llm_response(response, space)
 
 
+def test_parse_llm_response_aligns_index_with_exp_rep():
+    """Returned DataFrame index matches the exp_rep index of the search space."""
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    parameters = [
+        NumericalDiscreteParameter("x", values=[1, 2, 3]),
+        NumericalDiscreteParameter("y", values=[10, 20, 30]),
+    ]
+    space = SearchSpace.from_product(parameters=parameters)
+    rec = LLMRecommender(model="m", experiment_description="test")
+
+    # Suggest the last row of exp_rep — its index is not 0
+    last_row = space.discrete.exp_rep.iloc[-1]
+    response = _make_suggestions([{"x": last_row["x"], "y": last_row["y"]}])
+    result = rec._parse_llm_response(response, space)
+
+    assert list(result.index) == [space.discrete.exp_rep.index[-1]]
+
+
 def test_parse_llm_response_warns_for_continuous_constraints():
     """A warning is issued when the search space has continuous constraints."""
     from baybe.constraints.continuous import ContinuousLinearConstraint

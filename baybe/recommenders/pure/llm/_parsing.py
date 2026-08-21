@@ -185,4 +185,25 @@ def parse_llm_response(response: str, searchspace: SearchSpace) -> pd.DataFrame:
                 f"value, but received {list(unique_values)}."
             )
 
+    # Recover exp_rep index so campaign metadata tracking works correctly,
+    # analogous to the merge-based alignment in the Botorch hybrid recommender.
+    discrete_param_names = [p.name for p in searchspace.discrete.parameters]
+    if discrete_param_names:
+        exp_rep = searchspace.discrete.exp_rep
+        _IDX_COL = "__exp_rep_idx__"
+        exp_lookup = exp_rep[discrete_param_names].copy()
+        exp_lookup[_IDX_COL] = exp_rep.index
+        aligned_index = pd.Index(
+            df[discrete_param_names]
+            .merge(exp_lookup, on=discrete_param_names, how="left")[_IDX_COL]
+            .values
+        )
+        continuous_param_names = [p.name for p in searchspace.continuous.parameters]
+        if continuous_param_names:
+            rec_disc = exp_rep.loc[aligned_index]
+            rec_cont = df[continuous_param_names].set_axis(aligned_index)
+            return pd.concat([rec_disc, rec_cont], axis=1)
+        else:
+            return exp_rep.loc[aligned_index]
+
     return df
