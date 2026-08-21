@@ -8,13 +8,28 @@ import pandas as pd
 import pytest
 
 from baybe._optional.info import LLM_INSTALLED
-from baybe.exceptions import LLMResponseError
+from baybe.constraints.conditions import SubSelectionCondition, ThresholdCondition
+from baybe.constraints.discrete import (
+    DiscreteBatchConstraint,
+    DiscreteCardinalityConstraint,
+    DiscreteConstraint,
+    DiscreteCustomConstraint,
+    DiscreteDependenciesConstraint,
+    DiscreteExcludeConstraint,
+    DiscreteLinkedParametersConstraint,
+    DiscreteNoLabelDuplicatesConstraint,
+    DiscretePermutationInvarianceConstraint,
+    DiscreteProductConstraint,
+    DiscreteSumConstraint,
+)
+from baybe.exceptions import LLMResponseError, LLMResponseWarning
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
 from baybe.searchspace import SearchSpace
+from baybe.utils.basic import get_subclasses
 
 pytestmark = pytest.mark.skipif(
     not LLM_INSTALLED, reason="LLM dependencies not installed"
@@ -363,6 +378,189 @@ def test_parse_llm_response_errors(
     """Malformed responses raise LLMResponseError with descriptive messages."""
     with pytest.raises(LLMResponseError, match=error_match):
         recommender._parse_llm_response(response_content, searchspace)
+
+
+# ---------------------------------------------------------------------------
+# Constraint violation test cases — one per concrete DiscreteConstraint class
+# (except DiscreteBatchConstraint, which is tested separately below).
+#
+# Each entry maps a constraint class to (parameters, constraints, violations)
+# where violations is a list of suggestion dicts that individually satisfy all
+# parameter bounds/values but violate the constraint as a combination or batch.
+# ---------------------------------------------------------------------------
+_ROW_CONSTRAINT_VIOLATION_CASES = {
+    DiscreteExcludeConstraint: (
+        [
+            NumericalDiscreteParameter("x", values=[1, 2, 3]),
+            CategoricalParameter("y", values=["a", "b", "c"]),
+        ],
+        [
+            DiscreteExcludeConstraint(
+                parameters=["x", "y"],
+                conditions=[
+                    SubSelectionCondition(selection=[2]),
+                    SubSelectionCondition(selection=["b"]),
+                ],
+                combiner="AND",
+            )
+        ],
+        [{"x": 2, "y": "b"}],
+    ),
+    DiscreteSumConstraint: (
+        [
+            NumericalDiscreteParameter("a", values=[1, 2, 3]),
+            NumericalDiscreteParameter("b", values=[1, 2, 3]),
+        ],
+        [
+            DiscreteSumConstraint(
+                parameters=["a", "b"],
+                condition=ThresholdCondition(threshold=6.0, operator="="),
+            )
+        ],
+        [{"a": 1, "b": 1}],  # sum=2, required sum=6
+    ),
+    DiscreteProductConstraint: (
+        [
+            NumericalDiscreteParameter("a", values=[1, 2, 3]),
+            NumericalDiscreteParameter("b", values=[1, 2, 3]),
+        ],
+        [
+            DiscreteProductConstraint(
+                parameters=["a", "b"],
+                condition=ThresholdCondition(threshold=6.0, operator=">="),
+            )
+        ],
+        [{"a": 1, "b": 1}],  # product=1, required product>=6
+    ),
+    DiscreteNoLabelDuplicatesConstraint: (
+        [
+            CategoricalParameter("x", values=["A", "B", "C"]),
+            CategoricalParameter("y", values=["A", "B", "C"]),
+        ],
+        [DiscreteNoLabelDuplicatesConstraint(parameters=["x", "y"])],
+        [{"x": "A", "y": "A"}],  # duplicate label across parameters
+    ),
+    DiscreteLinkedParametersConstraint: (
+        [
+            NumericalDiscreteParameter("x", values=[1, 2, 3]),
+            NumericalDiscreteParameter("y", values=[1, 2, 3]),
+        ],
+        [DiscreteLinkedParametersConstraint(parameters=["x", "y"])],
+        [{"x": 1, "y": 2}],  # x and y must be equal
+    ),
+    DiscreteDependenciesConstraint: (
+        [
+            CategoricalParameter("switch", values=["on", "off"]),
+            CategoricalParameter("mode", values=["fast", "slow"]),
+        ],
+        [
+            DiscreteDependenciesConstraint(
+                parameters=["switch"],
+                conditions=[SubSelectionCondition(selection=["on"])],
+                affected_parameters=[["mode"]],
+            )
+        ],
+        # when switch="off" mode is irrelevant: two "off" rows are duplicates
+        [{"switch": "off", "mode": "fast"}, {"switch": "off", "mode": "slow"}],
+    ),
+    DiscretePermutationInvarianceConstraint: (
+        [
+            NumericalDiscreteParameter("a", values=[1, 2, 3]),
+            NumericalDiscreteParameter("b", values=[1, 2, 3]),
+        ],
+        [DiscretePermutationInvarianceConstraint(parameters=["a", "b"])],
+        # (1,2) and (2,1) are permutation-equivalent; the second is a duplicate
+        [{"a": 1, "b": 2}, {"a": 2, "b": 1}],
+    ),
+    DiscreteCustomConstraint: (
+        [NumericalDiscreteParameter("x", values=[1, 2, 3])],
+        [DiscreteCustomConstraint(parameters=["x"], validator=lambda df: df["x"] != 2)],
+        [{"x": 2}],  # custom validator rejects x=2
+    ),
+    DiscreteCardinalityConstraint: (
+        [
+            NumericalDiscreteParameter("a", values=[0, 1, 2]),
+            NumericalDiscreteParameter("b", values=[0, 1, 2]),
+        ],
+        [DiscreteCardinalityConstraint(parameters=["a", "b"], max_cardinality=1)],
+        [{"a": 1, "b": 1}],  # 2 nonzero values exceeds max_cardinality=1
+    ),
+}
+
+# Verify all concrete DiscreteConstraint subclasses (except DiscreteBatchConstraint)
+# have a violation test case — fails at collection time if coverage lapses.
+_ALL_ROW_CONSTRAINT_CLASSES = frozenset(
+    cls
+    for cls in get_subclasses(DiscreteConstraint)
+    if cls is not DiscreteBatchConstraint
+)
+assert frozenset(_ROW_CONSTRAINT_VIOLATION_CASES) == _ALL_ROW_CONSTRAINT_CLASSES, (
+    "Missing constraint violation cases for: "
+    f"{_ALL_ROW_CONSTRAINT_CLASSES - frozenset(_ROW_CONSTRAINT_VIOLATION_CASES)}"
+)
+
+
+@pytest.mark.parametrize(
+    ("parameters", "constraints", "violation_suggestions"),
+    [
+        pytest.param(*_ROW_CONSTRAINT_VIOLATION_CASES[cls], id=cls.__name__)
+        for cls in get_subclasses(DiscreteConstraint)
+        if cls is not DiscreteBatchConstraint
+    ],
+)
+def test_parse_llm_response_rejects_row_constraint_violations(
+    parameters, constraints, violation_suggestions
+):
+    """Suggestions valid per-parameter but violating a discrete constraint raise."""
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    space = SearchSpace.from_product(parameters=parameters, constraints=constraints)
+    rec = LLMRecommender(model="m", experiment_description="test")
+    response = _make_suggestions(violation_suggestions)
+    with pytest.raises(LLMResponseError, match="violate the.*constraint"):
+        rec._parse_llm_response(response, space)
+
+
+def test_parse_llm_response_rejects_batch_constraint_violation():
+    """Batch suggestions with mixed values for a DiscreteBatchConstraint param raise."""
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    parameters = [
+        NumericalDiscreteParameter("x", values=[1, 2, 3]),
+        CategoricalParameter("y", values=["a", "b"]),
+    ]
+    space = SearchSpace.from_product(
+        parameters=parameters,
+        constraints=[DiscreteBatchConstraint(parameters=["x"])],
+    )
+    rec = LLMRecommender(model="m", experiment_description="test")
+    # x values differ across suggestions — violates the batch constraint
+    response = _make_suggestions([{"x": 1, "y": "a"}, {"x": 2, "y": "b"}])
+    with pytest.raises(LLMResponseError, match="DiscreteBatchConstraint"):
+        rec._parse_llm_response(response, space)
+
+
+def test_parse_llm_response_warns_for_continuous_constraints():
+    """A warning is issued when the search space has continuous constraints."""
+    from baybe.constraints.continuous import ContinuousLinearConstraint
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    parameters = [
+        NumericalContinuousParameter("x", bounds=(0, 1)),
+        NumericalContinuousParameter("y", bounds=(0, 1)),
+    ]
+    space = SearchSpace.from_product(
+        parameters=parameters,
+        constraints=[
+            ContinuousLinearConstraint(
+                parameters=["x", "y"], coefficients=[1, 1], rhs=1.5, operator="<="
+            )
+        ],
+    )
+    rec = LLMRecommender(model="m", experiment_description="test")
+    response = _make_suggestions([{"x": 0.3, "y": 0.4}])
+    with pytest.warns(LLMResponseWarning, match="continuous constraints"):
+        rec._parse_llm_response(response, space)
 
 
 @pytest.mark.parametrize(
