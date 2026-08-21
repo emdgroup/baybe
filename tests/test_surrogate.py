@@ -8,7 +8,8 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe.exceptions import IncompatibleSurrogateError
+from baybe.exceptions import IncompatibleSurrogateError, UnusedObjectWarning
+from baybe.kernels import RBFKernel
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.pareto import ParetoObjective
@@ -46,6 +47,19 @@ def test_caching(patched, searchspace, objective, fake_measurements):
     # Second call
     surrogate.fit(searchspace, objective, fake_measurements)
     patched.assert_not_called()
+
+
+def test_ignored_kernel_override_warning():
+    """Non-GP surrogates warn when ignoring a parameter kernel override."""
+    parameter = NumericalDiscreteParameter("x", [0, 1], kernel_override=RBFKernel())
+    measurements = pd.DataFrame({"x": [0, 1], "y": [0.0, 1.0]})
+
+    with pytest.warns(UnusedObjectWarning, match=r"kernel overrides.*\['x'\]"):
+        MeanPredictionSurrogate().fit(
+            parameter.to_searchspace(),
+            NumericalTarget("y").to_objective(),
+            measurements,
+        )
 
 
 @pytest.mark.parametrize(
