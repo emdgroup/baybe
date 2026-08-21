@@ -209,7 +209,8 @@ project-excludes = [
     "baybe/utils/dataframe.py",
     "baybe/utils/clustering_algorithms/third_party/kmedoids.py",
 ]
-replace-imports-with-any = ["sklearn.*", "shap"]
+replace-imports-with-any = ["sklearn.*", "shap", "litellm"]
+# Note: For litellm, this could be removed by bumping to a version >=1.97.0
 
 [tool.pyrefly.errors]
 unused-ignore = "error"
