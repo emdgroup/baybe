@@ -1,8 +1,11 @@
 """Composite kernels (that is, kernels composed of other kernels)."""
 
+from __future__ import annotations
+
 import gc
 from functools import reduce
 from operator import add, mul
+from typing import TYPE_CHECKING
 
 from attrs import define, evolve, field
 from attrs.converters import optional as optional_c
@@ -12,10 +15,12 @@ from typing_extensions import override
 
 from baybe.kernels.base import CompositeKernel, Kernel
 from baybe.priors.base import Prior
-from baybe.searchspace.core import SearchSpace
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
 from baybe.utils.validation import finite_float
+
+if TYPE_CHECKING:
+    from baybe.searchspace.core import SearchSpace
 
 
 @define(frozen=True)
@@ -51,6 +56,10 @@ class ScaleKernel(CompositeKernel):
         return None if stripped is None else evolve(self, base_kernel=stripped)
 
     @override
+    def _with_parameter(self, name: str, /) -> Kernel:
+        return evolve(self, base_kernel=self.base_kernel._with_parameter(name))
+
+    @override
     def to_gpytorch(self, *args, **kwargs):
         import torch
 
@@ -77,6 +86,13 @@ class AdditiveKernel(CompositeKernel):
     """The individual kernels to be summed."""
 
     @override
+    def _with_parameter(self, name: str, /) -> Kernel:
+        return evolve(
+            self,
+            base_kernels=tuple(k._with_parameter(name) for k in self.base_kernels),
+        )
+
+    @override
     def to_gpytorch(self, *args, **kwargs):
         return reduce(add, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
 
@@ -92,6 +108,13 @@ class ProductKernel(CompositeKernel):
         ),
     )
     """The individual kernels to be multiplied."""
+
+    @override
+    def _with_parameter(self, name: str, /) -> Kernel:
+        return evolve(
+            self,
+            base_kernels=tuple(k._with_parameter(name) for k in self.base_kernels),
+        )
 
     @override
     def to_gpytorch(self, *args, **kwargs):
