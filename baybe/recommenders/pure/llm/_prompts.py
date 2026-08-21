@@ -5,6 +5,8 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
+from attrs import asdict as attrs_asdict
+
 from baybe.exceptions import IncompatibilityError
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.numerical import NumericalContinuousParameter
@@ -54,6 +56,11 @@ Allowed values: {{ param.values }}
 {% endif %}
 {% if param.unit is not none %}
 Unit: {{ param.unit }}
+{% endif %}
+{% if param.misc %}
+{% for key, value in param.misc.items() %}
+{{ key }}: {{ value }}
+{% endfor %}
 {% endif %}
 
 {% endfor %}
@@ -145,8 +152,7 @@ def _extract_parameter_info(
     for param in parameters:
         info: dict[str, Any] = {
             "name": param.name,
-            "description": param.description,
-            "unit": param.unit,
+            **attrs_asdict(param.metadata),
         }
 
         if isinstance(param, NumericalContinuousParameter):
