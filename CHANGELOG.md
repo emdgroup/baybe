@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   number of required models instead of the number of transform outputs
 
 ### Added
+- Parameter-specific kernel overrides for composing Gaussian process kernels on
+  individual parameter dimensions
 - `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
   the same pattern as `ContinuousLinearConstraint.coefficients`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
