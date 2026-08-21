@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from enum import Enum, auto
@@ -13,7 +14,11 @@ from attrs import define, field
 from joblib.hashing import hash
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibleSurrogateError, ModelNotTrainedError
+from baybe.exceptions import (
+    IncompatibleSurrogateError,
+    ModelNotTrainedError,
+    UnusedObjectWarning,
+)
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
@@ -81,6 +86,9 @@ class SurrogateProtocol(Protocol):
 @define
 class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Abstract base class for all surrogate models."""
+
+    supports_kernel_overrides: ClassVar[bool] = False
+    """Whether parameter-specific kernel overrides are supported."""
 
     supports_transfer_learning: ClassVar[bool]
     """Class variable encoding whether or not the surrogate supports transfer
@@ -429,6 +437,15 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 f"The search space contains task parameters but the selected "
                 f"surrogate model type ({self.__class__.__name__}) does not "
                 f"support transfer learning."
+            )
+
+        if not self.supports_kernel_overrides and (
+            names := [p.name for p in searchspace.parameters if p.kernel_override]
+        ):
+            warnings.warn(
+                f"The selected surrogate model ({self.__class__.__name__}) does not "
+                f"use the kernel overrides specified for parameters {names}.",
+                UnusedObjectWarning,
             )
 
         # Block partial measurements
