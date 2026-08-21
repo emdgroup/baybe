@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from baybe._optional.info import LLM_INSTALLED
-from baybe.exceptions import LLMResponseError, LLMResponseWarning
+from baybe.exceptions import LLMResponseError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -412,10 +412,10 @@ def test_recovery_success(mock_completion, recommender, searchspace):
 
 
 @patch("baybe._optional.llm.completion")
-def test_batch_size_warning_when_llm_returns_fewer(
+def test_batch_size_error_when_llm_returns_fewer(
     mock_completion, recommender, searchspace
 ):
-    """Warning is emitted when LLM returns fewer suggestions than requested."""
+    """An error is raised when LLM returns fewer suggestions than requested."""
     mock_completion.return_value = _mock_response(
         _make_suggestions(
             [
@@ -424,7 +424,7 @@ def test_batch_size_warning_when_llm_returns_fewer(
         )
     )
 
-    with pytest.warns(LLMResponseWarning, match="instead of the requested"):
+    with pytest.raises(LLMResponseError, match="instead of the requested"):
         recommender.recommend(batch_size=3, searchspace=searchspace)
 
 
