@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 import gc
+import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
 import attrs
 import pandas as pd
-from attrs import define, field
+from attrs import Converter, define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
+from baybe.kernels.base import Kernel
 from baybe.parameters.enum import ParameterEncoding
 from baybe.serialization import (
     SerialMixin,
@@ -22,13 +24,91 @@ from baybe.utils.basic import to_tuple
 from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 if TYPE_CHECKING:
+    from gpytorch.kernels import Kernel as GPyTorchKernel
+
     from baybe.parameters.enum import _ParameterKind
     from baybe.searchspace.continuous import SubspaceContinuous
     from baybe.searchspace.core import SearchSpace
     from baybe.searchspace.discrete import SubspaceDiscrete
 
+    KernelOverride: TypeAlias = Kernel | GPyTorchKernel
+else:
+    KernelOverride: TypeAlias = Kernel
+
 # TODO: Reactive slots in all classes once cached_property is supported:
 #   https://github.com/python-attrs/attrs/issues/164
+
+
+def _iter_basic_kernels(kernel: Kernel):
+    """Iterate over the basic kernel leaves of a BayBE kernel."""
+    from baybe.kernels.base import BasicKernel
+    from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
+
+    if isinstance(kernel, BasicKernel):
+        yield kernel
+    elif isinstance(kernel, ScaleKernel):
+        yield from _iter_basic_kernels(kernel.base_kernel)
+    elif isinstance(kernel, (AdditiveKernel, ProductKernel)):
+        for sub in kernel.base_kernels:
+            yield from _iter_basic_kernels(sub)
+
+
+def _to_kernel_override(
+    value: KernelOverride | None, instance: Parameter
+) -> KernelOverride | None:
+    """Validate a kernel override and scope BayBE kernels to their parameter.
+
+    Args:
+        value: The provided kernel override.
+        instance: The parameter the override belongs to.
+
+    Raises:
+        ValueError: If a BayBE kernel targets a different parameter or a GPyTorch
+            kernel specifies explicit active dimensions.
+        TypeError: If the object is neither a BayBE nor a GPyTorch kernel.
+
+    Returns:
+        The validated override, with BayBE kernels scoped to the parameter.
+    """
+    if value is None:
+        return None
+
+    # BayBE kernels: every basic leaf must be unscoped or scoped to the owner. The
+    # kernel is then rebound to the owning parameter (dropping unspecified names).
+    if isinstance(value, Kernel):
+        if any(
+            leaf.parameter_names not in (None, (instance.name,))
+            for leaf in _iter_basic_kernels(value)
+        ):
+            raise ValueError(
+                f"The kernel provided for the kernel override of "
+                f"'{instance.__class__.__name__}' may only act on the parameter "
+                f"itself. Its basic kernels must specify 'parameter_names' as "
+                f"``None`` or ({instance.name!r},)."
+            )
+        return value._with_parameter(instance.name)
+
+    # GPyTorch kernels: no explicit active dimensions allowed anywhere in the tree.
+    if sys.modules.get("gpytorch") is not None:
+        from gpytorch.kernels import Kernel as GPyTorchKernel
+
+        if isinstance(value, GPyTorchKernel):
+            if any(
+                k.active_dims is not None
+                for k in value.modules()
+                if isinstance(k, GPyTorchKernel)
+            ):
+                raise ValueError(
+                    "The GPyTorch kernel provided for the kernel override must not "
+                    "specify 'active_dims'."
+                )
+            return value
+
+    raise TypeError(
+        f"The object provided for the kernel override of "
+        f"'{instance.__class__.__name__}' must be a BayBE or GPyTorch kernel. "
+        f"Got: {type(value)}"
+    )
 
 
 @define(frozen=True, slots=False)
@@ -46,6 +126,13 @@ class Parameter(ABC, SerialMixin):
     # object variables
     name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
+
+    kernel_override: KernelOverride | None = field(
+        default=None,
+        converter=Converter(_to_kernel_override, takes_self=True),  # type: ignore[misc, call-overload]
+        kw_only=True,
+    )
+    """An optional kernel replacing the overall kernel for this parameter."""
 
     metadata: MeasurableMetadata = field(
         factory=MeasurableMetadata,
@@ -111,7 +198,14 @@ class Parameter(ABC, SerialMixin):
         """
         if type(self) is not type(other):
             return False
-        return attrs.evolve(self, name=other.name) == other
+        # The override is owner-scoped, so rebind it to the other parameter's name.
+        kernel_override = self.kernel_override
+        if isinstance(kernel_override, Kernel):
+            kernel_override = kernel_override._with_parameter(other.name)
+        return (
+            attrs.evolve(self, name=other.name, kernel_override=kernel_override)
+            == other
+        )
 
     @abstractmethod
     def summary(self) -> dict:
