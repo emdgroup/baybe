@@ -15,12 +15,12 @@ from typing_extensions import override
 
 from baybe.exceptions import UnmatchedAttributeError
 from baybe.priors.base import Prior
-from baybe.searchspace.core import SearchSpace
 from baybe.serialization.mixin import SerialMixin
 from baybe.settings import active_settings
 from baybe.utils.basic import classproperty, get_baseclasses, match_attributes, to_tuple
 
 if TYPE_CHECKING:
+    from baybe.searchspace.core import SearchSpace
     from baybe.surrogates.gaussian_process.components.kernel import PlainKernelFactory
 
 
@@ -119,6 +119,22 @@ class Kernel(ABC, SerialMixin):
         """
         raise TypeError(
             f"Cannot remove a parameter from kernel '{self.__class__.__name__}'. "
+        )
+
+    def _with_parameter(self, name: str, /) -> Kernel:
+        """Return a copy of the kernel scoped to a single parameter.
+
+        Args:
+            name: The name of the parameter to scope the kernel to.
+
+        Raises:
+            TypeError: If the kernel structure cannot be scoped unambiguously.
+
+        Returns:
+            The scoped kernel.
+        """
+        raise TypeError(
+            f"Cannot scope kernel '{self.__class__.__name__}' to a parameter."
         )
 
     @abstractmethod
@@ -272,6 +288,10 @@ class BasicKernel(Kernel, ABC):
         else:
             return self
         return evolve(self, parameter_names=remaining) if remaining else None
+
+    @override
+    def _with_parameter(self, name: str, /) -> Kernel:
+        return evolve(self, parameter_names=(name,))
 
 
 @define(frozen=True)
