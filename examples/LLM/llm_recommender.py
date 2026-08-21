@@ -146,7 +146,6 @@ llm_recommender = LLMRecommender(
         "solvent, a base, and a ligand (given by their names) together with a reaction "
         "temperature and a substrate concentration."
     ),
-    objective_description="Maximize the reaction yield in percent. Higher is better.",
 )
 
 # We compare three strategies:
