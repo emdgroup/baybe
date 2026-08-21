@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from typing import Any, ClassVar
 
 import pandas as pd
@@ -50,10 +51,12 @@ class LLMRecommender(PureRecommender):
     """The LiteLLM model identifier to use for recommendations."""
 
     experiment_description: str = field(validator=(instance_of(str), min_len(1)))
-    """Textual description of the experiment."""
+    """Textual description of the experiment.
 
-    objective_description: str = field(validator=(instance_of(str), min_len(1)))
-    """Textual description of the optimization objective."""
+    For best results, also set :attr:`baybe.objectives.base.Objective.metadata`
+    on the objective passed to :meth:`recommend` to give the language model a
+    description of what to optimize and per-target context such as units.
+    """
 
     recovery_model: str | None = field(default=None)
     """Optional model to use for recovery attempts.
@@ -138,7 +141,6 @@ class LLMRecommender(PureRecommender):
             recommender_name=self.__class__.__name__,
             batch_size=batch_size,
             experiment_description=self.experiment_description,
-            objective_description=self.objective_description,
             objective=objective,
             measurements=measurements,
             pending_experiments=pending_experiments,
@@ -254,6 +256,15 @@ class LLMRecommender(PureRecommender):
 
         if objective is not None:
             validate_object_names(searchspace.parameters + objective.targets)
+            if objective.metadata.is_empty:
+                warnings.warn(
+                    "The objective has no metadata description. Without context on "
+                    "what to optimize, the language model may produce suboptimal "
+                    "suggestions. Set the 'description' field on the objective's "
+                    "metadata to guide the LLM.",
+                    UserWarning,
+                    stacklevel=2,
+                )
 
         if measurements is not None:
             measurements = preprocess_dataframe(
@@ -316,9 +327,6 @@ class LLMRecommender(PureRecommender):
             to_string("LiteLLM Args", self.litellm_args, single_line=True),
             to_string(
                 "Experiment Description", self.experiment_description, single_line=True
-            ),
-            to_string(
-                "Optimization Objective", self.objective_description, single_line=True
             ),
         ]
         return to_string(self.__class__.__name__, *fields)

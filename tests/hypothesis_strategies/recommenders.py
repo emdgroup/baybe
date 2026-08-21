@@ -34,7 +34,6 @@ def llm_recommenders() -> st.SearchStrategy[LLMRecommender]:
         LLMRecommender,
         model=st.text(min_size=1),
         experiment_description=st.text(min_size=1),
-        objective_description=st.text(min_size=1),
         recovery_model=st.one_of(st.none(), st.text(min_size=1)),
         litellm_args=_safe_litellm_args(),
         recovery_litellm_args=st.one_of(st.none(), _safe_litellm_args()),

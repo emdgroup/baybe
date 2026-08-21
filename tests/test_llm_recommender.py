@@ -74,7 +74,6 @@ def fixture_recommender():
     return LLMRecommender(
         model="gpt-5.4",
         experiment_description="Test experiment",
-        objective_description="Maximize yield",
     )
 
 
@@ -182,7 +181,12 @@ def test_recommend_with_objective(
     mock_completion.return_value = valid_response
     objective = SingleTargetObjective(NumericalTarget("yield", minimize=False))
 
-    recommender.recommend(batch_size=3, searchspace=searchspace, objective=objective)
+    with pytest.warns(UserWarning, match="objective has no metadata description"):
+        recommender.recommend(
+            batch_size=3,
+            searchspace=searchspace,
+            objective=objective,
+        )
 
     prompt_content = mock_completion.call_args.kwargs.get(
         "messages", mock_completion.call_args[1]["messages"]
@@ -199,7 +203,6 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
     recommender = LLMRecommender(
         model="gpt-5.4",
         experiment_description="Test",
-        objective_description="Maximize yield",
         recovery_model="gpt-4o-mini",
         recovery_litellm_args={"temperature": 0.0},
     )
@@ -441,7 +444,6 @@ def test_initialization(recommender):
     """LLMRecommender initializes with correct attributes."""
     assert recommender.model == "gpt-5.4"
     assert recommender.experiment_description == "Test experiment"
-    assert recommender.objective_description == "Maximize yield"
 
 
 def test_initialization_validation():
@@ -449,19 +451,10 @@ def test_initialization_validation():
     from baybe.recommenders.pure.llm.llm import LLMRecommender
 
     with pytest.raises(ValueError, match="Length"):
-        LLMRecommender(
-            model="", experiment_description="desc", objective_description="obj"
-        )
+        LLMRecommender(model="", experiment_description="desc")
 
     with pytest.raises(ValueError, match="Length"):
-        LLMRecommender(
-            model="m", experiment_description="", objective_description="obj"
-        )
-
-    with pytest.raises(ValueError, match="Length"):
-        LLMRecommender(
-            model="m", experiment_description="desc", objective_description=""
-        )
+        LLMRecommender(model="m", experiment_description="")
 
 
 @pytest.mark.parametrize(
@@ -483,7 +476,6 @@ def test_construction_rejects_protected_keys(key, phrase):
         LLMRecommender(
             model="m",
             experiment_description="desc",
-            objective_description="obj",
             litellm_args={key: "secret"},
         )
 
@@ -491,7 +483,6 @@ def test_construction_rejects_protected_keys(key, phrase):
         LLMRecommender(
             model="m",
             experiment_description="desc",
-            objective_description="obj",
             recovery_litellm_args={key: "secret"},
         )
 
