@@ -589,10 +589,7 @@ class DiscreteBatchConstraint(DiscreteConstraint):
 
 
 @define
-# Pyrefly incorrectly orders attrs fields inherited through this diamond hierarchy.
-class DiscreteCardinalityConstraint(  # pyrefly: ignore[bad-class-definition]
-    DiscreteFilteringConstraint, CardinalityConstraint
-):
+class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringConstraint):
     """Class for discrete cardinality constraints."""
 
     # Class variables
