@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import gc
 import importlib
+import operator
 import os
 import warnings
-from functools import partial
-from typing import TYPE_CHECKING, ClassVar
+from copy import deepcopy
+from functools import partial, reduce
+from typing import TYPE_CHECKING, ClassVar, NoReturn
 
 import pandas as pd
-from attrs import Converter, define, field, fields
+from attrs import Converter, define, field
 from attrs.converters import optional as optional_c
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
@@ -69,6 +71,8 @@ if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
+
+    from baybe.parameters.selectors import ParameterSelectorProtocol
 
 
 @define
@@ -140,6 +144,45 @@ def _mark_custom_kernel(
     return value
 
 
+def _bind_gpytorch_override(
+    override: GPyTorchKernel, indices: tuple[int, ...], name: str
+) -> GPyTorchKernel:
+    """Copy a raw GPyTorch override and bind it to the given dimensions.
+
+    Args:
+        override: The provided GPyTorch kernel (must not specify active dimensions).
+        indices: The computational column indices of the owning parameter.
+        name: The owning parameter name (for error messages).
+
+    Raises:
+        IncompatibleOverrideError: If the kernel specifies active dimensions or an
+            incompatible number of ARD dimensions.
+
+    Returns:
+        A copy of the kernel bound to the given dimensions.
+    """
+    import torch
+    from gpytorch.kernels import Kernel as GPyTorchKernel
+
+    for kernel in override.modules():
+        if not isinstance(kernel, GPyTorchKernel):
+            continue
+        if kernel.active_dims is not None:
+            raise IncompatibleOverrideError(
+                f"The GPyTorch kernel override for parameter '{name}' must not "
+                f"specify 'active_dims'."
+            )
+        if kernel.ard_num_dims not in (None, len(indices)):
+            raise IncompatibleOverrideError(
+                f"The GPyTorch kernel override for parameter '{name}' specifies "
+                f"{kernel.ard_num_dims} ARD dimensions, but the parameter has "
+                f"{len(indices)} computational dimensions."
+            )
+    result = deepcopy(override)
+    result.active_dims = torch.tensor(indices)
+    return result
+
+
 @define
 class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model."""
@@ -158,6 +201,9 @@ class GaussianProcessSurrogate(Surrogate):
     # problem since the resulting `posterior` method of that object is exposed
     # to `optimize_acqf_*`, which is configured to be called on the original scale.
     # Moving the scaling operation into the botorch GP object avoids this conflict.
+
+    supports_kernel_overrides: ClassVar[bool] = True
+    # See base class.
 
     supports_transfer_learning: ClassVar[bool] = True
     # See base class.
@@ -396,123 +442,212 @@ class GaussianProcessSurrogate(Surrogate):
         return self._model.posterior(candidates_comp_scaled)
 
     def _resolve_kernel(self, context: _ModelContext) -> GPyTorchKernel:
-        """Resolve the GP kernel, dispatching on task parameter overrides.
+        """Resolve the GP kernel, applying parameter and transfer overrides.
 
-        Args:
-            context: The model context providing searchspace information.
-
-        Raises:
-            IncompatibleOverrideError: If a transfer learning override is combined
-                with a kernel or kernel factory that cannot be reduced to a task-free
-                base kernel operating on parameter names.
-
-        Returns:
-            The constructed gpytorch kernel.
+        The effective kernel is the surrogate kernel restricted to the
+        non-overridden dimensions, multiplied by one factor per override.
         """
+        overrides = self._extract_parameter_overrides(context)
+        overrides.extend(self._extract_transfer_learning_overrides(context))
+
+        # No overrides: let the surrogate kernel (factory) handle everything.
+        if not overrides:
+            factory = self.kernel_factory or BayBEKernelFactory()
+            kernel = factory(
+                context.searchspace, context.objective, context.measurements
+            )
+            return self._as_gpytorch(kernel, context.searchspace)
+
+        excluded_names = {name for name, _ in overrides}
+        residual = self._resolve_residual_kernel(context, excluded_names)
+        factors = ([] if residual is None else [residual]) + [k for _, k in overrides]
+        return reduce(operator.mul, factors)
+
+    def _extract_parameter_overrides(
+        self, context: _ModelContext
+    ) -> list[tuple[str, GPyTorchKernel]]:
+        """Extract regular parameter-specific kernel overrides."""
+        return [
+            (p.name, self._make_parameter_override_kernel(p, context.searchspace))
+            for p in context.searchspace.parameters
+            if p.kernel_override is not None
+        ]
+
+    def _extract_transfer_learning_overrides(
+        self, context: _ModelContext
+    ) -> list[tuple[str, GPyTorchKernel]]:
+        """Extract the transfer-learning kernel override, if any."""
+        task_param = context.searchspace._task_parameter
+        if task_param is None or context.tl_override is None:
+            return []
+        kernel = self._make_transfer_learning_override_kernel(context)
+        return [(task_param.name, kernel)]
+
+    @staticmethod
+    def _make_parameter_override_kernel(
+        parameter: Parameter, searchspace: SearchSpace
+    ) -> GPyTorchKernel:
+        """Create the kernel factor for a parameter's override."""
+        override = parameter.kernel_override
+        assert override is not None
+        indices = searchspace.get_comp_rep_parameter_indices(parameter.name)
+
+        # BayBE kernels resolve their own dimensions; raw kernels are bound manually.
+        if isinstance(override, Kernel):
+            return override.to_gpytorch(searchspace)
+        return _bind_gpytorch_override(override, indices, parameter.name)
+
+    @staticmethod
+    def _make_transfer_learning_override_kernel(
+        context: _ModelContext,
+    ) -> GPyTorchKernel:
+        """Create the task kernel factor requested by a transfer-learning override."""
         from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
+
+        task_param = context.searchspace._task_parameter
+        override = context.tl_override
+        assert task_param is not None and override is not None
+        n_tasks, names = context.n_tasks, (task_param.name,)
+        match override:
+            case TransferLearningMode.POSITIVE_INDEX_KERNEL:
+                spec: Kernel = PositiveIndexKernel(
+                    num_tasks=n_tasks, rank=n_tasks, parameter_names=names
+                )
+            case TransferLearningMode.INDEX_KERNEL:
+                spec = IndexKernel(
+                    num_tasks=n_tasks, rank=n_tasks, parameter_names=names
+                )
+            case _:
+                assert_never(override)
+        return spec.to_gpytorch(context.searchspace)
+
+    def _resolve_residual_kernel(
+        self, context: _ModelContext, excluded_names: set[str]
+    ) -> GPyTorchKernel | None:
+        """Resolve the surrogate kernel restricted to the non-excluded dimensions.
+
+        This is intentionally task-agnostic: it only removes ``excluded_names``.
+        A task parameter is excluded here only if a transfer-learning override
+        already replaced it; otherwise it is preserved by the surrogate kernel.
+        """
         from baybe.surrogates.gaussian_process.components.generic import (
             PlainGPComponentFactory,
         )
 
         searchspace = context.searchspace
-        task_param = searchspace._task_parameter
-        tl_override = context.tl_override
+        factory = self.kernel_factory or BayBEKernelFactory()
+        remaining = [p for p in searchspace.parameters if p.name not in excluded_names]
+        if not remaining:
+            return None
 
-        if task_param is None or tl_override is None:
-            # No override: let the factory handle everything (default path)
-            kernel_factory = self.kernel_factory or BayBEKernelFactory()
-            kernel = kernel_factory(
+        # Default kernel: reuse the default machinery, but restrict it to the
+        # remaining (non-overridden) parameters via the factory's selector.
+        if isinstance(factory, BayBEKernelFactory):
+            return self._resolve_default_base(context, excluded_names)
+
+        # A fixed kernel is reduced directly by removing the excluded parameters.
+        if isinstance(factory, PlainGPComponentFactory):
+            spec = self._reduce_kernel_spec(
+                factory.component, excluded_names, searchspace, factory
+            )
+            return None if spec is None else spec.to_gpytorch(searchspace)
+
+        # Any other callable factory: call it on the reduced space and reduce the
+        # returned BayBE kernel. Factories needing full-space information or
+        # returning a raw kernel are unsupported.
+        reduced_space = searchspace._drop_parameters(excluded_names)
+        try:
+            returned = factory(reduced_space, context.objective, context.measurements)
+        except (
+            IncompatibleSearchSpaceError,
+            UnsupportedSearchSpaceAttributeError,
+        ) as ex:
+            self._raise_incompatible_override(excluded_names, factory, ex)
+        spec = self._reduce_kernel_spec(returned, excluded_names, searchspace, factory)
+        return None if spec is None else spec.to_gpytorch(searchspace)
+
+    def _resolve_default_base(
+        self, context: _ModelContext, excluded_names: set[str]
+    ) -> GPyTorchKernel | None:
+        """Resolve the default kernel base, excluding the given parameters.
+
+        The numerical base always excludes the task; the default task kernel is
+        re-added unless the task is itself overridden (i.e. already excluded).
+        """
+        from baybe.surrogates.gaussian_process.components.kernel import (
+            _PureKernelFactory,
+        )
+        from baybe.surrogates.gaussian_process.presets.baybe import (
+            _BayBENumericalKernelFactory,
+            _BayBETaskKernelFactory,
+        )
+
+        searchspace = context.searchspace
+        factory = self.kernel_factory or BayBEKernelFactory()
+        assert isinstance(factory, _PureKernelFactory)
+        selector = factory.parameter_selector
+        task_param = searchspace._task_parameter
+
+        keep: ParameterSelectorProtocol = lambda parameter: (  # noqa: E731
+            parameter.name not in excluded_names
+            and parameter is not task_param
+            and (selector is None or selector(parameter))
+        )
+        factors: list[GPyTorchKernel] = []
+        if any(keep(p) for p in searchspace.parameters):
+            base = _BayBENumericalKernelFactory(parameter_selector=keep)(
                 searchspace, context.objective, context.measurements
             )
-            if isinstance(kernel, Kernel):
-                kernel = kernel.to_gpytorch(searchspace=searchspace)
-            return kernel
+            factors.append(self._as_gpytorch(base, searchspace))
+        if task_param is not None and task_param.name not in excluded_names:
+            task = _BayBETaskKernelFactory()(
+                searchspace, context.objective, context.measurements
+            )
+            factors.append(self._as_gpytorch(task, searchspace))
 
-        # Override is set: assemble the prescribed task kernel.
-        n_tasks = searchspace.n_tasks
-        task_kernel_spec: Kernel
-        match tl_override:
-            case TransferLearningMode.POSITIVE_INDEX_KERNEL:
-                task_kernel_spec = PositiveIndexKernel(
-                    num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
-                )
-            case TransferLearningMode.INDEX_KERNEL:
-                task_kernel_spec = IndexKernel(
-                    num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
-                )
-            case _:
-                assert_never(tl_override)
+        return reduce(operator.mul, factors) if factors else None
 
-        # Default factory (None or explicit BayBEKernelFactory): reuse the ICM
-        # machinery on the full searchspace, which builds the task-excluded base
-        # kernel and combines it with the prescribed task kernel. This avoids the
-        # reduced searchspace, on which the default factory's numerical kernel
-        # cannot resolve its active dimensions.
-        if (
-            self.kernel_factory is None
-            or type(self.kernel_factory) is BayBEKernelFactory
-        ):
-            icm = ICMKernelFactory(task_kernel_or_factory=task_kernel_spec)
-            return icm(searchspace, context.objective, context.measurements)
-
-        # Otherwise, build a task-free base kernel and attach the prescribed task
-        # kernel manually.
-        effective_factory = self.kernel_factory
-        incompatible_message = (
-            f"The '{TaskParameter.__name__}' '{task_param.name}' specifies "
-            f"'{fields(TaskParameter).override_transfer_learning_mode.name}="
-            f"{tl_override.name}', which requires a "
-            f"kernel (factory) that yields a task-free BayBE kernel operating on "
-            f"parameter names. The provided kernel factory "
-            f"'{type(effective_factory).__name__}' does not satisfy this (e.g., it "
-            f"returns a raw gpytorch kernel or already operates on the task "
-            f"parameter)."
-        )
-
-        if isinstance(self.kernel_factory, PlainGPComponentFactory):
-            # A fixed kernel was provided: strip the task parameter directly.
-            component = self.kernel_factory.component
-            if not isinstance(component, Kernel):
-                raise IncompatibleOverrideError(incompatible_message)
+    @staticmethod
+    def _reduce_kernel_spec(
+        component: object,
+        excluded_names: set[str],
+        searchspace: SearchSpace,
+        factory: object,
+    ) -> Kernel | None:
+        """Remove the excluded parameters from a fixed BayBE kernel."""
+        if not isinstance(component, Kernel):
+            GaussianProcessSurrogate._raise_incompatible_override(
+                excluded_names, factory
+            )
+        spec: Kernel | None = component
+        for name in excluded_names:
+            if spec is None:
+                break
             try:
-                base_spec = component._without_parameter(task_param.name, searchspace)
+                spec = spec._without_parameter(name, searchspace)
             except TypeError as ex:
-                raise IncompatibleOverrideError(incompatible_message) from ex
-        else:
-            # Call the factory on a reduced (task-free) searchspace so that it
-            # produces only the base kernel. Factories that need computational
-            # information unavailable on the reduced space, or that return a raw
-            # gpytorch kernel, are not supported.
-            reduced_searchspace = searchspace._drop_parameters({task_param.name})
-            try:
-                factory_kernel = effective_factory(
-                    reduced_searchspace, context.objective, context.measurements
+                GaussianProcessSurrogate._raise_incompatible_override(
+                    excluded_names, factory, ex
                 )
-            except (
-                IncompatibleSearchSpaceError,
-                UnsupportedSearchSpaceAttributeError,
-            ) as ex:
-                raise IncompatibleOverrideError(incompatible_message) from ex
-            if not isinstance(factory_kernel, Kernel):
-                raise IncompatibleOverrideError(incompatible_message)
-            # Normalize to an explicitly task-free spec.
-            try:
-                base_spec = factory_kernel._without_parameter(
-                    task_param.name, searchspace
-                )
-            except TypeError as ex:
-                raise IncompatibleOverrideError(incompatible_message) from ex
+        return spec
 
-        # Convert the base kernel on the full searchspace so that parameter names
-        # resolve to the correct computational column indices.
-        base_kernel = (
-            None
-            if base_spec is None
-            else base_spec.to_gpytorch(searchspace=searchspace)
-        )
+    @staticmethod
+    def _as_gpytorch(
+        kernel: Kernel | GPyTorchKernel, searchspace: SearchSpace
+    ) -> GPyTorchKernel:
+        """Convert a BayBE kernel to GPyTorch, passing through raw kernels."""
+        return kernel.to_gpytorch(searchspace) if isinstance(kernel, Kernel) else kernel
 
-        task_kernel = task_kernel_spec.to_gpytorch(searchspace=searchspace)
-        return task_kernel if base_kernel is None else base_kernel * task_kernel
+    @staticmethod
+    def _raise_incompatible_override(
+        parameter_names: set[str], factory: object, cause: Exception | None = None
+    ) -> NoReturn:
+        """Raise an error for a surrogate kernel that cannot be reduced."""
+        raise IncompatibleOverrideError(
+            f"Kernel overrides for {sorted(parameter_names)} require a surrogate "
+            f"kernel (factory) that can exclude these parameters. "
+            f"'{type(factory).__name__}' does not satisfy this requirement."
+        ) from cause
 
     def _resolve_components(
         self, context: _ModelContext
