@@ -5,12 +5,13 @@ from functools import cached_property
 
 import numpy as np
 import pandas as pd
+from attr.converters import optional as optional_c
 from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
 from baybe.parameters.base import _DiscreteLabelLikeParameter
-from baybe.parameters.enum import CategoricalEncoding
+from baybe.parameters.enum import CategoricalEncoding, TransferLearningMode
 from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple, sort_tuple
 from baybe.utils.validation import validate_unique_values
@@ -86,6 +87,21 @@ class TaskParameter(CategoricalParameter):
 
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
+
+    override_transfer_learning_mode: TransferLearningMode | None = field(
+        default=None,
+        converter=optional_c(TransferLearningMode),
+    )
+    """Optional override for how the task dimension is modeled.
+
+    Only applies to :class:`.GaussianProcessSurrogate`. When ``None``, the surrogate's
+    kernel factory decides how the task dimension is treated. When set, the surrogate
+    attaches the requested task kernel to a task-free base kernel derived from the
+    configured factory.
+
+    If the configured factory does not reduce to a task-free base kernel, an
+    :class:`.IncompatibleOverrideError` is raised.
+    """
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

@@ -82,6 +82,14 @@ def test_reduced_blocked_attributes(reduced_searchspace):
             getattr(reduced_searchspace, attr)
 
 
+def test_reduced_blocked_attribute_exception_type(reduced_searchspace):
+    """Blocked attribute access raises the dedicated ``AttributeError`` subclass."""
+    from baybe.exceptions import UnsupportedSearchSpaceAttributeError
+
+    with pytest.raises(UnsupportedSearchSpaceAttributeError):
+        reduced_searchspace.get_comp_rep_parameter_indices("x")
+
+
 def test_reduced_repr(reduced_searchspace):
     """Verify that repr does not crash on a reduced search space."""
     result = repr(reduced_searchspace)

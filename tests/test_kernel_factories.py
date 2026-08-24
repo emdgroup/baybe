@@ -2,17 +2,26 @@
 
 from contextlib import nullcontext
 
+import gpytorch
 import pandas as pd
 import pytest
 from pytest import param
 
-from baybe.exceptions import IncompatibleSearchSpaceError
-from baybe.parameters.categorical import CategoricalParameter, TaskParameter
+from baybe.exceptions import IncompatibleOverrideError, IncompatibleSearchSpaceError
+from baybe.kernels.basic import IndexKernel, MaternKernel
+from baybe.kernels.composite import ScaleKernel
+from baybe.parameters.categorical import (
+    CategoricalParameter,
+    TaskParameter,
+)
+from baybe.parameters.enum import TransferLearningMode
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
 from baybe.searchspace.core import SearchSpace
+from baybe.surrogates import GaussianProcessSurrogate
+from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
 from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEKernelFactory,
     _BayBENumericalKernelFactory,
@@ -22,6 +31,41 @@ from baybe.targets.numerical import NumericalTarget
 
 # A selector that accepts all parameters
 _SELECT_ALL = lambda parameter: True  # noqa: E731
+
+
+def _task_free_matern_factory(searchspace, objective, measurements):
+    """A callable kernel factory returning a task-free BayBE kernel.
+
+    It names the remaining parameters of the (reduced) search space it is called on,
+    so that the produced base kernel never covers the task column.
+    """
+    return MaternKernel(parameter_names=tuple(searchspace.parameter_names))
+
+
+def _gpytorch_returning_factory(searchspace, objective, measurements):
+    """A callable kernel factory returning a raw gpytorch kernel.
+
+    Such factories are unsupported in combination with an override, since a raw
+    gpytorch kernel does not operate on parameter names.
+    """
+    return gpytorch.kernels.MaternKernel(nu=2.5)
+
+
+def _unnamed_matern_factory(searchspace, objective, measurements):
+    """A callable kernel factory returning an unnamed BayBE kernel.
+
+    A ``parameter_names=None`` kernel spans all columns on full-space conversion,
+    so the override path must normalize it to stay task-free.
+    """
+    return MaternKernel()
+
+
+def _task_named_matern_factory(searchspace, objective, measurements):
+    """A callable kernel factory returning a kernel that names the task parameter.
+
+    The override path must strip the task name so the base kernel stays task-free.
+    """
+    return MaternKernel(parameter_names=("x", "Task"))
 
 
 @pytest.mark.parametrize(
@@ -74,3 +118,206 @@ def test_factory_parameter_kind_validation(factory, parameters, error):
         else pytest.raises(error, match="does not support")
     ):
         factory(searchspace, objective, measurements)
+
+
+def _make_dispatch_context(override_mode):
+    """Build a `_ModelContext` with a numerical + task parameter for dispatch tests."""
+    from baybe.surrogates.gaussian_process.core import _ModelContext
+
+    task_param = TaskParameter(
+        "Task",
+        ["A", "B", "C"],
+        active_values=["A"],
+        override_transfer_learning_mode=override_mode,
+    )
+    num_param = NumericalDiscreteParameter("x", [1, 2, 3, 4, 5])
+    searchspace = SearchSpace.from_product([num_param, task_param])
+    objective = NumericalTarget("y").to_objective()
+    measurements = pd.DataFrame()
+    return _ModelContext(searchspace, objective, measurements)
+
+
+@pytest.mark.parametrize(
+    ("override_mode", "kernel_or_factory", "expected_task_kernel_cls", "has_base"),
+    [
+        param(
+            None,
+            None,
+            "PositiveIndexKernel",
+            True,
+            id="no_override+default_factory",
+        ),
+        param(
+            None,
+            ICMKernelFactory(
+                task_kernel_or_factory=IndexKernel(
+                    num_tasks=3, rank=3, parameter_names=("Task",)
+                )
+            ),
+            "IndexKernel",
+            True,
+            id="no_override+custom_icm_index_kernel_escape_hatch",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            MaternKernel(),
+            "PositiveIndexKernel",
+            True,
+            id="positive_index_override+bare_baybe_matern",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            MaternKernel(),
+            "IndexKernel",
+            True,
+            id="index_override+bare_baybe_matern",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            MaternKernel(parameter_names=("x", "Task")),
+            "PositiveIndexKernel",
+            True,
+            id="positive_index_override+baybe_matern_with_task_name",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            ScaleKernel(MaternKernel()),
+            "PositiveIndexKernel",
+            True,
+            id="positive_index_override+scaled_baybe_matern",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",)),
+            "IndexKernel",
+            False,
+            id="index_override+task_only_index_kernel",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            ScaleKernel(IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",))),
+            "IndexKernel",
+            False,
+            id="index_override+scaled_task_only_index_kernel",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            _task_free_matern_factory,
+            "PositiveIndexKernel",
+            True,
+            id="positive_index_override+callable_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            _task_free_matern_factory,
+            "IndexKernel",
+            True,
+            id="index_override+callable_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            _unnamed_matern_factory,
+            "IndexKernel",
+            True,
+            id="index_override+unnamed_callable_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            _task_named_matern_factory,
+            "IndexKernel",
+            True,
+            id="index_override+task_named_callable_factory",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            None,
+            "PositiveIndexKernel",
+            True,
+            id="positive_index_override+default_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            None,
+            "IndexKernel",
+            True,
+            id="index_override+default_factory",
+        ),
+    ],
+)
+def test_resolve_kernel_dispatch_success(
+    monkeypatch, override_mode, kernel_or_factory, expected_task_kernel_cls, has_base
+):
+    """`_resolve_kernel` produces the expected task kernel for supported inputs."""
+    monkeypatch.setenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "True")
+
+    context = _make_dispatch_context(override_mode)
+    kwargs = (
+        {} if kernel_or_factory is None else {"kernel_or_factory": kernel_or_factory}
+    )
+    surrogate = GaussianProcessSurrogate(**kwargs)
+
+    kernel = surrogate._resolve_kernel(context)
+
+    if has_base:
+        # The resolved kernel is a product of base * task kernel
+        base_kernel, task_kernel = kernel.kernels
+    else:
+        # Stripping left no non-task parameters -> only the task kernel remains
+        base_kernel, task_kernel = None, kernel
+    assert type(task_kernel).__name__ == expected_task_kernel_cls
+
+    # Override branches must partition active dims so the task kernel acts exactly
+    # on the task column, while the base kernel stays task-free.
+    if override_mode is not None:
+        assert task_kernel.active_dims is not None
+        assert set(task_kernel.active_dims.tolist()) == {context.task_idx}
+        if base_kernel is not None:
+            assert base_kernel.active_dims is not None
+            assert context.task_idx not in base_kernel.active_dims.tolist()
+
+
+@pytest.mark.parametrize(
+    ("override_mode", "kernel_or_factory"),
+    [
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            gpytorch.kernels.MaternKernel(nu=2.5),
+            id="index_override+bare_gpytorch_matern",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            MaternKernel(parameter_names=("x",))
+            * IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",)),
+            id="override+product_kernel",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            ICMKernelFactory(
+                task_kernel_or_factory=IndexKernel(
+                    num_tasks=3, rank=3, parameter_names=("Task",)
+                )
+            ),
+            id="override+task_aware_factory",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            _gpytorch_returning_factory,
+            id="override+factory_returning_gpytorch",
+        ),
+    ],
+)
+def test_resolve_kernel_dispatch_raises(monkeypatch, override_mode, kernel_or_factory):
+    """`_resolve_kernel` raises for inputs incompatible with an override.
+
+    This covers raw gpytorch kernels, composite kernels, and task-aware factories.
+    """
+    monkeypatch.setenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "True")
+
+    context = _make_dispatch_context(override_mode)
+    kwargs = (
+        {} if kernel_or_factory is None else {"kernel_or_factory": kernel_or_factory}
+    )
+    surrogate = GaussianProcessSurrogate(**kwargs)
+
+    with pytest.raises(IncompatibleOverrideError):
+        surrogate._resolve_kernel(context)

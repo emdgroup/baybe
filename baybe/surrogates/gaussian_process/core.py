@@ -10,17 +10,24 @@ from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
-from attrs import Converter, define, field
+from attrs import Converter, define, field, fields
 from attrs.converters import optional as optional_c
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
-from typing_extensions import Self, override
+from typing_extensions import Self, assert_never, override
 
-from baybe.exceptions import DeprecationError, ModelNotTrainedError
+from baybe.exceptions import (
+    DeprecationError,
+    IncompatibleOverrideError,
+    IncompatibleSearchSpaceError,
+    ModelNotTrainedError,
+    UnsupportedSearchSpaceAttributeError,
+)
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
@@ -81,6 +88,14 @@ class _ModelContext:
     def task_idx(self) -> int | None:
         """The computational column index of the task parameter, if available."""
         return self.searchspace.task_idx
+
+    @property
+    def tl_override(self) -> TransferLearningMode | None:
+        """The task parameter's transfer learning override, if any."""
+        task_param = self.searchspace._task_parameter
+        return (
+            None if task_param is None else task_param.override_transfer_learning_mode
+        )
 
     @property
     def is_multitask(self) -> bool:
@@ -167,6 +182,10 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`baybe.kernels.base.Kernel`
         * :obj:`.components.kernel.KernelFactoryProtocol`
         * :class:`gpytorch.kernels.Kernel`
+
+    If a :class:`.TaskParameter` sets ``override_transfer_learning_mode``, this must
+    reduce to a task-free BayBE kernel or an :class:`.IncompatibleOverrideError` is
+    raised.
     """
 
     mean_factory: MeanFactoryProtocol | None = field(
@@ -375,6 +394,125 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._model is not None
         return self._model.posterior(candidates_comp_scaled)
 
+    def _resolve_kernel(self, context: _ModelContext) -> GPyTorchKernel:
+        """Resolve the GP kernel, dispatching on task parameter overrides.
+
+        Args:
+            context: The model context providing searchspace information.
+
+        Raises:
+            IncompatibleOverrideError: If a transfer learning override is combined
+                with a kernel or kernel factory that cannot be reduced to a task-free
+                base kernel operating on parameter names.
+
+        Returns:
+            The constructed gpytorch kernel.
+        """
+        from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
+        from baybe.surrogates.gaussian_process.components.generic import (
+            PlainGPComponentFactory,
+        )
+
+        searchspace = context.searchspace
+        task_param = searchspace._task_parameter
+        tl_override = context.tl_override
+
+        if task_param is None or tl_override is None:
+            # No override: let the factory handle everything (default path)
+            kernel_factory = self.kernel_factory or BayBEKernelFactory()
+            kernel = kernel_factory(
+                searchspace, context.objective, context.measurements
+            )
+            if isinstance(kernel, Kernel):
+                kernel = kernel.to_gpytorch(searchspace=searchspace)
+            return kernel
+
+        # Override is set: assemble the prescribed task kernel.
+        n_tasks = searchspace.n_tasks
+        task_kernel_spec: Kernel
+        match tl_override:
+            case TransferLearningMode.POSITIVE_INDEX_KERNEL:
+                task_kernel_spec = PositiveIndexKernel(
+                    num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
+                )
+            case TransferLearningMode.INDEX_KERNEL:
+                task_kernel_spec = IndexKernel(
+                    num_tasks=n_tasks, rank=n_tasks, parameter_names=(task_param.name,)
+                )
+            case _:
+                assert_never(tl_override)
+
+        # Default factory (None or explicit BayBEKernelFactory): reuse the ICM
+        # machinery on the full searchspace, which builds the task-excluded base
+        # kernel and combines it with the prescribed task kernel. This avoids the
+        # reduced searchspace, on which the default factory's numerical kernel
+        # cannot resolve its active dimensions.
+        if (
+            self.kernel_factory is None
+            or type(self.kernel_factory) is BayBEKernelFactory
+        ):
+            icm = ICMKernelFactory(task_kernel_or_factory=task_kernel_spec)
+            return icm(searchspace, context.objective, context.measurements)
+
+        # Otherwise, build a task-free base kernel and attach the prescribed task
+        # kernel manually.
+        effective_factory = self.kernel_factory
+        incompatible_message = (
+            f"The '{TaskParameter.__name__}' '{task_param.name}' specifies "
+            f"'{fields(TaskParameter).override_transfer_learning_mode.name}="
+            f"{tl_override.name}', which requires a "
+            f"kernel (factory) that yields a task-free BayBE kernel operating on "
+            f"parameter names. The provided kernel factory "
+            f"'{type(effective_factory).__name__}' does not satisfy this (e.g., it "
+            f"returns a raw gpytorch kernel or already operates on the task "
+            f"parameter)."
+        )
+
+        if isinstance(self.kernel_factory, PlainGPComponentFactory):
+            # A fixed kernel was provided: strip the task parameter directly.
+            component = self.kernel_factory.component
+            if not isinstance(component, Kernel):
+                raise IncompatibleOverrideError(incompatible_message)
+            try:
+                base_spec = component._without_parameter(task_param.name, searchspace)
+            except TypeError as ex:
+                raise IncompatibleOverrideError(incompatible_message) from ex
+        else:
+            # Call the factory on a reduced (task-free) searchspace so that it
+            # produces only the base kernel. Factories that need computational
+            # information unavailable on the reduced space, or that return a raw
+            # gpytorch kernel, are not supported.
+            reduced_searchspace = searchspace._drop_parameters({task_param.name})
+            try:
+                factory_kernel = effective_factory(
+                    reduced_searchspace, context.objective, context.measurements
+                )
+            except (
+                IncompatibleSearchSpaceError,
+                UnsupportedSearchSpaceAttributeError,
+            ) as ex:
+                raise IncompatibleOverrideError(incompatible_message) from ex
+            if not isinstance(factory_kernel, Kernel):
+                raise IncompatibleOverrideError(incompatible_message)
+            # Normalize to an explicitly task-free spec.
+            try:
+                base_spec = factory_kernel._without_parameter(
+                    task_param.name, searchspace
+                )
+            except TypeError as ex:
+                raise IncompatibleOverrideError(incompatible_message) from ex
+
+        # Convert the base kernel on the full searchspace so that parameter names
+        # resolve to the correct computational column indices.
+        base_kernel = (
+            None
+            if base_spec is None
+            else base_spec.to_gpytorch(searchspace=searchspace)
+        )
+
+        task_kernel = task_kernel_spec.to_gpytorch(searchspace=searchspace)
+        return task_kernel if base_kernel is None else base_kernel * task_kernel
+
     def _resolve_components(
         self, context: _ModelContext
     ) -> tuple[GPyTorchKernel, GPyTorchMean, GPyTorchLikelihood, FitCriterion]:
@@ -390,20 +528,15 @@ class GaussianProcessSurrogate(Surrogate):
         Returns:
             A tuple of (kernel, mean, likelihood, criterion).
         """
-        kernel_factory = self.kernel_factory or BayBEKernelFactory()
         mean_factory = self.mean_factory or BayBEMeanFactory()
         likelihood_factory = self.likelihood_factory or BayBELikelihoodFactory()
         criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
 
+        kernel = self._resolve_kernel(context)
+
         mean = mean_factory(
             context.searchspace, context.objective, context.measurements
         )
-
-        kernel = kernel_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-        if isinstance(kernel, Kernel):
-            kernel = kernel.to_gpytorch(searchspace=context.searchspace)
 
         likelihood = likelihood_factory(
             context.searchspace, context.objective, context.measurements
@@ -431,9 +564,14 @@ class GaussianProcessSurrogate(Surrogate):
 
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
+        # Check for custom kernel + multi-task clash (only relevant when no
+        # override_transfer_learning_mode is set, since the override mechanism
+        # handles task kernel attachment explicitly).
+        has_tl_override = context.tl_override is not None
         if (
             context.is_multitask
             and self._custom_kernel
+            and not has_tl_override
             and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
         ):
             raise DeprecationError(

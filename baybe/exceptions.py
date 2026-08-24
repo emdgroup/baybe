@@ -74,6 +74,14 @@ class IncompatibleArgumentError(IncompatibilityError):
     """An incompatible argument was passed to a callable."""
 
 
+class IncompatibleOverrideError(IncompatibilityError):
+    """An override conflicts with another specification."""
+
+
+class UnsupportedSearchSpaceAttributeError(AttributeError):
+    """Access to a blocked attribute on a reduced search space was attempted."""
+
+
 class NonGaussianityError(Exception):
     """An operation assuming Gaussianity is attempted on a non-Gaussian distribution."""
 
