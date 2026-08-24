@@ -6,9 +6,12 @@ import numpy as np
 import pandas as pd
 import pytest
 from cattrs.errors import IterableValidationError
+from gpytorch import kernels as gk
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
+from baybe.kernels import RBFKernel
+from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import (
     CategoricalParameter,
     TaskParameter,
@@ -39,6 +42,39 @@ def test_invalid_parameter_name(name, error):
     """Providing an invalid parameter name raises an exception."""
     with pytest.raises(error):
         NumericalDiscreteParameter(name=name, values=[1, 2, 3])
+
+
+def test_task_parameter_rejects_kernel_override():
+    """Task parameters do not expose regular kernel overrides."""
+    with pytest.raises(TypeError, match="kernel_override"):
+        TaskParameter("task", ["a", "b"], kernel_override=RBFKernel())
+
+
+@pytest.mark.parametrize(
+    "override",
+    [
+        param(RBFKernel(parameter_names=("other",)), id="different_name"),
+        param(RBFKernel(parameter_names=("x", "other")), id="multiple_names"),
+        param(ScaleKernel(RBFKernel(parameter_names=("other",))), id="composite_leaf"),
+    ],
+)
+def test_invalid_baybe_kernel_override(override):
+    """A BayBE kernel override may only act on its owning parameter."""
+    with pytest.raises(ValueError, match="may only act on the parameter itself"):
+        NumericalContinuousParameter("x", (0, 1), kernel_override=override)
+
+
+@pytest.mark.parametrize(
+    "override",
+    [
+        param(gk.RBFKernel(active_dims=[0]), id="active_dims"),
+        param(gk.ScaleKernel(gk.RBFKernel(active_dims=[0])), id="nested_active_dims"),
+    ],
+)
+def test_invalid_gpytorch_kernel_override(override):
+    """A GPyTorch kernel override must not specify active dimensions."""
+    with pytest.raises(ValueError, match="must not specify 'active_dims'"):
+        NumericalContinuousParameter("x", (0, 1), kernel_override=override)
 
 
 @pytest.mark.parametrize(
