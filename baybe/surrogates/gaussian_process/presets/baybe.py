@@ -234,23 +234,16 @@ class _BayBEIndexKernelFactory(_PureKernelFactory, ABC):
     def _make(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel:
-        n_index = self._n_index(searchspace)
+        n_index_levels = self._n_index_levels(searchspace)
         return PositiveIndexKernel(
-            num_tasks=n_index,
-            rank=n_index,
+            num_tasks=n_index_levels,
+            rank=n_index_levels,
             parameter_names=self.get_parameter_names(searchspace),
         )
 
     @abstractmethod
-    def _n_index(self, searchspace: SearchSpace) -> int:
-        """Return the number of index levels handled by the factory.
-
-        Args:
-            searchspace: The search space.
-
-        Returns:
-            The number of index levels.
-        """
+    def _n_index_levels(self, searchspace: SearchSpace) -> int:
+        """Return the number of index levels handled by the factory."""
 
 
 @define
@@ -267,7 +260,7 @@ class _BayBETaskKernelFactory(_BayBEIndexKernelFactory):
     # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
-    def _n_index(self, searchspace: SearchSpace) -> int:
+    def _n_index_levels(self, searchspace: SearchSpace) -> int:
         return searchspace._n_tasks
 
 
@@ -285,7 +278,7 @@ class _BayBECategoricalFidelityKernelFactory(_BayBEIndexKernelFactory):
     # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
-    def _n_index(self, searchspace: SearchSpace) -> int:
+    def _n_index_levels(self, searchspace: SearchSpace) -> int:
         return searchspace._n_fidelities
 
 
