@@ -42,6 +42,7 @@ DiscreteLinkedParametersConstraint
 
    .. autosummary::
    
+      ~DiscreteLinkedParametersConstraint.exclude
       ~DiscreteLinkedParametersConstraint.has_polars_implementation
       ~DiscreteLinkedParametersConstraint.is_continuous
       ~DiscreteLinkedParametersConstraint.is_discrete

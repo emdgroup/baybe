@@ -307,7 +307,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Constraints_Discrete/Constraints_Discrete.html">Constraints Discrete</a><input aria-label="Toggle navigation of Constraints Discrete" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../Constraints_Discrete/exclusion_constraints.html">Exclusion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Constraints_Discrete/selection_constraints.html">Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Constraints_Discrete/dependency_constraints.html">Dependency</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Constraints_Discrete/custom_constraints.html">Custom</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Constraints_Discrete/prodsum_constraints.html">Product/Sum</a></li>
@@ -425,6 +425,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.base.ContinuousConstraint.html">ContinuousConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.base.ContinuousNonlinearConstraint.html">ContinuousNonlinearConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.base.DiscreteConstraint.html">DiscreteConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.base.DiscreteFilteringConstraint.html">DiscreteFilteringConstraint</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.conditions.html">baybe.constraints.conditions</a><input aria-label="Toggle navigation of baybe.constraints.conditions" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -439,15 +440,16 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
 </li>
@@ -1324,16 +1326,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>       Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
-0   5.225745  13.456950     3.027586     1.554051  68.122080   8.613588
-1   2.294475  16.318508     1.852143     2.251009   6.424842  70.859024
-2   3.378103  16.701547     0.190023     3.803699  52.267266  23.659363
-3   9.721924  19.065849     2.700254     1.970346   6.058212  60.483415
-4  12.157643   6.814079     2.303036     0.136573  37.700985  40.887685
-5   6.104603   9.787566     0.713307     2.003839  11.126943  70.263742
-6   1.252242  10.394125     0.503301     1.034900  72.299335  14.516098
-7  11.342742   8.702002     3.267291     1.403065   9.713368  65.571531
-8   7.649122  15.545603     0.345088     4.415750  37.361404  34.683032
-9  13.098173  17.360636     3.949802     0.981174  47.845172  16.765042
+0   7.221384   6.043590     1.317810     2.608661  47.166047  35.642508
+1  16.610302  11.055544     2.292358     2.291588  47.539562  20.210646
+2  10.941639  16.327527     1.579982     0.813474  26.486391  43.850989
+3  18.790473   1.241363     1.955245     0.168184  70.786534   7.058201
+4  19.435089   0.654713     0.135089     2.847612  72.208060   4.719437
+5  14.617618  13.181972     0.113478     1.966889  24.795657  45.324385
+6  12.437640  10.793664     3.245399     1.640213  68.306405   3.576679
+7  18.220940   5.912365     2.815590     1.349643  50.969019  20.732444
+8  12.486002  14.043774     0.481320     0.392553  15.693280  56.903070
+9  19.444110  19.082619     0.721235     1.717057  37.742267  21.292713
 </pre></div>
 </div>
 <p>Computing the respective row sums reveals the expected result:</p>
@@ -1348,16 +1350,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   Total  Total_Bases  Total_Phase_Agents
-0  100.0    18.682695            4.581637
-1  100.0    18.612983            4.103151
-2  100.0    20.079650            3.993721
-3  100.0    28.787773            4.670600
-4  100.0    18.971722            2.439609
-5  100.0    15.892169            2.717146
-6  100.0    11.646366            1.538201
-7  100.0    20.044745            4.670356
-8  100.0    23.194726            4.760838
-9  100.0    30.458809            4.930976
+0  100.0    13.264974            3.926471
+1  100.0    27.665846            4.583946
+2  100.0    27.269165            2.393456
+3  100.0    20.031836            2.123428
+4  100.0    20.089802            2.982701
+5  100.0    27.799590            2.080367
+6  100.0    23.231304            4.885612
+7  100.0    24.133305            4.165232
+8  100.0    26.529777            0.873873
+9  100.0    38.526728            2.438292
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>

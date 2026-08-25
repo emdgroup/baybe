@@ -1,7 +1,6 @@
-# Example for using exclusion constraints in discrete searchspaces
+# Example for using selection constraints in discrete searchspaces
 
-This examples shows how an exclusion constraint can be created for a discrete
-searchspace.
+This example shows how a selection constraint can be created for a discrete searchspace.
 This can be used if some parameter values are incompatible with values of another
 parameter.
 
@@ -19,7 +18,7 @@ import numpy as np
 ```python
 from baybe import Campaign
 from baybe.constraints import (
-    DiscreteExcludeConstraint,
+    DiscreteSelectionConstraint,
     SubSelectionCondition,
     ThresholdCondition,
 )
@@ -76,13 +75,14 @@ compatible with temperatures larger than 151 and should thus be excluded.
 
 
 ```python
-constraint_1 = DiscreteExcludeConstraint(
+constraint_1 = DiscreteSelectionConstraint(
     parameters=["Temp", "Solv"],
     combiner="AND",
     conditions=[
         ThresholdCondition(threshold=151, operator=">"),
         SubSelectionCondition(selection=["C4", "C2"]),
     ],
+    exclude=True,
 )
 ```
 
@@ -91,13 +91,14 @@ compatible with pressures larger than 5 and should thus be excluded.
 
 
 ```python
-constraint_2 = DiscreteExcludeConstraint(
+constraint_2 = DiscreteSelectionConstraint(
     parameters=["Pressure", "Solv"],
     combiner="AND",
     conditions=[
         ThresholdCondition(threshold=5, operator=">"),
         SubSelectionCondition(selection=["C5", "C6"]),
     ],
+    exclude=True,
 )
 ```
 
@@ -106,13 +107,14 @@ combined with temperatures above 120.
 
 
 ```python
-constraint_3 = DiscreteExcludeConstraint(
+constraint_3 = DiscreteSelectionConstraint(
     parameters=["Pressure", "Temp"],
     combiner="AND",
     conditions=[
         ThresholdCondition(threshold=3.0, operator="<"),
         ThresholdCondition(threshold=120.0, operator=">"),
     ],
+    exclude=True,
 )
 ```
 
@@ -182,9 +184,9 @@ NaN
                 [1150 rows x 4 columns]
              Constraints
                               Type Affected_Paramet
-                0  DiscreteExcl...     [Temp, Solv]
-                1  DiscreteExcl...  [Pressure, S...
-                2  DiscreteExcl...  [Pressure, T...
+                0  DiscreteSele...     [Temp, Solv]
+                1  DiscreteSele...  [Pressure, S...
+                2  DiscreteSele...  [Pressure, T...
              Computational Representation
                       Pressure  Solv_RDKIT2DDESC  ...  Speed   Temp
                 0          1.0              0.0   ...    0.0  100.0

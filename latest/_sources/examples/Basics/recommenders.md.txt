@@ -248,15 +248,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    129  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
-    197  Butyornitrile  Potassium pivalate                 (t-Bu)PhCPhos   
-    96     Butyl Ester  Potassium pivalate                     BrettPhos   
+             Solvent             Base                        Ligand  Temperature  \
+    249         DMAc  Cesium pivalate                 (t-Bu)PhCPhos        120.0   
+    18   Butyl Ester   Cesium acetate  Di-tert-butylphenylphosphine         90.0   
+    44   Butyl Ester  Cesium pivalate                     BrettPhos        120.0   
     
-         Temperature  Concentration  
-    129        105.0          0.057  
-    197        120.0          0.153  
-    96         120.0          0.057  
+         Concentration  
+    249          0.057  
+    18           0.057  
+    44           0.153  
 
 
 
@@ -269,15 +269,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    129  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
-    197  Butyornitrile  Potassium pivalate                 (t-Bu)PhCPhos   
-    96     Butyl Ester  Potassium pivalate                     BrettPhos   
+             Solvent             Base                        Ligand  Temperature  \
+    249         DMAc  Cesium pivalate                 (t-Bu)PhCPhos        120.0   
+    18   Butyl Ester   Cesium acetate  Di-tert-butylphenylphosphine         90.0   
+    44   Butyl Ester  Cesium pivalate                     BrettPhos        120.0   
     
-         Temperature  Concentration      yield  
-    129        105.0          0.057 -59.513681  
-    197        120.0          0.153 -24.676995  
-    96         120.0          0.057  13.611375  
+         Concentration      yield  
+    249          0.057   5.980096  
+    18           0.057  40.045733  
+    44           0.153  58.216220  
 
 
 

@@ -3,12 +3,12 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="DiscreteLinkedParametersConstraint" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html"><link rel="prev" title="DiscreteDependenciesConstraint" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="DiscreteBatchConstraint" href="baybe.constraints.discrete.DiscreteBatchConstraint.html"><link rel="prev" title="baybe.constraints.discrete" href="baybe.constraints.discrete.html">
         <link rel="prefetch" href="../_static/logo1.svg" as="image">
         <link rel="prefetch" href="../_static/logo1.svg" as="image">
 
     <link rel="shortcut icon" href="../_static/favicon.ico"><!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
-        <title>DiscreteExcludeConstraint - BayBE documentation</title>
+        <title>baybe.constraints.discrete.DiscreteExcludeConstraint - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -307,7 +307,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Constraints_Discrete/Constraints_Discrete.html">Constraints Discrete</a><input aria-label="Toggle navigation of Constraints Discrete" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/exclusion_constraints.html">Exclusion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/selection_constraints.html">Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/dependency_constraints.html">Dependency</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/custom_constraints.html">Custom</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/prodsum_constraints.html">Product/Sum</a></li>
@@ -425,6 +425,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.ContinuousConstraint.html">ContinuousConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.ContinuousNonlinearConstraint.html">ContinuousNonlinearConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.DiscreteConstraint.html">DiscreteConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.DiscreteFilteringConstraint.html">DiscreteFilteringConstraint</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.constraints.conditions.html">baybe.constraints.conditions</a><input aria-label="Toggle navigation of baybe.constraints.conditions" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -439,15 +440,16 @@
 </ul>
 </li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" checked="" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
 </li>
@@ -1218,291 +1220,17 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="discreteexcludeconstraint">
-<h1>DiscreteExcludeConstraint<a class="headerlink" href="#discreteexcludeconstraint" title="Link to this heading">¶</a></h1>
-<dl class="py class">
+          <section id="baybe-constraints-discrete-discreteexcludeconstraint">
+<h1>baybe.constraints.discrete.DiscreteExcludeConstraint<a class="headerlink" href="#baybe-constraints-discrete-discreteexcludeconstraint" title="Link to this heading">¶</a></h1>
+<dl class="py function">
 <dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baybe.constraints.discrete.</span></span><span class="sig-name descname"><span class="pre">DiscreteExcludeConstraint</span></span><a class="reference internal" href="../_modules/baybe/constraints/discrete.html#DiscreteExcludeConstraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint" title="baybe.constraints.base.DiscreteConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteConstraint</span></code></a></p>
-<p>Class for modelling exclusion constraints.</p>
-<p class="rubric">Public methods</p>
-<div class="table-wrapper autosummary longtable docutils container">
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.__init__" title="baybe.constraints.discrete.DiscreteExcludeConstraint.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(parameters, conditions[, combiner])</p></td>
-<td><p>Method generated by attrs for class DiscreteExcludeConstraint.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.from_dict" title="baybe.constraints.discrete.DiscreteExcludeConstraint.from_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_dict</span></code></a>(dictionary)</p></td>
-<td><p>Create an object from its dictionary representation.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.from_json" title="baybe.constraints.discrete.DiscreteExcludeConstraint.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a>(source, /)</p></td>
-<td><p>Create an object from its JSON representation.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid" title="baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_invalid</span></code></a>(df, /, *[, allow_missing])</p></td>
-<td><p>Get the indices of dataframe entries that are invalid under the constraint.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid_polars" title="baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid_polars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_invalid_polars</span></code></a>()</p></td>
-<td><p>Translate the constraint to Polars expression identifying undesired rows.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.get_valid" title="baybe.constraints.discrete.DiscreteExcludeConstraint.get_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_valid</span></code></a>(df, /, *[, allow_missing])</p></td>
-<td><p>Get the indices of dataframe entries that are valid under the constraint.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.summary" title="baybe.constraints.discrete.DiscreteExcludeConstraint.summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summary</span></code></a>()</p></td>
-<td><p>Return a custom summarization of the constraint.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.to_dict" title="baybe.constraints.discrete.DiscreteExcludeConstraint.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
-<td><p>Create an object's dictionary representation.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.to_json" title="baybe.constraints.discrete.DiscreteExcludeConstraint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
-<td><p>Create an object's JSON representation.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p class="rubric">Public attributes and properties</p>
-<div class="table-wrapper autosummary longtable docutils container">
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.conditions" title="baybe.constraints.discrete.DiscreteExcludeConstraint.conditions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">conditions</span></code></a></p></td>
-<td><p>List of individual conditions.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.combiner" title="baybe.constraints.discrete.DiscreteExcludeConstraint.combiner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">combiner</span></code></a></p></td>
-<td><p>Operator encoding how to combine the individual conditions.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_polars_implementation</span></code></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.is_continuous" title="baybe.constraints.discrete.DiscreteExcludeConstraint.is_continuous"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_continuous</span></code></a></p></td>
-<td><p>Boolean indicating if this is a constraint over continuous parameters.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.is_discrete" title="baybe.constraints.discrete.DiscreteExcludeConstraint.is_discrete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_discrete</span></code></a></p></td>
-<td><p>Boolean indicating if this is a constraint over discrete parameters.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.numerical_only" title="baybe.constraints.discrete.DiscreteExcludeConstraint.numerical_only"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numerical_only</span></code></a></p></td>
-<td><p>Class variable encoding whether the constraint is valid only for numerical parameters.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.parameters" title="baybe.constraints.discrete.DiscreteExcludeConstraint.parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code></a></p></td>
-<td><p>The list of parameters used for the constraint.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<dl class="py method">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conditions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="baybe.constraints.conditions.Condition.html#baybe.constraints.conditions.Condition" title="baybe.constraints.conditions.Condition"><span class="pre">Condition</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">combiner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'AND'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Method generated by attrs for class DiscreteExcludeConstraint.</p>
-<p>For details on the parameters, see <strong>Public attributes and properties</strong>.</p>
-<dl class="field-list simple">
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.from_dict">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.from_dict" title="Link to this definition">¶</a></dt>
-<dd><p>Create an object from its dictionary representation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="target" id="baybe.constraints.discrete.DiscreteExcludeConstraint.from_dict.params.dictionary"></span><strong>dictionary</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span>) – The dictionary representation.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>, bound= SerialMixin)</span></p>
-</dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The reconstructed object.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.from_json">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.serialization.mixin.SupportsRead.html#baybe.serialization.mixin.SupportsRead" title="baybe.serialization.mixin.SupportsRead"><span class="pre">SupportsRead</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.from_json" title="Link to this definition">¶</a></dt>
-<dd><p>Create an object from its JSON representation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="target" id="baybe.constraints.discrete.DiscreteExcludeConstraint.from_json.params.source"></span><strong>source</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>, <a class="reference internal" href="baybe.serialization.mixin.SupportsRead.html#baybe.serialization.mixin.SupportsRead" title="baybe.serialization.mixin.SupportsRead"><code class="xref py py-class docutils literal notranslate"><span class="pre">SupportsRead</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span>) – <p>The JSON source. Can be:</p>
-<ul class="simple">
-<li><p>A string containing JSON content.</p></li>
-<li><p>A file path or <code class="docutils literal notranslate"><span class="pre">Path</span></code> object pointing to a JSON file.</p></li>
-<li><p>A file-like object with a <code class="docutils literal notranslate"><span class="pre">read()</span></code> method.</p></li>
-</ul>
-</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">source</span></code> is not one of the allowed types.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>, bound= SerialMixin)</span></p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The reconstructed object.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid">
-<span class="sig-name descname"><span class="pre">get_invalid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_missing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid" title="Link to this definition">¶</a></dt>
-<dd><p>Get the indices of dataframe entries that are invalid under the constraint.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><span class="target" id="baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid.params.df"></span><strong>df</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span>) – A dataframe where each row represents a parameter configuration.</p></li>
-<li><p><span class="target" id="baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid.params.allow_missing"></span><strong>allow_missing</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If <code class="docutils literal notranslate"><span class="pre">False</span></code>, a <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></a> is raised when
-the dataframe is missing required parameter columns. If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the
-subclass is asked whether it can perform (partial) constraint
-evaluation; if not, an empty index is returned, signaling to the
-caller <cite>there are no entries to be excluded *yet*</cite>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">allow_missing</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code> and the dataframe
-    is missing required parameter columns.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Index</span></code></span></p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The dataframe indices of rows that violate the constraint.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid_polars">
-<span class="sig-name descname"><span class="pre">get_invalid_polars</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/constraints/discrete.html#DiscreteExcludeConstraint.get_invalid_polars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid_polars" title="Link to this definition">¶</a></dt>
-<dd><p>Translate the constraint to Polars expression identifying undesired rows.</p>
+<span class="sig-prename descclassname"><span class="pre">baybe.constraints.discrete.</span></span><span class="sig-name descname"><span class="pre">DiscreteExcludeConstraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conditions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="baybe.constraints.conditions.Condition.html#baybe.constraints.conditions.Condition" title="baybe.constraints.conditions.Condition"><span class="pre">Condition</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">combiner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'AND'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/constraints/discrete.html#DiscreteExcludeConstraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint" title="Link to this definition">¶</a></dt>
+<dd><p>A <code class="docutils literal notranslate"><span class="pre">DiscreteSelectionConstraint</span></code> alias for backward compatibility.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">pl.Expr</span></p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The Polars expressions to pass to <a class="reference external" href="https://docs.pola.rs/api/python/stable/reference/lazyframe/api/polars.LazyFrame.filter.html#polars.LazyFrame.filter" title="(in Polars)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">polars.LazyFrame.filter()</span></code></a>.</p>
-</dd>
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.14)"><strong>NotImplementedError</strong></a> – If the constraint class does not have a Polars
-    implementation.</p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html#baybe.constraints.discrete.DiscreteSelectionConstraint" title="baybe.constraints.discrete.DiscreteSelectionConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteSelectionConstraint</span></code></a></span></p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.get_valid">
-<span class="sig-name descname"><span class="pre">get_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_missing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.get_valid" title="Link to this definition">¶</a></dt>
-<dd><p>Get the indices of dataframe entries that are valid under the constraint.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><span class="target" id="baybe.constraints.discrete.DiscreteExcludeConstraint.get_valid.params.df"></span><strong>df</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span>) – A dataframe where each row represents a parameter configuration.</p></li>
-<li><p><span class="target" id="baybe.constraints.discrete.DiscreteExcludeConstraint.get_valid.params.allow_missing"></span><strong>allow_missing</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If <code class="docutils literal notranslate"><span class="pre">False</span></code>, a <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></a> is raised when
-the dataframe is missing required parameter columns. If
-<code class="docutils literal notranslate"><span class="pre">True</span></code>, the constraint performs partial filtering on the
-available columns.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Index</span></code></span></p>
-</dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The dataframe indices of rows that fulfill the constraint.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.summary">
-<span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.summary" title="Link to this definition">¶</a></dt>
-<dd><p>Return a custom summarization of the constraint.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.to_dict">
-<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.to_dict" title="Link to this definition">¶</a></dt>
-<dd><p>Create an object’s dictionary representation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The dictionary representation of the object.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.to_json">
-<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sink</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.serialization.mixin.SupportsWrite.html#baybe.serialization.mixin.SupportsWrite" title="baybe.serialization.mixin.SupportsWrite"><span class="pre">SupportsWrite</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.to_json" title="Link to this definition">¶</a></dt>
-<dd><p>Create an object’s JSON representation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><span class="target" id="baybe.constraints.discrete.DiscreteExcludeConstraint.to_json.params.sink"></span><strong>sink</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>, <a class="reference internal" href="baybe.serialization.mixin.SupportsWrite.html#baybe.serialization.mixin.SupportsWrite" title="baybe.serialization.mixin.SupportsWrite"><code class="xref py py-class docutils literal notranslate"><span class="pre">SupportsWrite</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span>) – <p>The JSON sink. Can be:</p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code> (only returns the JSON string).</p></li>
-<li><p>A file path or <code class="docutils literal notranslate"><span class="pre">Path</span></code> object pointing to a location where to write
-the JSON content.</p></li>
-<li><p>A file-like object with a <code class="docutils literal notranslate"><span class="pre">write()</span></code> method.</p></li>
-</ul>
-</p></li>
-<li><p><span class="target" id="baybe.constraints.discrete.DiscreteExcludeConstraint.to_json.params.overwrite"></span><strong>overwrite</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – Boolean flag indicating if to overwrite the file if it already
-exists. Only relevant if <code class="docutils literal notranslate"><span class="pre">sink</span></code> is a file path or <code class="docutils literal notranslate"><span class="pre">Path</span></code> object.</p></li>
-<li><p><span class="target" id="baybe.constraints.discrete.DiscreteExcludeConstraint.to_json.params.**kwargs"></span><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a></span>) – Additional keyword arguments to pass to <a class="reference external" href="https://docs.python.org/3/library/json.html#json.dumps" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">json.dumps()</span></code></a>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileExistsError" title="(in Python v3.14)"><strong>FileExistsError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">sink</span></code> points to an already existing file but
-    <code class="docutils literal notranslate"><span class="pre">overwrite</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The JSON representation as a string.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.combiner">
-<span class="sig-name descname"><span class="pre">combiner</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></em><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.combiner" title="Link to this definition">¶</a></dt>
-<dd><p>Operator encoding how to combine the individual conditions.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.conditions">
-<span class="sig-name descname"><span class="pre">conditions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a><span class="pre">[</span><a class="reference internal" href="baybe.constraints.conditions.Condition.html#baybe.constraints.conditions.Condition" title="baybe.constraints.conditions.Condition"><code class="xref py py-class docutils literal notranslate"><span class="pre">Condition</span></code></a><span class="pre">]</span></em><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.conditions" title="Link to this definition">¶</a></dt>
-<dd><p>List of individual conditions.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.is_continuous">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_continuous</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.is_continuous" title="Link to this definition">¶</a></dt>
-<dd><p>Boolean indicating if this is a constraint over continuous parameters.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.is_discrete">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_discrete</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.is_discrete" title="Link to this definition">¶</a></dt>
-<dd><p>Boolean indicating if this is a constraint over discrete parameters.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.numerical_only">
-<span class="sig-name descname"><span class="pre">numerical_only</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.numerical_only" title="Link to this definition">¶</a></dt>
-<dd><p>Class variable encoding whether the constraint is valid only for numerical
-parameters.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteExcludeConstraint.parameters">
-<span class="sig-name descname"><span class="pre">parameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a><span class="pre">]</span></em><a class="headerlink" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.parameters" title="Link to this definition">¶</a></dt>
-<dd><p>The list of parameters used for the constraint.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>
@@ -1512,23 +1240,23 @@ parameters.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">
+          <a class="next-page" href="baybe.constraints.discrete.DiscreteBatchConstraint.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">DiscreteLinkedParametersConstraint</div>
+                <div class="title">DiscreteBatchConstraint</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html">
+          <a class="prev-page" href="baybe.constraints.discrete.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">DiscreteDependenciesConstraint</div>
+                <div class="title">baybe.constraints.discrete</div>
                 
               </div>
             </a>
@@ -1562,25 +1290,8 @@ parameters.</p>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">DiscreteExcludeConstraint</a><ul>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint</span></code></a><ul>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.__init__"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.__init__()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.from_dict"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.from_dict()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.from_json"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.from_json()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.get_invalid()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid_polars"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.get_invalid_polars()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.get_valid"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.get_valid()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.summary"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.summary()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.to_dict"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.to_dict()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.to_json"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.to_json()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.combiner"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.combiner</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.conditions"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.conditions</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.is_continuous"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.is_continuous</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.is_discrete"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.is_discrete</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.numerical_only"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.numerical_only</span></code></a></li>
-<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint.parameters"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint.parameters</span></code></a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#">baybe.constraints.discrete.DiscreteExcludeConstraint</a><ul>
+<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteExcludeConstraint"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -47,6 +47,7 @@ DiscreteDependenciesConstraint
       ~DiscreteDependenciesConstraint.conditions
       ~DiscreteDependenciesConstraint.affected_parameters
       ~DiscreteDependenciesConstraint.permutation_invariant
+      ~DiscreteDependenciesConstraint.exclude
       ~DiscreteDependenciesConstraint.has_polars_implementation
       ~DiscreteDependenciesConstraint.is_continuous
       ~DiscreteDependenciesConstraint.is_discrete

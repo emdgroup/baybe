@@ -21,12 +21,6 @@ DiscreteConstraint
    
       ~DiscreteConstraint.from_json
    
-      ~DiscreteConstraint.get_invalid
-   
-      ~DiscreteConstraint.get_invalid_polars
-   
-      ~DiscreteConstraint.get_valid
-   
       ~DiscreteConstraint.summary
    
       ~DiscreteConstraint.to_dict
@@ -42,7 +36,6 @@ DiscreteConstraint
 
    .. autosummary::
    
-      ~DiscreteConstraint.has_polars_implementation
       ~DiscreteConstraint.is_continuous
       ~DiscreteConstraint.is_discrete
       ~DiscreteConstraint.numerical_only

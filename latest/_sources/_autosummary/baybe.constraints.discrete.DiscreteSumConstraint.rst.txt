@@ -44,6 +44,7 @@ DiscreteSumConstraint
    
       ~DiscreteSumConstraint.condition
       ~DiscreteSumConstraint.coefficients
+      ~DiscreteSumConstraint.exclude
       ~DiscreteSumConstraint.has_polars_implementation
       ~DiscreteSumConstraint.is_continuous
       ~DiscreteSumConstraint.is_discrete

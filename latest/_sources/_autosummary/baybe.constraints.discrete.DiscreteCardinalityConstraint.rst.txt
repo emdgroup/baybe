@@ -42,12 +42,13 @@ DiscreteCardinalityConstraint
 
    .. autosummary::
    
+      ~DiscreteCardinalityConstraint.exclude
       ~DiscreteCardinalityConstraint.has_polars_implementation
       ~DiscreteCardinalityConstraint.is_continuous
       ~DiscreteCardinalityConstraint.is_discrete
-      ~DiscreteCardinalityConstraint.max_cardinality
-      ~DiscreteCardinalityConstraint.min_cardinality
       ~DiscreteCardinalityConstraint.numerical_only
       ~DiscreteCardinalityConstraint.parameters
+      ~DiscreteCardinalityConstraint.min_cardinality
+      ~DiscreteCardinalityConstraint.max_cardinality
    
    

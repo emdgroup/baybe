@@ -207,8 +207,7 @@ SubSelectionCondition(  # will select two solvents identified by their labels
 ```
 
 ## Discrete Constraints
-Discrete constraints currently do not affect the optimization process directly.
-Instead, they act as a filter on the search space.
+Discrete constraints operate on discrete parameters.
 For instance, a search space created via [`from_product`](baybe.searchspace.core.SearchSpace.from_product) 
 might include invalid combinations, which can be removed again by applying constraints.
 
@@ -231,35 +230,50 @@ identified by the `parameters` member, which expects a list of parameter names a
 strings.
 All of these parameters must be present in the search space specification.
 
-### DiscreteExcludeConstraint
-The [`DiscreteExcludeConstraint`](baybe.constraints.discrete.DiscreteExcludeConstraint)
-constraint simply removes a set of search space elements, according to its
-specifications.
+(filtering-constraints)=
+### Filtering Constraints
+Most discrete constraints are **filtering constraints**, derived from the abstract
+{class}`~baybe.constraints.base.DiscreteFilteringConstraint`. A filtering constraint
+reduces the search space, and its specification always describes what is **kept**: the
+entries matching the constraint remain in the search space – everything else is
+removed.
 
-The following example would exclude entries where "Ethanol" and "DMF" are combined with
-temperatures above 150, which might be due to their chemical instability at those
-temperatures:
+This behavior can be inverted with the keyword-only ``exclude`` flag, which is available
+on all filtering constraints and defaults to ``False``. With ``exclude=True``, the same
+specification instead defines what is **removed**, keeping the complement.
+
+#### DiscreteSelectionConstraint
+The [`DiscreteSelectionConstraint`](baybe.constraints.discrete.DiscreteSelectionConstraint)
+keeps search space elements that match its conditions and removes all others.
+
+The following example keeps only entries where "Ethanol" and "DMF" are combined with
+temperatures above 150. By setting ``exclude=True``, the same specification instead
+removes exactly those entries, which might be desirable if these combinations are
+chemically unstable at such temperatures:
 ```python
 from baybe.constraints import (
-    DiscreteExcludeConstraint,
+    DiscreteSelectionConstraint,
     ThresholdCondition,
     SubSelectionCondition,
 )
 
-DiscreteExcludeConstraint(
+DiscreteSelectionConstraint(
     parameters=["Temperature", "Solvent"],  # names of the affected parameters
     combiner="AND",  # specifies how the conditions are logically combined
     conditions=[  # requires one condition for each entry in parameters
         ThresholdCondition(threshold=150, operator=">"),
         SubSelectionCondition(selection=["Ethanol", "DMF"]),
     ],
+    # exclude=False (default) KEEPS the matching entries;
+    # exclude=True removes them and keeps everything else.
+    exclude=True,
 )
 ```
 
 A more detailed example can be found
-[here](../../examples/Constraints_Discrete/exclusion_constraints).
+[here](../../examples/Constraints_Discrete/selection_constraints).
 
-### DiscreteSumConstraint and DiscreteProductConstraint
+#### DiscreteSumConstraint and DiscreteProductConstraint
 [`DiscreteSumConstraint`](baybe.constraints.discrete.DiscreteSumConstraint)
 and [`DiscreteProductConstraint`](baybe.constraints.discrete.DiscreteProductConstraint)
 impose conditions on sums or products of numerical parameters.
@@ -282,7 +296,7 @@ DiscreteSumConstraint(
 
 An end to end example can be found [here](../../examples/Constraints_Discrete/prodsum_constraints).
 
-### DiscreteNoLabelDuplicatesConstraint
+#### DiscreteNoLabelDuplicatesConstraint
 Sometimes, duplicated labels in several parameters are undesirable.
 Consider an example with two solvents that describe different mixture
 components.
@@ -290,8 +304,8 @@ These might have the exact same or overlapping sets of possible values, e.g.
 `["Water", "THF", "Octanol"]`.
 It would not necessarily be reasonable to allow values in which both solvents show the
 same label/component.
-We can exclude such occurrences with the
-[`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint):
+The [`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint)
+keeps only those entries whose labels are all distinct:
 
 ```python
 from baybe.constraints import DiscreteNoLabelDuplicatesConstraint
@@ -299,22 +313,22 @@ from baybe.constraints import DiscreteNoLabelDuplicatesConstraint
 DiscreteNoLabelDuplicatesConstraint(parameters=["Solvent_1", "Solvent_2"])
 ```
 
-Without this constraint, combinations like below would be possible:
+With this constraint, combinations with duplicated labels are removed:
 
 |   | Solvent_1 | Solvent_2 | With DiscreteNoLabelDuplicatesConstraint |
 |---|-----------|-----------|------------------------------------------|
-| 1 | Water     | Water     | would be excluded                        |
-| 2 | THF       | Water     |                                          |
-| 3 | Octanol   | Octanol   | would be excluded                        |
+| 1 | Water     | Water     | removed                                  |
+| 2 | THF       | Water     | kept                                     |
+| 3 | Octanol   | Octanol   | removed                                  |
 
 The usage of `DiscreteNoLabelDuplicatesConstraint` is part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
-### DiscreteLinkedParametersConstraint
+#### DiscreteLinkedParametersConstraint
 The [`DiscreteLinkedParametersConstraint`](baybe.constraints.discrete.DiscreteLinkedParametersConstraint)
 is, in a sense, the opposite of the
 [`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint).
-It will ensure that **only** entries with duplicated labels are present.
+It keeps **only** entries where the linked parameters share the same label.
 This can be useful, for instance, in situations where we have one parameter but would
 like to include it with several encodings:
 ```python
@@ -339,11 +353,11 @@ DiscreteLinkedParametersConstraint(
 
 |   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteLinkedParametersConstraint |
 |---|-------------------|---------------------|-----------------------------------------|
-| 1 | Water             | Water               |                                         |
-| 2 | THF               | Water               | would be excluded                       |
-| 3 | Octanol           | Octanol             |                                         |
+| 1 | Water             | Water               | kept                                    |
+| 2 | THF               | Water               | removed                                 |
+| 3 | Octanol           | Octanol             | kept                                    |
 
-### DiscreteDependenciesConstraint
+#### DiscreteDependenciesConstraint
 A dependency is a situation where parameters depend on other parameters.
 Let's say an experimental setup has a parameter called `"Switch"`, which turns on
 pieces of equipment that are optional.
@@ -401,7 +415,7 @@ DiscreteDependenciesConstraint(
 An end to end example can be found [here](../../examples/Constraints_Discrete/dependency_constraints).
 For more information about the possibility of data augmentation, see [here](recommender_data_augmentation).
 
-### DiscretePermutationInvarianceConstraint
+#### DiscretePermutationInvarianceConstraint
 Permutation invariance, enabled by the 
 [`DiscretePermutationInvarianceConstraint`](baybe.constraints.discrete.DiscretePermutationInvarianceConstraint)
 , is a property where combinations of values of multiple
@@ -483,7 +497,7 @@ The usage of `DiscretePermutationInvarianceConstraint` is also part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
 For more information about the possibility of data augmentation, see [here](recommender_data_augmentation).
 
-### DiscreteCardinalityConstraint
+#### DiscreteCardinalityConstraint
 Like its [continuous cousin](#ContinuousCardinalityConstraint), the
 {class}`~baybe.constraints.discrete.DiscreteCardinalityConstraint` lets you control the
 number of active parameters in your design. The construction works analogously: 
@@ -497,7 +511,7 @@ DiscreteCardinalityConstraint(
 )
 ```
 
-### DiscreteCustomConstraint
+#### DiscreteCustomConstraint
 With a [`DiscreteCustomConstraint`](baybe.constraints.discrete.DiscreteCustomConstraint) 
 constraint, you can specify a completely custom filter:
 
@@ -537,9 +551,9 @@ the corresponding object or higher-level objects containing it.
 ```
 
 ### DiscreteBatchConstraint
-Unlike the other discrete constraints described above, the
-{class}`~baybe.constraints.discrete.DiscreteBatchConstraint` does not filter candidates
-from the search space. Instead, it controls how recommendations are generated at
+Unlike the [filtering constraints](#filtering-constraints) described above, the
+{class}`~baybe.constraints.discrete.DiscreteBatchConstraint` is not a filtering constraint
+and does not filter candidates from the search space. Instead, it controls how recommendations are generated at
 batch level: it ensures that **all experiments in a recommended batch share the same
 value** for the constrained parameter.
 

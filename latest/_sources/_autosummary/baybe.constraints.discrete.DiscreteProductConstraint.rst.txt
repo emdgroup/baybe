@@ -43,6 +43,7 @@ DiscreteProductConstraint
    .. autosummary::
    
       ~DiscreteProductConstraint.condition
+      ~DiscreteProductConstraint.exclude
       ~DiscreteProductConstraint.has_polars_implementation
       ~DiscreteProductConstraint.is_continuous
       ~DiscreteProductConstraint.is_discrete

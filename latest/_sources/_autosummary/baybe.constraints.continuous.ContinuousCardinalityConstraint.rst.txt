@@ -45,10 +45,10 @@ ContinuousCardinalityConstraint
       ~ContinuousCardinalityConstraint.relative_threshold
       ~ContinuousCardinalityConstraint.is_continuous
       ~ContinuousCardinalityConstraint.is_discrete
-      ~ContinuousCardinalityConstraint.max_cardinality
-      ~ContinuousCardinalityConstraint.min_cardinality
       ~ContinuousCardinalityConstraint.n_inactive_parameter_combinations
       ~ContinuousCardinalityConstraint.numerical_only
       ~ContinuousCardinalityConstraint.parameters
+      ~ContinuousCardinalityConstraint.min_cardinality
+      ~ContinuousCardinalityConstraint.max_cardinality
    
    

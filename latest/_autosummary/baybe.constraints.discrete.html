@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="DiscreteBatchConstraint" href="baybe.constraints.discrete.DiscreteBatchConstraint.html"><link rel="prev" title="ContinuousLinearConstraint" href="baybe.constraints.continuous.ContinuousLinearConstraint.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="baybe.constraints.discrete.DiscreteExcludeConstraint" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html"><link rel="prev" title="ContinuousLinearConstraint" href="baybe.constraints.continuous.ContinuousLinearConstraint.html">
         <link rel="prefetch" href="../_static/logo1.svg" as="image">
         <link rel="prefetch" href="../_static/logo1.svg" as="image">
 
@@ -307,7 +307,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Constraints_Discrete/Constraints_Discrete.html">Constraints Discrete</a><input aria-label="Toggle navigation of Constraints Discrete" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/exclusion_constraints.html">Exclusion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/selection_constraints.html">Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/dependency_constraints.html">Dependency</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/custom_constraints.html">Custom</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/prodsum_constraints.html">Product/Sum</a></li>
@@ -425,6 +425,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.ContinuousConstraint.html">ContinuousConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.ContinuousNonlinearConstraint.html">ContinuousNonlinearConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.DiscreteConstraint.html">DiscreteConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.DiscreteFilteringConstraint.html">DiscreteFilteringConstraint</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.constraints.conditions.html">baybe.constraints.conditions</a><input aria-label="Toggle navigation of baybe.constraints.conditions" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -439,15 +440,16 @@
 </ul>
 </li>
 <li class="toctree-l3 current has-children current-page"><a class="current reference internal" href="#">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" checked="" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html">DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
 </li>
@@ -1221,6 +1223,16 @@
           <section id="module-baybe.constraints.discrete">
 <span id="baybe-constraints-discrete"></span><h1>baybe.constraints.discrete<a class="headerlink" href="#module-baybe.constraints.discrete" title="Link to this heading">¶</a></h1>
 <p>Discrete constraints.</p>
+<p class="rubric">Functions</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html#baybe.constraints.discrete.DiscreteExcludeConstraint" title="baybe.constraints.discrete.DiscreteExcludeConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint</span></code></a>(parameters, conditions)</p></td>
+<td><p>A <code class="docutils literal notranslate"><span class="pre">DiscreteSelectionConstraint</span></code> alias for backward compatibility.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p class="rubric">Classes</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -1237,20 +1249,20 @@
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html#baybe.constraints.discrete.DiscreteDependenciesConstraint" title="baybe.constraints.discrete.DiscreteDependenciesConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint</span></code></a></p></td>
 <td><p>Constraint that specifies dependencies between parameters.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html#baybe.constraints.discrete.DiscreteExcludeConstraint" title="baybe.constraints.discrete.DiscreteExcludeConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint</span></code></a></p></td>
-<td><p>Class for modelling exclusion constraints.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html#baybe.constraints.discrete.DiscreteLinkedParametersConstraint" title="baybe.constraints.discrete.DiscreteLinkedParametersConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteLinkedParametersConstraint</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html#baybe.constraints.discrete.DiscreteLinkedParametersConstraint" title="baybe.constraints.discrete.DiscreteLinkedParametersConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteLinkedParametersConstraint</span></code></a></p></td>
 <td><p>Constraint class for linking the values of parameters.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint" title="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code></a></p></td>
-<td><p>Constraint class for excluding entries where occurring labels are not unique.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint" title="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code></a></p></td>
+<td><p>Constraint class for keeping entries where all labels are unique.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint</span></code></a></p></td>
 <td><p>Constraint class for declaring that a set of parameters is permutation invariant.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteProductConstraint.html#baybe.constraints.discrete.DiscreteProductConstraint" title="baybe.constraints.discrete.DiscreteProductConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteProductConstraint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteProductConstraint.html#baybe.constraints.discrete.DiscreteProductConstraint" title="baybe.constraints.discrete.DiscreteProductConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteProductConstraint</span></code></a></p></td>
 <td><p>Class for modelling product constraints.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html#baybe.constraints.discrete.DiscreteSelectionConstraint" title="baybe.constraints.discrete.DiscreteSelectionConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteSelectionConstraint</span></code></a></p></td>
+<td><p>Class for filtering search space entries based on conditions.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteSumConstraint.html#baybe.constraints.discrete.DiscreteSumConstraint" title="baybe.constraints.discrete.DiscreteSumConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteSumConstraint</span></code></a></p></td>
 <td><p>Class for modelling sum constraints.</p></td>
@@ -1265,12 +1277,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="baybe.constraints.discrete.DiscreteBatchConstraint.html">
+          <a class="next-page" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">DiscreteBatchConstraint</div>
+                <div class="title">baybe.constraints.discrete.DiscreteExcludeConstraint</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

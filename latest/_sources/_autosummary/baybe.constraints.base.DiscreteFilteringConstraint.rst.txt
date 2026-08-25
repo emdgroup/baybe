@@ -1,0 +1,52 @@
+DiscreteFilteringConstraint
+===========================
+
+.. currentmodule:: baybe.constraints.base
+
+.. autoclass:: DiscreteFilteringConstraint
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteFilteringConstraint.__init__
+   
+      ~DiscreteFilteringConstraint.from_dict
+   
+      ~DiscreteFilteringConstraint.from_json
+   
+      ~DiscreteFilteringConstraint.get_invalid
+   
+      ~DiscreteFilteringConstraint.get_invalid_polars
+   
+      ~DiscreteFilteringConstraint.get_valid
+   
+      ~DiscreteFilteringConstraint.summary
+   
+      ~DiscreteFilteringConstraint.to_dict
+   
+      ~DiscreteFilteringConstraint.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteFilteringConstraint.exclude
+      ~DiscreteFilteringConstraint.has_polars_implementation
+      ~DiscreteFilteringConstraint.is_continuous
+      ~DiscreteFilteringConstraint.is_discrete
+      ~DiscreteFilteringConstraint.numerical_only
+      ~DiscreteFilteringConstraint.parameters
+   
+   

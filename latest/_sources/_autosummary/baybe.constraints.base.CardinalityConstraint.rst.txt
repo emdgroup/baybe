@@ -36,11 +36,11 @@ CardinalityConstraint
 
    .. autosummary::
    
-      ~CardinalityConstraint.min_cardinality
-      ~CardinalityConstraint.max_cardinality
+      ~CardinalityConstraint.parameters
       ~CardinalityConstraint.is_continuous
       ~CardinalityConstraint.is_discrete
       ~CardinalityConstraint.numerical_only
-      ~CardinalityConstraint.parameters
+      ~CardinalityConstraint.min_cardinality
+      ~CardinalityConstraint.max_cardinality
    
    

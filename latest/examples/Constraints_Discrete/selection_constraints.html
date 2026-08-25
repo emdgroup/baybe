@@ -8,7 +8,7 @@
         <link rel="prefetch" href="../../_static/logo1.svg" as="image">
 
     <link rel="shortcut icon" href="../../_static/favicon.ico"><!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
-        <title>Example for using exclusion constraints in discrete searchspaces - BayBE documentation</title>
+        <title>Example for using selection constraints in discrete searchspaces - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -307,7 +307,7 @@
 </ul>
 </li>
 <li class="toctree-l2 current has-children"><a class="reference internal" href="Constraints_Discrete.html">Constraints Discrete</a><input aria-label="Toggle navigation of Constraints Discrete" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
-<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">Exclusion</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="dependency_constraints.html">Dependency</a></li>
 <li class="toctree-l3"><a class="reference internal" href="custom_constraints.html">Custom</a></li>
 <li class="toctree-l3"><a class="reference internal" href="prodsum_constraints.html">Product/Sum</a></li>
@@ -425,6 +425,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.base.ContinuousConstraint.html">ContinuousConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.base.ContinuousNonlinearConstraint.html">ContinuousNonlinearConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.base.DiscreteConstraint.html">DiscreteConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.base.DiscreteFilteringConstraint.html">DiscreteFilteringConstraint</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.conditions.html">baybe.constraints.conditions</a><input aria-label="Toggle navigation of baybe.constraints.conditions" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -439,15 +440,16 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
 </li>
@@ -1200,7 +1202,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../../_sources/examples/Constraints_Discrete/exclusion_constraints.md.txt" title="View this page">
+  <a class="muted-link" href="../../_sources/examples/Constraints_Discrete/selection_constraints.md.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -1218,10 +1220,9 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section class="tex2jax_ignore mathjax_ignore" id="example-for-using-exclusion-constraints-in-discrete-searchspaces">
-<h1>Example for using exclusion constraints in discrete searchspaces<a class="headerlink" href="#example-for-using-exclusion-constraints-in-discrete-searchspaces" title="Link to this heading">¶</a></h1>
-<p>This examples shows how an exclusion constraint can be created for a discrete
-searchspace.
+          <section class="tex2jax_ignore mathjax_ignore" id="example-for-using-selection-constraints-in-discrete-searchspaces">
+<h1>Example for using selection constraints in discrete searchspaces<a class="headerlink" href="#example-for-using-selection-constraints-in-discrete-searchspaces" title="Link to this heading">¶</a></h1>
+<p>This example shows how a selection constraint can be created for a discrete searchspace.
 This can be used if some parameter values are incompatible with values of another
 parameter.</p>
 <p>This example assumes some basic familiarity with using BayBE.
@@ -1233,7 +1234,7 @@ We thus refer to <a class="reference internal" href="../Basics/campaign.html"><s
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Campaign</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">DiscreteExcludeConstraint</span><span class="p">,</span>
+    <span class="n">DiscreteSelectionConstraint</span><span class="p">,</span>
     <span class="n">SubSelectionCondition</span><span class="p">,</span>
     <span class="n">ThresholdCondition</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1284,37 +1285,40 @@ We thus refer to <a class="reference internal" href="../Basics/campaign.html"><s
 <h2>Creating the constraint<a class="headerlink" href="#creating-the-constraint" title="Link to this heading">¶</a></h2>
 <p>This constraint simulates a situation where solvents <code class="docutils literal notranslate"><span class="pre">C2</span></code> and <code class="docutils literal notranslate"><span class="pre">C4</span></code> are not
 compatible with temperatures larger than 151 and should thus be excluded.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">constraint_1</span> <span class="o">=</span> <span class="n">DiscreteExcludeConstraint</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">constraint_1</span> <span class="o">=</span> <span class="n">DiscreteSelectionConstraint</span><span class="p">(</span>
     <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Temp&quot;</span><span class="p">,</span> <span class="s2">&quot;Solv&quot;</span><span class="p">],</span>
     <span class="n">combiner</span><span class="o">=</span><span class="s2">&quot;AND&quot;</span><span class="p">,</span>
     <span class="n">conditions</span><span class="o">=</span><span class="p">[</span>
         <span class="n">ThresholdCondition</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mi">151</span><span class="p">,</span> <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;&gt;&quot;</span><span class="p">),</span>
         <span class="n">SubSelectionCondition</span><span class="p">(</span><span class="n">selection</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;C4&quot;</span><span class="p">,</span> <span class="s2">&quot;C2&quot;</span><span class="p">]),</span>
     <span class="p">],</span>
+    <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 <p>This constraint simulates a situation where solvents <code class="docutils literal notranslate"><span class="pre">C5</span></code> and <code class="docutils literal notranslate"><span class="pre">C6</span></code> are not
 compatible with pressures larger than 5 and should thus be excluded.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">constraint_2</span> <span class="o">=</span> <span class="n">DiscreteExcludeConstraint</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">constraint_2</span> <span class="o">=</span> <span class="n">DiscreteSelectionConstraint</span><span class="p">(</span>
     <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;Solv&quot;</span><span class="p">],</span>
     <span class="n">combiner</span><span class="o">=</span><span class="s2">&quot;AND&quot;</span><span class="p">,</span>
     <span class="n">conditions</span><span class="o">=</span><span class="p">[</span>
         <span class="n">ThresholdCondition</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;&gt;&quot;</span><span class="p">),</span>
         <span class="n">SubSelectionCondition</span><span class="p">(</span><span class="n">selection</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;C5&quot;</span><span class="p">,</span> <span class="s2">&quot;C6&quot;</span><span class="p">]),</span>
     <span class="p">],</span>
+    <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 <p>This constraint simulates a situation where pressures below 3 should never be
 combined with temperatures above 120.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">constraint_3</span> <span class="o">=</span> <span class="n">DiscreteExcludeConstraint</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">constraint_3</span> <span class="o">=</span> <span class="n">DiscreteSelectionConstraint</span><span class="p">(</span>
     <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;Temp&quot;</span><span class="p">],</span>
     <span class="n">combiner</span><span class="o">=</span><span class="s2">&quot;AND&quot;</span><span class="p">,</span>
     <span class="n">conditions</span><span class="o">=</span><span class="p">[</span>
         <span class="n">ThresholdCondition</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
         <span class="n">ThresholdCondition</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">120.0</span><span class="p">,</span> <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;&gt;&quot;</span><span class="p">),</span>
     <span class="p">],</span>
+    <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -1379,9 +1383,9 @@ NaN</p>
             [1150 rows x 4 columns]
          Constraints
                           Type Affected_Paramet
-            0  DiscreteExcl...     [Temp, Solv]
-            1  DiscreteExcl...  [Pressure, S...
-            2  DiscreteExcl...  [Pressure, T...
+            0  DiscreteSele...     [Temp, Solv]
+            1  DiscreteSele...  [Pressure, S...
+            2  DiscreteSele...  [Pressure, T...
          Computational Representation
                   Pressure  Solv_RDKIT2DDESC  ...  Speed   Temp
             0          1.0              0.0   ...    0.0  100.0
@@ -1543,7 +1547,7 @@ Number of entries with pressure below 3 and temperature above 120:            0
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Example for using exclusion constraints in discrete searchspaces</a><ul>
+<li><a class="reference internal" href="#">Example for using selection constraints in discrete searchspaces</a><ul>
 <li><a class="reference internal" href="#necessary-imports-for-this-example">Necessary imports for this example</a></li>
 <li><a class="reference internal" href="#experiment-setup">Experiment setup</a></li>
 <li><a class="reference internal" href="#creating-the-constraint">Creating the constraint</a></li>

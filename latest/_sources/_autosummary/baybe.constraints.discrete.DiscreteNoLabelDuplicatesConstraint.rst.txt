@@ -42,6 +42,7 @@ DiscreteNoLabelDuplicatesConstraint
 
    .. autosummary::
    
+      ~DiscreteNoLabelDuplicatesConstraint.exclude
       ~DiscreteNoLabelDuplicatesConstraint.has_polars_implementation
       ~DiscreteNoLabelDuplicatesConstraint.is_continuous
       ~DiscreteNoLabelDuplicatesConstraint.is_discrete

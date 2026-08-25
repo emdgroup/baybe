@@ -307,7 +307,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Constraints_Discrete/Constraints_Discrete.html">Constraints Discrete</a><input aria-label="Toggle navigation of Constraints Discrete" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/exclusion_constraints.html">Exclusion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/selection_constraints.html">Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/dependency_constraints.html">Dependency</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/custom_constraints.html">Custom</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/prodsum_constraints.html">Product/Sum</a></li>
@@ -425,6 +425,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.ContinuousConstraint.html">ContinuousConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.ContinuousNonlinearConstraint.html">ContinuousNonlinearConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.DiscreteConstraint.html">DiscreteConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.base.DiscreteFilteringConstraint.html">DiscreteFilteringConstraint</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.constraints.conditions.html">baybe.constraints.conditions</a><input aria-label="Toggle navigation of baybe.constraints.conditions" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -439,15 +440,16 @@
 </ul>
 </li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" checked="" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html">DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
 </li>
@@ -1223,7 +1225,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baybe.constraints.discrete.</span></span><span class="sig-name descname"><span class="pre">DiscretePermutationInvarianceConstraint</span></span><a class="reference internal" href="../_modules/baybe/constraints/discrete.html#DiscretePermutationInvarianceConstraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint" title="baybe.constraints.base.DiscreteConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteConstraint</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="baybe.constraints.base.DiscreteFilteringConstraint.html#baybe.constraints.base.DiscreteFilteringConstraint" title="baybe.constraints.base.DiscreteFilteringConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteFilteringConstraint</span></code></a></p>
 <p>Constraint class for declaring that a set of parameters is permutation invariant.</p>
 <p>More precisely, this means that, <code class="docutils literal notranslate"><span class="pre">(val_from_param1,</span> <span class="pre">val_from_param2)</span></code> is
 equivalent to <code class="docutils literal notranslate"><span class="pre">(val_from_param2,</span> <span class="pre">val_from_param1)</span></code>.</p>
@@ -1233,7 +1235,7 @@ evaluated during modeling to make use of the invariance.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.__init__" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(parameters[, dependencies])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.__init__" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(parameters[, dependencies, exclude])</p></td>
 <td><p>Method generated by attrs for class DiscretePermutationInvarianceConstraint.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.from_dict" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.from_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_dict</span></code></a>(dictionary)</p></td>
@@ -1246,7 +1248,7 @@ evaluated during modeling to make use of the invariance.</p>
 <td><p>Get the indices of dataframe entries that are invalid under the constraint.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.get_invalid_polars" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.get_invalid_polars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_invalid_polars</span></code></a>()</p></td>
-<td><p>Translate the constraint to Polars expression identifying undesired rows.</p></td>
+<td><p>Translate the constraint to a Polars expression identifying rows to remove.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.get_valid" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.get_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_valid</span></code></a>(df, /, *[, allow_missing])</p></td>
 <td><p>Get the indices of dataframe entries that are valid under the constraint.</p></td>
@@ -1273,19 +1275,22 @@ evaluated during modeling to make use of the invariance.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.dependencies" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.dependencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dependencies</span></code></a></p></td>
 <td><p>Dependencies connected with the invariant parameters.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_polars_implementation</span></code></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.exclude" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.exclude"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exclude</span></code></a></p></td>
+<td><p>Whether to invert the selection (keep the complement of the specification).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_polars_implementation</span></code></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.is_continuous" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.is_continuous"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_continuous</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.is_continuous" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.is_continuous"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_continuous</span></code></a></p></td>
 <td><p>Boolean indicating if this is a constraint over continuous parameters.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.is_discrete" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.is_discrete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_discrete</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.is_discrete" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.is_discrete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_discrete</span></code></a></p></td>
 <td><p>Boolean indicating if this is a constraint over discrete parameters.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.numerical_only" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.numerical_only"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numerical_only</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.numerical_only" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.numerical_only"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numerical_only</span></code></a></p></td>
 <td><p>Class variable encoding whether the constraint is valid only for numerical parameters.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.parameters" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.parameters" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code></a></p></td>
 <td><p>The list of parameters used for the constraint.</p></td>
 </tr>
 </tbody>
@@ -1293,7 +1298,7 @@ evaluated during modeling to make use of the invariance.</p>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dependencies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html#baybe.constraints.discrete.DiscreteDependenciesConstraint" title="baybe.constraints.discrete.DiscreteDependenciesConstraint"><span class="pre">DiscreteDependenciesConstraint</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dependencies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html#baybe.constraints.discrete.DiscreteDependenciesConstraint" title="baybe.constraints.discrete.DiscreteDependenciesConstraint"><span class="pre">DiscreteDependenciesConstraint</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Method generated by attrs for class DiscretePermutationInvarianceConstraint.</p>
 <p>For details on the parameters, see <strong>Public attributes and properties</strong>.</p>
 <dl class="field-list simple">
@@ -1374,17 +1379,13 @@ caller <cite>there are no entries to be excluded *yet*</cite>.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.get_invalid_polars">
 <span class="sig-name descname"><span class="pre">get_invalid_polars</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.get_invalid_polars" title="Link to this definition">¶</a></dt>
-<dd><p>Translate the constraint to Polars expression identifying undesired rows.</p>
+<dd><p>Translate the constraint to a Polars expression identifying rows to remove.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">pl.Expr</span></p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The Polars expressions to pass to <a class="reference external" href="https://docs.pola.rs/api/python/stable/reference/lazyframe/api/polars.LazyFrame.filter.html#polars.LazyFrame.filter" title="(in Polars)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">polars.LazyFrame.filter()</span></code></a>.</p>
-</dd>
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.14)"><strong>NotImplementedError</strong></a> – If the constraint class does not have a Polars
-    implementation.</p>
+<dd class="field-even"><p>The Polars expression.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1479,7 +1480,7 @@ dependencies are attached, their parameters are added as an additional
 group that is permuted in lockstep.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">PermutationSymmetry</span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.symmetries.permutation.PermutationSymmetry.html#baybe.symmetries.permutation.PermutationSymmetry" title="baybe.symmetries.permutation.PermutationSymmetry"><code class="xref py py-class docutils literal notranslate"><span class="pre">PermutationSymmetry</span></code></a></span></p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The corresponding permutation symmetry.</p>
@@ -1491,6 +1492,12 @@ group that is permuted in lockstep.</p>
 <dt class="sig sig-object py" id="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.dependencies">
 <span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html#baybe.constraints.discrete.DiscreteDependenciesConstraint" title="baybe.constraints.discrete.DiscreteDependenciesConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint</span></code></a> <span class="pre">|</span> <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></em><a class="headerlink" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.dependencies" title="Link to this definition">¶</a></dt>
 <dd><p>Dependencies connected with the invariant parameters.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.exclude">
+<span class="sig-name descname"><span class="pre">exclude</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></em><a class="headerlink" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.exclude" title="Link to this definition">¶</a></dt>
+<dd><p>Whether to invert the selection (keep the complement of the specification).</p>
 </dd></dl>
 
 <dl class="py property">
@@ -1590,6 +1597,7 @@ parameters.</p>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.to_json"><code class="docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint.to_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.to_symmetry"><code class="docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint.to_symmetry()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.dependencies"><code class="docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.exclude"><code class="docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint.exclude</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.is_continuous"><code class="docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint.is_continuous</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.is_discrete"><code class="docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint.is_discrete</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.numerical_only"><code class="docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint.numerical_only</span></code></a></li>

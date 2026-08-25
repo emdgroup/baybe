@@ -45,6 +45,7 @@ DiscretePermutationInvarianceConstraint
    .. autosummary::
    
       ~DiscretePermutationInvarianceConstraint.dependencies
+      ~DiscretePermutationInvarianceConstraint.exclude
       ~DiscretePermutationInvarianceConstraint.has_polars_implementation
       ~DiscretePermutationInvarianceConstraint.is_continuous
       ~DiscretePermutationInvarianceConstraint.is_discrete

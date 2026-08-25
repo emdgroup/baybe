@@ -307,7 +307,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Constraints_Discrete/Constraints_Discrete.html">Constraints Discrete</a><input aria-label="Toggle navigation of Constraints Discrete" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/exclusion_constraints.html">Exclusion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/selection_constraints.html">Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/dependency_constraints.html">Dependency</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/custom_constraints.html">Custom</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/prodsum_constraints.html">Product/Sum</a></li>
@@ -425,6 +425,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.base.ContinuousConstraint.html">ContinuousConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.base.ContinuousNonlinearConstraint.html">ContinuousNonlinearConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.base.DiscreteConstraint.html">DiscreteConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.base.DiscreteFilteringConstraint.html">DiscreteFilteringConstraint</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.constraints.conditions.html">baybe.constraints.conditions</a><input aria-label="Toggle navigation of baybe.constraints.conditions" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -439,15 +440,16 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
 </li>
@@ -1425,8 +1427,7 @@ achieved with a <a class="reference internal" href="../_autosummary/baybe.constr
 </section>
 <section id="discrete-constraints">
 <h2>Discrete Constraints<a class="headerlink" href="#discrete-constraints" title="Link to this heading">¶</a></h2>
-<p>Discrete constraints currently do not affect the optimization process directly.
-Instead, they act as a filter on the search space.
+<p>Discrete constraints operate on discrete parameters.
 For instance, a search space created via <a class="reference internal" href="../_autosummary/baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.from_product" title="baybe.searchspace.core.SearchSpace.from_product"><span class="xref myst py py-meth"><code class="docutils literal notranslate"><span class="pre">from_product</span></code></span></a>
 might include invalid combinations, which can be removed again by applying constraints.</p>
 <div class="tip admonition">
@@ -1446,35 +1447,48 @@ currently a main dependency of BayBE.</p>
 identified by the <code class="docutils literal notranslate"><span class="pre">parameters</span></code> member, which expects a list of parameter names as
 strings.
 All of these parameters must be present in the search space specification.</p>
-<section id="discreteexcludeconstraint">
-<h3>DiscreteExcludeConstraint<a class="headerlink" href="#discreteexcludeconstraint" title="Link to this heading">¶</a></h3>
-<p>The <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html#baybe.constraints.discrete.DiscreteExcludeConstraint" title="baybe.constraints.discrete.DiscreteExcludeConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint</span></code></span></a>
-constraint simply removes a set of search space elements, according to its
-specifications.</p>
-<p>The following example would exclude entries where “Ethanol” and “DMF” are combined with
-temperatures above 150, which might be due to their chemical instability at those
-temperatures:</p>
+<section id="filtering-constraints">
+<span id="id1"></span><h3>Filtering Constraints<a class="headerlink" href="#filtering-constraints" title="Link to this heading">¶</a></h3>
+<p>Most discrete constraints are <strong>filtering constraints</strong>, derived from the abstract
+<a class="reference internal" href="../_autosummary/baybe.constraints.base.DiscreteFilteringConstraint.html#baybe.constraints.base.DiscreteFilteringConstraint" title="baybe.constraints.base.DiscreteFilteringConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteFilteringConstraint</span></code></a>. A filtering constraint
+reduces the search space, and its specification always describes what is <strong>kept</strong>: the
+entries matching the constraint remain in the search space – everything else is
+removed.</p>
+<p>This behavior can be inverted with the keyword-only <code class="docutils literal notranslate"><span class="pre">exclude</span></code> flag, which is available
+on all filtering constraints and defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>. With <code class="docutils literal notranslate"><span class="pre">exclude=True</span></code>, the same
+specification instead defines what is <strong>removed</strong>, keeping the complement.</p>
+<section id="discreteselectionconstraint">
+<h4>DiscreteSelectionConstraint<a class="headerlink" href="#discreteselectionconstraint" title="Link to this heading">¶</a></h4>
+<p>The <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html#baybe.constraints.discrete.DiscreteSelectionConstraint" title="baybe.constraints.discrete.DiscreteSelectionConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteSelectionConstraint</span></code></span></a>
+keeps search space elements that match its conditions and removes all others.</p>
+<p>The following example keeps only entries where “Ethanol” and “DMF” are combined with
+temperatures above 150. By setting <code class="docutils literal notranslate"><span class="pre">exclude=True</span></code>, the same specification instead
+removes exactly those entries, which might be desirable if these combinations are
+chemically unstable at such temperatures:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">DiscreteExcludeConstraint</span><span class="p">,</span>
+    <span class="n">DiscreteSelectionConstraint</span><span class="p">,</span>
     <span class="n">ThresholdCondition</span><span class="p">,</span>
     <span class="n">SubSelectionCondition</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">DiscreteExcludeConstraint</span><span class="p">(</span>
+<span class="n">DiscreteSelectionConstraint</span><span class="p">(</span>
     <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Temperature&quot;</span><span class="p">,</span> <span class="s2">&quot;Solvent&quot;</span><span class="p">],</span>  <span class="c1"># names of the affected parameters</span>
     <span class="n">combiner</span><span class="o">=</span><span class="s2">&quot;AND&quot;</span><span class="p">,</span>  <span class="c1"># specifies how the conditions are logically combined</span>
     <span class="n">conditions</span><span class="o">=</span><span class="p">[</span>  <span class="c1"># requires one condition for each entry in parameters</span>
         <span class="n">ThresholdCondition</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;&gt;&quot;</span><span class="p">),</span>
         <span class="n">SubSelectionCondition</span><span class="p">(</span><span class="n">selection</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Ethanol&quot;</span><span class="p">,</span> <span class="s2">&quot;DMF&quot;</span><span class="p">]),</span>
     <span class="p">],</span>
+    <span class="c1"># exclude=False (default) KEEPS the matching entries;</span>
+    <span class="c1"># exclude=True removes them and keeps everything else.</span>
+    <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 <p>A more detailed example can be found
-<a class="reference internal" href="../examples/Constraints_Discrete/exclusion_constraints.html"><span class="doc std std-doc">here</span></a>.</p>
+<a class="reference internal" href="../examples/Constraints_Discrete/selection_constraints.html"><span class="doc std std-doc">here</span></a>.</p>
 </section>
 <section id="discretesumconstraint-and-discreteproductconstraint">
-<h3>DiscreteSumConstraint and DiscreteProductConstraint<a class="headerlink" href="#discretesumconstraint-and-discreteproductconstraint" title="Link to this heading">¶</a></h3>
+<h4>DiscreteSumConstraint and DiscreteProductConstraint<a class="headerlink" href="#discretesumconstraint-and-discreteproductconstraint" title="Link to this heading">¶</a></h4>
 <p><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html#baybe.constraints.discrete.DiscreteSumConstraint" title="baybe.constraints.discrete.DiscreteSumConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteSumConstraint</span></code></span></a>
 and <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html#baybe.constraints.discrete.DiscreteProductConstraint" title="baybe.constraints.discrete.DiscreteProductConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteProductConstraint</span></code></span></a>
 impose conditions on sums or products of numerical parameters.
@@ -1497,7 +1511,7 @@ If these parameters were instead discrete, the corresponding constraint would lo
 <p>An end to end example can be found <a class="reference internal" href="../examples/Constraints_Discrete/prodsum_constraints.html"><span class="doc std std-doc">here</span></a>.</p>
 </section>
 <section id="discretenolabelduplicatesconstraint">
-<h3>DiscreteNoLabelDuplicatesConstraint<a class="headerlink" href="#discretenolabelduplicatesconstraint" title="Link to this heading">¶</a></h3>
+<h4>DiscreteNoLabelDuplicatesConstraint<a class="headerlink" href="#discretenolabelduplicatesconstraint" title="Link to this heading">¶</a></h4>
 <p>Sometimes, duplicated labels in several parameters are undesirable.
 Consider an example with two solvents that describe different mixture
 components.
@@ -1505,14 +1519,14 @@ These might have the exact same or overlapping sets of possible values, e.g.
 <code class="docutils literal notranslate"><span class="pre">[&quot;Water&quot;,</span> <span class="pre">&quot;THF&quot;,</span> <span class="pre">&quot;Octanol&quot;]</span></code>.
 It would not necessarily be reasonable to allow values in which both solvents show the
 same label/component.
-We can exclude such occurrences with the
-<a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint" title="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code></span></a>:</p>
+The <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint" title="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code></span></a>
+keeps only those entries whose labels are all distinct:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteNoLabelDuplicatesConstraint</span>
 
 <span class="n">DiscreteNoLabelDuplicatesConstraint</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Solvent_1&quot;</span><span class="p">,</span> <span class="s2">&quot;Solvent_2&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>Without this constraint, combinations like below would be possible:</p>
+<p>With this constraint, combinations with duplicated labels are removed:</p>
 <div class="table-wrapper colwidths-auto docutils container">
 <table class="docutils align-default">
 <thead>
@@ -1526,17 +1540,17 @@ We can exclude such occurrences with the
 <tr class="row-even"><td><p>1</p></td>
 <td><p>Water</p></td>
 <td><p>Water</p></td>
-<td><p>would be excluded</p></td>
+<td><p>removed</p></td>
 </tr>
 <tr class="row-odd"><td><p>2</p></td>
 <td><p>THF</p></td>
 <td><p>Water</p></td>
-<td><p></p></td>
+<td><p>kept</p></td>
 </tr>
 <tr class="row-even"><td><p>3</p></td>
 <td><p>Octanol</p></td>
 <td><p>Octanol</p></td>
-<td><p>would be excluded</p></td>
+<td><p>removed</p></td>
 </tr>
 </tbody>
 </table>
@@ -1545,11 +1559,11 @@ We can exclude such occurrences with the
 <a class="reference internal" href="../examples/Mixtures/slot_based.html"><span class="doc std std-doc">example on slot-based mixtures</span></a>.</p>
 </section>
 <section id="discretelinkedparametersconstraint">
-<h3>DiscreteLinkedParametersConstraint<a class="headerlink" href="#discretelinkedparametersconstraint" title="Link to this heading">¶</a></h3>
+<h4>DiscreteLinkedParametersConstraint<a class="headerlink" href="#discretelinkedparametersconstraint" title="Link to this heading">¶</a></h4>
 <p>The <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html#baybe.constraints.discrete.DiscreteLinkedParametersConstraint" title="baybe.constraints.discrete.DiscreteLinkedParametersConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteLinkedParametersConstraint</span></code></span></a>
 is, in a sense, the opposite of the
 <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint" title="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code></span></a>.
-It will ensure that <strong>only</strong> entries with duplicated labels are present.
+It keeps <strong>only</strong> entries where the linked parameters share the same label.
 This can be useful, for instance, in situations where we have one parameter but would
 like to include it with several encodings:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubstanceParameter</span>
@@ -1584,24 +1598,24 @@ like to include it with several encodings:</p>
 <tr class="row-even"><td><p>1</p></td>
 <td><p>Water</p></td>
 <td><p>Water</p></td>
-<td><p></p></td>
+<td><p>kept</p></td>
 </tr>
 <tr class="row-odd"><td><p>2</p></td>
 <td><p>THF</p></td>
 <td><p>Water</p></td>
-<td><p>would be excluded</p></td>
+<td><p>removed</p></td>
 </tr>
 <tr class="row-even"><td><p>3</p></td>
 <td><p>Octanol</p></td>
 <td><p>Octanol</p></td>
-<td><p></p></td>
+<td><p>kept</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
 <section id="discretedependenciesconstraint">
-<h3>DiscreteDependenciesConstraint<a class="headerlink" href="#discretedependenciesconstraint" title="Link to this heading">¶</a></h3>
+<h4>DiscreteDependenciesConstraint<a class="headerlink" href="#discretedependenciesconstraint" title="Link to this heading">¶</a></h4>
 <p>A dependency is a situation where parameters depend on other parameters.
 Let’s say an experimental setup has a parameter called <code class="docutils literal notranslate"><span class="pre">&quot;Switch&quot;</span></code>, which turns on
 pieces of equipment that are optional.
@@ -1657,7 +1671,7 @@ second switch is set to <code class="docutils literal notranslate"><span class="
 For more information about the possibility of data augmentation, see <a class="reference internal" href="recommenders.html#recommender-data-augmentation"><span class="std std-ref">here</span></a>.</p>
 </section>
 <section id="discretepermutationinvarianceconstraint">
-<h3>DiscretePermutationInvarianceConstraint<a class="headerlink" href="#discretepermutationinvarianceconstraint" title="Link to this heading">¶</a></h3>
+<h4>DiscretePermutationInvarianceConstraint<a class="headerlink" href="#discretepermutationinvarianceconstraint" title="Link to this heading">¶</a></h4>
 <p>Permutation invariance, enabled by the
 <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint</span></code></span></a>
 , is a property where combinations of values of multiple
@@ -1769,7 +1783,7 @@ dependencies as well:</p>
 For more information about the possibility of data augmentation, see <a class="reference internal" href="recommenders.html#recommender-data-augmentation"><span class="std std-ref">here</span></a>.</p>
 </section>
 <section id="discretecardinalityconstraint">
-<h3>DiscreteCardinalityConstraint<a class="headerlink" href="#discretecardinalityconstraint" title="Link to this heading">¶</a></h3>
+<h4>DiscreteCardinalityConstraint<a class="headerlink" href="#discretecardinalityconstraint" title="Link to this heading">¶</a></h4>
 <p>Like its <a class="reference internal" href="../_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html#baybe.constraints.continuous.ContinuousCardinalityConstraint" title="baybe.constraints.continuous.ContinuousCardinalityConstraint"><span class="xref myst py py-class">continuous cousin</span></a>, the
 <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html#baybe.constraints.discrete.DiscreteCardinalityConstraint" title="baybe.constraints.discrete.DiscreteCardinalityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteCardinalityConstraint</span></code></a> lets you control the
 number of active parameters in your design. The construction works analogously:</p>
@@ -1784,7 +1798,7 @@ number of active parameters in your design. The construction works analogously:<
 </div>
 </section>
 <section id="discretecustomconstraint">
-<h3>DiscreteCustomConstraint<a class="headerlink" href="#discretecustomconstraint" title="Link to this heading">¶</a></h3>
+<h4>DiscreteCustomConstraint<a class="headerlink" href="#discretecustomconstraint" title="Link to this heading">¶</a></h4>
 <p>With a <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html#baybe.constraints.discrete.DiscreteCustomConstraint" title="baybe.constraints.discrete.DiscreteCustomConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteCustomConstraint</span></code></span></a>
 constraint, you can specify a completely custom filter:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -1820,11 +1834,12 @@ using a <code class="docutils literal notranslate"><span class="pre">DiscreteCus
 the corresponding object or higher-level objects containing it.</p>
 </div>
 </section>
+</section>
 <section id="discretebatchconstraint">
 <h3>DiscreteBatchConstraint<a class="headerlink" href="#discretebatchconstraint" title="Link to this heading">¶</a></h3>
-<p>Unlike the other discrete constraints described above, the
-<a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html#baybe.constraints.discrete.DiscreteBatchConstraint" title="baybe.constraints.discrete.DiscreteBatchConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteBatchConstraint</span></code></a> does not filter candidates
-from the search space. Instead, it controls how recommendations are generated at
+<p>Unlike the <a class="reference internal" href="#filtering-constraints">filtering constraints</a> described above, the
+<a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html#baybe.constraints.discrete.DiscreteBatchConstraint" title="baybe.constraints.discrete.DiscreteBatchConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteBatchConstraint</span></code></a> is not a filtering constraint
+and does not filter candidates from the search space. Instead, it controls how recommendations are generated at
 batch level: it ensures that <strong>all experiments in a recommended batch share the same
 value</strong> for the constrained parameter.</p>
 <p>This is useful, for example, when experiments in a batch must be run under shared
@@ -1942,7 +1957,8 @@ constraints is used.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#discrete-constraints">Discrete Constraints</a><ul>
-<li><a class="reference internal" href="#discreteexcludeconstraint">DiscreteExcludeConstraint</a></li>
+<li><a class="reference internal" href="#filtering-constraints">Filtering Constraints</a><ul>
+<li><a class="reference internal" href="#discreteselectionconstraint">DiscreteSelectionConstraint</a></li>
 <li><a class="reference internal" href="#discretesumconstraint-and-discreteproductconstraint">DiscreteSumConstraint and DiscreteProductConstraint</a></li>
 <li><a class="reference internal" href="#discretenolabelduplicatesconstraint">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li><a class="reference internal" href="#discretelinkedparametersconstraint">DiscreteLinkedParametersConstraint</a></li>
@@ -1950,6 +1966,8 @@ constraints is used.</p>
 <li><a class="reference internal" href="#discretepermutationinvarianceconstraint">DiscretePermutationInvarianceConstraint</a></li>
 <li><a class="reference internal" href="#discretecardinalityconstraint">DiscreteCardinalityConstraint</a></li>
 <li><a class="reference internal" href="#discretecustomconstraint">DiscreteCustomConstraint</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#discretebatchconstraint">DiscreteBatchConstraint</a></li>
 </ul>
 </li>

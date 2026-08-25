@@ -306,7 +306,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../examples/Constraints_Discrete/Constraints_Discrete.html">Constraints Discrete</a><input aria-label="Toggle navigation of Constraints Discrete" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../examples/Constraints_Discrete/exclusion_constraints.html">Exclusion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../examples/Constraints_Discrete/selection_constraints.html">Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../examples/Constraints_Discrete/dependency_constraints.html">Dependency</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../examples/Constraints_Discrete/custom_constraints.html">Custom</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../examples/Constraints_Discrete/prodsum_constraints.html">Product/Sum</a></li>
@@ -424,6 +424,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.base.ContinuousConstraint.html">ContinuousConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.base.ContinuousNonlinearConstraint.html">ContinuousNonlinearConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.base.DiscreteConstraint.html">DiscreteConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.base.DiscreteFilteringConstraint.html">DiscreteFilteringConstraint</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.constraints.conditions.html">baybe.constraints.conditions</a><input aria-label="Toggle navigation of baybe.constraints.conditions" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -438,15 +439,16 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
 </li>
@@ -1298,19 +1300,38 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint">[docs]</a>
 <span class="nd">@define</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DiscreteConstraint</span><span class="p">(</span><span class="n">Constraint</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for discrete constraints.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for discrete constraints.&quot;&quot;&quot;</span></div>
 
-<span class="sd">    Discrete constraints use conditions and chain them together to filter unwanted</span>
-<span class="sd">    entries from the search space.</span>
+
+
+<div class="viewcode-block" id="DiscreteFilteringConstraint">
+<a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.DiscreteFilteringConstraint.html#baybe.constraints.base.DiscreteFilteringConstraint">[docs]</a>
+<span class="nd">@define</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteFilteringConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for discrete constraints that filter the search space.</span>
+
+<span class="sd">    A filtering constraint&#39;s specification defines which entries are **kept** in the</span>
+<span class="sd">    search space. The keyword-only ``exclude`` flag inverts this: when ``True``, the</span>
+<span class="sd">    specification instead defines which entries are **removed** and the complement is</span>
+<span class="sd">    kept.</span>
+
+<span class="sd">    Subclasses implement :meth:`_get_matching_rows` (and optionally</span>
+<span class="sd">    :meth:`_get_matching_rows_polars`) to express positive matching-rows logic. The</span>
+<span class="sd">    base class derives the removal set and applies the ``exclude`` inversion.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># object variables</span>
+    <span class="n">exclude</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">bool</span><span class="p">))</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether to invert the selection (keep the complement of the specification).&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_can_evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">available</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Indicate whether the constraint can be (partially) evaluated.</span>
 
 <span class="sd">        Called to decide if the constraint logic should be invoked at all. The default</span>
 <span class="sd">        implementation requires *all* parameters considered by the constraint to be</span>
-<span class="sd">        present. Subclasses that support useful partial filtering override this to</span>
-<span class="sd">        return ``True`` whenever a meaningful subset is available.</span>
+<span class="sd">        present. Subclasses that support useful partial filtering override this,</span>
+<span class="sd">        taking ``self.exclude`` into account (partial-evaluation soundness depends on</span>
+<span class="sd">        both the constraint type and the ``exclude`` flag).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            available: The set of column names present in the dataframe that</span>
@@ -1322,8 +1343,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_required_parameters</span> <span class="o">&lt;=</span> <span class="n">available</span>
 
-<div class="viewcode-block" id="DiscreteConstraint.get_valid">
-<a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint.get_valid">[docs]</a>
+<div class="viewcode-block" id="DiscreteFilteringConstraint.get_valid">
+<a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.DiscreteFilteringConstraint.html#baybe.constraints.base.DiscreteFilteringConstraint.get_valid">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_valid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">allow_missing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
@@ -1343,8 +1364,8 @@
         <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">invalid</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="DiscreteConstraint.get_invalid">
-<a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint.get_invalid">[docs]</a>
+<div class="viewcode-block" id="DiscreteFilteringConstraint.get_invalid">
+<a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.DiscreteFilteringConstraint.html#baybe.constraints.base.DiscreteFilteringConstraint.get_invalid">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">allow_missing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
@@ -1377,37 +1398,62 @@
         <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_can_evaluate</span><span class="p">(</span><span class="n">available</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">([])</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_invalid</span><span class="p">(</span><span class="n">df</span><span class="p">)</span></div>
+        <span class="n">matching</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_matching_rows</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">matching</span>
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">matching</span><span class="p">)</span></div>
 
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the indices of invalid entries (core logic for subclasses).</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the indices of rows matching the constraint&#39;s specification.</span>
+
+<span class="sd">        Subclasses implement this to express which rows their specification keeps</span>
+<span class="sd">        (as if ``exclude=False``). The ``exclude`` inversion is applied by the base</span>
+<span class="sd">        class in :meth:`get_invalid` / :meth:`get_invalid_polars`, not here.</span>
 
 <span class="sd">        This method is only called after it has been confirmed that the dataframe</span>
-<span class="sd">        contains sufficient columns for (at least partial) evaluation. Implementations</span>
-<span class="sd">        should therefore contain only the constraint&#39;s core filtering logic without</span>
-<span class="sd">        column-availability checks.</span>
+<span class="sd">        contains sufficient columns for (at least partial) evaluation.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            df: A dataframe where each row represents a parameter configuration.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The dataframe indices of rows that violate the constraint.</span>
+<span class="sd">            The dataframe indices of rows that the specification matches/keeps.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
     <span class="nd">@classproperty</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">has_polars_implementation</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this constraint class has a Polars implementation.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_invalid_polars</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">DiscreteConstraint</span><span class="o">.</span><span class="n">get_invalid_polars</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_get_matching_rows_polars</span>
+            <span class="ow">is</span> <span class="ow">not</span> <span class="n">DiscreteFilteringConstraint</span><span class="o">.</span><span class="n">_get_matching_rows_polars</span>
+        <span class="p">)</span>
 
-<div class="viewcode-block" id="DiscreteConstraint.get_invalid_polars">
-<a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint.get_invalid_polars">[docs]</a>
+<div class="viewcode-block" id="DiscreteFilteringConstraint.get_invalid_polars">
+<a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.DiscreteFilteringConstraint.html#baybe.constraints.base.DiscreteFilteringConstraint.get_invalid_polars">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Translate the constraint to Polars expression identifying undesired rows.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Translate the constraint to a Polars expression identifying rows to remove.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The Polars expressions to pass to :meth:`polars.LazyFrame.filter`.</span>
+<span class="sd">            The Polars expression.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">matching_expr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_matching_rows_polars</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">matching_expr</span>
+        <span class="k">return</span> <span class="o">~</span><span class="n">matching_expr</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Translate the constraint to a Polars expression identifying matching rows.</span>
+
+<span class="sd">        Subclasses with a Polars implementation override this method. The expression</span>
+<span class="sd">        should evaluate to ``True`` for rows that the specification matches/keeps</span>
+<span class="sd">        (as if ``exclude=False``). The ``exclude`` inversion is applied by the base</span>
+<span class="sd">        class in :meth:`get_invalid_polars`, not here.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A Polars expression that evaluates to ``True`` for matching rows.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            NotImplementedError: If the constraint class does not have a Polars</span>
@@ -1416,7 +1462,6 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; does not have a Polars implementation.&quot;</span>
         <span class="p">)</span></div>
-</div>
 
 
 
@@ -1434,7 +1479,7 @@
 
 <div class="viewcode-block" id="CardinalityConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.CardinalityConstraint.html#baybe.constraints.base.CardinalityConstraint">[docs]</a>
-<span class="nd">@define</span>
+<span class="nd">@define</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CardinalityConstraint</span><span class="p">(</span><span class="n">Constraint</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Abstract base class for cardinality constraints.</span>
 
