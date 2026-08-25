@@ -15,6 +15,12 @@ from pandas.testing import assert_series_equal
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
+from baybe.constraints import SubSelectionCondition
+from baybe.constraints import base as base_module
+from baybe.constraints.discrete import (
+    DiscreteExcludeConstraint,
+    DiscreteSelectionConstraint,
+)
 from baybe.exceptions import DeprecationError
 from baybe.kernels.basic import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
@@ -32,6 +38,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace.core import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
+from baybe.serialization import converter
 from baybe.settings import Settings
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
@@ -556,3 +563,41 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
     )
     with context:
         GaussianProcessSurrogate(*args).fit(searchspace, objective, measurements)
+
+
+def test_discrete_exclude_constraint_deprecation():
+    """Constructing a DiscreteExcludeConstraint emits a DeprecationWarning."""
+    with pytest.warns(DeprecationWarning, match="DiscreteExcludeConstraint"):
+        c = DiscreteExcludeConstraint(
+            parameters=["A"],
+            conditions=[SubSelectionCondition(selection=["a"])],
+        )
+    ref = DiscreteSelectionConstraint(
+        parameters=["A"],
+        conditions=[SubSelectionCondition(selection=["a"])],
+        exclude=True,
+    )
+    assert c == ref
+
+
+@pytest.mark.parametrize(
+    "annotation",
+    ["Constraint", "DiscreteConstraint", "DiscreteFilteringConstraint"],
+)
+def test_discrete_exclude_constraint_deserialization(annotation):
+    """Legacy DiscreteExcludeConstraint deserializes regardless of the annotation."""
+    legacy_dict = {
+        "type": "DiscreteExcludeConstraint",
+        "parameters": ["A"],
+        "conditions": [{"type": "SubSelectionCondition", "selection": ["a"]}],
+        "combiner": "AND",
+    }
+    ref = DiscreteSelectionConstraint(
+        parameters=["A"],
+        conditions=[SubSelectionCondition(selection=["a"])],
+        combiner="AND",
+        exclude=True,
+    )
+    target = getattr(base_module, annotation)
+    result = converter.structure(legacy_dict, target)
+    assert result == ref

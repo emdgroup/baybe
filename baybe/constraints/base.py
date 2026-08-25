@@ -76,19 +76,35 @@ class Constraint(ABC, SerialMixin):
 
 @define
 class DiscreteConstraint(Constraint, ABC):
-    """Abstract base class for discrete constraints.
+    """Abstract base class for discrete constraints."""
 
-    Discrete constraints use conditions and chain them together to filter unwanted
-    entries from the search space.
+
+@define
+class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
+    """Abstract base class for discrete constraints that filter the search space.
+
+    A filtering constraint's specification defines which entries are **kept** in the
+    search space. The keyword-only ``exclude`` flag inverts this: when ``True``, the
+    specification instead defines which entries are **removed** and the complement is
+    kept.
+
+    Subclasses implement :meth:`_get_matching_rows` (and optionally
+    :meth:`_get_matching_rows_polars`) to express positive matching-rows logic. The
+    base class derives the removal set and applies the ``exclude`` inversion.
     """
+
+    # object variables
+    exclude: bool = field(default=False, kw_only=True, validator=instance_of(bool))
+    """Whether to invert the selection (keep the complement of the specification)."""
 
     def _can_evaluate(self, available: set[str], /) -> bool:
         """Indicate whether the constraint can be (partially) evaluated.
 
         Called to decide if the constraint logic should be invoked at all. The default
         implementation requires *all* parameters considered by the constraint to be
-        present. Subclasses that support useful partial filtering override this to
-        return ``True`` whenever a meaningful subset is available.
+        present. Subclasses that support useful partial filtering override this,
+        taking ``self.exclude`` into account (partial-evaluation soundness depends on
+        both the constraint type and the ``exclude`` flag).
 
         Args:
             available: The set of column names present in the dataframe that
@@ -150,34 +166,58 @@ class DiscreteConstraint(Constraint, ABC):
         elif not self._can_evaluate(available):
             return pd.Index([])
 
-        return self._get_invalid(df)
+        matching = self._get_matching_rows(df)
+        if self.exclude:
+            return matching
+        return df.index.drop(matching)
 
     @abstractmethod
-    def _get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
-        """Get the indices of invalid entries (core logic for subclasses).
+    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
+        """Get the indices of rows matching the constraint's specification.
+
+        Subclasses implement this to express which rows their specification keeps
+        (as if ``exclude=False``). The ``exclude`` inversion is applied by the base
+        class in :meth:`get_invalid` / :meth:`get_invalid_polars`, not here.
 
         This method is only called after it has been confirmed that the dataframe
-        contains sufficient columns for (at least partial) evaluation. Implementations
-        should therefore contain only the constraint's core filtering logic without
-        column-availability checks.
+        contains sufficient columns for (at least partial) evaluation.
 
         Args:
             df: A dataframe where each row represents a parameter configuration.
 
         Returns:
-            The dataframe indices of rows that violate the constraint.
+            The dataframe indices of rows that the specification matches/keeps.
         """
 
     @classproperty
     def has_polars_implementation(cls) -> bool:
         """Whether this constraint class has a Polars implementation."""
-        return cls.get_invalid_polars is not DiscreteConstraint.get_invalid_polars
+        return (
+            cls._get_matching_rows_polars
+            is not DiscreteFilteringConstraint._get_matching_rows_polars
+        )
 
     def get_invalid_polars(self) -> pl.Expr:
-        """Translate the constraint to Polars expression identifying undesired rows.
+        """Translate the constraint to a Polars expression identifying rows to remove.
 
         Returns:
-            The Polars expressions to pass to :meth:`polars.LazyFrame.filter`.
+            The Polars expression.
+        """
+        matching_expr = self._get_matching_rows_polars()
+        if self.exclude:
+            return matching_expr
+        return ~matching_expr
+
+    def _get_matching_rows_polars(self) -> pl.Expr:
+        """Translate the constraint to a Polars expression identifying matching rows.
+
+        Subclasses with a Polars implementation override this method. The expression
+        should evaluate to ``True`` for rows that the specification matches/keeps
+        (as if ``exclude=False``). The ``exclude`` inversion is applied by the base
+        class in :meth:`get_invalid_polars`, not here.
+
+        Returns:
+            A Polars expression that evaluates to ``True`` for matching rows.
 
         Raises:
             NotImplementedError: If the constraint class does not have a Polars
@@ -197,7 +237,7 @@ class ContinuousConstraint(Constraint, ABC):
     # See base class.
 
 
-@define
+@define(slots=False)
 class CardinalityConstraint(Constraint, ABC):
     r"""Abstract base class for cardinality constraints.
 

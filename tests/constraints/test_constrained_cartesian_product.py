@@ -13,10 +13,10 @@ from baybe.constraints import (
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteCardinalityConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteExcludeConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
+    DiscreteSelectionConstraint,
     DiscreteSumConstraint,
     SubSelectionCondition,
     ThresholdCondition,
@@ -63,8 +63,8 @@ def _linked_parameters_scenario() -> tuple[
     return params, constraints
 
 
-def _exclude_scenario(
-    combiner: str,
+def _filtering_scenario(
+    combiner: str, exclude: bool
 ) -> tuple[Sequence[DiscreteParameter], Sequence[DiscreteConstraint]]:
     params = [
         CategoricalParameter(name="A", values=["a1", "a2", "a3"]),
@@ -72,13 +72,14 @@ def _exclude_scenario(
         CategoricalParameter(name="C", values=["c1", "c2", "c3"]),
     ]
     constraints = [
-        DiscreteExcludeConstraint(
+        DiscreteSelectionConstraint(
             parameters=["A", "B"],
             conditions=[
                 SubSelectionCondition(selection=["a1"]),
                 SubSelectionCondition(selection=["b1"]),
             ],
             combiner=combiner,
+            exclude=exclude,
         )
     ]
     return params, constraints
@@ -209,8 +210,22 @@ def _mixed_scenario() -> tuple[
         pytest.param(_no_constraints_scenario, id="no_constraints"),
         pytest.param(_no_label_duplicates_scenario, id="no_label_duplicates"),
         pytest.param(_linked_parameters_scenario, id="linked_parameters"),
-        pytest.param(partial(_exclude_scenario, "OR"), id="exclude_or"),
-        pytest.param(partial(_exclude_scenario, "AND"), id="exclude_and"),
+        pytest.param(partial(_filtering_scenario, "OR", False), id="filtering_or_keep"),
+        pytest.param(
+            partial(_filtering_scenario, "OR", True), id="filtering_or_exclude"
+        ),
+        pytest.param(
+            partial(_filtering_scenario, "AND", False), id="filtering_and_keep"
+        ),
+        pytest.param(
+            partial(_filtering_scenario, "AND", True), id="filtering_and_exclude"
+        ),
+        pytest.param(
+            partial(_filtering_scenario, "XOR", False), id="filtering_xor_keep"
+        ),
+        pytest.param(
+            partial(_filtering_scenario, "XOR", True), id="filtering_xor_exclude"
+        ),
         pytest.param(_cardinality_scenario, id="cardinality"),
         pytest.param(_sum_scenario, id="sum"),
         pytest.param(_dependencies_scenario, id="dependencies"),

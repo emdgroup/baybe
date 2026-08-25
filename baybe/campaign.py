@@ -17,7 +17,7 @@ from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
 
-from baybe.constraints.base import DiscreteConstraint
+from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
 from baybe.exceptions import (
     IncompatibilityError,
     NoMeasurementsError,
@@ -468,7 +468,7 @@ class Campaign(SerialMixin):
             points = filter_df(df, constraints, complement)
 
         elif isinstance(constraints, Collection) and is_all_instance(
-            constraints, DiscreteConstraint
+            constraints, DiscreteFilteringConstraint
         ):
             # TODO: Should be taken over by upcoming `SubspaceDiscrete.filter` method,
             #   automatically choosing the appropriate backend (polars/pandas/...)

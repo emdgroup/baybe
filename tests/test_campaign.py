@@ -13,7 +13,7 @@ from pytest import param
 from baybe.acquisition import qLogEI, qLogNEHVI, qTS, qUCB
 from baybe.campaign import _EXCLUDED, Campaign
 from baybe.constraints.conditions import SubSelectionCondition
-from baybe.constraints.discrete import DiscreteExcludeConstraint
+from baybe.constraints.discrete import DiscreteSelectionConstraint
 from baybe.exceptions import IncompatibilityError, NotEnoughPointsLeftError
 from baybe.objectives import DesirabilityObjective, ParetoObjective
 from baybe.parameters.numerical import (
@@ -86,7 +86,11 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
     "constraints",
     [
         pd.DataFrame({"a": [0]}),
-        [DiscreteExcludeConstraint(["a"], [SubSelectionCondition([1])])],
+        [
+            DiscreteSelectionConstraint(
+                ["a"], [SubSelectionCondition([1])], exclude=True
+            )
+        ],
     ],
     ids=["dataframe", "constraints"],
 )

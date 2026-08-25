@@ -13,11 +13,11 @@ from baybe.constraints.continuous import (
 )
 from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
-    DiscreteExcludeConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
+    DiscreteSelectionConstraint,
     DiscreteSumConstraint,
 )
 from baybe.parameters.base import DiscreteParameter
@@ -33,10 +33,10 @@ _nonzero_finite_floats = finite_floats().filter(lambda x: x != 0.0)
 
 
 @st.composite
-def discrete_excludes_constraints(
+def discrete_selection_constraints(
     draw: st.DrawFn, parameters: list[DiscreteParameter] | None = None
 ):
-    """Generate :class:`baybe.constraints.discrete.DiscreteExcludeConstraint`."""
+    """Generate :class:`baybe.constraints.discrete.DiscreteSelectionConstraint`."""
     if parameters is None:
         parameter_names = draw(st.lists(st.text(), unique=True, min_size=1))
         conditions = draw(
@@ -59,7 +59,10 @@ def discrete_excludes_constraints(
         ]
 
     combiner = draw(st.sampled_from(list(_valid_logic_combiners)))
-    return DiscreteExcludeConstraint(parameter_names, conditions, combiner)
+    exclude = draw(st.booleans())
+    return DiscreteSelectionConstraint(
+        parameter_names, conditions, combiner, exclude=exclude
+    )
 
 
 @st.composite
@@ -129,8 +132,9 @@ def discrete_dependencies_constraints(
             p not in affected_parameter_names[k] for k, p in enumerate(parameter_names)
         ), "Affected parameters cannot overlap with the parameters they depend on"
 
+    exclude = draw(st.booleans())
     return DiscreteDependenciesConstraint(
-        parameter_names, conditions, affected_parameter_names
+        parameter_names, conditions, affected_parameter_names, exclude=exclude
     )
 
 
@@ -159,7 +163,10 @@ def discrete_permutation_invariance_constraints(
             )
         )
 
-    return DiscretePermutationInvarianceConstraint(parameter_names, dependencies)
+    exclude = draw(st.booleans())
+    return DiscretePermutationInvarianceConstraint(
+        parameter_names, dependencies, exclude=exclude
+    )
 
 
 @st.composite
@@ -181,16 +188,22 @@ def _discrete_constraints(
         assert len(parameter_names) == len(set(parameter_names))
         params = parameter_names
 
+    exclude = draw(st.booleans())
+
     if constraint_type is DiscreteSumConstraint:
         condition = draw(threshold_conditions())
         if draw(st.booleans()):
             coefficients = draw(st.tuples(*([_nonzero_finite_floats] * len(params))))
-            return DiscreteSumConstraint(params, condition, coefficients)
-        return DiscreteSumConstraint(params, condition)
+            return DiscreteSumConstraint(
+                params, condition, coefficients, exclude=exclude
+            )
+        return DiscreteSumConstraint(params, condition, exclude=exclude)
     elif constraint_type is DiscreteProductConstraint:
-        return DiscreteProductConstraint(params, draw(threshold_conditions()))
+        return DiscreteProductConstraint(
+            params, draw(threshold_conditions()), exclude=exclude
+        )
     else:
-        return constraint_type(params)
+        return constraint_type(params, exclude=exclude)
 
 
 discrete_sum_constraints = partial(_discrete_constraints, DiscreteSumConstraint)
@@ -248,7 +261,7 @@ continuous_linear_inequality_constraints = partial(
 
 constraints = st.one_of(
     [
-        discrete_excludes_constraints(),
+        discrete_selection_constraints(),
         discrete_dependencies_constraints(),
         discrete_permutation_invariance_constraints(),
         discrete_sum_constraints(),
