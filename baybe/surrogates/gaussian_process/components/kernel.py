@@ -231,7 +231,7 @@ def _enable_mechanism(
 
         original_call = cls.__call__
         original_supported_kinds = cls._supported_parameter_kinds
-        _index_exclude_selector = TypeSelector(tuple(index_param_types), exclude=True)
+        _index_exclude_selector = TypeSelector(index_param_types, exclude=True)
 
         @functools.wraps(original_call)
         def __call__(
