@@ -298,7 +298,7 @@ class _MetaKernelFactory(KernelFactoryProtocol, ABC):
 
 @define
 class ICMKernelFactory(_MetaKernelFactory):
-    """A kernel factory that constructs an ICM kernel for transfer learning or multi-fidelity.
+    """A kernel factory that constructs an ICM kernel for transfer or multi-fidelity learning.
 
     ICM: Intrinsic Coregionalization Model :cite:p:`NIPS2007_66368270`
     """  # noqa: E501
@@ -322,7 +322,7 @@ class ICMKernelFactory(_MetaKernelFactory):
 
     If ``None``, the appropriate use-case default is resolved at call time based on the
     search space (a task kernel for transfer learning, a categorical fidelity kernel for
-    multi-fidelity)."""
+    multi-fidelity learning)."""
 
     # >>>>>>>>>> Deprecation
     _deprecated_task_kernel_factory: KernelFactoryProtocol | None = field(
