@@ -10,7 +10,7 @@ from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
-from attrs import Converter, define, field
+from attrs import Converter, define, evolve, field
 from attrs.converters import optional as optional_c
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
@@ -21,6 +21,7 @@ from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
@@ -222,6 +223,9 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The fitted BoTorch model."""
 
+    _delegate: Surrogate | None = field(init=False, default=None, eq=False, repr=False)
+    """A surrogate the fitting/prediction is delegated to (for TL dispatch)."""
+
     @staticmethod
     def _make_input_transform(context: _ModelContext) -> Normalize:
         """Create the input transform for the Gaussian process."""
@@ -350,7 +354,36 @@ class GaussianProcessSurrogate(Surrogate):
         )
 
     @override
+    def fit(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
+        # Thin dispatch only: the RGPE ensemble logic lives in the dedicated surrogate.
+        task_parameter = searchspace._task_parameter
+        if (
+            task_parameter is not None
+            and task_parameter.tl_mode is TransferLearningMode.RGPE
+        ):
+            from baybe.surrogates.transfer_learning.rgpe import RGPETransferSurrogate
+
+            self._delegate = RGPETransferSurrogate(base_surrogate=evolve(self))
+            self._delegate.fit(searchspace, objective, measurements)
+            return
+        self._delegate = None
+        super().fit(searchspace, objective, measurements)
+
+    @override
+    def posterior(self, candidates: pd.DataFrame, *, joint: bool = True) -> Posterior:
+        if self._delegate is not None:
+            return self._delegate.posterior(candidates, joint=joint)
+        return super().posterior(candidates, joint=joint)
+
+    @override
     def to_botorch(self) -> GPyTorchModel:
+        if self._delegate is not None:
+            return self._delegate.to_botorch()
         if self._model is None:
             raise ModelNotTrainedError(
                 "The surrogate must be trained before a BoTorch model can be created."
