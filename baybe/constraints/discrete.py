@@ -150,8 +150,10 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
 class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     """Class for modelling linear (weighted-sum) constraints on discrete parameters.
 
-    The constraint compares the (optionally weighted) sum of the specified parameters
-    against ``rhs`` using the given ``operator``.
+    The constraint compares the sum of the specified parameters, optionally weighted by
+    :paramref:`DiscreteLinearConstraint.coefficients`, against
+    :paramref:`DiscreteLinearConstraint.rhs` using
+    :paramref:`DiscreteLinearConstraint.operator`.
 
     Examples:
         >>> df = pd.DataFrame({"A": [1.0, 3.0, 5.0], "B": [2.0, 1.0, 3.0]})
@@ -294,8 +296,9 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
 class DiscreteProductConstraint(DiscreteFilteringConstraint):
     """Class for modelling product constraints on discrete parameters.
 
-    The constraint compares the product of the specified parameters against ``rhs``
-    using the given ``operator``.
+    The constraint compares the product of the specified parameters against
+    :paramref:`DiscreteProductConstraint.rhs` using
+    :paramref:`DiscreteProductConstraint.operator`.
 
     Examples:
         >>> df = pd.DataFrame({"A": [2.0, 3.0, 5.0], "B": [3.0, 2.0, 2.0]})
@@ -329,7 +332,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     # working (with a deprecation warning). The new-interface fields are therefore
     # keyword-only until the deprecated `condition` field is removed.
     condition: ThresholdCondition | None = field(default=None)
-    """Deprecated. Use ``operator``, ``rhs``, and ``tolerance`` instead."""
+    """Deprecated. Use keywords ``operator``, ``rhs``, and ``tolerance`` instead."""
 
     # <<<<<<<<<< Deprecation
 
