@@ -334,40 +334,40 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
 
 # >>>>>>>>>> Deprecation
 def DiscreteNoLabelDuplicatesConstraint(  # noqa: N802
-    *args, **kwargs
+    parameters: list[str],
 ) -> DiscreteDegeneracyConstraint:
     """A ``DiscreteDegeneracyConstraint`` alias for backward compatibility."""  # noqa: D401
     import warnings
 
     warnings.warn(
-        "'DiscreteNoLabelDuplicatesConstraint' is deprecated and will be removed "
-        "in a future version. Use 'DiscreteDegeneracyConstraint' instead.",
+        f"'{DiscreteNoLabelDuplicatesConstraint.__name__}' is deprecated and will be "
+        f"removed in a future version. Use '{DiscreteDegeneracyConstraint.__name__}' "
+        f"instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    return DiscreteDegeneracyConstraint(*args, **kwargs)
+    return DiscreteDegeneracyConstraint(parameters=parameters)
 
 
 def DiscreteLinkedParametersConstraint(  # noqa: N802
-    parameters, *args, **kwargs
+    parameters: list[str],
 ) -> DiscreteDegeneracyConstraint:
     """A ``DiscreteDegeneracyConstraint`` alias for backward compatibility."""  # noqa: D401
     import warnings
 
     flds = fields(DiscreteDegeneracyConstraint)
     warnings.warn(
-        "'DiscreteLinkedParametersConstraint' is deprecated and will be removed "
-        "in a future version. Use 'DiscreteDegeneracyConstraint' with "
-        f"'{flds.n_max_occurrences.alias}=len(parameters)-1' and "
+        f"'{DiscreteLinkedParametersConstraint.__name__}' is deprecated and will be "
+        f"removed in a future version. Use '{DiscreteDegeneracyConstraint.__name__}' "
+        f"with '{flds.n_max_occurrences.alias}=len(parameters)-1' and "
         f"'{flds.exclude.alias}=True' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    # The legacy constraint had no 'exclude' argument; drop any stray value to
-    # avoid colliding with the fixed 'exclude=True' below.
-    kwargs.pop("exclude", None)
     return DiscreteDegeneracyConstraint(
-        parameters, *args, n_max_occurrences=len(parameters) - 1, exclude=True, **kwargs
+        parameters=parameters,
+        n_max_occurrences=len(parameters) - 1,
+        exclude=True,
     )
 
 
