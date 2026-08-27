@@ -704,19 +704,17 @@ converter.register_structure_hook(DiscreteCustomConstraint, block_deserializatio
 # >>>>>>>>>> Deprecation
 def _structure_constraint_compat(val: dict, cls: type) -> Constraint:
     """Structure hook that redirects legacy constraint type names."""
+    val = dict(val)  # copy before mutating
     if val.get(_TYPE_FIELD) == "DiscreteExcludeConstraint":
-        val = dict(val)  # copy before mutating
         val[_TYPE_FIELD] = "DiscreteSelectionConstraint"
-        val.setdefault("exclude", True)
+        val["exclude"] = True
     elif val.get(_TYPE_FIELD) == "DiscreteNoLabelDuplicatesConstraint":
-        val = dict(val)  # copy before mutating
         val[_TYPE_FIELD] = "DiscreteDegeneracyConstraint"
     elif val.get(_TYPE_FIELD) == "DiscreteLinkedParametersConstraint":
-        val = dict(val)  # copy before mutating
         val[_TYPE_FIELD] = "DiscreteDegeneracyConstraint"
         if (params := val.get("parameters")) is not None and len(params) >= 2:
-            val.setdefault("n_max_occurrences", len(params) - 1)
-        val.setdefault("exclude", True)
+            val["n_max_occurrences"] = len(params) - 1
+        val["exclude"] = True
     return make_base_structure_hook(cls)(val, cls)
 
 
