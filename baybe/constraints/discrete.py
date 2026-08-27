@@ -23,6 +23,7 @@ from baybe.constraints.base import (
 )
 from baybe.constraints.conditions import (
     Condition,
+    SubSelectionCondition,  # noqa: F401 (used in doctests)
     ThresholdCondition,
     _threshold_operators,
     _valid_logic_combiners,
@@ -72,7 +73,30 @@ def DiscreteExcludeConstraint(  # noqa: N802
 
 @define
 class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
-    """Class for filtering search space entries based on conditions."""
+    """Class for filtering search space entries based on conditions.
+
+    Examples:
+        >>> df = pd.DataFrame({
+        ...     "Solvent": ["Water", "Water", "Hexane", "Hexane"],
+        ...     "Temp": [80.0, 120.0, 80.0, 120.0],
+        ... })
+        >>> df
+          Solvent   Temp
+        0   Water   80.0
+        1   Water  120.0
+        2  Hexane   80.0
+        3  Hexane  120.0
+        >>> c = DiscreteSelectionConstraint(
+        ...     parameters=["Solvent", "Temp"],
+        ...     conditions=[
+        ...         SubSelectionCondition(selection=["Hexane"]),
+        ...         ThresholdCondition(threshold=100.0, operator=">="),
+        ...     ],
+        ...     exclude=True,
+        ... )
+        >>> list(c.get_invalid(df))
+        [3]
+    """
 
     # object variables
     conditions: list[Condition] = field(validator=min_len(1))
@@ -127,6 +151,30 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
 
     The constraint evaluates whether the (optionally weighted) sum of the specified
     parameters satisfies the given threshold condition.
+
+    Examples:
+        >>> df = pd.DataFrame({"A": [1.0, 3.0, 5.0], "B": [2.0, 1.0, 3.0]})
+        >>> df
+             A    B
+        0  1.0  2.0
+        1  3.0  1.0
+        2  5.0  3.0
+        >>> c = DiscreteSumConstraint(
+        ...     parameters=["A", "B"],
+        ...     condition=ThresholdCondition(threshold=5.0, operator="<="),
+        ... )
+        >>> list(c.get_invalid(df))
+        [2]
+
+        With coefficients, the weighted sum is checked instead:
+
+        >>> c = DiscreteSumConstraint(
+        ...     parameters=["A", "B"],
+        ...     condition=ThresholdCondition(threshold=5.0, operator="<="),
+        ...     coefficients=(2.0, 1.0),
+        ... )
+        >>> list(c.get_invalid(df))
+        [1, 2]
     """
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
@@ -197,7 +245,22 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
 
 @define
 class DiscreteProductConstraint(DiscreteFilteringConstraint):
-    """Class for modelling product constraints."""
+    """Class for modelling product constraints.
+
+    Examples:
+        >>> df = pd.DataFrame({"A": [2.0, 3.0, 5.0], "B": [3.0, 2.0, 2.0]})
+        >>> df
+             A    B
+        0  2.0  3.0
+        1  3.0  2.0
+        2  5.0  2.0
+        >>> c = DiscreteProductConstraint(
+        ...     parameters=["A", "B"],
+        ...     condition=ThresholdCondition(threshold=8.0, operator="<="),
+        ... )
+        >>> list(c.get_invalid(df))
+        [2]
+    """
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
@@ -240,6 +303,25 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
 
     Keeps only rows where no single value appears more than a specified number of
     times across the specified parameters.
+
+    Examples:
+        >>> df = pd.DataFrame({"A": ["x", "y", "x"], "B": ["y", "x", "x"]})
+        >>> df
+           A  B
+        0  x  y
+        1  y  x
+        2  x  x
+        >>> c = DiscreteDegeneracyConstraint(parameters=["A", "B"])
+        >>> list(c.get_invalid(df))
+        [2]
+
+        With ``exclude=True``, the logic inverts — keep only the repeated rows:
+
+        >>> c = DiscreteDegeneracyConstraint(
+        ...     parameters=["A", "B"], exclude=True
+        ... )
+        >>> list(c.get_invalid(df))
+        [0, 1]
     """
 
     # object variables
@@ -381,6 +463,24 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
     For instance some parameters might only be relevant when another parameter has a
     certain value (e.g. parameter switch is 'on'). All dependencies must be declared in
     a single constraint.
+
+    Examples:
+        >>> df = pd.DataFrame({
+        ...     "Switch": ["on", "off", "off"],
+        ...     "Temp": [100, 200, 100],
+        ... })
+        >>> df
+          Switch  Temp
+        0     on   100
+        1    off   200
+        2    off   100
+        >>> c = DiscreteDependenciesConstraint(
+        ...     parameters=["Switch"],
+        ...     conditions=[SubSelectionCondition(selection=["on"])],
+        ...     affected_parameters=[["Temp"]],
+        ... )
+        >>> list(c.get_invalid(df))
+        [2]
     """
 
     # object variables
@@ -494,6 +594,17 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
 
     *Note:* This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
+
+    Examples:
+        >>> df = pd.DataFrame({"A": ["x", "y", "z"], "B": ["y", "x", "x"]})
+        >>> df
+           A  B
+        0  x  y
+        1  y  x
+        2  z  x
+        >>> c = DiscretePermutationInvarianceConstraint(parameters=["A", "B"])
+        >>> list(c.get_invalid(df))
+        [1]
     """
 
     # object variables
@@ -650,7 +761,21 @@ class DiscreteBatchConstraint(DiscreteConstraint):
 
 @define
 class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringConstraint):
-    """Class for discrete cardinality constraints."""
+    """Class for discrete cardinality constraints.
+
+    Examples:
+        >>> df = pd.DataFrame({"A": [0.0, 1.0, 1.0], "B": [0.0, 0.0, 1.0]})
+        >>> df
+             A    B
+        0  0.0  0.0
+        1  1.0  0.0
+        2  1.0  1.0
+        >>> c = DiscreteCardinalityConstraint(
+        ...     parameters=["A", "B"], max_cardinality=1
+        ... )
+        >>> list(c.get_invalid(df))
+        [2]
+    """
 
     # Class variables
     numerical_only: ClassVar[bool] = True
