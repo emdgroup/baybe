@@ -11,7 +11,7 @@ import cattrs
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.validators import deep_iterable, ge, in_, instance_of, min_len
 from typing_extensions import override
 
@@ -55,7 +55,7 @@ def DiscreteExcludeConstraint(  # noqa: N802
     warnings.warn(
         f"'{DiscreteExcludeConstraint.__name__}' is deprecated and will be removed "
         f"in a future version. Use '{DiscreteSelectionConstraint.__name__}' with "
-        f"'exclude=True' instead.",
+        f"'{fields(DiscreteSelectionConstraint).exclude.alias}=True' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -252,7 +252,7 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
     def _validate_n_max_occurrences(  # noqa: DOC101, DOC103
         self, _: Any, value: int
     ) -> None:
-        """Validate n_max_occurrences against the number of parameters.
+        """Validate the maximum occurrence count against the number of parameters.
 
         Raises:
             ValueError: If ``n_max_occurrences`` exceeds the number of
@@ -260,8 +260,9 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
         """
         if value >= len(self.parameters):
             raise ValueError(
-                f"'n_max_occurrences' must be less than the number of parameters "
-                f"({len(self.parameters)}), but got {value}."
+                f"'{fields(type(self)).n_max_occurrences.alias}' must be less "
+                f"than the number of parameters ({len(self.parameters)}), "
+                f"but got {value}."
             )
 
     @override
@@ -353,10 +354,12 @@ def DiscreteLinkedParametersConstraint(  # noqa: N802
     """A ``DiscreteDegeneracyConstraint`` alias for backward compatibility."""  # noqa: D401
     import warnings
 
+    flds = fields(DiscreteDegeneracyConstraint)
     warnings.warn(
         "'DiscreteLinkedParametersConstraint' is deprecated and will be removed "
         "in a future version. Use 'DiscreteDegeneracyConstraint' with "
-        "'n_max_occurrences=len(parameters)-1' and 'exclude=True' instead.",
+        f"'{flds.n_max_occurrences.alias}=len(parameters)-1' and "
+        f"'{flds.exclude.alias}=True' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
