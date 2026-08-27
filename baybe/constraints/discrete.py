@@ -238,7 +238,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
 class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
     """Class for constraining value repetition across parameters.
 
-    Keeps only rows where no single value appears more than ``n_max_occurrences``
+    Keeps only rows where no single value appears more than a specified number of
     times across the specified parameters.
     """
 
@@ -255,7 +255,7 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
         """Validate n_max_occurrences against the number of parameters.
 
         Raises:
-            ValueError: If ``n_max_occurrences`` is not smaller than the number of
+            ValueError: If ``n_max_occurrences`` exceeds the number of
                 parameters.
         """
         if value >= len(self.parameters):
