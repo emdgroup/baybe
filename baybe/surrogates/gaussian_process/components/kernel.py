@@ -435,9 +435,10 @@ class ICMKernelFactory(_MetaKernelFactory):
                 f"'{CategoricalFidelityParameter.__name__}'."
             )
 
+        # Index resolution below assumes exactly one index dimension.
+        assert not (is_task and is_categorical_fidelity)
+
         # Resolve the use-case default index kernel factory when none is provided.
-        # Exactly one of the two index cases holds here (guaranteed by the guard above
-        # and by the search space validation forbidding combined task/fidelity spaces).
         index_kernel_factory = self.index_kernel_factory or self._default_index_factory(
             is_task
         )
