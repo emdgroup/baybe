@@ -74,6 +74,9 @@ class _CustomScaledNumericalKernelFactory(_PureKernelFactory):
         - The mode matches that of the LogNormal and thus also scales with sqrt(d).
     """
 
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
+    # See base class.
+
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
@@ -182,6 +185,9 @@ def _dispatch(
 class _BayBENumericalKernelFactory(_PureKernelFactory):
     """The default numerical kernel factory for GP surrogates."""
 
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
+    # See base class.
+
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
@@ -217,17 +223,10 @@ class _BayBEIndexKernelFactory(_PureKernelFactory, ABC):
     fidelity parameters) both model free-form correlations between their index levels
     via a :class:`~baybe.kernels.basic.PositiveIndexKernel`. This base captures that
     shared construction, while subclasses specialize the supported parameter kind, the
-    default parameter selector, and the number of index levels. The fact that both
-    use cases currently map to the same kernel architecture is incidental and must not
-    leak into a shared use-case interface.
+    default parameter selector, and the number of index levels.
     """
 
     _uses_parameter_names: ClassVar[bool] = True
-    # See base class.
-
-    _supported_parameter_kinds: ClassVar[_ParameterKind] = (
-        _ParameterKind.TASK | _ParameterKind.FIDELITY
-    )
     # See base class.
 
     @override

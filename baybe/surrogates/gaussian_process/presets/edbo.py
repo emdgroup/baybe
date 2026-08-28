@@ -64,6 +64,9 @@ class EDBOKernelFactory(_PureKernelFactory):
     Prior settings: https://github.com/b-shields/edbo/blob/9b41eac3f6d9e520547702fd5b0c7ef6441625a4/edbo/bro.py#L658
     """
 
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
+    # See base class.
+
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 

@@ -70,7 +70,7 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
     # TODO: Perhaps we can find a more elegant way to enforce this by design
     _uses_parameter_names: ClassVar[bool] = False
 
-    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
+    _supported_parameter_kinds: ClassVar[_ParameterKind]
     """The parameter kinds supported by the kernel factory."""
 
     parameter_selector: ParameterSelectorProtocol | None = field(

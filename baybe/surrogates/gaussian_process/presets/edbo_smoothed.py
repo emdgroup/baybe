@@ -48,6 +48,9 @@ class SmoothedEDBOKernelFactory(_PureKernelFactory):
     and interpolates the prior moments linearly in between.
     """  # noqa: E501
 
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
+    # See base class.
+
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
