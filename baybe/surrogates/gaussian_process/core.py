@@ -259,7 +259,7 @@ class GaussianProcessSurrogate(Surrogate):
         return self._model.posterior(candidates_comp_scaled)
 
     @override
-    def _validate_fit_context(
+    def _validate_model_context(
         self,
         searchspace: SearchSpace,
         objective: Objective,

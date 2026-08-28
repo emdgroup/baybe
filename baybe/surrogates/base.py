@@ -387,16 +387,16 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         return result
 
-    def _validate_fit_context(
+    def _validate_model_context(
         self,
         searchspace: SearchSpace,
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
-        """Validate the surrogate fit context.
+        """Validate the surrogate model context.
 
         Optional hook with a no-op default. Surrogates that impose constraints on the
-        fit context can override it to reject contexts incompatible with the model.
+        model context can override it.
 
         Args:
             searchspace: The search space in which experiments are conducted.
@@ -460,7 +460,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 f"support multi-fidelity optimization."
             )
 
-        self._validate_fit_context(searchspace, objective, measurements)
+        self._validate_model_context(searchspace, objective, measurements)
 
         # Block partial measurements
         handle_missing_values(measurements, [t.name for t in objective.targets])
