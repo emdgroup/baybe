@@ -6,7 +6,7 @@ from pytest import param
 
 from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import (
-    DiscreteDegeneracyConstraint,
+    DiscreteRepetitionConstraint,
     DiscreteSumConstraint,
     ThresholdCondition,
 )
@@ -248,7 +248,7 @@ def test_mixed_polars_pandas_constraints():
             condition=ThresholdCondition(threshold=100, operator="="),
         ),
         # Pandas-only: operates on [B, C] — B is shared with the Polars constraint
-        DiscreteDegeneracyConstraint(
+        DiscreteRepetitionConstraint(
             parameters=["B", "C"], n_max_occurrences=1, exclude=True
         ),
     ]

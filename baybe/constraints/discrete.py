@@ -298,7 +298,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
 
 
 @define
-class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
+class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
     """Class for constraining value repetition across parameters.
 
     Keeps only rows where no single value appears more than a specified number of
@@ -311,13 +311,13 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
         0  x  y
         1  y  x
         2  x  x
-        >>> c = DiscreteDegeneracyConstraint(parameters=["A", "B"])
+        >>> c = DiscreteRepetitionConstraint(parameters=["A", "B"])
         >>> list(c.get_invalid(df))
         [2]
 
         With ``exclude=True``, the logic inverts — keep only the repeated rows:
 
-        >>> c = DiscreteDegeneracyConstraint(
+        >>> c = DiscreteRepetitionConstraint(
         ...     parameters=["A", "B"], exclude=True
         ... )
         >>> list(c.get_invalid(df))
@@ -407,36 +407,36 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
 # >>>>>>>>>> Deprecation
 def DiscreteNoLabelDuplicatesConstraint(  # noqa: N802
     parameters: list[str],
-) -> DiscreteDegeneracyConstraint:
-    """A :class:`DiscreteDegeneracyConstraint` alias for backward compatibility."""  # noqa: D401
+) -> DiscreteRepetitionConstraint:
+    """A :class:`DiscreteRepetitionConstraint` alias for backward compatibility."""  # noqa: D401
     import warnings
 
     warnings.warn(
         f"'{DiscreteNoLabelDuplicatesConstraint.__name__}' is deprecated and will be "
-        f"removed in a future version. Use '{DiscreteDegeneracyConstraint.__name__}' "
+        f"removed in a future version. Use '{DiscreteRepetitionConstraint.__name__}' "
         f"instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    return DiscreteDegeneracyConstraint(parameters=parameters)
+    return DiscreteRepetitionConstraint(parameters=parameters)
 
 
 def DiscreteLinkedParametersConstraint(  # noqa: N802
     parameters: list[str],
-) -> DiscreteDegeneracyConstraint:
-    """A :class:`DiscreteDegeneracyConstraint` alias for backward compatibility."""  # noqa: D401
+) -> DiscreteRepetitionConstraint:
+    """A :class:`DiscreteRepetitionConstraint` alias for backward compatibility."""  # noqa: D401
     import warnings
 
-    flds = fields(DiscreteDegeneracyConstraint)
+    flds = fields(DiscreteRepetitionConstraint)
     warnings.warn(
         f"'{DiscreteLinkedParametersConstraint.__name__}' is deprecated and will be "
-        f"removed in a future version. Use '{DiscreteDegeneracyConstraint.__name__}' "
+        f"removed in a future version. Use '{DiscreteRepetitionConstraint.__name__}' "
         f"with '{flds.n_max_occurrences.alias}=len(parameters)-1' and "
         f"'{flds.exclude.alias}=True' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    return DiscreteDegeneracyConstraint(
+    return DiscreteRepetitionConstraint(
         parameters=parameters,
         n_max_occurrences=len(parameters) - 1,
         exclude=True,
@@ -802,7 +802,7 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
 # effort to minimize total time in their sequential application
 DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscreteSelectionConstraint,
-    DiscreteDegeneracyConstraint,
+    DiscreteRepetitionConstraint,
     DiscreteSumConstraint,
     DiscreteProductConstraint,
     DiscreteCardinalityConstraint,
@@ -824,9 +824,9 @@ def _structure_constraint_compat(val: dict, cls: type) -> Constraint:
         val[_TYPE_FIELD] = "DiscreteSelectionConstraint"
         val["exclude"] = True
     elif val.get(_TYPE_FIELD) == "DiscreteNoLabelDuplicatesConstraint":
-        val[_TYPE_FIELD] = "DiscreteDegeneracyConstraint"
+        val[_TYPE_FIELD] = "DiscreteRepetitionConstraint"
     elif val.get(_TYPE_FIELD) == "DiscreteLinkedParametersConstraint":
-        val[_TYPE_FIELD] = "DiscreteDegeneracyConstraint"
+        val[_TYPE_FIELD] = "DiscreteRepetitionConstraint"
         if (params := val.get("parameters")) is not None and len(params) >= 2:
             val["n_max_occurrences"] = len(params) - 1
         val["exclude"] = True

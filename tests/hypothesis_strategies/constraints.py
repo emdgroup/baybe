@@ -12,10 +12,10 @@ from baybe.constraints.continuous import (
     ContinuousLinearConstraint,
 )
 from baybe.constraints.discrete import (
-    DiscreteDegeneracyConstraint,
     DiscreteDependenciesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
+    DiscreteRepetitionConstraint,
     DiscreteSelectionConstraint,
     DiscreteSumConstraint,
 )
@@ -206,10 +206,10 @@ discrete_product_constraints = partial(_discrete_constraints, DiscreteProductCon
 
 
 @st.composite
-def discrete_degeneracy_constraints(
+def discrete_repetition_constraints(
     draw: st.DrawFn, parameter_names: list[str] | None = None
 ):
-    """Generate :class:`baybe.constraints.discrete.DiscreteDegeneracyConstraint`."""
+    """Generate :class:`baybe.constraints.discrete.DiscreteRepetitionConstraint`."""
     if parameter_names is None:
         params = draw(st.lists(st.text(), unique=True, min_size=2))
     else:
@@ -218,7 +218,7 @@ def discrete_degeneracy_constraints(
 
     n_max = draw(st.integers(min_value=1, max_value=len(params) - 1))
     exclude = draw(st.booleans())
-    return DiscreteDegeneracyConstraint(
+    return DiscreteRepetitionConstraint(
         params, n_max_occurrences=n_max, exclude=exclude
     )
 
@@ -266,7 +266,7 @@ constraints = st.one_of(
         discrete_permutation_invariance_constraints(),
         discrete_sum_constraints(),
         discrete_product_constraints(),
-        discrete_degeneracy_constraints(),
+        discrete_repetition_constraints(),
         continuous_linear_equality_constraints(),
         continuous_linear_inequality_constraints(),
     ]
