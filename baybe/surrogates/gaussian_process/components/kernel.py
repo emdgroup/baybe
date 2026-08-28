@@ -10,13 +10,11 @@ from collections.abc import Callable, Iterable
 from functools import partial, reduce
 from typing import TYPE_CHECKING, Any, ClassVar
 
-import cattrs
 import pandas as pd
 from attrs import define, field, fields
 from attrs.converters import optional as optional_c
 from attrs.validators import is_callable
 from attrs.validators import optional as optional_v
-from cattrs.gen import make_dict_unstructure_fn
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSearchSpaceError
@@ -35,7 +33,7 @@ from baybe.searchspace.core import (
     SearchSpaceFidelityType,
     SearchSpaceTaskType,
 )
-from baybe.serialization.core import add_type, converter
+from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
@@ -43,7 +41,6 @@ from baybe.surrogates.gaussian_process.components.generic import (
     PlainGPComponentFactory,
     to_component_factory,
 )
-from baybe.utils.boolean import is_abstract
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
@@ -483,21 +480,15 @@ class ICMKernelFactory(_MetaKernelFactory):
 
 
 # >>>>>>>>>> Deprecation
-@converter.register_unstructure_hook_factory(lambda x: issubclass(x, ICMKernelFactory))
-def _(cls: type[ICMKernelFactory]) -> Callable[[ICMKernelFactory], dict[str, Any]]:
+_icm_base_unstructure = converter.get_unstructure_hook(ICMKernelFactory)
+
+
+def _icm_unstructure_drop_deprecated(obj: ICMKernelFactory, /) -> dict[str, Any]:
     """Drop the deprecated ``task_kernel_or_factory`` field from serialized output."""
-
-    def drop_deprecated_field(obj: ICMKernelFactory, /) -> dict[str, Any]:
-        fn = make_dict_unstructure_fn(
-            cls,
-            converter,
-            _deprecated_task_kernel_factory=cattrs.override(omit=True),
-        )
-        if is_abstract(cls):
-            fn = add_type(fn)
-        return fn(obj)
-
-    return drop_deprecated_field
+    result = _icm_base_unstructure(obj)
+    result.pop("task_kernel_or_factory", None)
+    return result
 
 
+converter.register_unstructure_hook(ICMKernelFactory, _icm_unstructure_drop_deprecated)
 # <<<<<<<<<< Deprecation
