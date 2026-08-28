@@ -12,7 +12,8 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import define, field, fields
-from attrs.validators import deep_iterable, in_, min_len
+from attrs.validators import deep_iterable, ge, in_, instance_of, min_len
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.constraints.base import (
@@ -330,10 +331,14 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
     """
 
     # object variables
-    n_min_repetitions: int | None = field(default=None, kw_only=True)
+    n_min_repetitions: int | None = field(
+        default=None, validator=optional_v([instance_of(int), ge(1)]), kw_only=True
+    )
     """Minimum number of times any single value must appear in a row."""
 
-    n_max_repetitions: int | None = field(default=None, kw_only=True)
+    n_max_repetitions: int | None = field(
+        default=None, validator=optional_v([instance_of(int), ge(1)]), kw_only=True
+    )
     """Maximum number of times any single value may appear in a row."""
 
     def __attrs_post_init__(self) -> None:
@@ -341,8 +346,7 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
 
         Raises:
             ValueError: If no repetition bound is provided.
-            TypeError: If a bound is not an integer.
-            ValueError: If a bound is less than 1 or a no-op.
+            ValueError: If a bound is a no-op.
             ValueError: If the lower bound exceeds the upper bound.
         """
         n_params = len(self.parameters)
@@ -355,32 +359,20 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
                 f"'{flds.n_max_repetitions.alias}') must be provided."
             )
 
-        for bound, attr in [
-            (self.n_min_repetitions, flds.n_min_repetitions),
-            (self.n_max_repetitions, flds.n_max_repetitions),
-        ]:
-            if bound is None:
-                continue
-            if not isinstance(bound, int):
-                raise TypeError(
-                    f"'{attr.alias}' must be an integer, but got {type(bound)}."
-                )
-            if bound < 1:
-                raise ValueError(f"'{attr.alias}' must be at least 1, but got {bound}.")
-
-        # Reject no-op bounds: n_min=1 alone imposes no constraint (every value
-        # appears at least once); n_max >= n_params alone imposes no constraint
-        # (the count can never exceed the number of parameters).
+        # Reject no-op bounds: n_min=1 alone and n_max >= n_params alone do not
+        # impose a meaningful constraint (with exclude=False all rows pass;
+        # with exclude=True all rows are removed).
         if self.n_min_repetitions is not None and self.n_min_repetitions <= 1:
             if self.n_max_repetitions is None:
                 raise ValueError(
-                    f"'{flds.n_min_repetitions.alias}' of 1 imposes no constraint "
-                    f"on its own. Provide a meaningful bound."
+                    f"'{flds.n_min_repetitions.alias}' of 1 without an upper bound "
+                    f"imposes no meaningful constraint."
                 )
         if self.n_max_repetitions is not None and self.n_max_repetitions >= n_params:
             raise ValueError(
                 f"'{flds.n_max_repetitions.alias}' must be less than the number "
-                f"of parameters ({n_params}), but got {self.n_max_repetitions}."
+                f"of parameters ({n_params}) to impose a meaningful constraint, "
+                f"but got {self.n_max_repetitions}."
             )
 
         if (
