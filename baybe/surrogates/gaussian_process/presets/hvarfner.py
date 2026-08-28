@@ -10,12 +10,10 @@ import pandas as pd
 from attrs import define
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.enum import _ParameterKind
-from baybe.parameters.fidelity import CategoricalFidelityParameter
-from baybe.searchspace.core import SearchSpace, SearchSpaceFidelityType
+from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components import LikelihoodFactoryProtocol
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
@@ -23,6 +21,7 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
     ICMKernelFactory,
+    _enable_mechanism,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.mean import MeanFactoryProtocol
@@ -33,16 +32,17 @@ if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
 
 
+@_enable_mechanism(multi_fidelity=True)
 @define
 class HvarfnerKernelFactory(_PureKernelFactory):
     """A factory providing kernels with dimension-scaled priors as proposed by :cite:p:`Hvarfner2024`."""  # noqa: E501
 
-    _uses_parameter_names: ClassVar[bool] = True
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = (
+        _ParameterKind.REGULAR | _ParameterKind.TASK
+    )
     # See base class.
 
-    _supported_parameter_kinds: ClassVar[_ParameterKind] = (
-        _ParameterKind.REGULAR | _ParameterKind.TASK | _ParameterKind.FIDELITY
-    )
+    _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
     @override
@@ -72,29 +72,17 @@ class HvarfnerKernelFactory(_PureKernelFactory):
             ard_num_dims=ard_num_dims, active_dims=active_dims
         )
 
-        # Single-index case
         if (task_idx := searchspace._task_idx) is not None:
-            n_index_levels = searchspace._n_tasks
-            index_dim = task_idx
-        elif (fidelity_idx := searchspace._fidelity_idx) is not None:
-            if searchspace._fidelity_type is not SearchSpaceFidelityType.CATEGORICAL:
-                raise IncompatibleSearchSpaceError(
-                    f"'{type(self).__name__}' only supports fidelity parameters "
-                    f"of type '{CategoricalFidelityParameter.__name__}'."
-                )
-            n_index_levels = searchspace._n_fidelities
-            index_dim = fidelity_idx
-        else:
-            return base_kernel
+            index_kernel = PositiveIndexKernel(
+                num_tasks=searchspace._n_tasks,
+                rank=searchspace._n_tasks,
+                active_dims=[task_idx],
+            )
+            return ICMKernelFactory(base_kernel, index_kernel)(
+                searchspace, objective, measurements
+            )
 
-        index_kernel = PositiveIndexKernel(
-            num_tasks=n_index_levels,
-            rank=n_index_levels,
-            active_dims=[index_dim],
-        )
-        return ICMKernelFactory(base_kernel, index_kernel)(
-            searchspace, objective, measurements
-        )
+        return base_kernel
 
 
 class HvarfnerMeanFactory(MeanFactoryProtocol):
