@@ -67,6 +67,26 @@ def _linked_parameters_scenario() -> tuple[
     return params, constraints
 
 
+def _repetition_scenario(
+    n_min: int | None,
+    n_max: int | None,
+    exclude: bool,
+) -> tuple[Sequence[DiscreteParameter], Sequence[DiscreteConstraint]]:
+    values = ["a", "b", "c", "d"]
+    params = [CategoricalParameter(name=f"P{i}", values=values) for i in range(4)]
+    kwargs: dict = {}
+    if n_min is not None:
+        kwargs["n_min_repetitions"] = n_min
+    if n_max is not None:
+        kwargs["n_max_repetitions"] = n_max
+    constraints = [
+        DiscreteRepetitionConstraint(
+            parameters=[p.name for p in params], exclude=exclude, **kwargs
+        )
+    ]
+    return params, constraints
+
+
 def _filtering_scenario(
     combiner: str, exclude: bool
 ) -> tuple[Sequence[DiscreteParameter], Sequence[DiscreteConstraint]]:
@@ -241,6 +261,22 @@ def _mixed_scenario() -> tuple[
             id="permutation_invariance_with_deps",
         ),
         pytest.param(_mixed_scenario, id="mixed"),
+        pytest.param(
+            partial(_repetition_scenario, None, 1, True),
+            id="repetition_max_exclude",
+        ),
+        pytest.param(
+            partial(_repetition_scenario, 2, None, True),
+            id="repetition_min_exclude",
+        ),
+        pytest.param(
+            partial(_repetition_scenario, 2, 3, False),
+            id="repetition_both",
+        ),
+        pytest.param(
+            partial(_repetition_scenario, 2, 3, True),
+            id="repetition_both_exclude",
+        ),
     ],
 )
 def test_constrained_cartesian_product(scenario):
