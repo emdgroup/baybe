@@ -62,23 +62,23 @@ class SearchSpaceType(Enum):
 class SearchSpaceTaskType(Enum):
     """Enum class for different types of task subspaces."""
 
-    SINGLE_TASK = "SINGLE_TASK"
+    SINGLE = "SINGLE"
     """Flag for search spaces with a single task, meaning no task parameter."""
 
-    CATEGORICAL_MULTI_TASK = "CATEGORICAL_MULTI_TASK"
+    CATEGORICAL = "CATEGORICAL"
     """Flag for search spaces with a categorical task parameter."""
 
 
 class SearchSpaceFidelityType(Enum):
     """Enum class for different types of fidelity subspaces."""
 
-    SINGLE_FIDELITY = "SINGLE_FIDELITY"
+    SINGLE = "SINGLE"
     """Flag for search spaces with a single fidelity, meaning no fidelity parameter."""
 
-    NUMERICAL_DISCRETE_MULTI_FIDELITY = "NUMERICAL_DISCRETE_MULTI_FIDELITY"
+    DISCRETE = "DISCRETE"
     """Flag for search spaces with a discrete numerical (ordered) fidelity parameter."""
 
-    CATEGORICAL_MULTI_FIDELITY = "CATEGORICAL_MULTI_FIDELITY"
+    CATEGORICAL = "CATEGORICAL"
     """Flag for search spaces with a categorical (unordered) fidelity parameter."""
 
 
@@ -363,19 +363,19 @@ class SearchSpace(SerialMixin):
     def _task_type(self) -> SearchSpaceTaskType:
         """Return the task type of the search space."""
         if self._task_parameter is None:
-            return SearchSpaceTaskType.SINGLE_TASK
-        return SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
+            return SearchSpaceTaskType.SINGLE
+        return SearchSpaceTaskType.CATEGORICAL
 
     @property
     def _fidelity_type(self) -> SearchSpaceFidelityType:
         """Return the fidelity type of the search space."""
         match self._fidelity_parameter:
             case None:
-                return SearchSpaceFidelityType.SINGLE_FIDELITY
+                return SearchSpaceFidelityType.SINGLE
             case CategoricalFidelityParameter():
-                return SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
+                return SearchSpaceFidelityType.CATEGORICAL
             case NumericalDiscreteFidelityParameter():
-                return SearchSpaceFidelityType.NUMERICAL_DISCRETE_MULTI_FIDELITY
+                return SearchSpaceFidelityType.DISCRETE
             case _:
                 assert_never(self._fidelity_parameter)
 

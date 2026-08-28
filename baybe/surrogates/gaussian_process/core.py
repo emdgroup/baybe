@@ -274,10 +274,7 @@ class GaussianProcessSurrogate(Surrogate):
         # BoTorch's ``SingleTaskMultiFidelityGP`` builds its own mean, kernel, and
         # likelihood, so custom versions of those would be silently ignored and are
         # rejected.
-        if (
-            searchspace._fidelity_type
-            is SearchSpaceFidelityType.NUMERICAL_DISCRETE_MULTI_FIDELITY
-        ) and any(
+        if (searchspace._fidelity_type is SearchSpaceFidelityType.DISCRETE) and any(
             factory is not None
             for factory in (
                 self.kernel_factory,
@@ -379,10 +376,7 @@ class GaussianProcessSurrogate(Surrogate):
 
         # Numerical multi-fidelity is delegated directly to BoTorch's dedicated model,
         # which handles the fidelity dimension and its components internally.
-        if (
-            context.searchspace._fidelity_type
-            is SearchSpaceFidelityType.NUMERICAL_DISCRETE_MULTI_FIDELITY
-        ):
+        if context.searchspace._fidelity_type is SearchSpaceFidelityType.DISCRETE:
             assert context.fidelity_idx is not None
             self._model = botorch.models.SingleTaskMultiFidelityGP(
                 train_x,

@@ -266,11 +266,10 @@ def _enable_mechanism(
             # only triggers on the parameter that activates it.
             if (
                 transfer_learning
-                and searchspace._task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
+                and searchspace._task_type is SearchSpaceTaskType.CATEGORICAL
             ) or (
                 multi_fidelity
-                and searchspace._fidelity_type
-                is SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
+                and searchspace._fidelity_type is SearchSpaceFidelityType.CATEGORICAL
             ):
                 icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
                 return icm(searchspace, objective, measurements)
@@ -425,10 +424,9 @@ class ICMKernelFactory(_MetaKernelFactory):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-        is_task = searchspace._task_type is SearchSpaceTaskType.CATEGORICAL_MULTI_TASK
+        is_task = searchspace._task_type is SearchSpaceTaskType.CATEGORICAL
         is_categorical_fidelity = (
-            searchspace._fidelity_type
-            is SearchSpaceFidelityType.CATEGORICAL_MULTI_FIDELITY
+            searchspace._fidelity_type is SearchSpaceFidelityType.CATEGORICAL
         )
         if not (is_task or is_categorical_fidelity):
             raise IncompatibleSearchSpaceError(
