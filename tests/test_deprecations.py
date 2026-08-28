@@ -1,6 +1,5 @@
 """Deprecation tests."""
 
-import copy
 import os
 import warnings
 from contextlib import nullcontext
@@ -590,14 +589,17 @@ def test_icm_task_kernel_or_factory_serialization_deprecation():
     assert "task_kernel_or_factory" not in serialized
     assert "index_kernel_or_factory" in serialized
 
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        assert converter.structure(serialized, ICMKernelFactory) == factory
+
+    # Build the legacy dict from a fresh unstructure to avoid sharing nested dicts
+    # with `serialized` (structuring mutates nested dicts by popping 'type' keys).
+    fresh = converter.unstructure(factory)
     legacy = {
-        "base_kernel_or_factory": copy.deepcopy(serialized["base_kernel_or_factory"]),
-        "task_kernel_or_factory": copy.deepcopy(serialized["index_kernel_or_factory"]),
+        "base_kernel_or_factory": fresh["base_kernel_or_factory"],
+        "task_kernel_or_factory": fresh["index_kernel_or_factory"],
     }
     with pytest.warns(DeprecationWarning, match="task_kernel_or_factory"):
         restored = converter.structure(legacy, ICMKernelFactory)
     assert restored == factory
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", DeprecationWarning)
-        assert converter.structure(serialized, ICMKernelFactory) == factory

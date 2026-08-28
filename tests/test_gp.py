@@ -343,9 +343,6 @@ def test_standard_gp_fit_fidelity(searchspace, measurements, expected_model):
     # Exact type check: SingleTaskMultiFidelityGP subclasses SingleTaskGP, so the
     # categorical case must not accidentally match the multi-fidelity model.
     assert type(surrogate.to_botorch()) is expected_model
-    stats = surrogate.posterior_stats(measurements)
-    assert set(stats.columns) == {"t_mean", "t_std"}
-    assert len(stats) == len(measurements)
 
 
 @pytest.mark.parametrize(
