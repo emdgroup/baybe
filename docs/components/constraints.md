@@ -296,8 +296,8 @@ DiscreteSumConstraint(
 
 An end to end example can be found [here](../../examples/Constraints_Discrete/prodsum_constraints).
 
-#### DiscreteDegeneracyConstraint
-The [`DiscreteDegeneracyConstraint`](baybe.constraints.discrete.DiscreteDegeneracyConstraint)
+#### DiscreteRepetitionConstraint
+The [`DiscreteRepetitionConstraint`](baybe.constraints.discrete.DiscreteRepetitionConstraint)
 controls value repetition across a group of parameters. It keeps only rows where no
 single value appears more than ``n_max_occurrences`` times (default: 1, i.e. all values
 must be distinct).
@@ -306,12 +306,12 @@ The following example ensures that no solvent label is used more than once acros
 mixture slots:
 
 ```python
-from baybe.constraints import DiscreteDegeneracyConstraint
+from baybe.constraints import DiscreteRepetitionConstraint
 
-DiscreteDegeneracyConstraint(parameters=["Solvent_1", "Solvent_2", "Solvent_3"])
+DiscreteRepetitionConstraint(parameters=["Solvent_1", "Solvent_2", "Solvent_3"])
 ```
 
-|   | Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteDegeneracyConstraint |
+|   | Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteRepetitionConstraint |
 |---|-----------|-----------|-----------|-----------------------------------|
 | 1 | Water     | Water     | THF       | removed (Water appears twice)     |
 | 2 | THF       | Water     | Octanol   | kept                              |
@@ -324,7 +324,7 @@ encodings, which then must all refer to the same underlying value:
 
 ```python
 from baybe.parameters import SubstanceParameter
-from baybe.constraints import DiscreteDegeneracyConstraint
+from baybe.constraints import DiscreteRepetitionConstraint
 
 dict_solvents = {"Water": "O", "THF": "C1CCOC1", "Octanol": "CCCCCCCCO"}
 solvent_encoding1 = SubstanceParameter(
@@ -337,20 +337,20 @@ solvent_encoding2 = SubstanceParameter(
     data=dict_solvents,
     encoding="MORDRED",
 )
-DiscreteDegeneracyConstraint(
+DiscreteRepetitionConstraint(
     parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"],
     n_max_occurrences=1,  # = number of parameters - 1
     exclude=True,
 )
 ```
 
-|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteDegeneracyConstraint (exclude) |
+|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionConstraint (exclude) |
 |---|-------------------|---------------------|---------------------------------------------|
 | 1 | Water             | Water               | kept                                        |
 | 2 | THF               | Water               | pruned                                      |
 | 3 | Octanol           | Octanol             | kept                                        |
 
-The usage of `DiscreteDegeneracyConstraint` is part of the
+The usage of `DiscreteRepetitionConstraint` is part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
 #### DiscreteDependenciesConstraint

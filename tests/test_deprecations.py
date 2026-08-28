@@ -19,8 +19,8 @@ from baybe.constraints import SubSelectionCondition
 from baybe.constraints import base as base_module
 from baybe.constraints import discrete as discrete_module
 from baybe.constraints.discrete import (
-    DiscreteDegeneracyConstraint,
     DiscreteExcludeConstraint,
+    DiscreteRepetitionConstraint,
     DiscreteSelectionConstraint,
 )
 from baybe.exceptions import DeprecationError
@@ -622,11 +622,11 @@ def test_discrete_exclude_constraint_deserialization(annotation):
         ),
     ],
 )
-def test_degeneracy_constraint_deprecation(legacy_name, kwargs, expected):
-    """Deprecated degeneracy constraints map to DiscreteDegeneracyConstraint."""
+def test_repetition_constraint_deprecation(legacy_name, kwargs, expected):
+    """Deprecated constraints map to DiscreteRepetitionConstraint."""
     with pytest.warns(DeprecationWarning, match=legacy_name):
         c = getattr(discrete_module, legacy_name)(**kwargs)
-    ref = DiscreteDegeneracyConstraint(
+    ref = DiscreteRepetitionConstraint(
         parameters=kwargs["parameters"],
         n_max_occurrences=expected["n_max_occurrences"],
         exclude=expected["exclude"],
