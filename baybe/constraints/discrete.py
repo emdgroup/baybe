@@ -50,7 +50,7 @@ def DiscreteExcludeConstraint(  # noqa: N802
     conditions: list[Condition],
     combiner: str = "AND",
 ) -> DiscreteSelectionConstraint:
-    """A ``DiscreteSelectionConstraint`` alias for backward compatibility."""  # noqa: D401
+    """A :class:`DiscreteSelectionConstraint` alias for backward compatibility."""  # noqa: D401
     import warnings
 
     warnings.warn(
@@ -418,7 +418,7 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
 def DiscreteNoLabelDuplicatesConstraint(  # noqa: N802
     parameters: list[str],
 ) -> DiscreteDegeneracyConstraint:
-    """A ``DiscreteDegeneracyConstraint`` alias for backward compatibility."""  # noqa: D401
+    """A :class:`DiscreteDegeneracyConstraint` alias for backward compatibility."""  # noqa: D401
     import warnings
 
     warnings.warn(
@@ -434,7 +434,7 @@ def DiscreteNoLabelDuplicatesConstraint(  # noqa: N802
 def DiscreteLinkedParametersConstraint(  # noqa: N802
     parameters: list[str],
 ) -> DiscreteDegeneracyConstraint:
-    """A ``DiscreteDegeneracyConstraint`` alias for backward compatibility."""  # noqa: D401
+    """A :class:`DiscreteDegeneracyConstraint` alias for backward compatibility."""  # noqa: D401
     import warnings
 
     flds = fields(DiscreteDegeneracyConstraint)
