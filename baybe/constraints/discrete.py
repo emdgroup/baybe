@@ -396,15 +396,16 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
-        # With exclude=True, the matching/non-matching status of a row can flip
-        # as later columns are added, so all parameters must be present first.
-        if self.exclude:
-            return self._required_parameters <= available
-        # An upper-bound violation is permanent and can be detected early.
-        if self.n_max_repetitions is not None:
+        # Multiplicity can only grow as columns are added, so:
+        # - exclude=False: an upper-bound violation (M > max) is permanent.
+        # - exclude=True: a lower-bound match (M >= min) is permanent,
+        #   but only when no upper bound exists (otherwise the combined
+        #   match status M_min <= M <= M_max can still flip).
+        if not self.exclude and self.n_max_repetitions is not None:
             return len(available & set(self.parameters)) >= 2
-        # A lower-bound violation is not permanent (multiplicity can still grow),
-        # so all parameters must be present before deciding.
+        if self.exclude and self.n_min_repetitions is not None:
+            if self.n_max_repetitions is None:
+                return len(available & set(self.parameters)) >= 2
         return self._required_parameters <= available
 
     @override
@@ -436,10 +437,21 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
                 max_multiplicity, (run_ids == run_id).sum(axis=1)
             )
 
+        # On a partial subset, only the "permanent" bound is applied:
+        # exclude=False → n_max (violation permanent);
+        # exclude=True → n_min (match permanent).
+        # When all parameters are present, both bounds are always applied.
+        can_apply_max = self.n_max_repetitions is not None and (
+            all_present or not self.exclude
+        )
+        can_apply_min = self.n_min_repetitions is not None and (
+            all_present or self.exclude
+        )
+
         mask_good = np.ones(len(df), dtype=bool)
-        if self.n_max_repetitions is not None:
+        if can_apply_max:
             mask_good &= max_multiplicity <= self.n_max_repetitions
-        if all_present and self.n_min_repetitions is not None:
+        if can_apply_min:
             mask_good &= max_multiplicity >= self.n_min_repetitions
 
         return df.index[mask_good]
