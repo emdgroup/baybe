@@ -96,8 +96,8 @@ class BotorchKernelFactory(_PureKernelFactory):
         if (fidelity_idx := searchspace._fidelity_idx) is not None:
             if searchspace._fidelity_type is not SearchSpaceFidelityType.CATEGORICAL:
                 raise IncompatibleSearchSpaceError(
-                    f"'{type(self).__name__}' supports fidelity parameters "
-                    f"only for '{CategoricalFidelityParameter.__name__}'."
+                    f"'{type(self).__name__}' only supports fidelity parameters "
+                    f"of type '{CategoricalFidelityParameter.__name__}'."
                 )
             # Distinct fidelity levels of the same system are expected to be positively
             # correlated, so we use the same prior as BoTorch's 'MultiTaskGP' applies to
