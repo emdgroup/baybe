@@ -135,7 +135,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         return df.index[res]
 
     @override
-    def _get_matching_rows_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
         satisfied = []
@@ -236,7 +236,7 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
         return df.index[mask_good]
 
     @override
-    def _get_matching_rows_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
         weighted = [pl.col(p) * c for p, c in zip(self.parameters, self.coefficients)]
@@ -285,7 +285,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
         return df.index[mask_good]
 
     @override
-    def _get_matching_rows_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
         op = _threshold_operators[self.condition.operator]
@@ -389,29 +389,19 @@ class DiscreteDegeneracyConstraint(DiscreteFilteringConstraint):
         return df.index[mask_good]
 
     @override
-    def _get_matching_rows_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
-        def _tag(value):
-            """Encode a value with a type tag mirroring pandas equality semantics."""
-            if value is None:
-                return None
-            if isinstance(value, str):
-                return f"s:{value}"
-            # Numbers (incl. bool) compare equal by numeric value, matching the
-            # pandas ``factorize`` grouping used by the pandas implementation.
-            return f"n:{float(value)!r}"
+        def _safe_eq(ci: str, cj: str) -> pl.Expr:
+            """Compare two columns, returning ``False`` for incompatible dtypes."""
+            di, dj = schema[ci], schema[cj]
+            if di == dj or (di.is_numeric() and dj.is_numeric()):
+                return pl.col(ci).eq_missing(pl.col(cj))
+            return pl.lit(False)
 
-        # Tag each value by (type, value) so that, e.g., a categorical "1" and a
-        # numeric 1.0 are treated as distinct - identical to the pandas backend.
-        tagged = [
-            pl.col(p).map_elements(_tag, return_dtype=pl.String)
-            for p in self.parameters
-        ]
-        counts = pl.concat_list(tagged).list.eval(
-            pl.element().value_counts().struct.field("count").max()
-        )
-        return counts.list.first() <= self.n_max_occurrences
+        params = self.parameters
+        counts = [pl.sum_horizontal(_safe_eq(ci, cj) for cj in params) for ci in params]
+        return pl.max_horizontal(counts) <= self.n_max_occurrences
 
 
 # >>>>>>>>>> Deprecation
