@@ -129,7 +129,8 @@ parameters = [
 # {class}`~baybe.constraints.discrete.DiscreteRepetitionConstraint`:
 
 no_duplicates_constraint = DiscreteRepetitionConstraint(
-    parameters=["Slot1_Label", "Slot2_Label", "Slot3_Label"]
+    parameters=["Slot1_Label", "Slot2_Label", "Slot3_Label"],
+    n_max_repetitions=1,
 )
 
 #### Permutation Invariance

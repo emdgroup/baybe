@@ -298,9 +298,10 @@ An end to end example can be found [here](../../examples/Constraints_Discrete/pr
 
 #### DiscreteRepetitionConstraint
 The [`DiscreteRepetitionConstraint`](baybe.constraints.discrete.DiscreteRepetitionConstraint)
-controls value repetition across a group of parameters. It keeps only rows where no
-single value appears more than ``n_max_occurrences`` times (default: 1, i.e. all values
-must be distinct).
+controls value repetition across a group of parameters. It keeps only rows where the
+largest number of times any single value appears falls within the specified bounds
+(``n_min_repetitions`` and/or ``n_max_repetitions``). At least one bound must be
+provided.
 
 The following example ensures that no solvent label is used more than once across three
 mixture slots:
@@ -308,7 +309,10 @@ mixture slots:
 ```python
 from baybe.constraints import DiscreteRepetitionConstraint
 
-DiscreteRepetitionConstraint(parameters=["Solvent_1", "Solvent_2", "Solvent_3"])
+DiscreteRepetitionConstraint(
+    parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+    n_max_repetitions=1,
+)
 ```
 
 |   | Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteRepetitionConstraint |
@@ -317,12 +321,12 @@ DiscreteRepetitionConstraint(parameters=["Solvent_1", "Solvent_2", "Solvent_3"])
 | 2 | THF       | Water     | Octanol   | kept                              |
 | 3 | Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times) |
 
-The constraint can also be used to ensure that **only rows with identical values are
-kept**, by combining a high ``n_max_occurrences`` with ``exclude=True``. This is useful,
-for instance, when we have one parameter but would like to include it with several
+The constraint can also enforce that **all values are identical** by requiring a
+minimum repetition count equal to the number of parameters. This is useful, for
+instance, when we have one parameter but would like to include it with several
 encodings, which then must all refer to the same underlying value:
 
-```python
+~~~python
 from baybe.parameters import SubstanceParameter
 from baybe.constraints import DiscreteRepetitionConstraint
 
@@ -339,16 +343,15 @@ solvent_encoding2 = SubstanceParameter(
 )
 DiscreteRepetitionConstraint(
     parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"],
-    n_max_occurrences=1,  # = number of parameters - 1
-    exclude=True,
+    n_min_repetitions=2,
 )
-```
+~~~
 
-|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionConstraint (exclude) |
-|---|-------------------|---------------------|---------------------------------------------|
-| 1 | Water             | Water               | kept                                        |
-| 2 | THF               | Water               | pruned                                      |
-| 3 | Octanol           | Octanol             | kept                                        |
+|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionConstraint |
+|---|-------------------|---------------------|-----------------------------------|
+| 1 | Water             | Water               | kept                              |
+| 2 | THF               | Water               | removed                           |
+| 3 | Octanol           | Octanol             | kept                              |
 
 The usage of `DiscreteRepetitionConstraint` is part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).

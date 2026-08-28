@@ -248,9 +248,7 @@ def test_mixed_polars_pandas_constraints():
             condition=ThresholdCondition(threshold=100, operator="="),
         ),
         # Pandas-only: operates on [B, C] — B is shared with the Polars constraint
-        DiscreteRepetitionConstraint(
-            parameters=["B", "C"], n_max_occurrences=1, exclude=True
-        ),
+        DiscreteRepetitionConstraint(parameters=["B", "C"], n_min_repetitions=2),
     ]
 
     # Naive reference: full product then filter

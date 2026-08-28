@@ -45,7 +45,11 @@ def _no_label_duplicates_scenario() -> tuple[
 ]:
     values = ["x", "y", "z", "w"]
     params = [CategoricalParameter(name=f"P{i}", values=values) for i in range(4)]
-    constraints = [DiscreteRepetitionConstraint(parameters=[p.name for p in params])]
+    constraints = [
+        DiscreteRepetitionConstraint(
+            parameters=[p.name for p in params], n_max_repetitions=1
+        )
+    ]
     return params, constraints
 
 
@@ -57,8 +61,7 @@ def _linked_parameters_scenario() -> tuple[
     constraints = [
         DiscreteRepetitionConstraint(
             parameters=[p.name for p in params],
-            n_max_occurrences=len(params) - 1,
-            exclude=True,
+            n_min_repetitions=len(params),
         )
     ]
     return params, constraints
@@ -180,7 +183,7 @@ def _permutation_invariance_with_dependencies_scenario() -> tuple[
             parameters=amount_names,
             condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.1),
         ),
-        DiscreteRepetitionConstraint(parameters=label_names),
+        DiscreteRepetitionConstraint(parameters=label_names, n_max_repetitions=1),
     ]
     return params, constraints
 
@@ -196,7 +199,9 @@ def _mixed_scenario() -> tuple[
         NumericalDiscreteParameter(name="Num2", values=[0.0, 50.0, 100.0]),
     ]
     constraints = [
-        DiscreteRepetitionConstraint(parameters=["Cat1", "Cat2", "Cat3"]),
+        DiscreteRepetitionConstraint(
+            parameters=["Cat1", "Cat2", "Cat3"], n_max_repetitions=1
+        ),
         DiscreteSumConstraint(
             parameters=["Num1", "Num2"],
             condition=ThresholdCondition(threshold=100, operator="<="),

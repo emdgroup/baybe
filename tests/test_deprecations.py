@@ -611,13 +611,13 @@ def test_discrete_exclude_constraint_deserialization(annotation):
         pytest.param(
             "DiscreteNoLabelDuplicatesConstraint",
             {"parameters": ["A", "B", "C"]},
-            {"n_max_occurrences": 1, "exclude": False},
+            {"n_max_repetitions": 1},
             id="no_label_duplicates",
         ),
         pytest.param(
             "DiscreteLinkedParametersConstraint",
             {"parameters": ["A", "B", "C"]},
-            {"n_max_occurrences": 2, "exclude": True},
+            {"n_min_repetitions": 3},
             id="linked_parameters",
         ),
     ],
@@ -628,8 +628,7 @@ def test_repetition_constraint_deprecation(legacy_name, kwargs, expected):
         c = getattr(discrete_module, legacy_name)(**kwargs)
     ref = DiscreteRepetitionConstraint(
         parameters=kwargs["parameters"],
-        n_max_occurrences=expected["n_max_occurrences"],
-        exclude=expected["exclude"],
+        **expected,
     )
     assert c == ref
 

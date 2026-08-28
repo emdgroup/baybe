@@ -507,6 +507,7 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
         ),
         "Constraint_7": DiscreteRepetitionConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+            n_max_repetitions=1,
         ),
         "Constraint_8": DiscreteSumConstraint(
             parameters=["Fraction_1", "Fraction_2"],
@@ -549,8 +550,7 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
         ),
         "Constraint_15": DiscreteRepetitionConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
-            n_max_occurrences=2,
-            exclude=True,
+            n_min_repetitions=3,
         ),
         "ContiConstraint_1": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
