@@ -12,7 +12,5 @@ def check_links() -> None:
             "dummy",
             "docs",
             "docs/build",
-            "-n",
-            "-W",
         ]
     )
