@@ -7,6 +7,7 @@ from __future__ import annotations
 from gpytorch.kernels import Kernel as GPyTorchKernel
 from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
 from gpytorch.means import Mean as GPyTorchMean
+from sphinx.ext.intersphinx import missing_reference as intersphinx_missing_reference
 
 # >>>>>>>>>> NOTE ON THE FOLLOWING IMPORTS AND ALIASES <<<<<<<<<<
 # This is a hack to make the GPyTorch components available in the docs
@@ -339,6 +340,32 @@ typehints_use_signature = True
 def setup(app):  # noqa: D103
     app.connect("autodoc-process-docstring", autodoc_process_docstring)
     app.connect("autodoc-skip-member", autodoc_skip_member)
+    app.connect("missing-reference", resolve_intersphinx_aliases)
+
+
+def resolve_intersphinx_aliases(app, env, node, contnode):
+    """Resolve external references emitted with a private module path.
+
+    Some libraries expose public classes through private submodules at runtime (e.g.
+    ``polars.dataframe.frame.DataFrame``) while their documentation only registers the
+    canonical name (``polars.DataFrame``). We retry resolution with the canonical
+    ``<top-level package>.<name>`` form; if that does not resolve either, the reference
+    is left untouched.
+    """
+    target = node.get("reftarget")
+    if not target or "." not in target:
+        return None
+    top, name = target.split(".", 1)[0], target.rsplit(".", 1)[-1]
+    candidate = f"{top}.{name}"
+    if candidate == target or top not in intersphinx_mapping:
+        return None
+    node["reftarget"] = candidate
+    result = intersphinx_missing_reference(app, env, node, contnode)
+    if result is None:
+        # Restore the original target so downstream warnings and nitpick-ignore
+        # matching still see the reference as it was actually written.
+        node["reftarget"] = target
+    return result
 
 
 def autodoc_process_docstring(app, what, name, obj, options, lines):
