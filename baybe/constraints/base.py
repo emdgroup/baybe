@@ -88,8 +88,8 @@ class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
     specification instead defines which entries are **removed** and the complement is
     kept.
 
-    Subclasses implement :meth:`_get_matching_rows` (and optionally
-    :meth:`_get_matching_rows_polars`) to express positive matching-rows logic. The
+    Subclasses implement ``_get_matching_rows`` (and optionally
+    ``_get_matching_rows_polars``) to express positive matching-rows logic. The
     base class derives the removal set and applies the ``exclude`` inversion.
     """
 
