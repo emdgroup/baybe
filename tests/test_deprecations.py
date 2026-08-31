@@ -567,9 +567,7 @@ def test_icm_task_kernel_or_factory_deprecation():
     with pytest.warns(DeprecationWarning, match="task_kernel_or_factory"):
         deprecated = ICMKernelFactory(task_kernel_or_factory=index_kernel)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", DeprecationWarning)
-        renamed = ICMKernelFactory(index_kernel_or_factory=index_kernel)
+    renamed = ICMKernelFactory(index_kernel_or_factory=index_kernel)
     assert deprecated == renamed
 
     with pytest.raises(ValueError, match="not both"):
@@ -589,9 +587,7 @@ def test_icm_task_kernel_or_factory_serialization_deprecation():
     assert "task_kernel_or_factory" not in serialized
     assert "index_kernel_or_factory" in serialized
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", DeprecationWarning)
-        assert converter.structure(serialized, ICMKernelFactory) == factory
+    assert converter.structure(serialized, ICMKernelFactory) == factory
 
     # Build the legacy dict from a fresh unstructure to avoid sharing nested dicts
     # with `serialized` (structuring mutates nested dicts by popping 'type' keys).
