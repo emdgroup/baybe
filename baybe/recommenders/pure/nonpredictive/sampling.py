@@ -180,18 +180,21 @@ class FPSRecommender(NonPredictiveRecommender):
         if active_settings.use_fpsample:
             from baybe._optional.fpsample import fps_sampling
 
-            ilocs = fps_sampling(
+            idcs = fps_sampling(
                 candidates_scaled,
                 n_samples=batch_size,
             )
         else:
-            ilocs = farthest_point_sampling(
+            idcs = farthest_point_sampling(
                 candidates_scaled,
                 batch_size,
                 initialization=self.initialization.value,
                 random_tie_break=self.random_tie_break,
             )
-        return candidates.iloc[ilocs].reset_index(drop=True)
+        return _df_with_backend(
+            nw.from_native(candidates, eager_only=True)[idcs],
+            active_settings.default_dataframe_backend,
+        ).to_native()
 
     @override
     def __str__(self) -> str:

@@ -5,13 +5,15 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
 from attrs import evolve
 
 from baybe.searchspace import SubspaceDiscrete
 from baybe.searchspace.candidates import TableCandidates
-from baybe.utils.dataframe import to_tensor
+from baybe.settings import active_settings
+from baybe.utils.dataframe import _df_with_backend, to_tensor
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame
@@ -62,7 +64,10 @@ def recommend_discrete_with_subsets(
             subset_subspace = evolve(
                 subspace_discrete,
                 candidates=TableCandidates(
-                    subspace_discrete.parameters, candidates.loc[mask]
+                    subspace_discrete.parameters,
+                    nw.from_native(candidates, eager_only=True)
+                    .filter(mask.tolist())
+                    .to_native(),
                 ),
             )
 
@@ -136,4 +141,7 @@ def recommend_discrete_without_subsets(
         (choices.unsqueeze(0) == points.unsqueeze(1)).all(dim=-1).int().argmax(dim=1)
     )
 
-    return candidates.iloc[row_idxs.numpy()].reset_index(drop=True)
+    return _df_with_backend(
+        nw.from_native(candidates, eager_only=True)[row_idxs.tolist()],
+        active_settings.default_dataframe_backend,
+    ).to_native()

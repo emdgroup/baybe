@@ -6,6 +6,7 @@ import gc
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
+import narwhals.stable.v2 as nw
 import numpy as np
 from attrs import define, field
 from typing_extensions import override
@@ -130,7 +131,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
             selection = self._make_selection_default(model, candidates_scaled)
 
         # Select rows by positional indices and return the corresponding subset
-        return candidates.iloc[selection].reset_index(drop=True)
+        return nw.from_native(candidates, eager_only=True)[selection].to_native()
 
     @override
     def __str__(self) -> str:
