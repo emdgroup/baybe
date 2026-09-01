@@ -217,6 +217,9 @@ def build_examples(
                 try:
                     future.result()
                 except Exception as ex:
+                    # Fail fast: cancel not-yet-started conversions instead of waiting
+                    # for the whole batch to finish before the error propagates.
+                    executor.shutdown(wait=False, cancel_futures=True)
                     raise RuntimeError(f"Failed to convert example: {file}") from ex
 
     # Append the ordered list of examples to the file for the top level folder
