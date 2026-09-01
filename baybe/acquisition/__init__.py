@@ -3,6 +3,7 @@
 from baybe.acquisition.acqfs import (
     ExpectedImprovement,
     LogExpectedImprovement,
+    MultiFidelityUpperConfidenceBound,
     PosteriorMean,
     PosteriorStandardDeviation,
     ProbabilityOfImprovement,
@@ -13,6 +14,7 @@ from baybe.acquisition.acqfs import (
     qLogNoisyExpectedHypervolumeImprovement,
     qLogNoisyExpectedImprovement,
     qLogNParEGO,
+    qMultiFidelityKnowledgeGradient,
     qNegIntegratedPosteriorVariance,
     qNoisyExpectedHypervolumeImprovement,
     qNoisyExpectedImprovement,
@@ -30,6 +32,7 @@ qSR = qSimpleRegret
 EI = ExpectedImprovement
 qEI = qExpectedImprovement
 qKG = qKnowledgeGradient
+qMFKG = qMultiFidelityKnowledgeGradient
 LogEI = LogExpectedImprovement
 qLogEI = qLogExpectedImprovement
 qNEI = qNoisyExpectedImprovement
@@ -38,6 +41,7 @@ qLogNEI = qLogNoisyExpectedImprovement
 PI = ProbabilityOfImprovement
 qPI = qProbabilityOfImprovement
 UCB = UpperConfidenceBound
+MFUCB = MultiFidelityUpperConfidenceBound
 qUCB = qUpperConfidenceBound
 qTS = qThompsonSampling
 qNEHVI = qNoisyExpectedHypervolumeImprovement
@@ -47,6 +51,7 @@ __all__ = [
     ######################### Acquisition functions
     # Knowledge Gradient
     "qKnowledgeGradient",
+    "qMultiFidelityKnowledgeGradient",
     # Posterior Statistics
     "PosteriorMean",
     "PosteriorStandardDeviation",
@@ -67,6 +72,7 @@ __all__ = [
     # Upper Confidence Bound
     "UpperConfidenceBound",
     "qUpperConfidenceBound",
+    "MultiFidelityUpperConfidenceBound",
     # Thompson Sampling
     "qThompsonSampling",
     # Hypervolume Improvement
@@ -77,6 +83,7 @@ __all__ = [
     ######################### Abbreviations
     # Knowledge Gradient
     "qKG",
+    "qMFKG",
     # Posterior Statistics
     "PM",
     "PSTD",
@@ -97,6 +104,7 @@ __all__ = [
     # Upper Confidence Bound
     "UCB",
     "qUCB",
+    "MFUCB",
     # Thompson Sampling
     "qTS",
     # Hypervolume Improvement
