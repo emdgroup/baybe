@@ -307,7 +307,7 @@ class GaussianProcessSurrogate(Surrogate):
         * **Eagerly:** By calling the method and passing the returned module to a GP.
         * **Lazily:** By passing the bound method itself, without eagerly calling it.
             This works because the method signature complies with
-            :class:`~.components.mean.MeanFactoryProtocol`, i.e., the new GP will use it
+            :obj:`~.components.mean.MeanFactoryProtocol`, i.e., the new GP will use it
             as a factory and call it automatically at fit time.
 
         If the mean-providing GP has not been fitted at call time, its prior mean module
