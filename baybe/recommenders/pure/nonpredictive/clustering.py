@@ -71,7 +71,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         """
         assigned_clusters = model.predict(candidates_scaled)
         selection = [
-            np.random.choice(np.argwhere(cluster == assigned_clusters).flatten())
+            np.random.choice(np.argwhere(cluster == assigned_clusters).flatten()).item()
             for cluster in np.unique(assigned_clusters)
         ]
         return selection
