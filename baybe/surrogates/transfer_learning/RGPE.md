@@ -53,11 +53,16 @@ hands off when the task parameter asks for RGPE.
   `TaskParameter` (`INDEX_KERNEL` vs `RGPE`) so the search space tells the BO loop which
   transfer-learning method to use. A thin dispatch in the GP factory reads it and hands
   off to the RGPE surrogate.
-- **Exposing the model to acquisition (`to_botorch`).** We wrap the blended ensemble as
-  a *real* GP. We could instead extend the generic `AdapterModel`, but that only
-  unlocks the analytic acquisition functions — the look-ahead ones (qKG, qNIPV) still
-  need a real GP. So the real-GP wrapper is the complete option; the `AdapterModel`
-  tweak is a smaller, separate improvement that helps other surrogates but not these.
+- **Exposing the model to acquisition (`to_botorch`).** The optimizer needs a real
+  BoTorch model. We hold the per-task GPs in a `ModelListGP` (independent outputs) and
+  turn them into the RGPE blend with a `ScalarizedPosteriorTransform`: because the
+  outputs are independent, scalarizing with the weights gives exactly `mean = Σ wᵢ·μᵢ`
+  and `cov = Σ wᵢ²·Σᵢ`. This avoids a hand-written blend model *and*, by inheriting from
+  `ModelListGP`, keeps `fantasize`/`condition_on_observations` working — which the
+  look-ahead acquisition functions (qKG, qNIPV) need. The one fiddly bit left is
+  re-wrapping the fantasized model so the scalarization survives. (A simpler
+  alternative — extending `AdapterModel` to apply a `posterior_transform` — only
+  unlocks the analytic acquisition functions, not the look-ahead ones.)
 - **A task-free search space.** To fit each per-task GP we need a search space without
   the task parameter that still supports `transform`. The existing `_drop_parameters`
   helper returns a reduced space that *blocks* `transform`, so we widened its allow-list

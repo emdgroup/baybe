@@ -132,9 +132,9 @@ def _rank_weights(
     """Compute the RGPE rank weights for the source models and the target model.
 
     Orchestrates the weight computation: scores each source model via
-    :func:`_draw_posterior_samples` + :func:`_ranking_loss`, scores the target model via
-    :func:`_loocv_samples` + :func:`_ranking_loss`, then combines the stacked losses with
-    :func:`_weights_from_losses`.
+    :func:`_draw_posterior_samples` + :func:`_ranking_loss`, scores the target model
+    via :func:`_loocv_samples` + :func:`_ranking_loss`, then combines the stacked
+    losses with :func:`_weights_from_losses`.
 
     Args:
         train_x: The target training inputs (``n x d``).
@@ -153,51 +153,79 @@ def _rank_weights(
 def _make_ensemble_model(
     models: list[GPyTorchModel], weights: Tensor, task_idx: int
 ) -> GPyTorchModel:
-    """Wrap the fitted per-task GPs into a single botorch GP that blends them.
+    """Wrap the fitted per-task GPs into a single botorch model that blends them.
 
-    Defined as a factory so that the gpytorch imports stay lazy: the ensemble subclasses
-    :class:`gpytorch.models.GP`, so a module-level definition would import gpytorch
-    eagerly.
+    Holds the per-task GPs in a :class:`~botorch.models.ModelListGP` (as independent
+    outputs) and collapses them into the RGPE posterior with a
+    :class:`~botorch.acquisition.objective.ScalarizedPosteriorTransform`. Because the
+    outputs are independent, scalarizing with ``weights`` yields ``mean = Σ wᵢ·μᵢ`` and
+    ``cov = Σ wᵢ²·Σᵢ`` exactly. Subclassing ``ModelListGP`` keeps ``fantasize`` /
+    ``condition_on_observations`` working (they are delegated to the sub-models).
+
+    Defined as a factory so the botorch imports stay lazy.
 
     Args:
         models: The fitted per-task botorch models, ordered ``(sources..., target)``.
         weights: The ensemble weights aligned with ``models``.
         task_idx: The computational-representation column of the task parameter, which
-            is stripped from incoming candidates.
+            is stripped from candidates before hitting the task-free sub-models.
 
     Returns:
         A botorch model whose posterior is the rank-weighted sum of the per-task GPs.
     """
-    from botorch.models.gpytorch import GPyTorchModel
-    from gpytorch.distributions import MultivariateNormal
-    from gpytorch.likelihoods import LikelihoodList
-    from gpytorch.models import GP
-    from torch.nn import ModuleList
+    import torch
+    from botorch.acquisition.objective import ScalarizedPosteriorTransform
+    from botorch.models import ModelListGP
 
-    class _RGPEnsembleModel(GP, GPyTorchModel):
-        """The RGPE ensemble exposed as a single botorch GP."""
+    class _RGPEnsembleModel(ModelListGP):
+        """The RGPE ensemble: a ``ModelListGP`` collapsed to the rank-weighted blend."""
 
-        _num_outputs = 1  # botorch metadata
+        # NOTE: The underlying list is multi-output, but the scalarized posterior this
+        # model exposes is single-output.
 
         def __init__(self) -> None:
-            super().__init__()
-            self.models = ModuleList(models)
-            self.likelihood = LikelihoodList(*[m.likelihood for m in models])
-            self._weights = weights
+            super().__init__(*models)
+            self._transform = ScalarizedPosteriorTransform(weights=weights)
             self._task_idx = task_idx
 
-        def forward(self, x: Tensor) -> MultivariateNormal:
-            """Blend the per-task posteriors into one distribution.
-
-            Strips the task column, drops zero-weight models, renormalizes the
-            survivors, then returns ``MultivariateNormal(Σ wᵢ·μᵢ, Σ wᵢ²·Σᵢ)`` (note the
-            weight is squared on the covariance).
+        def _strip_task(self, x: Tensor) -> Tensor:
+            """Drop the task column so the task-free sub-models can be evaluated.
 
             Args:
                 x: Candidates in computational representation (task column included).
 
             Returns:
-                The blended multivariate normal distribution.
+                The candidates without the task column.
+            """
+            return torch.cat(
+                [x[..., : self._task_idx], x[..., self._task_idx + 1 :]], dim=-1
+            )
+
+        @override
+        def posterior(self, X: Tensor, *args, **kwargs) -> Posterior:
+            """Return the rank-weighted blend of the per-task posteriors.
+
+            Args:
+                X: Candidates in computational representation (task column included).
+                *args: Forwarded to :meth:`ModelListGP.posterior`.
+                **kwargs: Forwarded to :meth:`ModelListGP.posterior`.
+
+            Returns:
+                The scalarized (rank-weighted) ensemble posterior.
+            """
+            posterior = super().posterior(self._strip_task(X), *args, **kwargs)
+            return self._transform(posterior)
+
+        @override
+        def fantasize(self, *args, **kwargs):
+            """Fantasize each sub-model, then re-apply the scalarization.
+
+            ``ModelListGP.fantasize`` returns a plain ``ModelListGP``, so the result
+            must be re-wrapped to preserve the rank-weighted blend.
+
+            Args:
+                *args: Forwarded to :meth:`ModelListGP.fantasize`.
+                **kwargs: Forwarded to :meth:`ModelListGP.fantasize`.
             """
             raise NotImplementedError
 
@@ -304,22 +332,24 @@ class RGPETransferSurrogate(Surrogate):
         Returns:
             The rank-weighted ensemble posterior.
         """
-        # Strip the task column, drop zero-weight models, renormalize, then blend
-        # mean = Σ wᵢ·μᵢ and cov = Σ wᵢ²·Σᵢ.
+        # Strip the task column, evaluate the per-task GPs, and scalarize with the
+        # weights to get mean = Σ wᵢ·μᵢ and cov = Σ wᵢ²·Σᵢ (see `_make_ensemble_model`).
         raise NotImplementedError
 
     @override
     def to_botorch(self) -> GPyTorchModel:
-        """Expose the ensemble as one real botorch GP.
+        """Expose the ensemble as one botorch model.
 
-        A real GP (instead of the base ``AdapterModel``) is required so that acquisition
-        functions relying on ``posterior_transform`` (all analytic ones) or
-        ``fantasize`` (qKG, qNIPV) keep working.
+        Builds a :class:`~botorch.models.ModelListGP` of the per-task GPs whose
+        posterior is scalarized into the rank-weighted RGPE blend. Going through
+        ``ModelListGP`` (instead of a hand-written GP) keeps ``fantasize`` /
+        ``condition_on_observations`` working, which the fantasy-based acquisition
+        functions (qKG, qNIPV) rely on.
 
         Note:
-            Extending ``AdapterModel`` to apply the ``posterior_transform`` would also
+            Extending ``AdapterModel`` to apply a ``posterior_transform`` would also
             work, but only unlocks the analytic acquisition functions; the fantasy-based
-            ones (qKG, qNIPV) still require a real GP as returned here.
+            ones still require a real GP as returned here.
 
         Returns:
             The ensemble botorch model.
