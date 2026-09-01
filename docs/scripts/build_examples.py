@@ -211,7 +211,11 @@ def build_examples(
             for future in tqdm(
                 as_completed(futures), total=len(futures), desc="Converting examples"
             ):
-                future.result()
+                file = futures[future]
+                try:
+                    future.result()
+                except Exception as ex:
+                    raise RuntimeError(f"Failed to convert example: {file}") from ex
 
     # Append the ordered list of examples to the file for the top level folder
     ex_file += "".join(ex_order)
