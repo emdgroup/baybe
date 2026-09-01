@@ -291,7 +291,7 @@ class BotorchAcquisitionFunctionBuilder:
                 acq_function=PosteriorMean(self._botorch_surrogate),
                 d=len(self.searchspace.parameters),
                 columns=[
-                    self.searchspace.fidelity_idx,
+                    self.searchspace._fidelity_idx,
                 ],
                 values=[
                     1.0,
@@ -325,9 +325,9 @@ class BotorchAcquisitionFunctionBuilder:
         if not isinstance(self.acqf, (qMultiFidelityKnowledgeGradient)):
             return
 
-        assert self.searchspace.fidelity_idx is not None  # for mypy
+        assert self.searchspace._fidelity_idx is not None  # for mypy
 
-        target_fidelities = {self.searchspace.fidelity_idx: 1.0}
+        target_fidelities = {self.searchspace._fidelity_idx: 1.0}
 
         num_dims = len(self.searchspace.parameters)
 

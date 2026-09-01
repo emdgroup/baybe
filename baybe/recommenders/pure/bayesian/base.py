@@ -22,6 +22,7 @@ from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.utils import restricted_fidelity_searchspace
 from baybe.searchspace import SearchSpace
+from baybe.searchspace.core import SearchSpaceFidelityType
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import (
@@ -83,10 +84,10 @@ class BayesianRecommender(PureRecommender, ABC):
     ) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
         if self.acquisition_function is None:
-            if searchspace.task_type == SearchSpaceTaskType.NUMERICALFIDELITY:
+            if searchspace._fidelity_type == SearchSpaceFidelityType.DISCRETE:
                 return qMFKG()
 
-            elif searchspace.task_type == SearchSpaceTaskType.CATEGORICALFIDELITY:
+            elif searchspace._fidelity_type == SearchSpaceFidelityType.CATEGORICAL:
                 return MFUCB()
 
             return qLogNEHVI() if objective.is_multi_output else qLogEI()
