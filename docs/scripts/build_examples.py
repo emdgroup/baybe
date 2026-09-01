@@ -5,7 +5,7 @@ import shutil
 import textwrap
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from subprocess import DEVNULL, STDOUT, check_call
+from subprocess import DEVNULL, check_call
 
 from tqdm import tqdm
 
@@ -21,8 +21,10 @@ def _convert_example(file: Path, sub_directory: Path) -> None:
     """
     file_name = file.stem
 
-    # Convert the file to a jupyter notebook
-    check_call(["jupytext", "--to", "notebook", file], stdout=DEVNULL, stderr=STDOUT)
+    # Convert the file to a jupyter notebook.
+    # Note: stdout is discarded to keep the parallel build log clean, but stderr is
+    # left untouched so the actual error surfaces when a conversion fails.
+    check_call(["jupytext", "--to", "notebook", file], stdout=DEVNULL)
 
     notebook_path = file.with_suffix(".ipynb")
 
@@ -37,9 +39,9 @@ def _convert_example(file: Path, sub_directory: Path) -> None:
         "--execute",
         notebook_path,
     ]
-    check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT, env=env)
+    check_call(convert_execute, stdout=DEVNULL, env=env)
     to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
-    check_call(to_markdown, stdout=DEVNULL, stderr=STDOUT, env=env)
+    check_call(to_markdown, stdout=DEVNULL, env=env)
 
     # Wrap long lines, except those containing a link (detected via "](")
     markdown_path = file.with_suffix(".md")
