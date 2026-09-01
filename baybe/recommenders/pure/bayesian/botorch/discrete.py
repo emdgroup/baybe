@@ -137,11 +137,11 @@ def recommend_discrete_without_subsets(
     # Recover the positional index of each selected point in the candidate set.
     # Operating directly on the BoTorch output avoids introducing any further
     # imprecision beyond what the optimizer itself produces.
-    row_idxs = (
-        (choices.unsqueeze(0) == points.unsqueeze(1)).all(dim=-1).int().argmax(dim=1)
-    )
+    from baybe.utils.torch import index_in_tensor
+
+    row_idxs = index_in_tensor(points, choices)
 
     return _df_with_backend(
-        nw.from_native(candidates, eager_only=True)[row_idxs.tolist()],
+        nw.from_native(candidates, eager_only=True)[row_idxs],
         active_settings.default_dataframe_backend,
     ).to_native()

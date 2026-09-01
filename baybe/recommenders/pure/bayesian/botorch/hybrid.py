@@ -138,14 +138,11 @@ def recommend_hybrid_without_subsets(
     # Recover the positional index of the discrete part of each recommended point.
     # Operating directly on the BoTorch output avoids introducing any further
     # imprecision beyond what the optimizer itself produces.
+    from baybe.utils.torch import index_in_tensor
+
     disc_choices = to_tensor(candidates_comp)
     disc_points = points[:, :n_comp_columns]
-    row_idxs = (
-        (disc_choices.unsqueeze(0) == disc_points.unsqueeze(1))
-        .all(dim=-1)
-        .int()
-        .argmax(dim=1)
-    )
+    row_idxs = index_in_tensor(disc_points, disc_choices)
 
     # Combine the discrete part in experimental representation with the
     # optimized continuous part from the BoTorch output
@@ -155,7 +152,7 @@ def recommend_hybrid_without_subsets(
         backend=active_settings.default_dataframe_backend,
     )
     rec_disc_exp = _df_with_backend(
-        candidates[row_idxs.tolist()], active_settings.default_dataframe_backend
+        candidates[row_idxs], active_settings.default_dataframe_backend
     )
     return nw.concat([rec_disc_exp, rec_cont], how="horizontal").to_native()
 
