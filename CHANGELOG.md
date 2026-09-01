@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inverting the specification to keep the complement
 - `DiscreteSelectionConstraint` as the condition-based filtering constraint
   (inclusion-by-default; replaces `DiscreteExcludeConstraint`)
+- `get_invalid`/`get_valid` methods on `ContinuousConstraint` and
+  `ContinuousLinearConstraint`, enabling row-level validation of continuous linear
+  constraints against a dataframe of candidate configurations
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
