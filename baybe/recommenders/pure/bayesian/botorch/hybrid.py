@@ -197,7 +197,7 @@ def recommend_hybrid_with_subsets(
         def optimize() -> tuple[IntoDataFrame, Tensor]:
             import torch
 
-            # TODO: Replace with .filter() method to avoid materialization
+            # TODO: Replace with SubspaceDiscrete.filter method to avoid materialization
             mod_disc = evolve(
                 searchspace.discrete,
                 candidates=TableCandidates(
