@@ -21,7 +21,7 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
     _MLLForNonTLFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
-    _enable_transfer_learning,
+    _enable_mechanism,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -55,7 +55,7 @@ _EDBO_ENCODINGS = (
 """Encodings relevant to EDBO logic."""
 
 
-@_enable_transfer_learning
+@_enable_mechanism(transfer_learning=True, multi_fidelity=True)
 @define
 class EDBOKernelFactory(_PureKernelFactory):
     """A factory providing EDBO kernels, as proposed by :cite:p:`Shields2021`.
@@ -63,6 +63,9 @@ class EDBOKernelFactory(_PureKernelFactory):
     GitHub repository: https://github.com/b-shields/edbo
     Prior settings: https://github.com/b-shields/edbo/blob/9b41eac3f6d9e520547702fd5b0c7ef6441625a4/edbo/bro.py#L658
     """
+
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
+    # See base class.
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.

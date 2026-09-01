@@ -12,13 +12,17 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
-from typing_extensions import override
+from typing_extensions import assert_never, override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
 from baybe.exceptions import InfeasibilityError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
+from baybe.parameters.fidelity import (
+    CategoricalFidelityParameter,
+    NumericalDiscreteFidelityParameter,
+)
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -53,6 +57,29 @@ class SearchSpaceType(Enum):
 
     HYBRID = "HYBRID"
     """Flag for hybrid search spaces resp. compatibility with hybrid search spaces."""
+
+
+class SearchSpaceTaskType(Enum):
+    """Enum class for different types of task subspaces."""
+
+    SINGLE = "SINGLE"
+    """Flag for search spaces with a single task, meaning no task parameter."""
+
+    CATEGORICAL = "CATEGORICAL"
+    """Flag for search spaces with a categorical task parameter."""
+
+
+class SearchSpaceFidelityType(Enum):
+    """Enum class for different types of fidelity subspaces."""
+
+    SINGLE = "SINGLE"
+    """Flag for search spaces with a single fidelity, meaning no fidelity parameter."""
+
+    DISCRETE = "DISCRETE"
+    """Flag for search spaces with a discrete numerical (ordered) fidelity parameter."""
+
+    CATEGORICAL = "CATEGORICAL"
+    """Flag for search spaces with a categorical (unordered) fidelity parameter."""
 
 
 @define
@@ -269,11 +296,30 @@ class SearchSpace(SerialMixin):
         return params[0]
 
     @property
-    def task_idx(self) -> int | None:
-        """The column index of the task parameter in computational representation."""
+    def _fidelity_parameter(
+        self,
+    ) -> NumericalDiscreteFidelityParameter | CategoricalFidelityParameter | None:
+        """The (single) fidelity parameter of the space, if it exists."""
+        # Currently private since this helper assumes at most one fidelity parameter.
+        fidelity_parameters = (
+            NumericalDiscreteFidelityParameter,
+            CategoricalFidelityParameter,
+        )
+
+        params = [p for p in self.parameters if isinstance(p, fidelity_parameters)]
+
+        if not params:
+            return None
+
+        assert len(params) == 1  # currently ensured by parameter validation step
+        return params[0]
+
+    @property
+    def _task_idx(self) -> int | None:
+        """Column index of the task parameter in computational representation."""
         if (task_param := self._task_parameter) is None:
             return None
-        # TODO[11611]: The current approach has three limitations:
+        # TODO: The current approach has three limitations:
         #   1.  It matches by column name and thus assumes that the parameter name
         #       is used as the column name.
         #   2.  It relies on the current implementation detail that discrete parameters
@@ -283,7 +329,16 @@ class SearchSpace(SerialMixin):
         return cast(int, self.discrete.comp_rep.columns.get_loc(task_param.name))
 
     @property
-    def n_tasks(self) -> int:
+    def _fidelity_idx(self) -> int | None:
+        """Column index of the fidelity parameter in computational representation."""
+        if (fidelity_param := self._fidelity_parameter) is None:
+            return None
+        # TODO: Adjustment after merge of candidates rework necessary (refactor the
+        #   comp-rep index lookup as described in `_task_idx`).
+        return cast(int, self.discrete.comp_rep.columns.get_loc(fidelity_param.name))
+
+    @property
+    def _n_tasks(self) -> int:
         """The number of tasks encoded in the search space."""
         # TODO [16932]: This approach only works for a single task parameter. For
         #  multiple task parameters, we need to align what the output should even
@@ -293,6 +348,36 @@ class SearchSpace(SerialMixin):
             # When there are no task parameters, we effectively have a single task
             return 1
         return len(task_param.values)
+
+    @property
+    def _n_fidelities(self) -> int:
+        """The number of fidelities encoded in the search space."""
+        # TODO: Generalize the fidelity-count semantics to multiple fidelity
+        # parameters, consistent with the task-count semantics in `_n_tasks`.
+        if (fidelity_param := self._fidelity_parameter) is None:
+            # No fidelity parameter means we effectively have a single fidelity.
+            return 1
+        return len(fidelity_param.values)
+
+    @property
+    def _task_type(self) -> SearchSpaceTaskType:
+        """Return the task type of the search space."""
+        if self._task_parameter is None:
+            return SearchSpaceTaskType.SINGLE
+        return SearchSpaceTaskType.CATEGORICAL
+
+    @property
+    def _fidelity_type(self) -> SearchSpaceFidelityType:
+        """Return the fidelity type of the search space."""
+        match self._fidelity_parameter:
+            case None:
+                return SearchSpaceFidelityType.SINGLE
+            case CategoricalFidelityParameter():
+                return SearchSpaceFidelityType.CATEGORICAL
+            case NumericalDiscreteFidelityParameter():
+                return SearchSpaceFidelityType.DISCRETE
+            case _:
+                assert_never(self._fidelity_parameter)
 
     @property
     def n_subsets(self) -> int:
@@ -600,7 +685,7 @@ class _ReducedSearchSpace(SearchSpace):
             "constraints",
             "type",
             "_task_parameter",
-            "n_tasks",
+            "_n_tasks",
             "_get_n_comp_rep_columns",
             "get_parameters_by_name",
             "_ALLOWED_ATTRIBUTES",

@@ -20,6 +20,7 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
     ICMKernelFactory,
+    _enable_mechanism,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.presets.hvarfner import (
@@ -36,6 +37,7 @@ if TYPE_CHECKING:
 _MIN_BOTORCH_VERSION = "0.18.0"
 
 
+@_enable_mechanism(multi_fidelity=True)
 @define
 class BotorchKernelFactory(_PureKernelFactory):
     """A factory providing kernels matching BoTorch's :class:`~botorch.models.MultiTaskGP` defaults."""  # noqa: E501
@@ -78,20 +80,19 @@ class BotorchKernelFactory(_PureKernelFactory):
             ard_num_dims=ard_num_dims, active_dims=active_dims
         )
 
-        # Single-task case
-        if (task_idx := searchspace.task_idx) is None:
-            return base_kernel
+        if (task_idx := searchspace._task_idx) is not None:
+            task_prior = BetaPrior(concentration1=2.5, concentration0=1.5)
+            index_kernel = PositiveIndexKernel(
+                num_tasks=searchspace._n_tasks,
+                rank=searchspace._n_tasks,
+                task_prior=task_prior,
+                active_dims=[task_idx],
+            )
+            return ICMKernelFactory(base_kernel, index_kernel)(
+                searchspace, objective, measurements
+            )
 
-        task_prior = BetaPrior(concentration1=2.5, concentration0=1.5)
-        index_kernel = PositiveIndexKernel(
-            num_tasks=searchspace.n_tasks,
-            rank=searchspace.n_tasks,
-            task_prior=task_prior,
-            active_dims=[task_idx],
-        )
-        return ICMKernelFactory(base_kernel, index_kernel)(
-            searchspace, objective, measurements
-        )
+        return base_kernel
 
     def _validate_botorch_version(self) -> None:
         """Verify that the installed BoTorch version meets the minimum requirement.

@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 import torch
 from botorch.fit import fit_gpytorch_mll
-from botorch.models import MultiTaskGP, SingleTaskGP
+from botorch.models import MultiTaskGP, SingleTaskGP, SingleTaskMultiFidelityGP
 from botorch.models.transforms import Normalize, Standardize
 from gpytorch.kernels import MaternKernel as GPyTorchMaternKernel
 from gpytorch.kernels import RBFKernel as GPyTorchRBFKernel
@@ -20,11 +20,18 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe import active_settings
-from baybe.exceptions import ModelNotTrainedError
+from baybe.exceptions import IncompatibleSurrogateError, ModelNotTrainedError
 from baybe.kernels.basic import MaternKernel, RBFKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.parameters.fidelity import (
+    CategoricalFidelityParameter,
+    NumericalDiscreteFidelityParameter,
+)
+from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+)
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriterion
 from baybe.surrogates.gaussian_process.components.generic import PlainGPComponentFactory
@@ -54,6 +61,23 @@ measurements_mt = create_fake_input(
 baybe_kernel = ScaleKernel(MaternKernel() + RBFKernel())
 gpytorch_kernel = GPyTorchScaleKernel(GPyTorchMaternKernel() + GPyTorchRBFKernel())
 
+_num_fid_param = NumericalDiscreteFidelityParameter(
+    "fidelity", values=[0.5, 1.0], costs=[1.0, 10.0]
+)
+_cat_fid_param = CategoricalFidelityParameter(
+    "fidelity", values=["lo", "hi"], costs=[1.0, 10.0], zeta=[0.5, 0.0]
+)
+_design_param = NumericalDiscreteParameter("x", values=[1.0, 2.0, 3.0])
+
+searchspace_num_fid = SearchSpace.from_product([_design_param, _num_fid_param])
+searchspace_cat_fid = SearchSpace.from_product([_design_param, _cat_fid_param])
+measurements_num_fid = create_fake_input(
+    searchspace_num_fid.parameters, objective.targets, n_rows=3
+)
+measurements_cat_fid = create_fake_input(
+    searchspace_cat_fid.parameters, objective.targets, n_rows=3
+)
+
 
 def _dummy_mean_factory(*args, **kwargs) -> GPyTorchMean:
     return ConstantMean()
@@ -73,7 +97,7 @@ def _posterior_stats_botorch(
     # >>>>> Code adapted from BoTorch landing page: https://botorch.org/ >>>>>
     # NOTE: We normalize according to the searchspace bounds to ensure consistency with
     #       the BayBE GP implementation.
-    if searchspace.n_tasks == 1:
+    if searchspace._n_tasks == 1:
         gp = SingleTaskGP(
             train_X=train_X,
             train_Y=train_Y,
@@ -84,14 +108,14 @@ def _posterior_stats_botorch(
             outcome_transform=Standardize(m=1),
         )
     else:
-        assert searchspace.task_idx is not None
+        assert searchspace._task_idx is not None
         non_task_idcs = [
-            i for i in range(train_X.shape[-1]) if i != searchspace.task_idx
+            i for i in range(train_X.shape[-1]) if i != searchspace._task_idx
         ]
         gp = MultiTaskGP(
             train_X=train_X,
             train_Y=train_Y,
-            task_feature=searchspace.task_idx,
+            task_feature=searchspace._task_idx,
             input_transform=Normalize(
                 d=len(searchspace.comp_rep_columns),
                 indices=non_task_idcs,
@@ -262,3 +286,95 @@ def test_to_botorch_before_fit():
     """Attempting to access an untrained surrogate raises an error."""
     with pytest.raises(ModelNotTrainedError):
         GaussianProcessSurrogate().to_botorch()
+
+
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        param([TaskParameter("task", values=["a", "b"])], id="task_only"),
+        param([_cat_fid_param], id="categorical_fidelity_only"),
+        param([_num_fid_param], id="numerical_fidelity_only"),
+    ],
+)
+def test_surrogate_rejects_index_only_searchspace(parameters):
+    """GP surrogates raise for search spaces without regular model inputs."""
+    searchspace = SearchSpace.from_product(parameters)
+    measurements = create_fake_input(
+        searchspace.parameters, objective.targets, n_rows=3
+    )
+
+    with pytest.raises(IncompatibleSurrogateError, match="at least one regular"):
+        GaussianProcessSurrogate().fit(searchspace, objective, measurements)
+
+
+@pytest.mark.parametrize(
+    "component",
+    [
+        param({"kernel_or_factory": baybe_kernel}, id="kernel"),
+        param({"mean_or_factory": ConstantMean()}, id="mean"),
+        param({"likelihood_or_factory": GaussianLikelihood()}, id="likelihood"),
+    ],
+)
+def test_gp_rejects_custom_components_numerical_fidelity(component):
+    """Custom components are rejected for numerical multi-fidelity search spaces."""
+    surrogate = GaussianProcessSurrogate(**component)
+    with pytest.raises(IncompatibleSurrogateError, match="custom components"):
+        surrogate.fit(searchspace_num_fid, objective, measurements_num_fid)
+
+
+@pytest.mark.parametrize(
+    ("searchspace", "measurements", "expected_model"),
+    [
+        param(
+            searchspace_cat_fid, measurements_cat_fid, SingleTaskGP, id="categorical"
+        ),
+        param(
+            searchspace_num_fid,
+            measurements_num_fid,
+            SingleTaskMultiFidelityGP,
+            id="numerical",
+        ),
+    ],
+)
+def test_standard_gp_fit_fidelity(searchspace, measurements, expected_model):
+    """GaussianProcessSurrogate fits a fidelity space with the expected model."""
+    surrogate = GaussianProcessSurrogate()
+    surrogate.fit(searchspace, objective, measurements)
+    # Exact type check: SingleTaskMultiFidelityGP subclasses SingleTaskGP, so the
+    # categorical case must not accidentally match the multi-fidelity model.
+    assert type(surrogate.to_botorch()) is expected_model
+
+
+@pytest.mark.parametrize(
+    "preset",
+    [
+        param(
+            preset,
+            marks=pytest.mark.skipif(
+                preset is GaussianProcessPreset.BOTORCH and sys.version_info < (3, 11),
+                reason="BoTorch >=0.18.0 requires Python >=3.11.",
+            ),
+        )
+        for preset in GaussianProcessPreset
+    ],
+    ids=lambda preset: preset.value,
+)
+def test_gp_presets_fit_categorical_fidelity(preset):
+    """All GP presets can be fitted on a categorical fidelity space."""
+    surrogate = GaussianProcessSurrogate.from_preset(preset)
+    surrogate.fit(searchspace_cat_fid, objective, measurements_cat_fid)
+
+
+@pytest.mark.parametrize(
+    "preset", list(GaussianProcessPreset), ids=lambda preset: preset.value
+)
+def test_gp_presets_reject_numerical_fidelity(preset):
+    """No GP preset can be fitted on a numerical fidelity space.
+
+    Numerical multi-fidelity spaces are delegated to BoTorch's
+    ``SingleTaskMultiFidelityGP``, which builds its own components. Since every
+    preset supplies explicit component factories, fitting must be rejected.
+    """
+    surrogate = GaussianProcessSurrogate.from_preset(preset)
+    with pytest.raises(IncompatibleSurrogateError, match="custom components"):
+        surrogate.fit(searchspace_num_fid, objective, measurements_num_fid)

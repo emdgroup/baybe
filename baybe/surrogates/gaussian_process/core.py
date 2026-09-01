@@ -8,19 +8,22 @@ import os
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
-import pandas as pd
 from attrs import Converter, define, field
 from attrs.converters import optional as optional_c
 from attrs.converters import pipe
-from attrs.validators import instance_of, is_callable, optional
+from attrs.validators import is_callable, optional
 from typing_extensions import Self, override
 
-from baybe.exceptions import DeprecationError, ModelNotTrainedError
+from baybe.exceptions import (
+    DeprecationError,
+    IncompatibleSurrogateError,
+    ModelNotTrainedError,
+)
 from baybe.kernels.base import Kernel
-from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
-from baybe.searchspace.core import SearchSpace
+from baybe.parameters.enum import _ParameterKind
+from baybe.searchspace.core import SearchSpaceFidelityType
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
@@ -47,11 +50,13 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBELikelihoodFactory,
     BayBEMeanFactory,
 )
+from baybe.surrogates.gaussian_process.utils import _ModelContext
 from baybe.symmetries.base import Symmetry
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    import pandas as pd
     from botorch.models.gpytorch import GPyTorchModel
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
@@ -61,56 +66,8 @@ if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
 
-
-@define
-class _ModelContext:
-    """Model context for :class:`GaussianProcessSurrogate`."""
-
-    searchspace: SearchSpace = field(validator=instance_of(SearchSpace))
-    """The search space the model is trained on."""
-
-    objective: Objective = field(validator=instance_of(Objective))
-    """The objective for which the model is trained."""
-
-    measurements: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
-    """The training data in experimental representation."""
-
-    @property
-    def task_idx(self) -> int | None:
-        """The computational column index of the task parameter, if available."""
-        return self.searchspace.task_idx
-
-    @property
-    def is_multitask(self) -> bool:
-        """Indicates if model is to be operated in a multi-task context."""
-        return self.n_task_dimensions > 0
-
-    @property
-    def n_task_dimensions(self) -> int:
-        """The number of task dimensions."""
-        # TODO: Generalize to multiple task parameters
-        return 1 if self.task_idx is not None else 0
-
-    @property
-    def n_tasks(self) -> int:
-        """The number of tasks."""
-        return self.searchspace.n_tasks
-
-    @property
-    def parameter_bounds(self) -> Tensor:
-        """Get the search space parameter bounds in BoTorch Format."""
-        import torch
-
-        return torch.from_numpy(self.searchspace.scaling_bounds.to_numpy(copy=True))
-
-    @property
-    def numerical_indices(self) -> list[int]:
-        """The indices of the regular numerical model inputs."""
-        return [
-            i
-            for i in range(len(self.searchspace.comp_rep_columns))
-            if i != self.task_idx
-        ]
+    from baybe.objectives.base import Objective
+    from baybe.searchspace import SearchSpace
 
 
 def _mark_custom_kernel(
@@ -143,6 +100,9 @@ class GaussianProcessSurrogate(Surrogate):
     # Moving the scaling operation into the botorch GP object avoids this conflict.
 
     supports_transfer_learning: ClassVar[bool] = True
+    # See base class.
+
+    supports_multi_fidelity: ClassVar[bool] = True
     # See base class.
 
     _custom_kernel: bool = field(init=False, default=False, repr=False, eq=False)
@@ -298,6 +258,58 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._model is not None
         return self._model.posterior(candidates_comp_scaled)
 
+    @override
+    def _validate_model_context(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
+        # A GP needs at least one regular parameter to model.
+        if not any(p._kind is _ParameterKind.REGULAR for p in searchspace.parameters):
+            raise IncompatibleSurrogateError(
+                f"'{self.__class__.__name__}' requires at least one regular parameter."
+            )
+
+        # BoTorch's ``SingleTaskMultiFidelityGP`` builds its own mean, kernel, and
+        # likelihood, so custom versions of those would be silently ignored and are
+        # rejected.
+        if (searchspace._fidelity_type is SearchSpaceFidelityType.DISCRETE) and any(
+            factory is not None
+            for factory in (
+                self.kernel_factory,
+                self.mean_factory,
+                self.likelihood_factory,
+            )
+        ):
+            from botorch.models import SingleTaskMultiFidelityGP
+
+            raise IncompatibleSurrogateError(
+                f"'{self.__class__.__name__}' does not support custom components "
+                f"(kernel, mean, or likelihood) for numerical multi-fidelity search "
+                f"spaces. Such search spaces are handled internally by BoTorch's "
+                f"'{SingleTaskMultiFidelityGP.__name__}', which builds these "
+                f"components on its own."
+            )
+
+        if (
+            searchspace._task_idx is not None
+            and self._custom_kernel
+            and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
+        ):
+            raise DeprecationError(
+                f"We noticed that you are using a custom kernel architecture on a "
+                f"search space that includes a '{TaskParameter.__name__}'. Please note "
+                f"that the kernel logic of '{GaussianProcessSurrogate.__name__}' has "
+                f"changed: the task kernel is no longer automatically added and must "
+                f"now be explicitly included in your kernel (factory). "
+                f"The '{ICMKernelFactory.__name__}' provides a suitable interface "
+                f"for this purpose. If you are aware of this breaking change and wish "
+                f"to proceed with your current kernel architecture, you can disable "
+                f"this error by setting the 'BAYBE_DISABLE_CUSTOM_KERNEL_WARNING' "
+                f"environment variable to a truthy value."
+            )
+
     def _resolve_components(
         self, context: _ModelContext
     ) -> tuple[GPyTorchKernel, GPyTorchMean, GPyTorchLikelihood, FitCriterion]:
@@ -349,30 +361,8 @@ class GaussianProcessSurrogate(Surrogate):
             raise NotImplementedError(
                 "Symmetry-aware surrogate architecture is not yet implemented."
             )
-            for s in self._symmetries:
-                s.validate_searchspace_context(self._searchspace)
 
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
-
-        if (
-            context.is_multitask
-            and self._custom_kernel
-            and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
-        ):
-            raise DeprecationError(
-                f"We noticed that you are using a custom kernel architecture on a "
-                f"search space that includes a '{TaskParameter.__name__}'. Please note "
-                f"that the kernel logic of '{GaussianProcessSurrogate.__name__}' has "
-                f"changed: the task kernel is no longer automatically added and must "
-                f"now be explicitly included in your kernel (factory). "
-                f"The '{ICMKernelFactory.__name__}' provides a suitable interface "
-                f"for this purpose. If you are aware of this breaking change and wish "
-                f"to proceed with your current kernel architecture, you can disable "
-                f"this error by setting the 'BAYBE_DISABLE_CUSTOM_KERNEL_WARNING' "
-                f"environment variable to a truthy value."
-            )
-
-        kernel, mean, likelihood, criterion = self._resolve_components(context)
 
         import botorch
         from botorch.models.transforms import Normalize, Standardize
@@ -383,15 +373,33 @@ class GaussianProcessSurrogate(Surrogate):
             indices=context.numerical_indices,
         )
         outcome_transform = Standardize(train_y.shape[-1])
-        self._model = botorch.models.SingleTaskGP(
-            train_x,
-            train_y,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            mean_module=mean,
-            covar_module=kernel,
-            likelihood=likelihood,
-        )
+
+        # Numerical multi-fidelity is delegated directly to BoTorch's dedicated model,
+        # which handles the fidelity dimension and its components internally.
+        if context.searchspace._fidelity_type is SearchSpaceFidelityType.DISCRETE:
+            assert context.fidelity_idx is not None
+            self._model = botorch.models.SingleTaskMultiFidelityGP(
+                train_x,
+                train_y,
+                input_transform=input_transform,
+                outcome_transform=outcome_transform,
+                data_fidelities=(context.fidelity_idx,),
+            )
+            criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
+            criterion = criterion_factory(
+                context.searchspace, context.objective, context.measurements
+            )
+        else:
+            kernel, mean, likelihood, criterion = self._resolve_components(context)
+            self._model = botorch.models.SingleTaskGP(
+                train_x,
+                train_y,
+                input_transform=input_transform,
+                outcome_transform=outcome_transform,
+                mean_module=mean,
+                covar_module=kernel,
+                likelihood=likelihood,
+            )
         mll = criterion.to_gpytorch(self._model.likelihood, self._model)
         botorch.fit.fit_gpytorch_mll(mll)
 

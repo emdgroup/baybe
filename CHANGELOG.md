@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are now keyword-only
 - `df_apply_permutation_augmentation` has a different interface and now expects
   permutation groups instead of column groups
+- The following `SearchSpace` properties have been made private: `task_type`,
+  `n_tasks`, `task_idx`
 
 ### Fixed
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
@@ -28,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `BayesianRecommender`
 - `Parameter.is_equivalent` method for structural parameter comparison
 - `CategoricalFidelityParameter` and `NumericalDiscreteFidelityParameter` classes
+- Multi-fidelity support in `GaussianProcessSurrogate`: categorical fidelity via
+  ICM kernels and numerical discrete fidelity via BoTorch's
+  `SingleTaskMultiFidelityGP`
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
@@ -44,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `mean_factory`, `likelihood_factory`, `fit_criterion_factory`) now default to
   `None`, meaning "auto-select based on context at fit time". Accessing a field
   before fitting may return `None` instead of a concrete factory.
+
+### Deprecations
+- The `task_kernel_or_factory` argument of `ICMKernelFactory` has been renamed to
+  `index_kernel_or_factory` since it now also supports multi-fidelity modeling
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes

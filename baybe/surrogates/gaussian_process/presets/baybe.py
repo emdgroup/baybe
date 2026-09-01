@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import math
+from abc import ABC, abstractmethod
 from itertools import chain
 from typing import TYPE_CHECKING, ClassVar, TypeVar
 
@@ -16,13 +17,18 @@ from baybe.kernels.basic import PositiveIndexKernel
 from baybe.objectives.base import Objective
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import _ParameterKind
+from baybe.parameters.fidelity import CategoricalFidelityParameter
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
     to_parameter_selector,
 )
 from baybe.parameters.substance import SubstanceParameter
-from baybe.searchspace.core import SearchSpace
+from baybe.searchspace.core import (
+    SearchSpace,
+    SearchSpaceFidelityType,
+    SearchSpaceTaskType,
+)
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     FitCriterionFactoryProtocol,
@@ -31,7 +37,7 @@ from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
-    _enable_transfer_learning,
+    _enable_mechanism,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -67,6 +73,9 @@ class _CustomScaledNumericalKernelFactory(_PureKernelFactory):
           predecessor) Gamma distribution used by BoTorch.
         - The mode matches that of the LogNormal and thus also scales with sqrt(d).
     """
+
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
+    # See base class.
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
@@ -176,6 +185,9 @@ def _dispatch(
 class _BayBENumericalKernelFactory(_PureKernelFactory):
     """The default numerical kernel factory for GP surrogates."""
 
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
+    # See base class.
+
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
@@ -197,18 +209,45 @@ class _BayBENumericalKernelFactory(_PureKernelFactory):
         return factory(searchspace, objective, measurements)
 
 
-BayBEKernelFactory = _enable_transfer_learning(
+BayBEKernelFactory = _enable_mechanism(transfer_learning=True, multi_fidelity=True)(
     _BayBENumericalKernelFactory, "BayBEKernelFactory"
 )
 """The default kernel factory for GP surrogates."""
 
 
 @define
-class _BayBETaskKernelFactory(_PureKernelFactory):
-    """The default task kernel factory for GP surrogates."""
+class _BayBEIndexKernelFactory(_PureKernelFactory, ABC):
+    """Shared core for BayBE index kernel factories.
+
+    Transfer learning (task parameters) and categorical multi-fidelity (categorical
+    fidelity parameters) both model free-form correlations between their index levels
+    via a :class:`~baybe.kernels.basic.PositiveIndexKernel`. This base captures that
+    shared construction, while subclasses specialize the supported parameter kind, the
+    default parameter selector, and the number of index levels.
+    """
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
+
+    @override
+    def _make(
+        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+    ) -> Kernel:
+        n_index_levels = self._n_index_levels(searchspace)
+        return PositiveIndexKernel(
+            num_tasks=n_index_levels,
+            rank=n_index_levels,
+            parameter_names=self.get_parameter_names(searchspace),
+        )
+
+    @abstractmethod
+    def _n_index_levels(self, searchspace: SearchSpace) -> int:
+        """Return the number of index levels handled by the factory."""
+
+
+@define
+class _BayBETaskKernelFactory(_BayBEIndexKernelFactory):
+    """The default task (transfer learning) index kernel factory for GP surrogates."""
 
     _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.TASK
     # See base class.
@@ -220,14 +259,26 @@ class _BayBETaskKernelFactory(_PureKernelFactory):
     # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
 
     @override
-    def _make(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
-    ) -> Kernel:
-        return PositiveIndexKernel(
-            num_tasks=searchspace.n_tasks,
-            rank=searchspace.n_tasks,
-            parameter_names=self.get_parameter_names(searchspace),
-        )
+    def _n_index_levels(self, searchspace: SearchSpace) -> int:
+        return searchspace._n_tasks
+
+
+@define
+class _BayBECategoricalFidelityKernelFactory(_BayBEIndexKernelFactory):
+    """The default categorical multi-fidelity index kernel factory for GP surrogates."""
+
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.FIDELITY
+    # See base class.
+
+    parameter_selector: ParameterSelectorProtocol | None = field(
+        factory=lambda: TypeSelector([CategoricalFidelityParameter]),
+        converter=to_parameter_selector,
+    )
+    # TODO: Reuse base attribute (https://github.com/python-attrs/attrs/pull/1429)
+
+    @override
+    def _n_index_levels(self, searchspace: SearchSpace) -> int:
+        return searchspace._n_fidelities
 
 
 @define
@@ -274,10 +325,17 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> FitCriterion:
+        # Use LOO whenever the model uses an index kernel structure — i.e., for
+        # transfer learning (TaskParameter) and categorical multi-fidelity
+        # (CategoricalFidelityParameter).
+        uses_index_kernel = (
+            searchspace._task_type is SearchSpaceTaskType.CATEGORICAL
+            or searchspace._fidelity_type is SearchSpaceFidelityType.CATEGORICAL
+        )
         return (
-            FitCriterion.MARGINAL_LOG_LIKELIHOOD
-            if searchspace.n_tasks == 1
-            else FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
+            FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
+            if uses_index_kernel
+            else FitCriterion.MARGINAL_LOG_LIKELIHOOD
         )
 
 

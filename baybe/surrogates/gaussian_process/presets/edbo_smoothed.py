@@ -19,7 +19,7 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
     _MLLForNonTLFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
-    _enable_transfer_learning,
+    _enable_mechanism,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 _DIM_LIMITS = (8, 75)
 
 
-@_enable_transfer_learning
+@_enable_mechanism(transfer_learning=True, multi_fidelity=True)
 @define
 class SmoothedEDBOKernelFactory(_PureKernelFactory):
     """A factory providing smoothed versions of EDBO kernels (adapted from :cite:p:`Shields2021`).
@@ -47,6 +47,9 @@ class SmoothedEDBOKernelFactory(_PureKernelFactory):
     :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`
     and interpolates the prior moments linearly in between.
     """  # noqa: E501
+
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
+    # See base class.
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.

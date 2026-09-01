@@ -86,6 +86,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
+    supports_multi_fidelity: ClassVar[bool] = False
+    """Class variable encoding whether or not the surrogate supports multi-fidelity
+    optimization."""
+
     supports_multi_output: ClassVar[bool] = False
     """Class variable encoding whether or not the surrogate is multi-output
     compatible."""
@@ -383,6 +387,23 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         return result
 
+    def _validate_model_context(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
+        """Validate the surrogate model context.
+
+        Optional hook with a no-op default. Surrogates that impose constraints on the
+        model context can override it.
+
+        Args:
+            searchspace: The search space in which experiments are conducted.
+            objective: The objective to be optimized.
+            measurements: The training data in experimental representation.
+        """
+
     @override
     def fit(
         self,
@@ -424,12 +445,22 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             return
 
         # Check if transfer learning capabilities are needed
-        if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
+        if (searchspace._n_tasks > 1) and (not self.supports_transfer_learning):
             raise ValueError(
                 f"The search space contains task parameters but the selected "
                 f"surrogate model type ({self.__class__.__name__}) does not "
                 f"support transfer learning."
             )
+
+        # Check if multi-fidelity capabilities are needed
+        if (searchspace._n_fidelities > 1) and (not self.supports_multi_fidelity):
+            raise ValueError(
+                f"The search space contains fidelity parameters but the selected "
+                f"surrogate model type ({self.__class__.__name__}) does not "
+                f"support multi-fidelity optimization."
+            )
+
+        self._validate_model_context(searchspace, objective, measurements)
 
         # Block partial measurements
         handle_missing_values(measurements, [t.name for t in objective.targets])
@@ -474,6 +505,11 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             to_string(
                 "Supports Transfer Learning",
                 self.supports_transfer_learning,
+                single_line=True,
+            ),
+            to_string(
+                "Supports Multi-Fidelity",
+                self.supports_multi_fidelity,
                 single_line=True,
             ),
         ]

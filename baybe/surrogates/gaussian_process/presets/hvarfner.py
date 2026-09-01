@@ -21,6 +21,7 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
     ICMKernelFactory,
+    _enable_mechanism,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.mean import MeanFactoryProtocol
@@ -31,16 +32,17 @@ if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
 
 
+@_enable_mechanism(multi_fidelity=True)
 @define
 class HvarfnerKernelFactory(_PureKernelFactory):
     """A factory providing kernels with dimension-scaled priors as proposed by :cite:p:`Hvarfner2024`."""  # noqa: E501
 
-    _uses_parameter_names: ClassVar[bool] = True
-    # See base class.
-
     _supported_parameter_kinds: ClassVar[_ParameterKind] = (
         _ParameterKind.REGULAR | _ParameterKind.TASK
     )
+    # See base class.
+
+    _uses_parameter_names: ClassVar[bool] = True
     # See base class.
 
     @override
@@ -70,18 +72,17 @@ class HvarfnerKernelFactory(_PureKernelFactory):
             ard_num_dims=ard_num_dims, active_dims=active_dims
         )
 
-        # Single-task case
-        if (task_idx := searchspace.task_idx) is None:
-            return base_kernel
+        if (task_idx := searchspace._task_idx) is not None:
+            index_kernel = PositiveIndexKernel(
+                num_tasks=searchspace._n_tasks,
+                rank=searchspace._n_tasks,
+                active_dims=[task_idx],
+            )
+            return ICMKernelFactory(base_kernel, index_kernel)(
+                searchspace, objective, measurements
+            )
 
-        index_kernel = PositiveIndexKernel(
-            num_tasks=searchspace.n_tasks,
-            rank=searchspace.n_tasks,
-            active_dims=[task_idx],
-        )
-        return ICMKernelFactory(base_kernel, index_kernel)(
-            searchspace, objective, measurements
-        )
+        return base_kernel
 
 
 class HvarfnerMeanFactory(MeanFactoryProtocol):
@@ -97,12 +98,12 @@ class HvarfnerMeanFactory(MeanFactoryProtocol):
             HadamardConstantMean,
         )
 
-        if searchspace.n_tasks == 1:
+        if searchspace._n_tasks == 1:
             return ConstantMean()
 
-        assert searchspace.task_idx is not None
+        assert searchspace._task_idx is not None
         return HadamardConstantMean(
-            ConstantMean(), searchspace.n_tasks, searchspace.task_idx
+            ConstantMean(), searchspace._n_tasks, searchspace._task_idx
         )
 
 
@@ -114,7 +115,7 @@ class HvarfnerLikelihoodFactory(LikelihoodFactoryProtocol):
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> GPyTorchLikelihood:
 
-        if searchspace.n_tasks == 1:
+        if searchspace._n_tasks == 1:
             from botorch.models.utils.gpytorch_modules import (
                 get_gaussian_likelihood_with_lognormal_prior,
             )
@@ -125,9 +126,9 @@ class HvarfnerLikelihoodFactory(LikelihoodFactoryProtocol):
             make_botorch_multitask_likelihood,
         )
 
-        assert searchspace.task_idx is not None
+        assert searchspace._task_idx is not None
         return make_botorch_multitask_likelihood(
-            num_tasks=searchspace.n_tasks, task_feature=searchspace.task_idx
+            num_tasks=searchspace._n_tasks, task_feature=searchspace._task_idx
         )
 
 

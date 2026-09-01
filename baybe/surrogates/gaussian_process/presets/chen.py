@@ -13,12 +13,13 @@ from typing_extensions import override
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.objectives.base import Objective
+from baybe.parameters.enum import _ParameterKind
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     _MLLForNonTLFitCriterionFactory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
-    _enable_transfer_learning,
+    _enable_mechanism,
     _PureKernelFactory,
 )
 from baybe.surrogates.gaussian_process.components.likelihood import (
@@ -34,6 +35,9 @@ if TYPE_CHECKING:
 @define
 class _ChenNumericalKernelFactory(_PureKernelFactory):
     """A factory providing the core numerical kernel for the Chen preset."""
+
+    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
+    # See base class.
 
     _uses_parameter_names: ClassVar[bool] = True
     # See base class.
@@ -61,7 +65,7 @@ class _ChenNumericalKernelFactory(_PureKernelFactory):
         )
 
 
-ChenKernelFactory = _enable_transfer_learning(
+ChenKernelFactory = _enable_mechanism(transfer_learning=True, multi_fidelity=True)(
     _ChenNumericalKernelFactory, "ChenKernelFactory"
 )
 """A factory providing adaptive hyperprior kernels as proposed by :cite:p:`Chen2026`.

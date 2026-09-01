@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import functools
+import operator
+import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
-from functools import partial
-from typing import TYPE_CHECKING, ClassVar
+from collections.abc import Callable, Iterable
+from functools import partial, reduce
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attrs import define, field, fields
-from attrs.converters import optional
+from attrs.converters import optional as optional_c
 from attrs.validators import is_callable
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSearchSpaceError
@@ -19,12 +22,18 @@ from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import _ParameterKind
+from baybe.parameters.fidelity import CategoricalFidelityParameter
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
     to_parameter_selector,
 )
-from baybe.searchspace.core import SearchSpace
+from baybe.searchspace.core import (
+    SearchSpace,
+    SearchSpaceFidelityType,
+    SearchSpaceTaskType,
+)
+from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentFactoryProtocol,
@@ -58,11 +67,11 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
     # TODO: Perhaps we can find a more elegant way to enforce this by design
     _uses_parameter_names: ClassVar[bool] = False
 
-    _supported_parameter_kinds: ClassVar[_ParameterKind] = _ParameterKind.REGULAR
+    _supported_parameter_kinds: ClassVar[_ParameterKind]
     """The parameter kinds supported by the kernel factory."""
 
     parameter_selector: ParameterSelectorProtocol | None = field(
-        default=None, converter=optional(to_parameter_selector)
+        default=None, converter=optional_c(to_parameter_selector)
     )
     """An optional selector to specify which parameters are considered by the kernel."""
 
@@ -127,100 +136,149 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
         """Construct the kernel."""
 
 
-def _enable_transfer_learning(
-    cls: type[_PureKernelFactory], name: str | None = None, /
-) -> type[_PureKernelFactory]:
-    """Class decorator enabling BayBE's default transfer learning mechanism.
+def _enable_mechanism(
+    *, transfer_learning: bool = False, multi_fidelity: bool = False
+) -> Callable[..., type[_PureKernelFactory]]:
+    """Create a class decorator enabling BayBE's default GP modeling mechanisms.
 
-    When the search space contains a task parameter, the decorated factory
-    automatically composes its kernel with BayBE's default task kernel.
-    Otherwise, the factory behaves unchanged.
-
-    When used as a decorator (without ``name``), the class is modified in-place.
-    When called with a ``name`` argument, a new subclass is created so that the
-    original class remains unmodified. The latter form is intended for cases where
-    the original class is reused independently elsewhere.
+    Enabling a mechanism lets the decorated factory account for the corresponding index
+    parameters in the search space by composing its kernel with BayBE's default ICM
+    kernel (index kernel × base kernel). Transfer learning is activated by a
+    :class:`~baybe.parameters.categorical.TaskParameter` and multi-fidelity by a
+    :class:`~baybe.parameters.fidelity.CategoricalFidelityParameter`. When the search
+    space contains no parameter activating an enabled mechanism, the decorated factory
+    behaves unchanged.
 
     Args:
-        cls: The kernel factory class to decorate.
-        name: Optional name for the created class. If provided, a new subclass is
-            created instead of modifying ``cls`` in-place.
+        transfer_learning: Whether to enable BayBE's transfer learning mechanism.
+        multi_fidelity: Whether to enable BayBE's multi-fidelity mechanism.
 
     Raises:
-        TypeError: If the factory already supports task parameters.
+        ValueError: If no mechanism is enabled.
 
     Returns:
-        The decorated kernel factory class with transfer learning enabled.
+        A class decorator applying the selected mechanisms to a kernel factory.
     """
-    if cls._supported_parameter_kinds & _ParameterKind.TASK:
-        raise TypeError(f"'{cls.__name__}' already supports task parameters.")
+    # Map the enabled mechanisms to the parameter kinds they operate on.
+    kinds: list[_ParameterKind] = []
+    index_param_types: list[type[Parameter]] = []
+    if transfer_learning:
+        kinds.append(_ParameterKind.TASK)
+        index_param_types.append(TaskParameter)
+    if multi_fidelity:
+        kinds.append(_ParameterKind.FIDELITY)
+        index_param_types.append(CategoricalFidelityParameter)
+    if not kinds:
+        raise ValueError("At least one mechanism must be enabled.")
+    enabled_kinds = reduce(operator.or_, kinds)
 
-    # This distinction is important for serialization so that the classes can be
-    # correctly identified by their names in the subclass registry
-    if name is None:
-        # Modify the class in-place (avoids name collision in subclass registry)
-        # -> For the use with `@` syntax, where the original class gets overridden by
-        #    the decorated version, i.e., no references to the original class remain.
-        target_cls = cls
-    else:
-        # Create a sibling class so the original class remains unmodified.
-        # We use cls.__bases__ (not (cls,)) because the new class is conceptually
-        # an equivalent variant, not a specialization. Concrete (non-dunder)
-        # attributes are copied so the sibling has the same behavior.
-        # __module__ must be set explicitly because the Protocol metaclass
-        # would otherwise default it to "abc".
-        # -> For the assignment-based used, i.e.,
-        #   `DecoratedX = enable_transfer_learning(X, name="DecoratedX")`,
-        #    where both the original and decorated versions remain accessible and
-        #    are intended to be used independently.
-        ns = {
-            k: v
-            for k, v in cls.__dict__.items()
-            if not (k.startswith("__") and k.endswith("__"))
-        }
-        ns["__doc__"] = cls.__doc__
-        ns["__module__"] = cls.__module__
-        target_cls = type(name, cls.__bases__, ns)
+    def decorator(
+        cls: type[_PureKernelFactory], name: str | None = None, /
+    ) -> type[_PureKernelFactory]:
+        """Apply the selected mechanisms to a kernel factory class.
 
-    original_call = cls.__call__
-    original_supported_kinds = cls._supported_parameter_kinds
-    _task_exclude_selector = TypeSelector((TaskParameter,), exclude=True)
+        When used as a decorator (without ``name``), the class is modified in-place.
+        When called with a ``name`` argument, a new subclass is created so that the
+        original class remains unmodified. The latter form is intended for cases where
+        the original class is reused independently elsewhere.
 
-    @functools.wraps(original_call)
-    def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
-    ):
-        # Temporarily narrow the supported parameter kinds to those of the original
-        # class. If the decorator logic is correct, the original factory should never
-        # see the extended scope, but this acts as a sanity check to prevent regressions
-        broadened_kinds = target_cls._supported_parameter_kinds
-        target_cls._supported_parameter_kinds = original_supported_kinds
+        Args:
+            cls: The kernel factory class to decorate.
+            name: Optional name for the created class. If provided, a new subclass is
+                created instead of modifying ``cls`` in-place.
 
-        # Split off the task parameters
-        original_selector = self.parameter_selector
-        if original_selector is None:
-            self.parameter_selector = _task_exclude_selector
-        else:
-            self.parameter_selector = lambda p: (
-                _task_exclude_selector(p) and original_selector(p)
+        Raises:
+            TypeError: If the factory already supports task or fidelity parameters.
+
+        Returns:
+            The decorated kernel factory class with the selected mechanisms enabled.
+        """
+        if cls._supported_parameter_kinds & enabled_kinds:
+            raise TypeError(
+                f"'{cls.__name__}' already supports task or fidelity parameters."
             )
 
-        try:
-            base_kernel = original_call(self, searchspace, objective, measurements)
-        finally:
-            target_cls._supported_parameter_kinds = broadened_kinds
-            self.parameter_selector = original_selector
+        # This distinction is important for serialization so that the classes can be
+        # correctly identified by their names in the subclass registry
+        if name is None:
+            # Modify the class in-place (avoids name collision in subclass registry)
+            # -> For the use with `@` syntax, where the original class gets overridden
+            #    by the decorated version, i.e., no references to the original class
+            #    remain.
+            target_cls = cls
+        else:
+            # Create a sibling class so the original class remains unmodified.
+            # We use cls.__bases__ (not (cls,)) because the new class is conceptually
+            # an equivalent variant, not a specialization. Concrete (non-dunder)
+            # attributes are copied so the sibling has the same behavior.
+            # __module__ must be set explicitly because the Protocol metaclass
+            # would otherwise default it to "abc".
+            # -> For the assignment-based use, i.e.,
+            #   `DecoratedX = _enable_mechanism(...)(X, name="DecoratedX")`,
+            #    where both the original and decorated versions remain accessible and
+            #    are intended to be used independently.
+            ns = {
+                k: v
+                for k, v in cls.__dict__.items()
+                if not (k.startswith("__") and k.endswith("__"))
+            }
+            ns["__doc__"] = cls.__doc__
+            ns["__module__"] = cls.__module__
+            target_cls = type(name, cls.__bases__, ns)
 
-        if searchspace.n_tasks > 1:
-            icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
-            return icm(searchspace, objective, measurements)
-        return base_kernel
+        original_call = cls.__call__
+        original_supported_kinds = cls._supported_parameter_kinds
+        _index_exclude_selector = TypeSelector(index_param_types, exclude=True)
 
-    target_cls.__call__ = __call__  # type: ignore[method-assign]
-    target_cls._supported_parameter_kinds = (
-        cls._supported_parameter_kinds | _ParameterKind.TASK
-    )
-    return target_cls
+        @functools.wraps(original_call)
+        def __call__(
+            self,
+            searchspace: SearchSpace,
+            objective: Objective,
+            measurements: pd.DataFrame,
+        ):
+            # Temporarily narrow the supported parameter kinds to those of the original
+            # class. If the decorator logic is correct, the original factory should
+            # never see the extended scope, but this acts as a sanity check to prevent
+            # regressions.
+            broadened_kinds = target_cls._supported_parameter_kinds
+            target_cls._supported_parameter_kinds = original_supported_kinds
+
+            # Split off the index parameters handled by the enabled mechanisms
+            original_selector = self.parameter_selector
+            if original_selector is None:
+                self.parameter_selector = _index_exclude_selector
+            else:
+                self.parameter_selector = lambda p: (
+                    _index_exclude_selector(p) and original_selector(p)
+                )
+
+            try:
+                base_kernel = original_call(self, searchspace, objective, measurements)
+            finally:
+                target_cls._supported_parameter_kinds = broadened_kinds
+                self.parameter_selector = original_selector
+
+            # Realize the enabled mechanisms via ICM kernel composition. Each mechanism
+            # only triggers on the parameter that activates it.
+            if (
+                transfer_learning
+                and searchspace._task_type is SearchSpaceTaskType.CATEGORICAL
+            ) or (
+                multi_fidelity
+                and searchspace._fidelity_type is SearchSpaceFidelityType.CATEGORICAL
+            ):
+                icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
+                return icm(searchspace, objective, measurements)
+            return base_kernel
+
+        target_cls.__call__ = __call__  # type: ignore[method-assign]
+        target_cls._supported_parameter_kinds = (
+            cls._supported_parameter_kinds | enabled_kinds
+        )
+        return target_cls
+
+    return decorator
 
 
 @define
@@ -236,10 +294,10 @@ class _MetaKernelFactory(KernelFactoryProtocol, ABC):
 
 @define
 class ICMKernelFactory(_MetaKernelFactory):
-    """A kernel factory that constructs an ICM kernel for transfer learning.
+    """A kernel factory that constructs an ICM kernel for transfer or multi-fidelity learning.
 
     ICM: Intrinsic Coregionalization Model :cite:p:`NIPS2007_66368270`
-    """
+    """  # noqa: E501
 
     base_kernel_factory: KernelFactoryProtocol = field(
         alias="base_kernel_or_factory",
@@ -248,12 +306,32 @@ class ICMKernelFactory(_MetaKernelFactory):
     )
     """The factory for the base kernel operating on numerical input features."""
 
-    task_kernel_factory: KernelFactoryProtocol = field(
-        alias="task_kernel_or_factory",
-        converter=partial(to_component_factory, component_type=GPComponentType.KERNEL),  # type: ignore[misc]
-        validator=is_callable(),
+    index_kernel_factory: KernelFactoryProtocol | None = field(
+        alias="index_kernel_or_factory",
+        default=None,
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.KERNEL)  # type: ignore[misc]
+        ),
+        validator=optional_v(is_callable()),
     )
-    """The factory for the task kernel operating on the task indices."""
+    """The factory for the index kernel operating on the task/fidelity indices.
+
+    If ``None``, the appropriate use-case default is resolved at call time based on the
+    search space (a task kernel for transfer learning, a categorical fidelity kernel for
+    multi-fidelity learning)."""
+
+    # >>>>>>>>>> Deprecation
+    _deprecated_task_kernel_factory: KernelFactoryProtocol | None = field(
+        alias="task_kernel_or_factory",
+        default=None,
+        kw_only=True,
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.KERNEL)  # type: ignore[misc]
+        ),
+        validator=optional_v(is_callable()),
+    )
+    "Deprecated! Renamed to ``index_kernel_or_factory``."
+    # <<<<<<<<<< Deprecation
 
     @base_kernel_factory.default
     def _default_base_kernel_factory(self) -> KernelFactoryProtocol:
@@ -262,76 +340,155 @@ class ICMKernelFactory(_MetaKernelFactory):
         )
 
         return _BayBENumericalKernelFactory(
-            TypeSelector((TaskParameter,), exclude=True)
+            TypeSelector(
+                (TaskParameter, CategoricalFidelityParameter),
+                exclude=True,
+            )
         )
-
-    @task_kernel_factory.default
-    def _default_task_kernel_factory(self) -> KernelFactoryProtocol:
-        from baybe.surrogates.gaussian_process.presets.baybe import (
-            _BayBETaskKernelFactory,
-        )
-
-        return _BayBETaskKernelFactory()
 
     @base_kernel_factory.validator
     def _validate_base_kernel_factory(self, _, factory: KernelFactoryProtocol):
+        _index_kinds = _ParameterKind.TASK | _ParameterKind.FIDELITY
         if (
             isinstance(factory, _PureKernelFactory)
-            and factory._supported_parameter_kinds & _ParameterKind.TASK
+            and factory._supported_parameter_kinds & _index_kinds
         ):
             raise TypeError(
                 f"The specified '{fields(ICMKernelFactory).base_kernel_factory.alias}' "
-                f"must not support task parameters."
+                f"must not support task or fidelity parameters."
             )
 
-    @task_kernel_factory.validator
-    def _validate_task_kernel_factory(self, _, factory: KernelFactoryProtocol):
+    @index_kernel_factory.validator
+    def _validate_index_kernel_factory(self, _, factory: KernelFactoryProtocol):
         if (
             isinstance(factory, _PureKernelFactory)
-            and factory._supported_parameter_kinds is not _ParameterKind.TASK
+            and factory._supported_parameter_kinds & _ParameterKind.REGULAR
         ):
             raise TypeError(
-                f"The specified '{fields(ICMKernelFactory).task_kernel_factory.alias}' "
-                f"must support only task parameters."
+                f"The specified "
+                f"'{fields(ICMKernelFactory).index_kernel_factory.alias}' "
+                f"must support only task or fidelity parameters."
             )
+
+    # >>>>>>>>>> Deprecation
+    def __attrs_post_init__(self):
+        if self._deprecated_task_kernel_factory is not None:
+            index_alias = fields(ICMKernelFactory).index_kernel_factory.alias
+            deprecated_alias = fields(
+                ICMKernelFactory
+            )._deprecated_task_kernel_factory.alias
+            if self.index_kernel_factory is not None:
+                raise ValueError(
+                    f"Provide only '{index_alias}', not both it and the deprecated "
+                    f"'{deprecated_alias}'."
+                )
+            warnings.warn(
+                f"The '{deprecated_alias}' argument of "
+                f"'{type(self).__name__}' has been renamed to '{index_alias}' "
+                f"and will be removed in a future version. "
+                f"Use '{index_alias}' instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self.index_kernel_factory = self._deprecated_task_kernel_factory
+            self._deprecated_task_kernel_factory = None
+
+    # <<<<<<<<<< Deprecation
+
+    @staticmethod
+    def _default_index_factory(is_task: bool) -> KernelFactoryProtocol:
+        """Return the use-case default index kernel factory.
+
+        Args:
+            is_task: Whether the index kernel operates on a task parameter (transfer
+                learning) rather than a categorical fidelity parameter.
+
+        Returns:
+            The default index kernel factory for the respective use case.
+        """
+        from baybe.surrogates.gaussian_process.presets.baybe import (
+            _BayBECategoricalFidelityKernelFactory,
+            _BayBETaskKernelFactory,
+        )
+
+        return (
+            _BayBETaskKernelFactory()
+            if is_task
+            else (_BayBECategoricalFidelityKernelFactory())
+        )
 
     @override
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-        if searchspace.n_tasks == 1:
+        is_task = searchspace._task_type is SearchSpaceTaskType.CATEGORICAL
+        is_categorical_fidelity = (
+            searchspace._fidelity_type is SearchSpaceFidelityType.CATEGORICAL
+        )
+        if not (is_task or is_categorical_fidelity):
             raise IncompatibleSearchSpaceError(
                 f"'{type(self).__name__}' can only be used with a searchspace that "
-                f"contains a '{TaskParameter.__name__}'."
+                f"contains a '{TaskParameter.__name__}' or a "
+                f"'{CategoricalFidelityParameter.__name__}'."
             )
 
+        # Index resolution below assumes exactly one index dimension.
+        assert not (is_task and is_categorical_fidelity)
+
+        # Resolve the use-case default index kernel factory when none is provided.
+        index_kernel_factory = self.index_kernel_factory or self._default_index_factory(
+            is_task
+        )
+
         base_kernel = self.base_kernel_factory(searchspace, objective, measurements)
-        task_kernel = self.task_kernel_factory(searchspace, objective, measurements)
+        index_kernel = index_kernel_factory(searchspace, objective, measurements)
         if isinstance(base_kernel, Kernel):
             base_kernel = base_kernel.to_gpytorch(searchspace)
-        if isinstance(task_kernel, Kernel):
-            task_kernel = task_kernel.to_gpytorch(searchspace)
+        if isinstance(index_kernel, Kernel):
+            index_kernel = index_kernel.to_gpytorch(searchspace)
 
-        # Ensure correct partitioning between base and task kernels active dimensions
+        # Ensure correct partitioning between base and index kernels active dimensions.
+        # The index dimension is either the task or the categorical fidelity column —
+        # exactly one is non-None after the guard at the start of this method.
+        index_idx = (
+            searchspace._task_idx
+            if searchspace._task_idx is not None
+            else searchspace._fidelity_idx
+        )
         all_idcs = set(range(len(searchspace.comp_rep_columns)))
-        allowed_task_idcs = {searchspace.task_idx}
-        allowed_base_idcs = all_idcs - allowed_task_idcs
+        allowed_index_idcs = {index_idx}
+        allowed_base_idcs = all_idcs - allowed_index_idcs
         base_idcs = (
             set(d.tolist()) if (d := base_kernel.active_dims) is not None else all_idcs
         )
-        task_idcs = (
-            set(d.tolist()) if (d := task_kernel.active_dims) is not None else all_idcs
+        index_idcs = (
+            set(d.tolist()) if (d := index_kernel.active_dims) is not None else all_idcs
         )
 
         if not base_idcs <= allowed_base_idcs:
             raise ValueError(
                 f"The base kernel's 'active_dims' {base_idcs} must be a subset of "
-                f"the non-task indices {allowed_base_idcs}."
+                f"the non-index indices {allowed_base_idcs}."
             )
-        if task_idcs != allowed_task_idcs:
+        if index_idcs != allowed_index_idcs:
             raise ValueError(
-                f"The task kernel's 'active_dims' {task_idcs} does not match "
-                f"the task index {allowed_task_idcs}."
+                f"The index kernel's 'active_dims' {index_idcs} does not match "
+                f"the index column {allowed_index_idcs}."
             )
 
-        return base_kernel * task_kernel
+        return base_kernel * index_kernel
+
+
+# >>>>>>>>>> Deprecation
+_icm_base_unstructure = converter.get_unstructure_hook(ICMKernelFactory)
+
+
+def _icm_unstructure_drop_deprecated(obj: ICMKernelFactory, /) -> dict[str, Any]:
+    """Drop the deprecated ``task_kernel_or_factory`` field from serialized output."""
+    result = _icm_base_unstructure(obj)
+    result.pop("task_kernel_or_factory", None)
+    return result
+
+
+converter.register_unstructure_hook(ICMKernelFactory, _icm_unstructure_drop_deprecated)
+# <<<<<<<<<< Deprecation
