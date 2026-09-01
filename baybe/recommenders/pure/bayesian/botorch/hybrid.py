@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import math
 import warnings
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
 import numpy as np
-from attrs import evolve
+from attrs import evolve, fields
 
 from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import (
@@ -22,7 +21,6 @@ from baybe.searchspace.candidates import TableCandidates
 from baybe.settings import active_settings
 from baybe.utils.basic import flatten
 from baybe.utils.dataframe import _df_with_backend, to_tensor
-from baybe.utils.sampling_algorithms import sample_numerical_df
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame
@@ -55,6 +53,7 @@ def recommend_hybrid_without_subsets(
         batch_size: The size of the calculated batch.
 
     Raises:
+        NotImplementedError: If ``hybrid_sampler`` is set on the recommender.
         IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
             function is used with a batch size > 1.
 
@@ -86,17 +85,15 @@ def recommend_hybrid_without_subsets(
     candidates = nw.from_native(searchspace.discrete.get_candidates(), eager_only=True)
     candidates_comp = nw.from_native(searchspace.discrete.transform(candidates))
 
-    # Calculate the number of samples from the given percentage
-    n_candidates = math.ceil(recommender.sampling_percentage * len(candidates_comp))
-
-    # Potential sampling of discrete candidates
     if recommender.hybrid_sampler is not None:
-        candidates_comp = nw.from_native(
-            sample_numerical_df(
-                candidates_comp.to_native(),
-                n_candidates,
-                method=recommender.hybrid_sampler,
-            ),
+        # Subsampling must keep `candidates` and `candidates_comp` row-aligned, which
+        # requires a narwhals-compatible refactor of the sampling procedure. This is
+        # deferred until the optimizer refactoring is complete.
+        from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
+
+        raise NotImplementedError(
+            f"Using '{fields(BotorchRecommender).hybrid_sampler.alias}' is "
+            f"temporarily not supported."
         )
 
     # Prepare all considered discrete configurations in the
