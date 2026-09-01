@@ -12,7 +12,7 @@ from attrs.converters import optional
 from attrs.validators import deep_iterable, instance_of
 from typing_extensions import override
 
-from baybe.acquisition import qLogEI, qLogNEHVI
+from baybe.acquisition import MFUCB, qLogEI, qLogNEHVI, qMFKG
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
 from baybe.exceptions import (
@@ -20,7 +20,9 @@ from baybe.exceptions import (
 )
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.utils import restricted_fidelity_searchspace
 from baybe.searchspace import SearchSpace
+from baybe.searchspace.core import SearchSpaceFidelityType
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import (
@@ -77,9 +79,17 @@ class BayesianRecommender(PureRecommender, ABC):
     _botorch_acqf = field(default=None, init=False, eq=False)
     """The induced BoTorch acquisition function."""
 
-    def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
+    def _get_acquisition_function(
+        self, objective: Objective, searchspace: SearchSpace
+    ) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
         if self.acquisition_function is None:
+            if searchspace._fidelity_type == SearchSpaceFidelityType.DISCRETE:
+                return qMFKG()
+
+            elif searchspace._fidelity_type == SearchSpaceFidelityType.CATEGORICAL:
+                return MFUCB()
+
             return qLogNEHVI() if objective.is_multi_output else qLogEI()
         return self.acquisition_function
 
@@ -103,7 +113,7 @@ class BayesianRecommender(PureRecommender, ABC):
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
         self._objective = objective
-        acqf = self._get_acquisition_function(objective)
+        acqf = self._get_acquisition_function(objective, searchspace)
 
         if objective.is_multi_output and not acqf.supports_multi_output:
             raise IncompatibleAcquisitionFunctionError(
@@ -181,10 +191,14 @@ class BayesianRecommender(PureRecommender, ABC):
         self._setup_botorch_acqf(
             searchspace, objective, measurements, pending_experiments
         )
+        acqf = self._get_acquisition_function(objective, searchspace)
 
         try:
             with Settings(preprocess_dataframes=False):
-                return super().recommend(
+                if isinstance(acqf, MFUCB):
+                    searchspace = restricted_fidelity_searchspace(searchspace)
+
+                recommendation = super().recommend(
                     batch_size=batch_size,
                     searchspace=searchspace,
                     objective=objective,
@@ -210,6 +224,12 @@ class BayesianRecommender(PureRecommender, ABC):
                 ) from ex
             else:
                 raise
+
+        return (
+            recommendation
+            if not isinstance(acqf, MFUCB)
+            else self._botorch_acqf.optimize_stage_two(recommendation)
+        )
 
     def acquisition_values(
         self,
@@ -240,7 +260,9 @@ class BayesianRecommender(PureRecommender, ABC):
             A series of individual acquisition values, one for each candidate.
         """
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        acqf = acquisition_function or self._get_acquisition_function(objective)
+        acqf = acquisition_function or self._get_acquisition_function(
+            objective, searchspace
+        )
         return acqf.evaluate(
             candidates,
             surrogate,
@@ -268,7 +290,9 @@ class BayesianRecommender(PureRecommender, ABC):
             The joint acquisition value of the batch.
         """
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        acqf = acquisition_function or self._get_acquisition_function(objective)
+        acqf = acquisition_function or self._get_acquisition_function(
+            objective, searchspace
+        )
         return acqf.evaluate(
             candidates,
             surrogate,
