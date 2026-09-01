@@ -1429,15 +1429,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent                Base                        Ligand  \
-131  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
-421       p-Xylene  Potassium pivalate                     BrettPhos   
-283           DMAc   Potassium acetate                     BrettPhos   
+           Solvent                Base         Ligand  Temperature  \
+111  Butyornitrile      Cesium acetate  (t-Bu)PhCPhos        105.0   
+16     Butyl Ester      Cesium acetate      BrettPhos        120.0   
+411       p-Xylene  Potassium pivalate  (t-Bu)PhCPhos        120.0   
 
-     Temperature  Concentration  
-131        105.0          0.153  
-421        120.0          0.100  
-283        105.0          0.100  
+     Concentration  
+111          0.057  
+16           0.100  
+411          0.057  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1446,15 +1446,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent                Base                        Ligand  \
-131  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
-421       p-Xylene  Potassium pivalate                     BrettPhos   
-283           DMAc   Potassium acetate                     BrettPhos   
+           Solvent                Base         Ligand  Temperature  \
+111  Butyornitrile      Cesium acetate  (t-Bu)PhCPhos        105.0   
+16     Butyl Ester      Cesium acetate      BrettPhos        120.0   
+411       p-Xylene  Potassium pivalate  (t-Bu)PhCPhos        120.0   
 
-     Temperature  Concentration      yield  
-131        105.0          0.153 -19.098407  
-421        120.0          0.100  60.624158  
-283        105.0          0.100 -79.325857  
+     Concentration      yield  
+111          0.057  24.893175  
+16           0.100  87.780988  
+411          0.057 -81.020437  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
@@ -1492,7 +1492,7 @@ as follows.</p>
         <div class="bottom-of-page">
           <div class="left-details">
             <div class="copyright">
-                Copyright &#169; 2022-2025 Merck KGaA, Darmstadt, Germany and/or its affiliates. All rights reserved.
+                Copyright &#169; 2022-2026 Merck KGaA, Darmstadt, Germany and/or its affiliates. All rights reserved.
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
             
