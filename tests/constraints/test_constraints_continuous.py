@@ -1,11 +1,15 @@
 """Test for imposing continuous constraints."""
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 from pytest import param
 
-from baybe.constraints import ContinuousLinearConstraint
+from baybe.constraints import (
+    ContinuousCardinalityConstraint,
+    ContinuousLinearConstraint,
+)
 from baybe.parameters.numerical import NumericalContinuousParameter
 from tests.conftest import run_iterations
 
@@ -230,3 +234,112 @@ def test_invalid_constraints(parameters, coefficients, rhs, op):
         ContinuousLinearConstraint(
             parameters=parameters, operator=op, coefficients=coefficients, rhs=rhs
         )
+
+
+@pytest.mark.parametrize(
+    ("operator", "coefficients", "rhs", "df_values", "expected_invalid_indices"),
+    [
+        param(
+            "=",
+            [1.0, 1.0],
+            1.0,
+            {"x": [0.5, 0.3], "y": [0.5, 0.7]},
+            [],
+            id="eq_satisfied",
+        ),
+        param(
+            "=",
+            [1.0, 1.0],
+            1.0,
+            {"x": [0.5, 0.3], "y": [0.5, 0.3]},
+            [1],
+            id="eq_violated",
+        ),
+        param(
+            ">=",
+            [1.0, 1.0],
+            1.0,
+            {"x": [0.5, 0.6], "y": [0.5, 0.6]},
+            [],
+            id="ge_satisfied",
+        ),
+        param(
+            ">=",
+            [1.0, 1.0],
+            1.0,
+            {"x": [0.3, 0.6], "y": [0.3, 0.6]},
+            [0],
+            id="ge_violated",
+        ),
+        param(
+            "<=",
+            [1.0, 1.0],
+            1.0,
+            {"x": [0.4, 0.6], "y": [0.4, 0.6]},
+            [1],
+            id="le_violated",
+        ),
+    ],
+)
+def test_linear_constraint_get_invalid(
+    operator, coefficients, rhs, df_values, expected_invalid_indices
+):
+    """Test get_invalid returns the correct violating row indices."""
+    constraint = ContinuousLinearConstraint(
+        parameters=list(df_values.keys()),
+        operator=operator,
+        coefficients=coefficients,
+        rhs=rhs,
+    )
+    df = pd.DataFrame(df_values)
+    assert list(constraint.get_invalid(df)) == expected_invalid_indices
+
+
+def test_linear_constraint_get_invalid_missing_column():
+    """Test get_invalid raises ValueError for missing required columns."""
+    constraint = ContinuousLinearConstraint(
+        parameters=["x", "y"], operator="=", rhs=1.0
+    )
+    df = pd.DataFrame({"x": [0.5]})
+    with pytest.raises(ValueError, match="missing"):
+        constraint.get_invalid(df)
+
+
+def test_linear_constraint_get_valid_is_complement():
+    """Test get_valid returns the complement of get_invalid."""
+    constraint = ContinuousLinearConstraint(
+        parameters=["x", "y"], operator=">=", rhs=1.0
+    )
+    df = pd.DataFrame({"x": [0.3, 0.6, 0.1], "y": [0.3, 0.6, 0.1]})
+    assert constraint.get_invalid(df).union(constraint.get_valid(df)).equals(df.index)
+
+
+def test_linear_interpoint_constraint_get_invalid_satisfied():
+    """Test interpoint get_invalid returns empty index when aggregate satisfies."""
+    constraint = ContinuousLinearConstraint(
+        parameters=["x"], operator="=", rhs=1.0, interpoint=True
+    )
+    df = pd.DataFrame({"x": [0.4, 0.6]})
+    assert len(constraint.get_invalid(df)) == 0
+
+
+def test_linear_interpoint_constraint_get_invalid_violated():
+    """Test interpoint get_invalid returns full index when batch aggregate violates."""
+    constraint = ContinuousLinearConstraint(
+        parameters=["x"], operator="=", rhs=1.0, interpoint=True
+    )
+    df = pd.DataFrame({"x": [0.3, 0.6]})
+    assert list(constraint.get_invalid(df)) == list(df.index)
+
+
+def test_cardinality_constraint_get_invalid_raises():
+    """Test that ContinuousCardinalityConstraint.get_invalid raises NotImplementedError.
+
+    Row-level validation requires parameter bounds not stored on the constraint.
+    """
+    constraint = ContinuousCardinalityConstraint(
+        parameters=["x", "y", "z"], min_cardinality=1, max_cardinality=2
+    )
+    df = pd.DataFrame({"x": [0.0], "y": [1.0], "z": [0.0]})
+    with pytest.raises(NotImplementedError):
+        constraint.get_invalid(df)
