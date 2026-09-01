@@ -1275,7 +1275,8 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RecommenderProtocol</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Follow the meta recommender chain to the selected non-meta recommender.</span>
 
-<span class="sd">        Recursively calls :meth:`MetaRecommender.select_recommender` until a</span>
+<span class="sd">        Recursively calls</span>
+<span class="sd">        :meth:`~baybe.recommenders.meta.base.MetaRecommender.select_recommender` until a</span>
 <span class="sd">        non-meta recommender is encountered, which is then returned.</span>
 <span class="sd">        Effectively, this extracts the recommender responsible for generating</span>
 <span class="sd">        the recommendations for the specified context.</span>

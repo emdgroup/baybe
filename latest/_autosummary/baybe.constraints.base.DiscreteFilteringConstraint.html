@@ -1231,8 +1231,8 @@
 search space. The keyword-only <code class="docutils literal notranslate"><span class="pre">exclude</span></code> flag inverts this: when <code class="docutils literal notranslate"><span class="pre">True</span></code>, the
 specification instead defines which entries are <strong>removed</strong> and the complement is
 kept.</p>
-<p>Subclasses implement <code class="xref py py-meth docutils literal notranslate"><span class="pre">_get_matching_rows()</span></code> (and optionally
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_get_matching_rows_polars()</span></code>) to express positive matching-rows logic. The
+<p>Subclasses implement <code class="docutils literal notranslate"><span class="pre">_get_matching_rows</span></code> (and optionally
+<code class="docutils literal notranslate"><span class="pre">_get_matching_rows_polars</span></code>) to express positive matching-rows logic. The
 base class derives the removal set and applies the <code class="docutils literal notranslate"><span class="pre">exclude</span></code> inversion.</p>
 <p class="rubric">Public methods</p>
 <div class="table-wrapper autosummary longtable docutils container">

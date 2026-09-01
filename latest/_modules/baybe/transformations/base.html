@@ -1271,10 +1271,11 @@
 <span class="sd">        In accordance with the mathematical definition of a function&#39;s `codomain</span>
 <span class="sd">        &lt;https://en.wikipedia.org/wiki/Codomain&gt;`_, we define the codomain of a given</span>
 <span class="sd">        :class:`~baybe.utils.interval.Interval` under a certain (assumed continuous)</span>
-<span class="sd">        :class:`~Transformation` to be an :class:`~baybe.utils.interval.Interval`</span>
-<span class="sd">        guaranteed to contain all possible outcomes when the :class:`~Transformation` is</span>
-<span class="sd">        applied to all points in the input :class:`~baybe.utils.interval.Interval`. In</span>
-<span class="sd">        cases where the image cannot exactly be computed, it is often still possible to</span>
+<span class="sd">        :class:`~baybe.transformations.base.Transformation` to be an</span>
+<span class="sd">        :class:`~baybe.utils.interval.Interval` guaranteed to contain all possible</span>
+<span class="sd">        outcomes when the :class:`~baybe.transformations.base.Transformation` is applied</span>
+<span class="sd">        to all points in the input :class:`~baybe.utils.interval.Interval`. In cases</span>
+<span class="sd">        where the image cannot exactly be computed, it is often still possible to</span>
 <span class="sd">        compute a codomain. The codomain always contains the image, but might be larger.</span>
 <span class="sd">        &quot;&quot;&quot;</span></div>
 
@@ -1287,10 +1288,10 @@
 <span class="sd">        In accordance with the mathematical definition of a function&#39;s `image</span>
 <span class="sd">        &lt;https://en.wikipedia.org/wiki/Image_(mathematics)&gt;`_, we define the image of a</span>
 <span class="sd">        given :class:`~baybe.utils.interval.Interval` under a certain (assumed</span>
-<span class="sd">        continuous) :class:`~Transformation` to be the smallest</span>
-<span class="sd">        :class:`~baybe.utils.interval.Interval` containing all possible outcomes when</span>
-<span class="sd">        the :class:`~Transformation` is applied to all points in the input</span>
-<span class="sd">        :class:`~baybe.utils.interval.Interval`.</span>
+<span class="sd">        continuous) :class:`~baybe.transformations.base.Transformation` to be the</span>
+<span class="sd">        smallest :class:`~baybe.utils.interval.Interval` containing all possible</span>
+<span class="sd">        outcomes when the :class:`~baybe.transformations.base.Transformation` is applied</span>
+<span class="sd">        to all points in the input :class:`~baybe.utils.interval.Interval`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># By default, it is assumed that the exact image of an interval cannot be</span>
         <span class="c1"># computed but only the codomain is available (see :meth:`get_codomain`).</span>
