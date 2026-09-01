@@ -11,15 +11,17 @@ from typing import TYPE_CHECKING, Any
 
 import cattrs
 import numpy as np
+import pandas as pd
 from attrs import define, evolve, field
 from attrs.validators import deep_iterable, gt, in_, instance_of, lt
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from baybe.constraints.base import (
     CardinalityConstraint,
     ContinuousConstraint,
     ContinuousNonlinearConstraint,
 )
+from baybe.constraints.conditions import ThresholdCondition
 from baybe.parameters import NumericalContinuousParameter
 from baybe.settings import active_settings
 from baybe.utils.interval import Interval
@@ -197,6 +199,41 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
             return [(idxs_batched_2d, coefficients_batched, rhs)]
 
+    @override
+    def get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
+        """Get the indices of dataframe entries that violate the constraint.
+
+        For intrapoint constraints, each row is evaluated independently.
+        For interpoint constraints, the aggregate across all rows is compared
+        against :attr:`rhs`; if violated, all rows are returned as invalid.
+
+        Args:
+            df: A dataframe where each row represents a parameter configuration.
+
+        Raises:
+            ValueError: If the dataframe is missing required parameter columns.
+
+        Returns:
+            The dataframe indices of rows that violate the constraint.
+        """
+        if missing := self._required_parameters - set(df.columns):
+            raise ValueError(
+                f"'{self.__class__.__name__}' requires columns {missing} "
+                f"which are missing from the dataframe."
+            )
+        series = pd.Series(
+            sum(
+                df[p].to_numpy() * c for p, c in zip(self.parameters, self.coefficients)
+            ),
+            index=df.index,
+        )
+        condition = ThresholdCondition(threshold=self.rhs, operator=self.operator)
+        if self.is_interpoint:
+            # Aggregate across all batch rows (mirrors BoTorch interpoint semantics).
+            satisfied = bool(condition.evaluate(pd.Series([float(series.sum())]))[0])
+            return pd.Index([]) if satisfied else df.index
+        return df.index[~condition.evaluate(series)]
+
 
 @define
 class ContinuousCardinalityConstraint(
@@ -311,6 +348,27 @@ class ContinuousCardinalityConstraint(
         return Interval(
             lower=self.relative_threshold * bounds.lower,
             upper=self.relative_threshold * bounds.upper,
+        )
+
+    @override
+    def get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
+        """Not supported: bounds are required to determine activity thresholds.
+
+        Use :func:`baybe.constraints.utils.is_cardinality_fulfilled` instead.
+
+        Args:
+            df: A dataframe where each row represents a parameter configuration.
+
+        Raises:
+            NotImplementedError: Always.
+
+        Returns:
+            None. Always raises NotImplementedError.
+        """
+        raise NotImplementedError(
+            f"'{self.__class__.__name__}' cannot evaluate row-level validity without "
+            f"parameter bounds. Use 'is_cardinality_fulfilled' from "
+            f"'baybe.constraints.utils' instead."
         )
 
 

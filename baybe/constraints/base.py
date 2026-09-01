@@ -236,6 +236,31 @@ class ContinuousConstraint(Constraint, ABC):
     numerical_only: ClassVar[bool] = True
     # See base class.
 
+    @abstractmethod
+    def get_invalid(self, df: pd.DataFrame, /) -> pd.Index:
+        """Get the indices of dataframe entries that violate the constraint.
+
+        Args:
+            df: A dataframe where each row represents a parameter configuration.
+
+        Raises:
+            ValueError: If the dataframe is missing required parameter columns.
+
+        Returns:
+            The dataframe indices of rows that violate the constraint.
+        """
+
+    def get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+        """Get the indices of dataframe entries that satisfy the constraint.
+
+        Args:
+            df: A dataframe where each row represents a parameter configuration.
+
+        Returns:
+            The dataframe indices of rows that fulfill the constraint.
+        """
+        return df.index.drop(self.get_invalid(df))
+
 
 @define(slots=False)
 class CardinalityConstraint(Constraint, ABC):
