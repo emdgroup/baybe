@@ -5,16 +5,12 @@ from collections.abc import Collection, Sequence
 from typing import TypeVar
 
 import pandas as pd
+from exceptiongroup import ExceptionGroup
 
 from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
 from baybe.utils.dataframe import get_transform_objects
-
-try:  # For python < 3.11, use the exceptiongroup backport
-    ExceptionGroup
-except NameError:
-    from exceptiongroup import ExceptionGroup
 
 _T = TypeVar("_T", bound=Parameter)
 

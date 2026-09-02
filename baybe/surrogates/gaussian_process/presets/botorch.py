@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+from importlib import import_module
 from itertools import chain
 from typing import TYPE_CHECKING, ClassVar
 
@@ -58,7 +59,6 @@ class BotorchKernelFactory(_PureKernelFactory):
         from botorch.models.utils.gpytorch_modules import (
             get_covar_module_with_dim_scaled_prior,
         )
-        from botorch.models.utils.priors import BetaPrior
 
         parameter_names = self.get_parameter_names(searchspace)
 
@@ -82,7 +82,9 @@ class BotorchKernelFactory(_PureKernelFactory):
         if (task_idx := searchspace.task_idx) is None:
             return base_kernel
 
-        task_prior = BetaPrior(concentration1=2.5, concentration0=1.5)
+        # BoTorch versions lacking this module are rejected at the start of this method.
+        beta_prior = import_module("botorch.models.utils.priors").BetaPrior
+        task_prior = beta_prior(concentration1=2.5, concentration0=1.5)
         index_kernel = PositiveIndexKernel(
             num_tasks=searchspace.n_tasks,
             rank=searchspace.n_tasks,
