@@ -8,7 +8,10 @@ from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
 )
-from baybe.constraints.discrete import DiscreteSumConstraint
+from baybe.constraints.discrete import (
+    DiscreteRepetitionConstraint,
+    DiscreteSumConstraint,
+)
 
 
 @pytest.mark.parametrize(
@@ -26,6 +29,78 @@ def test_invalid_cardinalities(cardinalities, error, match):
     """Providing an invalid parameter name raises an exception."""
     with pytest.raises(error, match=match):
         ContinuousCardinalityConstraint(["x", "y"], *cardinalities)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "error", "match"),
+    [
+        param({}, ValueError, "At least one repetition bound", id="missing-bounds"),
+        param(
+            {"n_min_repetitions": "2"},
+            TypeError,
+            "must be <class 'int'>",
+            id="minimum-type",
+        ),
+        param(
+            {"n_max_repetitions": 2.0},
+            TypeError,
+            "must be <class 'int'>",
+            id="maximum-type",
+        ),
+        param(
+            {"n_min_repetitions": 0},
+            ValueError,
+            "must be >= 1",
+            id="minimum-too-small",
+        ),
+        param(
+            {"n_max_repetitions": 0},
+            ValueError,
+            "must be >= 1",
+            id="maximum-too-small",
+        ),
+        param(
+            {"n_min_repetitions": 4},
+            ValueError,
+            "must not exceed the number of parameters",
+            id="minimum-too-large",
+        ),
+        param(
+            {"n_max_repetitions": 4},
+            ValueError,
+            "must not exceed the number of parameters",
+            id="maximum-too-large",
+        ),
+        param(
+            {"n_min_repetitions": 3, "n_max_repetitions": 2},
+            ValueError,
+            "must not exceed",
+            id="wrong-order",
+        ),
+        param(
+            {"n_min_repetitions": 1},
+            ValueError,
+            "no meaningful constraint",
+            id="minimum-only-no-op",
+        ),
+        param(
+            {"n_max_repetitions": 3},
+            ValueError,
+            "no meaningful constraint",
+            id="maximum-only-no-op",
+        ),
+        param(
+            {"n_min_repetitions": 1, "n_max_repetitions": 3},
+            ValueError,
+            "no meaningful constraint",
+            id="complete-interval-no-op",
+        ),
+    ],
+)
+def test_invalid_repetition_bounds(kwargs, error, match):
+    """Invalid repetition bounds raise an exception."""
+    with pytest.raises(error, match=match):
+        DiscreteRepetitionConstraint(parameters=["A", "B", "C"], **kwargs)
 
 
 @pytest.mark.parametrize(
