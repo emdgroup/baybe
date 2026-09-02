@@ -346,12 +346,14 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
 
         Raises:
             ValueError: If no repetition bound is provided.
-            ValueError: If a bound is a no-op.
+            ValueError: If a bound exceeds the number of parameters.
             ValueError: If the lower bound exceeds the upper bound.
+            ValueError: If the bounds impose no meaningful constraint.
         """
         n_params = len(self.parameters)
         flds = fields(type(self))
 
+        # Require at least one bound.
         if self.n_min_repetitions is None and self.n_max_repetitions is None:
             raise ValueError(
                 "At least one repetition bound "
@@ -359,22 +361,18 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
                 f"'{flds.n_max_repetitions.alias}') must be provided."
             )
 
-        # Reject no-op bounds: n_min=1 alone and n_max >= n_params alone do not
-        # impose a meaningful constraint (with exclude=False all rows pass;
-        # with exclude=True all rows are removed).
-        if self.n_min_repetitions is not None and self.n_min_repetitions <= 1:
-            if self.n_max_repetitions is None:
+        # Require attainable bounds.
+        for bound, fld in (
+            (self.n_min_repetitions, flds.n_min_repetitions),
+            (self.n_max_repetitions, flds.n_max_repetitions),
+        ):
+            if bound is not None and bound > n_params:
                 raise ValueError(
-                    f"'{flds.n_min_repetitions.alias}' of 1 without an upper bound "
-                    f"imposes no meaningful constraint."
+                    f"'{fld.alias}' must not exceed the number of parameters "
+                    f"({n_params}), but got {bound}."
                 )
-        if self.n_max_repetitions is not None and self.n_max_repetitions >= n_params:
-            raise ValueError(
-                f"'{flds.n_max_repetitions.alias}' must be less than the number "
-                f"of parameters ({n_params}) to impose a meaningful constraint, "
-                f"but got {self.n_max_repetitions}."
-            )
 
+        # Require a non-empty interval.
         if (
             self.n_min_repetitions is not None
             and self.n_max_repetitions is not None
@@ -384,6 +382,14 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
                 f"'{flds.n_min_repetitions.alias}' ({self.n_min_repetitions}) "
                 f"must not exceed "
                 f"'{flds.n_max_repetitions.alias}' ({self.n_max_repetitions})."
+            )
+
+        # Reject bounds covering the complete feasible interval.
+        effective_min = self.n_min_repetitions or 1
+        effective_max = self.n_max_repetitions or n_params
+        if effective_min == 1 and effective_max == n_params:
+            raise ValueError(
+                "The provided repetition bounds impose no meaningful constraint."
             )
 
     @override
