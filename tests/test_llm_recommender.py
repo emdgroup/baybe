@@ -22,7 +22,17 @@ from baybe.constraints.discrete import (
     DiscreteProductConstraint,
     DiscreteSumConstraint,
 )
-from baybe.exceptions import LLMResponseError, LLMResponseWarning
+from baybe.exceptions import (
+    ConstraintViolationError,
+    IneligiblePointsError,
+    InvalidParameterValueError,
+    LLMResponseError,
+    LLMResponseWarning,
+    MalformedLLMResponseError,
+    MissingParameterError,
+    NonNumericParameterError,
+    UnknownParameterError,
+)
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -269,10 +279,11 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
 
 
 @pytest.mark.parametrize(
-    ("response_content", "error_match"),
+    ("response_content", "error_type", "error_match"),
     [
         pytest.param(
             "Invalid JSON",
+            MalformedLLMResponseError,
             "Error parsing JSON output",
             id="invalid_json",
         ),
@@ -290,6 +301,7 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
                     }
                 ]
             ),
+            InvalidParameterValueError,
             "has invalid values in parameter",
             id="out_of_bounds",
         ),
@@ -307,6 +319,7 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
                     }
                 ]
             ),
+            InvalidParameterValueError,
             "has invalid values in parameter",
             id="invalid_categorical",
         ),
@@ -319,7 +332,8 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
                     }
                 ]
             ),
-            "missing columns for the following parameters",
+            MissingParameterError,
+            "missing values for the following parameters",
             id="missing_parameter",
         ),
         pytest.param(
@@ -337,26 +351,31 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
                     }
                 ]
             ),
+            UnknownParameterError,
             "unknown parameter names",
             id="unknown_parameter",
         ),
         pytest.param(
             json.dumps({"explanation": "Test", "parameters": {}}),
+            MalformedLLMResponseError,
             "Response must be a JSON array",
             id="not_a_list",
         ),
         pytest.param(
             json.dumps([]),
+            MalformedLLMResponseError,
             "empty array with no suggestions",
             id="empty_array",
         ),
         pytest.param(
             json.dumps(["a string"]),
+            MalformedLLMResponseError,
             "Each suggestion must be a JSON object",
             id="suggestion_not_dict",
         ),
         pytest.param(
             json.dumps([{"explanation": "Test", "parameters": [1, 2]}]),
+            MalformedLLMResponseError,
             "Parameters must be a JSON object",
             id="parameters_not_dict",
         ),
@@ -373,6 +392,7 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
                     }
                 ]
             ),
+            MalformedLLMResponseError,
             "must contain an 'explanation' field",
             id="missing_explanation",
         ),
@@ -390,14 +410,17 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
                     }
                 ]
             ),
+            NonNumericParameterError,
             "has non-numeric entries",
             id="non_numeric_continuous",
         ),
     ],
 )
-def test_parse_llm_response_errors(response_content, error_match, searchspace):
-    """Malformed responses raise LLMResponseError with descriptive messages."""
-    with pytest.raises(LLMResponseError, match=error_match):
+def test_parse_llm_response_errors(
+    response_content, error_type, error_match, searchspace
+):
+    """Malformed responses raise the specific error subtype with a clear message."""
+    with pytest.raises(error_type, match=error_match):
         parse_llm_response(response_content, searchspace)
 
 
@@ -560,7 +583,7 @@ def test_parse_llm_response_rejects_row_constraint_violations(
     """Suggestions valid per-parameter but violating a discrete constraint raise."""
     space = SearchSpace.from_product(parameters=parameters, constraints=constraints)
     response = _make_suggestions(violation_suggestions)
-    with pytest.raises(LLMResponseError, match="violate the.*constraint"):
+    with pytest.raises(ConstraintViolationError, match="violate the.*constraint"):
         parse_llm_response(response, space)
 
 
@@ -576,7 +599,7 @@ def test_parse_llm_response_rejects_batch_constraint_violation():
     )
     # x values differ across suggestions — violates the batch constraint
     response = _make_suggestions([{"x": 1, "y": "a"}, {"x": 2, "y": "b"}])
-    with pytest.raises(LLMResponseError, match="DiscreteBatchConstraint"):
+    with pytest.raises(ConstraintViolationError, match="DiscreteBatchConstraint"):
         parse_llm_response(response, space)
 
 
@@ -711,36 +734,13 @@ def test_recommend_allows_duplicate_configurations(
     assert recommendations["catalyst"].tolist() == ["A", "A", "A"]
 
 
-@patch("baybe._optional.llm.completion")
-def test_recommend_excludes_filtered_candidates(mock_completion):
-    """Suggestions matching filtered-out (ineligible) candidates are dropped."""
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
+def test_parse_llm_response_rejects_ineligible_points():
+    """Suggestions matching filtered-out (ineligible) candidates raise."""
     filtered_space = _filtered_discrete_space(exclude={"x": 1, "y": 1})
-    rec = LLMRecommender(model="m", experiment_description="test")
-    # The first suggestion targets the excluded candidate; the rest are eligible.
-    mock_completion.return_value = _mock_response(
-        _make_suggestions([{"x": 1, "y": 1}, {"x": 2, "y": 2}, {"x": 3, "y": 3}])
-    )
-
-    result = rec.recommend(batch_size=2, searchspace=filtered_space)
-
-    assert len(result) == 2
-    assert not ((result["x"] == 1) & (result["y"] == 1)).any()
-
-
-@patch("baybe._optional.llm.completion")
-def test_recommend_errors_when_too_few_eligible(mock_completion):
-    """An error is raised when eligibility filtering leaves fewer than requested."""
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
-    filtered_space = _filtered_discrete_space(exclude={"x": 1, "y": 1})
-    rec = LLMRecommender(model="m", experiment_description="test")
-    # Only the excluded candidate is suggested, so nothing eligible remains.
-    mock_completion.return_value = _mock_response(_make_suggestions([{"x": 1, "y": 1}]))
-
-    with pytest.raises(LLMResponseError, match="eligible suggestion"):
-        rec.recommend(batch_size=1, searchspace=filtered_space)
+    # The first suggestion targets the excluded candidate; the second is eligible.
+    response = _make_suggestions([{"x": 1, "y": 1}, {"x": 2, "y": 2}])
+    with pytest.raises(IneligiblePointsError, match="do not correspond to eligible"):
+        parse_llm_response(response, filtered_space)
 
 
 def test_initialization(recommender):
