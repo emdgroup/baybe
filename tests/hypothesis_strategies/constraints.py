@@ -13,10 +13,9 @@ from baybe.constraints.continuous import (
 )
 from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
-    DiscreteLinkedParametersConstraint,
-    DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
+    DiscreteRepetitionConstraint,
     DiscreteSelectionConstraint,
     DiscreteSumConstraint,
 )
@@ -172,15 +171,10 @@ def discrete_permutation_invariance_constraints(
 @st.composite
 def _discrete_constraints(
     draw: st.DrawFn,
-    constraint_type: (
-        type[DiscreteSumConstraint]
-        | type[DiscreteProductConstraint]
-        | type[DiscreteNoLabelDuplicatesConstraint]
-        | type[DiscreteLinkedParametersConstraint]
-    ),
+    constraint_type: type[DiscreteSumConstraint] | type[DiscreteProductConstraint],
     parameter_names: list[str] | None = None,
 ):
-    """Generate discrete constraints."""
+    """Generate discrete sum/product constraints."""
     if parameter_names is None:
         params = draw(st.lists(st.text(), unique=True, min_size=1))
     else:
@@ -198,12 +192,10 @@ def _discrete_constraints(
                 params, condition, coefficients, exclude=exclude
             )
         return DiscreteSumConstraint(params, condition, exclude=exclude)
-    elif constraint_type is DiscreteProductConstraint:
+    else:
         return DiscreteProductConstraint(
             params, draw(threshold_conditions()), exclude=exclude
         )
-    else:
-        return constraint_type(params, exclude=exclude)
 
 
 discrete_sum_constraints = partial(_discrete_constraints, DiscreteSumConstraint)
@@ -212,15 +204,23 @@ discrete_sum_constraints = partial(_discrete_constraints, DiscreteSumConstraint)
 discrete_product_constraints = partial(_discrete_constraints, DiscreteProductConstraint)
 """Generate :class:`baybe.constraints.discrete.DiscreteProductConstraint`."""
 
-discrete_no_label_duplicates_constraints = partial(
-    _discrete_constraints, DiscreteNoLabelDuplicatesConstraint
-)
-"""Generate :class:`baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`."""
 
-discrete_linked_parameters_constraints = partial(
-    _discrete_constraints, DiscreteLinkedParametersConstraint
-)
-"""Generate :class:`baybe.constraints.discrete.DiscreteLinkedParametersConstraint`."""
+@st.composite
+def discrete_repetition_constraints(
+    draw: st.DrawFn, parameter_names: list[str] | None = None
+):
+    """Generate :class:`baybe.constraints.discrete.DiscreteRepetitionConstraint`."""
+    if parameter_names is None:
+        params = draw(st.lists(st.text(), unique=True, min_size=2))
+    else:
+        assert len(parameter_names) >= 2
+        params = parameter_names
+
+    n_max = draw(st.integers(min_value=1, max_value=len(params) - 1))
+    exclude = draw(st.booleans())
+    return DiscreteRepetitionConstraint(
+        params, n_max_repetitions=n_max, exclude=exclude
+    )
 
 
 @st.composite
@@ -266,8 +266,7 @@ constraints = st.one_of(
         discrete_permutation_invariance_constraints(),
         discrete_sum_constraints(),
         discrete_product_constraints(),
-        discrete_no_label_duplicates_constraints(),
-        discrete_linked_parameters_constraints(),
+        discrete_repetition_constraints(),
         continuous_linear_equality_constraints(),
         continuous_linear_inequality_constraints(),
     ]

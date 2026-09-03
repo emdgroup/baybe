@@ -17,8 +17,10 @@ from pytest import param
 from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
 from baybe.constraints import SubSelectionCondition
 from baybe.constraints import base as base_module
+from baybe.constraints import discrete as discrete_module
 from baybe.constraints.discrete import (
     DiscreteExcludeConstraint,
+    DiscreteRepetitionConstraint,
     DiscreteSelectionConstraint,
 )
 from baybe.exceptions import DeprecationError
@@ -600,4 +602,66 @@ def test_discrete_exclude_constraint_deserialization(annotation):
     )
     target = getattr(base_module, annotation)
     result = converter.structure(legacy_dict, target)
+    assert result == ref
+
+
+@pytest.mark.parametrize(
+    ("legacy_name", "kwargs", "expected"),
+    [
+        pytest.param(
+            "DiscreteNoLabelDuplicatesConstraint",
+            {"parameters": ["A", "B", "C"]},
+            {"n_max_repetitions": 1},
+            id="no_label_duplicates",
+        ),
+        pytest.param(
+            "DiscreteLinkedParametersConstraint",
+            {"parameters": ["A", "B", "C"]},
+            {"n_max_repetitions": 2, "exclude": True},
+            id="linked_parameters",
+        ),
+    ],
+)
+def test_repetition_constraint_deprecation(legacy_name, kwargs, expected):
+    """Constructing deprecated constraints emits a deprecation warning."""
+    with pytest.warns(DeprecationWarning, match=legacy_name):
+        c = getattr(discrete_module, legacy_name)(**kwargs)
+    ref = DiscreteRepetitionConstraint(
+        parameters=kwargs["parameters"],
+        **expected,
+    )
+    assert c == ref
+
+
+@pytest.mark.parametrize(
+    "annotation",
+    ["Constraint", "DiscreteConstraint", "DiscreteFilteringConstraint"],
+)
+@pytest.mark.parametrize(
+    ("legacy_name", "kwargs", "expected"),
+    [
+        pytest.param(
+            "DiscreteNoLabelDuplicatesConstraint",
+            {"parameters": ["A", "B", "C"]},
+            {"n_max_repetitions": 1},
+            id="no_label_duplicates",
+        ),
+        pytest.param(
+            "DiscreteLinkedParametersConstraint",
+            {"parameters": ["A", "B", "C"]},
+            {"n_max_repetitions": 2, "exclude": True},
+            id="linked_parameters",
+        ),
+    ],
+)
+def test_repetition_constraint_deserialization(
+    annotation, legacy_name, kwargs, expected
+):
+    """Legacy repetition constraints deserialize regardless of the annotation."""
+    ref = DiscreteRepetitionConstraint(
+        parameters=kwargs["parameters"],
+        **expected,
+    )
+    target = getattr(base_module, annotation)
+    result = converter.structure({"type": legacy_name, **kwargs}, target)
     assert result == ref

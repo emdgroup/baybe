@@ -17,7 +17,7 @@ from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
 
-from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
+from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.exceptions import (
     IncompatibilityError,
     NoMeasurementsError,
@@ -426,7 +426,7 @@ class Campaign(SerialMixin):
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
-        constraints: Collection[DiscreteConstraint] | pd.DataFrame,
+        constraints: Collection[DiscreteFilteringConstraint] | pd.DataFrame,
         exclude: bool,
         complement: bool = False,
         dry_run: bool = False,
@@ -436,8 +436,8 @@ class Campaign(SerialMixin):
         Args:
             constraints: A filtering mechanism determining the candidates subset to be
                 in-/excluded. Can be either a collection of
-                :class:`~baybe.constraints.base.DiscreteConstraint` or a dataframe.
-                For the latter, see :func:`~baybe.utils.dataframe.filter_df`
+                :class:`~baybe.constraints.base.DiscreteFilteringConstraint` or a
+                dataframe. For the latter, see :func:`~baybe.utils.dataframe.filter_df`
                 for details.
             exclude: If ``True``, the specified candidates are excluded.
                 If ``False``, the candidates are considered for recommendation.
@@ -483,8 +483,8 @@ class Campaign(SerialMixin):
 
         else:
             raise TypeError(
-                "Candidate toggling is not implemented for the given type of "
-                "constraint specifications."
+                f"Candidate toggling requires a dataframe or a collection of "
+                f"'{DiscreteFilteringConstraint.__name__}' instances."
             )
 
         if not dry_run:

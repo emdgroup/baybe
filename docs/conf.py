@@ -4,6 +4,7 @@ from __future__ import annotations
 #
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
+import polars as pl
 from gpytorch.kernels import Kernel as GPyTorchKernel
 from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
 from gpytorch.means import Mean as GPyTorchMean
@@ -17,6 +18,8 @@ from gpytorch.means import Mean as GPyTorchMean
 # though not pretty, it is the best solution to this problem.
 # If future implementations of the corresponding factories rely on different imports
 # not listed here, this will be flagged by the docs pipeline.
+from baybe.constraints import base as _constraint_base
+from baybe.constraints import discrete as _constraint_discrete
 from baybe.surrogates.gaussian_process.components import kernel as _kernel
 from baybe.surrogates.gaussian_process.components import likelihood as _likelihood
 from baybe.surrogates.gaussian_process.components import mean as _mean
@@ -24,6 +27,8 @@ from baybe.surrogates.gaussian_process.presets import botorch as _botorch
 from baybe.surrogates.gaussian_process.presets import edbo as _edbo
 from baybe.surrogates.gaussian_process.presets import edbo_smoothed as _edbo_smoothed
 
+_constraint_base.pl = pl
+_constraint_discrete.pl = pl
 _kernel.GPyTorchKernel = GPyTorchKernel
 _likelihood.GPyTorchLikelihood = GPyTorchLikelihood
 _mean.GPyTorchMean = GPyTorchMean

@@ -11,8 +11,8 @@ import cattrs
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from attrs import define, field
-from attrs.validators import deep_iterable, in_, min_len
+from attrs import define, field, fields
+from attrs.validators import deep_iterable, ge, in_, instance_of, min_len
 from typing_extensions import override
 
 from baybe.constraints.base import (
@@ -23,6 +23,7 @@ from baybe.constraints.base import (
 )
 from baybe.constraints.conditions import (
     Condition,
+    SubSelectionCondition,  # noqa: F401 (used in doctests)
     ThresholdCondition,
     _threshold_operators,
     _valid_logic_combiners,
@@ -49,13 +50,13 @@ def DiscreteExcludeConstraint(  # noqa: N802
     conditions: list[Condition],
     combiner: str = "AND",
 ) -> DiscreteSelectionConstraint:
-    """A ``DiscreteSelectionConstraint`` alias for backward compatibility."""  # noqa: D401
+    """A :class:`DiscreteSelectionConstraint` alias for backward compatibility."""  # noqa: D401
     import warnings
 
     warnings.warn(
         f"'{DiscreteExcludeConstraint.__name__}' is deprecated and will be removed "
         f"in a future version. Use '{DiscreteSelectionConstraint.__name__}' with "
-        f"'exclude=True' instead.",
+        f"'{fields(DiscreteSelectionConstraint).exclude.alias}=True' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -72,7 +73,30 @@ def DiscreteExcludeConstraint(  # noqa: N802
 
 @define
 class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
-    """Class for filtering search space entries based on conditions."""
+    """Class for filtering search space entries based on conditions.
+
+    Examples:
+        >>> df = pd.DataFrame({
+        ...     "Solvent": ["Water", "Water", "Hexane", "Hexane"],
+        ...     "Temp": [80.0, 120.0, 80.0, 120.0],
+        ... })
+        >>> df
+          Solvent   Temp
+        0   Water   80.0
+        1   Water  120.0
+        2  Hexane   80.0
+        3  Hexane  120.0
+        >>> c = DiscreteSelectionConstraint(
+        ...     parameters=["Solvent", "Temp"],
+        ...     conditions=[
+        ...         SubSelectionCondition(selection=["Hexane"]),
+        ...         ThresholdCondition(threshold=100.0, operator=">="),
+        ...     ],
+        ...     exclude=True,
+        ... )
+        >>> list(c.get_invalid(df))
+        [3]
+    """
 
     # object variables
     conditions: list[Condition] = field(validator=min_len(1))
@@ -111,7 +135,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         return df.index[res]
 
     @override
-    def _get_matching_rows_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
         satisfied = []
@@ -127,6 +151,30 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
 
     The constraint evaluates whether the (optionally weighted) sum of the specified
     parameters satisfies the given threshold condition.
+
+    Examples:
+        >>> df = pd.DataFrame({"A": [1.0, 3.0, 5.0], "B": [2.0, 1.0, 3.0]})
+        >>> df
+             A    B
+        0  1.0  2.0
+        1  3.0  1.0
+        2  5.0  3.0
+        >>> c = DiscreteSumConstraint(
+        ...     parameters=["A", "B"],
+        ...     condition=ThresholdCondition(threshold=5.0, operator="<="),
+        ... )
+        >>> list(c.get_invalid(df))
+        [2]
+
+        With coefficients, the weighted sum is checked instead:
+
+        >>> c = DiscreteSumConstraint(
+        ...     parameters=["A", "B"],
+        ...     condition=ThresholdCondition(threshold=5.0, operator="<="),
+        ...     coefficients=(2.0, 1.0),
+        ... )
+        >>> list(c.get_invalid(df))
+        [1, 2]
     """
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
@@ -188,7 +236,7 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
         return df.index[mask_good]
 
     @override
-    def _get_matching_rows_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
         weighted = [pl.col(p) * c for p, c in zip(self.parameters, self.coefficients)]
@@ -197,7 +245,22 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
 
 @define
 class DiscreteProductConstraint(DiscreteFilteringConstraint):
-    """Class for modelling product constraints."""
+    """Class for modelling product constraints.
+
+    Examples:
+        >>> df = pd.DataFrame({"A": [2.0, 3.0, 5.0], "B": [3.0, 2.0, 2.0]})
+        >>> df
+             A    B
+        0  2.0  3.0
+        1  3.0  2.0
+        2  5.0  2.0
+        >>> c = DiscreteProductConstraint(
+        ...     parameters=["A", "B"],
+        ...     condition=ThresholdCondition(threshold=8.0, operator="<="),
+        ... )
+        >>> list(c.get_invalid(df))
+        [2]
+    """
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
@@ -222,7 +285,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
         return df.index[mask_good]
 
     @override
-    def _get_matching_rows_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
         op = _threshold_operators[self.condition.operator]
@@ -234,84 +297,164 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
         return op(expr, self.condition.threshold)
 
 
-class DiscreteNoLabelDuplicatesConstraint(DiscreteFilteringConstraint):
-    """Constraint class for keeping entries where all labels are unique.
+@define
+class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
+    """Class for constraining value repetition across parameters.
 
-    This can be useful to remove entries that arise from e.g. a permutation invariance
-    as for instance here:
+    Keeps only rows where no single value appears more than a specified number of
+    times across the specified parameters.
 
-    - A,B,C,D would be kept
-    - A,A,B,C would be removed
-    - A,A,B,B would be removed
-    - A,A,B,A would be removed
-    - A,C,A,C would be removed
-    - A,C,B,C would be removed
+    Examples:
+        >>> df = pd.DataFrame({"A": ["x", "y", "x"], "B": ["y", "x", "x"]})
+        >>> df
+           A  B
+        0  x  y
+        1  y  x
+        2  x  x
+
+        Upper bound: row 2 has "x" twice, violating ``n_max_repetitions=1``:
+
+        >>> c = DiscreteRepetitionConstraint(
+        ...     parameters=["A", "B"], n_max_repetitions=1
+        ... )
+        >>> list(c.get_invalid(df))
+        [2]
+
+        With ``exclude=True``, the logic inverts and only repeated rows are kept:
+
+        >>> c = DiscreteRepetitionConstraint(
+        ...     parameters=["A", "B"], n_max_repetitions=1, exclude=True
+        ... )
+        >>> list(c.get_invalid(df))
+        [0, 1]
     """
+
+    # object variables
+    n_max_repetitions: int = field(
+        default=1, validator=[instance_of(int), ge(1)], kw_only=True
+    )
+    """Maximum number of times any single value may appear in a row."""
+
+    def __attrs_post_init__(self) -> None:
+        """Validate the maximum repetition count.
+
+        Raises:
+            ValueError: If the maximum repetition count imposes no meaningful
+                constraint.
+        """
+        n_params = len(self.parameters)
+        if self.n_max_repetitions >= n_params:
+            raise ValueError(
+                f"'{fields(type(self)).n_max_repetitions.alias}' must be less than "
+                f"the number of parameters ({n_params}) to impose a meaningful "
+                f"constraint, but got {self.n_max_repetitions}."
+            )
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
-        # exclude=False (keep all-distinct rows): a duplicate seen in a subset
-        # stays a duplicate, so rows can be dropped early.
-        # exclude=True (keep rows with a duplicate): a row that looks distinct so
-        # far may still gain a duplicate from a later column, so all parameters
-        # must be present first.
+        n_available = len(available & set(self.parameters))
         if self.exclude:
-            return self._required_parameters <= available
-        return len(available & set(self.parameters)) >= 2
+            # Once even assigning every missing parameter the same value cannot
+            # exceed the maximum, the row is guaranteed to be excluded.
+            return n_available >= len(self.parameters) - self.n_max_repetitions + 1
+        # Exceeding the maximum requires at least one more available parameter.
+        return n_available >= self.n_max_repetitions + 1
 
     @override
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         params = [p for p in self.parameters if p in df]
-        mask_good = df[params].nunique(axis=1) == len(params)
 
-        return df.index[mask_good]
+        # Encode all values to integer codes with a single global mapping so that
+        # equality matches pandas semantics exactly (avoids false duplicates that a
+        # naive string cast would introduce, e.g. int 1 vs. str "1"). Sorting the
+        # integer codes per row groups equal values together.
+        block = df[params].to_numpy()
+        codes = pd.factorize(block.ravel())[0].reshape(block.shape)
+        sorted_codes = np.sort(codes, axis=1)
 
-    @override
-    def _get_matching_rows_polars(self) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
+        # Mark the start of each run of equal values along the sorted row, then
+        # assign an increasing run id to every position via a cumulative sum.
+        is_run_start = np.empty(sorted_codes.shape, dtype=bool)
+        is_run_start[:, 0] = True
+        is_run_start[:, 1:] = sorted_codes[:, 1:] != sorted_codes[:, :-1]
+        run_ids = np.cumsum(is_run_start, axis=1)
 
-        expr = pl.concat_list(pl.col(self.parameters)).list.n_unique() == len(
-            self.parameters
+        # The largest run (i.e. the highest per-value multiplicity) is found by
+        # counting, for each possible run id, how many positions carry it. This
+        # loop runs over the (small) number of parameters, not the dataframe rows.
+        max_multiplicity = np.zeros(sorted_codes.shape[0], dtype=int)
+        for run_id in range(1, sorted_codes.shape[1] + 1):
+            max_multiplicity = np.maximum(
+                max_multiplicity, (run_ids == run_id).sum(axis=1)
+            )
+
+        n_missing = len(self.parameters) - len(params)
+        max_possible_multiplicity = (
+            max_multiplicity + n_missing if self.exclude else max_multiplicity
         )
-
-        return expr
-
-
-@define
-class DiscreteLinkedParametersConstraint(DiscreteFilteringConstraint):
-    """Constraint class for linking the values of parameters.
-
-    This constraint type effectively allows generating parameter sets that relate to
-    the same underlying quantity, e.g. two parameters that represent the same molecule
-    using different encodings. Linking the parameters keeps only entries where all
-    parameter values are identical.
-    """
-
-    @override
-    def _can_evaluate(self, available: set[str], /) -> bool:
-        # exclude=False (keep all-identical rows): values that already differ in a
-        # subset stay different, so rows can be dropped early.
-        # exclude=True (keep non-identical rows): a row that looks identical so far
-        # may still differ once a later column is added, so all parameters must be
-        # present first.
-        if self.exclude:
-            return self._required_parameters <= available
-        return len(available & set(self.parameters)) >= 2
-
-    @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        params = [p for p in self.parameters if p in set(df.columns)]
-        mask_good = df[params].nunique(axis=1) == 1
+        mask_good = max_possible_multiplicity <= self.n_max_repetitions
 
         return df.index[mask_good]
 
     @override
-    def _get_matching_rows_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
-        expr = pl.concat_list(pl.col(self.parameters)).list.n_unique() == 1
+        def _safe_eq(ci: str, cj: str) -> pl.Expr:
+            """Compare two columns, returning ``False`` for incompatible dtypes."""
+            di, dj = schema[ci], schema[cj]
+            if di == dj or (di.is_numeric() and dj.is_numeric()):
+                return pl.col(ci).eq_missing(pl.col(cj))
+            return pl.lit(False)
 
-        return expr
+        params = self.parameters
+        counts = [pl.sum_horizontal(_safe_eq(ci, cj) for cj in params) for ci in params]
+        max_count = pl.max_horizontal(counts)
+
+        return max_count <= self.n_max_repetitions
+
+
+# >>>>>>>>>> Deprecation
+def DiscreteNoLabelDuplicatesConstraint(  # noqa: N802
+    parameters: list[str],
+) -> DiscreteRepetitionConstraint:
+    """A :class:`DiscreteRepetitionConstraint` alias for backward compatibility."""  # noqa: D401
+    import warnings
+
+    flds = fields(DiscreteRepetitionConstraint)
+    warnings.warn(
+        f"'{DiscreteNoLabelDuplicatesConstraint.__name__}' is deprecated and will be "
+        f"removed in a future version. Use '{DiscreteRepetitionConstraint.__name__}' "
+        f"with '{flds.n_max_repetitions.alias}=1' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return DiscreteRepetitionConstraint(parameters=parameters, n_max_repetitions=1)
+
+
+def DiscreteLinkedParametersConstraint(  # noqa: N802
+    parameters: list[str],
+) -> DiscreteRepetitionConstraint:
+    """A :class:`DiscreteRepetitionConstraint` alias for backward compatibility."""  # noqa: D401
+    import warnings
+
+    flds = fields(DiscreteRepetitionConstraint)
+    warnings.warn(
+        f"'{DiscreteLinkedParametersConstraint.__name__}' is deprecated and will be "
+        f"removed in a future version. Use '{DiscreteRepetitionConstraint.__name__}' "
+        f"with '{flds.n_max_repetitions.alias}=len(parameters)-1' and "
+        f"'{flds.exclude.alias}=True' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return DiscreteRepetitionConstraint(
+        parameters=parameters,
+        n_max_repetitions=len(parameters) - 1,
+        exclude=True,
+    )
+
+
+# <<<<<<<<<< Deprecation
 
 
 @define
@@ -321,6 +464,24 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
     For instance some parameters might only be relevant when another parameter has a
     certain value (e.g. parameter switch is 'on'). All dependencies must be declared in
     a single constraint.
+
+    Examples:
+        >>> df = pd.DataFrame({
+        ...     "Switch": ["on", "off", "off"],
+        ...     "Temp": [100, 200, 100],
+        ... })
+        >>> df
+          Switch  Temp
+        0     on   100
+        1    off   200
+        2    off   100
+        >>> c = DiscreteDependenciesConstraint(
+        ...     parameters=["Switch"],
+        ...     conditions=[SubSelectionCondition(selection=["on"])],
+        ...     affected_parameters=[["Temp"]],
+        ... )
+        >>> list(c.get_invalid(df))
+        [2]
     """
 
     # object variables
@@ -434,6 +595,17 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
 
     *Note:* This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
+
+    Examples:
+        >>> df = pd.DataFrame({"A": ["x", "y", "z"], "B": ["y", "x", "x"]})
+        >>> df
+           A  B
+        0  x  y
+        1  y  x
+        2  z  x
+        >>> c = DiscretePermutationInvarianceConstraint(parameters=["A", "B"])
+        >>> list(c.get_invalid(df))
+        [1]
     """
 
     # object variables
@@ -590,7 +762,21 @@ class DiscreteBatchConstraint(DiscreteConstraint):
 
 @define
 class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringConstraint):
-    """Class for discrete cardinality constraints."""
+    """Class for discrete cardinality constraints.
+
+    Examples:
+        >>> df = pd.DataFrame({"A": [0.0, 1.0, 1.0], "B": [0.0, 0.0, 1.0]})
+        >>> df
+             A    B
+        0  0.0  0.0
+        1  1.0  0.0
+        2  1.0  1.0
+        >>> c = DiscreteCardinalityConstraint(
+        ...     parameters=["A", "B"], max_cardinality=1
+        ... )
+        >>> list(c.get_invalid(df))
+        [2]
+    """
 
     # Class variables
     numerical_only: ClassVar[bool] = True
@@ -627,8 +813,7 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
 # effort to minimize total time in their sequential application
 DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscreteSelectionConstraint,
-    DiscreteNoLabelDuplicatesConstraint,
-    DiscreteLinkedParametersConstraint,
+    DiscreteRepetitionConstraint,
     DiscreteSumConstraint,
     DiscreteProductConstraint,
     DiscreteCardinalityConstraint,
@@ -645,10 +830,18 @@ converter.register_structure_hook(DiscreteCustomConstraint, block_deserializatio
 # >>>>>>>>>> Deprecation
 def _structure_constraint_compat(val: dict, cls: type) -> Constraint:
     """Structure hook that redirects legacy constraint type names."""
+    val = dict(val)  # copy before mutating
     if val.get(_TYPE_FIELD) == "DiscreteExcludeConstraint":
-        val = dict(val)  # copy before mutating
         val[_TYPE_FIELD] = "DiscreteSelectionConstraint"
-        val.setdefault("exclude", True)
+        val["exclude"] = True
+    elif val.get(_TYPE_FIELD) == "DiscreteNoLabelDuplicatesConstraint":
+        val[_TYPE_FIELD] = "DiscreteRepetitionConstraint"
+        val["n_max_repetitions"] = 1
+    elif val.get(_TYPE_FIELD) == "DiscreteLinkedParametersConstraint":
+        val[_TYPE_FIELD] = "DiscreteRepetitionConstraint"
+        if (params := val.get("parameters")) is not None and len(params) >= 2:
+            val["n_max_repetitions"] = len(params) - 1
+        val["exclude"] = True
     return make_base_structure_hook(cls)(val, cls)
 
 

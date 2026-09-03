@@ -8,7 +8,10 @@ from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
 )
-from baybe.constraints.discrete import DiscreteSumConstraint
+from baybe.constraints.discrete import (
+    DiscreteRepetitionConstraint,
+    DiscreteSumConstraint,
+)
 
 
 @pytest.mark.parametrize(
@@ -26,6 +29,41 @@ def test_invalid_cardinalities(cardinalities, error, match):
     """Providing an invalid parameter name raises an exception."""
     with pytest.raises(error, match=match):
         ContinuousCardinalityConstraint(["x", "y"], *cardinalities)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "error", "match"),
+    [
+        param(
+            {"n_max_repetitions": 2.0},
+            TypeError,
+            "must be <class 'int'>",
+            id="maximum-type",
+        ),
+        param(
+            {"n_max_repetitions": 0},
+            ValueError,
+            "must be >= 1",
+            id="maximum-too-small",
+        ),
+        param(
+            {"n_max_repetitions": 4},
+            ValueError,
+            "must be less than the number of parameters",
+            id="maximum-too-large",
+        ),
+        param(
+            {"n_max_repetitions": 3},
+            ValueError,
+            "meaningful constraint",
+            id="maximum-only-no-op",
+        ),
+    ],
+)
+def test_invalid_max_repetitions(kwargs, error, match):
+    """Invalid maximum repetition counts raise an exception."""
+    with pytest.raises(error, match=match):
+        DiscreteRepetitionConstraint(parameters=["A", "B", "C"], **kwargs)
 
 
 @pytest.mark.parametrize(

@@ -8,10 +8,9 @@ from pytest import param
 from tests.hypothesis_strategies.constraints import (
     continuous_linear_constraints,
     discrete_dependencies_constraints,
-    discrete_linked_parameters_constraints,
-    discrete_no_label_duplicates_constraints,
     discrete_permutation_invariance_constraints,
     discrete_product_constraints,
+    discrete_repetition_constraints,
     discrete_selection_constraints,
     discrete_sum_constraints,
 )
@@ -30,12 +29,8 @@ from tests.serialization.utils import assert_roundtrip_consistency
         param(discrete_sum_constraints(), id="DiscreteSumConstraint"),
         param(discrete_product_constraints(), id="DiscreteProductConstraint"),
         param(
-            discrete_no_label_duplicates_constraints(),
-            id="DiscreteNoLabelDuplicatesConstraint",
-        ),
-        param(
-            discrete_linked_parameters_constraints(),
-            id="DiscreteLinkedParametersConstraint",
+            discrete_repetition_constraints(),
+            id="DiscreteRepetitionConstraint",
         ),
         param(
             continuous_linear_constraints(),

@@ -296,44 +296,38 @@ DiscreteSumConstraint(
 
 An end to end example can be found [here](../../examples/Constraints_Discrete/prodsum_constraints).
 
-#### DiscreteNoLabelDuplicatesConstraint
-Sometimes, duplicated labels in several parameters are undesirable.
-Consider an example with two solvents that describe different mixture
-components.
-These might have the exact same or overlapping sets of possible values, e.g.
-`["Water", "THF", "Octanol"]`.
-It would not necessarily be reasonable to allow values in which both solvents show the
-same label/component.
-The [`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint)
-keeps only those entries whose labels are all distinct:
+#### DiscreteRepetitionConstraint
+The [`DiscreteRepetitionConstraint`](baybe.constraints.discrete.DiscreteRepetitionConstraint)
+controls value repetition across a group of parameters. It keeps only rows where the
+largest number of times any single value appears does not exceed
+``n_max_repetitions`` (default: ``1``).
+
+The following example ensures that no solvent label is used more than once across three
+mixture slots:
 
 ```python
-from baybe.constraints import DiscreteNoLabelDuplicatesConstraint
+from baybe.constraints import DiscreteRepetitionConstraint
 
-DiscreteNoLabelDuplicatesConstraint(parameters=["Solvent_1", "Solvent_2"])
+DiscreteRepetitionConstraint(
+    parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+    n_max_repetitions=1,
+)
 ```
 
-With this constraint, combinations with duplicated labels are removed:
+|   | Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteRepetitionConstraint |
+|---|-----------|-----------|-----------|-----------------------------------|
+| 1 | Water     | Water     | THF       | removed (Water appears twice)     |
+| 2 | THF       | Water     | Octanol   | kept                              |
+| 3 | Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times) |
 
-|   | Solvent_1 | Solvent_2 | With DiscreteNoLabelDuplicatesConstraint |
-|---|-----------|-----------|------------------------------------------|
-| 1 | Water     | Water     | removed                                  |
-| 2 | THF       | Water     | kept                                     |
-| 3 | Octanol   | Octanol   | removed                                  |
+The constraint can also enforce that **all values are identical** by excluding rows
+where a value appears at most one fewer times than there are parameters. This is
+useful, for instance, when we have one parameter but would like to include it with
+several encodings, which then must all refer to the same underlying value:
 
-The usage of `DiscreteNoLabelDuplicatesConstraint` is part of the
-[example on slot-based mixtures](../../examples/Mixtures/slot_based).
-
-#### DiscreteLinkedParametersConstraint
-The [`DiscreteLinkedParametersConstraint`](baybe.constraints.discrete.DiscreteLinkedParametersConstraint)
-is, in a sense, the opposite of the
-[`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint).
-It keeps **only** entries where the linked parameters share the same label.
-This can be useful, for instance, in situations where we have one parameter but would
-like to include it with several encodings:
 ```python
 from baybe.parameters import SubstanceParameter
-from baybe.constraints import DiscreteLinkedParametersConstraint
+from baybe.constraints import DiscreteRepetitionConstraint
 
 dict_solvents = {"Water": "O", "THF": "C1CCOC1", "Octanol": "CCCCCCCCO"}
 solvent_encoding1 = SubstanceParameter(
@@ -346,16 +340,21 @@ solvent_encoding2 = SubstanceParameter(
     data=dict_solvents,
     encoding="MORDRED",
 )
-DiscreteLinkedParametersConstraint(
-    parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"]
+DiscreteRepetitionConstraint(
+    parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"],
+    n_max_repetitions=1,  # = number of parameters - 1
+    exclude=True,
 )
 ```
 
-|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteLinkedParametersConstraint |
-|---|-------------------|---------------------|-----------------------------------------|
-| 1 | Water             | Water               | kept                                    |
-| 2 | THF               | Water               | removed                                 |
-| 3 | Octanol           | Octanol             | kept                                    |
+|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionConstraint |
+|---|-------------------|---------------------|-----------------------------------|
+| 1 | Water             | Water               | kept                              |
+| 2 | THF               | Water               | removed                           |
+| 3 | Octanol           | Octanol             | kept                              |
+
+The usage of `DiscreteRepetitionConstraint` is part of the
+[example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
 #### DiscreteDependenciesConstraint
 A dependency is a situation where parameters depend on other parameters.

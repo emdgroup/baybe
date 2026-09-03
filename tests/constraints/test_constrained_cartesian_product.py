@@ -13,9 +13,8 @@ from baybe.constraints import (
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteCardinalityConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteLinkedParametersConstraint,
-    DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
+    DiscreteRepetitionConstraint,
     DiscreteSelectionConstraint,
     DiscreteSumConstraint,
     SubSelectionCondition,
@@ -47,7 +46,9 @@ def _no_label_duplicates_scenario() -> tuple[
     values = ["x", "y", "z", "w"]
     params = [CategoricalParameter(name=f"P{i}", values=values) for i in range(4)]
     constraints = [
-        DiscreteNoLabelDuplicatesConstraint(parameters=[p.name for p in params])
+        DiscreteRepetitionConstraint(
+            parameters=[p.name for p in params], n_max_repetitions=1
+        )
     ]
     return params, constraints
 
@@ -58,7 +59,27 @@ def _linked_parameters_scenario() -> tuple[
     values = ["a", "b", "c"]
     params = [CategoricalParameter(name=f"P{i}", values=values) for i in range(3)]
     constraints = [
-        DiscreteLinkedParametersConstraint(parameters=[p.name for p in params])
+        DiscreteRepetitionConstraint(
+            parameters=[p.name for p in params],
+            n_max_repetitions=len(params) - 1,
+            exclude=True,
+        )
+    ]
+    return params, constraints
+
+
+def _repetition_scenario(
+    n_max: int,
+    exclude: bool,
+) -> tuple[Sequence[DiscreteParameter], Sequence[DiscreteConstraint]]:
+    values = ["a", "b", "c", "d"]
+    params = [CategoricalParameter(name=f"P{i}", values=values) for i in range(4)]
+    constraints = [
+        DiscreteRepetitionConstraint(
+            parameters=[p.name for p in params],
+            n_max_repetitions=n_max,
+            exclude=exclude,
+        )
     ]
     return params, constraints
 
@@ -179,7 +200,7 @@ def _permutation_invariance_with_dependencies_scenario() -> tuple[
             parameters=amount_names,
             condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.1),
         ),
-        DiscreteNoLabelDuplicatesConstraint(parameters=label_names),
+        DiscreteRepetitionConstraint(parameters=label_names, n_max_repetitions=1),
     ]
     return params, constraints
 
@@ -195,7 +216,9 @@ def _mixed_scenario() -> tuple[
         NumericalDiscreteParameter(name="Num2", values=[0.0, 50.0, 100.0]),
     ]
     constraints = [
-        DiscreteNoLabelDuplicatesConstraint(parameters=["Cat1", "Cat2", "Cat3"]),
+        DiscreteRepetitionConstraint(
+            parameters=["Cat1", "Cat2", "Cat3"], n_max_repetitions=1
+        ),
         DiscreteSumConstraint(
             parameters=["Num1", "Num2"],
             condition=ThresholdCondition(threshold=100, operator="<="),
@@ -235,6 +258,18 @@ def _mixed_scenario() -> tuple[
             id="permutation_invariance_with_deps",
         ),
         pytest.param(_mixed_scenario, id="mixed"),
+        pytest.param(
+            partial(_repetition_scenario, 1, True),
+            id="repetition_max_exclude",
+        ),
+        pytest.param(
+            partial(_repetition_scenario, 2, False),
+            id="repetition_max_keep",
+        ),
+        pytest.param(
+            partial(_repetition_scenario, 2, True),
+            id="repetition_max_exclude_general",
+        ),
     ],
 )
 def test_constrained_cartesian_product(scenario):
