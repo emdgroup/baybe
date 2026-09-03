@@ -43,7 +43,9 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
         searchspace: The search space to validate recommendations against.
 
     Returns:
-        A DataFrame containing the parsed recommendations.
+        A DataFrame containing the parsed recommendations, restricted to the eligible
+        candidate set of the search space (as returned by
+        :meth:`baybe.searchspace.discrete.SubspaceDiscrete.get_candidates`).
 
     Raises:
         LLMResponseError: If the response cannot be parsed, contains invalid parameter
@@ -145,9 +147,12 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
 
     # Recover the exp_rep index (for campaign metadata tracking) via the same fuzzy
     # matching used for measurement input: exact for categorical, nearest numerical.
+    # Matching against get_candidates() (not exp_rep directly) ensures that suggestions
+    # snap to eligible points only, respecting the allow_recommending_* filters applied
+    # by the campaign via FilteredSubspaceDiscrete.
     discrete_params = searchspace.discrete.parameters
     if discrete_params:
-        exp_rep = searchspace.discrete.exp_rep
+        exp_rep, _ = searchspace.discrete.get_candidates()
         aligned_index = fuzzy_row_match(exp_rep, df, discrete_params)
         continuous_param_names = [p.name for p in searchspace.continuous.parameters]
         if continuous_param_names:
