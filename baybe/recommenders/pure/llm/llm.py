@@ -79,7 +79,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
 
     def _attempt_recovery(
         self,
-        error: Exception,
+        error: LLMResponseError,
         original_response: str,
         searchspace: SearchSpace,
     ) -> pd.DataFrame:
