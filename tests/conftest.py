@@ -55,6 +55,7 @@ from baybe.parameters import (
     SubstanceEncoding,
     TaskParameter,
 )
+from baybe.parameters.enum import TransferLearningMode
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors import GammaPrior
 from baybe.recommenders.meta.base import MetaRecommender
@@ -311,6 +312,18 @@ def fixture_parameters(
             name="Task",
             values=("A", "B", "C"),
             active_values=("A", "B"),
+        ),
+        TaskParameter(
+            name="Task_index_override",
+            values=("A", "B", "C"),
+            active_values=("A", "B"),
+            override_transfer_learning_mode=TransferLearningMode.INDEX_KERNEL,
+        ),
+        TaskParameter(
+            name="Task_positive_index_override",
+            values=("A", "B", "C"),
+            active_values=("A", "B"),
+            override_transfer_learning_mode=TransferLearningMode.POSITIVE_INDEX_KERNEL,
         ),
     ]
 

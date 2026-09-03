@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inverting the specification to keep the complement
 - `DiscreteSelectionConstraint` as the condition-based filtering constraint
   (inclusion-by-default; replaces `DiscreteExcludeConstraint`)
+- `TaskParameter.override_transfer_learning_mode` (and the corresponding
+  `TransferLearningMode` enum) for selecting the kernel that models the task
+  correlations in transfer learning, taking precedence over the task kernel of the
+  configured kernel factory
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance

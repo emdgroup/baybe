@@ -4,7 +4,7 @@ import gc
 from functools import reduce
 from operator import add, mul
 
-from attrs import define, field
+from attrs import define, evolve, field
 from attrs.converters import optional as optional_c
 from attrs.validators import deep_iterable, gt, instance_of, min_len
 from attrs.validators import optional as optional_v
@@ -12,6 +12,7 @@ from typing_extensions import override
 
 from baybe.kernels.base import CompositeKernel, Kernel
 from baybe.priors.base import Prior
+from baybe.searchspace.core import SearchSpace
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
 from baybe.utils.validation import finite_float
@@ -41,6 +42,13 @@ class ScaleKernel(CompositeKernel):
 
     If ``False``, the output scale is frozen at its initial value and excluded from
     optimization."""
+
+    @override
+    def _without_parameter(
+        self, name: str, searchspace: SearchSpace, /
+    ) -> Kernel | None:
+        stripped = self.base_kernel._without_parameter(name, searchspace)
+        return None if stripped is None else evolve(self, base_kernel=stripped)
 
     @override
     def to_gpytorch(self, *args, **kwargs):

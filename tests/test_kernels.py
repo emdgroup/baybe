@@ -13,7 +13,11 @@ from pytest import param
 from baybe.kernels.base import BasicKernel, Kernel
 from baybe.kernels.basic import IndexKernel, MaternKernel, RBFKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
-from baybe.parameters import NumericalContinuousParameter
+from baybe.parameters import (
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+    TaskParameter,
+)
 from baybe.searchspace.core import SearchSpace
 from tests.hypothesis_strategies.kernels import kernels
 
@@ -223,3 +227,67 @@ def test_mul_constant_produces_constant_scale_kernel(left, right, searchspace):
     optimizer = torch.optim.SGD(gpytorch_kernel.parameters(), lr=0.1)
     optimizer.step()
     assert gpytorch_kernel.outputscale.item() == initial_outputscale
+
+
+@pytest.fixture(name="task_searchspace")
+def fixture_task_searchspace() -> SearchSpace:
+    """A search space with a numerical (``x``) and a task (``Task``) parameter."""
+    return SearchSpace.from_product(
+        [
+            NumericalDiscreteParameter("x", [1, 2, 3]),
+            TaskParameter("Task", ["A", "B", "C"]),
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    ("kernel", "expected"),
+    [
+        param(
+            MaternKernel(parameter_names=("x", "Task")),
+            MaternKernel(parameter_names=("x",)),
+            id="named_kernel_drops_parameter",
+        ),
+        param(
+            MaternKernel(),
+            MaternKernel(parameter_names=("x",)),
+            id="unnamed_kernel_pins_to_remaining",
+        ),
+        param(
+            MaternKernel(parameter_names=("x",)),
+            MaternKernel(parameter_names=("x",)),
+            id="absent_parameter_leaves_kernel_unchanged",
+        ),
+        param(
+            IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",)),
+            None,
+            id="sole_parameter_collapses_to_none",
+        ),
+        param(
+            ScaleKernel(MaternKernel()),
+            ScaleKernel(MaternKernel(parameter_names=("x",))),
+            id="scale_kernel_recurses_into_base",
+        ),
+        param(
+            ScaleKernel(IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",))),
+            None,
+            id="scale_kernel_over_sole_parameter_collapses_to_none",
+        ),
+    ],
+)
+def test_without_parameter(kernel, expected, task_searchspace):
+    """Removing a parameter reduces basic and scaled kernels as expected."""
+    assert kernel._without_parameter("Task", task_searchspace) == expected
+
+
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        param(MaternKernel() * RBFKernel(), id="product_kernel"),
+        param(MaternKernel() + RBFKernel(), id="additive_kernel"),
+    ],
+)
+def test_without_parameter_unsupported(kernel, task_searchspace):
+    """Kernels that cannot be reduced unambiguously raise ``TypeError``."""
+    with pytest.raises(TypeError, match="Cannot remove a parameter"):
+        kernel._without_parameter("Task", task_searchspace)
