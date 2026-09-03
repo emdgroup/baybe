@@ -856,6 +856,11 @@ def _df_with_backend(obj: _SeriesOrFrameT, backend: IntoBackend, /) -> _SeriesOr
     # TODO: Replace once built-in solution is available
     # https://github.com/narwhals-dev/narwhals/issues/3812
 
+    incoming = nw.Implementation.from_backend(nw.get_native_namespace(obj))
+    target = nw.Implementation.from_backend(backend)
+    if incoming == target:
+        return obj
+
     if isinstance(obj, nw.Series):
         name = obj.name
         return nw.from_dict(obj.to_frame().to_dict(), backend=backend)[name]  # type: ignore[return-value]
