@@ -259,7 +259,10 @@ def test_fps_recommender_utility_call(use_fpsample):
             return_value=[2, 0],
         )
 
-    with context as mock_, Settings(use_fpsample=use_fpsample):
+    with (
+        context as mock_,
+        Settings(use_fpsample=use_fpsample, default_dataframe_backend="pandas"),
+    ):
         result = FPSRecommender().recommend(batch_size=2, searchspace=ss)
 
     mock_.assert_called_once()
