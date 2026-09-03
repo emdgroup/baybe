@@ -117,50 +117,6 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 f"instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY)."
             )
 
-    def _construct_prompt(
-        self,
-        searchspace: SearchSpace,
-        batch_size: int,
-        objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> str:
-        """Construct the prompt for the language model.
-
-        Args:
-            searchspace: The search space to generate recommendations for.
-            batch_size: The number of recommendations to generate.
-            objective: Optional objective to include in the prompt.
-            measurements: Optional measurements to include in the prompt.
-            pending_experiments: Optional pending experiments to include in the prompt.
-
-        Returns:
-            The constructed prompt.
-        """
-        return build_prompt(
-            searchspace,
-            recommender_name=self.__class__.__name__,
-            batch_size=batch_size,
-            experiment_description=self.experiment_description,
-            objective=objective,
-            measurements=measurements,
-            pending_experiments=pending_experiments,
-        )
-
-    def _parse_llm_response(
-        self, response: str, searchspace: SearchSpace
-    ) -> pd.DataFrame:
-        """Parse the LLM response into a DataFrame of recommendations.
-
-        Args:
-            response: The response from the language model.
-            searchspace: The search space to validate recommendations against.
-
-        Returns:
-            A DataFrame containing the parsed recommendations.
-        """
-        return parse_llm_response(response, searchspace)
-
     def _attempt_recovery(
         self,
         error: Exception,
@@ -184,7 +140,6 @@ class LLMRecommender(PureRecommender, SerialMixin):
 
         recovery_prompt = build_recovery_prompt(
             searchspace,
-            recommender_name=self.__class__.__name__,
             error=error,
             original_response=original_response,
         )
@@ -220,7 +175,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
             )
 
         try:
-            return self._parse_llm_response(content, searchspace)
+            return parse_llm_response(content, searchspace)
         except LLMResponseError as e:
             raise LLMResponseError(
                 f"Recovery produced another malformed response: {e}. "
@@ -289,8 +244,13 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 numerical_measurements_must_be_within_tolerance=False,
             )
 
-        prompt = self._construct_prompt(
-            searchspace, batch_size, objective, measurements, pending_experiments
+        prompt = build_prompt(
+            searchspace,
+            batch_size=batch_size,
+            experiment_description=self.experiment_description,
+            objective=objective,
+            measurements=measurements,
+            pending_experiments=pending_experiments,
         )
         try:
             response = completion(
@@ -316,7 +276,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
             raise LLMResponseError("LLM returned empty content (None).")
 
         try:
-            output = self._parse_llm_response(content, searchspace)
+            output = parse_llm_response(content, searchspace)
         except LLMResponseError as e:
             output = self._attempt_recovery(e, content, searchspace)
 
