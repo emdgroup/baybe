@@ -11,6 +11,7 @@ from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
 import cattrs
+import narwhals.stable.v2 as nw
 from attrs import Factory, define, field, fields
 from attrs.validators import deep_iterable, ge, in_, instance_of
 from typing_extensions import override
@@ -84,7 +85,11 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         measurements: IntoDataFrameT | None = None,
         pending_experiments: IntoDataFrameT | None = None,
     ) -> RecommenderProtocol:
-        n_data = len(measurements) if measurements is not None else 0
+        n_data = (
+            len(nw.from_native(measurements, eager_only=True))
+            if measurements is not None
+            else 0
+        )
         if (n_data >= self.switch_after) or (
             self._has_switched and self.remain_switched
         ):
@@ -139,9 +144,12 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         pending_experiments: IntoDataFrameT | None = None,
     ) -> RecommenderProtocol:
         # If the training dataset size has decreased, something went wrong
-        if (
-            n_data := len(measurements) if measurements is not None else 0
-        ) < self._n_last_measurements:
+        n_data = (
+            len(nw.from_native(measurements, eager_only=True))
+            if measurements is not None
+            else 0
+        )
+        if n_data < self._n_last_measurements:
             raise RuntimeError(
                 f"The training dataset size decreased from {self._n_last_measurements} "
                 f"to {n_data} since the last function call, which indicates that "
@@ -173,7 +181,11 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         self._was_used = True
 
         # Remember the training dataset size for the next call
-        self._n_last_measurements = len(measurements) if measurements is not None else 0
+        self._n_last_measurements = (
+            len(nw.from_native(measurements, eager_only=True))
+            if measurements is not None
+            else 0
+        )
 
         return recommendation
 

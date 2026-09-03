@@ -145,7 +145,9 @@ class BayesianRecommender(PureRecommender, ABC):
 
         validate_object_names(searchspace.parameters + objective.targets)
 
-        if (measurements is None) or len(measurements) == 0:
+        if (measurements is None) or nw.from_native(
+            measurements, eager_only=True
+        ).is_empty:
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
                 f"empty training data."
