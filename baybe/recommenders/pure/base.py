@@ -150,6 +150,18 @@ class PureRecommender(ABC, RecommenderProtocol):
             f"but backend '{expected}' was expected."
         )
 
+        # For pandas-backed results, assert that the dataframe has a default index
+        if actual is nw.Implementation.PANDAS:
+            import pandas as pd
+
+            assert isinstance(rec, pd.DataFrame) and rec.index.equals(
+                pd.RangeIndex(len(rec))
+            ), (
+                f"The generated recommendations dataframe has a non-default pandas "
+                f"index. Ensure '{self.__class__.__name__}' calls "
+                f"'{nw.maybe_reset_index.__name__}' before returning."
+            )
+
         return cast(IntoDataFrameT, rec)
 
     def _recommend_discrete(
