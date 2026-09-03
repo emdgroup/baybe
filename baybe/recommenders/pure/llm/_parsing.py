@@ -140,9 +140,9 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
         unique_values = df[param_name].unique()
         if len(unique_values) > 1:
             raise LLMResponseError(
-                f"Suggestions violate 'DiscreteBatchConstraint' on parameter "
-                f"'{param_name}': all suggestions in a batch must share the same "
-                f"value, but received {list(unique_values)}."
+                f"Suggestions violate the '{type(constraint).__name__}' constraint on "
+                f"parameter '{param_name}': all suggestions in a batch must share the "
+                f"same value, but received {list(unique_values)}."
             )
 
     # Recover the exp_rep index (for campaign metadata tracking) via the same fuzzy
