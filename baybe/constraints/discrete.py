@@ -13,7 +13,6 @@ import numpy.typing as npt
 import pandas as pd
 from attrs import define, field, fields
 from attrs.validators import deep_iterable, ge, in_, instance_of, min_len
-from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.constraints.base import (
@@ -302,8 +301,8 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
 class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
     """Class for constraining value repetition across parameters.
 
-    Keeps only rows where the largest number of times any single value appears
-    across the specified parameters falls within the given bounds.
+    Keeps only rows where no single value appears more than a specified number of
+    times across the specified parameters.
 
     Examples:
         >>> df = pd.DataFrame({"A": ["x", "y", "x"], "B": ["y", "x", "x"]})
@@ -321,95 +320,49 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
         >>> list(c.get_invalid(df))
         [2]
 
-        Lower bound: only row 2 has a value repeated at least twice:
+        With ``exclude=True``, the logic inverts and only repeated rows are kept:
 
         >>> c = DiscreteRepetitionConstraint(
-        ...     parameters=["A", "B"], n_min_repetitions=2
+        ...     parameters=["A", "B"], n_max_repetitions=1, exclude=True
         ... )
         >>> list(c.get_invalid(df))
         [0, 1]
     """
 
     # object variables
-    n_min_repetitions: int | None = field(
-        default=None, validator=optional_v([instance_of(int), ge(1)]), kw_only=True
-    )
-    """Minimum number of times any single value must appear in a row."""
-
-    n_max_repetitions: int | None = field(
-        default=None, validator=optional_v([instance_of(int), ge(1)]), kw_only=True
+    n_max_repetitions: int = field(
+        default=1, validator=[instance_of(int), ge(1)], kw_only=True
     )
     """Maximum number of times any single value may appear in a row."""
 
     def __attrs_post_init__(self) -> None:
-        """Validate the repetition bounds.
+        """Validate the maximum repetition count.
 
         Raises:
-            ValueError: If no repetition bound is provided.
-            ValueError: If a bound exceeds the number of parameters.
-            ValueError: If the lower bound exceeds the upper bound.
-            ValueError: If the bounds impose no meaningful constraint.
+            ValueError: If the maximum repetition count imposes no meaningful
+                constraint.
         """
         n_params = len(self.parameters)
-        flds = fields(type(self))
-
-        # Require at least one bound.
-        if self.n_min_repetitions is None and self.n_max_repetitions is None:
+        if self.n_max_repetitions >= n_params:
             raise ValueError(
-                "At least one repetition bound "
-                f"('{flds.n_min_repetitions.alias}' or "
-                f"'{flds.n_max_repetitions.alias}') must be provided."
-            )
-
-        # Require attainable bounds.
-        for bound, fld in (
-            (self.n_min_repetitions, flds.n_min_repetitions),
-            (self.n_max_repetitions, flds.n_max_repetitions),
-        ):
-            if bound is not None and bound > n_params:
-                raise ValueError(
-                    f"'{fld.alias}' must not exceed the number of parameters "
-                    f"({n_params}), but got {bound}."
-                )
-
-        # Require a non-empty interval.
-        if (
-            self.n_min_repetitions is not None
-            and self.n_max_repetitions is not None
-            and self.n_min_repetitions > self.n_max_repetitions
-        ):
-            raise ValueError(
-                f"'{flds.n_min_repetitions.alias}' ({self.n_min_repetitions}) "
-                f"must not exceed "
-                f"'{flds.n_max_repetitions.alias}' ({self.n_max_repetitions})."
-            )
-
-        # Reject bounds covering the complete feasible interval.
-        effective_min = self.n_min_repetitions or 1
-        effective_max = self.n_max_repetitions or n_params
-        if effective_min == 1 and effective_max == n_params:
-            raise ValueError(
-                "The provided repetition bounds impose no meaningful constraint."
+                f"'{fields(type(self)).n_max_repetitions.alias}' must be less than "
+                f"the number of parameters ({n_params}) to impose a meaningful "
+                f"constraint, but got {self.n_max_repetitions}."
             )
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
-        # Multiplicity can only grow as columns are added, so:
-        # - exclude=False: an upper-bound violation (M > max) is permanent.
-        # - exclude=True: a lower-bound match (M >= min) is permanent,
-        #   but only when no upper bound exists (otherwise the combined
-        #   match status M_min <= M <= M_max can still flip).
-        if not self.exclude and self.n_max_repetitions is not None:
-            return len(available & set(self.parameters)) >= 2
-        if self.exclude and self.n_min_repetitions is not None:
-            if self.n_max_repetitions is None:
-                return len(available & set(self.parameters)) >= 2
-        return self._required_parameters <= available
+        n_available = len(available & set(self.parameters))
+        if self.exclude:
+            # Once even assigning every missing parameter the same value cannot
+            # exceed the maximum, the row is guaranteed to be excluded.
+            return n_available >= len(self.parameters) - self.n_max_repetitions + 1
+        # Exceeding the maximum requires at least one more available parameter.
+        return n_available >= self.n_max_repetitions + 1
 
     @override
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         params = [p for p in self.parameters if p in df]
-        all_present = len(params) == len(self.parameters)
 
         # Encode all values to integer codes with a single global mapping so that
         # equality matches pandas semantics exactly (avoids false duplicates that a
@@ -435,22 +388,11 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
                 max_multiplicity, (run_ids == run_id).sum(axis=1)
             )
 
-        # On a partial subset, only the "permanent" bound is applied:
-        # exclude=False → n_max (violation permanent);
-        # exclude=True → n_min (match permanent).
-        # When all parameters are present, both bounds are always applied.
-        can_apply_max = self.n_max_repetitions is not None and (
-            all_present or not self.exclude
+        n_missing = len(self.parameters) - len(params)
+        max_possible_multiplicity = (
+            max_multiplicity + n_missing if self.exclude else max_multiplicity
         )
-        can_apply_min = self.n_min_repetitions is not None and (
-            all_present or self.exclude
-        )
-
-        mask_good = np.ones(len(df), dtype=bool)
-        if can_apply_max:
-            mask_good &= max_multiplicity <= self.n_max_repetitions
-        if can_apply_min:
-            mask_good &= max_multiplicity >= self.n_min_repetitions
+        mask_good = max_possible_multiplicity <= self.n_max_repetitions
 
         return df.index[mask_good]
 
@@ -469,13 +411,7 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
         counts = [pl.sum_horizontal(_safe_eq(ci, cj) for cj in params) for ci in params]
         max_count = pl.max_horizontal(counts)
 
-        matches = pl.lit(True)
-        if self.n_max_repetitions is not None:
-            matches &= max_count <= self.n_max_repetitions
-        if self.n_min_repetitions is not None:
-            matches &= max_count >= self.n_min_repetitions
-
-        return matches
+        return max_count <= self.n_max_repetitions
 
 
 # >>>>>>>>>> Deprecation
@@ -506,13 +442,15 @@ def DiscreteLinkedParametersConstraint(  # noqa: N802
     warnings.warn(
         f"'{DiscreteLinkedParametersConstraint.__name__}' is deprecated and will be "
         f"removed in a future version. Use '{DiscreteRepetitionConstraint.__name__}' "
-        f"with '{flds.n_min_repetitions.alias}=len(parameters)' instead.",
+        f"with '{flds.n_max_repetitions.alias}=len(parameters)-1' and "
+        f"'{flds.exclude.alias}=True' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
     return DiscreteRepetitionConstraint(
         parameters=parameters,
-        n_min_repetitions=len(parameters),
+        n_max_repetitions=len(parameters) - 1,
+        exclude=True,
     )
 
 
@@ -902,7 +840,8 @@ def _structure_constraint_compat(val: dict, cls: type) -> Constraint:
     elif val.get(_TYPE_FIELD) == "DiscreteLinkedParametersConstraint":
         val[_TYPE_FIELD] = "DiscreteRepetitionConstraint"
         if (params := val.get("parameters")) is not None and len(params) >= 2:
-            val["n_min_repetitions"] = len(params)
+            val["n_max_repetitions"] = len(params) - 1
+        val["exclude"] = True
     return make_base_structure_hook(cls)(val, cls)
 
 

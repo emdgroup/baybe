@@ -146,9 +146,15 @@ def test_polars_exclusion(mock_substances, parameters, constraints):
 
 
 @pytest.mark.parametrize("parameter_names", [["Solvent_1", "Solvent_2", "Solvent_3"]])
-@pytest.mark.parametrize("constraint_names", [["Constraint_7"]])
-def test_polars_label_duplicates(parameters, constraints):
-    """Tests Polars implementation of no-label duplicates constraint."""
+@pytest.mark.parametrize(
+    ("constraint_names", "n_unique"),
+    [
+        pytest.param(["Constraint_7"], 3, id="maximum-one"),
+        pytest.param(["Constraint_15"], 1, id="inverted-maximum"),
+    ],
+)
+def test_polars_repetition_constraint(parameters, constraints, n_unique):
+    """Test the Polars implementation of the repetition constraint."""
     ldf = _lazyframe_from_product(parameters)
     ldf = _apply_constraint_filter_polars(ldf, constraints)
 
@@ -157,25 +163,7 @@ def test_polars_label_duplicates(parameters, constraints):
         .list.n_unique()
         .alias("n_unique")
     )
-    df = ldf.filter(pl.col("n_unique") != len(parameters)).collect()
-
-    num_entries = len(df)
-    assert num_entries == 0
-
-
-@pytest.mark.parametrize("parameter_names", [["Solvent_1", "Solvent_2", "Solvent_3"]])
-@pytest.mark.parametrize("constraint_names", [["Constraint_15"]])
-def test_polars_linked_parameters(parameters, constraints):
-    """Tests Polars implementation of linked parameters constraint."""
-    ldf = _lazyframe_from_product(parameters)
-    ldf = _apply_constraint_filter_polars(ldf, constraints)
-
-    ldf = ldf.with_columns(
-        pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
-        .list.n_unique()
-        .alias("n_unique")
-    )
-    df = ldf.filter(pl.col("n_unique") != 1).collect()
+    df = ldf.filter(pl.col("n_unique") != n_unique).collect()
 
     num_entries = len(df)
     assert num_entries == 0

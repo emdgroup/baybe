@@ -216,23 +216,11 @@ def discrete_repetition_constraints(
         assert len(parameter_names) >= 2
         params = parameter_names
 
-    n_params = len(params)
-    max_bound = n_params - 1
-    # Draw one of three modes: min-only, max-only, or both
-    # Avoid no-op configurations: n_min=1 alone and n_max>=n_params alone
-    mode = draw(st.sampled_from(["min", "max", "both"]))
-    if mode == "min":
-        n_min = draw(st.integers(min_value=2, max_value=n_params))
-        kwargs = {"n_min_repetitions": n_min}
-    elif mode == "max":
-        n_max = draw(st.integers(min_value=1, max_value=max_bound))
-        kwargs = {"n_max_repetitions": n_max}
-    else:
-        n_min = draw(st.integers(min_value=1, max_value=max_bound))
-        n_max = draw(st.integers(min_value=n_min, max_value=max_bound))
-        kwargs = {"n_min_repetitions": n_min, "n_max_repetitions": n_max}
+    n_max = draw(st.integers(min_value=1, max_value=len(params) - 1))
     exclude = draw(st.booleans())
-    return DiscreteRepetitionConstraint(params, exclude=exclude, **kwargs)
+    return DiscreteRepetitionConstraint(
+        params, n_max_repetitions=n_max, exclude=exclude
+    )
 
 
 @st.composite

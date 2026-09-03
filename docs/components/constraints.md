@@ -299,9 +299,8 @@ An end to end example can be found [here](../../examples/Constraints_Discrete/pr
 #### DiscreteRepetitionConstraint
 The [`DiscreteRepetitionConstraint`](baybe.constraints.discrete.DiscreteRepetitionConstraint)
 controls value repetition across a group of parameters. It keeps only rows where the
-largest number of times any single value appears falls within the specified bounds
-(``n_min_repetitions`` and/or ``n_max_repetitions``). At least one bound must be
-provided.
+largest number of times any single value appears does not exceed
+``n_max_repetitions`` (default: ``1``).
 
 The following example ensures that no solvent label is used more than once across three
 mixture slots:
@@ -321,12 +320,12 @@ DiscreteRepetitionConstraint(
 | 2 | THF       | Water     | Octanol   | kept                              |
 | 3 | Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times) |
 
-The constraint can also enforce that **all values are identical** by requiring a
-minimum repetition count equal to the number of parameters. This is useful, for
-instance, when we have one parameter but would like to include it with several
-encodings, which then must all refer to the same underlying value:
+The constraint can also enforce that **all values are identical** by excluding rows
+where a value appears at most one fewer times than there are parameters. This is
+useful, for instance, when we have one parameter but would like to include it with
+several encodings, which then must all refer to the same underlying value:
 
-~~~python
+```python
 from baybe.parameters import SubstanceParameter
 from baybe.constraints import DiscreteRepetitionConstraint
 
@@ -343,9 +342,10 @@ solvent_encoding2 = SubstanceParameter(
 )
 DiscreteRepetitionConstraint(
     parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"],
-    n_min_repetitions=2,
+    n_max_repetitions=1,  # = number of parameters - 1
+    exclude=True,
 )
-~~~
+```
 
 |   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionConstraint |
 |---|-------------------|---------------------|-----------------------------------|

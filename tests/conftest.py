@@ -550,7 +550,8 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
         ),
         "Constraint_15": DiscreteRepetitionConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
-            n_min_repetitions=3,
+            n_max_repetitions=2,
+            exclude=True,
         ),
         "ContiConstraint_1": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
