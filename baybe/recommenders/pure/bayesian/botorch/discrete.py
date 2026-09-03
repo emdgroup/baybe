@@ -141,7 +141,9 @@ def recommend_discrete_without_subsets(
 
     row_idxs = index_in_tensor(points, choices)
 
-    return _df_with_backend(
-        nw.from_native(candidates, eager_only=True)[row_idxs],
-        active_settings.default_dataframe_backend,
+    return nw.maybe_reset_index(
+        _df_with_backend(
+            nw.from_native(candidates, eager_only=True)[row_idxs],
+            active_settings.default_dataframe_backend,
+        )
     ).to_native()

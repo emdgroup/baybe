@@ -131,7 +131,9 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
             selection = self._make_selection_default(model, candidates_scaled)
 
         # Select rows by positional indices and return the corresponding subset
-        return nw.from_native(candidates, eager_only=True)[selection].to_native()
+        return nw.maybe_reset_index(
+            nw.from_native(candidates, eager_only=True)[selection]
+        ).to_native()
 
     @override
     def __str__(self) -> str:

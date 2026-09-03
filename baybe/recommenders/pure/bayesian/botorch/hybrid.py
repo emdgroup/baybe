@@ -151,8 +151,10 @@ def recommend_hybrid_without_subsets(
         schema=searchspace.continuous.parameter_names,
         backend=active_settings.default_dataframe_backend,
     )
-    rec_disc_exp = _df_with_backend(
-        candidates[row_idxs], active_settings.default_dataframe_backend
+    rec_disc_exp = nw.maybe_reset_index(
+        _df_with_backend(
+            candidates[row_idxs], active_settings.default_dataframe_backend
+        )
     )
     return nw.concat([rec_disc_exp, rec_cont], how="horizontal").to_native()
 

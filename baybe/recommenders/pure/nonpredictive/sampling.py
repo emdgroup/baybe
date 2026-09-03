@@ -72,12 +72,14 @@ class RandomRecommender(NonPredictiveRecommender):
                 )
             candidates_exp = candidates_exp.filter(masks[0].tolist())
 
-        disc_random = _df_with_backend(
-            candidates_exp.sample(
-                n=batch_size,
-                with_replacement=is_hybrid or len(candidates_exp) < batch_size,
-            ),
-            backend,
+        disc_random = nw.maybe_reset_index(
+            _df_with_backend(
+                candidates_exp.sample(
+                    n=batch_size,
+                    with_replacement=is_hybrid or len(candidates_exp) < batch_size,
+                ),
+                backend,
+            )
         )
 
         if not is_hybrid:
@@ -191,9 +193,11 @@ class FPSRecommender(NonPredictiveRecommender):
                 initialization=self.initialization.value,
                 random_tie_break=self.random_tie_break,
             )
-        return _df_with_backend(
-            nw.from_native(candidates, eager_only=True)[idcs],
-            active_settings.default_dataframe_backend,
+        return nw.maybe_reset_index(
+            _df_with_backend(
+                nw.from_native(candidates, eager_only=True)[idcs],
+                active_settings.default_dataframe_backend,
+            )
         ).to_native()
 
     @override
