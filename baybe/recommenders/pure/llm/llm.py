@@ -87,15 +87,15 @@ class LLMRecommender(PureRecommender, SerialMixin):
         conflicts = _RESERVED_LITELLM_KEYS & set(value.keys())
         if conflicts:
             raise ValueError(
-                f"'litellm_args' must not contain keys that are set explicitly: "
+                f"'{attribute.name}' must not contain keys that are set explicitly: "
                 f"{conflicts}. Use the dedicated class attributes instead."
             )
         cred_conflicts = _CREDENTIAL_LITELLM_KEYS & set(value.keys())
         if cred_conflicts:
             raise ValueError(
-                f"'litellm_args' must not contain credential keys {cred_conflicts}. "
-                f"Supply credentials via environment variables instead "
-                f"(e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY)."
+                f"'{attribute.name}' must not contain credential keys "
+                f"{cred_conflicts}. Supply credentials via environment variables "
+                f"instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY)."
             )
 
     @recovery_litellm_args.validator
@@ -106,13 +106,13 @@ class LLMRecommender(PureRecommender, SerialMixin):
         conflicts = _RESERVED_LITELLM_KEYS & set(value.keys())
         if conflicts:
             raise ValueError(
-                f"'recovery_litellm_args' must not contain keys that are set "
-                f"explicitly: {conflicts}. Use the dedicated class attributes instead."
+                f"'{attribute.name}' must not contain keys that are set explicitly: "
+                f"{conflicts}. Use the dedicated class attributes instead."
             )
         cred_conflicts = _CREDENTIAL_LITELLM_KEYS & set(value.keys())
         if cred_conflicts:
             raise ValueError(
-                f"'recovery_litellm_args' must not contain credential keys "
+                f"'{attribute.name}' must not contain credential keys "
                 f"{cred_conflicts}. Supply credentials via environment variables "
                 f"instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY)."
             )
