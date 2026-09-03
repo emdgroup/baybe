@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import math
 import warnings
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
 import numpy as np
-from attrs import evolve, fields
+import pandas as pd
+from attrs import evolve
 
 from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import (
@@ -21,6 +23,7 @@ from baybe.searchspace.candidates import TableCandidates
 from baybe.settings import active_settings
 from baybe.utils.basic import flatten
 from baybe.utils.dataframe import _df_with_backend, to_tensor
+from baybe.utils.sampling_algorithms import sample_numerical_df
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame
@@ -53,13 +56,17 @@ def recommend_hybrid_without_subsets(
         batch_size: The size of the calculated batch.
 
     Raises:
-        NotImplementedError: If ``hybrid_sampler`` is set on the recommender.
         IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
             function is used with a batch size > 1.
 
     Returns:
         The recommended points.
     """
+    # TODO: Narhwalification is currently blocked by the fact that the alignment of
+    #   experimental and computational representations in the subsampled path
+    #   (i.e. when `sample_numerical_df` is used) is inherently index-based and
+    #   requires a narwhals-compatible subsampling mechanism first.
+
     assert recommender._objective is not None
 
     # Interpoint constraints cannot be used with optimize_acqf_mixed, see
@@ -82,26 +89,25 @@ def recommend_hybrid_without_subsets(
     from botorch.optim import optimize_acqf_mixed
 
     # Transform discrete candidates
-    candidates = nw.from_native(searchspace.discrete.get_candidates(), eager_only=True)
-    candidates_comp = nw.from_native(searchspace.discrete.transform(candidates))
+    candidates = searchspace.discrete.get_candidates()
+    candidates_comp = searchspace.discrete.transform(candidates)
 
+    # Calculate the number of samples from the given percentage
+    n_candidates = math.ceil(
+        recommender.sampling_percentage * len(candidates_comp.index)
+    )
+
+    # Potential sampling of discrete candidates
     if recommender.hybrid_sampler is not None:
-        # Subsampling must keep `candidates` and `candidates_comp` row-aligned, which
-        # requires a narwhals-compatible refactor of the sampling procedure. This is
-        # deferred until the optimizer refactoring is complete.
-        from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
-
-        raise NotImplementedError(
-            f"Using '{fields(BotorchRecommender).hybrid_sampler.alias}' is "
-            f"temporarily not supported."
+        candidates_comp = sample_numerical_df(
+            candidates_comp, n_candidates, method=recommender.hybrid_sampler
         )
 
     # Prepare all considered discrete configurations in the
     # List[Dict[int, float]] format expected by BoTorch.
-    n_comp_columns = len(candidates_comp.columns)
-    fixed_features_list = [
-        dict(enumerate(row)) for row in candidates_comp.to_numpy().tolist()
-    ]
+    num_comp_columns = len(candidates_comp.columns)
+    candidates_comp.columns = list(range(num_comp_columns))
+    fixed_features_list = candidates_comp.to_dict("records")
 
     # Actual call of the BoTorch optimization routine
     # NOTE: The explicit `or None` conversion is added as an additional safety net
@@ -114,11 +120,11 @@ def recommend_hybrid_without_subsets(
         q=batch_size,
         num_restarts=recommender.n_restarts,
         raw_samples=recommender.n_raw_samples,
-        fixed_features_list=fixed_features_list,
+        fixed_features_list=fixed_features_list,  # type: ignore[arg-type]
         equality_constraints=flatten(
             c.to_botorch(
                 searchspace.continuous.parameters,
-                idx_offset=n_comp_columns,
+                idx_offset=len(candidates_comp.columns),
                 batch_size=batch_size if c.is_interpoint else None,
             )
             for c in searchspace.continuous.constraints_lin_eq
@@ -127,7 +133,7 @@ def recommend_hybrid_without_subsets(
         inequality_constraints=flatten(
             c.to_botorch(
                 searchspace.continuous.parameters,
-                idx_offset=n_comp_columns,
+                idx_offset=num_comp_columns,
                 batch_size=batch_size if c.is_interpoint else None,
             )
             for c in searchspace.continuous.constraints_lin_ineq
@@ -135,28 +141,34 @@ def recommend_hybrid_without_subsets(
         or None,
     )
 
-    # Recover the positional index of the discrete part of each recommended point.
-    # Operating directly on the BoTorch output avoids introducing any further
-    # imprecision beyond what the optimizer itself produces.
-    from baybe.utils.torch import index_in_tensor
+    # Align candidates with search space index. Done via including the search space
+    # index during the merge, which is used later for back-translation into the
+    # experimental representation
+    merged = pd.merge(
+        pd.DataFrame(points),
+        candidates_comp.reset_index(),
+        on=list(candidates_comp.columns),
+        how="left",
+    ).set_index("index")
 
-    disc_choices = to_tensor(candidates_comp)
-    disc_points = points[:, :n_comp_columns]
-    row_idxs = index_in_tensor(disc_points, disc_choices)
+    # Get experimental representation of discrete part
+    rec_disc_exp = candidates.loc[merged.index]
 
-    # Combine the discrete part in experimental representation with the
-    # optimized continuous part from the BoTorch output
-    rec_cont = nw.from_numpy(
-        points[:, n_comp_columns:].numpy(),
-        schema=searchspace.continuous.parameter_names,
-        backend=active_settings.default_dataframe_backend,
+    # Combine discrete and continuous parts
+    rec_exp = pd.concat(
+        [
+            rec_disc_exp,
+            merged.iloc[:, num_comp_columns:].set_axis(
+                searchspace.continuous.parameter_names, axis=1
+            ),
+        ],
+        axis=1,
     )
-    rec_disc_exp = nw.maybe_reset_index(
-        _df_with_backend(
-            candidates[row_idxs], active_settings.default_dataframe_backend
-        )
-    )
-    return nw.concat([rec_disc_exp, rec_cont], how="horizontal").to_native()
+
+    return _df_with_backend(
+        nw.from_native(rec_exp.reset_index(drop=True)),
+        active_settings.default_dataframe_backend,
+    ).to_native()
 
 
 def recommend_hybrid_with_subsets(
