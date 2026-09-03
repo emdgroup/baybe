@@ -51,12 +51,6 @@ class LLMRecommender(PureRecommender, SerialMixin):
     description of what to optimize and per-target context such as units.
     """
 
-    recovery_model: str | None = field(default=None)
-    """Optional model to use for recovery attempts.
-
-    If ``None``, uses the same model as the main recommendations.
-    """
-
     litellm_args: dict[str, Any] = field(factory=dict, converter=dict)
     """Additional arguments to pass to LiteLLM (e.g. ``temperature``, ``max_tokens``).
 
@@ -66,35 +60,9 @@ class LLMRecommender(PureRecommender, SerialMixin):
     (e.g. ``OPENAI_API_KEY``, ``ANTHROPIC_API_KEY``).
     """
 
-    recovery_litellm_args: dict[str, Any] | None = field(default=None)
-    """Optional arguments to pass to LiteLLM during recovery attempts.
-
-    If ``None``, uses the same arguments as the main recommendations. The same
-    credential restriction as for :attr:`litellm_args` applies.
-    """
-
     @litellm_args.validator
     def _validate_litellm_args(self, attribute, value):  # noqa: DOC101, DOC103
         """Validate litellm_args does not contain reserved or credential keys."""
-        conflicts = _RESERVED_LITELLM_KEYS & set(value.keys())
-        if conflicts:
-            raise ValueError(
-                f"'{attribute.name}' must not contain keys that are set explicitly: "
-                f"{conflicts}. Use the dedicated class attributes instead."
-            )
-        cred_conflicts = _CREDENTIAL_LITELLM_KEYS & set(value.keys())
-        if cred_conflicts:
-            raise ValueError(
-                f"'{attribute.name}' must not contain credential keys "
-                f"{cred_conflicts}. Supply credentials via environment variables "
-                f"instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY)."
-            )
-
-    @recovery_litellm_args.validator
-    def _validate_recovery_litellm_args(self, attribute, value):  # noqa: DOC101, DOC103
-        """Validate recovery_litellm_args has no reserved or credential keys."""
-        if value is None:
-            return
         conflicts = _RESERVED_LITELLM_KEYS & set(value.keys())
         if conflicts:
             raise ValueError(
@@ -136,16 +104,11 @@ class LLMRecommender(PureRecommender, SerialMixin):
             original_response=original_response,
         )
 
-        litellm_args = (
-            self.recovery_litellm_args
-            if self.recovery_litellm_args is not None
-            else self.litellm_args
-        )
         try:
             response = completion(
-                model=self.recovery_model or self.model,
+                model=self.model,
                 messages=[{"role": "user", "content": recovery_prompt}],
-                **litellm_args,
+                **self.litellm_args,
             )
         except Exception as e:
             raise LLMResponseError(
