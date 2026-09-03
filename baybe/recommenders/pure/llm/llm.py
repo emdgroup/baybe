@@ -27,22 +27,14 @@ _RESERVED_LITELLM_KEYS = frozenset({"model", "messages"})
 
 # Credential keys that LiteLLM accepts inline but must be supplied via environment
 # variables instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY). Blocking them at
-# construction time prevents accidental exposure in logs, __str__, and serialized
-# campaign files.
+# construction time prevents accidental exposure in logs, __str__, and serialization
+# strings.
 _CREDENTIAL_LITELLM_KEYS = frozenset({"api_key", "api_base", "api_version"})
 
 
 @define(slots=False)
 class LLMRecommender(PureRecommender, SerialMixin):
-    """Recommender that uses a language model to suggest new experimental points.
-
-    Unlike other pure recommenders, this recommender does not implement the
-    ``_recommend_discrete``/``_recommend_continuous``/``_recommend_hybrid`` hooks.
-    The language model returns a complete set of parameter configurations that already
-    constitutes the recommendation, so there is no per-subspace selection step to
-    delegate to those hooks. Instead, :meth:`recommend` is fully overridden and builds
-    the result directly from the model response.
-    """
+    """Recommender that uses a language model to suggest new experimental points."""
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
