@@ -3,19 +3,18 @@
 from __future__ import annotations
 
 import json
-import math
 import warnings
 from json import JSONDecodeError
 
 import pandas as pd
 
 from baybe.exceptions import LLMResponseError, LLMResponseWarning
-from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
+from baybe.utils.dataframe import fuzzy_row_match, normalize_input_dtypes
+from baybe.utils.validation import validate_parameter_input
 
 
-def extract_json_array(response: str) -> str:
+def extract_json_array(response: str, /) -> str:
     """Extract the JSON array payload from a raw language model response.
 
     Language models frequently wrap their output in Markdown code fences or add
@@ -36,7 +35,7 @@ def extract_json_array(response: str) -> str:
     return response
 
 
-def parse_llm_response(response: str, searchspace: SearchSpace) -> pd.DataFrame:
+def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFrame:
     """Parse a language model response into a DataFrame of recommendations.
 
     Args:
@@ -96,61 +95,20 @@ def parse_llm_response(response: str, searchspace: SearchSpace) -> pd.DataFrame:
 
     df = pd.DataFrame(recommendations)
 
-    for param in searchspace.parameters:
-        if param.name not in df.columns:
-            raise LLMResponseError(f"Missing parameter: {param.name}")
-
-        values = df[param.name]
-
-        if isinstance(param, NumericalContinuousParameter):
-            if not all(
-                isinstance(v, (int, float)) and math.isfinite(v) for v in values
-            ):
-                raise LLMResponseError(
-                    f"Non-finite or non-numeric values for continuous parameter: "
-                    f"{param.name}"
-                )
-            bounds = param.bounds.to_tuple()
-            min_val, max_val = bounds
-            if not all(min_val <= v <= max_val for v in values):
-                raise LLMResponseError(
-                    f"Values for {param.name} outside bounds [{min_val}, {max_val}]"
-                )
-
-        elif isinstance(param, DiscreteParameter):
-            allowed = list(param.values)
-            if param.is_numerical:
-                allowed_floats = [float(a) for a in allowed]
-                invalid = []
-                canonical = []
-                for v in values:
-                    try:
-                        fv = float(v)
-                    except (TypeError, ValueError):
-                        invalid.append(v)
-                        canonical.append(v)
-                        continue
-                    if fv in allowed_floats:
-                        canonical.append(allowed[allowed_floats.index(fv)])
-                    else:
-                        invalid.append(v)
-                        canonical.append(v)
-                if invalid:
-                    raise LLMResponseError(
-                        f"Invalid values {invalid} for parameter '{param.name}'. "
-                        f"Allowed values are: {allowed}"
-                    )
-                df[param.name] = canonical
-            else:
-                invalid = [v for v in values if v not in allowed]
-                if invalid:
-                    raise LLMResponseError(
-                        f"Invalid values {invalid} for parameter '{param.name}'. "
-                        f"Allowed values are: {allowed}"
-                    )
-                # Categorical values from JSON are strings; cast to canonical
-                allowed_map = {str(a): a for a in allowed}
-                df[param.name] = [allowed_map.get(str(v), v) for v in values]
+    # Validate parameter columns as for measurement input. Called directly, not via
+    # `preprocess_dataframe`, which is a no-op under `preprocess_dataframes=False`.
+    # TODO: Sharpen the caught errors — different validation failures (e.g. missing
+    #   columns vs. out-of-range values) will require different reactions (hard error
+    #   vs. recovery vs. eligibility drop) rather than a single wrapped error.
+    try:
+        validate_parameter_input(
+            df,
+            searchspace.parameters,
+            numerical_measurements_must_be_within_tolerance=True,
+        )
+    except (ValueError, TypeError) as e:
+        raise LLMResponseError(str(e)) from e
+    df = normalize_input_dtypes(df, searchspace.parameters)
 
     continuous_constraints = (
         *searchspace.continuous.constraints_lin_eq,
@@ -185,19 +143,12 @@ def parse_llm_response(response: str, searchspace: SearchSpace) -> pd.DataFrame:
                 f"value, but received {list(unique_values)}."
             )
 
-    # Recover exp_rep index so campaign metadata tracking works correctly,
-    # analogous to the merge-based alignment in the Botorch hybrid recommender.
-    discrete_param_names = [p.name for p in searchspace.discrete.parameters]
-    if discrete_param_names:
+    # Recover the exp_rep index (for campaign metadata tracking) via the same fuzzy
+    # matching used for measurement input: exact for categorical, nearest numerical.
+    discrete_params = searchspace.discrete.parameters
+    if discrete_params:
         exp_rep = searchspace.discrete.exp_rep
-        _IDX_COL = "__exp_rep_idx__"
-        exp_lookup = exp_rep[discrete_param_names].copy()
-        exp_lookup[_IDX_COL] = exp_rep.index
-        aligned_index = pd.Index(
-            df[discrete_param_names]
-            .merge(exp_lookup, on=discrete_param_names, how="left")[_IDX_COL]
-            .values
-        )
+        aligned_index = fuzzy_row_match(exp_rep, df, discrete_params)
         continuous_param_names = [p.name for p in searchspace.continuous.parameters]
         if continuous_param_names:
             rec_disc = exp_rep.loc[aligned_index]
