@@ -57,7 +57,7 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
             Continuous constraints cannot be validated after the fact, so compliance
             of the LLM suggestions with such constraints is not guaranteed.
     """
-    payload = extract_json_array(response) if isinstance(response, str) else response
+    payload = extract_json_array(response)
     try:
         suggestions = json.loads(payload)
     except (JSONDecodeError, TypeError) as e:
