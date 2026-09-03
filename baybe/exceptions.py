@@ -15,6 +15,10 @@ class InputDataTypeWarning(UserWarning):
     """An input has unexpected data type."""
 
 
+class LLMResponseWarning(UserWarning):
+    """A language model response did not fully meet the request."""
+
+
 class UnusedObjectWarning(UserWarning):
     """
     A method or function was called with undesired arguments which indicates an
@@ -88,6 +92,10 @@ class NonGaussianityError(Exception):
 
 class InfeasibilityError(Exception):
     """An optimization problem has no feasible solution."""
+
+
+class LLMResponseError(Exception):
+    """An error occurred while processing a language model response."""
 
 
 class NotEnoughPointsLeftError(Exception):

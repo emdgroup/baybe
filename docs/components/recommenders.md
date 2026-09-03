@@ -88,6 +88,35 @@ BayBE provides two recommenders that recommend by sampling form the search space
   this recommender can be found
   [here](./../../examples/Custom_Surrogates/surrogate_params).
 
+### LLM Recommenders
+
+The **[`LLMRecommender`](baybe.recommenders.pure.llm.llm.LLMRecommender)** queries a large
+language model to propose experiments. This is particularly useful for warm-starting a
+campaign, where a language model can inject prior knowledge to suggest more sensible
+points than random sampling before enough data has been collected to train a surrogate
+model. It builds a prompt from the search space and the provided ``experiment_description``
+and ``objective_description``, queries the model through
+[LiteLLM](https://docs.litellm.ai/), and validates the returned suggestions against the
+search space. The ``model`` field accepts any LiteLLM model identifier (e.g.
+``"openai/gpt-4o"`` or ``"anthropic/claude-sonnet-4-6"``).
+
+This recommender requires the optional ``llm`` dependency group:
+
+~~~bash
+pip install "baybe[llm]"
+~~~
+
+```{admonition} Credentials
+:class: note
+The recommender does not take an API key. LiteLLM reads the provider credentials from
+environment variables (e.g. ``OPENAI_API_KEY``, ``ANTHROPIC_API_KEY``) selected by the
+provider prefix of the ``model`` identifier.
+```
+
+A walk-through that warm-starts a campaign with the ``LLMRecommender`` before switching to
+a Bayesian recommender can be found
+[here](./../../examples/LLM/llm_recommender).
+
 ## Meta Recommenders
 
 In analogy to meta studies, meta recommenders are wrappers that operate on a sequence

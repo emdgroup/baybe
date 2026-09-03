@@ -25,7 +25,9 @@ def exclude_sys_path(path: str, /):  # noqa: DOC402
 # Individual packages
 with exclude_sys_path(os.getcwd()):
     FLAKE8_INSTALLED = find_spec("flake8") is not None
+    JINJA2_INSTALLED = find_spec("jinja2") is not None
     LIME_INSTALLED = find_spec("lime") is not None
+    LITELLM_INSTALLED = find_spec("litellm") is not None
     ONNX_INSTALLED = find_spec("onnxruntime") is not None
     NGBOOST_INSTALLED = find_spec("ngboost") is not None
     POLARS_INSTALLED = find_spec("polars") is not None
@@ -49,6 +51,7 @@ TYPOS_INSTALLED = True
 # Information on whether all required packages for certain functionality are available
 CHEM_INSTALLED = SKFP_INSTALLED
 INSIGHTS_INSTALLED = SHAP_INSTALLED and LIME_INSTALLED
+LLM_INSTALLED = JINJA2_INSTALLED and LITELLM_INSTALLED
 LINT_INSTALLED = all(
     (
         FLAKE8_INSTALLED,
