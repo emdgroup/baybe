@@ -267,7 +267,7 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
                     }
                 ]
             ),
-            "outside bounds",
+            "has invalid values in parameter",
             id="out_of_bounds",
         ),
         pytest.param(
@@ -284,7 +284,7 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
                     }
                 ]
             ),
-            "Invalid values",
+            "has invalid values in parameter",
             id="invalid_categorical",
         ),
         pytest.param(
@@ -296,7 +296,7 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
                     }
                 ]
             ),
-            "Missing parameter",
+            "missing columns for the following parameters",
             id="missing_parameter",
         ),
         pytest.param(
@@ -367,7 +367,7 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
                     }
                 ]
             ),
-            "Non-finite or non-numeric values",
+            "has non-numeric entries",
             id="non_numeric_continuous",
         ),
     ],
@@ -378,6 +378,37 @@ def test_parse_llm_response_errors(
     """Malformed responses raise LLMResponseError with descriptive messages."""
     with pytest.raises(LLMResponseError, match=error_match):
         recommender._parse_llm_response(response_content, searchspace)
+
+
+def test_parse_llm_response_numerical_tolerance_snaps_to_nearest():
+    """A numerical-discrete value within tolerance is accepted and snapped.
+
+    Matches how user measurement input is handled: ``validate_parameter_input``
+    accepts values within the parameter tolerance and ``fuzzy_row_match`` snaps
+    them to the nearest allowed value.
+    """
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    space = SearchSpace.from_product(
+        [NumericalDiscreteParameter("x", values=[1.0, 2.0, 3.0], tolerance=0.4)]
+    )
+    rec = LLMRecommender(model="m", experiment_description="test")
+    # 1.3 is within tolerance 0.4 of 1.0 but not an exact allowed value.
+    result = rec._parse_llm_response(_make_suggestions([{"x": 1.3}]), space)
+    assert result["x"].tolist() == [1.0]
+
+
+def test_parse_llm_response_numerical_out_of_tolerance_rejected():
+    """A numerical-discrete value outside tolerance is rejected."""
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    space = SearchSpace.from_product(
+        [NumericalDiscreteParameter("x", values=[1.0, 2.0, 3.0], tolerance=0.1)]
+    )
+    rec = LLMRecommender(model="m", experiment_description="test")
+    # 1.3 is outside tolerance 0.1 of every allowed value.
+    with pytest.raises(LLMResponseError, match="has invalid values in parameter"):
+        rec._parse_llm_response(_make_suggestions([{"x": 1.3}]), space)
 
 
 # ---------------------------------------------------------------------------
