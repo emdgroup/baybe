@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from exceptiongroup import ExceptionGroup
 from pandas.testing import assert_frame_equal
 
 from baybe._optional.info import POLARS_INSTALLED
@@ -34,11 +35,6 @@ from baybe.searchspace.utils import (
     parameter_cartesian_prod_polars,
 )
 from baybe.utils.basic import is_all_instance
-
-try:
-    ExceptionGroup
-except NameError:
-    from exceptiongroup import ExceptionGroup
 
 
 def test_empty_parameters():
