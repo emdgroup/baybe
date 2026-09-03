@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TransferLearningMode` enum) for selecting the kernel that models the task
   correlations in transfer learning, taking precedence over the task kernel of the
   configured kernel factory
+- `DiscreteRepetitionConstraint` for controlling value repetition across parameters
+  via `n_max_repetitions` (replaces `DiscreteNoLabelDuplicatesConstraint` and
+  `DiscreteLinkedParametersConstraint`)
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
@@ -63,6 +66,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecations
 - `DiscreteExcludeConstraint` in favor of
   `DiscreteSelectionConstraint(..., exclude=True)`
+- `DiscreteNoLabelDuplicatesConstraint` in favor of
+  `DiscreteRepetitionConstraint(..., n_max_repetitions=1)`
+- `DiscreteLinkedParametersConstraint` in favor of
+  `DiscreteRepetitionConstraint(..., n_max_repetitions=len(parameters)-1,
+  exclude=True)`
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
