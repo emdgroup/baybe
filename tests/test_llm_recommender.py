@@ -243,41 +243,6 @@ def test_recommend_with_objective(
     assert "yield" in prompt_content
 
 
-@patch("baybe._optional.llm.completion")
-def test_recovery_with_distinct_model(mock_completion, recommender, searchspace):
-    """Recovery uses the specified recovery_model and recovery_litellm_args."""
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
-    recommender = LLMRecommender(
-        model="gpt-5.4",
-        experiment_description="Test",
-        recovery_model="gpt-4o-mini",
-        recovery_litellm_args={"temperature": 0.0},
-    )
-
-    invalid = _mock_response("Invalid JSON")
-    valid = _mock_response(
-        _make_suggestions(
-            [
-                {"temperature": 50.0, "pressure": 3.0, "n_cycles": 2, "catalyst": "C"},
-            ]
-        )
-    )
-    mock_completion.side_effect = [invalid, valid]
-
-    recommender.recommend(batch_size=1, searchspace=searchspace)
-
-    recovery_call = mock_completion.call_args_list[1]
-    assert (
-        recovery_call.kwargs.get("model", recovery_call[1].get("model"))
-        == "gpt-4o-mini"
-    )
-    assert (
-        recovery_call.kwargs.get("temperature", recovery_call[1].get("temperature"))
-        == 0.0
-    )
-
-
 @pytest.mark.parametrize(
     ("response_content", "error_type", "error_match"),
     [
@@ -780,13 +745,6 @@ def test_construction_rejects_protected_keys(key, phrase):
             model="m",
             experiment_description="desc",
             litellm_args={key: "secret"},
-        )
-
-    with pytest.raises(ValueError, match=f"must not contain {phrase}"):
-        LLMRecommender(
-            model="m",
-            experiment_description="desc",
-            recovery_litellm_args={key: "secret"},
         )
 
 
