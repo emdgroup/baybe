@@ -28,6 +28,7 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.recommenders.pure.llm._parsing import parse_llm_response
 from baybe.searchspace import SearchSpace
 from baybe.utils.basic import get_subclasses
 
@@ -394,12 +395,10 @@ def test_recovery_with_distinct_model(mock_completion, recommender, searchspace)
         ),
     ],
 )
-def test_parse_llm_response_errors(
-    response_content, error_match, recommender, searchspace
-):
+def test_parse_llm_response_errors(response_content, error_match, searchspace):
     """Malformed responses raise LLMResponseError with descriptive messages."""
     with pytest.raises(LLMResponseError, match=error_match):
-        recommender._parse_llm_response(response_content, searchspace)
+        parse_llm_response(response_content, searchspace)
 
 
 def test_parse_llm_response_numerical_tolerance_snaps_to_nearest():
@@ -409,28 +408,22 @@ def test_parse_llm_response_numerical_tolerance_snaps_to_nearest():
     accepts values within the parameter tolerance and ``fuzzy_row_match`` snaps
     them to the nearest allowed value.
     """
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
     space = SearchSpace.from_product(
         [NumericalDiscreteParameter("x", values=[1.0, 2.0, 3.0], tolerance=0.4)]
     )
-    rec = LLMRecommender(model="m", experiment_description="test")
     # 1.3 is within tolerance 0.4 of 1.0 but not an exact allowed value.
-    result = rec._parse_llm_response(_make_suggestions([{"x": 1.3}]), space)
+    result = parse_llm_response(_make_suggestions([{"x": 1.3}]), space)
     assert result["x"].tolist() == [1.0]
 
 
 def test_parse_llm_response_numerical_out_of_tolerance_rejected():
     """A numerical-discrete value outside tolerance is rejected."""
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
     space = SearchSpace.from_product(
         [NumericalDiscreteParameter("x", values=[1.0, 2.0, 3.0], tolerance=0.1)]
     )
-    rec = LLMRecommender(model="m", experiment_description="test")
     # 1.3 is outside tolerance 0.1 of every allowed value.
     with pytest.raises(LLMResponseError, match="has invalid values in parameter"):
-        rec._parse_llm_response(_make_suggestions([{"x": 1.3}]), space)
+        parse_llm_response(_make_suggestions([{"x": 1.3}]), space)
 
 
 # ---------------------------------------------------------------------------
@@ -565,19 +558,14 @@ def test_parse_llm_response_rejects_row_constraint_violations(
     parameters, constraints, violation_suggestions
 ):
     """Suggestions valid per-parameter but violating a discrete constraint raise."""
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
     space = SearchSpace.from_product(parameters=parameters, constraints=constraints)
-    rec = LLMRecommender(model="m", experiment_description="test")
     response = _make_suggestions(violation_suggestions)
     with pytest.raises(LLMResponseError, match="violate the.*constraint"):
-        rec._parse_llm_response(response, space)
+        parse_llm_response(response, space)
 
 
 def test_parse_llm_response_rejects_batch_constraint_violation():
     """Batch suggestions with mixed values for a DiscreteBatchConstraint param raise."""
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
     parameters = [
         NumericalDiscreteParameter("x", values=[1, 2, 3]),
         CategoricalParameter("y", values=["a", "b"]),
@@ -586,28 +574,23 @@ def test_parse_llm_response_rejects_batch_constraint_violation():
         parameters=parameters,
         constraints=[DiscreteBatchConstraint(parameters=["x"])],
     )
-    rec = LLMRecommender(model="m", experiment_description="test")
     # x values differ across suggestions — violates the batch constraint
     response = _make_suggestions([{"x": 1, "y": "a"}, {"x": 2, "y": "b"}])
     with pytest.raises(LLMResponseError, match="DiscreteBatchConstraint"):
-        rec._parse_llm_response(response, space)
+        parse_llm_response(response, space)
 
 
 def test_parse_llm_response_aligns_index_with_exp_rep():
     """Returned DataFrame index matches the exp_rep index of the search space."""
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
-
     parameters = [
         NumericalDiscreteParameter("x", values=[1, 2, 3]),
         NumericalDiscreteParameter("y", values=[10, 20, 30]),
     ]
     space = SearchSpace.from_product(parameters=parameters)
-    rec = LLMRecommender(model="m", experiment_description="test")
-
     # Suggest the last row of exp_rep — its index is not 0
     last_row = space.discrete.exp_rep.iloc[-1]
     response = _make_suggestions([{"x": last_row["x"], "y": last_row["y"]}])
-    result = rec._parse_llm_response(response, space)
+    result = parse_llm_response(response, space)
 
     assert list(result.index) == [space.discrete.exp_rep.index[-1]]
 
@@ -615,7 +598,6 @@ def test_parse_llm_response_aligns_index_with_exp_rep():
 def test_parse_llm_response_warns_for_continuous_constraints():
     """A warning is issued when the search space has continuous constraints."""
     from baybe.constraints.continuous import ContinuousLinearConstraint
-    from baybe.recommenders.pure.llm.llm import LLMRecommender
 
     parameters = [
         NumericalContinuousParameter("x", bounds=(0, 1)),
@@ -629,10 +611,9 @@ def test_parse_llm_response_warns_for_continuous_constraints():
             )
         ],
     )
-    rec = LLMRecommender(model="m", experiment_description="test")
     response = _make_suggestions([{"x": 0.3, "y": 0.4}])
     with pytest.warns(LLMResponseWarning, match="continuous constraints"):
-        rec._parse_llm_response(response, space)
+        parse_llm_response(response, space)
 
 
 @pytest.mark.parametrize(
@@ -644,12 +625,12 @@ def test_parse_llm_response_warns_for_continuous_constraints():
     ],
     ids=["json_fence", "bare_fence", "surrounding_prose"],
 )
-def test_parse_llm_response_strips_wrappers(wrapper, recommender, searchspace):
+def test_parse_llm_response_strips_wrappers(wrapper, searchspace):
     """Markdown fences and surrounding prose are stripped before JSON parsing."""
     payload = _make_suggestions(
         [{"temperature": 25.0, "pressure": 2.0, "n_cycles": 1, "catalyst": "A"}]
     )
-    df = recommender._parse_llm_response(wrapper.format(payload=payload), searchspace)
+    df = parse_llm_response(wrapper.format(payload=payload), searchspace)
     assert len(df) == 1
     assert df["catalyst"].iloc[0] == "A"
 

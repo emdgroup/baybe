@@ -134,13 +134,12 @@ Please provide a corrected JSON response that follows the required format:
 
 
 def _extract_parameter_info(
-    parameters: tuple[Parameter, ...], recommender_name: str
+    parameters: tuple[Parameter, ...],
 ) -> list[SimpleNamespace]:
     """Extract parameter information for prompt construction.
 
     Args:
         parameters: The parameters from the search space.
-        recommender_name: The name of the recommender, used in error messages.
 
     Returns:
         A list of namespace objects containing parameter information.
@@ -164,8 +163,7 @@ def _extract_parameter_info(
         else:
             raise IncompatibilityError(
                 f"Parameter '{param.name}' has unsupported type "
-                f"'{type(param).__name__}' for "
-                f"'{recommender_name}'. Only "
+                f"'{type(param).__name__}'. Only "
                 f"'{NumericalContinuousParameter.__name__}' and "
                 f"'{DiscreteParameter.__name__}' subclasses are supported."
             )
@@ -178,7 +176,6 @@ def _extract_parameter_info(
 def build_prompt(
     searchspace: SearchSpace,
     *,
-    recommender_name: str,
     batch_size: int,
     experiment_description: str,
     objective: Objective | None,
@@ -189,7 +186,6 @@ def build_prompt(
 
     Args:
         searchspace: The search space to generate recommendations for.
-        recommender_name: The name of the recommender, used in error messages.
         batch_size: The number of recommendations to generate.
         experiment_description: Textual description of the experiment.
         objective: Optional objective to include in the prompt. Set
@@ -204,7 +200,7 @@ def build_prompt(
     """
     from baybe._optional.llm import Template
 
-    parameters = _extract_parameter_info(searchspace.parameters, recommender_name)
+    parameters = _extract_parameter_info(searchspace.parameters)
     template = Template(_PROMPT_TEMPLATE, trim_blocks=True, lstrip_blocks=True)
     return template.render(
         experiment_description=experiment_description,
@@ -219,7 +215,6 @@ def build_prompt(
 def build_recovery_prompt(
     searchspace: SearchSpace,
     *,
-    recommender_name: str,
     error: Exception,
     original_response: str,
 ) -> str:
@@ -227,7 +222,6 @@ def build_recovery_prompt(
 
     Args:
         searchspace: The search space to generate recommendations for.
-        recommender_name: The name of the recommender, used in error messages.
         error: The error that occurred during parsing.
         original_response: The original malformed response.
 
@@ -236,7 +230,7 @@ def build_recovery_prompt(
     """
     from baybe._optional.llm import Template
 
-    parameters = _extract_parameter_info(searchspace.parameters, recommender_name)
+    parameters = _extract_parameter_info(searchspace.parameters)
     template = Template(_RECOVERY_PROMPT_TEMPLATE, trim_blocks=True, lstrip_blocks=True)
     return template.render(
         error=str(error),
