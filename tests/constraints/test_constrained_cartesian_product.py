@@ -61,27 +61,24 @@ def _linked_parameters_scenario() -> tuple[
     constraints = [
         DiscreteRepetitionConstraint(
             parameters=[p.name for p in params],
-            n_min_repetitions=len(params),
+            n_max_repetitions=len(params) - 1,
+            exclude=True,
         )
     ]
     return params, constraints
 
 
 def _repetition_scenario(
-    n_min: int | None,
-    n_max: int | None,
+    n_max: int,
     exclude: bool,
 ) -> tuple[Sequence[DiscreteParameter], Sequence[DiscreteConstraint]]:
     values = ["a", "b", "c", "d"]
     params = [CategoricalParameter(name=f"P{i}", values=values) for i in range(4)]
-    kwargs: dict = {}
-    if n_min is not None:
-        kwargs["n_min_repetitions"] = n_min
-    if n_max is not None:
-        kwargs["n_max_repetitions"] = n_max
     constraints = [
         DiscreteRepetitionConstraint(
-            parameters=[p.name for p in params], exclude=exclude, **kwargs
+            parameters=[p.name for p in params],
+            n_max_repetitions=n_max,
+            exclude=exclude,
         )
     ]
     return params, constraints
@@ -262,20 +259,16 @@ def _mixed_scenario() -> tuple[
         ),
         pytest.param(_mixed_scenario, id="mixed"),
         pytest.param(
-            partial(_repetition_scenario, None, 1, True),
+            partial(_repetition_scenario, 1, True),
             id="repetition_max_exclude",
         ),
         pytest.param(
-            partial(_repetition_scenario, 2, None, True),
-            id="repetition_min_exclude",
+            partial(_repetition_scenario, 2, False),
+            id="repetition_max_keep",
         ),
         pytest.param(
-            partial(_repetition_scenario, 2, 3, False),
-            id="repetition_both",
-        ),
-        pytest.param(
-            partial(_repetition_scenario, 2, 3, True),
-            id="repetition_both_exclude",
+            partial(_repetition_scenario, 2, True),
+            id="repetition_max_exclude_general",
         ),
     ],
 )
