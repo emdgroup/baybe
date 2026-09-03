@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from attrs import asdict as attrs_asdict
 
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, LLMResponseError
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
@@ -100,10 +100,10 @@ Format your response as a JSON array of objects with the following structure \
 """
 
 _RECOVERY_PROMPT_TEMPLATE = """\
-The previous response was malformed and could not be parsed as JSON. Please \
-correct the response to match the required format.
+Your previous recommendation could not be used and needs to be corrected.
 
-ERROR: {{ error }}
+WHAT WENT WRONG:
+{{ recovery_instruction }}
 
 ORIGINAL RESPONSE:
 {{ original_response }}
@@ -216,15 +216,17 @@ def make_prompt(
 def make_recovery_prompt(
     searchspace: SearchSpace,
     *,
-    error: Exception,
+    error: LLMResponseError,
     original_response: str,
 ) -> str:
-    """Construct the recovery prompt asking the model to correct a malformed response.
+    """Construct the recovery prompt asking the model to correct its response.
 
     Args:
         searchspace: The search space to generate recommendations for.
-        error: The error that occurred during parsing.
-        original_response: The original malformed response.
+        error: The error that occurred while processing the previous response. Its
+            :attr:`~baybe.exceptions.LLMResponseError.recovery_instruction` provides the
+            error-specific guidance embedded in the prompt.
+        original_response: The original response that could not be used.
 
     Returns:
         The constructed recovery prompt.
@@ -234,7 +236,7 @@ def make_recovery_prompt(
     parameters = _extract_parameter_info(searchspace.parameters)
     template = Template(_RECOVERY_PROMPT_TEMPLATE, trim_blocks=True, lstrip_blocks=True)
     return template.render(
-        error=str(error),
+        recovery_instruction=error.recovery_instruction,
         original_response=original_response,
         parameters=parameters,
     )

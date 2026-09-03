@@ -39,6 +39,7 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
 )
 from baybe.recommenders.pure.llm._parsing import parse_llm_response
+from baybe.recommenders.pure.llm._prompts import make_recovery_prompt
 from baybe.searchspace import SearchSpace
 from baybe.utils.basic import get_subclasses
 
@@ -632,6 +633,33 @@ def test_recommend_invalid_response_with_failed_recovery(
 
     with pytest.raises(LLMResponseError, match="Recovery produced another malformed"):
         recommender.recommend(batch_size=3, searchspace=searchspace)
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        MalformedLLMResponseError("bad"),
+        UnknownParameterError(
+            "bad", unknown_names={"foo"}, valid_names={"temperature"}
+        ),
+        MissingParameterError("bad", parameters={"pressure"}),
+        NonNumericParameterError("bad", detail="detail."),
+        InvalidParameterValueError("bad", detail="detail."),
+        ConstraintViolationError(
+            "bad", constraint_name="DiscreteSumConstraint", parameters=["a", "b"]
+        ),
+        IneligiblePointsError("bad", n_ineligible=2),
+    ],
+    ids=lambda e: type(e).__name__,
+)
+def test_make_recovery_prompt_embeds_error_guidance(error, searchspace):
+    """The recovery prompt embeds the error-specific recovery instruction."""
+    prompt = make_recovery_prompt(
+        searchspace, error=error, original_response="the original response"
+    )
+    assert "WHAT WENT WRONG" in prompt
+    assert error.recovery_instruction in prompt
+    assert "the original response" in prompt
 
 
 @patch("baybe._optional.llm.completion")
