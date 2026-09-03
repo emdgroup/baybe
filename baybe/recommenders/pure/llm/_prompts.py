@@ -173,7 +173,7 @@ def _extract_parameter_info(
     return infos
 
 
-def build_prompt(
+def make_prompt(
     searchspace: SearchSpace,
     *,
     batch_size: int,
@@ -212,7 +212,7 @@ def build_prompt(
     )
 
 
-def build_recovery_prompt(
+def make_recovery_prompt(
     searchspace: SearchSpace,
     *,
     error: Exception,

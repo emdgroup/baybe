@@ -15,7 +15,7 @@ from baybe.exceptions import LLMResponseError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.llm._parsing import parse_llm_response
-from baybe.recommenders.pure.llm._prompts import build_prompt, build_recovery_prompt
+from baybe.recommenders.pure.llm._prompts import make_prompt, make_recovery_prompt
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.serialization import SerialMixin
@@ -138,7 +138,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
         """
         from baybe._optional.llm import completion
 
-        recovery_prompt = build_recovery_prompt(
+        recovery_prompt = make_recovery_prompt(
             searchspace,
             error=error,
             original_response=original_response,
@@ -244,7 +244,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 numerical_measurements_must_be_within_tolerance=False,
             )
 
-        prompt = build_prompt(
+        prompt = make_prompt(
             searchspace,
             batch_size=batch_size,
             experiment_description=self.experiment_description,
