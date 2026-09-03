@@ -18,6 +18,7 @@ from baybe.recommenders.pure.llm._parsing import parse_llm_response
 from baybe.recommenders.pure.llm._prompts import build_prompt, build_recovery_prompt
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
+from baybe.serialization import SerialMixin
 from baybe.utils.conversion import to_string
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
@@ -32,7 +33,7 @@ _CREDENTIAL_LITELLM_KEYS = frozenset({"api_key", "api_base", "api_version"})
 
 
 @define(slots=False)
-class LLMRecommender(PureRecommender):
+class LLMRecommender(PureRecommender, SerialMixin):
     """Recommender that uses a language model to suggest new experimental points.
 
     Unlike other pure recommenders, this recommender does not implement the
