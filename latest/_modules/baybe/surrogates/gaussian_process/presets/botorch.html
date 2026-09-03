@@ -1221,6 +1221,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_module</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span>
 
@@ -1278,7 +1279,6 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils.gpytorch_modules</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
             <span class="n">get_covar_module_with_dim_scaled_prior</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils.priors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BetaPrior</span>
 
         <span class="n">parameter_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">(</span><span class="n">searchspace</span><span class="p">)</span>
 
@@ -1302,7 +1302,9 @@
         <span class="k">if</span> <span class="p">(</span><span class="n">task_idx</span> <span class="o">:=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">task_idx</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">base_kernel</span>
 
-        <span class="n">task_prior</span> <span class="o">=</span> <span class="n">BetaPrior</span><span class="p">(</span><span class="n">concentration1</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">concentration0</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+        <span class="c1"># BoTorch versions lacking this module are rejected at the start of this method.</span>
+        <span class="n">beta_prior</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;botorch.models.utils.priors&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">BetaPrior</span>
+        <span class="n">task_prior</span> <span class="o">=</span> <span class="n">beta_prior</span><span class="p">(</span><span class="n">concentration1</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">concentration0</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
         <span class="n">index_kernel</span> <span class="o">=</span> <span class="n">PositiveIndexKernel</span><span class="p">(</span>
             <span class="n">num_tasks</span><span class="o">=</span><span class="n">searchspace</span><span class="o">.</span><span class="n">n_tasks</span><span class="p">,</span>
             <span class="n">rank</span><span class="o">=</span><span class="n">searchspace</span><span class="o">.</span><span class="n">n_tasks</span><span class="p">,</span>

@@ -1221,6 +1221,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">combinations</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">exceptiongroup</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExceptionGroup</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constraint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.continuous</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContinuousCardinalityConstraint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.discrete</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -1229,11 +1231,6 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalContinuousParameter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
-
-<span class="k">try</span><span class="p">:</span>  <span class="c1"># For python &lt; 3.11, use the exceptiongroup backport</span>
-    <span class="n">ExceptionGroup</span>
-<span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">exceptiongroup</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExceptionGroup</span>
 
 
 <div class="viewcode-block" id="validate_constraints">

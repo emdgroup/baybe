@@ -1225,6 +1225,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">deep_mapping</span><span class="p">,</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">min_len</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">exceptiongroup</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExceptionGroup</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">_DiscreteLabelLikeParameter</span>
@@ -1236,11 +1237,6 @@
     <span class="n">df_drop_single_value_columns</span><span class="p">,</span>
     <span class="n">df_uncorrelated_features</span><span class="p">,</span>
 <span class="p">)</span>
-
-<span class="k">try</span><span class="p">:</span>  <span class="c1"># For python &lt; 3.11, use the exceptiongroup backport</span>
-    <span class="n">ExceptionGroup</span>
-<span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">exceptiongroup</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExceptionGroup</span>
 
 <span class="n">Smiles</span> <span class="o">=</span> <span class="nb">str</span>
 <span class="sd">&quot;&quot;&quot;Type alias for SMILES strings.&quot;&quot;&quot;</span>
