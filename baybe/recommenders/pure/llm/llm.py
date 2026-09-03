@@ -250,9 +250,16 @@ class LLMRecommender(PureRecommender):
         Raises:
             LLMResponseError: If the call to the language model fails, if its
                 response cannot be parsed and recovery fails, or if the number of
-                suggestions is less than the requested batch size.
+                eligible suggestions is less than the requested batch size.
+            ValueError: If ``batch_size`` is smaller than 1.
         """
         from baybe._optional.llm import completion
+
+        if batch_size < 1:
+            raise ValueError(
+                f"You must at least request one recommendation per batch, but "
+                f"provided {batch_size=}."
+            )
 
         if objective is not None:
             validate_object_names(searchspace.parameters + objective.targets)
@@ -314,10 +321,13 @@ class LLMRecommender(PureRecommender):
 
         if len(output) < batch_size:
             raise LLMResponseError(
-                f"LLM returned {len(output)} suggestions instead of the "
-                f"requested {batch_size}."
+                f"Only {len(output)} eligible suggestion(s) remained instead of the "
+                f"requested {batch_size}. The language model may have returned too "
+                f"few suggestions or proposed points excluded by the current "
+                f"candidate filters."
             )
 
+        # NOTE: Duplicate configurations within a batch are permitted
         return output.head(batch_size)
 
     @override

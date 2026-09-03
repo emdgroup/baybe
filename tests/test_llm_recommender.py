@@ -53,6 +53,28 @@ def _make_suggestions(params_list: list[dict]) -> str:
     )
 
 
+def _filtered_discrete_space(exclude: dict):
+    """Build a 3x3 discrete space with one candidate filtered from the eligible set."""
+    from attrs import evolve
+
+    from baybe.searchspace._filtered import FilteredSubspaceDiscrete
+
+    space = SearchSpace.from_product(
+        [
+            NumericalDiscreteParameter("x", values=[1, 2, 3]),
+            NumericalDiscreteParameter("y", values=[1, 2, 3]),
+        ]
+    )
+    exp_rep = space.discrete.exp_rep
+    mask_keep = ~(
+        (exp_rep["x"] == exclude["x"]) & (exp_rep["y"] == exclude["y"])
+    ).to_numpy()
+    return evolve(
+        space,
+        discrete=FilteredSubspaceDiscrete.from_subspace(space.discrete, mask_keep),
+    )
+
+
 @pytest.fixture(name="searchspace")
 def fixture_searchspace():
     """A search space with continuous, discrete numeric, and categorical parameters."""
@@ -686,6 +708,58 @@ def test_completion_failure_wrapped(mock_completion, recommender, searchspace):
 
     with pytest.raises(LLMResponseError, match="call to the language model failed"):
         recommender.recommend(batch_size=3, searchspace=searchspace)
+
+
+def test_recommend_rejects_nonpositive_batch_size(recommender, searchspace):
+    """A batch size below 1 raises ValueError before any model call."""
+    with pytest.raises(ValueError, match="at least request one recommendation"):
+        recommender.recommend(batch_size=0, searchspace=searchspace)
+
+
+@patch("baybe._optional.llm.completion")
+def test_recommend_allows_duplicate_configurations(
+    mock_completion, recommender, searchspace
+):
+    """Duplicate configurations within a batch are permitted."""
+    dup = {"temperature": 25.0, "pressure": 2.0, "n_cycles": 1, "catalyst": "A"}
+    mock_completion.return_value = _mock_response(_make_suggestions([dup, dup, dup]))
+
+    recommendations = recommender.recommend(batch_size=3, searchspace=searchspace)
+
+    assert len(recommendations) == 3
+    assert recommendations["catalyst"].tolist() == ["A", "A", "A"]
+
+
+@patch("baybe._optional.llm.completion")
+def test_recommend_excludes_filtered_candidates(mock_completion):
+    """Suggestions matching filtered-out (ineligible) candidates are dropped."""
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    filtered_space = _filtered_discrete_space(exclude={"x": 1, "y": 1})
+    rec = LLMRecommender(model="m", experiment_description="test")
+    # The first suggestion targets the excluded candidate; the rest are eligible.
+    mock_completion.return_value = _mock_response(
+        _make_suggestions([{"x": 1, "y": 1}, {"x": 2, "y": 2}, {"x": 3, "y": 3}])
+    )
+
+    result = rec.recommend(batch_size=2, searchspace=filtered_space)
+
+    assert len(result) == 2
+    assert not ((result["x"] == 1) & (result["y"] == 1)).any()
+
+
+@patch("baybe._optional.llm.completion")
+def test_recommend_errors_when_too_few_eligible(mock_completion):
+    """An error is raised when eligibility filtering leaves fewer than requested."""
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    filtered_space = _filtered_discrete_space(exclude={"x": 1, "y": 1})
+    rec = LLMRecommender(model="m", experiment_description="test")
+    # Only the excluded candidate is suggested, so nothing eligible remains.
+    mock_completion.return_value = _mock_response(_make_suggestions([{"x": 1, "y": 1}]))
+
+    with pytest.raises(LLMResponseError, match="eligible suggestion"):
+        rec.recommend(batch_size=1, searchspace=filtered_space)
 
 
 def test_initialization(recommender):
