@@ -628,11 +628,12 @@ def test_parse_llm_response_strips_wrappers(wrapper, searchspace):
 def test_recommend_invalid_response_with_failed_recovery(
     mock_completion, recommender, searchspace
 ):
-    """Invalid response that also fails recovery raises LLMResponseError."""
+    """An invalid response whose recovery also fails raises an informative error."""
     mock_completion.return_value = _mock_response("Invalid JSON")
 
-    with pytest.raises(LLMResponseError, match="Recovery produced another malformed"):
+    with pytest.raises(LLMResponseError, match="even after a recovery attempt"):
         recommender.recommend(batch_size=3, searchspace=searchspace)
+    assert mock_completion.call_count == 2
 
 
 @pytest.mark.parametrize(
@@ -681,21 +682,92 @@ def test_recovery_success(mock_completion, recommender, searchspace):
     assert mock_completion.call_count == 2
 
 
+@pytest.mark.parametrize(
+    "bad_parameters",
+    [
+        pytest.param("not json at all", id="malformed"),
+        pytest.param(
+            {
+                "temperature": 25.0,
+                "pressure": 2.0,
+                "n_cycles": 1,
+                "catalyst": "A",
+                "unknown": 1,
+            },
+            id="unknown_parameter",
+        ),
+        pytest.param({"temperature": 25.0, "catalyst": "A"}, id="missing_parameter"),
+        pytest.param(
+            {"temperature": "hot", "pressure": 2.0, "n_cycles": 1, "catalyst": "A"},
+            id="non_numeric",
+        ),
+        pytest.param(
+            {"temperature": 150.0, "pressure": 2.0, "n_cycles": 1, "catalyst": "A"},
+            id="invalid_value",
+        ),
+    ],
+)
 @patch("baybe._optional.llm.completion")
-def test_batch_size_error_when_llm_returns_fewer(
+def test_recovery_per_error_category(
+    mock_completion, bad_parameters, recommender, searchspace
+):
+    """Each response issue triggers exactly one recovery attempt that can succeed."""
+    bad_content = (
+        bad_parameters
+        if isinstance(bad_parameters, str)
+        else _make_suggestions([bad_parameters])
+    )
+    valid = _make_suggestions(
+        [{"temperature": 50.0, "pressure": 3.0, "n_cycles": 2, "catalyst": "C"}]
+    )
+    mock_completion.side_effect = [_mock_response(bad_content), _mock_response(valid)]
+
+    recommendations = recommender.recommend(batch_size=1, searchspace=searchspace)
+
+    assert len(recommendations) == 1
+    assert mock_completion.call_count == 2
+
+
+@patch("baybe._optional.llm.completion")
+def test_batch_size_shortfall_triggers_recovery(
     mock_completion, recommender, searchspace
 ):
-    """An error is raised when LLM returns fewer suggestions than requested."""
-    mock_completion.return_value = _mock_response(
+    """Too few valid suggestions trigger a recovery attempt that can succeed."""
+    too_few = _mock_response(
+        _make_suggestions(
+            [{"temperature": 25.0, "pressure": 2.0, "n_cycles": 1, "catalyst": "A"}]
+        )
+    )
+    enough = _mock_response(
         _make_suggestions(
             [
                 {"temperature": 25.0, "pressure": 2.0, "n_cycles": 1, "catalyst": "A"},
+                {"temperature": 50.0, "pressure": 3.0, "n_cycles": 2, "catalyst": "B"},
             ]
         )
     )
+    mock_completion.side_effect = [too_few, enough]
 
-    with pytest.raises(LLMResponseError, match="instead of the requested"):
+    recommendations = recommender.recommend(batch_size=2, searchspace=searchspace)
+
+    assert len(recommendations) == 2
+    assert mock_completion.call_count == 2
+
+
+@patch("baybe._optional.llm.completion")
+def test_batch_size_shortfall_failed_recovery(
+    mock_completion, recommender, searchspace
+):
+    """A persistent batch-size shortfall raises after a single recovery attempt."""
+    mock_completion.return_value = _mock_response(
+        _make_suggestions(
+            [{"temperature": 25.0, "pressure": 2.0, "n_cycles": 1, "catalyst": "A"}]
+        )
+    )
+
+    with pytest.raises(LLMResponseError, match="even after a recovery attempt"):
         recommender.recommend(batch_size=3, searchspace=searchspace)
+    assert mock_completion.call_count == 2
 
 
 @patch("baybe._optional.llm.completion")

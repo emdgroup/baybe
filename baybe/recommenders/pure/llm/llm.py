@@ -11,7 +11,7 @@ from attrs import define, field
 from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
-from baybe.exceptions import LLMResponseError
+from baybe.exceptions import BatchSizeError, LLMResponseError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.llm._parsing import parse_llm_response
@@ -77,65 +77,72 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 f"instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY)."
             )
 
-    def _attempt_recovery(
-        self,
-        error: LLMResponseError,
-        original_response: str,
-        searchspace: SearchSpace,
-    ) -> pd.DataFrame:
-        """Attempt to recover from a malformed LLM response by asking for correction.
+    def _query_model(self, prompt: str) -> str:
+        """Query the language model and return the raw response text.
 
         Args:
-            error: The error that occurred during parsing.
-            original_response: The original malformed response.
-            searchspace: The search space to validate recommendations against.
+            prompt: The prompt to send to the language model.
 
         Returns:
-            A DataFrame containing the corrected recommendations.
+            The raw text content of the model response.
 
         Raises:
-            LLMResponseError: If recovery fails.
+            LLMResponseError: If the model call fails or returns no usable content.
         """
         from baybe._optional.llm import completion
-
-        recovery_prompt = make_recovery_prompt(
-            searchspace,
-            error=error,
-            original_response=original_response,
-        )
 
         try:
             response = completion(
                 model=self.model,
-                messages=[{"role": "user", "content": recovery_prompt}],
+                messages=[{"role": "user", "content": prompt}],
                 **self.litellm_args,
             )
         except Exception as e:
             raise LLMResponseError(
-                f"Recovery LLM call failed ({type(e).__name__}): {e}. "
-                f"Original error: {error}"
+                f"The call to the language model failed ({type(e).__name__}): {e}. "
+                f"Check your API credentials, network connection, and the model "
+                f"identifier '{self.model}'."
             ) from e
 
         try:
             content = response.choices[0].message.content
         except (AttributeError, IndexError, TypeError) as e:
             raise LLMResponseError(
-                f"Recovery response had unexpected structure: {e}. "
-                f"Original error: {error}"
+                f"The language model returned an unexpected response structure: {e}."
             ) from e
 
         if content is None:
-            raise LLMResponseError(
-                f"Recovery returned empty content (None). Original error: {error}"
-            )
+            raise LLMResponseError("The language model returned empty content (None).")
 
-        try:
-            return parse_llm_response(content, searchspace)
-        except LLMResponseError as e:
-            raise LLMResponseError(
-                f"Recovery produced another malformed response: {e}. "
-                f"Original error: {error}"
-            ) from e
+        return content
+
+    def _validate_response(
+        self, content: str, searchspace: SearchSpace, batch_size: int
+    ) -> pd.DataFrame:
+        """Parse and validate a raw response into a recommendation batch.
+
+        Args:
+            content: The raw text content of the model response.
+            searchspace: The search space to validate recommendations against.
+            batch_size: The number of recommendations to generate.
+
+        Returns:
+            A DataFrame with exactly ``batch_size`` recommendations.
+
+        Raises:
+            LLMResponseError: If the response cannot be parsed/validated, or if it
+                contains fewer than ``batch_size`` recommendations.
+        """
+        output = parse_llm_response(content, searchspace)
+        if len(output) < batch_size:
+            raise BatchSizeError(
+                f"The language model returned {len(output)} valid recommendation(s) "
+                f"instead of the requested {batch_size}.",
+                requested=batch_size,
+                received=len(output),
+            )
+        # NOTE: Duplicate configurations within a batch are permitted.
+        return output.head(batch_size)
 
     @override
     def recommend(
@@ -159,13 +166,11 @@ class LLMRecommender(PureRecommender, SerialMixin):
             A DataFrame containing the recommendations as individual rows.
 
         Raises:
-            LLMResponseError: If the call to the language model fails, if its
-                response cannot be parsed and recovery fails, or if the number of
-                eligible suggestions is less than the requested batch size.
+            LLMResponseError: If the call to the language model fails, or if its
+                response cannot be turned into a valid recommendation batch even after
+                a recovery attempt.
             ValueError: If ``batch_size`` is smaller than 1.
         """
-        from baybe._optional.llm import completion
-
         if batch_size < 1:
             raise ValueError(
                 f"You must at least request one recommendation per batch, but "
@@ -207,44 +212,26 @@ class LLMRecommender(PureRecommender, SerialMixin):
             measurements=measurements,
             pending_experiments=pending_experiments,
         )
+        content = self._query_model(prompt)
         try:
-            response = completion(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                **self.litellm_args,
+            return self._validate_response(content, searchspace, batch_size)
+        except LLMResponseError as initial_error:
+            # The recommendation had an issue. Make a single, error-specific recovery
+            # attempt, informing the model what went wrong.
+            recovery_prompt = make_recovery_prompt(
+                searchspace, error=initial_error, original_response=content
             )
-        except Exception as e:
-            raise LLMResponseError(
-                f"The call to the language model failed ({type(e).__name__}): {e}. "
-                f"Check your API credentials, network connection, and the model "
-                f"identifier '{self.model}'."
-            ) from e
-
-        try:
-            content = response.choices[0].message.content
-        except (AttributeError, IndexError, TypeError) as e:
-            raise LLMResponseError(
-                f"LLM returned an unexpected response structure: {e}"
-            ) from e
-
-        if content is None:
-            raise LLMResponseError("LLM returned empty content (None).")
-
-        try:
-            output = parse_llm_response(content, searchspace)
-        except LLMResponseError as e:
-            output = self._attempt_recovery(e, content, searchspace)
-
-        if len(output) < batch_size:
-            raise LLMResponseError(
-                f"Only {len(output)} eligible suggestion(s) remained instead of the "
-                f"requested {batch_size}. The language model may have returned too "
-                f"few suggestions or proposed points excluded by the current "
-                f"candidate filters."
-            )
-
-        # NOTE: Duplicate configurations within a batch are permitted
-        return output.head(batch_size)
+            recovery_content = self._query_model(recovery_prompt)
+            try:
+                return self._validate_response(
+                    recovery_content, searchspace, batch_size
+                )
+            except LLMResponseError as recovery_error:
+                raise LLMResponseError(
+                    f"The language model failed to produce a valid recommendation, "
+                    f"even after a recovery attempt. Initial problem: {initial_error} "
+                    f"Remaining problem after recovery: {recovery_error}"
+                ) from recovery_error
 
     @override
     def __str__(self) -> str:
