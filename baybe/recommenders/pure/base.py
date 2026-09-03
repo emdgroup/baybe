@@ -8,6 +8,7 @@ from collections.abc import Callable
 from typing import Any, ClassVar, NoReturn, cast
 
 import cattrs
+import narwhals.stable.v2 as nw
 from attrs import define, field
 from cattrs.gen import make_dict_unstructure_fn
 from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
@@ -139,6 +140,15 @@ class PureRecommender(ABC, RecommenderProtocol):
                 rec = self._recommend_continuous(searchspace.continuous, batch_size)
             else:
                 rec = self._recommend_with_discrete_parts(searchspace, batch_size)
+
+        # Assert that the expected backend is used, which cannot be guaranteed using
+        # static type checking but is implicitly controlled by the runtime settings
+        actual = nw.Implementation.from_backend(nw.get_native_namespace(rec))
+        expected = nw.Implementation.from_backend(backend)
+        assert actual == expected, (
+            f"The generated recommendations dataframe uses backend '{actual}' "
+            f"but backend '{expected}' was expected."
+        )
 
         return cast(IntoDataFrameT, rec)
 
