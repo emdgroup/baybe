@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
@@ -134,7 +135,7 @@ Please provide a corrected JSON response that follows the required format:
 
 
 def _extract_parameter_info(
-    parameters: tuple[Parameter, ...],
+    parameters: Sequence[Parameter],
 ) -> list[SimpleNamespace]:
     """Extract parameter information for prompt construction.
 
