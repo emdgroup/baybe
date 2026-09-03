@@ -471,6 +471,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompatibleAcquisitionFunctionError.html">baybe.exceptions.IncompatibleAcquisitionFunctionError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompatibleArgumentError.html">baybe.exceptions.IncompatibleArgumentError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompatibleOverrideError.html">baybe.exceptions.IncompatibleOverrideError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompatibleSurrogateError.html">baybe.exceptions.IncompatibleSurrogateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
@@ -590,6 +591,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.parameters.enum.CustomEncoding.html">CustomEncoding</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.parameters.enum.ParameterEncoding.html">ParameterEncoding</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.parameters.enum.SubstanceEncoding.html">SubstanceEncoding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.parameters.enum.TransferLearningMode.html">TransferLearningMode</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.parameters.numerical.html">baybe.parameters.numerical</a><input aria-label="Toggle navigation of baybe.parameters.numerical" class="toctree-checkbox" id="toctree-checkbox-52" name="toctree-checkbox-52" role="switch" type="checkbox"/><label for="toctree-checkbox-52"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -1401,6 +1403,20 @@
 
     <span class="n">WHIM</span> <span class="o">=</span> <span class="s2">&quot;WHIM&quot;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.WHIMFingerprint`&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="TransferLearningMode">
+<a class="viewcode-back" href="../../../_autosummary/baybe.parameters.enum.TransferLearningMode.html#baybe.parameters.enum.TransferLearningMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransferLearningMode</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transfer learning modes for :class:`.TaskParameter`.&quot;&quot;&quot;</span>
+
+    <span class="n">INDEX_KERNEL</span> <span class="o">=</span> <span class="s2">&quot;INDEX_KERNEL&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`gpytorch.kernels.IndexKernel` for arbitrary correlations.&quot;&quot;&quot;</span>
+
+    <span class="n">POSITIVE_INDEX_KERNEL</span> <span class="o">=</span> <span class="s2">&quot;POSITIVE_INDEX_KERNEL&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`botorch.models.kernels.positive_index.PositiveIndexKernel` for positive</span>
+<span class="sd">    correlations.&quot;&quot;&quot;</span></div>
 
 </pre></div>
         </article>
