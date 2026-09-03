@@ -8,7 +8,16 @@ from json import JSONDecodeError
 
 import pandas as pd
 
-from baybe.exceptions import LLMResponseError, LLMResponseWarning
+from baybe.exceptions import (
+    ConstraintViolationError,
+    IneligiblePointsError,
+    InvalidParameterValueError,
+    LLMResponseWarning,
+    MalformedLLMResponseError,
+    MissingParameterError,
+    NonNumericParameterError,
+    UnknownParameterError,
+)
 from baybe.searchspace import SearchSpace
 from baybe.utils.dataframe import fuzzy_row_match, normalize_input_dtypes
 from baybe.utils.validation import validate_parameter_input
@@ -48,9 +57,18 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
         :meth:`baybe.searchspace.discrete.SubspaceDiscrete.get_candidates`).
 
     Raises:
-        LLMResponseError: If the response cannot be parsed, contains invalid parameter
-            values, or violates any discrete constraint (including batch constraints)
-            present in the search space.
+        MalformedLLMResponseError: If the response cannot be parsed into the expected
+            JSON structure.
+        UnknownParameterError: If a suggestion references parameters not in the search
+            space.
+        MissingParameterError: If a suggestion omits required search space parameters.
+        NonNumericParameterError: If a suggestion gives non-numeric values for a
+            numerical parameter.
+        InvalidParameterValueError: If a suggestion contains invalid parameter values.
+        ConstraintViolationError: If a suggestion violates a discrete constraint
+            (including batch constraints) present in the search space.
+        IneligiblePointsError: If a suggestion does not correspond to an eligible
+            candidate of the search space.
 
     Warns:
         LLMResponseWarning: If the search space contains continuous constraints.
@@ -61,55 +79,69 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
     try:
         suggestions = json.loads(payload)
     except (JSONDecodeError, TypeError) as e:
-        raise LLMResponseError(f"Error parsing JSON output: {e}") from e
+        raise MalformedLLMResponseError(f"Error parsing JSON output: {e}.") from e
 
     if not isinstance(suggestions, list):
-        raise LLMResponseError("Response must be a JSON array")
+        raise MalformedLLMResponseError("Response must be a JSON array.")
 
     if not suggestions:
-        raise LLMResponseError("Response contains an empty array with no suggestions.")
+        raise MalformedLLMResponseError(
+            "Response contains an empty array with no suggestions."
+        )
 
     recommendations = []
     for suggestion in suggestions:
         if not isinstance(suggestion, dict):
-            raise LLMResponseError("Each suggestion must be a JSON object")
+            raise MalformedLLMResponseError("Each suggestion must be a JSON object.")
 
         if "parameters" not in suggestion:
-            raise LLMResponseError("Each suggestion must contain a 'parameters' field")
+            raise MalformedLLMResponseError(
+                "Each suggestion must contain a 'parameters' field."
+            )
 
         if "explanation" not in suggestion:
-            raise LLMResponseError(
-                "Each suggestion must contain an 'explanation' field"
+            raise MalformedLLMResponseError(
+                "Each suggestion must contain an 'explanation' field."
             )
 
         params = suggestion["parameters"]
         if not isinstance(params, dict):
-            raise LLMResponseError("Parameters must be a JSON object")
+            raise MalformedLLMResponseError("Parameters must be a JSON object.")
 
         param_names = {p.name for p in searchspace.parameters}
         unknown = set(params.keys()) - param_names
         if unknown:
-            raise LLMResponseError(
-                f"Response contains unknown parameter names: {unknown}"
+            raise UnknownParameterError(
+                f"Response contains unknown parameter names: {unknown}.",
+                unknown_names=unknown,
+                valid_names=param_names,
             )
 
         recommendations.append(params)
 
     df = pd.DataFrame(recommendations)
 
-    # Validate parameter columns as for measurement input. Called directly, not via
-    # `preprocess_dataframe`, which is a no-op under `preprocess_dataframes=False`.
-    # TODO: Sharpen the caught errors — different validation failures (e.g. missing
-    #   columns vs. out-of-range values) will require different reactions (hard error
-    #   vs. recovery vs. eligibility drop) rather than a single wrapped error.
+    # Detect missing columns up front so they surface as a distinct error.
+    missing = {p.name for p in searchspace.parameters}.difference(df.columns)
+    if missing:
+        raise MissingParameterError(
+            f"Response is missing values for the following parameters: {missing}.",
+            parameters=missing,
+        )
+
+    # Validate parameter columns as for measurement input. `validate_parameter_input`
+    # raises `TypeError` for non-numeric entries and `ValueError` for other invalid
+    # values, which we surface as distinct error types.
     try:
         validate_parameter_input(
             df,
             searchspace.parameters,
             numerical_measurements_must_be_within_tolerance=True,
         )
-    except (ValueError, TypeError) as e:
-        raise LLMResponseError(str(e)) from e
+    except TypeError as e:
+        raise NonNumericParameterError(str(e), detail=str(e)) from e
+    except ValueError as e:
+        raise InvalidParameterValueError(str(e), detail=str(e)) from e
     df = normalize_input_dtypes(df, searchspace.parameters)
 
     continuous_constraints = (
@@ -129,20 +161,24 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
     for constraint in searchspace.discrete.constraints:
         invalid_idx = constraint.get_invalid(df)
         if not invalid_idx.empty:
-            raise LLMResponseError(
+            raise ConstraintViolationError(
                 f"{len(invalid_idx)} suggestion(s) violate the "
                 f"'{type(constraint).__name__}' constraint on parameters "
-                f"{constraint.parameters}."
+                f"{constraint.parameters}.",
+                constraint_name=type(constraint).__name__,
+                parameters=constraint.parameters,
             )
 
     for constraint in searchspace.discrete.constraints_batch:
         param_name = constraint.parameters[0]
         unique_values = df[param_name].unique()
         if len(unique_values) > 1:
-            raise LLMResponseError(
+            raise ConstraintViolationError(
                 f"Suggestions violate the '{type(constraint).__name__}' constraint on "
                 f"parameter '{param_name}': all suggestions in a batch must share the "
-                f"same value, but received {list(unique_values)}."
+                f"same value, but received {list(unique_values)}.",
+                constraint_name=type(constraint).__name__,
+                parameters=constraint.parameters,
             )
 
     # Recover the exp_rep index (for campaign metadata tracking) via the same fuzzy
@@ -154,6 +190,15 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
     if discrete_params:
         exp_rep, _ = searchspace.discrete.get_candidates()
         aligned_index = fuzzy_row_match(exp_rep, df, discrete_params)
+        # `fuzzy_row_match` silently drops suggestions with no eligible candidate, so
+        # detect the shortfall explicitly rather than let them vanish.
+        n_ineligible = len(df) - len(aligned_index)
+        if n_ineligible > 0:
+            raise IneligiblePointsError(
+                f"{n_ineligible} suggestion(s) do not correspond to eligible "
+                f"candidates of the search space.",
+                n_ineligible=n_ineligible,
+            )
         continuous_param_names = [p.name for p in searchspace.continuous.parameters]
         if continuous_param_names:
             rec_disc = exp_rep.loc[aligned_index]
