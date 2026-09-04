@@ -13,7 +13,9 @@ from typing_extensions import override
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
+from baybe.settings import active_settings
 from baybe.utils.conversion import to_string
+from baybe.utils.dataframe import _df_with_backend
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -132,7 +134,10 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
         # Select rows by positional indices and return the corresponding subset
         return nw.maybe_reset_index(
-            nw.from_native(candidates, eager_only=True)[selection]
+            _df_with_backend(
+                nw.from_native(candidates, eager_only=True)[selection],
+                active_settings.default_dataframe_backend,
+            )
         ).to_native()
 
     @override
