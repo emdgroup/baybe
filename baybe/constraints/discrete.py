@@ -440,6 +440,21 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
     dependencies: DiscreteDependenciesConstraint | None = field(default=None)
     """Dependencies connected with the invariant parameters."""
 
+    @dependencies.validator
+    def _validate_dependencies(  # noqa: DOC101, DOC103
+        self, _: Any, value: DiscreteDependenciesConstraint | None
+    ) -> None:
+        """Validate the dependencies constraint.
+
+        Raises:
+            ValueError: If the dependencies constraint uses ``exclude=True``.
+        """
+        if value is not None and value.exclude:
+            raise ValueError(
+                "Dependencies of a permutation invariance constraint cannot use "
+                "'exclude=True'."
+            )
+
     @property
     @override
     def _required_parameters(self) -> set[str]:

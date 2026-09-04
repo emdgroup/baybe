@@ -70,6 +70,7 @@ def discrete_dependencies_constraints(
     draw: st.DrawFn,
     parameters: list[DiscreteParameter] | None = None,
     affected_parameter_names: list[list[str]] | None = None,
+    exclude: bool | None = None,
 ):
     if parameters is None:
         # Draw random unique parameter names
@@ -132,7 +133,8 @@ def discrete_dependencies_constraints(
             p not in affected_parameter_names[k] for k, p in enumerate(parameter_names)
         ), "Affected parameters cannot overlap with the parameters they depend on"
 
-    exclude = draw(st.booleans())
+    if exclude is None:
+        exclude = draw(st.booleans())
     return DiscreteDependenciesConstraint(
         parameter_names, conditions, affected_parameter_names, exclude=exclude
     )
@@ -158,6 +160,7 @@ def discrete_permutation_invariance_constraints(
                     discrete_dependencies_constraints(
                         parameters=None,
                         affected_parameter_names=[[p] for p in parameter_names],
+                        exclude=False,
                     ),
                 ]
             )

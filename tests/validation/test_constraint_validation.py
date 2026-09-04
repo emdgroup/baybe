@@ -3,12 +3,16 @@
 import pytest
 from pytest import param
 
-from baybe.constraints.conditions import ThresholdCondition
+from baybe.constraints.conditions import SubSelectionCondition, ThresholdCondition
 from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
 )
-from baybe.constraints.discrete import DiscreteSumConstraint
+from baybe.constraints.discrete import (
+    DiscreteDependenciesConstraint,
+    DiscretePermutationInvarianceConstraint,
+    DiscreteSumConstraint,
+)
 
 
 @pytest.mark.parametrize(
@@ -48,4 +52,22 @@ def test_invalid_coefficients(coefficients, match):
             parameters=["A", "B", "C"],
             operator="<=",
             coefficients=coefficients,
+        )
+
+
+def test_excluded_permutation_dependencies():
+    """Excluded permutation dependencies raise a ValueError."""
+    dependencies = DiscreteDependenciesConstraint(
+        parameters=["Gate"],
+        conditions=[SubSelectionCondition(selection=["on"])],
+        affected_parameters=[["P1", "P2"]],
+        exclude=True,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Dependencies of a permutation invariance constraint cannot use",
+    ):
+        DiscretePermutationInvarianceConstraint(
+            parameters=["P1", "P2"], dependencies=dependencies
         )
