@@ -1,6 +1,7 @@
 """Tests verifying that transformation methods preserve the pandas index."""
 
 import functools
+import os
 
 import pandas as pd
 import pytest
@@ -19,12 +20,18 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.parameters.substance import SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets._deprecated import LegacyTarget
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
+    reason="Only possible in FULLTEST environment.",
+)
 
 _INDEX = [10, 20, 30]
 _DATA = pd.DataFrame(
@@ -71,9 +78,8 @@ _parameters: list[DiscreteParameter] = [
     CustomDiscreteParameter("mol_custom", data=_custom_parameter_data),
 ]
 if CHEM_INSTALLED:
-    from baybe.parameters.substance import SubstanceParameter
-
     _parameters.append(SubstanceParameter("mol", data=_substance_data))
+
 
 _searchspaces: list[tuple[str, SearchSpace]] = [
     (
@@ -104,9 +110,11 @@ _searchspaces: list[tuple[str, SearchSpace]] = [
 ]
 
 
-assert set(get_subclasses(Target)) - {LegacyTarget} == {t.__class__ for t in _targets}
-assert set(get_subclasses(Objective)) == {o.__class__ for o in _objectives}
-assert set(get_subclasses(DiscreteParameter)) == {p.__class__ for p in _parameters}
+def test_coverage():
+    """All concrete subclasses providing transformation methods are covered."""
+    assert set(get_subclasses(Target)) - {LegacyTarget} == {type(t) for t in _targets}
+    assert set(get_subclasses(Objective)) == {type(o) for o in _objectives}
+    assert set(get_subclasses(DiscreteParameter)) == {type(p) for p in _parameters}
 
 
 @pytest.mark.parametrize(
