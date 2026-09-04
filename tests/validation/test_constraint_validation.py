@@ -3,14 +3,14 @@
 import pytest
 from pytest import param
 
-from baybe.constraints.conditions import ThresholdCondition
 from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
 )
 from baybe.constraints.discrete import (
+    DiscreteLinearConstraint,
+    DiscreteProductConstraint,
     DiscreteRepetitionConstraint,
-    DiscreteSumConstraint,
 )
 
 
@@ -76,9 +76,10 @@ def test_invalid_max_repetitions(kwargs, error, match):
 def test_invalid_coefficients(coefficients, match):
     """Invalid coefficients raise a ValueError."""
     with pytest.raises(ValueError, match=match):
-        DiscreteSumConstraint(
+        DiscreteLinearConstraint(
             parameters=["A", "B", "C"],
-            condition=ThresholdCondition(threshold=1.0, operator="<="),
+            operator="<=",
+            rhs=1.0,
             coefficients=coefficients,
         )
     with pytest.raises(ValueError, match=match):
@@ -86,4 +87,33 @@ def test_invalid_coefficients(coefficients, match):
             parameters=["A", "B", "C"],
             operator="<=",
             coefficients=coefficients,
+        )
+
+
+@pytest.mark.parametrize(
+    "constraint_cls",
+    [DiscreteLinearConstraint, DiscreteProductConstraint],
+    ids=["linear", "product"],
+)
+@pytest.mark.parametrize(
+    ("operator", "tolerance", "match"),
+    [
+        param("=", float("nan"), "cannot be 'nan'", id="nan"),
+        param("=", float("inf"), "cannot be 'inf'", id="inf"),
+        param("=", -float("inf"), "cannot be 'inf'", id="neg-inf"),
+        param("=", 0.0, "must be positive", id="zero"),
+        param("=", -1.0, "must be positive", id="negative"),
+        param(
+            ">=", 0.1, "only valid with the following operators", id="wrong-operator"
+        ),
+    ],
+)
+def test_invalid_tolerance(constraint_cls, operator, tolerance, match):
+    """Invalid tolerances are rejected eagerly at construction."""
+    with pytest.raises(ValueError, match=match):
+        constraint_cls(
+            parameters=["A", "B"],
+            operator=operator,
+            rhs=1.0,
+            tolerance=tolerance,
         )

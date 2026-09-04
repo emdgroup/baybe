@@ -48,9 +48,9 @@ import pandas as pd
 
 from baybe.constraints import (
     DiscreteDependenciesConstraint,
+    DiscreteLinearConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteRepetitionConstraint,
-    DiscreteSumConstraint,
     ThresholdCondition,
 )
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
@@ -168,9 +168,11 @@ perm_inv_constraint = DiscretePermutationInvarianceConstraint(
 # Interpreting the slot amounts as percentages, we need to ensure that their total is
 # always 100:
 
-sum_constraint = DiscreteSumConstraint(
+sum_constraint = DiscreteLinearConstraint(
     parameters=["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"],
-    condition=ThresholdCondition(threshold=100, operator="=", tolerance=SUM_TOLERANCE),
+    operator="=",
+    rhs=100,
+    tolerance=SUM_TOLERANCE,
 )
 
 

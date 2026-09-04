@@ -33,11 +33,11 @@ from baybe.constraints import (
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
+    DiscreteLinearConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
     DiscreteRepetitionConstraint,
     DiscreteSelectionConstraint,
-    DiscreteSumConstraint,
     SubSelectionCondition,
     ThresholdCondition,
 )
@@ -509,17 +509,20 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
             n_max_repetitions=1,
         ),
-        "Constraint_8": DiscreteSumConstraint(
+        "Constraint_8": DiscreteLinearConstraint(
             parameters=["Fraction_1", "Fraction_2"],
-            condition=ThresholdCondition(threshold=150, operator="<="),
+            operator="<=",
+            rhs=150,
         ),
         "Constraint_9": DiscreteProductConstraint(
             parameters=["Fraction_1", "Fraction_2"],
-            condition=ThresholdCondition(threshold=30, operator=">="),
+            operator=">=",
+            rhs=30,
         ),
-        "Constraint_10": DiscreteSumConstraint(
+        "Constraint_10": DiscreteLinearConstraint(
             parameters=["Fraction_1", "Fraction_2"],
-            condition=ThresholdCondition(threshold=100, operator="="),
+            operator="=",
+            rhs=100,
         ),
         "Constraint_11": DiscretePermutationInvarianceConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
@@ -535,9 +538,11 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
                 affected_parameters=[["Solvent_1"], ["Solvent_2"], ["Solvent_3"]],
             ),
         ),
-        "Constraint_12": DiscreteSumConstraint(
+        "Constraint_12": DiscreteLinearConstraint(
             parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
-            condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.01),
+            operator="=",
+            rhs=100,
+            tolerance=0.01,
         ),
         "Constraint_13": DiscreteCustomConstraint(
             parameters=["Pressure", "Solvent_1", "Temperature"],

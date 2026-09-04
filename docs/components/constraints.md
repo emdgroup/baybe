@@ -273,24 +273,35 @@ DiscreteSelectionConstraint(
 A more detailed example can be found
 [here](../../examples/Constraints_Discrete/selection_constraints).
 
-#### DiscreteSumConstraint and DiscreteProductConstraint
-[`DiscreteSumConstraint`](baybe.constraints.discrete.DiscreteSumConstraint)
+#### DiscreteLinearConstraint and DiscreteProductConstraint
+[`DiscreteLinearConstraint`](baybe.constraints.discrete.DiscreteLinearConstraint)
 and [`DiscreteProductConstraint`](baybe.constraints.discrete.DiscreteProductConstraint)
-impose conditions on sums or products of numerical parameters.
+impose conditions on weighted sums or products of numerical parameters.
+The `DiscreteLinearConstraint` mirrors the interface of
+[`ContinuousLinearConstraint`](#CLC) with `operator`, `rhs`, and `coefficients`.
 [In the first example from `ContinuousLinearConstraint`](#CLC), we
 had three continuous parameters `x_1`, `x_2` and `x_3`, which needed to sum
 up to 1.0.
 If these parameters were instead discrete, the corresponding constraint would look like:
 ```python
-from baybe.constraints import DiscreteSumConstraint, ThresholdCondition
+from baybe.constraints import DiscreteLinearConstraint
 
-DiscreteSumConstraint(
+DiscreteLinearConstraint(
     parameters=["x_1", "x_2", "x_3"],
-    condition=ThresholdCondition(  # set condition that should apply to the sum
-        threshold=1.0,
-        operator="=",
-        tolerance=0.001,  # optional; here, everything between 0.999 and 1.001 would also be considered valid
-    ),
+    operator="=",
+    rhs=1.0,
+    tolerance=0.001,  # optional; everything between 0.999 and 1.001 is valid
+)
+```
+
+A product constraint can be expressed similarly:
+```python
+from baybe.constraints import DiscreteProductConstraint
+
+DiscreteProductConstraint(
+    parameters=["x_1", "x_2"],
+    operator=">=",
+    rhs=30.0,
 )
 ```
 

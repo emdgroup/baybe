@@ -27,6 +27,7 @@ from baybe.constraints.conditions import (
     ThresholdCondition,
     _threshold_operators,
     _valid_logic_combiners,
+    _valid_tolerance_operators,
 )
 from baybe.serialization import (
     block_deserialization_hook,
@@ -114,8 +115,8 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         # - OR with exclude=True: once a present condition holds, the row is
         #   permanently marked for removal (an OR match stays).
         # For XOR, the combined result can flip as further operands arrive, so
-        # all parameters must be present first. All other cases must likewise
-        # wait for every parameter.
+        # all parameters must be present before evaluating. All other cases must
+        # likewise wait for every parameter.
         present = available & set(self.parameters)
         if not present:
             return False
@@ -146,11 +147,13 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
 
 
 @define
-class DiscreteSumConstraint(DiscreteFilteringConstraint):
-    """Class for modelling sum constraints.
+class DiscreteLinearConstraint(DiscreteFilteringConstraint):
+    """Class for modelling linear (weighted-sum) constraints on discrete parameters.
 
-    The constraint evaluates whether the (optionally weighted) sum of the specified
-    parameters satisfies the given threshold condition.
+    The constraint compares the sum of the specified parameters, optionally weighted by
+    :paramref:`DiscreteLinearConstraint.coefficients`, against
+    :paramref:`DiscreteLinearConstraint.rhs` using
+    :paramref:`DiscreteLinearConstraint.operator`.
 
     Examples:
         >>> df = pd.DataFrame({"A": [1.0, 3.0, 5.0], "B": [2.0, 1.0, 3.0]})
@@ -159,25 +162,25 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
         0  1.0  2.0
         1  3.0  1.0
         2  5.0  3.0
-        >>> c = DiscreteSumConstraint(
+        >>> c = DiscreteLinearConstraint(
         ...     parameters=["A", "B"],
-        ...     condition=ThresholdCondition(threshold=5.0, operator="<="),
+        ...     operator="<=",
+        ...     rhs=5.0,
         ... )
         >>> list(c.get_invalid(df))
         [2]
 
         With coefficients, the weighted sum is checked instead:
 
-        >>> c = DiscreteSumConstraint(
+        >>> c = DiscreteLinearConstraint(
         ...     parameters=["A", "B"],
-        ...     condition=ThresholdCondition(threshold=5.0, operator="<="),
         ...     coefficients=(2.0, 1.0),
+        ...     operator="<=",
+        ...     rhs=5.0,
         ... )
         >>> list(c.get_invalid(df))
         [1, 2]
     """
-
-    # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # IMPROVE: Look-ahead filtering would be possible if parameter
     # value ranges (min/max) were available to the constraint, allowing
@@ -189,8 +192,8 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
     # See base class.
 
     # object variables
-    condition: ThresholdCondition = field()
-    """The condition modeled by this constraint."""
+    operator: str = field(validator=in_(_threshold_operators))
+    """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
     coefficients: tuple[float, ...] = field(
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
@@ -199,6 +202,17 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
     """The coefficients for the weighted sum, one per entry in ``parameters``.
 
     Defaults to all-ones, i.e. an unweighted sum."""
+
+    rhs: float = field(default=0.0, converter=float, validator=finite_float)
+    """Right-hand side value of the comparison."""
+
+    tolerance: float | None = field(
+        default=None, converter=lambda x: float(x) if x is not None else None
+    )
+    """Numerical tolerance for equality/inequality operators that support it.
+
+    Only applicable when ``operator`` is one of ``"="``, ``"=="``, ``"!="``.
+    Set to a reasonable default when left as ``None``."""
 
     @coefficients.default
     def _default_coefficients(self) -> tuple[float, ...]:
@@ -223,6 +237,39 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
         if any(c == 0.0 for c in coefficients):
             raise ValueError("All entries in 'coefficients' must be non-zero.")
 
+    @tolerance.validator
+    def _validate_tolerance(  # noqa: DOC101, DOC103
+        self, attribute: Any, value: float | None
+    ) -> None:
+        """Validate the tolerance.
+
+        Raises:
+            ValueError: If a tolerance is provided for a non-tolerance operator.
+            ValueError: If the tolerance is not positive for a tolerance operator.
+        """
+        if self.operator not in _valid_tolerance_operators and value is not None:
+            raise ValueError(
+                f"Setting the '{attribute.alias}' is only valid with the following "
+                f"operators: {_valid_tolerance_operators}, but got operator "
+                f"'{self.operator}'."
+            )
+        if value is not None:
+            finite_float(self, attribute, value)
+            if value <= 0.0:
+                raise ValueError(
+                    f"'{attribute.alias}' must be positive, but got {value}."
+                )
+
+    def _build_condition(self) -> ThresholdCondition:
+        """Build the internal threshold condition from the constraint fields."""
+        kwargs: dict[str, Any] = {
+            "threshold": self.rhs,
+            "operator": self.operator,
+        }
+        if self.tolerance is not None:
+            kwargs["tolerance"] = self.tolerance
+        return ThresholdCondition(**kwargs)
+
     @override
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = pd.Series(
@@ -231,7 +278,8 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
             ),
             index=df.index,
         )
-        mask_good = self.condition.evaluate(evaluate_df)
+        condition = self._build_condition()
+        mask_good = condition.evaluate(evaluate_df)
 
         return df.index[mask_good]
 
@@ -240,12 +288,17 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
         from baybe._optional.polars import polars as pl
 
         weighted = [pl.col(p) * c for p, c in zip(self.parameters, self.coefficients)]
-        return self.condition.to_polars(pl.sum_horizontal(weighted))
+        condition = self._build_condition()
+        return condition.to_polars(pl.sum_horizontal(weighted))
 
 
 @define
 class DiscreteProductConstraint(DiscreteFilteringConstraint):
-    """Class for modelling product constraints.
+    """Class for modelling product constraints on discrete parameters.
+
+    The constraint compares the product of the specified parameters against
+    :paramref:`DiscreteProductConstraint.rhs` using
+    :paramref:`DiscreteProductConstraint.operator`.
 
     Examples:
         >>> df = pd.DataFrame({"A": [2.0, 3.0, 5.0], "B": [3.0, 2.0, 2.0]})
@@ -256,31 +309,120 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
         2  5.0  2.0
         >>> c = DiscreteProductConstraint(
         ...     parameters=["A", "B"],
-        ...     condition=ThresholdCondition(threshold=8.0, operator="<="),
+        ...     operator="<=",
+        ...     rhs=8.0,
         ... )
         >>> list(c.get_invalid(df))
         [2]
     """
-
-    # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
-
-    # class variables
-    numerical_only: ClassVar[bool] = True
-    # See base class.
-
-    # object variables
-    condition: ThresholdCondition = field()
-    """The condition that is used for this constraint."""
 
     # IMPROVE: Look-ahead filtering would be possible if parameter
     # value ranges (min/max) were available to the constraint, allowing
     # bound-based pruning of partial products before all parameters are
     # present. This could be expressed via a _can_evaluate override.
 
+    # class variables
+    numerical_only: ClassVar[bool] = True
+    # See base class.
+
+    # object variables
+    # >>>>>>>>>> Deprecation
+    # NOTE: `condition` occupies its original (second) positional slot so that the
+    # previously valid call `DiscreteProductConstraint(parameters, condition)` keeps
+    # working (with a deprecation warning). The new-interface fields are therefore
+    # keyword-only until the deprecated `condition` field is removed.
+    condition: ThresholdCondition | None = field(default=None)
+    """Deprecated. Use keywords ``operator``, ``rhs``, and ``tolerance`` instead."""
+
+    # <<<<<<<<<< Deprecation
+
+    operator: str = field(default="", validator=instance_of(str), kw_only=True)
+    """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
+
+    rhs: float = field(
+        default=0.0, converter=float, validator=finite_float, kw_only=True
+    )
+    """Right-hand side value of the comparison."""
+
+    tolerance: float | None = field(
+        default=None,
+        converter=lambda x: float(x) if x is not None else None,
+        kw_only=True,
+    )
+    """Numerical tolerance for equality/inequality operators that support it.
+
+    Only applicable when ``operator`` is one of ``"="``, ``"=="``, ``"!="``.
+    Set to a reasonable default when left as ``None``."""
+
+    def __attrs_post_init__(self):
+        """Resolve the deprecated ``condition`` field and validate."""
+        import warnings
+
+        flds = fields(type(self))
+
+        # >>>>>>>>>> Deprecation
+        if self.condition is not None:
+            if self.operator != "":
+                raise ValueError(
+                    f"Cannot specify both '{flds.condition.alias}' and "
+                    f"'{flds.operator.alias}'. Use the new interface "
+                    f"('{flds.operator.alias}', '{flds.rhs.alias}', "
+                    f"'{flds.tolerance.alias}') instead."
+                )
+            warnings.warn(
+                f"Passing '{flds.condition.alias}' to '{type(self).__name__}' is "
+                f"deprecated and will be removed in a future version. Use "
+                f"'{flds.operator.alias}' and '{flds.rhs.alias}' (and optionally "
+                f"'{flds.tolerance.alias}') instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            object.__setattr__(self, "operator", self.condition.operator)
+            object.__setattr__(self, "rhs", self.condition.threshold)
+            object.__setattr__(self, "tolerance", self.condition.tolerance)
+            object.__setattr__(self, "condition", None)
+        # <<<<<<<<<< Deprecation
+
+        # Validate operator
+        if self.operator not in _threshold_operators:
+            raise ValueError(
+                f"'{flds.operator.alias}' must be one of "
+                f"{list(_threshold_operators)}, but got '{self.operator}'."
+            )
+
+        # Validate tolerance
+        if (
+            self.operator not in _valid_tolerance_operators
+            and self.tolerance is not None
+        ):
+            raise ValueError(
+                f"Setting the '{flds.tolerance.alias}' is only valid with the "
+                f"following operators: {_valid_tolerance_operators}, but got "
+                f"operator '{self.operator}'."
+            )
+        if self.tolerance is not None:
+            finite_float(self, flds.tolerance, self.tolerance)
+            if self.tolerance <= 0.0:
+                raise ValueError(
+                    f"'{flds.tolerance.alias}' must be positive, "
+                    f"but got {self.tolerance}."
+                )
+
+    def _build_condition(self) -> ThresholdCondition:
+        """Build the internal threshold condition from the constraint fields."""
+        kwargs: dict[str, Any] = {
+            "threshold": self.rhs,
+            "operator": self.operator,
+        }
+        if self.tolerance is not None:
+            kwargs["tolerance"] = self.tolerance
+        return ThresholdCondition(**kwargs)
+
     @override
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = df[self.parameters].prod(axis=1)
-        mask_good = self.condition.evaluate(evaluate_df)
+        condition = self._build_condition()
+        mask_good = condition.evaluate(evaluate_df)
 
         return df.index[mask_good]
 
@@ -288,13 +430,49 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
-        op = _threshold_operators[self.condition.operator]
-
-        # Get the product of columns
+        condition = self._build_condition()
         expr = pl.reduce(lambda acc, x: acc * x, pl.col(self.parameters))
+        return condition.to_polars(expr)
 
-        # Apply the threshold operator on expr and the condition threshold
-        return op(expr, self.condition.threshold)
+
+# >>>>>>>>>> Deprecation
+def DiscreteSumConstraint(  # noqa: N802
+    parameters, condition=None, coefficients=None, *, exclude=False
+) -> DiscreteLinearConstraint:
+    """A ``DiscreteLinearConstraint`` alias for backward compatibility."""  # noqa: D401
+    import warnings
+
+    warnings.warn(
+        f"'DiscreteSumConstraint' is deprecated and will be removed in a future "
+        f"version. Use '{DiscreteLinearConstraint.__name__}' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    # Translate the old ThresholdCondition-based interface
+    if condition is not None:
+        operator = condition.operator
+        rhs = condition.threshold
+        tolerance = condition.tolerance
+    else:
+        raise TypeError(
+            f"Missing required argument 'condition'. Use "
+            f"'{DiscreteLinearConstraint.__name__}' with 'operator' and 'rhs' instead."
+        )
+
+    new_kwargs: dict[str, Any] = {
+        "operator": operator,
+        "rhs": rhs,
+        "exclude": exclude,
+    }
+    if tolerance is not None:
+        new_kwargs["tolerance"] = tolerance
+    if coefficients is not None:
+        new_kwargs["coefficients"] = coefficients
+
+    return DiscreteLinearConstraint(parameters, **new_kwargs)
+
+
+# <<<<<<<<<< Deprecation
 
 
 @define
@@ -814,7 +992,7 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
 DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscreteSelectionConstraint,
     DiscreteRepetitionConstraint,
-    DiscreteSumConstraint,
+    DiscreteLinearConstraint,
     DiscreteProductConstraint,
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
@@ -828,20 +1006,64 @@ converter.register_structure_hook(DiscreteCustomConstraint, block_deserializatio
 
 
 # >>>>>>>>>> Deprecation
+def _unstructure_product_constraint(obj: DiscreteProductConstraint) -> dict:
+    """Unstructure hook that excludes the deprecated ``condition`` field."""
+    result = cattrs.gen.make_dict_unstructure_fn(DiscreteProductConstraint, converter)(
+        obj
+    )
+    result.pop("condition", None)
+    return result
+
+
+converter.register_unstructure_hook(
+    DiscreteProductConstraint, _unstructure_product_constraint
+)
+
+
+def _unpack_condition_payload(val: dict) -> None:
+    """Unpack a legacy nested ``condition`` dict into top-level fields.
+
+    Mutates *val* in place: extracts ``threshold`` → ``rhs``,
+    ``operator`` → ``operator``, and (optionally) ``tolerance`` → ``tolerance``
+    from the nested ``condition`` sub-dict, then removes the ``condition`` key.
+
+    Args:
+        val: The serialized constraint dict to transform.
+    """
+    cond = val.pop("condition", None)
+    if cond is None:
+        return
+    if isinstance(cond, dict):
+        cond = dict(cond)
+        # Remove the type discriminator if present
+        cond.pop("type", None)
+        val["operator"] = cond["operator"]
+        val["rhs"] = cond["threshold"]
+        tol = cond.get("tolerance")
+        if tol is not None:
+            val["tolerance"] = tol
+
+
 def _structure_constraint_compat(val: dict, cls: type) -> Constraint:
     """Structure hook that redirects legacy constraint type names."""
     val = dict(val)  # copy before mutating
-    if val.get(_TYPE_FIELD) == "DiscreteExcludeConstraint":
+    type_ = val.get(_TYPE_FIELD)
+    if type_ == "DiscreteExcludeConstraint":
         val[_TYPE_FIELD] = "DiscreteSelectionConstraint"
         val["exclude"] = True
-    elif val.get(_TYPE_FIELD) == "DiscreteNoLabelDuplicatesConstraint":
+    elif type_ == "DiscreteNoLabelDuplicatesConstraint":
         val[_TYPE_FIELD] = "DiscreteRepetitionConstraint"
         val["n_max_repetitions"] = 1
-    elif val.get(_TYPE_FIELD) == "DiscreteLinkedParametersConstraint":
+    elif type_ == "DiscreteLinkedParametersConstraint":
         val[_TYPE_FIELD] = "DiscreteRepetitionConstraint"
         if (params := val.get("parameters")) is not None and len(params) >= 2:
             val["n_max_repetitions"] = len(params) - 1
         val["exclude"] = True
+    elif type_ == "DiscreteSumConstraint":
+        _unpack_condition_payload(val)
+        val[_TYPE_FIELD] = "DiscreteLinearConstraint"
+    elif type_ == "DiscreteProductConstraint" and "condition" in val:
+        _unpack_condition_payload(val)
     return make_base_structure_hook(cls)(val, cls)
 
 
