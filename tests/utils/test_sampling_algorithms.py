@@ -13,6 +13,7 @@ from pytest import param
 from sklearn.metrics import pairwise_distances
 
 from baybe._optional.info import FPSAMPLE_INSTALLED
+from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSInitialization,
     FPSRecommender,
@@ -246,21 +247,27 @@ def test_fps_recommender_utility_initialization_indices(searchspace):
         False,
     ],
 )
-def test_fps_recommender_utility_call(searchspace, use_fpsample):
+def test_fps_recommender_utility_call(use_fpsample):
     """FPSRecommender calls expected underlying utility."""
+    ss = NumericalDiscreteParameter("p", [1.0, 2.0, 3.0, 4.0]).to_searchspace()
+
     if use_fpsample:
-        context = patch("baybe._optional.fpsample.fps_sampling", return_value=[0, 1, 2])
+        context = patch("baybe._optional.fpsample.fps_sampling", return_value=[2, 0])
     else:
         context = patch(
             "baybe.recommenders.pure.nonpredictive.sampling.farthest_point_sampling",
-            return_value=[0, 1, 2],
+            return_value=[2, 0],
         )
 
-    with context as mock_, Settings(use_fpsample=use_fpsample):
-        result = FPSRecommender().recommend(batch_size=3, searchspace=searchspace)
+    with (
+        context as mock_,
+        Settings(use_fpsample=use_fpsample, default_dataframe_backend="pandas"),
+    ):
+        result = FPSRecommender().recommend(batch_size=2, searchspace=ss)
 
     mock_.assert_called_once()
-    assert result.index.tolist() == [0, 1, 2]
+    expected = ss.discrete.get_candidates().iloc[[2, 0]].reset_index(drop=True)
+    assert result.equals(expected)
 
 
 @pytest.mark.skipif(

@@ -6,9 +6,12 @@ import plotly.graph_objects as go
 import streamlit as st
 from sklearn.datasets import make_blobs
 
+from baybe import active_settings
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SubspaceDiscrete
 from baybe.utils.basic import get_subclasses
+
+active_settings.default_dataframe_backend = "pandas"
 
 
 def uniform_distribution(n_points: int) -> np.ndarray:
@@ -113,8 +116,13 @@ def main():
     recommender = selection_recommenders[recommender_name]()
     selection = recommender.recommend(searchspace=searchspace, batch_size=n_selected)
 
+    # Recover the original row positions in `points` for each selected point.
+    selection_indices = selection.merge(points.reset_index(), on=["x", "y"])[
+        "index"
+    ].values
+
     # show the result
-    fig = plot_point_selection(points.values, selection.index.values, recommender_name)
+    fig = plot_point_selection(points.values, selection_indices, recommender_name)
     st.plotly_chart(fig)
 
 

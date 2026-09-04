@@ -5,10 +5,10 @@ from __future__ import annotations
 import gc
 import warnings
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
+import narwhals.stable.v2 as nw
 import numpy as np
-import pandas as pd
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, gt, instance_of
@@ -36,11 +36,15 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
+from baybe.settings import active_settings
 from baybe.utils.conversion import to_string
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
     from torch import Tensor
+
+_T = TypeVar("_T")
 
 
 @define(kw_only=True)
@@ -157,7 +161,7 @@ class BotorchRecommender(BayesianRecommender):
         self,
         subspace_discrete: SubspaceDiscrete,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a discrete search space.
 
         Dispatches to the appropriate optimization routine depending on whether
@@ -181,7 +185,7 @@ class BotorchRecommender(BayesianRecommender):
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a continuous search space.
 
         Args:
@@ -208,14 +212,18 @@ class BotorchRecommender(BayesianRecommender):
 
         points, _ = recommend_continuous_torch(self, subspace_continuous, batch_size)
 
-        return pd.DataFrame(points, columns=subspace_continuous.parameter_names)
+        return nw.from_numpy(
+            points.numpy(),
+            schema=subspace_continuous.parameter_names,
+            backend=active_settings.default_dataframe_backend,
+        ).to_native()
 
     @override
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a hybrid search space.
 
         Dispatches to the appropriate optimization routine depending on whether
@@ -234,8 +242,8 @@ class BotorchRecommender(BayesianRecommender):
 
     def _optimize_over_subsets(
         self,
-        subset_callables: Iterable[Callable[[], tuple[Any, Tensor]]],
-    ) -> tuple[Any, Tensor]:
+        subset_callables: Iterable[Callable[[], tuple[_T, Tensor]]],
+    ) -> tuple[_T, Tensor]:
         """Optimize across subsets and return the result with the best acqf value.
 
         Each callable performs optimization for one subset configuration and returns
@@ -256,7 +264,7 @@ class BotorchRecommender(BayesianRecommender):
         """
         from botorch.exceptions.errors import InfeasibilityError as BoInfeasibilityError
 
-        results_all: list = []
+        results_all: list[_T] = []
         acqf_values_all: list[Tensor] = []
 
         for optimize_fn in subset_callables:

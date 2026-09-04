@@ -3,13 +3,15 @@
 #  this file will resolve type errors
 # mypy: disable-error-code="arg-type"
 
+from __future__ import annotations
+
 import gc
 from abc import abstractmethod
 from collections.abc import Iterable, Iterator
-from typing import Any, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
 import cattrs
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import Factory, define, field, fields
 from attrs.validators import deep_iterable, ge, in_, instance_of
 from typing_extensions import override
@@ -27,6 +29,9 @@ from baybe.serialization import (
     converter,
 )
 from baybe.utils.conversion import to_string
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrameT
 
 _T = TypeVar("_T")
 
@@ -77,10 +82,14 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> RecommenderProtocol:
-        n_data = len(measurements) if measurements is not None else 0
+        n_data = (
+            len(nw.from_native(measurements, eager_only=True))
+            if measurements is not None
+            else 0
+        )
         if (n_data >= self.switch_after) or (
             self._has_switched and self.remain_switched
         ):
@@ -131,13 +140,16 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> RecommenderProtocol:
         # If the training dataset size has decreased, something went wrong
-        if (
-            n_data := len(measurements) if measurements is not None else 0
-        ) < self._n_last_measurements:
+        n_data = (
+            len(nw.from_native(measurements, eager_only=True))
+            if measurements is not None
+            else 0
+        )
+        if n_data < self._n_last_measurements:
             raise RuntimeError(
                 f"The training dataset size decreased from {self._n_last_measurements} "
                 f"to {n_data} since the last function call, which indicates that "
@@ -160,16 +172,20 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         recommendation = super().recommend(
             batch_size, searchspace, objective, measurements, pending_experiments
         )
         self._was_used = True
 
         # Remember the training dataset size for the next call
-        self._n_last_measurements = len(measurements) if measurements is not None else 0
+        self._n_last_measurements = (
+            len(nw.from_native(measurements, eager_only=True))
+            if measurements is not None
+            else 0
+        )
 
         return recommendation
 

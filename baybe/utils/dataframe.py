@@ -24,7 +24,8 @@ from baybe.parameters.base import Parameter
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrame, IntoSeries
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoFrame, IntoSeries
+    from narwhals.typing import IntoBackend
     from torch import Tensor
 
     from baybe.targets.base import Target
@@ -35,6 +36,8 @@ if TYPE_CHECKING:
     _IntoTensor: TypeAlias = (
         int | float | np.ndarray | nw.Series | nw.DataFrame | IntoSeries | IntoDataFrame
     )
+
+_SeriesOrFrameT = TypeVar("_SeriesOrFrameT", nw.Series, nw.DataFrame)
 
 
 @overload
@@ -795,6 +798,73 @@ def normalize_input_dtypes(
     for col in cols_to_convert:
         df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
     return df
+
+
+def _infer_backend(*frames: IntoFrame | None) -> IntoBackend:
+    """Infer the dataframe backend from the first non-``None`` frame.
+
+    Falls back to :attr:`~baybe.settings.Settings.default_dataframe_backend` if all
+    provided frames are ``None``.
+
+    Args:
+        *frames: The frames to inspect. Accepts both eager and lazy frames.
+            Any of them may be ``None``.
+
+    Returns:
+        The inferred backend.
+    """
+    for frame in frames:
+        if frame is not None:
+            return nw.get_native_namespace(frame)
+    return active_settings.default_dataframe_backend
+
+
+def _copy_index(
+    output: _SeriesOrFrameT, source: nw.DataFrame | nw.Series, /
+) -> _SeriesOrFrameT:
+    """Copy the pandas index from one series/dataframe to another.
+
+    For non-pandas backends this is a no-op, since they have no index concept.
+
+    Args:
+        output: The narwhals Series or DataFrame to copy the index onto.
+        source: The narwhals Series or DataFrame whose index is to be copied.
+
+    Returns:
+        The output with the index copied from the source.
+    """
+    # TODO: Replace once built-in solution is available
+    # https://github.com/narwhals-dev/narwhals/issues/3693
+    # https://github.com/narwhals-dev/narwhals/issues/3864
+    if (index := nw.maybe_get_index(source)) is not None:
+        return nw.maybe_set_index(
+            output, index=nw.from_native(pd.Series(index), series_only=True)
+        )
+    return output
+
+
+def _df_with_backend(obj: _SeriesOrFrameT, backend: IntoBackend, /) -> _SeriesOrFrameT:
+    """Convert a narwhals Series/DataFrame to a different native backend.
+
+    Args:
+        obj: The narwhals Series/DataFrame to convert.
+        backend: The target backend to convert to.
+
+    Returns:
+        The input object converted to the specified backend.
+    """
+    # TODO: Replace once built-in solution is available
+    # https://github.com/narwhals-dev/narwhals/issues/3812
+
+    incoming = nw.Implementation.from_backend(nw.get_native_namespace(obj))
+    target = nw.Implementation.from_backend(backend)
+    if incoming == target:
+        return obj
+
+    if isinstance(obj, nw.Series):
+        name = obj.name
+        return nw.from_dict(obj.to_frame().to_dict(), backend=backend)[name]  # type: ignore[return-value]
+    return nw.from_dict(obj.to_dict(), backend=backend)  # type: ignore[return-value]
 
 
 def _df_equals(df1: nw.DataFrame, df2: nw.DataFrame, /) -> bool:

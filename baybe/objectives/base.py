@@ -15,7 +15,7 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
-from baybe.utils.dataframe import get_transform_objects, to_tensor
+from baybe.utils.dataframe import _copy_index, get_transform_objects, to_tensor
 from baybe.utils.dataframe import (
     handle_missing_values as df_handle_missing_values,
 )
@@ -252,26 +252,19 @@ class Objective(ABC, SerialMixin):
 
         import torch
 
-        ns = nw.get_native_namespace(nw_df)
         with torch.no_grad():
             transformed = self._full_transformation(
                 to_tensor(nw_df.select([t.name for t in targets]))
             )
 
-        # TODO[narwhalify]: drop index handling once pandas index is removed globally
-        if ns is pd:
-            return pd.DataFrame(  # type: ignore[return-value]
-                transformed.numpy(),
-                columns=self.output_names,
-                index=nw_df.to_pandas().index,
-            )
-
-        return nw.from_numpy(
+        out = nw.from_numpy(
             # For 1-D transforms, we explicitly reshape to 2-D to please nw.from_numpy
             transformed.numpy().reshape(-1, len(self.output_names)),
             schema=self.output_names,
-            backend=ns,
-        ).to_native()
+            backend=nw.get_native_namespace(nw_df),
+        )
+
+        return _copy_index(out, nw_df).to_native()
 
     def identify_non_dominated_configurations(
         self, configurations: pd.DataFrame, /

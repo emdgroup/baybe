@@ -6,9 +6,11 @@ import gc
 from abc import ABC
 from typing import TYPE_CHECKING
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
+from narwhals.stable.v2.typing import IntoDataFrameT
 from typing_extensions import override
 
 from baybe.acquisition import qLogEI, qLogNEHVI
@@ -132,9 +134,9 @@ class BayesianRecommender(PureRecommender, ABC):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         if objective is None:
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' require "
@@ -143,7 +145,9 @@ class BayesianRecommender(PureRecommender, ABC):
 
         validate_object_names(searchspace.parameters + objective.targets)
 
-        if (measurements is None) or measurements.empty:
+        if (measurements is None) or nw.from_native(
+            measurements, eager_only=True
+        ).is_empty():
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
                 f"empty training data."
@@ -155,6 +159,7 @@ class BayesianRecommender(PureRecommender, ABC):
             objective,
             numerical_measurements_must_be_within_tolerance=False,
         )
+        measurements_pd = nw.from_native(measurements, eager_only=True).to_pandas()
 
         if pending_experiments is not None:
             pending_experiments = preprocess_dataframe(
@@ -162,9 +167,14 @@ class BayesianRecommender(PureRecommender, ABC):
                 searchspace,
                 numerical_measurements_must_be_within_tolerance=False,
             )
+        pending_experiments_pd = (
+            nw.from_native(pending_experiments, eager_only=True).to_pandas()
+            if pending_experiments is not None
+            else None
+        )
 
         self._setup_botorch_acqf(
-            searchspace, objective, measurements, pending_experiments
+            searchspace, objective, measurements_pd, pending_experiments_pd
         )
 
         try:

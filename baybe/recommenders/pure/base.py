@@ -1,14 +1,17 @@
 """Base classes for all pure recommenders."""
 
+from __future__ import annotations
+
 import gc
 from abc import ABC
 from collections.abc import Callable
-from typing import Any, ClassVar, NoReturn
+from typing import Any, ClassVar, NoReturn, cast
 
 import cattrs
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import define, field
 from cattrs.gen import make_dict_unstructure_fn
+from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
 from typing_extensions import override
 
 from baybe.exceptions import (
@@ -23,7 +26,9 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.serialization.core import add_type, converter
+from baybe.settings import Settings
 from baybe.utils.boolean import is_abstract
+from baybe.utils.dataframe import _infer_backend
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 _DEPRECATION_ERROR_MESSAGE = (
@@ -107,11 +112,13 @@ class PureRecommender(ABC, RecommenderProtocol):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         if objective is not None:
             validate_object_names(searchspace.parameters + objective.targets)
+
+        backend = _infer_backend(measurements, pending_experiments)
 
         if measurements is not None:
             measurements = preprocess_dataframe(
@@ -128,18 +135,40 @@ class PureRecommender(ABC, RecommenderProtocol):
                 numerical_measurements_must_be_within_tolerance=False,
             )
 
-        if searchspace.type is SearchSpaceType.CONTINUOUS:
-            return self._recommend_continuous(
-                subspace_continuous=searchspace.continuous, batch_size=batch_size
+        with Settings(default_dataframe_backend=backend):
+            if searchspace.type is SearchSpaceType.CONTINUOUS:
+                rec = self._recommend_continuous(searchspace.continuous, batch_size)
+            else:
+                rec = self._recommend_with_discrete_parts(searchspace, batch_size)
+
+        # Assert that the expected backend is used, which cannot be guaranteed using
+        # static type checking but is implicitly controlled by the runtime settings
+        actual = nw.Implementation.from_backend(nw.get_native_namespace(rec))
+        expected = nw.Implementation.from_backend(backend)
+        assert actual == expected, (
+            f"The generated recommendations dataframe uses backend '{actual}' "
+            f"but backend '{expected}' was expected."
+        )
+
+        # For pandas-backed results, assert that the dataframe has a default index
+        if actual is nw.Implementation.PANDAS:
+            import pandas as pd
+
+            assert isinstance(rec, pd.DataFrame) and rec.index.equals(
+                pd.RangeIndex(len(rec))
+            ), (
+                f"The generated recommendations dataframe has a non-default pandas "
+                f"index. Ensure '{self.__class__.__name__}' calls "
+                f"'{nw.maybe_reset_index.__name__}' before returning."
             )
-        else:
-            return self._recommend_with_discrete_parts(searchspace, batch_size)
+
+        return cast(IntoDataFrameT, rec)
 
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a discrete search space.
 
         Args:
@@ -175,7 +204,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a continuous search space.
 
         Args:
@@ -210,7 +239,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         searchspace: SearchSpace,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a hybrid search space.
 
         If the recommender does not implement additional functions for discrete and
@@ -237,7 +266,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         searchspace: SearchSpace,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Obtain recommendations in search spaces with a discrete part.
 
         Convenience helper which sequentially performs the following tasks: get discrete

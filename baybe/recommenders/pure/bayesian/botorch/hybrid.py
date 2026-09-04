@@ -7,6 +7,7 @@ import warnings
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from attrs import evolve
@@ -19,11 +20,13 @@ from baybe.exceptions import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.candidates import TableCandidates
+from baybe.settings import active_settings
 from baybe.utils.basic import flatten
-from baybe.utils.dataframe import to_tensor
+from baybe.utils.dataframe import _df_with_backend, to_tensor
 from baybe.utils.sampling_algorithms import sample_numerical_df
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
     from torch import Tensor
 
     from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
@@ -33,7 +36,7 @@ def recommend_hybrid_without_subsets(
     recommender: BotorchRecommender,
     searchspace: SearchSpace,
     batch_size: int,
-) -> pd.DataFrame:
+) -> IntoDataFrame:
     """Recommend points using the ``optimize_acqf_mixed`` function of BoTorch.
 
     This functions samples points from the discrete subspace, performs optimization
@@ -59,6 +62,11 @@ def recommend_hybrid_without_subsets(
     Returns:
         The recommended points.
     """
+    # TODO: Narhwalification is currently blocked by the fact that the alignment of
+    #   experimental and computational representations in the subsampled path
+    #   (i.e. when `sample_numerical_df` is used) is inherently index-based and
+    #   requires a narwhals-compatible subsampling mechanism first.
+
     assert recommender._objective is not None
 
     # Interpoint constraints cannot be used with optimize_acqf_mixed, see
@@ -157,14 +165,17 @@ def recommend_hybrid_without_subsets(
         axis=1,
     )
 
-    return rec_exp
+    return _df_with_backend(
+        nw.from_native(rec_exp.reset_index(drop=True)),
+        active_settings.default_dataframe_backend,
+    ).to_native()
 
 
 def recommend_hybrid_with_subsets(
     recommender: BotorchRecommender,
     searchspace: SearchSpace,
     batch_size: int,
-) -> pd.DataFrame:
+) -> IntoDataFrame:
     """Recommend from a hybrid space with subset constraints.
 
     Uses ``SearchSpace.subsets()`` to enumerate the Cartesian
@@ -186,7 +197,7 @@ def recommend_hybrid_with_subsets(
     # NOTE: No min_discrete_candidates filtering in hybrid spaces because
     # optimize_acqf_mixed can produce multiple recommendations from a single
     # discrete candidate by varying continuous parameters.
-    candidates = searchspace.discrete.get_candidates()
+    candidates = nw.from_native(searchspace.discrete.get_candidates(), eager_only=True)
     combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
     if searchspace.n_subsets <= recommender.max_n_subsets:
         combined_masks = searchspace.subsets()
@@ -196,15 +207,16 @@ def recommend_hybrid_with_subsets(
     def make_callable(
         d_mask: np.ndarray,
         c_inactive_params: frozenset[str],
-    ) -> Callable[[], tuple[pd.DataFrame, Tensor]]:
-        def optimize() -> tuple[pd.DataFrame, Tensor]:
+    ) -> Callable[[], tuple[IntoDataFrame, Tensor]]:
+        def optimize() -> tuple[IntoDataFrame, Tensor]:
             import torch
 
-            # TODO: Replace with .filter() method to avoid materialization
+            # TODO: Replace with SubspaceDiscrete.filter method to avoid materialization
             mod_disc = evolve(
                 searchspace.discrete,
                 candidates=TableCandidates(
-                    searchspace.discrete.parameters, candidates.loc[d_mask]
+                    searchspace.discrete.parameters,
+                    candidates.filter(d_mask.tolist()).to_native(),
                 ),
             )
             mod_cont = (
@@ -222,9 +234,7 @@ def recommend_hybrid_with_subsets(
 
             comp = mod_searchspace.transform(rec)
             with torch.no_grad():
-                acqf_value = recommender._botorch_acqf(
-                    to_tensor(comp.values).unsqueeze(0)
-                )
+                acqf_value = recommender._botorch_acqf(to_tensor(comp).unsqueeze(0))
             return rec, acqf_value
 
         return optimize
@@ -234,7 +244,9 @@ def recommend_hybrid_with_subsets(
 
     # Post-check minimum cardinality on continuous columns
     if subspace_c.constraints_cardinality and not is_cardinality_fulfilled(
-        best_rec[list(subspace_c.parameter_names)],
+        nw.from_native(best_rec, eager_only=True)
+        .select(subspace_c.parameter_names)
+        .to_native(),
         subspace_c,
         check_maximum=False,
     ):

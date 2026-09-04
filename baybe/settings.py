@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 import narwhals.stable.v2 as nw
 import numpy as np
 from attrs import Attribute, Converter, Factory, define, field, fields
+from attrs.converters import optional as optional_c
 from attrs.setters import validate
 from attrs.validators import in_, instance_of
 from attrs.validators import optional as optional_v
@@ -221,6 +222,7 @@ class Settings(_SlottedContextDecorator):
     _default_dataframe_backend: nw.Implementation | None = field(
         alias="default_dataframe_backend",
         default=None,
+        converter=optional_c(nw.Implementation.from_backend),  # type: ignore[misc]
         validator=optional_v(in_(typing.get_args(EagerAllowed))),
     )
     """Controls which backend is used when constructing dataframes from scratch. Set to ``None`` to apply automatic selection."""  # noqa: E501
