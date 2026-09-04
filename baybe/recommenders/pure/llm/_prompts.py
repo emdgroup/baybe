@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any
-
-from attrs import asdict as attrs_asdict
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 from baybe.exceptions import IncompatibilityError, LLMResponseError
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.parameters.substance import SubstanceParameter
+from baybe.recommenders.pure.llm._schema import _response_format
 from baybe.searchspace import SearchSpace
 
 if TYPE_CHECKING:
@@ -49,33 +47,27 @@ Parameter: {{ param.name }}
 {% if param.description is not none %}
 Description: {{ param.description }}
 {% endif %}
-Type: {{ param.type }}
-{% if param.type == 'continuous' %}
-Bounds: [{{ param.bounds[0] }}, {{ param.bounds[1] }}]
-{% else %}
-Allowed values: {{ param.values }}
-{% endif %}
+Type: {{ param.kind }}
+{{ param.domain }}
 {% if param.unit is not none %}
 Unit: {{ param.unit }}
 {% endif %}
-{% if param.misc %}
-{% for key, value in param.misc.items() %}
+{% for key, value in param.misc %}
 {{ key }}: {{ value }}
 {% endfor %}
-{% endif %}
 
 {% endfor %}
 
-{% if measurements is not none and not measurements.empty %}
+{% if measurements is not none %}
 PREVIOUS MEASUREMENTS:
-{{ measurements.to_string(index=False) }}
+{{ measurements }}
 {% endif %}
 
-{% if pending_experiments is not none and not pending_experiments.empty %}
+{% if pending_experiments is not none %}
 PENDING EXPERIMENTS:
 The following experiments have already been proposed and are awaiting results.
 Do not recommend these again.
-{{ pending_experiments.to_string(index=False) }}
+{{ pending_experiments }}
 {% endif %}
 
 Please suggest {{ batch_size }} new experimental conditions that are likely to \
@@ -86,17 +78,7 @@ For each suggestion, provide:
 
 Format your response as a JSON array of objects with the following structure \
 (no backticks):
-[
-  {
-    "explanation": "Brief explanation of the suggestion",
-    "parameters": {
-      "param1": value1,
-      "param2": value2,
-      ...
-    }
-  },
-  ...
-]
+{{ response_format }}
 """
 
 _RECOVERY_PROMPT_TEMPLATE = """\
@@ -111,67 +93,98 @@ ORIGINAL RESPONSE:
 PARAMETERS:
 {% for param in parameters %}
 Parameter: {{ param.name }}
-Type: {{ param.type }}
-{% if param.type == 'continuous' %}
-Bounds: [{{ param.bounds[0] }}, {{ param.bounds[1] }}]
-{% else %}
-Allowed values: {{ param.values }}
-{% endif %}
+Type: {{ param.kind }}
+{{ param.domain }}
 {% endfor %}
 
 Please provide a corrected JSON response that follows the required format:
-[
-  {
-    "explanation": "Brief explanation of the suggestion",
-    "parameters": {
-      "param1": value1,
-      "param2": value2,
-      ...
-    }
-  },
-  ...
-]\
+{{ response_format }}\
 """
 
 
-def _extract_parameter_info(
-    parameters: Sequence[Parameter],
-) -> list[SimpleNamespace]:
-    """Extract parameter information for prompt construction.
+class _ParameterPromptInfo(TypedDict):
+    """Typed, presentation-only view of a parameter for prompt rendering.
+
+    Gives the template a single stable shape (instead of the previous
+    dynamically-shaped ``SimpleNamespace``); the value domain is flattened into one
+    ``domain`` string so no field is conditionally present.
+    """
+
+    name: str
+    description: str | None
+    kind: Literal["continuous", "discrete_numeric", "categorical", "substance"]
+    domain: str
+    unit: str | None
+    misc: tuple[tuple[str, str], ...]
+
+
+class _PromptContext(TypedDict):
+    """Typed render context for the main prompt."""
+
+    experiment_description: str
+    objective: Objective | None
+    parameters: tuple[_ParameterPromptInfo, ...]
+    measurements: str | None
+    pending_experiments: str | None
+    batch_size: int
+    response_format: str
+
+
+class _RecoveryPromptContext(TypedDict):
+    """Typed render context for the recovery prompt."""
+
+    parameters: tuple[_ParameterPromptInfo, ...]
+    recovery_instruction: str
+    original_response: str
+    response_format: str
+
+
+def _parameter_prompt_info(parameter: Parameter) -> _ParameterPromptInfo:
+    """Build the prompt view of a parameter.
 
     Args:
-        parameters: The parameters from the search space.
+        parameter: The parameter to describe.
 
     Returns:
-        A list of namespace objects containing parameter information.
+        A typed, presentation-only view consumed by the prompt template.
 
     Raises:
-        IncompatibilityError: If a parameter type is not supported.
+        IncompatibilityError: If the parameter type is not supported.
     """
-    infos = []
-    for param in parameters:
-        info: dict[str, Any] = {
-            "name": param.name,
-            **attrs_asdict(param.metadata),
-        }
-
-        if isinstance(param, NumericalContinuousParameter):
-            info["type"] = "continuous"
-            info["bounds"] = param.bounds.to_tuple()
-        elif isinstance(param, DiscreteParameter):
-            info["type"] = "discrete_numeric" if param.is_numerical else "categorical"
-            info["values"] = list(param.values)
-        else:
-            raise IncompatibilityError(
-                f"Parameter '{param.name}' has unsupported type "
-                f"'{type(param).__name__}'. Only "
-                f"'{NumericalContinuousParameter.__name__}' and "
-                f"'{DiscreteParameter.__name__}' subclasses are supported."
-            )
-
-        infos.append(SimpleNamespace(**info))
-
-    return infos
+    if isinstance(parameter, NumericalContinuousParameter):
+        lower, upper = parameter.bounds.to_tuple()
+        kind: Literal["continuous", "discrete_numeric", "categorical", "substance"] = (
+            "continuous"
+        )
+        domain = f"Bounds: [{lower}, {upper}]"
+    elif isinstance(parameter, SubstanceParameter):
+        # Substances are chemical compounds: expose their SMILES so the model can
+        # reason about structure, while still choosing by substance name.
+        kind = "substance"
+        substances = ", ".join(
+            f"{name} ({smiles})" for name, smiles in parameter.data.items()
+        )
+        domain = f"Allowed values (choose by name; SMILES in parentheses): {substances}"
+    elif isinstance(parameter, DiscreteParameter):
+        kind = "discrete_numeric" if parameter.is_numerical else "categorical"
+        domain = f"Allowed values: {list(parameter.values)}"
+    else:
+        raise IncompatibilityError(
+            f"Parameter '{parameter.name}' has unsupported type "
+            f"'{type(parameter).__name__}'. Only "
+            f"'{NumericalContinuousParameter.__name__}' and "
+            f"'{DiscreteParameter.__name__}' subclasses are supported."
+        )
+    return {
+        "name": parameter.name,
+        "description": parameter.description,
+        "kind": kind,
+        "domain": domain,
+        "unit": parameter.unit,
+        "misc": tuple(
+            (key, str(value)) for key, value in parameter.metadata.misc.items()
+        ),
+    }
 
 
 def make_prompt(
@@ -199,18 +212,34 @@ def make_prompt(
     Returns:
         The constructed prompt.
     """
-    from baybe._optional.llm import Template
+    from baybe._optional.llm import StrictUndefined, Template
 
-    parameters = _extract_parameter_info(searchspace.parameters)
-    template = Template(_PROMPT_TEMPLATE, trim_blocks=True, lstrip_blocks=True)
-    return template.render(
-        experiment_description=experiment_description,
-        objective=objective,
-        parameters=parameters,
-        measurements=measurements,
-        pending_experiments=pending_experiments,
-        batch_size=batch_size,
+    measurements_text = (
+        measurements.to_string(index=False)
+        if measurements is not None and not measurements.empty
+        else None
     )
+    pending_text = (
+        pending_experiments.to_string(index=False)
+        if pending_experiments is not None and not pending_experiments.empty
+        else None
+    )
+    context: _PromptContext = {
+        "experiment_description": experiment_description,
+        "objective": objective,
+        "parameters": tuple(_parameter_prompt_info(p) for p in searchspace.parameters),
+        "measurements": measurements_text,
+        "pending_experiments": pending_text,
+        "batch_size": batch_size,
+        "response_format": _response_format(),
+    }
+    template = Template(
+        _PROMPT_TEMPLATE,
+        trim_blocks=True,
+        lstrip_blocks=True,
+        undefined=StrictUndefined,
+    )
+    return template.render(context)
 
 
 def make_recovery_prompt(
@@ -231,12 +260,18 @@ def make_recovery_prompt(
     Returns:
         The constructed recovery prompt.
     """
-    from baybe._optional.llm import Template
+    from baybe._optional.llm import StrictUndefined, Template
 
-    parameters = _extract_parameter_info(searchspace.parameters)
-    template = Template(_RECOVERY_PROMPT_TEMPLATE, trim_blocks=True, lstrip_blocks=True)
-    return template.render(
-        recovery_instruction=error.recovery_instruction,
-        original_response=original_response,
-        parameters=parameters,
+    context: _RecoveryPromptContext = {
+        "parameters": tuple(_parameter_prompt_info(p) for p in searchspace.parameters),
+        "recovery_instruction": error.recovery_instruction,
+        "original_response": original_response,
+        "response_format": _response_format(),
+    }
+    template = Template(
+        _RECOVERY_PROMPT_TEMPLATE,
+        trim_blocks=True,
+        lstrip_blocks=True,
+        undefined=StrictUndefined,
     )
+    return template.render(context)
