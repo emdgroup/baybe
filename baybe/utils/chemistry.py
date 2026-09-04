@@ -14,7 +14,6 @@ from baybe._optional.chem import (
     Chem,
     ConformerGenerator,
     MolFromSmilesTransformer,
-    fingerprints,
 )
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.settings import active_settings
@@ -160,6 +159,8 @@ def get_fingerprint_class(
     Returns:
         The fingerprint class.
     """
+    from baybe._optional.chem import fingerprints
+
     # Exception case
     if encoding is SubstanceEncoding.RDKITFINGERPRINT:
         return fingerprints.RDKitFingerprint
