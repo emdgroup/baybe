@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Breaking Changes
+- For pandas users: series/dataframe indices are no longer used as information carriers
+  anywhere. In particular, recommendation dataframes no longer reflect discrete subspace
+  locations via their index. Similarly, `_recommend_discrete` and kin now return a
+  dataframe-based subselection instead of a `pd.Index`.
 - All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
   are now keyword-only
 - `Campaign.measurements` no longer contains `FitNr` or `BatchNr` metadata columns
@@ -49,10 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no longer requiring users to manually group constraints according to their type
 - Parameter and constraint validation has been streamlined, using `validate_parameters`
   and `validate_constraints` as the only remaining public entry points
-- For pandas users: series/dataframe indices are no longer used as information carriers
-  anywhere. In particular, recommendation dataframes no longer reflect discrete subspace
-  locations via their index. Similarly, `_recommend_discrete` and kin now return a
-  dataframe-based subselection instead of a `pd.Index`.
 - `SubspaceDiscrete.from_product` and `SubspaceDiscrete.from_simplex` now split
   their `constraints` argument into filtering constraints (applied during construction)
   and batch constraints (stored in `batch_constraints`)
