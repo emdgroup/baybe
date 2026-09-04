@@ -9,6 +9,7 @@ import warnings
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import Converter, define, field, fields
 from attrs.converters import optional as optional_c
@@ -83,7 +84,7 @@ class _ModelContext:
     objective: Objective = field(validator=instance_of(Objective))
     """The objective for which the model is trained."""
 
-    measurements: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
+    measurements: nw.DataFrame = field(validator=instance_of(nw.DataFrame))
     """The training data in experimental representation."""
 
     @property
