@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from baybe._optional.info import LLM_INSTALLED
+from baybe._optional.info import CHEM_INSTALLED, LLM_INSTALLED
 from baybe.constraints.conditions import SubSelectionCondition, ThresholdCondition
 from baybe.constraints.discrete import (
     DiscreteBatchConstraint,
@@ -39,7 +39,12 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
 )
 from baybe.recommenders.pure.llm._parsing import parse_llm_response
-from baybe.recommenders.pure.llm._prompts import make_recovery_prompt
+from baybe.recommenders.pure.llm._prompts import make_prompt, make_recovery_prompt
+from baybe.recommenders.pure.llm._schema import (
+    _EXPLANATION_FIELD,
+    _PARAMETERS_FIELD,
+    _response_format,
+)
 from baybe.searchspace import SearchSpace
 from baybe.utils.basic import get_subclasses
 
@@ -59,7 +64,7 @@ def _make_suggestions(params_list: list[dict]) -> str:
     """Create a JSON string of suggestions from a list of parameter dicts."""
     return json.dumps(
         [
-            {"explanation": f"Suggestion {i}", "parameters": p}
+            {_EXPLANATION_FIELD: f"Suggestion {i}", _PARAMETERS_FIELD: p}
             for i, p in enumerate(params_list)
         ]
     )
@@ -242,6 +247,100 @@ def test_recommend_with_objective(
     )[0]["content"]
     assert "OPTIMIZATION TARGETS" in prompt_content
     assert "yield" in prompt_content
+
+
+def test_response_contract_is_single_sourced(searchspace):
+    """Both prompts and the parser share one definition of the response fields."""
+    response_format = _response_format()
+    assert _EXPLANATION_FIELD in response_format
+    assert _PARAMETERS_FIELD in response_format
+
+    prompt = make_prompt(
+        searchspace,
+        batch_size=1,
+        experiment_description="Test",
+        objective=None,
+        measurements=None,
+        pending_experiments=None,
+    )
+    assert response_format in prompt
+
+    recovery_prompt = make_recovery_prompt(
+        searchspace,
+        error=MalformedLLMResponseError("boom"),
+        original_response="[]",
+    )
+    assert response_format in recovery_prompt
+
+    # A response built from the shared field names parses successfully.
+    suggestions = _make_suggestions(
+        [{"temperature": 25.0, "pressure": 2.0, "n_cycles": 1, "catalyst": "A"}]
+    )
+    assert len(parse_llm_response(suggestions, searchspace)) == 1
+
+
+def test_parameter_prompt_info():
+    """The typed prompt view maps each parameter type to a stable shape."""
+    from baybe.exceptions import IncompatibilityError
+    from baybe.recommenders.pure.llm._prompts import _parameter_prompt_info
+
+    cont = _parameter_prompt_info(
+        NumericalContinuousParameter(
+            "x", bounds=(0.0, 1.0), metadata={"unit": "m", "description": "d"}
+        )
+    )
+    assert cont["kind"] == "continuous"
+    assert cont["domain"] == "Bounds: [0.0, 1.0]"
+    assert cont["unit"] == "m"
+    assert cont["description"] == "d"
+    assert cont["misc"] == ()
+
+    disc = _parameter_prompt_info(NumericalDiscreteParameter("n", values=[1, 2, 3]))
+    assert disc["kind"] == "discrete_numeric"
+    assert disc["domain"].startswith("Allowed values:")
+    assert disc["unit"] is None
+
+    # Non-string misc values are normalized to strings at the prompt boundary.
+    cat = _parameter_prompt_info(
+        CategoricalParameter("c", values=["A", "B"], metadata={"note": 1})
+    )
+    assert cat["kind"] == "categorical"
+    assert cat["domain"] == "Allowed values: ['A', 'B']"
+    assert cat["misc"] == (("note", "1"),)
+
+    with pytest.raises(IncompatibilityError, match="unsupported type"):
+        _parameter_prompt_info(SimpleNamespace(name="weird"))
+
+
+@pytest.mark.skipif(not CHEM_INSTALLED, reason="Chemistry dependencies not installed")
+def test_parameter_prompt_info_substance():
+    """Substance parameters expose their SMILES alongside the substance names."""
+    from baybe.parameters.substance import SubstanceParameter
+    from baybe.recommenders.pure.llm._prompts import _parameter_prompt_info
+
+    info = _parameter_prompt_info(
+        SubstanceParameter("solvent", data={"water": "O", "ethanol": "CCO"})
+    )
+    assert info["kind"] == "substance"
+    assert "water (O)" in info["domain"]
+    assert "ethanol (CCO)" in info["domain"]
+
+
+def test_prompt_templates_use_strict_undefined():
+    """Undefined template variables fail fast instead of rendering empty."""
+    from jinja2 import UndefinedError
+
+    from baybe._optional.llm import StrictUndefined, Template
+    from baybe.recommenders.pure.llm._prompts import _PROMPT_TEMPLATE
+
+    template = Template(
+        _PROMPT_TEMPLATE,
+        trim_blocks=True,
+        lstrip_blocks=True,
+        undefined=StrictUndefined,
+    )
+    with pytest.raises(UndefinedError):
+        template.render()  # empty context -> first undefined access raises
 
 
 @pytest.mark.parametrize(

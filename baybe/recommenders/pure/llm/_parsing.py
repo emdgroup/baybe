@@ -18,6 +18,10 @@ from baybe.exceptions import (
     NonNumericParameterError,
     UnknownParameterError,
 )
+from baybe.recommenders.pure.llm._schema import (
+    _EXPLANATION_FIELD,
+    _PARAMETERS_FIELD,
+)
 from baybe.searchspace import SearchSpace
 from baybe.utils.dataframe import fuzzy_row_match, normalize_input_dtypes
 from baybe.utils.validation import validate_parameter_input
@@ -94,17 +98,17 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
         if not isinstance(suggestion, dict):
             raise MalformedLLMResponseError("Each suggestion must be a JSON object.")
 
-        if "parameters" not in suggestion:
+        if _PARAMETERS_FIELD not in suggestion:
             raise MalformedLLMResponseError(
-                "Each suggestion must contain a 'parameters' field."
+                f"Each suggestion must contain a '{_PARAMETERS_FIELD}' field."
             )
 
-        if "explanation" not in suggestion:
+        if _EXPLANATION_FIELD not in suggestion:
             raise MalformedLLMResponseError(
-                "Each suggestion must contain an 'explanation' field."
+                f"Each suggestion must contain an '{_EXPLANATION_FIELD}' field."
             )
 
-        params = suggestion["parameters"]
+        params = suggestion[_PARAMETERS_FIELD]
         if not isinstance(params, dict):
             raise MalformedLLMResponseError("Parameters must be a JSON object.")
 
