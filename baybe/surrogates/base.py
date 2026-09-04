@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from enum import Enum, auto
 from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypeAlias
 
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import define, field
 from joblib.hashing import hash
 from typing_extensions import override
@@ -20,7 +20,7 @@ from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.basic import classproperty
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import handle_missing_values, to_tensor
+from baybe.utils.dataframe import _copy_index, handle_missing_values, to_tensor
 from baybe.utils.scaling import ColumnTransformer
 
 if TYPE_CHECKING:
@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import GPyTorchPosterior, Posterior
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
     from torch import Tensor
 
     from baybe.surrogates.composite import CompositeSurrogate
@@ -60,7 +61,7 @@ class SurrogateProtocol(Protocol):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
+        measurements: IntoDataFrame,
     ) -> None:
         """Fit the surrogate to training data in a given modelling context.
 
@@ -96,10 +97,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     _objective: Objective | None = field(init=False, default=None, eq=False)
     """The objective for which the surrogate was trained. Available after fitting."""
 
-    _measurements: pd.DataFrame | None = field(init=False, default=None, eq=False)
+    _measurements: nw.DataFrame | None = field(init=False, default=None, eq=False)
     """The measurements used for training. Available after fitting."""
 
-    _measurements_hash: str = field(init=False, default=None, eq=False)
+    _measurements_hash: str | None = field(init=False, default=None, eq=False)
     """The hash of the data the surrogate was trained on."""
 
     _input_scaler: ColumnTransformer | None = field(init=False, default=None, eq=False)
@@ -191,7 +192,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         return scaler
 
     def _make_output_scaler(
-        self, objective: Objective, measurements: pd.DataFrame
+        self, objective: Objective, measurements: IntoDataFrame
     ) -> OutcomeTransform | _NoTransform:
         """Make and fit the output scaler for transforming computational dataframes."""
         if (factory := self._make_target_scaler_factory()) is None:
@@ -210,7 +211,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         return scaler
 
-    def posterior(self, candidates: pd.DataFrame, *, joint: bool = True) -> Posterior:
+    def posterior(self, candidates: IntoDataFrame, *, joint: bool = True) -> Posterior:
         """Compute the posterior for candidates in experimental representation.
 
         Takes a dataframe of parameter configurations in **experimental representation**
@@ -307,9 +308,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
     def posterior_stats(
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         stats: Sequence[PosteriorStatistic] = ("mean", "std"),
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         """Return posterior statistics for each target.
 
         Args:
@@ -344,7 +345,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         import torch
 
-        result = pd.DataFrame(index=candidates.index)
+        df = nw.from_native(candidates, eager_only=True)
+        stat_frames: list[nw.DataFrame] = []
+
         with torch.no_grad():
             for stat in stats:
                 try:
@@ -372,23 +375,31 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
                 # Enforce a consistent shape
                 # https://github.com/pytorch/botorch/issues/2958
-                vals = vals.reshape((len(candidates), 1))
+                vals = vals.reshape((len(df), 1))
 
-                result[
-                    [
-                        f"{name}_{stat_name}"
-                        for name in self._objective._modeled_quantity_names
-                    ]
-                ] = vals.cpu().numpy()
+                col_names = [
+                    f"{name}_{stat_name}"
+                    for name in self._objective._modeled_quantity_names
+                ]
+                stat_frames.append(
+                    nw.from_numpy(
+                        vals.numpy(),
+                        schema=col_names,
+                        backend=nw.get_native_namespace(df),
+                    )
+                )
 
-        return result
+        # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3897
+        result: nw.DataFrame = nw.concat(stat_frames, how="horizontal")  # type: ignore[assignment]
+        result = _copy_index(result, df)
+        return result.to_native()
 
     @override
     def fit(
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
+        measurements: IntoDataFrame,
     ) -> None:
         """Train the surrogate model on the provided data.
 
@@ -405,6 +416,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         """
         # TODO: consider adding a validation step for `measurements`
 
+        # Wrap in narwhals for backend-agnostic handling
+        measurements = nw.from_native(measurements, eager_only=True)
+
         # Validate multi-target compatibility
         if objective.is_multi_output and not self.supports_multi_output:
             raise IncompatibleSurrogateError(
@@ -416,10 +430,11 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             )
 
         # When the context is unchanged, no retraining is necessary
+        measurements_pd = measurements.to_pandas()
         if (
             searchspace == self._searchspace
             and objective == self._objective
-            and hash(measurements) == self._measurements_hash
+            and hash(measurements_pd) == self._measurements_hash
         ):
             return
 
@@ -432,13 +447,13 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             )
 
         # Block partial measurements
-        handle_missing_values(measurements, [t.name for t in objective.targets])
+        handle_missing_values(measurements_pd, [t.name for t in objective.targets])
 
         # Remember the training context
         self._searchspace = searchspace
         self._objective = objective
         self._measurements = measurements
-        self._measurements_hash = hash(measurements)
+        self._measurements_hash = hash(measurements_pd)
 
         # Create context-specific transformations
         self._input_scaler = self._make_input_scaler(searchspace)
