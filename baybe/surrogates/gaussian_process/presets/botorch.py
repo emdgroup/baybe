@@ -6,7 +6,6 @@ import gc
 from itertools import chain
 from typing import TYPE_CHECKING, ClassVar
 
-import pandas as pd
 from attrs import define
 from typing_extensions import override
 
@@ -31,6 +30,7 @@ from baybe.surrogates.gaussian_process.presets.hvarfner import (
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
+    from narwhals.stable.v2.typing import IntoDataFrame
 
 # The minimum BoTorch version required for the preset
 _MIN_BOTORCH_VERSION = "0.18.0"
@@ -50,7 +50,10 @@ class BotorchKernelFactory(_PureKernelFactory):
 
     @override
     def _make(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> Kernel | GPyTorchKernel:
         self._validate_botorch_version()
 

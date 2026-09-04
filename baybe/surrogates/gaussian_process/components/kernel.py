@@ -8,7 +8,6 @@ from collections.abc import Iterable
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar
 
-import pandas as pd
 from attrs import define, field, fields
 from attrs.converters import optional
 from attrs.validators import is_callable
@@ -35,6 +34,7 @@ from baybe.surrogates.gaussian_process.components.generic import (
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
+    from narwhals.stable.v2.typing import IntoDataFrame
 
     from baybe.parameters.base import Parameter
 
@@ -109,7 +109,10 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> Kernel | GPyTorchKernel:
         """Construct the kernel, validating parameter kinds before construction."""
         if self.parameter_selector is not None:
@@ -122,7 +125,10 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
 
     @abstractmethod
     def _make(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> Kernel | GPyTorchKernel:
         """Construct the kernel."""
 
@@ -188,7 +194,10 @@ def _enable_transfer_learning(
 
     @functools.wraps(original_call)
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ):
         # Temporarily narrow the supported parameter kinds to those of the original
         # class. If the decorator logic is correct, the original factory should never
@@ -230,7 +239,10 @@ class _MetaKernelFactory(KernelFactoryProtocol, ABC):
     @override
     @abstractmethod
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> Kernel | GPyTorchKernel: ...
 
 
@@ -297,7 +309,10 @@ class ICMKernelFactory(_MetaKernelFactory):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> Kernel | GPyTorchKernel:
         if searchspace.n_tasks == 1:
             raise IncompatibleSearchSpaceError(

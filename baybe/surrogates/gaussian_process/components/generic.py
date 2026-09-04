@@ -7,7 +7,6 @@ import sys
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeAlias, TypeVar
 
-import pandas as pd
 from attrs import Attribute, define, field
 from typing_extensions import override
 
@@ -24,6 +23,7 @@ if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.means import Mean as GPyTorchMean
+    from narwhals.stable.v2.typing import IntoDataFrame
 
     GPyTorchGPComponent: TypeAlias = GPyTorchKernel | GPyTorchMean | GPyTorchLikelihood
     GPComponent: TypeAlias = BayBEGPComponent | GPyTorchGPComponent
@@ -110,7 +110,10 @@ class GPComponentFactoryProtocol(Protocol, Generic[_T_co]):
     """A protocol defining the interface for Gaussian process component factories."""
 
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> _T_co:
         """Create a Gaussian process component for the given recommendation context.
 
@@ -133,7 +136,10 @@ class PlainGPComponentFactory(GPComponentFactoryProtocol[_T_co], SerialMixin):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> _T_co:
         return self.component
 

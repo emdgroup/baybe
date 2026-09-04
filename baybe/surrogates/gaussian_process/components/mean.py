@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import pandas as pd
 from attrs import define
 from typing_extensions import override
 
@@ -17,6 +16,7 @@ from baybe.surrogates.gaussian_process.components.generic import (
 
 if TYPE_CHECKING:
     from gpytorch.means import Mean as GPyTorchMean
+    from narwhals.stable.v2.typing import IntoDataFrame
 
     MeanFactoryProtocol = GPComponentFactoryProtocol[GPyTorchMean]
     PlainMeanFactory = PlainGPComponentFactory[GPyTorchMean]
@@ -35,7 +35,10 @@ class LazyConstantMeanFactory(MeanFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> GPyTorchMean:
         from gpytorch.means import ConstantMean
 
