@@ -6,10 +6,8 @@ from collections.abc import Collection
 from enum import Enum
 from typing import Literal
 
-import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
-from narwhals.stable.v2.typing import IntoDataFrame
 
 from baybe.utils.basic import is_all_instance
 
@@ -185,7 +183,7 @@ class DiscreteSamplingMethod(Enum):
 
 
 def sample_numerical_df(
-    df: IntoDataFrame,
+    df: pd.DataFrame,
     n_points: int,
     *,
     method: DiscreteSamplingMethod = DiscreteSamplingMethod.Random,
@@ -208,8 +206,6 @@ def sample_numerical_df(
         TypeError: If the provided dataframe has non-numerical content.
         ValueError: When an invalid sampling method was provided.
     """
-    df = nw.from_native(df, eager_only=True).to_pandas()
-
     if any(df[col].dtype.kind not in "iufb" for col in df.columns):
         raise TypeError(
             f"'{sample_numerical_df.__name__}' only supports purely numerical "
