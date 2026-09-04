@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
 
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import define, field
 from typing_extensions import override
 
@@ -24,6 +24,7 @@ from baybe.utils.basic import is_all_instance
 if TYPE_CHECKING:
     from botorch.models.model import ModelList
     from botorch.posteriors import PosteriorList
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
     from torch import Tensor
 
 _T = TypeVar("_T")
@@ -103,21 +104,26 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
+        measurements: IntoDataFrame,
     ) -> None:
-        # See base class.
-
-        for name, data in objective.handle_missing_values(measurements).items():
-            pre_transformed = objective._pre_transform(
-                data[[t.name for t in objective.targets]]
+        for name, data in objective._handle_missing_values(measurements).items():
+            data_nw = nw.from_native(data, eager_only=True)
+            targets_pre_transformed = objective._pre_transform(
+                data_nw.select([t.name for t in objective.targets])
             )
-            pre_transformed = pd.concat(
-                [data[list(searchspace.parameter_names)], pre_transformed],
-                axis=1,
+            # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3897
+            pre_transformed: nw.DataFrame = nw.concat(  # type: ignore[assignment]
+                [
+                    data_nw.select(searchspace.parameter_names),
+                    nw.from_native(targets_pre_transformed, eager_only=True),
+                ],
+                how="horizontal",
             )
             quantity = next(x for x in objective._modeled_quantities if x.name == name)
             self.surrogates[name].fit(
-                searchspace, quantity.to_objective(), pre_transformed
+                searchspace,
+                quantity.to_objective(),
+                pre_transformed.to_native(),
             )
 
         self._modeled_quantity_names = objective._modeled_quantity_names
@@ -133,7 +139,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         else:
             return ModelList(*(s.to_botorch() for s in surrogates))
 
-    def posterior(self, candidates: pd.DataFrame, joint: bool = True) -> PosteriorList:
+    def posterior(self, candidates: IntoDataFrame, joint: bool = True) -> PosteriorList:
         """Compute the posterior for candidates in experimental representation.
 
         The (independent joint) posterior is represented as a collection of individual
@@ -180,9 +186,9 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
 
     def posterior_stats(
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         stats: Sequence[PosteriorStatistic] = ("mean", "std"),
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         """See :meth:`baybe.surrogates.base.Surrogate.posterior_stats`."""
         if not all(hasattr(s, "posterior_stats") for s in self._surrogates_flat):
             raise IncompatibleSurrogateError(
@@ -190,8 +196,12 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
                 "offer this computation."
             )
 
-        dfs = [s.posterior_stats(candidates, stats) for s in self._surrogates_flat]  # type: ignore[attr-defined]
-        return pd.concat(dfs, axis=1)
+        dfs = [
+            nw.from_native(s.posterior_stats(candidates, stats), eager_only=True)  # type: ignore[attr-defined]
+            for s in self._surrogates_flat
+        ]
+
+        return nw.concat(dfs, how="horizontal").to_native()
 
 
 def _get_surrogate_getter_type(type: str) -> type[_SurrogateGetter]:
