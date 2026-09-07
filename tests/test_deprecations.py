@@ -1027,7 +1027,7 @@ else:
 )
 def test_deprecated_comp_df(param):
     """Accessing ``comp_df`` on any discrete parameter emits a deprecation warning."""
+    expected = nw.from_native(param.transform(), eager_only=True).to_pandas()
     with pytest.warns(DeprecationWarning, match="comp_df"):
         result = param.comp_df
-    expected = nw.from_native(param.transform(), eager_only=True).to_pandas()
     assert_frame_equal(result, expected)
