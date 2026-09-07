@@ -326,6 +326,53 @@ def test_parameter_prompt_info_substance():
     assert "ethanol (CCO)" in info["domain"]
 
 
+def test_make_llm_two_phase_recommender():
+    """The two-phase factory wires an LLM warm-start into a TwoPhaseMetaRecommender."""
+    from baybe.recommenders import (
+        BotorchRecommender,
+        TwoPhaseMetaRecommender,
+        make_llm_two_phase_recommender,
+    )
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    rec = make_llm_two_phase_recommender(
+        model="gpt-5.4",
+        experiment_description="Test",
+        switch_after=3,
+        litellm_args={"temperature": 0.1},
+    )
+    assert isinstance(rec, TwoPhaseMetaRecommender)
+    assert isinstance(rec.initial_recommender, LLMRecommender)
+    assert rec.initial_recommender.model == "gpt-5.4"
+    assert rec.initial_recommender.litellm_args == {"temperature": 0.1}
+    assert isinstance(rec.recommender, BotorchRecommender)
+    assert rec.switch_after == 3
+
+    # The returned recommender is a standard serializable type.
+    assert type(rec).from_json(rec.to_json()) == rec
+
+
+def test_make_llm_alternating_recommender():
+    """The alternating factory yields a cyclic LLM/Bayesian sequential recommender."""
+    from baybe.recommenders import (
+        RandomRecommender,
+        SequentialMetaRecommender,
+        make_llm_alternating_recommender,
+    )
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    rec = make_llm_alternating_recommender(
+        model="gpt-5.4",
+        experiment_description="Test",
+        recommender=RandomRecommender(),
+    )
+    assert isinstance(rec, SequentialMetaRecommender)
+    assert rec.mode == "cyclic"
+    assert len(rec.recommenders) == 2
+    assert isinstance(rec.recommenders[0], LLMRecommender)
+    assert isinstance(rec.recommenders[1], RandomRecommender)
+
+
 def test_prompt_templates_use_strict_undefined():
     """Undefined template variables fail fast instead of rendering empty."""
     from jinja2 import UndefinedError
