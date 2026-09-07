@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
-from attrs.validators import instance_of, min_len
+from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
 from baybe.exceptions import BatchSizeError, LLMResponseError
@@ -58,7 +58,17 @@ class LLMRecommender(PureRecommender, SerialMixin):
     description of what to optimize and per-target context such as units.
     """
 
-    litellm_args: dict[str, Any] = field(factory=dict, converter=dict)
+    litellm_args: dict[str, Any] = field(
+        factory=dict,
+        converter=dict,
+        validator=deep_mapping(
+            key_validator=instance_of(str),
+            # Values are intentionally unconstrained: LiteLLM accepts heterogeneous
+            # argument types (str, int, float, bool, nested dicts, ...).
+            value_validator=lambda *_: None,
+            mapping_validator=instance_of(dict),
+        ),
+    )
     """Additional arguments to pass to LiteLLM (e.g. ``temperature``, ``max_tokens``).
 
     API credentials must **not** be passed here — they would be stored in plain text

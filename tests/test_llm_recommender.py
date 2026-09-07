@@ -1017,6 +1017,18 @@ def test_construction_rejects_protected_keys(key, phrase):
         )
 
 
+def test_construction_rejects_non_string_keys():
+    """Non-string keys in litellm_args raise during construction."""
+    from baybe.recommenders.pure.llm.llm import LLMRecommender
+
+    with pytest.raises(TypeError):
+        LLMRecommender(
+            model="m",
+            experiment_description="desc",
+            litellm_args={1: "value"},
+        )
+
+
 def test_str_representation(recommender):
     """String representation includes key information."""
     s = str(recommender)
