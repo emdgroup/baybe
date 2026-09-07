@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 import warnings
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -21,6 +21,13 @@ from baybe.searchspace.core import SearchSpaceType
 from baybe.serialization import SerialMixin
 from baybe.utils.conversion import to_string
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
+
+if TYPE_CHECKING:
+    from baybe.recommenders.base import RecommenderProtocol
+    from baybe.recommenders.meta.sequential import (
+        SequentialMetaRecommender,
+        TwoPhaseMetaRecommender,
+    )
 
 # Keys that are wired in by the recommender itself and must not be overridden.
 _RESERVED_LITELLM_KEYS = frozenset({"model", "messages"})
@@ -243,6 +250,87 @@ class LLMRecommender(PureRecommender, SerialMixin):
             ),
         ]
         return to_string(self.__class__.__name__, *fields)
+
+
+def make_llm_two_phase_recommender(
+    model: str,
+    experiment_description: str,
+    *,
+    switch_after: int = 1,
+    litellm_args: dict[str, Any] | None = None,
+    recommender: RecommenderProtocol | None = None,
+) -> TwoPhaseMetaRecommender:
+    """Create a recommender that warm-starts with an LLM, then switches to Bayesian.
+
+    The returned meta recommender uses an :class:`LLMRecommender` for the initial
+    experiments and switches to ``recommender`` once ``switch_after`` measurements have
+    been collected.
+
+    Args:
+        model: The LiteLLM model identifier for the initial LLM recommender.
+        experiment_description: Textual description of the experiment for the LLM.
+        switch_after: The number of collected experiments after which the recommender
+            switches from the LLM to ``recommender``.
+        litellm_args: Optional additional arguments passed to LiteLLM.
+        recommender: The recommender used after the switch. Defaults to a
+            :class:`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender`.
+
+    Returns:
+        A :class:`~baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender` using the
+        LLM as its initial recommender.
+    """
+    from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
+    from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+
+    return TwoPhaseMetaRecommender(
+        initial_recommender=LLMRecommender(
+            model=model,
+            experiment_description=experiment_description,
+            litellm_args=litellm_args or {},
+        ),
+        recommender=BotorchRecommender() if recommender is None else recommender,
+        switch_after=switch_after,
+    )
+
+
+def make_llm_alternating_recommender(
+    model: str,
+    experiment_description: str,
+    *,
+    litellm_args: dict[str, Any] | None = None,
+    recommender: RecommenderProtocol | None = None,
+) -> SequentialMetaRecommender:
+    """Create a recommender that alternates each round between an LLM and Bayesian.
+
+    The returned meta recommender cycles indefinitely between an
+    :class:`LLMRecommender` and ``recommender``, advancing to the next one whenever new
+    measurements become available.
+
+    Args:
+        model: The LiteLLM model identifier for the LLM recommender.
+        experiment_description: Textual description of the experiment for the LLM.
+        litellm_args: Optional additional arguments passed to LiteLLM.
+        recommender: The recommender alternated with the LLM. Defaults to a
+            :class:`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender`.
+
+    Returns:
+        A :class:`~baybe.recommenders.meta.sequential.SequentialMetaRecommender` in
+        cyclic mode, alternating between the LLM and ``recommender``.
+    """
+    from baybe.recommenders.meta.sequential import SequentialMetaRecommender
+    from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+
+    return SequentialMetaRecommender(
+        recommenders=[
+            LLMRecommender(
+                model=model,
+                experiment_description=experiment_description,
+                litellm_args=litellm_args or {},
+            ),
+            BotorchRecommender() if recommender is None else recommender,
+        ],
+        mode="cyclic",
+    )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
