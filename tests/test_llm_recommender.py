@@ -256,12 +256,9 @@ def test_response_contract_is_single_sourced(searchspace):
     assert _PARAMETERS_FIELD in response_format
 
     prompt = make_prompt(
-        searchspace,
         batch_size=1,
+        searchspace=searchspace,
         experiment_description="Test",
-        objective=None,
-        measurements=None,
-        pending_experiments=None,
     )
     assert response_format in prompt
 
