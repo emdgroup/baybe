@@ -70,6 +70,16 @@ Do not recommend these again.
 {{ pending_experiments }}
 {% endif %}
 
+{% if forbidden_configurations is not none %}
+FORBIDDEN CONFIGURATIONS:
+The following configurations have ALREADY been tested and are NO LONGER selectable. You
+MUST NOT recommend any of them again. Treat this list as the single source of truth
+about what has been tested -- do not rely on your own memory of novelty. Before you
+output each suggestion, compare it row-by-row against this list; if it matches a row,
+discard it and choose a genuinely new, untested configuration instead:
+{{ forbidden_configurations }}
+{% endif %}
+
 Please suggest {{ batch_size }} new experimental conditions that are likely to \
 improve the optimization objective.
 For each suggestion, provide:
@@ -96,6 +106,13 @@ Parameter: {{ param.name }}
 Type: {{ param.kind }}
 {{ param.domain }}
 {% endfor %}
+{% if forbidden_configurations is not none %}
+
+FORBIDDEN CONFIGURATIONS: these have already been tested and are NO LONGER selectable.
+Do NOT recommend any of them. Check each corrected suggestion row-by-row against this
+list and pick a genuinely new, untested configuration instead:
+{{ forbidden_configurations }}
+{% endif %}
 
 Please provide a corrected JSON response that follows the required format:
 {{ response_format }}\
@@ -126,6 +143,7 @@ class _PromptContext(TypedDict):
     parameters: tuple[_ParameterPromptInfo, ...]
     measurements: str | None
     pending_experiments: str | None
+    forbidden_configurations: str | None
     batch_size: int
     response_format: str
 
@@ -134,6 +152,7 @@ class _RecoveryPromptContext(TypedDict):
     """Typed render context for the recovery prompt."""
 
     parameters: tuple[_ParameterPromptInfo, ...]
+    forbidden_configurations: str | None
     recovery_instruction: str
     original_response: str
     response_format: str
@@ -187,6 +206,31 @@ def _parameter_prompt_info(parameter: Parameter) -> _ParameterPromptInfo:
     }
 
 
+def _forbidden_configurations(searchspace: SearchSpace) -> str | None:
+    """Render discrete configurations that are no longer eligible candidates.
+
+    When the campaign forbids re-recommending already-used points (e.g. via
+    ``allow_recommending_already_recommended``), those points are dropped from the
+    eligible candidate set the recommender receives. Surfacing them lets the model avoid
+    proposing configurations that would be rejected as ineligible.
+
+    Args:
+        searchspace: The (possibly filtered) search space to recommend for.
+
+    Returns:
+        A rendered table of the forbidden discrete configurations, or ``None`` if the
+        search space has no discrete part or nothing has been filtered out.
+    """
+    discrete = searchspace.discrete
+    if not discrete.parameters:
+        return None
+    eligible, _ = discrete.get_candidates()
+    forbidden = discrete.exp_rep[~discrete.exp_rep.index.isin(eligible.index)]
+    if forbidden.empty:
+        return None
+    return forbidden.to_string(index=False)
+
+
 def make_prompt(
     searchspace: SearchSpace,
     *,
@@ -230,6 +274,7 @@ def make_prompt(
         "parameters": tuple(_parameter_prompt_info(p) for p in searchspace.parameters),
         "measurements": measurements_text,
         "pending_experiments": pending_text,
+        "forbidden_configurations": _forbidden_configurations(searchspace),
         "batch_size": batch_size,
         "response_format": _response_format(),
     }
@@ -264,6 +309,7 @@ def make_recovery_prompt(
 
     context: _RecoveryPromptContext = {
         "parameters": tuple(_parameter_prompt_info(p) for p in searchspace.parameters),
+        "forbidden_configurations": _forbidden_configurations(searchspace),
         "recovery_instruction": error.recovery_instruction,
         "original_response": original_response,
         "response_format": _response_format(),
