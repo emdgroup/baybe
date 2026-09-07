@@ -18,6 +18,7 @@ import warnings
 
 import pandas as pd
 import seaborn as sns
+from narwhals.stable.v2.typing import IntoDataFrameT
 
 from baybe import Campaign, active_settings
 from baybe.acquisition import ProbabilityOfImprovement
@@ -129,7 +130,7 @@ def stop_on_PI(
     self: BotorchRecommender,
     searchspace: SearchSpace,
     objective: Objective | None = None,
-    measurements: pd.DataFrame | None = None,
+    measurements: IntoDataFrameT | None = None,
 ) -> None:
     """Raise an exception if the PI-based stopping criterion is fulfilled."""
     if searchspace.type != SearchSpaceType.DISCRETE:

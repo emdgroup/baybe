@@ -6,15 +6,18 @@ import math
 from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Any
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from attrs import Attribute
 
 from baybe.exceptions import IncompleteMeasurementsError
 from baybe.settings import active_settings
-from baybe.utils.dataframe import normalize_input_dtypes
+from baybe.utils.dataframe import _df_with_backend, normalize_input_dtypes
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrameT
+
     from baybe.objectives.base import Objective
     from baybe.parameters.base import Parameter
     from baybe.searchspace.core import SearchSpace
@@ -260,12 +263,12 @@ def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
 
 
 def preprocess_dataframe(
-    df: pd.DataFrame,
+    df: IntoDataFrameT,
     /,
     searchspace: SearchSpace,
     objective: Objective | None = None,
     numerical_measurements_must_be_within_tolerance: bool = True,
-) -> pd.DataFrame:
+) -> IntoDataFrameT:
     """Preprocess an experimental dataframe by validating and normalizing its contents.
 
     Checks that the dataframe contains all required columns for the given
@@ -282,19 +285,25 @@ def preprocess_dataframe(
     Returns:
         The preprocessed dataframe.
     """
+    df_nw = nw.from_native(df, eager_only=True)
+    df_pd = df_nw.to_pandas()
+
     if not active_settings.preprocess_dataframes:
         return df
 
     validate_parameter_input(
-        df,
+        df_pd,
         searchspace.parameters,
         numerical_measurements_must_be_within_tolerance,
         allow_duplicates=True,
     )
     if objective is not None:
         targets = objective.targets
-        validate_target_input(df, targets)
-        validate_objective_input(df, objective)
+        validate_target_input(df_pd, targets)
+        validate_objective_input(df_pd, objective)
     else:
         targets = ()
-    return normalize_input_dtypes(df, [*searchspace.parameters, *targets])
+    result_pd = normalize_input_dtypes(df_pd, [*searchspace.parameters, *targets])
+    return _df_with_backend(
+        nw.from_native(result_pd, eager_only=True), df_nw.implementation
+    ).to_native()

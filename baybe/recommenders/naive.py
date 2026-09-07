@@ -1,9 +1,11 @@
 """Naive recommender for hybrid spaces."""
 
-import gc
-from typing import ClassVar
+from __future__ import annotations
 
-import pandas as pd
+import gc
+from typing import TYPE_CHECKING, ClassVar
+
+import narwhals.stable.v2 as nw
 from attrs import define, field
 from typing_extensions import override
 
@@ -13,7 +15,11 @@ from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType
-from baybe.utils.dataframe import to_tensor
+from baybe.settings import Settings
+from baybe.utils.dataframe import _infer_backend, to_tensor
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrameT
 
 
 @define
@@ -53,10 +59,12 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         from baybe.acquisition.partial import PartialAcquisitionFunction
+
+        backend = _infer_backend(measurements, pending_experiments)
 
         disc_is_bayesian = isinstance(self.disc_recommender, BayesianRecommender)
         if not disc_is_bayesian and not isinstance(
@@ -92,11 +100,23 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         cont_part = searchspace.continuous.sample_uniform(1)
         cont_part_tensor = to_tensor(cont_part).unsqueeze(-2)
 
+        # Convert to pandas for BoTorch internals (acqf setup requires pd.DataFrame)
+        measurements_pd = (
+            nw.from_native(measurements, eager_only=True).to_pandas()
+            if measurements is not None
+            else None
+        )
+        pending_experiments_pd = (
+            nw.from_native(pending_experiments, eager_only=True).to_pandas()
+            if pending_experiments is not None
+            else None
+        )
+
         # We now check whether the discrete recommender is bayesian.
         if isinstance(self.disc_recommender, BayesianRecommender):
             # Get access to the recommenders acquisition function
             self.disc_recommender._setup_botorch_acqf(
-                searchspace, objective, measurements, pending_experiments
+                searchspace, objective, measurements_pd, pending_experiments_pd
             )
 
             # Construct the partial acquisition function that attaches cont_part
@@ -109,39 +129,44 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
             self.disc_recommender._botorch_acqf = disc_acqf_part
 
-        # Call the private function of the discrete recommender and get the candidates
-        disc_rec = self.disc_recommender._recommend_discrete(
-            subspace_discrete=searchspace.discrete,
-            batch_size=batch_size,
-        )
+        with Settings(default_dataframe_backend=backend):
+            # Call the private function of the discrete recommender
+            disc_rec = self.disc_recommender._recommend_discrete(
+                subspace_discrete=searchspace.discrete,
+                batch_size=batch_size,
+            )
 
-        # Get one random discrete point that will be attached when evaluating the
-        # acquisition function in the discrete space.
-        disc_part = searchspace.discrete.transform(disc_rec).sample(1)
-        disc_part_tensor = to_tensor(disc_part).unsqueeze(-2)
+            # Get one random discrete point that will be attached when evaluating the
+            # acquisition function in the discrete space.
+            disc_part = searchspace.discrete.transform(disc_rec).sample(1)
+            disc_part_tensor = to_tensor(disc_part).unsqueeze(-2)
 
-        # Setup a fresh acquisition function for the continuous recommender
-        self.cont_recommender._setup_botorch_acqf(
-            searchspace, objective, measurements, pending_experiments
-        )
+            # Setup a fresh acquisition function for the continuous recommender
+            self.cont_recommender._setup_botorch_acqf(
+                searchspace, objective, measurements_pd, pending_experiments_pd
+            )
 
-        # Construct the continuous space as a standalone space
-        cont_acqf_part = PartialAcquisitionFunction(
-            botorch_acqf=self.cont_recommender._botorch_acqf,
-            pinned_part=disc_part_tensor,
-            pin_discrete=True,
-        )
-        self.cont_recommender._botorch_acqf = cont_acqf_part
+            # Construct the continuous space as a standalone space
+            cont_acqf_part = PartialAcquisitionFunction(
+                botorch_acqf=self.cont_recommender._botorch_acqf,
+                pinned_part=disc_part_tensor,
+                pin_discrete=True,
+            )
+            self.cont_recommender._botorch_acqf = cont_acqf_part
 
-        # Call the private function of the continuous recommender
-        rec_cont = self.cont_recommender._recommend_continuous(
-            searchspace.continuous, batch_size
-        )
+            # Call the private function of the continuous recommender
+            rec_cont = self.cont_recommender._recommend_continuous(
+                searchspace.continuous, batch_size
+            )
 
         # Glue the solutions together and return them
-        rec_cont.index = disc_rec.index
-        rec_exp = pd.concat([disc_rec, rec_cont], axis=1)
-        return rec_exp
+        return nw.concat(
+            [
+                nw.from_native(disc_rec, eager_only=True),
+                nw.from_native(rec_cont, eager_only=True),
+            ],
+            how="horizontal",
+        ).to_native()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

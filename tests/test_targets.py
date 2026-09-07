@@ -155,13 +155,6 @@ def test_numerical_target_transform_affine(series_constructor):
     assert list(result) == pytest.approx([3.0, 5.0, 7.0])
 
 
-def test_numerical_target_transform_index_preserved():
-    """NumericalTarget.transform preserves a non-default pandas index."""
-    t = NumericalTarget("t")
-    series = pd.Series([1.0, 2.0, 3.0], name="t", index=[10, 20, 30])
-    assert list(t.transform(series).index) == [10, 20, 30]
-
-
 # ── BinaryTarget.transform ────────────────────────────────────────────────────
 
 

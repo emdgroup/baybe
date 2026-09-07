@@ -6,7 +6,7 @@ import warnings
 from collections.abc import Callable, Collection, Iterable
 from typing import TYPE_CHECKING
 
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import fields
 
 from baybe.constraints.utils import is_cardinality_fulfilled
@@ -16,6 +16,7 @@ from baybe.exceptions import (
 )
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.searchspace import SubspaceContinuous
+from baybe.settings import active_settings
 from baybe.utils.basic import flatten
 from baybe.utils.dataframe import to_tensor
 
@@ -113,7 +114,11 @@ def recommend_continuous_with_cardinality_constraints(
 
     # Check if any minimum cardinality constraints are violated
     if not is_cardinality_fulfilled(
-        pd.DataFrame(points, columns=subspace_continuous.parameter_names),
+        nw.DataFrame.from_numpy(
+            points.numpy(),
+            subspace_continuous.parameter_names,
+            backend=active_settings.default_dataframe_backend,
+        ),
         subspace_continuous,
         check_maximum=False,
     ):

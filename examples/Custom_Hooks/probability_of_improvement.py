@@ -21,6 +21,7 @@ import pandas as pd
 from botorch.test_functions.synthetic import Hartmann
 from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d import Axes3D
+from narwhals.stable.v2.typing import IntoDataFrameT
 from scipy.stats import gaussian_kde
 
 from baybe import active_settings
@@ -70,7 +71,7 @@ def extract_pi(
     self: BotorchRecommender,
     searchspace: SearchSpace,
     objective: Objective | None = None,
-    measurements: pd.DataFrame | None = None,
+    measurements: IntoDataFrameT | None = None,
 ) -> None:
     """Calculate and store the probability of improvement."""
     if searchspace.type is not SearchSpaceType.DISCRETE:

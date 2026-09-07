@@ -5,16 +5,18 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
 from attrs import evolve
 
 from baybe.searchspace import SubspaceDiscrete
 from baybe.searchspace.candidates import TableCandidates
-from baybe.utils.dataframe import to_tensor
+from baybe.settings import active_settings
+from baybe.utils.dataframe import _df_with_backend, to_tensor
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
     from torch import Tensor
 
     from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
@@ -24,7 +26,7 @@ def recommend_discrete_with_subsets(
     recommender: BotorchRecommender,
     subspace_discrete: SubspaceDiscrete,
     batch_size: int,
-) -> pd.DataFrame:
+) -> IntoDataFrame:
     """Recommend from a discrete space with subset-generating constraints.
 
     Splits the candidate set into subsets according to subset-generating constraints,
@@ -56,13 +58,16 @@ def recommend_discrete_with_subsets(
 
     def make_callable(
         mask: np.ndarray,
-    ) -> Callable[[], tuple[pd.DataFrame, Tensor]]:
-        def optimize() -> tuple[pd.DataFrame, Tensor]:
+    ) -> Callable[[], tuple[IntoDataFrame, Tensor]]:
+        def optimize() -> tuple[IntoDataFrame, Tensor]:
             # TODO: Replace with .filter() method to avoid materialization
             subset_subspace = evolve(
                 subspace_discrete,
                 candidates=TableCandidates(
-                    subspace_discrete.parameters, candidates.loc[mask]
+                    subspace_discrete.parameters,
+                    nw.from_native(candidates, eager_only=True)
+                    .filter(mask.tolist())
+                    .to_native(),
                 ),
             )
 
@@ -86,7 +91,7 @@ def recommend_discrete_without_subsets(
     recommender: BotorchRecommender,
     subspace_discrete: SubspaceDiscrete,
     batch_size: int,
-) -> pd.DataFrame:
+) -> IntoDataFrame:
     """Generate recommendations from a discrete search space.
 
     Args:
@@ -123,25 +128,22 @@ def recommend_discrete_without_subsets(
 
     from botorch.optim import optimize_acqf_discrete
 
-    # Determine the next set of points to be tested
     candidates = subspace_discrete.get_candidates()
     candidates_comp = subspace_discrete.transform(candidates)
-    points, _ = optimize_acqf_discrete(
-        recommender._botorch_acqf, batch_size, to_tensor(candidates_comp)
-    )
+    choices = to_tensor(candidates_comp)
 
-    # Retrieve the rows from the subspace corresponding to the selected points
-    # IMPROVE: The merging procedure is conceptually similar to what
-    #   `SearchSpace._match_measurement_with_searchspace_indices` does, though using
-    #   a simpler matching logic. When refactoring the SearchSpace class to
-    #   handle continuous parameters, a corresponding utility could be extracted.
-    idxs = pd.Index(
-        pd.merge(
-            pd.DataFrame(points, columns=candidates_comp.columns),
-            candidates_comp.reset_index(),
-            on=list(candidates_comp),
-            how="left",
-        )["index"]
-    )
+    points, _ = optimize_acqf_discrete(recommender._botorch_acqf, batch_size, choices)
 
-    return candidates.loc[idxs]
+    # Recover the positional index of each selected point in the candidate set.
+    # Operating directly on the BoTorch output avoids introducing any further
+    # imprecision beyond what the optimizer itself produces.
+    from baybe.utils.torch import index_in_tensor
+
+    row_idxs = index_in_tensor(points, choices)
+
+    return nw.maybe_reset_index(
+        _df_with_backend(
+            nw.from_native(candidates, eager_only=True)[row_idxs],
+            active_settings.default_dataframe_backend,
+        )
+    ).to_native()
