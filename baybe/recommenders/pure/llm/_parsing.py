@@ -8,6 +8,7 @@ from json import JSONDecodeError
 
 import pandas as pd
 
+from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.exceptions import (
     ConstraintViolationError,
     IneligiblePointsError,
@@ -178,6 +179,10 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
         )
 
     for constraint in searchspace.discrete.constraints:
+        # Only filtering constraints expose row-level validity; batch constraints are
+        # handled separately below.
+        if not isinstance(constraint, DiscreteFilteringConstraint):
+            continue
         invalid_idx = constraint.get_invalid(df)
         if not invalid_idx.empty:
             raise ConstraintViolationError(
