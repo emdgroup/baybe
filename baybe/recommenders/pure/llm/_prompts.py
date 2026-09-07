@@ -232,26 +232,30 @@ def _forbidden_configurations(searchspace: SearchSpace) -> str | None:
 
 
 def make_prompt(
-    searchspace: SearchSpace,
-    *,
     batch_size: int,
+    searchspace: SearchSpace,
+    objective: Objective | None = None,
+    measurements: pd.DataFrame | None = None,
+    pending_experiments: pd.DataFrame | None = None,
+    *,
     experiment_description: str,
-    objective: Objective | None,
-    measurements: pd.DataFrame | None,
-    pending_experiments: pd.DataFrame | None,
 ) -> str:
     """Construct the main prompt for the language model.
 
+    The recommendation-context arguments follow the canonical order used by
+    :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`; the LLM-specific
+    ``experiment_description`` is keyword-only.
+
     Args:
-        searchspace: The search space to generate recommendations for.
         batch_size: The number of recommendations to generate.
-        experiment_description: Textual description of the experiment.
+        searchspace: The search space to generate recommendations for.
         objective: Optional objective to include in the prompt. Set
             :attr:`baybe.objectives.base.Objective.metadata` to provide the
             language model with a description of what to optimize and per-target
             context such as units and descriptions.
         measurements: Optional measurements to include in the prompt.
         pending_experiments: Optional pending experiments to include in the prompt.
+        experiment_description: Textual description of the experiment.
 
     Returns:
         The constructed prompt.

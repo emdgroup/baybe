@@ -212,12 +212,12 @@ class LLMRecommender(PureRecommender, SerialMixin):
             )
 
         prompt = make_prompt(
+            batch_size,
             searchspace,
-            batch_size=batch_size,
+            objective,
+            measurements,
+            pending_experiments,
             experiment_description=self.experiment_description,
-            objective=objective,
-            measurements=measurements,
-            pending_experiments=pending_experiments,
         )
         content = self._query_model(prompt)
         try:
