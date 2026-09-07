@@ -7,7 +7,6 @@ from abc import ABC
 from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
-import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import deep_iterable, instance_of
@@ -29,6 +28,7 @@ from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoSeries
 
 
 def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
@@ -84,7 +84,7 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
+        measurements: IntoDataFrame,
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
         # This fit applies internal caching and does not necessarily involve computation
@@ -95,8 +95,8 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
         self._objective = objective
@@ -125,8 +125,8 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> BoAcquisitionFunction:
         """Get the BoTorch acquisition function for the given recommendation context.
 
@@ -168,7 +168,6 @@ class BayesianRecommender(PureRecommender, ABC):
             objective,
             numerical_measurements_must_be_within_tolerance=False,
         )
-        measurements_pd = nw.from_native(measurements, eager_only=True).to_pandas()
 
         if pending_experiments is not None:
             pending_experiments = preprocess_dataframe(
@@ -176,14 +175,9 @@ class BayesianRecommender(PureRecommender, ABC):
                 searchspace,
                 numerical_measurements_must_be_within_tolerance=False,
             )
-        pending_experiments_pd = (
-            nw.from_native(pending_experiments, eager_only=True).to_pandas()
-            if pending_experiments is not None
-            else None
-        )
 
         self._setup_botorch_acqf(
-            searchspace, objective, measurements_pd, pending_experiments_pd
+            searchspace, objective, measurements, pending_experiments
         )
 
         try:
@@ -217,13 +211,13 @@ class BayesianRecommender(PureRecommender, ABC):
 
     def acquisition_values(
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
         acquisition_function: AcquisitionFunction | None = None,
-    ) -> pd.Series:
+    ) -> IntoSeries:
         """Compute the acquisition values for the given candidates.
 
         Args:
@@ -257,11 +251,11 @@ class BayesianRecommender(PureRecommender, ABC):
 
     def joint_acquisition_value(  # noqa: DOC101, DOC103
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
         acquisition_function: AcquisitionFunction | None = None,
     ) -> float:
         """Compute the joint acquisition value for the given candidate batch.
