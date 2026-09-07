@@ -6,7 +6,7 @@ These examples demonstrate BayBE's
 :maxdepth: 1
 
 Custom Blackbox<custom_blackbox>
-Full Initial Data<full_initial_data>
 Full Lookup<full_lookup>
 Impute Mode<impute_mode>
+Full Initial Data<full_initial_data>
 ```
