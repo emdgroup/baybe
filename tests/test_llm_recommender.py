@@ -15,11 +15,11 @@ from baybe.constraints.discrete import (
     DiscreteConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteExcludeConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
+    DiscreteSelectionConstraint,
     DiscreteSumConstraint,
 )
 from baybe.exceptions import (
@@ -570,19 +570,20 @@ def test_parse_llm_response_numerical_out_of_tolerance_rejected():
 # parameter bounds/values but violate the constraint as a combination or batch.
 # ---------------------------------------------------------------------------
 _ROW_CONSTRAINT_VIOLATION_CASES = {
-    DiscreteExcludeConstraint: (
+    DiscreteSelectionConstraint: (
         [
             NumericalDiscreteParameter("x", values=[1, 2, 3]),
             CategoricalParameter("y", values=["a", "b", "c"]),
         ],
         [
-            DiscreteExcludeConstraint(
+            DiscreteSelectionConstraint(
                 parameters=["x", "y"],
                 conditions=[
                     SubSelectionCondition(selection=[2]),
                     SubSelectionCondition(selection=["b"]),
                 ],
                 combiner="AND",
+                exclude=True,
             )
         ],
         [{"x": 2, "y": "b"}],
