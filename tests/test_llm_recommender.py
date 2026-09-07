@@ -770,6 +770,31 @@ def test_parse_llm_response_strips_wrappers(wrapper, searchspace):
     assert df["catalyst"].iloc[0] == "A"
 
 
+def test_extract_json_array_handles_multiple_blocks_and_prose():
+    """The last suggestion-like array wins; stray brackets in prose are ignored."""
+    from baybe.recommenders.pure.llm._parsing import extract_json_array
+
+    # A reconsidered second block supersedes the first.
+    two_blocks = '```json\n[{"a": 1}]\n```\nRevise:\n```json\n[{"a": 2}]\n```'
+    assert extract_json_array(two_blocks) == '[{"a": 2}]'
+    # A stray bracket in trailing prose is not mistaken for the array.
+    assert extract_json_array('[{"a": 1}] note x[0]') == '[{"a": 1}]'
+
+
+def test_parse_llm_response_uses_last_of_multiple_blocks(searchspace):
+    """When the model emits several JSON blocks, the last (revised) one is parsed."""
+    first = _make_suggestions(
+        [{"temperature": 25.0, "pressure": 2.0, "n_cycles": 1, "catalyst": "A"}]
+    )
+    second = _make_suggestions(
+        [{"temperature": 30.0, "pressure": 3.0, "n_cycles": 5, "catalyst": "C"}]
+    )
+    response = f"```json\n{first}\n```\nWait, let me revise:\n```json\n{second}\n```"
+    df = parse_llm_response(response, searchspace)
+    assert len(df) == 1
+    assert df["catalyst"].iloc[0] == "C"
+
+
 @patch("baybe._optional.llm.completion")
 def test_recommend_invalid_response_with_failed_recovery(
     mock_completion, recommender, searchspace
