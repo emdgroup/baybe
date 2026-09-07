@@ -30,22 +30,37 @@ from baybe.utils.validation import validate_parameter_input
 def extract_json_array(response: str, /) -> str:
     """Extract the JSON array payload from a raw language model response.
 
-    Language models frequently wrap their output in Markdown code fences or add
-    surrounding prose despite instructions to the contrary. This helper isolates the
-    outermost ``[...]`` block so that such responses can still be parsed.
+    Models often wrap the array in Markdown fences or prose, or emit several blocks
+    (e.g. after reconsidering). Return the *last* array that is a list of objects (the
+    intended answer), ignoring prose and stray brackets like ``x[0]``. If none is found,
+    fall back to the last complete array, else the original text.
 
     Args:
         response: The raw response text.
 
     Returns:
-        The substring spanning the outermost JSON array, or the original text if no
-        array delimiters are found.
+        The substring spanning the extracted JSON array, or the original text if none.
     """
-    start = response.find("[")
-    end = response.rfind("]")
-    if start != -1 and end != -1 and start < end:
-        return response[start : end + 1]
-    return response
+    decoder = json.JSONDecoder()
+    last_array: str | None = None
+    last_object_array: str | None = None
+    search_start = 0
+    while (start := response.find("[", search_start)) != -1:
+        try:
+            value, end = decoder.raw_decode(response, start)
+        except JSONDecodeError:
+            search_start = start + 1  # not a valid array here; try the next "["
+            continue
+        last_array = response[start:end]
+        is_object_list = (
+            isinstance(value, list)
+            and bool(value)
+            and all(isinstance(x, dict) for x in value)
+        )
+        if is_object_list:
+            last_object_array = last_array
+        search_start = end  # keep scanning; a later block wins
+    return last_object_array or last_array or response
 
 
 def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFrame:
