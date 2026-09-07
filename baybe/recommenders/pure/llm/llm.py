@@ -320,17 +320,15 @@ def make_llm_alternating_recommender(
     from baybe.recommenders.meta.sequential import SequentialMetaRecommender
     from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 
-    return SequentialMetaRecommender(
-        recommenders=[
-            LLMRecommender(
-                model=model,
-                experiment_description=experiment_description,
-                litellm_args=litellm_args or {},
-            ),
-            BotorchRecommender() if recommender is None else recommender,
-        ],
-        mode="cyclic",
-    )
+    recommenders: list[RecommenderProtocol] = [
+        LLMRecommender(
+            model=model,
+            experiment_description=experiment_description,
+            litellm_args=litellm_args or {},
+        ),
+        BotorchRecommender() if recommender is None else recommender,
+    ]
+    return SequentialMetaRecommender(recommenders=recommenders, mode="cyclic")
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
