@@ -353,7 +353,9 @@ class GaussianProcessSurrogate(Surrogate):
             mean_factory = self.mean_factory or BayBEMeanFactory()
             return mean_factory(searchspace, objective, measurements)
 
-        context = _ModelContext(searchspace, objective, measurements)
+        context = _ModelContext(
+            searchspace, objective, nw.from_native(measurements, eager_only=True)
+        )
 
         train_y = to_tensor(objective._pre_transform(measurements, allow_extra=True))
         if train_y.ndim == 1:
