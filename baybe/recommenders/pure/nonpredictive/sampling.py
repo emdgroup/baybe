@@ -40,6 +40,7 @@ class RandomRecommender(NonPredictiveRecommender):
     ) -> IntoDataFrame:
         backend = active_settings.default_dataframe_backend
         is_hybrid = searchspace.type is SearchSpaceType.HYBRID
+        cont_random = None
 
         # Sample continuous part if applicable
         if is_hybrid or searchspace.type is SearchSpaceType.CONTINUOUS:
@@ -84,6 +85,7 @@ class RandomRecommender(NonPredictiveRecommender):
         if not is_hybrid:
             return disc_random.to_native()
 
+        assert cont_random is not None
         return nw.concat([disc_random, cont_random], how="horizontal").to_native()
 
     @override
