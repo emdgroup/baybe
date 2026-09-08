@@ -138,7 +138,7 @@ class BayesianRecommender(PureRecommender, ABC):
         return self._botorch_acqf
 
     @override
-    def recommend(
+    def recommend(  # pyrefly: ignore[bad-override]  # TODO[typing]: https://github.com/facebook/pyrefly/issues/4847
         self,
         batch_size: int,
         searchspace: SearchSpace,

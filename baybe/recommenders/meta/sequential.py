@@ -167,7 +167,7 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         return self._get_recommender_at_current_step()
 
     @override
-    def recommend(
+    def recommend(  # pyrefly: ignore[bad-override]  # TODO[typing]: https://github.com/facebook/pyrefly/issues/4847
         self,
         batch_size: int,
         searchspace: SearchSpace,
@@ -187,7 +187,7 @@ class BaseSequentialMetaRecommender(MetaRecommender):
             else 0
         )
 
-        return recommendation
+        return recommendation  # pyrefly: ignore[bad-return]  # TODO[typing]: https://github.com/facebook/pyrefly/issues/4847
 
 
 @define

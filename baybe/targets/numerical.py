@@ -719,7 +719,7 @@ class NumericalTarget(Target, SerialMixin):
         return self._append_transformation(PowerTransformation(exponent))
 
     @override
-    def transform(
+    def transform(  # pyrefly: ignore[bad-override]  # TODO[typing]: https://github.com/facebook/pyrefly/issues/4847
         self, series: IntoSeriesT | None = None, /, *, data: pd.DataFrame | None = None
     ) -> IntoSeriesT:
         # >>>>>>>>>> Deprecation

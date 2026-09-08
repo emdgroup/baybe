@@ -22,7 +22,7 @@ class NonPredictiveRecommender(PureRecommender, ABC):
     """Abstract base class for all nonpredictive recommenders."""
 
     @override
-    def recommend(
+    def recommend(  # pyrefly: ignore[bad-override]  # TODO[typing]: https://github.com/facebook/pyrefly/issues/4847
         self,
         batch_size: int,
         searchspace: SearchSpace,
