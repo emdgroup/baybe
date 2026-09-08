@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, ClassVar, overload
 
+import attrs
 import narwhals.stable.v2 as nw
 import pandas as pd
 from attr.converters import optional as optional_c
@@ -106,6 +107,22 @@ class Parameter(ABC, SerialMixin):
         from baybe.searchspace.core import SearchSpace
 
         return SearchSpace.from_parameter(self)
+
+    def is_equivalent(self, other: Parameter) -> bool:
+        """Check if this parameter is equivalent to another, ignoring the name.
+
+        Two parameters are considered equivalent if they have the same type and
+        all attributes are equal except for the name.
+
+        Args:
+            other: The parameter to compare against.
+
+        Returns:
+            ``True`` if the parameters are equivalent, ``False`` otherwise.
+        """
+        if type(self) is not type(other):
+            return False
+        return attrs.evolve(self, name=other.name) == other
 
     @abstractmethod
     def summary(self) -> dict:

@@ -13,11 +13,14 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
-from baybe.exceptions import InfeasibilityError
+from baybe.exceptions import (
+    InfeasibilityError,
+    _UnsupportedSearchSpaceAttributeError,
+)
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
 from baybe.searchspace.candidates import TableCandidates
@@ -111,7 +114,7 @@ class SearchSpace(SerialMixin):
         cls,
         parameters: Sequence[Parameter],
         constraints: Sequence[Constraint] | None = None,
-    ) -> SearchSpace:
+    ) -> Self:
         """Create a search space from a cartesian product.
 
         In the search space, optional subsequent constraints are applied.
@@ -144,14 +147,14 @@ class SearchSpace(SerialMixin):
             constraints=[c for c in constraints if c.is_continuous],  # type:ignore[misc]
         )
 
-        return SearchSpace(discrete=discrete, continuous=continuous)
+        return cls(discrete=discrete, continuous=continuous)
 
     @classmethod
     def from_dataframe(
         cls,
         df: pd.DataFrame,
         parameters: Sequence[Parameter],
-    ) -> SearchSpace:
+    ) -> Self:
         """Create a search space from a specified set of parameter configurations.
 
         The way in which the contents of the columns are interpreted depends on the
@@ -182,7 +185,7 @@ class SearchSpace(SerialMixin):
 
         validate_dataframe_active_values(df, disc_params)
 
-        return SearchSpace(
+        return cls(
             discrete=SubspaceDiscrete.from_dataframe(
                 df[[p.name for p in disc_params]],
                 disc_params,  # type:ignore[arg-type]
@@ -611,7 +614,7 @@ class _ReducedSearchSpace(SearchSpace):
         allowed = object.__getattribute__(self, "_ALLOWED_ATTRIBUTES")
         if name in allowed:
             return object.__getattribute__(self, name)
-        raise AttributeError(
+        raise _UnsupportedSearchSpaceAttributeError(
             f"'{object.__getattribute__(self, '__class__').__name__}' does not "
             f"support attribute '{name}'. Only parameter information is available."
         )

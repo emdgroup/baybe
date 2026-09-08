@@ -136,7 +136,7 @@ class LegacyTarget(Target, SerialMixin):
     def _validate_transformation(  # noqa: DOC101, DOC103
         self, _: Any, value: TargetTransformation | None
     ) -> None:
-        """Validate compatability between transformation, bounds and the mode.
+        """Validate compatibility between transformation, bounds and the mode.
 
         Raises:
             ValueError: If a target transformation was provided for an unbounded

@@ -3,20 +3,18 @@
 import gc
 
 import narwhals.stable.v2 as nw
+from attr.converters import optional as optional_c
 from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import assert_never, override
 
-from baybe.parameters.base import _JOIN_KEY, _EncodedDiscreteParameter
-from baybe.parameters.enum import CategoricalEncoding
-from baybe.parameters.validation import validate_unique_values
-from baybe.utils.conversion import nonstring_to_tuple
-
-
-def _convert_values(value, self, field) -> tuple[str, ...]:
-    """Sort and convert values for categorical parameters."""
-    value = nonstring_to_tuple(value, self, field)
-    return tuple(sorted(value, key=lambda x: (str(type(x)), x)))
+from baybe.parameters.base import (
+    _JOIN_KEY,
+    _EncodedDiscreteParameter,
+)
+from baybe.parameters.enum import CategoricalEncoding, TransferLearningMode
+from baybe.utils.conversion import nonstring_to_tuple, sort_tuple
+from baybe.utils.validation import validate_unique_values
 
 
 def _validate_label_min_len(self, attr, value) -> None:
@@ -35,7 +33,10 @@ class CategoricalParameter(_EncodedDiscreteParameter):
     # object variables
     _values: tuple[str | bool, ...] = field(
         alias="values",
-        converter=Converter(_convert_values, takes_self=True, takes_field=True),  # type: ignore
+        converter=[  # type: ignore[misc]
+            Converter(nonstring_to_tuple, takes_self=True, takes_field=True),  # type: ignore[call-overload]
+            sort_tuple,
+        ],
         validator=(
             validate_unique_values,
             deep_iterable(
@@ -109,6 +110,18 @@ class TaskParameter(CategoricalParameter):
 
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     """The encoding used the generate the parameters computational representation."""
+
+    override_transfer_learning_mode: TransferLearningMode | None = field(
+        default=None,
+        converter=optional_c(TransferLearningMode),
+    )
+    """Optional override for how the task dimension is modeled.
+
+    Only applies to :class:`.GaussianProcessSurrogate`. When ``None``, the surrogate's
+    kernel factory decides how the task dimension is treated. When set, the surrogate
+    attaches the requested task kernel to a task-free base kernel derived from the
+    configured factory.
+    """
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

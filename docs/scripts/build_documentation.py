@@ -3,6 +3,7 @@
 import argparse
 import os
 import pathlib
+import shutil
 from subprocess import check_call, run
 
 from build_examples import build_examples
@@ -48,6 +49,32 @@ LINKCHECK = not args.no_linkcheck
 FULL_REBUILD = args.full_rebuild
 INCLUDE_WARNINGS = args.include_warnings
 FORCE = args.force
+
+
+def _run_apidoc() -> None:
+    """Generate API reference RST stubs via sphinx-apidoc."""
+    from sphinx.ext import apidoc
+
+    output_dir = pathlib.Path("docs/sdk")
+    module_dir = pathlib.Path("baybe")
+
+    # Remove previously generated stubs to ensure a clean state
+    if output_dir.is_dir():
+        shutil.rmtree(output_dir)
+
+    apidoc.main(
+        [
+            "--implicit-namespaces",
+            "-M",
+            "-T",
+            "-e",
+            "-f",
+            "-o",
+            str(output_dir),
+            str(module_dir),
+            str(module_dir / "__init__.py"),
+        ]
+    )
 
 
 def build_documentation(
@@ -100,6 +127,9 @@ def build_documentation(
 
     if perform_linkcheck:
         check_links()
+
+    # Generate the API reference stubs via sphinx-apidoc
+    _run_apidoc()
 
     # Directory where the documentation is build.
     build_dir = pathlib.Path("docs/build")

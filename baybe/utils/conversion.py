@@ -42,6 +42,11 @@ def nonstring_to_tuple(x: Sequence[_T], self: type, field: Attribute) -> tuple[_
     return tuple(x)
 
 
+def sort_tuple(values: tuple[_T, ...]) -> tuple[_T, ...]:
+    """Sort a tuple using a type-stable key."""
+    return tuple(sorted(values, key=lambda x: (str(type(x)), x)))
+
+
 def _indent(text: str, amount: int = 3, ch: str = " ") -> str:
     """Indent a given text by a certain amount."""
     padding = amount * ch

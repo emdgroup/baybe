@@ -4,6 +4,7 @@
 ci:
   autoupdate_schedule: quarterly
   autofix_prs: false
+  skip: [pyrefly-check]
 
 repos:
 - repo: https://github.com/pycqa/flake8
@@ -31,4 +32,11 @@ repos:
   rev: v1.26.1
   hooks:
   - id: zizmor
+- repo: https://github.com/facebook/pyrefly-pre-commit
+  rev: 1.2.0
+  hooks:
+    - id: pyrefly-check
+      name: pyrefly
+      pass_filenames: false  # full check, not just changed files
+      language: system
 

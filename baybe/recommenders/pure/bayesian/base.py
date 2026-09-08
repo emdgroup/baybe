@@ -10,24 +10,21 @@ import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
+from attrs.validators import deep_iterable, instance_of
 from narwhals.stable.v2.typing import IntoDataFrameT
 from typing_extensions import override
 
 from baybe.acquisition import qLogEI, qLogNEHVI
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
-from baybe.exceptions import (
-    IncompatibleAcquisitionFunctionError,
-)
+from baybe.exceptions import IncompatibleAcquisitionFunctionError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
-from baybe.surrogates.base import (
-    Surrogate,
-    SurrogateProtocol,
-)
+from baybe.surrogates.base import Surrogate, SurrogateProtocol
+from baybe.symmetries.base import Symmetry
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
@@ -56,6 +53,14 @@ class BayesianRecommender(PureRecommender, ABC):
         default=None, converter=optional(convert_acqf)
     )
     """The acquisition function. When omitted, a default is used."""
+
+    symmetries: tuple[Symmetry, ...] = field(
+        factory=tuple,
+        converter=tuple,
+        validator=deep_iterable(member_validator=instance_of(Symmetry)),
+        kw_only=True,
+    )
+    """Symmetries triggering data augmentation during model fitting."""
 
     # TODO: The objective is currently only required for validating the recommendation
     #   context. Once multi-target support is complete, we might want to refactor
@@ -102,6 +107,10 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"You attempted to use a single-output acquisition function in a "
                 f"{len(objective.targets)}-target multi-output context."
             )
+
+        # Perform data augmentation
+        for s in self.symmetries:
+            measurements = s.augment_measurements(measurements, searchspace)
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = acqf.to_botorch(

@@ -8,6 +8,7 @@ import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_mapping, instance_of, min_len
+from exceptiongroup import ExceptionGroup
 from typing_extensions import override
 
 from baybe.parameters.base import _EncodedDiscreteParameter
@@ -20,11 +21,6 @@ from baybe.utils.dataframe import (
     df_drop_single_value_columns,
     df_uncorrelated_features,
 )
-
-try:  # For python < 3.11, use the exceptiongroup backport
-    ExceptionGroup
-except NameError:
-    from exceptiongroup import ExceptionGroup
 
 Smiles = str
 """Type alias for SMILES strings."""

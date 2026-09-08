@@ -14,7 +14,6 @@ from baybe._optional.chem import (
     Chem,
     ConformerGenerator,
     MolFromSmilesTransformer,
-    fingerprints,
 )
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.settings import active_settings
@@ -70,7 +69,7 @@ def _molecule_to_fingerprint_features(
     Returns:
         Array of fingerprint features.
     """
-    return encoder.transform([molecule])
+    return np.asarray(encoder.transform([molecule]))
 
 
 def smiles_to_fingerprint_features(
@@ -146,7 +145,9 @@ def smiles_to_fingerprint_features(
     return df
 
 
-def get_fingerprint_class(encoding: SubstanceEncoding) -> BaseFingerprintTransformer:
+def get_fingerprint_class(
+    encoding: SubstanceEncoding,
+) -> type[BaseFingerprintTransformer]:
     """Retrieve the fingerprint class corresponding to a given encoding.
 
     Args:
@@ -158,6 +159,8 @@ def get_fingerprint_class(encoding: SubstanceEncoding) -> BaseFingerprintTransfo
     Returns:
         The fingerprint class.
     """
+    from baybe._optional.chem import fingerprints
+
     # Exception case
     if encoding is SubstanceEncoding.RDKITFINGERPRINT:
         return fingerprints.RDKitFingerprint

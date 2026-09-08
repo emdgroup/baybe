@@ -10,6 +10,7 @@ from gpytorch.means.multitask_mean import Mean
 from gpytorch.priors import LogNormalPrior
 from torch import Tensor
 from torch.nn import Module
+from typing_extensions import override
 
 
 class HadamardConstantMean(Mean):
@@ -37,6 +38,7 @@ class HadamardConstantMean(Mean):
         self.multitask_mean = MultitaskMean(mean_module, num_tasks=num_tasks)
         self.task_feature = task_feature
 
+    @override
     def forward(self, x: Tensor) -> Tensor:
         # Adapted from https://github.com/meta-pytorch/botorch/blob/e0f4f5b941b5949a4a1171bf8d4ee9f74f146f3a/botorch/models/multitask.py#L397
 

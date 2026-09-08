@@ -37,11 +37,11 @@ from baybe.constraints import (
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteExcludeConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
+    DiscreteSelectionConstraint,
     DiscreteSumConstraint,
     SubSelectionCondition,
     ThresholdCondition,
@@ -59,6 +59,7 @@ from baybe.parameters import (
     SubstanceEncoding,
     TaskParameter,
 )
+from baybe.parameters.enum import TransferLearningMode
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors import GammaPrior
 from baybe.recommenders.meta.base import MetaRecommender
@@ -245,7 +246,7 @@ def fixture_parameters(
         NumericalDiscreteParameter(
             name="Fraction_1",
             values=tuple(np.linspace(0, 100, n_grid_points)),
-            tolerance=0.2,
+            tolerance=0.5,
         ),
         NumericalDiscreteParameter(
             name="Fraction_2",
@@ -315,6 +316,18 @@ def fixture_parameters(
             name="Task",
             values=("A", "B", "C"),
             active_values=("A", "B"),
+        ),
+        TaskParameter(
+            name="Task_index_override",
+            values=("A", "B", "C"),
+            active_values=("A", "B"),
+            override_transfer_learning_mode=TransferLearningMode.INDEX_KERNEL,
+        ),
+        TaskParameter(
+            name="Task_positive_index_override",
+            values=("A", "B", "C"),
+            active_values=("A", "B"),
+            override_transfer_learning_mode=TransferLearningMode.POSITIVE_INDEX_KERNEL,
         ),
     ]
 
@@ -470,29 +483,32 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             conditions=[SubSelectionCondition(selection=["right"])],
             affected_parameters=[["Frame_A", "Frame_B"]],
         ),
-        "Constraint_4": DiscreteExcludeConstraint(
+        "Constraint_4": DiscreteSelectionConstraint(
             parameters=["Temperature", "Solvent_1"],
             combiner="AND",
             conditions=[
                 ThresholdCondition(threshold=151, operator=">"),
                 SubSelectionCondition(selection=list(mock_substances)[:2]),
             ],
+            exclude=True,
         ),
-        "Constraint_5": DiscreteExcludeConstraint(
+        "Constraint_5": DiscreteSelectionConstraint(
             parameters=["Pressure", "Solvent_1"],
             combiner="AND",
             conditions=[
                 ThresholdCondition(threshold=5, operator=">"),
                 SubSelectionCondition(selection=list(mock_substances)[-2:]),
             ],
+            exclude=True,
         ),
-        "Constraint_6": DiscreteExcludeConstraint(
+        "Constraint_6": DiscreteSelectionConstraint(
             parameters=["Pressure", "Temperature"],
             combiner="AND",
             conditions=[
                 ThresholdCondition(threshold=3, operator="<"),
                 ThresholdCondition(threshold=120, operator=">"),
             ],
+            exclude=True,
         ),
         "Constraint_7": DiscreteNoLabelDuplicatesConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],

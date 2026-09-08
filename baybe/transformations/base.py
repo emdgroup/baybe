@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define
 from typing_extensions import override
@@ -15,8 +15,13 @@ from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import ConvertibleToInterval, Interval
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
+
+    TensorCallable = Callable[[Tensor], Tensor]
+    """Type alias for a torch-based function mapping from reals to reals."""
 
 
 _TTransformation = TypeVar("_TTransformation", bound="Transformation")
@@ -43,10 +48,11 @@ class Transformation(SerialMixin, ABC):
         In accordance with the mathematical definition of a function's `codomain
         <https://en.wikipedia.org/wiki/Codomain>`_, we define the codomain of a given
         :class:`~baybe.utils.interval.Interval` under a certain (assumed continuous)
-        :class:`~Transformation` to be an :class:`~baybe.utils.interval.Interval`
-        guaranteed to contain all possible outcomes when the :class:`~Transformation` is
-        applied to all points in the input :class:`~baybe.utils.interval.Interval`. In
-        cases where the image cannot exactly be computed, it is often still possible to
+        :class:`~baybe.transformations.base.Transformation` to be an
+        :class:`~baybe.utils.interval.Interval` guaranteed to contain all possible
+        outcomes when the :class:`~baybe.transformations.base.Transformation` is applied
+        to all points in the input :class:`~baybe.utils.interval.Interval`. In cases
+        where the image cannot exactly be computed, it is often still possible to
         compute a codomain. The codomain always contains the image, but might be larger.
         """
 
@@ -56,10 +62,10 @@ class Transformation(SerialMixin, ABC):
         In accordance with the mathematical definition of a function's `image
         <https://en.wikipedia.org/wiki/Image_(mathematics)>`_, we define the image of a
         given :class:`~baybe.utils.interval.Interval` under a certain (assumed
-        continuous) :class:`~Transformation` to be the smallest
-        :class:`~baybe.utils.interval.Interval` containing all possible outcomes when
-        the :class:`~Transformation` is applied to all points in the input
-        :class:`~baybe.utils.interval.Interval`.
+        continuous) :class:`~baybe.transformations.base.Transformation` to be the
+        smallest :class:`~baybe.utils.interval.Interval` containing all possible
+        outcomes when the :class:`~baybe.transformations.base.Transformation` is applied
+        to all points in the input :class:`~baybe.utils.interval.Interval`.
         """
         # By default, it is assumed that the exact image of an interval cannot be
         # computed but only the codomain is available (see :meth:`get_codomain`).
@@ -198,7 +204,7 @@ class Transformation(SerialMixin, ABC):
         if callable(other):
             from baybe.transformations.basic import CustomTransformation
 
-            return self | CustomTransformation(other)
+            return self | CustomTransformation(cast("TensorCallable", other))
         return NotImplemented
 
     @classmethod

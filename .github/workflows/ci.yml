@@ -110,7 +110,7 @@ jobs:
       - name: Run type check
         run: |
           pip install tox-uv
-          tox -e mypy-${{ matrix.py-version.tox }}
+          tox -e typecheck-${{ matrix.py-version.tox }}
 
   audit:
     needs: [lint]

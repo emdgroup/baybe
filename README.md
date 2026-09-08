@@ -413,7 +413,8 @@ The available groups are:
 - `docs`: Required for creating the documentation.
 - `examples`: Required for running the examples/streamlit.
 - `lint`: Required for linting and formatting.
-- `mypy`: Required for static type checking.
+- `mypy`: Required for static type checking with mypy (stubs and mypy itself).
+- `typecheck`: Required for full static type checking (includes `mypy` and `pyrefly`).
 - `onnx`: Required for using custom surrogate models in [ONNX format](https://onnx.ai).
 - `polars`: Required for optimized search space construction via [Polars](https://docs.pola.rs/).
 - `insights`: Required for built-in model and campaign analysis (e.g. using [SHAP](https://shap.readthedocs.io/)).

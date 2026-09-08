@@ -55,7 +55,7 @@ we recommend the following workflow:
    ```
 
    Other tox tests that are useful to verify your work locally are `tox -e lint-py314`,
-   `tox -e mypy-py314` and `tox -e coretest-py314`.
+   `tox -e typecheck-py314` and `tox -e coretest-py314`.
 
    If you want to challenge your machine, you can run all checks in all Python versions
    in parallel via:
@@ -112,7 +112,8 @@ If you have questions or problems, simply ask for advice.
 
 | Tool                                                                                            | Purpose                                   |
 |:------------------------------------------------------------------------------------------------|:------------------------------------------|
-| [mypy](https://mypy.readthedocs.io/)                                                            | check static types                        |
+| [mypy](https://mypy.readthedocs.io/)                                                            | static type checker                        |
+| [pyrefly](https://pyrefly.org/)                                                                 | static type checker             |
 | [pip-audit](https://github.com/pypa/pip-audit)                                                  | detect vulnerabilities in dependencies    |
 | [pytest](https://docs.pytest.org/)                                                              | run tests                                 |
 | [pytest-cov](https://pytest-cov.readthedocs.io/)                                                | measure test coverage                     |

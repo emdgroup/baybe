@@ -242,3 +242,34 @@ def test_batching_incompatibility(
         match="cannot be used for joint posterior evaluation",
     ):
         surrogate.posterior(measurements, joint=True)
+
+
+@pytest.mark.parametrize(
+    "objective",
+    [
+        param(
+            DesirabilityObjective(
+                [NumericalTarget("t1"), NumericalTarget("t2")],
+                scalarizer="MEAN",
+                require_normalization=False,
+                as_pre_transformation=False,
+            ),
+            id="desirability",
+        ),
+        param(
+            ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2")]),
+            id="pareto",
+        ),
+    ],
+)
+def test_multi_model_incompatibility(objective: Objective):
+    """Single-output surrogates reject multi-model objectives in fit."""
+    searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
+    measurements = create_fake_input(searchspace.parameters, objective.targets)
+    surrogate = GaussianProcessSurrogate()
+
+    with pytest.raises(
+        IncompatibleSurrogateError,
+        match="single-output surrogate",
+    ):
+        surrogate.fit(searchspace, objective, measurements)

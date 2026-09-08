@@ -31,8 +31,12 @@ def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
         else:
             raise OSError("Destination directory exists but should not be removed.")
 
-    # Copy the examples folder in the destination directory
-    shutil.copytree("examples", destination_directory)
+    # Copy the examples folder in the destination directory. "__pycache__" might be
+    # present in the examples folder and needs to be ignored
+    def ignore_pycache(_, contents: list[str]):
+        return [item for item in contents if item == "__pycache__"]
+
+    shutil.copytree("examples", destination_directory, ignore=ignore_pycache)
 
     # For the toctree of the top level example folder, we need to keep track of all
     # folders. We thus write the header here and populate it during the execution of the
@@ -44,7 +48,7 @@ def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
 
     # This list contains the order of the examples as we want to have them in the end.
     # The examples that should be the first ones are already included here and skipped
-    # later on. ALl other are just included.
+    # later on. All others are just included.
     ex_order = [
         "Basics<Basics/Basics>\n",
         "Searchspaces<Searchspaces/Searchspaces>\n",

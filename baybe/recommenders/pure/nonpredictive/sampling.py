@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from enum import Enum
 from typing import TYPE_CHECKING, ClassVar
 
 import narwhals.stable.v2 as nw
@@ -20,7 +19,7 @@ from baybe.utils.dataframe import _df_with_backend
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame
 from baybe.utils.conversion import to_string
-from baybe.utils.sampling_algorithms import farthest_point_sampling
+from baybe.utils.sampling_algorithms import FPSInitialization, farthest_point_sampling
 
 
 class RandomRecommender(NonPredictiveRecommender):
@@ -59,6 +58,7 @@ class RandomRecommender(NonPredictiveRecommender):
         )
 
         # Restrict to a random subset if subset-generating constraints are present
+        is_hybrid = searchspace.type is SearchSpaceType.HYBRID
         if searchspace.discrete.n_subsets > 0:
             masks = searchspace.discrete.sample_subset_masks(
                 n=1,
@@ -93,16 +93,6 @@ class RandomRecommender(NonPredictiveRecommender):
         return to_string(self.__class__.__name__, *fields)
 
 
-class FPSInitialization(Enum):
-    """Initialization methods for farthest point sampling."""
-
-    FARTHEST = "farthest"
-    """Selects the first two points with the largest distance."""
-
-    RANDOM = "random"
-    """Selects the first point uniformly at random."""
-
-
 @define
 class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling.
@@ -123,7 +113,7 @@ class FPSRecommender(NonPredictiveRecommender):
     """See :func:`~baybe.utils.sampling_algorithms.farthest_point_sampling`.
 
     If the optional package 'fpsample' is used, only
-    :attr:`~baybe.recommenders.pure.nonpredictive.sampling.FPSInitialization.FARTHEST`
+    :attr:`~baybe.utils.sampling_algorithms.FPSInitialization.FARTHEST`
     is supported.
     """
 
@@ -190,7 +180,7 @@ class FPSRecommender(NonPredictiveRecommender):
             idcs = farthest_point_sampling(
                 candidates_scaled,
                 batch_size,
-                initialization=self.initialization.value,
+                initialization=self.initialization,
                 random_tie_break=self.random_tie_break,
             )
         return nw.maybe_reset_index(

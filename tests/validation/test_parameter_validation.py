@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from cattrs.errors import IterableValidationError
+from exceptiongroup import ExceptionGroup
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
@@ -21,11 +22,6 @@ from baybe.parameters.numerical import (
 from baybe.parameters.substance import SubstanceParameter
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.interval import InfiniteIntervalError
-
-try:  # For python < 3.11, use the exceptiongroup backport
-    ExceptionGroup
-except NameError:
-    from exceptiongroup import ExceptionGroup
 
 
 @pytest.mark.parametrize(

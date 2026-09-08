@@ -377,6 +377,21 @@ def test_kernel_factories(ongoing_campaign, n_iterations, batch_size):
     run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
+@pytest.mark.parametrize(
+    "parameter_names",
+    [
+        param(["Categorical_1", "Num_disc_1", "Task_index_override"], id="index"),
+        param(
+            ["Categorical_1", "Num_disc_1", "Task_positive_index_override"],
+            id="positive_index",
+        ),
+    ],
+)
+def test_transfer_learning_override(ongoing_campaign, n_iterations, batch_size):
+    """A task parameter override survives a full fit/recommend loop."""
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
+
+
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "surrogate_model",

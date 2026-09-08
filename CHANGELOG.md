@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Removed
+- `eval_during_creation` / `eval_during_modeling` constraint class variables
+
 ### Breaking Changes
 - For pandas users: series/dataframe indices are no longer used as information carriers
   anywhere. In particular, recommendation dataframes no longer reflect discrete subspace
@@ -24,6 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.get_candidates` now returns only the experimental representation
   instead of a tuple of experimental and computational representations
 - Optional/secondary fields of discrete parameter classes are now keyword-only
+- `df_apply_permutation_augmentation` has a different interface and now expects
+  permutation groups instead of column groups
+- `ParameterSelectorProtocol.__call__` now declares its input as positional-only
+
+### Fixed
+- `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
+  values of invariant points are degenerate
+- Multi-output surrogate compatibility check in `Surrogate.fit` now correctly uses the
+  number of required models instead of the number of transform outputs
 
 ### Added
 - `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
@@ -41,6 +53,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Settings.default_dataframe_backend` attribute for convenient dataframe backend choice
 - `DiscreteParameter.transform` narwhalified: now accepts `narwhals`-compatible series,
   arbitrary iterables, or `None`
+- `Symmetry` concept for expressing symmetries of the optimization problem, including
+  `PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry` classes, which trigger
+  automatic data augmentation when assigned to the `symmetries` attribute of a
+  `BayesianRecommender`
+- `Parameter.is_equivalent` method for structural parameter comparison
+- `posterior_mean_function` method to `GaussianProcessSurrogate`
+- `exclude` keyword-only flag available on all discrete filtering constraints,
+  inverting the specification to keep the complement
+- `DiscreteSelectionConstraint` as the condition-based filtering constraint
+  (inclusion-by-default; replaces `DiscreteExcludeConstraint`)
+- `TaskParameter.override_transfer_learning_mode` (and the corresponding
+  `TransferLearningMode` enum) for selecting the kernel that models the task
+  correlations in transfer learning, taking precedence over the task kernel of the
+  configured kernel factory
 
 ### Changed
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
@@ -72,6 +98,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
 - Bumped polars to `>=0.20.8`
 - Bumped cattrs to `>=26.1.0`
+- The factory fields of `GaussianProcessSurrogate` (`kernel_factory`,
+  `mean_factory`, `likelihood_factory`, `fit_criterion_factory`) now default to
+  `None`, meaning "auto-select based on context at fit time". Accessing a field
+  before fitting may return `None` instead of a concrete factory.
+- Discrete filtering constraints now uniformly define what is **kept** in the search
+  space; set `exclude=True` to invert and keep the complement instead
+- Renamed `exclusion_constraints` example to `selection_constraints`
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
@@ -94,6 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.constraints_batch` property (use `batch_constraints` instead)
 - `SubspaceDiscrete.exp_rep` attribute (use `get_candidates()` instead)
 - `SubspaceDiscrete.comp_rep` attribute (use `transform(get_candidates())` instead)
+- `DiscreteExcludeConstraint` in favor of
+  `DiscreteSelectionConstraint(..., exclude=True)`
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
