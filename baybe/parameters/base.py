@@ -189,7 +189,7 @@ class DiscreteParameter(Parameter, ABC):
     @overload
     def transform(self, series: pl.Series, /) -> pl.DataFrame: ...
     @overload
-    def transform(self, series: Iterable[Any], /) -> IntoDataFrame: ...  # type: ignore[overload-cannot-match]
+    def transform(self, series: Iterable[Any], /) -> IntoDataFrame: ...
 
     def transform(
         self, series: nw.IntoSeries | Iterable[Any] | None = None, /
