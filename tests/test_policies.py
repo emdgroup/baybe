@@ -73,7 +73,7 @@ def test_call_chain():
     campaign.add_measurements(measurements)
     n_sample = 10
     policy = RandomSamplingPolicy(n=n_sample, seed=42)
-    candidates = searchspace.discrete.get_candidates(policy)
+    candidates = searchspace.discrete.get_candidates(policy).to_lazy().collect()
     assert candidates.shape[0] == n_sample
 
     recommendations = campaign.recommend(batch_size=2, policy=policy)

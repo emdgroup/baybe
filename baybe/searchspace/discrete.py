@@ -826,10 +826,12 @@ class SubspaceDiscrete(SerialMixin):
             )
         )
 
-    def get_candidates(self, policy: PolicyProtocol | None = None) -> pd.DataFrame:
+    def get_candidates(
+        self, policy: PolicyProtocol | None = None
+    ) -> CandidatesProtocol:
         """Return all candidate parameter configurations."""
         if policy is not None:
-            return policy(self.candidates).to_lazy().collect().to_pandas()
+            return policy(self.candidates)
 
         if not self.candidates.is_finite:
             raise InfiniteSpaceError(
@@ -837,7 +839,7 @@ class SubspaceDiscrete(SerialMixin):
                 "candidates or use a finite set of candidates."
             )
 
-        return self.candidates.to_lazy().collect().to_pandas()
+        return self.candidates
 
     def transform(
         self,
