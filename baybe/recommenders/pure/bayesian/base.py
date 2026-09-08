@@ -24,6 +24,7 @@ from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate, SurrogateProtocol
 from baybe.symmetries.base import Symmetry
+from baybe.utils.dataframe import _df_with_backend
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
@@ -108,8 +109,13 @@ class BayesianRecommender(PureRecommender, ABC):
             )
 
         # Perform data augmentation
+        backend = nw.get_native_namespace(measurements)
         for s in self.symmetries:
-            measurements = s.augment_measurements(measurements, searchspace)
+            measurements_pd = nw.from_native(measurements, eager_only=True).to_pandas()
+            augmented = nw.from_native(
+                s.augment_measurements(measurements_pd, searchspace), eager_only=True
+            )
+            measurements = _df_with_backend(augmented, backend).to_native()
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = acqf.to_botorch(
