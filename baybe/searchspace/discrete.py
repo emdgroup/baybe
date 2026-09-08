@@ -127,7 +127,7 @@ class SubspaceDiscrete(SerialMixin):
             and all(isinstance(p, DiscreteParameter) for p in candidates)
         ):
             parameters = candidates
-            candidates = UNSPECIFIED
+            candidates = UNSPECIFIED  # pyrefly: ignore[bad-assignment]
             if isinstance(batch_constraints, pd.DataFrame):
                 exp_rep = batch_constraints
                 batch_constraints = ()
@@ -271,7 +271,9 @@ class SubspaceDiscrete(SerialMixin):
             )
             validate_constraints(filtering_constraints, parameters)
 
-        extra = {"empty_encoding": empty_encoding} if empty_encoding is not None else {}
+        extra: dict[str, Any] = (
+            {"empty_encoding": empty_encoding} if empty_encoding is not None else {}
+        )
         return cls(
             candidates=(
                 EmptyCandidates()
@@ -343,7 +345,9 @@ class SubspaceDiscrete(SerialMixin):
         # Ensure dtype consistency
         df = normalize_input_dtypes(df, parameters)
 
-        extra = {"empty_encoding": empty_encoding} if empty_encoding is not None else {}
+        extra: dict[str, Any] = (
+            {"empty_encoding": empty_encoding} if empty_encoding is not None else {}
+        )
         return cls(
             candidates=TableCandidates(parameters, df),
             batch_constraints=batch_constraints,
