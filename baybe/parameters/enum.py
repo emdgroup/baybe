@@ -57,7 +57,7 @@ class _DeprecatedCustomEncodingMeta(EnumMeta):
     @override
     def __getattribute__(cls, name: str) -> object:
         obj = super().__getattribute__(name)
-        if isinstance(obj, cls):
+        if isinstance(obj, cls):  # pyrefly: ignore[invalid-argument]
             warnings.warn(cls._msg, DeprecationWarning, stacklevel=2)
         return obj
 

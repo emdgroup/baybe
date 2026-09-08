@@ -210,7 +210,7 @@ class DiscreteParameter(Parameter, ABC):
         """
         all_values = series is None
         if is_into_series(series):
-            series = nw.from_native(series, series_only=True)
+            series = nw.from_native(series, series_only=True)  # pyrefly: ignore[no-matching-overload]  # https://github.com/facebook/pyrefly/issues/4849
             if series.name != self.name:
                 raise ValueError(
                     f"The provided series name '{series.name}' does not match "
