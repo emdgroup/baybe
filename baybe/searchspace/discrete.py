@@ -257,22 +257,19 @@ class SubspaceDiscrete(SerialMixin):
 
         if constraints is None:
             constraints = []
-        else:
-            constraints = sorted(
-                constraints,
+
+        batch_constraints = [
+            c for c in constraints if isinstance(c, DiscreteBatchConstraint)
+        ]
+        filtering_constraints = [
+            c for c in constraints if not isinstance(c, DiscreteBatchConstraint)
+        ]
+        if filtering_constraints:
+            filtering_constraints = sorted(
+                filtering_constraints,
                 key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
             )
-            validate_constraints(constraints, parameters)
-
-        filtering_constraints = [c for c in constraints if c.eval_during_creation]
-        batch_constraints = [c for c in constraints if c.eval_during_modeling]
-        assert len(filtering_constraints) + len(batch_constraints) == len(
-            constraints
-        ), (
-            "The constraints could not be fully partitioned into filtering and batch "
-            "constraints. The current logic assumes that each constraint belongs "
-            "exactly to one type."
-        )
+            validate_constraints(filtering_constraints, parameters)
 
         extra = {"empty_encoding": empty_encoding} if empty_encoding is not None else {}
         return cls(
@@ -567,15 +564,12 @@ class SubspaceDiscrete(SerialMixin):
         # Wrap in DataFrame
         exp_rep = pd.DataFrame(arr, columns=[p.name for p in simplex_parameters])
 
-        filtering_constraints = [c for c in constraints if c.eval_during_creation]
-        batch_constraints_list = [c for c in constraints if c.eval_during_modeling]
-        assert len(filtering_constraints) + len(batch_constraints_list) == len(
-            constraints
-        ), (
-            "The constraints could not be fully partitioned into filtering and batch "
-            "constraints. The current logic assumes that each constraint belongs "
-            "exactly to one type."
-        )
+        batch_constraints_list = [
+            c for c in constraints if isinstance(c, DiscreteBatchConstraint)
+        ]
+        filtering_constraints = [
+            c for c in constraints if not isinstance(c, DiscreteBatchConstraint)
+        ]
 
         # Merge product parameters and apply filtering constraints incrementally
         exp_rep = build_constrained_product(

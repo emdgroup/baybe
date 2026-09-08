@@ -14,12 +14,12 @@ from baybe.exceptions import InfeasibilityError
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.settings import Settings, active_settings
+from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import _df_with_backend
+from baybe.utils.sampling_algorithms import FPSInitialization, farthest_point_sampling
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame
-from baybe.utils.conversion import to_string
-from baybe.utils.sampling_algorithms import FPSInitialization, farthest_point_sampling
 
 
 class RandomRecommender(NonPredictiveRecommender):
@@ -58,7 +58,6 @@ class RandomRecommender(NonPredictiveRecommender):
         )
 
         # Restrict to a random subset if subset-generating constraints are present
-        is_hybrid = searchspace.type is SearchSpaceType.HYBRID
         if searchspace.discrete.n_subsets > 0:
             masks = searchspace.discrete.sample_subset_masks(
                 n=1,

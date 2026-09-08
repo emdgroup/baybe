@@ -21,7 +21,6 @@ from baybe.constraints import (
     SubSelectionCondition,
 )
 from baybe.constraints import base as base_module
-from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.constraints.discrete import (
     DiscreteBatchConstraint,
@@ -971,7 +970,9 @@ def test_deprecated_constraints_argument_from_product():
     p = CategoricalParameter("p", ["a", "b"])
     q = CategoricalParameter("q", ["x", "y"])
     batch_c = DiscreteBatchConstraint(["p"])
-    no_dup_c = DiscreteExcludeConstraint(["p"], [SubSelectionCondition(["a"])])
+    no_dup_c = DiscreteSelectionConstraint(
+        ["p"], [SubSelectionCondition(["a"])], exclude=True
+    )
 
     ss_both = SubspaceDiscrete.from_product(
         parameters=[p, q], constraints=[batch_c, no_dup_c]

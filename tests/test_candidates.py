@@ -8,7 +8,7 @@ from pandas.testing import assert_frame_equal
 
 from baybe.constraints import DiscreteSumConstraint, ThresholdCondition
 from baybe.constraints.conditions import SubSelectionCondition
-from baybe.constraints.discrete import DiscreteExcludeConstraint
+from baybe.constraints.discrete import DiscreteSelectionConstraint
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -26,7 +26,9 @@ p_disc2 = NumericalDiscreteParameter("disc2", (0, 10))
 p_cat = CategoricalParameter("cat", ("a", "b", "c"))
 p_cont = NumericalContinuousParameter("cont", (3, 8))
 c_sum = DiscreteSumConstraint(["disc", "disc2"], ThresholdCondition(2, "<="))
-c_sub = DiscreteExcludeConstraint(["disc"], [SubSelectionCondition([1])])
+c_sub = DiscreteSelectionConstraint(
+    ["disc"], [SubSelectionCondition([1])], exclude=True
+)
 edf = pd.DataFrame()
 
 

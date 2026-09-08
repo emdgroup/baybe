@@ -14,10 +14,7 @@ from sklearn.metrics import pairwise_distances
 
 from baybe._optional.info import FPSAMPLE_INSTALLED
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from baybe.recommenders.pure.nonpredictive.sampling import (
-    FPSInitialization,
-    FPSRecommender,
-)
+from baybe.recommenders.pure.nonpredictive.sampling import FPSRecommender
 from baybe.settings import Settings
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,

@@ -14,7 +14,6 @@ from attrs import Attribute
 
 from baybe.exceptions import IncompleteMeasurementsError
 from baybe.settings import active_settings
-from baybe.utils.dataframe import _df_with_backend, normalize_input_dtypes
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrameT
@@ -286,6 +285,8 @@ def preprocess_dataframe(
     Returns:
         The preprocessed dataframe.
     """
+    from baybe.utils.dataframe import _df_with_backend, normalize_input_dtypes
+
     df_nw = nw.from_native(df, eager_only=True)
     df_pd = df_nw.to_pandas()
 
@@ -304,6 +305,7 @@ def preprocess_dataframe(
         validate_objective_input(df_pd, objective)
     else:
         targets = ()
+
     result_pd = normalize_input_dtypes(df_pd, [*searchspace.parameters, *targets])
     return _df_with_backend(
         nw.from_native(result_pd, eager_only=True), df_nw.implementation
