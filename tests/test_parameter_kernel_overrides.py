@@ -83,7 +83,16 @@ def test_default_factory_selector_is_preserved(mode):
 
 @pytest.mark.parametrize(
     ("kernel_or_factory", "expected_residual_dims"),
-    [param(MaternKernel(), (0, 2), id="unnamed")],
+    [
+        param(MaternKernel(), (0, 2), id="unnamed"),
+        param(MaternKernel(parameter_names=("x1", "x2")), (0,), id="named"),
+        param(ScaleKernel(MaternKernel()), (0, 2), id="scaled"),
+        param(
+            lambda s, o, m: MaternKernel(parameter_names=s.parameter_names),
+            (0, 2),
+            id="callable",
+        ),
+    ],
 )
 def test_nondefault_residual_indices(kernel_or_factory, expected_residual_dims):
     """Removing a middle parameter preserves the original computational indices."""
