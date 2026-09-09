@@ -110,6 +110,21 @@ class ProductKernel(CompositeKernel):
     """The individual kernels to be multiplied."""
 
     @override
+    def _without_parameter(
+        self, name: str, searchspace: SearchSpace, /
+    ) -> Kernel | None:
+        remaining = tuple(
+            reduced
+            for kernel in self.base_kernels
+            if (reduced := kernel._without_parameter(name, searchspace)) is not None
+        )
+        if not remaining:
+            return None
+        if len(remaining) == 1:
+            return remaining[0]
+        return evolve(self, base_kernels=remaining)
+
+    @override
     def _with_parameter(self, name: str, /) -> Kernel:
         return evolve(
             self,
