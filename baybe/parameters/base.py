@@ -24,8 +24,11 @@ from baybe.utils.basic import to_tuple
 from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from gpytorch.kernels import Kernel as GPyTorchKernel
 
+    from baybe.kernels.base import BasicKernel
     from baybe.parameters.enum import _ParameterKind
     from baybe.searchspace.continuous import SubspaceContinuous
     from baybe.searchspace.core import SearchSpace
@@ -39,8 +42,15 @@ else:
 #   https://github.com/python-attrs/attrs/issues/164
 
 
-def _iter_basic_kernels(kernel: Kernel):
-    """Iterate over the basic kernel leaves of a BayBE kernel."""
+def _iter_basic_kernels(kernel: Kernel) -> Iterator[BasicKernel]:
+    """Iterate over the basic kernel leaves of a BayBE kernel.
+
+    Args:
+        kernel: The kernel to traverse.
+
+    Yields:
+        The basic kernel leaves.
+    """
     from baybe.kernels.base import BasicKernel
     from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 
