@@ -40,7 +40,8 @@ def make_parameter_override_kernel(
     """Create the kernel factor for a parameter's override.
 
     Args:
-        parameter: The parameter carrying the override.
+        parameter: The parameter carrying a non-``None`` kernel override, as ensured
+            by :func:`extract_parameter_overrides`.
         searchspace: The search space the kernel operates on.
 
     Returns:
