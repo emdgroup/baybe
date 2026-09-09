@@ -122,7 +122,7 @@ class Kernel(ABC, SerialMixin):
         )
 
     def _with_parameter(self, name: str, /) -> Kernel:
-        """Return a copy of the kernel scoped to a single parameter.
+        """Return a copy of the kernel that acts only on the given parameter.
 
         Args:
             name: The name of the parameter to scope the kernel to.
