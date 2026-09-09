@@ -89,6 +89,8 @@ def _to_kernel_override(
         return value._with_parameter(instance.name)
 
     # GPyTorch kernels: no explicit active dimensions allowed anywhere in the tree.
+    # An existing GPyTorch instance implies the module is already imported. Avoid
+    # importing it (and Torch) solely to validate other parameter inputs.
     if sys.modules.get("gpytorch") is not None:
         from gpytorch.kernels import Kernel as GPyTorchKernel
 
