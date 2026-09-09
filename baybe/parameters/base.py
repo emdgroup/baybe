@@ -50,6 +50,9 @@ def _iter_basic_kernels(kernel: Kernel) -> Iterator[BasicKernel]:
 
     Yields:
         The basic kernel leaves.
+
+    Raises:
+        TypeError: If the kernel structure is unsupported.
     """
     from baybe.kernels.base import BasicKernel
     from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
@@ -61,6 +64,9 @@ def _iter_basic_kernels(kernel: Kernel) -> Iterator[BasicKernel]:
     elif isinstance(kernel, (AdditiveKernel, ProductKernel)):
         for sub in kernel.base_kernels:
             yield from _iter_basic_kernels(sub)
+
+    else:
+        raise TypeError(f"Cannot traverse kernel '{type(kernel).__name__}'.")
 
 
 def _to_kernel_override(

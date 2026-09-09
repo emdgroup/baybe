@@ -13,6 +13,7 @@ from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.kernels import RBFKernel
+from baybe.kernels.base import Kernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import (
     CategoricalParameter,
@@ -92,6 +93,16 @@ def test_invalid_kernel_override(constructor, override, error, match):
     """Invalid parameter kernel overrides raise the expected exceptions."""
     with pytest.raises(error, match=match):
         constructor(kernel_override=override)
+
+
+@pytest.mark.parametrize("scaled", [False, True], ids=["direct", "nested"])
+def test_unsupported_kernel_override_structure(scaled):
+    """Unknown kernel structures cannot silently bypass owner-scope validation."""
+    kernel = Mock(spec=Kernel)
+    with pytest.raises(TypeError, match="Cannot traverse kernel"):
+        NumericalContinuousParameter(
+            "x", (0, 1), kernel_override=ScaleKernel(kernel) if scaled else kernel
+        )
 
 
 @pytest.mark.parametrize(
