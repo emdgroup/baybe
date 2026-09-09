@@ -15,6 +15,7 @@ from pytest import param
 
 from baybe.exceptions import IncompatibleOverrideError
 from baybe.kernels import MaternKernel, RBFKernel
+from baybe.kernels.basic import IndexKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from baybe.parameters import (
     CategoricalParameter,
@@ -26,6 +27,7 @@ from baybe.parameters.enum import TransferLearningMode
 from baybe.parameters.selectors import NameSelector
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
+from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
 from baybe.surrogates.gaussian_process.core import _ModelContext
 from baybe.surrogates.gaussian_process.presets import BayBEKernelFactory
 from baybe.targets import NumericalTarget
@@ -294,3 +296,123 @@ def test_incompatible_surrogate_kernel_is_rejected(kernel_or_factory):
 
     with pytest.raises(IncompatibleOverrideError):
         _resolve(parameters, kernel_or_factory)
+
+
+@pytest.mark.parametrize("resolver", ["icm", "unified"], ids=["icm", "unified"])
+@pytest.mark.parametrize(
+    ("factor", "active_dims"),
+    [
+        param("residual", None, id="unrestricted-residual"),
+        param("residual", (0, 1), id="overlapping-residual"),
+        param("task", None, id="unrestricted-task"),
+        param("task", (0, 1), id="overlapping-task"),
+        param("task", (), id="empty-task"),
+    ],
+)
+def test_tl_partition_validation(monkeypatch, resolver, factor, active_dims):
+    """The unified resolver retains ICM's rejection of misbound kernel outputs."""
+    parameters = [
+        NumericalContinuousParameter("x", (0, 1)),
+        TaskParameter(
+            "task",
+            ["a", "b"],
+            override_transfer_learning_mode=TransferLearningMode.INDEX_KERNEL,
+        ),
+    ]
+    searchspace = SearchSpace.from_product(parameters)
+    objective = NumericalTarget("y").to_objective()
+    measurements = pd.DataFrame()
+    kernel_cls = MaternKernel if factor == "residual" else IndexKernel
+
+    def misbound_kernel(self, searchspace):
+        return gk.RBFKernel(active_dims=active_dims)
+
+    monkeypatch.setattr(kernel_cls, "to_gpytorch", misbound_kernel)
+    with pytest.raises(ValueError, match="active_dims"):
+        if resolver == "icm":
+            ICMKernelFactory(
+                base_kernel_or_factory=MaternKernel(parameter_names=("x",)),
+                task_kernel_or_factory=IndexKernel(
+                    num_tasks=2, rank=2, parameter_names=("task",)
+                ),
+            )(searchspace, objective, measurements)
+        else:
+            GaussianProcessSurrogate(kernel_or_factory=MaternKernel())._resolve_kernel(
+                _ModelContext(searchspace, objective, measurements)
+            )
+
+
+@pytest.mark.parametrize(
+    "factor", ["residual", "override"], ids=["residual", "override"]
+)
+def test_regular_partition_validation(monkeypatch, factor):
+    """Partition validation also rejects overlap for regular parameter overrides."""
+
+    def misbound_kernel(self, searchspace):
+        return gk.RBFKernel()
+
+    monkeypatch.setattr(
+        MaternKernel if factor == "residual" else RBFKernel,
+        "to_gpytorch",
+        misbound_kernel,
+    )
+    with pytest.raises(ValueError, match="active_dims"):
+        _resolve(
+            [
+                NumericalContinuousParameter("x", (0, 1)),
+                NumericalContinuousParameter("y", (0, 1), kernel_override=RBFKernel()),
+            ],
+            MaternKernel(),
+        )
+
+
+@pytest.mark.parametrize(
+    "override",
+    [
+        param(ScaleKernel(RBFKernel()), id="scale"),
+        param(AdditiveKernel([RBFKernel(), MaternKernel()]), id="additive"),
+        param(ProductKernel([RBFKernel(), MaternKernel()]), id="product"),
+        param(gk.ScaleKernel(gk.RBFKernel()), id="raw-scale"),
+    ],
+)
+def test_composite_partition_omits_unselected_columns(override):
+    """Composite factors may share their owner while unused columns stay irrelevant."""
+    kernel, searchspace = _resolve(
+        [
+            NumericalContinuousParameter("x", (0, 1)),
+            NumericalContinuousParameter("y", (0, 1), kernel_override=override),
+            NumericalContinuousParameter("omitted", (0, 1)),
+            TaskParameter("task", ["a", "b"]),
+        ],
+        BayBEKernelFactory(parameter_selector=NameSelector(("x",), regex=False)),
+    )
+    inputs = torch.zeros(2, len(searchspace.comp_rep_columns))
+    baseline = kernel(inputs).to_dense()
+    omitted = searchspace.get_comp_rep_parameter_indices("omitted")
+    inputs[1, list(omitted)] = 1.0
+    torch.testing.assert_close(kernel(inputs).to_dense(), baseline)
+    overridden = searchspace.get_comp_rep_parameter_indices("y")
+    inputs[1, list(overridden)] = 1.0
+    assert not torch.allclose(kernel(inputs).to_dense(), baseline)
+
+
+@pytest.mark.parametrize("as_factory", [False, True], ids=["fixed", "callable"])
+def test_raw_surrogate_kernel_without_overrides(as_factory):
+    """Without overrides, raw surrogate kernels are passed through unchanged."""
+    raw = gk.RBFKernel(active_dims=(0,))
+    specification = (lambda s, o, m: raw) if as_factory else raw
+    kernel, _ = _resolve([NumericalContinuousParameter("x", (0, 1))], specification)
+    assert kernel is raw
+
+
+def test_all_overridden_bypasses_surrogate_factory():
+    """A fully overridden space does not construct an unused residual kernel."""
+
+    def unused_factory(searchspace, objective, measurements):
+        pytest.fail("The residual factory must not be called.")
+
+    kernel, _ = _resolve(
+        [NumericalContinuousParameter("x", (0, 1), kernel_override=RBFKernel())],
+        unused_factory,
+    )
+    assert isinstance(kernel, gk.RBFKernel)

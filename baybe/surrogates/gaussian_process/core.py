@@ -7,7 +7,6 @@ import importlib
 import operator
 import os
 import warnings
-from copy import deepcopy
 from functools import partial, reduce
 from typing import TYPE_CHECKING, ClassVar
 
@@ -407,22 +406,43 @@ class GaussianProcessSurrogate(Surrogate):
 
         The effective kernel is the surrogate kernel restricted to the
         non-overridden dimensions, multiplied by one factor per override.
+
+        Args:
+            context: The model context providing the inputs and override settings.
+
+        Raises:
+            ValueError: If the resolved kernels violate the override partition.
+
+        Returns:
+            The resolved and partition-validated kernel.
         """
         overrides = _override.extract_parameter_overrides(context)
-        overrides.extend(_override.extract_transfer_learning_overrides(context))
-
-        # No overrides: let the surrogate kernel (factory) handle everything.
-        if not overrides:
-            factory = self.kernel_factory or BayBEKernelFactory()
-            kernel = factory(
-                context.searchspace, context.objective, context.measurements
-            )
-            if isinstance(kernel, Kernel):
-                return kernel.to_gpytorch(context.searchspace)
-            return kernel
+        overrides += _override.extract_transfer_learning_overrides(context)
 
         excluded_names = {name for name, _ in overrides}
         residual = self._resolve_residual_kernel(context, excluded_names)
+        searchspace = context.searchspace
+        excluded_dimensions: set[int] = set()
+        for name, kernel in overrides:
+            expected = set(searchspace.get_comp_rep_parameter_indices(name))
+            actual = _override.get_active_dimensions(kernel, searchspace)
+            if actual != expected:
+                raise ValueError(
+                    f"The kernel override for '{name}' has 'active_dims' {actual}, "
+                    f"but must use exactly the parameter indices {expected}."
+                )
+            excluded_dimensions.update(expected)
+
+        if residual is not None and excluded_names:
+            allowed = (
+                set(range(len(searchspace.comp_rep_columns))) - excluded_dimensions
+            )
+            actual = _override.get_active_dimensions(residual, searchspace)
+            if not actual <= allowed:
+                raise ValueError(
+                    f"The residual kernel's 'active_dims' {actual} must be a subset "
+                    f"of the non-overridden indices {allowed}."
+                )
         factors = ([] if residual is None else [residual]) + [k for _, k in overrides]
         return reduce(operator.mul, factors)
 
@@ -437,6 +457,14 @@ class GaussianProcessSurrogate(Surrogate):
         """
         searchspace = context.searchspace
         factory = self.kernel_factory or BayBEKernelFactory()
+        if not excluded_names:
+            kernel = factory(searchspace, context.objective, context.measurements)
+            return (
+                kernel.to_gpytorch(searchspace)
+                if isinstance(kernel, Kernel)
+                else kernel
+            )
+
         if all(p.name in excluded_names for p in searchspace.parameters):
             return None
 
@@ -663,6 +691,8 @@ def _make_posterior_mean_module(
     Returns:
         A mean module ready for use in a new GP.
     """
+    from copy import deepcopy
+
     import gpytorch
 
     frozen_model = deepcopy(model)
