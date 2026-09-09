@@ -82,6 +82,26 @@ def test_default_factory_selector_is_preserved(mode):
 
 
 @pytest.mark.parametrize(
+    ("kernel_or_factory", "expected_residual_dims"),
+    [param(MaternKernel(), (0, 2), id="unnamed")],
+)
+def test_nondefault_residual_indices(kernel_or_factory, expected_residual_dims):
+    """Removing a middle parameter preserves the original computational indices."""
+    kernel, _ = _resolve(
+        [
+            NumericalContinuousParameter("x1", (0, 1)),
+            NumericalContinuousParameter("x2", (0, 1), kernel_override=RBFKernel()),
+            NumericalContinuousParameter("x3", (0, 1)),
+        ],
+        kernel_or_factory,
+    )
+    residual, override = kernel.kernels
+    assert tuple(residual.active_dims.tolist()) == expected_residual_dims
+    assert tuple(override.active_dims.tolist()) == (1,)
+    assert isinstance(override, gk.RBFKernel)
+
+
+@pytest.mark.parametrize(
     ("override_parameter", "base_override", "task_parameter"),
     [
         (NumericalDiscreteParameter("override", [0, 1, 2]), None, None),
