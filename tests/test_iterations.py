@@ -27,7 +27,11 @@ from baybe.kernels.basic import (
 )
 from baybe.kernels.composite import ScaleKernel
 from baybe.objectives.pareto import ParetoObjective
-from baybe.parameters import NumericalContinuousParameter
+from baybe.parameters import (
+    NumericalContinuousParameter,
+    TaskParameter,
+    TransferLearningMode,
+)
 from baybe.priors import (
     GammaPrior,
     HalfCauchyPrior,
@@ -379,9 +383,19 @@ def test_kernels(ongoing_campaign, n_iterations, batch_size):
         [
             NumericalContinuousParameter("x1", (0, 1)),
             NumericalContinuousParameter("x2", (0, 1), kernel_override=RBFKernel()),
+            *(
+                []
+                if mode is None
+                else [
+                    TaskParameter(
+                        "task", ["a", "b"], override_transfer_learning_mode=mode
+                    )
+                ]
+            ),
         ]
+        for mode in [None, *TransferLearningMode]
     ],
-    ids=["parameter_kernel_override"],
+    ids=["parameter_kernel_override", *(mode.name for mode in TransferLearningMode)],
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_parameter_kernel_override_iteration(
