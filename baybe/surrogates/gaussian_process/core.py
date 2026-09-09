@@ -195,9 +195,16 @@ class GaussianProcessSurrogate(Surrogate):
         * :obj:`.components.kernel.KernelFactoryProtocol`
         * :class:`gpytorch.kernels.Kernel`
 
-    If a :class:`.TaskParameter` sets ``override_transfer_learning_mode``, this must
-    reduce to a task-free BayBE kernel or an :class:`.IncompatibleOverrideError` is
-    raised.
+    A :attr:`~baybe.parameters.base.Parameter.kernel_override` removes its parameter
+    from this kernel and contributes a separate multiplicative factor. A
+    :attr:`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`
+    replaces the task factor in the same way. When a residual kernel is needed,
+    the configured kernel or factory must support excluding the overridden parameters;
+    otherwise, :class:`~baybe.exceptions.IncompatibleOverrideError` is raised.
+    If all parameters are overridden, this kernel or factory is not used. Without
+    overrides, it is used unchanged.
+
+    See :ref:`parameter_kernel_overrides` for details and limitations.
     """
 
     mean_factory: MeanFactoryProtocol | None = field(
