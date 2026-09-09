@@ -170,7 +170,12 @@ class GaussianProcessSurrogate(Surrogate):
     # See base class.
 
     _custom_kernel: bool = field(init=False, default=False, repr=False, eq=False)
-    # For deprecation only!
+    """Legacy flag for custom surrogate kernels affected by task-attachment changes.
+
+    Parameter overrides do not set this flag: default residual construction still
+    attaches the default task kernel unless an explicit TL override replaces it.
+    This flag does not classify the final composed covariance.
+    """
 
     kernel_factory: KernelFactoryProtocol | None = field(
         alias="kernel_or_factory",
