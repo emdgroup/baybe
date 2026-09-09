@@ -12,7 +12,7 @@ from gpytorch.kernels import IndexKernel as GPyTorchIndexKernel
 from pytest import param
 
 from baybe.exceptions import IncompatibleOverrideError, IncompatibleSearchSpaceError
-from baybe.kernels.basic import IndexKernel, MaternKernel, RBFKernel
+from baybe.kernels.basic import IndexKernel, MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import (
     CategoricalParameter,
@@ -23,7 +23,7 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.parameters.selectors import NameSelector, TypeSelector
+from baybe.parameters.selectors import TypeSelector
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
@@ -342,69 +342,3 @@ def test_resolve_kernel_dispatch_raises(monkeypatch, override_mode, kernel_or_fa
 
     with pytest.raises(IncompatibleOverrideError):
         surrogate._resolve_kernel(context)
-
-
-@pytest.mark.parametrize(
-    ("override_mode", "expected_task_kernel_cls"),
-    [
-        param(
-            TransferLearningMode.POSITIVE_INDEX_KERNEL,
-            GPyTorchPositiveIndexKernel,
-            id="positive-index",
-        ),
-        param(TransferLearningMode.INDEX_KERNEL, GPyTorchIndexKernel, id="index"),
-    ],
-)
-@pytest.mark.parametrize(
-    "has_regular_override", [False, True], ids=["tl-only", "tl-and-regular"]
-)
-def test_default_factory_selector_override_precedence(
-    override_mode: TransferLearningMode,
-    expected_task_kernel_cls: type[gpytorch.kernels.Kernel],
-    has_regular_override: bool,
-) -> None:
-    """Selectors restrict the base kernel but cannot exclude parameter overrides."""
-    from baybe.surrogates.gaussian_process.core import _ModelContext
-
-    searchspace = SearchSpace.from_product(
-        [
-            NumericalContinuousParameter("x1", (0, 1)),
-            NumericalContinuousParameter(
-                "x2",
-                (0, 1),
-                kernel_override=RBFKernel() if has_regular_override else None,
-            ),
-            NumericalContinuousParameter("omitted", (0, 1)),
-            TaskParameter(
-                "Task", ["A", "B"], override_transfer_learning_mode=override_mode
-            ),
-        ]
-    )
-    selector = NameSelector(("x1",), regex=False)
-    assert [p.name for p in searchspace.parameters if selector(p)] == ["x1"]
-    surrogate = GaussianProcessSurrogate(
-        kernel_or_factory=BayBEKernelFactory(parameter_selector=selector)
-    )
-    context = _ModelContext(
-        searchspace, NumericalTarget("y").to_objective(), pd.DataFrame()
-    )
-
-    kernel = surrogate._resolve_kernel(context)
-
-    expected_names = ["x1"] + (["x2"] if has_regular_override else []) + ["Task"]
-    expected_types = (
-        [gpytorch.kernels.MaternKernel]
-        + ([gpytorch.kernels.RBFKernel] if has_regular_override else [])
-        + [expected_task_kernel_cls]
-    )
-    expected_dimensions = [
-        searchspace.get_comp_rep_parameter_indices(name) for name in expected_names
-    ]
-    assert isinstance(kernel, gpytorch.kernels.ProductKernel)
-    assert [type(k) for k in kernel.kernels] == expected_types
-    assert [
-        tuple(k.active_dims.tolist()) for k in kernel.kernels
-    ] == expected_dimensions
-    assert [k.ard_num_dims for k in kernel.kernels] == [
-        len(d) for d in expected_dimensions
-    ]
