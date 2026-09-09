@@ -59,6 +59,7 @@ def reduce_kernel_spec(
     """
     if not isinstance(component, Kernel):
         raise_incompatible_override(excluded_names, factory)
+    # Reduction can exhaust the scope and return None despite a non-None input.
     spec: Kernel | None = component
     for name in excluded_names:
         if spec is None:
