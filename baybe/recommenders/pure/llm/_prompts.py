@@ -280,7 +280,7 @@ def make_prompt(
         "pending_experiments": pending_text,
         "forbidden_configurations": _forbidden_configurations(searchspace),
         "batch_size": batch_size,
-        "response_format": _response_format(),
+        "response_format": _response_format(batch_size),
     }
     template = Template(
         _PROMPT_TEMPLATE,
@@ -294,6 +294,7 @@ def make_prompt(
 def make_recovery_prompt(
     searchspace: SearchSpace,
     *,
+    batch_size: int,
     error: LLMResponseError,
     original_response: str,
 ) -> str:
@@ -301,6 +302,9 @@ def make_recovery_prompt(
 
     Args:
         searchspace: The search space to generate recommendations for.
+        batch_size: The number of recommendations required. Passed to
+            :func:`~baybe.recommenders.pure.llm._schema._response_format` so the
+            embedded format example matches the expected array length.
         error: The error that occurred while processing the previous response. Its
             :attr:`~baybe.exceptions.LLMResponseError.recovery_instruction` provides the
             error-specific guidance embedded in the prompt.
@@ -316,7 +320,7 @@ def make_recovery_prompt(
         "forbidden_configurations": _forbidden_configurations(searchspace),
         "recovery_instruction": error.recovery_instruction,
         "original_response": original_response,
-        "response_format": _response_format(),
+        "response_format": _response_format(batch_size),
     }
     template = Template(
         _RECOVERY_PROMPT_TEMPLATE,
