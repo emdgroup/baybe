@@ -89,7 +89,7 @@ def recommend_hybrid_without_subsets(
     from botorch.optim import optimize_acqf_mixed
 
     # Transform discrete candidates
-    candidates = searchspace.discrete.get_candidates()
+    candidates = searchspace.discrete._get_candidates().collect().to_pandas()
     candidates_comp = searchspace.discrete.transform(candidates)
 
     # Calculate the number of samples from the given percentage
@@ -197,7 +197,7 @@ def recommend_hybrid_with_subsets(
     # NOTE: No min_discrete_candidates filtering in hybrid spaces because
     # optimize_acqf_mixed can produce multiple recommendations from a single
     # discrete candidate by varying continuous parameters.
-    candidates = nw.from_native(searchspace.discrete.get_candidates(), eager_only=True)
+    candidates = searchspace.discrete._get_candidates().collect()
     combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
     if searchspace.n_subsets <= recommender.max_n_subsets:
         combined_masks = searchspace.subsets()

@@ -7,11 +7,10 @@ from abc import ABC
 from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
-import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import deep_iterable, instance_of
-from narwhals.stable.v2.typing import IntoDataFrameT
+from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoSeries
 from typing_extensions import override
 
 from baybe.acquisition import qLogEI, qLogNEHVI
@@ -25,6 +24,7 @@ from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate, SurrogateProtocol
 from baybe.symmetries.base import Symmetry
+from baybe.utils.dataframe import _df_with_backend
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
@@ -84,7 +84,7 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
+        measurements: IntoDataFrame,
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
         # This fit applies internal caching and does not necessarily involve computation
@@ -95,8 +95,8 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
         self._objective = objective
@@ -109,8 +109,13 @@ class BayesianRecommender(PureRecommender, ABC):
             )
 
         # Perform data augmentation
+        backend = nw.get_native_namespace(measurements)
         for s in self.symmetries:
-            measurements = s.augment_measurements(measurements, searchspace)
+            measurements_pd = nw.from_native(measurements, eager_only=True).to_pandas()
+            augmented = nw.from_native(
+                s.augment_measurements(measurements_pd, searchspace), eager_only=True
+            )
+            measurements = _df_with_backend(augmented, backend).to_native()
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = acqf.to_botorch(
@@ -125,8 +130,8 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> BoAcquisitionFunction:
         """Get the BoTorch acquisition function for the given recommendation context.
 
@@ -168,7 +173,6 @@ class BayesianRecommender(PureRecommender, ABC):
             objective,
             numerical_measurements_must_be_within_tolerance=False,
         )
-        measurements_pd = nw.from_native(measurements, eager_only=True).to_pandas()
 
         if pending_experiments is not None:
             pending_experiments = preprocess_dataframe(
@@ -176,14 +180,9 @@ class BayesianRecommender(PureRecommender, ABC):
                 searchspace,
                 numerical_measurements_must_be_within_tolerance=False,
             )
-        pending_experiments_pd = (
-            nw.from_native(pending_experiments, eager_only=True).to_pandas()
-            if pending_experiments is not None
-            else None
-        )
 
         self._setup_botorch_acqf(
-            searchspace, objective, measurements_pd, pending_experiments_pd
+            searchspace, objective, measurements, pending_experiments
         )
 
         try:
@@ -217,13 +216,13 @@ class BayesianRecommender(PureRecommender, ABC):
 
     def acquisition_values(
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
         acquisition_function: AcquisitionFunction | None = None,
-    ) -> pd.Series:
+    ) -> IntoSeries:
         """Compute the acquisition values for the given candidates.
 
         Args:
@@ -257,11 +256,11 @@ class BayesianRecommender(PureRecommender, ABC):
 
     def joint_acquisition_value(  # noqa: DOC101, DOC103
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
         acquisition_function: AcquisitionFunction | None = None,
     ) -> float:
         """Compute the joint acquisition value for the given candidate batch.

@@ -56,6 +56,7 @@ from baybe.utils.validation import (
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from botorch.posteriors import Posterior
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoSeries
 
     from baybe.acquisition.base import AcquisitionFunction
 
@@ -430,7 +431,7 @@ class Campaign(SerialMixin):
         #  * Additional shortcuts might be possible.
         self.clear_cache()
 
-        df = self.searchspace.discrete.get_candidates()
+        df = self.searchspace.discrete._get_candidates().collect().to_pandas()
 
         if isinstance(constraints, pd.DataFrame):
             # Determine the candidate subset to be toggled
@@ -531,7 +532,9 @@ class Campaign(SerialMixin):
         if self.searchspace.type is SearchSpaceType.DISCRETE:
             # TODO: This implementation should at some point be hidden behind an
             #   appropriate public interface, like `SubspaceDiscrete.filter()`
-            candidates = self.searchspace.discrete.get_candidates()
+            candidates = (
+                self.searchspace.discrete._get_candidates().collect().to_pandas()
+            )
             mask_todrop = pd.Series(False, index=candidates.index)
             if not self._excluded_experiments.empty:
                 mask_todrop |= (
@@ -799,7 +802,7 @@ class Campaign(SerialMixin):
     def _get_non_meta_recommender(
         self,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> RecommenderProtocol:
         """Get the current recommender.
 
@@ -825,7 +828,7 @@ class Campaign(SerialMixin):
     def _get_bayesian_recommender(
         self,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> BayesianRecommender:
         """Get the current Bayesian recommender (if available).
 
@@ -845,7 +848,7 @@ class Campaign(SerialMixin):
     def get_acquisition_function(
         self,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> BoAcquisitionFunction:
         """Get the current BoTorch acquisition function.
 
@@ -876,12 +879,12 @@ class Campaign(SerialMixin):
 
     def acquisition_values(
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         acquisition_function: AcquisitionFunction | None = None,
         *,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.Series:
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoSeries:
         """Compute the acquisition values for the given candidates.
 
         Args:
@@ -910,11 +913,11 @@ class Campaign(SerialMixin):
 
     def joint_acquisition_value(  # noqa: DOC101, DOC103
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         acquisition_function: AcquisitionFunction | None = None,
         *,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> float:
         """Compute the joint acquisition values for the given candidate batch.
 
@@ -1081,7 +1084,9 @@ def _structure_campaign(d: dict, cl: type) -> Campaign:
     # >>>>>>>>>> Deprecation
     # Post-structure reconstruction from legacy metadata indices
     if legacy_recommended_idxs is not None or legacy_excluded_idxs is not None:
-        candidates = campaign.searchspace.discrete.get_candidates()
+        candidates = (
+            campaign.searchspace.discrete._get_candidates().collect().to_pandas()
+        )
         if legacy_recommended_idxs is not None:
             campaign._recommended_experiments = candidates.loc[
                 legacy_recommended_idxs

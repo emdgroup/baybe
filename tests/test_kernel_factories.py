@@ -3,6 +3,7 @@
 from contextlib import nullcontext
 
 import gpytorch
+import narwhals.stable.v2 as nw
 import pandas as pd
 import pytest
 from botorch.models.kernels.positive_index import (
@@ -139,7 +140,7 @@ def _make_dispatch_context(override_mode):
     num_param = NumericalDiscreteParameter("x", [1, 2, 3, 4, 5])
     searchspace = SearchSpace.from_product([num_param, task_param])
     objective = NumericalTarget("y").to_objective()
-    measurements = pd.DataFrame()
+    measurements = nw.from_native(pd.DataFrame())
     return _ModelContext(searchspace, objective, measurements)
 
 
