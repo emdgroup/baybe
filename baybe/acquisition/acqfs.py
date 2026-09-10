@@ -111,7 +111,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
         # Discrete part
         if not searchspace.discrete.is_empty:
             candidates_discrete = searchspace.discrete.transform(
-                searchspace.discrete.get_candidates()
+                searchspace.discrete._get_candidates().collect().to_pandas()
             )
             n_candidates = self.sampling_n_points or math.ceil(
                 self.sampling_fraction * len(candidates_discrete)  # type: ignore[operator]
