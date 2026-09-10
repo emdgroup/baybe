@@ -100,23 +100,11 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         cont_part = searchspace.continuous.sample_uniform(1)
         cont_part_tensor = to_tensor(cont_part).unsqueeze(-2)
 
-        # Convert to pandas for BoTorch internals (acqf setup requires pd.DataFrame)
-        measurements_pd = (
-            nw.from_native(measurements, eager_only=True).to_pandas()
-            if measurements is not None
-            else None
-        )
-        pending_experiments_pd = (
-            nw.from_native(pending_experiments, eager_only=True).to_pandas()
-            if pending_experiments is not None
-            else None
-        )
-
         # We now check whether the discrete recommender is bayesian.
         if isinstance(self.disc_recommender, BayesianRecommender):
             # Get access to the recommenders acquisition function
             self.disc_recommender._setup_botorch_acqf(
-                searchspace, objective, measurements_pd, pending_experiments_pd
+                searchspace, objective, measurements, pending_experiments
             )
 
             # Construct the partial acquisition function that attaches cont_part
@@ -143,7 +131,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
             # Setup a fresh acquisition function for the continuous recommender
             self.cont_recommender._setup_botorch_acqf(
-                searchspace, objective, measurements_pd, pending_experiments_pd
+                searchspace, objective, measurements, pending_experiments
             )
 
             # Construct the continuous space as a standalone space

@@ -6,7 +6,7 @@ import gc
 from abc import ABC
 from typing import TYPE_CHECKING, ClassVar, Literal, overload
 
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import define
 
 from baybe.exceptions import (
@@ -19,10 +19,11 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.utils.basic import classproperty
 from baybe.utils.boolean import is_abstract
-from baybe.utils.dataframe import to_tensor
+from baybe.utils.dataframe import _copy_index, to_tensor
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
+    from narwhals.stable.v2.typing import IntoDataFrameT, IntoSeries
 
 
 @define(frozen=True)
@@ -63,8 +64,8 @@ class AcquisitionFunction(ABC, SerialMixin):
         surrogate: SurrogateProtocol,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> BotorchAcquisitionFunction:
         """Create the botorch-ready representation of the function.
 
@@ -86,12 +87,12 @@ class AcquisitionFunction(ABC, SerialMixin):
     @overload
     def evaluate(
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         surrogate: SurrogateProtocol,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
         *,
         jointly: Literal[True],
     ) -> float: ...
@@ -99,27 +100,27 @@ class AcquisitionFunction(ABC, SerialMixin):
     @overload
     def evaluate(
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         surrogate: SurrogateProtocol,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
         *,
         jointly: Literal[False] = False,
-    ) -> pd.Series: ...
+    ) -> IntoSeries: ...
 
     def evaluate(
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         surrogate: SurrogateProtocol,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
         *,
         jointly: bool = False,
-    ) -> pd.Series | float:
+    ) -> IntoSeries | float:
         """Get the acquisition values for the given candidates.
 
         Args:
@@ -144,6 +145,8 @@ class AcquisitionFunction(ABC, SerialMixin):
         """
         import torch
 
+        candidates_nw = nw.from_native(candidates, eager_only=True)
+
         # Assemble the Botorch acquisition function and its input
         botorch_acqf = self.to_botorch(
             surrogate, searchspace, objective, measurements, pending_experiments
@@ -156,7 +159,11 @@ class AcquisitionFunction(ABC, SerialMixin):
             out = botorch_acqf(in_)
         if jointly:
             return out.item()
-        return pd.Series(out.numpy(), index=candidates.index)
+
+        backend = nw.get_native_namespace(candidates_nw)
+        return _copy_index(
+            nw.new_series("", out.numpy(), backend=backend), candidates_nw
+        ).to_native()
 
 
 def _get_botorch_acqf_class(

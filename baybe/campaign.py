@@ -56,6 +56,7 @@ from baybe.utils.validation import (
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from botorch.posteriors import Posterior
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoSeries
 
     from baybe.acquisition.base import AcquisitionFunction
 
@@ -799,7 +800,7 @@ class Campaign(SerialMixin):
     def _get_non_meta_recommender(
         self,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> RecommenderProtocol:
         """Get the current recommender.
 
@@ -825,7 +826,7 @@ class Campaign(SerialMixin):
     def _get_bayesian_recommender(
         self,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> BayesianRecommender:
         """Get the current Bayesian recommender (if available).
 
@@ -845,7 +846,7 @@ class Campaign(SerialMixin):
     def get_acquisition_function(
         self,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> BoAcquisitionFunction:
         """Get the current BoTorch acquisition function.
 
@@ -876,12 +877,12 @@ class Campaign(SerialMixin):
 
     def acquisition_values(
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         acquisition_function: AcquisitionFunction | None = None,
         *,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.Series:
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoSeries:
         """Compute the acquisition values for the given candidates.
 
         Args:
@@ -910,11 +911,11 @@ class Campaign(SerialMixin):
 
     def joint_acquisition_value(  # noqa: DOC101, DOC103
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         acquisition_function: AcquisitionFunction | None = None,
         *,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> float:
         """Compute the joint acquisition values for the given candidate batch.
 
