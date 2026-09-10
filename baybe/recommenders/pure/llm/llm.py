@@ -236,7 +236,10 @@ class LLMRecommender(PureRecommender, SerialMixin):
             # The recommendation had an issue. Make a single, error-specific recovery
             # attempt, informing the model what went wrong.
             recovery_prompt = make_recovery_prompt(
-                searchspace, error=initial_error, original_response=content
+                searchspace,
+                batch_size=batch_size,
+                error=initial_error,
+                original_response=content,
             )
             recovery_content = self._query_model(recovery_prompt)
             try:
