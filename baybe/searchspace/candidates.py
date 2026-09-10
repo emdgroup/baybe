@@ -37,7 +37,7 @@ class CandidatesProtocol(Protocol):
     def is_finite(self) -> bool:
         """Indicates whether the candidate set is finite or infinite."""
 
-    def to_lazy(self) -> nw.LazyFrame:
+    def _to_lazy(self) -> nw.LazyFrame:
         """Generate all candidates."""
 
 
@@ -56,7 +56,7 @@ class EmptyCandidates(CandidatesProtocol):
         return True
 
     @override
-    def to_lazy(self) -> nw.LazyFrame:
+    def _to_lazy(self) -> nw.LazyFrame:
         backend = active_settings.default_dataframe_backend
         return nw.from_dict({}, backend=backend).lazy()
 
@@ -98,7 +98,7 @@ class ProductCandidates(CandidatesProtocol):
         return all(p.is_finite for p in self.parameters)
 
     @override
-    def to_lazy(self) -> nw.LazyFrame:
+    def _to_lazy(self) -> nw.LazyFrame:
         if not self.is_finite:
             raise InfiniteSpaceError(
                 "Cannot generate all candidates from an infinite space."
@@ -125,13 +125,13 @@ class TableCandidates(CandidatesProtocol):
     )
     """See :attr:`CandidatesProtocol.parameters`."""
 
-    dataframe: nw.DataFrame = field(
+    _dataframe: nw.DataFrame = field(
         converter=lambda x: nw.from_native(x, eager_only=True),
         eq=cmp_using(eq=_df_equals),
     )
     """The dataframe containing the candidates."""
 
-    @dataframe.validator
+    @_dataframe.validator
     def _validate_dataframe(self, _: Attribute, value: nw.DataFrame) -> None:  # noqa: DOC101, DOC103
         validate_parameter_input(
             value.to_pandas(),
@@ -146,8 +146,8 @@ class TableCandidates(CandidatesProtocol):
         return True
 
     @override
-    def to_lazy(self) -> nw.LazyFrame:
-        return self.dataframe.lazy()
+    def _to_lazy(self) -> nw.LazyFrame:
+        return self._dataframe.lazy()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
