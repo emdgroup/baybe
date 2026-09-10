@@ -1684,6 +1684,21 @@
     <span class="n">dependencies</span><span class="p">:</span> <span class="n">DiscreteDependenciesConstraint</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Dependencies connected with the invariant parameters.&quot;&quot;&quot;</span>
 
+    <span class="nd">@dependencies</span><span class="o">.</span><span class="n">validator</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_dependencies</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">DiscreteDependenciesConstraint</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the dependencies constraint.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the dependencies constraint uses ``exclude=True``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">exclude</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Dependencies of a permutation invariance constraint cannot use &quot;</span>
+                <span class="s2">&quot;&#39;exclude=True&#39;.&quot;</span>
+            <span class="p">)</span>
+
     <span class="nd">@property</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_required_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
