@@ -50,7 +50,7 @@ from baybe.utils.dataframe import (
 from baybe.utils.memory import bytes_to_human_readable
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoLazyFrame
 
     from baybe.searchspace.core import SearchSpace
 
@@ -621,7 +621,7 @@ class SubspaceDiscrete(SerialMixin):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.get_candidates()
+        return self._get_candidates().collect().to_pandas()
 
     @property
     def comp_rep(self) -> pd.DataFrame:
@@ -635,7 +635,7 @@ class SubspaceDiscrete(SerialMixin):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.transform(self.get_candidates())
+        return self.transform(self._get_candidates().collect().to_pandas())
 
     # <<<<<<<<<< Deprecation
 
@@ -770,10 +770,18 @@ class SubspaceDiscrete(SerialMixin):
 
         per_constraint: list[list[npt.NDArray[np.bool_]]]
         if not self.batch_constraints:
-            per_constraint = [[np.ones(len(self.get_candidates()), dtype=bool)]]
+            per_constraint = [
+                [
+                    np.ones(
+                        self._get_candidates().select(nw.len()).collect().item(),
+                        dtype=bool,
+                    )
+                ]
+            ]
         else:
             per_constraint = [
-                c.subset_masks(self.get_candidates()) for c in self.batch_constraints
+                c.subset_masks(self._get_candidates().collect().to_pandas())
+                for c in self.batch_constraints
             ]
 
         total = prod(len(masks) for masks in per_constraint)
@@ -825,9 +833,13 @@ class SubspaceDiscrete(SerialMixin):
             )
         )
 
-    def get_candidates(self) -> pd.DataFrame:
+    def _get_candidates(self) -> nw.LazyFrame:
+        """Return all candidate parameter configurations as a narwhals LazyFrame."""
+        return self.candidates.to_lazy()
+
+    def get_candidates(self) -> IntoLazyFrame:
         """Return all candidate parameter configurations."""
-        return self.candidates.to_lazy().collect().to_pandas()
+        return self._get_candidates().to_native()
 
     def transform(
         self,
