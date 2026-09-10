@@ -835,7 +835,7 @@ class SubspaceDiscrete(SerialMixin):
 
     def _get_candidates(self) -> nw.LazyFrame:
         """Return all candidate parameter configurations as a narwhals LazyFrame."""
-        return self.candidates.to_lazy()
+        return self.candidates._to_lazy()
 
     def get_candidates(self) -> IntoLazyFrame:
         """Return all candidate parameter configurations."""
