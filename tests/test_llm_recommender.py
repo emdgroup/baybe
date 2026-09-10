@@ -251,7 +251,7 @@ def test_recommend_with_objective(
 
 def test_response_contract_is_single_sourced(searchspace):
     """Both prompts and the parser share one definition of the response fields."""
-    response_format = _response_format()
+    response_format = _response_format(batch_size=1)
     assert _EXPLANATION_FIELD in response_format
     assert _PARAMETERS_FIELD in response_format
 
@@ -264,6 +264,7 @@ def test_response_contract_is_single_sourced(searchspace):
 
     recovery_prompt = make_recovery_prompt(
         searchspace,
+        batch_size=1,
         error=MalformedLLMResponseError("boom"),
         original_response="[]",
     )
@@ -274,6 +275,30 @@ def test_response_contract_is_single_sourced(searchspace):
         [{"temperature": 25.0, "pressure": 2.0, "n_cycles": 1, "catalyst": "A"}]
     )
     assert len(parse_llm_response(suggestions, searchspace)) == 1
+
+
+def test_response_format_batch_size(searchspace):
+    """Both prompts embed an example array with exactly batch_size entries."""
+    for batch_size in (1, 2, 5):
+        fmt = _response_format(batch_size=batch_size)
+        # The format string must contain exactly batch_size copies of the field keys.
+        assert fmt.count(f'"{_EXPLANATION_FIELD}"') == batch_size
+        assert fmt.count(f'"{_PARAMETERS_FIELD}"') == batch_size
+
+        prompt = make_prompt(
+            batch_size=batch_size,
+            searchspace=searchspace,
+            experiment_description="Test",
+        )
+        assert fmt in prompt
+
+        recovery_prompt = make_recovery_prompt(
+            searchspace,
+            batch_size=batch_size,
+            error=MalformedLLMResponseError("boom"),
+            original_response="[]",
+        )
+        assert fmt in recovery_prompt
 
 
 def test_parameter_prompt_info():
@@ -825,7 +850,10 @@ def test_recommend_invalid_response_with_failed_recovery(
 def test_make_recovery_prompt_embeds_error_guidance(error, searchspace):
     """The recovery prompt embeds the error-specific recovery instruction."""
     prompt = make_recovery_prompt(
-        searchspace, error=error, original_response="the original response"
+        searchspace,
+        batch_size=1,
+        error=error,
+        original_response="the original response",
     )
     assert "WHAT WENT WRONG" in prompt
     assert error.recovery_instruction in prompt
