@@ -349,6 +349,7 @@ def test_update_measurements(ongoing_campaign):
     ],
 )
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+@Settings(default_dataframe_backend="pandas")
 def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     """Posterior statistics have expected shape, index and columns."""
     objective = ongoing_campaign.objective
