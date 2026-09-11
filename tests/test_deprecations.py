@@ -629,6 +629,14 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
             id="sum",
         ),
         pytest.param(
+            DiscreteSumConstraint,
+            (["A", "B"], ThresholdCondition(threshold=100.0, operator="<=")),
+            {},
+            "DiscreteSumConstraint",
+            DiscreteLinearConstraint(["A", "B"], operator="<=", rhs=100.0),
+            id="sum-positional-default-coefficients",
+        ),
+        pytest.param(
             DiscreteProductConstraint,
             (),
             {
