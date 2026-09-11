@@ -370,57 +370,10 @@ class Campaign(SerialMixin):
         data: IntoDataFrame,
         numerical_measurements_must_be_within_tolerance: bool = True,
     ) -> None:
-        """Update previously added measurements.
-
-        This can be useful to correct mistakes or update target measurements. The
-        match to existing data entries is made based on the index. This will reset
-        cached recommendations.
-
-        Args:
-            data: The measurement data to be updated (with filled values for targets).
-            numerical_measurements_must_be_within_tolerance: Flag indicating if
-                numerical parameters need to be within their tolerances.
-
-        Raises:
-            ValueError: If the given data contains duplicated indices.
-            ValueError: If the given data contains indices not present in existing
-                measurements.
-        """
-        # Preprocess incoming data
-        data_pd = nw.from_native(
-            preprocess_dataframe(
-                data,
-                self.searchspace,
-                self.objective,
-                numerical_measurements_must_be_within_tolerance,
-            ),
-            eager_only=True,
-        ).to_pandas()
-
-        # With changed measurements, the recommendations must always be recomputed
-        self.clear_cache()
-
-        # Block duplicate input indices
-        if data_pd.index.has_duplicates:
-            raise ValueError(
-                "The input dataframe containing the measurement updates has duplicated "
-                "indices. Please ensure that all updates for a given measurement are "
-                "made in a single combined entry."
-            )
-
-        # Allow only existing indices
-        measurements_pd = self._measurements.to_pandas()
-        if nonmatching_idxs := set(data_pd.index).difference(measurements_pd.index):
-            raise ValueError(
-                f"Updating measurements requires indices matching the "
-                f"existing measurements. The following indices were in the input, but "
-                f"are not found in the existing entries: {nonmatching_idxs}"
-            )
-
-        # Perform the update
-        cols = [p.name for p in self.parameters] + [t.name for t in self.targets]
-        measurements_pd.loc[data_pd.index, cols] = data_pd[cols]
-        self._measurements = nw.from_native(measurements_pd, eager_only=True)
+        """Update previously added measurements."""
+        raise NotImplementedError(
+            f"'{self.update_measurements.__name__}' is temporarily unavailable."
+        )
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
