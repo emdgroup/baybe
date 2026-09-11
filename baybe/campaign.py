@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, cast
 import cattrs
 import narwhals.stable.v2 as nw
 import pandas as pd
-from attrs import Attribute, define, evolve, field, fields, setters
+from attrs import Attribute, cmp_using, define, evolve, field, fields, setters
 from attrs.converters import optional
 from attrs.validators import instance_of
 from narwhals.stable.v2.dependencies import is_into_dataframe
@@ -46,9 +46,10 @@ from baybe.settings import Settings, active_settings
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.targets.base import Target
 from baybe.utils.basic import is_all_instance
-from baybe.utils.boolean import AutoBool, eq_dataframe
+from baybe.utils.boolean import AutoBool
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
+    _df_equals,
     _df_with_backend,
     _infer_backend,
     filter_df,
@@ -179,39 +180,48 @@ class Campaign(SerialMixin):
     """Allow recommending pending experiments."""
 
     # Private
-    _excluded_experiments: pd.DataFrame = field(eq=eq_dataframe, init=False)
+    _excluded_experiments: nw.DataFrame = field(eq=cmp_using(_df_equals), init=False)
     """The parameter configurations that have been excluded from recommendations."""
 
-    _measurements: pd.DataFrame = field(eq=eq_dataframe, init=False)
+    _measurements: nw.DataFrame = field(eq=cmp_using(_df_equals), init=False)
     """The measurements added to the campaign."""
 
-    _recommended_experiments: pd.DataFrame = field(eq=eq_dataframe, init=False)
+    _recommended_experiments: nw.DataFrame = field(eq=cmp_using(_df_equals), init=False)
     """The (deduplicated) parameter configurations that have been recommended."""
 
-    _cached_recommendation: pd.DataFrame | None = field(
+    _cached_recommendation: nw.DataFrame | None = field(
         default=None, init=False, eq=False
     )
     """The cached recommendations."""
 
     @_measurements.default
-    def _default_measurements(self) -> pd.DataFrame:
+    def _default_measurements(self) -> nw.DataFrame:
         """Create an empty measurements DataFrame with the correct schema."""
         cols = [p.name for p in self.searchspace.parameters] + [
             t.name for t in (self.objective.targets if self.objective else ())
         ]
-        return pd.DataFrame(columns=cols)
+        return nw.from_dict(
+            {c: [] for c in cols},
+            backend=active_settings.default_dataframe_backend,
+        )
 
     @_excluded_experiments.default
-    def _default_excluded_experiments(self) -> pd.DataFrame:
+    def _default_excluded_experiments(self) -> nw.DataFrame:
         """Create an empty excluded experiments DataFrame with correct schema."""
         cols = [p.name for p in self.searchspace.parameters]
-        return pd.DataFrame(columns=cols)
+        return nw.from_dict(
+            {c: [] for c in cols},
+            backend=active_settings.default_dataframe_backend,
+        )
 
     @_recommended_experiments.default
-    def _default_recommended_experiments(self) -> pd.DataFrame:
+    def _default_recommended_experiments(self) -> nw.DataFrame:
         """Create an empty recommended experiments DataFrame with correct schema."""
         cols = [p.name for p in self.searchspace.parameters]
-        return pd.DataFrame(columns=cols)
+        return nw.from_dict(
+            {c: [] for c in cols},
+            backend=active_settings.default_dataframe_backend,
+        )
 
     @override
     def __str__(self) -> str:
@@ -221,7 +231,7 @@ class Campaign(SerialMixin):
     @property
     def measurements(self) -> pd.DataFrame:
         """The experimental data added to the Campaign."""
-        return self._measurements
+        return self._measurements.to_pandas()
 
     @property
     def n_batches_done(self) -> NoReturn:
@@ -305,9 +315,9 @@ class Campaign(SerialMixin):
         config = json.loads(config_json)
         _validation_converter.structure(config, Campaign)
 
-    def _cache_recommendation(self, df: pd.DataFrame, /) -> None:
+    def _cache_recommendation(self, df: nw.DataFrame, /) -> None:
         """Cache the given recommendation."""
-        self._cached_recommendation = df.copy()
+        self._cached_recommendation = df
 
     def clear_cache(self) -> None:
         """Clear the internal recommendation cache."""
@@ -334,7 +344,7 @@ class Campaign(SerialMixin):
                 numerical parameters need to be within their tolerances.
         """
         # Preprocess incoming data
-        data = nw.from_native(
+        data_nw = nw.from_native(
             preprocess_dataframe(
                 data,
                 self.searchspace,
@@ -342,14 +352,18 @@ class Campaign(SerialMixin):
                 numerical_measurements_must_be_within_tolerance,
             ),
             eager_only=True,
-        ).to_pandas()
+        )
 
         # With new measurements, the recommendations must always be recomputed
         self.clear_cache()
 
         # Read in measurements and add them to the database
-        frames = [f for f in (self._measurements, data) if not f.empty]
-        self._measurements = pd.concat(frames, axis=0, ignore_index=True)
+        frames = [f for f in (self._measurements, data_nw) if not f.is_empty()]
+        # TODO[typing]: https://github.com/facebook/pyrefly/issues/4849
+        concatenated: nw.DataFrame = nw.concat(frames, how="vertical")  # type: ignore[assignment]
+        self._measurements = _df_with_backend(
+            concatenated, active_settings.default_dataframe_backend
+        )
 
     def update_measurements(
         self,
@@ -373,7 +387,7 @@ class Campaign(SerialMixin):
                 measurements.
         """
         # Preprocess incoming data
-        data = nw.from_native(
+        data_pd = nw.from_native(
             preprocess_dataframe(
                 data,
                 self.searchspace,
@@ -387,7 +401,7 @@ class Campaign(SerialMixin):
         self.clear_cache()
 
         # Block duplicate input indices
-        if data.index.has_duplicates:
+        if data_pd.index.has_duplicates:
             raise ValueError(
                 "The input dataframe containing the measurement updates has duplicated "
                 "indices. Please ensure that all updates for a given measurement are "
@@ -395,7 +409,8 @@ class Campaign(SerialMixin):
             )
 
         # Allow only existing indices
-        if nonmatching_idxs := set(data.index).difference(self.measurements.index):
+        measurements_pd = self._measurements.to_pandas()
+        if nonmatching_idxs := set(data_pd.index).difference(measurements_pd.index):
             raise ValueError(
                 f"Updating measurements requires indices matching the "
                 f"existing measurements. The following indices were in the input, but "
@@ -404,7 +419,8 @@ class Campaign(SerialMixin):
 
         # Perform the update
         cols = [p.name for p in self.parameters] + [t.name for t in self.targets]
-        self._measurements.loc[data.index, cols] = data[cols]
+        measurements_pd.loc[data_pd.index, cols] = data_pd[cols]
+        self._measurements = nw.from_native(measurements_pd, eager_only=True)
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
@@ -477,23 +493,22 @@ class Campaign(SerialMixin):
         if not dry_run:
             if exclude and not points.empty:
                 # Add the toggled points (avoid duplicates)
-                frames = [
-                    f for f in (self._excluded_experiments, points) if not f.empty
-                ]
-                self._excluded_experiments = (
-                    pd.concat(frames, axis=0).drop_duplicates().reset_index(drop=True)
+                excluded_pd = self._excluded_experiments.to_pandas()
+                frames = [f for f in (excluded_pd, points) if not f.empty]
+                self._excluded_experiments = nw.from_native(
+                    pd.concat(frames, axis=0).drop_duplicates().reset_index(drop=True),
+                    eager_only=True,
                 )
-            elif not exclude and not self._excluded_experiments.empty:
+            elif not exclude and not self._excluded_experiments.is_empty():
                 # Remove the re-included points
-                merged = pd.merge(
-                    self._excluded_experiments,
-                    points,
-                    indicator=True,
-                    how="left",
+                excluded_pd = self._excluded_experiments.to_pandas()
+                merged = pd.merge(excluded_pd, points, indicator=True, how="left")
+                self._excluded_experiments = nw.from_native(
+                    excluded_pd[merged["_merge"].eq("left_only").values].reset_index(
+                        drop=True
+                    ),
+                    eager_only=True,
                 )
-                self._excluded_experiments = self._excluded_experiments[
-                    merged["_merge"].eq("left_only").values
-                ].reset_index(drop=True)
 
         return points
 
@@ -562,11 +577,11 @@ class Campaign(SerialMixin):
                 self.searchspace.discrete._get_candidates().collect().to_pandas()
             )
             mask_todrop = pd.Series(False, index=candidates.index)
-            if not self._excluded_experiments.empty:
+            if not self._excluded_experiments.is_empty():
                 mask_todrop |= (
                     pd.merge(
                         candidates,
-                        self._excluded_experiments,
+                        self._excluded_experiments.to_pandas(),
                         indicator=True,
                         how="left",
                     )["_merge"]
@@ -575,12 +590,12 @@ class Campaign(SerialMixin):
                 )
             if (
                 not self.allow_recommending_already_recommended
-                and not self._recommended_experiments.empty
+                and not self._recommended_experiments.is_empty()
             ):
                 mask_todrop |= (
                     pd.merge(
                         candidates,
-                        self._recommended_experiments,
+                        self._recommended_experiments.to_pandas(),
                         indicator=True,
                         how="left",
                     )["_merge"]
@@ -589,10 +604,10 @@ class Campaign(SerialMixin):
                 )
             if (
                 not self.allow_recommending_already_measured
-                and not self._measurements.empty
+                and not self._measurements.is_empty()
             ):
                 measured_idxs = fuzzy_row_match(
-                    candidates, self._measurements, self.parameters
+                    candidates, self._measurements.to_pandas(), self.parameters
                 )
                 mask_todrop.loc[measured_idxs] = True
             if (
@@ -680,33 +695,33 @@ class Campaign(SerialMixin):
                 f"{str(ex)} Consider setting {message}."
             ) from ex
 
-        rec_pd = nw.from_native(rec, eager_only=True).to_pandas()
+        rec_nw = nw.from_native(rec, eager_only=True)
 
         if (
             active_settings.cache_campaign_recommendations
             and pending_experiments_pd is None  # see IMPROVE comment above
         ):
-            self._cache_recommendation(rec_pd)
+            self._cache_recommendation(rec_nw)
 
         # Track recommended experiments (deduplicated)
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
             param_cols = [p.name for p in self.parameters]
+            rec_params_pd = rec_nw.select(param_cols).to_pandas()
             frames = [
                 f
-                for f in (self._recommended_experiments, rec_pd[param_cols])
+                for f in (self._recommended_experiments.to_pandas(), rec_params_pd)
                 if not f.empty
             ]
-            self._recommended_experiments = (
+            self._recommended_experiments = nw.from_native(
                 pd.concat(frames, axis=0, ignore_index=True)
                 .drop_duplicates()
-                .reset_index(drop=True)
+                .reset_index(drop=True),
+                eager_only=True,
             )
 
         return cast(
             IntoDataFrameT,
-            _df_with_backend(
-                nw.from_native(rec_pd, eager_only=True), backend
-            ).to_native(),
+            _df_with_backend(rec_nw, backend).to_native(),
         )
 
     def posterior(
@@ -1094,7 +1109,19 @@ def _prepare_for_structuring(dict_: dict, /) -> dict:
     return dict_
 
 
-# Register (un-)structure hooks
+# Register (un-)structure hooks for nw.DataFrame (serialize via pandas)
+# TODO: Revisit once serialization is narwhalsified
+converter.register_unstructure_hook(
+    nw.DataFrame,
+    lambda df: converter.unstructure(df.to_pandas()),
+)
+converter.register_structure_hook(
+    nw.DataFrame,
+    lambda obj, _: nw.from_native(
+        converter.structure(obj, pd.DataFrame), eager_only=True
+    ),
+)
+
 unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
     Campaign, converter, _cattrs_include_init_false=True
 )
@@ -1120,16 +1147,18 @@ def _structure_campaign(d: dict, cl: type) -> Campaign:
             campaign.searchspace.discrete._get_candidates().collect().to_pandas()
         )
         if legacy_recommended_idxs is not None:
-            campaign._recommended_experiments = candidates.loc[
-                legacy_recommended_idxs
-            ].reset_index(drop=True)
+            campaign._recommended_experiments = nw.from_native(
+                candidates.loc[legacy_recommended_idxs].reset_index(drop=True),
+                eager_only=True,
+            )
         if legacy_excluded_idxs is not None:
-            campaign._excluded_experiments = candidates.loc[
-                legacy_excluded_idxs
-            ].reset_index(drop=True)
+            campaign._excluded_experiments = nw.from_native(
+                candidates.loc[legacy_excluded_idxs].reset_index(drop=True),
+                eager_only=True,
+            )
 
     # Fix schema of empty DataFrames from legacy serialization
-    if campaign._measurements.columns.empty:
+    if len(campaign._measurements.columns) == 0:
         campaign._measurements = campaign._default_measurements()
     # <<<<<<<<<< Deprecation
 

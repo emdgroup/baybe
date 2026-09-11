@@ -95,6 +95,7 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
     ],
     ids=["dataframe", "constraints"],
 )
+@Settings(default_dataframe_backend="pandas")
 def test_candidate_toggling(constraints, exclude, complement):
     """Toggling discrete candidates updates the exclusion state accordingly."""
     subspace = SubspaceDiscrete.from_product(
@@ -122,7 +123,9 @@ def test_candidate_toggling(constraints, exclude, complement):
     if exclude:
         # The toggled rows should be excluded, the rest should not
         assert len(campaign._excluded_experiments) == len(toggled_rows)
-        merged = pd.merge(campaign._excluded_experiments, toggled_rows, how="inner")
+        merged = pd.merge(
+            campaign._excluded_experiments.to_native(), toggled_rows, how="inner"
+        )
         assert len(merged) == len(toggled_rows)
     else:
         # The toggled rows should be re-included, the rest should remain excluded
@@ -224,7 +227,7 @@ def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     assert campaign._cached_recommendation is None
     rec = campaign.recommend(1)
     mock_recommend.reset_mock()
-    assert campaign._cached_recommendation.equals(rec)
+    assert campaign._cached_recommendation.to_native().equals(rec)
 
     for i in range(2):
         with (
@@ -255,7 +258,7 @@ def test_allow_pending_flag(campaign_for_flag_test: Campaign):
     assert campaign._cached_recommendation is None
     rec = campaign.recommend(1)
     mock_recommend.reset_mock()
-    assert campaign._cached_recommendation.equals(rec)
+    assert campaign._cached_recommendation.to_native().equals(rec)
 
     # Recommending without pending experiments uses the cache
     campaign.recommend(1)
