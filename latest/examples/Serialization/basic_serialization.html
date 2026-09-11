@@ -441,14 +441,15 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
@@ -1498,8 +1499,8 @@ create and compare some recommendations in both campaigns.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommendation from original object:
    Granularity  Pressure[bar]  Temperature[degree_C]
-63      medium            1.0             133.333333
-59        fine           10.0             200.000000
+3       coarse            1.0             133.333333
+89      medium           10.0             200.000000
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recommendation from recreated object:&quot;</span><span class="p">)</span>
@@ -1508,8 +1509,8 @@ create and compare some recommendations in both campaigns.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommendation from recreated object:
    Granularity  Pressure[bar]  Temperature[degree_C]
-45        fine            5.0             155.555556
-80      medium           10.0             100.000000
+24      coarse           10.0             144.444444
+69      medium            1.0             200.000000
 </pre></div>
 </div>
 </section>

@@ -440,14 +440,15 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
@@ -1521,8 +1522,9 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The Polars lazyframe with undesired rows removed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">schema</span> <span class="o">=</span> <span class="n">ldf</span><span class="o">.</span><span class="n">collect_schema</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
-        <span class="n">to_keep</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get_invalid_polars</span><span class="p">()</span><span class="o">.</span><span class="n">not_</span><span class="p">()</span>
+        <span class="n">to_keep</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get_invalid_polars</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">not_</span><span class="p">()</span>
         <span class="n">ldf</span> <span class="o">=</span> <span class="n">ldf</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">to_keep</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">ldf</span>

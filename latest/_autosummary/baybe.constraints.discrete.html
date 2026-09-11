@@ -441,14 +441,15 @@
 </li>
 <li class="toctree-l3 current has-children current-page"><a class="current reference internal" href="#">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" checked="" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
@@ -1230,7 +1231,13 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html#baybe.constraints.discrete.DiscreteExcludeConstraint" title="baybe.constraints.discrete.DiscreteExcludeConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteExcludeConstraint</span></code></a>(parameters, conditions)</p></td>
-<td><p>A <code class="docutils literal notranslate"><span class="pre">DiscreteSelectionConstraint</span></code> alias for backward compatibility.</p></td>
+<td><p>A <a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html#baybe.constraints.discrete.DiscreteSelectionConstraint" title="baybe.constraints.discrete.DiscreteSelectionConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteSelectionConstraint</span></code></a> alias for backward compatibility.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html#baybe.constraints.discrete.DiscreteLinkedParametersConstraint" title="baybe.constraints.discrete.DiscreteLinkedParametersConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteLinkedParametersConstraint</span></code></a>(parameters)</p></td>
+<td><p>A <a class="reference internal" href="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html#baybe.constraints.discrete.DiscreteRepetitionLimitConstraint" title="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteRepetitionLimitConstraint</span></code></a> alias for backward compatibility.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint" title="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code></a>(parameters)</p></td>
+<td><p>A <a class="reference internal" href="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html#baybe.constraints.discrete.DiscreteRepetitionLimitConstraint" title="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteRepetitionLimitConstraint</span></code></a> alias for backward compatibility.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1251,22 +1258,19 @@
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html#baybe.constraints.discrete.DiscreteDependenciesConstraint" title="baybe.constraints.discrete.DiscreteDependenciesConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint</span></code></a></p></td>
 <td><p>Constraint that specifies dependencies between parameters.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html#baybe.constraints.discrete.DiscreteLinkedParametersConstraint" title="baybe.constraints.discrete.DiscreteLinkedParametersConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteLinkedParametersConstraint</span></code></a></p></td>
-<td><p>Constraint class for linking the values of parameters.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint" title="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code></a></p></td>
-<td><p>Constraint class for keeping entries where all labels are unique.</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint" title="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint</span></code></a></p></td>
 <td><p>Constraint class for declaring that a set of parameters is permutation invariant.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteProductConstraint.html#baybe.constraints.discrete.DiscreteProductConstraint" title="baybe.constraints.discrete.DiscreteProductConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteProductConstraint</span></code></a></p></td>
 <td><p>Class for modelling product constraints.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html#baybe.constraints.discrete.DiscreteSelectionConstraint" title="baybe.constraints.discrete.DiscreteSelectionConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteSelectionConstraint</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html#baybe.constraints.discrete.DiscreteRepetitionLimitConstraint" title="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteRepetitionLimitConstraint</span></code></a></p></td>
+<td><p>Class for constraining value repetition across parameters.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html#baybe.constraints.discrete.DiscreteSelectionConstraint" title="baybe.constraints.discrete.DiscreteSelectionConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteSelectionConstraint</span></code></a></p></td>
 <td><p>Class for filtering search space entries based on conditions.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteSumConstraint.html#baybe.constraints.discrete.DiscreteSumConstraint" title="baybe.constraints.discrete.DiscreteSumConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteSumConstraint</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.discrete.DiscreteSumConstraint.html#baybe.constraints.discrete.DiscreteSumConstraint" title="baybe.constraints.discrete.DiscreteSumConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteSumConstraint</span></code></a></p></td>
 <td><p>Class for modelling sum constraints.</p></td>
 </tr>
 </tbody>

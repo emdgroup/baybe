@@ -441,14 +441,15 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
@@ -1306,8 +1307,8 @@ continuous parameters, which is not currently supported.</p>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DiscreteDependenciesConstraint</span><span class="p">,</span>
-    <span class="n">DiscreteNoLabelDuplicatesConstraint</span><span class="p">,</span>
     <span class="n">DiscretePermutationInvarianceConstraint</span><span class="p">,</span>
+    <span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">,</span>
     <span class="n">DiscreteSumConstraint</span><span class="p">,</span>
     <span class="n">ThresholdCondition</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1385,9 +1386,10 @@ could further argue that adding the same substance multiple times should be allo
 having two slots with the same substance or having only one slot with the combined
 amounts. Thus, we want to make sure that there are no such duplicate label entries,
 which can be achieved using a
-<a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint" title="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code></a>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">no_duplicates_constraint</span> <span class="o">=</span> <span class="n">DiscreteNoLabelDuplicatesConstraint</span><span class="p">(</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Slot1_Label&quot;</span><span class="p">,</span> <span class="s2">&quot;Slot2_Label&quot;</span><span class="p">,</span> <span class="s2">&quot;Slot3_Label&quot;</span><span class="p">]</span>
+<a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html#baybe.constraints.discrete.DiscreteRepetitionLimitConstraint" title="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteRepetitionLimitConstraint</span></code></a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">no_duplicates_constraint</span> <span class="o">=</span> <span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">(</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Slot1_Label&quot;</span><span class="p">,</span> <span class="s2">&quot;Slot2_Label&quot;</span><span class="p">,</span> <span class="s2">&quot;Slot3_Label&quot;</span><span class="p">],</span>
+    <span class="n">n_max_repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>

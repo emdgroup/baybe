@@ -441,14 +441,15 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
@@ -1313,13 +1314,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-         Solvent                Base                        Ligand  \
-234         DMAc      Cesium acetate  Di-tert-butylphenylphosphine   
-85   Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
+         Solvent             Base                        Ligand  Temperature  \
+376     p-Xylene  Cesium pivalate  Di-tert-butylphenylphosphine        120.0   
+34   Butyl Ester  Cesium pivalate                 (t-Bu)PhCPhos        120.0   
 
-     Temperature  Concentration  
-234         90.0          0.057  
-85         105.0          0.100  
+     Concentration  
+376            0.1  
+34             0.1  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1332,13 +1333,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent                Base                        Ligand  \
-234         DMAc      Cesium acetate  Di-tert-butylphenylphosphine   
-85   Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
+         Solvent             Base                        Ligand  Temperature  \
+376     p-Xylene  Cesium pivalate  Di-tert-butylphenylphosphine        120.0   
+34   Butyl Ester  Cesium pivalate                 (t-Bu)PhCPhos        120.0   
 
-     Temperature  Concentration      yield  
-234         90.0          0.057  12.511692  
-85         105.0          0.100  78.930720  
+     Concentration      yield  
+376            0.1 -69.091365  
+34             0.1  93.845721  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

@@ -441,14 +441,15 @@
 </li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" checked="" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">DiscreteSumConstraint</a></li>
 </ul>
@@ -1231,6 +1232,31 @@
 <p>Class for modelling sum constraints.</p>
 <p>The constraint evaluates whether the (optionally weighted) sum of the specified
 parameters satisfies the given threshold condition.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span> <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span>
+<span class="go">     A    B</span>
+<span class="go">0  1.0  2.0</span>
+<span class="go">1  3.0  1.0</span>
+<span class="go">2  5.0  3.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">DiscreteSumConstraint</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">condition</span><span class="o">=</span><span class="n">ThresholdCondition</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;&lt;=&quot;</span><span class="p">),</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get_invalid</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+<span class="go">[2]</span>
+</pre></div>
+</div>
+<p>With coefficients, the weighted sum is checked instead:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">DiscreteSumConstraint</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">condition</span><span class="o">=</span><span class="n">ThresholdCondition</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;&lt;=&quot;</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="n">coefficients</span><span class="o">=</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get_invalid</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+<span class="go">[1, 2]</span>
+</pre></div>
+</div>
 <p class="rubric">Public methods</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -1247,7 +1273,7 @@ parameters satisfies the given threshold condition.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteSumConstraint.get_invalid" title="baybe.constraints.discrete.DiscreteSumConstraint.get_invalid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_invalid</span></code></a>(df, /, *[, allow_missing])</p></td>
 <td><p>Get the indices of dataframe entries that are invalid under the constraint.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteSumConstraint.get_invalid_polars" title="baybe.constraints.discrete.DiscreteSumConstraint.get_invalid_polars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_invalid_polars</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteSumConstraint.get_invalid_polars" title="baybe.constraints.discrete.DiscreteSumConstraint.get_invalid_polars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_invalid_polars</span></code></a>(schema)</p></td>
 <td><p>Translate the constraint to a Polars expression identifying rows to remove.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteSumConstraint.get_valid" title="baybe.constraints.discrete.DiscreteSumConstraint.get_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_valid</span></code></a>(df, /, *[, allow_missing])</p></td>
@@ -1378,14 +1404,17 @@ caller <cite>there are no entries to be excluded *yet*</cite>.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteSumConstraint.get_invalid_polars">
-<span class="sig-name descname"><span class="pre">get_invalid_polars</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteSumConstraint.get_invalid_polars" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_invalid_polars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteSumConstraint.get_invalid_polars" title="Link to this definition">¶</a></dt>
 <dd><p>Translate the constraint to a Polars expression identifying rows to remove.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">pl.Expr</span></p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="target" id="baybe.constraints.discrete.DiscreteSumConstraint.get_invalid_polars.params.schema"></span><strong>schema</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></span>) – The Polars schema of the dataframe being filtered.</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The Polars expression.</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expr</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The Polars expression.</p>
 </dd>
 </dl>
 </dd></dl>

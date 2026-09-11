@@ -441,14 +441,15 @@
 </li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" checked="" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
@@ -1245,7 +1246,7 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteCustomConstraint.get_invalid" title="baybe.constraints.discrete.DiscreteCustomConstraint.get_invalid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_invalid</span></code></a>(df, /, *[, allow_missing])</p></td>
 <td><p>Get the indices of dataframe entries that are invalid under the constraint.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteCustomConstraint.get_invalid_polars" title="baybe.constraints.discrete.DiscreteCustomConstraint.get_invalid_polars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_invalid_polars</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteCustomConstraint.get_invalid_polars" title="baybe.constraints.discrete.DiscreteCustomConstraint.get_invalid_polars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_invalid_polars</span></code></a>(schema)</p></td>
 <td><p>Translate the constraint to a Polars expression identifying rows to remove.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteCustomConstraint.get_valid" title="baybe.constraints.discrete.DiscreteCustomConstraint.get_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_valid</span></code></a>(df, /, *[, allow_missing])</p></td>
@@ -1373,14 +1374,17 @@ caller <cite>there are no entries to be excluded *yet*</cite>.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteCustomConstraint.get_invalid_polars">
-<span class="sig-name descname"><span class="pre">get_invalid_polars</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteCustomConstraint.get_invalid_polars" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_invalid_polars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteCustomConstraint.get_invalid_polars" title="Link to this definition">¶</a></dt>
 <dd><p>Translate the constraint to a Polars expression identifying rows to remove.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">pl.Expr</span></p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="target" id="baybe.constraints.discrete.DiscreteCustomConstraint.get_invalid_polars.params.schema"></span><strong>schema</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></span>) – The Polars schema of the dataframe being filtered.</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The Polars expression.</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expr</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The Polars expression.</p>
 </dd>
 </dl>
 </dd></dl>

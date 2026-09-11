@@ -440,14 +440,15 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
@@ -1229,8 +1230,8 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">deep_iterable</span><span class="p">,</span> <span class="n">in_</span><span class="p">,</span> <span class="n">min_len</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">deep_iterable</span><span class="p">,</span> <span class="n">ge</span><span class="p">,</span> <span class="n">in_</span><span class="p">,</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">min_len</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -1241,6 +1242,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.conditions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Condition</span><span class="p">,</span>
+    <span class="n">SubSelectionCondition</span><span class="p">,</span>  <span class="c1"># noqa: F401 (used in doctests)</span>
     <span class="n">ThresholdCondition</span><span class="p">,</span>
     <span class="n">_threshold_operators</span><span class="p">,</span>
     <span class="n">_valid_logic_combiners</span><span class="p">,</span>
@@ -1269,13 +1271,13 @@
     <span class="n">conditions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Condition</span><span class="p">],</span>
     <span class="n">combiner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;AND&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DiscreteSelectionConstraint</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A ``DiscreteSelectionConstraint`` alias for backward compatibility.&quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A :class:`DiscreteSelectionConstraint` alias for backward compatibility.&quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">DiscreteExcludeConstraint</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; is deprecated and will be removed &quot;</span>
         <span class="sa">f</span><span class="s2">&quot;in a future version. Use &#39;</span><span class="si">{</span><span class="n">DiscreteSelectionConstraint</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; with &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;&#39;exclude=True&#39; instead.&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">fields</span><span class="p">(</span><span class="n">DiscreteSelectionConstraint</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">=True&#39; instead.&quot;</span><span class="p">,</span>
         <span class="ne">DeprecationWarning</span><span class="p">,</span>
         <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
     <span class="p">)</span>
@@ -1295,7 +1297,30 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html#baybe.constraints.discrete.DiscreteSelectionConstraint">[docs]</a>
 <span class="nd">@define</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DiscreteSelectionConstraint</span><span class="p">(</span><span class="n">DiscreteFilteringConstraint</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for filtering search space entries based on conditions.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for filtering search space entries based on conditions.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; df = pd.DataFrame({</span>
+<span class="sd">        ...     &quot;Solvent&quot;: [&quot;Water&quot;, &quot;Water&quot;, &quot;Hexane&quot;, &quot;Hexane&quot;],</span>
+<span class="sd">        ...     &quot;Temp&quot;: [80.0, 120.0, 80.0, 120.0],</span>
+<span class="sd">        ... })</span>
+<span class="sd">        &gt;&gt;&gt; df</span>
+<span class="sd">          Solvent   Temp</span>
+<span class="sd">        0   Water   80.0</span>
+<span class="sd">        1   Water  120.0</span>
+<span class="sd">        2  Hexane   80.0</span>
+<span class="sd">        3  Hexane  120.0</span>
+<span class="sd">        &gt;&gt;&gt; c = DiscreteSelectionConstraint(</span>
+<span class="sd">        ...     parameters=[&quot;Solvent&quot;, &quot;Temp&quot;],</span>
+<span class="sd">        ...     conditions=[</span>
+<span class="sd">        ...         SubSelectionCondition(selection=[&quot;Hexane&quot;]),</span>
+<span class="sd">        ...         ThresholdCondition(threshold=100.0, operator=&quot;&gt;=&quot;),</span>
+<span class="sd">        ...     ],</span>
+<span class="sd">        ...     exclude=True,</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; list(c.get_invalid(df))</span>
+<span class="sd">        [3]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># object variables</span>
     <span class="n">conditions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Condition</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">min_len</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
@@ -1334,7 +1359,7 @@
         <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">res</span><span class="p">]</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Schema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
 
         <span class="n">satisfied</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1353,6 +1378,30 @@
 
 <span class="sd">    The constraint evaluates whether the (optionally weighted) sum of the specified</span>
 <span class="sd">    parameters satisfies the given threshold condition.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; df = pd.DataFrame({&quot;A&quot;: [1.0, 3.0, 5.0], &quot;B&quot;: [2.0, 1.0, 3.0]})</span>
+<span class="sd">        &gt;&gt;&gt; df</span>
+<span class="sd">             A    B</span>
+<span class="sd">        0  1.0  2.0</span>
+<span class="sd">        1  3.0  1.0</span>
+<span class="sd">        2  5.0  3.0</span>
+<span class="sd">        &gt;&gt;&gt; c = DiscreteSumConstraint(</span>
+<span class="sd">        ...     parameters=[&quot;A&quot;, &quot;B&quot;],</span>
+<span class="sd">        ...     condition=ThresholdCondition(threshold=5.0, operator=&quot;&lt;=&quot;),</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; list(c.get_invalid(df))</span>
+<span class="sd">        [2]</span>
+
+<span class="sd">        With coefficients, the weighted sum is checked instead:</span>
+
+<span class="sd">        &gt;&gt;&gt; c = DiscreteSumConstraint(</span>
+<span class="sd">        ...     parameters=[&quot;A&quot;, &quot;B&quot;],</span>
+<span class="sd">        ...     condition=ThresholdCondition(threshold=5.0, operator=&quot;&lt;=&quot;),</span>
+<span class="sd">        ...     coefficients=(2.0, 1.0),</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; list(c.get_invalid(df))</span>
+<span class="sd">        [1, 2]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying</span>
@@ -1414,7 +1463,7 @@
         <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">mask_good</span><span class="p">]</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Schema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
 
         <span class="n">weighted</span> <span class="o">=</span> <span class="p">[</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">c</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">)]</span>
@@ -1426,7 +1475,22 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html#baybe.constraints.discrete.DiscreteProductConstraint">[docs]</a>
 <span class="nd">@define</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DiscreteProductConstraint</span><span class="p">(</span><span class="n">DiscreteFilteringConstraint</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for modelling product constraints.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for modelling product constraints.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; df = pd.DataFrame({&quot;A&quot;: [2.0, 3.0, 5.0], &quot;B&quot;: [3.0, 2.0, 2.0]})</span>
+<span class="sd">        &gt;&gt;&gt; df</span>
+<span class="sd">             A    B</span>
+<span class="sd">        0  2.0  3.0</span>
+<span class="sd">        1  3.0  2.0</span>
+<span class="sd">        2  5.0  2.0</span>
+<span class="sd">        &gt;&gt;&gt; c = DiscreteProductConstraint(</span>
+<span class="sd">        ...     parameters=[&quot;A&quot;, &quot;B&quot;],</span>
+<span class="sd">        ...     condition=ThresholdCondition(threshold=8.0, operator=&quot;&lt;=&quot;),</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; list(c.get_invalid(df))</span>
+<span class="sd">        [2]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying</span>
 
@@ -1451,7 +1515,7 @@
         <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">mask_good</span><span class="p">]</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Schema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
 
         <span class="n">op</span> <span class="o">=</span> <span class="n">_threshold_operators</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">operator</span><span class="p">]</span>
@@ -1464,90 +1528,175 @@
 
 
 
-<div class="viewcode-block" id="DiscreteNoLabelDuplicatesConstraint">
-<a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteNoLabelDuplicatesConstraint</span><span class="p">(</span><span class="n">DiscreteFilteringConstraint</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Constraint class for keeping entries where all labels are unique.</span>
+<div class="viewcode-block" id="DiscreteRepetitionLimitConstraint">
+<a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html#baybe.constraints.discrete.DiscreteRepetitionLimitConstraint">[docs]</a>
+<span class="nd">@define</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteRepetitionLimitConstraint</span><span class="p">(</span><span class="n">DiscreteFilteringConstraint</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for constraining value repetition across parameters.</span>
 
-<span class="sd">    This can be useful to remove entries that arise from e.g. a permutation invariance</span>
-<span class="sd">    as for instance here:</span>
+<span class="sd">    Keeps only rows where no single value appears more than a specified number of</span>
+<span class="sd">    times across the specified parameters.</span>
 
-<span class="sd">    - A,B,C,D would be kept</span>
-<span class="sd">    - A,A,B,C would be removed</span>
-<span class="sd">    - A,A,B,B would be removed</span>
-<span class="sd">    - A,A,B,A would be removed</span>
-<span class="sd">    - A,C,A,C would be removed</span>
-<span class="sd">    - A,C,B,C would be removed</span>
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; df = pd.DataFrame({&quot;A&quot;: [&quot;x&quot;, &quot;y&quot;, &quot;x&quot;], &quot;B&quot;: [&quot;y&quot;, &quot;x&quot;, &quot;x&quot;]})</span>
+<span class="sd">        &gt;&gt;&gt; df</span>
+<span class="sd">           A  B</span>
+<span class="sd">        0  x  y</span>
+<span class="sd">        1  y  x</span>
+<span class="sd">        2  x  x</span>
+
+<span class="sd">        Upper bound: row 2 has &quot;x&quot; twice, violating ``n_max_repetitions=1``:</span>
+
+<span class="sd">        &gt;&gt;&gt; c = DiscreteRepetitionLimitConstraint(</span>
+<span class="sd">        ...     parameters=[&quot;A&quot;, &quot;B&quot;], n_max_repetitions=1</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; list(c.get_invalid(df))</span>
+<span class="sd">        [2]</span>
+
+<span class="sd">        With ``exclude=True``, the logic inverts and only repeated rows are kept:</span>
+
+<span class="sd">        &gt;&gt;&gt; c = DiscreteRepetitionLimitConstraint(</span>
+<span class="sd">        ...     parameters=[&quot;A&quot;, &quot;B&quot;], n_max_repetitions=1, exclude=True</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; list(c.get_invalid(df))</span>
+<span class="sd">        [0, 1]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># object variables</span>
+    <span class="n">n_max_repetitions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="p">[</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">ge</span><span class="p">(</span><span class="mi">1</span><span class="p">)],</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum number of times any single value may appear in a row.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__attrs_post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the maximum repetition count.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the maximum repetition count imposes no meaningful</span>
+<span class="sd">                constraint.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_params</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_max_repetitions</span> <span class="o">&gt;=</span> <span class="n">n_params</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">fields</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span><span class="o">.</span><span class="n">n_max_repetitions</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">&#39; must be less than &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;the number of parameters (</span><span class="si">{</span><span class="n">n_params</span><span class="si">}</span><span class="s2">) to impose a meaningful &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;constraint, but got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_max_repetitions</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
 
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_can_evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">available</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="c1"># exclude=False (keep all-distinct rows): a duplicate seen in a subset</span>
-        <span class="c1"># stays a duplicate, so rows can be dropped early.</span>
-        <span class="c1"># exclude=True (keep rows with a duplicate): a row that looks distinct so</span>
-        <span class="c1"># far may still gain a duplicate from a later column, so all parameters</span>
-        <span class="c1"># must be present first.</span>
+        <span class="n">n_available</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">available</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_required_parameters</span> <span class="o">&lt;=</span> <span class="n">available</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">available</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+            <span class="c1"># Once even assigning every missing parameter the same value cannot</span>
+            <span class="c1"># exceed the maximum, the row is guaranteed to be excluded.</span>
+            <span class="k">return</span> <span class="n">n_available</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_max_repetitions</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="c1"># Exceeding the maximum requires at least one more available parameter.</span>
+        <span class="k">return</span> <span class="n">n_available</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_max_repetitions</span> <span class="o">+</span> <span class="mi">1</span>
 
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">df</span><span class="p">]</span>
-        <span class="n">mask_good</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">params</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+
+        <span class="c1"># Encode all values to integer codes with a single global mapping so that</span>
+        <span class="c1"># equality matches pandas semantics exactly (avoids false duplicates that a</span>
+        <span class="c1"># naive string cast would introduce, e.g. int 1 vs. str &quot;1&quot;). Sorting the</span>
+        <span class="c1"># integer codes per row groups equal values together.</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">params</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">codes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">factorize</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">ravel</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">sorted_codes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">codes</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Mark the start of each run of equal values along the sorted row, then</span>
+        <span class="c1"># assign an increasing run id to every position via a cumulative sum.</span>
+        <span class="n">is_run_start</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">sorted_codes</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">is_run_start</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">is_run_start</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">sorted_codes</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">sorted_codes</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">run_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">is_run_start</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># The largest run (i.e. the highest per-value multiplicity) is found by</span>
+        <span class="c1"># counting, for each possible run id, how many positions carry it. This</span>
+        <span class="c1"># loop runs over the (small) number of parameters, not the dataframe rows.</span>
+        <span class="n">max_multiplicity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">sorted_codes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">run_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sorted_codes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">max_multiplicity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+                <span class="n">max_multiplicity</span><span class="p">,</span> <span class="p">(</span><span class="n">run_ids</span> <span class="o">==</span> <span class="n">run_id</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">n_missing</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">max_possible_multiplicity</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">max_multiplicity</span> <span class="o">+</span> <span class="n">n_missing</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span> <span class="k">else</span> <span class="n">max_multiplicity</span>
+        <span class="p">)</span>
+        <span class="n">mask_good</span> <span class="o">=</span> <span class="n">max_possible_multiplicity</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_max_repetitions</span>
 
         <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">mask_good</span><span class="p">]</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Schema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
 
-        <span class="n">expr</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">concat_list</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">n_unique</span><span class="p">()</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span>
-        <span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_safe_eq</span><span class="p">(</span><span class="n">ci</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cj</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Compare two columns, returning ``False`` for incompatible dtypes.&quot;&quot;&quot;</span>
+            <span class="n">di</span><span class="p">,</span> <span class="n">dj</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="n">ci</span><span class="p">],</span> <span class="n">schema</span><span class="p">[</span><span class="n">cj</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">di</span> <span class="o">==</span> <span class="n">dj</span> <span class="ow">or</span> <span class="p">(</span><span class="n">di</span><span class="o">.</span><span class="n">is_numeric</span><span class="p">()</span> <span class="ow">and</span> <span class="n">dj</span><span class="o">.</span><span class="n">is_numeric</span><span class="p">()):</span>
+                <span class="k">return</span> <span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="n">ci</span><span class="p">)</span><span class="o">.</span><span class="n">eq_missing</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="n">cj</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">pl</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">expr</span></div>
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="p">[</span><span class="n">pl</span><span class="o">.</span><span class="n">sum_horizontal</span><span class="p">(</span><span class="n">_safe_eq</span><span class="p">(</span><span class="n">ci</span><span class="p">,</span> <span class="n">cj</span><span class="p">)</span> <span class="k">for</span> <span class="n">cj</span> <span class="ow">in</span> <span class="n">params</span><span class="p">)</span> <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="n">params</span><span class="p">]</span>
+        <span class="n">max_count</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">max_horizontal</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">max_count</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_max_repetitions</span></div>
+
+
+
+<span class="c1"># &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Deprecation</span>
+<div class="viewcode-block" id="DiscreteNoLabelDuplicatesConstraint">
+<a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">DiscreteNoLabelDuplicatesConstraint</span><span class="p">(</span>  <span class="c1"># noqa: N802</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A :class:`DiscreteRepetitionLimitConstraint` alias for backward compatibility.&quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+    <span class="n">flds</span> <span class="o">=</span> <span class="n">fields</span><span class="p">(</span><span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">)</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">DiscreteNoLabelDuplicatesConstraint</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; is deprecated and will be &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;removed in a future version. Use &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">DiscreteRepetitionLimitConstraint</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;with &#39;</span><span class="si">{</span><span class="n">flds</span><span class="o">.</span><span class="n">n_max_repetitions</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">=1&#39; instead.&quot;</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span> <span class="n">n_max_repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="DiscreteLinkedParametersConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html#baybe.constraints.discrete.DiscreteLinkedParametersConstraint">[docs]</a>
-<span class="nd">@define</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteLinkedParametersConstraint</span><span class="p">(</span><span class="n">DiscreteFilteringConstraint</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Constraint class for linking the values of parameters.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">DiscreteLinkedParametersConstraint</span><span class="p">(</span>  <span class="c1"># noqa: N802</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A :class:`DiscreteRepetitionLimitConstraint` alias for backward compatibility.&quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-<span class="sd">    This constraint type effectively allows generating parameter sets that relate to</span>
-<span class="sd">    the same underlying quantity, e.g. two parameters that represent the same molecule</span>
-<span class="sd">    using different encodings. Linking the parameters keeps only entries where all</span>
-<span class="sd">    parameter values are identical.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">flds</span> <span class="o">=</span> <span class="n">fields</span><span class="p">(</span><span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">)</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">DiscreteLinkedParametersConstraint</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; is deprecated and will be &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;removed in a future version. Use &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">DiscreteRepetitionLimitConstraint</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;with &#39;</span><span class="si">{</span><span class="n">flds</span><span class="o">.</span><span class="n">n_max_repetitions</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">=len(parameters)-1&#39; and &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">flds</span><span class="o">.</span><span class="n">exclude</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">=True&#39; instead.&quot;</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">(</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
+        <span class="n">n_max_repetitions</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
-    <span class="nd">@override</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_can_evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">available</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="c1"># exclude=False (keep all-identical rows): values that already differ in a</span>
-        <span class="c1"># subset stay different, so rows can be dropped early.</span>
-        <span class="c1"># exclude=True (keep non-identical rows): a row that looks identical so far</span>
-        <span class="c1"># may still differ once a later column is added, so all parameters must be</span>
-        <span class="c1"># present first.</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_required_parameters</span> <span class="o">&lt;=</span> <span class="n">available</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">available</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="mi">2</span>
 
-    <span class="nd">@override</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)]</span>
-        <span class="n">mask_good</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">params</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
 
-        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">mask_good</span><span class="p">]</span>
-
-    <span class="nd">@override</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_matching_rows_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
-
-        <span class="n">expr</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">concat_list</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">n_unique</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
-
-        <span class="k">return</span> <span class="n">expr</span></div>
-
+<span class="c1"># &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; Deprecation</span>
 
 
 <div class="viewcode-block" id="DiscreteDependenciesConstraint">
@@ -1559,6 +1708,24 @@
 <span class="sd">    For instance some parameters might only be relevant when another parameter has a</span>
 <span class="sd">    certain value (e.g. parameter switch is &#39;on&#39;). All dependencies must be declared in</span>
 <span class="sd">    a single constraint.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; df = pd.DataFrame({</span>
+<span class="sd">        ...     &quot;Switch&quot;: [&quot;on&quot;, &quot;off&quot;, &quot;off&quot;],</span>
+<span class="sd">        ...     &quot;Temp&quot;: [100, 200, 100],</span>
+<span class="sd">        ... })</span>
+<span class="sd">        &gt;&gt;&gt; df</span>
+<span class="sd">          Switch  Temp</span>
+<span class="sd">        0     on   100</span>
+<span class="sd">        1    off   200</span>
+<span class="sd">        2    off   100</span>
+<span class="sd">        &gt;&gt;&gt; c = DiscreteDependenciesConstraint(</span>
+<span class="sd">        ...     parameters=[&quot;Switch&quot;],</span>
+<span class="sd">        ...     conditions=[SubSelectionCondition(selection=[&quot;on&quot;])],</span>
+<span class="sd">        ...     affected_parameters=[[&quot;Temp&quot;]],</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; list(c.get_invalid(df))</span>
+<span class="sd">        [2]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># object variables</span>
@@ -1678,6 +1845,17 @@
 
 <span class="sd">    *Note:* This constraint is evaluated during creation. In the future it might also be</span>
 <span class="sd">    evaluated during modeling to make use of the invariance.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; df = pd.DataFrame({&quot;A&quot;: [&quot;x&quot;, &quot;y&quot;, &quot;z&quot;], &quot;B&quot;: [&quot;y&quot;, &quot;x&quot;, &quot;x&quot;]})</span>
+<span class="sd">        &gt;&gt;&gt; df</span>
+<span class="sd">           A  B</span>
+<span class="sd">        0  x  y</span>
+<span class="sd">        1  y  x</span>
+<span class="sd">        2  z  x</span>
+<span class="sd">        &gt;&gt;&gt; c = DiscretePermutationInvarianceConstraint(parameters=[&quot;A&quot;, &quot;B&quot;])</span>
+<span class="sd">        &gt;&gt;&gt; list(c.get_invalid(df))</span>
+<span class="sd">        [1]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># object variables</span>
@@ -1864,7 +2042,21 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html#baybe.constraints.discrete.DiscreteCardinalityConstraint">[docs]</a>
 <span class="nd">@define</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DiscreteCardinalityConstraint</span><span class="p">(</span><span class="n">CardinalityConstraint</span><span class="p">,</span> <span class="n">DiscreteFilteringConstraint</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for discrete cardinality constraints.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for discrete cardinality constraints.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; df = pd.DataFrame({&quot;A&quot;: [0.0, 1.0, 1.0], &quot;B&quot;: [0.0, 0.0, 1.0]})</span>
+<span class="sd">        &gt;&gt;&gt; df</span>
+<span class="sd">             A    B</span>
+<span class="sd">        0  0.0  0.0</span>
+<span class="sd">        1  1.0  0.0</span>
+<span class="sd">        2  1.0  1.0</span>
+<span class="sd">        &gt;&gt;&gt; c = DiscreteCardinalityConstraint(</span>
+<span class="sd">        ...     parameters=[&quot;A&quot;, &quot;B&quot;], max_cardinality=1</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; list(c.get_invalid(df))</span>
+<span class="sd">        [2]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Class variables</span>
     <span class="n">numerical_only</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
@@ -1902,8 +2094,7 @@
 <span class="c1"># effort to minimize total time in their sequential application</span>
 <span class="n">DISCRETE_CONSTRAINTS_FILTERING_ORDER</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">DiscreteSelectionConstraint</span><span class="p">,</span>
-    <span class="n">DiscreteNoLabelDuplicatesConstraint</span><span class="p">,</span>
-    <span class="n">DiscreteLinkedParametersConstraint</span><span class="p">,</span>
+    <span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">,</span>
     <span class="n">DiscreteSumConstraint</span><span class="p">,</span>
     <span class="n">DiscreteProductConstraint</span><span class="p">,</span>
     <span class="n">DiscreteCardinalityConstraint</span><span class="p">,</span>
@@ -1920,10 +2111,18 @@
 <span class="c1"># &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Deprecation</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_structure_constraint_compat</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Constraint</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Structure hook that redirects legacy constraint type names.&quot;&quot;&quot;</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>  <span class="c1"># copy before mutating</span>
     <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TYPE_FIELD</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;DiscreteExcludeConstraint&quot;</span><span class="p">:</span>
-        <span class="n">val</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>  <span class="c1"># copy before mutating</span>
         <span class="n">val</span><span class="p">[</span><span class="n">_TYPE_FIELD</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;DiscreteSelectionConstraint&quot;</span>
-        <span class="n">val</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;exclude&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">val</span><span class="p">[</span><span class="s2">&quot;exclude&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TYPE_FIELD</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;DiscreteNoLabelDuplicatesConstraint&quot;</span><span class="p">:</span>
+        <span class="n">val</span><span class="p">[</span><span class="n">_TYPE_FIELD</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;DiscreteRepetitionLimitConstraint&quot;</span>
+        <span class="n">val</span><span class="p">[</span><span class="s2">&quot;n_max_repetitions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TYPE_FIELD</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;DiscreteLinkedParametersConstraint&quot;</span><span class="p">:</span>
+        <span class="n">val</span><span class="p">[</span><span class="n">_TYPE_FIELD</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;DiscreteRepetitionLimitConstraint&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">params</span> <span class="o">:=</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;parameters&quot;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">val</span><span class="p">[</span><span class="s2">&quot;n_max_repetitions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">val</span><span class="p">[</span><span class="s2">&quot;exclude&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="n">make_base_structure_hook</span><span class="p">(</span><span class="bp">cls</span><span class="p">)(</span><span class="n">val</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>
 
 

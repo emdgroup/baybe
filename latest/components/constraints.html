@@ -441,14 +441,15 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
@@ -1512,64 +1513,60 @@ If these parameters were instead discrete, the corresponding constraint would lo
 </div>
 <p>An end to end example can be found <a class="reference internal" href="../examples/Constraints_Discrete/prodsum_constraints.html"><span class="doc std std-doc">here</span></a>.</p>
 </section>
-<section id="discretenolabelduplicatesconstraint">
-<h4>DiscreteNoLabelDuplicatesConstraint<a class="headerlink" href="#discretenolabelduplicatesconstraint" title="Link to this heading">¶</a></h4>
-<p>Sometimes, duplicated labels in several parameters are undesirable.
-Consider an example with two solvents that describe different mixture
-components.
-These might have the exact same or overlapping sets of possible values, e.g.
-<code class="docutils literal notranslate"><span class="pre">[&quot;Water&quot;,</span> <span class="pre">&quot;THF&quot;,</span> <span class="pre">&quot;Octanol&quot;]</span></code>.
-It would not necessarily be reasonable to allow values in which both solvents show the
-same label/component.
-The <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint" title="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code></span></a>
-keeps only those entries whose labels are all distinct:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteNoLabelDuplicatesConstraint</span>
+<section id="discreterepetitionlimitconstraint">
+<h4>DiscreteRepetitionLimitConstraint<a class="headerlink" href="#discreterepetitionlimitconstraint" title="Link to this heading">¶</a></h4>
+<p>The <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html#baybe.constraints.discrete.DiscreteRepetitionLimitConstraint" title="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteRepetitionLimitConstraint</span></code></span></a>
+controls value repetition across a group of parameters. It keeps only rows where the
+largest number of times any single value appears does not exceed
+<code class="docutils literal notranslate"><span class="pre">n_max_repetitions</span></code> (default: <code class="docutils literal notranslate"><span class="pre">1</span></code>).</p>
+<p>The following example ensures that no solvent label is used more than once across three
+mixture slots:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteRepetitionLimitConstraint</span>
 
-<span class="n">DiscreteNoLabelDuplicatesConstraint</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Solvent_1&quot;</span><span class="p">,</span> <span class="s2">&quot;Solvent_2&quot;</span><span class="p">])</span>
+<span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">(</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Solvent_1&quot;</span><span class="p">,</span> <span class="s2">&quot;Solvent_2&quot;</span><span class="p">,</span> <span class="s2">&quot;Solvent_3&quot;</span><span class="p">],</span>
+    <span class="n">n_max_repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
-<p>With this constraint, combinations with duplicated labels are removed:</p>
 <div class="table-wrapper colwidths-auto docutils container">
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p></p></th>
 <th class="head"><p>Solvent_1</p></th>
 <th class="head"><p>Solvent_2</p></th>
-<th class="head"><p>With DiscreteNoLabelDuplicatesConstraint</p></th>
+<th class="head"><p>Solvent_3</p></th>
+<th class="head"><p>With DiscreteRepetitionLimitConstraint</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td><p>1</p></td>
 <td><p>Water</p></td>
 <td><p>Water</p></td>
-<td><p>removed</p></td>
+<td><p>THF</p></td>
+<td><p>removed (Water appears twice)</p></td>
 </tr>
 <tr class="row-odd"><td><p>2</p></td>
 <td><p>THF</p></td>
 <td><p>Water</p></td>
+<td><p>Octanol</p></td>
 <td><p>kept</p></td>
 </tr>
 <tr class="row-even"><td><p>3</p></td>
 <td><p>Octanol</p></td>
 <td><p>Octanol</p></td>
-<td><p>removed</p></td>
+<td><p>Octanol</p></td>
+<td><p>removed (Octanol appears 3 times)</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>The usage of <code class="docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code> is part of the
-<a class="reference internal" href="../examples/Mixtures/slot_based.html"><span class="doc std std-doc">example on slot-based mixtures</span></a>.</p>
-</section>
-<section id="discretelinkedparametersconstraint">
-<h4>DiscreteLinkedParametersConstraint<a class="headerlink" href="#discretelinkedparametersconstraint" title="Link to this heading">¶</a></h4>
-<p>The <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html#baybe.constraints.discrete.DiscreteLinkedParametersConstraint" title="baybe.constraints.discrete.DiscreteLinkedParametersConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteLinkedParametersConstraint</span></code></span></a>
-is, in a sense, the opposite of the
-<a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint" title="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code></span></a>.
-It keeps <strong>only</strong> entries where the linked parameters share the same label.
-This can be useful, for instance, in situations where we have one parameter but would
-like to include it with several encodings:</p>
+<p>The constraint can also enforce that <strong>all values are identical</strong> by excluding rows
+where a value appears at most one fewer times than there are parameters. This is
+useful, for instance, when we have one parameter but would like to include it with
+several encodings, which then must all refer to the same underlying value:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubstanceParameter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteLinkedParametersConstraint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteRepetitionLimitConstraint</span>
 
 <span class="n">dict_solvents</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Water&quot;</span><span class="p">:</span> <span class="s2">&quot;O&quot;</span><span class="p">,</span> <span class="s2">&quot;THF&quot;</span><span class="p">:</span> <span class="s2">&quot;C1CCOC1&quot;</span><span class="p">,</span> <span class="s2">&quot;Octanol&quot;</span><span class="p">:</span> <span class="s2">&quot;CCCCCCCCO&quot;</span><span class="p">}</span>
 <span class="n">solvent_encoding1</span> <span class="o">=</span> <span class="n">SubstanceParameter</span><span class="p">(</span>
@@ -1582,8 +1579,10 @@ like to include it with several encodings:</p>
     <span class="n">data</span><span class="o">=</span><span class="n">dict_solvents</span><span class="p">,</span>
     <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;MORDRED&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">DiscreteLinkedParametersConstraint</span><span class="p">(</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Solvent_RDKIT_enc&quot;</span><span class="p">,</span> <span class="s2">&quot;Solvent_MORDRED_enc&quot;</span><span class="p">]</span>
+<span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">(</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Solvent_RDKIT_enc&quot;</span><span class="p">,</span> <span class="s2">&quot;Solvent_MORDRED_enc&quot;</span><span class="p">],</span>
+    <span class="n">n_max_repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># = number of parameters - 1</span>
+    <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -1593,7 +1592,7 @@ like to include it with several encodings:</p>
 <tr class="row-odd"><th class="head"><p></p></th>
 <th class="head"><p>Solvent_RDKIT_enc</p></th>
 <th class="head"><p>Solvent_MORDRED_enc</p></th>
-<th class="head"><p>With DiscreteLinkedParametersConstraint</p></th>
+<th class="head"><p>With DiscreteRepetitionLimitConstraint</p></th>
 </tr>
 </thead>
 <tbody>
@@ -1615,6 +1614,8 @@ like to include it with several encodings:</p>
 </tbody>
 </table>
 </div>
+<p>The usage of <code class="docutils literal notranslate"><span class="pre">DiscreteRepetitionLimitConstraint</span></code> is part of the
+<a class="reference internal" href="../examples/Mixtures/slot_based.html"><span class="doc std std-doc">example on slot-based mixtures</span></a>.</p>
 </section>
 <section id="discretedependenciesconstraint">
 <h4>DiscreteDependenciesConstraint<a class="headerlink" href="#discretedependenciesconstraint" title="Link to this heading">¶</a></h4>
@@ -1962,8 +1963,7 @@ constraints is used.</p>
 <li><a class="reference internal" href="#filtering-constraints">Filtering Constraints</a><ul>
 <li><a class="reference internal" href="#discreteselectionconstraint">DiscreteSelectionConstraint</a></li>
 <li><a class="reference internal" href="#discretesumconstraint-and-discreteproductconstraint">DiscreteSumConstraint and DiscreteProductConstraint</a></li>
-<li><a class="reference internal" href="#discretenolabelduplicatesconstraint">DiscreteNoLabelDuplicatesConstraint</a></li>
-<li><a class="reference internal" href="#discretelinkedparametersconstraint">DiscreteLinkedParametersConstraint</a></li>
+<li><a class="reference internal" href="#discreterepetitionlimitconstraint">DiscreteRepetitionLimitConstraint</a></li>
 <li><a class="reference internal" href="#discretedependenciesconstraint">DiscreteDependenciesConstraint</a></li>
 <li><a class="reference internal" href="#discretepermutationinvarianceconstraint">DiscretePermutationInvarianceConstraint</a></li>
 <li><a class="reference internal" href="#discretecardinalityconstraint">DiscreteCardinalityConstraint</a></li>

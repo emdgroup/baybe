@@ -440,14 +440,15 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input aria-label="Toggle navigation of baybe.constraints.discrete" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">DiscreteLinkedParametersConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">DiscreteNoLabelDuplicatesConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
@@ -1235,7 +1236,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">instance_of</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteConstraint</span><span class="p">,</span> <span class="n">DiscreteFilteringConstraint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteFilteringConstraint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">IncompatibilityError</span><span class="p">,</span>
     <span class="n">NoMeasurementsError</span><span class="p">,</span>
@@ -1663,7 +1664,7 @@
 <a class="viewcode-back" href="../../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.toggle_discrete_candidates">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">toggle_discrete_candidates</span><span class="p">(</span>  <span class="c1"># noqa: DOC501</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">constraints</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">DiscreteConstraint</span><span class="p">]</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">DiscreteFilteringConstraint</span><span class="p">]</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">exclude</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">complement</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -1673,8 +1674,8 @@
 <span class="sd">        Args:</span>
 <span class="sd">            constraints: A filtering mechanism determining the candidates subset to be</span>
 <span class="sd">                in-/excluded. Can be either a collection of</span>
-<span class="sd">                :class:`~baybe.constraints.base.DiscreteConstraint` or a dataframe.</span>
-<span class="sd">                For the latter, see :func:`~baybe.utils.dataframe.filter_df`</span>
+<span class="sd">                :class:`~baybe.constraints.base.DiscreteFilteringConstraint` or a</span>
+<span class="sd">                dataframe. For the latter, see :func:`~baybe.utils.dataframe.filter_df`</span>
 <span class="sd">                for details.</span>
 <span class="sd">            exclude: If ``True``, the specified candidates are excluded.</span>
 <span class="sd">                If ``False``, the candidates are considered for recommendation.</span>
@@ -1720,8 +1721,8 @@
 
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="s2">&quot;Candidate toggling is not implemented for the given type of &quot;</span>
-                <span class="s2">&quot;constraint specifications.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Candidate toggling requires a dataframe or a collection of &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">DiscreteFilteringConstraint</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; instances.&quot;</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">dry_run</span><span class="p">:</span>
