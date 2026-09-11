@@ -48,8 +48,8 @@ import pandas as pd
 
 from baybe.constraints import (
     DiscreteDependenciesConstraint,
-    DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
+    DiscreteRepetitionLimitConstraint,
     DiscreteSumConstraint,
     ThresholdCondition,
 )
@@ -126,10 +126,11 @@ parameters = [
 # having two slots with the same substance or having only one slot with the combined
 # amounts. Thus, we want to make sure that there are no such duplicate label entries,
 # which can be achieved using a
-# {class}`~baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`:
+# {class}`~baybe.constraints.discrete.DiscreteRepetitionLimitConstraint`:
 
-no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
-    parameters=["Slot1_Label", "Slot2_Label", "Slot3_Label"]
+no_duplicates_constraint = DiscreteRepetitionLimitConstraint(
+    parameters=["Slot1_Label", "Slot2_Label", "Slot3_Label"],
+    n_max_repetitions=1,
 )
 
 #### Permutation Invariance
