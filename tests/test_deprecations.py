@@ -751,8 +751,40 @@ def test_discrete_constraint_deprecation(
 def test_discrete_constraint_deserialization(annotation, payload, expected):
     """Legacy constraints deserialize regardless of the abstract annotation."""
     target = getattr(base_module, annotation)
-    result = converter.structure(deepcopy(payload), target)
+    with pytest.warns(DeprecationWarning) as recorded:
+        result = converter.structure(deepcopy(payload), target)
     assert result == expected
+    assert len(recorded) == 1
+    assert payload["type"] in str(recorded[0].message)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        assert converter.structure(result.to_dict(), target) == result
+
+
+@pytest.mark.parametrize(
+    "operator", ["=", ">="], ids=["default-tolerance", "no-tolerance"]
+)
+def test_product_legacy_concrete_deserialization(operator):
+    """Concrete Product deserialization uses the same deprecated input adapter."""
+    condition = ThresholdCondition(threshold=1.0, operator=operator)
+    payload = {
+        "type": "DiscreteProductConstraint",
+        "parameters": ["A", "B"],
+        "condition": {
+            "type": "ThresholdCondition",
+            "threshold": 1.0,
+            "operator": operator,
+        },
+    }
+    original = deepcopy(payload)
+    with pytest.warns(DeprecationWarning, match="condition") as recorded:
+        result = converter.structure(payload, DiscreteProductConstraint)
+    assert len(recorded) == 1
+    assert payload == original
+    assert result == DiscreteProductConstraint(
+        ["A", "B"], operator=operator, rhs=1.0, tolerance=condition.tolerance
+    )
+    assert "condition" not in result.to_dict()
 
 
 def test_discrete_product_constraint_mixing_raises():

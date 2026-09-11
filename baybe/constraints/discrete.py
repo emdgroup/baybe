@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import gc
 from collections.abc import Callable, Sequence
+from copy import deepcopy
 from functools import reduce
 from inspect import Parameter, Signature, signature
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast, overload
+from typing import TYPE_CHECKING, Any, ClassVar, cast, get_type_hints, overload
 
 import cattrs
 import numpy as np
@@ -335,17 +336,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     """The modern constructor signature exposed to introspection tools."""
 
     # object variables
-    # >>>>>>>>>> Deprecation
-    condition: ThresholdCondition | None = field(
-        default=None, eq=False, repr=False, kw_only=True
-    )
-    """Deprecated. Use keywords ``operator``, ``rhs``, and ``tolerance`` instead."""
-
-    # <<<<<<<<<< Deprecation
-
-    operator: ThresholdOperator | Literal[""] = field(
-        default="", validator=in_(_threshold_operators)
-    )
+    operator: ThresholdOperator = field(validator=in_(_threshold_operators))
     """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
@@ -398,8 +389,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
         if condition is not None:
             if {"operator", "rhs", "tolerance"} & kwargs.keys():
                 raise ValueError(
-                    f"Cannot specify both '{flds.condition.alias}' and modern "
-                    "comparison arguments."
+                    "Cannot specify both 'condition' and modern comparison arguments."
                 )
             legacy = _legacy_product_signature.bind(*args, **kwargs)
             values = dict(legacy.arguments)
@@ -415,7 +405,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
         self.__attrs_init__(**values)
         if condition is not None:
             warnings.warn(
-                f"Passing '{flds.condition.alias}' to '{self.__class__.__name__}' is "
+                f"Passing 'condition' to '{self.__class__.__name__}' is "
                 f"deprecated and will be removed in a future version. Use "
                 f"'{flds.operator.alias}' and '{flds.rhs.alias}' (and optionally "
                 f"'{flds.tolerance.alias}') instead.",
@@ -442,9 +432,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     @override
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = df[self.parameters].prod(axis=1)
-        condition = _make_condition(
-            cast(ThresholdOperator, self.operator), self.rhs, self.tolerance
-        )
+        condition = _make_condition(self.operator, self.rhs, self.tolerance)
         mask_good = condition.evaluate(evaluate_df)
 
         return df.index[mask_good]
@@ -453,9 +441,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
-        condition = _make_condition(
-            cast(ThresholdOperator, self.operator), self.rhs, self.tolerance
-        )
+        condition = _make_condition(self.operator, self.rhs, self.tolerance)
         expr = pl.reduce(lambda acc, x: acc * x, pl.col(self.parameters))
         return condition.to_polars(expr)
 
@@ -464,9 +450,9 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
 # Derive the public signature from attrs while retaining the legacy input adapter.
 _product_signature = signature(DiscreteProductConstraint.__attrs_init__).replace(
     parameters=[
-        p.replace(default=Parameter.empty) if p.name == "operator" else p
+        p
         for p in signature(DiscreteProductConstraint.__attrs_init__).parameters.values()
-        if p.name not in {"self", "condition"}
+        if p.name != "self"
     ]
 )
 _legacy_product_signature = _product_signature.replace(
@@ -1056,64 +1042,73 @@ converter.register_structure_hook(DiscreteCustomConstraint, block_deserializatio
 
 
 # >>>>>>>>>> Deprecation
-def _unstructure_product_constraint(obj: DiscreteProductConstraint) -> dict:
-    """Unstructure hook that excludes the deprecated ``condition`` field."""
-    result = cattrs.gen.make_dict_unstructure_fn(DiscreteProductConstraint, converter)(
-        obj
-    )
-    result.pop("condition", None)
-    return result
+_product_structure_hook = converter.get_structure_hook(DiscreteProductConstraint)
 
 
-converter.register_unstructure_hook(
-    DiscreteProductConstraint, _unstructure_product_constraint
+def _structure_product_constraint(val: dict, cls: type) -> DiscreteProductConstraint:
+    """Route legacy Product input through its warning-emitting constructor.
+
+    Args:
+        val: The serialized constraint.
+        cls: The requested concrete class.
+
+    Returns:
+        The deserialized Product constraint.
+    """
+    val = dict(val)
+    if val.get("condition") is not None:
+        # Let the normal hook reject mismatching type tags.
+        if val.get(_TYPE_FIELD, cls.__name__) != cls.__name__:
+            return _product_structure_hook(val, cls)
+        val.pop(_TYPE_FIELD, None)
+        val["condition"] = converter.structure(
+            deepcopy(val["condition"]), ThresholdCondition
+        )
+        val["parameters"] = converter.structure(val["parameters"], list[str])
+        return cls(**val)
+    return _product_structure_hook(val, cls)
+
+
+converter.register_structure_hook(
+    DiscreteProductConstraint, _structure_product_constraint
 )
 
 
-def _unpack_condition_payload(val: dict) -> None:
-    """Unpack a legacy nested ``condition`` dict into top-level fields.
-
-    Mutates *val* in place: extracts ``threshold`` → ``rhs``,
-    ``operator`` → ``operator``, and (optionally) ``tolerance`` → ``tolerance``
-    from the nested ``condition`` sub-dict, then removes the ``condition`` key.
+def _structure_constraint_compat(val: dict, cls: type) -> Constraint:
+    """Structure legacy constraints through their compatibility constructors.
 
     Args:
-        val: The serialized constraint dict to transform.
+        val: The serialized constraint.
+        cls: The requested abstract class.
+
+    Returns:
+        The deserialized constraint.
+
+    Raises:
+        TypeError: If the legacy replacement is incompatible with the requested class.
     """
-    cond = val.pop("condition", None)
-    if cond is None:
-        return
-    if isinstance(cond, dict):
-        cond = dict(cond)
-        # Remove the type discriminator if present
-        cond.pop("type", None)
-        val["operator"] = cond["operator"]
-        val["rhs"] = cond["threshold"]
-        tol = cond.get("tolerance")
-        if tol is not None:
-            val["tolerance"] = tol
-
-
-def _structure_constraint_compat(val: dict, cls: type) -> Constraint:
-    """Structure hook that redirects legacy constraint type names."""
     val = dict(val)  # copy before mutating
     type_ = val.get(_TYPE_FIELD)
-    if type_ == "DiscreteExcludeConstraint":
-        val[_TYPE_FIELD] = "DiscreteSelectionConstraint"
-        val["exclude"] = True
-    elif type_ == "DiscreteNoLabelDuplicatesConstraint":
-        val[_TYPE_FIELD] = "DiscreteRepetitionLimitConstraint"
-        val["n_max_repetitions"] = 1
-    elif type_ == "DiscreteLinkedParametersConstraint":
-        val[_TYPE_FIELD] = "DiscreteRepetitionLimitConstraint"
-        if (params := val.get("parameters")) is not None and len(params) >= 2:
-            val["n_max_repetitions"] = len(params) - 1
-        val["exclude"] = True
-    elif type_ == "DiscreteSumConstraint":
-        _unpack_condition_payload(val)
-        val[_TYPE_FIELD] = "DiscreteLinearConstraint"
-    elif type_ == "DiscreteProductConstraint" and "condition" in val:
-        _unpack_condition_payload(val)
+    factories: dict[str, Callable[..., Constraint]] = {
+        factory.__name__: factory
+        for factory in (
+            DiscreteExcludeConstraint,
+            DiscreteNoLabelDuplicatesConstraint,
+            DiscreteLinkedParametersConstraint,
+            DiscreteSumConstraint,
+        )
+    }
+    if isinstance(type_, str) and (factory := factories.get(type_)):
+        hints = get_type_hints(factory)
+        if not issubclass(hints["return"], cls):
+            raise TypeError(f"'{type_}' is not compatible with '{cls.__name__}'.")
+        val.pop(_TYPE_FIELD)
+        bound = signature(factory).bind(**val)
+        arguments = {
+            name: converter.structure(deepcopy(value), hints[name])
+            for name, value in bound.arguments.items()
+        }
+        return factory(**arguments)
     return make_base_structure_hook(cls)(val, cls)
 
 
