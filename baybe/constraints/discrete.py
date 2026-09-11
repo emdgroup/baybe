@@ -331,7 +331,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     # previously valid call `DiscreteProductConstraint(parameters, condition)` keeps
     # working (with a deprecation warning). The new-interface fields are therefore
     # keyword-only until the deprecated `condition` field is removed.
-    condition: ThresholdCondition | None = field(default=None)
+    condition: ThresholdCondition | None = field(default=None, eq=False, repr=False)
     """Deprecated. Use keywords ``operator``, ``rhs``, and ``tolerance`` instead."""
 
     # <<<<<<<<<< Deprecation
