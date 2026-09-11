@@ -148,7 +148,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
 
 @define
 class DiscreteLinearConstraint(DiscreteFilteringConstraint):
-    """Class for modelling linear (weighted-sum) constraints on discrete parameters.
+    """Class for modeling linear (weighted-sum) constraints on discrete parameters.
 
     The constraint compares the sum of the specified parameters, optionally weighted by
     :paramref:`DiscreteLinearConstraint.coefficients`, against
@@ -294,7 +294,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
 
 @define
 class DiscreteProductConstraint(DiscreteFilteringConstraint):
-    """Class for modelling product constraints on discrete parameters.
+    """Class for modeling product constraints on discrete parameters.
 
     The constraint compares the product of the specified parameters against
     :paramref:`DiscreteProductConstraint.rhs` using
