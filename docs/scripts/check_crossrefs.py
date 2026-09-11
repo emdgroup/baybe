@@ -3,7 +3,7 @@
 from subprocess import check_call
 
 
-def check_links() -> None:
+def check_crossrefs() -> None:
     """Check that documentation cross-references resolve (external links: lychee)."""
     check_call(
         [
