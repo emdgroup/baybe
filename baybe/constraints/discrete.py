@@ -298,7 +298,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
 
 
 @define
-class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
+class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
     """Class for constraining value repetition across parameters.
 
     Keeps only rows where no single value appears more than a specified number of
@@ -314,7 +314,7 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
 
         Upper bound: row 2 has "x" twice, violating ``n_max_repetitions=1``:
 
-        >>> c = DiscreteRepetitionConstraint(
+        >>> c = DiscreteRepetitionLimitConstraint(
         ...     parameters=["A", "B"], n_max_repetitions=1
         ... )
         >>> list(c.get_invalid(df))
@@ -322,7 +322,7 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
 
         With ``exclude=True``, the logic inverts and only repeated rows are kept:
 
-        >>> c = DiscreteRepetitionConstraint(
+        >>> c = DiscreteRepetitionLimitConstraint(
         ...     parameters=["A", "B"], n_max_repetitions=1, exclude=True
         ... )
         >>> list(c.get_invalid(df))
@@ -417,37 +417,39 @@ class DiscreteRepetitionConstraint(DiscreteFilteringConstraint):
 # >>>>>>>>>> Deprecation
 def DiscreteNoLabelDuplicatesConstraint(  # noqa: N802
     parameters: list[str],
-) -> DiscreteRepetitionConstraint:
-    """A :class:`DiscreteRepetitionConstraint` alias for backward compatibility."""  # noqa: D401
+) -> DiscreteRepetitionLimitConstraint:
+    """A :class:`DiscreteRepetitionLimitConstraint` alias for backward compatibility."""  # noqa: D401
     import warnings
 
-    flds = fields(DiscreteRepetitionConstraint)
+    flds = fields(DiscreteRepetitionLimitConstraint)
     warnings.warn(
         f"'{DiscreteNoLabelDuplicatesConstraint.__name__}' is deprecated and will be "
-        f"removed in a future version. Use '{DiscreteRepetitionConstraint.__name__}' "
+        f"removed in a future version. Use "
+        f"'{DiscreteRepetitionLimitConstraint.__name__}' "
         f"with '{flds.n_max_repetitions.alias}=1' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    return DiscreteRepetitionConstraint(parameters=parameters, n_max_repetitions=1)
+    return DiscreteRepetitionLimitConstraint(parameters=parameters, n_max_repetitions=1)
 
 
 def DiscreteLinkedParametersConstraint(  # noqa: N802
     parameters: list[str],
-) -> DiscreteRepetitionConstraint:
-    """A :class:`DiscreteRepetitionConstraint` alias for backward compatibility."""  # noqa: D401
+) -> DiscreteRepetitionLimitConstraint:
+    """A :class:`DiscreteRepetitionLimitConstraint` alias for backward compatibility."""  # noqa: D401
     import warnings
 
-    flds = fields(DiscreteRepetitionConstraint)
+    flds = fields(DiscreteRepetitionLimitConstraint)
     warnings.warn(
         f"'{DiscreteLinkedParametersConstraint.__name__}' is deprecated and will be "
-        f"removed in a future version. Use '{DiscreteRepetitionConstraint.__name__}' "
+        f"removed in a future version. Use "
+        f"'{DiscreteRepetitionLimitConstraint.__name__}' "
         f"with '{flds.n_max_repetitions.alias}=len(parameters)-1' and "
         f"'{flds.exclude.alias}=True' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    return DiscreteRepetitionConstraint(
+    return DiscreteRepetitionLimitConstraint(
         parameters=parameters,
         n_max_repetitions=len(parameters) - 1,
         exclude=True,
@@ -828,7 +830,7 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
 # effort to minimize total time in their sequential application
 DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscreteSelectionConstraint,
-    DiscreteRepetitionConstraint,
+    DiscreteRepetitionLimitConstraint,
     DiscreteSumConstraint,
     DiscreteProductConstraint,
     DiscreteCardinalityConstraint,
@@ -850,10 +852,10 @@ def _structure_constraint_compat(val: dict, cls: type) -> Constraint:
         val[_TYPE_FIELD] = "DiscreteSelectionConstraint"
         val["exclude"] = True
     elif val.get(_TYPE_FIELD) == "DiscreteNoLabelDuplicatesConstraint":
-        val[_TYPE_FIELD] = "DiscreteRepetitionConstraint"
+        val[_TYPE_FIELD] = "DiscreteRepetitionLimitConstraint"
         val["n_max_repetitions"] = 1
     elif val.get(_TYPE_FIELD) == "DiscreteLinkedParametersConstraint":
-        val[_TYPE_FIELD] = "DiscreteRepetitionConstraint"
+        val[_TYPE_FIELD] = "DiscreteRepetitionLimitConstraint"
         if (params := val.get("parameters")) is not None and len(params) >= 2:
             val["n_max_repetitions"] = len(params) - 1
         val["exclude"] = True

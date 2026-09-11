@@ -296,8 +296,8 @@ DiscreteSumConstraint(
 
 An end to end example can be found [here](../../examples/Constraints_Discrete/prodsum_constraints).
 
-#### DiscreteRepetitionConstraint
-The [`DiscreteRepetitionConstraint`](baybe.constraints.discrete.DiscreteRepetitionConstraint)
+#### DiscreteRepetitionLimitConstraint
+The [`DiscreteRepetitionLimitConstraint`](baybe.constraints.discrete.DiscreteRepetitionLimitConstraint)
 controls value repetition across a group of parameters. It keeps only rows where the
 largest number of times any single value appears does not exceed
 ``n_max_repetitions`` (default: ``1``).
@@ -306,19 +306,19 @@ The following example ensures that no solvent label is used more than once acros
 mixture slots:
 
 ```python
-from baybe.constraints import DiscreteRepetitionConstraint
+from baybe.constraints import DiscreteRepetitionLimitConstraint
 
-DiscreteRepetitionConstraint(
+DiscreteRepetitionLimitConstraint(
     parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
     n_max_repetitions=1,
 )
 ```
 
-|   | Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteRepetitionConstraint |
-|---|-----------|-----------|-----------|-----------------------------------|
-| 1 | Water     | Water     | THF       | removed (Water appears twice)     |
-| 2 | THF       | Water     | Octanol   | kept                              |
-| 3 | Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times) |
+|   | Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteRepetitionLimitConstraint |
+|---|-----------|-----------|-----------|----------------------------------------|
+| 1 | Water     | Water     | THF       | removed (Water appears twice)          |
+| 2 | THF       | Water     | Octanol   | kept                                   |
+| 3 | Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times)      |
 
 The constraint can also enforce that **all values are identical** by excluding rows
 where a value appears at most one fewer times than there are parameters. This is
@@ -327,7 +327,7 @@ several encodings, which then must all refer to the same underlying value:
 
 ```python
 from baybe.parameters import SubstanceParameter
-from baybe.constraints import DiscreteRepetitionConstraint
+from baybe.constraints import DiscreteRepetitionLimitConstraint
 
 dict_solvents = {"Water": "O", "THF": "C1CCOC1", "Octanol": "CCCCCCCCO"}
 solvent_encoding1 = SubstanceParameter(
@@ -340,20 +340,20 @@ solvent_encoding2 = SubstanceParameter(
     data=dict_solvents,
     encoding="MORDRED",
 )
-DiscreteRepetitionConstraint(
+DiscreteRepetitionLimitConstraint(
     parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"],
     n_max_repetitions=1,  # = number of parameters - 1
     exclude=True,
 )
 ```
 
-|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionConstraint |
+|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionLimitConstraint |
 |---|-------------------|---------------------|-----------------------------------|
 | 1 | Water             | Water               | kept                              |
 | 2 | THF               | Water               | removed                           |
 | 3 | Octanol           | Octanol             | kept                              |
 
-The usage of `DiscreteRepetitionConstraint` is part of the
+The usage of `DiscreteRepetitionLimitConstraint` is part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
 #### DiscreteDependenciesConstraint

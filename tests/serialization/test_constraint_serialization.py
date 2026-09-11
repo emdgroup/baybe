@@ -10,7 +10,7 @@ from tests.hypothesis_strategies.constraints import (
     discrete_dependencies_constraints,
     discrete_permutation_invariance_constraints,
     discrete_product_constraints,
-    discrete_repetition_constraints,
+    discrete_repetition_limit_constraints,
     discrete_selection_constraints,
     discrete_sum_constraints,
 )
@@ -29,8 +29,8 @@ from tests.serialization.utils import assert_roundtrip_consistency
         param(discrete_sum_constraints(), id="DiscreteSumConstraint"),
         param(discrete_product_constraints(), id="DiscreteProductConstraint"),
         param(
-            discrete_repetition_constraints(),
-            id="DiscreteRepetitionConstraint",
+            discrete_repetition_limit_constraints(),
+            id="DiscreteRepetitionLimitConstraint",
         ),
         param(
             continuous_linear_constraints(),

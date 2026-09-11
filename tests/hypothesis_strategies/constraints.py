@@ -15,7 +15,7 @@ from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
-    DiscreteRepetitionConstraint,
+    DiscreteRepetitionLimitConstraint,
     DiscreteSelectionConstraint,
     DiscreteSumConstraint,
 )
@@ -209,10 +209,10 @@ discrete_product_constraints = partial(_discrete_constraints, DiscreteProductCon
 
 
 @st.composite
-def discrete_repetition_constraints(
+def discrete_repetition_limit_constraints(
     draw: st.DrawFn, parameter_names: list[str] | None = None
 ):
-    """Generate :class:`baybe.constraints.discrete.DiscreteRepetitionConstraint`."""
+    """Generate a :class:`~baybe.constraints.DiscreteRepetitionLimitConstraint`."""
     if parameter_names is None:
         params = draw(st.lists(st.text(), unique=True, min_size=2))
     else:
@@ -221,7 +221,7 @@ def discrete_repetition_constraints(
 
     n_max = draw(st.integers(min_value=1, max_value=len(params) - 1))
     exclude = draw(st.booleans())
-    return DiscreteRepetitionConstraint(
+    return DiscreteRepetitionLimitConstraint(
         params, n_max_repetitions=n_max, exclude=exclude
     )
 
@@ -269,7 +269,7 @@ constraints = st.one_of(
         discrete_permutation_invariance_constraints(),
         discrete_sum_constraints(),
         discrete_product_constraints(),
-        discrete_repetition_constraints(),
+        discrete_repetition_limit_constraints(),
         continuous_linear_equality_constraints(),
         continuous_linear_inequality_constraints(),
     ]

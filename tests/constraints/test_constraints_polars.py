@@ -153,8 +153,8 @@ def test_polars_exclusion(mock_substances, parameters, constraints):
         pytest.param(["Constraint_15"], 1, id="inverted-maximum"),
     ],
 )
-def test_polars_repetition_constraint(parameters, constraints, n_unique):
-    """Test the Polars implementation of the repetition constraint."""
+def test_polars_repetition_limit_constraint(parameters, constraints, n_unique):
+    """Test the Polars implementation of the repetition-limit constraint."""
     ldf = _lazyframe_from_product(parameters)
     ldf = _apply_constraint_filter_polars(ldf, constraints)
 

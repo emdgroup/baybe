@@ -14,7 +14,7 @@ from baybe.constraints import (
     DiscreteCardinalityConstraint,
     DiscreteDependenciesConstraint,
     DiscretePermutationInvarianceConstraint,
-    DiscreteRepetitionConstraint,
+    DiscreteRepetitionLimitConstraint,
     DiscreteSelectionConstraint,
     DiscreteSumConstraint,
     SubSelectionCondition,
@@ -46,7 +46,7 @@ def _no_label_duplicates_scenario() -> tuple[
     values = ["x", "y", "z", "w"]
     params = [CategoricalParameter(name=f"P{i}", values=values) for i in range(4)]
     constraints = [
-        DiscreteRepetitionConstraint(
+        DiscreteRepetitionLimitConstraint(
             parameters=[p.name for p in params], n_max_repetitions=1
         )
     ]
@@ -59,7 +59,7 @@ def _linked_parameters_scenario() -> tuple[
     values = ["a", "b", "c"]
     params = [CategoricalParameter(name=f"P{i}", values=values) for i in range(3)]
     constraints = [
-        DiscreteRepetitionConstraint(
+        DiscreteRepetitionLimitConstraint(
             parameters=[p.name for p in params],
             n_max_repetitions=len(params) - 1,
             exclude=True,
@@ -68,14 +68,14 @@ def _linked_parameters_scenario() -> tuple[
     return params, constraints
 
 
-def _repetition_scenario(
+def _repetition_limit_scenario(
     n_max: int,
     exclude: bool,
 ) -> tuple[Sequence[DiscreteParameter], Sequence[DiscreteConstraint]]:
     values = ["a", "b", "c", "d"]
     params = [CategoricalParameter(name=f"P{i}", values=values) for i in range(4)]
     constraints = [
-        DiscreteRepetitionConstraint(
+        DiscreteRepetitionLimitConstraint(
             parameters=[p.name for p in params],
             n_max_repetitions=n_max,
             exclude=exclude,
@@ -200,7 +200,7 @@ def _permutation_invariance_with_dependencies_scenario() -> tuple[
             parameters=amount_names,
             condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.1),
         ),
-        DiscreteRepetitionConstraint(parameters=label_names, n_max_repetitions=1),
+        DiscreteRepetitionLimitConstraint(parameters=label_names, n_max_repetitions=1),
     ]
     return params, constraints
 
@@ -216,7 +216,7 @@ def _mixed_scenario() -> tuple[
         NumericalDiscreteParameter(name="Num2", values=[0.0, 50.0, 100.0]),
     ]
     constraints = [
-        DiscreteRepetitionConstraint(
+        DiscreteRepetitionLimitConstraint(
             parameters=["Cat1", "Cat2", "Cat3"], n_max_repetitions=1
         ),
         DiscreteSumConstraint(
@@ -259,16 +259,16 @@ def _mixed_scenario() -> tuple[
         ),
         pytest.param(_mixed_scenario, id="mixed"),
         pytest.param(
-            partial(_repetition_scenario, 1, True),
-            id="repetition_max_exclude",
+            partial(_repetition_limit_scenario, 1, True),
+            id="repetition_limit_exclude",
         ),
         pytest.param(
-            partial(_repetition_scenario, 2, False),
-            id="repetition_max_keep",
+            partial(_repetition_limit_scenario, 2, False),
+            id="repetition_limit_keep",
         ),
         pytest.param(
-            partial(_repetition_scenario, 2, True),
-            id="repetition_max_exclude_general",
+            partial(_repetition_limit_scenario, 2, True),
+            id="repetition_limit_exclude_general",
         ),
     ],
 )

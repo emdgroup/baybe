@@ -20,7 +20,7 @@ from baybe.constraints import base as base_module
 from baybe.constraints import discrete as discrete_module
 from baybe.constraints.discrete import (
     DiscreteExcludeConstraint,
-    DiscreteRepetitionConstraint,
+    DiscreteRepetitionLimitConstraint,
     DiscreteSelectionConstraint,
 )
 from baybe.exceptions import DeprecationError
@@ -622,11 +622,11 @@ def test_discrete_exclude_constraint_deserialization(annotation):
         ),
     ],
 )
-def test_repetition_constraint_deprecation(legacy_name, kwargs, expected):
+def test_repetition_limit_constraint_deprecation(legacy_name, kwargs, expected):
     """Constructing deprecated constraints emits a deprecation warning."""
     with pytest.warns(DeprecationWarning, match=legacy_name):
         c = getattr(discrete_module, legacy_name)(**kwargs)
-    ref = DiscreteRepetitionConstraint(
+    ref = DiscreteRepetitionLimitConstraint(
         parameters=kwargs["parameters"],
         **expected,
     )
@@ -654,11 +654,11 @@ def test_repetition_constraint_deprecation(legacy_name, kwargs, expected):
         ),
     ],
 )
-def test_repetition_constraint_deserialization(
+def test_repetition_limit_constraint_deserialization(
     annotation, legacy_name, kwargs, expected
 ):
     """Legacy repetition constraints deserialize regardless of the annotation."""
-    ref = DiscreteRepetitionConstraint(
+    ref = DiscreteRepetitionLimitConstraint(
         parameters=kwargs["parameters"],
         **expected,
     )

@@ -11,7 +11,7 @@ from baybe.constraints.continuous import (
 from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
     DiscretePermutationInvarianceConstraint,
-    DiscreteRepetitionConstraint,
+    DiscreteRepetitionLimitConstraint,
     DiscreteSumConstraint,
 )
 
@@ -65,7 +65,7 @@ def test_invalid_cardinalities(cardinalities, error, match):
 def test_invalid_max_repetitions(kwargs, error, match):
     """Invalid maximum repetition counts raise an exception."""
     with pytest.raises(error, match=match):
-        DiscreteRepetitionConstraint(parameters=["A", "B", "C"], **kwargs)
+        DiscreteRepetitionLimitConstraint(parameters=["A", "B", "C"], **kwargs)
 
 
 @pytest.mark.parametrize(

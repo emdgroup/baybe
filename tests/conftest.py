@@ -35,7 +35,7 @@ from baybe.constraints import (
     DiscreteDependenciesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
-    DiscreteRepetitionConstraint,
+    DiscreteRepetitionLimitConstraint,
     DiscreteSelectionConstraint,
     DiscreteSumConstraint,
     SubSelectionCondition,
@@ -505,7 +505,7 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             ],
             exclude=True,
         ),
-        "Constraint_7": DiscreteRepetitionConstraint(
+        "Constraint_7": DiscreteRepetitionLimitConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
             n_max_repetitions=1,
         ),
@@ -548,7 +548,7 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             min_cardinality=1,
             max_cardinality=2,
         ),
-        "Constraint_15": DiscreteRepetitionConstraint(
+        "Constraint_15": DiscreteRepetitionLimitConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
             n_max_repetitions=2,
             exclude=True,

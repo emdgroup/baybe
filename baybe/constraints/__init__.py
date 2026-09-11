@@ -16,7 +16,7 @@ from baybe.constraints.discrete import (
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
-    DiscreteRepetitionConstraint,
+    DiscreteRepetitionLimitConstraint,
     DiscreteSelectionConstraint,
     DiscreteSumConstraint,
 )
@@ -39,7 +39,7 @@ __all__ = [
     "DiscreteNoLabelDuplicatesConstraint",
     "DiscretePermutationInvarianceConstraint",
     "DiscreteProductConstraint",
-    "DiscreteRepetitionConstraint",
+    "DiscreteRepetitionLimitConstraint",
     "DiscreteSelectionConstraint",
     "DiscreteSumConstraint",
     # --- Other --- #
