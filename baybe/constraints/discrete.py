@@ -12,6 +12,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import define, field, fields
+from attrs.converters import optional as optional_c
 from attrs.validators import deep_iterable, ge, in_, instance_of, min_len
 from typing_extensions import override
 
@@ -207,9 +208,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the comparison."""
 
-    tolerance: float | None = field(
-        default=None, converter=lambda x: float(x) if x is not None else None
-    )
+    tolerance: float | None = field(default=None, converter=optional_c(float))
     """Numerical tolerance for equality/inequality operators that support it.
 
     Only applicable when ``operator`` is one of ``"="``, ``"=="``, ``"!="``.
@@ -349,7 +348,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
 
     tolerance: float | None = field(
         default=None,
-        converter=lambda x: float(x) if x is not None else None,
+        converter=optional_c(float),
         kw_only=True,
     )
     """Numerical tolerance for equality/inequality operators that support it.
