@@ -1,6 +1,5 @@
 scheme = ["https", "http"]
 exclude = [
-    "https://github\\.com/b-shields/edbo/blob.*",
     "https://doi\\.org/10\\.26434/chemrxiv\\.10001986/v2",
     "https://doi\\.org/10\\.1039/D5DD00050E",
 ]
