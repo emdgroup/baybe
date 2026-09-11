@@ -480,39 +480,29 @@ DiscreteProductConstraint.__signature__ = _product_signature
 
 
 def DiscreteSumConstraint(  # noqa: N802
-    parameters, condition=None, coefficients=None, *, exclude=False
+    parameters: list[str],
+    condition: ThresholdCondition,
+    coefficients: Sequence[float] | None = None,
 ) -> DiscreteLinearConstraint:
-    """A ``DiscreteLinearConstraint`` alias for backward compatibility."""  # noqa: D401
+    """A :class:`DiscreteLinearConstraint` alias for backward compatibility."""  # noqa: D401
     import warnings
 
     warnings.warn(
-        f"'DiscreteSumConstraint' is deprecated and will be removed in a future "
-        f"version. Use '{DiscreteLinearConstraint.__name__}' instead.",
+        f"'{DiscreteSumConstraint.__name__}' is deprecated and will be removed "
+        f"in a future version. Use '{DiscreteLinearConstraint.__name__}' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    # Translate the old ThresholdCondition-based interface
-    if condition is not None:
-        operator = condition.operator
-        rhs = condition.threshold
-        tolerance = condition.tolerance
-    else:
-        raise TypeError(
-            f"Missing required argument 'condition'. Use "
-            f"'{DiscreteLinearConstraint.__name__}' with 'operator' and 'rhs' instead."
-        )
-
-    new_kwargs: dict[str, Any] = {
-        "operator": operator,
-        "rhs": rhs,
-        "exclude": exclude,
-    }
-    if tolerance is not None:
-        new_kwargs["tolerance"] = tolerance
-    if coefficients is not None:
-        new_kwargs["coefficients"] = coefficients
-
-    return DiscreteLinearConstraint(parameters, **new_kwargs)
+    kwargs: dict[str, Any] = (
+        {} if coefficients is None else {"coefficients": coefficients}
+    )
+    return DiscreteLinearConstraint(
+        parameters,
+        operator=condition.operator,
+        rhs=condition.threshold,
+        tolerance=condition.tolerance,
+        **kwargs,
+    )
 
 
 # <<<<<<<<<< Deprecation
