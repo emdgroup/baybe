@@ -174,6 +174,13 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         return recommendation
 
 
+def _to_recommender_list(
+    recommenders: Iterable[RecommenderProtocol], /
+) -> list[RecommenderProtocol]:
+    """Convert an iterable of recommenders into a list."""
+    return list(recommenders)
+
+
 @define
 class SequentialMetaRecommender(BaseSequentialMetaRecommender):
     """A meta recommender that uses a pre-defined sequence of recommenders.
@@ -197,7 +204,8 @@ class SequentialMetaRecommender(BaseSequentialMetaRecommender):
     """
 
     recommenders: list[RecommenderProtocol] = field(
-        converter=list, validator=deep_iterable(instance_of(RecommenderProtocol))
+        converter=_to_recommender_list,
+        validator=deep_iterable(instance_of(RecommenderProtocol)),
     )
     """A finite-length sequence of recommenders to be used. For infinite-length
     iterables, see
