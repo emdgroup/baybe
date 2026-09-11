@@ -1,4 +1,3 @@
-# External link check. Keep `exclude` in sync with `linkcheck_ignore` in docs/conf.py.
 scheme = ["https", "http"]
 exclude = [
     "https://github\\.com/b-shields/edbo/blob.*",
