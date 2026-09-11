@@ -23,7 +23,7 @@ from baybe.constraints.discrete import (
 )
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from tests.hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.basic import finite_floats, positive_finite_floats
 from tests.hypothesis_strategies.conditions import (
     sub_selection_conditions,
     threshold_conditions,
@@ -193,7 +193,7 @@ def discrete_linear_constraints(
     # Optionally add tolerance for tolerance-enabled operators
     tolerance = None
     if operator in _valid_tolerance_operators:
-        tolerance = draw(st.one_of(st.none(), finite_floats().filter(lambda x: x > 0)))
+        tolerance = draw(st.one_of(st.none(), positive_finite_floats()))
 
     # Optionally add coefficients
     if draw(st.booleans()):
@@ -231,7 +231,7 @@ def discrete_product_constraints(
     # Optionally add tolerance for tolerance-enabled operators
     tolerance = None
     if operator in _valid_tolerance_operators:
-        tolerance = draw(st.one_of(st.none(), finite_floats().filter(lambda x: x > 0)))
+        tolerance = draw(st.one_of(st.none(), positive_finite_floats()))
 
     return DiscreteProductConstraint(
         params, operator=operator, rhs=rhs, tolerance=tolerance, exclude=exclude
