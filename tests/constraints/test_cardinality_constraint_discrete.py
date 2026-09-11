@@ -46,7 +46,7 @@ def test_cardinality_constraint_discrete(
 
     # Assert that cardinality constraint is fulfilled
     assert (
-        (searchspace.discrete.exp_rep != 0.0)
+        (searchspace.discrete.get_candidates() != 0.0)
         .sum(axis=1)
         .between(min_cardinality, max_cardinality)
         .all()

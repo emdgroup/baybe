@@ -6,8 +6,9 @@ import gc
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
 from itertools import product
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -21,7 +22,8 @@ from baybe.exceptions import (
     _UnsupportedSearchSpaceAttributeError,
 )
 from baybe.parameters import TaskParameter
-from baybe.parameters.base import Parameter
+from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
+from baybe.searchspace.candidates import TableCandidates
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -36,6 +38,8 @@ from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
+
     from baybe.parameters.selectors import ParameterSelectorProtocol
 
 
@@ -110,7 +114,6 @@ class SearchSpace(SerialMixin):
         cls,
         parameters: Sequence[Parameter],
         constraints: Sequence[Constraint] | None = None,
-        empty_encoding: bool = False,
     ) -> Self:
         """Create a search space from a cartesian product.
 
@@ -124,19 +127,11 @@ class SearchSpace(SerialMixin):
             parameters: The parameters spanning the search space.
             constraints: An optional set of constraints restricting the valid parameter
                 space.
-            empty_encoding: If ``True``, uses an "empty" encoding for all parameters.
-                This is useful, for instance, in combination with random search
-                strategies that do not read the actual parameter values, since it avoids
-                the (potentially costly) transformation of the parameter values to their
-                computational representation.
 
         Returns:
             The constructed search space.
+
         """
-        # IMPROVE: The arguments get pre-validated here to avoid the potentially costly
-        #   creation of the subspaces. Perhaps there is an elegant way to bypass the
-        #   default validation in the initializer (which is required for other
-        #   ways of object creation) in this particular case.
         validate_parameters(parameters)
         if constraints:
             validate_constraints(constraints, parameters)
@@ -146,7 +141,6 @@ class SearchSpace(SerialMixin):
         discrete = SubspaceDiscrete.from_product(
             parameters=[p for p in parameters if p.is_discrete],  # type:ignore[misc]
             constraints=[c for c in constraints if c.is_discrete],  # type:ignore[misc]
-            empty_encoding=empty_encoding,
         )
         continuous = SubspaceContinuous.from_product(
             parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]
@@ -211,16 +205,9 @@ class SearchSpace(SerialMixin):
     def constraints(self) -> tuple[Constraint, ...]:
         """Return the constraints of the search space."""
         return (
-            *self.discrete.constraints,
-            *self.continuous.constraints_lin_eq,
-            *self.continuous.constraints_lin_ineq,
-            *self.continuous.constraints_nonlin,
+            *self.discrete.batch_constraints,
+            *self.continuous.constraints,
         )
-
-    @property
-    def is_constrained(self) -> bool:
-        """Boolean indicating if the search space has any constraints."""
-        return self.discrete.is_constrained or self.continuous.is_constrained
 
     @property
     def type(self) -> SearchSpaceType:
@@ -239,19 +226,26 @@ class SearchSpace(SerialMixin):
         return self.discrete.comp_rep_columns + self.continuous.comp_rep_columns
 
     @property
-    def comp_rep_bounds(self) -> pd.DataFrame:
+    def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
-        return pd.concat(
-            [self.discrete.comp_rep_bounds, self.continuous.comp_rep_bounds],
-            axis=1,
-        )
+        return nw.concat(
+            [
+                nw.from_native(self.discrete.comp_rep_bounds, eager_only=True),
+                nw.from_native(self.continuous.comp_rep_bounds, eager_only=True),
+            ],
+            how="horizontal",
+        ).to_native()
 
     @property
-    def scaling_bounds(self) -> pd.DataFrame:
+    def scaling_bounds(self) -> IntoDataFrame:
         """The bounds used for scaling the surrogate model input."""
-        return pd.concat(
-            [self.discrete.scaling_bounds, self.continuous.scaling_bounds], axis=1
-        )
+        return nw.concat(
+            [
+                nw.from_native(self.discrete.scaling_bounds, eager_only=True),
+                nw.from_native(self.continuous.scaling_bounds, eager_only=True),
+            ],
+            how="horizontal",
+        ).to_native()
 
     @property
     def parameter_names(self) -> tuple[str, ...]:
@@ -283,7 +277,7 @@ class SearchSpace(SerialMixin):
         #       appear first in the computational dataframe.
         #   3.  It assumes there exists exactly one task parameter
         #   --> Fix this when refactoring the data
-        return cast(int, self.discrete.comp_rep.columns.get_loc(task_param.name))
+        return self.discrete.comp_rep_columns.index(task_param.name)
 
     @property
     def n_tasks(self) -> int:
@@ -313,7 +307,6 @@ class SearchSpace(SerialMixin):
 
     def subsets(
         self,
-        candidates_exp: pd.DataFrame,
         min_discrete_candidates: int | None = None,
     ) -> Iterator[tuple[npt.NDArray[np.bool_], frozenset[str]]]:
         r"""Get an iterator over all combined subset configurations.
@@ -322,7 +315,6 @@ class SearchSpace(SerialMixin):
         configurations.
 
         Args:
-            candidates_exp: The experimental representation of discrete candidates.
             min_discrete_candidates: If provided, discrete Subsets with fewer
                 matching candidates are skipped.
 
@@ -330,15 +322,12 @@ class SearchSpace(SerialMixin):
             A discrete mask and continuous inactive parameters pair.
         """
         yield from product(
-            self.discrete.subset_masks(
-                candidates_exp, min_candidates=min_discrete_candidates
-            ),
+            self.discrete.subset_masks(min_candidates=min_discrete_candidates),
             self.continuous.inactive_parameter_combinations(),
         )
 
     def sample_subsets(
         self,
-        candidates_exp: pd.DataFrame,
         n: int,
         min_discrete_candidates: int | None = None,
         *,
@@ -351,7 +340,6 @@ class SearchSpace(SerialMixin):
         Duplicate pairs are skipped.
 
         Args:
-            candidates_exp: The experimental representation of discrete candidates.
             n: Number of unique configurations to sample.
             min_discrete_candidates: If provided, discrete Subsets with fewer
                 matching candidates are excluded.
@@ -366,7 +354,6 @@ class SearchSpace(SerialMixin):
             A list of ``(discrete_mask, continuous_inactive_params)`` tuples.
         """
         d_iter = self.discrete.subset_masks(
-            candidates_exp,
             min_candidates=min_discrete_candidates,
             mode="replace",
         )
@@ -471,12 +458,12 @@ class SearchSpace(SerialMixin):
 
     def transform(
         self,
-        df: pd.DataFrame,
+        df: IntoDataFrameT,
         /,
         *,
         allow_missing: bool = False,
         allow_extra: bool = False,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         """Transform parameters from experimental to computational representation.
 
         Args:
@@ -497,25 +484,33 @@ class SearchSpace(SerialMixin):
         # be "extra" columns, so we drop them first. However, in this step, we can
         # ignore if columns are not complete since a proper error will be raised in the
         # corresponding transformation step of each space below.
-        df_disc_in = df.drop(
-            columns=list(self.continuous.parameter_names), errors="ignore"
+        nw_df = nw.from_native(df, eager_only=True)
+        existing = set(nw_df.columns)
+        df_disc_in = nw_df.drop(
+            [c for c in self.continuous.parameter_names if c in existing]
         )
-        df_cont_in = df.drop(
-            columns=list(self.discrete.parameter_names), errors="ignore"
-        )
-
-        # Transform subspaces separately
-        df_disc_out = self.discrete.transform(
-            df_disc_in, allow_missing=allow_missing, allow_extra=allow_extra
-        )
-        df_cont_out = self.continuous.transform(
-            df_cont_in, allow_missing=allow_missing, allow_extra=allow_extra
+        df_cont_in = nw_df.drop(
+            [c for c in self.discrete.parameter_names if c in existing]
         )
 
-        # Combine Subspaces
-        comp_rep = pd.concat([df_disc_out, df_cont_out], axis=1)
-
-        return comp_rep
+        # Transform subspaces separately and combine
+        return nw.concat(
+            [
+                nw.from_native(
+                    self.discrete.transform(
+                        df_disc_in, allow_missing=allow_missing, allow_extra=allow_extra
+                    ),
+                    eager_only=True,
+                ),
+                nw.from_native(
+                    self.continuous.transform(
+                        df_cont_in, allow_missing=allow_missing, allow_extra=allow_extra
+                    ),
+                    eager_only=True,
+                ),
+            ],
+            how="horizontal",
+        ).to_native()
 
     def get_parameters_by_name(self, names: Sequence[str]) -> tuple[Parameter, ...]:
         """Return parameters with the specified names.
@@ -554,26 +549,21 @@ class SearchSpace(SerialMixin):
             )
         remaining = [p for p in self.parameters if p.name not in names_set]
 
-        disc_params = [p for p in remaining if p.is_discrete]
-        cont_params = [p for p in remaining if p.is_continuous]
+        disc_params = [p for p in remaining if isinstance(p, DiscreteParameter)]
+        cont_params = [p for p in remaining if isinstance(p, ContinuousParameter)]
 
-        # Explicit comp_rep needed because transform() drops columns for empty inputs.
         discrete = (
             SubspaceDiscrete(
-                parameters=disc_params,
-                exp_rep=pd.DataFrame(columns=[p.name for p in disc_params]),
-                comp_rep=pd.DataFrame(
-                    columns=[c for p in disc_params for c in p.comp_rep_columns]
-                ),
+                candidates=TableCandidates(
+                    disc_params, pd.DataFrame(columns=[p.name for p in disc_params])
+                )
             )
             if disc_params
             else SubspaceDiscrete.empty()
         )
 
         continuous = (
-            SubspaceContinuous(
-                parameters=cont_params,
-            )
+            SubspaceContinuous(parameters=cont_params)
             if cont_params
             else SubspaceContinuous.empty()
         )

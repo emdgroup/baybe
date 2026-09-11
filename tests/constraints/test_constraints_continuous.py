@@ -7,6 +7,7 @@ from pytest import param
 
 from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.utils.dataframe import add_fake_measurements
 from tests.conftest import run_iterations
 
 TOLERANCE = 0.01
@@ -116,18 +117,22 @@ def test_interpoint_linear_constraints(
     check_type,
 ):
     """Test interpoint linear constraints with various operators and parameters."""
-    run_iterations(campaign_non_sequential, n_iterations, batch_size, add_noise=False)
-    res = campaign_non_sequential.measurements
+    batches = []
+    for _ in range(n_iterations):
+        rec = campaign_non_sequential.recommend(batch_size=batch_size)
+        batches.append(rec)
+        add_fake_measurements(rec, campaign_non_sequential.targets)
+        campaign_non_sequential.add_measurements(rec)
 
-    res_grouped = res.groupby("BatchNr")
-    interpoint_result = calculation(res_grouped)
+    for batch in batches:
+        interpoint_result = calculation(batch)
 
-    if check_type == "eq":
-        assert np.allclose(interpoint_result, expected_value, atol=TOLERANCE)
-    elif check_type == "ge":
-        assert interpoint_result.ge(expected_value - TOLERANCE).all()
-    elif check_type == "le":
-        assert interpoint_result.le(expected_value + TOLERANCE).all()
+        if check_type == "eq":
+            assert np.isclose(interpoint_result, expected_value, atol=TOLERANCE)
+        elif check_type == "ge":
+            assert interpoint_result >= expected_value - TOLERANCE
+        elif check_type == "le":
+            assert interpoint_result <= expected_value + TOLERANCE
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -140,11 +145,20 @@ def test_interpoint_intrapoint_mix(
     batch_size,
 ):
     """Test mixing interpoint and intrapoint inequality constraints."""
-    run_iterations(campaign_non_sequential, n_iterations, batch_size, add_noise=False)
-    res = campaign_non_sequential.measurements
+    batches = []
+    for _ in range(n_iterations):
+        rec = campaign_non_sequential.recommend(batch_size=batch_size)
+        batches.append(rec)
+        add_fake_measurements(rec, campaign_non_sequential.targets)
+        campaign_non_sequential.add_measurements(rec)
 
-    interpoint_result = 2 * res.groupby("BatchNr")["Conti_finite1"].sum()
-    assert interpoint_result.ge(0.3 - TOLERANCE).all()
+    # Interpoint constraint: sum across each batch
+    for batch in batches:
+        interpoint_result = 2 * batch["Conti_finite1"].sum()
+        assert interpoint_result >= 0.3 - TOLERANCE
+
+    # Intrapoint constraint: each row individually
+    res = campaign_non_sequential.measurements
     assert (
         (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"])
         .ge(0.3 - TOLERANCE)

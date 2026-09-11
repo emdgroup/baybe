@@ -1,9 +1,11 @@
 """Recommenders based on sampling."""
 
-from typing import ClassVar
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, ClassVar
+
+import narwhals.stable.v2 as nw
 import numpy as np
-import pandas as pd
 from attrs import define, field, fields
 from attrs.validators import instance_of
 from typing_extensions import override
@@ -13,7 +15,11 @@ from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.settings import Settings, active_settings
 from baybe.utils.conversion import to_string
+from baybe.utils.dataframe import _df_with_backend
 from baybe.utils.sampling_algorithms import FPSInitialization, farthest_point_sampling
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
 
 
 class RandomRecommender(NonPredictiveRecommender):
@@ -30,17 +36,31 @@ class RandomRecommender(NonPredictiveRecommender):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.DataFrame:
-        if searchspace.type is SearchSpaceType.CONTINUOUS:
-            return searchspace.continuous.sample_uniform(batch_size=batch_size)
+    ) -> IntoDataFrame:
+        backend = active_settings.default_dataframe_backend
+        is_hybrid = searchspace.type is SearchSpaceType.HYBRID
+        cont_random = None
+
+        # Sample continuous part if applicable
+        if is_hybrid or searchspace.type is SearchSpaceType.CONTINUOUS:
+            cont_random = _df_with_backend(
+                nw.from_native(
+                    searchspace.continuous.sample_uniform(batch_size=batch_size),
+                    eager_only=True,
+                ),
+                backend,
+            )
+            if searchspace.type is SearchSpaceType.CONTINUOUS:
+                return cont_random.to_native()
+
+        candidates_exp = nw.from_native(
+            searchspace.discrete.get_candidates(), eager_only=True
+        )
 
         # Restrict to a random subset if subset-generating constraints are present
-        is_hybrid = searchspace.type is SearchSpaceType.HYBRID
         if searchspace.discrete.n_subsets > 0:
             masks = searchspace.discrete.sample_subset_masks(
-                candidates_exp,
                 n=1,
                 min_candidates=None if is_hybrid else batch_size,
             )
@@ -50,19 +70,23 @@ class RandomRecommender(NonPredictiveRecommender):
                     "subset-generating constraints. All subsets have fewer "
                     f"candidates than the requested {batch_size=}."
                 )
-            candidates_exp = candidates_exp.loc[masks[0]]
+            candidates_exp = candidates_exp.filter(masks[0].tolist())
 
-        disc_random = candidates_exp.sample(
-            n=batch_size,
-            replace=is_hybrid or len(candidates_exp) < batch_size,
+        disc_random = nw.maybe_reset_index(
+            _df_with_backend(
+                candidates_exp.sample(
+                    n=batch_size,
+                    with_replacement=is_hybrid or len(candidates_exp) < batch_size,
+                ),
+                backend,
+            )
         )
 
         if not is_hybrid:
-            return disc_random
+            return disc_random.to_native()
 
-        cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
-        cont_random.index = disc_random.index
-        return pd.concat([disc_random, cont_random], axis=1)
+        assert cont_random is not None
+        return nw.concat([disc_random, cont_random], how="horizontal").to_native()
 
     @override
     def __str__(self) -> str:
@@ -132,35 +156,40 @@ class FPSRecommender(NonPredictiveRecommender):
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.Index:
+    ) -> IntoDataFrame:
         # Fit scaler on entire search space
         from sklearn.preprocessing import StandardScaler
 
         # TODO [Scaling]: scaling should be handled by search space object
+        candidates = subspace_discrete.get_candidates()
+        candidates_comp = subspace_discrete.transform(candidates)
         scaler = StandardScaler()
-        scaler.fit(subspace_discrete.comp_rep)
+        scaler.fit(candidates_comp)
 
         # Scale and sample
-        candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
         if active_settings.use_fpsample:
             from baybe._optional.fpsample import fps_sampling
 
-            ilocs = fps_sampling(
+            idcs = fps_sampling(
                 candidates_scaled,
                 n_samples=batch_size,
             )
         else:
-            ilocs = farthest_point_sampling(
+            idcs = farthest_point_sampling(
                 candidates_scaled,
                 batch_size,
                 initialization=self.initialization,
                 random_tie_break=self.random_tie_break,
             )
-        return candidates_comp.index[ilocs]
+        return nw.maybe_reset_index(
+            _df_with_backend(
+                nw.from_native(candidates, eager_only=True)[idcs],
+                active_settings.default_dataframe_backend,
+            )
+        ).to_native()
 
     @override
     def __str__(self) -> str:

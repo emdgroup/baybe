@@ -5,10 +5,10 @@ from __future__ import annotations
 import gc
 import warnings
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
+import narwhals.stable.v2 as nw
 import numpy as np
-import pandas as pd
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, gt, instance_of
@@ -36,11 +36,15 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
+from baybe.settings import active_settings
 from baybe.utils.conversion import to_string
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
     from torch import Tensor
+
+_T = TypeVar("_T")
 
 
 @define(kw_only=True)
@@ -156,9 +160,8 @@ class BotorchRecommender(BayesianRecommender):
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.Index:
+    ) -> IntoDataFrame:
         """Generate recommendations from a discrete search space.
 
         Dispatches to the appropriate optimization routine depending on whether
@@ -167,28 +170,22 @@ class BotorchRecommender(BayesianRecommender):
         Args:
             subspace_discrete: The discrete subspace from which to generate
                 recommendations.
-            candidates_exp: The experimental representation of all discrete candidate
-                points to be considered.
             batch_size: The size of the recommendation batch.
 
         Returns:
-            The dataframe indices of the recommended points in the provided
-            experimental representation.
+            A dataframe containing the recommendations as a subset of rows from the
+            provided experimental representation.
         """
         if subspace_discrete.n_subsets > 0:
-            return recommend_discrete_with_subsets(
-                self, subspace_discrete, candidates_exp, batch_size
-            )
-        return recommend_discrete_without_subsets(
-            self, subspace_discrete, candidates_exp, batch_size
-        )
+            return recommend_discrete_with_subsets(self, subspace_discrete, batch_size)
+        return recommend_discrete_without_subsets(self, subspace_discrete, batch_size)
 
     @override
     def _recommend_continuous(
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a continuous search space.
 
         Args:
@@ -215,15 +212,18 @@ class BotorchRecommender(BayesianRecommender):
 
         points, _ = recommend_continuous_torch(self, subspace_continuous, batch_size)
 
-        return pd.DataFrame(points.numpy(), columns=subspace_continuous.parameter_names)
+        return nw.from_numpy(
+            points.numpy(),
+            schema=subspace_continuous.parameter_names,
+            backend=active_settings.default_dataframe_backend,
+        ).to_native()
 
     @override
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """Generate recommendations from a hybrid search space.
 
         Dispatches to the appropriate optimization routine depending on whether
@@ -231,25 +231,19 @@ class BotorchRecommender(BayesianRecommender):
 
         Args:
             searchspace: The search space in which the recommendations should be made.
-            candidates_exp: The experimental representation of the candidates
-                of the discrete subspace.
             batch_size: The size of the calculated batch.
 
         Returns:
             The recommended points.
         """
         if searchspace.n_subsets > 0:
-            return recommend_hybrid_with_subsets(
-                self, searchspace, candidates_exp, batch_size
-            )
-        return recommend_hybrid_without_subsets(
-            self, searchspace, candidates_exp, batch_size
-        )
+            return recommend_hybrid_with_subsets(self, searchspace, batch_size)
+        return recommend_hybrid_without_subsets(self, searchspace, batch_size)
 
     def _optimize_over_subsets(
         self,
-        subset_callables: Iterable[Callable[[], tuple[Any, Tensor]]],
-    ) -> tuple[Any, Tensor]:
+        subset_callables: Iterable[Callable[[], tuple[_T, Tensor]]],
+    ) -> tuple[_T, Tensor]:
         """Optimize across subsets and return the result with the best acqf value.
 
         Each callable performs optimization for one subset configuration and returns
@@ -270,7 +264,7 @@ class BotorchRecommender(BayesianRecommender):
         """
         from botorch.exceptions.errors import InfeasibilityError as BoInfeasibilityError
 
-        results_all: list = []
+        results_all: list[_T] = []
         acqf_values_all: list[Tensor] = []
 
         for optimize_fn in subset_callables:

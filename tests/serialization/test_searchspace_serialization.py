@@ -3,6 +3,7 @@
 import json
 from collections.abc import Sequence
 
+import pandas as pd
 import pytest
 
 from baybe.parameters.base import Parameter
@@ -29,11 +30,13 @@ def test_roundtrip(parameters: Sequence[Parameter]) -> None:
     assert_roundtrip_consistency(searchspace)
 
 
-def test_from_dataframe_deserialization(searchspace):
-    """Deserialization from dataframe yields back the original object."""
-    unstructured = searchspace.discrete.to_dict()
-    df_string = json.dumps(unstructured["exp_rep"])
-    parameters_string = json.dumps(unstructured["parameters"])
+def test_from_dataframe_deserialization():
+    """Deserialization via ``from_dataframe`` constructor yields the original object."""
+    p = NumericalDiscreteParameter("p", [0.0, 1.0])
+    df = pd.DataFrame({"p": [0.0, 1.0]})
+    expected = SearchSpace.from_dataframe(df, parameters=[p])
+    df_string = json.dumps(converter.unstructure(df))
+    parameters_string = json.dumps([converter.unstructure(p, unstructure_as=Parameter)])
     config = """
     {
         "constructor": "from_dataframe",
@@ -44,7 +47,7 @@ def test_from_dataframe_deserialization(searchspace):
         "__fillin__parameters__", parameters_string
     )
     deserialized = SearchSpace.from_json(config)
-    assert searchspace == deserialized, (searchspace, deserialized)
+    assert expected == deserialized, (expected, deserialized)
 
 
 def test_from_simplex_deserialization():

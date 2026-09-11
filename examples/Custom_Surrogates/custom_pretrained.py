@@ -55,7 +55,7 @@ parameters = [
 # Its purpose is to show the workflow for using pre-trained surrogates in BayBE.
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=None)
-train_x = to_tensor(searchspace.discrete.comp_rep)
+train_x = to_tensor(searchspace.transform(searchspace.discrete.get_candidates()))
 train_y = torch.rand(train_x.size(dim=0))  # train with a random y vector
 
 # Define model and fit

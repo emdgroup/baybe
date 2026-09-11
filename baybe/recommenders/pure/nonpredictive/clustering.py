@@ -6,16 +6,20 @@ import gc
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
+import narwhals.stable.v2 as nw
 import numpy as np
-import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
+from baybe.settings import active_settings
 from baybe.utils.conversion import to_string
+from baybe.utils.dataframe import _df_with_backend
 
 if TYPE_CHECKING:
+    import pandas as pd
+    from narwhals.stable.v2.typing import IntoDataFrame
     from sklearn.base import ClusterMixin
 
 
@@ -70,7 +74,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         """
         assigned_clusters = model.predict(candidates_scaled)
         selection = [
-            np.random.choice(np.argwhere(cluster == assigned_clusters).flatten())
+            np.random.choice(np.argwhere(cluster == assigned_clusters).flatten()).item()
             for cluster in np.unique(assigned_clusters)
         ]
         return selection
@@ -101,18 +105,18 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.Index:
+    ) -> IntoDataFrame:
         # Fit scaler on entire search space
         from sklearn.preprocessing import StandardScaler
 
         # TODO [Scaling]: scaling should be handled by search space object
+        candidates = subspace_discrete.get_candidates()
+        candidates_comp = subspace_discrete.transform(candidates)
         scaler = StandardScaler()
-        scaler.fit(subspace_discrete.comp_rep)
+        scaler.fit(candidates_comp)
 
         # Scale candidates
-        candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
         # Set model parameters and perform fit
@@ -128,8 +132,13 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         else:
             selection = self._make_selection_default(model, candidates_scaled)
 
-        # Convert positional indices into DataFrame indices and return result
-        return candidates_comp.index[selection]
+        # Select rows by positional indices and return the corresponding subset
+        return nw.maybe_reset_index(
+            _df_with_backend(
+                nw.from_native(candidates, eager_only=True)[selection],
+                active_settings.default_dataframe_backend,
+            )
+        ).to_native()
 
     @override
     def __str__(self) -> str:

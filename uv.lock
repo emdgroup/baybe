@@ -209,6 +209,7 @@ dependencies = [
     { name = "gpytorch", version = "1.14.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "gpytorch", version = "1.15.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "joblib" },
+    { name = "narwhals" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pandas" },
@@ -392,6 +393,7 @@ simulation = [
 ]
 test = [
     { name = "hypothesis", extra = ["pandas"] },
+    { name = "polars", extra = ["pyarrow"] },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "tenacity" },
@@ -422,6 +424,7 @@ requires-dist = [
     { name = "baybe", extras = ["onnx"], marker = "extra == 'benchmarking'" },
     { name = "baybe", extras = ["onnx"], marker = "extra == 'extras'" },
     { name = "baybe", extras = ["polars"], marker = "extra == 'extras'" },
+    { name = "baybe", extras = ["polars"], marker = "extra == 'test'" },
     { name = "baybe", extras = ["simulation"], marker = "extra == 'benchmarking'" },
     { name = "baybe", extras = ["simulation"], marker = "extra == 'extras'" },
     { name = "baybe", extras = ["test"], marker = "extra == 'dev'" },
@@ -442,6 +445,7 @@ requires-dist = [
     { name = "matplotlib", marker = "extra == 'examples'", specifier = ">=3.7.3,!=3.9.1" },
     { name = "mypy", marker = "extra == 'mypy'", specifier = ">=1.19.1" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.0" },
+    { name = "narwhals", specifier = ">=2.25.0,<3" },
     { name = "ngboost", marker = "extra == 'extras'", specifier = ">=0.3.12,<1" },
     { name = "numpy", specifier = ">=1.24.1,<3" },
     { name = "onnx", marker = "extra == 'onnx'", specifier = ">=1.16.0" },
@@ -3169,11 +3173,11 @@ wheels = [
 
 [[package]]
 name = "narwhals"
-version = "2.15.0"
+version = "2.25.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/47/6d/b57c64e5038a8cf071bce391bb11551657a74558877ac961e7fa905ece27/narwhals-2.15.0.tar.gz", hash = "sha256:a9585975b99d95084268445a1fdd881311fa26ef1caa18020d959d5b2ff9a965", size = 603479, upload-time = "2026-01-06T08:10:13.27Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6f/7b/6248dada39781db1ab3ebf08943080df0796098515a87f6f8696d14ec744/narwhals-2.25.0.tar.gz", hash = "sha256:62c036c810662bf7820b7737077176313bc59350eeeefb808510f388c743e4b2", size = 677076, upload-time = "2026-08-20T18:10:15.454Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/2e/cf2ffeb386ac3763526151163ad7da9f1b586aac96d2b4f7de1eaebf0c61/narwhals-2.15.0-py3-none-any.whl", hash = "sha256:cbfe21ca19d260d9fd67f995ec75c44592d1f106933b03ddd375df7ac841f9d6", size = 432856, upload-time = "2026-01-06T08:10:11.511Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/dc/55481808fd70ef1567cf13540ffd4702af3f74b112e35427564b03f79c2d/narwhals-2.25.0-py3-none-any.whl", hash = "sha256:1f0f403e8c7e4463cde9bfe78b12fdd809e3ae3dda6d9b2f802934fb9c7a6a8f", size = 467373, upload-time = "2026-08-20T18:10:13.834Z" },
 ]
 
 [[package]]
