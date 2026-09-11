@@ -378,7 +378,7 @@ class Campaign(SerialMixin):
         exclude: bool,
         complement: bool = False,
         dry_run: bool = False,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         """In-/exclude certain discrete points in/from the candidate set.
 
         Args:
@@ -397,7 +397,7 @@ class Campaign(SerialMixin):
                 Useful for setting up the correct filtering mechanism.
 
         Returns:
-            A new dataframe containing the  discrete candidate set passing through the
+            A new dataframe containing the discrete candidate set passing through the
             specified filter.
         """
         # IMPROVE: The cache invalidation could be made more fine-grained:
@@ -440,27 +440,22 @@ class Campaign(SerialMixin):
                 "constraint specifications."
             )
 
+        points_nw = nw.from_native(points, eager_only=True)
+
         if not dry_run:
-            if exclude and not points.empty:
+            if exclude and not points_nw.is_empty():
                 # Add the toggled points (avoid duplicates)
-                excluded_pd = self._excluded_experiments.to_pandas()
-                frames = [f for f in (excluded_pd, points) if not f.empty]
-                self._excluded_experiments = nw.from_native(
-                    pd.concat(frames, axis=0).drop_duplicates().reset_index(drop=True),
-                    eager_only=True,
+                concatenated = nw.concat(
+                    [self._excluded_experiments, points_nw], how="vertical"
                 )
+                self._excluded_experiments = concatenated.unique()
             elif not exclude and not self._excluded_experiments.is_empty():
                 # Remove the re-included points
-                excluded_pd = self._excluded_experiments.to_pandas()
-                merged = pd.merge(excluded_pd, points, indicator=True, how="left")
-                self._excluded_experiments = nw.from_native(
-                    excluded_pd[merged["_merge"].eq("left_only").values].reset_index(
-                        drop=True
-                    ),
-                    eager_only=True,
+                self._excluded_experiments = self._excluded_experiments.join(
+                    points_nw, on=points_nw.columns, how="anti"
                 )
 
-        return points
+        return points_nw.to_native()
 
     def recommend(
         self,
