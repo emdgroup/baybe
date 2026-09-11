@@ -653,9 +653,11 @@ def test_discrete_constraint_deprecation(
     factory, args, kwargs, warning_match, expected
 ):
     """Constructing deprecated constraints emits a deprecation warning."""
-    with pytest.warns(DeprecationWarning, match=warning_match):
+    with pytest.warns(DeprecationWarning, match=warning_match) as recorded:
         result = factory(*args, **kwargs)
     assert result == expected
+    assert len(recorded) == 1
+    assert recorded[0].filename == __file__
 
 
 @pytest.mark.parametrize(

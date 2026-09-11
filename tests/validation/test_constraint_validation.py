@@ -122,8 +122,8 @@ def test_excluded_permutation_dependencies():
         param("=", float("nan"), "cannot be 'nan'", id="nan"),
         param("=", float("inf"), "cannot be 'inf'", id="inf"),
         param("=", -float("inf"), "cannot be 'inf'", id="neg-inf"),
-        param("=", 0.0, "must be positive", id="zero"),
-        param("=", -1.0, "must be positive", id="negative"),
+        param("=", 0.0, "must be > 0", id="zero"),
+        param("=", -1.0, "must be > 0", id="negative"),
         param(
             ">=", 0.1, "only valid with the following operators", id="wrong-operator"
         ),
@@ -138,3 +138,43 @@ def test_invalid_tolerance(constraint_cls, operator, tolerance, match):
             rhs=1.0,
             tolerance=tolerance,
         )
+
+
+@pytest.mark.parametrize(
+    ("args", "kwargs", "error", "match"),
+    [
+        param((["A", "B"],), {}, TypeError, "missing.*operator", id="missing"),
+        param(
+            (["A", "B"], "=", 1, 0.01, True),
+            {},
+            TypeError,
+            "too many positional",
+            id="positional-exclude",
+        ),
+        param(
+            (["A", "B"], "="),
+            {"operator": "="},
+            TypeError,
+            "multiple values",
+            id="duplicate",
+        ),
+        param(
+            (["A", "B"],),
+            {"operator": "bad"},
+            ValueError,
+            "must be in",
+            id="invalid-operator",
+        ),
+        param(
+            (["A", "B"],),
+            {"operator": "=", "unknown": 1},
+            TypeError,
+            "unexpected keyword",
+            id="unknown",
+        ),
+    ],
+)
+def test_invalid_product_arguments(args, kwargs, error, match):
+    """Product argument binding rejects invalid modern call shapes."""
+    with pytest.raises(error, match=match):
+        DiscreteProductConstraint(*args, **kwargs)
