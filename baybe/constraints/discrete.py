@@ -150,6 +150,23 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         return pl.reduce(_valid_logic_combiners[self.combiner], satisfied)
 
 
+def _make_condition(
+    operator: ThresholdOperator, rhs: float, tolerance: float | None
+) -> ThresholdCondition:
+    """Create a threshold condition, using its default when tolerance is omitted.
+
+    Args:
+        operator: The comparison operator.
+        rhs: The comparison threshold.
+        tolerance: The explicit tolerance, or ``None`` to use the default.
+
+    Returns:
+        The threshold condition.
+    """
+    kwargs = {} if tolerance is None else {"tolerance": tolerance}
+    return ThresholdCondition(threshold=rhs, operator=operator, **kwargs)
+
+
 @define
 class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     """Class for modeling linear (weighted-sum) constraints on discrete parameters.
@@ -259,16 +276,6 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
                 f"'{self.operator}'."
             )
 
-    def _build_condition(self) -> ThresholdCondition:
-        """Build the internal threshold condition from the constraint fields."""
-        kwargs: dict[str, Any] = {
-            "threshold": self.rhs,
-            "operator": self.operator,
-        }
-        if self.tolerance is not None:
-            kwargs["tolerance"] = self.tolerance
-        return ThresholdCondition(**kwargs)
-
     @override
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = pd.Series(
@@ -277,7 +284,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
             ),
             index=df.index,
         )
-        condition = self._build_condition()
+        condition = _make_condition(self.operator, self.rhs, self.tolerance)
         mask_good = condition.evaluate(evaluate_df)
 
         return df.index[mask_good]
@@ -287,7 +294,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
         from baybe._optional.polars import polars as pl
 
         weighted = [pl.col(p) * c for p, c in zip(self.parameters, self.coefficients)]
-        condition = self._build_condition()
+        condition = _make_condition(self.operator, self.rhs, self.tolerance)
         return condition.to_polars(pl.sum_horizontal(weighted))
 
 
@@ -432,20 +439,12 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
                 f"operator '{self.operator}'."
             )
 
-    def _build_condition(self) -> ThresholdCondition:
-        """Build the internal threshold condition from the constraint fields."""
-        kwargs: dict[str, Any] = {
-            "threshold": self.rhs,
-            "operator": self.operator,
-        }
-        if self.tolerance is not None:
-            kwargs["tolerance"] = self.tolerance
-        return ThresholdCondition(**kwargs)
-
     @override
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = df[self.parameters].prod(axis=1)
-        condition = self._build_condition()
+        condition = _make_condition(
+            cast(ThresholdOperator, self.operator), self.rhs, self.tolerance
+        )
         mask_good = condition.evaluate(evaluate_df)
 
         return df.index[mask_good]
@@ -454,7 +453,9 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
-        condition = self._build_condition()
+        condition = _make_condition(
+            cast(ThresholdOperator, self.operator), self.rhs, self.tolerance
+        )
         expr = pl.reduce(lambda acc, x: acc * x, pl.col(self.parameters))
         return condition.to_polars(expr)
 
