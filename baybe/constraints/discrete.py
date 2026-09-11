@@ -5,7 +5,8 @@ from __future__ import annotations
 import gc
 from collections.abc import Callable, Sequence
 from functools import reduce
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from inspect import Parameter, Signature, signature
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast, overload
 
 import cattrs
 import numpy as np
@@ -13,7 +14,8 @@ import numpy.typing as npt
 import pandas as pd
 from attrs import define, field, fields
 from attrs.converters import optional as optional_c
-from attrs.validators import deep_iterable, ge, in_, instance_of, min_len
+from attrs.validators import deep_iterable, ge, gt, in_, instance_of, min_len
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.constraints.base import (
@@ -208,7 +210,11 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the comparison."""
 
-    tolerance: float | None = field(default=None, converter=optional_c(float))
+    tolerance: float | None = field(
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0)]),
+    )
     """Numerical tolerance for equality/inequality operators that support it.
 
     Only applicable when ``operator`` is one of ``"="``, ``"=="``, ``"!="``.
@@ -245,7 +251,6 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
 
         Raises:
             ValueError: If a tolerance is provided for a non-tolerance operator.
-            ValueError: If the tolerance is not positive for a tolerance operator.
         """
         if self.operator not in _valid_tolerance_operators and value is not None:
             raise ValueError(
@@ -253,12 +258,6 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
                 f"operators: {_valid_tolerance_operators}, but got operator "
                 f"'{self.operator}'."
             )
-        if value is not None:
-            finite_float(self, attribute, value)
-            if value <= 0.0:
-                raise ValueError(
-                    f"'{attribute.alias}' must be positive, but got {value}."
-                )
 
     def _build_condition(self) -> ThresholdCondition:
         """Build the internal threshold condition from the constraint fields."""
@@ -292,7 +291,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
         return condition.to_polars(pl.sum_horizontal(weighted))
 
 
-@define
+@define(init=False)
 class DiscreteProductConstraint(DiscreteFilteringConstraint):
     """Class for modeling product constraints on discrete parameters.
 
@@ -325,90 +324,113 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     numerical_only: ClassVar[bool] = True
     # See base class.
 
+    __signature__: ClassVar[Signature]
+    """The modern constructor signature exposed to introspection tools."""
+
     # object variables
     # >>>>>>>>>> Deprecation
-    # NOTE: `condition` occupies its original (second) positional slot so that the
-    # previously valid call `DiscreteProductConstraint(parameters, condition)` keeps
-    # working (with a deprecation warning). The new-interface fields are therefore
-    # keyword-only until the deprecated `condition` field is removed.
-    condition: ThresholdCondition | None = field(default=None, eq=False, repr=False)
+    condition: ThresholdCondition | None = field(
+        default=None, eq=False, repr=False, kw_only=True
+    )
     """Deprecated. Use keywords ``operator``, ``rhs``, and ``tolerance`` instead."""
 
     # <<<<<<<<<< Deprecation
 
     operator: ThresholdOperator | Literal[""] = field(
-        default="", validator=instance_of(str), kw_only=True
+        default="", validator=in_(_threshold_operators)
     )
     """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
-    rhs: float = field(
-        default=0.0, converter=float, validator=finite_float, kw_only=True
-    )
+    rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the comparison."""
 
     tolerance: float | None = field(
         default=None,
         converter=optional_c(float),
-        kw_only=True,
+        validator=optional_v([finite_float, gt(0)]),
     )
     """Numerical tolerance for equality/inequality operators that support it.
 
     Only applicable when ``operator`` is one of ``"="``, ``"=="``, ``"!="``.
     Set to a reasonable default when left as ``None``."""
 
-    def __attrs_post_init__(self):
-        """Resolve the deprecated ``condition`` field and validate."""
+    @overload
+    def __init__(  # noqa: DOC101, DOC103 (overload; attributes document inputs)
+        self,
+        parameters: list[str],
+        operator: ThresholdOperator,
+        rhs: float = 0.0,
+        tolerance: float | None = None,
+        *,
+        exclude: bool = False,
+    ) -> None: ...
+
+    @overload
+    def __init__(  # noqa: DOC101, DOC103 (overload; attributes document inputs)
+        self,
+        parameters: list[str],
+        condition: ThresholdCondition,
+        *,
+        exclude: bool = False,
+    ) -> None: ...
+
+    # The public overloads and attrs fields document the compatibility initializer.
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: DOC101, DOC103, DOC501
+        # Normalize before attrs converters and validators see the arguments.
         import warnings
 
         flds = fields(type(self))
+        supplied = dict(kwargs)
+        condition = supplied.pop("condition", None)
+        bound = _product_signature.bind_partial(*args, **supplied)
+        if "operator" not in kwargs and isinstance(
+            bound.arguments.get("operator"), ThresholdCondition
+        ):
+            condition = bound.arguments["operator"]
 
-        # >>>>>>>>>> Deprecation
-        if self.condition is not None:
-            if self.operator != "":
+        if condition is not None:
+            if {"operator", "rhs", "tolerance"} & kwargs.keys():
                 raise ValueError(
-                    f"Cannot specify both '{flds.condition.alias}' and "
-                    f"'{flds.operator.alias}'. Use the new interface "
-                    f"('{flds.operator.alias}', '{flds.rhs.alias}', "
-                    f"'{flds.tolerance.alias}') instead."
+                    f"Cannot specify both '{flds.condition.alias}' and modern "
+                    "comparison arguments."
                 )
+            legacy = _legacy_product_signature.bind(*args, **kwargs)
+            values = dict(legacy.arguments)
+            condition = values.pop("condition")
+            values.update(
+                operator=condition.operator,
+                rhs=condition.threshold,
+                tolerance=condition.tolerance,
+            )
+        else:
+            values = dict(_product_signature.bind(*args, **supplied).arguments)
+
+        self.__attrs_init__(**values)
+        if condition is not None:
             warnings.warn(
-                f"Passing '{flds.condition.alias}' to '{type(self).__name__}' is "
+                f"Passing '{flds.condition.alias}' to '{self.__class__.__name__}' is "
                 f"deprecated and will be removed in a future version. Use "
                 f"'{flds.operator.alias}' and '{flds.rhs.alias}' (and optionally "
                 f"'{flds.tolerance.alias}') instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
-            object.__setattr__(self, "operator", self.condition.operator)
-            object.__setattr__(self, "rhs", self.condition.threshold)
-            object.__setattr__(self, "tolerance", self.condition.tolerance)
-            object.__setattr__(self, "condition", None)
-        # <<<<<<<<<< Deprecation
 
-        # Validate operator
-        if self.operator not in _threshold_operators:
-            raise ValueError(
-                f"'{flds.operator.alias}' must be one of "
-                f"{list(_threshold_operators)}, but got '{self.operator}'."
-            )
+    @tolerance.validator
+    def _validate_tolerance(  # noqa: DOC101, DOC103
+        self, attribute: Any, value: float | None
+    ) -> None:
+        """Validate compatibility between the operator and tolerance.
 
-        # Validate tolerance
-        if (
-            self.operator not in _valid_tolerance_operators
-            and self.tolerance is not None
-        ):
+        Raises:
+            ValueError: If a tolerance is provided for a non-tolerance operator.
+        """
+        if self.operator not in _valid_tolerance_operators and value is not None:
             raise ValueError(
-                f"Setting the '{flds.tolerance.alias}' is only valid with the "
+                f"Setting the '{attribute.alias}' is only valid with the "
                 f"following operators: {_valid_tolerance_operators}, but got "
                 f"operator '{self.operator}'."
             )
-        if self.tolerance is not None:
-            finite_float(self, flds.tolerance, self.tolerance)
-            if self.tolerance <= 0.0:
-                raise ValueError(
-                    f"'{flds.tolerance.alias}' must be positive, "
-                    f"but got {self.tolerance}."
-                )
 
     def _build_condition(self) -> ThresholdCondition:
         """Build the internal threshold condition from the constraint fields."""
@@ -438,6 +460,24 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
 
 
 # >>>>>>>>>> Deprecation
+# Derive the public signature from attrs while retaining the legacy input adapter.
+_product_signature = signature(DiscreteProductConstraint.__attrs_init__).replace(
+    parameters=[
+        p.replace(default=Parameter.empty) if p.name == "operator" else p
+        for p in signature(DiscreteProductConstraint.__attrs_init__).parameters.values()
+        if p.name not in {"self", "condition"}
+    ]
+)
+_legacy_product_signature = _product_signature.replace(
+    parameters=[
+        _product_signature.parameters["parameters"],
+        Parameter("condition", Parameter.POSITIONAL_OR_KEYWORD),
+        _product_signature.parameters["exclude"],
+    ]
+)
+DiscreteProductConstraint.__signature__ = _product_signature
+
+
 def DiscreteSumConstraint(  # noqa: N802
     parameters, condition=None, coefficients=None, *, exclude=False
 ) -> DiscreteLinearConstraint:

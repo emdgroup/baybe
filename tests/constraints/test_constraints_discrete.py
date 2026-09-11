@@ -2,6 +2,7 @@
 
 import itertools
 import math
+from inspect import signature
 
 import pandas as pd
 import pytest
@@ -10,8 +11,36 @@ from pytest import param
 from baybe.constraints.conditions import ThresholdCondition
 from baybe.constraints.discrete import (
     DiscreteLinearConstraint,
+    DiscreteProductConstraint,
     DiscreteSelectionConstraint,
 )
+
+
+@pytest.mark.parametrize(
+    ("args", "kwargs"),
+    [
+        param((["A", "B"], "=", 8.0, 0.01), {}, id="positional"),
+        param((["A", "B"], "="), {"rhs": 8.0, "tolerance": 0.01}, id="mixed"),
+        param(
+            (),
+            {"parameters": ["A", "B"], "operator": "=", "rhs": 8.0, "tolerance": 0.01},
+            id="keyword",
+        ),
+    ],
+)
+def test_product_constructor(args, kwargs):
+    """Modern Product call styles produce the same constraint."""
+    result = DiscreteProductConstraint(*args, **kwargs)
+    assert result == DiscreteProductConstraint(
+        ["A", "B"], operator="=", rhs=8.0, tolerance=0.01
+    )
+    assert tuple(signature(DiscreteProductConstraint).parameters) == (
+        "parameters",
+        "operator",
+        "rhs",
+        "tolerance",
+        "exclude",
+    )
 
 
 @pytest.fixture(
