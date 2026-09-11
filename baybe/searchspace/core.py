@@ -228,23 +228,23 @@ class SearchSpace(SerialMixin):
     @property
     def comp_rep_bounds(self) -> IntoDataFrame:
         """The minimum and maximum values of the computational representation."""
+        frames = [
+            nw.from_native(self.discrete.comp_rep_bounds, eager_only=True),
+            nw.from_native(self.continuous.comp_rep_bounds, eager_only=True),
+        ]
         return nw.concat(
-            [
-                nw.from_native(self.discrete.comp_rep_bounds, eager_only=True),
-                nw.from_native(self.continuous.comp_rep_bounds, eager_only=True),
-            ],
-            how="horizontal",
+            [f for f in frames if not f.is_empty()], how="horizontal"
         ).to_native()
 
     @property
     def scaling_bounds(self) -> IntoDataFrame:
         """The bounds used for scaling the surrogate model input."""
+        frames = [
+            nw.from_native(self.discrete.scaling_bounds, eager_only=True),
+            nw.from_native(self.continuous.scaling_bounds, eager_only=True),
+        ]
         return nw.concat(
-            [
-                nw.from_native(self.discrete.scaling_bounds, eager_only=True),
-                nw.from_native(self.continuous.scaling_bounds, eager_only=True),
-            ],
-            how="horizontal",
+            [f for f in frames if not f.is_empty()], how="horizontal"
         ).to_native()
 
     @property
