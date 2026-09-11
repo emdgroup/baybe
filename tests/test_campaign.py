@@ -278,6 +278,7 @@ def test_allow_pending_flag(campaign_for_flag_test: Campaign):
         assert mock_recommend.call_count == 3
 
 
+@pytest.mark.xfail(reason="update_measurements temporarily disabled", strict=True)
 @pytest.mark.parametrize(
     "parameter_names", [["Categorical_1", "Categorical_2", "Num_disc_1"]]
 )
