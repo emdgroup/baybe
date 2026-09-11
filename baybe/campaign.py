@@ -183,8 +183,12 @@ class Campaign(SerialMixin):
     _excluded_experiments: nw.DataFrame = field(eq=cmp_using(_df_equals), init=False)
     """The parameter configurations that have been excluded from recommendations."""
 
-    _measurements: nw.DataFrame = field(eq=cmp_using(_df_equals), init=False)
-    """The measurements added to the campaign."""
+    _measurements: list[nw.DataFrame] = field(
+        factory=list,
+        eq=cmp_using(lambda a, b: len(a) == len(b) and all(map(_df_equals, a, b))),
+        init=False,
+    )
+    """The measurements added to the campaign, one frame per batch."""
 
     _recommended_experiments: nw.DataFrame = field(eq=cmp_using(_df_equals), init=False)
     """The (deduplicated) parameter configurations that have been recommended."""
@@ -193,17 +197,6 @@ class Campaign(SerialMixin):
         default=None, init=False, eq=False
     )
     """The cached recommendations."""
-
-    @_measurements.default
-    def _default_measurements(self) -> nw.DataFrame:
-        """Create an empty measurements DataFrame with the correct schema."""
-        cols = [p.name for p in self.searchspace.parameters] + [
-            t.name for t in (self.objective.targets if self.objective else ())
-        ]
-        return nw.from_dict(
-            {c: [] for c in cols},
-            backend=active_settings.default_dataframe_backend,
-        )
 
     @_excluded_experiments.default
     def _default_excluded_experiments(self) -> nw.DataFrame:
@@ -229,9 +222,18 @@ class Campaign(SerialMixin):
         return to_string(self.__class__.__name__, *fields)
 
     @property
-    def measurements(self) -> pd.DataFrame:
+    def measurements(self) -> IntoDataFrame:
         """The experimental data added to the Campaign."""
-        return self._measurements.to_pandas()
+        if not self._measurements:
+            cols = [p.name for p in self.searchspace.parameters] + [
+                t.name for t in (self.objective.targets if self.objective else ())
+            ]
+            return nw.from_dict(
+                {c: [] for c in cols},
+                backend=active_settings.default_dataframe_backend,
+            ).to_native()
+
+        return nw.concat(self._measurements, how="vertical").to_native()
 
     @property
     def n_batches_done(self) -> NoReturn:
@@ -357,13 +359,8 @@ class Campaign(SerialMixin):
         # With new measurements, the recommendations must always be recomputed
         self.clear_cache()
 
-        # Read in measurements and add them to the database
-        frames = [f for f in (self._measurements, data_nw) if not f.is_empty()]
-        # TODO[typing]: https://github.com/facebook/pyrefly/issues/4849
-        concatenated: nw.DataFrame = nw.concat(frames, how="vertical")  # type: ignore[assignment]
-        self._measurements = _df_with_backend(
-            concatenated, active_settings.default_dataframe_backend
-        )
+        # Append the new batch
+        self._measurements.append(data_nw)
 
     def update_measurements(
         self,
@@ -555,12 +552,11 @@ class Campaign(SerialMixin):
                     .eq("both")
                     .to_numpy()
                 )
-            if (
-                not self.allow_recommending_already_measured
-                and not self._measurements.is_empty()
-            ):
+            if not self.allow_recommending_already_measured and self._measurements:
                 measured_idxs = fuzzy_row_match(
-                    candidates, self._measurements.to_pandas(), self.parameters
+                    candidates,
+                    nw.from_native(self.measurements, eager_only=True).to_pandas(),
+                    self.parameters,
                 )
                 mask_todrop.loc[measured_idxs] = True
             if (
@@ -698,7 +694,9 @@ class Campaign(SerialMixin):
             For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
         if candidates is None:
-            candidates = self.measurements[[p.name for p in self.parameters]]
+            candidates = nw.from_native(self.measurements, eager_only=True).to_pandas()[
+                [p.name for p in self.parameters]
+            ]
 
         surrogate = self.get_surrogate()
         if not hasattr(surrogate, method_name := "posterior"):
@@ -734,14 +732,16 @@ class Campaign(SerialMixin):
             A dataframe with posterior statistics for each target and candidate.
         """
         if candidates is None:
-            if self.measurements.empty:
+            if not self._measurements:
                 raise NoMeasurementsError(
                     f"No candidates were provided and the campaign has no measurements "
                     f"yet. '{self.posterior_stats.__name__}' has no candidates to "
                     f"compute statistics for in this case."
                 )
 
-            candidates = self.measurements[[p.name for p in self.parameters]]
+            candidates = nw.from_native(self.measurements, eager_only=True).to_pandas()[
+                [p.name for p in self.parameters]
+            ]
 
         surrogate = self.get_surrogate()
         if not hasattr(surrogate, method_name := "posterior_stats"):
@@ -966,7 +966,7 @@ class Campaign(SerialMixin):
                 f"'{Objective.__name__}' is defined."
             )
 
-        if self.measurements.empty:
+        if not self._measurements:
             if configurations is None:
                 raise NothingToComputeError(
                     "The calculation of non-dominated points was requested, but "
@@ -983,21 +983,22 @@ class Campaign(SerialMixin):
                     UserWarning,
                 )
 
+        measurements_pd = nw.from_native(self.measurements, eager_only=True).to_pandas()
         if configurations is None:
-            configurations = self.measurements
+            configurations = measurements_pd
         else:
             configurations = nw.from_native(configurations, eager_only=True).to_pandas()
             validate_target_input(configurations, self.objective.targets)
 
-        if consider_campaign_measurements and not self.measurements.empty:
-            configurations = pd.concat([configurations, self.measurements])
+        if consider_campaign_measurements and self._measurements:
+            configurations = pd.concat([configurations, measurements_pd])
 
         non_dominated = self.objective.identify_non_dominated_configurations(
             configurations
         )
 
         if consider_campaign_measurements:
-            non_dominated = non_dominated.iloc[: -len(self.measurements)]
+            non_dominated = non_dominated.iloc[: -len(measurements_pd)]
 
         return non_dominated
 
@@ -1110,9 +1111,6 @@ def _structure_campaign(d: dict, cl: type) -> Campaign:
                 eager_only=True,
             )
 
-    # Fix schema of empty DataFrames from legacy serialization
-    if len(campaign._measurements.columns) == 0:
-        campaign._measurements = campaign._default_measurements()
     # <<<<<<<<<< Deprecation
 
     return campaign
