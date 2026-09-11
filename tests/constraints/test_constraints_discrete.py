@@ -2,13 +2,45 @@
 
 import itertools
 import math
+from inspect import signature
 
 import pandas as pd
 import pytest
 from pytest import param
 
 from baybe.constraints.conditions import ThresholdCondition
-from baybe.constraints.discrete import DiscreteSumConstraint
+from baybe.constraints.discrete import (
+    DiscreteLinearConstraint,
+    DiscreteProductConstraint,
+    DiscreteSelectionConstraint,
+)
+
+
+@pytest.mark.parametrize(
+    ("args", "kwargs"),
+    [
+        param((["A", "B"], "=", 8.0, 0.01), {}, id="positional"),
+        param((["A", "B"], "="), {"rhs": 8.0, "tolerance": 0.01}, id="mixed"),
+        param(
+            (),
+            {"parameters": ["A", "B"], "operator": "=", "rhs": 8.0, "tolerance": 0.01},
+            id="keyword",
+        ),
+    ],
+)
+def test_product_constructor(args, kwargs):
+    """Modern Product call styles produce the same constraint."""
+    result = DiscreteProductConstraint(*args, **kwargs)
+    assert result == DiscreteProductConstraint(
+        ["A", "B"], operator="=", rhs=8.0, tolerance=0.01
+    )
+    assert tuple(signature(DiscreteProductConstraint).parameters) == (
+        "parameters",
+        "operator",
+        "rhs",
+        "tolerance",
+        "exclude",
+    )
 
 
 @pytest.fixture(
@@ -293,12 +325,13 @@ def test_cardinality(campaign):
         param((1.0, 1.0), 1.0, "=", 6, id="equality"),
     ],
 )
-def test_sum_constraint_coefficients(coefficients, threshold, operator, n_invalid):
-    """DiscreteSumConstraint filters correctly with default and custom coefficients."""
+def test_linear_constraint_coefficients(coefficients, threshold, operator, n_invalid):
+    """DiscreteLinearConstraint filters with default and custom coefficients."""
     kwargs = {} if coefficients is None else {"coefficients": coefficients}
-    constraint = DiscreteSumConstraint(
+    constraint = DiscreteLinearConstraint(
         parameters=["A", "B"],
-        condition=ThresholdCondition(threshold=threshold, operator=operator),
+        operator=operator,
+        rhs=threshold,
         **kwargs,
     )
     df = pd.DataFrame(
@@ -309,3 +342,61 @@ def test_sum_constraint_coefficients(coefficients, threshold, operator, n_invali
     expected = df.index[~ThresholdCondition(threshold, operator).evaluate(weighted)]
     assert list(constraint.get_invalid(df)) == list(expected)
     assert len(constraint.get_invalid(df)) == n_invalid
+
+
+@pytest.mark.parametrize(
+    ("combiner", "exclude", "partial_ok"),
+    [
+        param("AND", False, True, id="AND-keep"),
+        param("AND", True, False, id="AND-exclude"),
+        param("OR", False, False, id="OR-keep"),
+        param("OR", True, True, id="OR-exclude"),
+        param("XOR", False, False, id="XOR-keep"),
+        param("XOR", True, False, id="XOR-exclude"),
+    ],
+)
+def test_filtering_partial_evaluation(combiner, exclude, partial_ok):
+    """Partial evaluation is only allowed when the drop decision cannot reverse.
+
+    In particular, an ``XOR`` combination must never be evaluated partially, since
+    its result can flip as further operands become available.
+    """
+    constraint = DiscreteSelectionConstraint(
+        parameters=["A", "B"],
+        conditions=[
+            ThresholdCondition(threshold=0.0, operator=">"),
+            ThresholdCondition(threshold=0.0, operator=">"),
+        ],
+        combiner=combiner,
+        exclude=exclude,
+    )
+    # Only a subset of the involved parameters is available
+    assert constraint._can_evaluate({"A"}) is partial_ok
+    # All parameters available -> always evaluable
+    assert constraint._can_evaluate({"A", "B"}) is True
+
+
+def test_filtering_xor_partial_does_not_drop_valid_rows():
+    """A valid XOR row is not removed when evaluated with missing columns.
+
+    With ``allow_missing=True`` and only one operand present, a premature XOR
+    evaluation would wrongly drop rows; the constraint must instead defer.
+    """
+    constraint = DiscreteSelectionConstraint(
+        parameters=["A", "B"],
+        conditions=[
+            ThresholdCondition(threshold=0.0, operator=">"),
+            ThresholdCondition(threshold=0.0, operator=">"),
+        ],
+        combiner="XOR",
+    )
+    # Row where only "A" is known so far; "B" is still missing.
+    partial_df = pd.DataFrame({"A": [1.0, 0.0]})
+    # Deferred: nothing may be dropped yet.
+    assert list(constraint.get_invalid(partial_df, allow_missing=True)) == []
+
+    # Once both columns are present, XOR keeps rows where exactly one holds.
+    full_df = pd.DataFrame({"A": [1.0, 1.0, 0.0], "B": [0.0, 1.0, 0.0]})
+    invalid = constraint.get_invalid(full_df, allow_missing=True)
+    # Rows 1 (both > 0) and 2 (neither > 0) violate XOR; row 0 is kept.
+    assert list(invalid) == [1, 2]

@@ -7,7 +7,7 @@ from pytest import param
 from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import (
     DiscreteCustomConstraint,
-    DiscreteSumConstraint,
+    DiscreteLinearConstraint,
     ThresholdCondition,
 )
 from baybe.parameters import NumericalDiscreteParameter
@@ -86,8 +86,9 @@ def test_polars_sum_constraint(parameters, coefficients, threshold, operator):
     """Polars and Pandas paths produce correct and identical results."""
     names = [p.name for p in parameters]
     kwargs = {} if coefficients is None else {"coefficients": coefficients}
-    condition = ThresholdCondition(threshold=threshold, operator=operator)
-    constraint = DiscreteSumConstraint(parameters=names, condition=condition, **kwargs)
+    constraint = DiscreteLinearConstraint(
+        parameters=names, operator=operator, rhs=threshold, **kwargs
+    )
     coeffs = coefficients or (1.0,) * len(parameters)
 
     ldf = _lazyframe_from_product(parameters)
@@ -97,6 +98,7 @@ def test_polars_sum_constraint(parameters, coefficients, threshold, operator):
     df_pl = _apply_constraint_filter_polars(ldf, [constraint]).collect().to_pandas()
 
     # Correctness: all remaining rows satisfy the constraint
+    condition = ThresholdCondition(threshold=threshold, operator=operator)
     weighted_pd = sum(df_pd[n] * c for n, c in zip(names, coeffs))
     assert condition.evaluate(weighted_pd).all()
 
@@ -231,9 +233,10 @@ def test_mixed_polars_pandas_constraints():
     ]
     constraints = [
         # Polars-capable: operates on [A, B]
-        DiscreteSumConstraint(
+        DiscreteLinearConstraint(
             parameters=["A", "B"],
-            condition=ThresholdCondition(threshold=100, operator="="),
+            operator="=",
+            rhs=100,
         ),
         # Pandas-only: operates on [B, C] — B is shared with the Polars constraint
         DiscreteCustomConstraint(

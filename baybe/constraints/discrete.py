@@ -4,15 +4,19 @@ from __future__ import annotations
 
 import gc
 from collections.abc import Callable, Sequence
+from copy import deepcopy
 from functools import reduce
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from inspect import Parameter, Signature, signature
+from typing import TYPE_CHECKING, Any, ClassVar, cast, get_type_hints, overload
 
 import cattrs
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import define, field, fields
-from attrs.validators import deep_iterable, ge, in_, instance_of, min_len
+from attrs.converters import optional as optional_c
+from attrs.validators import deep_iterable, ge, gt, in_, instance_of, min_len
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.constraints.base import (
@@ -25,8 +29,10 @@ from baybe.constraints.conditions import (
     Condition,
     SubSelectionCondition,  # noqa: F401 (used in doctests)
     ThresholdCondition,
+    ThresholdOperator,
     _threshold_operators,
     _valid_logic_combiners,
+    _valid_tolerance_operators,
 )
 from baybe.serialization import (
     block_deserialization_hook,
@@ -114,8 +120,8 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         # - OR with exclude=True: once a present condition holds, the row is
         #   permanently marked for removal (an OR match stays).
         # For XOR, the combined result can flip as further operands arrive, so
-        # all parameters must be present first. All other cases must likewise
-        # wait for every parameter.
+        # all parameters must be present before evaluating. All other cases must
+        # likewise wait for every parameter.
         present = available & set(self.parameters)
         if not present:
             return False
@@ -145,12 +151,31 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         return pl.reduce(_valid_logic_combiners[self.combiner], satisfied)
 
 
-@define
-class DiscreteSumConstraint(DiscreteFilteringConstraint):
-    """Class for modelling sum constraints.
+def _make_condition(
+    operator: ThresholdOperator, rhs: float, tolerance: float | None
+) -> ThresholdCondition:
+    """Create a threshold condition, using its default when tolerance is omitted.
 
-    The constraint evaluates whether the (optionally weighted) sum of the specified
-    parameters satisfies the given threshold condition.
+    Args:
+        operator: The comparison operator.
+        rhs: The comparison threshold.
+        tolerance: The explicit tolerance, or ``None`` to use the default.
+
+    Returns:
+        The threshold condition.
+    """
+    kwargs = {} if tolerance is None else {"tolerance": tolerance}
+    return ThresholdCondition(threshold=rhs, operator=operator, **kwargs)
+
+
+@define
+class DiscreteLinearConstraint(DiscreteFilteringConstraint):
+    """Class for modeling linear (weighted-sum) constraints on discrete parameters.
+
+    The constraint compares the sum of the specified parameters, optionally weighted by
+    :paramref:`DiscreteLinearConstraint.coefficients`, against
+    :paramref:`DiscreteLinearConstraint.rhs` using
+    :paramref:`DiscreteLinearConstraint.operator`.
 
     Examples:
         >>> df = pd.DataFrame({"A": [1.0, 3.0, 5.0], "B": [2.0, 1.0, 3.0]})
@@ -159,25 +184,25 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
         0  1.0  2.0
         1  3.0  1.0
         2  5.0  3.0
-        >>> c = DiscreteSumConstraint(
+        >>> c = DiscreteLinearConstraint(
         ...     parameters=["A", "B"],
-        ...     condition=ThresholdCondition(threshold=5.0, operator="<="),
+        ...     operator="<=",
+        ...     rhs=5.0,
         ... )
         >>> list(c.get_invalid(df))
         [2]
 
         With coefficients, the weighted sum is checked instead:
 
-        >>> c = DiscreteSumConstraint(
+        >>> c = DiscreteLinearConstraint(
         ...     parameters=["A", "B"],
-        ...     condition=ThresholdCondition(threshold=5.0, operator="<="),
         ...     coefficients=(2.0, 1.0),
+        ...     operator="<=",
+        ...     rhs=5.0,
         ... )
         >>> list(c.get_invalid(df))
         [1, 2]
     """
-
-    # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # IMPROVE: Look-ahead filtering would be possible if parameter
     # value ranges (min/max) were available to the constraint, allowing
@@ -189,8 +214,8 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
     # See base class.
 
     # object variables
-    condition: ThresholdCondition = field()
-    """The condition modeled by this constraint."""
+    operator: ThresholdOperator = field(validator=in_(_threshold_operators))
+    """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
     coefficients: tuple[float, ...] = field(
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
@@ -199,6 +224,19 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
     """The coefficients for the weighted sum, one per entry in ``parameters``.
 
     Defaults to all-ones, i.e. an unweighted sum."""
+
+    rhs: float = field(default=0.0, converter=float, validator=finite_float)
+    """Right-hand side value of the comparison."""
+
+    tolerance: float | None = field(
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0)]),
+    )
+    """Numerical tolerance for equality/inequality operators that support it.
+
+    Only applicable when ``operator`` is one of ``"="``, ``"=="``, ``"!="``.
+    Set to a reasonable default when left as ``None``."""
 
     @coefficients.default
     def _default_coefficients(self) -> tuple[float, ...]:
@@ -223,6 +261,22 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
         if any(c == 0.0 for c in coefficients):
             raise ValueError("All entries in 'coefficients' must be non-zero.")
 
+    @tolerance.validator
+    def _validate_tolerance(  # noqa: DOC101, DOC103
+        self, attribute: Any, value: float | None
+    ) -> None:
+        """Validate the tolerance.
+
+        Raises:
+            ValueError: If a tolerance is provided for a non-tolerance operator.
+        """
+        if self.operator not in _valid_tolerance_operators and value is not None:
+            raise ValueError(
+                f"Setting the '{attribute.alias}' is only valid with the following "
+                f"operators: {_valid_tolerance_operators}, but got operator "
+                f"'{self.operator}'."
+            )
+
     @override
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = pd.Series(
@@ -231,7 +285,8 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
             ),
             index=df.index,
         )
-        mask_good = self.condition.evaluate(evaluate_df)
+        condition = _make_condition(self.operator, self.rhs, self.tolerance)
+        mask_good = condition.evaluate(evaluate_df)
 
         return df.index[mask_good]
 
@@ -240,12 +295,17 @@ class DiscreteSumConstraint(DiscreteFilteringConstraint):
         from baybe._optional.polars import polars as pl
 
         weighted = [pl.col(p) * c for p, c in zip(self.parameters, self.coefficients)]
-        return self.condition.to_polars(pl.sum_horizontal(weighted))
+        condition = _make_condition(self.operator, self.rhs, self.tolerance)
+        return condition.to_polars(pl.sum_horizontal(weighted))
 
 
-@define
+@define(init=False)
 class DiscreteProductConstraint(DiscreteFilteringConstraint):
-    """Class for modelling product constraints.
+    """Class for modeling product constraints on discrete parameters.
+
+    The constraint compares the product of the specified parameters against
+    :paramref:`DiscreteProductConstraint.rhs` using
+    :paramref:`DiscreteProductConstraint.operator`.
 
     Examples:
         >>> df = pd.DataFrame({"A": [2.0, 3.0, 5.0], "B": [3.0, 2.0, 2.0]})
@@ -256,31 +316,124 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
         2  5.0  2.0
         >>> c = DiscreteProductConstraint(
         ...     parameters=["A", "B"],
-        ...     condition=ThresholdCondition(threshold=8.0, operator="<="),
+        ...     operator="<=",
+        ...     rhs=8.0,
         ... )
         >>> list(c.get_invalid(df))
         [2]
     """
-
-    # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
-
-    # class variables
-    numerical_only: ClassVar[bool] = True
-    # See base class.
-
-    # object variables
-    condition: ThresholdCondition = field()
-    """The condition that is used for this constraint."""
 
     # IMPROVE: Look-ahead filtering would be possible if parameter
     # value ranges (min/max) were available to the constraint, allowing
     # bound-based pruning of partial products before all parameters are
     # present. This could be expressed via a _can_evaluate override.
 
+    # class variables
+    numerical_only: ClassVar[bool] = True
+    # See base class.
+
+    __signature__: ClassVar[Signature]
+    """The modern constructor signature exposed to introspection tools."""
+
+    # object variables
+    operator: ThresholdOperator = field(validator=in_(_threshold_operators))
+    """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
+
+    rhs: float = field(default=0.0, converter=float, validator=finite_float)
+    """Right-hand side value of the comparison."""
+
+    tolerance: float | None = field(
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0)]),
+    )
+    """Numerical tolerance for equality/inequality operators that support it.
+
+    Only applicable when ``operator`` is one of ``"="``, ``"=="``, ``"!="``.
+    Set to a reasonable default when left as ``None``."""
+
+    @overload
+    def __init__(  # noqa: DOC101, DOC103 (overload; attributes document inputs)
+        self,
+        parameters: list[str],
+        operator: ThresholdOperator,
+        rhs: float = 0.0,
+        tolerance: float | None = None,
+        *,
+        exclude: bool = False,
+    ) -> None: ...
+
+    @overload
+    def __init__(  # noqa: DOC101, DOC103 (overload; attributes document inputs)
+        self,
+        parameters: list[str],
+        condition: ThresholdCondition,
+        *,
+        exclude: bool = False,
+    ) -> None: ...
+
+    # The public overloads and attrs fields document the compatibility initializer.
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: DOC101, DOC103, DOC501
+        # Normalize before attrs converters and validators see the arguments.
+        import warnings
+
+        flds = fields(type(self))
+        supplied = dict(kwargs)
+        condition = supplied.pop("condition", None)
+        bound = _product_signature.bind_partial(*args, **supplied)
+        if "operator" not in kwargs and isinstance(
+            bound.arguments.get("operator"), ThresholdCondition
+        ):
+            condition = bound.arguments["operator"]
+
+        if condition is not None:
+            if {"operator", "rhs", "tolerance"} & kwargs.keys():
+                raise ValueError(
+                    "Cannot specify both 'condition' and modern comparison arguments."
+                )
+            legacy = _legacy_product_signature.bind(*args, **kwargs)
+            values = dict(legacy.arguments)
+            condition = values.pop("condition")
+            values.update(
+                operator=condition.operator,
+                rhs=condition.threshold,
+                tolerance=condition.tolerance,
+            )
+        else:
+            values = dict(_product_signature.bind(*args, **supplied).arguments)
+
+        self.__attrs_init__(**values)
+        if condition is not None:
+            warnings.warn(
+                f"Passing 'condition' to '{self.__class__.__name__}' is "
+                f"deprecated and will be removed in a future version. Use "
+                f"'{flds.operator.alias}' and '{flds.rhs.alias}' (and optionally "
+                f"'{flds.tolerance.alias}') instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+    @tolerance.validator
+    def _validate_tolerance(  # noqa: DOC101, DOC103
+        self, attribute: Any, value: float | None
+    ) -> None:
+        """Validate compatibility between the operator and tolerance.
+
+        Raises:
+            ValueError: If a tolerance is provided for a non-tolerance operator.
+        """
+        if self.operator not in _valid_tolerance_operators and value is not None:
+            raise ValueError(
+                f"Setting the '{attribute.alias}' is only valid with the "
+                f"following operators: {_valid_tolerance_operators}, but got "
+                f"operator '{self.operator}'."
+            )
+
     @override
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = df[self.parameters].prod(axis=1)
-        mask_good = self.condition.evaluate(evaluate_df)
+        condition = _make_condition(self.operator, self.rhs, self.tolerance)
+        mask_good = condition.evaluate(evaluate_df)
 
         return df.index[mask_good]
 
@@ -288,13 +441,57 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         from baybe._optional.polars import polars as pl
 
-        op = _threshold_operators[self.condition.operator]
-
-        # Get the product of columns
+        condition = _make_condition(self.operator, self.rhs, self.tolerance)
         expr = pl.reduce(lambda acc, x: acc * x, pl.col(self.parameters))
+        return condition.to_polars(expr)
 
-        # Apply the threshold operator on expr and the condition threshold
-        return op(expr, self.condition.threshold)
+
+# >>>>>>>>>> Deprecation
+# Derive the public signature from attrs while retaining the legacy input adapter.
+_product_signature = signature(DiscreteProductConstraint.__attrs_init__).replace(
+    parameters=[
+        p
+        for p in signature(DiscreteProductConstraint.__attrs_init__).parameters.values()
+        if p.name != "self"
+    ]
+)
+_legacy_product_signature = _product_signature.replace(
+    parameters=[
+        _product_signature.parameters["parameters"],
+        Parameter("condition", Parameter.POSITIONAL_OR_KEYWORD),
+        _product_signature.parameters["exclude"],
+    ]
+)
+DiscreteProductConstraint.__signature__ = _product_signature
+
+
+def DiscreteSumConstraint(  # noqa: N802
+    parameters: list[str],
+    condition: ThresholdCondition,
+    coefficients: Sequence[float] | None = None,
+) -> DiscreteLinearConstraint:
+    """A :class:`DiscreteLinearConstraint` alias for backward compatibility."""  # noqa: D401
+    import warnings
+
+    warnings.warn(
+        f"'{DiscreteSumConstraint.__name__}' is deprecated and will be removed "
+        f"in a future version. Use '{DiscreteLinearConstraint.__name__}' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    kwargs: dict[str, Any] = (
+        {} if coefficients is None else {"coefficients": coefficients}
+    )
+    return DiscreteLinearConstraint(
+        parameters,
+        operator=condition.operator,
+        rhs=condition.threshold,
+        tolerance=condition.tolerance,
+        **kwargs,
+    )
+
+
+# <<<<<<<<<< Deprecation
 
 
 @define
@@ -831,7 +1028,7 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
 DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscreteSelectionConstraint,
     DiscreteRepetitionLimitConstraint,
-    DiscreteSumConstraint,
+    DiscreteLinearConstraint,
     DiscreteProductConstraint,
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
@@ -845,20 +1042,73 @@ converter.register_structure_hook(DiscreteCustomConstraint, block_deserializatio
 
 
 # >>>>>>>>>> Deprecation
+_product_structure_hook = converter.get_structure_hook(DiscreteProductConstraint)
+
+
+def _structure_product_constraint(val: dict, cls: type) -> DiscreteProductConstraint:
+    """Route legacy Product input through its warning-emitting constructor.
+
+    Args:
+        val: The serialized constraint.
+        cls: The requested concrete class.
+
+    Returns:
+        The deserialized Product constraint.
+    """
+    val = dict(val)
+    if val.get("condition") is not None:
+        # Let the normal hook reject mismatching type tags.
+        if val.get(_TYPE_FIELD, cls.__name__) != cls.__name__:
+            return _product_structure_hook(val, cls)
+        val.pop(_TYPE_FIELD, None)
+        val["condition"] = converter.structure(
+            deepcopy(val["condition"]), ThresholdCondition
+        )
+        val["parameters"] = converter.structure(val["parameters"], list[str])
+        return cls(**val)
+    return _product_structure_hook(val, cls)
+
+
+converter.register_structure_hook(
+    DiscreteProductConstraint, _structure_product_constraint
+)
+
+
 def _structure_constraint_compat(val: dict, cls: type) -> Constraint:
-    """Structure hook that redirects legacy constraint type names."""
+    """Structure legacy constraints through their compatibility constructors.
+
+    Args:
+        val: The serialized constraint.
+        cls: The requested abstract class.
+
+    Returns:
+        The deserialized constraint.
+
+    Raises:
+        TypeError: If the legacy replacement is incompatible with the requested class.
+    """
     val = dict(val)  # copy before mutating
-    if val.get(_TYPE_FIELD) == "DiscreteExcludeConstraint":
-        val[_TYPE_FIELD] = "DiscreteSelectionConstraint"
-        val["exclude"] = True
-    elif val.get(_TYPE_FIELD) == "DiscreteNoLabelDuplicatesConstraint":
-        val[_TYPE_FIELD] = "DiscreteRepetitionLimitConstraint"
-        val["n_max_repetitions"] = 1
-    elif val.get(_TYPE_FIELD) == "DiscreteLinkedParametersConstraint":
-        val[_TYPE_FIELD] = "DiscreteRepetitionLimitConstraint"
-        if (params := val.get("parameters")) is not None and len(params) >= 2:
-            val["n_max_repetitions"] = len(params) - 1
-        val["exclude"] = True
+    type_ = val.get(_TYPE_FIELD)
+    factories: dict[str, Callable[..., Constraint]] = {
+        factory.__name__: factory
+        for factory in (
+            DiscreteExcludeConstraint,
+            DiscreteNoLabelDuplicatesConstraint,
+            DiscreteLinkedParametersConstraint,
+            DiscreteSumConstraint,
+        )
+    }
+    if isinstance(type_, str) and (factory := factories.get(type_)):
+        hints = get_type_hints(factory)
+        if not issubclass(hints["return"], cls):
+            raise TypeError(f"'{type_}' is not compatible with '{cls.__name__}'.")
+        val.pop(_TYPE_FIELD)
+        bound = signature(factory).bind(**val)
+        arguments = {
+            name: converter.structure(deepcopy(value), hints[name])
+            for name, value in bound.arguments.items()
+        }
+        return factory(**arguments)
     return make_base_structure_hook(cls)(val, cls)
 
 
