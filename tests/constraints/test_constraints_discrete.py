@@ -296,7 +296,7 @@ def test_cardinality(campaign):
         param((1.0, 1.0), 1.0, "=", 6, id="equality"),
     ],
 )
-def test_sum_constraint_coefficients(coefficients, threshold, operator, n_invalid):
+def test_linear_constraint_coefficients(coefficients, threshold, operator, n_invalid):
     """DiscreteLinearConstraint filters with default and custom coefficients."""
     kwargs = {} if coefficients is None else {"coefficients": coefficients}
     constraint = DiscreteLinearConstraint(
