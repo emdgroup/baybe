@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 from collections.abc import Callable, Sequence
 from functools import reduce
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 import cattrs
 import numpy as np
@@ -25,6 +25,7 @@ from baybe.constraints.conditions import (
     Condition,
     SubSelectionCondition,  # noqa: F401 (used in doctests)
     ThresholdCondition,
+    ThresholdOperator,
     _threshold_operators,
     _valid_logic_combiners,
     _valid_tolerance_operators,
@@ -192,7 +193,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     # See base class.
 
     # object variables
-    operator: str = field(validator=in_(_threshold_operators))
+    operator: ThresholdOperator = field(validator=in_(_threshold_operators))
     """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
     coefficients: tuple[float, ...] = field(
@@ -336,7 +337,9 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
 
     # <<<<<<<<<< Deprecation
 
-    operator: str = field(default="", validator=instance_of(str), kw_only=True)
+    operator: ThresholdOperator | Literal[""] = field(
+        default="", validator=instance_of(str), kw_only=True
+    )
     """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
     rhs: float = field(
