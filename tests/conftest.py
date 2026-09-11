@@ -985,7 +985,7 @@ def run_iterations(
         batch_size: Number of recommended points per iteration.
         add_noise: Flag whether measurement noise should be added every 2nd iteration.
     """
-    with Settings(random_seed=int(time.time())):
+    with Settings(random_seed=int(time.time()), default_dataframe_backend="pandas"):
         for k in range(n_iterations):
             rec = campaign.recommend(batch_size=batch_size)
 

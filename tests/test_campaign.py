@@ -28,6 +28,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
 )
 from baybe.searchspace.core import SearchSpace, SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.settings import Settings
 from baybe.surrogates import (
     BetaBernoulliMultiArmedBanditSurrogate,
     GaussianProcessSurrogate,
@@ -180,6 +181,7 @@ def test_setting_allow_flags(flag, searchspace, value, discrete_value):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_measured_flag(campaign_for_flag_test: Campaign):
     """The flag controls the candidate set and properly interacts with the cache."""
     campaign = campaign_for_flag_test
@@ -211,6 +213,7 @@ def test_allow_measured_flag(campaign_for_flag_test: Campaign):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     """The flag controls the candidate set and properly interacts with the cache."""
     campaign = campaign_for_flag_test
@@ -238,6 +241,7 @@ def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_pending_flag(campaign_for_flag_test: Campaign):
     campaign = campaign_for_flag_test
     flag = campaign.allow_recommending_pending_experiments

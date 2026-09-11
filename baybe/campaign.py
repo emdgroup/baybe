@@ -7,7 +7,7 @@ import json
 import warnings
 from collections.abc import Collection, Sequence
 from functools import reduce
-from typing import TYPE_CHECKING, Any, NoReturn, TypeVar
+from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, cast
 
 import cattrs
 import narwhals.stable.v2 as nw
@@ -15,6 +15,8 @@ import pandas as pd
 from attrs import Attribute, define, evolve, field, fields, setters
 from attrs.converters import optional
 from attrs.validators import instance_of
+from narwhals.stable.v2.dependencies import is_into_dataframe
+from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoSeries
 from typing_extensions import override
 
 from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
@@ -46,7 +48,12 @@ from baybe.targets.base import Target
 from baybe.utils.basic import is_all_instance
 from baybe.utils.boolean import AutoBool, eq_dataframe
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import filter_df, fuzzy_row_match
+from baybe.utils.dataframe import (
+    _df_with_backend,
+    _infer_backend,
+    filter_df,
+    fuzzy_row_match,
+)
 from baybe.utils.validation import (
     preprocess_dataframe,
     validate_object_names,
@@ -56,7 +63,6 @@ from baybe.utils.validation import (
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from botorch.posteriors import Posterior
-    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoSeries
 
     from baybe.acquisition.base import AcquisitionFunction
 
@@ -309,7 +315,7 @@ class Campaign(SerialMixin):
 
     def add_measurements(
         self,
-        data: pd.DataFrame,
+        data: IntoDataFrame,
         numerical_measurements_must_be_within_tolerance: bool = True,
     ) -> None:
         """Add results from a dataframe to the internal database.
@@ -328,12 +334,15 @@ class Campaign(SerialMixin):
                 numerical parameters need to be within their tolerances.
         """
         # Preprocess incoming data
-        data = preprocess_dataframe(
-            data,
-            self.searchspace,
-            self.objective,
-            numerical_measurements_must_be_within_tolerance,
-        )
+        data = nw.from_native(
+            preprocess_dataframe(
+                data,
+                self.searchspace,
+                self.objective,
+                numerical_measurements_must_be_within_tolerance,
+            ),
+            eager_only=True,
+        ).to_pandas()
 
         # With new measurements, the recommendations must always be recomputed
         self.clear_cache()
@@ -344,7 +353,7 @@ class Campaign(SerialMixin):
 
     def update_measurements(
         self,
-        data: pd.DataFrame,
+        data: IntoDataFrame,
         numerical_measurements_must_be_within_tolerance: bool = True,
     ) -> None:
         """Update previously added measurements.
@@ -364,12 +373,15 @@ class Campaign(SerialMixin):
                 measurements.
         """
         # Preprocess incoming data
-        data = preprocess_dataframe(
-            data,
-            self.searchspace,
-            self.objective,
-            numerical_measurements_must_be_within_tolerance,
-        )
+        data = nw.from_native(
+            preprocess_dataframe(
+                data,
+                self.searchspace,
+                self.objective,
+                numerical_measurements_must_be_within_tolerance,
+            ),
+            eager_only=True,
+        ).to_pandas()
 
         # With changed measurements, the recommendations must always be recomputed
         self.clear_cache()
@@ -396,7 +408,7 @@ class Campaign(SerialMixin):
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
-        constraints: Collection[DiscreteConstraint] | pd.DataFrame,
+        constraints: Collection[DiscreteConstraint] | IntoDataFrame,
         exclude: bool,
         complement: bool = False,
         dry_run: bool = False,
@@ -433,9 +445,14 @@ class Campaign(SerialMixin):
 
         df = self.searchspace.discrete._get_candidates().collect().to_pandas()
 
-        if isinstance(constraints, pd.DataFrame):
+        if is_into_dataframe(constraints):
             # Determine the candidate subset to be toggled
-            points = filter_df(df, constraints, complement)
+            points = filter_df(
+                df,
+                # TODO[typing]: https://github.com/facebook/pyrefly/issues/4849
+                nw.from_native(constraints, eager_only=True).to_pandas(),  # pyrefly: ignore[no-matching-overload]
+                complement,
+            )
 
         elif isinstance(constraints, Collection) and is_all_instance(
             constraints, DiscreteFilteringConstraint
@@ -483,8 +500,8 @@ class Campaign(SerialMixin):
     def recommend(
         self,
         batch_size: int,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         """Provide the recommendations for the next batch of experiments.
 
         Args:
@@ -504,6 +521,8 @@ class Campaign(SerialMixin):
                 f"{batch_size=}."
             )
 
+        backend = _infer_backend(pending_experiments)
+
         # IMPROVE: Currently, we simply invalidate the cache whenever pending
         #     experiments are provided, because in order to use it, we need to check if
         #     the previous call was done with the same pending experiments.
@@ -511,22 +530,29 @@ class Campaign(SerialMixin):
             self.clear_cache()
 
         # Preprocess pending experiments
-        if pending_experiments is not None:
-            pending_experiments = preprocess_dataframe(
-                pending_experiments,
-                self.searchspace,
-                numerical_measurements_must_be_within_tolerance=False,
-            )
+        pending_experiments_pd: pd.DataFrame | None = (
+            nw.from_native(
+                preprocess_dataframe(
+                    pending_experiments,
+                    self.searchspace,
+                    numerical_measurements_must_be_within_tolerance=False,
+                ),
+                eager_only=True,
+            ).to_pandas()
+            if pending_experiments is not None
+            else None
+        )
 
         # TODO: Proper fix for the allow_* flags required
         if (
             active_settings.cache_campaign_recommendations
             and (cache := self._cached_recommendation) is not None
-            and pending_experiments is None
+            and pending_experiments_pd is None
             and self.allow_recommending_already_recommended
             and len(cache) == batch_size
         ):
-            return cache
+            # TODO: Potentially the cast becomes obsolete once Campaign is generic
+            return cast(IntoDataFrameT, cache)
 
         # Prepare the search space according to the current campaign state
         if self.searchspace.type is SearchSpaceType.DISCRETE:
@@ -571,12 +597,12 @@ class Campaign(SerialMixin):
                 mask_todrop.loc[measured_idxs] = True
             if (
                 not self.allow_recommending_pending_experiments
-                and pending_experiments is not None
+                and pending_experiments_pd is not None
             ):
                 mask_todrop |= (
                     pd.merge(
                         candidates,
-                        pending_experiments,
+                        pending_experiments_pd,
                         indicator=True,
                         how="left",
                     )["_merge"]
@@ -608,7 +634,7 @@ class Campaign(SerialMixin):
                 searchspace,
                 self.objective,
                 self.measurements,
-                pending_experiments,
+                pending_experiments_pd,
             )
         is_nonpredictive = isinstance(recommender, NonPredictiveRecommender)
 
@@ -622,7 +648,7 @@ class Campaign(SerialMixin):
                     searchspace,
                     self.objective,
                     self.measurements,
-                    None if is_nonpredictive else pending_experiments,
+                    None if is_nonpredictive else pending_experiments_pd,
                 )
         except NotEnoughPointsLeftError as ex:
             # Aliases for code compactness
@@ -633,7 +659,7 @@ class Campaign(SerialMixin):
             ok_m_name = f._allow_recommending_already_measured.alias
             ok_r_name = f._allow_recommending_already_recommended.alias
             ok_p_name = f._allow_recommending_pending_experiments.alias
-            no_blocked_pending_points = ok_p or (pending_experiments is None)
+            no_blocked_pending_points = ok_p or (pending_experiments_pd is None)
 
             # If there are no candidate restrictions to be relaxed
             if ok_m and ok_r and no_blocked_pending_points:
@@ -654,20 +680,20 @@ class Campaign(SerialMixin):
                 f"{str(ex)} Consider setting {message}."
             ) from ex
 
-        rec = nw.from_native(rec, eager_only=True).to_pandas()
+        rec_pd = nw.from_native(rec, eager_only=True).to_pandas()
 
         if (
             active_settings.cache_campaign_recommendations
-            and pending_experiments is None  # see IMPROVE comment above
+            and pending_experiments_pd is None  # see IMPROVE comment above
         ):
-            self._cache_recommendation(rec)
+            self._cache_recommendation(rec_pd)
 
         # Track recommended experiments (deduplicated)
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
             param_cols = [p.name for p in self.parameters]
             frames = [
                 f
-                for f in (self._recommended_experiments, rec[param_cols])
+                for f in (self._recommended_experiments, rec_pd[param_cols])
                 if not f.empty
             ]
             self._recommended_experiments = (
@@ -676,10 +702,15 @@ class Campaign(SerialMixin):
                 .reset_index(drop=True)
             )
 
-        return rec
+        return cast(
+            IntoDataFrameT,
+            _df_with_backend(
+                nw.from_native(rec_pd, eager_only=True), backend
+            ).to_native(),
+        )
 
     def posterior(
-        self, candidates: pd.DataFrame | None = None, *, joint: bool = True
+        self, candidates: IntoDataFrame | None = None, *, joint: bool = True
     ) -> Posterior:
         """Get the posterior predictive distribution for the given candidates.
 
@@ -713,7 +744,7 @@ class Campaign(SerialMixin):
 
     def posterior_stats(
         self,
-        candidates: pd.DataFrame | None = None,
+        candidates: IntoDataFrame | None = None,
         stats: Sequence[PosteriorStatistic] = ("mean", "std"),
     ) -> pd.DataFrame:
         """Return posterior statistics for each target.
@@ -939,7 +970,7 @@ class Campaign(SerialMixin):
 
     def identify_non_dominated_configurations(
         self,
-        configurations: pd.DataFrame | None = None,
+        configurations: IntoDataFrame | None = None,
         /,
         *,
         consider_campaign_measurements: bool = True,
@@ -987,6 +1018,7 @@ class Campaign(SerialMixin):
         if configurations is None:
             configurations = self.measurements
         else:
+            configurations = nw.from_native(configurations, eager_only=True).to_pandas()
             validate_target_input(configurations, self.objective.targets)
 
         if consider_campaign_measurements and not self.measurements.empty:
