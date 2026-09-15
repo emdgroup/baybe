@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import base64
 import contextlib
-import pickle
 from datetime import datetime, timedelta
 from typing import (
     TYPE_CHECKING,
@@ -18,10 +16,17 @@ from typing import (
 
 import attrs
 import cattrs
-import pandas as pd
+import narwhals.stable.v2 as nw
 from cattrs.gen import make_dict_structure_fn
 from cattrs.strategies import configure_union_passthrough
+from narwhals.stable.v2.typing import IntoDataFrame
 
+from baybe.serialization.utils import (
+    _structure_nw_dataframe,
+    _unstructure_nw_dataframe,
+    deserialize_dataframe,
+    serialize_dataframe,
+)
 from baybe.utils.basic import find_subclass, refers_to
 from baybe.utils.boolean import (
     AutoBool,
@@ -182,31 +187,6 @@ def _make_block_mismatching_type_hook(cls: type[_T]):
     return structure_concrete
 
 
-def _structure_dataframe_hook(obj: str | dict, _) -> pd.DataFrame:
-    """Deserialize a DataFrame."""
-    if isinstance(obj, str):
-        pickled_df = base64.b64decode(obj.encode("utf-8"))
-        return pickle.loads(pickled_df)
-    elif isinstance(obj, dict):
-        if _CONSTRUCTOR_FIELD not in obj:
-            raise ValueError(
-                f"For deserializing a dataframe from a dictionary, "
-                f"the '{_CONSTRUCTOR_FIELD}' key must be provided.",
-            )
-        return select_constructor_hook(obj, pd.DataFrame)
-    else:
-        raise ValueError(
-            "Unknown object type for deserializing a dataframe. Supported types are "
-            "strings and dictionaries.",
-        )
-
-
-def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
-    """Serialize a DataFrame."""
-    pickled_df = pickle.dumps(df)
-    return base64.b64encode(pickled_df).decode("utf-8")
-
-
 def _expand_non_baybe_path(cls: type) -> str:
     """Expand the class path for non-BayBE classes to include the module."""
     if cls.__module__.startswith("baybe."):
@@ -285,8 +265,12 @@ converter.register_structure_hook_factory(
     ),
     _make_block_mismatching_type_hook,
 )
-converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
-converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
+converter.register_unstructure_hook(IntoDataFrame, serialize_dataframe)
+converter.register_structure_hook(
+    IntoDataFrame, lambda obj, _: deserialize_dataframe(obj)
+)
+converter.register_unstructure_hook(nw.DataFrame, _unstructure_nw_dataframe)
+converter.register_structure_hook(nw.DataFrame, _structure_nw_dataframe)
 converter.register_unstructure_hook(datetime, lambda x: x.isoformat())
 converter.register_structure_hook(datetime, lambda x, _: datetime.fromisoformat(x))
 converter.register_unstructure_hook(timedelta, lambda x: f"{x.total_seconds()}s")
