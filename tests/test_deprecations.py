@@ -953,16 +953,18 @@ def test_deprecated_discrete_subspace_deserialization():
         SubspaceDiscrete.from_dict(base_dict | {"comp_rep": {}})
 
 
+@Settings(default_dataframe_backend="pandas")
 def test_deprecated_exp_rep_deserialization():
     """Deserialization from the legacy ``parameters`` + ``exp_rep`` format warns."""
     p = NumericalDiscreteParameter("p", [0, 1])
     df = pd.DataFrame({"p": [0, 1]})
     expected = SubspaceDiscrete.from_dataframe(parameters=[p], df=df)
-    # Build a legacy dict as produced by the old SubspaceDiscrete serialization
+    # Build a legacy dict as produced by the old SubspaceDiscrete serialization,
+    # with exp_rep encoded as a pickle/base64 string (old format)
     legacy_dict = {
         "type": "SubspaceDiscrete",
         "parameters": [converter.unstructure(p, unstructure_as=DiscreteParameter)],
-        "exp_rep": converter.unstructure(expected.get_candidates()),
+        "exp_rep": _legacy_serialize(expected.get_candidates()),
         "batch_constraints": [],
     }
     with pytest.warns(DeprecationWarning, match="exp_rep"):
