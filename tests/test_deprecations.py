@@ -1,6 +1,8 @@
 """Deprecation tests."""
 
+import base64
 import os
+import pickle
 import warnings
 from contextlib import nullcontext
 from itertools import pairwise
@@ -766,6 +768,19 @@ def test_legacy_excluded_metadata_deserialization():
         ).reset_index(drop=True),
         expected.sort_values(expected.columns.tolist()).reset_index(drop=True),
     )
+
+
+@pytest.mark.parametrize(
+    "df",
+    [
+        pytest.param(pd.DataFrame(), id="empty"),
+        pytest.param(pd.DataFrame({"x": [1, 2], "y": ["a", "b"]}), id="non-empty"),
+    ],
+)
+def test_legacy_pickle_dataframe_deserialization(df):
+    """A legacy pickle/base64-encoded pandas DataFrame is correctly deserialized."""
+    encoded = base64.b64encode(pickle.dumps(df)).decode()
+    pd.testing.assert_frame_equal(converter.structure(encoded, pd.DataFrame), df)
 
 
 @pytest.mark.parametrize("positional", [True, False])

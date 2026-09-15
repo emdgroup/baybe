@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import contextlib
 from datetime import datetime, timedelta
 from typing import (
@@ -17,6 +18,7 @@ from typing import (
 import attrs
 import cattrs
 import narwhals.stable.v2 as nw
+import pandas as pd
 from cattrs.gen import make_dict_structure_fn
 from cattrs.strategies import configure_union_passthrough
 from narwhals.stable.v2.typing import IntoDataFrame
@@ -279,3 +281,20 @@ converter.register_structure_hook(
 )
 converter.register_unstructure_hook(AutoBool, unstructure_autobool)
 converter.register_structure_hook(AutoBool, structure_autobool)
+
+
+# >>>>>>>>>> Deprecation
+def _structure_pandas_dataframe(obj: str | dict, _: Any, /) -> pd.DataFrame:
+    """Legacy dataframe deserialization for pickle/base64 encoding."""
+    if isinstance(obj, dict):
+        return select_constructor_hook(obj.copy(), pd.DataFrame)
+    try:
+        return _structure_nw_dataframe(obj, None).to_pandas()
+    except Exception:
+        import pickle
+
+        return pickle.loads(base64.b64decode(obj.encode("utf-8")))
+
+
+converter.register_structure_hook(pd.DataFrame, _structure_pandas_dataframe)
+# <<<<<<<<<< Deprecation
