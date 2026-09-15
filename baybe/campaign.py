@@ -1012,37 +1012,62 @@ def _drop_version(dict_: dict) -> dict:
 
 
 # >>>>>>>>>> Deprecation
-def _discard_legacy_fields(dict_: dict, /) -> dict:
-    """Discard legacy fields from a Campaign dictionary during structuring."""
+_EXCLUDED = "excluded"
+_MEASURED = "measured"
+_RECOMMENDED = "recommended"
+
+
+def _unpickle_dataframe(encoded: str, /) -> pd.DataFrame:
+    """Deserialize a legacy pickle/base64-encoded pandas DataFrame."""
+    import base64
+    import pickle
+
+    return pickle.loads(base64.b64decode(encoded.encode("utf-8")))
+
+
+def _migrate_legacy_campaign(dict_: dict, /) -> dict:
+    """Migrate a legacy Campaign dictionary to the current format.
+
+    Handles all structural changes made after the 0.15.0 release:
+    - ``n_fits_done`` / ``n_batches_done`` fields (discarded)
+    - ``measurements_exp`` key rename to ``measurements``
+    - ``FitNr`` / ``BatchNr`` columns in measurements (stripped)
+    - Single ``pd.DataFrame`` ``measurements`` (pickle/base64) converted to
+      ``list[nw.DataFrame]`` (parquet/base64)
+    - ``searchspace_metadata`` with ``_RECOMMENDED`` / ``_EXCLUDED`` columns
+      migrated to ``recommended_experiments`` / ``excluded_experiments``
+    - ``cached_recommendation`` (any format) discarded
+    """
     dict_.pop("n_fits_done", None)
     dict_.pop("n_batches_done", None)
 
-    # Migrate legacy "measurements_exp" key to "measurements"
+    # Rename legacy measurements key
     if "measurements_exp" in dict_:
         dict_["measurements"] = dict_.pop("measurements_exp")
 
-    # Strip FitNr/BatchNr columns from legacy measurements
-    if "measurements" in dict_:
-        meas = converter.structure(dict_["measurements"], pd.DataFrame)
-        cols_to_drop = [c for c in ("FitNr", "BatchNr") if c in meas.columns]
-        if cols_to_drop:
-            dict_["measurements"] = converter.unstructure(
-                meas.drop(columns=cols_to_drop)
-            )
+    # Convert single pd.DataFrame measurements (old pickle/base64 string) to
+    # list[nw.DataFrame] (parquet/base64 list), stripping legacy columns along the way
+    if "measurements" in dict_ and isinstance(dict_["measurements"], str):
+        meas = _unpickle_dataframe(dict_["measurements"])
+        meas = meas.drop(columns=[c for c in ("FitNr", "BatchNr") if c in meas.columns])
+        batches = [] if meas.empty else [nw.from_native(meas, eager_only=True)]
+        dict_["measurements"] = converter.unstructure(
+            batches,
+            unstructure_as=list[nw.DataFrame],
+        )
 
-    # Migrate legacy _searchspace_metadata to new fields
+    # Migrate legacy searchspace metadata to new fields
     if "searchspace_metadata" in dict_:
-        metadata = converter.structure(dict_.pop("searchspace_metadata"), pd.DataFrame)
-        if _RECOMMENDED in metadata.columns:
-            if "recommended_experiments" not in dict_:
-                recommended_idxs = metadata.index[metadata[_RECOMMENDED]]
-                if len(recommended_idxs) > 0:
-                    dict_["_legacy_recommended_idxs"] = recommended_idxs
-        if _EXCLUDED in metadata.columns:
-            if "excluded_experiments" not in dict_:
-                excluded_idxs = metadata.index[metadata[_EXCLUDED]]
-                if len(excluded_idxs) > 0:
-                    dict_["_legacy_excluded_idxs"] = excluded_idxs
+        metadata = _unpickle_dataframe(dict_.pop("searchspace_metadata"))
+        if _RECOMMENDED in metadata.columns and "recommended_experiments" not in dict_:
+            recommended_idxs = metadata.index[metadata[_RECOMMENDED]]
+            dict_["_legacy_recommended_idxs"] = recommended_idxs.tolist()
+        if _EXCLUDED in metadata.columns and "excluded_experiments" not in dict_:
+            excluded_idxs = metadata.index[metadata[_EXCLUDED]]
+            dict_["_legacy_excluded_idxs"] = excluded_idxs.tolist()
+
+    # Drop cache
+    dict_.pop("cached_recommendation", None)
 
     return dict_
 
@@ -1054,15 +1079,21 @@ def _prepare_for_structuring(dict_: dict, /) -> dict:
     """Prepare a Campaign dictionary for structuring."""
     dict_ = dict_.copy()
     _drop_version(dict_)
-    _discard_legacy_fields(dict_)
+    _migrate_legacy_campaign(dict_)
     return dict_
 
 
 unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
-    Campaign, converter, _cattrs_include_init_false=True
+    Campaign,
+    converter,
+    _cattrs_include_init_false=True,
+    _cached_recommendation=cattrs.gen.override(omit=True),
 )
 structure_hook = cattrs.gen.make_dict_structure_fn(
-    Campaign, converter, _cattrs_include_init_false=True
+    Campaign,
+    converter,
+    _cattrs_include_init_false=True,
+    _cached_recommendation=cattrs.gen.override(omit=True),
 )
 converter.register_unstructure_hook(
     Campaign, lambda x: _add_version(unstructure_hook(x))
