@@ -21,13 +21,10 @@ import narwhals.stable.v2 as nw
 import pandas as pd
 from cattrs.gen import make_dict_structure_fn
 from cattrs.strategies import configure_union_passthrough
-from narwhals.stable.v2.typing import IntoDataFrame
 
 from baybe.serialization.utils import (
     _structure_nw_dataframe,
     _unstructure_nw_dataframe,
-    deserialize_dataframe,
-    serialize_dataframe,
 )
 from baybe.utils.basic import find_subclass, refers_to
 from baybe.utils.boolean import (
@@ -266,10 +263,6 @@ converter.register_structure_hook_factory(
         attrs.has(cls) and not is_abstract(cls) and cls.__module__.startswith("baybe.")
     ),
     _make_block_mismatching_type_hook,
-)
-converter.register_unstructure_hook(IntoDataFrame, serialize_dataframe)
-converter.register_structure_hook(
-    IntoDataFrame, lambda obj, _: deserialize_dataframe(obj)
 )
 converter.register_unstructure_hook(nw.DataFrame, _unstructure_nw_dataframe)
 converter.register_structure_hook(nw.DataFrame, _structure_nw_dataframe)
