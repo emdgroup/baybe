@@ -36,7 +36,10 @@ if TYPE_CHECKING:
 _T = TypeVar("_T")
 
 _TYPE_FIELD = "type"
-"""The name of the field used to store the type information in serialized objects."""
+"""Key used to identify the type in dict-based deserialization."""
+
+_CONSTRUCTOR_FIELD = "constructor"
+"""Key used to identify the constructor in dict-based deserialization."""
 
 converter = cattrs.Converter(unstruct_collection_overrides={set: list}, use_alias=True)
 """The default converter for (de-)serializing BayBE-related objects."""
@@ -185,10 +188,10 @@ def _structure_dataframe_hook(obj: str | dict, _) -> pd.DataFrame:
         pickled_df = base64.b64decode(obj.encode("utf-8"))
         return pickle.loads(pickled_df)
     elif isinstance(obj, dict):
-        if "constructor" not in obj:
+        if _CONSTRUCTOR_FIELD not in obj:
             raise ValueError(
-                "For deserializing a dataframe from a dictionary, the 'constructor' "
-                "keyword must be provided as key.",
+                f"For deserializing a dataframe from a dictionary, "
+                f"the '{_CONSTRUCTOR_FIELD}' key must be provided.",
             )
         return select_constructor_hook(obj, pd.DataFrame)
     else:
@@ -235,7 +238,7 @@ def block_deserialization_hook(_: Any, cls: type) -> NoReturn:  # noqa: DOC101, 
 def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
     """Use the constructor specified in the 'constructor' field for deserialization."""
     # If a constructor is specified, use it
-    if constructor_name := specs.pop("constructor", None):
+    if constructor_name := specs.pop(_CONSTRUCTOR_FIELD, None):
         # Drop potentially existing type field
         # (The type is already fully determined in this execution branch)
         specs = specs.copy()

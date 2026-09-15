@@ -35,6 +35,7 @@ from baybe.searchspace.validation import (
     validate_parameters,
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
+from baybe.serialization.core import _CONSTRUCTOR_FIELD
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -649,7 +650,7 @@ def to_searchspace(
 def validate_searchspace_from_config(specs: dict, _) -> None:
     """Validate the search space specifications while skipping costly creation steps."""
     # Validate product inputs without constructing it
-    if specs.get("constructor", None) == "from_product":
+    if specs.get(_CONSTRUCTOR_FIELD, None) == "from_product":
         parameters = converter.structure(specs["parameters"], list[Parameter])
         validate_parameters(parameters)
 
@@ -660,7 +661,7 @@ def validate_searchspace_from_config(specs: dict, _) -> None:
 
     else:
         discrete_subspace_specs = specs.get("discrete", {})
-        if discrete_subspace_specs.get("constructor", None) == "from_simplex":
+        if discrete_subspace_specs.get(_CONSTRUCTOR_FIELD, None) == "from_simplex":
             # Validate discrete simplex subspace
             _validation_converter = converter.copy()
             _validation_converter.register_structure_hook(
