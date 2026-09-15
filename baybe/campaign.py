@@ -362,7 +362,16 @@ class Campaign(SerialMixin):
         data: IntoDataFrame,
         numerical_measurements_must_be_within_tolerance: bool = True,
     ) -> None:
-        """Update previously added measurements."""
+        """Update previously added measurements.
+
+        Args:
+            data: The measurement data to be updated (with filled values for targets).
+            numerical_measurements_must_be_within_tolerance: Flag indicating if
+                numerical parameters need to be within their tolerances.
+
+        Raises:
+            NotImplementedError: This method is temporarily unavailable.
+        """
         raise NotImplementedError(
             f"'{self.update_measurements.__name__}' is temporarily unavailable."
         )
