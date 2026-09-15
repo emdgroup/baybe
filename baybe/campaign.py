@@ -69,11 +69,6 @@ if TYPE_CHECKING:
 
     _T = TypeVar("_T")
 
-# Legacy constants kept for deserialization migration only
-_EXCLUDED = "excluded"
-_MEASURED = "measured"
-_RECOMMENDED = "recommended"
-
 
 def _set_with_cache_cleared(instance: Campaign, attribute: Attribute, value: _T) -> _T:
     """Attrs-compatible hook to clear the cache when changing an attribute."""
