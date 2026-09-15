@@ -1058,19 +1058,6 @@ def _prepare_for_structuring(dict_: dict, /) -> dict:
     return dict_
 
 
-# Register (un-)structure hooks for nw.DataFrame (serialize via pandas)
-# TODO: Revisit once serialization is narwhalsified
-converter.register_unstructure_hook(
-    nw.DataFrame,
-    lambda df: converter.unstructure(df.to_pandas()),
-)
-converter.register_structure_hook(
-    nw.DataFrame,
-    lambda obj, _: nw.from_native(
-        converter.structure(obj, pd.DataFrame), eager_only=True
-    ),
-)
-
 unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
     Campaign, converter, _cattrs_include_init_false=True
 )
