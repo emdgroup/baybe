@@ -1066,6 +1066,13 @@ def _migrate_legacy_campaign(dict_: dict, /) -> dict:
             excluded_idxs = metadata.index[metadata[_EXCLUDED]]
             dict_["_legacy_excluded_idxs"] = excluded_idxs.tolist()
 
+    # Drop legacy ``comp_rep`` from the discrete subspace (was never meaningful
+    # outside of the old serialization)
+    try:
+        dict_["searchspace"]["discrete"].pop("comp_rep", None)
+    except (KeyError, AttributeError):
+        pass
+
     # Drop cache
     dict_.pop("cached_recommendation", None)
 
