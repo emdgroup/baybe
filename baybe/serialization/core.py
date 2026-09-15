@@ -277,16 +277,21 @@ converter.register_structure_hook(AutoBool, structure_autobool)
 
 
 # >>>>>>>>>> Deprecation
+_PARQUET_MAGIC = b"PAR1"
+
+
 def _structure_pandas_dataframe(obj: str | dict, _: Any, /) -> pd.DataFrame:
     """Legacy dataframe deserialization for pickle/base64 encoding."""
     if isinstance(obj, dict):
         return select_constructor_hook(obj.copy(), pd.DataFrame)
-    try:
-        return _structure_nw_dataframe(obj, None).to_pandas()
-    except Exception:
-        import pickle
 
-        return pickle.loads(base64.b64decode(obj.encode("utf-8")))
+    raw = base64.b64decode(obj.encode("utf-8"))
+    if raw[:4] == _PARQUET_MAGIC:
+        return _structure_nw_dataframe(obj, None).to_pandas()
+
+    import pickle
+
+    return pickle.loads(raw)
 
 
 converter.register_structure_hook(pd.DataFrame, _structure_pandas_dataframe)
