@@ -24,6 +24,10 @@ search spaces with a {class}`~baybe.objectives.pareto.ParetoObjective`, particul
 when many objectives or a large measured Pareto front make hypervolume-based
 acquisition expensive.
 
+TFPR's dominance and fitness approach builds on Pareto-optimal embedded modeling
+(POEM) {cite:p}`Brereton2020`. Its top-fraction cutoff is a later heuristic and is not
+part of the published POEM method.
+
 TFPR compares objective values through dominance rather than combining differently
 scaled values into a single weighted sum. Integer `weights` control how strongly each
 target contributes, `tolerances` treat practically equivalent values as ties, and

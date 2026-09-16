@@ -1,4 +1,9 @@
-"""Top-Fraction Pareto Ranking recommender."""
+"""Top-Fraction Pareto Ranking recommender.
+
+The dominance and fitness approach builds on the POEM method described by Brereton
+et al. in "Predicting drug properties with parameter-free machine learning:
+pareto-optimal embedded modeling" (https://doi.org/10.1088/2632-2153/ab891b).
+"""
 
 from __future__ import annotations
 
