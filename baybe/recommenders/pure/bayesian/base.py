@@ -19,14 +19,9 @@ from baybe.exceptions import (
     IncompatibleAcquisitionFunctionError,
 )
 from baybe.objectives.base import Objective
-from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.surrogate import SurrogateRecommender
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
-from baybe.surrogates import GaussianProcessSurrogate
-from baybe.surrogates.base import (
-    Surrogate,
-    SurrogateProtocol,
-)
 from baybe.symmetries.base import Symmetry
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
@@ -34,23 +29,9 @@ if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
 
 
-def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
-    """Replicates single-output surrogate models and passes through everything else."""
-    if isinstance(surrogate, Surrogate) and not surrogate.supports_multi_output:
-        return surrogate.replicate()
-    return surrogate
-
-
 @define
-class BayesianRecommender(PureRecommender, ABC):
+class BayesianRecommender(SurrogateRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
-
-    _surrogate_model: SurrogateProtocol = field(
-        alias="surrogate_model",
-        factory=GaussianProcessSurrogate,
-        converter=_autoreplicate,
-    )
-    """The surrogate model."""
 
     acquisition_function: AcquisitionFunction | None = field(
         default=None, converter=optional(convert_acqf)
@@ -82,17 +63,6 @@ class BayesianRecommender(PureRecommender, ABC):
         if self.acquisition_function is None:
             return qLogNEHVI() if objective.is_multi_output else qLogEI()
         return self.acquisition_function
-
-    def get_surrogate(
-        self,
-        searchspace: SearchSpace,
-        objective: Objective,
-        measurements: pd.DataFrame,
-    ) -> SurrogateProtocol:
-        """Get the trained surrogate model."""
-        # This fit applies internal caching and does not necessarily involve computation
-        self._surrogate_model.fit(searchspace, objective, measurements)
-        return self._surrogate_model
 
     def _setup_botorch_acqf(
         self,

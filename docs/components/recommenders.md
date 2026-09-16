@@ -14,6 +14,35 @@ While some pure recommenders are versatile and work across different types of se
 spaces, other are specifically designed for discrete or continuous spaces. The
 compatibility is indicated via the corresponding `compatibility` class variable.
 
+### Surrogate-Based Recommenders
+
+The
+**[`TFPRRecommender`](baybe.recommenders.pure.tfpr.TFPRRecommender)**
+uses posterior means and standard deviations from a surrogate model, then ranks the
+candidate set with Top-Fraction Pareto Ranking (TFPR). It is intended for discrete
+search spaces with a {class}`~baybe.objectives.pareto.ParetoObjective`, particularly
+when many objectives or a large measured Pareto front make hypervolume-based
+acquisition expensive.
+
+TFPR compares objective values through dominance rather than combining differently
+scaled values into a single weighted sum. Integer `weights` control how strongly each
+target contributes, `tolerances` treat practically equivalent values as ties, and
+`optimism_lambda` adds posterior uncertainty in each target's favorable direction.
+Only identity target transformations are currently supported.
+
+~~~python
+from baybe.recommenders import FPSRecommender, TFPRRecommender, TwoPhaseMetaRecommender
+
+recommender = TwoPhaseMetaRecommender(
+    initial_recommender=FPSRecommender(),
+    recommender=TFPRRecommender(
+        weights={"yield": 4, "purity": 2},
+        tolerances={"yield": 0.03, "purity": 0.05},
+        optimism_lambda=0.5,
+    ),
+)
+~~~
+
 ### Bayesian Recommenders
 
 The Bayesian recommenders in BayBE are built on the foundation of the

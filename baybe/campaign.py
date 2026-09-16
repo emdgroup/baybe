@@ -31,6 +31,7 @@ from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.pure.surrogate import SurrogateRecommender
 from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from baybe.searchspace.core import (
     SearchSpace,
@@ -750,7 +751,7 @@ class Campaign(SerialMixin):
             )
 
         recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
-        if isinstance(recommender, BayesianRecommender):
+        if isinstance(recommender, SurrogateRecommender):
             return recommender.get_surrogate(
                 self.searchspace, self.objective, self.measurements
             )
@@ -759,7 +760,7 @@ class Campaign(SerialMixin):
                 f"The current recommender is of type "
                 f"'{recommender.__class__.__name__}', which does not provide "
                 f"a surrogate model. Surrogate models are only available for "
-                f"recommender subclasses of '{BayesianRecommender.__name__}'."
+                f"recommender subclasses of '{SurrogateRecommender.__name__}'."
             )
 
     def _get_non_meta_recommender(
