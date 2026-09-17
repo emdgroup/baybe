@@ -4,10 +4,12 @@ import pytest
 from cattrs import ClassValidationError
 
 from baybe.campaign import Campaign
+from baybe.settings import Settings
 from baybe.utils.dataframe import add_fake_measurements
 from tests.serialization.utils import assert_roundtrip_consistency
 
 
+@Settings(default_dataframe_backend="pandas")
 def test_roundtrip(campaign: Campaign):
     """A serialization roundtrip yields an equivalent object."""
     assert_roundtrip_consistency(campaign)

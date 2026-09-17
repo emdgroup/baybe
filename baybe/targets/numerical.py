@@ -18,7 +18,11 @@ from typing_extensions import Self, assert_never, override
 
 from baybe.exceptions import IncompatibilityError
 from baybe.serialization import SerialMixin, converter
-from baybe.serialization.core import _TYPE_FIELD, select_constructor_hook
+from baybe.serialization.core import (
+    _CONSTRUCTOR_FIELD,
+    _TYPE_FIELD,
+    select_constructor_hook,
+)
 from baybe.targets._deprecated import (
     _VALID_TRANSFORMATIONS,
     TargetMode,
@@ -206,13 +210,13 @@ class NumericalTarget(Target, SerialMixin):
         info: dict[str, Any] = {}
         if self._constructor_info is None:
             # The init constructor has no temporary arguments
-            info["constructor"] = "__init__"
+            info[_CONSTRUCTOR_FIELD] = "__init__"
             parameters = init_fields
         else:
             # This includes the constructor name and temporary arguments
             info.update(self._constructor_info)
 
-            constructor = getattr(self, info["constructor"])
+            constructor = getattr(self, info[_CONSTRUCTOR_FIELD])
             sig = inspect.signature(constructor)
             parameters = list(sig.parameters.keys())
 
@@ -234,7 +238,7 @@ class NumericalTarget(Target, SerialMixin):
         """  # noqa: D401
         info = constructor_info.copy()
 
-        c = info.pop("constructor")
+        c = info.pop(_CONSTRUCTOR_FIELD)
         if c == "__init__":
             return cls(**info)
         else:

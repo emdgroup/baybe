@@ -39,6 +39,7 @@ from baybe.searchspace.candidates import (
 from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
+from baybe.serialization.core import _CONSTRUCTOR_FIELD
 from baybe.settings import active_settings
 from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, to_tuple
 from baybe.utils.conversion import to_string
@@ -50,7 +51,7 @@ from baybe.utils.dataframe import (
 from baybe.utils.memory import bytes_to_human_readable
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoLazyFrame
 
     from baybe.searchspace.core import SearchSpace
 
@@ -621,7 +622,7 @@ class SubspaceDiscrete(SerialMixin):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.get_candidates()
+        return self._get_candidates().collect().to_pandas()
 
     @property
     def comp_rep(self) -> pd.DataFrame:
@@ -635,7 +636,7 @@ class SubspaceDiscrete(SerialMixin):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.transform(self.get_candidates())
+        return self.transform(self._get_candidates().collect().to_pandas())
 
     # <<<<<<<<<< Deprecation
 
@@ -770,10 +771,18 @@ class SubspaceDiscrete(SerialMixin):
 
         per_constraint: list[list[npt.NDArray[np.bool_]]]
         if not self.batch_constraints:
-            per_constraint = [[np.ones(len(self.get_candidates()), dtype=bool)]]
+            per_constraint = [
+                [
+                    np.ones(
+                        self._get_candidates().select(nw.len()).collect().item(),
+                        dtype=bool,
+                    )
+                ]
+            ]
         else:
             per_constraint = [
-                c.subset_masks(self.get_candidates()) for c in self.batch_constraints
+                c.subset_masks(self._get_candidates().collect().to_pandas())
+                for c in self.batch_constraints
             ]
 
         total = prod(len(masks) for masks in per_constraint)
@@ -825,9 +834,13 @@ class SubspaceDiscrete(SerialMixin):
             )
         )
 
-    def get_candidates(self) -> pd.DataFrame:
+    def _get_candidates(self) -> nw.LazyFrame:
+        """Return all candidate parameter configurations as a narwhals LazyFrame."""
+        return self.candidates._to_lazy()
+
+    def get_candidates(self) -> IntoLazyFrame:
         """Return all candidate parameter configurations."""
-        return self.candidates.to_lazy().collect().to_pandas()
+        return self._get_candidates().to_native()
 
     def transform(
         self,
@@ -872,7 +885,7 @@ class SubspaceDiscrete(SerialMixin):
 def validate_simplex_subspace_from_config(specs: dict, _) -> None:
     """Validate the discrete space while skipping costly creation steps."""
     # Validate product inputs without constructing it
-    if specs.get("constructor", None) == "from_product":
+    if specs.get(_CONSTRUCTOR_FIELD, None) == "from_product":
         parameters = converter.structure(specs["parameters"], list[DiscreteParameter])
         validate_parameters(parameters, allow_empty=True)
 
@@ -886,7 +899,7 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
             validate_constraints(constraints, parameters)
 
     # Validate simplex inputs without constructing it
-    elif specs.get("constructor", None) == "from_simplex":
+    elif specs.get(_CONSTRUCTOR_FIELD, None) == "from_simplex":
         simplex_parameters = converter.structure(
             specs["simplex_parameters"], list[NumericalDiscreteParameter]
         )

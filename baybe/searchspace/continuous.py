@@ -35,6 +35,7 @@ from baybe.parameters.utils import (
 from baybe.searchspace.utils import select_via_flat_index
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
+from baybe.serialization.core import _CONSTRUCTOR_FIELD
 from baybe.settings import active_settings
 from baybe.utils.basic import flatten, is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
@@ -756,7 +757,7 @@ _hook = cattrs.gen.make_dict_structure_fn(SubspaceContinuous, converter)
 
 def _structure_hook(specs: dict, cls: type) -> SubspaceContinuous:
     """Structure hook that supports both constructor dispatch and legacy fields."""
-    if "constructor" in specs:
+    if _CONSTRUCTOR_FIELD in specs:
         return select_constructor_hook(specs, cls)
 
     specs = specs.copy()

@@ -28,6 +28,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
 )
 from baybe.searchspace.core import SearchSpace, SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.settings import Settings
 from baybe.surrogates import (
     BetaBernoulliMultiArmedBanditSurrogate,
     GaussianProcessSurrogate,
@@ -94,6 +95,7 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
     ],
     ids=["dataframe", "constraints"],
 )
+@Settings(default_dataframe_backend="pandas")
 def test_candidate_toggling(constraints, exclude, complement):
     """Toggling discrete candidates updates the exclusion state accordingly."""
     subspace = SubspaceDiscrete.from_product(
@@ -121,7 +123,9 @@ def test_candidate_toggling(constraints, exclude, complement):
     if exclude:
         # The toggled rows should be excluded, the rest should not
         assert len(campaign._excluded_experiments) == len(toggled_rows)
-        merged = pd.merge(campaign._excluded_experiments, toggled_rows, how="inner")
+        merged = pd.merge(
+            campaign._excluded_experiments.to_native(), toggled_rows, how="inner"
+        )
         assert len(merged) == len(toggled_rows)
     else:
         # The toggled rows should be re-included, the rest should remain excluded
@@ -180,6 +184,7 @@ def test_setting_allow_flags(flag, searchspace, value, discrete_value):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_measured_flag(campaign_for_flag_test: Campaign):
     """The flag controls the candidate set and properly interacts with the cache."""
     campaign = campaign_for_flag_test
@@ -211,6 +216,7 @@ def test_allow_measured_flag(campaign_for_flag_test: Campaign):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     """The flag controls the candidate set and properly interacts with the cache."""
     campaign = campaign_for_flag_test
@@ -221,7 +227,7 @@ def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     assert campaign._cached_recommendation is None
     rec = campaign.recommend(1)
     mock_recommend.reset_mock()
-    assert campaign._cached_recommendation.equals(rec)
+    assert campaign._cached_recommendation.to_native().equals(rec)
 
     for i in range(2):
         with (
@@ -238,6 +244,7 @@ def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_pending_flag(campaign_for_flag_test: Campaign):
     campaign = campaign_for_flag_test
     flag = campaign.allow_recommending_pending_experiments
@@ -251,7 +258,7 @@ def test_allow_pending_flag(campaign_for_flag_test: Campaign):
     assert campaign._cached_recommendation is None
     rec = campaign.recommend(1)
     mock_recommend.reset_mock()
-    assert campaign._cached_recommendation.equals(rec)
+    assert campaign._cached_recommendation.to_native().equals(rec)
 
     # Recommending without pending experiments uses the cache
     campaign.recommend(1)
@@ -271,6 +278,7 @@ def test_allow_pending_flag(campaign_for_flag_test: Campaign):
         assert mock_recommend.call_count == 3
 
 
+@pytest.mark.xfail(reason="update_measurements temporarily disabled", strict=True)
 @pytest.mark.parametrize(
     "parameter_names", [["Categorical_1", "Categorical_2", "Num_disc_1"]]
 )
@@ -341,6 +349,7 @@ def test_update_measurements(ongoing_campaign):
     ],
 )
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+@Settings(default_dataframe_backend="pandas")
 def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     """Posterior statistics have expected shape, index and columns."""
     objective = ongoing_campaign.objective

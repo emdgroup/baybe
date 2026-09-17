@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import base64
 import contextlib
-import pickle
 from datetime import datetime, timedelta
 from typing import (
     TYPE_CHECKING,
@@ -18,10 +17,15 @@ from typing import (
 
 import attrs
 import cattrs
+import narwhals.stable.v2 as nw
 import pandas as pd
 from cattrs.gen import make_dict_structure_fn
 from cattrs.strategies import configure_union_passthrough
 
+from baybe.serialization.utils import (
+    _structure_nw_dataframe,
+    _unstructure_nw_dataframe,
+)
 from baybe.utils.basic import find_subclass, refers_to
 from baybe.utils.boolean import (
     AutoBool,
@@ -36,7 +40,10 @@ if TYPE_CHECKING:
 _T = TypeVar("_T")
 
 _TYPE_FIELD = "type"
-"""The name of the field used to store the type information in serialized objects."""
+"""Key used to identify the type in dict-based deserialization."""
+
+_CONSTRUCTOR_FIELD = "constructor"
+"""Key used to identify the constructor in dict-based deserialization."""
 
 converter = cattrs.Converter(unstruct_collection_overrides={set: list}, use_alias=True)
 """The default converter for (de-)serializing BayBE-related objects."""
@@ -179,31 +186,6 @@ def _make_block_mismatching_type_hook(cls: type[_T]):
     return structure_concrete
 
 
-def _structure_dataframe_hook(obj: str | dict, _) -> pd.DataFrame:
-    """Deserialize a DataFrame."""
-    if isinstance(obj, str):
-        pickled_df = base64.b64decode(obj.encode("utf-8"))
-        return pickle.loads(pickled_df)
-    elif isinstance(obj, dict):
-        if "constructor" not in obj:
-            raise ValueError(
-                "For deserializing a dataframe from a dictionary, the 'constructor' "
-                "keyword must be provided as key.",
-            )
-        return select_constructor_hook(obj, pd.DataFrame)
-    else:
-        raise ValueError(
-            "Unknown object type for deserializing a dataframe. Supported types are "
-            "strings and dictionaries.",
-        )
-
-
-def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
-    """Serialize a DataFrame."""
-    pickled_df = pickle.dumps(df)
-    return base64.b64encode(pickled_df).decode("utf-8")
-
-
 def _expand_non_baybe_path(cls: type) -> str:
     """Expand the class path for non-BayBE classes to include the module."""
     if cls.__module__.startswith("baybe."):
@@ -235,7 +217,7 @@ def block_deserialization_hook(_: Any, cls: type) -> NoReturn:  # noqa: DOC101, 
 def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
     """Use the constructor specified in the 'constructor' field for deserialization."""
     # If a constructor is specified, use it
-    if constructor_name := specs.pop("constructor", None):
+    if constructor_name := specs.pop(_CONSTRUCTOR_FIELD, None):
         # Drop potentially existing type field
         # (The type is already fully determined in this execution branch)
         specs = specs.copy()
@@ -282,8 +264,8 @@ converter.register_structure_hook_factory(
     ),
     _make_block_mismatching_type_hook,
 )
-converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
-converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
+converter.register_unstructure_hook(nw.DataFrame, _unstructure_nw_dataframe)
+converter.register_structure_hook(nw.DataFrame, _structure_nw_dataframe)
 converter.register_unstructure_hook(datetime, lambda x: x.isoformat())
 converter.register_structure_hook(datetime, lambda x, _: datetime.fromisoformat(x))
 converter.register_unstructure_hook(timedelta, lambda x: f"{x.total_seconds()}s")
@@ -292,3 +274,25 @@ converter.register_structure_hook(
 )
 converter.register_unstructure_hook(AutoBool, unstructure_autobool)
 converter.register_structure_hook(AutoBool, structure_autobool)
+
+
+# >>>>>>>>>> Deprecation
+_PARQUET_MAGIC = b"PAR1"
+
+
+def _structure_pandas_dataframe(obj: str | dict, _: Any, /) -> pd.DataFrame:
+    """Legacy dataframe deserialization for pickle/base64 encoding."""
+    if isinstance(obj, dict):
+        return select_constructor_hook(obj.copy(), pd.DataFrame)
+
+    raw = base64.b64decode(obj.encode("utf-8"))
+    if raw[:4] == _PARQUET_MAGIC:
+        return _structure_nw_dataframe(obj, None).to_pandas()
+
+    import pickle
+
+    return pickle.loads(raw)
+
+
+converter.register_structure_hook(pd.DataFrame, _structure_pandas_dataframe)
+# <<<<<<<<<< Deprecation

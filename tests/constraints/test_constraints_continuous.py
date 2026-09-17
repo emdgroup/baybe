@@ -7,6 +7,7 @@ from pytest import param
 
 from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.settings import Settings
 from baybe.utils.dataframe import add_fake_measurements
 from tests.conftest import run_iterations
 
@@ -108,6 +109,7 @@ def test_intrapoint_linear_constraints(
         ),
     ],
 )
+@Settings(default_dataframe_backend="pandas")
 def test_interpoint_linear_constraints(
     campaign_non_sequential,
     n_iterations,
@@ -139,6 +141,7 @@ def test_interpoint_linear_constraints(
 @pytest.mark.parametrize(
     "constraint_names", [["ContiConstraint_4", "InterConstraint_2"]]
 )
+@Settings(default_dataframe_backend="pandas")
 def test_interpoint_intrapoint_mix(
     campaign_non_sequential,
     n_iterations,

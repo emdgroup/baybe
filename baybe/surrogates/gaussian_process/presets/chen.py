@@ -6,7 +6,6 @@ import gc
 import math
 from typing import TYPE_CHECKING, ClassVar
 
-import pandas as pd
 from attrs import define
 from typing_extensions import override
 
@@ -27,6 +26,8 @@ from baybe.surrogates.gaussian_process.components.likelihood import (
 from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFactory
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
+
     from baybe.kernels.base import Kernel
     from baybe.searchspace.core import SearchSpace
 
@@ -40,7 +41,10 @@ class _ChenNumericalKernelFactory(_PureKernelFactory):
 
     @override
     def _make(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> Kernel:
         n_dimensions = self._get_effective_dimensionality(searchspace)
         lengthscale = 0.4 * math.sqrt(n_dimensions) + 4.0
