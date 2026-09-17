@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   anywhere. In particular, recommendation dataframes no longer reflect discrete subspace
   locations via their index. Similarly, `_recommend_discrete` and kin now return a
   dataframe-based subselection instead of a `pd.Index`.
+- `Objective.handle_missing_values` is now private (`_handle_missing_values`)
 - All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
   are now keyword-only
 - `Campaign.measurements` no longer contains `FitNr` or `BatchNr` metadata columns

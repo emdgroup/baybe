@@ -46,7 +46,7 @@ def recommend_discrete_with_subsets(
     """
     import torch
 
-    candidates = subspace_discrete.get_candidates()
+    candidates = subspace_discrete._get_candidates().collect()
     masks: Iterable[npt.NDArray[np.bool_]]
     if subspace_discrete.n_subsets <= recommender.max_n_subsets:
         masks = subspace_discrete.subset_masks(min_candidates=batch_size)
@@ -65,9 +65,7 @@ def recommend_discrete_with_subsets(
                 subspace_discrete,
                 candidates=TableCandidates(
                     subspace_discrete.parameters,
-                    nw.from_native(candidates, eager_only=True)
-                    .filter(mask.tolist())
-                    .to_native(),
+                    candidates.filter(mask.tolist()).to_native(),
                 ),
             )
 
@@ -128,7 +126,7 @@ def recommend_discrete_without_subsets(
 
     from botorch.optim import optimize_acqf_discrete
 
-    candidates = subspace_discrete.get_candidates()
+    candidates = subspace_discrete._get_candidates().collect()
     candidates_comp = subspace_discrete.transform(candidates)
     choices = to_tensor(candidates_comp)
 
@@ -143,7 +141,7 @@ def recommend_discrete_without_subsets(
 
     return nw.maybe_reset_index(
         _df_with_backend(
-            nw.from_native(candidates, eager_only=True)[row_idxs],
+            candidates[row_idxs],
             active_settings.default_dataframe_backend,
         )
     ).to_native()

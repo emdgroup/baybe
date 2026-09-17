@@ -15,7 +15,12 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
-from baybe.utils.dataframe import _copy_index, get_transform_objects, to_tensor
+from baybe.utils.dataframe import (
+    _copy_index,
+    _df_with_backend,
+    get_transform_objects,
+    to_tensor,
+)
 from baybe.utils.dataframe import (
     handle_missing_values as df_handle_missing_values,
 )
@@ -111,9 +116,9 @@ class Objective(ABC, SerialMixin):
         """The end-to-end transformation applied, from targets to objective values."""
         return self.to_botorch()
 
-    def handle_missing_values(
-        self, measurements: pd.DataFrame
-    ) -> dict[str, pd.DataFrame]:
+    def _handle_missing_values(
+        self, measurements: IntoDataFrameT
+    ) -> dict[str, IntoDataFrameT]:
         """Handle missing values in the given measurements for each modeled quantity.
 
         Args:
@@ -122,10 +127,16 @@ class Objective(ABC, SerialMixin):
         Returns:
             A dictionary with one dataframe for each modeled quantity.
         """
-        cleaned: dict[str, pd.DataFrame] = {}
+        # TODO: The logic should be reworked. Currently, the returned dataframes contain
+        #    all original columns, even those not related to the modeled quantities.
+        measurements_nw = nw.from_native(measurements, eager_only=True)
+        measurements_pd = measurements_nw.to_pandas()
+        cleaned: dict[str, IntoDataFrameT] = {}
         for quantity, target_names in self._model_quantities_to_target_names.items():
-            data = df_handle_missing_values(measurements, target_names, drop=True)
-            cleaned[quantity] = data
+            data_pd = df_handle_missing_values(measurements_pd, target_names, drop=True)
+            cleaned[quantity] = _df_with_backend(
+                nw.from_native(data_pd, eager_only=True), measurements_nw.implementation
+            ).to_native()
 
         return cleaned
 

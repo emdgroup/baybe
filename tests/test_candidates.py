@@ -35,7 +35,7 @@ edf = pd.DataFrame()
 def test_empty_candidates():
     """EmptyCandidates has no parameters, is finite, and yields an empty lazy frame."""
     candidates = EmptyCandidates()
-    candidates_ldf = candidates.to_lazy()
+    candidates_ldf = candidates._to_lazy()
     candidates_df = candidates_ldf.collect()
 
     assert candidates.parameters == ()
@@ -58,7 +58,7 @@ def test_table_candidates_generation(dataframe_factory):
     data = pd.DataFrame({"disc": [1, 2], "cat": ["a", "b"]})
     df = dataframe_factory(data)
     candidates = TableCandidates(parameters, df)
-    candidates_ldf = candidates.to_lazy()
+    candidates_ldf = candidates._to_lazy()
     candidates_df = candidates_ldf.collect()
 
     assert candidates.is_finite
@@ -73,7 +73,7 @@ def test_table_candidates_empty_rows():
     parameters = [p_disc, p_cat]
     empty_df = pd.DataFrame(columns=[p.name for p in parameters])
     candidates = TableCandidates(parameters, empty_df)
-    candidates_df = candidates.to_lazy().collect()
+    candidates_df = candidates._to_lazy().collect()
 
     assert candidates.is_finite
     assert set(candidates_df.columns) == {p.name for p in parameters}
@@ -152,7 +152,7 @@ def test_product_candidates_generation(constraints, expected):
     """ProductCandidates generates the expected lazy dataframe."""
     parameters = [p_disc, p_disc2]
     candidates = ProductCandidates(parameters, constraints)
-    candidates_ldf = candidates.to_lazy()
+    candidates_ldf = candidates._to_lazy()
     candidates_df = candidates_ldf.collect()
 
     assert candidates.is_finite
