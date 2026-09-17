@@ -32,7 +32,10 @@ TFPR compares objective values through dominance rather than combining different
 scaled values into a single weighted sum. Integer `weights` control how strongly each
 target contributes, `tolerances` treat practically equivalent values as ties, and
 `optimism_lambda` adds posterior uncertainty in each target's favorable direction.
-Only identity target transformations are currently supported.
+Only identity target transformations are currently supported. Pairwise comparisons are
+vectorized and limited by `top_fraction`, but their work remains quadratic in the
+retained per-target sets. Extremely large candidate spaces can therefore require a
+smaller explicit fraction; further scaling optimizations are outside this first MVP.
 
 ~~~python
 from baybe.recommenders import FPSRecommender, TFPRRecommender, TwoPhaseMetaRecommender

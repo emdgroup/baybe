@@ -13,6 +13,7 @@ from numpy.testing import assert_allclose
 from baybe import Campaign
 from baybe.exceptions import IncompatibilityError
 from baybe.objectives import ParetoObjective
+from baybe.objectives.base import Objective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.recommenders import (
     RandomRecommender,
@@ -34,7 +35,7 @@ class FakePosteriorStatsSurrogate:
     def fit(
         self,
         searchspace: SearchSpace,
-        objective: ParetoObjective,
+        objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
         """Record the training data."""
@@ -58,6 +59,26 @@ class FakePosteriorStatsSurrogate:
             },
             index=candidates.index,
         )
+
+    def to_botorch(self) -> NoReturn:
+        """Block unused conversion to BoTorch."""
+        raise NotImplementedError
+
+
+class FakeUnsupportedSurrogate:
+    """Surrogate that records unexpected fitting and lacks posterior statistics."""
+
+    def __init__(self) -> None:
+        self.was_fit = False
+
+    def fit(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
+        """Record an unexpected fit call."""
+        self.was_fit = True
 
     def to_botorch(self) -> NoReturn:
         """Block unused conversion to BoTorch."""
@@ -145,7 +166,7 @@ def test_auto_top_fraction(n_candidates: int, expected: float) -> None:
 
 
 def test_tfpr_fitness_matches_dense_reference() -> None:
-    """The TFPR implementation matches a dense reference calculation."""
+    """The vectorized implementation matches a dense reference."""
     values = np.array(
         [
             [4.0, 0.0],
@@ -159,6 +180,34 @@ def test_tfpr_fitness_matches_dense_reference() -> None:
 
     actual = _tfpr_fitness(values, weights, tolerances, 0.75)
     expected = _dense_tfpr_fitness(values, weights, tolerances, 0.75)
+
+    assert_allclose(actual, expected)
+
+
+@pytest.mark.parametrize(
+    ("n_candidates", "n_objectives", "top_fraction", "seed"),
+    [
+        pytest.param(2, 2, 1.0, 1, id="minimum"),
+        pytest.param(7, 3, 0.4, 2, id="inactive_candidates"),
+        pytest.param(20, 5, 0.2, 3, id="many_inactive_candidates"),
+        pytest.param(25, 10, 0.7, 4, id="many_objectives"),
+    ],
+)
+def test_tfpr_fitness_matches_dense_reference_randomized(
+    n_candidates: int,
+    n_objectives: int,
+    top_fraction: float,
+    seed: int,
+) -> None:
+    """Vectorized fitness matches the dense reference across varied inputs."""
+    rng = np.random.default_rng(seed)
+    values = rng.integers(-5, 6, size=(n_candidates, n_objectives)).astype(float)
+    weights = rng.integers(0, 5, size=n_objectives)
+    weights[0] = 1
+    tolerances = rng.choice([0.0, 0.05, 0.2], size=n_objectives)
+
+    actual = _tfpr_fitness(values, weights, tolerances, top_fraction)
+    expected = _dense_tfpr_fitness(values, weights, tolerances, top_fraction)
 
     assert_allclose(actual, expected)
 
@@ -238,6 +287,21 @@ def test_campaign_get_surrogate_accepts_tfpr(
 
     assert campaign.get_surrogate() is surrogate
     assert surrogate.measurements is not None
+
+
+def test_recommend_checks_surrogate_capability_before_fitting(
+    searchspace: SearchSpace,
+    pareto_objective: ParetoObjective,
+    measurements: pd.DataFrame,
+) -> None:
+    """Unsupported surrogates are rejected before fitting."""
+    surrogate = FakeUnsupportedSurrogate()
+    recommender = TFPRRecommender(surrogate_model=surrogate)
+
+    with pytest.raises(IncompatibilityError, match="posterior_stats"):
+        recommender.recommend(1, searchspace, pareto_objective, measurements)
+
+    assert not surrogate.was_fit
 
 
 @pytest.mark.parametrize(

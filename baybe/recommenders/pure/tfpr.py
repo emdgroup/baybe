@@ -83,7 +83,7 @@ def _tfpr_fitness(
     top_fraction: float | None,
     /,
 ) -> np.ndarray:
-    """Compute TFPR fitness scores without materializing a dense pair matrix."""
+    """Compute exact TFPR fitness with vectorized pairwise comparisons."""
     n_candidates, _ = values.shape
     fitness = np.zeros(n_candidates, dtype=float)
     total_weight = int(weights.sum())
@@ -98,33 +98,43 @@ def _tfpr_fitness(
 
     top_indices: list[np.ndarray] = []
     top_masks: list[np.ndarray] = []
+    top_values: list[np.ndarray] = []
     for objective_index in range(values.shape[1]):
         order = np.argsort(-values[:, objective_index], kind="stable")[:top_k]
         top_indices.append(order)
+        top_values.append(values[order, objective_index])
         mask = np.zeros(n_candidates, dtype=bool)
         mask[order] = True
         top_masks.append(mask)
 
-    for candidate_index in range(n_candidates):
-        dominance = np.zeros(n_candidates, dtype=float)
+    active_indices = np.flatnonzero(np.any(top_masks, axis=0))
+    active_positions = np.full(n_candidates, -1, dtype=int)
+    active_positions[active_indices] = np.arange(len(active_indices))
+    top_positions = [active_positions[indices] for indices in top_indices]
+    n_inactive = n_candidates - len(active_indices)
+
+    # Reuse one row buffer while vectorizing each candidate's pairwise comparisons.
+    dominance = np.zeros(len(active_indices), dtype=float)
+    for candidate_position, candidate_index in enumerate(active_indices):
+        dominance.fill(0.0)
         for objective_index, weight in enumerate(weights):
             if weight == 0 or not top_masks[objective_index][candidate_index]:
                 continue
 
-            indices = top_indices[objective_index]
+            positions = top_positions[objective_index]
             candidate_value = values[candidate_index, objective_index]
-            other_values = values[indices, objective_index]
-            not_self = indices != candidate_index
+            other_values = top_values[objective_index]
+            not_self = positions != candidate_position
             ties = _tie_mask(candidate_value, other_values, tolerances[objective_index])
             wins = (candidate_value > other_values) & ~ties
 
-            dominance[indices[wins & not_self]] += weight
-            dominance[indices[ties & not_self]] += weight / 2
+            dominance[positions[wins & not_self]] += weight
+            dominance[positions[ties & not_self]] += weight / 2
 
-        others = np.arange(n_candidates) != candidate_index
         mean_dominance = dominance.sum() / ((n_candidates - 1) * total_weight)
-        n_dominating = np.count_nonzero(dominance[others] > threshold)
-        n_submitting = np.count_nonzero(dominance[others] < threshold)
+        n_dominating = np.count_nonzero(dominance > threshold)
+        # Self-comparisons remain zero and must not count as submissions.
+        n_submitting = np.count_nonzero(dominance < threshold) - 1 + n_inactive
         fitness[candidate_index] = (
             mean_dominance * (n_dominating + _EPSILON) / (n_submitting + _EPSILON)
         )
@@ -313,12 +323,12 @@ class TFPRRecommender(SurrogateRecommender):
                 numerical_measurements_must_be_within_tolerance=False,
             )
 
-        surrogate = self.get_surrogate(searchspace, objective, measurements)
-        if not hasattr(surrogate, "posterior_stats"):
+        if not hasattr(self._surrogate_model, "posterior_stats"):
             raise IncompatibilityError(
-                f"The used surrogate type '{surrogate.__class__.__name__}' does not "
-                f"provide a 'posterior_stats' method."
+                f"The used surrogate type '{self._surrogate_model.__class__.__name__}' "
+                f"does not provide a 'posterior_stats' method."
             )
+        self.get_surrogate(searchspace, objective, measurements)
 
         self._objective = objective
         with Settings(preprocess_dataframes=False):
@@ -345,6 +355,10 @@ class TFPRRecommender(SurrogateRecommender):
             candidates_exp: The experimental representation of all discrete candidate
                 points to be considered.
             batch_size: The size of the recommendation batch.
+
+        Raises:
+            IncompatibilityError: If no Pareto objective is available.
+            ValueError: If the surrogate returns invalid posterior statistics.
 
         Returns:
             The dataframe indices of the recommended points in the provided

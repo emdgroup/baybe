@@ -44,11 +44,11 @@ class SurrogateRecommender(PureRecommender, ABC):
     ) -> pd.DataFrame:
         """See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
         return super().recommend(
-            batch_size,
-            searchspace,
-            objective,
-            measurements,
-            pending_experiments,
+            batch_size=batch_size,
+            searchspace=searchspace,
+            objective=objective,
+            measurements=measurements,
+            pending_experiments=pending_experiments,
         )
 
     def get_surrogate(
