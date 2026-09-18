@@ -44,6 +44,7 @@ from baybe.recommenders.pure.bayesian.botorch import (
     BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.pure.tfpr import TFPRRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogates.bandit import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
@@ -91,10 +92,12 @@ valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecom
 
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
 #  allows no training data
+# TFPR requires a Pareto objective and is covered by dedicated tests.
 valid_discrete_recommenders = [
     TwoPhaseMetaRecommender(recommender=cls())
     for cls in get_subclasses(PureRecommender)
-    if cls.compatibility
+    if cls is not TFPRRecommender
+    and cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender

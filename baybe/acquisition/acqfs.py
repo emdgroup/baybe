@@ -413,15 +413,15 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
             )
 
         # Convert arrays and set default optimization direction
-        array = np.asarray(array)
+        array_np = np.asarray(array, dtype=float)
         if maximize is None:
-            maximize = [True for _ in range(array.shape[1])]
+            maximize = [True for _ in range(array_np.shape[1])]
         maximize = np.where(maximize, 1.0, -1.0)
 
         # Compute bounds
-        array = array * maximize[None, :]
-        min = np.min(array, axis=0)
-        max = np.max(array, axis=0)
+        array_np = array_np * maximize[None, :]
+        min = array_np.min(axis=0)
+        max = array_np.max(axis=0)
 
         return (min - factor * (max - min)) * maximize
 
