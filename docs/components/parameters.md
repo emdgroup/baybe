@@ -289,6 +289,21 @@ For details, refer to [transfer learning](../concepts/transfer_learning.md).
 (parameter_kernel_overrides)=
 ## Parameter-Specific Kernel Overrides
 
+By default, the Gaussian process models all parameters with a single surrogate kernel.
+A parameter can instead be assigned its own kernel, which then replaces the surrogate
+kernel on that parameter's computational dimensions. The remaining dimensions stay with
+the surrogate kernel, and the two are combined multiplicatively:
+
+```{math}
+k_{\mathrm{effective}}
+= k_{\mathrm{surrogate}}(X_{\mathrm{remaining}})
+\prod_{p \in P_{\mathrm{override}}} k_p(X_p).
+```
+
+Here, "surrogate kernel" refers to the ``kernel_or_factory`` of the
+{class}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`, falling back
+to BayBE's default kernel when none is given.
+
 Regular parameters can replace the surrogate kernel on their computational dimensions
 using {attr}`~baybe.parameters.base.Parameter.kernel_override`:
 
@@ -303,19 +318,7 @@ x3 = NumericalContinuousParameter(
 )
 ```
 
-Here, "surrogate kernel" refers to the ``kernel_or_factory`` of the
-{class}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`, falling back
-to BayBE's default kernel when none is given. Overrides remove their parameter
-dimensions from that kernel and replace them with multiplicative parameter-specific
-factors:
-
-```{math}
-k_{\mathrm{effective}}
-= k_{\mathrm{surrogate}}(X_{\mathrm{remaining}})
-\prod_{p \in P_{\mathrm{override}}} k_p(X_p).
-```
-
-For parameters ``x1``, ``x2``, and ``x3`` in the example above, this produces
+In a search space with parameters ``x1``, ``x2``, and ``x3``, this produces
 ``surrogate kernel(x1, x2) * RBF(x3)``. The override does not replace a dimension inside
 the surrogate kernel itself. It partitions the dimensions and creates a separate kernel
 factor. Multiple overrides produce multiple factors. For a parameter with several
