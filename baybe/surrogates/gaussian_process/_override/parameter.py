@@ -93,5 +93,7 @@ def bind_gpytorch_override(
             )
 
     result = deepcopy(override)
-    result.active_dims = torch.tensor(indices)
+    # TODO[typing]: GPyTorch annotates `active_dims` with the constructor's tuple
+    #   type, but `register_buffer` stores a tensor at runtime.
+    result.active_dims = torch.tensor(indices)  # pyrefly: ignore[bad-assignment]
     return result

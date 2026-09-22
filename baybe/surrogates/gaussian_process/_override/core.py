@@ -29,11 +29,13 @@ def get_active_dimensions(kernel: GPyTorchKernel, searchspace: SearchSpace) -> s
     from gpytorch.kernels import AdditiveKernel, ProductKernel, ScaleKernel
 
     if kernel.active_dims is not None:
-        # TODO[typing]: https://github.com/facebook/pyrefly/issues/3988
-        return set(kernel.active_dims.tolist())  # pyrefly: ignore[not-callable]
+        # TODO[typing]: GPyTorch annotates `active_dims` with the constructor's tuple
+        #   type, but `register_buffer` stores a tensor at runtime.
+        return set(kernel.active_dims.tolist())  # pyrefly: ignore[missing-attribute]
     if isinstance(kernel, (AdditiveKernel, ProductKernel)):
         return set().union(
-            *(get_active_dimensions(k, searchspace) for k in kernel.kernels)
+            # TODO[typing]: Iterating a `ModuleList` yields the `Module` base type.
+            *(get_active_dimensions(k, searchspace) for k in kernel.kernels)  # pyrefly: ignore[bad-argument-type]
         )
     if isinstance(kernel, ScaleKernel):
         return get_active_dimensions(kernel.base_kernel, searchspace)
