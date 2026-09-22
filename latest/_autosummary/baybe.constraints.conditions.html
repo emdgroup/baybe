@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Condition" href="baybe.constraints.conditions.Condition.html"><link rel="prev" title="DiscreteFilteringConstraint" href="baybe.constraints.base.DiscreteFilteringConstraint.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="baybe.constraints.conditions.ThresholdOperator" href="baybe.constraints.conditions.ThresholdOperator.html"><link rel="prev" title="DiscreteFilteringConstraint" href="baybe.constraints.base.DiscreteFilteringConstraint.html">
         <link rel="prefetch" href="../_static/logo1.svg" as="image">
         <link rel="prefetch" href="../_static/logo1.svg" as="image">
 
@@ -429,12 +429,14 @@
 </ul>
 </li>
 <li class="toctree-l3 current has-children current-page"><a class="current reference internal" href="#">baybe.constraints.conditions</a><input aria-label="Toggle navigation of baybe.constraints.conditions" checked="" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.conditions.ThresholdOperator.html">baybe.constraints.conditions.ThresholdOperator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.conditions.Condition.html">Condition</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.conditions.SubSelectionCondition.html">SubSelectionCondition</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.conditions.ThresholdCondition.html">ThresholdCondition</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.constraints.continuous.html">baybe.constraints.continuous</a><input aria-label="Toggle navigation of baybe.constraints.continuous" class="toctree-checkbox" id="toctree-checkbox-28" name="toctree-checkbox-28" role="switch" type="checkbox"/><label for="toctree-checkbox-28"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.continuous.LinearConstraintOperator.html">baybe.constraints.continuous.LinearConstraintOperator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.continuous.ContinuousCardinalityConstraint.html">ContinuousCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.continuous.ContinuousLinearConstraint.html">ContinuousLinearConstraint</a></li>
 </ul>
@@ -443,15 +445,16 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSumConstraint.html">baybe.constraints.discrete.DiscreteSumConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteLinearConstraint.html">DiscreteLinearConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.constraints.utils.html">baybe.constraints.utils</a><input aria-label="Toggle navigation of baybe.constraints.utils" class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -1226,6 +1229,16 @@
           <section id="module-baybe.constraints.conditions">
 <span id="baybe-constraints-conditions"></span><h1>baybe.constraints.conditions<a class="headerlink" href="#module-baybe.constraints.conditions" title="Link to this heading">¶</a></h1>
 <p>Functionality for constraint conditions.</p>
+<p class="rubric">Module Attributes</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.constraints.conditions.ThresholdOperator.html#baybe.constraints.conditions.ThresholdOperator" title="baybe.constraints.conditions.ThresholdOperator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ThresholdOperator</span></code></a></p></td>
+<td><p>An operator for comparing numerical values against a threshold.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p class="rubric">Classes</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -1249,12 +1262,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="baybe.constraints.conditions.Condition.html">
+          <a class="next-page" href="baybe.constraints.conditions.ThresholdOperator.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Condition</div>
+                <div class="title">baybe.constraints.conditions.ThresholdOperator</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

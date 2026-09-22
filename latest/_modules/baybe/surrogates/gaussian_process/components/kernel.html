@@ -428,12 +428,14 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.conditions.html">baybe.constraints.conditions</a><input aria-label="Toggle navigation of baybe.constraints.conditions" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.conditions.ThresholdOperator.html">baybe.constraints.conditions.ThresholdOperator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.conditions.Condition.html">Condition</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.conditions.SubSelectionCondition.html">SubSelectionCondition</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.conditions.ThresholdCondition.html">ThresholdCondition</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.continuous.html">baybe.constraints.continuous</a><input aria-label="Toggle navigation of baybe.constraints.continuous" class="toctree-checkbox" id="toctree-checkbox-28" name="toctree-checkbox-28" role="switch" type="checkbox"/><label for="toctree-checkbox-28"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.continuous.LinearConstraintOperator.html">baybe.constraints.continuous.LinearConstraintOperator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html">ContinuousCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.continuous.ContinuousLinearConstraint.html">ContinuousLinearConstraint</a></li>
 </ul>
@@ -442,15 +444,16 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">baybe.constraints.discrete.DiscreteSumConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteLinearConstraint.html">DiscreteLinearConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.constraints.utils.html">baybe.constraints.utils</a><input aria-label="Toggle navigation of baybe.constraints.utils" class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -1539,12 +1542,15 @@
         <span class="n">all_idcs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">comp_rep_columns</span><span class="p">)))</span>
         <span class="n">allowed_task_idcs</span> <span class="o">=</span> <span class="p">{</span><span class="n">searchspace</span><span class="o">.</span><span class="n">task_idx</span><span class="p">}</span>
         <span class="n">allowed_base_idcs</span> <span class="o">=</span> <span class="n">all_idcs</span> <span class="o">-</span> <span class="n">allowed_task_idcs</span>
-        <span class="c1"># TODO[typing]: https://github.com/facebook/pyrefly/issues/3988</span>
         <span class="n">base_idcs</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">set</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span> <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="o">:=</span> <span class="n">base_kernel</span><span class="o">.</span><span class="n">active_dims</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">all_idcs</span>  <span class="c1"># pyrefly: ignore[not-callable]</span>
+            <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">d</span><span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="o">:=</span> <span class="n">base_kernel</span><span class="o">.</span><span class="n">active_dims</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">all_idcs</span>
         <span class="p">)</span>
         <span class="n">task_idcs</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">set</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span> <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="o">:=</span> <span class="n">task_kernel</span><span class="o">.</span><span class="n">active_dims</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">all_idcs</span>  <span class="c1"># pyrefly: ignore[not-callable]</span>
+            <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">d</span><span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="o">:=</span> <span class="n">task_kernel</span><span class="o">.</span><span class="n">active_dims</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">all_idcs</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">base_idcs</span> <span class="o">&lt;=</span> <span class="n">allowed_base_idcs</span><span class="p">:</span>

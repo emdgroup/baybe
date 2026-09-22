@@ -42,7 +42,9 @@ DiscreteProductConstraint
 
    .. autosummary::
    
-      ~DiscreteProductConstraint.condition
+      ~DiscreteProductConstraint.operator
+      ~DiscreteProductConstraint.rhs
+      ~DiscreteProductConstraint.tolerance
       ~DiscreteProductConstraint.exclude
       ~DiscreteProductConstraint.has_polars_implementation
       ~DiscreteProductConstraint.is_continuous

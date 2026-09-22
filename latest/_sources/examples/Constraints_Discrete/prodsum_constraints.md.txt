@@ -21,9 +21,8 @@ import numpy as np
 ```python
 from baybe import Campaign
 from baybe.constraints import (
+    DiscreteLinearConstraint,
     DiscreteProductConstraint,
-    DiscreteSumConstraint,
-    ThresholdCondition,
 )
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import (
@@ -100,17 +99,21 @@ Thus, they need to be defined prior to the searchspace creation.
 
 
 ```python
-sum_constraint_1 = DiscreteSumConstraint(
+sum_constraint_1 = DiscreteLinearConstraint(
     parameters=["NumParam1", "NumParam2"],
-    condition=ThresholdCondition(threshold=150.0, operator="<="),
+    operator="<=",
+    rhs=150.0,
 )
-sum_constraint_2 = DiscreteSumConstraint(
+sum_constraint_2 = DiscreteLinearConstraint(
     parameters=["NumParam5", "NumParam6"],
-    condition=ThresholdCondition(threshold=100, operator="=", tolerance=1.0),
+    operator="=",
+    rhs=100,
+    tolerance=1.0,
 )
 prod_constraint = DiscreteProductConstraint(
     parameters=["NumParam3", "NumParam4"],
-    condition=ThresholdCondition(threshold=30, operator=">="),
+    operator=">=",
+    rhs=30,
 )
 ```
 
@@ -188,8 +191,8 @@ NaN
                 [864 rows x 8 columns]
              Constraints
                               Type Affected_Paramet
-                0  DiscreteSumC...  [NumParam1, ...
-                1  DiscreteSumC...  [NumParam5, ...
+                0  DiscreteLine...  [NumParam1, ...
+                1  DiscreteLine...  [NumParam5, ...
                 2  DiscreteProd...  [NumParam3, ...
              Computational Representation
                      NumParam1  NumParam2  ...  Solvent_RDKIT2DD  Speed

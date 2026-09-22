@@ -1,54 +1,6 @@
-DiscreteSumConstraint
-=====================
+baybe.constraints.discrete.DiscreteSumConstraint
+================================================
 
 .. currentmodule:: baybe.constraints.discrete
 
-.. autoclass:: DiscreteSumConstraint
-   :members:                              
-   :special-members: __call__
-   :show-inheritance:                 
-   :inherited-members:
-
-   
-   
-   .. rubric:: Public methods
-
-   .. autosummary::
-   
-      ~DiscreteSumConstraint.__init__
-   
-      ~DiscreteSumConstraint.from_dict
-   
-      ~DiscreteSumConstraint.from_json
-   
-      ~DiscreteSumConstraint.get_invalid
-   
-      ~DiscreteSumConstraint.get_invalid_polars
-   
-      ~DiscreteSumConstraint.get_valid
-   
-      ~DiscreteSumConstraint.summary
-   
-      ~DiscreteSumConstraint.to_dict
-   
-      ~DiscreteSumConstraint.to_json
-   
-   
-   
-
-   
-   
-   .. rubric:: Public attributes and properties
-
-   .. autosummary::
-   
-      ~DiscreteSumConstraint.condition
-      ~DiscreteSumConstraint.coefficients
-      ~DiscreteSumConstraint.exclude
-      ~DiscreteSumConstraint.has_polars_implementation
-      ~DiscreteSumConstraint.is_continuous
-      ~DiscreteSumConstraint.is_discrete
-      ~DiscreteSumConstraint.numerical_only
-      ~DiscreteSumConstraint.parameters
-   
-   
+.. autofunction:: DiscreteSumConstraint

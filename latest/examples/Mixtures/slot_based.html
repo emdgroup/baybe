@@ -429,12 +429,14 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.conditions.html">baybe.constraints.conditions</a><input aria-label="Toggle navigation of baybe.constraints.conditions" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.conditions.ThresholdOperator.html">baybe.constraints.conditions.ThresholdOperator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.conditions.Condition.html">Condition</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.conditions.SubSelectionCondition.html">SubSelectionCondition</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.conditions.ThresholdCondition.html">ThresholdCondition</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.continuous.html">baybe.constraints.continuous</a><input aria-label="Toggle navigation of baybe.constraints.continuous" class="toctree-checkbox" id="toctree-checkbox-28" name="toctree-checkbox-28" role="switch" type="checkbox"/><label for="toctree-checkbox-28"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.continuous.LinearConstraintOperator.html">baybe.constraints.continuous.LinearConstraintOperator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html">ContinuousCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.continuous.ContinuousLinearConstraint.html">ContinuousLinearConstraint</a></li>
 </ul>
@@ -443,15 +445,16 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">baybe.constraints.discrete.DiscreteSumConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteLinearConstraint.html">DiscreteLinearConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.utils.html">baybe.constraints.utils</a><input aria-label="Toggle navigation of baybe.constraints.utils" class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -1307,9 +1310,9 @@ continuous parameters, which is not currently supported.</p>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DiscreteDependenciesConstraint</span><span class="p">,</span>
+    <span class="n">DiscreteLinearConstraint</span><span class="p">,</span>
     <span class="n">DiscretePermutationInvarianceConstraint</span><span class="p">,</span>
     <span class="n">DiscreteRepetitionLimitConstraint</span><span class="p">,</span>
-    <span class="n">DiscreteSumConstraint</span><span class="p">,</span>
     <span class="n">ThresholdCondition</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalDiscreteParameter</span><span class="p">,</span> <span class="n">SubstanceParameter</span>
@@ -1427,9 +1430,11 @@ these dependencies so that they are correctly included in the filtering process:
 <h3>Substance Amounts<a class="headerlink" href="#substance-amounts" title="Link to this heading">¶</a></h3>
 <p>Interpreting the slot amounts as percentages, we need to ensure that their total is
 always 100:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sum_constraint</span> <span class="o">=</span> <span class="n">DiscreteSumConstraint</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sum_constraint</span> <span class="o">=</span> <span class="n">DiscreteLinearConstraint</span><span class="p">(</span>
     <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Slot1_Amount&quot;</span><span class="p">,</span> <span class="s2">&quot;Slot2_Amount&quot;</span><span class="p">,</span> <span class="s2">&quot;Slot3_Amount&quot;</span><span class="p">],</span>
-    <span class="n">condition</span><span class="o">=</span><span class="n">ThresholdCondition</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="n">SUM_TOLERANCE</span><span class="p">),</span>
+    <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;=&quot;</span><span class="p">,</span>
+    <span class="n">rhs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">tolerance</span><span class="o">=</span><span class="n">SUM_TOLERANCE</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>

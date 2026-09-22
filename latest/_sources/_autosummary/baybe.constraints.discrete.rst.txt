@@ -17,6 +17,7 @@ baybe.constraints.discrete
       DiscreteExcludeConstraint
       DiscreteLinkedParametersConstraint
       DiscreteNoLabelDuplicatesConstraint
+      DiscreteSumConstraint
    
    
 
@@ -32,11 +33,11 @@ baybe.constraints.discrete
       DiscreteCardinalityConstraint
       DiscreteCustomConstraint
       DiscreteDependenciesConstraint
+      DiscreteLinearConstraint
       DiscretePermutationInvarianceConstraint
       DiscreteProductConstraint
       DiscreteRepetitionLimitConstraint
       DiscreteSelectionConstraint
-      DiscreteSumConstraint
    
    
 

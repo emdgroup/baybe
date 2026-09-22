@@ -429,12 +429,14 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.constraints.conditions.html">baybe.constraints.conditions</a><input aria-label="Toggle navigation of baybe.constraints.conditions" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.conditions.ThresholdOperator.html">baybe.constraints.conditions.ThresholdOperator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.conditions.Condition.html">Condition</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.conditions.SubSelectionCondition.html">SubSelectionCondition</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.conditions.ThresholdCondition.html">ThresholdCondition</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.constraints.continuous.html">baybe.constraints.continuous</a><input aria-label="Toggle navigation of baybe.constraints.continuous" class="toctree-checkbox" id="toctree-checkbox-28" name="toctree-checkbox-28" role="switch" type="checkbox"/><label for="toctree-checkbox-28"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.continuous.LinearConstraintOperator.html">baybe.constraints.continuous.LinearConstraintOperator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html">ContinuousCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.continuous.ContinuousLinearConstraint.html">ContinuousLinearConstraint</a></li>
 </ul>
@@ -443,15 +445,16 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html">baybe.constraints.discrete.DiscreteExcludeConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html">baybe.constraints.discrete.DiscreteLinkedParametersConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html">baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">baybe.constraints.discrete.DiscreteSumConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteBatchConstraint.html">DiscreteBatchConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html">DiscreteCardinalityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html">DiscreteCustomConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html">DiscreteDependenciesConstraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteLinearConstraint.html">DiscreteLinearConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html">DiscretePermutationInvarianceConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html">DiscreteProductConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteRepetitionLimitConstraint.html">DiscreteRepetitionLimitConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteSelectionConstraint.html">DiscreteSelectionConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html">DiscreteSumConstraint</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.constraints.utils.html">baybe.constraints.utils</a><input aria-label="Toggle navigation of baybe.constraints.utils" class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -1258,8 +1261,6 @@ number of required models instead of the number of transform outputs</p></li>
 <section id="added">
 <h3>Added<a class="headerlink" href="#added" title="Link to this heading">¶</a></h3>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">coefficients</span></code> attribute for <code class="docutils literal notranslate"><span class="pre">DiscreteSumConstraint</span></code>, enabling weighted sums. Follows
-the same pattern as <code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint.coefficients</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">simplex_coefficients</span></code> keyword argument to <code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete.from_simplex</span></code> for
 weighted simplex sum constraints</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Symmetry</span></code> concept for expressing symmetries of the optimization problem, including
@@ -1279,6 +1280,9 @@ configured kernel factory</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">DiscreteRepetitionLimitConstraint</span></code> for controlling value repetition across parameters
 via <code class="docutils literal notranslate"><span class="pre">n_max_repetitions</span></code> (replaces <code class="docutils literal notranslate"><span class="pre">DiscreteNoLabelDuplicatesConstraint</span></code> and
 <code class="docutils literal notranslate"><span class="pre">DiscreteLinkedParametersConstraint</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DiscreteLinearConstraint</span></code> for (optionally weighted) sum constraints on discrete
+parameters, supporting <code class="docutils literal notranslate"><span class="pre">coefficients</span></code> and mirroring <code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint</span></code>’s
+<code class="docutils literal notranslate"><span class="pre">operator</span></code>/<code class="docutils literal notranslate"><span class="pre">rhs</span></code>/<code class="docutils literal notranslate"><span class="pre">coefficients</span></code> interface (replaces <code class="docutils literal notranslate"><span class="pre">DiscreteSumConstraint</span></code>)</p></li>
 </ul>
 </section>
 <section id="changed">
@@ -1289,8 +1293,8 @@ kernel in multi-task scenarios, matching BoTorch’s <code class="docutils liter
 in version <code class="docutils literal notranslate"><span class="pre">0.18.0</span></code></p></li>
 <li><p>The <code class="docutils literal notranslate"><span class="pre">BOTORCH</span></code> GP preset now requires BoTorch <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">0.18.0</span></code> and raises an
 <code class="docutils literal notranslate"><span class="pre">IncompatibilityError</span></code> if an older version is installed</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">DiscreteSumConstraint</span></code>, <code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete.from_simplex</span></code> now forbid 0 as coefficients</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint</span></code> and <code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete.from_simplex</span></code>
+now forbid 0 as coefficients</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete.from_simplex</span></code> no longer requires non-negative parameter values</p></li>
 <li><p>Bumped polars to <code class="docutils literal notranslate"><span class="pre">&gt;=0.20.8</span></code></p></li>
 <li><p>Bumped cattrs to <code class="docutils literal notranslate"><span class="pre">&gt;=26.1.0</span></code></p></li>
@@ -1301,6 +1305,8 @@ before fitting may return <code class="docutils literal notranslate"><span class
 <li><p>Discrete filtering constraints now uniformly define what is <strong>kept</strong> in the search
 space; set <code class="docutils literal notranslate"><span class="pre">exclude=True</span></code> to invert and keep the complement instead</p></li>
 <li><p>Renamed <code class="docutils literal notranslate"><span class="pre">exclusion_constraints</span></code> example to <code class="docutils literal notranslate"><span class="pre">selection_constraints</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DiscreteProductConstraint</span></code> now uses <code class="docutils literal notranslate"><span class="pre">operator</span></code>/<code class="docutils literal notranslate"><span class="pre">rhs</span></code>/<code class="docutils literal notranslate"><span class="pre">tolerance</span></code> instead of
+<code class="docutils literal notranslate"><span class="pre">condition</span></code></p></li>
 </ul>
 </section>
 <section id="deprecations">
@@ -1312,6 +1318,9 @@ space; set <code class="docutils literal notranslate"><span class="pre">exclude=
 <code class="docutils literal notranslate"><span class="pre">DiscreteRepetitionLimitConstraint(...,</span> <span class="pre">n_max_repetitions=1)</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">DiscreteLinkedParametersConstraint</span></code> in favor of
 <code class="docutils literal notranslate"><span class="pre">DiscreteRepetitionLimitConstraint(...,</span> <span class="pre">n_max_repetitions=len(parameters)-1,</span> <span class="pre">exclude=True)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DiscreteSumConstraint</span></code> in favor of <code class="docutils literal notranslate"><span class="pre">DiscreteLinearConstraint</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DiscreteProductConstraint(condition=ThresholdCondition(...))</span></code> in favor of
+<code class="docutils literal notranslate"><span class="pre">DiscreteProductConstraint(operator=...,</span> <span class="pre">rhs=...)</span></code></p></li>
 </ul>
 </section>
 </section>

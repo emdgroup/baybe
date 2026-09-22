@@ -56,9 +56,9 @@ import pandas as pd
 ```python
 from baybe.constraints import (
     DiscreteDependenciesConstraint,
+    DiscreteLinearConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteRepetitionLimitConstraint,
-    DiscreteSumConstraint,
     ThresholdCondition,
 )
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
@@ -197,9 +197,11 @@ always 100:
 
 
 ```python
-sum_constraint = DiscreteSumConstraint(
+sum_constraint = DiscreteLinearConstraint(
     parameters=["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"],
-    condition=ThresholdCondition(threshold=100, operator="=", tolerance=SUM_TOLERANCE),
+    operator="=",
+    rhs=100,
+    tolerance=SUM_TOLERANCE,
 )
 ```
 
