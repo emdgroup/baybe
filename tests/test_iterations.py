@@ -59,6 +59,7 @@ from baybe.surrogates.gaussian_process.presets import (
     EDBOKernelFactory,
 )
 from baybe.surrogates.linear import BayesianLinearSurrogate
+from baybe.surrogates.transfer_learning.rgpe import RGPESurrogate
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import create_fake_input
@@ -82,6 +83,9 @@ for cls in get_subclasses(Surrogate):
     if issubclass(cls, CustomONNXSurrogate) or issubclass(
         cls, BetaBernoulliMultiArmedBanditSurrogate
     ):
+        continue
+    # RGPE needs a transfer-learning space (a task parameter); see test_rgpe_surrogate.
+    if issubclass(cls, RGPESurrogate):
         continue
     p = param(
         cls(),
@@ -393,9 +397,19 @@ def test_kernels(ongoing_campaign, n_iterations, batch_size):
                 ]
             ),
         ]
-        for mode in [None, *TransferLearningMode]
+        for mode in [
+            None,
+            *(m for m in TransferLearningMode if m is not TransferLearningMode.RGPE),
+        ]
     ],
-    ids=["parameter_kernel_override", *(mode.name for mode in TransferLearningMode)],
+    ids=[
+        "parameter_kernel_override",
+        *(
+            mode.name
+            for mode in TransferLearningMode
+            if mode is not TransferLearningMode.RGPE
+        ),
+    ],
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_parameter_kernel_override_iteration(

@@ -30,6 +30,9 @@ def extract_transfer_learning_overrides(
     task_param = context.searchspace._task_parameter
     if task_param is None or context.tl_override is None:
         return []
+    if context.tl_override is TransferLearningMode.RGPE:
+        # RGPE dispatches to a dedicated surrogate and adds no task kernel.
+        return []
     return [(task_param.name, make_transfer_learning_override_kernel(context))]
 
 
@@ -49,6 +52,9 @@ def make_transfer_learning_override_kernel(
     task_param = context.searchspace._task_parameter
     override = context.tl_override
     assert task_param is not None and override is not None
+    # RGPE dispatches to a dedicated surrogate and is filtered out by
+    # `extract_transfer_learning_overrides` before reaching this function.
+    assert override is not TransferLearningMode.RGPE
     n_tasks, names = context.n_tasks, (task_param.name,)
     match override:
         case TransferLearningMode.IDENTITY:

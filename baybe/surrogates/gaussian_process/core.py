@@ -11,7 +11,7 @@ from functools import partial, reduce
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
-from attrs import Converter, define, field
+from attrs import Converter, define, evolve, field
 from attrs.converters import optional as optional_c
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
@@ -20,6 +20,7 @@ from typing_extensions import Self, override
 from baybe.exceptions import (
     DeprecationError,
     IncompatibleSearchSpaceError,
+    IncompatibleSurrogateError,
     ModelNotTrainedError,
     _UnsupportedSearchSpaceAttributeError,
 )
@@ -261,6 +262,14 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The fitted BoTorch model."""
 
+    # TODO: type should be `Surrogate | None` but is currently omitted due to:
+    #   https://github.com/python-attrs/cattrs/issues/531
+    _delegate = field(init=False, default=None, eq=False)
+    """A transfer-learning surrogate to forward fitting and prediction to.
+
+    Set when a non-kernel mode (e.g.
+    :attr:`~baybe.parameters.enum.TransferLearningMode.RGPE`) is requested."""
+
     @staticmethod
     def _make_input_transform(context: _ModelContext) -> Normalize:
         """Create the input transform for the Gaussian process."""
@@ -360,7 +369,20 @@ class GaussianProcessSurrogate(Surrogate):
         Returns:
             A mean module ready to be used as the mean of a new
             :class:`GaussianProcessSurrogate`.
+
+        Raises:
+            IncompatibleSurrogateError: If the surrogate dispatches to a transfer
+                learning ensemble, for which posterior mean functions are not
+                implemented.
         """
+        if self._delegate is not None:
+            raise IncompatibleSurrogateError(
+                f"Providing a posterior mean function for a "
+                f"'{self.__class__.__name__}' that dispatches to a "
+                f"'{type(self._delegate).__name__}' transfer learning ensemble is not "
+                f"implemented."
+            )
+
         if self._model is None:
             warnings.warn(
                 f"'{self.__class__.__name__}' has not been fitted yet. "
@@ -389,6 +411,8 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def to_botorch(self) -> GPyTorchModel:
+        if self._delegate is not None:
+            return self._delegate.to_botorch()
         if self._model is None:
             raise ModelNotTrainedError(
                 "The surrogate must be trained before a BoTorch model can be created."
@@ -409,6 +433,9 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
+        # Forward to the transfer-learning delegate if one was set up during fitting.
+        if self._delegate is not None:
+            return self._delegate._posterior(candidates_comp_scaled)
         # Model being fit is guaranteed by the call in `posterior`
         assert self._model is not None
         return self._model.posterior(candidates_comp_scaled)
@@ -598,6 +625,16 @@ class GaussianProcessSurrogate(Surrogate):
                 s.validate_searchspace_context(self._searchspace)
 
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
+
+        # RGPE is handled by a dedicated ensemble surrogate rather than a task kernel.
+        # Dispatch to it, reusing this GP's configuration for the inner models.
+        if context.tl_override is TransferLearningMode.RGPE:
+            from baybe.surrogates.transfer_learning.rgpe import RGPESurrogate
+
+            delegate = RGPESurrogate(base_surrogate=evolve(self))
+            delegate.fit(self._searchspace, self._objective, self._measurements)
+            self._delegate = delegate
+            return
 
         # Check for custom kernel + multi-task clash (only relevant when no
         # override_transfer_learning_mode is set, since the override mechanism

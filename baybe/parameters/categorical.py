@@ -97,10 +97,10 @@ class TaskParameter(CategoricalParameter):
     )
     """Optional override for how the task dimension is modeled.
 
-    Only applies to :class:`.GaussianProcessSurrogate`. When ``None``, the surrogate's
-    kernel factory decides how the task dimension is treated. When set, the surrogate
-    attaches the requested task kernel to a task-free base kernel derived from the
-    configured factory.
+    Only applies to :class:`.GaussianProcessSurrogate`. When ``None``, the kernel
+    factory decides. The kernel modes attach the chosen task kernel to the base kernel,
+    while :attr:`~baybe.parameters.enum.TransferLearningMode.RGPE` dispatches to a
+    :class:`~baybe.surrogates.transfer_learning.rgpe.RGPESurrogate` ensemble.
     """
 
 
