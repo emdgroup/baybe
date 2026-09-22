@@ -331,8 +331,9 @@ An override can be a configured BayBE or GPyTorch kernel instance. For a BayBE k
 
 ```{admonition} Limitations
 :class: warning
-Parameter-local kernel factories are not supported. The surrogate kernel or factory of
-the {class}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate` must allow
+{attr}`~baybe.parameters.base.Parameter.kernel_override` accepts kernel instances only,
+not factories. The surrogate kernel or factory of the
+{class}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate` must allow
 the overridden dimensions to be excluded. Otherwise, BayBE raises
 {class}`~baybe.exceptions.IncompatibleOverrideError`.
 
