@@ -11,12 +11,13 @@ from typing import TYPE_CHECKING, ClassVar, cast
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from attrs import define, field
+from attrs import define, evolve, field
 from typing_extensions import Self, override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
 from baybe.exceptions import (
+    IncompatibleSearchSpaceError,
     InfeasibilityError,
     _UnsupportedSearchSpaceAttributeError,
 )
@@ -36,6 +37,7 @@ from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    from baybe.parameters.enum import TransferLearningMode
     from baybe.parameters.selectors import ParameterSelectorProtocol
 
 
@@ -579,6 +581,34 @@ class SearchSpace(SerialMixin):
         )
 
         return _ReducedSearchSpace(discrete=discrete, continuous=continuous)
+
+    def _with_task_mode(self, mode: TransferLearningMode, /) -> SearchSpace:
+        """Return a copy with the task parameter's transfer-learning mode replaced.
+
+        The mode does not affect encoding, so the computational representation is
+        unchanged.
+
+        Args:
+            mode: The transfer-learning mode to assign to the task parameter.
+
+        Raises:
+            IncompatibleSearchSpaceError: If the space has no task parameter.
+
+        Returns:
+            A copy whose task parameter carries the given mode.
+        """
+        if self._task_parameter is None:
+            raise IncompatibleSearchSpaceError(
+                "Cannot set a transfer-learning mode on a search space that does not "
+                "contain a task parameter."
+            )
+        parameters = tuple(
+            evolve(p, override_transfer_learning_mode=mode)
+            if isinstance(p, TaskParameter)
+            else p
+            for p in self.discrete.parameters
+        )
+        return evolve(self, discrete=evolve(self.discrete, parameters=parameters))
 
 
 @define(slots=False)

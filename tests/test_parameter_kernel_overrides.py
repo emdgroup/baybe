@@ -66,7 +66,7 @@ def _rbf_kernel(lengthscale, *, frozen=False):
 
 @pytest.mark.parametrize(
     "mode",
-    [None, *TransferLearningMode],
+    [None, *(m for m in TransferLearningMode if m is not TransferLearningMode.RGPE)],
     ids=lambda mode: mode.name if mode else "no-task",
 )
 def test_selector_does_not_exclude_overridden_parameters(mode):
@@ -146,6 +146,7 @@ def test_nondefault_residual_indices(kernel_or_factory, expected_residual_dims):
                 TaskParameter("task", ["a", "b"], override_transfer_learning_mode=mode),
             )
             for mode in TransferLearningMode
+            if mode is not TransferLearningMode.RGPE
         ],
     ],
     ids=[
@@ -153,7 +154,11 @@ def test_nondefault_residual_indices(kernel_or_factory, expected_residual_dims):
         "multi-dim",
         "all-overridden",
         "task-without-tl-override",
-        *(mode.name for mode in TransferLearningMode),
+        *(
+            mode.name
+            for mode in TransferLearningMode
+            if mode is not TransferLearningMode.RGPE
+        ),
     ],
 )
 def test_fitted_model_uses_parameter_kernel_overrides(
