@@ -303,9 +303,11 @@ x3 = NumericalContinuousParameter(
 )
 ```
 
-The surrogate kernel is the kernel supplied to the surrogate, or BayBE's default kernel
-if none is supplied. Overrides remove their parameter dimensions from that kernel and
-replace them with multiplicative parameter-specific factors:
+Here, "surrogate kernel" refers to the ``kernel_or_factory`` of the
+{class}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`, falling back
+to BayBE's default kernel when none is given. Overrides remove their parameter
+dimensions from that kernel and replace them with multiplicative parameter-specific
+factors:
 
 ```{math}
 k_{\mathrm{effective}}
