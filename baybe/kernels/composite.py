@@ -23,6 +23,32 @@ if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
 
 
+def _reduce_base_kernels(
+    kernel: AdditiveKernel | ProductKernel, name: str, searchspace: SearchSpace, /
+) -> Kernel | None:
+    """Remove a parameter from all base kernels of a composite kernel.
+
+    Args:
+        kernel: The composite kernel whose base kernels are to be reduced.
+        name: The name of the parameter to remove.
+        searchspace: The search space the kernel operates on.
+
+    Returns:
+        The reduced composite kernel, the sole remaining base kernel, or ``None``
+        if no base kernel remains.
+    """
+    remaining = tuple(
+        reduced
+        for k in kernel.base_kernels
+        if (reduced := k._without_parameter(name, searchspace)) is not None
+    )
+    if not remaining:
+        return None
+    if len(remaining) == 1:
+        return remaining[0]
+    return evolve(kernel, base_kernels=remaining)
+
+
 @define(frozen=True)
 class ScaleKernel(CompositeKernel):
     """A kernel for decorating existing kernels with an outputscale."""
@@ -86,6 +112,12 @@ class AdditiveKernel(CompositeKernel):
     """The individual kernels to be summed."""
 
     @override
+    def _without_parameter(
+        self, name: str, searchspace: SearchSpace, /
+    ) -> Kernel | None:
+        return _reduce_base_kernels(self, name, searchspace)
+
+    @override
     def _scope_to_parameter(self, name: str, /) -> Kernel:
         return evolve(
             self,
@@ -113,16 +145,7 @@ class ProductKernel(CompositeKernel):
     def _without_parameter(
         self, name: str, searchspace: SearchSpace, /
     ) -> Kernel | None:
-        remaining = tuple(
-            reduced
-            for kernel in self.base_kernels
-            if (reduced := kernel._without_parameter(name, searchspace)) is not None
-        )
-        if not remaining:
-            return None
-        if len(remaining) == 1:
-            return remaining[0]
-        return evolve(self, base_kernels=remaining)
+        return _reduce_base_kernels(self, name, searchspace)
 
     @override
     def _scope_to_parameter(self, name: str, /) -> Kernel:
