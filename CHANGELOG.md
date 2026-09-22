@@ -22,6 +22,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   number of required models instead of the number of transform outputs
 
 ### Added
+- `RGPESurrogate`, a rank-weighted Gaussian process ensemble for transfer learning,
+  selectable directly or by setting `override_transfer_learning_mode="RGPE"` on a
+  `TaskParameter`
+- `TransferLearningMode.IDENTITY`, a constant unit task kernel that renders the task
+  dimension inert so all tasks are pooled into a single model, used internally by
+  `RGPESurrogate`
+- `IdentityKernel`, a constant unit kernel that acts as an identity element under
+  kernel multiplication
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
 - `Symmetry` concept for expressing symmetries of the optimization problem, including
