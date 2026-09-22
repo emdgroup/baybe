@@ -121,11 +121,12 @@ class Kernel(ABC, SerialMixin):
             f"Cannot remove a parameter from kernel '{self.__class__.__name__}'. "
         )
 
-    def _scope_to_parameter(self, name: str, /) -> Kernel:
+    def _scope_to_parameter(self, name: str | None, /) -> Kernel:
         """Return a copy of the kernel that acts only on the given parameter.
 
         Args:
-            name: The name of the parameter to scope the kernel to.
+            name: The name of the parameter to scope the kernel to, or ``None`` to
+                remove all scoping so that the kernel acts on all dimensions.
 
         Raises:
             TypeError: If the kernel structure cannot be scoped unambiguously.
@@ -290,8 +291,8 @@ class BasicKernel(Kernel, ABC):
         return evolve(self, parameter_names=remaining) if remaining else None
 
     @override
-    def _scope_to_parameter(self, name: str, /) -> Kernel:
-        return evolve(self, parameter_names=(name,))
+    def _scope_to_parameter(self, name: str | None, /) -> Kernel:
+        return evolve(self, parameter_names=None if name is None else (name,))
 
 
 @define(frozen=True)

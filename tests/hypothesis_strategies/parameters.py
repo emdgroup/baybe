@@ -4,7 +4,6 @@ from collections.abc import Sequence
 
 import hypothesis.strategies as st
 import numpy as np
-from attrs import evolve
 from hypothesis.extra.pandas import columns, data_frames
 
 from baybe.parameters.categorical import (
@@ -39,28 +38,6 @@ categories = st.lists(
 """A strategy that generates parameter categories."""
 
 
-def _remove_kernel_parameter_names(kernel):
-    """Remove explicit parameter names from all basic kernel leaves."""
-    from baybe.kernels.base import BasicKernel
-    from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
-
-    if isinstance(kernel, BasicKernel):
-        return evolve(kernel, parameter_names=None)
-    if isinstance(kernel, ScaleKernel):
-        return evolve(
-            kernel,
-            base_kernel=_remove_kernel_parameter_names(kernel.base_kernel),
-        )
-    if isinstance(kernel, (AdditiveKernel, ProductKernel)):
-        return evolve(
-            kernel,
-            base_kernels=tuple(
-                _remove_kernel_parameter_names(k) for k in kernel.base_kernels
-            ),
-        )
-    raise TypeError(f"Unsupported kernel type: {type(kernel)}")
-
-
 @st.composite
 def kernel_overrides(draw: st.DrawFn, parameter_name: str):
     """Generate valid kernel overrides for a parameter."""
@@ -68,7 +45,7 @@ def kernel_overrides(draw: st.DrawFn, parameter_name: str):
 
     kernel = draw(st.one_of(st.none(), kernels(parameter_names=(parameter_name,))))
     if kernel is not None and draw(st.booleans()):
-        kernel = _remove_kernel_parameter_names(kernel)
+        kernel = kernel._scope_to_parameter(None)
     return kernel
 
 
