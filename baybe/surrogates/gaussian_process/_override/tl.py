@@ -51,6 +51,8 @@ def make_transfer_learning_override_kernel(
     assert task_param is not None and override is not None
     n_tasks, names = context.n_tasks, (task_param.name,)
     match override:
+        case TransferLearningMode.IDENTITY:
+            return make_identity_task_kernel(context)
         case TransferLearningMode.POSITIVE_INDEX_KERNEL:
             spec: Kernel = PositiveIndexKernel(
                 num_tasks=n_tasks, rank=n_tasks, parameter_names=names
@@ -60,3 +62,23 @@ def make_transfer_learning_override_kernel(
         case _:
             assert_never(override)
     return spec.to_gpytorch(context.searchspace)
+
+
+def make_identity_task_kernel(context: _ModelContext) -> GPyTorchKernel:
+    """Create a frozen constant task kernel that leaves the base kernel unchanged.
+
+    The kernel returns one for every task pair and has no trainable parameters, so
+    multiplying it onto the base kernel keeps all tasks pooled.
+
+    Args:
+        context: The model context providing the task parameter.
+
+    Returns:
+        The constant task kernel, restricted to the task dimension.
+    """
+    from baybe.kernels.basic import IdentityKernel
+
+    task_param = context.searchspace._task_parameter
+    assert task_param is not None
+    kernel = IdentityKernel(parameter_names=(task_param.name,))
+    return kernel.to_gpytorch(context.searchspace)

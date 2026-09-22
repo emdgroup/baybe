@@ -156,12 +156,12 @@ def test_fitted_model_uses_parameter_kernel_overrides(
     expected = {"base": gk.MaternKernel, "override": gk.RBFKernel}
     if task_parameter is not None:
         parameters.append(task_parameter)
-        expected["task"] = (
-            gk.IndexKernel
-            if task_parameter.override_transfer_learning_mode
-            == TransferLearningMode.INDEX_KERNEL
-            else PositiveIndexKernel
-        )
+        expected["task"] = {
+            None: PositiveIndexKernel,
+            TransferLearningMode.INDEX_KERNEL: gk.IndexKernel,
+            TransferLearningMode.POSITIVE_INDEX_KERNEL: PositiveIndexKernel,
+            TransferLearningMode.IDENTITY: gk.ConstantKernel,
+        }[task_parameter.override_transfer_learning_mode]
     searchspace = SearchSpace.from_product(parameters)
     measurements = pd.DataFrame(
         [
@@ -181,7 +181,12 @@ def test_fitted_model_uses_parameter_kernel_overrides(
         searchspace.get_comp_rep_parameter_indices(name): cls
         for name, cls in expected.items()
     }
-    assert all(k.ard_num_dims == len(k.active_dims) for k in leaves)
+    # The constant (identity) task kernel carries no lengthscales, hence no ARD dims.
+    assert all(
+        k.ard_num_dims == len(k.active_dims)
+        for k in leaves
+        if k.ard_num_dims is not None
+    )
 
 
 @pytest.mark.parametrize(
