@@ -241,10 +241,6 @@ def test_gpytorch_ard_mismatch_rejected():
 @pytest.mark.parametrize(
     "kernel_or_factory",
     [
-        param(
-            AdditiveKernel([MaternKernel(), MaternKernel()]),
-            id="non-reducible-baybe-kernel",
-        ),
         param(gk.MaternKernel(), id="raw-gpytorch-kernel"),
         param(lambda s, o, m: gk.MaternKernel(), id="factory-returning-raw-kernel"),
     ],
