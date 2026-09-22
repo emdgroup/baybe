@@ -59,6 +59,7 @@ from baybe.surrogates.gaussian_process.presets import (
     EDBOKernelFactory,
 )
 from baybe.surrogates.linear import BayesianLinearSurrogate
+from baybe.surrogates.transfer_learning.rgpe import RGPESurrogate
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import create_fake_input
@@ -82,6 +83,9 @@ for cls in get_subclasses(Surrogate):
     if issubclass(cls, CustomONNXSurrogate) or issubclass(
         cls, BetaBernoulliMultiArmedBanditSurrogate
     ):
+        continue
+    # RGPE needs a transfer-learning space (a task parameter); see test_rgpe_surrogate.
+    if issubclass(cls, RGPESurrogate):
         continue
     p = param(
         cls(),
@@ -428,6 +432,7 @@ def _make_override_parameters(mode: TransferLearningMode | None = None) -> list:
         *(
             param(_make_override_parameters(mode), id=mode.name)
             for mode in TransferLearningMode
+            if mode is not TransferLearningMode.RGPE
         ),
     ],
 )
