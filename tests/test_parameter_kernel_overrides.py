@@ -1,7 +1,6 @@
 """Functional tests for parameter-specific kernel overrides.
 
 These tests resolve or fit kernels to check binding and composition behavior.
-Construction-time input validation lives in ``tests/validation``.
 """
 
 from copy import deepcopy
