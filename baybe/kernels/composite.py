@@ -82,7 +82,7 @@ class ScaleKernel(CompositeKernel):
         return None if stripped is None else evolve(self, base_kernel=stripped)
 
     @override
-    def _scope_to_parameter(self, name: str, /) -> Kernel:
+    def _scope_to_parameter(self, name: str | None, /) -> Kernel:
         return evolve(self, base_kernel=self.base_kernel._scope_to_parameter(name))
 
     @override
@@ -118,7 +118,7 @@ class AdditiveKernel(CompositeKernel):
         return _reduce_base_kernels(self, name, searchspace)
 
     @override
-    def _scope_to_parameter(self, name: str, /) -> Kernel:
+    def _scope_to_parameter(self, name: str | None, /) -> Kernel:
         return evolve(
             self,
             base_kernels=tuple(k._scope_to_parameter(name) for k in self.base_kernels),
@@ -148,7 +148,7 @@ class ProductKernel(CompositeKernel):
         return _reduce_base_kernels(self, name, searchspace)
 
     @override
-    def _scope_to_parameter(self, name: str, /) -> Kernel:
+    def _scope_to_parameter(self, name: str | None, /) -> Kernel:
         return evolve(
             self,
             base_kernels=tuple(k._scope_to_parameter(name) for k in self.base_kernels),
