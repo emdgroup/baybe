@@ -69,9 +69,7 @@ def _iter_basic_kernels(kernel: Kernel) -> Iterator[BasicKernel]:
         raise TypeError(f"Cannot traverse kernel '{type(kernel).__name__}'.")
 
 
-def _to_kernel_override(
-    value: KernelOverride | None, instance: Parameter
-) -> KernelOverride | None:
+def _to_kernel_override(value: KernelOverride, instance: Parameter) -> KernelOverride:
     """Validate a kernel override and scope BayBE kernels to their parameter.
 
     Args:
@@ -86,9 +84,6 @@ def _to_kernel_override(
     Returns:
         The validated override, with BayBE kernels scoped to the parameter.
     """
-    if value is None:
-        return None
-
     # BayBE kernels: every basic leaf must be unscoped or scoped to the owner. The
     # kernel is then rebound to the owning parameter (dropping unspecified names).
     if isinstance(value, Kernel):
@@ -147,7 +142,7 @@ class Parameter(ABC, SerialMixin):
 
     kernel_override: KernelOverride | None = field(
         default=None,
-        converter=Converter(_to_kernel_override, takes_self=True),  # type: ignore[misc, call-overload]
+        converter=optional_c(Converter(_to_kernel_override, takes_self=True)),  # type: ignore[misc, call-overload]
         kw_only=True,
     )
     """An optional kernel replacing the overall kernel for this parameter."""
