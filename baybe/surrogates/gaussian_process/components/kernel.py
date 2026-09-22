@@ -317,12 +317,12 @@ class ICMKernelFactory(_MetaKernelFactory):
         allowed_task_idcs = {searchspace.task_idx}
         allowed_base_idcs = all_idcs - allowed_task_idcs
         base_idcs = (
-            set(d if isinstance(d, tuple) else d.tolist())
+            {int(i) for i in d}
             if (d := base_kernel.active_dims) is not None
             else all_idcs
         )
         task_idcs = (
-            set(d if isinstance(d, tuple) else d.tolist())
+            {int(i) for i in d}
             if (d := task_kernel.active_dims) is not None
             else all_idcs
         )

@@ -24,8 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `TFPRRecommender` for fast surrogate-based ranking of discrete multi-objective
   candidate sets using configurable optimism, target weights, and tie tolerances
-- `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
-  the same pattern as `ContinuousLinearConstraint.coefficients`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
 - `Symmetry` concept for expressing symmetries of the optimization problem, including
@@ -45,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteRepetitionLimitConstraint` for controlling value repetition across parameters
   via `n_max_repetitions` (replaces `DiscreteNoLabelDuplicatesConstraint` and
   `DiscreteLinkedParametersConstraint`)
+- `DiscreteLinearConstraint` for (optionally weighted) sum constraints on discrete
+  parameters, supporting `coefficients` and mirroring `ContinuousLinearConstraint`'s
+  `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
@@ -52,8 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in version `0.18.0`
 - The `BOTORCH` GP preset now requires BoTorch `>= 0.18.0` and raises an
   `IncompatibilityError` if an older version is installed
-- `DiscreteSumConstraint`, `ContinuousLinearConstraint`, and
-  `SubspaceDiscrete.from_simplex` now forbid 0 as coefficients
+- `ContinuousLinearConstraint` and `SubspaceDiscrete.from_simplex`
+   now forbid 0 as coefficients
 - `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
 - Bumped polars to `>=0.20.8`
 - Bumped cattrs to `>=26.1.0`
@@ -64,6 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Discrete filtering constraints now uniformly define what is **kept** in the search
   space; set `exclude=True` to invert and keep the complement instead
 - Renamed `exclusion_constraints` example to `selection_constraints`
+- `DiscreteProductConstraint` now uses `operator`/`rhs`/`tolerance` instead of
+  `condition`
 
 ### Deprecations
 - `DiscreteExcludeConstraint` in favor of
@@ -73,6 +76,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteLinkedParametersConstraint` in favor of
   `DiscreteRepetitionLimitConstraint(..., n_max_repetitions=len(parameters)-1,
   exclude=True)`
+- `DiscreteSumConstraint` in favor of `DiscreteLinearConstraint`
+- `DiscreteProductConstraint(condition=ThresholdCondition(...))` in favor of
+  `DiscreteProductConstraint(operator=..., rhs=...)`
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
