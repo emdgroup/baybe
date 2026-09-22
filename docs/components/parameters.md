@@ -290,7 +290,7 @@ For details, refer to [transfer learning](../concepts/transfer_learning.md).
 ## Parameter-Specific Kernel Overrides
 
 Regular parameters can replace the surrogate kernel on their computational dimensions
-using ``kernel_override``:
+using {attr}`~baybe.parameters.base.Parameter.kernel_override`:
 
 ```python
 from baybe.kernels import RBFKernel
