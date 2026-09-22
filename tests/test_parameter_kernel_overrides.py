@@ -87,7 +87,7 @@ def test_default_factory_selector_is_preserved(mode):
         param(MaternKernel(parameter_names=("x1", "x2")), (0,), id="named"),
         param(ScaleKernel(MaternKernel()), (0, 2), id="scaled"),
         param(
-            lambda s, o, m: MaternKernel(parameter_names=s.parameter_names),
+            lambda space, _, __: MaternKernel(parameter_names=space.parameter_names),
             (0, 2),
             id="callable",
         ),
