@@ -87,6 +87,9 @@ def _to_kernel_override(value: KernelOverride, instance: Parameter) -> KernelOve
     # BayBE kernels: every basic leaf must be unscoped or scoped to the owner. The
     # kernel is then rebound to the owning parameter (dropping unspecified names).
     if isinstance(value, Kernel):
+        from baybe.kernels.base import BasicKernel
+
+        names_alias = attrs.fields(BasicKernel).parameter_names.alias
         if any(
             leaf.parameter_names not in (None, (instance.name,))
             for leaf in _iter_basic_kernels(value)
@@ -94,7 +97,7 @@ def _to_kernel_override(value: KernelOverride, instance: Parameter) -> KernelOve
             raise ValueError(
                 f"The kernel provided for the kernel override of "
                 f"'{instance.__class__.__name__}' may only act on the parameter "
-                f"itself. Its basic kernels must specify 'parameter_names' as "
+                f"itself. Its basic kernels must specify '{names_alias}' as "
                 f"``None`` or ({instance.name!r},)."
             )
         return value._scope_to_parameter(instance.name)
