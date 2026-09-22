@@ -58,8 +58,12 @@ def _leaf_kernels(kernel):
     [None, *TransferLearningMode],
     ids=lambda mode: mode.name if mode else "no-task",
 )
-def test_default_factory_selector_is_preserved(mode):
-    """Selectors omit unselected dimensions but cannot exclude parameter overrides."""
+def test_selector_does_not_exclude_overridden_parameters(mode):
+    """A selector narrows the surrogate kernel, but overrides apply regardless.
+
+    The factory selects only ``x1``, so ``omitted`` contributes no kernel factor.
+    ``x2`` is likewise unselected, yet its override still yields its own factor.
+    """
     parameters = [
         NumericalContinuousParameter("x1", (0, 1)),
         NumericalContinuousParameter("x2", (0, 1), kernel_override=RBFKernel()),
@@ -71,13 +75,17 @@ def test_default_factory_selector_is_preserved(mode):
             TaskParameter("task", ["a", "b"], override_transfer_learning_mode=mode)
         )
         expected_names.append("task")
+
     kernel, searchspace = _resolve(
         parameters,
         BayBEKernelFactory(parameter_selector=NameSelector(("x1",), regex=False)),
     )
-    assert {tuple(k.active_dims.tolist()) for k in _leaf_kernels(kernel)} == {
+
+    actual_dimensions = {tuple(k.active_dims.tolist()) for k in _leaf_kernels(kernel)}
+    expected_dimensions = {
         searchspace.get_comp_rep_parameter_indices(name) for name in expected_names
     }
+    assert actual_dimensions == expected_dimensions
 
 
 @pytest.mark.parametrize(
