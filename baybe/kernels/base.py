@@ -121,7 +121,7 @@ class Kernel(ABC, SerialMixin):
             f"Cannot remove a parameter from kernel '{self.__class__.__name__}'. "
         )
 
-    def _with_parameter(self, name: str, /) -> Kernel:
+    def _scope_to_parameter(self, name: str, /) -> Kernel:
         """Return a copy of the kernel that acts only on the given parameter.
 
         Args:
@@ -290,7 +290,7 @@ class BasicKernel(Kernel, ABC):
         return evolve(self, parameter_names=remaining) if remaining else None
 
     @override
-    def _with_parameter(self, name: str, /) -> Kernel:
+    def _scope_to_parameter(self, name: str, /) -> Kernel:
         return evolve(self, parameter_names=(name,))
 
 
