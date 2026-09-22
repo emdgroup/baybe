@@ -56,8 +56,8 @@ class ScaleKernel(CompositeKernel):
         return None if stripped is None else evolve(self, base_kernel=stripped)
 
     @override
-    def _with_parameter(self, name: str, /) -> Kernel:
-        return evolve(self, base_kernel=self.base_kernel._with_parameter(name))
+    def _scope_to_parameter(self, name: str, /) -> Kernel:
+        return evolve(self, base_kernel=self.base_kernel._scope_to_parameter(name))
 
     @override
     def to_gpytorch(self, *args, **kwargs):
@@ -86,10 +86,10 @@ class AdditiveKernel(CompositeKernel):
     """The individual kernels to be summed."""
 
     @override
-    def _with_parameter(self, name: str, /) -> Kernel:
+    def _scope_to_parameter(self, name: str, /) -> Kernel:
         return evolve(
             self,
-            base_kernels=tuple(k._with_parameter(name) for k in self.base_kernels),
+            base_kernels=tuple(k._scope_to_parameter(name) for k in self.base_kernels),
         )
 
     @override
@@ -125,10 +125,10 @@ class ProductKernel(CompositeKernel):
         return evolve(self, base_kernels=remaining)
 
     @override
-    def _with_parameter(self, name: str, /) -> Kernel:
+    def _scope_to_parameter(self, name: str, /) -> Kernel:
         return evolve(
             self,
-            base_kernels=tuple(k._with_parameter(name) for k in self.base_kernels),
+            base_kernels=tuple(k._scope_to_parameter(name) for k in self.base_kernels),
         )
 
     @override
