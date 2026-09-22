@@ -53,6 +53,7 @@ _TRAVERSE_ERROR = "Cannot traverse kernel"
 
 _INDEX = TransferLearningMode.INDEX_KERNEL
 _POSITIVE_INDEX = TransferLearningMode.POSITIVE_INDEX_KERNEL
+_IDENTITY = TransferLearningMode.IDENTITY
 
 
 def _x(name, override_kernel=None):
@@ -396,6 +397,12 @@ _ARD_ERROR = "specifies 2 ARD dimensions, but the parameter has 3"
             id="task-positive-index",
         ),
         param(
+            [_x("x1"), _task(_IDENTITY)],
+            None,
+            {("x1",): [gk.MaternKernel], ("task",): [gk.ConstantKernel]},
+            id="task-identity",
+        ),
+        param(
             [_x("x1"), _task(_INDEX)],
             MaternKernel(parameter_names=("x1", "task")),
             {("x1",): [gk.MaternKernel], ("task",): [gk.IndexKernel]},
@@ -519,6 +526,9 @@ def test_override_kernel_construction(
     for k, names, columns in _basic_kernels(kernel, searchspace):
         if user_kernel or set(names) & gpytorch_overrides.keys():
             assert k.ard_num_dims in (None, len(columns))
+        elif isinstance(k, gk.ConstantKernel):
+            # The identity task kernel is constant and carries no ARD dimensions
+            assert k.ard_num_dims is None
         else:
             assert k.ard_num_dims == len(columns)
 

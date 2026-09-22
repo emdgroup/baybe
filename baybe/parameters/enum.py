@@ -179,6 +179,12 @@ class SubstanceEncoding(ParameterEncoding):
 class TransferLearningMode(Enum):
     """Transfer learning modes for :class:`.TaskParameter`."""
 
+    IDENTITY = "IDENTITY"
+    """A constant task kernel that leaves the base kernel unchanged.
+
+    The task dimension adds no covariance, so all tasks are pooled into a single model.
+    """
+
     INDEX_KERNEL = "INDEX_KERNEL"
     """:class:`gpytorch.kernels.IndexKernel` for arbitrary correlations."""
 

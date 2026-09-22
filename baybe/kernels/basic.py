@@ -1,7 +1,9 @@
 """Collection of basic kernels."""
 
+from __future__ import annotations
+
 import gc
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from attrs import define, field
 from attrs.converters import optional as optional_c
@@ -14,6 +16,31 @@ from baybe.priors.base import Prior
 from baybe.settings import active_settings
 from baybe.utils.conversion import fraction_to_float
 from baybe.utils.validation import finite_float
+
+if TYPE_CHECKING:
+    from baybe.searchspace.core import SearchSpace
+
+
+@define(frozen=True)
+class IdentityKernel(BasicKernel):
+    """A constant unit kernel acting as identity under kernel multiplication."""
+
+    @override
+    def _get_dimensions(
+        self, searchspace: SearchSpace
+    ) -> tuple[tuple[int, ...] | None, int | None]:
+        active_dims, _ = super()._get_dimensions(searchspace)
+        return active_dims, None
+
+    @override
+    def to_gpytorch(self, searchspace: SearchSpace):
+        from gpytorch.kernels import ConstantKernel
+
+        active_dims, _ = self._get_dimensions(searchspace)
+        kernel = ConstantKernel(active_dims=active_dims)
+        kernel.constant = kernel.constant.new_ones(kernel.constant.shape)
+        kernel.raw_constant.requires_grad_(False)
+        return kernel
 
 
 @define(frozen=True)
