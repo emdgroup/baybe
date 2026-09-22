@@ -102,7 +102,7 @@ def _to_kernel_override(
                 f"itself. Its basic kernels must specify 'parameter_names' as "
                 f"``None`` or ({instance.name!r},)."
             )
-        return value._with_parameter(instance.name)
+        return value._scope_to_parameter(instance.name)
 
     # GPyTorch kernels: no explicit active dimensions allowed anywhere in the tree.
     # An existing GPyTorch instance implies the module is already imported. Avoid
@@ -219,7 +219,7 @@ class Parameter(ABC, SerialMixin):
         # The override is owner-scoped, so rebind it to the other parameter's name.
         kernel_override = self.kernel_override
         if isinstance(kernel_override, Kernel):
-            kernel_override = kernel_override._with_parameter(other.name)
+            kernel_override = kernel_override._scope_to_parameter(other.name)
         return (
             attrs.evolve(self, name=other.name, kernel_override=kernel_override)
             == other
