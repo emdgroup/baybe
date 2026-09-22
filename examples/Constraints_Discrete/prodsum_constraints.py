@@ -13,9 +13,8 @@ import numpy as np
 
 from baybe import Campaign
 from baybe.constraints import (
+    DiscreteLinearConstraint,
     DiscreteProductConstraint,
-    DiscreteSumConstraint,
-    ThresholdCondition,
 )
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import (
@@ -77,17 +76,21 @@ parameters = [
 # Constraints are used when creating the searchspace object.
 # Thus, they need to be defined prior to the searchspace creation.
 
-sum_constraint_1 = DiscreteSumConstraint(
+sum_constraint_1 = DiscreteLinearConstraint(
     parameters=["NumParam1", "NumParam2"],
-    condition=ThresholdCondition(threshold=150.0, operator="<="),
+    operator="<=",
+    rhs=150.0,
 )
-sum_constraint_2 = DiscreteSumConstraint(
+sum_constraint_2 = DiscreteLinearConstraint(
     parameters=["NumParam5", "NumParam6"],
-    condition=ThresholdCondition(threshold=100, operator="=", tolerance=1.0),
+    operator="=",
+    rhs=100,
+    tolerance=1.0,
 )
 prod_constraint = DiscreteProductConstraint(
     parameters=["NumParam3", "NumParam4"],
-    condition=ThresholdCondition(threshold=30, operator=">="),
+    operator=">=",
+    rhs=30,
 )
 
 constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]

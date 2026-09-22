@@ -10,8 +10,7 @@ from hypothesis import given
 from pandas.testing import assert_frame_equal
 from pytest import param
 
-from baybe.constraints.conditions import ThresholdCondition
-from baybe.constraints.discrete import DiscreteSumConstraint
+from baybe.constraints.discrete import DiscreteLinearConstraint
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -283,9 +282,10 @@ def test_discrete_space_creation_from_simplex_coefficients(
 
     # from_product with equivalent constraint
     operator = "=" if boundary_only else "<="
-    constraint = DiscreteSumConstraint(
+    constraint = DiscreteLinearConstraint(
         parameters=cols,
-        condition=ThresholdCondition(threshold=max_sum, operator=operator),
+        operator=operator,
+        rhs=max_sum,
         coefficients=tuple(coeffs),
     )
     result_product = (

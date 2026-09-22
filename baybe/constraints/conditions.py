@@ -7,7 +7,7 @@ import operator as ops
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from functools import partial
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 
 import numpy as np
 import pandas as pd
@@ -69,8 +69,11 @@ def _is_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarra
     return np.abs(np.subtract(x, y)) <= atol + rtol * np.abs(y)
 
 
+ThresholdOperator: TypeAlias = Literal["<", "<=", "=", "==", "!=", ">", ">="]
+"""An operator for comparing numerical values against a threshold."""
+
 # provide threshold operators
-_threshold_operators: dict[str, Callable] = {
+_threshold_operators: dict[ThresholdOperator, Callable] = {
     "<": ops.lt,
     "<=": ops.le,
     "=": partial(_is_close, rtol=0.0),
@@ -129,7 +132,7 @@ class ThresholdCondition(Condition):
     threshold: float = field(converter=float, validator=finite_float)
     """The threshold value used in the condition."""
 
-    operator: str = field(validator=[in_(_threshold_operators)])
+    operator: ThresholdOperator = field(validator=[in_(_threshold_operators)])
     """The operator used in the condition."""
 
     tolerance: float | None = field(
