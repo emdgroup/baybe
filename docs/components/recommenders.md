@@ -30,8 +30,10 @@ part of the published POEM method.
 
 TFPR compares objective values through dominance rather than combining differently
 scaled values into a single weighted sum. Integer `weights` control how strongly each
-target contributes, `tolerances` treat practically equivalent values as ties, and
-`optimism_lambda` adds posterior uncertainty in each target's favorable direction.
+target contributes. Weight inputs are converted with `int`, so fractional values are
+truncated toward zero and Boolean values become `1` or `0`. The `tolerances` treat
+practically equivalent values as ties, and `optimism_lambda` adds posterior uncertainty
+in each target's favorable direction.
 Only identity target transformations are currently supported. Pairwise comparisons are
 vectorized and limited by `top_fraction`, but their work remains quadratic in the
 retained per-target sets. Extremely large candidate spaces can therefore require a

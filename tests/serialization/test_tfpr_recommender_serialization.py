@@ -1,5 +1,6 @@
 """Serialization tests for the TFPR recommender."""
 
+import pytest
 from hypothesis import given
 
 from baybe import Campaign
@@ -18,6 +19,22 @@ def test_tfpr_recommender_cattrs_roundtrip(recommender: TFPRRecommender) -> None
     dct = converter.unstructure(recommender)
     roundtrip = converter.structure(dct, TFPRRecommender)
     assert roundtrip == recommender
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(True, 1, id="boolean"),
+        pytest.param(1.9, 1, id="fractional"),
+    ],
+)
+def test_tfpr_recommender_structures_weight_inputs(
+    value: bool | float, expected: int
+) -> None:
+    """Cattrs applies the documented integer weight conversion."""
+    recommender = converter.structure({"weights": {"target": value}}, TFPRRecommender)
+
+    assert recommender.weights == {"target": expected}
 
 
 def test_campaign_with_tfpr_recommender_serialization() -> None:

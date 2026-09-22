@@ -94,7 +94,9 @@ def _dense_tfpr_fitness(
     """Compute dense-matrix TFPR fitness for comparison in tests."""
     n_candidates, n_objectives = values.shape
     counts = np.zeros((n_candidates, n_candidates), dtype=float)
-    fraction = 1.0 if top_fraction is None else top_fraction
+    fraction = (
+        _auto_top_fraction(n_candidates) if top_fraction is None else top_fraction
+    )
     top_k = min(n_candidates, max(2, math.ceil(n_candidates * fraction)))
 
     for objective_index in range(n_objectives):
@@ -165,6 +167,63 @@ def test_auto_top_fraction(n_candidates: int, expected: float) -> None:
     assert _auto_top_fraction(n_candidates) == pytest.approx(expected)
 
 
+@pytest.mark.parametrize(
+    ("values", "top_fraction", "expected"),
+    [
+        pytest.param(
+            [[3.0], [2.0], [1.0]],
+            1.0,
+            [41.0, 0.5, 0.0],
+            id="known_ranking",
+        ),
+        pytest.param(
+            [[1.0], [1.0]],
+            1.0,
+            [0.5, 0.5],
+            id="exact_tie",
+        ),
+        pytest.param(
+            [[4.0], [3.0], [2.0], [1.0]],
+            0.5,
+            [1.05 / (3 * 2.05), 0.0, 0.0, 0.0],
+            id="top_fraction",
+        ),
+    ],
+)
+def test_tfpr_fitness_matches_hand_calculation(
+    values: list[list[float]], top_fraction: float, expected: list[float]
+) -> None:
+    """TFPR fitness matches values calculated directly from its definition."""
+    actual = _tfpr_fitness(
+        np.array(values), np.array([1]), np.array([0.0]), top_fraction
+    )
+
+    assert_allclose(actual, expected)
+
+
+def test_tfpr_fitness_uses_automatic_top_fraction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Omitting the top fraction activates the automatic rule."""
+
+    def auto_top_fraction(n_candidates: int) -> float:
+        assert n_candidates == 4
+        return 0.5
+
+    monkeypatch.setattr(
+        "baybe.recommenders.pure.tfpr._auto_top_fraction", auto_top_fraction
+    )
+
+    actual = _tfpr_fitness(
+        np.array([[4.0], [3.0], [2.0], [1.0]]),
+        np.array([1]),
+        np.array([0.0]),
+        None,
+    )
+
+    assert_allclose(actual, [1.05 / (3 * 2.05), 0.0, 0.0, 0.0])
+
+
 def test_tfpr_fitness_matches_dense_reference() -> None:
     """The vectorized implementation matches a dense reference."""
     values = np.array(
@@ -191,12 +250,13 @@ def test_tfpr_fitness_matches_dense_reference() -> None:
         pytest.param(7, 3, 0.4, 2, id="inactive_candidates"),
         pytest.param(20, 5, 0.2, 3, id="many_inactive_candidates"),
         pytest.param(25, 10, 0.7, 4, id="many_objectives"),
+        pytest.param(7, 3, None, 5, id="automatic_fraction"),
     ],
 )
 def test_tfpr_fitness_matches_dense_reference_randomized(
     n_candidates: int,
     n_objectives: int,
-    top_fraction: float,
+    top_fraction: float | None,
     seed: int,
 ) -> None:
     """Vectorized fitness matches the dense reference across varied inputs."""
@@ -341,7 +401,6 @@ def test_target_mapping_validation(
     [
         pytest.param({"weights": {"yield": -1}}, ValueError, "between", id="w_low"),
         pytest.param({"weights": {"yield": 11}}, ValueError, "between", id="w_high"),
-        pytest.param({"weights": {"yield": 1.5}}, TypeError, "integer", id="w_float"),
         pytest.param({"weights": {1: 1}}, TypeError, "string", id="w_key"),
         pytest.param(
             {"tolerances": {"yield": -0.1}},
@@ -377,6 +436,50 @@ def test_init_validation(
     """Invalid TFPR constructor arguments are rejected."""
     with pytest.raises(error, match=match):
         TFPRRecommender(**kwargs)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "attribute", "expected"),
+    [
+        pytest.param(
+            {"weights": {"yield": True}},
+            "weights",
+            {"yield": 1},
+            id="boolean_weight",
+        ),
+        pytest.param(
+            {"weights": {"yield": 1.9}},
+            "weights",
+            {"yield": 1},
+            id="fractional_weight",
+        ),
+        pytest.param(
+            {"tolerances": {"yield": True}},
+            "tolerances",
+            {"yield": 1.0},
+            id="boolean_tolerance",
+        ),
+        pytest.param(
+            {"optimism_lambda": True},
+            "optimism_lambda",
+            1.0,
+            id="boolean_optimism",
+        ),
+        pytest.param(
+            {"top_fraction": True},
+            "top_fraction",
+            1.0,
+            id="boolean_top_fraction",
+        ),
+    ],
+)
+def test_init_numeric_conversion(
+    kwargs: dict[str, Any], attribute: str, expected: Any
+) -> None:
+    """Numeric constructor inputs are converted to their declared field types."""
+    recommender = TFPRRecommender(**kwargs)
+
+    assert getattr(recommender, attribute) == expected
 
 
 def test_recommend_honors_target_direction(

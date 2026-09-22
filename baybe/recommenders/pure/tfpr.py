@@ -11,11 +11,9 @@ import gc
 import math
 from typing import Any, ClassVar
 
-import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from cattrs.gen import make_dict_structure_fn
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError
@@ -23,7 +21,6 @@ from baybe.objectives.base import Objective
 from baybe.objectives.pareto import ParetoObjective
 from baybe.recommenders.pure.surrogate import SurrogateRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
-from baybe.serialization.core import converter
 from baybe.settings import Settings
 from baybe.transformations import IdentityTransformation
 from baybe.utils.conversion import to_string
@@ -44,26 +41,19 @@ def _auto_top_fraction(n_candidates: int) -> float:
     )
 
 
-def _make_float(value: Any, /) -> float:
-    """Convert a non-Boolean finite-like numeric value to float."""
-    if isinstance(value, bool):
-        raise TypeError("Boolean values are not valid floating-point inputs.")
-    return float(value)
-
-
 def _make_optional_float(value: Any, /) -> float | None:
-    """Convert ``None`` or a non-Boolean finite-like numeric value."""
-    return None if value is None else _make_float(value)
+    """Convert ``None`` or a numeric value to an optional float."""
+    return None if value is None else float(value)
 
 
 def _make_tolerances(value: Any, /) -> dict[str, float]:
-    """Convert a tolerance mapping to a copied plain dict."""
-    return {key: _make_float(val) for key, val in dict(value).items()}
+    """Convert a tolerance mapping to floating-point values."""
+    return {key: float(val) for key, val in dict(value).items()}
 
 
-def _pass_through_structure_hook(value: Any, _: Any, /) -> Any:
-    """Pass through values so attrs converters perform strict validation."""
-    return value
+def _make_weights(value: Any, /) -> dict[str, int]:
+    """Convert a weight mapping to integer values by truncating toward zero."""
+    return {key: int(val) for key, val in dict(value).items()}
 
 
 def _tie_mask(value: float, others: np.ndarray, tolerance: float, /) -> np.ndarray:
@@ -149,13 +139,17 @@ class TFPRRecommender(SurrogateRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
     # See base class.
 
-    weights: dict[str, int] = field(factory=dict, converter=dict)
-    """Target-name weights used by TFPR, where unspecified targets receive weight 1."""
+    weights: dict[str, int] = field(factory=dict, converter=_make_weights)
+    """Target-name weights used by TFPR, where unspecified targets receive weight 1.
+
+    Values are converted with :class:`int`, so fractional values are truncated toward
+    zero and Boolean values become ``1`` or ``0``.
+    """
 
     tolerances: dict[str, float] = field(factory=dict, converter=_make_tolerances)
     """Target-name relative tie tolerances, where unspecified targets receive 0."""
 
-    optimism_lambda: float = field(default=0.0, converter=_make_float)
+    optimism_lambda: float = field(default=0.0, converter=float)
     """Nonnegative multiplier for posterior standard-deviation optimism."""
 
     top_fraction: float | None = field(default=None, converter=_make_optional_float)
@@ -214,14 +208,12 @@ class TFPRRecommender(SurrogateRecommender):
         """Validate weight values.
 
         Raises:
-            TypeError: If a key is not a string or a value is not an integer.
+            TypeError: If a key is not a string.
             ValueError: If a value is outside the interval ``[0, 10]``.
         """
         for target_name, weight in value.items():
             if not isinstance(target_name, str):
                 raise TypeError("Weight mappings must use target-name string keys.")
-            if not isinstance(weight, int) or isinstance(weight, bool):
-                raise TypeError("TFPR weights must be integer values.")
             if not 0 <= weight <= 10:
                 raise ValueError("TFPR weights must be between 0 and 10.")
 
@@ -391,30 +383,6 @@ class TFPRRecommender(SurrogateRecommender):
         fitness = _tfpr_fitness(values, weights, tolerances, self.top_fraction)
         order = np.argsort(-fitness, kind="stable")[:batch_size]
         return candidates_exp.index[order]
-
-
-_structure_tfpr_recommender_inner = make_dict_structure_fn(
-    TFPRRecommender,
-    converter,
-    weights=cattrs.override(struct_hook=_pass_through_structure_hook),
-    tolerances=cattrs.override(struct_hook=_pass_through_structure_hook),
-    optimism_lambda=cattrs.override(struct_hook=_pass_through_structure_hook),
-    top_fraction=cattrs.override(struct_hook=_pass_through_structure_hook),
-)
-
-
-@converter.register_structure_hook
-def _structure_tfpr_recommender(
-    value: dict[str, Any], cls: type[TFPRRecommender]
-) -> TFPRRecommender:
-    """Structure TFPR recommenders while preserving strict field validation."""
-    value = value.copy()
-    if (type_ := value.pop("type", None)) and type_ != cls.__name__:
-        raise TypeError(
-            f"The type field '{type_}' does not match the target class "
-            f"'{cls.__name__}'."
-        )
-    return _structure_tfpr_recommender_inner(value, cls)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
