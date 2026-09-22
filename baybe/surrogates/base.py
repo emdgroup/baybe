@@ -88,7 +88,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Abstract base class for all surrogate models."""
 
     supports_kernel_overrides: ClassVar[bool] = False
-    """Whether parameter-specific kernel overrides are supported."""
+    """Class variable encoding whether or not the surrogate supports
+    parameter-specific kernel overrides."""
 
     supports_transfer_learning: ClassVar[bool]
     """Class variable encoding whether or not the surrogate supports transfer
