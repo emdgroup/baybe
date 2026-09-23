@@ -9,11 +9,14 @@ from __future__ import annotations
 
 import gc
 import math
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 import numpy as np
 import pandas as pd
 from attrs import define, field
+from attrs.converters import optional as optional_c
+from attrs.validators import deep_mapping, ge, gt, instance_of, le
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError
@@ -21,10 +24,9 @@ from baybe.objectives.base import Objective
 from baybe.objectives.pareto import ParetoObjective
 from baybe.recommenders.pure.surrogate import SurrogateRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
-from baybe.settings import Settings
 from baybe.transformations import IdentityTransformation
 from baybe.utils.conversion import to_string
-from baybe.utils.validation import preprocess_dataframe, validate_object_names
+from baybe.utils.validation import finite_float
 
 _EPSILON = 0.05
 """Small stabilizer used by the original TFPR fitness formula."""
@@ -39,11 +41,6 @@ def _auto_top_fraction(n_candidates: int) -> float:
     return 0.2 + (1.0 - 0.2) * (
         1 - 1 / (1 + math.exp(-0.0001 * (n_candidates - 27500)))
     )
-
-
-def _make_optional_float(value: Any, /) -> float | None:
-    """Convert ``None`` or a numeric value to an optional float."""
-    return None if value is None else float(value)
 
 
 def _make_tolerances(value: Any, /) -> dict[str, float]:
@@ -139,20 +136,38 @@ class TFPRRecommender(SurrogateRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
     # See base class.
 
-    weights: dict[str, int] = field(factory=dict, converter=_make_weights)
+    weights: dict[str, int] = field(
+        factory=dict,
+        converter=_make_weights,
+        validator=deep_mapping(
+            key_validator=instance_of(str), value_validator=[ge(0), le(10)]
+        ),
+    )
     """Target-name weights used by TFPR, where unspecified targets receive weight 1.
 
     Values are converted with :class:`int`, so fractional values are truncated toward
     zero and Boolean values become ``1`` or ``0``.
     """
 
-    tolerances: dict[str, float] = field(factory=dict, converter=_make_tolerances)
+    tolerances: dict[str, float] = field(
+        factory=dict,
+        converter=_make_tolerances,
+        validator=deep_mapping(
+            key_validator=instance_of(str), value_validator=[finite_float, ge(0)]
+        ),
+    )
     """Target-name relative tie tolerances, where unspecified targets receive 0."""
 
-    optimism_lambda: float = field(default=0.0, converter=float)
+    optimism_lambda: float = field(
+        default=0.0, converter=float, validator=[finite_float, ge(0)]
+    )
     """Nonnegative multiplier for posterior standard-deviation optimism."""
 
-    top_fraction: float | None = field(default=None, converter=_make_optional_float)
+    top_fraction: float | None = field(
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0), le(1)]),
+    )
     """Fraction of per-target top candidates considered by TFPR.
 
     ``None`` activates the original automatic rule.
@@ -160,62 +175,6 @@ class TFPRRecommender(SurrogateRecommender):
 
     _objective: ParetoObjective | None = field(default=None, init=False, eq=False)
     """The encountered objective to be optimized."""
-
-    @optimism_lambda.validator
-    def _validate_optimism_lambda(  # noqa: DOC101, DOC103
-        self, _: Any, value: float
-    ) -> None:
-        """Validate the optimism multiplier.
-
-        Raises:
-            ValueError: If the value is not finite and nonnegative.
-        """
-        if not math.isfinite(value) or value < 0:
-            raise ValueError("The optimism multiplier must be finite and nonnegative.")
-
-    @tolerances.validator
-    def _validate_tolerances(  # noqa: DOC101, DOC103
-        self, _: Any, value: dict[str, float]
-    ) -> None:
-        """Validate tolerance values.
-
-        Raises:
-            TypeError: If a key is not a string.
-            ValueError: If a value is not finite and nonnegative.
-        """
-        for target_name, tolerance in value.items():
-            if not isinstance(target_name, str):
-                raise TypeError("Tolerance mappings must use target-name string keys.")
-            if not math.isfinite(tolerance) or tolerance < 0:
-                raise ValueError("TFPR tolerances must be finite and nonnegative.")
-
-    @top_fraction.validator
-    def _validate_top_fraction(  # noqa: DOC101, DOC103
-        self, _: Any, value: float | None
-    ) -> None:
-        """Validate the top-fraction override.
-
-        Raises:
-            ValueError: If the value is not ``None`` or in the interval ``(0, 1]``.
-        """
-        if value is not None and (not math.isfinite(value) or not 0 < value <= 1):
-            raise ValueError("TFPR top_fraction must be None or satisfy 0 < f <= 1.")
-
-    @weights.validator
-    def _validate_weights(  # noqa: DOC101, DOC103
-        self, _: Any, value: dict[str, int]
-    ) -> None:
-        """Validate weight values.
-
-        Raises:
-            TypeError: If a key is not a string.
-            ValueError: If a value is outside the interval ``[0, 10]``.
-        """
-        for target_name, weight in value.items():
-            if not isinstance(target_name, str):
-                raise TypeError("Weight mappings must use target-name string keys.")
-            if not 0 <= weight <= 10:
-                raise ValueError("TFPR weights must be between 0 and 10.")
 
     @override
     def __str__(self) -> str:
@@ -272,6 +231,27 @@ class TFPRRecommender(SurrogateRecommender):
         return weights, tolerances, directions, target_names
 
     @override
+    def _prepare_recommendation(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None,
+    ) -> None:
+        if not hasattr(self._surrogate_model, "posterior_stats"):
+            raise IncompatibilityError(
+                f"The used surrogate type '{self._surrogate_model.__class__.__name__}' "
+                f"does not provide a 'posterior_stats' method."
+            )
+
+        self.get_surrogate(
+            searchspace=searchspace,
+            objective=objective,
+            measurements=measurements,
+        )
+        self._objective = cast(ParetoObjective, objective)
+
+    @override
     def recommend(
         self,
         batch_size: int,
@@ -292,45 +272,15 @@ class TFPRRecommender(SurrogateRecommender):
                 "discrete search space."
             )
 
-        validate_object_names(searchspace.parameters + objective.targets)
         self._make_target_options(objective)
 
-        if (measurements is None) or measurements.empty:
-            raise NotImplementedError(
-                f"Recommenders of type '{self.__class__.__name__}' do not support "
-                f"empty training data."
-            )
-
-        measurements = preprocess_dataframe(
-            measurements,
-            searchspace,
-            objective,
-            numerical_measurements_must_be_within_tolerance=False,
+        return super().recommend(
+            batch_size=batch_size,
+            searchspace=searchspace,
+            objective=objective,
+            measurements=measurements,
+            pending_experiments=pending_experiments,
         )
-
-        if pending_experiments is not None:
-            pending_experiments = preprocess_dataframe(
-                pending_experiments,
-                searchspace,
-                numerical_measurements_must_be_within_tolerance=False,
-            )
-
-        if not hasattr(self._surrogate_model, "posterior_stats"):
-            raise IncompatibilityError(
-                f"The used surrogate type '{self._surrogate_model.__class__.__name__}' "
-                f"does not provide a 'posterior_stats' method."
-            )
-        self.get_surrogate(searchspace, objective, measurements)
-
-        self._objective = objective
-        with Settings(preprocess_dataframes=False):
-            return super().recommend(
-                batch_size=batch_size,
-                searchspace=searchspace,
-                objective=objective,
-                measurements=measurements,
-                pending_experiments=pending_experiments,
-            )
 
     @override
     def _recommend_discrete(

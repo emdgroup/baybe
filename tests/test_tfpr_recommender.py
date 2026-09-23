@@ -399,35 +399,35 @@ def test_target_mapping_validation(
 @pytest.mark.parametrize(
     ("kwargs", "error", "match"),
     [
-        pytest.param({"weights": {"yield": -1}}, ValueError, "between", id="w_low"),
-        pytest.param({"weights": {"yield": 11}}, ValueError, "between", id="w_high"),
-        pytest.param({"weights": {1: 1}}, TypeError, "string", id="w_key"),
+        pytest.param({"weights": {"yield": -1}}, ValueError, ">= 0", id="w_low"),
+        pytest.param({"weights": {"yield": 11}}, ValueError, "<= 10", id="w_high"),
+        pytest.param({"weights": {1: 1}}, TypeError, "str", id="w_key"),
         pytest.param(
             {"tolerances": {"yield": -0.1}},
             ValueError,
-            "nonnegative",
+            ">= 0",
             id="tol_low",
         ),
         pytest.param(
             {"tolerances": {"yield": float("inf")}},
             ValueError,
-            "finite",
+            "inf",
             id="tol_inf",
         ),
         pytest.param(
             {"optimism_lambda": -1.0},
             ValueError,
-            "nonnegative",
+            ">= 0",
             id="lambda_low",
         ),
         pytest.param(
             {"optimism_lambda": float("nan")},
             ValueError,
-            "finite",
+            "nan",
             id="lambda_nan",
         ),
-        pytest.param({"top_fraction": 0.0}, ValueError, "0 < f", id="top_zero"),
-        pytest.param({"top_fraction": 1.1}, ValueError, "0 < f", id="top_high"),
+        pytest.param({"top_fraction": 0.0}, ValueError, "> 0", id="top_zero"),
+        pytest.param({"top_fraction": 1.1}, ValueError, "<= 1", id="top_high"),
     ],
 )
 def test_init_validation(
