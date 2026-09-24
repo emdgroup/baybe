@@ -132,14 +132,14 @@ def fixture_n_iterations(request):
 
 
 @pytest.fixture(
-    params=[pytest.param(1, marks=pytest.mark.slow), 3],
+    params=[pytest.param(1, marks=pytest.mark.slow), 2],
     name="batch_size",
-    ids=["b1", "b3"],
+    ids=["b1", "b2"],
 )
 def fixture_batch_size(request):
     """Number of recommendations requested per iteration.
 
-    Testing 1 as edge case and 3 as a case for >1.
+    Testing 1 as edge case and 2 as a case for >1.
     """
     return request.param
 
