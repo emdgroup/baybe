@@ -9,14 +9,16 @@ import pandas as pd
 import pytest
 import torch
 from attrs import evolve
-from botorch.models.kernels.positive_index import PositiveIndexKernel
+from botorch.models.kernels.positive_index import (
+    PositiveIndexKernel as BoPositiveIndexKernel,
+)
 from gpytorch import kernels as gk
 from gpytorch.priors import GammaPrior
 from pytest import param
 
 from baybe.exceptions import IncompatibleOverrideError
 from baybe.kernels import MaternKernel, RBFKernel
-from baybe.kernels.basic import IndexKernel
+from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from baybe.parameters import (
     CategoricalParameter,
@@ -169,7 +171,7 @@ def test_fitted_model_uses_parameter_kernel_overrides(
             gk.IndexKernel
             if task_parameter.override_transfer_learning_mode
             == TransferLearningMode.INDEX_KERNEL
-            else PositiveIndexKernel
+            else BoPositiveIndexKernel
         )
     searchspace = SearchSpace.from_product(parameters)
     measurements = pd.DataFrame(
@@ -313,6 +315,28 @@ def test_task_parameter_equivalence(values, mode, expected):
     p1 = TaskParameter("t1", ["a", "b"], override_transfer_learning_mode=mode_ref)
     p2 = TaskParameter("t2", values, override_transfer_learning_mode=mode)
     assert p1.is_equivalent(p2) == expected
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected"),
+    [
+        param(None, None, id="none"),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            IndexKernel(num_tasks=3, rank=3, parameter_names=("task",)),
+            id="index",
+        ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            PositiveIndexKernel(num_tasks=3, rank=3, parameter_names=("task",)),
+            id="positive-index",
+        ),
+    ],
+)
+def test_task_parameter_override_kernel(mode, expected):
+    """Task parameters derive their kernel override from the transfer learning mode."""
+    task = TaskParameter("task", ["a", "b", "c"], override_transfer_learning_mode=mode)
+    assert task.override_kernel == expected
 
 
 @pytest.mark.parametrize(

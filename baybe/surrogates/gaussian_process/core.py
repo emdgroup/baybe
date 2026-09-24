@@ -27,7 +27,6 @@ from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process import _override
@@ -92,14 +91,6 @@ class _ModelContext:
     def task_idx(self) -> int | None:
         """The computational column index of the task parameter, if available."""
         return self.searchspace.task_idx
-
-    @property
-    def tl_override(self) -> TransferLearningMode | None:
-        """The task parameter's transfer learning override, if any."""
-        task_param = self.searchspace._task_parameter
-        return (
-            None if task_param is None else task_param.override_transfer_learning_mode
-        )
 
     @property
     def is_multitask(self) -> bool:
@@ -196,10 +187,11 @@ class GaussianProcessSurrogate(Surrogate):
         * :class:`gpytorch.kernels.Kernel`
 
     A :attr:`~baybe.parameters.base.Parameter.override_kernel` removes its parameter
-    from this kernel and contributes a separate multiplicative factor. A
+    from this kernel and contributes a separate multiplicative factor. For task
+    parameters, it is derived from
     :attr:`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`
-    replaces the task factor in the same way. When not all parameters are removed by
-    an override, the configured kernel or factory must support excluding the
+    and replaces the task factor in the same way. When not all parameters are removed
+    by an override, the configured kernel or factory must support excluding the
     overridden parameters; otherwise,
     :class:`~baybe.exceptions.IncompatibleOverrideError` is raised. If all parameters
     are overridden, this kernel or factory is not used. Without overrides, it is used
@@ -428,8 +420,7 @@ class GaussianProcessSurrogate(Surrogate):
         Returns:
             The resolved and partition-validated kernel.
         """
-        overrides = _override.extract_parameter_overrides(context)
-        overrides += _override.extract_transfer_learning_overrides(context)
+        overrides = _override.extract_parameter_kernel_overrides(context)
 
         excluded_names = {name for name, _ in overrides}
         residual = self._resolve_residual_kernel(context, excluded_names)
@@ -599,14 +590,17 @@ class GaussianProcessSurrogate(Surrogate):
 
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
-        # Check for custom kernel + multi-task clash (only relevant when no
-        # override_transfer_learning_mode is set, since the override mechanism
-        # handles task kernel attachment explicitly).
-        has_tl_override = context.tl_override is not None
+        # Check for custom kernel + multi-task clash (only relevant when the task
+        # parameter has no kernel override, since the override mechanism handles task
+        # kernel attachment explicitly).
+        task_param = self._searchspace._task_parameter
+        has_task_override = (
+            task_param is not None and task_param.override_kernel is not None
+        )
         if (
             context.is_multitask
             and self._custom_kernel
-            and not has_tl_override
+            and not has_task_override
             and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
         ):
             raise DeprecationError(

@@ -8,8 +8,9 @@ import pandas as pd
 from attr.converters import optional as optional_c
 from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
-from typing_extensions import override
+from typing_extensions import assert_never, override
 
+from baybe.kernels.base import Kernel
 from baybe.parameters.base import _DiscreteLabelLikeParameter
 from baybe.parameters.enum import CategoricalEncoding, TransferLearningMode
 from baybe.settings import active_settings
@@ -89,7 +90,7 @@ class TaskParameter(CategoricalParameter):
     # See base class.
 
     _override_kernel: None = field(init=False, default=None)
-    """Task parameters do not support parameter-specific kernel overrides."""
+    """Task parameters derive their kernel override from the transfer learning mode."""
 
     override_transfer_learning_mode: TransferLearningMode | None = field(
         default=None,
@@ -102,6 +103,27 @@ class TaskParameter(CategoricalParameter):
     attaches the requested task kernel to a task-free base kernel derived from the
     configured factory.
     """
+
+    @override
+    @property
+    def override_kernel(self) -> Kernel | None:
+        """The task kernel defined by the transfer learning mode, if any."""
+        from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
+
+        n_tasks, names = len(self.values), (self.name,)
+        match mode := self.override_transfer_learning_mode:
+            case None:
+                return None
+            case TransferLearningMode.POSITIVE_INDEX_KERNEL:
+                return PositiveIndexKernel(
+                    num_tasks=n_tasks, rank=n_tasks, parameter_names=names
+                )
+            case TransferLearningMode.INDEX_KERNEL:
+                return IndexKernel(
+                    num_tasks=n_tasks, rank=n_tasks, parameter_names=names
+                )
+            case _:
+                assert_never(mode)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
