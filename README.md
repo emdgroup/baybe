@@ -246,6 +246,10 @@ recommender = TwoPhaseMetaRecommender(
 )
 ```
 
+For large discrete multi-objective campaigns, `TFPRRecommender` provides a
+surrogate-based alternative that ranks optimistic posterior predictions without
+hypervolume acquisition optimization.
+
 For more details on the different recommenders, their underlying algorithmic
 details and how their settings can be adjusted, see the
 [recommenders section](https://emdgroup.github.io/baybe/stable/components/recommenders.html)

@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constraint filtering
 
 ### Added
+- `TFPRRecommender` for fast surrogate-based ranking of discrete multi-objective
+  candidate sets using configurable optimism, target weights, and tie tolerances
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
 - `Symmetry` concept for expressing symmetries of the optimization problem, including
