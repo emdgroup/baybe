@@ -88,7 +88,7 @@ class TaskParameter(CategoricalParameter):
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
 
-    override_kernel: None = field(init=False, default=None)
+    _override_kernel: None = field(init=False, default=None)
     """Task parameters do not support parameter-specific kernel overrides."""
 
     override_transfer_learning_mode: TransferLearningMode | None = field(

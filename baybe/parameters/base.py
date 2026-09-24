@@ -190,12 +190,13 @@ class Parameter(ABC, SerialMixin):
     name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
 
-    override_kernel: KernelOverride | None = field(
+    _override_kernel: KernelOverride | None = field(
         default=None,
+        alias="override_kernel",
         converter=optional_c(Converter(_to_kernel_override, takes_self=True)),  # type: ignore[misc, call-overload]
         kw_only=True,
     )
-    """An optional kernel replacing the overall kernel for this parameter."""
+    """The optional kernel override, exposed via :attr:`override_kernel`."""
 
     metadata: MeasurableMetadata = field(
         factory=MeasurableMetadata,
@@ -228,6 +229,11 @@ class Parameter(ABC, SerialMixin):
     def is_discrete(self) -> bool:
         """Boolean indicating if this is a discrete parameter."""
         return isinstance(self, DiscreteParameter)
+
+    @property
+    def override_kernel(self) -> KernelOverride | None:
+        """An optional kernel replacing the overall kernel for this parameter."""
+        return self._override_kernel
 
     @property
     def _kind(self) -> _ParameterKind:
