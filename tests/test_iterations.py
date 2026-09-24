@@ -57,7 +57,7 @@ from baybe.surrogates.linear import BayesianLinearSurrogate
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import create_fake_input
-from tests.conftest import run_iterations
+from tests.conftest import FAST_OPTIMIZATION_SETTINGS, run_iterations
 
 
 @pytest.fixture
@@ -89,10 +89,24 @@ for cls in get_subclasses(Surrogate):
 
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
 
+
+def _make_pure_recommender(cls: type[PureRecommender]) -> PureRecommender:
+    """Create a recommender with reduced acquisition optimization effort, if possible.
+
+    The discrete part of the naive hybrid recommender keeps its default since the
+    optimization settings do not affect purely discrete optimization.
+    """
+    if issubclass(cls, BotorchRecommender):
+        return cls(**FAST_OPTIMIZATION_SETTINGS)
+    if issubclass(cls, NaiveHybridSpaceRecommender):
+        return cls(cont_recommender=BotorchRecommender(**FAST_OPTIMIZATION_SETTINGS))
+    return cls()
+
+
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
 #  allows no training data
 valid_discrete_recommenders = [
-    TwoPhaseMetaRecommender(recommender=cls())
+    TwoPhaseMetaRecommender(recommender=_make_pure_recommender(cls))
     for cls in get_subclasses(PureRecommender)
     if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
@@ -100,7 +114,7 @@ valid_discrete_recommenders = [
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
 #  allows no training data
 valid_continuous_recommenders = [
-    TwoPhaseMetaRecommender(recommender=cls())
+    TwoPhaseMetaRecommender(recommender=_make_pure_recommender(cls))
     for cls in get_subclasses(PureRecommender)
     if cls.compatibility
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
@@ -205,7 +219,7 @@ def _dedup_ids(ids: list[str]) -> list[str]:
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
 #  allows no training data
 valid_hybrid_recommenders = [
-    TwoPhaseMetaRecommender(recommender=cls())
+    TwoPhaseMetaRecommender(recommender=_make_pure_recommender(cls))
     for cls in get_subclasses(PureRecommender)
     if cls.compatibility == SearchSpaceType.HYBRID
 ]
@@ -223,7 +237,11 @@ sampling_strategies = [
 #  allows no training data
 valid_hybrid_sequential_greedy_recommenders = [
     TwoPhaseMetaRecommender(
-        recommender=BotorchRecommender(hybrid_sampler=sampler, sampling_percentage=per)
+        recommender=BotorchRecommender(
+            hybrid_sampler=sampler,
+            sampling_percentage=per,
+            **FAST_OPTIMIZATION_SETTINGS,
+        )
     )
     for sampler, per in sampling_strategies
 ]
@@ -246,7 +264,8 @@ valid_discrete_bayesian_recommenders = [
 valid_naive_hybrid_recommenders = [
     TwoPhaseMetaRecommender(
         recommender=NaiveHybridSpaceRecommender(
-            disc_recommender=disc, cont_recommender=BotorchRecommender()
+            disc_recommender=disc,
+            cont_recommender=BotorchRecommender(**FAST_OPTIMIZATION_SETTINGS),
         )
     )
     for disc in [
