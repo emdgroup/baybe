@@ -30,7 +30,7 @@ def extract_parameter_overrides(
     return [
         (p.name, make_parameter_override_kernel(p, context.searchspace))
         for p in context.searchspace.parameters
-        if p.kernel_override is not None
+        if p.override_kernel is not None
     ]
 
 
@@ -47,7 +47,7 @@ def make_parameter_override_kernel(
     Returns:
         The GPyTorch kernel bound to the parameter's dimensions.
     """
-    override = parameter.kernel_override
+    override = parameter.override_kernel
     assert override is not None
 
     # BayBE kernels resolve their own dimensions; raw kernels are bound manually.

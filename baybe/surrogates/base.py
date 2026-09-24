@@ -441,7 +441,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             )
 
         if not self.supports_kernel_overrides and (
-            names := [p.name for p in searchspace.parameters if p.kernel_override]
+            names := [p.name for p in searchspace.parameters if p.override_kernel]
         ):
             warnings.warn(
                 f"The selected surrogate model ({self.__class__.__name__}) does not "

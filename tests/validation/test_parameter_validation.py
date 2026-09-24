@@ -49,7 +49,7 @@ def test_invalid_parameter_name(name, error):
             partial(TaskParameter, "task", ["a", "b"]),
             RBFKernel(),
             TypeError,
-            "kernel_override",
+            "override_kernel",
             id="task_parameter",
         ),
         param(
@@ -92,7 +92,7 @@ def test_invalid_parameter_name(name, error):
 def test_invalid_kernel_override(constructor, override, error, match):
     """Invalid parameter kernel overrides raise the expected exceptions."""
     with pytest.raises(error, match=match):
-        constructor(kernel_override=override)
+        constructor(override_kernel=override)
 
 
 @pytest.mark.parametrize("scaled", [False, True], ids=["direct", "nested"])
@@ -101,7 +101,7 @@ def test_unsupported_kernel_override_structure(scaled):
     kernel = Mock(spec=Kernel)
     with pytest.raises(TypeError, match="Cannot traverse kernel"):
         NumericalContinuousParameter(
-            "x", (0, 1), kernel_override=ScaleKernel(kernel) if scaled else kernel
+            "x", (0, 1), override_kernel=ScaleKernel(kernel) if scaled else kernel
         )
 
 
