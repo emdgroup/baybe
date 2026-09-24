@@ -147,6 +147,14 @@ def _make_dispatch_context(override_mode):
     ("override_mode", "kernel_or_factory", "expected_task_kernel_cls", "has_base"),
     [
         param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            MaternKernel(parameter_names=("x",))
+            * IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",)),
+            GPyTorchPositiveIndexKernel,
+            True,
+            id="override+product_kernel",
+        ),
+        param(
             None,
             None,
             GPyTorchPositiveIndexKernel,
@@ -248,6 +256,24 @@ def _make_dispatch_context(override_mode):
             True,
             id="index_override+default_factory",
         ),
+        param(
+            TransferLearningMode.POSITIVE_INDEX_KERNEL,
+            BayBEKernelFactory(
+                parameter_selector=TypeSelector((TaskParameter,), exclude=True)
+            ),
+            GPyTorchPositiveIndexKernel,
+            True,
+            id="positive_index_override+default_factory_with_selector",
+        ),
+        param(
+            TransferLearningMode.INDEX_KERNEL,
+            BayBEKernelFactory(
+                parameter_selector=TypeSelector((TaskParameter,), exclude=True)
+            ),
+            GPyTorchIndexKernel,
+            True,
+            id="index_override+default_factory_with_selector",
+        ),
     ],
 )
 def test_resolve_kernel_dispatch_success(
@@ -289,12 +315,6 @@ def test_resolve_kernel_dispatch_success(
         ),
         param(
             TransferLearningMode.POSITIVE_INDEX_KERNEL,
-            MaternKernel(parameter_names=("x",))
-            * IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",)),
-            id="override+product_kernel",
-        ),
-        param(
-            TransferLearningMode.POSITIVE_INDEX_KERNEL,
             ICMKernelFactory(
                 task_kernel_or_factory=IndexKernel(
                     num_tasks=3, rank=3, parameter_names=("Task",)
@@ -307,21 +327,12 @@ def test_resolve_kernel_dispatch_success(
             _gpytorch_returning_factory,
             id="override+factory_returning_gpytorch",
         ),
-        param(
-            TransferLearningMode.INDEX_KERNEL,
-            BayBEKernelFactory(
-                parameter_selector=TypeSelector((TaskParameter,), exclude=True)
-            ),
-            # On a searchspace without a substance parameter, the default factory
-            # yields a gpytorch kernel and cannot be combined with an override.
-            id="override+default_factory_with_selector_unsupported",
-        ),
     ],
 )
 def test_resolve_kernel_dispatch_raises(monkeypatch, override_mode, kernel_or_factory):
     """`_resolve_kernel` raises for inputs incompatible with an override.
 
-    This covers raw gpytorch kernels, composite kernels, and task-aware factories.
+    This covers raw gpytorch kernels and task-aware factories.
     """
     monkeypatch.setenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "True")
 

@@ -1,8 +1,11 @@
 """Composite kernels (that is, kernels composed of other kernels)."""
 
+from __future__ import annotations
+
 import gc
 from functools import reduce
 from operator import add, mul
+from typing import TYPE_CHECKING
 
 from attrs import define, evolve, field
 from attrs.converters import optional as optional_c
@@ -12,10 +15,38 @@ from typing_extensions import override
 
 from baybe.kernels.base import CompositeKernel, Kernel
 from baybe.priors.base import Prior
-from baybe.searchspace.core import SearchSpace
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
 from baybe.utils.validation import finite_float
+
+if TYPE_CHECKING:
+    from baybe.searchspace.core import SearchSpace
+
+
+def _reduce_base_kernels(
+    kernel: AdditiveKernel | ProductKernel, name: str, searchspace: SearchSpace, /
+) -> Kernel | None:
+    """Remove a parameter from all base kernels of a composite kernel.
+
+    Args:
+        kernel: The composite kernel whose base kernels are to be reduced.
+        name: The name of the parameter to remove.
+        searchspace: The search space the kernel operates on.
+
+    Returns:
+        The reduced composite kernel, the sole remaining base kernel, or ``None``
+        if no base kernel remains.
+    """
+    remaining = tuple(
+        reduced
+        for k in kernel.base_kernels
+        if (reduced := k._without_parameter(name, searchspace)) is not None
+    )
+    if not remaining:
+        return None
+    if len(remaining) == 1:
+        return remaining[0]
+    return evolve(kernel, base_kernels=remaining)
 
 
 @define(frozen=True)
@@ -51,6 +82,10 @@ class ScaleKernel(CompositeKernel):
         return None if stripped is None else evolve(self, base_kernel=stripped)
 
     @override
+    def _scope_to_parameter(self, name: str | None, /) -> Kernel:
+        return evolve(self, base_kernel=self.base_kernel._scope_to_parameter(name))
+
+    @override
     def to_gpytorch(self, *args, **kwargs):
         import torch
 
@@ -77,6 +112,19 @@ class AdditiveKernel(CompositeKernel):
     """The individual kernels to be summed."""
 
     @override
+    def _without_parameter(
+        self, name: str, searchspace: SearchSpace, /
+    ) -> Kernel | None:
+        return _reduce_base_kernels(self, name, searchspace)
+
+    @override
+    def _scope_to_parameter(self, name: str | None, /) -> Kernel:
+        return evolve(
+            self,
+            base_kernels=tuple(k._scope_to_parameter(name) for k in self.base_kernels),
+        )
+
+    @override
     def to_gpytorch(self, *args, **kwargs):
         return reduce(add, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
 
@@ -92,6 +140,19 @@ class ProductKernel(CompositeKernel):
         ),
     )
     """The individual kernels to be multiplied."""
+
+    @override
+    def _without_parameter(
+        self, name: str, searchspace: SearchSpace, /
+    ) -> Kernel | None:
+        return _reduce_base_kernels(self, name, searchspace)
+
+    @override
+    def _scope_to_parameter(self, name: str | None, /) -> Kernel:
+        return evolve(
+            self,
+            base_kernels=tuple(k._scope_to_parameter(name) for k in self.base_kernels),
+        )
 
     @override
     def to_gpytorch(self, *args, **kwargs):
