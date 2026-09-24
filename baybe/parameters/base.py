@@ -7,7 +7,7 @@ import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, cast
 
 import attrs
 import pandas as pd
@@ -117,7 +117,7 @@ def _is_gpytorch_kernel_equivalent(
 
 
 def _to_kernel_override(value: KernelOverride, instance: Parameter) -> KernelOverride:
-    """Validate a kernel override and scope BayBE kernels to their parameter.
+    """Validate a kernel override and store BayBE kernels unscoped.
 
     Args:
         value: The provided kernel override.
@@ -129,10 +129,9 @@ def _to_kernel_override(value: KernelOverride, instance: Parameter) -> KernelOve
         TypeError: If the object is neither a BayBE nor a GPyTorch kernel.
 
     Returns:
-        The validated override, with BayBE kernels scoped to the parameter.
+        The validated override, with BayBE kernels unscoped.
     """
-    # BayBE kernels: every basic leaf must be unscoped or scoped to the owner. The
-    # kernel is then rebound to the owning parameter (dropping unspecified names).
+    # BayBE kernels: every basic leaf must be unscoped or scoped to the owner.
     if isinstance(value, Kernel):
         from baybe.kernels.base import BasicKernel
 
@@ -147,7 +146,13 @@ def _to_kernel_override(value: KernelOverride, instance: Parameter) -> KernelOve
                 f"itself. Its basic kernels must specify '{names_alias}' as "
                 f"``None`` or ({instance.name!r},)."
             )
-        return value._scope_to_parameter(instance.name)
+        # NOTE: Validated BayBE kernels are stored unscoped and only scoped to the
+        #   owning parameter when accessed via `override_kernel`. This keeps the
+        #   stored value independent of the parameter name, so that renaming (e.g.
+        #   via `attrs.evolve`) and `is_equivalent` work without rescoping. User
+        #   input is still restricted to unscoped kernels or kernels scoped to the
+        #   owning parameter.
+        return value._scope_to_parameter(None)
 
     # GPyTorch kernels: no explicit active dimensions allowed anywhere in the tree.
     # An existing GPyTorch instance implies the module is already imported. Avoid
@@ -233,7 +238,9 @@ class Parameter(ABC, SerialMixin):
     @property
     def override_kernel(self) -> KernelOverride | None:
         """An optional kernel replacing the overall kernel for this parameter."""
-        return self._override_kernel
+        if isinstance(kernel := self._override_kernel, Kernel):
+            return kernel._scope_to_parameter(self.name)
+        return kernel
 
     @property
     def _kind(self) -> _ParameterKind:
@@ -271,23 +278,22 @@ class Parameter(ABC, SerialMixin):
         """
         if type(self) is not type(other):
             return False
-        override_kernel = self.override_kernel
-        other_override = other.override_kernel
-        if isinstance(override_kernel, Kernel):
-            # The override is owner-scoped, so rebind it to the other parameter's name
-            override_kernel = override_kernel._scope_to_parameter(other.name)
-        elif (
-            override_kernel is not None
-            and other_override is not None
-            and not isinstance(other_override, Kernel)
-            and _is_gpytorch_kernel_equivalent(override_kernel, other_override)
+        # Stored overrides are unscoped (see `_to_kernel_override`), so only the name
+        # needs to be aligned for the comparison
+        changes: dict[str, Any] = {}
+        kernel, other_kernel = self._override_kernel, other._override_kernel
+        if (
+            kernel is not None
+            and not isinstance(kernel, Kernel)
+            and other_kernel is not None
+            and not isinstance(other_kernel, Kernel)
+            and _is_gpytorch_kernel_equivalent(kernel, other_kernel)
         ):
             # GPyTorch kernels define no equality, so substitute equivalent overrides
-            override_kernel = other_override
-        return (
-            attrs.evolve(self, name=other.name, override_kernel=override_kernel)
-            == other
-        )
+            # NOTE: attrs resolves all aliases during class creation
+            alias = cast(str, attrs.fields(Parameter)._override_kernel.alias)
+            changes[alias] = other_kernel
+        return attrs.evolve(self, name=other.name, **changes) == other
 
     @abstractmethod
     def summary(self) -> dict:
