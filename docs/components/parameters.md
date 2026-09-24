@@ -345,7 +345,7 @@ elsewhere, they cannot be serialized.
 
 The feature applies only to Gaussian process surrogates. Other surrogates ignore kernel
 overrides and emit an {class}`~baybe.exceptions.UnusedObjectWarning`. Task parameters do
-not expose {attr}`~baybe.parameters.base.Parameter.override_kernel`; use
+not support kernel overrides; use
 {attr}`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`
-instead. Both override mechanisms can be used in the same searchspace, in which case
-their kernel factors are multiplied.
+instead. Kernel overrides of other parameters can be combined with a transfer learning
+override of the task parameter, in which case their kernel factors are multiplied.
