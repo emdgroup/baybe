@@ -88,7 +88,7 @@ ACQFS = [
     PosteriorStandardDeviation(),  # Active learning
 ]
 N_MC_RUNS = 3 if SMOKE_TEST else 10
-N_ITERATIONS = 50 if SMOKE_TEST else 200
+N_ITERATIONS = 10 if SMOKE_TEST else 200
 
 
 ### Building the Model
