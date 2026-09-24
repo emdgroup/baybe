@@ -190,7 +190,7 @@ class Parameter(ABC, SerialMixin):
     name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
 
-    kernel_override: KernelOverride | None = field(
+    override_kernel: KernelOverride | None = field(
         default=None,
         converter=optional_c(Converter(_to_kernel_override, takes_self=True)),  # type: ignore[misc, call-overload]
         kw_only=True,
@@ -265,21 +265,21 @@ class Parameter(ABC, SerialMixin):
         """
         if type(self) is not type(other):
             return False
-        kernel_override = self.kernel_override
-        other_override = other.kernel_override
-        if isinstance(kernel_override, Kernel):
+        override_kernel = self.override_kernel
+        other_override = other.override_kernel
+        if isinstance(override_kernel, Kernel):
             # The override is owner-scoped, so rebind it to the other parameter's name
-            kernel_override = kernel_override._scope_to_parameter(other.name)
+            override_kernel = override_kernel._scope_to_parameter(other.name)
         elif (
-            kernel_override is not None
+            override_kernel is not None
             and other_override is not None
             and not isinstance(other_override, Kernel)
-            and _is_gpytorch_kernel_equivalent(kernel_override, other_override)
+            and _is_gpytorch_kernel_equivalent(override_kernel, other_override)
         ):
             # GPyTorch kernels define no equality, so substitute equivalent overrides
-            kernel_override = other_override
+            override_kernel = other_override
         return (
-            attrs.evolve(self, name=other.name, kernel_override=kernel_override)
+            attrs.evolve(self, name=other.name, override_kernel=override_kernel)
             == other
         )
 
