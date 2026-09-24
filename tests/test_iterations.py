@@ -210,10 +210,10 @@ valid_hybrid_recommenders = [
     if cls.compatibility == SearchSpaceType.HYBRID
 ]
 # List of BotorchRecommenders with different sampling strategies.
+# NOTE: Without a hybrid sampler, the sampling percentage is ignored, which is why
+#   the corresponding configuration is only covered once via the default recommender.
 sampling_strategies = [
     # Valid combinations
-    (None, 0.0),
-    (None, 1.0),
     ("FPS", 0.2),
     ("FPS", 0.5),
     ("Random", 0.2),
@@ -253,6 +253,8 @@ valid_naive_hybrid_recommenders = [
         *valid_discrete_non_predictive_recommenders,
         *valid_discrete_bayesian_recommenders,
     ]
+    # The default configuration is already covered by the hybrid recommenders above
+    if disc != NaiveHybridSpaceRecommender().disc_recommender
 ]
 
 valid_hybrid_recommenders.extend(valid_naive_hybrid_recommenders)
