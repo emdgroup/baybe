@@ -82,6 +82,9 @@ from baybe.utils.dataframe import (
     create_fake_input,
 )
 
+FAST_OPTIMIZATION_SETTINGS = {"n_restarts": 2, "n_raw_samples": 16}
+"""Reduced acquisition optimization effort for tests not concerned with its quality."""
+
 # Hypothesis settings
 hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
 if strtobool(os.getenv("CI", "false")):
@@ -782,7 +785,9 @@ def fixture_recommender(initial_recommender, surrogate_model, acqf):
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
         recommender=BotorchRecommender(
-            surrogate_model=surrogate_model, acquisition_function=acqf
+            surrogate_model=surrogate_model,
+            acquisition_function=acqf,
+            **FAST_OPTIMIZATION_SETTINGS,
         ),
     )
 
@@ -796,6 +801,7 @@ def fixture_non_sequential_recommender(initial_recommender, surrogate_model, acq
             surrogate_model=surrogate_model,
             acquisition_function=acqf,
             sequential_continuous=False,
+            **FAST_OPTIMIZATION_SETTINGS,
         ),
     )
 
