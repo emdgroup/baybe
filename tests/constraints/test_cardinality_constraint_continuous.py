@@ -147,7 +147,7 @@ def test_polytope_sampling_with_cardinality_constraint():
             parameters=params_inequality,
             operator=">=",
             coefficients=coeffs_inequality,
-            rhs=rhs_equality,
+            rhs=rhs_inequality,
         ),
         ContinuousCardinalityConstraint(
             parameters=params_cardinality,
