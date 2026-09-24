@@ -139,7 +139,8 @@ max_yield = lookup["yield"].max()
 sns.lineplot(
     data=results, x="Num_Experiments", y="yield_CumBest", hue="Scenario", marker="x"
 )
-plt.plot([3, 3 * N_DOE_ITERATIONS], [max_yield, max_yield], "--r")
+plt.plot([BATCH_SIZE, BATCH_SIZE * N_DOE_ITERATIONS], [max_yield, max_yield], "--r")
 plt.legend(loc="lower right")
 plt.gcf().set_size_inches(20, 8)
-plt.savefig("./run_full_initial_data.png")
+if not SMOKE_TEST:
+    plt.savefig("./run_full_initial_data.png")
