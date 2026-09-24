@@ -382,7 +382,11 @@ def test_kernels(ongoing_campaign, n_iterations, batch_size):
     [
         [
             NumericalContinuousParameter("x1", (0, 1)),
-            NumericalContinuousParameter("x2", (0, 1), override_kernel=RBFKernel()),
+            NumericalContinuousParameter(
+                "x2",
+                (0, 1),
+                override_kernel=RBFKernel(lengthscale_prior=GammaPrior(3.0, 6.0)),
+            ),
             *(
                 []
                 if mode is None
