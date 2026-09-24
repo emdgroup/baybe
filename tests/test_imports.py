@@ -114,13 +114,33 @@ def test_lazy_loading(target: str, whitelist: Sequence[str]):
     assert result == 0
 
 
+_WHITELISTED_TARGETS: dict[str, list[str]] = {}
+"""The inverted whitelist, mapping modules to their permitted imports."""
+
+for _target, _modules in WHITELISTS.items():
+    for _module in _modules:
+        _WHITELISTED_TARGETS.setdefault(_module, []).append(_target)
+
+
 @pytest.mark.parametrize(
-    ("target", "module"),
-    [param(k, m, id=f"{k}-{m}") for k, v in WHITELISTS.items() for m in v],
+    ("module", "targets"),
+    [param(m, t, id=m) for m, t in _WHITELISTED_TARGETS.items()],
 )
-def test_whitelist_modules_are_true_positives(target, module):
-    """The whitelisted modules actually import the target."""
-    code = make_import_check([module], target)
-    python_interpreter = sys.executable
-    result = subprocess.call([python_interpreter, "-c", code])
-    assert result == _EAGER_LOADING_EXIT_CODE
+def test_whitelist_modules_are_true_positives(module, targets):
+    """The whitelisted modules actually import all targets they are whitelisted for.
+
+    All targets of a module are checked within a single subprocess to avoid paying
+    the interpreter startup and import costs once per target.
+    """
+    code = "\n".join(
+        [
+            "import sys",
+            f"import {module}",
+            f"print(','.join(t for t in {targets!r} if t not in sys.modules))",
+        ]
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    missing = result.stdout.strip()
+    assert not missing, f"'{module}' does not import: {missing}"
