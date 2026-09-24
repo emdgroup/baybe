@@ -5,6 +5,6 @@ as in the slot-based representation.
 ```{toctree}
 :maxdepth: 1
 
-Slot Based<slot_based>
 Traditional<traditional>
+Slot Based<slot_based>
 ```
