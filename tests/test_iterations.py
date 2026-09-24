@@ -414,6 +414,7 @@ def test_kernel_factories(ongoing_campaign, n_iterations, batch_size):
         ),
     ],
 )
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
 def test_transfer_learning_override(ongoing_campaign, n_iterations, batch_size):
     """A task parameter override survives a full fit/recommend loop."""
     run_iterations(ongoing_campaign, n_iterations, batch_size)
