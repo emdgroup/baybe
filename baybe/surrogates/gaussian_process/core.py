@@ -195,7 +195,7 @@ class GaussianProcessSurrogate(Surrogate):
         * :obj:`.components.kernel.KernelFactoryProtocol`
         * :class:`gpytorch.kernels.Kernel`
 
-    A :attr:`~baybe.parameters.base.Parameter.kernel_override` removes its parameter
+    A :attr:`~baybe.parameters.base.Parameter.override_kernel` removes its parameter
     from this kernel and contributes a separate multiplicative factor. A
     :attr:`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`
     replaces the task factor in the same way. When not all parameters are removed by

@@ -75,7 +75,7 @@ def test_selector_does_not_exclude_overridden_parameters(mode):
     """
     parameters = [
         NumericalContinuousParameter("x1", (0, 1)),
-        NumericalContinuousParameter("x2", (0, 1), kernel_override=RBFKernel()),
+        NumericalContinuousParameter("x2", (0, 1), override_kernel=RBFKernel()),
         NumericalContinuousParameter("omitted", (0, 1)),
     ]
     expected_names = ["x1", "x2"]
@@ -115,7 +115,7 @@ def test_nondefault_residual_indices(kernel_or_factory, expected_residual_dims):
     kernel, _ = _resolve(
         [
             NumericalContinuousParameter("x1", (0, 1)),
-            NumericalContinuousParameter("x2", (0, 1), kernel_override=RBFKernel()),
+            NumericalContinuousParameter("x2", (0, 1), override_kernel=RBFKernel()),
             NumericalContinuousParameter("x3", (0, 1)),
         ],
         kernel_or_factory,
@@ -159,8 +159,8 @@ def test_fitted_model_uses_parameter_kernel_overrides(
 ):
     """The fitted model uses each configured kernel on the intended dimensions."""
     parameters = [
-        CategoricalParameter("base", ["a", "b"], kernel_override=base_override),
-        evolve(override_parameter, kernel_override=RBFKernel()),
+        CategoricalParameter("base", ["a", "b"], override_kernel=base_override),
+        evolve(override_parameter, override_kernel=RBFKernel()),
     ]
     expected = {"base": gk.MaternKernel, "override": gk.RBFKernel}
     if task_parameter is not None:
@@ -207,7 +207,7 @@ def test_valid_baybe_kernel_override(override):
     """Valid BayBE overrides bind all their leaves to the owning parameter."""
     parameters = [
         CategoricalParameter("base", ["a", "b"]),
-        CategoricalParameter("override", ["a", "b", "c"], kernel_override=override),
+        CategoricalParameter("override", ["a", "b", "c"], override_kernel=override),
     ]
     kernel, searchspace = _resolve(parameters)
     expected = set(searchspace.get_comp_rep_parameter_indices("override"))
@@ -234,7 +234,7 @@ def test_valid_gpytorch_kernel_override(categories, override):
     snapshot = deepcopy(override.state_dict())
     base = NumericalContinuousParameter("base", (0, 1))
     kernel, searchspace = _resolve(
-        [base, CategoricalParameter("override", categories, kernel_override=override)]
+        [base, CategoricalParameter("override", categories, override_kernel=override)]
     )
     expected = set(searchspace.get_comp_rep_parameter_indices("override"))
 
@@ -250,7 +250,7 @@ def test_valid_gpytorch_kernel_override(categories, override):
 def test_gpytorch_ard_mismatch_rejected():
     """A GPyTorch override with mismatched ARD size is rejected during resolution."""
     override = gk.RBFKernel(ard_num_dims=2)
-    parameter = CategoricalParameter("p", ["a", "b", "c"], kernel_override=override)
+    parameter = CategoricalParameter("p", ["a", "b", "c"], override_kernel=override)
     with pytest.raises(IncompatibleOverrideError, match="has 3 computational"):
         _resolve([parameter])
 
@@ -294,8 +294,8 @@ def test_gpytorch_ard_mismatch_rejected():
 )
 def test_parameter_equivalence(left, right, expected):
     """Parameter equivalence with kernel overrides produces the expected result."""
-    p1 = NumericalContinuousParameter("p1", (0, 1), kernel_override=left)
-    p2 = NumericalContinuousParameter("p2", (0, 1), kernel_override=right)
+    p1 = NumericalContinuousParameter("p1", (0, 1), override_kernel=left)
+    p2 = NumericalContinuousParameter("p2", (0, 1), override_kernel=right)
     assert p1.is_equivalent(p2) == expected
 
 
@@ -310,7 +310,7 @@ def test_incompatible_surrogate_kernel_is_rejected(kernel_or_factory):
     """Surrogate kernels that cannot exclude overridden dimensions are rejected."""
     parameters = [
         NumericalContinuousParameter("x1", (0, 1)),
-        NumericalContinuousParameter("x2", (0, 1), kernel_override=RBFKernel()),
+        NumericalContinuousParameter("x2", (0, 1), override_kernel=RBFKernel()),
     ]
 
     with pytest.raises(IncompatibleOverrideError, match="can exclude these parameters"):
@@ -340,7 +340,7 @@ def test_partition_validation(monkeypatch, override_kind, kernel_cls, active_dim
         )
         if override_kind == "tl"
         else NumericalContinuousParameter(
-            "override", (0, 1), kernel_override=RBFKernel()
+            "override", (0, 1), override_kernel=RBFKernel()
         ),
     ]
     searchspace = SearchSpace.from_product(parameters)

@@ -51,7 +51,7 @@ def test_caching(patched, searchspace, objective, fake_measurements):
 
 def test_ignored_kernel_override_warning():
     """Non-GP surrogates warn when ignoring a parameter kernel override."""
-    parameter = NumericalDiscreteParameter("x", [0, 1], kernel_override=RBFKernel())
+    parameter = NumericalDiscreteParameter("x", [0, 1], override_kernel=RBFKernel())
     measurements = pd.DataFrame({"x": [0, 1], "y": [0.0, 1.0]})
 
     with pytest.warns(UnusedObjectWarning, match=r"kernel overrides.*\['x'\]"):
