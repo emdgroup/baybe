@@ -300,6 +300,22 @@ def test_parameter_equivalence(left, right, expected):
 
 
 @pytest.mark.parametrize(
+    ("values", "mode", "expected"),
+    [
+        param(["a", "b"], TransferLearningMode.INDEX_KERNEL, True, id="same"),
+        param(["a", "b"], TransferLearningMode.POSITIVE_INDEX_KERNEL, False, id="mode"),
+        param(["a", "b", "c"], TransferLearningMode.INDEX_KERNEL, False, id="values"),
+    ],
+)
+def test_task_parameter_equivalence(values, mode, expected):
+    """Task parameter equivalence produces the expected result."""
+    mode_ref = TransferLearningMode.INDEX_KERNEL
+    p1 = TaskParameter("t1", ["a", "b"], override_transfer_learning_mode=mode_ref)
+    p2 = TaskParameter("t2", values, override_transfer_learning_mode=mode)
+    assert p1.is_equivalent(p2) == expected
+
+
+@pytest.mark.parametrize(
     "kernel_or_factory",
     [
         param(gk.MaternKernel(), id="raw-gpytorch-kernel"),
