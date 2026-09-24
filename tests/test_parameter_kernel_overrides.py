@@ -11,6 +11,7 @@ import torch
 from attrs import evolve
 from botorch.models.kernels.positive_index import PositiveIndexKernel
 from gpytorch import kernels as gk
+from gpytorch.priors import GammaPrior
 from pytest import param
 
 from baybe.exceptions import IncompatibleOverrideError
@@ -51,6 +52,14 @@ def _leaf_kernels(kernel):
         if not children
         else tuple(k for c in children for k in _leaf_kernels(c))
     )
+
+
+def _rbf_kernel(lengthscale, *, frozen=False):
+    """Create a GPyTorch RBF kernel with a given, optionally frozen, lengthscale."""
+    kernel = gk.RBFKernel()
+    kernel.lengthscale = lengthscale
+    kernel.raw_lengthscale.requires_grad_(not frozen)
+    return kernel
 
 
 @pytest.mark.parametrize(
@@ -244,6 +253,50 @@ def test_gpytorch_ard_mismatch_rejected():
     parameter = CategoricalParameter("p", ["a", "b", "c"], kernel_override=override)
     with pytest.raises(IncompatibleOverrideError, match="has 3 computational"):
         _resolve([parameter])
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        param(None, None, True, id="none"),
+        param(RBFKernel(), RBFKernel(), True, id="baybe"),
+        param(gk.MaternKernel(), gk.MaternKernel(), True, id="gpytorch"),
+        param(
+            gk.ScaleKernel(gk.RBFKernel(lengthscale_prior=GammaPrior(3.0, 6.0))),
+            gk.ScaleKernel(gk.RBFKernel(lengthscale_prior=GammaPrior(3.0, 6.0))),
+            True,
+            id="gpytorch-nested",
+        ),
+        param(
+            gk.IndexKernel(num_tasks=2),
+            gk.IndexKernel(num_tasks=2),
+            True,
+            id="gpytorch-random-init",
+        ),
+        param(_rbf_kernel(2.0), _rbf_kernel(3.0), True, id="gpytorch-init-value"),
+        param(RBFKernel(), MaternKernel(), False, id="baybe-class"),
+        param(gk.MaternKernel(nu=0.5), gk.MaternKernel(), False, id="gpytorch-attr"),
+        param(
+            gk.RBFKernel(lengthscale_prior=GammaPrior(3.0, 6.0)),
+            gk.RBFKernel(lengthscale_prior=GammaPrior(2.0, 6.0)),
+            False,
+            id="gpytorch-prior",
+        ),
+        param(
+            _rbf_kernel(2.0, frozen=True),
+            _rbf_kernel(3.0, frozen=True),
+            False,
+            id="gpytorch-frozen-value",
+        ),
+        param(RBFKernel(), gk.RBFKernel(), False, id="baybe-vs-gpytorch"),
+        param(gk.RBFKernel(), None, False, id="gpytorch-vs-none"),
+    ],
+)
+def test_parameter_equivalence(left, right, expected):
+    """Parameter equivalence with kernel overrides produces the expected result."""
+    p1 = NumericalContinuousParameter("p1", (0, 1), kernel_override=left)
+    p2 = NumericalContinuousParameter("p2", (0, 1), kernel_override=right)
+    assert p1.is_equivalent(p2) == expected
 
 
 @pytest.mark.parametrize(
