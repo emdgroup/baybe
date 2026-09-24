@@ -6,6 +6,7 @@ import gc
 import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
+from itertools import chain
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
 import attrs
@@ -67,6 +68,52 @@ def _iter_basic_kernels(kernel: Kernel) -> Iterator[BasicKernel]:
 
     else:
         raise TypeError(f"Cannot traverse kernel '{type(kernel).__name__}'.")
+
+
+def _is_gpytorch_kernel_equivalent(
+    kernel: GPyTorchKernel, other: GPyTorchKernel, /
+) -> bool:
+    """Check if two GPyTorch kernels are equivalent.
+
+    Two kernels are considered equivalent if they have the same module structure,
+    the same public module attributes, and agree on the values of all tensors that
+    are not changed by fitting. Tensors changed by fitting are only compared by
+    shape, since their values merely serve as initialization.
+
+    Args:
+        kernel: The first kernel.
+        other: The kernel to compare against.
+
+    Returns:
+        ``True`` if the kernels are equivalent, ``False`` otherwise.
+    """
+    modules = list(kernel.named_modules())
+    other_modules = list(other.named_modules())
+    if [(n, type(m)) for n, m in modules] != [(n, type(m)) for n, m in other_modules]:
+        return False
+    for (_, module), (_, other_module) in zip(modules, other_modules):
+        public = {k: v for k, v in vars(module).items() if not k.startswith("_")}
+        other_public = {
+            k: v for k, v in vars(other_module).items() if not k.startswith("_")
+        }
+        if public != other_public:
+            return False
+
+    # Tensors requiring gradients are changed by fitting, so only shapes must agree
+    tensors = dict(chain(kernel.named_parameters(), kernel.named_buffers()))
+    other_tensors = dict(chain(other.named_parameters(), other.named_buffers()))
+    if tensors.keys() != other_tensors.keys():
+        return False
+    for name, tensor in tensors.items():
+        other_tensor = other_tensors[name]
+        if (tensor.shape, tensor.requires_grad) != (
+            other_tensor.shape,
+            other_tensor.requires_grad,
+        ):
+            return False
+        if not tensor.requires_grad and not tensor.equal(other_tensor):
+            return False
+    return True
 
 
 def _to_kernel_override(value: KernelOverride, instance: Parameter) -> KernelOverride:
@@ -206,6 +253,10 @@ class Parameter(ABC, SerialMixin):
         Two parameters are considered equivalent if they have the same type and
         all attributes are equal except for the name.
 
+        GPyTorch kernel overrides are compared structurally, since GPyTorch kernels
+        define no equality. Values of tensors changed by fitting (i.e., initial
+        hyperparameter values) do not affect equivalence.
+
         Args:
             other: The parameter to compare against.
 
@@ -214,10 +265,19 @@ class Parameter(ABC, SerialMixin):
         """
         if type(self) is not type(other):
             return False
-        # The override is owner-scoped, so rebind it to the other parameter's name.
         kernel_override = self.kernel_override
+        other_override = other.kernel_override
         if isinstance(kernel_override, Kernel):
+            # The override is owner-scoped, so rebind it to the other parameter's name
             kernel_override = kernel_override._scope_to_parameter(other.name)
+        elif (
+            kernel_override is not None
+            and other_override is not None
+            and not isinstance(other_override, Kernel)
+            and _is_gpytorch_kernel_equivalent(kernel_override, other_override)
+        ):
+            # GPyTorch kernels define no equality, so substitute equivalent overrides
+            kernel_override = other_override
         return (
             attrs.evolve(self, name=other.name, kernel_override=kernel_override)
             == other
