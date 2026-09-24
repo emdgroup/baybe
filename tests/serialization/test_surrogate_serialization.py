@@ -10,8 +10,12 @@ from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.ngboost import NGBoostSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
+from baybe.surrogates.transfer_learning.rgpe import RGPESurrogate
 from baybe.utils.basic import get_subclasses
-from tests.hypothesis_strategies.surrogates import gaussian_process_surrogates
+from tests.hypothesis_strategies.surrogates import (
+    gaussian_process_surrogates,
+    rgpe_surrogates,
+)
 from tests.serialization.utils import assert_roundtrip_consistency
 
 
@@ -20,7 +24,7 @@ from tests.serialization.utils import assert_roundtrip_consistency
     [
         c
         for c in get_subclasses(Surrogate)
-        if not issubclass(c, GaussianProcessSurrogate)
+        if not issubclass(c, (GaussianProcessSurrogate, RGPESurrogate))
     ],
 )
 def test_surrogate_roundtrip(request, surrogate_cls: type[Surrogate]):
@@ -40,6 +44,12 @@ def test_surrogate_roundtrip(request, surrogate_cls: type[Surrogate]):
 @given(gaussian_process_surrogates())
 def test_gaussian_process_surrogate_roundtrip(surrogate: GaussianProcessSurrogate):
     """A serialization roundtrip yields an equivalent GP surrogate for all configs."""
+    assert_roundtrip_consistency(surrogate)
+
+
+@given(rgpe_surrogates())
+def test_rgpe_surrogate_roundtrip(surrogate: RGPESurrogate):
+    """A serialization roundtrip yields an equivalent RGPE surrogate for all configs."""
     assert_roundtrip_consistency(surrogate)
 
 

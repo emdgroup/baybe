@@ -285,3 +285,67 @@ enlarged data corpus.
 ```{seealso}
 For details, refer to [transfer learning](../concepts/transfer_learning.md).
 ```
+
+(parameter_kernel_overrides)=
+## Parameter-Specific Kernel Overrides
+
+By default, the Gaussian process models all parameters with a single surrogate kernel.
+A parameter can instead be assigned its own kernel, which then replaces the surrogate
+kernel on that parameter's computational dimensions. The remaining dimensions stay with
+the surrogate kernel, and the two are combined multiplicatively:
+
+```{math}
+k_{\mathrm{effective}}
+= k_{\mathrm{surrogate}}(X_{\mathrm{remaining}})
+\prod_{p \in P_{\mathrm{override}}} k_p(X_p).
+```
+
+Here, "surrogate kernel" refers to the ``kernel_or_factory`` of the
+{class}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`, falling back
+to BayBE's default kernel when none is given.
+
+Regular parameters can replace the surrogate kernel on their computational dimensions
+using {attr}`~baybe.parameters.base.Parameter.kernel_override`:
+
+```python
+from baybe.kernels import RBFKernel
+from baybe.parameters import NumericalContinuousParameter
+
+x3 = NumericalContinuousParameter(
+    name="x3",
+    bounds=(0.0, 1.0),
+    kernel_override=RBFKernel(),
+)
+```
+
+In a search space with parameters ``x1``, ``x2``, and ``x3``, this produces
+``surrogate kernel(x1, x2) * RBF(x3)``. The override does not replace a dimension inside
+the surrogate kernel itself. It partitions the dimensions and creates a separate kernel
+factor. Multiple overrides produce multiple factors. For a parameter with several
+computational dimensions, the override acts jointly on the complete computational
+representation.
+
+An override can be a configured BayBE or GPyTorch kernel instance. For a BayBE kernel,
+``parameter_names`` must be ``None`` or contain exactly the owning parameter. Here,
+``None`` is rebound to the owning parameter instead of acting on all dimensions.
+
+```{admonition} Limitations
+:class: warning
+{attr}`~baybe.parameters.base.Parameter.kernel_override` accepts kernel instances only,
+not factories. The surrogate kernel or factory of the
+{class}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate` must allow
+the overridden dimensions to be excluded. Otherwise, BayBE raises
+{class}`~baybe.exceptions.IncompatibleOverrideError`.
+
+Raw GPyTorch overrides must not specify ``active_dims``, and their ``ard_num_dims`` must
+be ``None`` or match the number of computational dimensions of the parameter. ``None``
+is preserved and does not automatically enable ARD. Like raw GPyTorch kernels used
+elsewhere, they cannot be serialized.
+```
+
+The feature applies only to Gaussian process surrogates. Other surrogates ignore kernel
+overrides and emit an {class}`~baybe.exceptions.UnusedObjectWarning`. Task parameters do
+not expose {attr}`~baybe.parameters.base.Parameter.kernel_override`; use
+{attr}`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`
+instead. Both override mechanisms can be used in the same searchspace, in which case
+their kernel factors are multiplied.

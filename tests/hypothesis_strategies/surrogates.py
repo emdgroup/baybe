@@ -24,6 +24,7 @@ from baybe.surrogates.gaussian_process.presets.edbo import (
 from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOMeanFactory,
 )
+from baybe.surrogates.transfer_learning.rgpe import RGPESurrogate
 from tests.hypothesis_strategies.kernels import kernels
 
 _MEAN_FACTORIES = [
@@ -64,4 +65,17 @@ def gaussian_process_surrogates():
             st.sampled_from(FitCriterion),
             st.builds(BayBEFitCriterionFactory),
         ),
+    )
+
+
+def rgpe_surrogates():
+    """A strategy generating RGPE surrogate instances with varying configurations.
+
+    The inner Gaussian process configuration is drawn from the full space of GP
+    surrogate configurations and the number of Monte Carlo samples is varied.
+    """
+    return st.builds(
+        RGPESurrogate,
+        base_surrogate=gaussian_process_surrogates(),
+        n_mc_samples=st.integers(min_value=1, max_value=512),
     )

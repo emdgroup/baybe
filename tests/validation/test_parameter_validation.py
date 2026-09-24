@@ -1,5 +1,6 @@
 """Validation tests for parameters."""
 
+from functools import partial
 from unittest.mock import Mock
 
 import numpy as np
@@ -7,9 +8,13 @@ import pandas as pd
 import pytest
 from cattrs.errors import IterableValidationError
 from exceptiongroup import ExceptionGroup
+from gpytorch import kernels as gk
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
+from baybe.kernels import RBFKernel
+from baybe.kernels.base import Kernel
+from baybe.kernels.composite import ScaleKernel
 from baybe.parameters.categorical import (
     CategoricalParameter,
     TaskParameter,
@@ -35,6 +40,69 @@ def test_invalid_parameter_name(name, error):
     """Providing an invalid parameter name raises an exception."""
     with pytest.raises(error):
         NumericalDiscreteParameter(name=name, values=[1, 2, 3])
+
+
+@pytest.mark.parametrize(
+    ("constructor", "override", "error", "match"),
+    [
+        param(
+            partial(TaskParameter, "task", ["a", "b"]),
+            RBFKernel(),
+            TypeError,
+            "kernel_override",
+            id="task_parameter",
+        ),
+        param(
+            partial(NumericalContinuousParameter, "x", (0, 1)),
+            RBFKernel(parameter_names=("other",)),
+            ValueError,
+            "may only act on the parameter itself",
+            id="baybe_different_name",
+        ),
+        param(
+            partial(NumericalContinuousParameter, "x", (0, 1)),
+            RBFKernel(parameter_names=("x", "other")),
+            ValueError,
+            "may only act on the parameter itself",
+            id="baybe_multiple_names",
+        ),
+        param(
+            partial(NumericalContinuousParameter, "x", (0, 1)),
+            ScaleKernel(RBFKernel(parameter_names=("other",))),
+            ValueError,
+            "may only act on the parameter itself",
+            id="baybe_composite_leaf",
+        ),
+        param(
+            partial(NumericalContinuousParameter, "x", (0, 1)),
+            gk.RBFKernel(active_dims=[0]),
+            ValueError,
+            "must not specify 'active_dims'",
+            id="gpytorch_active_dims",
+        ),
+        param(
+            partial(NumericalContinuousParameter, "x", (0, 1)),
+            gk.ScaleKernel(gk.RBFKernel(active_dims=[0])),
+            ValueError,
+            "must not specify 'active_dims'",
+            id="gpytorch_nested_active_dims",
+        ),
+    ],
+)
+def test_invalid_kernel_override(constructor, override, error, match):
+    """Invalid parameter kernel overrides raise the expected exceptions."""
+    with pytest.raises(error, match=match):
+        constructor(kernel_override=override)
+
+
+@pytest.mark.parametrize("scaled", [False, True], ids=["direct", "nested"])
+def test_unsupported_kernel_override_structure(scaled):
+    """Unknown kernel structures cannot silently bypass owner-scope validation."""
+    kernel = Mock(spec=Kernel)
+    with pytest.raises(TypeError, match="Cannot traverse kernel"):
+        NumericalContinuousParameter(
+            "x", (0, 1), kernel_override=ScaleKernel(kernel) if scaled else kernel
+        )
 
 
 @pytest.mark.parametrize(

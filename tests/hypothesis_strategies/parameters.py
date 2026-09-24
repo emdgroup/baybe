@@ -39,6 +39,17 @@ categories = st.lists(
 
 
 @st.composite
+def kernel_overrides(draw: st.DrawFn, parameter_name: str):
+    """Generate valid kernel overrides for a parameter."""
+    from tests.hypothesis_strategies.kernels import kernels
+
+    kernel = draw(st.one_of(st.none(), kernels(parameter_names=(parameter_name,))))
+    if kernel is not None and draw(st.booleans()):
+        kernel = kernel._scope_to_parameter(None)
+    return kernel
+
+
+@st.composite
 def smiles(draw: st.DrawFn):
     """Generate short SMILES strings."""
     n_atoms = draw(st.integers(min_value=0, max_value=19))
@@ -121,8 +132,13 @@ def numerical_discrete_parameters(
             )
         )
     param_metadata = draw(measurable_metadata())
+    kernel_override = draw(kernel_overrides(name))
     return NumericalDiscreteParameter(
-        name=name, values=values, tolerance=tolerance, metadata=param_metadata
+        name=name,
+        values=values,
+        tolerance=tolerance,
+        metadata=param_metadata,
+        kernel_override=kernel_override,
     )
 
 
@@ -132,8 +148,12 @@ def numerical_continuous_parameters(draw: st.DrawFn):
     name = draw(parameter_names)
     bounds = draw(intervals(exclude_half_bounded=True, exclude_fully_unbounded=True))
     param_metadata = draw(measurable_metadata())
+    kernel_override = draw(kernel_overrides(name))
     return NumericalContinuousParameter(
-        name=name, bounds=bounds, metadata=param_metadata
+        name=name,
+        bounds=bounds,
+        metadata=param_metadata,
+        kernel_override=kernel_override,
     )
 
 
@@ -145,12 +165,14 @@ def categorical_parameters(draw: st.DrawFn):
     encoding = draw(st.sampled_from(CategoricalEncoding))
     active_values = draw(_active_values(values))
     param_metadata = draw(measurable_metadata())
+    kernel_override = draw(kernel_overrides(name))
     return CategoricalParameter(
         name=name,
         values=values,
         encoding=encoding,
         active_values=active_values,
         metadata=param_metadata,
+        kernel_override=kernel_override,
     )
 
 
@@ -188,6 +210,7 @@ def substance_parameters(draw: st.DrawFn):
     encoding = draw(st.sampled_from(encodings))
 
     param_metadata = draw(measurable_metadata())
+    kernel_override = draw(kernel_overrides(name))
 
     return SubstanceParameter(
         name=name,
@@ -196,6 +219,7 @@ def substance_parameters(draw: st.DrawFn):
         encoding=encoding,
         active_values=active_values,
         metadata=param_metadata,
+        kernel_override=kernel_override,
     )
 
 
@@ -207,12 +231,14 @@ def custom_parameters(draw: st.DrawFn):
     decorrelate = draw(decorrelations)
     active_values = draw(_active_values(list(data.index)))
     param_metadata = draw(measurable_metadata())
+    kernel_override = draw(kernel_overrides(name))
     return CustomDiscreteParameter(
         name=name,
         data=data,
         decorrelate=decorrelate,
         active_values=active_values,
         metadata=param_metadata,
+        kernel_override=kernel_override,
     )
 
 
