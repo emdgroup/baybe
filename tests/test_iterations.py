@@ -521,6 +521,49 @@ def test_recommenders_hybrid(ongoing_campaign, n_iterations, batch_size):
         pytest.skip(f"Optional dependency '{e.name}' not installed.")
 
 
+_hybrid_samplers_with_few_candidates = [
+    TwoPhaseMetaRecommender(
+        recommender=BotorchRecommender(
+            hybrid_sampler=sampler,
+            sampling_percentage=0.2,
+            **FAST_OPTIMIZATION_SETTINGS,
+        )
+    )
+    for sampler in ("FPS", "Random")
+]
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "recommender",
+    _hybrid_samplers_with_few_candidates,
+    ids=[_make_recommender_id(r) for r in _hybrid_samplers_with_few_candidates],
+)
+@pytest.mark.parametrize(
+    "parameter_names",
+    [
+        [
+            "Categorical_1_subset",
+            "Some_Setting",
+            "Num_disc_1",
+            "Conti_finite1",
+            "Conti_finite2",
+        ]
+    ],
+    ids=["hybrid_params_with_active_values"],
+)
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+def test_hybrid_sampling_with_batch_exceeding_candidates(
+    ongoing_campaign, n_iterations, batch_size
+):
+    """Hybrid sampling works when the batch exceeds the sampled discrete candidates.
+
+    Sampling 20% of the 9 discrete candidates yields 2 candidates, so a batch of 3
+    enforces repeated discrete configurations within the batch.
+    """
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
+
+
 @pytest.mark.parametrize(
     "recommender",
     valid_meta_recommenders,
