@@ -79,7 +79,7 @@ def _has_required_init_parameters(cls: type[shap.Explainer]) -> bool:
     return parameters[:3] == REQUIRED_PARAMETERS
 
 
-@pytest.mark.parametrize("explainer_name", NON_SHAP_EXPLAINERS)
+@pytest.mark.parametrize("explainer_name", sorted(NON_SHAP_EXPLAINERS))
 def test_non_shap_signature(explainer_name):
     """Non-SHAP explainers must have the required signature."""
     assert _has_required_init_parameters(_get_explainer_cls(explainer_name))
@@ -149,7 +149,7 @@ _desirabilty_targets = [
         ),
     ],
 )
-@mark.parametrize("explainer_cls", SHAP_EXPLAINERS)
+@mark.parametrize("explainer_cls", sorted(SHAP_EXPLAINERS))
 @mark.parametrize("use_comp_rep", [False, True], ids=["exp", "comp"])
 def test_shap_explainers(ongoing_campaign, explainer_cls, use_comp_rep):
     """Test the explain functionalities with measurements."""
@@ -184,7 +184,7 @@ def test_invalid_explained_data(ongoing_campaign, explainer_cls, use_comp_rep):
 
 @mark.slow
 @mark.parametrize("use_comp_rep", [False, True], ids=["exp", "comp"])
-@mark.parametrize("plot_type", SHAP_PLOTS)
+@mark.parametrize("plot_type", sorted(SHAP_PLOTS))
 def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
     """Test the default SHAP plots."""
     shap_insight = SHAPInsight.from_campaign(
