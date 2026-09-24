@@ -286,9 +286,15 @@ valid_base_kernels: list[Kernel] = [
     ]
 ]
 
+# NOTE: All kernel/prior combinations are already covered by the base kernels above,
+#   hence only one base kernel per kernel class is wrapped
+_scaled_base_kernels: dict[type[Kernel], Kernel] = {}
+for _kernel in valid_base_kernels:
+    _scaled_base_kernels.setdefault(type(_kernel), _kernel)
+
 valid_scale_kernels = [
     ScaleKernel(base_kernel=base_kernel, outputscale_prior=HalfCauchyPrior(scale=1))
-    for base_kernel in valid_base_kernels
+    for base_kernel in _scaled_base_kernels.values()
 ]
 
 valid_composite_kernels = [
