@@ -393,7 +393,7 @@ def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     ],
 )
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
-@pytest.mark.parametrize("batch_size", [1], ids=["b3"])
+@pytest.mark.parametrize("batch_size", [1], ids=["b1"])
 def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
     """Invalid inputs for posterior statistics raise expected exceptions."""
     with pytest.raises(error, match=match):
