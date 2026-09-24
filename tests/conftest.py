@@ -686,11 +686,28 @@ def fixture_campaign_non_sequential(
     )
 
 
+@pytest.fixture(scope="session", name="ongoing_campaign_cache")
+def fixture_ongoing_campaign_cache() -> dict[tuple[str, int, int], Campaign]:
+    """Iterated campaigns, keyed by their initial configuration and loop settings."""
+    return {}
+
+
 @pytest.fixture(name="ongoing_campaign")
-def fixture_ongoing_campaign(campaign, n_iterations, batch_size):
-    """Returns a campaign that already ran for several iterations."""
-    run_iterations(campaign, n_iterations, batch_size)
-    return campaign
+def fixture_ongoing_campaign(
+    campaign, n_iterations, batch_size, ongoing_campaign_cache
+):
+    """Returns a campaign that already ran for several iterations.
+
+    Iterating a campaign is expensive, but many parametrized test cases request
+    identically configured campaigns. Hence, each configuration (identified via the
+    serialized initial campaign) is iterated only once per session and every test
+    receives an independent deep copy that can be freely mutated.
+    """
+    key = (campaign.to_json(), n_iterations, batch_size)
+    if key not in ongoing_campaign_cache:
+        run_iterations(campaign, n_iterations, batch_size)
+        ongoing_campaign_cache[key] = campaign
+    return deepcopy(ongoing_campaign_cache[key])
 
 
 @pytest.fixture(name="searchspace")
