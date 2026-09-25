@@ -8,6 +8,7 @@ from warnings import WarningMessage
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import param
 
 from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
@@ -122,7 +123,7 @@ def test_polytope_sampling_with_cardinality_constraint():
     N_PARAMETERS = 6
     MAX_CARDINALITY = 4
     MIN_CARDINALITY = 2
-    BATCH_SIZE = 20
+    BATCH_SIZE = 5
     TOLERANCE = 1e-3
 
     parameters = [
@@ -147,7 +148,7 @@ def test_polytope_sampling_with_cardinality_constraint():
             parameters=params_inequality,
             operator=">=",
             coefficients=coeffs_inequality,
-            rhs=rhs_equality,
+            rhs=rhs_inequality,
         ),
         ContinuousCardinalityConstraint(
             parameters=params_cardinality,
@@ -274,12 +275,20 @@ def test_empty_constraints_after_cardinality_constraint():
     subspace.sample_uniform(1)
 
 
-@pytest.mark.parametrize("recommender", [RandomRecommender(), BotorchRecommender()])
-def test_cardinality_constraint(recommender):
+@pytest.mark.parametrize(
+    ("recommender", "batch_size"),
+    [
+        # Random sampling draws the inactive parameters per point, hence a larger
+        # batch covers more cardinality patterns at negligible cost
+        param(RandomRecommender(), 10, id="random"),
+        # The number of optimized subsets is independent of the batch size
+        param(BotorchRecommender(), 2, id="botorch"),
+    ],
+)
+def test_cardinality_constraint(recommender, batch_size):
     """Cardinality constraints are taken into account by the recommender."""
     MIN_CARDINALITY = 4
     MAX_CARDINALITY = 7
-    BATCH_SIZE = 10
 
     parameters = [NumericalContinuousParameter(str(i), (0, 1)) for i in range(10)]
     constraints = [
@@ -299,10 +308,10 @@ def test_cardinality_constraint(recommender):
 
     with warnings.catch_warnings(record=True) as w:
         recommendation = recommender.recommend(
-            BATCH_SIZE, searchspace, objective, measurements
+            batch_size, searchspace, objective, measurements
         )
 
     # Assert that the constraint conditions hold
     _validate_cardinality_constrained_batch(
-        recommendation, searchspace.continuous, BATCH_SIZE, w
+        recommendation, searchspace.continuous, batch_size, w
     )

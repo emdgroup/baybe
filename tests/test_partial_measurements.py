@@ -60,7 +60,7 @@ def test_invalid_partial_measurements(campaign):
     ],
 )
 @pytest.mark.parametrize("n_iterations", [2], ids=["i2"])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+@pytest.mark.parametrize("batch_size", [2], ids=["b2"])
 def test_partial_measurements(ongoing_campaign):
     """Objectives that can handle partial measurements do not complain when
     encountering incomplete measurements.

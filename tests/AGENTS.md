@@ -32,6 +32,9 @@
   ```
 - Tests can override by parametrizing `*_names` fixtures:
   `@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])`
+- `ongoing_campaign` is cached per session (keyed by the campaign's JSON) and
+  deep-copied per test; identical configurations share measurements, and the campaign
+  must be serializable.
 - **Prefer local fixtures** over adding to `conftest.py`. The autouse `reset_settings` fixture 
   restores global state before every test. Only one top-level `conftest.py` exists.
   ```python
@@ -46,7 +49,14 @@
   and make heavy (and possibly stacked) use of `@pytest.mark.parametrize` to test
   required configurations.
 - Always provide short human-readable IDs via `pytest.param(..., id="...")` or `ids=`.
-- If applicable, use a `batch_size` of 3, never more.
+- Use `batch_size` 2 for multi-point cases; larger only if the size itself is under
+  test.
+- Don't parametrize over settings ignored in the given configuration, and never
+  directly over sets (non-deterministic order breaks `pytest-xdist`); use `sorted(...)`.
+- Use `FAST_OPTIMIZATION_SETTINGS` for test-local `BotorchRecommender`s unless
+  optimization quality is under test.
+- Tests run in parallel: no order dependence or shared state; write files only to
+  `tmp_path`.
 
 ## Hypothesis
 - Full strategy library in `tests/hypothesis_strategies/` for all domain types.
