@@ -18,6 +18,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import SubstanceParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -48,6 +49,7 @@ def make_searchspace(
     data: pd.DataFrame,
     target_tasks: Sequence[str] | None = None,
     source_tasks: Sequence[str] | None = None,
+    transfer_learning_mode: TransferLearningMode | None = None,
 ) -> SearchSpace:
     """Create the search space for the benchmark."""
     params: list[DiscreteParameter] = [
@@ -65,6 +67,7 @@ def make_searchspace(
                 name="aryl_halide",
                 values=all_tasks,
                 active_values=target_tasks,
+                override_transfer_learning_mode=transfer_learning_mode,
             )
         )
     return SearchSpace.from_product(parameters=params)
@@ -113,7 +116,12 @@ def aryl_halide_tl_substance_benchmark(
         source_tasks=source_tasks,
         target_tasks=target_tasks,
     )
-    searchspace_nontl = make_searchspace(data=data)
+    searchspace_nontl = make_searchspace(
+        data=data,
+        source_tasks=source_tasks,
+        target_tasks=target_tasks,
+        transfer_learning_mode=TransferLearningMode.IDENTITY,
+    )
 
     lookup = make_lookup(data, target_tasks)
     initial_data = make_initial_data(data, source_tasks)
