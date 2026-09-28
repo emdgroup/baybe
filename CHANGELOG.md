@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   permutation groups instead of column groups
 - `ParameterSelectorProtocol.__call__` now declares its input as positional-only
 
+### Changed
+- Transfer-learning convergence benchmarks now build the naive baseline from a
+  `TaskParameter` with `override_transfer_learning_mode="IDENTITY"` instead of dropping
+  the task parameter, keeping it alongside the default transfer-learning variant
+
 ### Fixed
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
   values of invariant points are degenerate
