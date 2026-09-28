@@ -15,7 +15,7 @@ from baybe.kernels.base import Kernel
 from baybe.kernels.basic import PositiveIndexKernel
 from baybe.objectives.base import Objective
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.enum import _ParameterKind
+from baybe.parameters.enum import TransferLearningMode, _ParameterKind
 from baybe.parameters.selectors import (
     ParameterSelectorProtocol,
     TypeSelector,
@@ -274,11 +274,22 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> FitCriterion:
-        return (
-            FitCriterion.MARGINAL_LOG_LIKELIHOOD
-            if searchspace.n_tasks == 1
-            else FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
-        )
+        task_param = searchspace._task_parameter
+
+        # Without a (multi-valued) task parameter, this is an ordinary single-task GP.
+        if searchspace.n_tasks == 1:
+            return FitCriterion.MARGINAL_LOG_LIKELIHOOD
+        # IDENTITY mode keeps the task dimension but makes it inert (constant task
+        # kernel), so the model is effectively single-task and is fit like one.
+        elif (
+            task_param is not None
+            and task_param.override_transfer_learning_mode
+            is TransferLearningMode.IDENTITY
+        ):
+            return FitCriterion.MARGINAL_LOG_LIKELIHOOD
+        # Genuine multi-task model: use LOO cross-validation pseudo-likelihood.
+        else:
+            return FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
