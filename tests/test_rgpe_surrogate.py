@@ -24,10 +24,12 @@ _SOURCE = "B"
 
 
 def _make_searchspace(
-    *, override: bool = False, values=(_TARGET, _SOURCE), active=(_TARGET,)
+    *,
+    mode: TransferLearningMode | None = None,
+    values=(_TARGET, _SOURCE),
+    active=(_TARGET,),
 ) -> SearchSpace:
     """Build a single-task-parameter transfer-learning search space."""
-    mode = TransferLearningMode.RGPE if override else None
     return SearchSpace.from_product(
         [
             NumericalContinuousParameter("x", (0, 5)),
@@ -120,7 +122,7 @@ def test_override_dispatch_matches_direct(objective, candidates):
     measurements = _make_measurements("both")
 
     gp = GaussianProcessSurrogate()
-    gp.fit(_make_searchspace(override=True), objective, measurements)
+    gp.fit(_make_searchspace(mode=TransferLearningMode.RGPE), objective, measurements)
     assert isinstance(gp._delegate, RGPESurrogate)
     # The undelegated GP model is never built along the dispatch path.
     assert gp._model is None
@@ -133,6 +135,31 @@ def test_override_dispatch_matches_direct(objective, candidates):
     delegated_mean = gp.posterior(candidates).mean
     direct_mean = direct.posterior(candidates).mean
     assert torch.allclose(delegated_mean, direct_mean, atol=0.1)
+
+
+def test_identity_mode_matches_naive_pooling(objective, candidates):
+    """IDENTITY mode predicts like a task-free GP trained on the pooled data."""
+    measurements = _make_measurements("both")
+
+    # IDENTITY mode: keep the task parameter but render it inert.
+    gp_identity = GaussianProcessSurrogate()
+    gp_identity.fit(
+        _make_searchspace(mode=TransferLearningMode.IDENTITY), objective, measurements
+    )
+
+    # Naive pooling: no task parameter, task label dropped from the data.
+    gp_naive = GaussianProcessSurrogate()
+    gp_naive.fit(
+        NumericalContinuousParameter("x", (0, 5)).to_searchspace(),
+        objective,
+        measurements.drop(columns="task"),
+    )
+
+    identity_post = gp_identity.posterior(candidates)
+    naive_post = gp_naive.posterior(candidates.drop(columns="task"))
+
+    assert torch.allclose(identity_post.mean, naive_post.mean, atol=1e-5)
+    assert torch.allclose(identity_post.variance, naive_post.variance, atol=1e-5)
 
 
 @pytest.mark.parametrize(
@@ -208,7 +235,9 @@ def test_invalid_transfer_learning_setup_is_rejected(
 @pytest.mark.parametrize("via_override", [False, True], ids=["direct", "override"])
 def test_campaign_recommendation(objective, via_override):
     """A campaign recommends target-task points using the RGPE surrogate."""
-    searchspace = _make_searchspace(override=via_override)
+    searchspace = _make_searchspace(
+        mode=TransferLearningMode.RGPE if via_override else None
+    )
     surrogate = (
         GaussianProcessSurrogate() if via_override else RGPESurrogate(n_mc_samples=32)
     )
@@ -225,7 +254,11 @@ def test_campaign_recommendation(objective, via_override):
 def test_posterior_mean_function_rejects_delegate(objective):
     """A dispatched GP has no single mean module and fails loudly if asked for one."""
     gp = GaussianProcessSurrogate()
-    gp.fit(_make_searchspace(override=True), objective, _make_measurements("both"))
+    gp.fit(
+        _make_searchspace(mode=TransferLearningMode.RGPE),
+        objective,
+        _make_measurements("both"),
+    )
     with pytest.raises(IncompatibleSurrogateError, match="not implemented"):
         gp.posterior_mean_function(
             _make_searchspace(), objective, _make_measurements("both")
