@@ -6,6 +6,7 @@ import gc
 from abc import ABC
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
@@ -16,20 +17,44 @@ from baybe.acquisition import qLogEI, qLogNEHVI
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
 from baybe.exceptions import (
+    IncompatibilityError,
     IncompatibleAcquisitionFunctionError,
+    IncompatibleArgumentError,
 )
 from baybe.objectives.base import Objective
-from baybe.recommenders.pure.surrogate import SurrogateRecommender
-from baybe.searchspace import SearchSpace
+from baybe.objectives.tfpr import TFPRObjective
+from baybe.recommenders.pure.base import PureRecommender
+from baybe.searchspace import SearchSpace, SearchSpaceType
+from baybe.settings import Settings
+from baybe.surrogates import GaussianProcessSurrogate
+from baybe.surrogates.base import (
+    Surrogate,
+    SurrogateProtocol,
+)
 from baybe.symmetries.base import Symmetry
+from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
 
 
+def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
+    """Replicates single-output surrogate models and passes through everything else."""
+    if isinstance(surrogate, Surrogate) and not surrogate.supports_multi_output:
+        return surrogate.replicate()
+    return surrogate
+
+
 @define
-class BayesianRecommender(SurrogateRecommender, ABC):
+class BayesianRecommender(PureRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
+
+    _surrogate_model: SurrogateProtocol = field(
+        alias="surrogate_model",
+        factory=GaussianProcessSurrogate,
+        converter=_autoreplicate,
+    )
+    """The surrogate model."""
 
     acquisition_function: AcquisitionFunction | None = field(
         default=None, converter=optional(convert_acqf)
@@ -58,24 +83,25 @@ class BayesianRecommender(SurrogateRecommender, ABC):
 
     def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
+        if isinstance(objective, TFPRObjective):
+            raise IncompatibilityError(
+                f"Objectives of type '{TFPRObjective.__name__}' rank candidates "
+                f"directly and do not use an acquisition function."
+            )
         if self.acquisition_function is None:
             return qLogNEHVI() if objective.is_multi_output else qLogEI()
         return self.acquisition_function
 
-    @override
-    def _prepare_recommendation(
+    def get_surrogate(
         self,
         searchspace: SearchSpace,
         objective: Objective,
         measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None,
-    ) -> None:
-        self._setup_botorch_acqf(
-            searchspace=searchspace,
-            objective=objective,
-            measurements=measurements,
-            pending_experiments=pending_experiments,
-        )
+    ) -> SurrogateProtocol:
+        """Get the trained surrogate model."""
+        # This fit applies internal caching and does not necessarily involve computation
+        self._surrogate_model.fit(searchspace, objective, measurements)
+        return self._surrogate_model
 
     def _setup_botorch_acqf(
         self,
@@ -107,6 +133,74 @@ class BayesianRecommender(SurrogateRecommender, ABC):
             pending_experiments,
         )
 
+    def _setup_tfpr(
+        self,
+        searchspace: SearchSpace,
+        objective: TFPRObjective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None,
+    ) -> None:
+        """Validate the TFPR recommendation context and fit the surrogate."""
+        name = TFPRObjective.__name__
+        if self.acquisition_function is not None:
+            raise IncompatibilityError(
+                f"Objectives of type '{name}' rank candidates directly and do not use "
+                f"an acquisition function, but '{self.__class__.__name__}' was "
+                f"configured with '{type(self.acquisition_function).__name__}'."
+            )
+        if searchspace.type is not SearchSpaceType.DISCRETE:
+            raise IncompatibilityError(
+                f"Objectives of type '{name}' require a discrete search space."
+            )
+        if searchspace.discrete.n_subsets > 0:
+            raise IncompatibilityError(
+                f"Objectives of type '{name}' do not support discrete "
+                f"subset-generating constraints."
+            )
+        if pending_experiments is not None:
+            raise IncompatibleArgumentError(
+                f"Pending experiments were passed to '{self.__class__.__name__}"
+                f".{self.recommend.__name__}' but objectives of type '{name}' cannot "
+                f"use this information. If you want to exclude the pending "
+                f"experiments from the candidate set, adjust the search space "
+                f"accordingly."
+            )
+        if not hasattr(self._surrogate_model, "posterior_stats"):
+            raise IncompatibilityError(
+                f"Objectives of type '{name}' require a surrogate providing a "
+                f"'posterior_stats' method, which the used surrogate of type "
+                f"'{self._surrogate_model.__class__.__name__}' does not."
+            )
+
+        self._objective = objective
+        self._botorch_acqf = None
+
+        # Perform data augmentation
+        for s in self.symmetries:
+            measurements = s.augment_measurements(measurements, searchspace)
+
+        self.get_surrogate(searchspace, objective, measurements)
+
+    def _recommend_discrete_tfpr(
+        self, candidates_exp: pd.DataFrame, batch_size: int
+    ) -> pd.Index:
+        """Rank the discrete candidates via the encountered TFPR objective.
+
+        Args:
+            candidates_exp: The experimental representation of all discrete candidate
+                points to be considered.
+            batch_size: The size of the recommendation batch.
+
+        Returns:
+            The dataframe indices of the top-ranked candidates.
+        """
+        assert isinstance(self._objective, TFPRObjective)
+        posterior_stats = getattr(self._surrogate_model, "posterior_stats")
+        stats = posterior_stats(candidates_exp, stats=("mean", "std"))
+        fitness = self._objective.compute_fitness(stats)
+        order = np.argsort(-fitness.to_numpy(), kind="stable")[:batch_size]
+        return candidates_exp.index[order]
+
     def get_acquisition_function(
         self,
         searchspace: SearchSpace,
@@ -132,14 +226,51 @@ class BayesianRecommender(SurrogateRecommender, ABC):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        try:
-            return super().recommend(
-                batch_size=batch_size,
-                searchspace=searchspace,
-                objective=objective,
-                measurements=measurements,
-                pending_experiments=pending_experiments,
+        if objective is None:
+            raise NotImplementedError(
+                f"Recommenders of type '{BayesianRecommender.__name__}' require "
+                f"that an objective is specified."
             )
+
+        validate_object_names(searchspace.parameters + objective.targets)
+
+        # Experimental input validation
+        if (measurements is None) or measurements.empty:
+            raise NotImplementedError(
+                f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
+                f"empty training data."
+            )
+
+        measurements = preprocess_dataframe(
+            measurements,
+            searchspace,
+            objective,
+            numerical_measurements_must_be_within_tolerance=False,
+        )
+
+        if pending_experiments is not None:
+            pending_experiments = preprocess_dataframe(
+                pending_experiments,
+                searchspace,
+                numerical_measurements_must_be_within_tolerance=False,
+            )
+
+        if isinstance(objective, TFPRObjective):
+            self._setup_tfpr(searchspace, objective, measurements, pending_experiments)
+        else:
+            self._setup_botorch_acqf(
+                searchspace, objective, measurements, pending_experiments
+            )
+
+        try:
+            with Settings(preprocess_dataframes=False):
+                return super().recommend(
+                    batch_size=batch_size,
+                    searchspace=searchspace,
+                    objective=objective,
+                    measurements=measurements,
+                    pending_experiments=pending_experiments,
+                )
         except RuntimeError as ex:
             # Search spaces with continuous components are incompatible with surrogates
             # that do not support gradient computation
