@@ -120,10 +120,10 @@ If you have questions or problems, simply ask for advice.
 | [ruff](https://docs.astral.sh/ruff/)                                                            | lint and format code                      |
 | [sphinx](https://www.sphinx-doc.org/)                                                           | generate documentation                    |
 | [zizmor](https://woodruffw.github.io/zizmor/)                                                   | audit GitHub Actions workflows            |
-| [tox](https://tox.wiki/)                                                                        | orchestrate all the above                 |
+| [tox](https://tox.wiki/en/latest/)                                                              | orchestrate all the above                 |
 
 Executing a specific one of these tools is easiest by using the corresponding
-[tox](https://tox.wiki/) environment,
+[tox](https://tox.wiki/en/latest/) environment,
 ```console
 tox -e <env>
 ```
