@@ -1256,6 +1256,8 @@ permutation groups instead of column groups</p></li>
 values of invariant points are degenerate</p></li>
 <li><p>Multi-output surrogate compatibility check in <code class="docutils literal notranslate"><span class="pre">Surrogate.fit</span></code> now correctly uses the
 number of required models instead of the number of transform outputs</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SigmoidTransformation</span></code> no longer produces NaN gradients for inputs far from its
+center, which caused <code class="docutils literal notranslate"><span class="pre">OptimizationGradientError</span></code> during recommendation</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">ThresholdCondition</span></code> with the <code class="docutils literal notranslate"><span class="pre">!=</span></code> operator no longer fails when Polars is used for
 constraint filtering</p></li>
 </ul>
