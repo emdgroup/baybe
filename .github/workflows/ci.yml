@@ -28,7 +28,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: true
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
       - name: Assert Changelog Edit
@@ -52,7 +52,7 @@ jobs:
       issues: write  # Required for reminder-action to post issue comments
     steps:
       - name: check reminders and notify
-        uses: agrc/reminder-action@76a6297d144adb572b4cf6d9c0ee667f0ec6b832 # v1
+        uses: agrc/reminder-action@ab1f38534c17a1c16ba96eaf5fb9c0015d509301 # v1
 
   lint:
     strategy:
@@ -61,10 +61,10 @@ jobs:
     name: Lint ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -82,10 +82,10 @@ jobs:
       pages: write     # Required to deploy to GitHub Pages
       id-token: write  # Required for OIDC authentication to GitHub Pages
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with: {python-version: "3.10"}
       - name: Build Docs
         run: |
@@ -100,10 +100,10 @@ jobs:
     name: Type Check ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -120,10 +120,10 @@ jobs:
     name: Audit ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -140,14 +140,14 @@ jobs:
     name: Core Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
           path: .tox/coretest-${{ matrix.py-version.tox }}
           key: coretest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
@@ -165,14 +165,14 @@ jobs:
     name: Full Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
           path: .tox/fulltest-${{ matrix.py-version.tox }}
           key: fulltest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
@@ -202,14 +202,14 @@ jobs:
     name: GPU Tests ${{ matrix.py-version.semantic }}
     runs-on: XS-GPU
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
           path: .tox/gputest-${{ matrix.py-version.tox }}
           key: gputest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
