@@ -179,9 +179,22 @@ class SubstanceEncoding(ParameterEncoding):
 class TransferLearningMode(Enum):
     """Transfer learning modes for :class:`.TaskParameter`."""
 
+    IDENTITY = "IDENTITY"
+    """A constant task kernel that leaves the base kernel unchanged.
+
+    The task dimension adds no covariance, so all tasks are pooled into a single model.
+    """
+
     INDEX_KERNEL = "INDEX_KERNEL"
     """:class:`gpytorch.kernels.IndexKernel` for arbitrary correlations."""
 
     POSITIVE_INDEX_KERNEL = "POSITIVE_INDEX_KERNEL"
     """:class:`botorch.models.kernels.positive_index.PositiveIndexKernel` for positive
     correlations."""
+
+    RGPE = "RGPE"
+    """A rank-weighted ensemble of per-task Gaussian processes.
+
+    Adds no task kernel; instead dispatches the surrogate to a dedicated
+    :class:`~baybe.surrogates.transfer_learning.rgpe.RGPESurrogate`.
+    """

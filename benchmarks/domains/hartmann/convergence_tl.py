@@ -13,6 +13,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -105,9 +106,17 @@ def _make_hartmann_tl_benchmark(
             values=("Target_Function", "Source_Function"),
             active_values=("Target_Function",),
         )
+        task_param_naive = TaskParameter(
+            name="Function",
+            values=("Target_Function", "Source_Function"),
+            active_values=("Target_Function",),
+            override_transfer_learning_mode=TransferLearningMode.IDENTITY,
+        )
         params_tl = params + [task_param]
 
-        searchspace_nontl = SearchSpace.from_product(parameters=params)
+        searchspace_nontl = SearchSpace.from_product(
+            parameters=params + [task_param_naive]
+        )
         searchspace_tl = SearchSpace.from_product(parameters=params_tl)
 
         objective = SingleTargetObjective(

@@ -18,6 +18,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.parameters.base import Parameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -26,7 +27,9 @@ from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSett
 from benchmarks.definition.base import RunMode
 
 
-def make_searchspace(use_task_parameter: bool) -> SearchSpace:
+def make_searchspace(
+    transfer_learning_mode: TransferLearningMode | None = None,
+) -> SearchSpace:
     """Create search space for the benchmark."""
     params: list[Parameter] = [
         NumericalContinuousParameter(
@@ -35,14 +38,14 @@ def make_searchspace(use_task_parameter: bool) -> SearchSpace:
         )
         for k in range(5)
     ]
-    if use_task_parameter:
-        params.append(
-            TaskParameter(
-                name="Function",
-                values=["Target_Function", "Source_Function"],
-                active_values=["Target_Function"],
-            )
+    params.append(
+        TaskParameter(
+            name="Function",
+            values=["Target_Function", "Source_Function"],
+            active_values=["Target_Function"],
+            override_transfer_learning_mode=transfer_learning_mode,
         )
+    )
 
     return SearchSpace.from_product(parameters=params)
 
@@ -117,7 +120,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     • Includes baseline with no transfer learning (0 points)
     • Creates two campaign types:
       - Transfer learning: with task parameter to distinguish data sources
-      - Non-transfer learning (naive): without task parameter
+      - Non-transfer learning (naive): task parameter with an inert identity kernel
 
     Args:
         settings: Configuration settings for the convergence benchmark
@@ -131,8 +134,10 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         "Source_Function": Michalewicz(dim=5, negate=True, noise_std=0.15),
         "Target_Function": Michalewicz(dim=5, negate=True),
     }
-    searchspace_nontl = make_searchspace(use_task_parameter=False)
-    searchspace_tl = make_searchspace(use_task_parameter=True)
+    searchspace_nontl = make_searchspace(
+        transfer_learning_mode=TransferLearningMode.IDENTITY
+    )
+    searchspace_tl = make_searchspace()
 
     objective = make_objective()
     campaign_tl = Campaign(
