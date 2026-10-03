@@ -14,11 +14,16 @@ on the optimization of a permutation invariant function,
 ## Definitions
 The following table summarizes available symmetries in BayBE:
 
-| Symmetry                                                   | Functional Definition                                                                                                                            | Corresponding Constraint                                                                           | 
+| Symmetry                                                   | Functional Definition                                                                                                                            | Corresponding Constraint                                                                           |
 |:-----------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------|
-| {class}`~baybe.symmetries.permutation.PermutationSymmetry` | $f(x,y) = f(y,x)$                                                                                                                                | {class}`~baybe.constraints.discrete.DiscretePermutationInvarianceConstraint`                       |                                                                                                                                         | <hr> |
+| {class}`~baybe.symmetries.permutation.PermutationSymmetry` | $f(x,y) = f(y,x)$                                                                                                                                | {class}`~baybe.constraints.discrete.DiscretePermutationInvarianceConstraint`                       |
 | {class}`~baybe.symmetries.dependency.DependencySymmetry`   | $f(x,y) = \begin{cases}g(x,y) & \text{if }c(x) \\h(x) & \text{otherwise}\end{cases}$<br>where $c(x)$ is a condition that is either true or false | {class}`~baybe.constraints.discrete.DiscreteDependenciesConstraint`                                |
-| {class}`~baybe.symmetries.mirror.MirrorSymmetry`           | $f(x,y) = f(-x,y)$                                                                                                                               | No constraint is available. Instead, the number range for that parameter can simply be restricted. | 
+| {class}`~baybe.symmetries.mirror.MirrorSymmetry`           | $f(c+x,y) = f(c-x,y)$<br>where $c$ is the mirror point                                                                                          | No constraint is available. Instead, the number range for that parameter can simply be restricted. |
+
+A {class}`~baybe.symmetries.permutation.PermutationSymmetry` can contain several
+permutation groups of equal length. All groups are then permuted in lockstep, i.e.
+with the same permutation. For instance, the groups `[["x1", "x2"], ["w1", "w2"]]`
+express that $f(x_1,x_2,w_1,w_2) = f(x_2,x_1,w_2,w_1)$.
 
 ## Data Augmentation
 This can be a powerful tool to improve the modeling process. Data augmentation
