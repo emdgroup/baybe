@@ -122,7 +122,7 @@ class Kernel(ABC, SerialMixin):
         )
 
     def _scope_to_parameter(self, name: str | None, /) -> Kernel:
-        """Return a copy of the kernel that acts only on the given parameter.
+        """Return a copy of the kernel that acts only on the named parameter.
 
         Args:
             name: The name of the parameter to scope the kernel to, or ``None`` to
