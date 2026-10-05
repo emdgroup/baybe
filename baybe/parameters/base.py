@@ -235,7 +235,7 @@ class Parameter(ABC, SerialMixin):
         """Boolean indicating if this is a discrete parameter."""
         return isinstance(self, DiscreteParameter)
 
-    @property
+    @cached_property
     def override_kernel(self) -> KernelOverride | None:
         """An optional kernel replacing the overall kernel for this parameter."""
         if isinstance(kernel := self._override_kernel, Kernel):
