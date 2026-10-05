@@ -156,10 +156,7 @@ def test_shap_explainers(ongoing_campaign, explainer_cls, use_comp_rep):
     _test_shap_insight(ongoing_campaign, explainer_cls, use_comp_rep, is_shap=True)
 
 
-@mark.parametrize(
-    "explainer_cls",
-    [cls for cls in sorted(NON_SHAP_EXPLAINERS)],
-)
+@mark.parametrize("explainer_cls", sorted(NON_SHAP_EXPLAINERS))
 def test_non_shap_explainers(ongoing_campaign, explainer_cls):
     """Test the non-SHAP explainers in computational representation."""
     _test_shap_insight(
