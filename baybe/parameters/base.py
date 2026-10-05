@@ -126,7 +126,7 @@ def _to_kernel_override(value: KernelOverride, instance: Parameter) -> KernelOve
     Raises:
         ValueError: If a BayBE kernel targets a different parameter or a GPyTorch
             kernel specifies explicit active dimensions.
-        TypeError: If the object is neither a BayBE nor a GPyTorch kernel.
+        TypeError: If ``value`` is neither a BayBE nor a GPyTorch kernel.
 
     Returns:
         The validated override, with BayBE kernels unscoped.
