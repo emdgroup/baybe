@@ -29,22 +29,22 @@ def find_modules() -> list[str]:
     ]
 
 
-def make_import_check(modules: Sequence[str], target: str) -> str:
-    """Create code that tests if importing the given modules also imports the target.
+def make_import_check(modules: Sequence[str], targets: Sequence[str]) -> str:
+    """Create code that tests if importing the given modules also imports the targets.
 
     Args:
         modules: The modules to be imported by the created code.
-        target: The target module whose presence is to be checked after the import.
+        targets: The target modules whose presence is to be checked after the import.
 
     Returns:
-        Code that signals the presence of the target via a non-zero exit code.
+        Code that signals the presence of all targets via a non-zero exit code.
     """
     imports = "\n".join([f"import {module}" for module in modules])
     return "\n".join(
         [
             "import sys",
             f"{imports}",
-            f"hit = '{target}' in sys.modules.keys()",
+            f"hit = all(t in sys.modules.keys() for t in {list(targets)!r})",
             f"exit({_EAGER_LOADING_EXIT_CODE} if hit else 0)",
         ]
     )
@@ -108,7 +108,7 @@ def test_lazy_loading(target: str, whitelist: Sequence[str]):
     assert (w in all_modules for w in whitelist)
 
     modules = [m for m in all_modules if m not in whitelist]
-    code = make_import_check(modules, target)
+    code = make_import_check(modules, [target])
     python_interpreter = sys.executable
     result = subprocess.call([python_interpreter, "-c", code])
     assert result == 0
@@ -132,15 +132,7 @@ def test_whitelist_modules_are_true_positives(module, targets):
     All targets of a module are checked within a single subprocess to avoid paying
     the interpreter startup and import costs once per target.
     """
-    code = "\n".join(
-        [
-            "import sys",
-            f"import {module}",
-            f"print(','.join(t for t in {targets!r} if t not in sys.modules))",
-        ]
-    )
-    result = subprocess.run(
-        [sys.executable, "-c", code], capture_output=True, text=True, check=True
-    )
-    missing = result.stdout.strip()
-    assert not missing, f"'{module}' does not import: {missing}"
+    code = make_import_check([module], targets)
+    python_interpreter = sys.executable
+    result = subprocess.call([python_interpreter, "-c", code])
+    assert result == _EAGER_LOADING_EXIT_CODE
