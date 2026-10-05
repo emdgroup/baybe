@@ -105,7 +105,7 @@ class TaskParameter(CategoricalParameter):
     """
 
     @override
-    @property
+    @cached_property
     def override_kernel(self) -> Kernel | None:
         """The task kernel defined by the transfer learning mode, if any."""
         from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
