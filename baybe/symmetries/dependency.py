@@ -137,7 +137,7 @@ class DependencySymmetry(Symmetry):
         super().validate_searchspace_context(searchspace)
 
         # Causing parameter must be discrete
-        param = searchspace.get_parameters_by_name(self._parameter_name)[0]
+        param = searchspace.get_parameters_by_name((self._parameter_name,))[0]
         if not param.is_discrete:
             raise TypeError(
                 f"In a '{self.__class__.__name__}', the causing parameter must "

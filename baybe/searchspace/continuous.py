@@ -713,16 +713,24 @@ class SubspaceContinuous(SerialMixin):
         return pd.DataFrame(index=index).reset_index()
 
     def get_parameters_by_name(
-        self, names: Sequence[str]
+        self, names: Collection[str]
     ) -> tuple[NumericalContinuousParameter, ...]:
         """Return parameters with the specified names.
 
         Args:
-            names: Sequence of parameter names.
+            names: Collection of parameter names.
+
+        Raises:
+            ValueError: If a single string is passed instead of a collection of names.
 
         Returns:
             The named parameters.
         """
+        if isinstance(names, str):
+            raise ValueError(
+                f"'names' must be a collection of parameter names, not a string. "
+                f"Use ('{names}',) to select a single parameter."
+            )
         return tuple(p for p in self.parameters if p.name in names)
 
 
