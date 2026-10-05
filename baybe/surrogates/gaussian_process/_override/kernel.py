@@ -66,28 +66,20 @@ def bind_gpytorch_override(
     """Copy a raw GPyTorch override and bind it to the given dimensions.
 
     Args:
-        override: The provided GPyTorch kernel (must not specify active dimensions).
+        override: The provided GPyTorch kernel.
         indices: The computational column indices of the owning parameter.
         name: The owning parameter name (for error messages).
 
     Raises:
-        IncompatibleOverrideError: If the kernel specifies active dimensions or an
-            incompatible number of ARD dimensions.
+        IncompatibleOverrideError: If the kernel specifies an incompatible number of
+            ARD dimensions.
 
     Returns:
         A copy of the kernel bound to the given dimensions.
     """
     import torch
-    from gpytorch.kernels import Kernel as GPyTorchKernel
 
-    for kernel in override.modules():
-        if not isinstance(kernel, GPyTorchKernel):
-            continue
-        if kernel.active_dims is not None:
-            raise IncompatibleOverrideError(
-                f"The GPyTorch kernel override for parameter '{name}' must not "
-                f"specify 'active_dims'."
-            )
+    for kernel in (override, *override.sub_kernels()):
         if kernel.ard_num_dims not in (None, len(indices)):
             raise IncompatibleOverrideError(
                 f"The GPyTorch kernel override for parameter '{name}' specifies "
