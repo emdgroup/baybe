@@ -110,6 +110,9 @@ def test_selector_does_not_exclude_overridden_parameters(mode):
             (0, 2),
             id="callable",
         ),
+        param(MaternKernel() + RBFKernel(), (0, 2), id="sum"),
+        param(MaternKernel() * RBFKernel(), (0, 2), id="product"),
+        param(ScaleKernel(MaternKernel() + RBFKernel()), (0, 2), id="scaled-sum"),
     ],
 )
 def test_nondefault_residual_indices(kernel_or_factory, expected_residual_dims):
@@ -122,8 +125,14 @@ def test_nondefault_residual_indices(kernel_or_factory, expected_residual_dims):
         ],
         kernel_or_factory,
     )
-    residual, override = kernel.kernels
-    assert tuple(residual.active_dims.tolist()) == expected_residual_dims
+    # The override is the last factor; all remaining basic kernels form the residual
+    override = kernel.kernels[-1]
+    residual_dims = {
+        tuple(k.active_dims.tolist())
+        for k in _leaf_kernels(kernel)
+        if k is not override
+    }
+    assert residual_dims == {expected_residual_dims}
     assert tuple(override.active_dims.tolist()) == (1,)
     assert isinstance(override, gk.RBFKernel)
 
