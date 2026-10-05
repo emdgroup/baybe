@@ -37,6 +37,7 @@ from benchmarks.domains.hartmann.convergence_tl import (
 from benchmarks.domains.michalewicz.convergence_tl import (
     michalewicz_tl_continuous_benchmark,
 )
+from benchmarks.domains.protein.convergence import PROTEIN_BENCHMARKS
 from benchmarks.domains.synthetic_2C1D_1C import synthetic_2C1D_1C_benchmark
 
 BENCHMARKS: list[Benchmark] = [
@@ -62,6 +63,8 @@ BENCHMARKS: list[Benchmark] = [
     aryl_halide_CT_I_BM_tl_regr_benchmark,
     aryl_halide_CT_IM_tl_regr_benchmark,
     aryl_halide_IP_CP_tl_regr_benchmark,
+    # Protein DMS Convergence Benchmarks
+    *PROTEIN_BENCHMARKS,
 ]
 
 
