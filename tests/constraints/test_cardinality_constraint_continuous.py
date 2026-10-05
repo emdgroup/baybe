@@ -22,6 +22,7 @@ from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace, SubspaceContinuous
 from baybe.targets import NumericalTarget
+from tests.conftest import FAST_OPTIMIZATION_SETTINGS
 
 
 def _validate_cardinality_constrained_batch(
@@ -233,6 +234,8 @@ def test_min_cardinality_warning():
 
     with warnings.catch_warnings(record=True) as captured_warnings:
         warnings.filterwarnings("always", category=MinimumCardinalityViolatedWarning)
+        # NOTE: The default optimization settings are kept since the warning relies on
+        #   the optimizer actually reaching the origin
         BotorchRecommender().recommend(
             BATCH_SIZE, searchspace, objective, prepare_measurements()
         )
@@ -282,7 +285,7 @@ def test_empty_constraints_after_cardinality_constraint():
         # batch covers more cardinality patterns at negligible cost
         param(RandomRecommender(), 10, id="random"),
         # The number of optimized subsets is independent of the batch size
-        param(BotorchRecommender(), 2, id="botorch"),
+        param(BotorchRecommender(**FAST_OPTIMIZATION_SETTINGS), 2, id="botorch"),
     ],
 )
 def test_cardinality_constraint(recommender, batch_size):
