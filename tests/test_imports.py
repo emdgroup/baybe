@@ -105,7 +105,7 @@ WHITELISTS = {
 def test_lazy_loading(target: str, whitelist: Sequence[str]):
     """The target does not appear in the module list after loading BayBE modules."""
     all_modules = find_modules()
-    assert (w in all_modules for w in whitelist)
+    assert all(w in all_modules for w in whitelist)
 
     modules = [m for m in all_modules if m not in whitelist]
     code = make_import_check(modules, [target])
