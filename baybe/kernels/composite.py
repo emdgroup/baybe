@@ -26,16 +26,16 @@ if TYPE_CHECKING:
 def _reduce_base_kernels(
     kernel: AdditiveKernel | ProductKernel, name: str, searchspace: SearchSpace, /
 ) -> Kernel | None:
-    """Remove a parameter from all base kernels of a composite kernel.
+    """Remove a parameter from all base kernels of an additive or product kernel.
 
     Args:
-        kernel: The composite kernel whose base kernels are to be reduced.
+        kernel: The additive or product kernel whose base kernels are to be reduced.
         name: The name of the parameter to remove.
         searchspace: The search space the kernel operates on.
 
     Returns:
-        The reduced composite kernel, the sole remaining base kernel, or ``None``
-        if no base kernel remains.
+        The reduced kernel of the same type, the sole remaining base kernel, or
+        ``None`` if no base kernel remains.
     """
     remaining = tuple(
         reduced
