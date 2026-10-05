@@ -17,12 +17,14 @@ on:
           - "Transfer Learning"
           - "Synthetic"
           - "Non Transfer Learning"
+          - "Protein"
 
 env:
   TRANSFER_LEARNING_BENCHMARKS: '["aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_20_15","hartmann_tl_inv_3_20_15","hartmann_tl_shift_3_20_15","michalewicz_tl_continuous"]'
   SYNTHETIC_BENCHMARKS: '["synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
   ALL_BENCHMARKS: '["direct_arylation_multi_batch","direct_arylation_single_batch","aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_20_15","hartmann_tl_inv_3_20_15","hartmann_tl_shift_3_20_15","michalewicz_tl_continuous","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
   NON_TL_BENCHMARKS: '["direct_arylation_multi_batch","direct_arylation_single_batch","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
+  PROTEIN_BENCHMARKS: '["protein_brenan_ESMpp_small_batch30_rounds10","protein_cas12f_ESMpp_small_batch30_rounds10","protein_cov2_S_ESMpp_small_batch30_rounds10","protein_doud_ESMpp_small_batch30_rounds10","protein_giacomelli_ESMpp_small_batch30_rounds10","protein_haddox_ESMpp_small_batch30_rounds10","protein_jones_ESMpp_small_batch30_rounds10","protein_kelsic_ESMpp_small_batch30_rounds10","protein_lee_ESMpp_small_batch30_rounds10","protein_stiffler_ESMpp_small_batch30_rounds10","protein_zikv_E_ESMpp_small_batch30_rounds10"]'
 
 permissions:
   contents: read
@@ -52,6 +54,9 @@ jobs:
           if [ "$RUN_GROUP" = "All" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.ALL_BENCHMARKS }} }'
           fi
+          if [ "$RUN_GROUP" = "Protein" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.PROTEIN_BENCHMARKS }} }'
+          fi
 
           echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_ENV"
 
@@ -79,6 +84,7 @@ jobs:
     timeout-minutes: 1440
     env:
       BAYBE_BENCHMARKING_PERSISTENCE_PATH: ${{ secrets.TEST_RESULT_S3_BUCKET }}
+      BAYBE_BENCHMARKING_DATA_BUCKET: ${{ secrets.BENCHMARKING_DATA_S3_BUCKET }}
       BAYBE_PARALLELIZE_SIMULATION_RUNS: false
     steps:
       - name: System Information
