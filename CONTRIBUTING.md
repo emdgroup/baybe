@@ -189,13 +189,13 @@ Apart from that, we generally recommend adhering to the following guideline:
   ```python
   @define
   class Cookies:
-    """A delicious recipe for chocolate-banana cookies."""
-  
-    chocolate: float
-    """Chocolate is naturally measured in terms of floats."""
-  
-    bananas: int
-    """For bananas, we use integers, of course."""
+      """A delicious recipe for chocolate-banana cookies."""
+
+      chocolate: float
+      """Chocolate is naturally measured in terms of floats."""
+
+      bananas: int
+      """For bananas, we use integers, of course."""
   ```
 
 - Unless another more specific name is suitable, use our default naming convention for 
@@ -203,7 +203,8 @@ Apart from that, we generally recommend adhering to the following guideline:
   ```python
   @my_attribute.default
   def _default_my_attribute(self): ...
-  
+
+
   @my_attribute.validator
   def _validate_my_attribute(self, attribute, value): ...
   ```
@@ -218,18 +219,18 @@ to make the relationship explicit:
 ```python
 from typing_extensions import override
 
-class Parent:
 
-   def le_method():
-      """The method of the parent class."""
-      ...
+class Parent:
+    def le_method():
+        """The method of the parent class."""
+        ...
+
 
 class Child:
-
-   @override
-   def le_method():
-      """Overridden method of the child class."""
-      ...
+    @override
+    def le_method():
+        """Overridden method of the child class."""
+        ...
 ```
 Using the decorator provides a type-safe approach for defining inheritance structures
 that eliminates two potential sources of unintended class design:

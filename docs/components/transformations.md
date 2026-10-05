@@ -349,7 +349,7 @@ values = torch.linspace(0, 1, steps=100)
 t1 = AdditiveTransformation([p1, p2])  # explicit construction
 t2 = p1 + p2  # using overloaded addition operator
 assert t1 == t2
-assert torch.equal(t1(values), p1(values) + p2(values)) 
+assert torch.equal(t1(values), p1(values) + p2(values))
 ```
 
 ### Multiplication
