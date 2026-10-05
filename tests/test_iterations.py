@@ -401,7 +401,6 @@ def test_kernels(ongoing_campaign, n_iterations, batch_size):
     ],
     ids=["parameter_kernel_override", *(mode.name for mode in TransferLearningMode)],
 )
-@pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_parameter_kernel_override_iteration(
     ongoing_campaign, n_iterations, batch_size
 ):
