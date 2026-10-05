@@ -114,12 +114,12 @@ def test_lazy_loading(target: str, whitelist: Sequence[str]):
     assert result == 0
 
 
-_WHITELISTED_TARGETS: dict[str, list[str]] = {}
+_WHITELISTED_TARGETS: dict[str, list[str]] = {
+    m: [t for t, ms in WHITELISTS.items() if m in ms]
+    for ms in WHITELISTS.values()
+    for m in ms
+}
 """The inverted whitelist, mapping modules to their permitted imports."""
-
-for _target, _modules in WHITELISTS.items():
-    for _module in _modules:
-        _WHITELISTED_TARGETS.setdefault(_module, []).append(_target)
 
 
 @pytest.mark.parametrize(
