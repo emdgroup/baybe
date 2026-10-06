@@ -16,6 +16,14 @@ if TYPE_CHECKING:
 
     from baybe.objectives.base import Objective
 
+_FORBIDDEN_INSTRUCTIONS = """\
+The following configurations are currently NOT selectable. You MUST NOT recommend any
+of them. Treat this list as the single source of truth about what not to recommend.
+Do not rely on your own memory of novelty. Before you output each suggestion, compare it
+row-by-row against this list; if it matches a row, discard it and choose a genuinely
+new configuration instead:\
+"""
+
 _PROMPT_TEMPLATE = """\
 You are an expert experimental design assistant. Your task is to suggest new \
 experimental conditions based on the following information:
@@ -72,11 +80,7 @@ Do not recommend these again.
 
 {% if forbidden_configurations is not none %}
 FORBIDDEN CONFIGURATIONS:
-The following configurations have ALREADY been tested and are NO LONGER selectable. You
-MUST NOT recommend any of them again. Treat this list as the single source of truth
-about what has been tested -- do not rely on your own memory of novelty. Before you
-output each suggestion, compare it row-by-row against this list; if it matches a row,
-discard it and choose a genuinely new, untested configuration instead:
+{{ forbidden_instructions }}
 {{ forbidden_configurations }}
 {% endif %}
 
@@ -108,9 +112,8 @@ Type: {{ param.kind }}
 {% endfor %}
 {% if forbidden_configurations is not none %}
 
-FORBIDDEN CONFIGURATIONS: these have already been tested and are NO LONGER selectable.
-Do NOT recommend any of them. Check each corrected suggestion row-by-row against this
-list and pick a genuinely new, untested configuration instead:
+FORBIDDEN CONFIGURATIONS:
+{{ forbidden_instructions }}
 {{ forbidden_configurations }}
 {% endif %}
 
@@ -144,6 +147,7 @@ class _PromptContext(TypedDict):
     measurements: str | None
     pending_experiments: str | None
     forbidden_configurations: str | None
+    forbidden_instructions: str
     batch_size: int
     response_format: str
 
@@ -153,6 +157,7 @@ class _RecoveryPromptContext(TypedDict):
 
     parameters: tuple[_ParameterPromptInfo, ...]
     forbidden_configurations: str | None
+    forbidden_instructions: str
     recovery_instruction: str
     original_response: str
     response_format: str
@@ -279,6 +284,7 @@ def make_prompt(
         "measurements": measurements_text,
         "pending_experiments": pending_text,
         "forbidden_configurations": _forbidden_configurations(searchspace),
+        "forbidden_instructions": _FORBIDDEN_INSTRUCTIONS,
         "batch_size": batch_size,
         "response_format": _response_format(batch_size),
     }
@@ -318,6 +324,7 @@ def make_recovery_prompt(
     context: _RecoveryPromptContext = {
         "parameters": tuple(_parameter_prompt_info(p) for p in searchspace.parameters),
         "forbidden_configurations": _forbidden_configurations(searchspace),
+        "forbidden_instructions": _FORBIDDEN_INSTRUCTIONS,
         "recovery_instruction": error.recovery_instruction,
         "original_response": original_response,
         "response_format": _response_format(batch_size),
