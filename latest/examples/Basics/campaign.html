@@ -1317,13 +1317,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-         Solvent               Base                        Ligand  \
-273         DMAc  Potassium acetate                 (t-Bu)PhCPhos   
-52   Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine   
+         Solvent                Base                        Ligand  \
+323         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+44   Butyl Ester     Cesium pivalate                     BrettPhos   
 
      Temperature  Concentration  
-273        105.0          0.057  
-52         120.0          0.100  
+323        120.0          0.153  
+44         120.0          0.153  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1336,13 +1336,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent               Base                        Ligand  \
-273         DMAc  Potassium acetate                 (t-Bu)PhCPhos   
-52   Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine   
+         Solvent                Base                        Ligand  \
+323         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+44   Butyl Ester     Cesium pivalate                     BrettPhos   
 
      Temperature  Concentration      yield  
-273        105.0          0.057 -66.369630  
-52         120.0          0.100  24.110883  
+323        120.0          0.153 -20.601511  
+44         120.0          0.153 -92.891219  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
