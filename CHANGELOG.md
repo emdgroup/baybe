@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteLinearConstraint` for (optionally weighted) sum constraints on discrete
   parameters, supporting `coefficients` and mirroring `ContinuousLinearConstraint`'s
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
+- `LLMRecommender` for LLM-based experimental design suggestions via LiteLLM,
+  available through the optional `llm` dependency group
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
@@ -97,8 +99,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `KernelFactory` now obeys the more general `GPComponentFactoryProtocol`
 
 ### Added
-- `LLMRecommender` for LLM-based experimental design suggestions via LiteLLM,
-  available through the optional `llm` dependency group
 - Support for Python 3.14
 - Support for pandas 3
 - `Settings` class for unified and streamlined settings management
