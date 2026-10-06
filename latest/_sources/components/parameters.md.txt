@@ -188,7 +188,6 @@ SubstanceParameter(
         "fp_size": 1024,  # Change the number of computed bits
     },
 )
-
 ```
 
 These calculations will typically result in 500 to 1500 numbers per molecule.

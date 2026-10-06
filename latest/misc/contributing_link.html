@@ -1429,13 +1429,13 @@ Separate different attributes using a blank line.
 For example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@define</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Cookies</span><span class="p">:</span>
-<span class="w">  </span><span class="sd">&quot;&quot;&quot;A delicious recipe for chocolate-banana cookies.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A delicious recipe for chocolate-banana cookies.&quot;&quot;&quot;</span>
 
-  <span class="n">chocolate</span><span class="p">:</span> <span class="nb">float</span>
-<span class="w">  </span><span class="sd">&quot;&quot;&quot;Chocolate is naturally measured in terms of floats.&quot;&quot;&quot;</span>
+    <span class="n">chocolate</span><span class="p">:</span> <span class="nb">float</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Chocolate is naturally measured in terms of floats.&quot;&quot;&quot;</span>
 
-  <span class="n">bananas</span><span class="p">:</span> <span class="nb">int</span>
-<span class="w">  </span><span class="sd">&quot;&quot;&quot;For bananas, we use integers, of course.&quot;&quot;&quot;</span>
+    <span class="n">bananas</span><span class="p">:</span> <span class="nb">int</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;For bananas, we use integers, of course.&quot;&quot;&quot;</span>
 </pre></div>
 </div>
 </li>
@@ -1443,6 +1443,7 @@ For example:</p>
 <code class="docutils literal notranslate"><span class="pre">attrs</span></code> defaults and validators:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@my_attribute</span><span class="o">.</span><span class="n">default</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_default_my_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+
 
 <span class="nd">@my_attribute</span><span class="o">.</span><span class="n">validator</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_my_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span> <span class="o">...</span>
@@ -1460,18 +1461,18 @@ silenced using <code class="docutils literal notranslate"><span class="pre">#</s
 to make the relationship explicit:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">Parent</span><span class="p">:</span>
 
-   <span class="k">def</span><span class="w"> </span><span class="nf">le_method</span><span class="p">():</span>
-<span class="w">      </span><span class="sd">&quot;&quot;&quot;The method of the parent class.&quot;&quot;&quot;</span>
-      <span class="o">...</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Parent</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">le_method</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The method of the parent class.&quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">:</span>
-
-   <span class="nd">@override</span>
-   <span class="k">def</span><span class="w"> </span><span class="nf">le_method</span><span class="p">():</span>
-<span class="w">      </span><span class="sd">&quot;&quot;&quot;Overridden method of the child class.&quot;&quot;&quot;</span>
-      <span class="o">...</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">le_method</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Overridden method of the child class.&quot;&quot;&quot;</span>
+        <span class="o">...</span>
 </pre></div>
 </div>
 <p>Using the decorator provides a type-safe approach for defining inheritance structures
