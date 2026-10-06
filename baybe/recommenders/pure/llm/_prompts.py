@@ -123,12 +123,7 @@ Please provide a corrected JSON response that follows the required format:
 
 
 class _ParameterPromptInfo(TypedDict):
-    """Typed, presentation-only view of a parameter for prompt rendering.
-
-    Gives the template a single stable shape (instead of the previous
-    dynamically-shaped ``SimpleNamespace``); the value domain is flattened into one
-    ``domain`` string so no field is conditionally present.
-    """
+    """Typed, presentation-only view of a parameter for prompt rendering."""
 
     name: str
     description: str | None
@@ -212,15 +207,17 @@ def _parameter_prompt_info(parameter: Parameter) -> _ParameterPromptInfo:
 
 
 def _forbidden_configurations(searchspace: SearchSpace) -> str | None:
-    """Render discrete configurations that are no longer eligible candidates.
+    """Render discrete configurations that should not be recommended currently.
 
-    When the campaign forbids re-recommending already-used points (e.g. via
-    ``allow_recommending_already_recommended``), those points are dropped from the
-    eligible candidate set the recommender receives. Surfacing them lets the model avoid
-    proposing configurations that would be rejected as ineligible.
+    Some candidates should not be recommended in the current iteration, since it might
+    be forbidden to recommend points already recommended (e.g. via setting
+    ``allow_recommending_already_recommended``) or because the points are currently
+    pending. Hence, those points are dropped from the eligible candidate set the
+    recommender receives. Surfacing them lets the model avoid proposing configurations
+    that would be rejected as ineligible.
 
     Args:
-        searchspace: The (possibly filtered) search space to recommend for.
+        searchspace: The search space to recommend for.
 
     Returns:
         A rendered table of the forbidden discrete configurations, or ``None`` if the
