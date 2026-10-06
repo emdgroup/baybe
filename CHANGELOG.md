@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
 
 ### Changed
+- Updated the pre-commit hooks for Flake8, Ruff, uv, zizmor and Pyrefly
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
   kernel in multi-task scenarios, matching BoTorch's `MultiTaskGP` defaults introduced
   in version `0.18.0`
