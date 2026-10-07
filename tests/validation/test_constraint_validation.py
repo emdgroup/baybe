@@ -93,8 +93,13 @@ def test_invalid_coefficients(coefficients, match):
         )
 
 
-def test_excluded_permutation_dependencies():
-    """Excluded permutation dependencies raise a ValueError."""
+def test_invalid_dependencies():
+    """Invalid dependency specifications raise a ValueError."""
+    with pytest.raises(ValueError, match="cannot also be one of its affected"):
+        DiscreteDependenciesConstraint(
+            ["Gate"], [SubSelectionCondition(["on"])], [["Gate", "P1"]]
+        )
+
     dependencies = DiscreteDependenciesConstraint(
         parameters=["Gate"],
         conditions=[SubSelectionCondition(selection=["on"])],

@@ -162,6 +162,13 @@ valid_config_dep = {
             "must be a sequence but cannot be a string",
             id="dep_affected_bare_string",
         ),
+        param(
+            DependencySymmetry,
+            valid_config_dep | {"affected_parameter_names": ["n1", "n2"]},
+            ValueError,
+            "causing parameter 'n1' cannot also be an affected parameter",
+            id="dep_causing_in_affected",
+        ),
     ],
 )
 def test_configuration(cls, config, error, msg):

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -58,6 +58,21 @@ class DependencySymmetry(Symmetry):
     )
     """Number of evenly spaced points used to sample from continuous parameter ranges
     during augmentation. Must be set when any affected parameter is continuous."""
+
+    @affected_parameter_names.validator
+    def _validate_affected_parameter_names(  # noqa: DOC101, DOC103
+        self, _: Any, value: tuple[str, ...]
+    ) -> None:
+        """Validate the affected parameter names.
+
+        Raises:
+            ValueError: If the causing parameter is also an affected parameter.
+        """
+        if self._parameter_name in value:
+            raise ValueError(
+                f"In a '{self.__class__.__name__}', the causing parameter "
+                f"'{self._parameter_name}' cannot also be an affected parameter."
+            )
 
     @override
     @property
