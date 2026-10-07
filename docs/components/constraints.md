@@ -385,6 +385,8 @@ You can specify such a dependency with the
    only if the corresponding entry in `parameters` is active as specified by the 
    entry in `conditions`.
 
+A parameter cannot be one of its own `affected_parameters`.
+
 Internally, BayBE drops elements from the `SearchSpace` where affected parameters are
 irrelevant. Since in our example `"off"` is still a valid value for the switch, the
 `SearchSpace` will still retain **one** configuration for that setting, showing arbitrary

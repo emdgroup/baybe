@@ -21,7 +21,10 @@ class Symmetry(SerialMixin, ABC):
     """Abstract base class for symmetries.
 
     A ``Symmetry`` is a concept that can be used to configure the modeling process in
-    the presence of invariances.
+    the presence of invariances, either via data augmentation (see
+    :attr:`baybe.recommenders.pure.bayesian.base.BayesianRecommender.symmetries`) or
+    via invariant kernels (see
+    :attr:`baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.symmetries`).
     """
 
     @property

@@ -62,6 +62,8 @@ attribute of the recommender. This means you can add a data point in any accepta
 representation and BayBE will train the model on this point plus augmented points that
 can be generated from it. To see the effect in practice, refer to
 [this example](/examples/Symmetries/permutation).
+For Gaussian process surrogates, symmetries can alternatively be built into the kernel
+(see {ref}`invariant_kernels`).
 
 ### Clustering Recommenders
 

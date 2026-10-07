@@ -57,7 +57,8 @@ class DependencySymmetry(Symmetry):
         default=None, validator=optional_v((instance_of(int), ge(2))), kw_only=True
     )
     """Number of evenly spaced points used to sample from continuous parameter ranges
-    during augmentation. Must be set when any affected parameter is continuous."""
+    during augmentation. Must be set when any affected parameter is continuous and the
+    symmetry is used for data augmentation. Not used by invariant kernels."""
 
     @affected_parameter_names.validator
     def _validate_affected_parameter_names(  # noqa: DOC101, DOC103

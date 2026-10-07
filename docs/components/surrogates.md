@@ -163,6 +163,8 @@ kernel = MaternKernel(parameter_names=["Param_A", "Param_B"])
 
 For a convenience interface that assigns a kernel directly to one parameter, see
 {ref}`parameter_kernel_overrides`.
+To make the kernel invariant under symmetries of the problem, see
+{ref}`invariant_kernels`.
 
 #### Presets
 

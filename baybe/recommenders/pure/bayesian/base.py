@@ -63,7 +63,11 @@ class BayesianRecommender(PureRecommender, ABC):
         validator=deep_iterable(member_validator=instance_of(Symmetry)),
         kw_only=True,
     )
-    """Symmetries triggering data augmentation during model fitting."""
+    """Symmetries triggering data augmentation during model fitting.
+
+    For Gaussian process surrogates, symmetries can alternatively be enforced via
+    :attr:`baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.symmetries`.
+    """
 
     # TODO: The objective is currently only required for validating the recommendation
     #   context. Once multi-target support is complete, we might want to refactor
