@@ -26,6 +26,7 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
+from baybe.utils.basic import to_tuple
 from baybe.utils.conversion import to_string
 
 _T = TypeVar("_T")
@@ -174,13 +175,6 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         return recommendation
 
 
-def _to_recommender_list(
-    recommenders: Iterable[RecommenderProtocol], /
-) -> list[RecommenderProtocol]:
-    """Convert an iterable of recommenders into a list."""
-    return list(recommenders)
-
-
 @define
 class SequentialMetaRecommender(BaseSequentialMetaRecommender):
     """A meta recommender that uses a pre-defined sequence of recommenders.
@@ -192,7 +186,7 @@ class SequentialMetaRecommender(BaseSequentialMetaRecommender):
 
     Note:
         The provided sequence of recommenders will be internally pre-collected into a
-        list. If this is not acceptable, consider using
+        tuple. If this is not acceptable, consider using
         :class:`baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender`
         instead.
 
@@ -203,8 +197,8 @@ class SequentialMetaRecommender(BaseSequentialMetaRecommender):
             recommenders available and ``mode="raise"``.
     """
 
-    recommenders: list[RecommenderProtocol] = field(
-        converter=_to_recommender_list,
+    recommenders: tuple[RecommenderProtocol, ...] = field(
+        converter=to_tuple,  # https://github.com/python/mypy/issues/8417
         validator=deep_iterable(instance_of(RecommenderProtocol)),
     )
     """A finite-length sequence of recommenders to be used. For infinite-length

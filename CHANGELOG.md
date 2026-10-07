@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `df_apply_permutation_augmentation` has a different interface and now expects
   permutation groups instead of column groups
 - `ParameterSelectorProtocol.__call__` now declares its input as positional-only
+- `SequentialMetaRecommender.recommenders` is now a `tuple` instead of a `list`, making
+  the attribute immutable. Serialization is unaffected
 
 ### Fixed
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
