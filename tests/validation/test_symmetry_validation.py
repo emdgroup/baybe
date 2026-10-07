@@ -1,10 +1,12 @@
 """Validation tests for symmetry."""
 
+from unittest.mock import Mock
+
 import numpy as np
 import pytest
 from pytest import param
 
-from baybe.constraints import ThresholdCondition
+from baybe.constraints import SubSelectionCondition, ThresholdCondition
 from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.parameters import (
     CategoricalParameter,
@@ -13,6 +15,7 @@ from baybe.parameters import (
 )
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
+from baybe.surrogates import GaussianProcessSurrogate
 from baybe.symmetries import DependencySymmetry, MirrorSymmetry, PermutationSymmetry
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
@@ -282,3 +285,84 @@ def test_searchspace_context(searchspace, symmetry, error, msg):
         recommender.recommend(
             1, searchspace, t.to_objective(), measurements=measurements
         )
+
+
+@pytest.mark.parametrize(
+    "parameter_names, gp_kwargs, error, msg",
+    [
+        param(
+            ["n1"],
+            {"symmetries": ["n1"]},
+            TypeError,
+            "must be <class 'baybe.symmetries.base.Symmetry'>",
+            id="not_a_symmetry",
+        ),
+        param(
+            ["n1", "n2"],
+            {
+                "symmetries": [
+                    PermutationSymmetry([["n1", "n2"]]),
+                    MirrorSymmetry("n1"),
+                ]
+            },
+            ValueError,
+            r"controlled by several symmetries: \['n1'\]",
+            id="overlap_perm_mirror",
+        ),
+        param(
+            ["n1", "cat1"],
+            {
+                "symmetries": [
+                    DependencySymmetry("cat1", SubSelectionCondition(["a"]), ["n1"]),
+                    MirrorSymmetry("n1"),
+                ]
+            },
+            ValueError,
+            r"controlled by several symmetries: \['n1'\]",
+            id="overlap_dep_affected_mirror",
+        ),
+        param(
+            ["n1", "n2", "c1"],
+            {
+                "symmetries": [
+                    DependencySymmetry("n1", ThresholdCondition(0.0, ">"), ["c1"]),
+                    PermutationSymmetry([["n1", "n2"]]),
+                ]
+            },
+            ValueError,
+            "causing parameter 'n1' .* cannot be controlled by another symmetry",
+            id="causing_permuted",
+        ),
+        param(
+            ["n1", "n2", "cat1"],
+            {
+                "symmetries": [
+                    DependencySymmetry("n1", ThresholdCondition(0.0, ">"), ["n2"]),
+                    DependencySymmetry("n2", ThresholdCondition(0.0, ">"), ["cat1"]),
+                ]
+            },
+            ValueError,
+            "causing parameter 'n2' .* cannot be controlled by another symmetry",
+            id="dependency_chain",
+        ),
+        param(
+            ["n1"],
+            {"symmetries": [PermutationSymmetry([[f"p{i}" for i in range(6)]])]},
+            ValueError,
+            "at most 5 positions, but a group with 6",
+            id="perm_group_too_large",
+        ),
+    ],
+)
+def test_gp_configuration(monkeypatch, searchspace, gp_kwargs, error, msg):
+    """Invalid symmetry setups of a Gaussian process raise an error before fitting."""
+    fit = Mock()
+    monkeypatch.setattr("botorch.fit.fit_gpytorch_mll", fit)
+    t = NumericalTarget("t")
+    measurements = create_fake_input(searchspace.parameters, [t], n_rows=3)
+
+    with pytest.raises(error, match=msg):
+        GaussianProcessSurrogate(**gp_kwargs).fit(
+            searchspace, t.to_objective(), measurements
+        )
+    fit.assert_not_called()
