@@ -181,12 +181,17 @@ def _parameter_prompt_info(parameter: Parameter) -> _ParameterPromptInfo:
         # reason about structure, while still choosing by substance name.
         kind = "substance"
         substances = ", ".join(
-            f"{name} ({smiles})" for name, smiles in parameter.data.items()
+            f"{name} ({smiles})"
+            for name, smiles in parameter.data.items()
+            if name in parameter.active_values
         )
         domain = f"Allowed values (choose by name; SMILES in parentheses): {substances}"
     elif isinstance(parameter, DiscreteParameter):
         kind = "discrete_numeric" if parameter.is_numerical else "categorical"
-        domain = f"Allowed values: {list(parameter.values)}"
+        values = parameter.active_values
+        if parameter.is_numerical:
+            values = tuple(value.item() for value in values)  # avoid numpy-repr leak
+        domain = f"Allowed values: {list(values)}"
     else:
         raise IncompatibilityError(
             f"Parameter '{parameter.name}' has unsupported type "
