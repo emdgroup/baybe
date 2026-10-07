@@ -32,8 +32,7 @@ from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.gaussian_process import _override
-from baybe.surrogates.gaussian_process._symmetry import validate_symmetries
+from baybe.surrogates.gaussian_process import _override, _symmetry
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     FitCriterionFactoryProtocol,
@@ -203,6 +202,9 @@ class GaussianProcessSurrogate(Surrogate):
     unchanged.
 
     See :ref:`parameter_kernel_overrides` for details and limitations.
+
+    If :attr:`symmetries` are configured, the resulting kernel is additionally made
+    invariant under them (see :ref:`invariant_kernels`).
     """
 
     mean_factory: MeanFactoryProtocol | None = field(
@@ -283,7 +285,7 @@ class GaussianProcessSurrogate(Surrogate):
         self, _: Any, value: tuple[Symmetry, ...]
     ) -> None:
         """Validate that the symmetries can be enforced via kernel construction."""
-        validate_symmetries(value)
+        _symmetry.validate_symmetries(value)
 
     @staticmethod
     def _make_input_transform(context: _ModelContext) -> Normalize:
@@ -462,7 +464,9 @@ class GaussianProcessSurrogate(Surrogate):
         """Resolve the GP kernel, applying parameter and transfer overrides.
 
         The effective kernel is the surrogate kernel restricted to the
-        non-overridden dimensions, multiplied by one factor per override.
+        non-overridden dimensions, multiplied by one factor per override. If
+        :attr:`symmetries` are configured, the result is finally made invariant
+        under them.
 
         Args:
             context: The model context providing the inputs and override settings.
@@ -500,7 +504,16 @@ class GaussianProcessSurrogate(Surrogate):
                     f"of the non-overridden indices {allowed}."
                 )
         factors = ([] if residual is None else [residual]) + [k for _, k in overrides]
-        return reduce(operator.mul, factors)
+        kernel = reduce(operator.mul, factors)
+
+        if self.symmetries:
+            kernel = _symmetry.make_symmetric_kernel(
+                self.symmetries,
+                searchspace,
+                self._make_input_transform(context),
+                kernel,
+            )
+        return kernel
 
     def _resolve_residual_kernel(
         self, context: _ModelContext, excluded_names: set[str]
@@ -616,6 +629,8 @@ class GaussianProcessSurrogate(Surrogate):
         mean = mean_factory(
             context.searchspace, context.objective, context.measurements
         )
+        if self.symmetries:
+            _symmetry.validate_mean(mean)
 
         likelihood = likelihood_factory(
             context.searchspace, context.objective, context.measurements
@@ -633,11 +648,7 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._objective is not None  # ensured by base class
         assert self._measurements is not None  # ensured by base class
 
-        # Symmetry-aware architecture adjustment (planned for future implementation)
-        if self.symmetries:
-            raise NotImplementedError(
-                "Symmetry-aware surrogate architecture is not yet implemented."
-            )
+        _symmetry.validate_searchspace_context(self.symmetries, self._searchspace)
 
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 

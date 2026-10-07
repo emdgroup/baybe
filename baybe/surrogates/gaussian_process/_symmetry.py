@@ -13,6 +13,7 @@ import pandas as pd
 
 from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.enum import _ParameterKind
 from baybe.surrogates.gaussian_process._override import iter_gpytorch_kernel_tree
 from baybe.symmetries.base import Symmetry
 from baybe.symmetries.dependency import DependencySymmetry
@@ -22,6 +23,7 @@ from baybe.symmetries.permutation import PermutationSymmetry
 if TYPE_CHECKING:
     from botorch.models.transforms.input import InputTransform
     from gpytorch.kernels import Kernel as GPyTorchKernel
+    from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
     from torch.nn import Module
 
@@ -91,6 +93,62 @@ def validate_symmetries(symmetries: Collection[Symmetry], /) -> None:
                 f"instead, which is a different modeling approach whose number of "
                 f"training points grows by the same factorial factor."
             )
+
+
+def validate_searchspace_context(
+    symmetries: Collection[Symmetry], searchspace: SearchSpace, /
+) -> None:
+    """Validate that symmetries can be enforced via kernel construction in a space.
+
+    Args:
+        symmetries: The symmetries to validate.
+        searchspace: The search space the kernel operates on.
+
+    Raises:
+        IncompatibleSearchSpaceError: If a symmetry involves a parameter that is not a
+            regular parameter, e.g. a task parameter.
+    """
+    for s in symmetries:
+        s.validate_searchspace_context(searchspace)
+        if irregular := [
+            p.name
+            for p in searchspace.get_parameters_by_name(s.parameter_names)
+            if p._kind is not _ParameterKind.REGULAR
+        ]:
+            raise IncompatibleSearchSpaceError(
+                f"Symmetries enforced via kernel construction can only involve regular "
+                f"parameters, but the '{s.__class__.__name__}' involves the special "
+                f"parameters {irregular}, whose kernels have a dedicated purpose."
+            )
+
+
+def validate_mean(mean: GPyTorchMean, /) -> None:
+    """Validate that a mean function is compatible with symmetric kernels.
+
+    The posterior of a Gaussian process is only invariant if its prior mean is
+    invariant, which is guaranteed for constant means and task-wise constant means.
+
+    Args:
+        mean: The mean function to validate.
+
+    Raises:
+        ValueError: If the mean function is not (task-wise) constant.
+    """
+    from gpytorch.means import ConstantMean, ZeroMean
+
+    from baybe.surrogates.gaussian_process.components._gpytorch import (
+        HadamardConstantMean,
+    )
+
+    means = (
+        mean.multitask_mean.base_means if type(mean) is HadamardConstantMean else [mean]
+    )
+    if not all(type(m) in (ConstantMean, ZeroMean) for m in means):
+        raise ValueError(
+            f"Symmetries enforced via kernel construction require a constant mean "
+            f"function, since otherwise the model predictions are not invariant. "
+            f"However, a mean function of type '{type(mean).__name__}' was given."
+        )
 
 
 _PER_DIMENSION_PARAMETERS = ("raw_lengthscale", "raw_period_length")

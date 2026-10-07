@@ -9,6 +9,7 @@ from pytest import param
 
 from baybe.acquisition import qKG, qNIPV, qTS, qUCB
 from baybe.acquisition.base import AcquisitionFunction
+from baybe.constraints import SubSelectionCondition
 from baybe.exceptions import (
     IncompatibleSurrogateError,
     OptionalImportError,
@@ -28,6 +29,7 @@ from baybe.kernels.basic import (
 from baybe.kernels.composite import ScaleKernel
 from baybe.objectives.pareto import ParetoObjective
 from baybe.parameters import (
+    CategoricalParameter,
     NumericalContinuousParameter,
     TaskParameter,
     TransferLearningMode,
@@ -54,12 +56,14 @@ from baybe.surrogates.bandit import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
 from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
+from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import (
     BayBEKernelFactory,
     EDBOKernelFactory,
 )
 from baybe.surrogates.linear import BayesianLinearSurrogate
 from baybe.surrogates.transfer_learning.rgpe import RGPESurrogate
+from baybe.symmetries import DependencySymmetry, MirrorSymmetry, PermutationSymmetry
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import create_fake_input
@@ -419,6 +423,39 @@ def test_parameter_kernel_override_iteration(
     ongoing_campaign, n_iterations, batch_size
 ):
     """A complete optimization iteration supports a parameter kernel override."""
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        [
+            CategoricalParameter("s1", ["a", "b"]),
+            CategoricalParameter("s2", ["a", "b"]),
+            CategoricalParameter("switch", ["on", "off"]),
+            NumericalContinuousParameter("x", (0, 1)),
+            NumericalContinuousParameter("m", (-1, 1)),
+        ]
+    ],
+    ids=["hybrid"],
+)
+@pytest.mark.parametrize(
+    "surrogate_model",
+    [
+        GaussianProcessSurrogate(
+            symmetries=[
+                PermutationSymmetry([["s1", "s2"]]),
+                DependencySymmetry("switch", SubSelectionCondition(["on"]), ["x"]),
+                MirrorSymmetry("m"),
+            ]
+        )
+    ],
+    ids=["symmetric_gp"],
+)
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+def test_symmetric_gp_iteration(ongoing_campaign, n_iterations, batch_size):
+    """Complete optimization iterations work with a symmetric Gaussian process."""
     run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 

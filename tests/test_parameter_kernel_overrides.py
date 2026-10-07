@@ -16,6 +16,7 @@ from gpytorch import kernels as gk
 from gpytorch.priors import GammaPrior
 from pytest import param
 
+from baybe.constraints import SubSelectionCondition
 from baybe.exceptions import IncompatibleOverrideError
 from baybe.kernels import MaternKernel, RBFKernel
 from baybe.kernels.basic import IdentityKernel, IndexKernel, PositiveIndexKernel
@@ -30,19 +31,26 @@ from baybe.parameters.enum import TransferLearningMode
 from baybe.parameters.selectors import NameSelector
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
+from baybe.surrogates.gaussian_process.components._gpytorch import (
+    DependencyGatedKernel,
+    PermutationInvariantKernel,
+)
 from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
 from baybe.surrogates.gaussian_process.core import _ModelContext
 from baybe.surrogates.gaussian_process.presets import BayBEKernelFactory
+from baybe.symmetries import DependencySymmetry, PermutationSymmetry
 from baybe.targets import NumericalTarget
 
 
-def _resolve(parameters, kernel_or_factory=None):
+def _resolve(parameters, kernel_or_factory=None, symmetries=()):
     """Resolve the default GP kernel for the given parameters."""
     searchspace = SearchSpace.from_product(parameters)
     context = _ModelContext(
         searchspace, NumericalTarget("y").to_objective(), pd.DataFrame()
     )
-    surrogate = GaussianProcessSurrogate(kernel_or_factory=kernel_or_factory)
+    surrogate = GaussianProcessSurrogate(
+        kernel_or_factory=kernel_or_factory, symmetries=symmetries
+    )
     return surrogate._resolve_kernel(context), searchspace
 
 
@@ -446,3 +454,28 @@ def test_raw_surrogate_kernel_without_overrides(as_factory):
         searchspace, NumericalTarget("y").to_objective(), pd.DataFrame()
     )
     assert surrogate._resolve_kernel(context) is raw
+
+
+def test_symmetric_kernel_structure():
+    """Symmetries wrap the resolved kernel, keeping overrides and sharing parameters."""
+    parameters = [
+        NumericalDiscreteParameter("o1", (0, 1, 2), override_kernel=RBFKernel()),
+        NumericalDiscreteParameter("o2", (0, 1, 2), override_kernel=RBFKernel()),
+        NumericalContinuousParameter("x", (0, 1)),
+        CategoricalParameter("s", ("on", "off")),
+        NumericalDiscreteParameter("y", (0, 1, 2)),
+    ]
+    symmetries = [
+        PermutationSymmetry([["o1", "o2"]]),
+        DependencySymmetry("s", SubSelectionCondition(["on"]), ["y"]),
+    ]
+    kernel, searchspace = _resolve(parameters, symmetries=symmetries)
+
+    assert isinstance(kernel, PermutationInvariantKernel)
+    assert isinstance(gated := kernel.base_kernel, DependencyGatedKernel)
+    assert gated.affected_columns == [
+        list(searchspace.get_comp_rep_parameter_indices("y"))
+    ]
+    leaves = {id(k): k for k in _leaf_kernels(gated.base_kernel)}.values()
+    o1, o2 = (k for k in leaves if isinstance(k, gk.RBFKernel))
+    assert o1.raw_lengthscale is o2.raw_lengthscale

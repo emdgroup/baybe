@@ -15,6 +15,7 @@ from baybe.parameters import (
     CustomDiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
+    TaskParameter,
 )
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
@@ -22,6 +23,7 @@ from baybe.surrogates.gaussian_process._symmetry import make_symmetric_kernel
 from baybe.surrogates.gaussian_process.core import _ModelContext
 from baybe.symmetries import DependencySymmetry, MirrorSymmetry, PermutationSymmetry
 from baybe.targets import NumericalTarget
+from baybe.utils.dataframe import create_fake_input
 
 _PARAMETERS = {
     p.name: p
@@ -39,6 +41,7 @@ _PARAMETERS = {
         NumericalDiscreteParameter("y", (0, 5, 10)),
         NumericalContinuousParameter("yc", (0, 10)),
         NumericalContinuousParameter("z", (0, 1)),
+        TaskParameter("task", ("A", "B")),
         CustomDiscreteParameter(
             "custom",
             pd.DataFrame(
@@ -97,8 +100,8 @@ def _randomize(kernel):
     return kernel
 
 
-def _make_inputs(searchspace, symmetries, transform, n_rows):
-    """Make random inputs and their symmetry-equivalent counterparts.
+def _make_candidates(searchspace, symmetries, n_rows):
+    """Make random candidates together with their symmetry-equivalent counterparts.
 
     The counterparts are created via data augmentation, which keeps the index of the
     original row, so that all rows sharing an index are equivalent.
@@ -114,6 +117,12 @@ def _make_inputs(searchspace, symmetries, transform, n_rows):
     )
     for symmetry in symmetries:
         df = symmetry.augment_measurements(df, searchspace)
+    return df
+
+
+def _make_inputs(searchspace, symmetries, transform, n_rows):
+    """Make normalized kernel inputs and the equivalence groups they belong to."""
+    df = _make_candidates(searchspace, symmetries, n_rows)
     comp = torch.tensor(searchspace.transform(df).to_numpy(), dtype=torch.float64)
     return df.index.to_numpy(), transform.transform(comp)
 
@@ -181,3 +190,38 @@ def test_dependency_activity_must_be_identifiable(causing, condition, error, mat
     with pytest.raises(error, match=match):
         kernel, _, _ = _make_kernels(searchspace, [symmetry])
         kernel(x, x).to_dense()
+
+
+@pytest.mark.parametrize(
+    ("parameter_names", "symmetries"),
+    [
+        *(
+            c
+            for c in _CASES
+            if c.id in ("perm_lockstep_onehot", "mirror", "dependency")
+        ),
+        param(
+            ["o1", "o2", "m", "c", "y", "task", "z"],
+            [
+                PermutationSymmetry([["o1", "o2"]]),
+                _MIRROR,
+                DependencySymmetry("c", SubSelectionCondition(["on"]), ["y"]),
+            ],
+            id="combined_multitask",
+        ),
+    ],
+)
+def test_posterior_invariance(monkeypatch, parameter_names, symmetries):
+    """Posteriors of a Gaussian process with symmetries are invariant under them."""
+    # Invariance holds for any hyperparameters, so their optimization can be skipped
+    monkeypatch.setattr("botorch.fit.fit_gpytorch_mll", lambda mll: None)
+    searchspace = SearchSpace.from_product([_PARAMETERS[n] for n in parameter_names])
+    target = NumericalTarget("t")
+    measurements = create_fake_input(searchspace.parameters, [target], n_rows=6)
+    surrogate = GaussianProcessSurrogate(symmetries=symmetries)
+    surrogate.fit(searchspace, target.to_objective(), measurements)
+
+    candidates = _make_candidates(searchspace, symmetries, n_rows=3)
+    stats = surrogate.posterior_stats(candidates)
+    spread = stats.groupby(candidates.index.to_numpy()).agg(np.ptp)
+    assert (spread.to_numpy() < 1e-6).all()
