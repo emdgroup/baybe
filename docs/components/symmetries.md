@@ -125,9 +125,13 @@ is only relevant for data augmentation.
 
 ```{admonition} Requirements and Limitations
 :class: warning
-* Each parameter can be controlled by at most one symmetry, where the controlled
-  parameters are the permuted, mirrored and affected ones. The causing parameter of a
-  dependency cannot be controlled by any symmetry.
+* Symmetries can only be combined if their parameter roles are compatible: A parameter
+  can be permuted or mirrored by at most one symmetry, a mirrored parameter cannot
+  cause a dependency, a causing parameter cannot be affected by another dependency,
+  and permuting the parameters of a dependency must yield another existing dependency
+  with an identical condition. The latter enables slot-based mixtures, where the
+  substance labels and amounts of all slots are permuted together and each label only
+  matters if the amount of its slot is positive.
 * Symmetries can only involve regular parameters, e.g. no
   {class}`~baybe.parameters.categorical.TaskParameter`.
 * Permutation groups can have at most five positions. The costs of several symmetries

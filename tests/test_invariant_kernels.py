@@ -7,7 +7,7 @@ import torch
 from botorch.optim.utils import get_parameters_and_bounds
 from pytest import param
 
-from baybe.constraints import SubSelectionCondition
+from baybe.constraints import SubSelectionCondition, ThresholdCondition
 from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.kernels import RBFKernel
 from baybe.parameters import (
@@ -58,6 +58,12 @@ _DEPENDENCY = DependencySymmetry(
     "c", SubSelectionCondition(["on"]), ["y", "yc"], n_discretization_points=3
 )
 
+_MIXTURE = [
+    PermutationSymmetry([["s1", "s2"], ["f1", "f2"]]),
+    DependencySymmetry("f1", ThresholdCondition(0.0, ">"), ["s1"]),
+    DependencySymmetry("f2", ThresholdCondition(0.0, ">"), ["s2"]),
+]
+
 _CASES = [
     param(["x1", "x2", "z"], [_PERMUTATION], id="perm_joint_kernel"),
     param(
@@ -75,6 +81,7 @@ _CASES = [
         [_PERMUTATION, _MIRROR, _DEPENDENCY],
         id="combined",
     ),
+    param(["s1", "s2", "f1", "f2", "z"], _MIXTURE, id="mixture"),
 ]
 
 
@@ -198,7 +205,7 @@ def test_dependency_activity_must_be_identifiable(causing, condition, error, mat
         *(
             c
             for c in _CASES
-            if c.id in ("perm_lockstep_onehot", "mirror", "dependency")
+            if c.id in ("perm_lockstep_onehot", "mirror", "dependency", "mixture")
         ),
         param(
             ["o1", "o2", "m", "c", "y", "task", "z"],

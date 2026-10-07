@@ -343,20 +343,20 @@ def test_searchspace_context(searchspace, mechanism, symmetry, error, msg):
                 ]
             },
             ValueError,
-            r"controlled by several symmetries: \['n1'\]",
+            r"transformed by several symmetries: \['n1'\]",
             id="overlap_perm_mirror",
         ),
         param(
-            ["n1", "cat1"],
+            ["n1", "n2"],
             {
                 "symmetries": [
-                    DependencySymmetry("cat1", SubSelectionCondition(["a"]), ["n1"]),
+                    DependencySymmetry("n1", ThresholdCondition(0.0, ">"), ["n2"]),
                     MirrorSymmetry("n1"),
                 ]
             },
             ValueError,
-            r"controlled by several symmetries: \['n1'\]",
-            id="overlap_dep_affected_mirror",
+            r"following causing parameters are mirrored: \['n1'\]",
+            id="mirror_causing",
         ),
         param(
             ["n1", "n2", "c1"],
@@ -367,7 +367,7 @@ def test_searchspace_context(searchspace, mechanism, symmetry, error, msg):
                 ]
             },
             ValueError,
-            "causing parameter 'n1' .* cannot be controlled by another symmetry",
+            "must be closed under each permutation",
             id="causing_permuted",
         ),
         param(
@@ -379,7 +379,7 @@ def test_searchspace_context(searchspace, mechanism, symmetry, error, msg):
                 ]
             },
             ValueError,
-            "causing parameter 'n2' .* cannot be controlled by another symmetry",
+            r"following causing parameters are affected: \['n2'\]",
             id="dependency_chain",
         ),
         param(

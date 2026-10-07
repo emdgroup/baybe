@@ -33,23 +33,6 @@ MAX_PERMUTATION_GROUP_SIZE = 5
 """The maximum number of positions in a permutation group (cost grows factorially)."""
 
 
-def _get_controlled_parameter_names(symmetry: Symmetry, /) -> tuple[str, ...]:
-    """Get the names of the parameters whose modeling is changed by a symmetry.
-
-    For dependency symmetries, these are only the affected parameters, since the
-    causing parameter keeps its regular role and is merely read.
-
-    Args:
-        symmetry: The symmetry.
-
-    Returns:
-        The names of the controlled parameters.
-    """
-    if isinstance(symmetry, DependencySymmetry):
-        return symmetry.affected_parameter_names
-    return symmetry.parameter_names
-
-
 def validate_symmetries(symmetries: Collection[Symmetry], /) -> None:
     """Validate that symmetries can be jointly enforced via kernel construction.
 
@@ -57,42 +40,98 @@ def validate_symmetries(symmetries: Collection[Symmetry], /) -> None:
         symmetries: The symmetries to validate.
 
     Raises:
-        ValueError: If a parameter is controlled by more than one symmetry.
-        ValueError: If the causing parameter of a dependency is controlled by a
-            symmetry.
+        ValueError: If a parameter is permuted or mirrored by several symmetries.
+        ValueError: If a mirrored parameter causes a dependency.
+        ValueError: If a causing parameter is affected by another dependency.
+        ValueError: If the dependencies are not closed under a permutation.
         ValueError: If a permutation group exceeds the maximum supported size.
     """
-    counts = Counter(n for s in symmetries for n in _get_controlled_parameter_names(s))
-    if duplicates := sorted(n for n, c in counts.items() if c > 1):
+    # The kernel is wrapped in a dependency gate, a sum over permutations and a sum
+    # over reflections (in this order). Each wrapper yields a valid kernel, but the
+    # invariances only combine if the roles of the involved parameters are compatible:
+    #
+    # | Combination                            | Allowed | Reason                     |
+    # |----------------------------------------|---------|----------------------------|
+    # | Parameter permuted/mirrored repeatedly | No      | Transformations interfere  |
+    # | Mirrored causing parameter             | No      | Reflection flips activity  |
+    # | Causing parameter affected (chain)     | No      | Inactive value still counts|
+    # | Permuted/mirrored affected parameter   | Yes     | Fixed when inactive        |
+    # | Parameter in several dependencies      | Yes     | Fixed if any is inactive   |
+    # | Dependencies changed by a permutation  | No      | Gated kernel not invariant |
+    #
+    # The last rule requires that renaming the parameters of a dependency according to
+    # any permutation yields another existing dependency with an identical condition.
+    # This enables slot-based mixtures: Permuting the groups
+    # [["Solvent_1", "Solvent_2"], ["Fraction_1", "Fraction_2"]] together with the
+    # dependencies "Fraction_i > 0 -> Solvent_i" for all slots i is valid, since
+    # permuting the slots merely renumbers the dependencies.
+    permutations = [s for s in symmetries if isinstance(s, PermutationSymmetry)]
+    mirrors = [s for s in symmetries if isinstance(s, MirrorSymmetry)]
+    dependencies = [s for s in symmetries if isinstance(s, DependencySymmetry)]
+
+    # The causing parameter of a dependency comes first in its parameter names
+    causing = {d.parameter_names[0] for d in dependencies}
+    affected = {n for d in dependencies for n in d.affected_parameter_names}
+    transformed = Counter(
+        n for s in (*permutations, *mirrors) for n in s.parameter_names
+    )
+
+    if duplicates := sorted(n for n, c in transformed.items() if c > 1):
         raise ValueError(
-            f"Each parameter can be controlled by at most one symmetry when "
-            f"symmetries are enforced via kernel construction. However, the following "
-            f"parameters are controlled by several symmetries: {duplicates}."
+            f"When enforcing symmetries via kernel construction, each parameter can be "
+            f"permuted or mirrored by at most one symmetry. However, the following "
+            f"parameters are transformed by several symmetries: {duplicates}."
+        )
+    if mirrored_causing := sorted(causing & {m.parameter_names[0] for m in mirrors}):
+        raise ValueError(
+            f"When enforcing symmetries via kernel construction, the causing parameter "
+            f"of a '{DependencySymmetry.__name__}' cannot be mirrored. However, the "
+            f"following causing parameters are mirrored: {mirrored_causing}."
+        )
+    if chained := sorted(causing & affected):
+        raise ValueError(
+            f"When enforcing symmetries via kernel construction, the causing parameter "
+            f"of a '{DependencySymmetry.__name__}' cannot be affected by another "
+            f"dependency. However, the following causing parameters are affected: "
+            f"{chained}."
         )
 
-    for s in symmetries:
-        if (
-            isinstance(s, DependencySymmetry)
-            # The causing parameter comes first
-            and (name := s.parameter_names[0]) in counts
-        ):
+    signatures = [
+        (d.parameter_names[0], d.affected_parameter_names, d.condition)
+        for d in dependencies
+    ]
+    for p in permutations:
+        if (n := len(p.permutation_groups[0])) > MAX_PERMUTATION_GROUP_SIZE:
             raise ValueError(
-                f"The causing parameter '{name}' of a '{s.__class__.__name__}' cannot "
-                f"be controlled by another symmetry when symmetries are enforced via "
-                f"kernel construction."
-            )
-        if (
-            isinstance(s, PermutationSymmetry)
-            and (n := len(s.permutation_groups[0])) > MAX_PERMUTATION_GROUP_SIZE
-        ):
-            raise ValueError(
-                f"Enforcing a '{s.__class__.__name__}' via kernel construction "
+                f"Enforcing a '{p.__class__.__name__}' via kernel construction "
                 f"requires summing over all permutations of a group, which is "
                 f"supported for at most {MAX_PERMUTATION_GROUP_SIZE} positions, but a "
                 f"group with {n} positions was given. Consider using data augmentation "
                 f"instead, which is a different modeling approach whose number of "
                 f"training points grows by the same factorial factor."
             )
+        for permutation in itertools.permutations(range(n)):
+            rename = {
+                group[slot]: group[source]
+                for group in p.permutation_groups
+                for slot, source in enumerate(permutation)
+            }
+            for name, affected_names, condition in signatures:
+                image = (
+                    rename.get(name, name),
+                    tuple(sorted(rename.get(a, a) for a in affected_names)),
+                    condition,
+                )
+                if image not in signatures:
+                    raise ValueError(
+                        f"When enforcing symmetries via kernel construction, the "
+                        f"dependencies must be closed under each permutation, i.e. "
+                        f"permuting the parameters of a dependency must yield another "
+                        f"dependency with an identical condition. However, the "
+                        f"dependency of {affected_names} on '{name}' is mapped to a "
+                        f"dependency of {image[1]} on '{image[0]}', which does not "
+                        f"exist."
+                    )
 
 
 def validate_searchspace_context(
