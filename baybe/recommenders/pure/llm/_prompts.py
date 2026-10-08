@@ -5,16 +5,23 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal, TypedDict
 
 from baybe.exceptions import IncompatibilityError, LLMResponseError
+from baybe.objectives.desirability import DesirabilityObjective
+from baybe.objectives.enum import Scalarizer
+from baybe.objectives.pareto import ParetoObjective
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.parameters.substance import SubstanceParameter
 from baybe.recommenders.pure.llm._schema import _response_format
 from baybe.searchspace import SearchSpace
+from baybe.targets.binary import BinaryTarget
+from baybe.targets.numerical import NumericalTarget
+from baybe.transformations import IdentityTransformation
 
 if TYPE_CHECKING:
     import pandas as pd
 
     from baybe.objectives.base import Objective
+    from baybe.targets.base import Target
 
 _FORBIDDEN_INSTRUCTIONS = """\
 The following configurations are currently NOT selectable. You MUST NOT recommend any
@@ -32,19 +39,26 @@ EXPERIMENT DESCRIPTION:
 {{ experiment_description }}
 
 {% if objective is not none %}
-{% if objective.metadata.description is not none %}
 OPTIMIZATION OBJECTIVE:
-{{ objective.metadata.description }}
-
+{% if objective.description is not none %}
+{{ objective.description }}
 {% endif %}
-OPTIMIZATION TARGETS:
+{% if objective.combination is not none %}
+{{ objective.combination }}
+{% endif %}
+
+TARGETS:
 {% for target in objective.targets %}
 Target: {{ target.name }}
-{% if target.metadata.description is not none %}
-Description: {{ target.metadata.description }}
+Goal: {{ target.goal }}
+{% if target.transformation is not none %}
+Transformation applied before optimizing: {{ target.transformation }}
 {% endif %}
-{% if target.metadata.unit is not none %}
-Unit: {{ target.metadata.unit }}
+{% if target.description is not none %}
+Description: {{ target.description }}
+{% endif %}
+{% if target.unit is not none %}
+Unit: {{ target.unit }}
 {% endif %}
 
 {% endfor %}
@@ -120,11 +134,29 @@ class _ParameterPromptInfo(TypedDict):
     misc: tuple[tuple[str, str], ...]
 
 
+class _TargetPromptInfo(TypedDict):
+    """Typed, presentation-only view of an optimization target."""
+
+    name: str
+    goal: str
+    transformation: str | None
+    description: str | None
+    unit: str | None
+
+
+class _ObjectivePromptInfo(TypedDict):
+    """Typed, presentation-only view of the optimization objective."""
+
+    description: str | None
+    combination: str | None
+    targets: tuple[_TargetPromptInfo, ...]
+
+
 class _PromptContext(TypedDict):
     """Typed render context for the prompt."""
 
     experiment_description: str
-    objective: Objective | None
+    objective: _ObjectivePromptInfo | None
     parameters: tuple[_ParameterPromptInfo, ...]
     measurements: str | None
     pending_experiments: str | None
@@ -216,6 +248,87 @@ def _forbidden_configurations(searchspace: SearchSpace) -> str | None:
     return forbidden.to_string(index=False)
 
 
+def _target_prompt_info(target: Target) -> _TargetPromptInfo:
+    """Build the prompt view of an optimization target.
+
+    Args:
+        target: The target to describe.
+
+    Returns:
+        A typed, presentation-only view of the target's optimization semantics.
+
+    Raises:
+        IncompatibilityError: If the target type is not supported.
+    """
+    transformation: str | None = None
+    if isinstance(target, NumericalTarget):
+        goal = "minimize" if target.minimize else "maximize"
+        transformation = (
+            None
+            if isinstance(target.transformation, IdentityTransformation)
+            else str(target.transformation)
+        )
+    elif isinstance(target, BinaryTarget):
+        goal = (
+            f"achieve the success value '{target.success_value}' "
+            f"(as opposed to the failure value '{target.failure_value}')"
+        )
+    else:
+        raise IncompatibilityError(
+            f"Target '{target.name}' has unsupported type "
+            f"'{type(target).__name__}'. Only '{NumericalTarget.__name__}' and "
+            f"'{BinaryTarget.__name__}' are supported."
+        )
+    return {
+        "name": target.name,
+        "goal": goal,
+        "transformation": transformation,
+        "description": target.description,
+        "unit": target.unit,
+    }
+
+
+def _objective_prompt_info(objective: Objective) -> _ObjectivePromptInfo:
+    """Build the prompt view of the optimization objective.
+
+    Args:
+        objective: The objective to describe.
+
+    Returns:
+        A typed, presentation-only view: the objective description, how its targets are
+        combined, and the per-target views.
+    """
+    targets = tuple(_target_prompt_info(t) for t in objective.targets)
+    combination: str | None
+    if isinstance(objective, DesirabilityObjective):
+        aggregation = (
+            "weighted geometric mean"
+            if objective.scalarizer is Scalarizer.GEOM_MEAN
+            else "weighted arithmetic mean"
+        )
+        weights = ", ".join(
+            f"{t['name']}={w:.3g}"
+            for t, w in zip(targets, objective.normalized_weights)
+        )
+        combination = (
+            f"The targets are aggregated into a single desirability score via a "
+            f"{aggregation} (weights: {weights}), which is then maximized."
+        )
+    elif isinstance(objective, ParetoObjective):
+        combination = (
+            "The targets are optimized jointly as a multi-objective (Pareto) problem: "
+            "they are not combined into a single score; seek the best trade-offs, "
+            "optimizing each target in its stated direction."
+        )
+    else:
+        combination = None
+    return {
+        "description": objective.metadata.description,
+        "combination": combination,
+        "targets": targets,
+    }
+
+
 def make_prompt(
     batch_size: int,
     searchspace: SearchSpace,
@@ -278,7 +391,9 @@ def make_prompt(
     )
     context: _PromptContext = {
         "experiment_description": experiment_description,
-        "objective": objective,
+        "objective": (
+            _objective_prompt_info(objective) if objective is not None else None
+        ),
         "parameters": tuple(_parameter_prompt_info(p) for p in searchspace.parameters),
         "measurements": measurements_text,
         "pending_experiments": pending_text,
