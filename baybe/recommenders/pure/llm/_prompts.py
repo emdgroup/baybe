@@ -84,18 +84,7 @@ FORBIDDEN CONFIGURATIONS:
 {{ forbidden_configurations }}
 {% endif %}
 
-Please suggest {{ batch_size }} new experimental conditions that are likely to \
-improve the optimization objective.
-For each suggestion, provide:
-1. A brief explanation of why you chose these values
-2. The values for each parameter
-
-Format your response as a JSON array of objects with the following structure \
-(no backticks):
-{{ response_format }}
-"""
-
-_RECOVERY_PROMPT_TEMPLATE = """\
+{% if recovery_instruction is not none %}
 Your previous recommendation could not be used and needs to be corrected.
 
 WHAT WENT WRONG:
@@ -104,21 +93,19 @@ WHAT WENT WRONG:
 ORIGINAL RESPONSE:
 {{ original_response }}
 
-PARAMETERS:
-{% for param in parameters %}
-Parameter: {{ param.name }}
-Type: {{ param.kind }}
-{{ param.domain }}
-{% endfor %}
-{% if forbidden_configurations is not none %}
-
-FORBIDDEN CONFIGURATIONS:
-{{ forbidden_instructions }}
-{{ forbidden_configurations }}
+Please provide a corrected set of {{ batch_size }} experimental conditions that \
+addresses the problem described above and improves the optimization objective.
+{% else %}
+Please suggest {{ batch_size }} new experimental conditions that are likely to \
+improve the optimization objective.
 {% endif %}
+For each suggestion, provide:
+1. A brief explanation of why you chose these values
+2. The values for each parameter
 
-Please provide a corrected JSON response that follows the required format:
-{{ response_format }}\
+Format your response as a JSON array of objects with the following structure \
+(no backticks):
+{{ response_format }}
 """
 
 
@@ -134,7 +121,7 @@ class _ParameterPromptInfo(TypedDict):
 
 
 class _PromptContext(TypedDict):
-    """Typed render context for the main prompt."""
+    """Typed render context for the prompt."""
 
     experiment_description: str
     objective: Objective | None
@@ -145,17 +132,8 @@ class _PromptContext(TypedDict):
     forbidden_instructions: str
     batch_size: int
     response_format: str
-
-
-class _RecoveryPromptContext(TypedDict):
-    """Typed render context for the recovery prompt."""
-
-    parameters: tuple[_ParameterPromptInfo, ...]
-    forbidden_configurations: str | None
-    forbidden_instructions: str
-    recovery_instruction: str
-    original_response: str
-    response_format: str
+    recovery_instruction: str | None
+    original_response: str | None
 
 
 def _parameter_prompt_info(parameter: Parameter) -> _ParameterPromptInfo:
@@ -246,12 +224,20 @@ def make_prompt(
     pending_experiments: pd.DataFrame | None = None,
     *,
     experiment_description: str,
+    error: LLMResponseError | None = None,
+    original_response: str | None = None,
 ) -> str:
-    """Construct the main prompt for the language model.
+    """Construct the prompt for the language model.
 
     The recommendation-context arguments follow the canonical order used by
     :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`; the LLM-specific
     ``experiment_description`` is keyword-only.
+
+    When ``error`` and ``original_response`` are provided, the prompt is rendered in
+    *recovery* mode: it carries the exact same context as the original query and appends
+    a correction section asking the model to fix its previous response. Because each
+    model call is stateless, carrying the full context here is what lets the recovery
+    attempt reason as well as the original one.
 
     Args:
         batch_size: The number of recommendations to generate.
@@ -263,10 +249,21 @@ def make_prompt(
         measurements: Optional measurements to include in the prompt.
         pending_experiments: Optional pending experiments to include in the prompt.
         experiment_description: Textual description of the experiment.
+        error: If set, renders a recovery prompt using the error's
+            :attr:`~baybe.exceptions.LLMResponseError.recovery_instruction`. Must be
+            provided together with ``original_response``.
+        original_response: The previous, rejected response to be corrected. Must be
+            provided together with ``error``.
+
+    Raises:
+        ValueError: If exactly one of ``error`` and ``original_response`` is provided.
 
     Returns:
         The constructed prompt.
     """
+    if (error is None) != (original_response is None):
+        raise ValueError("'error' and 'original_response' must be provided together.")
+
     from baybe._optional.llm import StrictUndefined, Template
 
     measurements_text = (
@@ -289,50 +286,13 @@ def make_prompt(
         "forbidden_instructions": _FORBIDDEN_INSTRUCTIONS,
         "batch_size": batch_size,
         "response_format": _response_format(batch_size),
+        "recovery_instruction": (
+            error.recovery_instruction if error is not None else None
+        ),
+        "original_response": original_response,
     }
     template = Template(
         _PROMPT_TEMPLATE,
-        trim_blocks=True,
-        lstrip_blocks=True,
-        undefined=StrictUndefined,
-    )
-    return template.render(context)
-
-
-def make_recovery_prompt(
-    searchspace: SearchSpace,
-    *,
-    batch_size: int,
-    error: LLMResponseError,
-    original_response: str,
-) -> str:
-    """Construct the recovery prompt asking the model to correct its response.
-
-    Args:
-        searchspace: The search space to generate recommendations for.
-        batch_size: The number of recommendations required. Passed to
-            :func:`~baybe.recommenders.pure.llm._schema._response_format` so the
-            embedded format example matches the expected array length.
-        error: The error that occurred while processing the previous response. Its
-            :attr:`~baybe.exceptions.LLMResponseError.recovery_instruction` provides the
-            error-specific guidance embedded in the prompt.
-        original_response: The original response that could not be used.
-
-    Returns:
-        The constructed recovery prompt.
-    """
-    from baybe._optional.llm import StrictUndefined, Template
-
-    context: _RecoveryPromptContext = {
-        "parameters": tuple(_parameter_prompt_info(p) for p in searchspace.parameters),
-        "forbidden_configurations": _forbidden_configurations(searchspace),
-        "forbidden_instructions": _FORBIDDEN_INSTRUCTIONS,
-        "recovery_instruction": error.recovery_instruction,
-        "original_response": original_response,
-        "response_format": _response_format(batch_size),
-    }
-    template = Template(
-        _RECOVERY_PROMPT_TEMPLATE,
         trim_blocks=True,
         lstrip_blocks=True,
         undefined=StrictUndefined,
