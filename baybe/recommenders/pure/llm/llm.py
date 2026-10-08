@@ -121,8 +121,11 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 f"identifier '{self.model}'."
             ) from e
 
+        # NOTE: `completion()` can also return a stream/coroutine (via `litellm_args`),
+        # whose types lack `.choices`; the `except` below handles those at runtime.
         try:
-            content = response.choices[0].message.content
+            choices = response.choices  # pyrefly: ignore[missing-attribute]
+            content = choices[0].message.content
         except (AttributeError, IndexError, TypeError) as e:
             raise LLMResponseError(
                 f"The language model returned an unexpected response structure: {e}."
