@@ -9,6 +9,7 @@ Policies are responsible for:
 - Generating entirely new candidates (e.g. from a generative model).
 """
 
+from copy import deepcopy
 from typing import Protocol, runtime_checkable
 
 from attrs import define, field
@@ -51,8 +52,9 @@ class PolicyChain(PolicyProtocol):
     @override
     def __call__(self, candidates: CandidatesProtocol) -> CandidatesProtocol:
         """Apply each policy in sequence, threading the output forward."""
-        # TODO: Only the first one can be unmaterialized / infinite
-        result: CandidatesProtocol = candidates
+        # TODO: Sequential Chaining of policies: Only the first one can be
+        #  unmaterialized / infinite
+        result = deepcopy(candidates)
         for policy in self.policies:
             result = policy(result)
         return result
