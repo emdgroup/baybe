@@ -10,14 +10,14 @@ import pandas as pd
 
 from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.exceptions import (
-    ConstraintViolationError,
-    IneligiblePointsError,
-    InvalidParameterValueError,
+    LLMConstraintViolationError,
+    LLMIneligiblePointsError,
+    LLMInvalidParameterValueError,
+    LLMMalformedResponseError,
+    LLMMissingParameterError,
+    LLMNonNumericParameterError,
     LLMResponseWarning,
-    MalformedLLMResponseError,
-    MissingParameterError,
-    NonNumericParameterError,
-    UnknownParameterError,
+    LLMUnknownParameterError,
 )
 from baybe.recommenders.pure.llm._schema import (
     _EXPLANATION_FIELD,
@@ -77,17 +77,19 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
         :meth:`baybe.searchspace.discrete.SubspaceDiscrete.get_candidates`).
 
     Raises:
-        MalformedLLMResponseError: If the response cannot be parsed into the expected
+        LLMMalformedResponseError: If the response cannot be parsed into the expected
             JSON structure.
-        UnknownParameterError: If a suggestion references parameters not in the search
-            space.
-        MissingParameterError: If a suggestion omits required search space parameters.
-        NonNumericParameterError: If a suggestion gives non-numeric values for a
+        LLMUnknownParameterError: If a suggestion references parameters not in the
+            search space.
+        LLMMissingParameterError: If a suggestion omits required search space
+            parameters.
+        LLMNonNumericParameterError: If a suggestion gives non-numeric values for a
             numerical parameter.
-        InvalidParameterValueError: If a suggestion contains invalid parameter values.
-        ConstraintViolationError: If a suggestion violates a discrete constraint
+        LLMInvalidParameterValueError: If a suggestion contains invalid parameter
+            values.
+        LLMConstraintViolationError: If a suggestion violates a discrete constraint
             (including batch constraints) present in the search space.
-        IneligiblePointsError: If a suggestion does not correspond to an eligible
+        LLMIneligiblePointsError: If a suggestion does not correspond to an eligible
             candidate of the search space.
 
     Warns:
@@ -99,39 +101,39 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
     try:
         suggestions = json.loads(payload)
     except (JSONDecodeError, TypeError) as e:
-        raise MalformedLLMResponseError(f"Error parsing JSON output: {e}.") from e
+        raise LLMMalformedResponseError(f"Error parsing JSON output: {e}.") from e
 
     if not isinstance(suggestions, list):
-        raise MalformedLLMResponseError("Response must be a JSON array.")
+        raise LLMMalformedResponseError("Response must be a JSON array.")
 
     if not suggestions:
-        raise MalformedLLMResponseError(
+        raise LLMMalformedResponseError(
             "Response contains an empty array with no suggestions."
         )
 
     recommendations = []
     for suggestion in suggestions:
         if not isinstance(suggestion, dict):
-            raise MalformedLLMResponseError("Each suggestion must be a JSON object.")
+            raise LLMMalformedResponseError("Each suggestion must be a JSON object.")
 
         if _PARAMETERS_FIELD not in suggestion:
-            raise MalformedLLMResponseError(
+            raise LLMMalformedResponseError(
                 f"Each suggestion must contain a '{_PARAMETERS_FIELD}' field."
             )
 
         if _EXPLANATION_FIELD not in suggestion:
-            raise MalformedLLMResponseError(
+            raise LLMMalformedResponseError(
                 f"Each suggestion must contain an '{_EXPLANATION_FIELD}' field."
             )
 
         params = suggestion[_PARAMETERS_FIELD]
         if not isinstance(params, dict):
-            raise MalformedLLMResponseError("Parameters must be a JSON object.")
+            raise LLMMalformedResponseError("Parameters must be a JSON object.")
 
         param_names = {p.name for p in searchspace.parameters}
         unknown = set(params.keys()) - param_names
         if unknown:
-            raise UnknownParameterError(
+            raise LLMUnknownParameterError(
                 f"Response contains unknown parameter names: {unknown}.",
                 unknown_names=unknown,
                 valid_names=param_names,
@@ -144,7 +146,7 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
     # Detect missing columns up front so they surface as a distinct error.
     missing = {p.name for p in searchspace.parameters}.difference(df.columns)
     if missing:
-        raise MissingParameterError(
+        raise LLMMissingParameterError(
             f"Response is missing values for the following parameters: {missing}.",
             parameters=missing,
         )
@@ -159,9 +161,9 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
             numerical_measurements_must_be_within_tolerance=True,
         )
     except TypeError as e:
-        raise NonNumericParameterError(str(e), detail=str(e)) from e
+        raise LLMNonNumericParameterError(str(e), detail=str(e)) from e
     except ValueError as e:
-        raise InvalidParameterValueError(str(e), detail=str(e)) from e
+        raise LLMInvalidParameterValueError(str(e), detail=str(e)) from e
     df = normalize_input_dtypes(df, searchspace.parameters)
 
     continuous_constraints = (
@@ -185,7 +187,7 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
             continue
         invalid_idx = constraint.get_invalid(df)
         if not invalid_idx.empty:
-            raise ConstraintViolationError(
+            raise LLMConstraintViolationError(
                 f"{len(invalid_idx)} suggestion(s) violate the "
                 f"'{type(constraint).__name__}' constraint on parameters "
                 f"{constraint.parameters}.",
@@ -197,7 +199,7 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
         param_name = constraint.parameters[0]
         unique_values = df[param_name].unique()
         if len(unique_values) > 1:
-            raise ConstraintViolationError(
+            raise LLMConstraintViolationError(
                 f"Suggestions violate the '{type(constraint).__name__}' constraint on "
                 f"parameter '{param_name}': all suggestions in a batch must share the "
                 f"same value, but received {list(unique_values)}.",
@@ -218,7 +220,7 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
         # detect the shortfall explicitly rather than let them vanish.
         n_ineligible = len(df) - len(aligned_index)
         if n_ineligible > 0:
-            raise IneligiblePointsError(
+            raise LLMIneligiblePointsError(
                 f"{n_ineligible} suggestion(s) do not correspond to eligible "
                 f"candidates of the search space.",
                 n_ineligible=n_ineligible,

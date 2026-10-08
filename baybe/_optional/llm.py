@@ -8,11 +8,12 @@ except ModuleNotFoundError as ex:
     raise OptionalImportError(name="jinja2", group="llm") from ex
 
 try:
-    from litellm import completion
+    from litellm import AuthenticationError, completion
 except ModuleNotFoundError as ex:
     raise OptionalImportError(name="litellm", group="llm") from ex
 
 __all__ = [
+    "AuthenticationError",
     "StrictUndefined",
     "Template",
     "completion",
