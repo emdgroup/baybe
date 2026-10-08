@@ -8,6 +8,7 @@ from baybe.surrogates.linear import BayesianLinearSurrogate
 from baybe.surrogates.naive import MeanPredictionSurrogate
 from baybe.surrogates.ngboost import NGBoostSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
+from baybe.surrogates.transfer_learning import RGPESurrogate
 
 __all__ = [
     "BayesianLinearSurrogate",
@@ -17,5 +18,6 @@ __all__ = [
     "GaussianProcessSurrogate",
     "MeanPredictionSurrogate",
     "NGBoostSurrogate",
+    "RGPESurrogate",
     "RandomForestSurrogate",
 ]
