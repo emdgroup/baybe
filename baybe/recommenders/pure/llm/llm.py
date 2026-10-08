@@ -20,7 +20,7 @@ from baybe.exceptions import (
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.llm._parsing import parse_llm_response
-from baybe.recommenders.pure.llm._prompts import make_prompt, make_recovery_prompt
+from baybe.recommenders.pure.llm._prompts import make_prompt
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.serialization import SerialMixin
@@ -259,11 +259,14 @@ class LLMRecommender(PureRecommender, SerialMixin):
         try:
             return self._validate_response(content, searchspace, batch_size)
         except LLMResponseError as initial_error:
-            # The recommendation had an issue. Make a single, error-specific recovery
-            # attempt, informing the model what went wrong.
-            recovery_prompt = make_recovery_prompt(
+            # The recommendation had an issue. Make a recovery attempt.
+            recovery_prompt = make_prompt(
+                batch_size,
                 searchspace,
-                batch_size=batch_size,
+                self._objective,
+                self._measurements,
+                self._pending_experiments,
+                experiment_description=self.experiment_description,
                 error=initial_error,
                 original_response=content,
             )
