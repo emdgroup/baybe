@@ -22,7 +22,7 @@ from typing_extensions import Self, override
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
 from baybe.constraints.discrete import DiscreteBatchConstraint
-from baybe.exceptions import DeprecationError
+from baybe.exceptions import DeprecationError, InfiniteSpaceError
 from baybe.parameters import (
     CategoricalEncoding,
     CategoricalParameter,
@@ -52,6 +52,7 @@ from baybe.utils.memory import bytes_to_human_readable
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
 
+    from baybe.policies.base import PolicyProtocol
     from baybe.searchspace.core import SearchSpace
 
 
@@ -825,9 +826,20 @@ class SubspaceDiscrete(SerialMixin):
             )
         )
 
-    def get_candidates(self) -> pd.DataFrame:
+    def get_candidates(
+        self, policy: PolicyProtocol | None = None
+    ) -> CandidatesProtocol:
         """Return all candidate parameter configurations."""
-        return self.candidates.to_lazy().collect().to_pandas()
+        if policy is not None:
+            return policy(self.candidates)
+
+        if not self.candidates.is_finite:
+            raise InfiniteSpaceError(
+                "The candidate space is infinite. Please provide a policy to sample "
+                "candidates or use a finite set of candidates."
+            )
+
+        return self.candidates
 
     def transform(
         self,

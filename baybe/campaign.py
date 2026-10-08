@@ -39,6 +39,7 @@ from baybe.searchspace.core import (
     to_searchspace,
     validate_searchspace_from_config,
 )
+from baybe.searchspace.policies import PolicyProtocol
 from baybe.serialization import SerialMixin, converter
 from baybe.settings import Settings, active_settings
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
@@ -483,6 +484,7 @@ class Campaign(SerialMixin):
         self,
         batch_size: int,
         pending_experiments: pd.DataFrame | None = None,
+        policy: PolicyProtocol | None = None,
     ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
 
@@ -490,6 +492,7 @@ class Campaign(SerialMixin):
             batch_size: Number of requested recommendations.
             pending_experiments: Parameter configurations specifying experiments
                 that are currently pending.
+            policy: Policy to be applied to the discrete candidates before recommending.
 
         Returns:
             Dataframe containing the recommendations in experimental representation.
@@ -531,12 +534,13 @@ class Campaign(SerialMixin):
         if self.searchspace.type is SearchSpaceType.DISCRETE:
             # TODO: This implementation should at some point be hidden behind an
             #   appropriate public interface, like `SubspaceDiscrete.filter()`
-            candidates = self.searchspace.discrete.get_candidates()
-            mask_todrop = pd.Series(False, index=candidates.index)
+            candidates = self.searchspace.discrete.get_candidates(policy=policy)
+            candidates_df = candidates.to_lazy().collect().to_pandas()
+            mask_todrop = pd.Series(False, index=candidates_df.index)
             if not self._excluded_experiments.empty:
                 mask_todrop |= (
                     pd.merge(
-                        candidates,
+                        candidates_df,
                         self._excluded_experiments,
                         indicator=True,
                         how="left",
@@ -550,7 +554,7 @@ class Campaign(SerialMixin):
             ):
                 mask_todrop |= (
                     pd.merge(
-                        candidates,
+                        candidates_df,
                         self._recommended_experiments,
                         indicator=True,
                         how="left",
@@ -563,7 +567,7 @@ class Campaign(SerialMixin):
                 and not self._measurements.empty
             ):
                 measured_idxs = fuzzy_row_match(
-                    candidates, self._measurements, self.parameters
+                    candidates_df, self._measurements, self.parameters
                 )
                 mask_todrop.loc[measured_idxs] = True
             if (
@@ -572,7 +576,7 @@ class Campaign(SerialMixin):
             ):
                 mask_todrop |= (
                     pd.merge(
-                        candidates,
+                        candidates_df,
                         pending_experiments,
                         indicator=True,
                         how="left",
@@ -587,8 +591,7 @@ class Campaign(SerialMixin):
                 discrete=evolve(
                     self.searchspace.discrete,
                     candidates=TableCandidates(
-                        self.searchspace.discrete.parameters,
-                        candidates.loc[~mask_todrop],
+                        candidates.parameters, candidates_df.loc[~mask_todrop]
                     ),
                 ),
             )
