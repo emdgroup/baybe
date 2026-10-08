@@ -2,6 +2,7 @@
 
 import hypothesis.strategies as st
 
+from baybe.surrogates.gaussian_process._symmetry import MAX_PERMUTATION_GROUP_SIZE
 from baybe.surrogates.gaussian_process.components.fit_criterion import FitCriterion
 from baybe.surrogates.gaussian_process.components.likelihood import (
     LazyGaussianLikelihoodFactory,
@@ -25,6 +26,13 @@ from baybe.surrogates.gaussian_process.presets.edbo_smoothed import (
     SmoothedEDBOMeanFactory,
 )
 from baybe.surrogates.transfer_learning.rgpe import RGPESurrogate
+from baybe.symmetries import DependencySymmetry, MirrorSymmetry, PermutationSymmetry
+from baybe.symmetries.base import Symmetry
+from tests.hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.conditions import (
+    sub_selection_conditions,
+    threshold_conditions,
+)
 from tests.hypothesis_strategies.kernels import kernels
 
 _MEAN_FACTORIES = [
@@ -41,6 +49,34 @@ _LIKELIHOOD_FACTORIES = [
     ChenLikelihoodFactory,
     EDBOLikelihoodFactory,
 ]
+
+
+@st.composite
+def gaussian_process_symmetries(draw: st.DrawFn) -> list[Symmetry]:
+    """Generate symmetries that can jointly be enforced via kernel construction.
+
+    At most one symmetry of each type is drawn, each on its own parameters, so that no
+    parameter is controlled by several symmetries.
+    """
+    group_size = draw(st.integers(2, MAX_PERMUTATION_GROUP_SIZE))
+    n_groups = draw(st.integers(1, 2))
+    n_affected = draw(st.integers(1, 2))
+    n_perm = group_size * n_groups
+    names = draw(st.lists(st.text(min_size=1), unique=True, min_size=n_perm + 4))
+    mirror_name, causing_name, *affected_names = names[n_perm : n_perm + 2 + n_affected]
+
+    candidates: list[Symmetry] = [
+        PermutationSymmetry(
+            [names[i : i + group_size] for i in range(0, n_perm, group_size)]
+        ),
+        MirrorSymmetry(mirror_name, mirror_point=draw(finite_floats())),
+        DependencySymmetry(
+            causing_name,
+            draw(st.one_of(threshold_conditions(), sub_selection_conditions())),
+            affected_names,
+        ),
+    ]
+    return [s for s in candidates if draw(st.booleans())]
 
 
 def gaussian_process_surrogates():
@@ -65,6 +101,7 @@ def gaussian_process_surrogates():
             st.sampled_from(FitCriterion),
             st.builds(BayBEFitCriterionFactory),
         ),
+        symmetries=gaussian_process_symmetries(),
     )
 
 

@@ -704,6 +704,8 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         Raises:
             ValueError: If one set of affected parameters does not have exactly one
                 condition.
+            ValueError: If a causing parameter is also one of its affected
+                parameters.
         """
         if len(self.conditions) != len(value):
             raise ValueError(
@@ -711,6 +713,12 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
                 f"affected_parameters list you must provide exactly one condition in "
                 f"the conditions list."
             )
+        for causing, affected in zip(self.parameters, value):
+            if causing in affected:
+                raise ValueError(
+                    f"For the {self.__class__.__name__}, the causing parameter "
+                    f"'{causing}' cannot also be one of its affected parameters."
+                )
 
     @property
     @override

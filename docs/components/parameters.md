@@ -348,3 +348,7 @@ not support kernel overrides; use
 {attr}`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`
 instead. Kernel overrides of other parameters can be combined with a transfer learning
 override of the task parameter, in which case their kernel factors are multiplied.
+
+When used together with
+{attr}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.symmetries`,
+permuted parameters must have equivalent kernel overrides (see {ref}`invariant_kernels`).

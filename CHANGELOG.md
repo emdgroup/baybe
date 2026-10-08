@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `df_apply_permutation_augmentation` has a different interface and now expects
   permutation groups instead of column groups
 - `ParameterSelectorProtocol.__call__` now declares its input as positional-only
+- `DiscreteDependenciesConstraint` now rejects causing parameters that are among their
+  own affected parameters
 
 ### Changed
 - Transfer-learning convergence benchmarks now build the naive baseline from a
@@ -29,8 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   center, which caused `OptimizationGradientError` during recommendation
 - `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
   constraint filtering
+- `get_parameters_by_name` now rejects a single string instead of matching parameter
+  names by substring
 
 ### Added
+- `symmetries` attribute of `GaussianProcessSurrogate` (also accepted by
+  `GaussianProcessSurrogate.from_preset`) for enforcing symmetries via invariant
+  kernels, making the model predictions exactly invariant
 - `RGPESurrogate`, a rank-weighted Gaussian process ensemble for transfer learning,
   selectable directly or by setting `override_transfer_learning_mode="RGPE"` on a
   `TaskParameter`

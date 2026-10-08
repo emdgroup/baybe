@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -57,7 +57,23 @@ class DependencySymmetry(Symmetry):
         default=None, validator=optional_v((instance_of(int), ge(2))), kw_only=True
     )
     """Number of evenly spaced points used to sample from continuous parameter ranges
-    during augmentation. Must be set when any affected parameter is continuous."""
+    during augmentation. Must be set when any affected parameter is continuous and the
+    symmetry is used for data augmentation. Not used by invariant kernels."""
+
+    @affected_parameter_names.validator
+    def _validate_affected_parameter_names(  # noqa: DOC101, DOC103
+        self, _: Any, value: tuple[str, ...]
+    ) -> None:
+        """Validate the affected parameter names.
+
+        Raises:
+            ValueError: If the causing parameter is also an affected parameter.
+        """
+        if self._parameter_name in value:
+            raise ValueError(
+                f"In a '{self.__class__.__name__}', the causing parameter "
+                f"'{self._parameter_name}' cannot also be an affected parameter."
+            )
 
     @override
     @property
@@ -137,7 +153,7 @@ class DependencySymmetry(Symmetry):
         super().validate_searchspace_context(searchspace)
 
         # Causing parameter must be discrete
-        param = searchspace.get_parameters_by_name(self._parameter_name)[0]
+        param = searchspace.get_parameters_by_name((self._parameter_name,))[0]
         if not param.is_discrete:
             raise TypeError(
                 f"In a '{self.__class__.__name__}', the causing parameter must "

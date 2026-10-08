@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from copy import deepcopy
 from typing import TYPE_CHECKING, NoReturn
 
@@ -94,8 +95,57 @@ def bind_gpytorch_override(
     return result
 
 
+def iter_gpytorch_kernel_tree(
+    kernel: GPyTorchKernel, n_columns: int, /
+) -> Iterator[tuple[GPyTorchKernel, tuple[int, ...]]]:
+    """Iterate over all kernels of a GPyTorch kernel tree with their input columns.
+
+    In contrast to :meth:`gpytorch.kernels.Kernel.named_sub_kernels`, each kernel is
+    yielded together with the columns of the full model input it actually acts on.
+    These are not simply the kernel's ``active_dims``, since:
+
+    * ``active_dims`` are relative to the (already sliced) input of the parent kernel.
+    * A :class:`~gpytorch.kernels.ScaleKernel` passes its sliced input directly to the
+      ``forward`` method of its base kernel, bypassing the base kernel's own slicing.
+
+    Example:
+        For ``ProductKernel(RBFKernel(active_dims=[0]), ScaleKernel(MaternKernel(
+        active_dims=[1, 2])))`` on three columns, the yielded pairs are the product
+        kernel with ``(0, 1, 2)``, the RBF kernel with ``(0,)``, and both the scale
+        kernel (which adopts the ``active_dims`` of its base kernel) and the Matérn
+        kernel with ``(1, 2)``.
+
+    Args:
+        kernel: The root of the kernel tree.
+        n_columns: The number of columns of the full model input.
+
+    Yields:
+        Each kernel of the tree (in depth-first order, starting with the root) together
+        with the indices of the model input columns it acts on.
+    """
+    from gpytorch.kernels import Kernel, ScaleKernel
+    from torch.nn import ModuleList
+
+    def _iterate(
+        kernel: GPyTorchKernel, columns: tuple[int, ...], sliced: bool
+    ) -> Iterator[tuple[GPyTorchKernel, tuple[int, ...]]]:
+        if sliced and (active_dims := kernel.active_dims) is not None:
+            # TODO[typing]: GPyTorch annotates `active_dims` with the constructor's
+            #   tuple type, but `register_buffer` stores a tensor at runtime.
+            columns = tuple(columns[i] for i in active_dims.tolist())  # pyrefly: ignore[missing-attribute]
+        yield kernel, columns
+        for child in kernel.children():
+            for sub in child if isinstance(child, ModuleList) else (child,):
+                if isinstance(sub, Kernel):
+                    yield from _iterate(
+                        sub, columns, not isinstance(kernel, ScaleKernel)
+                    )
+
+    yield from _iterate(kernel, tuple(range(n_columns)), True)
+
+
 def get_active_dimensions(kernel: GPyTorchKernel, searchspace: SearchSpace) -> set[int]:
-    """Get the input columns used by a kernel, including standard composites.
+    """Get the input columns used by a kernel, i.e. those of its leaf kernels.
 
     Args:
         kernel: The resolved kernel to inspect.
@@ -104,20 +154,16 @@ def get_active_dimensions(kernel: GPyTorchKernel, searchspace: SearchSpace) -> s
     Returns:
         The active input column indices.
     """
-    from gpytorch.kernels import AdditiveKernel, ProductKernel, ScaleKernel
+    from gpytorch.kernels import Kernel
 
-    if kernel.active_dims is not None:
-        # TODO[typing]: GPyTorch annotates `active_dims` with the constructor's tuple
-        #   type, but `register_buffer` stores a tensor at runtime.
-        return set(kernel.active_dims.tolist())  # pyrefly: ignore[missing-attribute]
-    if isinstance(kernel, (AdditiveKernel, ProductKernel)):
-        return set().union(
-            # TODO[typing]: Iterating a `ModuleList` yields the `Module` base type.
-            *(get_active_dimensions(k, searchspace) for k in kernel.kernels)  # pyrefly: ignore[bad-argument-type]
+    return {
+        column
+        for k, columns in iter_gpytorch_kernel_tree(
+            kernel, len(searchspace.comp_rep_columns)
         )
-    if isinstance(kernel, ScaleKernel):
-        return get_active_dimensions(kernel.base_kernel, searchspace)
-    return set(range(len(searchspace.comp_rep_columns)))
+        if not any(isinstance(m, Kernel) for m in k.modules() if m is not k)
+        for column in columns
+    }
 
 
 def reduce_kernel_spec(
