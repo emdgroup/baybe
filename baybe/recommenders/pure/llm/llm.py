@@ -11,7 +11,12 @@ from attrs import define, field
 from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
-from baybe.exceptions import BatchSizeError, LLMResponseError
+from baybe.exceptions import (
+    LLMAuthenticationError,
+    LLMBatchSizeError,
+    LLMCallError,
+    LLMResponseError,
+)
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.llm._parsing import parse_llm_response
@@ -104,9 +109,12 @@ class LLMRecommender(PureRecommender, SerialMixin):
             The raw text content of the model response.
 
         Raises:
-            LLMResponseError: If the model call fails or returns no usable content.
+            LLMAuthenticationError: If authentication with the provider fails.
+            LLMCallError: If the call fails for another reason (e.g. network, rate
+                limiting, timeout, unknown model) before a response is produced.
+            LLMResponseError: If a response is returned but contains no usable content.
         """
-        from baybe._optional.llm import completion
+        from baybe._optional.llm import AuthenticationError, completion
 
         try:
             response = completion(
@@ -114,11 +122,17 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 messages=[{"role": "user", "content": prompt}],
                 **self.litellm_args,
             )
+        except AuthenticationError as e:
+            raise LLMAuthenticationError(
+                f"Authentication with the language model provider failed "
+                f"({type(e).__name__}): {e}. Check the API credentials for model "
+                f"'{self.model}' (e.g. the provider's API key environment variable)."
+            ) from e
         except Exception as e:
-            raise LLMResponseError(
+            raise LLMCallError(
                 f"The call to the language model failed ({type(e).__name__}): {e}. "
-                f"Check your API credentials, network connection, and the model "
-                f"identifier '{self.model}'."
+                f"Check your network connection and the model identifier "
+                f"'{self.model}'."
             ) from e
 
         # NOTE: `completion()` can also return a stream/coroutine (via `litellm_args`),
@@ -155,7 +169,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
         """
         output = parse_llm_response(content, searchspace)
         if len(output) < batch_size:
-            raise BatchSizeError(
+            raise LLMBatchSizeError(
                 f"The language model returned {len(output)} valid recommendation(s) "
                 f"instead of the requested {batch_size}.",
                 requested=batch_size,
@@ -186,9 +200,11 @@ class LLMRecommender(PureRecommender, SerialMixin):
             A DataFrame containing the recommendations as individual rows.
 
         Raises:
-            LLMResponseError: If the call to the language model fails, or if its
-                response cannot be turned into a valid recommendation batch even after
-                a recovery attempt.
+            LLMAuthenticationError: If authentication with the provider fails.
+            LLMCallError: If the call to the language model fails (e.g. network, rate
+                limiting, timeout) before a response is produced.
+            LLMResponseError: If the response cannot be turned into a valid
+                recommendation batch even after a recovery attempt.
             ValueError: If ``batch_size`` is smaller than 1.
         """
         if batch_size < 1:

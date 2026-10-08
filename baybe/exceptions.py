@@ -95,166 +95,6 @@ class InfeasibilityError(Exception):
     """An optimization problem has no feasible solution."""
 
 
-class LLMResponseError(Exception):
-    """An error occurred while processing a language model response."""
-
-    @property
-    def recovery_instruction(self) -> str:
-        """Guidance for the language model on how to correct its response."""
-        return (
-            "Your previous response could not be used. Please provide a new "
-            "recommendation that follows the required format and respects the search "
-            "space."
-        )
-
-
-class MalformedLLMResponseError(LLMResponseError):
-    """A language model response could not be parsed into the expected structure."""
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            "Your previous response was not valid JSON in the required format. Return "
-            "a JSON array of objects, each with an 'explanation' string and a "
-            "'parameters' object mapping parameter names to values, and nothing else."
-        )
-
-
-class UnknownParameterError(LLMResponseError):
-    """A language model response referenced parameters outside the search space."""
-
-    def __init__(
-        self,
-        *args: Any,
-        unknown_names: Collection[str],
-        valid_names: Collection[str],
-    ):
-        super().__init__(*args)
-        self.unknown_names = unknown_names
-        self.valid_names = valid_names
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            f"Your previous response used unknown parameter names "
-            f"{sorted(self.unknown_names)}. Use only the following parameters: "
-            f"{sorted(self.valid_names)}."
-        )
-
-
-class MissingParameterError(LLMResponseError):
-    """A language model response omitted required search space parameters."""
-
-    def __init__(self, *args: Any, parameters: Collection[str]):
-        super().__init__(*args)
-        self.parameters = parameters
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            f"Your previous response did not specify values for the required "
-            f"parameters {sorted(self.parameters)}. Every suggestion must provide a "
-            f"value for all parameters."
-        )
-
-
-class NonNumericParameterError(LLMResponseError):
-    """A language model response gave non-numeric values for a numerical parameter."""
-
-    def __init__(self, *args: Any, detail: str):
-        super().__init__(*args)
-        self.detail = detail
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            f"Your previous response provided non-numeric values for a numerical "
-            f"parameter: {self.detail} Provide numeric values for all numerical "
-            f"parameters."
-        )
-
-
-class InvalidParameterValueError(LLMResponseError):
-    """A language model response contained invalid parameter values."""
-
-    def __init__(self, *args: Any, detail: str):
-        super().__init__(*args)
-        self.detail = detail
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            f"Your previous response contained invalid parameter values: {self.detail} "
-            f"Provide values that lie within the allowed range (for numerical "
-            f"parameters) or match an allowed choice exactly (for categorical "
-            f"parameters)."
-        )
-
-
-class ConstraintViolationError(LLMResponseError):
-    """A language model response violated a search space constraint."""
-
-    def __init__(
-        self,
-        *args: Any,
-        constraint_name: str,
-        parameters: Collection[str],
-    ):
-        super().__init__(*args)
-        self.constraint_name = constraint_name
-        self.parameters = parameters
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            f"Your previous response violated the '{self.constraint_name}' constraint "
-            f"on parameters {list(self.parameters)}. Ensure all suggestions satisfy "
-            f"this constraint."
-        )
-
-
-class IneligiblePointsError(LLMResponseError):
-    """A language model response proposed points outside the eligible candidate set."""
-
-    def __init__(self, *args: Any, n_ineligible: int):
-        super().__init__(*args)
-        self.n_ineligible = n_ineligible
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            f"{self.n_ineligible} of your proposed configurations are not eligible "
-            f"candidates (they may already have been measured or recommended, or they "
-            f"do not exist in the search space). Propose different points from the "
-            f"available search space."
-        )
-
-
-class BatchSizeError(LLMResponseError):
-    """A language model response contained the wrong number of recommendations."""
-
-    def __init__(self, *args: Any, requested: int, received: int):
-        super().__init__(*args)
-        self.requested = requested
-        self.received = received
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            f"Your previous response provided {self.received} valid recommendation(s), "
-            f"but exactly {self.requested} are required. Provide {self.requested} "
-            f"distinct, valid recommendations."
-        )
-
-
 class NotEnoughPointsLeftError(Exception):
     """
     More recommendations are requested than there are viable parameter configurations
@@ -350,6 +190,185 @@ class NotAllowedError(Exception):
 
 class UnsupportedEarlyFilteringError(Exception):
     """A constraint does not support early filtering with the given parameters."""
+
+
+#### LLM exclusive exceptions ####
+
+
+class LLMError(Exception):
+    """A language model interaction failed."""
+
+
+class LLMCallError(LLMError):
+    """The call to the language model failed before producing a response.
+
+    Raised for failures such as network errors, rate limiting, timeouts, or an
+    unknown model identifier, where no response is returned to process.
+    """
+
+
+class LLMAuthenticationError(LLMCallError):
+    """Authentication with the language model provider failed."""
+
+
+class LLMResponseError(LLMError):
+    """An error occurred while processing a language model response."""
+
+    @property
+    def recovery_instruction(self) -> str:
+        """Guidance for the language model on how to correct its response."""
+        return (
+            "Your previous response could not be used. Please provide a new "
+            "recommendation that follows the required format and respects the search "
+            "space."
+        )
+
+
+class LLMMalformedResponseError(LLMResponseError):
+    """A language model response could not be parsed into the expected structure."""
+
+    @property
+    @override
+    def recovery_instruction(self) -> str:
+        return (
+            "Your previous response was not valid JSON in the required format. Return "
+            "a JSON array of objects, each with an 'explanation' string and a "
+            "'parameters' object mapping parameter names to values, and nothing else."
+        )
+
+
+class LLMUnknownParameterError(LLMResponseError):
+    """A language model response referenced parameters outside the search space."""
+
+    def __init__(
+        self,
+        *args: Any,
+        unknown_names: Collection[str],
+        valid_names: Collection[str],
+    ):
+        super().__init__(*args)
+        self.unknown_names = unknown_names
+        self.valid_names = valid_names
+
+    @property
+    @override
+    def recovery_instruction(self) -> str:
+        return (
+            f"Your previous response used unknown parameter names "
+            f"{sorted(self.unknown_names)}. Use only the following parameters: "
+            f"{sorted(self.valid_names)}."
+        )
+
+
+class LLMMissingParameterError(LLMResponseError):
+    """A language model response omitted required search space parameters."""
+
+    def __init__(self, *args: Any, parameters: Collection[str]):
+        super().__init__(*args)
+        self.parameters = parameters
+
+    @property
+    @override
+    def recovery_instruction(self) -> str:
+        return (
+            f"Your previous response did not specify values for the required "
+            f"parameters {sorted(self.parameters)}. Every suggestion must provide a "
+            f"value for all parameters."
+        )
+
+
+class LLMNonNumericParameterError(LLMResponseError):
+    """A language model response gave non-numeric values for a numerical parameter."""
+
+    def __init__(self, *args: Any, detail: str):
+        super().__init__(*args)
+        self.detail = detail
+
+    @property
+    @override
+    def recovery_instruction(self) -> str:
+        return (
+            f"Your previous response provided non-numeric values for a numerical "
+            f"parameter: {self.detail} Provide numeric values for all numerical "
+            f"parameters."
+        )
+
+
+class LLMInvalidParameterValueError(LLMResponseError):
+    """A language model response contained invalid parameter values."""
+
+    def __init__(self, *args: Any, detail: str):
+        super().__init__(*args)
+        self.detail = detail
+
+    @property
+    @override
+    def recovery_instruction(self) -> str:
+        return (
+            f"Your previous response contained invalid parameter values: {self.detail} "
+            f"Provide values that lie within the allowed range (for numerical "
+            f"parameters) or match an allowed choice exactly (for categorical "
+            f"parameters)."
+        )
+
+
+class LLMConstraintViolationError(LLMResponseError):
+    """A language model response violated a search space constraint."""
+
+    def __init__(
+        self,
+        *args: Any,
+        constraint_name: str,
+        parameters: Collection[str],
+    ):
+        super().__init__(*args)
+        self.constraint_name = constraint_name
+        self.parameters = parameters
+
+    @property
+    @override
+    def recovery_instruction(self) -> str:
+        return (
+            f"Your previous response violated the '{self.constraint_name}' constraint "
+            f"on parameters {list(self.parameters)}. Ensure all suggestions satisfy "
+            f"this constraint."
+        )
+
+
+class LLMIneligiblePointsError(LLMResponseError):
+    """A language model response proposed points outside the eligible candidate set."""
+
+    def __init__(self, *args: Any, n_ineligible: int):
+        super().__init__(*args)
+        self.n_ineligible = n_ineligible
+
+    @property
+    @override
+    def recovery_instruction(self) -> str:
+        return (
+            f"{self.n_ineligible} of your proposed configurations are not eligible "
+            f"candidates (they may already have been measured or recommended, or they "
+            f"do not exist in the search space). Propose different points from the "
+            f"available search space."
+        )
+
+
+class LLMBatchSizeError(LLMResponseError):
+    """A language model response contained the wrong number of recommendations."""
+
+    def __init__(self, *args: Any, requested: int, received: int):
+        super().__init__(*args)
+        self.requested = requested
+        self.received = received
+
+    @property
+    @override
+    def recovery_instruction(self) -> str:
+        return (
+            f"Your previous response provided {self.received} valid recommendation(s), "
+            f"but exactly {self.requested} are required. Provide {self.requested} "
+            f"distinct, valid recommendations."
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
