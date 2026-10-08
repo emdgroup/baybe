@@ -152,7 +152,7 @@ print(recommendation)
 
     Recommendation from campaign:
         Pressure[bar]  Temperature[degree_C]
-    21           10.0             111.111111
+    12            5.0             122.222222
 
 
 Add some fake results
