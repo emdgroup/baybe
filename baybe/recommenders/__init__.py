@@ -1,5 +1,9 @@
 """BayBE recommenders."""
 
+from baybe.recommenders.meta.llm import (
+    LLMAlternatingRecommender,
+    LLMTwoPhaseRecommender,
+)
 from baybe.recommenders.meta.sequential import (
     SequentialMetaRecommender,
     StreamingSequentialMetaRecommender,
@@ -7,11 +11,7 @@ from baybe.recommenders.meta.sequential import (
 )
 from baybe.recommenders.naive import NaiveHybridSpaceRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
-from baybe.recommenders.pure.llm import (
-    LLMRecommender,
-    make_llm_alternating_recommender,
-    make_llm_two_phase_recommender,
-)
+from baybe.recommenders.pure.llm import LLMRecommender
 from baybe.recommenders.pure.nonpredictive.clustering import (
     GaussianMixtureClusteringRecommender,
     KMeansClusteringRecommender,
@@ -27,13 +27,13 @@ __all__ = [
     "FPSRecommender",
     "GaussianMixtureClusteringRecommender",
     "KMeansClusteringRecommender",
+    "LLMAlternatingRecommender",
     "LLMRecommender",
+    "LLMTwoPhaseRecommender",
     "PAMClusteringRecommender",
     "NaiveHybridSpaceRecommender",
     "RandomRecommender",
     "TwoPhaseMetaRecommender",
     "SequentialMetaRecommender",
     "StreamingSequentialMetaRecommender",
-    "make_llm_alternating_recommender",
-    "make_llm_two_phase_recommender",
 ]

@@ -54,6 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kernels on individual parameter dimensions
 - `LLMRecommender` for LLM-based experimental design suggestions via LiteLLM,
   available through the optional `llm` dependency group
+- `LLMTwoPhaseRecommender` and `LLMAlternatingRecommender` convenience recommenders
+  built on top of `LLMRecommender`: the former warm-starts a campaign with the LLM and
+  then switches to another recommender, the latter alternates between the two
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
