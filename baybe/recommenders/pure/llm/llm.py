@@ -25,7 +25,6 @@ from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.serialization import SerialMixin
 from baybe.utils.conversion import to_string
-from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
     from baybe.recommenders.base import RecommenderProtocol
@@ -50,6 +49,9 @@ class LLMRecommender(PureRecommender, SerialMixin):
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
+    # See base class.
+
+    supports_discrete_subset_generating_constraints: ClassVar[bool] = True
     # See base class.
 
     model: str = field(validator=(instance_of(str), min_len(1)))
@@ -81,6 +83,15 @@ class LLMRecommender(PureRecommender, SerialMixin):
     environment variables that LiteLLM reads automatically based on the model prefix
     (e.g. ``OPENAI_API_KEY``, ``ANTHROPIC_API_KEY``).
     """
+
+    # Stashed context necessary for prompt building
+    _objective: Objective | None = field(default=None, init=False, eq=False)
+
+    _measurements: pd.DataFrame | None = field(default=None, init=False, eq=False)
+
+    _pending_experiments: pd.DataFrame | None = field(
+        default=None, init=False, eq=False
+    )
 
     @litellm_args.validator
     def _validate_litellm_args(self, attribute, value):  # noqa: DOC101, DOC103
@@ -213,39 +224,42 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 f"provided {batch_size=}."
             )
 
-        if objective is not None:
-            validate_object_names(searchspace.parameters + objective.targets)
-            if objective.metadata.is_empty:
-                warnings.warn(
-                    "The objective has no metadata description. Without context on "
-                    "what to optimize, the language model may produce suboptimal "
-                    "suggestions. Set the 'description' field on the objective's "
-                    "metadata to guide the LLM.",
-                    UserWarning,
-                    stacklevel=2,
-                )
-
-        if measurements is not None:
-            measurements = preprocess_dataframe(
-                measurements,
-                searchspace,
-                objective,
-                numerical_measurements_must_be_within_tolerance=False,
+        if objective is not None and objective.metadata.is_empty:
+            warnings.warn(
+                "The objective has no metadata description. Without context on "
+                "what to optimize, the language model may produce suboptimal "
+                "suggestions. Set the 'description' field on the objective's "
+                "metadata to guide the LLM.",
+                UserWarning,
+                stacklevel=2,
             )
 
-        if pending_experiments is not None:
-            pending_experiments = preprocess_dataframe(
-                pending_experiments,
-                searchspace,
-                numerical_measurements_must_be_within_tolerance=False,
-            )
+        # Stash context for `_recommend_hybrid`, then delegate to the base `recommend`
+        self._objective = objective
+        self._measurements = measurements
+        self._pending_experiments = pending_experiments
 
+        return super().recommend(
+            batch_size=batch_size,
+            searchspace=searchspace,
+            objective=objective,
+            measurements=measurements,
+            pending_experiments=pending_experiments,
+        )
+
+    @override
+    def _recommend_hybrid(
+        self,
+        searchspace: SearchSpace,
+        candidates_exp: pd.DataFrame,
+        batch_size: int,
+    ) -> pd.DataFrame:
         prompt = make_prompt(
             batch_size,
             searchspace,
-            objective,
-            measurements,
-            pending_experiments,
+            self._objective,
+            self._measurements,
+            self._pending_experiments,
             experiment_description=self.experiment_description,
         )
         content = self._query_model(prompt)
