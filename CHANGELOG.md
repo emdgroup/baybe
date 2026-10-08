@@ -48,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteLinearConstraint` for (optionally weighted) sum constraints on discrete
   parameters, supporting `coefficients` and mirroring `ContinuousLinearConstraint`'s
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
+- `S3ObjectRetrieval` and `CachedFileLoader` for fetching benchmark input data from
+  S3 and caching it locally on first use
+- Protein DMS single-mutant optimization benchmarks for eleven
+  deep mutational scanning datasets using protein language model embeddings
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
