@@ -101,6 +101,10 @@ class LLMAlternatingRecommender(SequentialMetaRecommender):
                 f"'{self.__class__.__name__}' requires the first recommender in the "
                 f"sequence to be an '{LLMRecommender.__name__}'."
             )
+        if not self.mode == "cyclic":
+            raise ValueError(
+                f"'{self.__class__.__name__}' requires the mode to be 'cyclic'."
+            )
 
     @classmethod
     def from_model(
