@@ -270,8 +270,8 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 error=initial_error,
                 original_response=content,
             )
-            recovery_content = self._query_model(recovery_prompt)
             try:
+                recovery_content = self._query_model(recovery_prompt)
                 return self._validate_response(
                     recovery_content, searchspace, batch_size
                 )
