@@ -70,9 +70,10 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
         searchspace: The search space to validate recommendations against.
 
     Returns:
-        A DataFrame containing the parsed recommendations, restricted to the eligible
-        candidate set of the search space (as returned by
-        :meth:`baybe.searchspace.discrete.SubspaceDiscrete.get_candidates`).
+        A DataFrame containing the parsed recommendations. All returned points are
+        eligible candidates of the search space (as returned by
+        :meth:`baybe.searchspace.discrete.SubspaceDiscrete.get_candidates`); suggestions
+        that are not are rejected.
 
     Raises:
         LLMMalformedResponseError: If the response cannot be parsed into the expected
@@ -198,16 +199,14 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
 
     # Recover the exp_rep index (for campaign metadata tracking) via the same fuzzy
     # matching used for measurement input: exact for categorical, nearest numerical.
-    # Matching against get_candidates() (not exp_rep directly) ensures that suggestions
-    # snap to eligible points only, respecting the allow_recommending_* filters applied
-    # by the campaign via FilteredSubspaceDiscrete.
     discrete_params = searchspace.discrete.parameters
     if discrete_params:
-        exp_rep, _ = searchspace.discrete.get_candidates()
+        exp_rep = searchspace.discrete.exp_rep
         aligned_index = fuzzy_row_match(exp_rep, df, discrete_params)
-        # `fuzzy_row_match` silently drops suggestions with no eligible candidate, so
-        # detect the shortfall explicitly rather than let them vanish.
-        n_ineligible = len(df) - len(aligned_index)
+        n_unmatched = len(df) - len(aligned_index)
+        eligible_index = searchspace.discrete.get_candidates()[0].index
+        n_filtered_out = int((~aligned_index.isin(eligible_index)).sum())
+        n_ineligible = n_unmatched + n_filtered_out
         if n_ineligible > 0:
             raise LLMIneligiblePointsError(
                 f"{n_ineligible} suggestion(s) do not correspond to eligible "
