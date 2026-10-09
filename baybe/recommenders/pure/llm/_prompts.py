@@ -79,26 +79,26 @@ Unit: {{ param.unit }}
 {% endfor %}
 
 {% endfor %}
-
 {% if measurements is not none %}
+
 PREVIOUS MEASUREMENTS:
 {{ measurements }}
 {% endif %}
+{%- if pending_experiments is not none %}
 
-{% if pending_experiments is not none %}
 PENDING EXPERIMENTS:
 The following experiments have already been proposed and are awaiting results.
 Do not recommend these again.
 {{ pending_experiments }}
 {% endif %}
+{%- if forbidden_configurations is not none %}
 
-{% if forbidden_configurations is not none %}
 FORBIDDEN CONFIGURATIONS:
 {{ forbidden_instructions }}
 {{ forbidden_configurations }}
 {% endif %}
+{%- if recovery_instruction is not none %}
 
-{% if recovery_instruction is not none %}
 Your previous recommendation could not be used and needs to be corrected.
 
 WHAT WENT WRONG:
@@ -110,6 +110,7 @@ ORIGINAL RESPONSE:
 Please provide a corrected set of {{ batch_size }} experimental conditions that \
 addresses the problem described above and improves the optimization objective.
 {% else %}
+
 Please suggest {{ batch_size }} new experimental conditions that are likely to \
 improve the optimization objective.
 {% endif %}
