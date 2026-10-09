@@ -10,6 +10,10 @@ from baybe.recommenders import (
     TwoPhaseMetaRecommender,
 )
 from baybe.recommenders.meta.base import MetaRecommender
+from baybe.recommenders.meta.llm import (
+    LLMAlternatingRecommender,
+    LLMTwoPhaseRecommender,
+)
 from tests.conftest import select_recommender
 from tests.serialization.utils import assert_roundtrip_consistency, roundtrip
 
@@ -17,12 +21,20 @@ from tests.serialization.utils import assert_roundtrip_consistency, roundtrip
 RECOMMENDERS = [RandomRecommender(), FPSRecommender()]
 assert len(RECOMMENDERS) == len({rec.__class__.__name__ for rec in RECOMMENDERS})
 
+_LLM_KWARGS = {"model": "test/model", "experiment_description": "Test."}
+
 
 @pytest.mark.parametrize(
     "recommender",
     [
         TwoPhaseMetaRecommender(),
         SequentialMetaRecommender(recommenders=[RandomRecommender()]),
+        LLMTwoPhaseRecommender.from_model(
+            **_LLM_KWARGS, recommender=RandomRecommender()
+        ),
+        LLMAlternatingRecommender.from_model(
+            **_LLM_KWARGS, recommender=RandomRecommender()
+        ),
     ],
 )
 def test_roundtrip(recommender: MetaRecommender):
