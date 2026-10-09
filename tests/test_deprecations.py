@@ -31,7 +31,7 @@ from baybe.exceptions import DeprecationError
 from baybe.kernels.basic import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
-from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.categorical import CategoricalParameter, TaskParameter
 from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.enum import SubstanceEncoding
@@ -935,8 +935,8 @@ def test_deprecated_exp_rep_deserialization():
     assert actual == expected
 
 
-def test_deprecated_constraints_deserialization():
-    """Deserialization of legacy ``constraints`` key migrates batch constraints."""
+def test_batch_constraints_deserialization():
+    """Deserializing a legacy config correctly migrates batch constraints."""
     p = NumericalDiscreteParameter("p", [0, 1, 2])
     batch_c = DiscreteBatchConstraint(["p"])
     expected = SubspaceDiscrete.from_product(parameters=[p], constraints=[batch_c])
@@ -950,6 +950,49 @@ def test_deprecated_constraints_deserialization():
         actual = SubspaceDiscrete.from_dict(legacy_dict)
 
     assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "constructor",
+    ["from_product", "from_simplex"],
+    ids=["from_product", "from_simplex"],
+)
+def test_filtering_constraints_deserialization(constructor):
+    """Deserializing ``from_*`` configs must not drop filtering constraints."""
+    p1 = NumericalDiscreteParameter("p1", [0, 1, 2])
+    p2 = NumericalDiscreteParameter("p2", [0, 1, 2])
+    filter_c = DiscreteSelectionConstraint(
+        ["p1"], [SubSelectionCondition([1])], exclude=True
+    )
+
+    if constructor == "from_product":
+        expected = SubspaceDiscrete.from_product(
+            parameters=[p1, p2], constraints=[filter_c]
+        )
+        specs = {
+            "constructor": "from_product",
+            "parameters": converter.unstructure(
+                [p1, p2], unstructure_as=list[Parameter]
+            ),
+        }
+    else:
+        expected = SubspaceDiscrete.from_simplex(
+            max_sum=3, simplex_parameters=[p1, p2], constraints=[filter_c]
+        )
+        specs = {
+            "constructor": "from_simplex",
+            "max_sum": 3,
+            "simplex_parameters": converter.unstructure([p1, p2]),
+        }
+    specs["constraints"] = converter.unstructure(
+        [filter_c], unstructure_as=list[base_module.DiscreteConstraint]
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        actual = converter.structure(specs, SubspaceDiscrete)
+
+    assert_frame_equal(actual.get_candidates(), expected.get_candidates())
 
 
 def test_deprecated_constraints_argument():
