@@ -103,19 +103,8 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
     except JSONDecodeError as e:
         raise LLMMalformedResponseError(f"Error parsing JSON output: {e}.") from e
 
-    if not isinstance(suggestions, list):
-        raise LLMMalformedResponseError("Response must be a JSON array.")
-
-    if not suggestions:
-        raise LLMMalformedResponseError(
-            "Response contains an empty array with no suggestions."
-        )
-
     recommendations = []
     for suggestion in suggestions:
-        if not isinstance(suggestion, dict):
-            raise LLMMalformedResponseError("Each suggestion must be a JSON object.")
-
         if _PARAMETERS_FIELD not in suggestion:
             raise LLMMalformedResponseError(
                 f"Each suggestion must contain a '{_PARAMETERS_FIELD}' field."
