@@ -95,6 +95,12 @@ WHITELISTS = {
         "baybe.utils.clustering_algorithms.third_party",
         "baybe.utils.clustering_algorithms.third_party.kmedoids",
     ],
+    "litellm": [
+        "baybe._optional.llm",
+    ],
+    "jinja2": [
+        "baybe._optional.llm",
+    ],
 }
 """Modules (dict values) for which certain imports (dict keys) are permitted."""
 
