@@ -31,7 +31,16 @@ def _encoding_table_from_comp_df(
     Returns:
         A narwhals dataframe with :data:`~baybe.parameters.base._JOIN_KEY` as the
         key column, converted to the same backend as ``values``.
+
+    Raises:
+        ValueError: If any values cannot be found in the given dataframe index.
     """
+    if invalid := set(values.to_list()) - set(comp_df.index):
+        raise ValueError(
+            f"Cannot encode the value(s) {invalid}. "
+            f"Valid choices are: {set(comp_df.index)}."
+        )
+
     return (
         nw.from_native(comp_df.reset_index(names=_JOIN_KEY), eager_only=True)
         .filter(nw.col(_JOIN_KEY).is_in(values))
