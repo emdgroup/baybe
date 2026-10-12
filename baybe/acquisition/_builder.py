@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterable
 from functools import cached_property
 from inspect import signature
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import Any, Generic
 
 import narwhals.stable.v2 as nw
 import torch
@@ -17,6 +17,7 @@ from botorch.models.model import Model
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
 )
+from narwhals.stable.v2.typing import IntoDataFrameT
 from torch import Tensor
 
 from baybe.acquisition.acqfs import (
@@ -43,11 +44,6 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.transformations import IdentityTransformation
 from baybe.utils.basic import match_attributes
 from baybe.utils.dataframe import _df_with_backend, handle_missing_values, to_tensor
-
-if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrameT
-else:
-    IntoDataFrameT = TypeVar("IntoDataFrameT")
 
 _OPT_FIELD: None = object()  # type: ignore[assignment]
 """Sentinel value indicating optional acquisition function attributes."""

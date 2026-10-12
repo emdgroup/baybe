@@ -99,6 +99,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
 - Bumped polars to `>=0.20.8`
 - Bumped cattrs to `>=26.1.0`
+- `BotorchAcquisitionFunctionBuilder` now imports `IntoDataFrameT` from narwhals
+  directly instead of via a `TYPE_CHECKING`-guarded shadow `TypeVar`
 - The factory fields of `GaussianProcessSurrogate` (`kernel_factory`,
   `mean_factory`, `likelihood_factory`, `fit_criterion_factory`) now default to
   `None`, meaning "auto-select based on context at fit time". Accessing a field
