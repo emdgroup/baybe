@@ -997,8 +997,12 @@ def _structure_subspace_discrete(specs: dict, cls: type) -> SubspaceDiscrete:
     if "comp_rep" in specs:
         _deprecate_argument("comp_rep", error=True, stacklevel=2)
 
-    # Migrate legacy ``constraints`` key to ``batch_constraints``
-    if "constraints" in specs and specs["constraints"] is not None:
+    # Migrate legacy ``constraints`` key to ``batch_constraints``. A given
+    # constructor is never part of the legacy format, so in that case the key is
+    # left untouched for the constructor to consume natively.
+    if specs.get("constraints") is None:
+        specs.pop("constraints", None)
+    elif "constructor" not in specs:
         warnings.warn(
             _make_constraints_deprecation_msg(),
             DeprecationWarning,
@@ -1018,8 +1022,6 @@ def _structure_subspace_discrete(specs: dict, cls: type) -> SubspaceDiscrete:
             specs["batch_constraints"] = [
                 c.to_dict() for c in existing_structured + batch_from_legacy
             ]
-    else:
-        specs.pop("constraints", None)
     return select_constructor_hook(specs, cls)
 
 
