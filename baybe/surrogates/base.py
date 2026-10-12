@@ -389,8 +389,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                     )
                 )
 
-        # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3897
-        result: nw.DataFrame = nw.concat(stat_frames, how="horizontal")  # type: ignore[assignment]
+        result: nw.DataFrame = nw.concat(stat_frames, how="horizontal")
         result = _copy_index(result, df)
         return result.to_native()
 

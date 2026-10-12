@@ -111,8 +111,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
             targets_pre_transformed = objective._pre_transform(
                 data_nw.select([t.name for t in objective.targets])
             )
-            # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3897
-            pre_transformed: nw.DataFrame = nw.concat(  # type: ignore[assignment]
+            pre_transformed: nw.DataFrame = nw.concat(
                 [
                     data_nw.select(searchspace.parameter_names),
                     nw.from_native(targets_pre_transformed, eager_only=True),
