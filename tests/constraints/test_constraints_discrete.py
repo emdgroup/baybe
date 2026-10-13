@@ -486,6 +486,8 @@ def test_threshold_operators(constraint, expected_rows, use_polars):
         searchspace = SearchSpace.from_product(_PARAMETERS, [constraint])
 
     assert_frame_equal(
-        searchspace.discrete.exp_rep.sort_values(["a", "b"]).reset_index(drop=True),
+        searchspace.discrete.get_candidates()
+        .sort_values(["a", "b"])
+        .reset_index(drop=True),
         _DF.loc[expected_rows].reset_index(drop=True),
     )
