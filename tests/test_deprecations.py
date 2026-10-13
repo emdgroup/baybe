@@ -3,6 +3,7 @@
 import os
 import warnings
 from contextlib import nullcontext
+from copy import deepcopy
 from itertools import pairwise
 from pathlib import Path
 from unittest.mock import patch
@@ -19,13 +20,19 @@ from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
 from baybe.constraints import (
     ContinuousLinearConstraint,
     SubSelectionCondition,
+    ThresholdCondition,
 )
 from baybe.constraints import base as base_module
+from baybe.constraints import discrete as discrete_module
 from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.constraints.discrete import (
     DiscreteBatchConstraint,
     DiscreteExcludeConstraint,
+    DiscreteLinearConstraint,
+    DiscreteProductConstraint,
+    DiscreteRepetitionLimitConstraint,
     DiscreteSelectionConstraint,
+    DiscreteSumConstraint,
 )
 from baybe.exceptions import DeprecationError
 from baybe.kernels.basic import MaternKernel
@@ -577,42 +584,220 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
         GaussianProcessSurrogate(*args).fit(searchspace, objective, measurements)
 
 
-def test_discrete_exclude_constraint_deprecation():
-    """Constructing a DiscreteExcludeConstraint emits a DeprecationWarning."""
-    with pytest.warns(DeprecationWarning, match="DiscreteExcludeConstraint"):
-        c = DiscreteExcludeConstraint(
-            parameters=["A"],
-            conditions=[SubSelectionCondition(selection=["a"])],
-        )
-    ref = DiscreteSelectionConstraint(
-        parameters=["A"],
-        conditions=[SubSelectionCondition(selection=["a"])],
-        exclude=True,
-    )
-    assert c == ref
+@pytest.mark.parametrize(
+    ("factory", "args", "kwargs", "warning_match", "expected"),
+    [
+        pytest.param(
+            DiscreteExcludeConstraint,
+            (),
+            {
+                "parameters": ["A"],
+                "conditions": [SubSelectionCondition(selection=["a"])],
+            },
+            "DiscreteExcludeConstraint",
+            DiscreteSelectionConstraint(
+                parameters=["A"],
+                conditions=[SubSelectionCondition(selection=["a"])],
+                exclude=True,
+            ),
+            id="exclude",
+        ),
+        pytest.param(
+            discrete_module.DiscreteNoLabelDuplicatesConstraint,
+            (),
+            {"parameters": ["A", "B", "C"]},
+            "DiscreteNoLabelDuplicatesConstraint",
+            DiscreteRepetitionLimitConstraint(
+                parameters=["A", "B", "C"], n_max_repetitions=1
+            ),
+            id="no-label-duplicates",
+        ),
+        pytest.param(
+            discrete_module.DiscreteLinkedParametersConstraint,
+            (),
+            {"parameters": ["A", "B", "C"]},
+            "DiscreteLinkedParametersConstraint",
+            DiscreteRepetitionLimitConstraint(
+                parameters=["A", "B", "C"],
+                n_max_repetitions=2,
+                exclude=True,
+            ),
+            id="linked-parameters",
+        ),
+        pytest.param(
+            DiscreteSumConstraint,
+            (),
+            {
+                "parameters": ["A", "B"],
+                "condition": ThresholdCondition(threshold=100.0, operator="<="),
+                "coefficients": (2.0, 3.0),
+            },
+            "DiscreteSumConstraint",
+            DiscreteLinearConstraint(
+                parameters=["A", "B"],
+                operator="<=",
+                rhs=100.0,
+                coefficients=(2.0, 3.0),
+            ),
+            id="sum",
+        ),
+        pytest.param(
+            DiscreteSumConstraint,
+            (["A", "B"], ThresholdCondition(threshold=100.0, operator="<=")),
+            {},
+            "DiscreteSumConstraint",
+            DiscreteLinearConstraint(["A", "B"], operator="<=", rhs=100.0),
+            id="sum-positional-default-coefficients",
+        ),
+        pytest.param(
+            DiscreteProductConstraint,
+            (),
+            {
+                "parameters": ["A", "B"],
+                "condition": ThresholdCondition(threshold=30.0, operator=">="),
+            },
+            "condition",
+            DiscreteProductConstraint(parameters=["A", "B"], operator=">=", rhs=30.0),
+            id="product-condition-keyword",
+        ),
+        pytest.param(
+            DiscreteProductConstraint,
+            (["A", "B"], ThresholdCondition(threshold=30.0, operator=">=")),
+            {},
+            "condition",
+            DiscreteProductConstraint(parameters=["A", "B"], operator=">=", rhs=30.0),
+            id="product-condition-positional",
+        ),
+    ],
+)
+def test_discrete_constraint_deprecation(
+    factory, args, kwargs, warning_match, expected
+):
+    """Constructing deprecated constraints emits a deprecation warning."""
+    with pytest.warns(DeprecationWarning, match=warning_match) as recorded:
+        result = factory(*args, **kwargs)
+    assert result == expected
+    assert len(recorded) == 1
+    assert recorded[0].filename == __file__
 
 
 @pytest.mark.parametrize(
     "annotation",
     ["Constraint", "DiscreteConstraint", "DiscreteFilteringConstraint"],
 )
-def test_discrete_exclude_constraint_deserialization(annotation):
-    """Legacy DiscreteExcludeConstraint deserializes regardless of the annotation."""
-    legacy_dict = {
-        "type": "DiscreteExcludeConstraint",
-        "parameters": ["A"],
-        "conditions": [{"type": "SubSelectionCondition", "selection": ["a"]}],
-        "combiner": "AND",
-    }
-    ref = DiscreteSelectionConstraint(
-        parameters=["A"],
-        conditions=[SubSelectionCondition(selection=["a"])],
-        combiner="AND",
-        exclude=True,
-    )
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        pytest.param(
+            {
+                "type": "DiscreteExcludeConstraint",
+                "parameters": ["A"],
+                "conditions": [{"type": "SubSelectionCondition", "selection": ["a"]}],
+                "combiner": "AND",
+            },
+            DiscreteSelectionConstraint(
+                parameters=["A"],
+                conditions=[SubSelectionCondition(selection=["a"])],
+                combiner="AND",
+                exclude=True,
+            ),
+            id="exclude",
+        ),
+        pytest.param(
+            {
+                "type": "DiscreteNoLabelDuplicatesConstraint",
+                "parameters": ["A", "B", "C"],
+            },
+            DiscreteRepetitionLimitConstraint(
+                parameters=["A", "B", "C"], n_max_repetitions=1
+            ),
+            id="no-label-duplicates",
+        ),
+        pytest.param(
+            {
+                "type": "DiscreteLinkedParametersConstraint",
+                "parameters": ["A", "B", "C"],
+            },
+            DiscreteRepetitionLimitConstraint(
+                parameters=["A", "B", "C"],
+                n_max_repetitions=2,
+                exclude=True,
+            ),
+            id="linked-parameters",
+        ),
+        pytest.param(
+            {
+                "type": "DiscreteSumConstraint",
+                "parameters": ["A", "B"],
+                "condition": {
+                    "type": "ThresholdCondition",
+                    "threshold": 100.0,
+                    "operator": "=",
+                    "tolerance": 0.01,
+                },
+                "coefficients": [1.0, 1.0],
+            },
+            DiscreteLinearConstraint(
+                parameters=["A", "B"],
+                operator="=",
+                rhs=100.0,
+                tolerance=0.01,
+                coefficients=(1.0, 1.0),
+            ),
+            id="sum",
+        ),
+        pytest.param(
+            {
+                "type": "DiscreteProductConstraint",
+                "parameters": ["A", "B"],
+                "condition": {
+                    "type": "ThresholdCondition",
+                    "threshold": 30.0,
+                    "operator": ">=",
+                },
+            },
+            DiscreteProductConstraint(parameters=["A", "B"], operator=">=", rhs=30.0),
+            id="product-condition",
+        ),
+    ],
+)
+def test_discrete_constraint_deserialization(annotation, payload, expected):
+    """Legacy constraints deserialize regardless of the abstract annotation."""
     target = getattr(base_module, annotation)
-    result = converter.structure(legacy_dict, target)
-    assert result == ref
+    with pytest.warns(DeprecationWarning) as recorded:
+        result = converter.structure(deepcopy(payload), target)
+    assert result == expected
+    assert len(recorded) == 1
+    assert payload["type"] in str(recorded[0].message)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        assert converter.structure(result.to_dict(), target) == result
+
+
+@pytest.mark.parametrize(
+    "operator", ["=", ">="], ids=["default-tolerance", "no-tolerance"]
+)
+def test_product_legacy_concrete_deserialization(operator):
+    """Concrete Product deserialization uses the same deprecated input adapter."""
+    condition = ThresholdCondition(threshold=1.0, operator=operator)
+    payload = {
+        "type": "DiscreteProductConstraint",
+        "parameters": ["A", "B"],
+        "condition": {
+            "type": "ThresholdCondition",
+            "threshold": 1.0,
+            "operator": operator,
+        },
+    }
+    original = deepcopy(payload)
+    with pytest.warns(DeprecationWarning, match="condition") as recorded:
+        result = converter.structure(payload, DiscreteProductConstraint)
+    assert len(recorded) == 1
+    assert payload == original
+    assert result == DiscreteProductConstraint(
+        ["A", "B"], operator=operator, rhs=1.0, tolerance=condition.tolerance
+    )
+    assert "condition" not in result.to_dict()
 
 
 @pytest.mark.parametrize(
@@ -1116,3 +1301,13 @@ def test_deprecated_comp_df(param):
     with pytest.warns(DeprecationWarning, match="comp_df"):
         result = param.comp_df
     assert_frame_equal(result, expected)
+
+
+def test_discrete_product_constraint_mixing_raises():
+    """Passing both condition= and operator= to DiscreteProductConstraint raises."""
+    with pytest.raises(ValueError, match="Cannot specify both"):
+        DiscreteProductConstraint(
+            parameters=["A", "B"],
+            operator=">=",
+            condition=ThresholdCondition(threshold=30.0, operator=">="),
+        )

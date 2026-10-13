@@ -37,12 +37,11 @@ from baybe.constraints import (
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
-    DiscreteLinkedParametersConstraint,
-    DiscreteNoLabelDuplicatesConstraint,
+    DiscreteLinearConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
+    DiscreteRepetitionLimitConstraint,
     DiscreteSelectionConstraint,
-    DiscreteSumConstraint,
     SubSelectionCondition,
     ThresholdCondition,
 )
@@ -510,20 +509,24 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             ],
             exclude=True,
         ),
-        "Constraint_7": DiscreteNoLabelDuplicatesConstraint(
+        "Constraint_7": DiscreteRepetitionLimitConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+            n_max_repetitions=1,
         ),
-        "Constraint_8": DiscreteSumConstraint(
+        "Constraint_8": DiscreteLinearConstraint(
             parameters=["Fraction_1", "Fraction_2"],
-            condition=ThresholdCondition(threshold=150, operator="<="),
+            operator="<=",
+            rhs=150,
         ),
         "Constraint_9": DiscreteProductConstraint(
             parameters=["Fraction_1", "Fraction_2"],
-            condition=ThresholdCondition(threshold=30, operator=">="),
+            operator=">=",
+            rhs=30,
         ),
-        "Constraint_10": DiscreteSumConstraint(
+        "Constraint_10": DiscreteLinearConstraint(
             parameters=["Fraction_1", "Fraction_2"],
-            condition=ThresholdCondition(threshold=100, operator="="),
+            operator="=",
+            rhs=100,
         ),
         "Constraint_11": DiscretePermutationInvarianceConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
@@ -539,9 +542,11 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
                 affected_parameters=[["Solvent_1"], ["Solvent_2"], ["Solvent_3"]],
             ),
         ),
-        "Constraint_12": DiscreteSumConstraint(
+        "Constraint_12": DiscreteLinearConstraint(
             parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
-            condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.01),
+            operator="=",
+            rhs=100,
+            tolerance=0.01,
         ),
         "Constraint_13": DiscreteCustomConstraint(
             parameters=["Pressure", "Solvent_1", "Temperature"],
@@ -552,8 +557,10 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             min_cardinality=1,
             max_cardinality=2,
         ),
-        "Constraint_15": DiscreteLinkedParametersConstraint(
+        "Constraint_15": DiscreteRepetitionLimitConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+            n_max_repetitions=2,
+            exclude=True,
         ),
         "ContiConstraint_1": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],

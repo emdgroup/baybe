@@ -7,7 +7,7 @@ import shutil
 from subprocess import check_call, run
 
 from build_examples import build_examples
-from check_links import check_links
+from check_crossrefs import check_crossrefs
 from utils import adjust_pictures
 
 parser = argparse.ArgumentParser()
@@ -19,8 +19,8 @@ parser.add_argument(
 )
 parser.add_argument(
     "-l",
-    "--no_linkcheck",
-    help="Do not check the links.",
+    "--no-crossref-check",
+    help="Do not check cross-references.",
     action="store_true",
 )
 parser.add_argument(
@@ -45,7 +45,7 @@ parser.add_argument(
 # Parse input arguments
 args = parser.parse_args()
 RUN_EXAMPLES = args.run_examples
-LINKCHECK = not args.no_linkcheck
+CROSSREF_CHECK = not args.no_crossref_check
 FULL_REBUILD = args.full_rebuild
 INCLUDE_WARNINGS = args.include_warnings
 FORCE = args.force
@@ -79,7 +79,7 @@ def _run_apidoc() -> None:
 
 def build_documentation(
     run_examples: bool = False,
-    verify_links: bool = False,
+    verify_crossrefs: bool = False,
     full_rebuild: bool = False,
     force: bool = False,
 ) -> None:
@@ -87,8 +87,8 @@ def build_documentation(
 
     A full build of the documentation consists of converting the examples into jupyter
     notebooks, executing them, transforming them into markdown files, as well as
-    checking all links and performing the actual ``sphinx-build``. Such a full build can
-    be triggered using the ``full_rebuild`` flag.
+    checking cross-references and performing the actual ``sphinx-build``. Such a full
+    build can be triggered using the ``full_rebuild`` flag.
     If this flag is not set, this function tries to re-use as much of potentially
     existing structures like already built examples as possible. This behavior can be
     changed by using the other flags.
@@ -97,18 +97,18 @@ def build_documentation(
         run_examples: Fully recalculate the examples. If this is ``False`` and no
             folder containing an already built set of examples is found, dummy files
             replicating the structure of the examples are created.
-        verify_links: Check both internal and external links.
+        verify_crossrefs: Check that documentation cross-references resolve.
         full_rebuild: Perform a full rebuild of the documentation, including a
-            recalculation of the examples and checking the links. Note that this option
-            ignores the choices for ``run_examples`` and ``check_links`` if set to
-            ``True.
+            recalculation of the examples and checking cross-references. Note that this
+            option ignores the choices for ``run_examples`` and
+            ``verify_crossrefs`` if set to ``True``.
         force: Force-build the steps, ignoring any errors or warnings.
     """
     examples_directory = pathlib.Path("docs/examples")
     examples_exist = examples_directory.is_dir()
 
     rerun_examples = run_examples or full_rebuild
-    perform_linkcheck = verify_links or full_rebuild
+    perform_crossref_check = verify_crossrefs or full_rebuild
 
     if rerun_examples:
         build_examples(
@@ -125,8 +125,8 @@ def build_documentation(
             remove_dir=examples_exist,
         )
 
-    if perform_linkcheck:
-        check_links()
+    if perform_crossref_check:
+        check_crossrefs()
 
     # Generate the API reference stubs via sphinx-apidoc
     _run_apidoc()
@@ -158,11 +158,11 @@ if __name__ == "__main__":
     if not INCLUDE_WARNINGS:
         os.environ["PYTHONWARNINGS"] = "ignore"
 
-    print(f"{LINKCHECK=}")
+    print(f"{CROSSREF_CHECK=}")
 
     build_documentation(
         run_examples=RUN_EXAMPLES,
-        verify_links=LINKCHECK,
+        verify_crossrefs=CROSSREF_CHECK,
         full_rebuild=FULL_REBUILD,
         force=FORCE,
     )

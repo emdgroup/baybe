@@ -506,7 +506,8 @@ class SigmoidTransformation(MonotonicTransformation):
     def __call__(self, x: Tensor, /) -> Tensor:
         import torch
 
-        return 1 / (1 + torch.exp(self.steepness * (x - self.center)))
+        # NOTE: `torch.sigmoid(z)` is defined as `1 / (1 + exp(-z))`
+        return torch.sigmoid(self.steepness * (self.center - x))
 
 
 @converter.register_structure_hook

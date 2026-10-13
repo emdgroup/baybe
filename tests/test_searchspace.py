@@ -8,9 +8,7 @@ from exceptiongroup import ExceptionGroup
 from pandas.testing import assert_frame_equal
 
 from baybe._optional.info import POLARS_INSTALLED
-from baybe.constraints import (
-    ContinuousLinearConstraint,
-)
+from baybe.constraints import ContinuousLinearConstraint, DiscreteLinearConstraint
 from baybe.exceptions import (
     EmptySearchSpaceError,
     IncompatibilityError,
@@ -194,6 +192,80 @@ def test_hyperrectangle_searchspace_creation():
 
     assert searchspace.type == SearchSpaceType.CONTINUOUS
     assert searchspace.parameters == parameters
+
+
+def test_invalid_constraint_parameter_combos():
+    """Testing invalid constraint-parameter combinations."""
+    parameters = [
+        CategoricalParameter("cat1", values=("c1", "c2")),
+        NumericalDiscreteParameter("d1", values=[1, 2, 3]),
+        NumericalDiscreteParameter("d2", values=[0, 1, 2]),
+        NumericalContinuousParameter("c1", (0, 2)),
+        NumericalContinuousParameter("c2", (-1, 1)),
+    ]
+
+    # Attempting continuous constraint over hybrid parameter set
+    with pytest.raises(ValueError):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[ContinuousLinearConstraint(["c1", "c2", "d1"], "=")],
+        )
+
+    # Attempting continuous constraint over hybrid parameter set
+    with pytest.raises(ValueError):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[ContinuousLinearConstraint(["c1", "c2", "d1"], "=")],
+        )
+
+    # Attempting discrete constraint over hybrid parameter set
+    with pytest.raises(ValueError):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[
+                DiscreteLinearConstraint(
+                    parameters=["d1", "d2", "c1"],
+                    operator=">",
+                    rhs=1.0,
+                )
+            ],
+        )
+
+    # Attempting constraints over parameter set where a parameter does not exist
+    with pytest.raises(ValueError):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[
+                DiscreteLinearConstraint(
+                    parameters=["d1", "e7", "c1"],
+                    operator=">",
+                    rhs=1.0,
+                )
+            ],
+        )
+
+    # Attempting constraints over parameter set where a parameter does not exist
+    with pytest.raises(ValueError):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[ContinuousLinearConstraint(["c1", "e7", "d1"], "=")],
+        )
+
+    # Attempting constraints over parameter sets containing non-numerical discrete
+    # parameters.
+    with pytest.raises(
+        ValueError, match="valid only for numerical discrete parameters"
+    ):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[
+                DiscreteLinearConstraint(
+                    parameters=["cat1", "d1", "d2"],
+                    operator=">",
+                    rhs=1.0,
+                )
+            ],
+        )
 
 
 @pytest.mark.parametrize(
