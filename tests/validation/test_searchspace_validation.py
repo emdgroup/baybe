@@ -9,7 +9,6 @@ from baybe.constraints import (
     ContinuousLinearConstraint,
     DiscreteLinearConstraint,
 )
-from baybe.constraints.discrete import DiscreteLinkedParametersConstraint
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -198,7 +197,7 @@ def test_continuous_subspace_constraint_with_nonexistent_params(referenced, disc
             NumericalDiscreteParameter("p2", (0, 1)),
         ]
         space = SubspaceDiscrete
-        constraint = DiscreteLinkedParametersConstraint(referenced)
+        constraint = DiscreteLinearConstraint(referenced, operator=">", rhs=1.0)
     else:
         parameters = [
             NumericalContinuousParameter("p1", (0, 1)),
