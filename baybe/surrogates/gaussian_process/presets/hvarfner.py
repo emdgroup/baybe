@@ -6,7 +6,6 @@ import gc
 from itertools import chain
 from typing import TYPE_CHECKING, ClassVar
 
-import pandas as pd
 from attrs import define
 from typing_extensions import override
 
@@ -29,6 +28,7 @@ if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.means import Mean as GPyTorchMean
+    from narwhals.stable.v2.typing import IntoDataFrame
 
 
 @define
@@ -45,7 +45,10 @@ class HvarfnerKernelFactory(_PureKernelFactory):
 
     @override
     def _make(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> Kernel | GPyTorchKernel:
         from botorch.models.kernels.positive_index import PositiveIndexKernel
         from botorch.models.utils.gpytorch_modules import (
@@ -89,7 +92,10 @@ class HvarfnerMeanFactory(MeanFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> GPyTorchMean:
         from gpytorch.means import ConstantMean
 
@@ -111,7 +117,10 @@ class HvarfnerLikelihoodFactory(LikelihoodFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> GPyTorchLikelihood:
 
         if searchspace.n_tasks == 1:

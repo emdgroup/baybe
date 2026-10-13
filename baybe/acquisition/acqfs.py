@@ -5,8 +5,9 @@ from __future__ import annotations
 import gc
 import math
 from abc import ABC
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -16,9 +17,14 @@ from attrs import AttrsInstance, define, field, fields
 from attrs.validators import gt, instance_of, le
 from typing_extensions import override
 
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
+
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.searchspace import SearchSpace
+from baybe.settings import active_settings
 from baybe.utils.basic import classproperty, convert_to_float
+from baybe.utils.dataframe import _df_with_backend
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod, sample_numerical_df
 from baybe.utils.validation import finite_float
 
@@ -81,7 +87,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
             flds.sampling_fraction.name,
         )
 
-    def get_integration_points(self, searchspace: SearchSpace) -> pd.DataFrame:
+    def get_integration_points(self, searchspace: SearchSpace) -> IntoDataFrame:
         """Sample points from a search space for integration purposes.
 
         Sampling of the discrete part can be controlled via 'sampling_method', but
@@ -137,7 +143,10 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
         # Combine different search space parts
         result = pd.concat(sampled_parts, axis=1)
 
-        return result
+        return _df_with_backend(
+            nw.from_native(result, eager_only=True),
+            active_settings.default_dataframe_backend,
+        ).to_native()
 
 
 ########################################################################################
