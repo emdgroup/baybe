@@ -18,7 +18,7 @@ from baybe.recommenders.pure.llm.llm import LLMRecommender
 
 @define
 class LLMTwoPhaseRecommender(TwoPhaseMetaRecommender):
-    """A two-phase recommender that warm-starts with an :class:`LLMRecommender`.
+    """A two-phase recommender that warm-starts with an LLM recommender.
 
     A convenience specialization of
     :class:`~baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender` whose
@@ -72,7 +72,7 @@ class LLMTwoPhaseRecommender(TwoPhaseMetaRecommender):
 
 @define
 class LLMAlternatingRecommender(SequentialMetaRecommender):
-    """A recommender alternating between an :class:`LLMRecommender` and another one.
+    """A recommender alternating between an LLM recommender and another one.
 
     A convenience specialization of
     :class:`~baybe.recommenders.meta.sequential.SequentialMetaRecommender` that cycles
