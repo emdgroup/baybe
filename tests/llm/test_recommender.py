@@ -9,7 +9,6 @@ from pytest import param
 
 from baybe import Campaign
 from baybe._optional.info import LLM_INSTALLED
-from baybe._optional.llm import AuthenticationError
 from baybe.exceptions import (
     LLMAuthenticationError,
     LLMCallError,
@@ -32,6 +31,9 @@ from tests.llm._mock import (
 
 if not LLM_INSTALLED:
     pytest.skip("LLM dependencies not installed.", allow_module_level=True)
+
+
+from baybe._optional.llm import AuthenticationError
 
 _RECOMMENDER = LLMRecommender(
     model="test/model", experiment_description="Test experiment."
