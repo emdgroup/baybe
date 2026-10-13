@@ -197,24 +197,30 @@ class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
             is not DiscreteFilteringConstraint._get_matching_rows_polars
         )
 
-    def get_invalid_polars(self) -> pl.Expr:
+    def get_invalid_polars(self, schema: pl.Schema) -> pl.Expr:
         """Translate the constraint to a Polars expression identifying rows to remove.
+
+        Args:
+            schema: The Polars schema of the dataframe being filtered.
 
         Returns:
             The Polars expression.
         """
-        matching_expr = self._get_matching_rows_polars()
+        matching_expr = self._get_matching_rows_polars(schema)
         if self.exclude:
             return matching_expr
         return ~matching_expr
 
-    def _get_matching_rows_polars(self) -> pl.Expr:
+    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
         """Translate the constraint to a Polars expression identifying matching rows.
 
         Subclasses with a Polars implementation override this method. The expression
         should evaluate to ``True`` for rows that the specification matches/keeps
         (as if ``exclude=False``). The ``exclude`` inversion is applied by the base
         class in :meth:`get_invalid_polars`, not here.
+
+        Args:
+            schema: The Polars schema of the dataframe being filtered.
 
         Returns:
             A Polars expression that evaluates to ``True`` for matching rows.

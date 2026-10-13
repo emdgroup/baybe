@@ -273,67 +273,72 @@ DiscreteSelectionConstraint(
 A more detailed example can be found
 [here](../../examples/Constraints_Discrete/selection_constraints).
 
-#### DiscreteSumConstraint and DiscreteProductConstraint
-[`DiscreteSumConstraint`](baybe.constraints.discrete.DiscreteSumConstraint)
+#### DiscreteLinearConstraint and DiscreteProductConstraint
+[`DiscreteLinearConstraint`](baybe.constraints.discrete.DiscreteLinearConstraint)
 and [`DiscreteProductConstraint`](baybe.constraints.discrete.DiscreteProductConstraint)
-impose conditions on sums or products of numerical parameters.
+impose conditions on weighted sums or products of numerical parameters.
+The `DiscreteLinearConstraint` mirrors the interface of
+[`ContinuousLinearConstraint`](#CLC) with `operator`, `rhs`, and `coefficients`.
 [In the first example from `ContinuousLinearConstraint`](#CLC), we
 had three continuous parameters `x_1`, `x_2` and `x_3`, which needed to sum
 up to 1.0.
 If these parameters were instead discrete, the corresponding constraint would look like:
 ```python
-from baybe.constraints import DiscreteSumConstraint, ThresholdCondition
+from baybe.constraints import DiscreteLinearConstraint
 
-DiscreteSumConstraint(
+DiscreteLinearConstraint(
     parameters=["x_1", "x_2", "x_3"],
-    condition=ThresholdCondition(  # set condition that should apply to the sum
-        threshold=1.0,
-        operator="=",
-        tolerance=0.001,  # optional; here, everything between 0.999 and 1.001 would also be considered valid
-    ),
+    operator="=",
+    rhs=1.0,
+    tolerance=0.001,  # optional; everything between 0.999 and 1.001 is valid
+)
+```
+
+A product constraint can be expressed similarly:
+```python
+from baybe.constraints import DiscreteProductConstraint
+
+DiscreteProductConstraint(
+    parameters=["x_1", "x_2"],
+    operator=">=",
+    rhs=30.0,
 )
 ```
 
 An end to end example can be found [here](../../examples/Constraints_Discrete/prodsum_constraints).
 
-#### DiscreteNoLabelDuplicatesConstraint
-Sometimes, duplicated labels in several parameters are undesirable.
-Consider an example with two solvents that describe different mixture
-components.
-These might have the exact same or overlapping sets of possible values, e.g.
-`["Water", "THF", "Octanol"]`.
-It would not necessarily be reasonable to allow values in which both solvents show the
-same label/component.
-The [`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint)
-keeps only those entries whose labels are all distinct:
+#### DiscreteRepetitionLimitConstraint
+The [`DiscreteRepetitionLimitConstraint`](baybe.constraints.discrete.DiscreteRepetitionLimitConstraint)
+controls value repetition across a group of parameters. It keeps only rows where the
+largest number of times any single value appears does not exceed
+``n_max_repetitions`` (default: ``1``).
+
+The following example ensures that no solvent label is used more than once across three
+mixture slots:
 
 ```python
-from baybe.constraints import DiscreteNoLabelDuplicatesConstraint
+from baybe.constraints import DiscreteRepetitionLimitConstraint
 
-DiscreteNoLabelDuplicatesConstraint(parameters=["Solvent_1", "Solvent_2"])
+DiscreteRepetitionLimitConstraint(
+    parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+    n_max_repetitions=1,
+)
 ```
 
-With this constraint, combinations with duplicated labels are removed:
+|   | Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteRepetitionLimitConstraint |
+|---|-----------|-----------|-----------|----------------------------------------|
+| 1 | Water     | Water     | THF       | removed (Water appears twice)          |
+| 2 | THF       | Water     | Octanol   | kept                                   |
+| 3 | Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times)      |
 
-|   | Solvent_1 | Solvent_2 | With DiscreteNoLabelDuplicatesConstraint |
-|---|-----------|-----------|------------------------------------------|
-| 1 | Water     | Water     | removed                                  |
-| 2 | THF       | Water     | kept                                     |
-| 3 | Octanol   | Octanol   | removed                                  |
+The constraint can also enforce that **all values are identical** by excluding rows
+where a value appears at most one fewer times than there are parameters. This is
+useful, for instance, when we have one parameter but would like to include it with
+several encodings, which then must all refer to the same underlying value:
 
-The usage of `DiscreteNoLabelDuplicatesConstraint` is part of the
-[example on slot-based mixtures](../../examples/Mixtures/slot_based).
-
-#### DiscreteLinkedParametersConstraint
-The [`DiscreteLinkedParametersConstraint`](baybe.constraints.discrete.DiscreteLinkedParametersConstraint)
-is, in a sense, the opposite of the
-[`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint).
-It keeps **only** entries where the linked parameters share the same label.
-This can be useful, for instance, in situations where we have one parameter but would
-like to include it with several encodings:
 ```python
 from baybe.parameters import SubstanceParameter
-from baybe.constraints import DiscreteLinkedParametersConstraint
+from baybe.constraints import DiscreteRepetitionLimitConstraint
 
 dict_solvents = {"Water": "O", "THF": "C1CCOC1", "Octanol": "CCCCCCCCO"}
 solvent_encoding1 = SubstanceParameter(
@@ -346,16 +351,21 @@ solvent_encoding2 = SubstanceParameter(
     data=dict_solvents,
     encoding="MORDRED",
 )
-DiscreteLinkedParametersConstraint(
-    parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"]
+DiscreteRepetitionLimitConstraint(
+    parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"],
+    n_max_repetitions=1,  # = number of parameters - 1
+    exclude=True,
 )
 ```
 
-|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteLinkedParametersConstraint |
-|---|-------------------|---------------------|-----------------------------------------|
-| 1 | Water             | Water               | kept                                    |
-| 2 | THF               | Water               | removed                                 |
-| 3 | Octanol           | Octanol             | kept                                    |
+|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionLimitConstraint |
+|---|-------------------|---------------------|-----------------------------------|
+| 1 | Water             | Water               | kept                              |
+| 2 | THF               | Water               | removed                           |
+| 3 | Octanol           | Octanol             | kept                              |
+
+The usage of `DiscreteRepetitionLimitConstraint` is part of the
+[example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
 #### DiscreteDependenciesConstraint
 A dependency is a situation where parameters depend on other parameters.

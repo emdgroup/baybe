@@ -37,10 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   values of invariant points are degenerate
 - Multi-output surrogate compatibility check in `Surrogate.fit` now correctly uses the
   number of required models instead of the number of transform outputs
+- `SigmoidTransformation` no longer produces NaN gradients for inputs far from its
+  center, which caused `OptimizationGradientError` during recommendation
+- `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
+  constraint filtering
 
 ### Added
-- `coefficients` attribute for `DiscreteSumConstraint`, enabling weighted sums. Follows
-  the same pattern as `ContinuousLinearConstraint.coefficients`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
 - `narwhals` as a hard dependency
@@ -68,6 +70,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TransferLearningMode` enum) for selecting the kernel that models the task
   correlations in transfer learning, taking precedence over the task kernel of the
   configured kernel factory
+- `DiscreteRepetitionLimitConstraint` for controlling value repetition across parameters
+  via `n_max_repetitions` (replaces `DiscreteNoLabelDuplicatesConstraint` and
+  `DiscreteLinkedParametersConstraint`)
+- `DiscreteLinearConstraint` for (optionally weighted) sum constraints on discrete
+  parameters, supporting `coefficients` and mirroring `ContinuousLinearConstraint`'s
+  `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
 
 ### Changed
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
@@ -94,8 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in version `0.18.0`
 - The `BOTORCH` GP preset now requires BoTorch `>= 0.18.0` and raises an
   `IncompatibilityError` if an older version is installed
-- `DiscreteSumConstraint`, `ContinuousLinearConstraint`, and
-  `SubspaceDiscrete.from_simplex` now forbid 0 as coefficients
+- `ContinuousLinearConstraint` and `SubspaceDiscrete.from_simplex`
+   now forbid 0 as coefficients
 - `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
 - Bumped polars to `>=0.20.8`
 - Bumped cattrs to `>=26.1.0`
@@ -108,6 +116,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Discrete filtering constraints now uniformly define what is **kept** in the search
   space; set `exclude=True` to invert and keep the complement instead
 - Renamed `exclusion_constraints` example to `selection_constraints`
+- `DiscreteProductConstraint` now uses `operator`/`rhs`/`tolerance` instead of
+  `condition`
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
@@ -132,6 +142,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.comp_rep` attribute (use `transform(get_candidates())` instead)
 - `DiscreteExcludeConstraint` in favor of
   `DiscreteSelectionConstraint(..., exclude=True)`
+- `DiscreteNoLabelDuplicatesConstraint` in favor of
+  `DiscreteRepetitionLimitConstraint(..., n_max_repetitions=1)`
+- `DiscreteLinkedParametersConstraint` in favor of
+  `DiscreteRepetitionLimitConstraint(..., n_max_repetitions=len(parameters)-1,
+  exclude=True)`
+- `DiscreteSumConstraint` in favor of `DiscreteLinearConstraint`
+- `DiscreteProductConstraint(condition=ThresholdCondition(...))` in favor of
+  `DiscreteProductConstraint(operator=..., rhs=...)`
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes

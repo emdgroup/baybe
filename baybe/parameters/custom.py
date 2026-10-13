@@ -15,7 +15,7 @@ from baybe.parameters.base import _JOIN_KEY, _EncodedDiscreteParameter
 from baybe.parameters.validation import validate_decorrelation
 from baybe.settings import active_settings
 from baybe.utils.boolean import eq_dataframe
-from baybe.utils.dataframe import df_uncorrelated_features
+from baybe.utils.dataframe import _df_with_backend, df_uncorrelated_features
 
 
 def _encoding_table_from_comp_df(
@@ -31,13 +31,20 @@ def _encoding_table_from_comp_df(
     Returns:
         A narwhals dataframe with :data:`~baybe.parameters.base._JOIN_KEY` as the
         key column, converted to the same backend as ``values``.
+
+    Raises:
+        ValueError: If any values cannot be found in the given dataframe index.
     """
-    return (
-        nw.from_native(comp_df.reset_index(names=_JOIN_KEY), eager_only=True)
-        .filter(nw.col(_JOIN_KEY).is_in(values))
-        .lazy()
-        .collect(backend=nw.get_native_namespace(values))
-    )
+    if invalid := set(values.to_list()) - set(comp_df.index):
+        raise ValueError(
+            f"Cannot encode the value(s) {invalid}. "
+            f"Valid choices are: {set(comp_df.index)}."
+        )
+
+    table = nw.from_native(
+        comp_df.reset_index(names=_JOIN_KEY), eager_only=True
+    ).filter(nw.col(_JOIN_KEY).is_in(values))
+    return _df_with_backend(table, nw.get_native_namespace(values))
 
 
 @define(frozen=True, slots=False)

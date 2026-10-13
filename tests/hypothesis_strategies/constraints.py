@@ -6,23 +6,24 @@ import hypothesis.strategies as st
 from hypothesis import assume
 
 from baybe.constraints.conditions import (
+    _threshold_operators,
     _valid_logic_combiners,
+    _valid_tolerance_operators,
 )
 from baybe.constraints.continuous import (
     ContinuousLinearConstraint,
 )
 from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
-    DiscreteLinkedParametersConstraint,
-    DiscreteNoLabelDuplicatesConstraint,
+    DiscreteLinearConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
+    DiscreteRepetitionLimitConstraint,
     DiscreteSelectionConstraint,
-    DiscreteSumConstraint,
 )
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from tests.hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.basic import finite_floats, positive_finite_floats
 from tests.hypothesis_strategies.conditions import (
     sub_selection_conditions,
     threshold_conditions,
@@ -70,6 +71,7 @@ def discrete_dependencies_constraints(
     draw: st.DrawFn,
     parameters: list[DiscreteParameter] | None = None,
     affected_parameter_names: list[list[str]] | None = None,
+    exclude: bool | None = None,
 ):
     if parameters is None:
         # Draw random unique parameter names
@@ -132,7 +134,8 @@ def discrete_dependencies_constraints(
             p not in affected_parameter_names[k] for k, p in enumerate(parameter_names)
         ), "Affected parameters cannot overlap with the parameters they depend on"
 
-    exclude = draw(st.booleans())
+    if exclude is None:
+        exclude = draw(st.booleans())
     return DiscreteDependenciesConstraint(
         parameter_names, conditions, affected_parameter_names, exclude=exclude
     )
@@ -158,6 +161,7 @@ def discrete_permutation_invariance_constraints(
                     discrete_dependencies_constraints(
                         parameters=None,
                         affected_parameter_names=[[p] for p in parameter_names],
+                        exclude=False,
                     ),
                 ]
             )
@@ -170,17 +174,11 @@ def discrete_permutation_invariance_constraints(
 
 
 @st.composite
-def _discrete_constraints(
+def discrete_linear_constraints(
     draw: st.DrawFn,
-    constraint_type: (
-        type[DiscreteSumConstraint]
-        | type[DiscreteProductConstraint]
-        | type[DiscreteNoLabelDuplicatesConstraint]
-        | type[DiscreteLinkedParametersConstraint]
-    ),
     parameter_names: list[str] | None = None,
 ):
-    """Generate discrete constraints."""
+    """Generate :class:`baybe.constraints.discrete.DiscreteLinearConstraint`."""
     if parameter_names is None:
         params = draw(st.lists(st.text(), unique=True, min_size=1))
     else:
@@ -188,39 +186,74 @@ def _discrete_constraints(
         assert len(parameter_names) == len(set(parameter_names))
         params = parameter_names
 
+    operator = draw(st.sampled_from(list(_threshold_operators.keys())))
+    rhs = draw(finite_floats())
     exclude = draw(st.booleans())
 
-    if constraint_type is DiscreteSumConstraint:
-        condition = draw(threshold_conditions())
-        if draw(st.booleans()):
-            coefficients = draw(st.tuples(*([_nonzero_finite_floats] * len(params))))
-            return DiscreteSumConstraint(
-                params, condition, coefficients, exclude=exclude
-            )
-        return DiscreteSumConstraint(params, condition, exclude=exclude)
-    elif constraint_type is DiscreteProductConstraint:
-        return DiscreteProductConstraint(
-            params, draw(threshold_conditions()), exclude=exclude
+    # Optionally add tolerance for tolerance-enabled operators
+    tolerance = None
+    if operator in _valid_tolerance_operators:
+        tolerance = draw(st.one_of(st.none(), positive_finite_floats()))
+
+    # Optionally add coefficients
+    if draw(st.booleans()):
+        coefficients = draw(st.tuples(*([_nonzero_finite_floats] * len(params))))
+        return DiscreteLinearConstraint(
+            params,
+            operator,
+            coefficients,
+            rhs=rhs,
+            tolerance=tolerance,
+            exclude=exclude,
         )
+    return DiscreteLinearConstraint(
+        params, operator, rhs=rhs, tolerance=tolerance, exclude=exclude
+    )
+
+
+@st.composite
+def discrete_product_constraints(
+    draw: st.DrawFn,
+    parameter_names: list[str] | None = None,
+):
+    """Generate :class:`baybe.constraints.discrete.DiscreteProductConstraint`."""
+    if parameter_names is None:
+        params = draw(st.lists(st.text(), unique=True, min_size=1))
     else:
-        return constraint_type(params, exclude=exclude)
+        assert len(parameter_names) > 0
+        assert len(parameter_names) == len(set(parameter_names))
+        params = parameter_names
+
+    operator = draw(st.sampled_from(list(_threshold_operators.keys())))
+    rhs = draw(finite_floats())
+    exclude = draw(st.booleans())
+
+    # Optionally add tolerance for tolerance-enabled operators
+    tolerance = None
+    if operator in _valid_tolerance_operators:
+        tolerance = draw(st.one_of(st.none(), positive_finite_floats()))
+
+    return DiscreteProductConstraint(
+        params, operator=operator, rhs=rhs, tolerance=tolerance, exclude=exclude
+    )
 
 
-discrete_sum_constraints = partial(_discrete_constraints, DiscreteSumConstraint)
-"""Generate :class:`baybe.constraints.discrete.DiscreteSumConstraint`."""
+@st.composite
+def discrete_repetition_limit_constraints(
+    draw: st.DrawFn, parameter_names: list[str] | None = None
+):
+    """Generate a :class:`~baybe.constraints.DiscreteRepetitionLimitConstraint`."""
+    if parameter_names is None:
+        params = draw(st.lists(st.text(), unique=True, min_size=2))
+    else:
+        assert len(parameter_names) >= 2
+        params = parameter_names
 
-discrete_product_constraints = partial(_discrete_constraints, DiscreteProductConstraint)
-"""Generate :class:`baybe.constraints.discrete.DiscreteProductConstraint`."""
-
-discrete_no_label_duplicates_constraints = partial(
-    _discrete_constraints, DiscreteNoLabelDuplicatesConstraint
-)
-"""Generate :class:`baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`."""
-
-discrete_linked_parameters_constraints = partial(
-    _discrete_constraints, DiscreteLinkedParametersConstraint
-)
-"""Generate :class:`baybe.constraints.discrete.DiscreteLinkedParametersConstraint`."""
+    n_max = draw(st.integers(min_value=1, max_value=len(params) - 1))
+    exclude = draw(st.booleans())
+    return DiscreteRepetitionLimitConstraint(
+        params, n_max_repetitions=n_max, exclude=exclude
+    )
 
 
 @st.composite
@@ -264,10 +297,9 @@ constraints = st.one_of(
         discrete_selection_constraints(),
         discrete_dependencies_constraints(),
         discrete_permutation_invariance_constraints(),
-        discrete_sum_constraints(),
+        discrete_linear_constraints(),
         discrete_product_constraints(),
-        discrete_no_label_duplicates_constraints(),
-        discrete_linked_parameters_constraints(),
+        discrete_repetition_limit_constraints(),
         continuous_linear_equality_constraints(),
         continuous_linear_inequality_constraints(),
     ]

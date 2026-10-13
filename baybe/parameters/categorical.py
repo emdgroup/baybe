@@ -77,6 +77,12 @@ class CategoricalParameter(_EncodedDiscreteParameter):
 
     @override
     def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
+        if invalid := set(values.to_list()) - set(self.values):
+            raise ValueError(
+                f"Cannot encode the value(s) {invalid}. "
+                f"Valid choices are: {set(self.values)}."
+            )
+
         if self.encoding is CategoricalEncoding.OHE:
             # TODO[narwhalify]: avoid hard-coded float type
             return (

@@ -48,9 +48,9 @@ import pandas as pd
 
 from baybe.constraints import (
     DiscreteDependenciesConstraint,
-    DiscreteNoLabelDuplicatesConstraint,
+    DiscreteLinearConstraint,
     DiscretePermutationInvarianceConstraint,
-    DiscreteSumConstraint,
+    DiscreteRepetitionLimitConstraint,
     ThresholdCondition,
 )
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
@@ -126,10 +126,11 @@ parameters = [
 # having two slots with the same substance or having only one slot with the combined
 # amounts. Thus, we want to make sure that there are no such duplicate label entries,
 # which can be achieved using a
-# {class}`~baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`:
+# {class}`~baybe.constraints.discrete.DiscreteRepetitionLimitConstraint`:
 
-no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
-    parameters=["Slot1_Label", "Slot2_Label", "Slot3_Label"]
+no_duplicates_constraint = DiscreteRepetitionLimitConstraint(
+    parameters=["Slot1_Label", "Slot2_Label", "Slot3_Label"],
+    n_max_repetitions=1,
 )
 
 #### Permutation Invariance
@@ -167,9 +168,11 @@ perm_inv_constraint = DiscretePermutationInvarianceConstraint(
 # Interpreting the slot amounts as percentages, we need to ensure that their total is
 # always 100:
 
-sum_constraint = DiscreteSumConstraint(
+sum_constraint = DiscreteLinearConstraint(
     parameters=["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"],
-    condition=ThresholdCondition(threshold=100, operator="=", tolerance=SUM_TOLERANCE),
+    operator="=",
+    rhs=100,
+    tolerance=SUM_TOLERANCE,
 )
 
 

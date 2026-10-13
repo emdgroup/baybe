@@ -6,7 +6,7 @@ import gc
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar, overload
+from typing import TYPE_CHECKING, ClassVar, cast, overload
 
 import attrs
 import narwhals.stable.v2 as nw
@@ -210,7 +210,11 @@ class DiscreteParameter(Parameter, ABC):
         """
         all_values = series is None
         if is_into_series(series):
-            series = nw.from_native(series, series_only=True)  # pyrefly: ignore[no-matching-overload]  # https://github.com/facebook/pyrefly/issues/4849
+            # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/4064
+            series = cast(
+                "nw.Series[Any]",
+                nw.from_native(series, series_only=True),  # pyrefly: ignore[no-matching-overload]
+            )
             if series.name != self.name:
                 raise ValueError(
                     f"The provided series name '{series.name}' does not match "

@@ -168,6 +168,58 @@ def test_transform(param, expected, index_select, series_factory):
         assert_frame_equal(result, nw.from_native(expected)[positions])
 
 
+@pytest.mark.parametrize(
+    "param",
+    [
+        pytest.param(
+            CategoricalParameter(name="color", values=["red", "green", "blue"]),
+            id="categorical_ohe",
+        ),
+        pytest.param(
+            CategoricalParameter(name="size", values=["S", "M", "L"], encoding="INT"),
+            id="categorical_int",
+        ),
+        pytest.param(
+            CustomDiscreteParameter(
+                name="mol",
+                data=pd.DataFrame(
+                    {"d1": [1.0, 2.0, 3.0], "d2": [4.0, 5.0, 6.0]},
+                    index=["A", "B", "C"],
+                ),
+                decorrelate=False,
+            ),
+            id="custom",
+        ),
+        pytest.param(
+            SubstanceParameter(
+                name="solvent",
+                data={"water": "O", "ethanol": "CCO", "methanol": "CO"},
+                decorrelate=False,
+            )
+            if CHEM_INSTALLED
+            else None,
+            id="substance",
+            marks=pytest.mark.skipif(
+                not CHEM_INSTALLED, reason="Optional chem dependency not installed."
+            ),
+        ),
+    ],
+)
+def test_transform_invalid_value(param):
+    """Transforming an unknown label raises an error."""
+    with pytest.raises(ValueError, match="Cannot encode the value"):
+        param.transform(pd.Series(["unknown_value"], name=param.name))
+
+
+def test_transform_numerical_out_of_range():
+    """Numerical parameters transform out-of-range values without raising."""
+    param = NumericalDiscreteParameter(name="x", values=[1.0, 2.0, 3.0])
+    result = param.transform(pd.Series([42.0], name="x"))
+    assert_frame_equal(
+        result, pd.DataFrame({"x": [42.0]}, dtype=active_settings.DTypeFloatNumpy)
+    )
+
+
 def test_decorrelation_custom():
     """CustomDiscreteParameter encoding drops correlated columns when decorrelate=True."""  # noqa: E501
     data = pd.DataFrame(

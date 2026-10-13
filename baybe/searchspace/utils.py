@@ -288,8 +288,9 @@ def _apply_constraint_filter_polars(
     Returns:
         The Polars lazyframe with undesired rows removed.
     """
+    schema = ldf.collect_schema()
     for c in constraints:
-        to_keep = c.get_invalid_polars().not_()
+        to_keep = c.get_invalid_polars(schema).not_()
         ldf = ldf.filter(to_keep)
 
     return ldf

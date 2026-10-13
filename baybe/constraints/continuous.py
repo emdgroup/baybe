@@ -7,7 +7,7 @@ import math
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from itertools import combinations
 from math import comb
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias, get_args
 
 import cattrs
 import numpy as np
@@ -30,7 +30,10 @@ if TYPE_CHECKING:
 
     ConstraintTuple = tuple[Tensor, Tensor, float]
 
-_valid_linear_constraint_operators = ["=", ">=", "<="]
+LinearConstraintOperator: TypeAlias = Literal["=", ">=", "<="]
+"""An operator supported by continuous linear constraints."""
+
+_valid_linear_constraint_operators = get_args(LinearConstraintOperator)
 
 
 @define
@@ -42,7 +45,9 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     """
 
     # object variables
-    operator: str = field(validator=in_(_valid_linear_constraint_operators))
+    operator: LinearConstraintOperator = field(
+        validator=in_(_valid_linear_constraint_operators)
+    )
     """Defines the operator used in the equation. Internally this will negate rhs and
     coefficients for `<=`."""
 
@@ -50,7 +55,9 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
         validator=deep_iterable(member_validator=finite_float),
     )
-    """In-/equality coefficient for each entry in ``parameters``."""
+    """The coefficients for the weighted sum, one per entry in ``parameters``.
+
+    Defaults to all-ones, i.e. an unweighted sum."""
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
