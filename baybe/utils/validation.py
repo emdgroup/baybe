@@ -148,6 +148,7 @@ def validate_objective_input(data: pd.DataFrame, objective: Objective) -> None:
         )
 
 
+# TODO: Accept IntoFrame and make it work for lazy & non lazy df
 def validate_parameter_input(
     data: pd.DataFrame,
     parameters: Sequence[Parameter],

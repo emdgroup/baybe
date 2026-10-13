@@ -128,7 +128,7 @@ def recommend_discrete_without_subsets(
 
     from botorch.optim import optimize_acqf_discrete
 
-    candidates = subspace_discrete.get_candidates()
+    candidates = subspace_discrete.get_candidates().to_lazy().collect().to_pandas()
     candidates_comp = subspace_discrete.transform(candidates)
     choices = to_tensor(candidates_comp)
 

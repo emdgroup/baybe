@@ -124,7 +124,7 @@ class TableCandidates(CandidatesProtocol):
         ],
     )
     """See :attr:`CandidatesProtocol.parameters`."""
-
+    # TODO: Needs to accept LazyFrame / IntoFrame - Use correct converter here
     dataframe: nw.DataFrame = field(
         converter=lambda x: nw.from_native(x, eager_only=True),
         eq=cmp_using(eq=_df_equals),
@@ -133,7 +133,7 @@ class TableCandidates(CandidatesProtocol):
 
     @dataframe.validator
     def _validate_dataframe(self, _: Attribute, value: nw.DataFrame) -> None:  # noqa: DOC101, DOC103
-        validate_parameter_input(
+        validate_parameter_input(  # TODO: Validate with LazyFrame as input?
             value.to_pandas(),
             self.parameters,
             allow_extra=False,
