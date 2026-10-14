@@ -288,6 +288,9 @@ For details, refer to [transfer learning](../concepts/transfer_learning.md).
 (parameter_kernel_overrides)=
 ## Parameter-Specific Kernel Overrides
 
+During a Bayesian optimization loop, the search space spanned by the user-defined
+parameters will be presented to the surrogate model (e.g., a Gaussian process),
+to evaluate its points in terms of their expected utility. 
 By default, the Gaussian process models all parameters with a single surrogate kernel.
 A parameter can instead be assigned its own kernel, which then replaces the surrogate
 kernel on that parameter's computational dimensions. The remaining dimensions stay with
