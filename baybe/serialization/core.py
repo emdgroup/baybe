@@ -265,7 +265,9 @@ converter.register_structure_hook_factory(
     _make_block_mismatching_type_hook,
 )
 converter.register_unstructure_hook(nw.DataFrame, _unstructure_nw_dataframe)
-converter.register_structure_hook(nw.DataFrame, _structure_nw_dataframe)
+converter.register_structure_hook(
+    nw.DataFrame, lambda obj, _: _structure_nw_dataframe(obj)
+)
 converter.register_unstructure_hook(datetime, lambda x: x.isoformat())
 converter.register_structure_hook(datetime, lambda x, _: datetime.fromisoformat(x))
 converter.register_unstructure_hook(timedelta, lambda x: f"{x.total_seconds()}s")
@@ -280,19 +282,21 @@ converter.register_structure_hook(AutoBool, structure_autobool)
 _PARQUET_MAGIC = b"PAR1"
 
 
-def _structure_pandas_dataframe(obj: str | dict, _: Any, /) -> pd.DataFrame:
+def _structure_pandas_dataframe(obj: str | dict, /) -> pd.DataFrame:
     """Legacy dataframe deserialization for pickle/base64 encoding."""
     if isinstance(obj, dict):
         return select_constructor_hook(obj.copy(), pd.DataFrame)
 
     raw = base64.b64decode(obj.encode("utf-8"))
     if raw[:4] == _PARQUET_MAGIC:
-        return _structure_nw_dataframe(obj, None).to_pandas()
+        return _structure_nw_dataframe(obj).to_pandas()
 
     import pickle
 
     return pickle.loads(raw)
 
 
-converter.register_structure_hook(pd.DataFrame, _structure_pandas_dataframe)
+converter.register_structure_hook(
+    pd.DataFrame, lambda obj, _: _structure_pandas_dataframe(obj)
+)
 # <<<<<<<<<< Deprecation

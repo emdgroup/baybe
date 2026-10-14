@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import io
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
 import pandas as pd
@@ -24,9 +24,9 @@ def deserialize_dataframe(serialized_df: str | dict, /) -> IntoDataFrame:
     Supports two input formats:
 
     - A string as produced by :func:`serialize_dataframe`.
-    - A dictionary with a ``constructor`` key specifying a constructor method name
-      and the corresponding keyword arguments. The constructor is looked up on
-      the native dataframe class of the active backend.
+    - A dictionary with a ``constructor`` key specifying one of
+      :class:`narwhals.stable.v2.DataFrame`'s constructor classmethods (e.g.
+      ``from_dict``, ``from_dicts``) and the corresponding keyword arguments.
 
     The backend of the resulting frame is determined by
     :attr:`baybe.active_settings.default_dataframe_backend`.
@@ -41,22 +41,19 @@ def deserialize_dataframe(serialized_df: str | dict, /) -> IntoDataFrame:
         ValueError: If the input is neither a string nor a dictionary.
         ValueError: If the input is a dict without a ``constructor`` key.
     """
-    from baybe.serialization.core import _CONSTRUCTOR_FIELD, select_constructor_hook
+    from baybe.serialization.core import _CONSTRUCTOR_FIELD
 
-    if isinstance(serialized_df, str):
-        return _structure_nw_dataframe(serialized_df, None).to_native()
-    elif isinstance(serialized_df, dict):
-        if _CONSTRUCTOR_FIELD not in serialized_df:
-            raise ValueError(
-                f"For deserializing a dataframe from a dictionary, "
-                f"the '{_CONSTRUCTOR_FIELD}' key must be provided.",
-            )
-        return select_constructor_hook(serialized_df, pd.DataFrame)
-    else:
+    if isinstance(serialized_df, dict) and _CONSTRUCTOR_FIELD not in serialized_df:
+        raise ValueError(
+            f"For deserializing a dataframe from a dictionary, "
+            f"the '{_CONSTRUCTOR_FIELD}' key must be provided.",
+        )
+    if not isinstance(serialized_df, str | dict):
         raise ValueError(
             "Unknown object type for deserializing a dataframe. Supported types are "
             "strings and dictionaries.",
         )
+    return _structure_nw_dataframe(serialized_df).to_native()
 
 
 def _unstructure_nw_dataframe(df: nw.DataFrame, /) -> str:
@@ -88,7 +85,7 @@ def _unstructure_nw_dataframe(df: nw.DataFrame, /) -> str:
     return base64.b64encode(buf.getvalue()).decode("utf-8")
 
 
-def _structure_nw_dataframe(obj: str | dict, _: Any, /) -> nw.DataFrame:
+def _structure_nw_dataframe(obj: str | dict, /) -> nw.DataFrame:
     """Deserialize a narwhals DataFrame from a base64-encoded Parquet string or dict."""
     from baybe.settings import active_settings
 
