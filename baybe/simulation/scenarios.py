@@ -282,14 +282,16 @@ def _simulate_groupby(
     #   all duplicates). While duplicate entries should be prevented by the search
     #   space constructor, the integer-based indexing provides a second safety net.
     #   Hence, the "reset_index" call.
+    candidates = (
+        campaign.searchspace.discrete._get_candidates()
+        .collect()
+        .to_pandas()
+        .reset_index()
+    )
     if groupby is None:
-        groups = ((None, campaign.searchspace.discrete.get_candidates().reset_index()),)
+        groups = ((None, candidates),)
     else:
-        groups = (
-            campaign.searchspace.discrete.get_candidates()
-            .reset_index()
-            .groupby(groupby)
-        )
+        groups = candidates.groupby(groupby)
 
     # Simulate all subgroups
     dfs = []

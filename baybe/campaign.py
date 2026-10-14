@@ -431,7 +431,7 @@ class Campaign(SerialMixin):
         #  * Additional shortcuts might be possible.
         self.clear_cache()
 
-        df = self.searchspace.discrete.get_candidates()
+        df = self.searchspace.discrete._get_candidates().collect().to_pandas()
 
         if isinstance(constraints, pd.DataFrame):
             # Determine the candidate subset to be toggled
@@ -532,7 +532,9 @@ class Campaign(SerialMixin):
         if self.searchspace.type is SearchSpaceType.DISCRETE:
             # TODO: This implementation should at some point be hidden behind an
             #   appropriate public interface, like `SubspaceDiscrete.filter()`
-            candidates = self.searchspace.discrete.get_candidates()
+            candidates = (
+                self.searchspace.discrete._get_candidates().collect().to_pandas()
+            )
             mask_todrop = pd.Series(False, index=candidates.index)
             if not self._excluded_experiments.empty:
                 mask_todrop |= (
@@ -1082,7 +1084,9 @@ def _structure_campaign(d: dict, cl: type) -> Campaign:
     # >>>>>>>>>> Deprecation
     # Post-structure reconstruction from legacy metadata indices
     if legacy_recommended_idxs is not None or legacy_excluded_idxs is not None:
-        candidates = campaign.searchspace.discrete.get_candidates()
+        candidates = (
+            campaign.searchspace.discrete._get_candidates().collect().to_pandas()
+        )
         if legacy_recommended_idxs is not None:
             campaign._recommended_experiments = candidates.loc[
                 legacy_recommended_idxs

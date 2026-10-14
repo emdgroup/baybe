@@ -54,9 +54,7 @@ class RandomRecommender(NonPredictiveRecommender):
             if searchspace.type is SearchSpaceType.CONTINUOUS:
                 return cont_random.to_native()
 
-        candidates_exp = nw.from_native(
-            searchspace.discrete.get_candidates(), eager_only=True
-        )
+        candidates_exp = searchspace.discrete._get_candidates().collect()
 
         # Restrict to a random subset if subset-generating constraints are present
         if searchspace.discrete.n_subsets > 0:
@@ -162,7 +160,7 @@ class FPSRecommender(NonPredictiveRecommender):
         from sklearn.preprocessing import StandardScaler
 
         # TODO [Scaling]: scaling should be handled by search space object
-        candidates = subspace_discrete.get_candidates()
+        candidates = subspace_discrete._get_candidates().collect()
         candidates_comp = subspace_discrete.transform(candidates)
         scaler = StandardScaler()
         scaler.fit(candidates_comp)
@@ -186,7 +184,7 @@ class FPSRecommender(NonPredictiveRecommender):
             )
         return nw.maybe_reset_index(
             _df_with_backend(
-                nw.from_native(candidates, eager_only=True)[idcs],
+                candidates[idcs],
                 active_settings.default_dataframe_backend,
             )
         ).to_native()
