@@ -318,7 +318,7 @@ x3 = NumericalContinuousParameter(
 ```
 
 In a search space with parameters ``x1``, ``x2``, and ``x3``, this produces
-``surrogate kernel(x1, x2) * RBF(x3)``. The override does not replace a dimension inside
+``surrogate_kernel(x1, x2) * RBF(x3)``. The override does not replace a dimension inside
 the surrogate kernel itself. It partitions the dimensions and creates a separate kernel
 factor. Multiple overrides produce multiple factors. For a parameter with several
 computational dimensions, the override acts jointly on the complete computational
