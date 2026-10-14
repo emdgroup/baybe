@@ -5,7 +5,7 @@ import pytest
 from attrs import evolve
 from pytest import param
 
-from baybe._optional.info import CHEM_INSTALLED, JINJA2_INSTALLED
+from baybe._optional.info import CHEM_INSTALLED, JINJA2_INSTALLED, LLM_INSTALLED
 from baybe.exceptions import LLMResponseError
 from baybe.objectives import (
     DesirabilityObjective,
@@ -271,6 +271,7 @@ _ALL_OPTIONAL_SECTIONS = {
 }
 
 
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
 @pytest.mark.parametrize(
     ("kwargs", "present_sections"),
     [
@@ -444,6 +445,7 @@ def test_forbidden_configurations(searchspace, expected):
     assert _forbidden_configurations(searchspace) == expected
 
 
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
 @pytest.mark.parametrize(
     ("recovery_kwargs", "expected_present", "expected_absent"),
     [
