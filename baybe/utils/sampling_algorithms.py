@@ -149,7 +149,7 @@ def farthest_point_sampling(
             map(int, np.unravel_index(idx_1d, dist_matrix.shape))
         )
         if n_samples == 1:
-            return [sort_idx[selected_point_indices[0]]]
+            return [int(sort_idx[selected_point_indices[0]])]
     else:  # initialization is Collection[int]
         inv_sort_idx = np.argsort(sort_idx)
         selected_point_indices = [inv_sort_idx[x] for x in initialization]

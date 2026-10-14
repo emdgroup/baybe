@@ -6,7 +6,7 @@ import warnings
 from collections.abc import Callable, Collection, Iterable
 from typing import TYPE_CHECKING
 
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import fields
 
 from baybe.constraints.utils import is_cardinality_fulfilled
@@ -16,7 +16,9 @@ from baybe.exceptions import (
 )
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.searchspace import SubspaceContinuous
+from baybe.settings import active_settings
 from baybe.utils.basic import flatten
+from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -112,7 +114,11 @@ def recommend_continuous_with_cardinality_constraints(
 
     # Check if any minimum cardinality constraints are violated
     if not is_cardinality_fulfilled(
-        pd.DataFrame(points, columns=subspace_continuous.parameter_names),
+        nw.DataFrame.from_numpy(
+            points.numpy(),
+            subspace_continuous.parameter_names,
+            backend=active_settings.default_dataframe_backend,
+        ),
         subspace_continuous,
         check_maximum=False,
     ):
@@ -147,7 +153,6 @@ def recommend_continuous_without_cardinality_constraints(
     Raises:
         ValueError: If the continuous search space has cardinality constraints.
     """
-    import torch
     from botorch.optim import optimize_acqf
 
     if subspace_continuous.n_subsets > 0:
@@ -183,9 +188,7 @@ def recommend_continuous_without_cardinality_constraints(
     #   For details: https://github.com/pytorch/botorch/issues/2042
     points, acqf_values = optimize_acqf(
         acq_function=recommender._botorch_acqf,
-        bounds=torch.from_numpy(
-            subspace_continuous.comp_rep_bounds.to_numpy(copy=True)
-        ),
+        bounds=to_tensor(subspace_continuous.comp_rep_bounds),
         q=batch_size,
         num_restarts=recommender.n_restarts,
         raw_samples=recommender.n_raw_samples,

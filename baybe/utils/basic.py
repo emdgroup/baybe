@@ -19,7 +19,6 @@ from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
 if TYPE_CHECKING:
     from _typeshed import ConvertibleToFloat
 
-_C = TypeVar("_C", bound=type)
 _T = TypeVar("_T")
 _U = TypeVar("_U")
 
@@ -50,7 +49,9 @@ def is_all_instance(
     return all(isinstance(y, t) for y in x)
 
 
-def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> list[_C]:
+def get_subclasses(
+    cls: type[_T], recursive: bool = True, abstract: bool = False
+) -> list[type[_T]]:
     """Return a list of subclasses for the given class.
 
     Args:
@@ -226,7 +227,7 @@ def refers_to(cls: type, name_or_abbr: str, /) -> bool:
     )
 
 
-def find_subclass(base: type, name_or_abbr: str, /):
+def find_subclass(base: type[object], name_or_abbr: str, /):
     """Retrieve a specific subclass of a base class via its name or abbreviation."""
     try:
         return next(cl for cl in get_subclasses(base) if refers_to(cl, name_or_abbr))

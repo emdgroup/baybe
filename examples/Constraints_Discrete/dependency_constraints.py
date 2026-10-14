@@ -77,39 +77,29 @@ print(campaign)
 
 N_ITERATIONS = 2 if SMOKE_TEST else 5
 for kIter in range(N_ITERATIONS):
+    candidates = campaign.searchspace.discrete.get_candidates()
+
     print(f"\n#### ITERATION {kIter + 1} ####")
 
     print("## ASSERTS ##")
     print(
         f"Number entries with both switches on "
         f"(expected {RESOLUTION * len(dict_solvent) * 2 * 2}): ",
-        (
-            (campaign.searchspace.discrete.exp_rep["Switch1"] == "on")
-            & (campaign.searchspace.discrete.exp_rep["Switch2"] == "right")
-        ).sum(),
+        ((candidates["Switch1"] == "on") & (candidates["Switch2"] == "right")).sum(),
     )
     print(
         f"Number entries with Switch1 off (expected {2 * 2}):       ",
-        (
-            (campaign.searchspace.discrete.exp_rep["Switch1"] == "off")
-            & (campaign.searchspace.discrete.exp_rep["Switch2"] == "right")
-        ).sum(),
+        ((candidates["Switch1"] == "off") & (candidates["Switch2"] == "right")).sum(),
     )
     print(
         f"Number entries with Switch2 off "
         f"(expected {RESOLUTION * len(dict_solvent)}):"
         f"      ",
-        (
-            (campaign.searchspace.discrete.exp_rep["Switch1"] == "on")
-            & (campaign.searchspace.discrete.exp_rep["Switch2"] == "left")
-        ).sum(),
+        ((candidates["Switch1"] == "on") & (candidates["Switch2"] == "left")).sum(),
     )
     print(
         "Number entries with both switches off (expected 1): ",
-        (
-            (campaign.searchspace.discrete.exp_rep["Switch1"] == "off")
-            & (campaign.searchspace.discrete.exp_rep["Switch2"] == "left")
-        ).sum(),
+        ((candidates["Switch1"] == "off") & (candidates["Switch2"] == "left")).sum(),
     )
 
     rec = campaign.recommend(batch_size=5)

@@ -13,6 +13,7 @@ from pytest import param
 from sklearn.metrics import pairwise_distances
 
 from baybe._optional.info import FPSAMPLE_INSTALLED
+from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.nonpredictive.sampling import FPSRecommender
 from baybe.settings import Settings
 from baybe.utils.sampling_algorithms import (
@@ -220,7 +221,9 @@ def test_fps_utility_expected_errors(points, n_requested, initialization, match)
 
 def test_fps_recommender_utility_initialization_indices(searchspace):
     """FPS utilities return expected indices when initialization indices are used."""
-    points = searchspace.discrete.comp_rep.values
+    candidates = searchspace.discrete.get_candidates()
+    candidates_comp = searchspace.discrete.transform(candidates)
+    points = candidates_comp.values
     inds1 = farthest_point_sampling(points, 3, initialization=[0])
     inds2 = farthest_point_sampling(points, 3, initialization=[1, 2])
 
@@ -242,21 +245,27 @@ def test_fps_recommender_utility_initialization_indices(searchspace):
         False,
     ],
 )
-def test_fps_recommender_utility_call(searchspace, use_fpsample):
+def test_fps_recommender_utility_call(use_fpsample):
     """FPSRecommender calls expected underlying utility."""
+    ss = NumericalDiscreteParameter("p", [1.0, 2.0, 3.0, 4.0]).to_searchspace()
+
     if use_fpsample:
-        context = patch("baybe._optional.fpsample.fps_sampling", return_value=[0, 1, 2])
+        context = patch("baybe._optional.fpsample.fps_sampling", return_value=[2, 0])
     else:
         context = patch(
             "baybe.recommenders.pure.nonpredictive.sampling.farthest_point_sampling",
-            return_value=[0, 1, 2],
+            return_value=[2, 0],
         )
 
-    with context as mock_, Settings(use_fpsample=use_fpsample):
-        result = FPSRecommender().recommend(batch_size=3, searchspace=searchspace)
+    with (
+        context as mock_,
+        Settings(use_fpsample=use_fpsample, default_dataframe_backend="pandas"),
+    ):
+        result = FPSRecommender().recommend(batch_size=2, searchspace=ss)
 
     mock_.assert_called_once()
-    assert result.index.tolist() == [0, 1, 2]
+    expected = ss.discrete.get_candidates().iloc[[2, 0]].reset_index(drop=True)
+    assert result.equals(expected)
 
 
 @pytest.mark.skipif(
@@ -267,7 +276,9 @@ def test_fps_recommender_result_consistency(searchspace):
     """FPS utilities return consistent results."""
     from baybe._optional.fpsample import fps_sampling
 
-    points = searchspace.discrete.comp_rep.values
+    candidates = searchspace.discrete.get_candidates()
+    candidates_comp = searchspace.discrete.transform(candidates)
+    points = candidates_comp.values
     inds1 = fps_sampling(points, 3, start_idx=0).tolist()
     inds2 = farthest_point_sampling(
         points, 3, initialization=[0], random_tie_break=False

@@ -115,43 +115,33 @@ print(campaign)
 
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
+    candidates = campaign.searchspace.discrete.get_candidates()
+
     print(f"\n\n#### ITERATION {kIter + 1} ####")
 
     print("## ASSERTS ##")
     print(
         "Number of entries with water, temp > 120 and concentration > 5:      ",
         (
-            campaign.searchspace.discrete.exp_rep["Concentration"].apply(
-                lambda x: x > 5
-            )
-            & campaign.searchspace.discrete.exp_rep["Temperature"].apply(
-                lambda x: x > 120
-            )
-            & campaign.searchspace.discrete.exp_rep["Solvent"].eq("water")
+            candidates["Concentration"].apply(lambda x: x > 5)
+            & candidates["Temperature"].apply(lambda x: x > 120)
+            & candidates["Solvent"].eq("water")
         ).sum(),
     )
     print(
         "Number of entries with C2, temp > 180 and concentration > 3:         ",
         (
-            campaign.searchspace.discrete.exp_rep["Concentration"].apply(
-                lambda x: x > 3
-            )
-            & campaign.searchspace.discrete.exp_rep["Temperature"].apply(
-                lambda x: x > 180
-            )
-            & campaign.searchspace.discrete.exp_rep["Solvent"].eq("C2")
+            candidates["Concentration"].apply(lambda x: x > 3)
+            & candidates["Temperature"].apply(lambda x: x > 180)
+            & candidates["Solvent"].eq("C2")
         ).sum(),
     )
     print(
         "Number of entries with C3, temp > 150 and concentration > 3:         ",
         (
-            campaign.searchspace.discrete.exp_rep["Concentration"].apply(
-                lambda x: x > 3
-            )
-            & campaign.searchspace.discrete.exp_rep["Temperature"].apply(
-                lambda x: x > 150
-            )
-            & campaign.searchspace.discrete.exp_rep["Solvent"].eq("C3")
+            candidates["Concentration"].apply(lambda x: x > 3)
+            & candidates["Temperature"].apply(lambda x: x > 150)
+            & candidates["Solvent"].eq("C3")
         ).sum(),
     )
 
