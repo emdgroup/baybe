@@ -123,7 +123,7 @@ def test_constructor_based_deserialization(target_type, impl, spec, expected_dat
     [
         param(pd.DataFrame({"a": [1, 2, 3]}, index=[10, 20, 30]), id="integer-index"),
         param(pd.DataFrame({"a": [1, 2, 3]}, index=["x", "y", "z"]), id="string-index"),
-        param(pd.DataFrame({"a": [1, 2, 3]}).iloc[1:], id="sliced-range-index"),
+        param(pd.DataFrame({"a": [1, 2, 3]}).iloc[1:], id="non-default-range-index"),
     ],
 )
 def test_serialize_non_trivial_index_raises(df):

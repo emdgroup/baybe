@@ -61,6 +61,14 @@ def deserialize_dataframe(serialized_df: str | dict, /) -> IntoDataFrame:
 
 def _unstructure_nw_dataframe(df: nw.DataFrame, /) -> str:
     """Serialize a narwhals DataFrame to a base64-encoded Parquet string."""
+    # We forbid serializing pandas DataFrames with non-default indices because users
+    # should explicitly reset the index rather than unintentionally relying on a
+    # potentially lossy round trip. Pandas stores indices as metadata in Parquet and
+    # restores them when reading the data back into pandas. Other backends, however, may
+    # materialize the index as additional "private" columns. Since we cannot control
+    # which backend is used for deserialization, we reject non-default indices instead
+    # of pretending that the index can be preserved. This is consistent with BayBE's
+    # general design philosophy, which does not rely on pandas indices.
     native = df.to_native()
     if isinstance(native, pd.DataFrame):
         idx = native.index
@@ -72,7 +80,7 @@ def _unstructure_nw_dataframe(df: nw.DataFrame, /) -> str:
         )
         if not is_default_range:
             raise ValueError(
-                f"Cannot serialize a pandas DataFrame with a non-trivial index "
+                f"Cannot serialize a pandas DataFrame with a non-default index "
                 f"({idx!r}). Reset the index before serializing."
             )
     buf = io.BytesIO()
