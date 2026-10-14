@@ -303,7 +303,7 @@ Here, "surrogate kernel" refers to the ``kernel_or_factory`` of the
 {class}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`, falling back
 to BayBE's default kernel when none is given.
 
-Regular parameters can replace the surrogate kernel on their computational dimensions
+Most parameter types allow to replace the surrogate kernel on their computational dimensions
 using {attr}`~baybe.parameters.base.Parameter.override_kernel`:
 
 ```python
