@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from contextlib import nullcontext
-
 import narwhals.stable.v2 as nw
 import pandas as pd
 import pytest
@@ -13,7 +11,6 @@ from narwhals.testing import assert_frame_equal
 from pytest import mark, param
 
 from baybe.serialization import deserialize_dataframe, serialize_dataframe
-from baybe.serialization.core import converter
 from baybe.settings import Settings
 from tests.hypothesis_strategies.dataframes import random_dataframes
 
@@ -47,70 +44,41 @@ def test_native_dataframe_roundtrip(impl, data):
 
 
 @mark.parametrize(
-    ("target_type", "impl", "spec", "expected_data"),
+    "impl",
+    [nw.Implementation.PANDAS, nw.Implementation.POLARS],
+    ids=["pandas", "polars"],
+)
+@mark.parametrize(
+    "spec",
     [
         param(
-            pd.DataFrame,
-            nw.Implementation.PANDAS,
+            {"constructor": "from_dict", "data": {"x": [1, 3], "y": [2, 4]}},
+            id="from_dict",
+        ),
+        param(
             {
-                "constructor": "from_records",
+                "constructor": "from_dicts",
                 "data": [{"x": 1, "y": 2}, {"x": 3, "y": 4}],
             },
-            {"x": [1, 3], "y": [2, 4]},
-            id="native-pandas-from_records",
-        ),
-        param(
-            pd.DataFrame,
-            nw.Implementation.PANDAS,
-            {"constructor": "from_dict", "data": {"x": [1, 3], "y": [2, 4]}},
-            {"x": [1, 3], "y": [2, 4]},
-            id="native-pandas-from_dict",
-        ),
-        param(
-            nw.DataFrame,
-            nw.Implementation.PANDAS,
-            {"constructor": "from_dict", "data": {"x": [1, 3], "y": [2, 4]}},
-            {"x": [1, 3], "y": [2, 4]},
-            id="narwhals-pandas-from_dict",
-        ),
-        param(
-            nw.DataFrame,
-            nw.Implementation.PANDAS,
-            {"constructor": "from_dicts", "data": [{"x": 1, "y": 2}, {"x": 3, "y": 4}]},
-            {"x": [1, 3], "y": [2, 4]},
-            id="narwhals-pandas-from_dicts",
-        ),
-        param(
-            nw.DataFrame,
-            nw.Implementation.POLARS,
-            {"constructor": "from_dict", "data": {"x": [1, 3], "y": [2, 4]}},
-            {"x": [1, 3], "y": [2, 4]},
-            id="narwhals-polars-from_dict",
-        ),
-        param(
-            nw.DataFrame,
-            nw.Implementation.POLARS,
-            {"constructor": "from_dicts", "data": [{"x": 1, "y": 2}, {"x": 3, "y": 4}]},
-            {"x": [1, 3], "y": [2, 4]},
-            id="narwhals-polars-from_dicts",
+            id="from_dicts",
         ),
     ],
 )
-def test_constructor_based_deserialization(target_type, impl, spec, expected_data):
-    """Constructor-based deserialization dispatches to the correct namespace.
+def test_constructor_based_deserialization(spec, impl):
+    """Dict-based deserialization dispatches to the correct narwhals constructor.
 
-    The active backend determines the native type of the result. Native target types use
-    the active backend's native namespace; narwhals target types use the narwhals
-    DataFrame classmethods.
+    The result's data matches the input and its native backend matches the active
+    dataframe backend.
     """
-    ctx = pytest.raises(AttributeError) if expected_data is None else nullcontext()
-    with Settings(default_dataframe_backend=impl), ctx:
-        result = converter.structure(spec, target_type)
-    if expected_data is not None:
-        assert_frame_equal(
-            nw.from_native(result, eager_only=True),
-            nw.from_dict(expected_data, backend=impl),
-        )
+    with Settings(default_dataframe_backend=impl):
+        result = deserialize_dataframe(dict(spec))
+
+    result_nw = nw.from_native(result, eager_only=True)
+    assert result_nw.implementation == impl
+    assert_frame_equal(
+        result_nw,
+        nw.from_dict({"x": [1, 3], "y": [2, 4]}, backend=impl),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -128,7 +96,7 @@ def test_constructor_based_deserialization(target_type, impl, spec, expected_dat
 )
 def test_serialize_non_trivial_index_raises(df):
     """Serializing a pandas DataFrame with a non-trivial index raises."""
-    with pytest.raises(ValueError, match="non-trivial index"):
+    with pytest.raises(ValueError, match="non-default index"):
         serialize_dataframe(df)
 
 

@@ -118,6 +118,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `exclusion_constraints` example to `selection_constraints`
 - `DiscreteProductConstraint` now uses `operator`/`rhs`/`tolerance` instead of
   `condition`
+- `deserialize_dataframe` now routes dictionary-based input via
+  `narwhals.DataFrame` constructors (e.g. `from_dict`, `from_dicts`) and dispatches
+  to the active dataframe backend instead of always returning pandas dataframes
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
@@ -150,6 +153,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteSumConstraint` in favor of `DiscreteLinearConstraint`
 - `DiscreteProductConstraint(condition=ThresholdCondition(...))` in favor of
   `DiscreteProductConstraint(operator=..., rhs=...)`
+- `deserialize_dataframe` dictionary input specifying a pandas-only constructor
+  (e.g. `from_records`) in favor of `narwhals.DataFrame`'s constructors
+  (e.g. `from_dict`, `from_dicts`)
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes

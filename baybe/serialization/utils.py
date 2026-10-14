@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import io
+import warnings
 from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
@@ -31,6 +32,11 @@ def deserialize_dataframe(serialized_df: str | dict, /) -> IntoDataFrame:
     The backend of the resulting frame is determined by
     :attr:`baybe.active_settings.default_dataframe_backend`.
 
+    For backward compatibility, dictionaries specifying a pandas-only constructor
+    (e.g. ``from_records``) are still supported but trigger a
+    :class:`DeprecationWarning` and always return a pandas ``DataFrame``, regardless
+    of the active backend.
+
     Args:
         serialized_df: The serialized dataframe.
 
@@ -53,6 +59,26 @@ def deserialize_dataframe(serialized_df: str | dict, /) -> IntoDataFrame:
             "Unknown object type for deserializing a dataframe. Supported types are "
             "strings and dictionaries.",
         )
+
+    # >>>>>>>>>> Deprecation
+    if isinstance(serialized_df, dict):
+        constructor_name = serialized_df[_CONSTRUCTOR_FIELD]
+        if not hasattr(nw.DataFrame, constructor_name) and hasattr(
+            pd.DataFrame, constructor_name
+        ):
+            from baybe.serialization.core import select_constructor_hook
+
+            warnings.warn(
+                f"Using the pandas-only constructor '{constructor_name}' for "
+                f"deserializing a dataframe is deprecated and will be removed in a "
+                f"future version. Use one of '{nw.DataFrame.__name__}'s "
+                f"constructors instead (e.g. 'from_dict', 'from_dicts').",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return select_constructor_hook(serialized_df.copy(), pd.DataFrame)
+    # <<<<<<<<<< Deprecation
+
     return _structure_nw_dataframe(serialized_df).to_native()
 
 

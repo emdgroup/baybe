@@ -59,7 +59,7 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
-from baybe.serialization import converter
+from baybe.serialization import converter, deserialize_dataframe
 from baybe.settings import Settings
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
@@ -959,6 +959,26 @@ def test_legacy_pickle_dataframe_deserialization(df):
     pd.testing.assert_frame_equal(
         converter.structure(_legacy_serialize(df), pd.DataFrame), df
     )
+
+
+@pytest.mark.parametrize(
+    "impl",
+    [nw.Implementation.PANDAS, nw.Implementation.POLARS],
+    ids=["pandas", "polars"],
+)
+def test_deserialize_dataframe_pandas_only_constructor_is_deprecated(impl):
+    """Dict-based deserialization still supports pandas-only constructors.
+
+    Doing so emits a deprecation warning and always returns a pandas ``DataFrame``,
+    irrespective of the active backend.
+    """
+    spec = {"constructor": "from_records", "data": [{"x": 1, "y": 2}]}
+    with (
+        Settings(default_dataframe_backend=impl),
+        pytest.warns(DeprecationWarning, match="from_records"),
+    ):
+        result = deserialize_dataframe(spec)
+    assert isinstance(result, pd.DataFrame)
 
 
 def test_legacy_campaign_v0150_deserialization():
