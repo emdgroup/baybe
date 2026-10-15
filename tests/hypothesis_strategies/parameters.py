@@ -39,12 +39,24 @@ categories = st.lists(
 
 
 @st.composite
-def kernel_overrides(draw: st.DrawFn, parameter_name: str):
-    """Generate valid kernel overrides for a parameter."""
+def kernel_overrides(draw: st.DrawFn, parameter_name: str, scoped: bool | None = None):
+    """Generate valid kernel overrides for a parameter.
+
+    Args:
+        draw: Hypothesis draw object.
+        parameter_name: The name of the parameter the override belongs to.
+        scoped: Whether the kernel is scoped to the parameter (``True``), unscoped
+            (``False``), or either (``None``).
+
+    Returns:
+        A kernel override or ``None``.
+    """
     from tests.hypothesis_strategies.kernels import kernels
 
     kernel = draw(st.one_of(st.none(), kernels(parameter_names=(parameter_name,))))
-    if kernel is not None and draw(st.booleans()):
+    if scoped is None:
+        scoped = draw(st.booleans())
+    if kernel is not None and not scoped:
         kernel = kernel._scope_to_parameter(None)
     return kernel
 
