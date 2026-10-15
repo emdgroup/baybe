@@ -8,6 +8,7 @@ from pytest import param
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
+from baybe.settings import Settings
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
 
@@ -47,6 +48,7 @@ def test_bad_parameter_input_value(campaign, bad_val, fake_measurements):
         param("asd", ["Target_binary"], id="binary_target_str"),
     ],
 )
+@Settings(default_dataframe_backend="pandas")
 def test_bad_target_input_value(campaign, bad_val):
     """Test attempting to read in an invalid target value."""
     rec = campaign.recommend(batch_size=3)

@@ -6,6 +6,7 @@ import warnings
 from typing import Any, Literal
 
 import matplotlib.pyplot as plt
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from attr.validators import deep_iterable
@@ -222,10 +223,14 @@ class SHAPInsight:
         Raises:
             ValueError: If the campaign does not contain any measurements.
         """
-        if campaign.measurements.empty:
+        measurements = nw.from_native(campaign.measurements, eager_only=True)
+        if measurements.is_empty():
             raise NoMeasurementsError("The campaign does not contain any measurements.")
-        data = campaign.measurements[[p.name for p in campaign.parameters]]
-        background_data = campaign.searchspace.transform(data) if use_comp_rep else data
+        data = measurements.select([p.name for p in campaign.parameters]).to_native()
+        background_data = nw.from_native(
+            campaign.searchspace.transform(data) if use_comp_rep else data,
+            eager_only=True,
+        ).to_pandas()
 
         return cls.from_surrogate(
             campaign.get_surrogate(),
