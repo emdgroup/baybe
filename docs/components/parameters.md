@@ -302,9 +302,10 @@ k_{\mathrm{effective}}
 \prod_{p \in P_{\mathrm{override}}} k_p(X_p).
 ```
 
-Here, "surrogate kernel" refers to the ``kernel_or_factory`` of the
-{class}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`, falling back
-to BayBE's default kernel when none is given.
+Here, "surrogate kernel" refers to the
+{attr}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.kernel_factory`
+of the {class}`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`,
+falling back to BayBE's default kernel when none is given.
 
 Most parameter types allow to replace the surrogate kernel on their computational dimensions
 using {attr}`~baybe.parameters.base.Parameter.override_kernel`:
@@ -328,8 +329,9 @@ computational dimensions, the override acts jointly on the complete computationa
 representation.
 
 An override can be a configured BayBE or GPyTorch kernel instance. For a BayBE kernel,
-``parameter_names`` must be ``None`` or contain exactly the owning parameter. Here,
-``None`` is rebound to the owning parameter instead of acting on all dimensions.
+{attr}`~baybe.kernels.base.BasicKernel.parameter_names` must be ``None`` or contain
+exactly the owning parameter. Here, ``None`` is rebound to the owning parameter instead
+of acting on all dimensions.
 
 ```{admonition} Limitations
 :class: warning
