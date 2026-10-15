@@ -313,6 +313,11 @@ _ALL_OPTIONAL_SECTIONS = {
             id="with_recovery",
         ),
         param(
+            {"error": LLMResponseError("test error")},
+            {"WHAT WENT WRONG"},
+            id="with_recovery_without_response",
+        ),
+        param(
             {
                 "measurements": pd.DataFrame(columns=["Cat", "yield"]),
             },
@@ -342,22 +347,14 @@ def test_make_prompt_optional_sections(kwargs, present_sections):
         assert section not in prompt
 
 
-@pytest.mark.parametrize(
-    ("error", "original_response"),
-    [
-        param(LLMResponseError("err"), None, id="error_only"),
-        param(None, "response text", id="response_only"),
-    ],
-)
-def test_make_prompt_recovery_requires_both(error, original_response):
-    """Providing only one of ``error``/``original_response`` raises."""
-    with pytest.raises(ValueError, match="must be provided together"):
+def test_make_prompt_original_response_requires_error():
+    """Providing ``original_response`` without ``error`` raises."""
+    with pytest.raises(ValueError, match="can only be provided with 'error'"):
         make_prompt(
             batch_size=1,
             searchspace=_SEARCHSPACE,
             experiment_description=_DESCRIPTION,
-            error=error,
-            original_response=original_response,
+            original_response="response text",
         )
 
 

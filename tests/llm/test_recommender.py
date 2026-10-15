@@ -1,6 +1,7 @@
 """Tests for the LLM recommender integration."""
 
 import warnings
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pandas as pd
@@ -116,14 +117,14 @@ def test_call_errors(exception, expected_error):
     assert mock.call_count == 1
 
 
-def test_empty_response():
-    """A response with ``None`` content raises without a recovery attempt."""
-    with patch(PATCH_TARGET, return_value=mock_response(None)) as mock:
-        with pytest.raises(LLMResponseError):
-            _RECOMMENDER.recommend(1, _SEARCHSPACE, _OBJECTIVE)
-    assert mock.call_count == 1
-
-
+@pytest.mark.parametrize(
+    "first_response",
+    [
+        param(mock_response("not valid json"), id="invalid_json"),
+        param(mock_response(None), id="empty_content"),
+        param(SimpleNamespace(), id="unexpected_structure"),
+    ],
+)
 @pytest.mark.parametrize(
     ("batch_size", "recovery_response", "expected_error"),
     [
@@ -159,9 +160,9 @@ def test_empty_response():
         ),
     ],
 )
-def test_recovery(batch_size, recovery_response, expected_error):
-    """After a bad first response, a recovery attempt is made exactly once."""
-    side_effect = [mock_response("not valid json"), recovery_response]
+def test_recovery(first_response, batch_size, recovery_response, expected_error):
+    """After an unusable first response, a recovery attempt is made exactly once."""
+    side_effect = [first_response, recovery_response]
     with patch(PATCH_TARGET, side_effect=side_effect) as mock:
         if expected_error is None:
             _RECOMMENDER.recommend(batch_size, _SEARCHSPACE, _OBJECTIVE)
@@ -171,9 +172,15 @@ def test_recovery(batch_size, recovery_response, expected_error):
     assert mock.call_count == 2
 
 
-def test_recovery_prompt_content():
+@pytest.mark.parametrize(
+    "bad_content",
+    [
+        param("not valid json", id="invalid_json"),
+        param(None, id="empty_content"),
+    ],
+)
+def test_recovery_prompt_content(bad_content):
     """The recovery prompt carries the full context and the error details."""
-    bad_content = "not valid json"
     valid_content = make_valid_json(_SEARCHSPACE, 1)
     side_effect = [mock_response(bad_content), mock_response(valid_content)]
     with patch(PATCH_TARGET, side_effect=side_effect) as mock:
@@ -186,9 +193,10 @@ def test_recovery_prompt_content():
         experiment_description=_RECOMMENDER.experiment_description,
     )
     expected_first = make_prompt(**prompt_kwargs)
+    # Only the recovery instruction of the error type enters the prompt
     expected_recovery = make_prompt(
         **prompt_kwargs,
-        error=LLMMalformedResponseError("Response contains no JSON array of objects."),
+        error=LLMMalformedResponseError("Unused message."),
         original_response=bad_content,
     )
 

@@ -15,6 +15,7 @@ from baybe.exceptions import (
     LLMAuthenticationError,
     LLMBatchSizeError,
     LLMCallError,
+    LLMMalformedResponseError,
     LLMResponseError,
 )
 from baybe.objectives.base import Objective
@@ -116,7 +117,8 @@ class LLMRecommender(PureRecommender, SerialMixin):
             LLMAuthenticationError: If authentication with the provider fails.
             LLMCallError: If the call fails for another reason (e.g. network, rate
                 limiting, timeout, unknown model) before a response is produced.
-            LLMResponseError: If a response is returned but contains no usable content.
+            LLMMalformedResponseError: If a response is returned but has an unexpected
+                structure or no content.
         """
         from baybe._optional.llm import AuthenticationError, completion
 
@@ -145,12 +147,14 @@ class LLMRecommender(PureRecommender, SerialMixin):
             choices = response.choices  # pyrefly: ignore[missing-attribute]
             content = choices[0].message.content
         except (AttributeError, IndexError, TypeError) as e:
-            raise LLMResponseError(
+            raise LLMMalformedResponseError(
                 f"The language model returned an unexpected response structure: {e}."
             ) from e
 
         if content is None:
-            raise LLMResponseError("The language model returned empty content (None).")
+            raise LLMMalformedResponseError(
+                "The language model returned empty content (None)."
+            )
 
         return content
 
@@ -255,8 +259,10 @@ class LLMRecommender(PureRecommender, SerialMixin):
             self._pending_experiments,
             experiment_description=self.experiment_description,
         )
-        content = self._query_model(prompt)
+        # Stays `None` if the model returns no usable content
+        content: str | None = None
         try:
+            content = self._query_model(prompt)
             return self._validate_response(content, searchspace, batch_size)
         except LLMResponseError as initial_error:
             # The recommendation had an issue. Make a recovery attempt.

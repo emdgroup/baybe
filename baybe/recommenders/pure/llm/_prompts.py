@@ -103,9 +103,11 @@ Your previous recommendation could not be used and needs to be corrected.
 
 WHAT WENT WRONG:
 {{ recovery_instruction }}
+{% if original_response is not none %}
 
 ORIGINAL RESPONSE:
 {{ original_response }}
+{% endif %}
 
 Please provide a corrected set of {{ batch_size }} experimental conditions that \
 addresses the problem described above and improves the optimization objective.
@@ -347,9 +349,9 @@ def make_prompt(
     :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`; the LLM-specific
     ``experiment_description`` is keyword-only.
 
-    When ``error`` and ``original_response`` are provided, the prompt is rendered in
-    *recovery* mode: it carries the exact same context as the original query and appends
-    a correction section asking the model to fix its previous response. Because each
+    When ``error`` is provided, the prompt is rendered in *recovery* mode: it carries
+    the exact same context as the original query and appends a correction section
+    asking the model to fix its previous response. Because each
     model call is stateless, carrying the full context here is what lets the recovery
     attempt reason as well as the original one.
 
@@ -364,19 +366,18 @@ def make_prompt(
         pending_experiments: Optional pending experiments to include in the prompt.
         experiment_description: Textual description of the experiment.
         error: If set, renders a recovery prompt using the error's
-            :attr:`~baybe.exceptions.LLMResponseError.recovery_instruction`. Must be
-            provided together with ``original_response``.
-        original_response: The previous, rejected response to be corrected. Must be
-            provided together with ``error``.
+            :attr:`~baybe.exceptions.LLMResponseError.recovery_instruction`.
+        original_response: The previous, rejected response to be corrected, if the
+            model returned any content. Requires ``error``.
 
     Raises:
-        ValueError: If exactly one of ``error`` and ``original_response`` is provided.
+        ValueError: If ``original_response`` is provided without ``error``.
 
     Returns:
         The constructed prompt.
     """
-    if (error is None) != (original_response is None):
-        raise ValueError("'error' and 'original_response' must be provided together.")
+    if original_response is not None and error is None:
+        raise ValueError("'original_response' can only be provided with 'error'.")
 
     from baybe._optional.llm import StrictUndefined, Template
 
