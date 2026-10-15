@@ -755,7 +755,7 @@ class Campaign(SerialMixin):
     def get_surrogate(
         self,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> SurrogateProtocol:
         """Get the current surrogate model.
 
