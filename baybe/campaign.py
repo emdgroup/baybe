@@ -803,7 +803,7 @@ class Campaign(SerialMixin):
                     f"compute statistics for in this case."
                 )
 
-            candidates = nw.from_native(self.measurements, eager_only=True).select(  # pyrefly: ignore[bad-assignment]
+            candidates = nw.from_native(self.measurements, eager_only=True).select(  # type: ignore[assignment]
                 [p.name for p in self.parameters]
             )
 
