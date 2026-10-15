@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
 - `replace_batch`/`drop_batch` methods to `Campaign` for replacing/dropping an entire
   batch of measurements
+- `Campaign.n_batches` property indicating the number of recorded measurement batches
 
 ### Changed
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`

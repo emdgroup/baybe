@@ -217,6 +217,11 @@ class Campaign(SerialMixin):
         return to_string(self.__class__.__name__, *fields)
 
     @property
+    def n_batches(self) -> int:
+        """The number of recorded measurement batches."""
+        return len(self._measurements)
+
+    @property
     def measurements(self) -> IntoDataFrame:
         """The experimental data added to the Campaign."""
         if not self._measurements:
