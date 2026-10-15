@@ -27,8 +27,10 @@ from baybe.searchspace.core import SearchSpaceType
 from baybe.serialization import SerialMixin
 from baybe.utils.conversion import to_string
 
-# Keys that are wired in by the recommender itself and must not be overridden.
-_RESERVED_LITELLM_KEYS = frozenset({"model", "messages"})
+# Keys that are controlled by the recommender itself and must not be overridden: the
+# model and messages are set explicitly, and the response must not be streamed since
+# it is parsed as a whole.
+_RESERVED_LITELLM_KEYS = frozenset({"model", "messages", "stream"})
 
 # Credential keys that LiteLLM accepts inline but must be supplied via environment
 # variables instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY). Blocking them at
@@ -93,8 +95,8 @@ class LLMRecommender(PureRecommender, SerialMixin):
         conflicts = _RESERVED_LITELLM_KEYS & set(value.keys())
         if conflicts:
             raise ValueError(
-                f"'{attribute.name}' must not contain keys that are set explicitly: "
-                f"{conflicts}. Use the dedicated class attributes instead."
+                f"'{attribute.name}' must not contain keys that are controlled by the "
+                f"recommender itself: {sorted(conflicts)}."
             )
         cred_conflicts = _CREDENTIAL_LITELLM_KEYS & set(value.keys())
         if cred_conflicts:
@@ -141,8 +143,9 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 f"'{self.model}'."
             ) from e
 
-        # NOTE: `completion()` can also return a stream/coroutine (via `litellm_args`),
-        # whose types lack `.choices`; the `except` below handles those at runtime.
+        # NOTE: `completion()` is typed to also return a stream, which lacks `.choices`.
+        #   Streaming is excluded via `_RESERVED_LITELLM_KEYS`, and the `except` below
+        #   guards against any other unexpected response type at runtime.
         try:
             choices = response.choices  # pyrefly: ignore[missing-attribute]
             content = choices[0].message.content
