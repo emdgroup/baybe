@@ -9,7 +9,19 @@ from baybe.utils.dataframe import add_fake_measurements
 from tests.serialization.utils import assert_roundtrip_consistency
 
 
-@Settings(default_dataframe_backend="pandas")
+@pytest.fixture(autouse=True, scope="module")
+def _use_pandas_backend():
+    """Use the pandas backend for all tests in this module.
+
+    Applied at module scope so that fixture resolution (not just the test body)
+    sees the correct backend. The ``@Settings`` decorator on individual test
+    functions would not achieve this because pytest resolves fixtures before the
+    decorator's context manager activates.
+    """
+    with Settings(default_dataframe_backend="pandas"):
+        yield
+
+
 def test_roundtrip(campaign: Campaign):
     """A serialization roundtrip yields an equivalent object."""
     assert_roundtrip_consistency(campaign)
