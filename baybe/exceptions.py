@@ -353,6 +353,23 @@ class LLMIneligiblePointsError(LLMResponseError):
         )
 
 
+class LLMDuplicateRecommendationsError(LLMResponseError):
+    """A language model response contained identical recommendations."""
+
+    def __init__(self, *args: Any, n_duplicates: int):
+        super().__init__(*args)
+        self.n_duplicates = n_duplicates
+
+    @property
+    @override
+    def recovery_instruction(self) -> str:
+        return (
+            f"{self.n_duplicates} of your proposed configurations duplicate another "
+            f"configuration of the same batch. All recommendations within a batch must "
+            f"be distinct."
+        )
+
+
 class LLMBatchSizeError(LLMResponseError):
     """A language model response contained the wrong number of recommendations."""
 
@@ -365,7 +382,7 @@ class LLMBatchSizeError(LLMResponseError):
     @override
     def recovery_instruction(self) -> str:
         return (
-            f"Your previous response provided {self.received} valid recommendation(s), "
+            f"Your previous response provided {self.received} recommendation(s), "
             f"but exactly {self.requested} are required. Provide {self.requested} "
             f"distinct, valid recommendations."
         )

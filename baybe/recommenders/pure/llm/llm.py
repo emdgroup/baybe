@@ -15,7 +15,6 @@ from baybe.constraints.discrete import DiscreteCustomConstraint
 from baybe.exceptions import (
     IncompatibilityError,
     LLMAuthenticationError,
-    LLMBatchSizeError,
     LLMCallError,
     LLMMalformedResponseError,
     LLMResponseError,
@@ -166,34 +165,6 @@ class LLMRecommender(PureRecommender, SerialMixin):
 
         return content
 
-    def _validate_response(
-        self, content: str, searchspace: SearchSpace, batch_size: int
-    ) -> pd.DataFrame:
-        """Parse and validate a raw response into a recommendation batch.
-
-        Args:
-            content: The raw text content of the model response.
-            searchspace: The search space to validate recommendations against.
-            batch_size: The number of recommendations to generate.
-
-        Returns:
-            A DataFrame with exactly ``batch_size`` recommendations.
-
-        Raises:
-            LLMResponseError: If the response cannot be parsed/validated, or if it
-                contains fewer than ``batch_size`` recommendations.
-        """
-        output = parse_llm_response(content, searchspace)
-        if len(output) < batch_size:
-            raise LLMBatchSizeError(
-                f"The language model returned {len(output)} valid recommendation(s) "
-                f"instead of the requested {batch_size}.",
-                requested=batch_size,
-                received=len(output),
-            )
-        # NOTE: Duplicate configurations within a batch are permitted.
-        return output.head(batch_size)
-
     def _validate_compatibility(
         self, searchspace: SearchSpace, objective: Objective | None
     ) -> None:
@@ -310,7 +281,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
         content: str | None = None
         try:
             content = self._query_model(prompt)
-            return self._validate_response(content, searchspace, batch_size)
+            return parse_llm_response(content, searchspace, batch_size)
         except LLMResponseError as initial_error:
             # The recommendation had an issue. Make a recovery attempt.
             recovery_prompt = make_prompt(
@@ -325,9 +296,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
             )
             try:
                 recovery_content = self._query_model(recovery_prompt)
-                return self._validate_response(
-                    recovery_content, searchspace, batch_size
-                )
+                return parse_llm_response(recovery_content, searchspace, batch_size)
             except LLMResponseError as recovery_error:
                 raise LLMResponseError(
                     f"The language model failed to produce a valid recommendation, "

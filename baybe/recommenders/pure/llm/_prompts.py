@@ -103,12 +103,12 @@ ORIGINAL RESPONSE:
 {{ original_response }}
 {% endif %}
 
-Please provide a corrected set of {{ batch_size }} experimental conditions that \
-addresses the problem described above and improves the optimization objective.
+Please provide a corrected set of {{ batch_size }} distinct experimental conditions \
+that addresses the problem described above and improves the optimization objective.
 {% else %}
 
-Please suggest {{ batch_size }} new experimental conditions that are likely to \
-improve the optimization objective.
+Please suggest {{ batch_size }} distinct new experimental conditions that are likely \
+to improve the optimization objective.
 {% endif %}
 For each suggestion, provide:
 1. A brief explanation of why you chose these values
