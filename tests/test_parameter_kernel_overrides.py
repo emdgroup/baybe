@@ -6,15 +6,21 @@ from unittest.mock import Mock
 
 import pandas as pd
 import pytest
+import torch
 from attrs import evolve
+from botorch.models.kernels.positive_index import (
+    PositiveIndexKernel as BoPositiveIndexKernel,
+)
 from gpytorch import kernels as gk
 from gpytorch import means as gm
 from gpytorch.constraints import Interval
 from gpytorch.priors import GammaPrior as GPyTorchGammaPrior
 from pytest import param
 
+from baybe.exceptions import IncompatibleOverrideError
 from baybe.kernels import MaternKernel, RBFKernel
 from baybe.kernels.base import Kernel
+from baybe.kernels.basic import IndexKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from baybe.parameters import (
     CategoricalParameter,
@@ -25,7 +31,14 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import _iter_basic_kernels
 from baybe.parameters.enum import TransferLearningMode
+from baybe.parameters.selectors import NameSelector
 from baybe.priors import GammaPrior
+from baybe.searchspace import SearchSpace
+from baybe.surrogates import GaussianProcessSurrogate
+from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
+from baybe.surrogates.gaussian_process.core import _ModelContext
+from baybe.surrogates.gaussian_process.presets import BayBEKernelFactory
+from baybe.targets import NumericalTarget
 
 _continuous = partial(NumericalContinuousParameter, "x", (0, 1))
 _discrete = partial(NumericalDiscreteParameter, "x", (0, 1, 2))
@@ -70,6 +83,79 @@ def _task_pair(values, mode, other_values, other_mode):
         TaskParameter("t1", values, override_transfer_learning_mode=mode),
         TaskParameter("t2", other_values, override_transfer_learning_mode=other_mode),
     )
+
+
+def _x(name, override=None):
+    """Create a continuous parameter on [0, 1], optionally with a kernel override."""
+    return NumericalContinuousParameter(name, (0, 1), override_kernel=override)
+
+
+def _tl_task(mode=None):
+    """Create a three-valued task parameter, optionally with a TL mode."""
+    return TaskParameter("task", ("a", "b", "c"), override_transfer_learning_mode=mode)
+
+
+def _basic_kernels(kernel, columns):
+    """Yield each basic kernel of a GPyTorch kernel with the columns it acts on.
+
+    Basic kernels compute on columns (e.g. RBF, Matern), as opposed to wrappers such
+    as Scale, Additive, or Product kernels. As in GPyTorch, ``active_dims`` of a
+    kernel apply to everything nested inside it.
+    """
+    if kernel.active_dims is not None:
+        columns = set(kernel.active_dims.tolist())
+    children = [c for c in kernel.children() if isinstance(c, gk.Kernel)]
+    children += [
+        m for c in kernel.children() if isinstance(c, torch.nn.ModuleList) for m in c
+    ]
+    if not children:
+        yield kernel, columns
+    for child in children:
+        yield from _basic_kernels(child, columns)
+
+
+def _factors_by_parameter(kernel, searchspace):
+    """Map the parameters each basic kernel acts on to the basic kernel classes.
+
+    Example: ``{("x1", "x3"): [MaternKernel], ("x2",): [RBFKernel]}``
+    """
+    factors: dict[tuple[str, ...], list[type]] = {}
+    for k, names, _ in _basic_kernels_by_parameter(kernel, searchspace):
+        factors.setdefault(names, []).append(type(k))
+    return factors
+
+
+def _basic_kernels_by_parameter(kernel, searchspace):
+    """Yield each basic kernel with the parameters and columns it acts on."""
+    all_columns = set(range(len(searchspace.comp_rep_columns)))
+    for k, columns in _basic_kernels(kernel, all_columns):
+        names = tuple(
+            p.name
+            for p in searchspace.parameters
+            if columns & set(searchspace.get_comp_rep_parameter_indices(p.name))
+        )
+        yield k, names, columns
+
+
+def _matern_naming_all(searchspace, objective, measurements):
+    """Return a Matern kernel naming all parameters of the given search space."""
+    return MaternKernel(parameter_names=searchspace.parameter_names)
+
+
+def _unnamed_matern(searchspace, objective, measurements):
+    """Return a Matern kernel without parameter names."""
+    return MaternKernel()
+
+
+def _raw_matern(searchspace, objective, measurements):
+    """Return a raw GPyTorch kernel, which cannot exclude overridden parameters."""
+    return gk.MaternKernel()
+
+
+def _needs_full_searchspace(searchspace, objective, measurements):
+    """Return a kernel after accessing information unavailable on reduced spaces."""
+    searchspace.task_idx
+    return MaternKernel()
 
 
 @pytest.mark.parametrize(
@@ -338,3 +424,276 @@ def test_parameter_equivalence(p1, p2, expected):
     """Parameter equivalence with kernel overrides produces the expected result."""
     assert p1.is_equivalent(p2) == expected
     assert p2.is_equivalent(p1) == expected
+
+
+_X2_RBF = [_x("x1"), _x("x2", RBFKernel()), _x("x3")]
+_X1_SELECTOR = BayBEKernelFactory(parameter_selector=NameSelector(("x1",), regex=False))
+_TASK_KERNEL = IndexKernel(num_tasks=3, rank=3, parameter_names=("task",))
+_EXCLUDE_ERROR = "can exclude these parameters"
+_ARD_ERROR = "specifies 2 ARD dimensions, but the parameter has 3"
+
+
+@pytest.mark.parametrize(
+    ("parameters", "kernel_or_factory", "expected"),
+    [
+        # No overrides: the surrogate kernel is used unchanged
+        param(
+            [_x("x1"), _x("x2")],
+            None,
+            {("x1", "x2"): [gk.MaternKernel]},
+            id="no-override-default",
+        ),
+        param(
+            [_x("x1"), _x("x2")],
+            gk.MaternKernel(),
+            {("x1", "x2"): [gk.MaternKernel]},
+            id="no-override-gpytorch",
+        ),
+        # One override, the surrogate kernel acts on the remaining parameters
+        param(
+            _X2_RBF,
+            None,
+            {("x1", "x3"): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
+            id="default",
+        ),
+        param(
+            _X2_RBF,
+            MaternKernel(),
+            {("x1", "x3"): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
+            id="fixed",
+        ),
+        param(
+            _X2_RBF,
+            MaternKernel(parameter_names=("x1", "x2")),
+            {("x1",): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
+            id="fixed-naming-overridden-parameter",
+        ),
+        param(
+            _X2_RBF,
+            ScaleKernel(MaternKernel()),
+            {("x1", "x3"): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
+            id="scaled",
+        ),
+        param(
+            _X2_RBF,
+            MaternKernel() + RBFKernel(),
+            {("x1", "x3"): [gk.MaternKernel, gk.RBFKernel], ("x2",): [gk.RBFKernel]},
+            id="sum",
+        ),
+        param(
+            _X2_RBF,
+            MaternKernel() * RBFKernel(),
+            {("x1", "x3"): [gk.MaternKernel, gk.RBFKernel], ("x2",): [gk.RBFKernel]},
+            id="product",
+        ),
+        param(
+            _X2_RBF,
+            _matern_naming_all,
+            {("x1", "x3"): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
+            id="factory",
+        ),
+        param(
+            _X2_RBF,
+            _X1_SELECTOR,
+            {("x1",): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
+            id="selector",
+        ),
+        # Override shapes
+        param(
+            [
+                _x("x1"),
+                CategoricalParameter("c", ("a", "b", "c"), override_kernel=RBFKernel()),
+            ],
+            None,
+            {("x1",): [gk.MaternKernel], ("c",): [gk.RBFKernel]},
+            id="multi-column-parameter",
+        ),
+        param(
+            [_x("x1"), _x("x2", RBFKernel()), _x("x3", MaternKernel())],
+            None,
+            {
+                ("x1",): [gk.MaternKernel],
+                ("x2",): [gk.RBFKernel],
+                ("x3",): [gk.MaternKernel],
+            },
+            id="multiple-overrides",
+        ),
+        param(
+            [_x("x1", RBFKernel()), _x("x2", MaternKernel())],
+            MaternKernel(),
+            {("x1",): [gk.RBFKernel], ("x2",): [gk.MaternKernel]},
+            id="all-overridden",
+        ),
+        param(
+            [_x("x1"), _x("x2", gk.RBFKernel())],
+            None,
+            {("x1",): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
+            id="gpytorch-override",
+        ),
+        param(
+            [
+                _x("x1"),
+                CategoricalParameter(
+                    "c", ("a", "b", "c"), override_kernel=gk.RBFKernel(ard_num_dims=3)
+                ),
+            ],
+            None,
+            {("x1",): [gk.MaternKernel], ("c",): [gk.RBFKernel]},
+            id="gpytorch-override-ard",
+        ),
+        param(
+            [_x("x1"), _x("x2", gk.ScaleKernel(gk.RBFKernel()))],
+            None,
+            {("x1",): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
+            id="gpytorch-override-nested",
+        ),
+        # Task parameters: the transfer learning mode defines the task kernel
+        param(
+            [_x("x1"), _tl_task()],
+            None,
+            {("x1",): [gk.MaternKernel], ("task",): [BoPositiveIndexKernel]},
+            id="task-without-mode",
+        ),
+        param(
+            [_x("x1"), _tl_task(_INDEX)],
+            None,
+            {("x1",): [gk.MaternKernel], ("task",): [gk.IndexKernel]},
+            id="task-index",
+        ),
+        param(
+            [_x("x1"), _tl_task(_POSITIVE_INDEX)],
+            None,
+            {("x1",): [gk.MaternKernel], ("task",): [BoPositiveIndexKernel]},
+            id="task-positive-index",
+        ),
+        param(
+            [_x("x1"), _tl_task(_INDEX)],
+            MaternKernel(parameter_names=("x1", "task")),
+            {("x1",): [gk.MaternKernel], ("task",): [gk.IndexKernel]},
+            id="task-index+kernel-naming-task",
+        ),
+        param(
+            [_x("x1"), _tl_task(_INDEX)],
+            MaternKernel(parameter_names=("x1",)) * _TASK_KERNEL,
+            {("x1",): [gk.MaternKernel], ("task",): [gk.IndexKernel]},
+            id="task-index+product-with-task-kernel",
+        ),
+        param(
+            [_x("x1"), _tl_task(_INDEX)],
+            _TASK_KERNEL,
+            {("task",): [gk.IndexKernel]},
+            id="task-index+task-only-kernel",
+        ),
+        param(
+            [_x("x1"), _tl_task(_INDEX)],
+            _unnamed_matern,
+            {("x1",): [gk.MaternKernel], ("task",): [gk.IndexKernel]},
+            id="task-index+factory",
+        ),
+        param(
+            [_x("x1"), _x("x2", RBFKernel()), _tl_task(_POSITIVE_INDEX)],
+            None,
+            {
+                ("x1",): [gk.MaternKernel],
+                ("task",): [BoPositiveIndexKernel],
+                ("x2",): [gk.RBFKernel],
+            },
+            id="task-positive-index+parameter-override",
+        ),
+        param(
+            [_x("x1"), _x("x2", RBFKernel()), _tl_task()],
+            _X1_SELECTOR,
+            {
+                ("x1",): [gk.MaternKernel],
+                ("task",): [BoPositiveIndexKernel],
+                ("x2",): [gk.RBFKernel],
+            },
+            id="task-without-mode+selector",
+        ),
+        # Invalid configurations detected at kernel construction
+        param(
+            [
+                _x("x1"),
+                CategoricalParameter(
+                    "c", ("a", "b", "c"), override_kernel=gk.RBFKernel(ard_num_dims=2)
+                ),
+            ],
+            None,
+            (IncompatibleOverrideError, _ARD_ERROR),
+            id="gpytorch-ard-mismatch",
+        ),
+        param(
+            [
+                _x("x1"),
+                CategoricalParameter(
+                    "c",
+                    ("a", "b", "c"),
+                    override_kernel=gk.ScaleKernel(gk.RBFKernel(ard_num_dims=2)),
+                ),
+            ],
+            None,
+            (IncompatibleOverrideError, _ARD_ERROR),
+            id="gpytorch-nested-ard-mismatch",
+        ),
+        param(
+            _X2_RBF,
+            gk.MaternKernel(),
+            (IncompatibleOverrideError, _EXCLUDE_ERROR),
+            id="gpytorch-surrogate-kernel",
+        ),
+        param(
+            _X2_RBF,
+            _raw_matern,
+            (IncompatibleOverrideError, _EXCLUDE_ERROR),
+            id="factory-returning-gpytorch-kernel",
+        ),
+        param(
+            _X2_RBF,
+            _needs_full_searchspace,
+            (IncompatibleOverrideError, _EXCLUDE_ERROR),
+            id="factory-needing-full-searchspace",
+        ),
+        param(
+            [_x("x1"), _tl_task(_INDEX)],
+            ICMKernelFactory(task_kernel_or_factory=_TASK_KERNEL),
+            (IncompatibleOverrideError, _EXCLUDE_ERROR),
+            id="task-index+icm-factory",
+        ),
+    ],
+)
+def test_override_kernel_construction(parameters, kernel_or_factory, expected):
+    """Kernel construction with overrides yields the expected kernel or error."""
+    searchspace = SearchSpace.from_product(parameters)
+    context = _ModelContext(
+        searchspace, NumericalTarget("y").to_objective(), pd.DataFrame()
+    )
+    surrogate = GaussianProcessSurrogate(kernel_or_factory=kernel_or_factory)
+
+    # Invalid configurations raise during construction
+    if isinstance(expected, tuple):
+        error, match = expected
+        with pytest.raises(error, match=match):
+            surrogate._resolve_kernel(context)
+        return
+
+    # Each parameter is covered by the expected kernel classes
+    kernel = surrogate._resolve_kernel(context)
+    assert _factors_by_parameter(kernel, searchspace) == expected
+
+    # User-provided GPyTorch overrides are copied, leaving the input unbound
+    gpytorch_overrides = {
+        p.name: p.override_kernel
+        for p in parameters
+        if p.override_kernel is not None and not isinstance(p.override_kernel, Kernel)
+    }
+    for override in gpytorch_overrides.values():
+        assert all(k.active_dims is None for k in (override, *override.sub_kernels()))
+
+    # BayBE-created kernels use one ARD dimension per column, user-provided GPyTorch
+    # kernels keep their setting
+    user_kernel = isinstance(kernel_or_factory, gk.Kernel)
+    for k, names, columns in _basic_kernels_by_parameter(kernel, searchspace):
+        if user_kernel or set(names) & gpytorch_overrides.keys():
+            assert k.ard_num_dims in (None, len(columns))
+        else:
+            assert k.ard_num_dims == len(columns)
