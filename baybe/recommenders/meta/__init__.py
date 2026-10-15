@@ -5,6 +5,10 @@ recommenders. According to their inner logic they choose which pure recommender 
 query.
 """
 
+from baybe.recommenders.meta.llm import (
+    LLMAlternatingRecommender,
+    LLMTwoPhaseRecommender,
+)
 from baybe.recommenders.meta.sequential import (
     SequentialMetaRecommender,
     StreamingSequentialMetaRecommender,
@@ -12,6 +16,8 @@ from baybe.recommenders.meta.sequential import (
 )
 
 __all__ = [
+    "LLMAlternatingRecommender",
+    "LLMTwoPhaseRecommender",
     "TwoPhaseMetaRecommender",
     "SequentialMetaRecommender",
     "StreamingSequentialMetaRecommender",
