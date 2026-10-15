@@ -88,7 +88,8 @@ def bind_gpytorch_override(
 
     result = deepcopy(override)
     # TODO[typing]: GPyTorch annotates `active_dims` with the constructor's tuple
-    #   type, but `register_buffer` stores a tensor at runtime.
+    #   type, but `register_buffer` stores a tensor at runtime, see
+    #   https://github.com/facebook/pyrefly/issues/5208
     result.active_dims = torch.tensor(indices)  # pyrefly: ignore[bad-assignment]
     return result
 
@@ -107,7 +108,8 @@ def get_active_dimensions(kernel: GPyTorchKernel, searchspace: SearchSpace) -> s
 
     if kernel.active_dims is not None:
         # TODO[typing]: GPyTorch annotates `active_dims` with the constructor's tuple
-        #   type, but `register_buffer` stores a tensor at runtime.
+        #   type, but `register_buffer` stores a tensor at runtime, see
+        #   https://github.com/facebook/pyrefly/issues/5208
         return set(kernel.active_dims.tolist())  # pyrefly: ignore[missing-attribute]
     if isinstance(kernel, (AdditiveKernel, ProductKernel)):
         return set().union(

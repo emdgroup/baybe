@@ -285,7 +285,8 @@ class Parameter(ABC, SerialMixin):
             and _is_gpytorch_kernel_equivalent(kernel, other_kernel)
         ):
             # GPyTorch kernels define no equality, so substitute equivalent overrides
-            # NOTE: attrs resolves all aliases during class creation
+            # TODO[typing]: attrs resolves all aliases during class creation, see
+            #   https://github.com/python-attrs/attrs/issues/1540
             alias = cast(str, attrs.fields(Parameter)._override_kernel.alias)
             changes[alias] = other_kernel
         return attrs.evolve(self, name=other.name, **changes) == other
