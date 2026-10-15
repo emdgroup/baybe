@@ -98,22 +98,28 @@ class TaskParameter(CategoricalParameter):
     )
     """Optional override for how the task dimension is modeled.
 
-    Only applies to :class:`.GaussianProcessSurrogate`. When ``None``, the surrogate's
-    kernel factory decides how the task dimension is treated. When set, the surrogate
-    attaches the requested task kernel to a task-free base kernel derived from the
-    configured factory.
+    Only applies to :class:`.GaussianProcessSurrogate`. When ``None``, the kernel
+    factory decides. The kernel modes attach the chosen task kernel to the base kernel,
+    while :attr:`~baybe.parameters.enum.TransferLearningMode.RGPE` dispatches to a
+    :class:`~baybe.surrogates.transfer_learning.rgpe.RGPESurrogate` ensemble.
     """
 
     @override
     @cached_property
     def override_kernel(self) -> Kernel | None:
         """The task kernel defined by the transfer learning mode, if any."""
-        from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
+        from baybe.kernels.basic import IdentityKernel, IndexKernel, PositiveIndexKernel
 
         n_tasks, names = len(self.values), (self.name,)
         match mode := self.override_transfer_learning_mode:
             case None:
                 return None
+            case TransferLearningMode.RGPE:
+                # RGPE adds no task kernel; the surrogate dispatches to a dedicated
+                # ensemble instead (see `GaussianProcessSurrogate._fit`).
+                return None
+            case TransferLearningMode.IDENTITY:
+                return IdentityKernel(parameter_names=names)
             case TransferLearningMode.POSITIVE_INDEX_KERNEL:
                 return PositiveIndexKernel(
                     num_tasks=n_tasks, rank=n_tasks, parameter_names=names

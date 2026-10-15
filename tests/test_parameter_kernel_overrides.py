@@ -18,7 +18,7 @@ from pytest import param
 
 from baybe.exceptions import IncompatibleOverrideError
 from baybe.kernels import MaternKernel, RBFKernel
-from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
+from baybe.kernels.basic import IdentityKernel, IndexKernel, PositiveIndexKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from baybe.parameters import (
     CategoricalParameter,
@@ -66,7 +66,7 @@ def _rbf_kernel(lengthscale, *, frozen=False):
 
 @pytest.mark.parametrize(
     "mode",
-    [None, *TransferLearningMode],
+    [None, *(m for m in TransferLearningMode if m is not TransferLearningMode.RGPE)],
     ids=lambda mode: mode.name if mode else "no-task",
 )
 def test_selector_does_not_exclude_overridden_parameters(mode):
@@ -155,6 +155,7 @@ def test_nondefault_residual_indices(kernel_or_factory, expected_residual_dims):
                 TaskParameter("task", ["a", "b"], override_transfer_learning_mode=mode),
             )
             for mode in TransferLearningMode
+            if mode is not TransferLearningMode.RGPE
         ],
     ],
     ids=[
@@ -162,7 +163,11 @@ def test_nondefault_residual_indices(kernel_or_factory, expected_residual_dims):
         "multi-dim",
         "all-overridden",
         "task-without-tl-override",
-        *(mode.name for mode in TransferLearningMode),
+        *(
+            mode.name
+            for mode in TransferLearningMode
+            if mode is not TransferLearningMode.RGPE
+        ),
     ],
 )
 def test_fitted_model_uses_parameter_kernel_overrides(
@@ -176,12 +181,12 @@ def test_fitted_model_uses_parameter_kernel_overrides(
     expected = {"base": gk.MaternKernel, "override": gk.RBFKernel}
     if task_parameter is not None:
         parameters.append(task_parameter)
-        expected["task"] = (
-            gk.IndexKernel
-            if task_parameter.override_transfer_learning_mode
-            == TransferLearningMode.INDEX_KERNEL
-            else BoPositiveIndexKernel
-        )
+        expected["task"] = {
+            None: BoPositiveIndexKernel,
+            TransferLearningMode.INDEX_KERNEL: gk.IndexKernel,
+            TransferLearningMode.POSITIVE_INDEX_KERNEL: BoPositiveIndexKernel,
+            TransferLearningMode.IDENTITY: gk.ConstantKernel,
+        }[task_parameter.override_transfer_learning_mode]
     searchspace = SearchSpace.from_product(parameters)
     measurements = pd.DataFrame(
         [
@@ -201,7 +206,12 @@ def test_fitted_model_uses_parameter_kernel_overrides(
         searchspace.get_comp_rep_parameter_indices(name): cls
         for name, cls in expected.items()
     }
-    assert all(k.ard_num_dims == len(k.active_dims) for k in leaves)
+    # The constant (identity) task kernel carries no lengthscales, hence no ARD dims.
+    assert all(
+        k.ard_num_dims == len(k.active_dims)
+        for k in leaves
+        if k.ard_num_dims is not None
+    )
 
 
 @pytest.mark.parametrize(
@@ -330,6 +340,11 @@ def test_task_parameter_equivalence(values, mode, expected):
     ("mode", "expected"),
     [
         param(None, None, id="none"),
+        param(
+            TransferLearningMode.IDENTITY,
+            IdentityKernel(parameter_names=("task",)),
+            id="identity",
+        ),
         param(
             TransferLearningMode.INDEX_KERNEL,
             IndexKernel(num_tasks=3, rank=3, parameter_names=("task",)),
