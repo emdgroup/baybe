@@ -2,26 +2,26 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, TypedDict
+import json
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any, TypedDict
 
-from baybe.exceptions import IncompatibilityError, LLMResponseError
-from baybe.objectives.desirability import DesirabilityObjective
-from baybe.objectives.enum import Scalarizer
-from baybe.objectives.pareto import ParetoObjective
-from baybe.parameters.base import DiscreteParameter, Parameter
-from baybe.parameters.numerical import NumericalContinuousParameter
+from attrs import fields
+
+from baybe.exceptions import LLMResponseError
+from baybe.parameters.base import _DiscreteLabelLikeParameter
+from baybe.parameters.categorical import CategoricalParameter
+from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.substance import SubstanceParameter
 from baybe.recommenders.pure.llm._schema import _response_format
 from baybe.searchspace import SearchSpace
-from baybe.targets.binary import BinaryTarget
-from baybe.targets.numerical import NumericalTarget
-from baybe.transformations import IdentityTransformation
 
 if TYPE_CHECKING:
     import pandas as pd
 
+    from baybe.constraints.base import Constraint
     from baybe.objectives.base import Objective
-    from baybe.targets.base import Target
+    from baybe.parameters.base import Parameter
 
 _FORBIDDEN_INSTRUCTIONS = """\
 The following configurations are currently NOT selectable. You MUST NOT recommend any
@@ -33,52 +33,46 @@ new configuration instead:\
 
 _PROMPT_TEMPLATE = """\
 You are an expert experimental design assistant. Your task is to suggest new \
-experimental conditions based on the following information:
+experimental conditions based on the following information. Objects are given in \
+JSON format, one object per line.
 
 EXPERIMENT DESCRIPTION:
 {{ experiment_description }}
 
 {% if objective is not none %}
 OPTIMIZATION OBJECTIVE:
-{% if objective.description is not none %}
-{{ objective.description }}
-{% endif %}
-{% if objective.combination is not none %}
-{{ objective.combination }}
-{% endif %}
+Each target is optimized by maximizing its transformed value (or minimizing it if \
+"minimize" is true); "constructor_info", if present, shows how the target was defined, \
+e.g. the "match_value" of a match target.
+{{ objective }}
 
-TARGETS:
-{% for target in objective.targets %}
-Target: {{ target.name }}
-Goal: {{ target.goal }}
-{% if target.transformation is not none %}
-Transformation applied before optimizing: {{ target.transformation }}
-{% endif %}
-{% if target.description is not none %}
-Description: {{ target.description }}
-{% endif %}
-{% if target.unit is not none %}
-Unit: {{ target.unit }}
-{% endif %}
+Transformations map a measured value x to the value being optimized:
+- IdentityTransformation: x
+- AffineTransformation: factor * x + shift
+- ClampingTransformation: x limited to the range [cutoffs.lower, cutoffs.upper]
+- AbsoluteTransformation: |x|
+- LogarithmicTransformation: ln(x)
+- ExponentialTransformation: exp(x)
+- PowerTransformation: x ** exponent
+- SigmoidTransformation: 1 / (1 + exp(-steepness * (center - x)))
+- TwoSidedAffineTransformation: slope_left * (x - midpoint) if x < midpoint, \
+else slope_right * (x - midpoint)
+- BellTransformation: exp(-((x - center) / sigma) ** 2 / 2), i.e. highest at x = center
+- TriangularTransformation: rising linearly from 0 at cutoffs.lower to 1 at peak, \
+falling linearly back to 0 at cutoffs.upper, and 0 outside the cutoffs
+- ChainedTransformation: the listed transformations applied in order, first one first
+- AdditiveTransformation / MultiplicativeTransformation: sum / product of the listed \
+transformations, each applied to x
 
-{% endfor %}
 {% endif %}
 PARAMETERS:
-{% for param in parameters %}
-Parameter: {{ param.name }}
-{% if param.description is not none %}
-Description: {{ param.description }}
-{% endif %}
-Type: {{ param.kind }}
-{{ param.domain }}
-{% if param.unit is not none %}
-Unit: {{ param.unit }}
-{% endif %}
-{% for key, value in param.misc %}
-{{ key }}: {{ value }}
-{% endfor %}
+{{ parameters }}
+{% if constraints is not none %}
 
-{% endfor %}
+CONSTRAINTS:
+All suggestions must satisfy the following constraints.
+{{ constraints }}
+{% endif %}
 {% if measurements is not none %}
 
 PREVIOUS MEASUREMENTS:
@@ -88,7 +82,7 @@ PREVIOUS MEASUREMENTS:
 
 PENDING EXPERIMENTS:
 The following experiments have already been proposed and are awaiting results.
-Do not recommend these again.
+Take them into account when generating your recommendations.
 {{ pending_experiments }}
 {% endif %}
 {%- if forbidden_configurations is not none %}
@@ -126,41 +120,13 @@ Format your response as a JSON array of objects with the following structure \
 """
 
 
-class _ParameterPromptInfo(TypedDict):
-    """Typed, presentation-only view of a parameter for prompt rendering."""
-
-    name: str
-    description: str | None
-    kind: Literal["continuous", "discrete_numeric", "categorical", "substance"]
-    domain: str
-    unit: str | None
-    misc: tuple[tuple[str, str], ...]
-
-
-class _TargetPromptInfo(TypedDict):
-    """Typed, presentation-only view of an optimization target."""
-
-    name: str
-    goal: str
-    transformation: str | None
-    description: str | None
-    unit: str | None
-
-
-class _ObjectivePromptInfo(TypedDict):
-    """Typed, presentation-only view of the optimization objective."""
-
-    description: str | None
-    combination: str | None
-    targets: tuple[_TargetPromptInfo, ...]
-
-
 class _PromptContext(TypedDict):
     """Typed render context for the prompt."""
 
     experiment_description: str
-    objective: _ObjectivePromptInfo | None
-    parameters: tuple[_ParameterPromptInfo, ...]
+    objective: str | None
+    parameters: str
+    constraints: str | None
     measurements: str | None
     pending_experiments: str | None
     forbidden_configurations: str | None
@@ -171,57 +137,80 @@ class _PromptContext(TypedDict):
     original_response: str | None
 
 
-def _parameter_prompt_info(parameter: Parameter) -> _ParameterPromptInfo:
-    """Build the prompt view of a parameter.
+def _drop_empty(obj: Any, /) -> Any:
+    """Recursively drop ``None`` values and empty dictionaries from dictionaries.
 
     Args:
-        parameter: The parameter to describe.
+        obj: The serialized object to clean up.
 
     Returns:
-        A typed, presentation-only view consumed by the prompt template.
-
-    Raises:
-        IncompatibilityError: If the parameter type is not supported.
+        The cleaned-up object.
     """
-    if isinstance(parameter, NumericalContinuousParameter):
-        lower, upper = parameter.bounds.to_tuple()
-        kind: Literal["continuous", "discrete_numeric", "categorical", "substance"] = (
-            "continuous"
-        )
-        domain = f"Bounds: [{lower}, {upper}]"
-    elif isinstance(parameter, SubstanceParameter):
-        # Substances are chemical compounds: expose their SMILES so the model can
-        # reason about structure, while still choosing by substance name.
-        kind = "substance"
-        substances = ", ".join(
-            f"{name} ({smiles})"
-            for name, smiles in parameter.data.items()
-            if name in parameter.active_values
-        )
-        domain = f"Allowed values (choose by name; SMILES in parentheses): {substances}"
-    elif isinstance(parameter, DiscreteParameter):
-        kind = "discrete_numeric" if parameter.is_numerical else "categorical"
-        values = parameter.active_values
-        if parameter.is_numerical:
-            values = tuple(value.item() for value in values)  # avoid numpy-repr leak
-        domain = f"Allowed values: {list(values)}"
-    else:
-        raise IncompatibilityError(
-            f"Parameter '{parameter.name}' has unsupported type "
-            f"'{type(parameter).__name__}'. Only "
-            f"'{NumericalContinuousParameter.__name__}' and "
-            f"'{DiscreteParameter.__name__}' subclasses are supported."
-        )
-    return {
-        "name": parameter.name,
-        "description": parameter.description,
-        "kind": kind,
-        "domain": domain,
-        "unit": parameter.unit,
-        "misc": tuple(
-            (key, str(value)) for key, value in parameter.metadata.misc.items()
-        ),
-    }
+    if isinstance(obj, dict):
+        cleaned = {key: _drop_empty(value) for key, value in obj.items()}
+        return {k: v for k, v in cleaned.items() if v is not None and v != {}}
+    if isinstance(obj, list):
+        return [_drop_empty(value) for value in obj]
+    return obj
+
+
+def _to_prompt_dict(obj: Parameter | Constraint | Objective, /) -> dict[str, Any]:
+    """Serialize an object into the representation shown to the language model.
+
+    ``None`` values and empty dictionaries are dropped since they carry no information
+    for the language model. For label-like parameters, ``values`` holds the active
+    labels only. Substance parameters keep the SMILES of their active labels, while
+    the descriptor table of custom parameters is omitted since it is only relevant for
+    the surrogate model.
+
+    Args:
+        obj: The object to serialize.
+
+    Returns:
+        The serialized object.
+    """
+    serialized = obj.to_dict()
+    if isinstance(obj, _DiscreteLabelLikeParameter):
+        active = list(obj.active_values)
+        serialized.pop(fields(_DiscreteLabelLikeParameter)._active_values.alias)
+        serialized[fields(CategoricalParameter)._values.alias] = active
+        if isinstance(obj, SubstanceParameter):
+            serialized[fields(SubstanceParameter).data.alias] = {
+                label: smiles for label, smiles in obj.data.items() if label in active
+            }
+        elif isinstance(obj, CustomDiscreteParameter):
+            del serialized[fields(CustomDiscreteParameter).data.alias]
+    return _drop_empty(serialized)
+
+
+def _to_json_lines(serialized_objects: Iterable[dict[str, Any]], /) -> str:
+    """Render serialized objects as JSON, one object per line.
+
+    Args:
+        serialized_objects: The serialized objects to render.
+
+    Returns:
+        The rendered objects.
+    """
+    return "\n".join(json.dumps(obj, ensure_ascii=False) for obj in serialized_objects)
+
+
+def _table_text(df: pd.DataFrame | None, columns: list[str], /) -> str | None:
+    """Render the given columns of a dataframe as a table.
+
+    Restricting the columns excludes non-experimental columns, such as the metadata
+    columns added by :class:`~baybe.campaign.Campaign`.
+
+    Args:
+        df: The optional dataframe to render.
+        columns: The columns to include.
+
+    Returns:
+        The rendered table, or ``None`` if no or an empty dataframe is provided.
+    """
+    if df is None or df.empty:
+        return None
+    return df[columns].to_string(index=False)
 
 
 def _forbidden_configurations(searchspace: SearchSpace) -> str | None:
@@ -251,87 +240,6 @@ def _forbidden_configurations(searchspace: SearchSpace) -> str | None:
     return forbidden.to_string(index=False)
 
 
-def _target_prompt_info(target: Target) -> _TargetPromptInfo:
-    """Build the prompt view of an optimization target.
-
-    Args:
-        target: The target to describe.
-
-    Returns:
-        A typed, presentation-only view of the target's optimization semantics.
-
-    Raises:
-        IncompatibilityError: If the target type is not supported.
-    """
-    transformation: str | None = None
-    if isinstance(target, NumericalTarget):
-        goal = "minimize" if target.minimize else "maximize"
-        transformation = (
-            None
-            if isinstance(target.transformation, IdentityTransformation)
-            else str(target.transformation)
-        )
-    elif isinstance(target, BinaryTarget):
-        goal = (
-            f"achieve the success value '{target.success_value}' "
-            f"(as opposed to the failure value '{target.failure_value}')"
-        )
-    else:
-        raise IncompatibilityError(
-            f"Target '{target.name}' has unsupported type "
-            f"'{type(target).__name__}'. Only '{NumericalTarget.__name__}' and "
-            f"'{BinaryTarget.__name__}' are supported."
-        )
-    return {
-        "name": target.name,
-        "goal": goal,
-        "transformation": transformation,
-        "description": target.description,
-        "unit": target.unit,
-    }
-
-
-def _objective_prompt_info(objective: Objective) -> _ObjectivePromptInfo:
-    """Build the prompt view of the optimization objective.
-
-    Args:
-        objective: The objective to describe.
-
-    Returns:
-        A typed, presentation-only view: the objective description, how its targets are
-        combined, and the per-target views.
-    """
-    targets = tuple(_target_prompt_info(t) for t in objective.targets)
-    combination: str | None
-    if isinstance(objective, DesirabilityObjective):
-        aggregation = (
-            "weighted geometric mean"
-            if objective.scalarizer is Scalarizer.GEOM_MEAN
-            else "weighted arithmetic mean"
-        )
-        weights = ", ".join(
-            f"{t['name']}={w:.3g}"
-            for t, w in zip(targets, objective.normalized_weights)
-        )
-        combination = (
-            f"The targets are aggregated into a single desirability score via a "
-            f"{aggregation} (weights: {weights}), which is then maximized."
-        )
-    elif isinstance(objective, ParetoObjective):
-        combination = (
-            "The targets are optimized jointly as a multi-objective (Pareto) problem: "
-            "they are not combined into a single score; seek the best trade-offs, "
-            "optimizing each target in its stated direction."
-        )
-    else:
-        combination = None
-    return {
-        "description": objective.metadata.description,
-        "combination": combination,
-        "targets": targets,
-    }
-
-
 def make_prompt(
     batch_size: int,
     searchspace: SearchSpace,
@@ -349,11 +257,15 @@ def make_prompt(
     :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`; the LLM-specific
     ``experiment_description`` is keyword-only.
 
+    The objective, parameters and constraints are included in their serialized form.
+    Measurements and pending experiments are restricted to their parameter and target
+    columns.
+
     When ``error`` is provided, the prompt is rendered in *recovery* mode: it carries
     the exact same context as the original query and appends a correction section
-    asking the model to fix its previous response. Because each
-    model call is stateless, carrying the full context here is what lets the recovery
-    attempt reason as well as the original one.
+    asking the model to fix its previous response. Because each model call is
+    stateless, carrying the full context here is what lets the recovery attempt reason
+    as well as the original one.
 
     Args:
         batch_size: The number of recommendations to generate.
@@ -381,24 +293,26 @@ def make_prompt(
 
     from baybe._optional.llm import StrictUndefined, Template
 
-    measurements_text = (
-        measurements.to_string(index=False)
-        if measurements is not None and not measurements.empty
-        else None
-    )
-    pending_text = (
-        pending_experiments.to_string(index=False)
-        if pending_experiments is not None and not pending_experiments.empty
-        else None
-    )
+    parameter_names = [p.name for p in searchspace.parameters]
+    target_names = [t.name for t in objective.targets] if objective is not None else []
+    constraints = searchspace.constraints
     context: _PromptContext = {
         "experiment_description": experiment_description,
         "objective": (
-            _objective_prompt_info(objective) if objective is not None else None
+            _to_json_lines([_to_prompt_dict(objective)])
+            if objective is not None
+            else None
         ),
-        "parameters": tuple(_parameter_prompt_info(p) for p in searchspace.parameters),
-        "measurements": measurements_text,
-        "pending_experiments": pending_text,
+        "parameters": _to_json_lines(
+            _to_prompt_dict(p) for p in searchspace.parameters
+        ),
+        "constraints": (
+            _to_json_lines(_to_prompt_dict(c) for c in constraints)
+            if constraints
+            else None
+        ),
+        "measurements": _table_text(measurements, parameter_names + target_names),
+        "pending_experiments": _table_text(pending_experiments, parameter_names),
         "forbidden_configurations": _forbidden_configurations(searchspace),
         "forbidden_instructions": _FORBIDDEN_INSTRUCTIONS,
         "batch_size": batch_size,

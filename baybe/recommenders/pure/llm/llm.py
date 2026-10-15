@@ -11,7 +11,9 @@ from attrs import define, field
 from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
+from baybe.constraints.discrete import DiscreteCustomConstraint
 from baybe.exceptions import (
+    IncompatibilityError,
     LLMAuthenticationError,
     LLMBatchSizeError,
     LLMCallError,
@@ -25,6 +27,9 @@ from baybe.recommenders.pure.llm._prompts import make_prompt
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.serialization import SerialMixin
+from baybe.targets.numerical import NumericalTarget
+from baybe.transformations.basic import CustomTransformation
+from baybe.transformations.utils import _iterate_transformations
 from baybe.utils.conversion import to_string
 
 # Keys that are controlled by the recommender itself and must not be overridden: the
@@ -189,6 +194,41 @@ class LLMRecommender(PureRecommender, SerialMixin):
         # NOTE: Duplicate configurations within a batch are permitted.
         return output.head(batch_size)
 
+    def _validate_compatibility(
+        self, searchspace: SearchSpace, objective: Objective | None
+    ) -> None:
+        """Validate that the recommendation context can be described to the model.
+
+        Custom constraints and transformations are defined by arbitrary callables,
+        whose logic cannot be communicated to the language model.
+
+        Args:
+            searchspace: The search space to generate recommendations for.
+            objective: The optional objective of the recommendation context.
+
+        Raises:
+            IncompatibilityError: If the search space contains a custom constraint.
+            IncompatibilityError: If a target uses a custom transformation.
+        """
+        for constraint in searchspace.discrete.constraints:
+            if isinstance(constraint, DiscreteCustomConstraint):
+                raise IncompatibilityError(
+                    f"'{self.__class__.__name__}' does not support "
+                    f"'{DiscreteCustomConstraint.__name__}' since its logic cannot be "
+                    f"described to the language model."
+                )
+        for target in objective.targets if objective is not None else ():
+            if isinstance(target, NumericalTarget) and any(
+                isinstance(t, CustomTransformation)
+                for t in _iterate_transformations(target.transformation)
+            ):
+                raise IncompatibilityError(
+                    f"'{self.__class__.__name__}' does not support "
+                    f"'{CustomTransformation.__name__}' (used by target "
+                    f"'{target.name}') since its logic cannot be described to the "
+                    f"language model."
+                )
+
     @override
     def recommend(
         self,
@@ -211,6 +251,8 @@ class LLMRecommender(PureRecommender, SerialMixin):
             A DataFrame containing the recommendations as individual rows.
 
         Raises:
+            IncompatibilityError: If the search space or objective contains custom
+                components that cannot be described to the language model.
             LLMAuthenticationError: If authentication with the provider fails.
             LLMCallError: If the call to the language model fails (e.g. network, rate
                 limiting, timeout) before a response is produced.
@@ -223,6 +265,8 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 f"You must at least request one recommendation per batch, but "
                 f"provided {batch_size=}."
             )
+
+        self._validate_compatibility(searchspace, objective)
 
         if objective is not None and objective.metadata.is_empty:
             warnings.warn(
