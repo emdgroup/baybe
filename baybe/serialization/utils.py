@@ -77,6 +77,12 @@ def deserialize_dataframe(serialized_df: str | dict, /) -> IntoDataFrame:
                 stacklevel=2,
             )
             return select_constructor_hook(serialized_df.copy(), pd.DataFrame)
+    if isinstance(serialized_df, str):
+        raw = base64.b64decode(serialized_df.encode())
+        if raw[:4] != b"PAR1":
+            from baybe.serialization.core import _structure_pandas_dataframe
+
+            return _structure_pandas_dataframe(serialized_df)
     # <<<<<<<<<< Deprecation
 
     return _structure_nw_dataframe(serialized_df).to_native()
