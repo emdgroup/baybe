@@ -509,17 +509,21 @@ class Campaign(SerialMixin):
                 f"'{DiscreteFilteringConstraint.__name__}' instances."
             )
 
-        points_nw = nw.from_native(points, eager_only=True)
+        points_nw = _df_with_backend(
+            nw.from_native(points, eager_only=True),
+            nw.get_native_namespace(self._excluded_experiments),
+        )
 
         if not dry_run:
             if exclude and not points_nw.is_empty():
-                # Add the toggled points (avoid duplicates)
-                concatenated = nw.concat(
-                    [self._excluded_experiments, points_nw], how="vertical"
-                )
-                self._excluded_experiments = concatenated.unique()
+                if self._excluded_experiments.is_empty():
+                    self._excluded_experiments = points_nw
+                else:
+                    concatenated = nw.concat(
+                        [self._excluded_experiments, points_nw], how="vertical"
+                    )
+                    self._excluded_experiments = concatenated.unique()
             elif not exclude and not self._excluded_experiments.is_empty():
-                # Remove the re-included points
                 self._excluded_experiments = self._excluded_experiments.join(
                     points_nw, on=points_nw.columns, how="anti"
                 )
