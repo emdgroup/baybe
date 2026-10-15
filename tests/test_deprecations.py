@@ -968,6 +968,23 @@ def test_legacy_pickle_dataframe_deserialization(df):
 
 
 @pytest.mark.parametrize(
+    "df",
+    [
+        pytest.param(pd.DataFrame(), id="empty"),
+        pytest.param(
+            pd.DataFrame({"x": [1, 2], "y": ["a", "b"]}, index=["foo", "bar"]),
+            id="non-empty-with-index",
+        ),
+    ],
+)
+def test_legacy_pickle_dataframe_serialization(df):
+    """A pandas DataFrame roundtrips through pickle/base64 (unstructure + structure)."""
+    unstructured = converter.unstructure(df)
+    assert isinstance(unstructured, str)
+    pd.testing.assert_frame_equal(converter.structure(unstructured, pd.DataFrame), df)
+
+
+@pytest.mark.parametrize(
     "impl",
     [nw.Implementation.PANDAS, nw.Implementation.POLARS],
     ids=["pandas", "polars"],

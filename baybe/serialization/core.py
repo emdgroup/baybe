@@ -282,6 +282,13 @@ converter.register_structure_hook(AutoBool, structure_autobool)
 _PARQUET_MAGIC = b"PAR1"
 
 
+def _unstructure_pandas_dataframe(df: pd.DataFrame, /) -> str:
+    """Serialize a pandas DataFrame to a base64-encoded pickle string."""
+    import pickle
+
+    return base64.b64encode(pickle.dumps(df)).decode("utf-8")
+
+
 def _structure_pandas_dataframe(obj: str | dict, /) -> pd.DataFrame:
     """Legacy dataframe deserialization for pickle/base64 encoding."""
     if isinstance(obj, dict):
@@ -296,6 +303,7 @@ def _structure_pandas_dataframe(obj: str | dict, /) -> pd.DataFrame:
     return pickle.loads(raw)
 
 
+converter.register_unstructure_hook(pd.DataFrame, _unstructure_pandas_dataframe)
 converter.register_structure_hook(
     pd.DataFrame, lambda obj, _: _structure_pandas_dataframe(obj)
 )

@@ -157,6 +157,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteSumConstraint` in favor of `DiscreteLinearConstraint`
 - `DiscreteProductConstraint(condition=ThresholdCondition(...))` in favor of
   `DiscreteProductConstraint(operator=..., rhs=...)`
+- (De)serialization of dataframes hardcoded against the pandas backend. New
+  serialization calls internally route via narwhals/parquet and produce
+  different serialization strings.
 - `deserialize_dataframe` dictionary input specifying a pandas-only constructor
   (e.g. `from_records`) in favor of `narwhals.DataFrame`'s constructors
   (e.g. `from_dict`, `from_dicts`)
