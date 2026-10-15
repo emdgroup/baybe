@@ -13,7 +13,9 @@ from baybe.constraints.discrete import (
     DiscreteSelectionConstraint,
 )
 from baybe.exceptions import (
+    LLMBatchSizeError,
     LLMConstraintViolationError,
+    LLMDuplicateRecommendationsError,
     LLMIneligiblePointsError,
     LLMInvalidParameterValueError,
     LLMMalformedResponseError,
@@ -150,7 +152,7 @@ def test_response_format(batch_size):
 def test_parse_llm_response_format_errors(discrete_searchspace, response, match):
     """Malformed responses raise ``LLMMalformedResponseError``."""
     with pytest.raises(LLMMalformedResponseError, match=match):
-        parse_llm_response(response, discrete_searchspace)
+        parse_llm_response(response, discrete_searchspace, batch_size=1)
 
 
 @pytest.mark.parametrize(
@@ -203,7 +205,7 @@ def test_parse_llm_response_parameter_errors(searchspace, overrides, error_cls, 
     """Invalid parameter values raise the corresponding error."""
     response = make_response_json(searchspace, **overrides)
     with pytest.raises(error_cls, match=match):
-        parse_llm_response(response, searchspace)
+        parse_llm_response(response, searchspace, batch_size=1)
 
 
 def test_parse_llm_response_missing_parameter():
@@ -221,7 +223,7 @@ def test_parse_llm_response_missing_parameter():
         LLMMissingParameterError,
         match="Response is missing values for the following parameters: {'Cat'}",
     ):
-        parse_llm_response(response, searchspace)
+        parse_llm_response(response, searchspace, batch_size=1)
 
 
 def test_parse_llm_response_selection_constraint_violation():
@@ -241,7 +243,7 @@ def test_parse_llm_response_selection_constraint_violation():
     with pytest.raises(
         LLMConstraintViolationError, match="DiscreteSelectionConstraint"
     ):
-        parse_llm_response(response, searchspace)
+        parse_llm_response(response, searchspace, batch_size=1)
 
 
 def test_parse_llm_response_batch_constraint_violation():
@@ -260,7 +262,7 @@ def test_parse_llm_response_batch_constraint_violation():
     ]
     response = json.dumps(suggestions)
     with pytest.raises(LLMConstraintViolationError, match="DiscreteBatchConstraint"):
-        parse_llm_response(response, searchspace)
+        parse_llm_response(response, searchspace, batch_size=2)
 
 
 def test_parse_llm_response_continuous_constraint_warning():
@@ -281,7 +283,7 @@ def test_parse_llm_response_continuous_constraint_warning():
     )
     response = json.dumps([{"explanation": "test", "parameters": {"x": 3.0, "y": 4.0}}])
     with pytest.warns(LLMResponseWarning, match="cannot be validated"):
-        parse_llm_response(response, searchspace)
+        parse_llm_response(response, searchspace, batch_size=1)
 
 
 def test_parse_llm_response_happy_path():
@@ -296,7 +298,7 @@ def test_parse_llm_response_happy_path():
         {"explanation": "first", "parameters": {"Cat": "A", "Num": 1.0}},
         {"explanation": "second", "parameters": {"Cat": "B", "Num": 2.0}},
     ]
-    result = parse_llm_response(json.dumps(suggestions), searchspace)
+    result = parse_llm_response(json.dumps(suggestions), searchspace, batch_size=2)
     assert set(result.columns) == {"Cat", "Num"}
     assert list(result["Cat"]) == ["A", "B"]
     assert list(result["Num"]) == [1.0, 2.0]
@@ -335,7 +337,7 @@ def test_parse_llm_response_ineligible_points(searchspace, overrides):
     """Proposing a forbidden candidate raises ``LLMIneligiblePointsError``."""
     response = make_response_json(searchspace, **overrides)
     with pytest.raises(LLMIneligiblePointsError):
-        parse_llm_response(response, searchspace)
+        parse_llm_response(response, searchspace, batch_size=1)
 
 
 def test_parse_llm_response_tolerance_snap():
@@ -344,7 +346,7 @@ def test_parse_llm_response_tolerance_snap():
         [NumericalDiscreteParameter("x", (1.0, 2.0, 3.0), tolerance=0.3)]
     )
     response = json.dumps([{"explanation": "test", "parameters": {"x": 1.2}}])
-    result = parse_llm_response(response, searchspace)
+    result = parse_llm_response(response, searchspace, batch_size=1)
     assert result["x"].iloc[0] == 1.0
 
 
@@ -360,7 +362,7 @@ def test_parse_llm_response_hybrid_output():
         {"explanation": "first", "parameters": {"Cat": "A", "Cont": 0.3}},
         {"explanation": "second", "parameters": {"Cat": "A", "Cont": 0.7}},
     ]
-    result = parse_llm_response(json.dumps(suggestions), searchspace)
+    result = parse_llm_response(json.dumps(suggestions), searchspace, batch_size=2)
     assert set(result.columns) == {"Cat", "Cont"}
     assert list(result["Cat"]) == ["A", "A"]
     assert list(result["Cont"]) == [0.3, 0.7]
@@ -374,7 +376,7 @@ def test_parse_llm_response_valid_then_invalid():
         {"explanation": "invalid", "parameters": {"Cat": "Z"}},
     ]
     with pytest.raises(LLMInvalidParameterValueError):
-        parse_llm_response(json.dumps(suggestions), searchspace)
+        parse_llm_response(json.dumps(suggestions), searchspace, batch_size=2)
 
 
 def test_parse_llm_response_partial_missing_parameter():
@@ -390,7 +392,7 @@ def test_parse_llm_response_partial_missing_parameter():
         {"explanation": "second", "parameters": {"Num": 2.0}},
     ]
     with pytest.raises(LLMInvalidParameterValueError, match="missing values"):
-        parse_llm_response(json.dumps(suggestions), searchspace)
+        parse_llm_response(json.dumps(suggestions), searchspace, batch_size=2)
 
 
 def test_parse_llm_response_continuous_only_happy_path():
@@ -405,8 +407,69 @@ def test_parse_llm_response_continuous_only_happy_path():
         {"explanation": "first", "parameters": {"x": 3.0, "y": 2.0}},
         {"explanation": "second", "parameters": {"x": 7.0, "y": 4.0}},
     ]
-    result = parse_llm_response(json.dumps(suggestions), searchspace)
+    result = parse_llm_response(json.dumps(suggestions), searchspace, batch_size=2)
     assert len(result) == 2
     assert set(result.columns) == {"x", "y"}
     assert list(result["x"]) == [3.0, 7.0]
     assert list(result["y"]) == [2.0, 4.0]
+
+
+_CAT_NUM_PARAMETERS = [
+    CategoricalParameter("Cat", ("A", "B")),
+    NumericalDiscreteParameter("Num", (1.0, 2.0)),
+]
+
+
+@pytest.mark.parametrize(
+    ("constraints", "surplus"),
+    [
+        pytest.param([], {"Cat": "Z", "Num": 1.0}, id="invalid_surplus"),
+        pytest.param(
+            [DiscreteBatchConstraint(parameters=["Cat"])],
+            {"Cat": "B", "Num": 2.0},
+            id="batch_constraint_violated_by_surplus",
+        ),
+    ],
+)
+def test_parse_llm_response_surplus_discarded(constraints, surplus):
+    """Surplus suggestions are discarded without being validated."""
+    searchspace = SearchSpace.from_product(_CAT_NUM_PARAMETERS, constraints)
+    suggestions = [
+        {"explanation": "requested", "parameters": {"Cat": "A", "Num": 1.0}},
+        {"explanation": "surplus", "parameters": surplus},
+    ]
+    result = parse_llm_response(json.dumps(suggestions), searchspace, batch_size=1)
+    assert list(result["Cat"]) == ["A"]
+    assert list(result["Num"]) == [1.0]
+
+
+def test_parse_llm_response_too_few_suggestions():
+    """Too few suggestions raise before any suggestion is validated."""
+    searchspace = SearchSpace.from_product(_CAT_NUM_PARAMETERS)
+    suggestions = [{"explanation": "invalid", "parameters": {"Cat": "Z", "Num": 1.0}}]
+    with pytest.raises(LLMBatchSizeError, match="returned 1 recommendation"):
+        parse_llm_response(json.dumps(suggestions), searchspace, batch_size=2)
+
+
+@pytest.mark.parametrize(
+    ("parameter", "values"),
+    [
+        pytest.param(CategoricalParameter("p", ("A", "B")), ["A", "A"], id="identical"),
+        pytest.param(
+            NumericalDiscreteParameter("p", (1.0, 2.0), tolerance=0.3),
+            [1.0, 1.2],
+            id="snapped_to_same_value",
+        ),
+        pytest.param(
+            NumericalContinuousParameter("p", (0.0, 1.0)),
+            [0.5, 0.5],
+            id="continuous",
+        ),
+    ],
+)
+def test_parse_llm_response_duplicates(parameter, values):
+    """Duplicate configurations within a batch raise an error."""
+    searchspace = SearchSpace.from_product([parameter])
+    suggestions = [{"explanation": "x", "parameters": {"p": v}} for v in values]
+    with pytest.raises(LLMDuplicateRecommendationsError, match="1 suggestion"):
+        parse_llm_response(json.dumps(suggestions), searchspace, batch_size=2)

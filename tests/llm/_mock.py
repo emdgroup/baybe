@@ -36,24 +36,25 @@ def make_valid_json(searchspace, batch_size):
     discrete_params = [p for p in params if p.is_discrete]
     continuous_params = [p for p in params if not p.is_discrete]
 
-    continuous_entry = {
-        cp.name: sum(cp.bounds.to_tuple()) / 2 for cp in continuous_params
-    }
+    def continuous_entry(i):
+        """Distinct interior points of the continuous bounds."""
+        fraction = (i + 1) / (batch_size + 1)
+        return {
+            cp.name: cp.bounds.lower + fraction * (cp.bounds.upper - cp.bounds.lower)
+            for cp in continuous_params
+        }
 
     suggestions = []
     if discrete_params:
         candidates = searchspace.discrete.get_candidates()[0]
-        for _, row in candidates.head(batch_size).iterrows():
+        for i, (_, row) in enumerate(candidates.head(batch_size).iterrows()):
             entry = {p.name: row[p.name] for p in discrete_params}
-            entry.update(continuous_entry)
+            entry.update(continuous_entry(i))
             suggestions.append({"explanation": "Mock suggestion.", "parameters": entry})
     else:
-        for _ in range(batch_size):
+        for i in range(batch_size):
             suggestions.append(
-                {
-                    "explanation": "Mock suggestion.",
-                    "parameters": dict(continuous_entry),
-                }
+                {"explanation": "Mock suggestion.", "parameters": continuous_entry(i)}
             )
 
     return json.dumps(

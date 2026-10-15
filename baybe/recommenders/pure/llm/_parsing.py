@@ -10,7 +10,9 @@ import pandas as pd
 
 from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.exceptions import (
+    LLMBatchSizeError,
     LLMConstraintViolationError,
+    LLMDuplicateRecommendationsError,
     LLMIneligiblePointsError,
     LLMInvalidParameterValueError,
     LLMMalformedResponseError,
@@ -62,22 +64,30 @@ def extract_json_array(response: str, /) -> str | None:
     return last_object_array
 
 
-def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFrame:
+def parse_llm_response(
+    response: str, /, searchspace: SearchSpace, batch_size: int
+) -> pd.DataFrame:
     """Parse a language model response into a DataFrame of recommendations.
+
+    Only the first ``batch_size`` suggestions are validated and returned, surplus
+    suggestions are discarded.
 
     Args:
         response: The response from the language model.
         searchspace: The search space to validate recommendations against.
+        batch_size: The number of recommendations to return.
 
     Returns:
-        A DataFrame containing the parsed recommendations. All returned points are
-        eligible candidates of the search space (as returned by
-        :meth:`baybe.searchspace.discrete.SubspaceDiscrete.get_candidates`); suggestions
-        that are not are rejected.
+        A DataFrame containing exactly ``batch_size`` distinct recommendations. All
+        returned points are eligible candidates of the search space (as returned by
+        :meth:`baybe.searchspace.discrete.SubspaceDiscrete.get_candidates`);
+        suggestions that are not are rejected.
 
     Raises:
         LLMMalformedResponseError: If the response cannot be parsed into the expected
             JSON structure.
+        LLMBatchSizeError: If the response contains fewer than ``batch_size``
+            suggestions.
         LLMUnknownParameterError: If a suggestion references parameters not in the
             search space.
         LLMMissingParameterError: If a suggestion omits required search space
@@ -90,6 +100,7 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
             (including batch constraints) present in the search space.
         LLMIneligiblePointsError: If a suggestion does not correspond to an eligible
             candidate of the search space.
+        LLMDuplicateRecommendationsError: If the recommendations are not distinct.
 
     Warns:
         LLMResponseWarning: If the search space contains continuous constraints.
@@ -103,6 +114,21 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
         suggestions = json.loads(payload)
     except JSONDecodeError as e:
         raise LLMMalformedResponseError(f"Error parsing JSON output: {e}.") from e
+
+    # Check the number of suggestions before validating any of them
+    if len(suggestions) < batch_size:
+        raise LLMBatchSizeError(
+            f"The language model returned {len(suggestions)} recommendation(s) "
+            f"instead of the requested {batch_size}.",
+            requested=batch_size,
+            received=len(suggestions),
+        )
+    # IMPROVE: Instead of discarding surplus suggestions, all suggestions could be
+    #   validated individually and the first valid ones selected, saving a recovery
+    #   attempt when only some of them are invalid. This requires suggestion-wise
+    #   validation, a selection that respects batch constraints, and a decision on
+    #   which error to report if too few valid suggestions remain.
+    suggestions = suggestions[:batch_size]
 
     recommendations = []
     for suggestion in suggestions:
@@ -217,8 +243,17 @@ def parse_llm_response(response: str, /, searchspace: SearchSpace) -> pd.DataFra
         if continuous_param_names:
             rec_disc = exp_rep.loc[aligned_index]
             rec_cont = df[continuous_param_names].set_axis(aligned_index)
-            return pd.concat([rec_disc, rec_cont], axis=1)
+            recommendations_df = pd.concat([rec_disc, rec_cont], axis=1)
         else:
-            return exp_rep.loc[aligned_index]
+            recommendations_df = exp_rep.loc[aligned_index]
+    else:
+        recommendations_df = df
 
-    return df
+    # Checked on the final configurations so that values snapped to the same allowed
+    # value (within tolerance) are also detected
+    if (n_duplicates := int(recommendations_df.duplicated().sum())) > 0:
+        raise LLMDuplicateRecommendationsError(
+            f"{n_duplicates} suggestion(s) duplicate another suggestion of the batch.",
+            n_duplicates=n_duplicates,
+        )
+    return recommendations_df

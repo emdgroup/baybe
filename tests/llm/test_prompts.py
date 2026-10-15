@@ -406,7 +406,7 @@ def test_forbidden_configurations(searchspace, expected):
     [
         param(
             {},
-            ["Please suggest 3 new experimental conditions"],
+            ["Please suggest 3 distinct new experimental conditions"],
             ["WHAT WENT WRONG", "ORIGINAL RESPONSE"],
             id="without_recovery",
         ),
