@@ -406,7 +406,7 @@ class GaussianProcessSurrogate(Surrogate):
         return self._model.posterior(candidates_comp_scaled)
 
     def _resolve_kernel(self, context: _ModelContext) -> GPyTorchKernel:
-        """Resolve the GP kernel, applying parameter and transfer overrides.
+        """Resolve the GP kernel, applying parameter-specific overrides.
 
         The effective kernel is the surrogate kernel restricted to the
         non-overridden dimensions, multiplied by one factor per override.

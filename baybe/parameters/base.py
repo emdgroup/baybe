@@ -145,8 +145,8 @@ def _to_kernel_override(value: KernelOverride, instance: Parameter) -> KernelOve
                 f"itself. Its basic kernels must specify '{names_alias}' as "
                 f"``None`` or ({instance.name!r},)."
             )
-        # NOTE: Validated BayBE kernels are stored unscoped and only scoped to the
-        #   owning parameter when accessed via `override_kernel`. This keeps the
+        # NOTE: Validated BayBE kernels are stored unscoped and are only scoped to
+        #   the owning parameter when accessed via `override_kernel`. This keeps the
         #   stored value independent of the parameter name, so that renaming (e.g.
         #   via `attrs.evolve`) and `is_equivalent` work without rescoping. User
         #   input is still restricted to unscoped kernels or kernels scoped to the
