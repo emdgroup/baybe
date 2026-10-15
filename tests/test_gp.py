@@ -40,6 +40,7 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBELikelihoodFactory,
     BayBEMeanFactory,
 )
+from baybe.symmetries import MirrorSymmetry
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import create_fake_input, to_tensor
 
@@ -162,7 +163,7 @@ def test_gpytorch_component_serialization(component):
 
 @pytest.mark.parametrize("preset", list(GaussianProcessPreset), ids=lambda p: p.name)
 def test_presets(preset: GaussianProcessPreset):
-    """Presets can be loaded and their defaults can be overridden."""
+    """Presets can be loaded, their defaults overridden and symmetries added."""
     kernel = GPyTorchMaternKernel()
     mean = ConstantMean()
     likelihood = GaussianLikelihood()
@@ -178,6 +179,7 @@ def test_presets(preset: GaussianProcessPreset):
         mean_or_factory=mean,
         likelihood_or_factory=likelihood,
         fit_criterion_or_factory=criterion,
+        symmetries=[MirrorSymmetry("p", mirror_point=0.5)],
     )
 
     # Check that the overrides were applied correctly
@@ -190,6 +192,7 @@ def test_presets(preset: GaussianProcessPreset):
     assert isinstance(gp2.fit_criterion_factory, PlainGPComponentFactory)
     assert gp2.fit_criterion_factory.component == criterion
     assert gp2.fit_criterion_factory != gp1.fit_criterion_factory
+    assert gp2.symmetries == (MirrorSymmetry("p", mirror_point=0.5),)
 
     gp2.fit(searchspace, objective, measurements)
 

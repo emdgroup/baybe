@@ -519,11 +519,11 @@ class SearchSpace(SerialMixin):
 
         return comp_rep
 
-    def get_parameters_by_name(self, names: Sequence[str]) -> tuple[Parameter, ...]:
+    def get_parameters_by_name(self, names: Collection[str]) -> tuple[Parameter, ...]:
         """Return parameters with the specified names.
 
         Args:
-            names: Sequence of parameter names.
+            names: Collection of parameter names.
 
         Returns:
             The named parameters.

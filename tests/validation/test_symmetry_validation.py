@@ -1,18 +1,26 @@
 """Validation tests for symmetry."""
 
+from unittest.mock import Mock
+
+import gpytorch
 import numpy as np
 import pytest
 from pytest import param
 
-from baybe.constraints import ThresholdCondition
+from baybe.constraints import SubSelectionCondition, ThresholdCondition
 from baybe.exceptions import IncompatibleSearchSpaceError
+from baybe.kernels import MaternKernel, RBFKernel
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
+    TaskParameter,
 )
+from baybe.parameters.selectors import NameSelector
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
+from baybe.surrogates import GaussianProcessSurrogate
+from baybe.surrogates.gaussian_process.presets.baybe import BayBEKernelFactory
 from baybe.symmetries import DependencySymmetry, MirrorSymmetry, PermutationSymmetry
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
@@ -162,6 +170,13 @@ valid_config_dep = {
             "must be a sequence but cannot be a string",
             id="dep_affected_bare_string",
         ),
+        param(
+            DependencySymmetry,
+            valid_config_dep | {"affected_parameter_names": ["n1", "n2"]},
+            ValueError,
+            "causing parameter 'n1' cannot also be an affected parameter",
+            id="dep_causing_in_affected",
+        ),
     ],
 )
 def test_configuration(cls, config, error, msg):
@@ -180,6 +195,7 @@ _parameters = [
     CategoricalParameter("cat1", ("a", "b", "c")),
     CategoricalParameter("cat1_altered", ("a", "b")),
     CategoricalParameter("cat2", ("a", "b", "c")),
+    TaskParameter("task", ("a", "b")),
 ]
 
 
@@ -190,10 +206,11 @@ def searchspace(parameter_names):
 
 
 @pytest.mark.parametrize(
-    "parameter_names, symmetry, error, msg",
+    "parameter_names, mechanism, symmetry, error, msg",
     [
         param(
             ["cat1"],
+            "augmentation",
             MirrorSymmetry(parameter_name="cat1"),
             TypeError,
             "'cat1' is of type 'CategoricalParameter' and is not numerical",
@@ -201,6 +218,7 @@ def searchspace(parameter_names):
         ),
         param(
             ["n1"],
+            "augmentation",
             MirrorSymmetry(parameter_name="n2"),
             IncompatibleSearchSpaceError,
             r"not present in the search space",
@@ -208,6 +226,7 @@ def searchspace(parameter_names):
         ),
         param(
             ["n2", "cat1"],
+            "augmentation",
             DependencySymmetry(**valid_config_dep),
             IncompatibleSearchSpaceError,
             r"not present in the search space",
@@ -215,6 +234,7 @@ def searchspace(parameter_names):
         ),
         param(
             ["n1", "cat1"],
+            "augmentation",
             DependencySymmetry(**valid_config_dep),
             IncompatibleSearchSpaceError,
             r"not present in the search space",
@@ -222,6 +242,7 @@ def searchspace(parameter_names):
         ),
         param(
             ["n1_not_discrete", "n2", "cat1"],
+            "augmentation",
             DependencySymmetry(
                 **valid_config_dep | {"parameter_name": "n1_not_discrete"}
             ),
@@ -231,6 +252,7 @@ def searchspace(parameter_names):
         ),
         param(
             ["n1", "c1"],
+            "augmentation",
             DependencySymmetry(
                 parameter_name="n1",
                 condition=ThresholdCondition(0.0, ">="),
@@ -242,6 +264,7 @@ def searchspace(parameter_names):
         ),
         param(
             ["cat1", "n1", "n2"],
+            "augmentation",
             PermutationSymmetry(**valid_config_perm),
             IncompatibleSearchSpaceError,
             r"not present in the search space",
@@ -249,6 +272,7 @@ def searchspace(parameter_names):
         ),
         param(
             ["cat1", "cat2", "n1", "n2"],
+            "augmentation",
             PermutationSymmetry(permutation_groups=[("cat1", "n1"), ("cat2", "n2")]),
             ValueError,
             r"differ in their specification",
@@ -256,6 +280,7 @@ def searchspace(parameter_names):
         ),
         param(
             ["cat1_altered", "cat2", "n1", "n2"],
+            "augmentation",
             PermutationSymmetry(
                 permutation_groups=[["cat1_altered", "cat2"], ["n1", "n2"]]
             ),
@@ -263,11 +288,33 @@ def searchspace(parameter_names):
             r"differ in their specification",
             id="perm_inconsistent_values",
         ),
+        param(
+            ["task", "n1"],
+            "kernel",
+            DependencySymmetry("task", SubSelectionCondition(["a"]), ["n1"]),
+            IncompatibleSearchSpaceError,
+            r"involves the special parameters \['task'\]",
+            id="kernel_task_causing",
+        ),
+        param(
+            ["task", "n1"],
+            "kernel",
+            DependencySymmetry("n1", ThresholdCondition(0.0, ">"), ["task"]),
+            IncompatibleSearchSpaceError,
+            r"involves the special parameters \['task'\]",
+            id="kernel_task_affected",
+        ),
     ],
 )
-def test_searchspace_context(searchspace, symmetry, error, msg):
-    """Configurations not compatible with the searchspace raise an expected error."""
-    recommender = BotorchRecommender(symmetries=(symmetry,))
+def test_searchspace_context(searchspace, mechanism, symmetry, error, msg):
+    """Incompatible symmetries raise an error for augmentation and invariant kernels."""
+    recommender = (
+        BotorchRecommender(symmetries=(symmetry,))
+        if mechanism == "augmentation"
+        else BotorchRecommender(
+            surrogate_model=GaussianProcessSurrogate(symmetries=(symmetry,))
+        )
+    )
     t = NumericalTarget("t")
     measurements = create_fake_input(searchspace.parameters, [t])
 
@@ -275,3 +322,117 @@ def test_searchspace_context(searchspace, symmetry, error, msg):
         recommender.recommend(
             1, searchspace, t.to_objective(), measurements=measurements
         )
+
+
+@pytest.mark.parametrize(
+    "parameter_names, gp_kwargs, error, msg",
+    [
+        param(
+            ["n1"],
+            {"symmetries": ["n1"]},
+            TypeError,
+            "must be <class 'baybe.symmetries.base.Symmetry'>",
+            id="not_a_symmetry",
+        ),
+        param(
+            ["n1", "n2"],
+            {
+                "symmetries": [
+                    PermutationSymmetry([["n1", "n2"]]),
+                    MirrorSymmetry("n1"),
+                ]
+            },
+            ValueError,
+            r"transformed by several symmetries: \['n1'\]",
+            id="overlap_perm_mirror",
+        ),
+        param(
+            ["n1", "n2"],
+            {
+                "symmetries": [
+                    DependencySymmetry("n1", ThresholdCondition(0.0, ">"), ["n2"]),
+                    MirrorSymmetry("n1"),
+                ]
+            },
+            ValueError,
+            r"following causing parameters are mirrored: \['n1'\]",
+            id="mirror_causing",
+        ),
+        param(
+            ["n1", "n2", "c1"],
+            {
+                "symmetries": [
+                    DependencySymmetry("n1", ThresholdCondition(0.0, ">"), ["c1"]),
+                    PermutationSymmetry([["n1", "n2"]]),
+                ]
+            },
+            ValueError,
+            "must be closed under each permutation",
+            id="causing_permuted",
+        ),
+        param(
+            ["n1", "n2", "cat1"],
+            {
+                "symmetries": [
+                    DependencySymmetry("n1", ThresholdCondition(0.0, ">"), ["n2"]),
+                    DependencySymmetry("n2", ThresholdCondition(0.0, ">"), ["cat1"]),
+                ]
+            },
+            ValueError,
+            r"following causing parameters are affected: \['n2'\]",
+            id="dependency_chain",
+        ),
+        param(
+            ["n1"],
+            {"symmetries": [PermutationSymmetry([[f"p{i}" for i in range(6)]])]},
+            ValueError,
+            "at most 5 positions, but a group with 6",
+            id="perm_group_too_large",
+        ),
+        param(
+            ["n1", "n2"],
+            {
+                "kernel_or_factory": MaternKernel(parameter_names=["n1"])
+                * RBFKernel(parameter_names=["n2"]),
+                "symmetries": [PermutationSymmetry([["n1", "n2"]])],
+            },
+            ValueError,
+            "cannot be made invariant",
+            id="permuted_kernels_differ",
+        ),
+        param(
+            ["n1", "n2", "cat1"],
+            {
+                "kernel_or_factory": BayBEKernelFactory(
+                    parameter_selector=NameSelector(["n1", "cat1"])
+                ),
+                "symmetries": [PermutationSymmetry([["n1", "n2"]])],
+            },
+            ValueError,
+            "cannot be made invariant",
+            id="selector_excludes_permuted",
+        ),
+        param(
+            ["n1", "n2"],
+            {
+                "mean_or_factory": gpytorch.means.LinearMean(input_size=2),
+                "symmetries": [MirrorSymmetry("n1")],
+            },
+            ValueError,
+            "require a constant mean function",
+            id="input_dependent_mean",
+        ),
+    ],
+)
+def test_gp_configuration(monkeypatch, searchspace, gp_kwargs, error, msg):
+    """Invalid symmetry setups of a Gaussian process raise an error before fitting."""
+    fit = Mock()
+    monkeypatch.setattr("botorch.fit.fit_gpytorch_mll", fit)
+    t = NumericalTarget("t")
+    measurements = create_fake_input(searchspace.parameters, [t], n_rows=3)
+
+    with pytest.raises(error, match=msg):
+        GaussianProcessSurrogate(**gp_kwargs).fit(
+            searchspace, t.to_objective(), measurements
+        )
+    fit.assert_not_called()

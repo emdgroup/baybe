@@ -1,10 +1,13 @@
 """Tests for the searchspace module."""
 
+from contextlib import nullcontext
+
 import numpy as np
 import pandas as pd
 import pytest
 from exceptiongroup import ExceptionGroup
 from pandas.testing import assert_frame_equal
+from pytest import param
 
 from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import (
@@ -196,6 +199,30 @@ def test_hyperrectangle_searchspace_creation():
 
     assert searchspace.type == SearchSpaceType.CONTINUOUS
     assert searchspace.parameters == parameters
+
+
+@pytest.mark.parametrize("space", ["full", "discrete", "continuous"])
+@pytest.mark.parametrize(
+    ("names", "expected", "error", "match"),
+    [
+        param(["x"], ("x",), None, None, id="exact_match"),
+        param(("x_cont", "x"), ("x", "x_cont"), None, None, id="discrete_first"),
+        param("x", None, ValueError, "not a string", id="string"),
+    ],
+)
+def test_get_parameters_by_name(space, names, expected, error, match):
+    """Parameters are selected by exact name and bare strings are rejected."""
+    searchspace = SearchSpace.from_product(
+        [
+            NumericalDiscreteParameter("x", (1, 2)),
+            NumericalDiscreteParameter("x_disc", (1, 2)),
+            NumericalContinuousParameter("x_cont", (0, 1)),
+        ]
+    )
+    space = searchspace if space == "full" else getattr(searchspace, space)
+    with pytest.raises(error, match=match) if error else nullcontext():
+        selected = tuple(p.name for p in space.get_parameters_by_name(names))
+        assert selected == tuple(n for n in expected if n in space.parameter_names)
 
 
 def test_invalid_constraint_parameter_combos():

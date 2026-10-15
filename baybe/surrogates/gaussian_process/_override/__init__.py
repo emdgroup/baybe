@@ -3,6 +3,7 @@
 from baybe.surrogates.gaussian_process._override.kernel import (
     extract_parameter_kernel_overrides,
     get_active_dimensions,
+    iter_gpytorch_kernel_tree,
     raise_incompatible_override,
     reduce_kernel_spec,
 )
@@ -10,6 +11,7 @@ from baybe.surrogates.gaussian_process._override.kernel import (
 __all__ = [
     "extract_parameter_kernel_overrides",
     "get_active_dimensions",
+    "iter_gpytorch_kernel_tree",
     "raise_incompatible_override",
     "reduce_kernel_spec",
 ]

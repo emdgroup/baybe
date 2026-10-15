@@ -7,14 +7,15 @@ import importlib
 import operator
 import os
 import warnings
+from collections.abc import Iterable
 from functools import partial, reduce
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attrs import Converter, define, evolve, field
 from attrs.converters import optional as optional_c
 from attrs.converters import pipe
-from attrs.validators import instance_of, is_callable, optional
+from attrs.validators import deep_iterable, instance_of, is_callable, optional
 from typing_extensions import Self, override
 
 from baybe.exceptions import (
@@ -31,7 +32,7 @@ from baybe.parameters.categorical import TaskParameter
 from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.gaussian_process import _override
+from baybe.surrogates.gaussian_process import _override, _symmetry
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     FitCriterionFactoryProtocol,
@@ -59,6 +60,7 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBEMeanFactory,
 )
 from baybe.symmetries.base import Symmetry
+from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import to_tensor
@@ -200,6 +202,9 @@ class GaussianProcessSurrogate(Surrogate):
     unchanged.
 
     See :ref:`parameter_kernel_overrides` for details and limitations.
+
+    If :attr:`symmetries` are configured, the resulting kernel is additionally made
+    invariant under them (see :ref:`invariant_kernels`).
     """
 
     mean_factory: MeanFactoryProtocol | None = field(
@@ -247,8 +252,20 @@ class GaussianProcessSurrogate(Surrogate):
         * :obj:`.components.fit_criterion.FitCriterionFactoryProtocol`
     """
 
-    _symmetries: tuple[Symmetry, ...] = field(factory=tuple, init=False, eq=False)
-    """Symmetries for future architecture adjustments (e.g., invariant kernels)."""
+    symmetries: tuple[Symmetry, ...] = field(
+        factory=tuple,
+        converter=to_tuple,
+        validator=deep_iterable(member_validator=instance_of(Symmetry)),
+        kw_only=True,
+    )
+    """Symmetries enforced by construction of an invariant kernel.
+
+    In contrast to
+    :attr:`~baybe.recommenders.pure.bayesian.base.BayesianRecommender.symmetries`,
+    which trigger data augmentation, these symmetries are built into the kernel, so
+    that the model predictions are exactly invariant. See :ref:`invariant_kernels` for
+    details and limitations.
+    """
 
     # TODO: type should be SingleTaskGP | None but is currently omitted due to:
     #   https://github.com/python-attrs/cattrs/issues/531
@@ -262,6 +279,13 @@ class GaussianProcessSurrogate(Surrogate):
 
     Set when a non-kernel mode (e.g.
     :attr:`~baybe.parameters.enum.TransferLearningMode.RGPE`) is requested."""
+
+    @symmetries.validator
+    def _validate_symmetries(  # noqa: DOC101, DOC103
+        self, _: Any, value: tuple[Symmetry, ...]
+    ) -> None:
+        """Validate that the symmetries can be enforced via kernel construction."""
+        _symmetry.validate_symmetries(value)
 
     @staticmethod
     def _make_input_transform(context: _ModelContext) -> Normalize:
@@ -298,6 +322,8 @@ class GaussianProcessSurrogate(Surrogate):
         fit_criterion_or_factory: FitCriterion
         | FitCriterionFactoryProtocol
         | None = None,
+        *,
+        symmetries: Iterable[Symmetry] = (),
     ) -> Self:
         """Create a Gaussian process surrogate from one of the defined presets.
 
@@ -311,6 +337,7 @@ class GaussianProcessSurrogate(Surrogate):
             mean_or_factory: The mean (factory) to use.
             likelihood_or_factory: The likelihood (factory) to use.
             fit_criterion_or_factory: The fit criterion (factory) to use.
+            symmetries: The symmetries to enforce via kernel construction.
 
         Returns:
             The Gaussian process surrogate configured according to the preset.
@@ -329,7 +356,7 @@ class GaussianProcessSurrogate(Surrogate):
             module, "FIT_CRITERION_FACTORY"
         )
 
-        gp = cls(kernel, mean, likelihood, fit_criterion)
+        gp = cls(kernel, mean, likelihood, fit_criterion, symmetries=symmetries)
         gp._custom_kernel = False  # preset are first-party features
         return gp
 
@@ -437,7 +464,9 @@ class GaussianProcessSurrogate(Surrogate):
         """Resolve the GP kernel, applying parameter and transfer overrides.
 
         The effective kernel is the surrogate kernel restricted to the
-        non-overridden dimensions, multiplied by one factor per override.
+        non-overridden dimensions, multiplied by one factor per override. If
+        :attr:`symmetries` are configured, the result is finally made invariant
+        under them.
 
         Args:
             context: The model context providing the inputs and override settings.
@@ -475,7 +504,16 @@ class GaussianProcessSurrogate(Surrogate):
                     f"of the non-overridden indices {allowed}."
                 )
         factors = ([] if residual is None else [residual]) + [k for _, k in overrides]
-        return reduce(operator.mul, factors)
+        kernel = reduce(operator.mul, factors)
+
+        if self.symmetries:
+            kernel = _symmetry.make_symmetric_kernel(
+                self.symmetries,
+                searchspace,
+                self._make_input_transform(context),
+                kernel,
+            )
+        return kernel
 
     def _resolve_residual_kernel(
         self, context: _ModelContext, excluded_names: set[str]
@@ -591,6 +629,8 @@ class GaussianProcessSurrogate(Surrogate):
         mean = mean_factory(
             context.searchspace, context.objective, context.measurements
         )
+        if self.symmetries:
+            _symmetry.validate_mean(mean)
 
         likelihood = likelihood_factory(
             context.searchspace, context.objective, context.measurements
@@ -608,13 +648,7 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._objective is not None  # ensured by base class
         assert self._measurements is not None  # ensured by base class
 
-        # Symmetry-aware architecture adjustment (planned for future implementation)
-        if self._symmetries:
-            raise NotImplementedError(
-                "Symmetry-aware surrogate architecture is not yet implemented."
-            )
-            for s in self._symmetries:
-                s.validate_searchspace_context(self._searchspace)
+        _symmetry.validate_searchspace_context(self.symmetries, self._searchspace)
 
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
@@ -696,6 +730,7 @@ class GaussianProcessSurrogate(Surrogate):
                 self.fit_criterion_factory or "auto",
                 single_line=True,
             ),
+            to_string("Symmetries", list(self.symmetries) or "none", single_line=True),
         ]
         return to_string(super().__str__(), *fields)
 

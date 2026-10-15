@@ -17,6 +17,10 @@ from baybe.parameters.enum import TransferLearningMode
 from baybe.recommenders import BotorchRecommender, TwoPhaseMetaRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate, RGPESurrogate
+from baybe.surrogates.gaussian_process.components._gpytorch import (
+    MirrorInvariantKernel,
+)
+from baybe.symmetries import MirrorSymmetry
 from baybe.targets import NumericalTarget
 
 _TARGET = "A"
@@ -100,8 +104,12 @@ def test_inner_gps_use_identity_mode_and_do_not_redispatch(objective):
 
     The inner GPs run on the identity-mode space, whose task parameter no longer carries
     the RGPE mode. This is what prevents infinite recursion in the factory dispatch.
+    Symmetries of the base GP are passed on to the inner GPs.
     """
-    surrogate = RGPESurrogate(n_mc_samples=32)
+    symmetries = (MirrorSymmetry("x", mirror_point=2.5),)
+    surrogate = RGPESurrogate(
+        base_surrogate=GaussianProcessSurrogate(symmetries=symmetries), n_mc_samples=32
+    )
     surrogate.fit(_make_searchspace(), objective, _make_measurements("both"))
 
     for gp in (*surrogate._source_gps, surrogate._target_gp):
@@ -115,6 +123,8 @@ def test_inner_gps_use_identity_mode_and_do_not_redispatch(objective):
         assert (
             task_param.override_transfer_learning_mode is TransferLearningMode.IDENTITY
         )
+        assert gp.symmetries == symmetries
+        assert isinstance(gp._model.covar_module, MirrorInvariantKernel)
 
 
 def test_override_dispatch_matches_direct(objective, candidates):
