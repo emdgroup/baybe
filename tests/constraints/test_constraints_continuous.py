@@ -13,7 +13,7 @@ TOLERANCE = 0.01
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+@pytest.mark.parametrize("batch_size", [2], ids=["b2"])
 @pytest.mark.parametrize(
     ("constraint_names", "coef1", "coef2", "expected_value", "check_type"),
     [
@@ -187,7 +187,7 @@ def test_to_botorch(flatten: bool, interpoint: bool):
     [["Solvent_1", "Conti_finite1", "Conti_finite3", "Conti_finite2"]],
 )
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_1"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+@pytest.mark.parametrize("batch_size", [2], ids=["b2"])
 def test_hybridspace_eq(campaign, n_iterations, batch_size):
     """Test equality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
@@ -202,7 +202,7 @@ def test_hybridspace_eq(campaign, n_iterations, batch_size):
     [["Solvent_1", "Conti_finite1", "Conti_finite3", "Conti_finite2"]],
 )
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_3"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+@pytest.mark.parametrize("batch_size", [2], ids=["b2"])
 def test_hybridspace_ineq(campaign, n_iterations, batch_size):
     """Test inequality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)

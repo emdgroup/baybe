@@ -117,6 +117,7 @@ If you have questions or problems, simply ask for advice.
 | [pip-audit](https://github.com/pypa/pip-audit)                                                  | detect vulnerabilities in dependencies    |
 | [pytest](https://docs.pytest.org/)                                                              | run tests                                 |
 | [pytest-cov](https://pytest-cov.readthedocs.io/)                                                | measure test coverage                     |
+| [pytest-xdist](https://pytest-xdist.readthedocs.io/)                                            | run tests in parallel                     |
 | [ruff](https://docs.astral.sh/ruff/)                                                            | lint and format code                      |
 | [sphinx](https://www.sphinx-doc.org/)                                                           | generate documentation                    |
 | [zizmor](https://woodruffw.github.io/zizmor/)                                                   | audit GitHub Actions workflows            |
