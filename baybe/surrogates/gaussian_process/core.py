@@ -512,6 +512,10 @@ class GaussianProcessSurrogate(Surrogate):
         The numerical base always excludes the task; the default task kernel is
         re-added unless the task is itself overridden (i.e. already excluded).
         """
+        # TODO: This method might become obsolete once it can be married with the lazy
+        #  searchspace updates. In that case, it should be reworked so it is largely or
+        #  fully replaced by a simple factory call.
+
         from baybe.surrogates.gaussian_process.presets.baybe import (
             _BayBENumericalKernelFactory,
             _BayBETaskKernelFactory,
