@@ -1,6 +1,7 @@
 """Tests for parameter-specific kernel overrides."""
 
 from contextlib import nullcontext
+from copy import deepcopy
 from functools import partial
 from unittest.mock import Mock
 
@@ -39,6 +40,7 @@ from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
 from baybe.surrogates.gaussian_process.core import _ModelContext
 from baybe.surrogates.gaussian_process.presets import BayBEKernelFactory
 from baybe.targets import NumericalTarget
+from baybe.utils.dataframe import create_fake_input
 
 _continuous = partial(NumericalContinuousParameter, "x", (0, 1))
 _discrete = partial(NumericalDiscreteParameter, "x", (0, 1, 2))
@@ -697,3 +699,84 @@ def test_override_kernel_construction(parameters, kernel_or_factory, expected):
             assert k.ard_num_dims in (None, len(columns))
         else:
             assert k.ard_num_dims == len(columns)
+
+
+def _rbf_with_prior():
+    """Create a regularized BayBE RBF kernel for numerically stable fits."""
+    return RBFKernel(lengthscale_prior=GammaPrior(3.0, 6.0))
+
+
+@pytest.mark.parametrize(
+    ("parameters", "expected"),
+    [
+        param(
+            [_x("x1"), _x("x2", _rbf_with_prior())],
+            {("x1",): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
+            id="parameter-override",
+        ),
+        param(
+            [
+                _x("x1"),
+                CategoricalParameter(
+                    "c", ("a", "b", "c"), override_kernel=_rbf_with_prior()
+                ),
+                TaskParameter(
+                    "task", ("a", "b"), override_transfer_learning_mode=_INDEX
+                ),
+            ],
+            {
+                ("x1",): [gk.MaternKernel],
+                ("c",): [gk.RBFKernel],
+                ("task",): [gk.IndexKernel],
+            },
+            id="task-index+parameter-override",
+        ),
+        param(
+            [
+                _x("x1", _rbf_with_prior()),
+                _x("x2", MaternKernel(lengthscale_prior=GammaPrior(3.0, 6.0))),
+            ],
+            {("x1",): [gk.RBFKernel], ("x2",): [gk.MaternKernel]},
+            id="all-overridden",
+        ),
+        param(
+            [
+                _x("x1"),
+                _x(
+                    "x2",
+                    gk.RBFKernel(lengthscale_prior=GPyTorchGammaPrior(3.0, 6.0)),
+                ),
+            ],
+            {("x1",): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
+            id="gpytorch-override",
+        ),
+    ],
+)
+def test_fitted_override_kernel(parameters, expected):
+    """The fitted model uses the kernel constructed from the overrides."""
+    searchspace = SearchSpace.from_product(parameters)
+    objective = NumericalTarget("y").to_objective()
+    measurements = create_fake_input(searchspace.parameters, objective.targets, 6)
+
+    # Snapshot user-provided GPyTorch overrides to detect mutations by training
+    gpytorch_overrides = [
+        p.override_kernel
+        for p in parameters
+        if p.override_kernel is not None and not isinstance(p.override_kernel, Kernel)
+    ]
+    snapshots = [deepcopy(o.state_dict()) for o in gpytorch_overrides]
+
+    surrogate = GaussianProcessSurrogate()
+    surrogate.fit(searchspace, objective, measurements)
+
+    # The model was fitted on data using the expected kernel structure
+    assert surrogate._model is not None
+    kernel = surrogate._model.covar_module
+    assert _factors_by_parameter(kernel, searchspace) == expected
+
+    # Training did not touch the user-provided GPyTorch overrides
+    for override, snapshot in zip(gpytorch_overrides, snapshots):
+        assert override.active_dims is None
+        assert all(
+            torch.equal(v, override.state_dict()[k]) for k, v in snapshot.items()
+        )
