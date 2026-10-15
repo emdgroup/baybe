@@ -32,14 +32,20 @@ _VALID_KWARGS = {"model": "test/model", "experiment_description": "Test experime
         param(
             {"litellm_args": {"model": "x"}},
             ValueError,
-            "'litellm_args' must not contain keys that are set explicitly",
+            "'litellm_args' must not contain keys that are controlled by",
             id="reserved_key_model",
         ),
         param(
             {"litellm_args": {"messages": []}},
             ValueError,
-            "'litellm_args' must not contain keys that are set explicitly",
+            "'litellm_args' must not contain keys that are controlled by",
             id="reserved_key_messages",
+        ),
+        param(
+            {"litellm_args": {"stream": True}},
+            ValueError,
+            "'litellm_args' must not contain keys that are controlled by",
+            id="reserved_key_stream",
         ),
         param(
             {"litellm_args": {"api_key": "x"}},
