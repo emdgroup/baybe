@@ -749,9 +749,9 @@ class Campaign(SerialMixin):
 
     def posterior_stats(
         self,
-        candidates: IntoDataFrame | None = None,
+        candidates: IntoDataFrameT | None = None,
         stats: Sequence[PosteriorStatistic] = ("mean", "std"),
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         """Return posterior statistics for each target.
 
         Args:
@@ -778,9 +778,9 @@ class Campaign(SerialMixin):
                     f"compute statistics for in this case."
                 )
 
-            candidates = nw.from_native(self.measurements, eager_only=True).to_pandas()[
+            candidates = nw.from_native(self.measurements, eager_only=True).select(  # pyrefly: ignore[bad-assignment]
                 [p.name for p in self.parameters]
-            ]
+            )
 
         surrogate = self.get_surrogate()
         if not hasattr(surrogate, method_name := "posterior_stats"):
