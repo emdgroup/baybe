@@ -496,7 +496,7 @@ def test_cache_invalidation(
         new_value = FPSRecommender() if change else RandomRecommender()
 
     setattr(campaign, attribute, value)
-    campaign._cache_recommendation(pd.DataFrame())
+    campaign._cache_recommendation(nw.from_native(pd.DataFrame(), eager_only=True))
     assert campaign._cached_recommendation is not None
     setattr(campaign, attribute, new_value)
     assert getattr(campaign, attribute) is new_value

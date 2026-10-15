@@ -319,7 +319,9 @@ class Campaign(SerialMixin):
 
     def _cache_recommendation(self, df: nw.DataFrame, /) -> None:
         """Cache the given recommendation."""
-        self._cached_recommendation = df
+        # Clone to prevent aliasing: the caller still holds a reference to ``df``
+        # whose native storage would otherwise be shared with the cache.
+        self._cached_recommendation = df.clone()
 
     def clear_cache(self) -> None:
         """Clear the internal recommendation cache."""
@@ -585,7 +587,12 @@ class Campaign(SerialMixin):
             and len(cache) == batch_size
         ):
             # TODO: Potentially the cast becomes obsolete once Campaign is generic
-            return cast(IntoDataFrameT, cache)
+            # Clone to prevent aliasing: the returned native frame would
+            # otherwise share storage with the cache.
+            return cast(
+                IntoDataFrameT,
+                _df_with_backend(cache.clone(), backend).to_native(),
+            )
 
         # Prepare the search space according to the current campaign state
         if self.searchspace.type is SearchSpaceType.DISCRETE:
