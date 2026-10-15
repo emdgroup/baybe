@@ -1239,6 +1239,9 @@ We thus refer to <a class="reference internal" href="../Searchspaces/discrete_sp
 details on this aspect.</p>
 <section id="necessary-imports-for-this-example">
 <h2>Necessary imports for this example<a class="headerlink" href="#necessary-imports-for-this-example" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+</pre></div>
+</div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.test_functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rastrigin</span>
@@ -1343,7 +1346,10 @@ We use the data of the test function to deduce bounds and number of parameters.<
 <span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">5</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">SMOKE_TEST</span> <span class="o">=</span> <span class="s2">&quot;SMOKE_TEST&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">5</span>
 <span class="n">N_ITERATIONS</span> <span class="o">=</span> <span class="mi">2</span>
 </pre></div>
 </div>

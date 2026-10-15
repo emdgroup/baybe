@@ -1435,15 +1435,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent               Base                        Ligand  \
-366       p-Xylene    Cesium pivalate                     BrettPhos   
-290           DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-154  Butyornitrile    Cesium pivalate  Di-tert-butylphenylphosphine   
+           Solvent                Base                        Ligand  \
+109  Butyornitrile      Cesium acetate                 (t-Bu)PhCPhos   
+209  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+146  Butyornitrile     Cesium pivalate                     BrettPhos   
 
      Temperature  Concentration  
-366        120.0          0.057  
-290         90.0          0.153  
-154         90.0          0.100  
+109         90.0          0.100  
+209         90.0          0.153  
+146         90.0          0.153  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1452,15 +1452,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base                        Ligand  \
-366       p-Xylene    Cesium pivalate                     BrettPhos   
-290           DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-154  Butyornitrile    Cesium pivalate  Di-tert-butylphenylphosphine   
+           Solvent                Base                        Ligand  \
+109  Butyornitrile      Cesium acetate                 (t-Bu)PhCPhos   
+209  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+146  Butyornitrile     Cesium pivalate                     BrettPhos   
 
      Temperature  Concentration      yield  
-366        120.0          0.057 -51.499276  
-290         90.0          0.153  84.128990  
-154         90.0          0.100 -24.172075  
+109         90.0          0.100  26.023318  
+209         90.0          0.153 -83.664530  
+146         90.0          0.153   4.143439  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

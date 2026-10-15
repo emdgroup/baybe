@@ -1235,6 +1235,9 @@ parameter.</p>
 We thus refer to <a class="reference internal" href="../Basics/campaign.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">campaign</span></code></span></a> for a basic example.</p>
 <section id="necessary-imports-for-this-example">
 <h2>Necessary imports for this example<a class="headerlink" href="#necessary-imports-for-this-example" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+</pre></div>
+</div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </pre></div>
 </div>
@@ -1434,7 +1437,9 @@ Has switched: False</p>
 <section id="manual-verification-of-the-constraints">
 <h2>Manual verification of the constraints<a class="headerlink" href="#manual-verification-of-the-constraints" title="Link to this heading">¶</a></h2>
 <p>The following loop performs some iterations and manually verifies the given constraints.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">N_ITERATIONS</span> <span class="o">=</span> <span class="mi">3</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">SMOKE_TEST</span> <span class="o">=</span> <span class="s2">&quot;SMOKE_TEST&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
+<span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">5</span>
+<span class="n">N_ITERATIONS</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">3</span>
 <span class="k">for</span> <span class="n">kIter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_ITERATIONS</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">#### ITERATION </span><span class="si">{</span><span class="n">kIter</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> ####&quot;</span><span class="p">)</span>
 
@@ -1465,7 +1470,7 @@ Has switched: False</p>
         <span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
     <span class="p">)</span>
 
-    <span class="n">rec</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">rec</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">)</span>
     <span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
     <span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
 </pre></div>
@@ -1480,15 +1485,6 @@ Number of entries with pressure below 3 and temperature above 120:            0
 
 
 #### ITERATION 2 ####
-## ASSERTS ##
-Number of entries with either Solvents C2 or C4 and a temperature above 151:  0
-Number of entries with either Solvents C5 or C6 and a pressure above 5:       0
-Number of entries with pressure below 3 and temperature above 120:            0
-
-
-
-
-#### ITERATION 3 ####
 ## ASSERTS ##
 Number of entries with either Solvents C2 or C4 and a temperature above 151:  0
 Number of entries with either Solvents C5 or C6 and a pressure above 5:       0

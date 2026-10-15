@@ -11,6 +11,11 @@ We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
 
 ```python
+import os
+```
+
+
+```python
 import numpy as np
 ```
 
@@ -231,7 +236,9 @@ The following loop performs some iterations and manually verifies the given cons
 
 
 ```python
-N_ITERATIONS = 3
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+BATCH_SIZE = 2 if SMOKE_TEST else 5
+N_ITERATIONS = 2 if SMOKE_TEST else 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n#### ITERATION {kIter + 1} ####")
 
@@ -262,7 +269,7 @@ for kIter in range(N_ITERATIONS):
         ).sum(),
     )
 
-    rec = campaign.recommend(batch_size=5)
+    rec = campaign.recommend(batch_size=BATCH_SIZE)
     add_fake_measurements(rec, campaign.targets)
     campaign.add_measurements(rec)
 ```
@@ -279,15 +286,6 @@ for kIter in range(N_ITERATIONS):
     
     
     #### ITERATION 2 ####
-    ## ASSERTS ##
-    Number of entries with either Solvents C2 or C4 and a temperature above 151:  0
-    Number of entries with either Solvents C5 or C6 and a pressure above 5:       0
-    Number of entries with pressure below 3 and temperature above 120:            0
-
-
-    
-    
-    #### ITERATION 3 ####
     ## ASSERTS ##
     Number of entries with either Solvents C2 or C4 and a temperature above 151:  0
     Number of entries with either Solvents C5 or C6 and a pressure above 5:       0

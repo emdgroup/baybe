@@ -14,6 +14,11 @@ details on this aspect.
 
 
 ```python
+import os
+```
+
+
+```python
 import numpy as np
 import pandas as pd
 from botorch.test_functions import Rastrigin
@@ -138,7 +143,12 @@ campaign = Campaign(
 
 
 ```python
-BATCH_SIZE = 5
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+```
+
+
+```python
+BATCH_SIZE = 2 if SMOKE_TEST else 5
 N_ITERATIONS = 2
 ```
 
