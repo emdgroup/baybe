@@ -416,6 +416,26 @@ class Campaign(SerialMixin):
         self._measurements[batch_index] = data_nw
         return old_batch.to_native()
 
+    def drop_batch(
+        self, batch_index: int = -1, *, dry_run: bool = False
+    ) -> IntoDataFrame:
+        """Drop an entire batch of previously added measurements.
+
+        Args:
+            batch_index: The index of the batch to drop.
+            dry_run: If ``True``, the current batch is returned without performing
+                the drop. Useful for inspecting the batch before actually
+                dropping it.
+
+        Returns:
+            The dropped batch data.
+        """
+        if dry_run:
+            return self._measurements[batch_index].to_native()
+
+        self.clear_cache()
+        return self._measurements.pop(batch_index).to_native()
+
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
         constraints: Collection[DiscreteFilteringConstraint] | IntoDataFrame,

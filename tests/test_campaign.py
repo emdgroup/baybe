@@ -319,6 +319,24 @@ def test_replace_batch(ongoing_campaign, batch_index, parameter_names):
     assert ongoing_campaign._cached_recommendation is None
 
 
+@pytest.mark.parametrize("batch_index", [0, 1, -1])
+def test_drop_batch(ongoing_campaign, batch_index):
+    """Dropping a batch removes it from the campaign."""
+    n_batches = len(ongoing_campaign._measurements)
+    old_batch = ongoing_campaign._measurements[batch_index]
+
+    # Dry-run returns the batch without dropping
+    dry_result = ongoing_campaign.drop_batch(batch_index, dry_run=True)
+    assert_frame_equal(nw.from_native(dry_result, eager_only=True), old_batch)
+    assert len(ongoing_campaign._measurements) == n_batches
+
+    # Drop the batch
+    dropped = ongoing_campaign.drop_batch(batch_index)
+    assert_frame_equal(nw.from_native(dropped, eager_only=True), old_batch)
+    assert len(ongoing_campaign._measurements) == n_batches - 1
+    assert ongoing_campaign._cached_recommendation is None
+
+
 @pytest.mark.parametrize(
     ("parameter_names", "objective", "surrogate_model", "acqf", "batch_size"),
     [

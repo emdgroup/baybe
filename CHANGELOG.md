@@ -76,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteLinearConstraint` for (optionally weighted) sum constraints on discrete
   parameters, supporting `coefficients` and mirroring `ContinuousLinearConstraint`'s
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
-- `Campaign.replace_batch` for replacing an entire batch of measurements
+- `replace_batch`/`drop_batch` methods to `Campaign` for replacing/dropping an entire
+  batch of measurements
 
 ### Changed
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
