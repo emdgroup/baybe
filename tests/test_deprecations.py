@@ -8,7 +8,7 @@ from contextlib import nullcontext
 from copy import deepcopy
 from itertools import pairwise
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import narwhals.stable.v2 as nw
 import numpy as np
@@ -810,6 +810,12 @@ def test_deprecated_campaign_counters(campaign, attr):
     """Accessing the deprecated campaign counter properties raises an error."""
     with pytest.raises(DeprecationError, match=attr):
         getattr(campaign, attr)
+
+
+def test_deprecated_update_measurements(campaign):
+    """Calling the deprecated ``update_measurements`` method raises an error."""
+    with pytest.raises(DeprecationError, match="replace_batch"):
+        campaign.update_measurements(Mock())
 
 
 def _legacy_serialize(obj: object) -> str:

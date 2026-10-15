@@ -357,24 +357,64 @@ class Campaign(SerialMixin):
         # Append the new batch
         self._measurements.append(data_nw)
 
-    def update_measurements(
+    # >>>>>>>>>> Deprecation
+    def update_measurements(self, *args: Any, **kwargs: Any) -> NoReturn:
+        """Deprecated! Use :meth:`replace_batch` instead."""  # noqa: D401
+        raise DeprecationError(
+            f"'{self.update_measurements.__name__}' is deprecated. "
+            f"Use '{self.replace_batch.__name__}' instead."
+        )
+
+    # <<<<<<<<<< Deprecation
+
+    def replace_batch(
         self,
-        data: IntoDataFrame,
+        df: IntoDataFrameT,
+        /,
+        batch_index: int = -1,
+        *,
         numerical_measurements_must_be_within_tolerance: bool = True,
-    ) -> None:
-        """Update previously added measurements.
+        dry_run: bool = False,
+    ) -> IntoDataFrameT:
+        """Replace an entire batch of previously added measurements.
+
+        Replaces the batch at the given index with the provided measurement data. The
+        dry-run option allows inspection of the batch before replacement and helps
+        identify the correct index.
 
         Args:
-            data: The measurement data to be updated (with filled values for targets).
+            df: The updated batch of measurements.
+            batch_index: The index of the batch to update.
             numerical_measurements_must_be_within_tolerance: Flag indicating if
                 numerical parameters need to be within their tolerances.
+            dry_run: If ``True``, the current batch is returned without performing
+                the update. Useful for inspecting the batch before actually
+                replacing it.
 
-        Raises:
-            NotImplementedError: This method is temporarily unavailable.
+        Returns:
+            The batch previously stored at the index.
         """
-        raise NotImplementedError(
-            f"'{self.update_measurements.__name__}' is temporarily unavailable."
+        if dry_run:
+            return self._measurements[batch_index].to_native()
+
+        # Preprocess incoming data
+        data_nw = nw.from_native(
+            preprocess_dataframe(
+                df,
+                self.searchspace,
+                self.objective,
+                numerical_measurements_must_be_within_tolerance,
+            ),
+            eager_only=True,
         )
+
+        # With changed measurements, the recommendations must be recomputed
+        self.clear_cache()
+
+        # Replace the batch, returning the old one
+        old_batch = self._measurements[batch_index]
+        self._measurements[batch_index] = data_nw
+        return old_batch.to_native()
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,

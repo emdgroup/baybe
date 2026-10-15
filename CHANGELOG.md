@@ -76,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteLinearConstraint` for (optionally weighted) sum constraints on discrete
   parameters, supporting `coefficients` and mirroring `ContinuousLinearConstraint`'s
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
+- `Campaign.replace_batch` for replacing an entire batch of measurements
 
 ### Changed
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
@@ -132,6 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteParameter.comp_df` property (use `transform()` instead)
 - `CustomEncoding` enum class
 - `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
+- `Campaign.update_measurements` (use `Campaign.replace_batch` instead)
 - `SubspaceDiscrete(parameters, exp_rep)` constructor call style
   (use `SubspaceDiscrete.from_dataframe(parameters, exp_rep)` or
   `SubspaceDiscrete(candidates=TableCandidates(parameters, exp_rep))` instead)
