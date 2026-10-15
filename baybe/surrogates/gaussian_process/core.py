@@ -474,7 +474,9 @@ class GaussianProcessSurrogate(Surrogate):
         # Default kernel: build the (task-free) numerical base restricted to the
         # remaining parameters and re-add the default task kernel unless overridden.
         if isinstance(factory, BayBEKernelFactory):
-            return self._resolve_default_base(context, excluded_names)
+            return self._resolve_default_base(
+                context, excluded_names, factory.parameter_selector
+            )
 
         # A fixed kernel is reduced directly by removing the excluded parameters.
         if isinstance(factory, PlainGPComponentFactory):
@@ -500,7 +502,10 @@ class GaussianProcessSurrogate(Surrogate):
         return None if spec is None else spec.to_gpytorch(searchspace)
 
     def _resolve_default_base(
-        self, context: _ModelContext, excluded_names: set[str]
+        self,
+        context: _ModelContext,
+        excluded_names: set[str],
+        selector: ParameterSelectorProtocol | None,
     ) -> GPyTorchKernel | None:
         """Resolve the default kernel base, excluding the given parameters.
 
@@ -513,7 +518,6 @@ class GaussianProcessSurrogate(Surrogate):
         )
 
         searchspace = context.searchspace
-        selector = getattr(self.kernel_factory, "parameter_selector", None)
         task_param = searchspace._task_parameter
 
         keep: ParameterSelectorProtocol = lambda parameter: (  # noqa: E731
