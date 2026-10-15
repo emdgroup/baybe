@@ -733,9 +733,9 @@ class Campaign(SerialMixin):
             For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
         if candidates is None:
-            candidates = nw.from_native(self.measurements, eager_only=True).to_pandas()[
+            candidates = nw.from_native(self.measurements, eager_only=True).select(
                 [p.name for p in self.parameters]
-            ]
+            )
 
         surrogate = self.get_surrogate()
         if not hasattr(surrogate, method_name := "posterior"):
