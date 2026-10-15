@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gc
-import sys
 from abc import ABC, abstractmethod
 from functools import cached_property
 from itertools import chain
@@ -155,22 +154,18 @@ def _to_kernel_override(value: KernelOverride, instance: Parameter) -> KernelOve
         return value._scope_to_parameter(None)
 
     # GPyTorch kernels: no explicit active dimensions allowed anywhere in the tree.
-    # An existing GPyTorch instance implies the module is already imported. Avoid
-    # importing it (and Torch) solely to validate other parameter inputs.
-    if sys.modules.get("gpytorch") is not None:
-        from gpytorch.kernels import Kernel as GPyTorchKernel
+    from baybe.surrogates.gaussian_process.components.generic import (
+        GPComponentType,
+        _is_gpytorch_component,
+    )
 
-        if isinstance(value, GPyTorchKernel):
-            if any(
-                k.active_dims is not None
-                for k in value.modules()
-                if isinstance(k, GPyTorchKernel)
-            ):
-                raise ValueError(
-                    "The GPyTorch kernel provided for the kernel override must not "
-                    "specify 'active_dims'."
-                )
-            return value
+    if _is_gpytorch_component(value, (GPComponentType.KERNEL,)):
+        if any(k.active_dims is not None for k in (value, *value.sub_kernels())):
+            raise ValueError(
+                "The GPyTorch kernel provided for the kernel override must not "
+                "specify 'active_dims'."
+            )
+        return value
 
     raise TypeError(
         f"The object provided for the kernel override of "

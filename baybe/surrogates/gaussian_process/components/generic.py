@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import sys
+from collections.abc import Collection
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeAlias, TypeVar
 
@@ -83,20 +84,46 @@ class GPComponentType(Enum):
         return tuple(types)
 
 
-def _is_gpytorch_component_class(obj: Any, /) -> bool:
-    """Check if a class is a GPyTorch component class using lazy loading."""
-    if sys.modules.get("gpytorch") is None:
-        return False
-    from gpytorch.kernels import Kernel as GPyTorchKernel
-    from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
-    from gpytorch.means import Mean as GPyTorchMean
+def _is_gpytorch_component_class(
+    obj: Any,
+    /,
+    component_types: Collection[GPComponentType] = tuple(GPComponentType),
+) -> bool:
+    """Check if a class is a GPyTorch component class using lazy loading.
 
-    return issubclass(obj, (GPyTorchKernel, GPyTorchMean, GPyTorchLikelihood))
+    Args:
+        obj: The class to check.
+        component_types: The component types to check against.
+
+    Returns:
+        ``True`` if the class is a GPyTorch class of one of the given component types.
+    """
+    # GPyTorch types are only returned if GPyTorch has already been imported
+    types = tuple(
+        t
+        for c in component_types
+        for t in c.get_types()
+        if not issubclass(t, BayBEGPComponent)
+    )
+    return issubclass(obj, types)
 
 
-def _is_gpytorch_component(obj: Any, /) -> TypeIs[GPyTorchGPComponent]:
-    """Check if an object is a GPyTorch component instance using lazy loading."""
-    return _is_gpytorch_component_class(type(obj))
+def _is_gpytorch_component(
+    obj: Any,
+    /,
+    component_types: Collection[GPComponentType] = tuple(GPComponentType),
+) -> TypeIs[GPyTorchGPComponent]:
+    """Check if an object is a GPyTorch component instance using lazy loading.
+
+    Args:
+        obj: The object to check.
+        component_types: The component types to check against.
+
+    Returns:
+        ``True`` if the object is a GPyTorch instance of one of the given component
+        types.
+    """
+    return _is_gpytorch_component_class(type(obj), component_types)
 
 
 def _validate_component(instance: Any, attribute: Attribute, value: Any) -> None:
