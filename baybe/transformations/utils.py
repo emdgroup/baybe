@@ -56,6 +56,25 @@ def _flatten_transformations(
             yield t
 
 
+def _iterate_transformations(
+    transformation: Transformation, /
+) -> Iterable[Transformation]:
+    """Recursively iterate over a transformation and all its nested components."""
+    from baybe.transformations.composite import (
+        AdditiveTransformation,
+        ChainedTransformation,
+        MultiplicativeTransformation,
+    )
+
+    yield transformation
+    if isinstance(
+        transformation,
+        (ChainedTransformation, AdditiveTransformation, MultiplicativeTransformation),
+    ):
+        for t in transformation.transformations:
+            yield from _iterate_transformations(t)
+
+
 def compress_transformations(
     transformations: Iterable[Transformation], /
 ) -> tuple[Transformation, ...]:

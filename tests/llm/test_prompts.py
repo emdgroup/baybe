@@ -6,264 +6,178 @@ from attrs import evolve
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED, JINJA2_INSTALLED, LLM_INSTALLED
+from baybe.constraints import (
+    ContinuousLinearConstraint,
+    DiscreteSelectionConstraint,
+    SubSelectionCondition,
+)
 from baybe.exceptions import LLMResponseError
 from baybe.objectives import (
     DesirabilityObjective,
     ParetoObjective,
     SingleTargetObjective,
 )
-from baybe.objectives.enum import Scalarizer
 from baybe.parameters import (
     CategoricalParameter,
+    CustomDiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
+    TaskParameter,
 )
 from baybe.recommenders.pure.llm._prompts import (
+    _drop_empty,
     _forbidden_configurations,
-    _objective_prompt_info,
-    _parameter_prompt_info,
-    _target_prompt_info,
+    _to_prompt_dict,
     make_prompt,
 )
 from baybe.searchspace import SearchSpace
 from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from baybe.targets import BinaryTarget, NumericalTarget
-from baybe.transformations import AffineTransformation
 
 if not JINJA2_INSTALLED:
     pytest.skip("Jinja2 not installed.", allow_module_level=True)
 
 
 @pytest.mark.parametrize(
-    ("parameter", "expected_kind", "domain_contains", "domain_excludes"),
+    ("parameter", "expected_values"),
     [
         param(
             CategoricalParameter("Cat", ("A", "B", "C")),
-            "categorical",
             ["A", "B", "C"],
-            [],
             id="categorical",
         ),
         param(
             CategoricalParameter("Cat", ("A", "B", "C"), active_values=("A", "B")),
-            "categorical",
             ["A", "B"],
-            ["C"],
             id="categorical_active_values",
         ),
         param(
-            NumericalDiscreteParameter("Num", (1.0, 2.0, 3.0)),
-            "discrete_numeric",
-            ["1.0", "2.0", "3.0"],
-            ["numpy", "np."],
-            id="numerical_discrete",
+            CategoricalParameter("Cat", ("A", "B", "C"), active_values=("A",)),
+            ["A"],
+            id="categorical_single_active_value",
         ),
         param(
-            NumericalContinuousParameter("Cont", bounds=(0.0, 10.0)),
-            "continuous",
-            ["0.0", "10.0"],
-            [],
-            id="continuous",
+            TaskParameter("Task", ("T1", "T2", "T3"), active_values=("T1",)),
+            ["T1"],
+            id="task_active_values",
+        ),
+        param(
+            CustomDiscreteParameter(
+                "Custom",
+                pd.DataFrame({"d1": [1.0, 2.0, 3.0]}, index=["L1", "L2", "L3"]),
+                active_values=("L1", "L2"),
+            ),
+            ["L1", "L2"],
+            id="custom_active_values",
+        ),
+        param(
+            NumericalDiscreteParameter("Num", (1.0, 2.0, 3.0)),
+            [1.0, 2.0, 3.0],
+            id="numerical_discrete",
         ),
     ],
 )
-def test_parameter_prompt_info(
-    parameter, expected_kind, domain_contains, domain_excludes
-):
-    """The prompt view has the correct kind and domain for each parameter type."""
-    info = _parameter_prompt_info(parameter)
-    assert info["name"] == parameter.name
-    assert info["kind"] == expected_kind
-    for substr in domain_contains:
-        assert substr in info["domain"]
-    for substr in domain_excludes:
-        assert substr not in info["domain"]
+def test_to_prompt_dict(parameter, expected_values):
+    """Only the active values of a parameter are shown, without encoding data."""
+    serialized = _to_prompt_dict(parameter)
+    assert serialized["name"] == parameter.name
+    assert serialized["values"] == expected_values
+    assert "active_values" not in serialized
+    assert "data" not in serialized
 
 
 @pytest.mark.skipif(not CHEM_INSTALLED, reason="Chem dependencies not installed.")
-def test_parameter_prompt_info_substance():
-    """Substance parameters expose SMILES in the domain string."""
+def test_to_prompt_dict_substance():
+    """Substance parameters show the SMILES of their active values only."""
     from baybe.parameters import SubstanceParameter
 
-    p = SubstanceParameter(
+    parameter = SubstanceParameter(
         "Solvent",
-        data={"Water": "O", "Ethanol": "CCO"},
-        encoding="MORDRED",
+        data={"Water": "O", "Ethanol": "CCO", "Benzene": "c1ccccc1"},
+        active_values=("Water", "Ethanol"),
     )
-    info = _parameter_prompt_info(p)
-    assert info["kind"] == "substance"
-    assert "Water" in info["domain"]
-    assert "O" in info["domain"]
-    assert "Ethanol" in info["domain"]
-    assert "CCO" in info["domain"]
+    serialized = _to_prompt_dict(parameter)
+    assert serialized["values"] == ["Water", "Ethanol"]
+    assert serialized["data"] == {"Water": "O", "Ethanol": "CCO"}
+    assert "active_values" not in serialized
 
 
-@pytest.mark.parametrize(
-    ("parameter", "expected_description", "expected_unit", "expected_misc"),
-    [
-        param(
-            CategoricalParameter(
-                "Cat",
-                ("A", "B"),
-                metadata={
-                    "description": "A category",
-                    "unit": "mg",
-                    "purity": "high",
-                },
-            ),
-            "A category",
-            "mg",
-            (("purity", "high"),),
-            id="with_metadata",
-        ),
-        param(
-            CategoricalParameter("Cat", ("A", "B")),
-            None,
-            None,
-            (),
-            id="no_metadata",
-        ),
-    ],
-)
-def test_parameter_prompt_info_metadata(
-    parameter, expected_description, expected_unit, expected_misc
-):
-    """Metadata fields are forwarded when present and None/empty otherwise."""
-    info = _parameter_prompt_info(parameter)
-    assert info["description"] == expected_description
-    assert info["unit"] == expected_unit
-    assert info["misc"] == expected_misc
-
-
-@pytest.mark.parametrize(
-    ("target", "goal_contains", "exp_transformation", "exp_desc", "exp_unit"),
-    [
-        param(
-            NumericalTarget("yield"),
-            ["maximize"],
-            None,
-            None,
-            None,
-            id="numerical_maximize",
-        ),
-        param(
-            NumericalTarget("yield", minimize=True),
-            ["minimize"],
-            None,
-            None,
-            None,
-            id="numerical_minimize",
-        ),
-        param(
-            NumericalTarget("yield", transformation=AffineTransformation(factor=2.0)),
-            ["maximize"],
-            "AffineTransformation(factor=2.0, shift=0.0)",
-            None,
-            None,
-            id="numerical_with_transformation",
-        ),
-        param(
-            BinaryTarget("success", success_value="yes", failure_value="no"),
-            ["yes", "no"],
-            None,
-            None,
-            None,
-            id="binary",
-        ),
-        param(
-            NumericalTarget(
-                "yield",
-                metadata={"description": "Reaction yield", "unit": "%"},
-            ),
-            ["maximize"],
-            None,
-            "Reaction yield",
-            "%",
-            id="numerical_with_metadata",
-        ),
-    ],
-)
-def test_target_prompt_info(
-    target, goal_contains, exp_transformation, exp_desc, exp_unit
-):
-    """The prompt view has the correct fields for each target type."""
-    info = _target_prompt_info(target)
-    assert info["name"] == target.name
-    assert info["description"] == exp_desc
-    assert info["unit"] == exp_unit
-    assert info["transformation"] == exp_transformation
-    for substr in goal_contains:
-        assert substr in info["goal"]
-
-
-_T1 = NumericalTarget("yield")
-_T2 = NumericalTarget("cost", minimize=True)
-
-
-@pytest.mark.parametrize(
-    ("objective", "combination_contains", "expected_description"),
-    [
-        param(
-            SingleTargetObjective(target=_T1),
-            None,
-            None,
-            id="single_target",
-        ),
-        param(
-            DesirabilityObjective(
-                targets=[_T1, _T2],
-                scalarizer=Scalarizer.MEAN,
-                require_normalization=False,
-            ),
-            "weighted arithmetic mean",
-            None,
-            id="desirability_mean",
-        ),
-        param(
-            DesirabilityObjective(
-                targets=[
-                    NumericalTarget.normalized_sigmoid("yield", [[0, 0.1], [100, 0.9]]),
-                    NumericalTarget.normalized_sigmoid("cost", [[0, 0.9], [100, 0.1]]),
-                ],
-                scalarizer=Scalarizer.GEOM_MEAN,
-            ),
-            "weighted geometric mean",
-            None,
-            id="desirability_geom_mean",
-        ),
-        param(
-            ParetoObjective(targets=[_T1, _T2]),
-            "Pareto",
-            None,
-            id="pareto",
-        ),
-        param(
-            SingleTargetObjective(
-                target=_T1,
-                metadata={"description": "Maximize yield"},
-            ),
-            None,
-            "Maximize yield",
-            id="single_target_with_metadata",
-        ),
-    ],
-)
-def test_objective_prompt_info(objective, combination_contains, expected_description):
-    """The prompt view has the correct fields per objective type."""
-    info = _objective_prompt_info(objective)
-    assert len(info["targets"]) == len(objective.targets)
-    assert info["description"] == expected_description
-    if combination_contains is None:
-        assert info["combination"] is None
-    else:
-        assert combination_contains in info["combination"]
+def test_drop_empty():
+    """None values and (resulting) empty dictionaries are dropped recursively."""
+    serialized = {
+        "none": None,
+        "empty": {},
+        "emptied": {"none": None},
+        "nested": [{"none": None, "kept": 1}],
+        "falsy": 0,
+        "empty_list": [],
+    }
+    assert _drop_empty(serialized) == {
+        "nested": [{"kept": 1}],
+        "falsy": 0,
+        "empty_list": [],
+    }
 
 
 _SEARCHSPACE = SearchSpace.from_product([CategoricalParameter("Cat", ("A", "B"))])
 _DESCRIPTION = "Test experiment."
+_T1 = NumericalTarget("yield")
+_T2 = NumericalTarget("cost", minimize=True)
+
+
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
+@pytest.mark.parametrize(
+    ("objective", "expected_content"),
+    [
+        param(SingleTargetObjective(_T2), '"minimize": true', id="direction"),
+        param(
+            SingleTargetObjective(
+                NumericalTarget.match_bell("pH", match_value=7.0, sigma=0.5)
+            ),
+            '"match_value": 7.0',
+            id="match_target",
+        ),
+        param(
+            DesirabilityObjective(
+                [
+                    NumericalTarget.normalized_ramp("yield", (0, 100)),
+                    NumericalTarget.normalized_ramp("cost", (0, 10), descending=True),
+                ],
+                weights=[2, 1],
+            ),
+            '"weights": [2.0, 1.0]',
+            id="desirability",
+        ),
+        param(ParetoObjective([_T1, _T2]), '"type": "ParetoObjective"', id="pareto"),
+        param(
+            SingleTargetObjective(
+                BinaryTarget("success", success_value="yes", failure_value="no")
+            ),
+            '"success_value": "yes"',
+            id="binary",
+        ),
+        param(
+            SingleTargetObjective(_T1, metadata={"description": "Maximize yield"}),
+            '"description": "Maximize yield"',
+            id="metadata",
+        ),
+    ],
+)
+def test_make_prompt_objective(objective, expected_content):
+    """The objective is included with all information relevant for optimizing."""
+    prompt = make_prompt(
+        batch_size=1,
+        searchspace=_SEARCHSPACE,
+        objective=objective,
+        experiment_description=_DESCRIPTION,
+    )
+    print(prompt)
+    assert expected_content in prompt
+
+
 _ALL_OPTIONAL_SECTIONS = {
     "OPTIMIZATION OBJECTIVE",
-    "TARGETS",
+    "CONSTRAINTS",
     "PREVIOUS MEASUREMENTS",
     "PENDING EXPERIMENTS",
     "WHAT WENT WRONG",
@@ -287,8 +201,32 @@ _ALL_OPTIONAL_SECTIONS = {
                     metadata={"description": "Maximize yield"},
                 ),
             },
-            {"OPTIMIZATION OBJECTIVE", "TARGETS"},
+            {"OPTIMIZATION OBJECTIVE"},
             id="with_objective",
+        ),
+        param(
+            {
+                "searchspace": SearchSpace.from_product(
+                    [CategoricalParameter("Cat", ("A", "B", "C"))],
+                    [
+                        DiscreteSelectionConstraint(
+                            ["Cat"], [SubSelectionCondition(["C"])], exclude=True
+                        )
+                    ],
+                ),
+            },
+            {"CONSTRAINTS"},
+            id="with_discrete_constraint",
+        ),
+        param(
+            {
+                "searchspace": SearchSpace.from_product(
+                    [NumericalContinuousParameter("x", (0.0, 1.0))],
+                    [ContinuousLinearConstraint(["x"], "<=", [1.0], 0.5)],
+                ),
+            },
+            {"CONSTRAINTS"},
+            id="with_continuous_constraint",
         ),
         param(
             {
@@ -336,10 +274,12 @@ _ALL_OPTIONAL_SECTIONS = {
 def test_make_prompt_optional_sections(kwargs, present_sections):
     """Optional prompt sections appear only when their arguments are provided."""
     prompt = make_prompt(
-        batch_size=1,
-        searchspace=_SEARCHSPACE,
-        experiment_description=_DESCRIPTION,
-        **kwargs,
+        **{
+            "batch_size": 1,
+            "searchspace": _SEARCHSPACE,
+            "experiment_description": _DESCRIPTION,
+            **kwargs,
+        }
     )
     for section in present_sections:
         assert section in prompt
@@ -356,6 +296,24 @@ def test_make_prompt_original_response_requires_error():
             experiment_description=_DESCRIPTION,
             original_response="response text",
         )
+
+
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
+def test_make_prompt_excludes_metadata_columns():
+    """Only parameter and target columns of the dataframes appear in the prompt."""
+    prompt = make_prompt(
+        batch_size=1,
+        searchspace=_SEARCHSPACE,
+        objective=SingleTargetObjective(_T1),
+        measurements=pd.DataFrame(
+            {"Cat": ["A"], "yield": [42.0], "BatchNr": [1], "FitNr": [1.0]}
+        ),
+        pending_experiments=pd.DataFrame({"Cat": ["B"], "BatchNr": [2]}),
+        experiment_description=_DESCRIPTION,
+    )
+    assert "42.0" in prompt
+    assert "BatchNr" not in prompt
+    assert "FitNr" not in prompt
 
 
 def _filter_searchspace(searchspace, mask):
@@ -492,7 +450,6 @@ def test_full_prompt(recovery_kwargs, expected_present, expected_absent):
         "A test experiment.",
         "OPTIMIZATION OBJECTIVE",
         "Maximize yield",
-        "TARGETS",
         "yield",
         "PARAMETERS",
         "Cat",
@@ -507,5 +464,6 @@ def test_full_prompt(recovery_kwargs, expected_present, expected_absent):
         assert section in prompt
     for section in expected_absent:
         assert section not in prompt
-    for residue in ("{{", "}}", "{%", "%}"):
+    # Jinja expressions are written with inner spaces, unlike nested JSON objects
+    for residue in ("{{ ", " }}", "{%", "%}"):
         assert residue not in prompt

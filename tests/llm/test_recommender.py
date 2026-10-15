@@ -10,7 +10,9 @@ from pytest import param
 
 from baybe import Campaign
 from baybe._optional.info import LLM_INSTALLED
+from baybe.constraints import DiscreteCustomConstraint
 from baybe.exceptions import (
+    IncompatibilityError,
     LLMAuthenticationError,
     LLMCallError,
     LLMMalformedResponseError,
@@ -19,7 +21,14 @@ from baybe.exceptions import (
 from baybe.objectives import SingleTargetObjective
 from baybe.recommenders.pure.llm._prompts import make_prompt
 from baybe.recommenders.pure.llm.llm import LLMRecommender
+from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
+from baybe.transformations import (
+    AdditiveTransformation,
+    AffineTransformation,
+    ChainedTransformation,
+    CustomTransformation,
+)
 from tests.llm._mock import (
     PATCH_TARGET,
     make_continuous_searchspace,
@@ -115,6 +124,65 @@ def test_call_errors(exception, expected_error):
         with pytest.raises(expected_error):
             _RECOMMENDER.recommend(1, _SEARCHSPACE, _OBJECTIVE)
     assert mock.call_count == 1
+
+
+def _custom_function(x):
+    """A custom torch callable."""
+    return x
+
+
+def _custom_validator(df):
+    """A custom constraint validator."""
+    return df["Num"] > 1
+
+
+@pytest.mark.parametrize(
+    ("searchspace", "transformation", "match"),
+    [
+        param(
+            SearchSpace.from_product(
+                _SEARCHSPACE.parameters,
+                [DiscreteCustomConstraint(["Num"], _custom_validator)],
+            ),
+            None,
+            "DiscreteCustomConstraint",
+            id="custom_constraint",
+        ),
+        param(
+            _SEARCHSPACE,
+            CustomTransformation(_custom_function),
+            "CustomTransformation",
+            id="custom_transformation",
+        ),
+        param(
+            _SEARCHSPACE,
+            ChainedTransformation(
+                [CustomTransformation(_custom_function), AffineTransformation(2.0)]
+            ),
+            "CustomTransformation",
+            id="chained_custom_transformation",
+        ),
+        param(
+            _SEARCHSPACE,
+            AdditiveTransformation(
+                [CustomTransformation(_custom_function), AffineTransformation(2.0)]
+            ),
+            "CustomTransformation",
+            id="additive_custom_transformation",
+        ),
+    ],
+)
+def test_custom_components_rejected(searchspace, transformation, match):
+    """Custom components are rejected before any call to the language model."""
+    objective = (
+        _OBJECTIVE
+        if transformation is None
+        else SingleTargetObjective(NumericalTarget("y", transformation=transformation))
+    )
+    with patch(PATCH_TARGET) as mock:
+        with pytest.raises(IncompatibilityError, match=match):
+            _RECOMMENDER.recommend(1, searchspace, objective)
+    assert mock.call_count == 0
 
 
 @pytest.mark.parametrize(
