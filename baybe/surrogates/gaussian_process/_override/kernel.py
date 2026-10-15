@@ -16,23 +16,22 @@ if TYPE_CHECKING:
     from baybe.surrogates.gaussian_process.components.kernel import (
         KernelFactoryProtocol,
     )
-    from baybe.surrogates.gaussian_process.core import _ModelContext
 
 
 def extract_parameter_kernel_overrides(
-    context: _ModelContext,
+    searchspace: SearchSpace,
 ) -> list[tuple[str, GPyTorchKernel]]:
-    """Extract the regular parameter-specific kernel overrides.
+    """Extract the parameter-specific kernel overrides.
 
     Args:
-        context: The model context providing the search space.
+        searchspace: The search space whose parameters are checked for overrides.
 
     Returns:
         A ``(parameter_name, kernel)`` pair for each parameter with an override.
     """
     return [
-        (p.name, make_parameter_override_kernel(p, context.searchspace))
-        for p in context.searchspace.parameters
+        (p.name, make_parameter_override_kernel(p, searchspace))
+        for p in searchspace.parameters
         if p.override_kernel is not None
     ]
 

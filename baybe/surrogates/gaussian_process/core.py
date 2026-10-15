@@ -420,7 +420,7 @@ class GaussianProcessSurrogate(Surrogate):
         Returns:
             The resolved and partition-validated kernel.
         """
-        overrides = _override.extract_parameter_kernel_overrides(context)
+        overrides = _override.extract_parameter_kernel_overrides(context.searchspace)
 
         excluded_names = {name for name, _ in overrides}
         residual = self._resolve_residual_kernel(context, excluded_names)
