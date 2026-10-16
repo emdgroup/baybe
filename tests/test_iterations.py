@@ -27,6 +27,11 @@ from baybe.kernels.basic import (
 )
 from baybe.kernels.composite import ScaleKernel
 from baybe.objectives.pareto import ParetoObjective
+from baybe.parameters import (
+    NumericalContinuousParameter,
+    TaskParameter,
+    TransferLearningMode,
+)
 from baybe.priors import (
     GammaPrior,
     HalfCauchyPrior,
@@ -395,6 +400,39 @@ def test_non_batching_acqfs(ongoing_campaign, n_iterations, batch_size):
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_kernels(ongoing_campaign, n_iterations, batch_size):
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
+
+
+def _make_override_parameters(mode: TransferLearningMode | None = None) -> list:
+    """Create parameters with a regularized kernel override and an optional task."""
+    parameters = [
+        NumericalContinuousParameter("x1", (0, 1)),
+        NumericalContinuousParameter(
+            "x2",
+            (0, 1),
+            override_kernel=RBFKernel(lengthscale_prior=GammaPrior(3.0, 6.0)),
+        ),
+    ]
+    if mode is not None:
+        parameters.append(
+            TaskParameter("task", ["a", "b"], override_transfer_learning_mode=mode)
+        )
+    return parameters
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        param(_make_override_parameters(), id="no_task"),
+        *(
+            param(_make_override_parameters(mode), id=mode.name)
+            for mode in TransferLearningMode
+        ),
+    ],
+)
+def test_kernel_override_iteration(ongoing_campaign, n_iterations, batch_size):
+    """A full optimization loop runs with kernel overrides."""
     run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
