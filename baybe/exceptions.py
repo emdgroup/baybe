@@ -336,7 +336,7 @@ class LLMConstraintViolationError(LLMResponseError):
 
 
 class LLMIneligiblePointsError(LLMResponseError):
-    """A language model response proposed points outside the eligible candidate set."""
+    """A language model response proposed points that are currently not selectable."""
 
     def __init__(self, *args: Any, n_ineligible: int):
         super().__init__(*args)
@@ -346,10 +346,9 @@ class LLMIneligiblePointsError(LLMResponseError):
     @override
     def recovery_instruction(self) -> str:
         return (
-            f"{self.n_ineligible} of your proposed configurations are not eligible "
-            f"candidates (they may already have been measured or recommended, or they "
-            f"do not exist in the search space). Propose different points from the "
-            f"available search space."
+            f"{self.n_ineligible} of your proposed configurations are currently not "
+            f"selectable (they are excluded, already measured or recommended, or "
+            f"pending). Propose different points from the available search space."
         )
 
 

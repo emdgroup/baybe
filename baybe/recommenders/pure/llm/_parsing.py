@@ -7,6 +7,7 @@ import warnings
 from json import JSONDecodeError
 
 import pandas as pd
+from exceptiongroup import ExceptionGroup
 
 from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.exceptions import (
@@ -26,7 +27,8 @@ from baybe.recommenders.pure.llm._schema import (
     _PARAMETERS_FIELD,
 )
 from baybe.searchspace import SearchSpace
-from baybe.utils.dataframe import fuzzy_row_match, normalize_input_dtypes
+from baybe.searchspace.validation import validate_dataframe_active_values
+from baybe.utils.dataframe import normalize_input_dtypes
 from baybe.utils.validation import validate_parameter_input
 
 
@@ -64,6 +66,35 @@ def extract_json_array(response: str, /) -> str | None:
     return last_object_array
 
 
+def _count_forbidden_configurations(df: pd.DataFrame, searchspace: SearchSpace) -> int:
+    """Count the suggestions that match a currently not selectable configuration.
+
+    These are the discrete configurations filtered out of the search space passed to
+    the recommender, i.e. excluded ones and, depending on the campaign settings, those
+    already measured, recommended or pending.
+
+    Args:
+        df: The suggestions.
+        searchspace: The search space passed to the recommender.
+
+    Returns:
+        The number of suggestions matching a not selectable configuration.
+    """
+    discrete = searchspace.discrete
+    if not discrete.parameters:
+        return 0
+    eligible, _ = discrete.get_candidates()
+    forbidden = discrete.exp_rep[~discrete.exp_rep.index.isin(eligible.index)]
+    if forbidden.empty:
+        return 0
+
+    names = [p.name for p in discrete.parameters]
+    forbidden_rows = set(forbidden[names].itertuples(index=False, name=None))
+    return sum(
+        row in forbidden_rows for row in df[names].itertuples(index=False, name=None)
+    )
+
+
 def parse_llm_response(
     response: str, /, searchspace: SearchSpace, batch_size: int
 ) -> pd.DataFrame:
@@ -78,10 +109,9 @@ def parse_llm_response(
         batch_size: The number of recommendations to return.
 
     Returns:
-        A DataFrame containing exactly ``batch_size`` distinct recommendations. All
-        returned points are eligible candidates of the search space (as returned by
-        :meth:`baybe.searchspace.discrete.SubspaceDiscrete.get_candidates`);
-        suggestions that are not are rejected.
+        A DataFrame containing exactly ``batch_size`` distinct recommendations whose
+        parameter values are valid and whose discrete part satisfies the discrete
+        constraints of the search space.
 
     Raises:
         LLMMalformedResponseError: If the response cannot be parsed into the expected
@@ -95,11 +125,11 @@ def parse_llm_response(
         LLMNonNumericParameterError: If a suggestion gives non-numeric values for a
             numerical parameter.
         LLMInvalidParameterValueError: If a suggestion contains invalid parameter
-            values.
+            values, including inactive values of label-like parameters.
         LLMConstraintViolationError: If a suggestion violates a discrete constraint
             (including batch constraints) present in the search space.
-        LLMIneligiblePointsError: If a suggestion does not correspond to an eligible
-            candidate of the search space.
+        LLMIneligiblePointsError: If a suggestion corresponds to a discrete
+            configuration that is currently not selectable.
         LLMDuplicateRecommendationsError: If the recommendations are not distinct.
 
     Warns:
@@ -182,6 +212,14 @@ def parse_llm_response(
         raise LLMInvalidParameterValueError(str(e), detail=str(e)) from e
     df = normalize_input_dtypes(df, searchspace.parameters)
 
+    # Inactive values of label-like parameters (e.g. other tasks in transfer learning)
+    # may appear in measurements but must not be recommended
+    try:
+        validate_dataframe_active_values(df, searchspace.parameters)
+    except ExceptionGroup as e:
+        detail = " ".join(str(ex) for ex in e.exceptions)
+        raise LLMInvalidParameterValueError(detail, detail=detail) from e
+
     continuous_constraints = (
         *searchspace.continuous.constraints_lin_eq,
         *searchspace.continuous.constraints_lin_ineq,
@@ -223,37 +261,22 @@ def parse_llm_response(
                 parameters=constraint.parameters,
             )
 
-    # Recover the exp_rep index (for campaign metadata tracking) via the same fuzzy
-    # matching used for measurement input: exact for categorical, nearest numerical.
-    discrete_params = searchspace.discrete.parameters
-    if discrete_params:
-        exp_rep = searchspace.discrete.exp_rep
-        aligned_index = fuzzy_row_match(exp_rep, df, discrete_params)
-        n_unmatched = len(df) - len(aligned_index)
-        eligible_index = searchspace.discrete.get_candidates()[0].index
-        n_filtered_out = int((~aligned_index.isin(eligible_index)).sum())
-        n_ineligible = n_unmatched + n_filtered_out
-        if n_ineligible > 0:
-            raise LLMIneligiblePointsError(
-                f"{n_ineligible} suggestion(s) do not correspond to eligible "
-                f"candidates of the search space.",
-                n_ineligible=n_ineligible,
-            )
-        continuous_param_names = [p.name for p in searchspace.continuous.parameters]
-        if continuous_param_names:
-            rec_disc = exp_rep.loc[aligned_index]
-            rec_cont = df[continuous_param_names].set_axis(aligned_index)
-            recommendations_df = pd.concat([rec_disc, rec_cont], axis=1)
-        else:
-            recommendations_df = exp_rep.loc[aligned_index]
-    else:
-        recommendations_df = df
+    if (n_forbidden := _count_forbidden_configurations(df, searchspace)) > 0:
+        raise LLMIneligiblePointsError(
+            f"{n_forbidden} suggestion(s) correspond to configurations that are "
+            f"currently not selectable.",
+            n_ineligible=n_forbidden,
+        )
 
-    # Checked on the final configurations so that values snapped to the same allowed
-    # value (within tolerance) are also detected
-    if (n_duplicates := int(recommendations_df.duplicated().sum())) > 0:
+    # TODO: We should at some point have a more explicit check against the actual search
+    # space object. Currently, we can e.g. not verify search space that use permutation
+    # constraints as the search space contains an arbitrary representation of a
+    # permutation group. Also, search spaces that are constructed as an explicit list of
+    # configurations (e.g. if generated from a DataFrame) can currently not be validated
+
+    if (n_duplicates := int(df.duplicated().sum())) > 0:
         raise LLMDuplicateRecommendationsError(
             f"{n_duplicates} suggestion(s) duplicate another suggestion of the batch.",
             n_duplicates=n_duplicates,
         )
-    return recommendations_df
+    return df

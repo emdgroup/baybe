@@ -10,6 +10,7 @@ from baybe.constraints.conditions import ThresholdCondition
 from baybe.constraints.continuous import ContinuousLinearConstraint
 from baybe.constraints.discrete import (
     DiscreteBatchConstraint,
+    DiscretePermutationInvarianceConstraint,
     DiscreteSelectionConstraint,
 )
 from baybe.exceptions import (
@@ -192,6 +193,15 @@ def test_parse_llm_response_format_errors(discrete_searchspace, response, match)
         ),
         pytest.param(
             SearchSpace.from_product(
+                [CategoricalParameter("Cat", ("A", "B"), active_values=("A",))]
+            ),
+            {"Cat": "B"},
+            LLMInvalidParameterValueError,
+            "Only values from the active values",
+            id="inactive_category",
+        ),
+        pytest.param(
+            SearchSpace.from_product(
                 [NumericalContinuousParameter("x", bounds=(0.0, 10.0))]
             ),
             {"x": 99.0},
@@ -323,14 +333,6 @@ def test_parse_llm_response_happy_path():
             {"Num": 3.0},
             id="numerical_forbidden",
         ),
-        pytest.param(
-            _make_filtered_searchspace(
-                [NumericalDiscreteParameter("x", (1.0, 2.0, 3.0), tolerance=0.3)],
-                forbidden_mask=[True, False, False],  # 1.0 is forbidden
-            ),
-            {"x": 1.2},
-            id="tolerance_snap_forbidden",
-        ),
     ],
 )
 def test_parse_llm_response_ineligible_points(searchspace, overrides):
@@ -340,14 +342,19 @@ def test_parse_llm_response_ineligible_points(searchspace, overrides):
         parse_llm_response(response, searchspace, batch_size=1)
 
 
-def test_parse_llm_response_tolerance_snap():
-    """A value within tolerance snaps to the nearest allowed value."""
+def test_parse_llm_response_accepts_non_stored_configuration():
+    """Valid configurations need not match the stored search space representation."""
+    # Of the equivalent configurations (1, 2) and (2, 1), only the first is stored
     searchspace = SearchSpace.from_product(
-        [NumericalDiscreteParameter("x", (1.0, 2.0, 3.0), tolerance=0.3)]
+        [
+            NumericalDiscreteParameter("x", (1.0, 2.0)),
+            NumericalDiscreteParameter("y", (1.0, 2.0)),
+        ],
+        constraints=[DiscretePermutationInvarianceConstraint(["x", "y"])],
     )
-    response = json.dumps([{"explanation": "test", "parameters": {"x": 1.2}}])
+    response = make_response_json(searchspace, x=2.0, y=1.0)
     result = parse_llm_response(response, searchspace, batch_size=1)
-    assert result["x"].iloc[0] == 1.0
+    assert result[["x", "y"]].values.tolist() == [[2.0, 1.0]]
 
 
 def test_parse_llm_response_hybrid_output():
@@ -455,11 +462,6 @@ def test_parse_llm_response_too_few_suggestions():
     ("parameter", "values"),
     [
         pytest.param(CategoricalParameter("p", ("A", "B")), ["A", "A"], id="identical"),
-        pytest.param(
-            NumericalDiscreteParameter("p", (1.0, 2.0), tolerance=0.3),
-            [1.0, 1.2],
-            id="snapped_to_same_value",
-        ),
         pytest.param(
             NumericalContinuousParameter("p", (0.0, 1.0)),
             [0.5, 0.5],
