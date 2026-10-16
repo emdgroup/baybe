@@ -637,7 +637,10 @@ class Campaign(SerialMixin):
 
         # Update metadata
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            self._searchspace_metadata.loc[rec.index, _RECOMMENDED] = True
+            idxs_matched = fuzzy_row_match(
+                self.searchspace.discrete.exp_rep, rec, self.parameters
+            )
+            self._searchspace_metadata.loc[idxs_matched, _RECOMMENDED] = True
 
         return rec
 

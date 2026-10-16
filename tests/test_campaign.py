@@ -11,7 +11,7 @@ from pandas.testing import assert_index_equal
 from pytest import param
 
 from baybe.acquisition import qLogEI, qLogNEHVI, qTS, qUCB
-from baybe.campaign import _EXCLUDED, Campaign
+from baybe.campaign import _EXCLUDED, _RECOMMENDED, Campaign
 from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.discrete import DiscreteSelectionConstraint
 from baybe.exceptions import IncompatibilityError, NotEnoughPointsLeftError
@@ -450,3 +450,30 @@ def test_cache_invalidation(
         assert campaign._cached_recommendation is None
     else:
         assert campaign._cached_recommendation is not None
+
+
+def test_recommended_metadata_uses_content_not_index():
+    """Metadata marks the correct rows even when the recommender resets the index."""
+    params = [
+        NumericalDiscreteParameter("x", [1, 2, 3]),
+        NumericalDiscreteParameter("y", [10, 20]),
+    ]
+    searchspace = SearchSpace.from_product(params)
+    objective = NumericalTarget("t").to_objective()
+    campaign = Campaign(searchspace, objective)
+
+    # Choose the original indices of the rows we want to recommend
+    original_idx = [2, 4]
+    rec_content = searchspace.discrete.exp_rep.iloc[original_idx].reset_index(drop=True)
+
+    mock_recommender = Mock(spec=RecommenderProtocol)
+    mock_recommender.recommend.return_value = rec_content
+    campaign.recommender = mock_recommender
+
+    rec = campaign.recommend(2)
+
+    # Verify that rec does not have the original indices but has a reset index
+    assert rec.index.tolist() == [0, 1]
+
+    recommended = campaign._searchspace_metadata[_RECOMMENDED]
+    assert list(recommended[recommended].index) == original_idx
