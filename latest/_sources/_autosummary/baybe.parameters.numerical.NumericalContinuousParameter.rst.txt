@@ -49,6 +49,7 @@ NumericalContinuousParameter
       ~NumericalContinuousParameter.is_continuous
       ~NumericalContinuousParameter.is_discrete
       ~NumericalContinuousParameter.is_numerical
+      ~NumericalContinuousParameter.override_kernel
       ~NumericalContinuousParameter.unit
       ~NumericalContinuousParameter.bounds
       ~NumericalContinuousParameter.name

@@ -53,6 +53,7 @@ NumericalDiscreteParameter
       ~NumericalDiscreteParameter.is_continuous
       ~NumericalDiscreteParameter.is_discrete
       ~NumericalDiscreteParameter.is_numerical
+      ~NumericalDiscreteParameter.override_kernel
       ~NumericalDiscreteParameter.unit
       ~NumericalDiscreteParameter.values
       ~NumericalDiscreteParameter.tolerance

@@ -1227,15 +1227,17 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">attrs</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">Converter</span><span class="p">,</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs.converters</span><span class="w"> </span><span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_c</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">min_len</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterEncoding</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SerialMixin</span><span class="p">,</span>
@@ -1244,13 +1246,154 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeasurableMetadata</span><span class="p">,</span> <span class="n">to_metadata</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span> <span class="k">as</span> <span class="n">GPyTorchKernel</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicKernel</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ParameterKind</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace.continuous</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubspaceContinuous</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace.discrete</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubspaceDiscrete</span>
 
+    <span class="n">KernelOverride</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="n">GPyTorchKernel</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">KernelOverride</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Kernel</span>
+
 <span class="c1"># TODO: Reactive slots in all classes once cached_property is supported:</span>
 <span class="c1">#   https://github.com/python-attrs/attrs/issues/164</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_iter_basic_kernels</span><span class="p">(</span><span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">BasicKernel</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Iterate over the basic kernel leaves of a BayBE kernel.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        kernel: The kernel to traverse.</span>
+
+<span class="sd">    Yields:</span>
+<span class="sd">        The basic kernel leaves.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        TypeError: If the kernel structure is unsupported.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicKernel</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.composite</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdditiveKernel</span><span class="p">,</span> <span class="n">ProductKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">BasicKernel</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">kernel</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">ScaleKernel</span><span class="p">):</span>
+        <span class="k">yield from</span> <span class="n">_iter_basic_kernels</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">base_kernel</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="p">(</span><span class="n">AdditiveKernel</span><span class="p">,</span> <span class="n">ProductKernel</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="n">_iter_basic_kernels</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot traverse kernel &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">kernel</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_gpytorch_kernel_equivalent</span><span class="p">(</span>
+    <span class="n">kernel</span><span class="p">:</span> <span class="n">GPyTorchKernel</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">GPyTorchKernel</span><span class="p">,</span> <span class="o">/</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if two GPyTorch kernels are equivalent.</span>
+
+<span class="sd">    Two kernels are considered equivalent if they have the same module structure,</span>
+<span class="sd">    the same public module attributes, and agree on the values of all tensors that</span>
+<span class="sd">    are not changed by fitting. Tensors changed by fitting are only compared by</span>
+<span class="sd">    shape, since their values merely serve as initialization.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        kernel: The first kernel.</span>
+<span class="sd">        other: The kernel to compare against.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``True`` if the kernels are equivalent, ``False`` otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">modules</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">named_modules</span><span class="p">())</span>
+    <span class="n">other_modules</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">named_modules</span><span class="p">())</span>
+    <span class="k">if</span> <span class="p">[(</span><span class="n">n</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">m</span><span class="p">))</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">modules</span><span class="p">]</span> <span class="o">!=</span> <span class="p">[(</span><span class="n">n</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">m</span><span class="p">))</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">other_modules</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">module</span><span class="p">),</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">other_module</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">modules</span><span class="p">,</span> <span class="n">other_modules</span><span class="p">):</span>
+        <span class="n">public</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)}</span>
+        <span class="n">other_public</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">other_module</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">public</span> <span class="o">!=</span> <span class="n">other_public</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Tensors requiring gradients are changed by fitting, so only shapes must agree</span>
+    <span class="n">tensors</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chain</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">(),</span> <span class="n">kernel</span><span class="o">.</span><span class="n">named_buffers</span><span class="p">()))</span>
+    <span class="n">other_tensors</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chain</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">(),</span> <span class="n">other</span><span class="o">.</span><span class="n">named_buffers</span><span class="p">()))</span>
+    <span class="k">if</span> <span class="n">tensors</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">!=</span> <span class="n">other_tensors</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">other_tensor</span> <span class="o">=</span> <span class="n">other_tensors</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span>
+            <span class="n">other_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+            <span class="n">other_tensor</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tensor</span><span class="o">.</span><span class="n">requires_grad</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tensor</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">other_tensor</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_to_kernel_override</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">KernelOverride</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KernelOverride</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a kernel override and store BayBE kernels unscoped.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        value: The provided kernel override.</span>
+<span class="sd">        instance: The parameter the override belongs to.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If a BayBE kernel targets a different parameter or a GPyTorch</span>
+<span class="sd">            kernel specifies explicit active dimensions.</span>
+<span class="sd">        TypeError: If ``value`` is neither a BayBE nor a GPyTorch kernel.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The validated override, with BayBE kernels unscoped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># BayBE kernels: every basic leaf must be unscoped or scoped to the owner.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicKernel</span>
+
+        <span class="n">names_alias</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">)</span><span class="o">.</span><span class="n">parameter_names</span><span class="o">.</span><span class="n">alias</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">leaf</span><span class="o">.</span><span class="n">parameter_names</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">name</span><span class="p">,))</span>
+            <span class="k">for</span> <span class="n">leaf</span> <span class="ow">in</span> <span class="n">_iter_basic_kernels</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The kernel provided for the kernel override of &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; may only act on the parameter &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;itself. Its basic kernels must specify &#39;</span><span class="si">{</span><span class="n">names_alias</span><span class="si">}</span><span class="s2">&#39; as &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;``None`` or (</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2">,).&quot;</span>
+            <span class="p">)</span>
+        <span class="c1"># NOTE: Validated BayBE kernels are stored unscoped and are only scoped to</span>
+        <span class="c1">#   the owning parameter when accessed via `override_kernel`. This keeps the</span>
+        <span class="c1">#   stored value independent of the parameter name, so that renaming (e.g.</span>
+        <span class="c1">#   via `attrs.evolve`) and `is_equivalent` work without rescoping. User</span>
+        <span class="c1">#   input is still restricted to unscoped kernels or kernels scoped to the</span>
+        <span class="c1">#   owning parameter.</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">_scope_to_parameter</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="c1"># GPyTorch kernels: no explicit active dimensions allowed anywhere in the tree.</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.components.generic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">GPComponentType</span><span class="p">,</span>
+        <span class="n">_is_gpytorch_component</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">_is_gpytorch_component</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">GPComponentType</span><span class="o">.</span><span class="n">KERNEL</span><span class="p">,)):</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">active_dims</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="n">value</span><span class="o">.</span><span class="n">sub_kernels</span><span class="p">())):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The GPyTorch kernel provided for the kernel override must not &quot;</span>
+                <span class="s2">&quot;specify &#39;active_dims&#39;.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;The object provided for the kernel override of &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; must be a BayBE or GPyTorch kernel. &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Got: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="Parameter">
@@ -1270,6 +1413,14 @@
     <span class="c1"># object variables</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="p">(</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">str</span><span class="p">),</span> <span class="n">min_len</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The name of the parameter&quot;&quot;&quot;</span>
+
+    <span class="n">_override_kernel</span><span class="p">:</span> <span class="n">KernelOverride</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;override_kernel&quot;</span><span class="p">,</span>
+        <span class="n">converter</span><span class="o">=</span><span class="n">optional_c</span><span class="p">(</span><span class="n">Converter</span><span class="p">(</span><span class="n">_to_kernel_override</span><span class="p">,</span> <span class="n">takes_self</span><span class="o">=</span><span class="kc">True</span><span class="p">)),</span>  <span class="c1"># type: ignore[misc, call-overload]</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The optional kernel override, exposed via :attr:`override_kernel`.&quot;&quot;&quot;</span>
 
     <span class="n">metadata</span><span class="p">:</span> <span class="n">MeasurableMetadata</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">factory</span><span class="o">=</span><span class="n">MeasurableMetadata</span><span class="p">,</span>
@@ -1306,6 +1457,13 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Boolean indicating if this is a discrete parameter.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">DiscreteParameter</span><span class="p">)</span>
 
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">override_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KernelOverride</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;An optional kernel replacing the overall kernel for this parameter.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_override_kernel</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="o">.</span><span class="n">_scope_to_parameter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">kernel</span>
+
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ParameterKind</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The kind of the parameter.&quot;&quot;&quot;</span>
@@ -1335,6 +1493,10 @@
 <span class="sd">        Two parameters are considered equivalent if they have the same type and</span>
 <span class="sd">        all attributes are equal except for the name.</span>
 
+<span class="sd">        GPyTorch kernel overrides are compared structurally, since GPyTorch kernels</span>
+<span class="sd">        define no equality. Values of tensors changed by fitting (i.e., initial</span>
+<span class="sd">        hyperparameter values) do not affect equivalence.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            other: The parameter to compare against.</span>
 
@@ -1343,7 +1505,23 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
-        <span class="k">return</span> <span class="n">attrs</span><span class="o">.</span><span class="n">evolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">other</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="n">other</span></div>
+        <span class="c1"># Stored overrides are unscoped (see `_to_kernel_override`), so only the name</span>
+        <span class="c1"># needs to be aligned for the comparison</span>
+        <span class="n">changes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">kernel</span><span class="p">,</span> <span class="n">other_kernel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_override_kernel</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_override_kernel</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">kernel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">other_kernel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other_kernel</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">_is_gpytorch_kernel_equivalent</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">other_kernel</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="c1"># GPyTorch kernels define no equality, so substitute equivalent overrides</span>
+            <span class="c1"># TODO[typing]: attrs resolves all aliases during class creation, see</span>
+            <span class="c1">#   https://github.com/python-attrs/attrs/issues/1540</span>
+            <span class="n">alias</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">attrs</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">Parameter</span><span class="p">)</span><span class="o">.</span><span class="n">_override_kernel</span><span class="o">.</span><span class="n">alias</span><span class="p">)</span>
+            <span class="n">changes</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">other_kernel</span>
+        <span class="k">return</span> <span class="n">attrs</span><span class="o">.</span><span class="n">evolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">other</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">changes</span><span class="p">)</span> <span class="o">==</span> <span class="n">other</span></div>
 
 
 <div class="viewcode-block" id="Parameter.summary">

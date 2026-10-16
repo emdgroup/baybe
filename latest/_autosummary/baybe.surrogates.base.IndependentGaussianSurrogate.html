@@ -1277,10 +1277,13 @@
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_available</span></code></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.base.IndependentGaussianSurrogate.supports_multi_output" title="baybe.surrogates.base.IndependentGaussianSurrogate.supports_multi_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_multi_output</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.base.IndependentGaussianSurrogate.supports_kernel_overrides" title="baybe.surrogates.base.IndependentGaussianSurrogate.supports_kernel_overrides"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_kernel_overrides</span></code></a></p></td>
+<td><p>Class variable encoding whether or not the surrogate supports parameter-specific kernel overrides.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.base.IndependentGaussianSurrogate.supports_multi_output" title="baybe.surrogates.base.IndependentGaussianSurrogate.supports_multi_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_multi_output</span></code></a></p></td>
 <td><p>Class variable encoding whether or not the surrogate is multi-output compatible.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.base.IndependentGaussianSurrogate.supports_transfer_learning" title="baybe.surrogates.base.IndependentGaussianSurrogate.supports_transfer_learning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_transfer_learning</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.base.IndependentGaussianSurrogate.supports_transfer_learning" title="baybe.surrogates.base.IndependentGaussianSurrogate.supports_transfer_learning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_transfer_learning</span></code></a></p></td>
 <td><p>Class variable encoding whether or not the surrogate supports transfer learning.</p></td>
 </tr>
 </tbody>
@@ -1388,7 +1391,7 @@ For more information, see <a class="reference external" href="https://botorch.or
 <dd class="field-even"><p><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html#baybe.exceptions.ModelNotTrainedError" title="baybe.exceptions.ModelNotTrainedError"><strong>ModelNotTrainedError</strong></a> – When called before the model has been trained.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/posteriors.html#botorch.posteriors.posterior.Posterior" title="(in BoTorch v0.1.dev50+gda00e0401)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/posteriors.html#botorch.posteriors.posterior.Posterior" title="(in BoTorch v0.1.dev50+g5bfc0288a)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></span></p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.Posterior</span></code> object representing the posterior
@@ -1452,13 +1455,13 @@ it as a single-target surrogate and applying the same replication mechanism.</p>
 <dt class="sig sig-object py" id="baybe.surrogates.base.IndependentGaussianSurrogate.to_botorch">
 <span class="sig-name descname"><span class="pre">to_botorch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.surrogates.base.IndependentGaussianSurrogate.to_botorch" title="Link to this definition">¶</a></dt>
 <dd><p>Create the botorch-ready representation of the fitted model.</p>
-<p>The <a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.1.dev50+gda00e0401)"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a> created by this method needs to be
+<p>The <a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.1.dev50+g5bfc0288a)"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a> created by this method needs to be
 configured such that it can be called with candidate points in <strong>computational
 representation</strong>, that is, input of the form as obtained via
 <a class="reference internal" href="baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.transform" title="baybe.searchspace.core.SearchSpace.transform"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.searchspace.core.SearchSpace.transform()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.1.dev50+gda00e0401)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.1.dev50+g5bfc0288a)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1508,6 +1511,13 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 <dd class="field-even"><p>The JSON representation as a string.</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="baybe.surrogates.base.IndependentGaussianSurrogate.supports_kernel_overrides">
+<span class="sig-name descname"><span class="pre">supports_kernel_overrides</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.15)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#baybe.surrogates.base.IndependentGaussianSurrogate.supports_kernel_overrides" title="Link to this definition">¶</a></dt>
+<dd><p>Class variable encoding whether or not the surrogate supports
+parameter-specific kernel overrides.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1595,6 +1605,7 @@ learning.</p>
 <li><a class="reference internal" href="#baybe.surrogates.base.IndependentGaussianSurrogate.to_botorch"><code class="docutils literal notranslate"><span class="pre">IndependentGaussianSurrogate.to_botorch()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.base.IndependentGaussianSurrogate.to_dict"><code class="docutils literal notranslate"><span class="pre">IndependentGaussianSurrogate.to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.base.IndependentGaussianSurrogate.to_json"><code class="docutils literal notranslate"><span class="pre">IndependentGaussianSurrogate.to_json()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.surrogates.base.IndependentGaussianSurrogate.supports_kernel_overrides"><code class="docutils literal notranslate"><span class="pre">IndependentGaussianSurrogate.supports_kernel_overrides</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.base.IndependentGaussianSurrogate.supports_multi_output"><code class="docutils literal notranslate"><span class="pre">IndependentGaussianSurrogate.supports_multi_output</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.base.IndependentGaussianSurrogate.supports_transfer_learning"><code class="docutils literal notranslate"><span class="pre">IndependentGaussianSurrogate.supports_transfer_learning</span></code></a></li>
 </ul>

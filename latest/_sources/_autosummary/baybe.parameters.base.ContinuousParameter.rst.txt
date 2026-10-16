@@ -48,6 +48,7 @@ ContinuousParameter
       ~ContinuousParameter.description
       ~ContinuousParameter.is_continuous
       ~ContinuousParameter.is_discrete
+      ~ContinuousParameter.override_kernel
       ~ContinuousParameter.unit
       ~ContinuousParameter.is_numerical
       ~ContinuousParameter.name

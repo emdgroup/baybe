@@ -53,6 +53,7 @@ CategoricalParameter
       ~CategoricalParameter.is_continuous
       ~CategoricalParameter.is_discrete
       ~CategoricalParameter.is_numerical
+      ~CategoricalParameter.override_kernel
       ~CategoricalParameter.unit
       ~CategoricalParameter.values
       ~CategoricalParameter.encoding

@@ -46,6 +46,7 @@ RandomForestSurrogate
    
       ~RandomForestSurrogate.model_params
       ~RandomForestSurrogate.is_available
+      ~RandomForestSurrogate.supports_kernel_overrides
       ~RandomForestSurrogate.supports_multi_output
       ~RandomForestSurrogate.supports_transfer_learning
    

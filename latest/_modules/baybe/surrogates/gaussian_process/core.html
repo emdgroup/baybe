@@ -1226,33 +1226,32 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span><span class="p">,</span> <span class="n">reduce</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">Converter</span><span class="p">,</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">Converter</span><span class="p">,</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs.converters</span><span class="w"> </span><span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_c</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs.converters</span><span class="w"> </span><span class="kn">import</span> <span class="n">pipe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">is_callable</span><span class="p">,</span> <span class="n">optional</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span><span class="p">,</span> <span class="n">assert_never</span><span class="p">,</span> <span class="n">override</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span><span class="p">,</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DeprecationError</span><span class="p">,</span>
-    <span class="n">IncompatibleOverrideError</span><span class="p">,</span>
     <span class="n">IncompatibleSearchSpaceError</span><span class="p">,</span>
     <span class="n">ModelNotTrainedError</span><span class="p">,</span>
     <span class="n">_UnsupportedSearchSpaceAttributeError</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">IndexKernel</span><span class="p">,</span> <span class="n">PositiveIndexKernel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Objective</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.categorical</span><span class="w"> </span><span class="kn">import</span> <span class="n">TaskParameter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransferLearningMode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Surrogate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process</span><span class="w"> </span><span class="kn">import</span> <span class="n">_override</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.components.fit_criterion</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FitCriterion</span><span class="p">,</span>
     <span class="n">FitCriterionFactoryProtocol</span><span class="p">,</span>
@@ -1294,6 +1293,8 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.means</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mean</span> <span class="k">as</span> <span class="n">GPyTorchMean</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.selectors</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterSelectorProtocol</span>
+
 
 <span class="nd">@define</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_ModelContext</span><span class="p">:</span>
@@ -1312,14 +1313,6 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">task_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The computational column index of the task parameter, if available.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">task_idx</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">tl_override</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransferLearningMode</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The task parameter&#39;s transfer learning override, if any.&quot;&quot;&quot;</span>
-        <span class="n">task_param</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">_task_parameter</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="kc">None</span> <span class="k">if</span> <span class="n">task_param</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">task_param</span><span class="o">.</span><span class="n">override_transfer_learning_mode</span>
-        <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_multitask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1385,11 +1378,19 @@
     <span class="c1"># to `optimize_acqf_*`, which is configured to be called on the original scale.</span>
     <span class="c1"># Moving the scaling operation into the botorch GP object avoids this conflict.</span>
 
+    <span class="n">supports_kernel_overrides</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1"># See base class.</span>
+
     <span class="n">supports_transfer_learning</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="c1"># See base class.</span>
 
     <span class="n">_custom_kernel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="c1"># For deprecation only!</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Legacy flag for custom surrogate kernels affected by task-attachment changes.</span>
+
+<span class="sd">    Parameter overrides do not set this flag: default residual construction still</span>
+<span class="sd">    attaches the default task kernel unless an explicit TL override replaces it.</span>
+<span class="sd">    This flag does not classify the final composed covariance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">kernel_factory</span><span class="p">:</span> <span class="n">KernelFactoryProtocol</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;kernel_or_factory&quot;</span><span class="p">,</span>
@@ -1409,9 +1410,18 @@
 <span class="sd">        * :obj:`.components.kernel.KernelFactoryProtocol`</span>
 <span class="sd">        * :class:`gpytorch.kernels.Kernel`</span>
 
-<span class="sd">    If a :class:`.TaskParameter` sets ``override_transfer_learning_mode``, this must</span>
-<span class="sd">    reduce to a task-free BayBE kernel or an :class:`.IncompatibleOverrideError` is</span>
-<span class="sd">    raised.</span>
+<span class="sd">    A :attr:`~baybe.parameters.base.Parameter.override_kernel` removes its parameter</span>
+<span class="sd">    from this kernel and contributes a separate multiplicative factor. For task</span>
+<span class="sd">    parameters, it is derived from</span>
+<span class="sd">    :attr:`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`</span>
+<span class="sd">    and replaces the task factor in the same way. When not all parameters are removed</span>
+<span class="sd">    by an override, the configured kernel or factory must support excluding the</span>
+<span class="sd">    overridden parameters; otherwise,</span>
+<span class="sd">    :class:`~baybe.exceptions.IncompatibleOverrideError` is raised. If all parameters</span>
+<span class="sd">    are overridden, this kernel or factory is not used. Without overrides, it is used</span>
+<span class="sd">    unchanged.</span>
+
+<span class="sd">    See :ref:`parameter_kernel_overrides` for details and limitations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">mean_factory</span><span class="p">:</span> <span class="n">MeanFactoryProtocol</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
@@ -1629,129 +1639,146 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">candidates_comp_scaled</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">_ModelContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchKernel</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the GP kernel, dispatching on task parameter overrides.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the GP kernel, applying parameter-specific overrides.</span>
+
+<span class="sd">        The effective kernel is the surrogate kernel restricted to the</span>
+<span class="sd">        non-overridden dimensions, multiplied by one factor per override.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            context: The model context providing searchspace information.</span>
+<span class="sd">            context: The model context providing the inputs and override settings.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            IncompatibleOverrideError: If a transfer learning override is combined</span>
-<span class="sd">                with a kernel or kernel factory that cannot be reduced to a task-free</span>
-<span class="sd">                base kernel operating on parameter names.</span>
+<span class="sd">            ValueError: If the resolved kernels violate the override partition.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The constructed gpytorch kernel.</span>
+<span class="sd">            The resolved and partition-validated kernel.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">overrides</span> <span class="o">=</span> <span class="n">_override</span><span class="o">.</span><span class="n">extract_parameter_kernel_overrides</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">searchspace</span><span class="p">)</span>
+
+        <span class="n">excluded_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">overrides</span><span class="p">}</span>
+        <span class="n">residual</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_residual_kernel</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">excluded_names</span><span class="p">)</span>
+        <span class="n">searchspace</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">searchspace</span>
+        <span class="n">excluded_dimensions</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">kernel</span> <span class="ow">in</span> <span class="n">overrides</span><span class="p">:</span>
+            <span class="n">expected</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">get_comp_rep_parameter_indices</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+            <span class="n">actual</span> <span class="o">=</span> <span class="n">_override</span><span class="o">.</span><span class="n">get_active_dimensions</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">actual</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;The kernel override for &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; has &#39;active_dims&#39; </span><span class="si">{</span><span class="n">actual</span><span class="si">}</span><span class="s2">, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;but must use exactly the parameter indices </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">excluded_dimensions</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">expected</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">residual</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">excluded_names</span><span class="p">:</span>
+            <span class="n">allowed</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">comp_rep_columns</span><span class="p">)))</span> <span class="o">-</span> <span class="n">excluded_dimensions</span>
+            <span class="p">)</span>
+            <span class="n">actual</span> <span class="o">=</span> <span class="n">_override</span><span class="o">.</span><span class="n">get_active_dimensions</span><span class="p">(</span><span class="n">residual</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">actual</span> <span class="o">&lt;=</span> <span class="n">allowed</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;The residual kernel&#39;s &#39;active_dims&#39; </span><span class="si">{</span><span class="n">actual</span><span class="si">}</span><span class="s2"> must be a subset &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;of the non-overridden indices </span><span class="si">{</span><span class="n">allowed</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
+        <span class="n">factors</span> <span class="o">=</span> <span class="p">([]</span> <span class="k">if</span> <span class="n">residual</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">residual</span><span class="p">])</span> <span class="o">+</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">overrides</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">factors</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_residual_kernel</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">_ModelContext</span><span class="p">,</span> <span class="n">excluded_names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchKernel</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the surrogate kernel restricted to the non-excluded dimensions.</span>
+
+<span class="sd">        This is intentionally task-agnostic: it only removes ``excluded_names``.</span>
+<span class="sd">        A task parameter is excluded here only if a transfer-learning override</span>
+<span class="sd">        already replaced it; otherwise it is preserved by the surrogate kernel.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">searchspace</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">searchspace</span>
-        <span class="n">task_param</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">_task_parameter</span>
-        <span class="n">tl_override</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">tl_override</span>
+        <span class="n">factory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_factory</span> <span class="ow">or</span> <span class="n">BayBEKernelFactory</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">excluded_names</span><span class="p">:</span>
+            <span class="n">kernel</span> <span class="o">=</span> <span class="n">factory</span><span class="p">(</span><span class="n">searchspace</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">measurements</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">kernel</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="n">searchspace</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">)</span>
+                <span class="k">else</span> <span class="n">kernel</span>
+            <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">tl_override</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># No override: let the factory handle everything (default path)</span>
-            <span class="n">kernel_factory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_factory</span> <span class="ow">or</span> <span class="n">BayBEKernelFactory</span><span class="p">()</span>
-            <span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel_factory</span><span class="p">(</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">excluded_names</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">parameters</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Default kernel: build the (task-free) numerical base restricted to the</span>
+        <span class="c1"># remaining parameters and re-add the default task kernel unless overridden.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">factory</span><span class="p">,</span> <span class="n">BayBEKernelFactory</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_default_base</span><span class="p">(</span>
+                <span class="n">context</span><span class="p">,</span> <span class="n">excluded_names</span><span class="p">,</span> <span class="n">factory</span><span class="o">.</span><span class="n">parameter_selector</span>
+            <span class="p">)</span>
+
+        <span class="c1"># A fixed kernel is reduced directly by removing the excluded parameters.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">factory</span><span class="p">,</span> <span class="n">PlainGPComponentFactory</span><span class="p">):</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="n">_override</span><span class="o">.</span><span class="n">reduce_kernel_spec</span><span class="p">(</span>
+                <span class="n">factory</span><span class="o">.</span><span class="n">component</span><span class="p">,</span> <span class="n">excluded_names</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">,</span> <span class="n">factory</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">spec</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="n">searchspace</span><span class="p">)</span>
+
+        <span class="c1"># Any other callable factory: call it on the reduced space and reduce the</span>
+        <span class="c1"># returned BayBE kernel. Factories needing full-space information or</span>
+        <span class="c1"># returning a raw kernel are unsupported.</span>
+        <span class="n">reduced_space</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">_drop_parameters</span><span class="p">(</span><span class="n">excluded_names</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">returned</span> <span class="o">=</span> <span class="n">factory</span><span class="p">(</span><span class="n">reduced_space</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">measurements</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span>
+            <span class="n">IncompatibleSearchSpaceError</span><span class="p">,</span>
+            <span class="n">_UnsupportedSearchSpaceAttributeError</span><span class="p">,</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">_override</span><span class="o">.</span><span class="n">raise_incompatible_override</span><span class="p">(</span><span class="n">excluded_names</span><span class="p">,</span> <span class="n">factory</span><span class="p">,</span> <span class="n">ex</span><span class="p">)</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">_override</span><span class="o">.</span><span class="n">reduce_kernel_spec</span><span class="p">(</span>
+            <span class="n">returned</span><span class="p">,</span> <span class="n">excluded_names</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">,</span> <span class="n">factory</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">spec</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="n">searchspace</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_default_base</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="n">_ModelContext</span><span class="p">,</span>
+        <span class="n">excluded_names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">selector</span><span class="p">:</span> <span class="n">ParameterSelectorProtocol</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchKernel</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the default kernel base, excluding the given parameters.</span>
+
+<span class="sd">        The numerical base always excludes the task; the default task kernel is</span>
+<span class="sd">        re-added unless the task is itself overridden (i.e. already excluded).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: This method might become obsolete once it can be married with the lazy</span>
+        <span class="c1">#  searchspace updates. In that case, it should be reworked so it is largely or</span>
+        <span class="c1">#  fully replaced by a simple factory call.</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.presets.baybe</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">_BayBENumericalKernelFactory</span><span class="p">,</span>
+            <span class="n">_BayBETaskKernelFactory</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">searchspace</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">searchspace</span>
+        <span class="n">task_param</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">_task_parameter</span>
+
+        <span class="n">keep</span><span class="p">:</span> <span class="n">ParameterSelectorProtocol</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">parameter</span><span class="p">:</span> <span class="p">(</span>  <span class="c1"># noqa: E731</span>
+            <span class="n">parameter</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">excluded_names</span>
+            <span class="ow">and</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">task_param</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="n">selector</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">selector</span><span class="p">(</span><span class="n">parameter</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">factors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GPyTorchKernel</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">keep</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">parameters</span><span class="p">):</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">_BayBENumericalKernelFactory</span><span class="p">(</span><span class="n">parameter_selector</span><span class="o">=</span><span class="n">keep</span><span class="p">)(</span>
                 <span class="n">searchspace</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">measurements</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">):</span>
-                <span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="n">searchspace</span><span class="o">=</span><span class="n">searchspace</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">kernel</span>
+            <span class="n">factors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">base</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="n">searchspace</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">)</span> <span class="k">else</span> <span class="n">base</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">task_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">task_param</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">excluded_names</span><span class="p">:</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="n">_BayBETaskKernelFactory</span><span class="p">()(</span>
+                <span class="n">searchspace</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">measurements</span>
+            <span class="p">)</span>
+            <span class="n">factors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="n">searchspace</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">)</span> <span class="k">else</span> <span class="n">task</span>
+            <span class="p">)</span>
 
-        <span class="k">assert</span> <span class="n">task_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># a set override implies a task parameter</span>
-
-        <span class="c1"># Override is set: assemble the prescribed task kernel</span>
-        <span class="n">n_tasks</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">n_tasks</span>
-        <span class="n">task_kernel_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">IndexKernel</span><span class="p">]</span>
-        <span class="k">match</span> <span class="n">tl_override</span><span class="p">:</span>
-            <span class="k">case</span> <span class="n">TransferLearningMode</span><span class="o">.</span><span class="n">POSITIVE_INDEX_KERNEL</span><span class="p">:</span>
-                <span class="n">task_kernel_cls</span> <span class="o">=</span> <span class="n">PositiveIndexKernel</span>
-            <span class="k">case</span> <span class="n">TransferLearningMode</span><span class="o">.</span><span class="n">INDEX_KERNEL</span><span class="p">:</span>
-                <span class="n">task_kernel_cls</span> <span class="o">=</span> <span class="n">IndexKernel</span>
-            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
-                <span class="n">assert_never</span><span class="p">(</span><span class="n">tl_override</span><span class="p">)</span>
-        <span class="n">task_kernel_spec</span> <span class="o">=</span> <span class="n">task_kernel_cls</span><span class="p">(</span>
-            <span class="n">num_tasks</span><span class="o">=</span><span class="n">n_tasks</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="n">n_tasks</span><span class="p">,</span> <span class="n">parameter_names</span><span class="o">=</span><span class="p">(</span><span class="n">task_param</span><span class="o">.</span><span class="n">name</span><span class="p">,)</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Default factory (None or a `BayBEKernelFactory` without a custom parameter</span>
-        <span class="c1"># selector): reuse the ICM machinery on the full searchspace, which builds the</span>
-        <span class="c1"># task-excluded base kernel and combines it with the prescribed task kernel.</span>
-        <span class="c1"># This avoids the reduced searchspace, on which the default factory&#39;s numerical</span>
-        <span class="c1"># kernel cannot resolve its active dimensions. A `BayBEKernelFactory` carrying a</span>
-        <span class="c1"># custom selector falls through to the general factory path below, so the</span>
-        <span class="c1"># selector is honored (or loudly rejected when it cannot be).</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_factory</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_factory</span><span class="p">,</span> <span class="n">BayBEKernelFactory</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_factory</span><span class="o">.</span><span class="n">parameter_selector</span> <span class="ow">is</span> <span class="kc">None</span>
-        <span class="p">):</span>
-            <span class="n">icm</span> <span class="o">=</span> <span class="n">ICMKernelFactory</span><span class="p">(</span><span class="n">task_kernel_or_factory</span><span class="o">=</span><span class="n">task_kernel_spec</span><span class="p">)</span>
-            <span class="n">kernel</span> <span class="o">=</span> <span class="n">icm</span><span class="p">(</span><span class="n">searchspace</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">measurements</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">):</span>
-                <span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="n">searchspace</span><span class="o">=</span><span class="n">searchspace</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">kernel</span>
-
-        <span class="c1"># Otherwise, build a task-free base kernel and attach the prescribed task</span>
-        <span class="c1"># kernel manually.</span>
-        <span class="n">effective_factory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_factory</span>
-        <span class="n">incompatible_message</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;The &#39;</span><span class="si">{</span><span class="n">TaskParameter</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; &#39;</span><span class="si">{</span><span class="n">task_param</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; specifies &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">fields</span><span class="p">(</span><span class="n">TaskParameter</span><span class="p">)</span><span class="o">.</span><span class="n">override_transfer_learning_mode</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">=&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tl_override</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;, which requires a &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;kernel (factory) that yields a task-free BayBE kernel operating on &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;parameter names. The provided kernel factory &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">effective_factory</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; does not satisfy this (e.g., it &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;returns a raw gpytorch kernel or already operates on the task &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;parameter).&quot;</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_factory</span><span class="p">,</span> <span class="n">PlainGPComponentFactory</span><span class="p">):</span>
-            <span class="c1"># A fixed kernel was provided: strip the task parameter directly.</span>
-            <span class="n">component</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_factory</span><span class="o">.</span><span class="n">component</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">IncompatibleOverrideError</span><span class="p">(</span><span class="n">incompatible_message</span><span class="p">)</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">base_spec</span> <span class="o">=</span> <span class="n">component</span><span class="o">.</span><span class="n">_without_parameter</span><span class="p">(</span><span class="n">task_param</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">IncompatibleOverrideError</span><span class="p">(</span><span class="n">incompatible_message</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ex</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Call the factory on a reduced (task-free) searchspace so that it</span>
-            <span class="c1"># produces only the base kernel. Factories that need computational</span>
-            <span class="c1"># information unavailable on the reduced space, or that return a raw</span>
-            <span class="c1"># gpytorch kernel, are not supported.</span>
-            <span class="n">reduced_searchspace</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">_drop_parameters</span><span class="p">({</span><span class="n">task_param</span><span class="o">.</span><span class="n">name</span><span class="p">})</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">factory_kernel</span> <span class="o">=</span> <span class="n">effective_factory</span><span class="p">(</span>
-                    <span class="n">reduced_searchspace</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">measurements</span>
-                <span class="p">)</span>
-            <span class="k">except</span> <span class="p">(</span>
-                <span class="n">IncompatibleSearchSpaceError</span><span class="p">,</span>
-                <span class="n">_UnsupportedSearchSpaceAttributeError</span><span class="p">,</span>
-            <span class="p">)</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">IncompatibleOverrideError</span><span class="p">(</span><span class="n">incompatible_message</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ex</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">factory_kernel</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">IncompatibleOverrideError</span><span class="p">(</span><span class="n">incompatible_message</span><span class="p">)</span>
-            <span class="c1"># Normalize to an explicitly task-free spec.</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">base_spec</span> <span class="o">=</span> <span class="n">factory_kernel</span><span class="o">.</span><span class="n">_without_parameter</span><span class="p">(</span>
-                    <span class="n">task_param</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">searchspace</span>
-                <span class="p">)</span>
-            <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">IncompatibleOverrideError</span><span class="p">(</span><span class="n">incompatible_message</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ex</span>
-
-        <span class="c1"># Stripping left no base kernel: return only the prescribed task kernel.</span>
-        <span class="k">if</span> <span class="n">base_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">task_kernel_spec</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="n">searchspace</span><span class="o">=</span><span class="n">searchspace</span><span class="p">)</span>
-
-        <span class="c1"># Combine base and task kernel via the ICM machinery (as in the default-factory</span>
-        <span class="c1"># branch above), which converts both on the full searchspace and validates the</span>
-        <span class="c1"># dimension partitioning between base and task kernel.</span>
-        <span class="n">icm</span> <span class="o">=</span> <span class="n">ICMKernelFactory</span><span class="p">(</span>
-            <span class="n">base_kernel_or_factory</span><span class="o">=</span><span class="n">base_spec</span><span class="p">,</span>
-            <span class="n">task_kernel_or_factory</span><span class="o">=</span><span class="n">task_kernel_spec</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">kernel</span> <span class="o">=</span> <span class="n">icm</span><span class="p">(</span><span class="n">searchspace</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">measurements</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">):</span>
-            <span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="n">searchspace</span><span class="o">=</span><span class="n">searchspace</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">kernel</span>
+        <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">factors</span><span class="p">)</span> <span class="k">if</span> <span class="n">factors</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_components</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">_ModelContext</span>
@@ -1804,14 +1831,17 @@
 
         <span class="n">context</span> <span class="o">=</span> <span class="n">_ModelContext</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_searchspace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_objective</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_measurements</span><span class="p">)</span>
 
-        <span class="c1"># Check for custom kernel + multi-task clash (only relevant when no</span>
-        <span class="c1"># override_transfer_learning_mode is set, since the override mechanism</span>
-        <span class="c1"># handles task kernel attachment explicitly).</span>
-        <span class="n">has_tl_override</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">tl_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="c1"># Check for custom kernel + multi-task clash (only relevant when the task</span>
+        <span class="c1"># parameter has no kernel override, since the override mechanism handles task</span>
+        <span class="c1"># kernel attachment explicitly).</span>
+        <span class="n">task_param</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_searchspace</span><span class="o">.</span><span class="n">_task_parameter</span>
+        <span class="n">has_task_override</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">task_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">task_param</span><span class="o">.</span><span class="n">override_kernel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">is_multitask</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_kernel</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_tl_override</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_task_override</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="n">strtobool</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;BAYBE_DISABLE_CUSTOM_KERNEL_WARNING&quot;</span><span class="p">,</span> <span class="s2">&quot;False&quot;</span><span class="p">))</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">DeprecationError</span><span class="p">(</span>

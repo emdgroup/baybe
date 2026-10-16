@@ -53,6 +53,7 @@ SubstanceParameter
       ~SubstanceParameter.is_continuous
       ~SubstanceParameter.is_discrete
       ~SubstanceParameter.is_numerical
+      ~SubstanceParameter.override_kernel
       ~SubstanceParameter.unit
       ~SubstanceParameter.values
       ~SubstanceParameter.data

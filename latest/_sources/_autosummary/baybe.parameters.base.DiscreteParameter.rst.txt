@@ -52,6 +52,7 @@ DiscreteParameter
       ~DiscreteParameter.description
       ~DiscreteParameter.is_continuous
       ~DiscreteParameter.is_discrete
+      ~DiscreteParameter.override_kernel
       ~DiscreteParameter.unit
       ~DiscreteParameter.values
       ~DiscreteParameter.encoding

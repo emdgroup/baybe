@@ -1483,6 +1483,66 @@ enlarged data corpus.</p>
 </div>
 </section>
 </section>
+<section id="parameter-specific-kernel-overrides">
+<span id="parameter-kernel-overrides"></span><h2>Parameter-Specific Kernel Overrides<a class="headerlink" href="#parameter-specific-kernel-overrides" title="Link to this heading">¶</a></h2>
+<p>During a Bayesian optimization loop, the search space spanned by the user-defined
+parameters will be presented to the surrogate model (e.g., a Gaussian process),
+to evaluate its points in terms of their expected utility.
+By default, the Gaussian process models all parameters with a single surrogate kernel.
+A parameter can instead be assigned its own kernel, which then replaces the surrogate
+kernel on that parameter’s computational dimensions. The remaining dimensions stay with
+the surrogate kernel, and the two are combined multiplicatively:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[k_{\mathrm{effective}}
+= k_{\mathrm{surrogate}}(X_{\mathrm{remaining}})
+\prod_{p \in P_{\mathrm{override}}} k_p(X_p).\]</div>
+</div>
+<p>Here, “surrogate kernel” refers to the
+<a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.html#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.kernel_factory" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.kernel_factory"><code class="xref py py-attr docutils literal notranslate"><span class="pre">kernel_factory</span></code></a>
+of the <a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.html#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">GaussianProcessSurrogate</span></code></a>,
+falling back to BayBE’s default kernel when none is given.</p>
+<p>Most parameter types allow to replace the surrogate kernel on their computational dimensions
+using <a class="reference internal" href="../_autosummary/baybe.parameters.base.Parameter.html#baybe.parameters.base.Parameter.override_kernel" title="baybe.parameters.base.Parameter.override_kernel"><code class="xref py py-attr docutils literal notranslate"><span class="pre">override_kernel</span></code></a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">RBFKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalContinuousParameter</span>
+
+<span class="n">x3</span> <span class="o">=</span> <span class="n">NumericalContinuousParameter</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;x3&quot;</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+    <span class="n">override_kernel</span><span class="o">=</span><span class="n">RBFKernel</span><span class="p">(),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>In a search space with parameters <code class="docutils literal notranslate"><span class="pre">x1</span></code>, <code class="docutils literal notranslate"><span class="pre">x2</span></code>, and <code class="docutils literal notranslate"><span class="pre">x3</span></code>, this produces
+<code class="docutils literal notranslate"><span class="pre">surrogate_kernel(x1,</span> <span class="pre">x2)</span> <span class="pre">*</span> <span class="pre">RBF(x3)</span></code>. The override does not replace a dimension inside
+the surrogate kernel itself. It partitions the dimensions and creates a separate kernel
+factor. Multiple overrides produce multiple factors. For a parameter with several
+computational dimensions, the override acts jointly on the complete computational
+representation.</p>
+<p>An override can be a configured BayBE or GPyTorch kernel instance. For a BayBE kernel,
+<a class="reference internal" href="../_autosummary/baybe.kernels.base.BasicKernel.html#baybe.kernels.base.BasicKernel.parameter_names" title="baybe.kernels.base.BasicKernel.parameter_names"><code class="xref py py-attr docutils literal notranslate"><span class="pre">parameter_names</span></code></a> must be <code class="docutils literal notranslate"><span class="pre">None</span></code> or contain
+exactly the owning parameter. Here, <code class="docutils literal notranslate"><span class="pre">None</span></code> is rebound to the owning parameter instead
+of acting on all dimensions.</p>
+<div class="warning admonition">
+<p class="admonition-title">Limitations</p>
+<p><a class="reference internal" href="../_autosummary/baybe.parameters.base.Parameter.html#baybe.parameters.base.Parameter.override_kernel" title="baybe.parameters.base.Parameter.override_kernel"><code class="xref py py-attr docutils literal notranslate"><span class="pre">override_kernel</span></code></a> accepts kernel instances only,
+not factories. The surrogate kernel or factory of the
+<a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.html#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">GaussianProcessSurrogate</span></code></a> must allow
+the overridden dimensions to be excluded. Otherwise, BayBE raises
+<a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleOverrideError.html#baybe.exceptions.IncompatibleOverrideError" title="baybe.exceptions.IncompatibleOverrideError"><code class="xref py py-class docutils literal notranslate"><span class="pre">IncompatibleOverrideError</span></code></a>.</p>
+<p>Raw GPyTorch overrides must not specify <code class="docutils literal notranslate"><span class="pre">active_dims</span></code>, and their <code class="docutils literal notranslate"><span class="pre">ard_num_dims</span></code> must
+be <code class="docutils literal notranslate"><span class="pre">None</span></code> or match the number of computational dimensions of the parameter. <code class="docutils literal notranslate"><span class="pre">None</span></code>
+is preserved and does not automatically enable ARD. Like raw GPyTorch kernels used
+elsewhere, they cannot be serialized.</p>
+</div>
+<p>The feature applies only to Gaussian process surrogates. Other surrogates ignore kernel
+overrides and emit an <a class="reference internal" href="../_autosummary/baybe.exceptions.UnusedObjectWarning.html#baybe.exceptions.UnusedObjectWarning" title="baybe.exceptions.UnusedObjectWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnusedObjectWarning</span></code></a>. Task parameters do
+not support kernel overrides; use
+<a class="reference internal" href="../_autosummary/baybe.parameters.categorical.TaskParameter.html#baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode" title="baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode"><code class="xref py py-attr docutils literal notranslate"><span class="pre">override_transfer_learning_mode</span></code></a>
+instead. Kernel overrides of other parameters can be combined with a transfer learning
+override of the task parameter, in which case their kernel factors are multiplied.</p>
+</section>
 </section>
 
         </article>
@@ -1553,6 +1613,7 @@ enlarged data corpus.</p>
 <li><a class="reference internal" href="#taskparameter">TaskParameter</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#parameter-specific-kernel-overrides">Parameter-Specific Kernel Overrides</a></li>
 </ul>
 </li>
 </ul>
@@ -1571,5 +1632,7 @@ enlarged data corpus.</p>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>
 </html>

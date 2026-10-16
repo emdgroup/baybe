@@ -1226,6 +1226,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">TypeVar</span>
 
@@ -1311,20 +1312,46 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_gpytorch_component_class</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a class is a GPyTorch component class using lazy loading.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gpytorch&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span> <span class="k">as</span> <span class="n">GPyTorchKernel</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods</span><span class="w"> </span><span class="kn">import</span> <span class="n">Likelihood</span> <span class="k">as</span> <span class="n">GPyTorchLikelihood</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.means</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mean</span> <span class="k">as</span> <span class="n">GPyTorchMean</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_gpytorch_component_class</span><span class="p">(</span>
+    <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="o">/</span><span class="p">,</span>
+    <span class="n">component_types</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">GPComponentType</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">GPComponentType</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a class is a GPyTorch component class using lazy loading.</span>
 
-    <span class="k">return</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">GPyTorchKernel</span><span class="p">,</span> <span class="n">GPyTorchMean</span><span class="p">,</span> <span class="n">GPyTorchLikelihood</span><span class="p">))</span>
+<span class="sd">    Args:</span>
+<span class="sd">        obj: The class to check.</span>
+<span class="sd">        component_types: The component types to check against.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``True`` if the class is a GPyTorch class of one of the given component types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># GPyTorch types are only returned if GPyTorch has already been imported</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+        <span class="n">t</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">component_types</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">get_types</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">BayBEGPComponent</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_gpytorch_component</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeIs</span><span class="p">[</span><span class="n">GPyTorchGPComponent</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if an object is a GPyTorch component instance using lazy loading.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_is_gpytorch_component_class</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_gpytorch_component</span><span class="p">(</span>
+    <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="o">/</span><span class="p">,</span>
+    <span class="n">component_types</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">GPComponentType</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">GPComponentType</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeIs</span><span class="p">[</span><span class="n">GPyTorchGPComponent</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if an object is a GPyTorch component instance using lazy loading.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        obj: The object to check.</span>
+<span class="sd">        component_types: The component types to check against.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``True`` if the object is a GPyTorch instance of one of the given component</span>
+<span class="sd">        types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_is_gpytorch_component_class</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">),</span> <span class="n">component_types</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_component</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="n">Attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

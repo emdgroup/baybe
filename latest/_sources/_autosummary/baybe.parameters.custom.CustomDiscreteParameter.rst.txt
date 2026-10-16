@@ -53,6 +53,7 @@ CustomDiscreteParameter
       ~CustomDiscreteParameter.is_continuous
       ~CustomDiscreteParameter.is_discrete
       ~CustomDiscreteParameter.is_numerical
+      ~CustomDiscreteParameter.override_kernel
       ~CustomDiscreteParameter.unit
       ~CustomDiscreteParameter.values
       ~CustomDiscreteParameter.data

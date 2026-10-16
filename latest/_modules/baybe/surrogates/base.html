@@ -1225,6 +1225,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
@@ -1235,7 +1236,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">joblib.hashing</span><span class="w"> </span><span class="kn">import</span> <span class="nb">hash</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncompatibleSurrogateError</span><span class="p">,</span> <span class="n">ModelNotTrainedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">IncompatibleSurrogateError</span><span class="p">,</span>
+    <span class="n">ModelNotTrainedError</span><span class="p">,</span>
+    <span class="n">UnusedObjectWarning</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Objective</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
@@ -1314,6 +1319,10 @@
 <span class="nd">@define</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Surrogate</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">SurrogateProtocol</span><span class="p">,</span> <span class="n">SerialMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all surrogate models.&quot;&quot;&quot;</span>
+
+    <span class="n">supports_kernel_overrides</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class variable encoding whether or not the surrogate supports</span>
+<span class="sd">    parameter-specific kernel overrides.&quot;&quot;&quot;</span>
 
     <span class="n">supports_transfer_learning</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class variable encoding whether or not the surrogate supports transfer</span>
@@ -1676,6 +1685,15 @@
                 <span class="sa">f</span><span class="s2">&quot;The search space contains task parameters but the selected &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;surrogate model type (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) does not &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;support transfer learning.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_kernel_overrides</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">names</span> <span class="o">:=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">parameters</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">override_kernel</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The selected surrogate model (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) does not &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;use the kernel overrides specified for parameters </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="n">UnusedObjectWarning</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="c1"># Block partial measurements</span>

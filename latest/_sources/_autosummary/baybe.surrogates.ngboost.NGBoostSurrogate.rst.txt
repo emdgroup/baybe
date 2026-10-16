@@ -46,6 +46,7 @@ NGBoostSurrogate
    
       ~NGBoostSurrogate.model_params
       ~NGBoostSurrogate.is_available
+      ~NGBoostSurrogate.supports_kernel_overrides
       ~NGBoostSurrogate.supports_multi_output
       ~NGBoostSurrogate.supports_transfer_learning
    

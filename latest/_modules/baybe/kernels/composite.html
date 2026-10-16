@@ -1222,9 +1222,12 @@
           <h1>Source code for baybe.kernels.composite</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Composite kernels (that is, kernels composed of other kernels).&quot;&quot;&quot;</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">add</span><span class="p">,</span> <span class="n">mul</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">evolve</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs.converters</span><span class="w"> </span><span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_c</span>
@@ -1234,10 +1237,38 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">CompositeKernel</span><span class="p">,</span> <span class="n">Kernel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.priors.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Prior</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">active_settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_tuple</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">finite_float</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reduce_base_kernels</span><span class="p">(</span>
+    <span class="n">kernel</span><span class="p">:</span> <span class="n">AdditiveKernel</span> <span class="o">|</span> <span class="n">ProductKernel</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="o">/</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove a parameter from all base kernels of an additive or product kernel.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        kernel: The additive or product kernel whose base kernels are to be reduced.</span>
+<span class="sd">        name: The name of the parameter to remove.</span>
+<span class="sd">        searchspace: The search space the kernel operates on.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The reduced kernel of the same type, the sole remaining base kernel, or</span>
+<span class="sd">        ``None`` if no base kernel remains.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">remaining</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+        <span class="n">reduced</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">reduced</span> <span class="o">:=</span> <span class="n">k</span><span class="o">.</span><span class="n">_without_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">remaining</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">remaining</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">remaining</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">evolve</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">base_kernels</span><span class="o">=</span><span class="n">remaining</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ScaleKernel">
@@ -1274,6 +1305,10 @@
         <span class="n">stripped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">_without_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">stripped</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">evolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_kernel</span><span class="o">=</span><span class="n">stripped</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_scope_to_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">evolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_kernel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">_scope_to_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
 <div class="viewcode-block" id="ScaleKernel.to_gpytorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.composite.ScaleKernel.html#baybe.kernels.composite.ScaleKernel.to_gpytorch">[docs]</a>
     <span class="nd">@override</span>
@@ -1306,6 +1341,19 @@
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The individual kernels to be summed.&quot;&quot;&quot;</span>
 
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_without_parameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="o">/</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_reduce_base_kernels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">)</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_scope_to_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">evolve</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">base_kernels</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">_scope_to_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">),</span>
+        <span class="p">)</span>
+
 <div class="viewcode-block" id="AdditiveKernel.to_gpytorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.composite.AdditiveKernel.html#baybe.kernels.composite.AdditiveKernel.to_gpytorch">[docs]</a>
     <span class="nd">@override</span>
@@ -1328,6 +1376,19 @@
         <span class="p">),</span>
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The individual kernels to be multiplied.&quot;&quot;&quot;</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_without_parameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="o">/</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_reduce_base_kernels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">)</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_scope_to_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">evolve</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">base_kernels</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">_scope_to_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">),</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="ProductKernel.to_gpytorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.composite.ProductKernel.html#baybe.kernels.composite.ProductKernel.to_gpytorch">[docs]</a>

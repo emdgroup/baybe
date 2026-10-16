@@ -1237,12 +1237,12 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnmatchedAttributeError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.priors.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Prior</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.mixin</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerialMixin</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">active_settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">classproperty</span><span class="p">,</span> <span class="n">get_baseclasses</span><span class="p">,</span> <span class="n">match_attributes</span><span class="p">,</span> <span class="n">to_tuple</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.components.kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlainKernelFactory</span>
 
 
@@ -1346,6 +1346,23 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Cannot remove a parameter from kernel &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_scope_to_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy of the kernel that acts only on the named parameter.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: The name of the parameter to scope the kernel to, or ``None`` to</span>
+<span class="sd">                remove all scoping so that the kernel acts on all dimensions.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If the kernel structure cannot be scoped unambiguously.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The scoped kernel.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Cannot scope kernel &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; to a parameter.&quot;</span>
         <span class="p">)</span>
 
     <span class="nd">@abstractmethod</span>
@@ -1504,7 +1521,11 @@
             <span class="n">remaining</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_names</span> <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span>
-        <span class="k">return</span> <span class="n">evolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_names</span><span class="o">=</span><span class="n">remaining</span><span class="p">)</span> <span class="k">if</span> <span class="n">remaining</span> <span class="k">else</span> <span class="kc">None</span></div>
+        <span class="k">return</span> <span class="n">evolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_names</span><span class="o">=</span><span class="n">remaining</span><span class="p">)</span> <span class="k">if</span> <span class="n">remaining</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_scope_to_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">evolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_names</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">name</span><span class="p">,))</span></div>
 
 
 

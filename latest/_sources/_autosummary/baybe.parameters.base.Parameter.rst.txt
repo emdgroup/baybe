@@ -46,6 +46,7 @@ Parameter
       ~Parameter.description
       ~Parameter.is_continuous
       ~Parameter.is_discrete
+      ~Parameter.override_kernel
       ~Parameter.unit
       ~Parameter.is_numerical
       ~Parameter.name
