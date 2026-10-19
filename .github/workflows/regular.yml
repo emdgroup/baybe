@@ -54,7 +54,8 @@ jobs:
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'},
                       {semantic: '3.13', tox: 'py313'}, 
-                      {semantic: '3.14', tox: 'py314'} ]
+                      {semantic: '3.14', tox: 'py314'},
+                      {semantic: '3.15', tox: 'py315'} ]
     name: Lint ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -79,7 +80,8 @@ jobs:
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'},
                       {semantic: '3.13', tox: 'py313'}, 
-                      {semantic: '3.14', tox: 'py314'} ]
+                      {semantic: '3.14', tox: 'py314'},
+                      {semantic: '3.15', tox: 'py315'} ]
     name: Type Check ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -104,7 +106,8 @@ jobs:
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'},
                       {semantic: '3.13', tox: 'py313'},
-                      {semantic: '3.14', tox: 'py314'} ]
+                      {semantic: '3.14', tox: 'py314'},
+                      {semantic: '3.15', tox: 'py315'} ]
     name: Audit ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -129,7 +132,8 @@ jobs:
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'},
                       {semantic: '3.13', tox: 'py313'},
-                      {semantic: '3.14', tox: 'py314'} ]
+                      {semantic: '3.14', tox: 'py314'},
+                      {semantic: '3.15', tox: 'py315'} ]
     name: Core Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -153,7 +157,8 @@ jobs:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'},
-                      {semantic: '3.13', tox: 'py313'} ]
+                      {semantic: '3.13', tox: 'py313'},
+                      {semantic: '3.14', tox: 'py314'} ]
     name: Full Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -191,7 +196,8 @@ jobs:
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'},
                       {semantic: '3.13', tox: 'py313'},
-                      {semantic: '3.14', tox: 'py314'} ]
+                      {semantic: '3.14', tox: 'py314'},
+                      {semantic: '3.15', tox: 'py315'} ]
     name: GPU Tests ${{ matrix.py-version.semantic }}
     runs-on: XS-GPU
     steps:
