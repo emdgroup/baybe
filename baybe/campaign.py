@@ -7,7 +7,7 @@ import json
 import warnings
 from collections.abc import Collection, Sequence
 from functools import reduce
-from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, cast
+from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, cast, overload
 
 import cattrs
 import narwhals.stable.v2 as nw
@@ -62,6 +62,7 @@ from baybe.utils.validation import (
 )
 
 if TYPE_CHECKING:
+    import polars as pl
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from botorch.posteriors import Posterior
 
@@ -1017,13 +1018,40 @@ class Campaign(SerialMixin):
             acquisition_function,
         )
 
+    @overload
     def identify_non_dominated_configurations(
         self,
-        configurations: IntoDataFrame | None = None,
+        configurations: None = None,
         /,
         *,
         consider_campaign_measurements: bool = True,
-    ) -> pd.Series:
+    ) -> IntoSeries: ...
+
+    @overload
+    def identify_non_dominated_configurations(
+        self,
+        configurations: pd.DataFrame,
+        /,
+        *,
+        consider_campaign_measurements: bool = True,
+    ) -> pd.Series: ...
+
+    @overload
+    def identify_non_dominated_configurations(
+        self,
+        configurations: pl.DataFrame,
+        /,
+        *,
+        consider_campaign_measurements: bool = True,
+    ) -> pl.Series: ...
+
+    def identify_non_dominated_configurations(
+        self,
+        configurations: IntoDataFrameT | None = None,
+        /,
+        *,
+        consider_campaign_measurements: bool = True,
+    ) -> IntoSeries:
         """Create a Boolean mask indicating non-dominated configurations.
 
         Args:
@@ -1064,22 +1092,27 @@ class Campaign(SerialMixin):
                     UserWarning,
                 )
 
-        measurements_pd = nw.from_native(self.measurements, eager_only=True).to_pandas()
+        measurements = nw.from_native(self.measurements, eager_only=True)
+
         if configurations is None:
-            configurations = measurements_pd
+            configurations_nw = measurements
         else:
-            configurations = nw.from_native(configurations, eager_only=True).to_pandas()
-            validate_target_input(configurations, self.objective.targets)
+            configurations_nw = nw.from_native(configurations, eager_only=True)
+            validate_target_input(configurations_nw.to_pandas(), self.objective.targets)
+
+        n_configs = len(configurations_nw)
 
         if consider_campaign_measurements and self._measurements:
-            configurations = pd.concat([configurations, measurements_pd])
+            configurations_nw = nw.concat(
+                [configurations_nw, measurements], how="vertical"
+            )
 
-        non_dominated = self.objective.identify_non_dominated_configurations(
-            configurations
+        non_dominated = self.objective.identify_non_dominated_configurations(  # type: ignore[call-overload]
+            configurations_nw.to_native()
         )
 
-        if consider_campaign_measurements:
-            non_dominated = non_dominated.iloc[: -len(measurements_pd)]
+        if consider_campaign_measurements and self._measurements:
+            non_dominated = non_dominated.iloc[:n_configs]
 
         return non_dominated
 
