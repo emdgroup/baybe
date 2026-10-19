@@ -1155,6 +1155,7 @@ def _migrate_legacy_campaign(dict_: dict, /) -> dict:
     # Drop legacy ``comp_rep`` from the discrete subspace (was never meaningful
     # outside of the old serialization)
     try:
+        dict_["searchspace"]["discrete"] = dict_["searchspace"]["discrete"].copy()
         dict_["searchspace"]["discrete"].pop("comp_rep", None)
     except (KeyError, AttributeError):
         pass
