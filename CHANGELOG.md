@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation build no longer fails due to unresolved cross-references to
   `narwhals` typing symbols and a type annotation resolution error in `Settings`
   caused by `narwhals`-internal forward references
+- Pinned `shap<0.53.0` to prevent silent loss of the `lime` dependency, which
+  disabled insights-related tests and coverage since `shap` 0.53.0 moved its
+  `others` extra to a dependency group not exposed via PyPI metadata
 
 ### Added
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
