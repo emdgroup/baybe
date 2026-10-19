@@ -8,9 +8,11 @@ import polars as pl
 from gpytorch.kernels import Kernel as GPyTorchKernel
 from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
 from gpytorch.means import Mean as GPyTorchMean
+from narwhals.stable.v2.typing import IntoDataFrame
 
 # >>>>>>>>>> NOTE ON THE FOLLOWING IMPORTS AND ALIASES <<<<<<<<<<
-# This is a hack to make the GPyTorch components available in the docs
+# This is a hack to make the GPyTorch components (and other names only available via
+# `TYPE_CHECKING` blocks, such as `IntoDataFrame`) available in the docs.
 # Without those specific imports, the corresponding references cannot be resolved.
 # As a consequence, the __call__ functions that the factories use would not be part
 # of the documentation. Having those explicit imports here are the only solution
@@ -30,6 +32,7 @@ from baybe.surrogates.gaussian_process.presets import edbo_smoothed as _edbo_smo
 _constraint_base.pl = pl
 _constraint_discrete.pl = pl
 _kernel.GPyTorchKernel = GPyTorchKernel
+_kernel.IntoDataFrame = IntoDataFrame
 _likelihood.GPyTorchLikelihood = GPyTorchLikelihood
 _mean.GPyTorchMean = GPyTorchMean
 _botorch.GPyTorchLikelihood = GPyTorchLikelihood
@@ -105,7 +108,7 @@ nitpick_ignore_regex = [
     # resolved via intersphinx (e.g. pandas.core.frame.DataFrame vs pandas.DataFrame).
     (
         r"py:.*",
-        r"(pandas|numpy|torch|botorch|gpytorch|scipy|sklearn|pathlib|polars|attr|joblib|matplotlib|skfp|rdkit|shap|xyzpy|typing)[\._].*",
+        r"(pandas|numpy|torch|botorch|gpytorch|scipy|sklearn|pathlib|polars|attr|joblib|matplotlib|skfp|rdkit|shap|xyzpy|typing|narwhals)[\._].*",
     ),  # noqa: E501
     ##### Inherited torch.nn.Module docstring references #####
     # Unqualified names from inherited external docstrings (torch, botorch, sklearn)
@@ -133,6 +136,11 @@ nitpick_ignore_regex = [
     (r"py:class", r"^(pd\.DataFrame|pl\.Expr)$"),
     (r"py:class", r"^(TypeAliasForwardRef|P)$"),
     (r"py:class", r"^\"(pandas|polars)\"\}?$"),
+    (r"py:class", r"^(PosteriorStatistic)$"),
+    # narwhals typing aliases used under `TYPE_CHECKING` (unqualified forward refs
+    # cannot be resolved outside the module they are imported into).
+    (r"py:class", r"^(IntoDataFrame|IntoDataFrameT|IntoSeries|IntoSeriesT)$"),
+    (r"py:class", r"^(Backend|IntoBackend|nw\.IntoSeries)$"),
     ##### BayBE-specific suppressions #####
     # Inherited classes we cannot control
     (r"py:.*", r".*DTypeFloatONNX.*"),
