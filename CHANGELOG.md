@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   center, which caused `OptimizationGradientError` during recommendation
 - `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
   constraint filtering
+- Documentation build no longer fails when Polars is the active default dataframe
+  backend, by pinning the pandas backend while executing the example scripts
 
 ### Added
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
