@@ -4,9 +4,11 @@ from contextlib import nullcontext
 from typing import Any
 from unittest.mock import Mock
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 import pytest
 from attrs import evolve
+from narwhals.testing import assert_frame_equal
 from pandas.testing import assert_index_equal
 from pytest import param
 
@@ -28,6 +30,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
 )
 from baybe.searchspace.core import SearchSpace, SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.settings import Settings
 from baybe.surrogates import (
     BetaBernoulliMultiArmedBanditSurrogate,
     GaussianProcessSurrogate,
@@ -94,6 +97,7 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
     ],
     ids=["dataframe", "constraints"],
 )
+@Settings(default_dataframe_backend="pandas")
 def test_candidate_toggling(constraints, exclude, complement):
     """Toggling discrete candidates updates the exclusion state accordingly."""
     subspace = SubspaceDiscrete.from_product(
@@ -121,7 +125,9 @@ def test_candidate_toggling(constraints, exclude, complement):
     if exclude:
         # The toggled rows should be excluded, the rest should not
         assert len(campaign._excluded_experiments) == len(toggled_rows)
-        merged = pd.merge(campaign._excluded_experiments, toggled_rows, how="inner")
+        merged = pd.merge(
+            campaign._excluded_experiments.to_native(), toggled_rows, how="inner"
+        )
         assert len(merged) == len(toggled_rows)
     else:
         # The toggled rows should be re-included, the rest should remain excluded
@@ -180,6 +186,7 @@ def test_setting_allow_flags(flag, searchspace, value, discrete_value):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_measured_flag(campaign_for_flag_test: Campaign):
     """The flag controls the candidate set and properly interacts with the cache."""
     campaign = campaign_for_flag_test
@@ -211,6 +218,7 @@ def test_allow_measured_flag(campaign_for_flag_test: Campaign):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     """The flag controls the candidate set and properly interacts with the cache."""
     campaign = campaign_for_flag_test
@@ -221,7 +229,7 @@ def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     assert campaign._cached_recommendation is None
     rec = campaign.recommend(1)
     mock_recommend.reset_mock()
-    assert campaign._cached_recommendation.equals(rec)
+    assert campaign._cached_recommendation.to_native().equals(rec)
 
     for i in range(2):
         with (
@@ -238,6 +246,7 @@ def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_pending_flag(campaign_for_flag_test: Campaign):
     campaign = campaign_for_flag_test
     flag = campaign.allow_recommending_pending_experiments
@@ -251,7 +260,7 @@ def test_allow_pending_flag(campaign_for_flag_test: Campaign):
     assert campaign._cached_recommendation is None
     rec = campaign.recommend(1)
     mock_recommend.reset_mock()
-    assert campaign._cached_recommendation.equals(rec)
+    assert campaign._cached_recommendation.to_native().equals(rec)
 
     # Recommending without pending experiments uses the cache
     campaign.recommend(1)
@@ -275,22 +284,56 @@ def test_allow_pending_flag(campaign_for_flag_test: Campaign):
     "parameter_names", [["Categorical_1", "Categorical_2", "Num_disc_1"]]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-def test_update_measurements(ongoing_campaign):
-    """Updating measurements makes the expected changes."""
-    p_name, t_name = "Num_disc_1", ongoing_campaign.targets[0].name
-    updated = ongoing_campaign.measurements.iloc[[0], :]
+@pytest.mark.parametrize("batch_index", [0, 1, -1])
+def test_replace_batch(ongoing_campaign, batch_index, parameter_names):
+    """Replacing a batch makes the expected changes."""
+    p_name = parameter_names[-1]
+    t_name = ongoing_campaign.targets[0].name
 
-    # Perform the update
-    updated.iloc[0, updated.columns.get_loc(p_name)] = 1337
-    updated.iloc[0, updated.columns.get_loc(t_name)] = 1337
-    ongoing_campaign.update_measurements(
-        updated, numerical_measurements_must_be_within_tolerance=False
+    # Dry-run returns the current batch without modifying
+    old_batch = ongoing_campaign._measurements[batch_index]
+    dry_result = ongoing_campaign.replace_batch(
+        old_batch.to_native(), batch_index=batch_index, dry_run=True
+    )
+    assert_frame_equal(nw.from_native(dry_result, eager_only=True), old_batch)
+
+    # Modify values and perform the actual replacement
+    new_batch = old_batch.with_columns(
+        nw.lit(1337).alias(p_name),
+        nw.lit(1337).alias(t_name),
     )
 
-    # Make sure values are updated and resets have been made
-    meas = ongoing_campaign.measurements
-    assert meas.iloc[0, updated.columns.get_loc(p_name)] == 1337
-    assert meas.iloc[0, updated.columns.get_loc(t_name)] == 1337
+    replaced = ongoing_campaign.replace_batch(
+        new_batch.to_native(),
+        batch_index=batch_index,
+        numerical_measurements_must_be_within_tolerance=False,
+    )
+
+    # Returned batch equals the pre-update batch
+    assert_frame_equal(nw.from_native(replaced, eager_only=True), old_batch)
+
+    # Verify values are updated and cache has been cleared
+    updated_batch = ongoing_campaign._measurements[batch_index]
+    assert updated_batch[p_name][0] == 1337
+    assert updated_batch[t_name][0] == 1337
+    assert ongoing_campaign._cached_recommendation is None
+
+
+@pytest.mark.parametrize("batch_index", [0, 1, -1])
+def test_drop_batch(ongoing_campaign, batch_index):
+    """Dropping a batch removes it from the campaign."""
+    n_batches = len(ongoing_campaign._measurements)
+    old_batch = ongoing_campaign._measurements[batch_index]
+
+    # Dry-run returns the batch without dropping
+    dry_result = ongoing_campaign.drop_batch(batch_index, dry_run=True)
+    assert_frame_equal(nw.from_native(dry_result, eager_only=True), old_batch)
+    assert len(ongoing_campaign._measurements) == n_batches
+
+    # Drop the batch
+    dropped = ongoing_campaign.drop_batch(batch_index)
+    assert_frame_equal(nw.from_native(dropped, eager_only=True), old_batch)
+    assert len(ongoing_campaign._measurements) == n_batches - 1
     assert ongoing_campaign._cached_recommendation is None
 
 
@@ -341,6 +384,7 @@ def test_update_measurements(ongoing_campaign):
     ],
 )
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+@Settings(default_dataframe_backend="pandas")
 def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     """Posterior statistics have expected shape, index and columns."""
     objective = ongoing_campaign.objective
@@ -452,7 +496,7 @@ def test_cache_invalidation(
         new_value = FPSRecommender() if change else RandomRecommender()
 
     setattr(campaign, attribute, value)
-    campaign._cache_recommendation(pd.DataFrame())
+    campaign._cache_recommendation(nw.from_native(pd.DataFrame(), eager_only=True))
     assert campaign._cached_recommendation is not None
     setattr(campaign, attribute, new_value)
     assert getattr(campaign, attribute) is new_value

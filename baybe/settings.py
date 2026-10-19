@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 import narwhals.stable.v2 as nw
 import numpy as np
 from attrs import Attribute, Converter, Factory, define, field, fields
-from attrs.converters import optional as optional_c
 from attrs.setters import validate
 from attrs.validators import in_, instance_of
 from attrs.validators import optional as optional_v
@@ -171,6 +170,21 @@ def _convert_cache_directory(
         ) from ex
 
 
+def _convert_default_dataframe_backend(
+    value: EagerAllowed | None, /
+) -> nw.Implementation | None:
+    """Attrs converter for the default dataframe backend setting.
+
+    Delegates to :meth:`narwhals.stable.v2.Implementation.from_backend`, but with an
+    annotation that Sphinx can resolve (unlike the original method, whose signature
+    references narwhals-internal forward refs that are invisible outside its own
+    module and would otherwise break type hint resolution for the whole class).
+    """
+    if value is None:
+        return None
+    return nw.Implementation.from_backend(value)
+
+
 def _get_default_dataframe_backend() -> nw.Implementation:
     """Get the default dataframe backend."""
     eager_impls = [
@@ -229,7 +243,7 @@ class Settings(_SlottedContextDecorator):
     _default_dataframe_backend: nw.Implementation | None = field(
         alias="default_dataframe_backend",
         default=None,
-        converter=optional_c(nw.Implementation.from_backend),  # type: ignore[misc]
+        converter=Converter(_convert_default_dataframe_backend),  # type: ignore[misc]
         validator=optional_v(in_(typing.get_args(EagerAllowed))),
     )
     """Controls which backend is used when constructing dataframes from scratch. Set to ``None`` to apply automatic selection."""  # noqa: E501

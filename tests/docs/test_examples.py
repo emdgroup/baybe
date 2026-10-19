@@ -32,6 +32,7 @@ def test_example(example: str):
     env = os.environ | {
         "PYTHONPATH": os.getcwd(),  # to ensure examples are found
         "MPLBACKEND": "Agg",  # avoid popups resulting from plt.show()
+        "BAYBE_DEFAULT_DATAFRAME_BACKEND": "pandas",
     }
     subprocess.run([sys.executable, example], check=True, env=env)
 
