@@ -43,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constraint filtering
 - Documentation build no longer fails when Polars is the active default dataframe
   backend, by pinning the pandas backend while executing the example scripts
+- Documentation build no longer fails due to unresolved cross-references to
+  `narwhals` typing symbols and a type annotation resolution error in `Settings`
+  caused by `narwhals`-internal forward references
 
 ### Added
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
