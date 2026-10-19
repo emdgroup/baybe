@@ -11,6 +11,7 @@ from attrs import define, field
 from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
+from baybe._optional.info import LLM_INSTALLED
 from baybe.constraints.discrete import DiscreteCustomConstraint
 from baybe.exceptions import (
     IncompatibilityError,
@@ -18,6 +19,7 @@ from baybe.exceptions import (
     LLMCallError,
     LLMMalformedResponseError,
     LLMResponseError,
+    OptionalImportError,
 )
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
@@ -109,6 +111,13 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 f"{cred_conflicts}. Supply credentials via environment variables "
                 f"instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY)."
             )
+
+    @override
+    def __attrs_post_init__(self) -> None:
+        """Raise if the optional LLM dependencies are not installed."""
+        super().__attrs_post_init__()
+        if not LLM_INSTALLED:
+            raise OptionalImportError(name="litellm", group="llm")
 
     def _query_model(self, prompt: str) -> str:
         """Query the language model and return the raw response text.
