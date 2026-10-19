@@ -101,7 +101,11 @@ dev = [
 ]
 
 insights = [
-    "shap[others]>=0.47.0",
+    # NOTE: Starting with 0.53.0, the `others` extra (providing `lime`) was moved to
+    # a dependency group not exposed via `pip`/PyPI metadata, silently dropping
+    # `lime` and thus disabling `INSIGHTS_INSTALLED`.
+    # https://github.com/shap/shap/pull/4589
+    "shap[others]>=0.47.0,<0.53.0",
 ]
 
 docs = [
