@@ -358,6 +358,9 @@ class Campaign(SerialMixin):
             eager_only=True,
         )
 
+        # Drop potential non-default pandas index
+        data_nw = nw.maybe_reset_index(data_nw)
+
         # With new measurements, the recommendations must always be recomputed
         self.clear_cache()
 
@@ -414,6 +417,9 @@ class Campaign(SerialMixin):
             ),
             eager_only=True,
         )
+
+        # Drop potential non-default pandas index
+        data_nw = nw.maybe_reset_index(data_nw)
 
         # With changed measurements, the recommendations must be recomputed
         self.clear_cache()
