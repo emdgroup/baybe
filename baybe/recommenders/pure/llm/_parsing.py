@@ -32,7 +32,7 @@ from baybe.utils.dataframe import normalize_input_dtypes
 from baybe.utils.validation import validate_parameter_input
 
 
-def extract_json_array(response: str, /) -> str | None:
+def _extract_json_array(response: str, /) -> str | None:
     """Extract the JSON array payload from a raw language model response.
 
     Models often wrap the array in Markdown fences or prose, or emit several blocks
@@ -137,7 +137,7 @@ def parse_llm_response(
             Continuous constraints cannot be validated after the fact, so compliance
             of the LLM suggestions with such constraints is not guaranteed.
     """
-    payload = extract_json_array(response)
+    payload = _extract_json_array(response)
     if payload is None:
         raise LLMMalformedResponseError("Response contains no JSON array of objects.")
     try:
