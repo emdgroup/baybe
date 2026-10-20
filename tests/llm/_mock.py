@@ -44,26 +44,31 @@ def make_valid_json(searchspace, batch_size):
             for cp in continuous_params
         }
 
-    suggestions = []
+    recommendations = []
     if discrete_params:
         candidates = searchspace.discrete.get_candidates()[0]
         for i, (_, row) in enumerate(candidates.head(batch_size).iterrows()):
             entry = {p.name: row[p.name] for p in discrete_params}
             entry.update(continuous_entry(i))
-            suggestions.append({"explanation": "Mock suggestion.", "parameters": entry})
+            recommendations.append(
+                {"explanation": "Mock recommendation.", "parameters": entry}
+            )
     else:
         for i in range(batch_size):
-            suggestions.append(
-                {"explanation": "Mock suggestion.", "parameters": continuous_entry(i)}
+            recommendations.append(
+                {
+                    "explanation": "Mock recommendation.",
+                    "parameters": continuous_entry(i),
+                }
             )
 
     return json.dumps(
-        suggestions,
+        recommendations,
     )
 
 
-def make_suggestion(searchspace, **overrides):
-    """Build a valid suggestion dict with optional parameter overrides.
+def make_recommendation(searchspace, **overrides):
+    """Build a valid recommendation dict with optional parameter overrides.
 
     Overrides replace or add parameter values, e.g. ``Num="abc"`` to inject an
     invalid value or ``Unknown="x"`` to add an extra parameter.
@@ -81,12 +86,12 @@ def make_suggestion(searchspace, **overrides):
 
 
 def make_response_json(searchspace, **overrides):
-    """Build a JSON response string with one suggestion.
+    """Build a JSON response string with one recommendation.
 
-    Overrides are forwarded to :func:`make_suggestion`.
+    Overrides are forwarded to :func:`make_recommendation`.
     """
     return json.dumps(
-        [make_suggestion(searchspace, **overrides)],
+        [make_recommendation(searchspace, **overrides)],
     )
 
 

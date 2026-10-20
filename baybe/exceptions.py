@@ -272,8 +272,8 @@ class LLMMissingParameterError(LLMResponseError):
     def recovery_instruction(self) -> str:
         return (
             f"Your previous response did not specify values for the required "
-            f"parameters {sorted(self.parameters)}. Every suggestion must provide a "
-            f"value for all parameters."
+            f"parameters {sorted(self.parameters)}. Every recommendation must "
+            f"provide a value for all parameters."
         )
 
 
@@ -330,8 +330,8 @@ class LLMConstraintViolationError(LLMResponseError):
     def recovery_instruction(self) -> str:
         return (
             f"Your previous response violated the '{self.constraint_name}' constraint "
-            f"on parameters {list(self.parameters)}. Ensure all suggestions satisfy "
-            f"this constraint."
+            f"on parameters {list(self.parameters)}. Ensure all recommendations "
+            f"satisfy this constraint."
         )
 
 

@@ -26,13 +26,13 @@ if TYPE_CHECKING:
 _FORBIDDEN_INSTRUCTIONS = """\
 The following configurations are currently NOT selectable. You MUST NOT recommend any
 of them. Treat this list as the single source of truth about what not to recommend.
-Do not rely on your own memory of novelty. Before you output each suggestion, compare it
-row-by-row against this list; if it matches a row, discard it and choose a genuinely
-new configuration instead:\
+Do not rely on your own memory of novelty. Before you output each recommendation,
+compare it row-by-row against this list; if it matches a row, discard it and choose a
+genuinely new configuration instead:\
 """
 
 _PROMPT_TEMPLATE = """\
-You are an expert experimental design assistant. Your task is to suggest new \
+You are an expert experimental design assistant. Your task is to recommend new \
 experimental conditions based on the following information. Objects are given in \
 JSON format, one object per line.
 
@@ -70,7 +70,7 @@ PARAMETERS:
 {% if constraints is not none %}
 
 CONSTRAINTS:
-All suggestions must satisfy the following constraints.
+All recommendations must satisfy the following constraints.
 {{ constraints }}
 {% endif %}
 {% if measurements is not none %}
@@ -107,10 +107,10 @@ Please provide a corrected set of {{ batch_size }} distinct experimental conditi
 that addresses the problem described above and improves the optimization objective.
 {% else %}
 
-Please suggest {{ batch_size }} distinct new experimental conditions that are likely \
+Please recommend {{ batch_size }} distinct new experimental conditions that are likely \
 to improve the optimization objective.
 {% endif %}
-For each suggestion, provide:
+For each recommendation, provide:
 1. A brief explanation of why you chose these values
 2. The values for each parameter
 

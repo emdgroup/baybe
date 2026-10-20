@@ -61,7 +61,7 @@ _OBJECTIVE = make_objective()
 )
 @pytest.mark.parametrize("batch_size", [1, 3], ids=["single", "batch"])
 def test_recommend_happy_path(searchspace_factory, batch_size):
-    """The recommend flow returns a DataFrame with correct shape.
+    """The recommend flow returns a dataframe with correct shape.
 
     Value correctness is covered by the parsing tests; this test verifies
     the end-to-end flow (prompt building, model call, parsing).

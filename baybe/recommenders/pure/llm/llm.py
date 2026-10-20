@@ -47,7 +47,7 @@ _CREDENTIAL_LITELLM_KEYS = frozenset({"api_key", "api_base", "api_version"})
 
 @define(slots=False)
 class LLMRecommender(PureRecommender, SerialMixin):
-    """Recommender that uses a language model to suggest new experimental points."""
+    """Recommender that uses a language model to recommend new experimental points."""
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
@@ -228,7 +228,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
             pending_experiments: Optional pending experiments to include in the prompt.
 
         Returns:
-            A DataFrame containing the recommendations as individual rows.
+            A dataframe containing the recommendations as individual rows.
 
         Raises:
             IncompatibilityError: If the search space or objective contains custom
@@ -252,7 +252,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
             warnings.warn(
                 "The objective has no metadata description. Without context on "
                 "what to optimize, the language model may produce suboptimal "
-                "suggestions. Set the 'description' field on the objective's "
+                "recommendations. Set the 'description' field on the objective's "
                 "metadata to guide the LLM.",
                 UserWarning,
                 stacklevel=2,

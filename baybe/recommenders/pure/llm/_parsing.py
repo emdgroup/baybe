@@ -67,18 +67,18 @@ def _extract_json_array(response: str, /) -> str | None:
 
 
 def _count_forbidden_configurations(df: pd.DataFrame, searchspace: SearchSpace) -> int:
-    """Count the suggestions that match a currently non-selectable configuration.
+    """Count the recommendations that match a currently non-selectable configuration.
 
     These are the discrete configurations filtered out of the search space passed to
     the recommender, i.e. excluded ones and, depending on the campaign settings, those
     already measured, recommended or pending.
 
     Args:
-        df: The suggestions.
+        df: The recommendations.
         searchspace: The search space passed to the recommender.
 
     Returns:
-        The number of suggestions matching a not selectable configuration.
+        The number of recommendations matching a not selectable configuration.
     """
     discrete = searchspace.discrete
     if not discrete.parameters:
@@ -98,10 +98,10 @@ def _count_forbidden_configurations(df: pd.DataFrame, searchspace: SearchSpace) 
 def parse_llm_response(
     response: str, /, searchspace: SearchSpace, batch_size: int
 ) -> pd.DataFrame:
-    """Parse a language model response into a DataFrame of recommendations.
+    """Parse a language model response into a dataframe of recommendations.
 
-    Only the first ``batch_size`` suggestions are validated and returned, surplus
-    suggestions are discarded.
+    Only the first ``batch_size`` recommendations are validated and returned, surplus
+    recommendations are discarded.
 
     Args:
         response: The response from the language model.
@@ -109,7 +109,7 @@ def parse_llm_response(
         batch_size: The number of recommendations to return.
 
     Returns:
-        A DataFrame containing exactly ``batch_size`` distinct recommendations whose
+        A dataframe containing exactly ``batch_size`` distinct recommendations whose
         parameter values are valid and whose discrete part satisfies the discrete
         constraints of the search space.
 
@@ -117,62 +117,62 @@ def parse_llm_response(
         LLMMalformedResponseError: If the response cannot be parsed into the expected
             JSON structure.
         LLMBatchSizeError: If the response contains fewer than ``batch_size``
-            suggestions.
-        LLMUnknownParameterError: If a suggestion references parameters not in the
+            recommendations.
+        LLMUnknownParameterError: If a recommendation references parameters not in the
             search space.
-        LLMMissingParameterError: If a suggestion omits required search space
+        LLMMissingParameterError: If a recommendation omits required search space
             parameters.
-        LLMNonNumericParameterError: If a suggestion gives non-numeric values for a
+        LLMNonNumericParameterError: If a recommendation gives non-numeric values for a
             numerical parameter.
-        LLMInvalidParameterValueError: If a suggestion contains invalid parameter
+        LLMInvalidParameterValueError: If a recommendation contains invalid parameter
             values, including inactive values of label-like parameters.
-        LLMConstraintViolationError: If a suggestion violates a discrete constraint
+        LLMConstraintViolationError: If a recommendation violates a discrete constraint
             (including batch constraints) present in the search space.
-        LLMIneligiblePointsError: If a suggestion corresponds to a discrete
+        LLMIneligiblePointsError: If a recommendation corresponds to a discrete
             configuration that is currently not selectable.
         LLMDuplicateRecommendationsError: If the recommendations are not distinct.
 
     Warns:
         LLMResponseWarning: If the search space contains continuous constraints.
             Continuous constraints cannot be validated after the fact, so compliance
-            of the LLM suggestions with such constraints is not guaranteed.
+            of the LLM recommendations with such constraints is not guaranteed.
     """
     payload = _extract_json_array(response)
     if payload is None:
         raise LLMMalformedResponseError("Response contains no JSON array of objects.")
     try:
-        suggestions = json.loads(payload)
+        recommendations = json.loads(payload)
     except JSONDecodeError as e:
         raise LLMMalformedResponseError(f"Error parsing JSON output: {e}.") from e
 
-    # Check the number of suggestions before validating any of them
-    if len(suggestions) < batch_size:
+    # Check the number of recommendations before validating any of them
+    if len(recommendations) < batch_size:
         raise LLMBatchSizeError(
-            f"The language model returned {len(suggestions)} recommendation(s) "
+            f"The language model returned {len(recommendations)} recommendation(s) "
             f"instead of the requested {batch_size}.",
             requested=batch_size,
-            received=len(suggestions),
+            received=len(recommendations),
         )
-    # IMPROVE: Instead of discarding surplus suggestions, all suggestions could be
-    #   validated individually and the first valid ones selected, saving a recovery
-    #   attempt when only some of them are invalid. This requires suggestion-wise
+    # IMPROVE: Instead of discarding surplus recommendations, all recommendations could
+    #   be validated individually and the first valid ones selected, saving a recovery
+    #   attempt when only some of them are invalid. This requires recommendation-wise
     #   validation, a selection that respects batch constraints, and a decision on
-    #   which error to report if too few valid suggestions remain.
-    suggestions = suggestions[:batch_size]
+    #   which error to report if too few valid recommendations remain.
+    recommendations = recommendations[:batch_size]
 
-    recommendations = []
-    for suggestion in suggestions:
-        if _PARAMETERS_FIELD not in suggestion:
+    configurations = []
+    for recommendation in recommendations:
+        if _PARAMETERS_FIELD not in recommendation:
             raise LLMMalformedResponseError(
-                f"Each suggestion must contain a '{_PARAMETERS_FIELD}' field."
+                f"Each recommendation must contain a '{_PARAMETERS_FIELD}' field."
             )
 
-        if _EXPLANATION_FIELD not in suggestion:
+        if _EXPLANATION_FIELD not in recommendation:
             raise LLMMalformedResponseError(
-                f"Each suggestion must contain an '{_EXPLANATION_FIELD}' field."
+                f"Each recommendation must contain an '{_EXPLANATION_FIELD}' field."
             )
 
-        params = suggestion[_PARAMETERS_FIELD]
+        params = recommendation[_PARAMETERS_FIELD]
         if not isinstance(params, dict):
             raise LLMMalformedResponseError("Parameters must be a JSON object.")
 
@@ -185,9 +185,9 @@ def parse_llm_response(
                 valid_names=param_names,
             )
 
-        recommendations.append(params)
+        configurations.append(params)
 
-    df = pd.DataFrame(recommendations)
+    df = pd.DataFrame(configurations)
 
     # Detect missing columns up front so they surface as a distinct error.
     missing = {p.name for p in searchspace.parameters}.difference(df.columns)
@@ -229,7 +229,7 @@ def parse_llm_response(
         names = ", ".join(f"'{type(c).__name__}'" for c in continuous_constraints)
         warnings.warn(
             f"The search space contains continuous constraints ({names}) that cannot "
-            f"be validated. The LLM suggestions may violate these constraints.",
+            f"be validated. The LLM recommendations may violate these constraints.",
             LLMResponseWarning,
             stacklevel=2,
         )
@@ -242,7 +242,7 @@ def parse_llm_response(
         invalid_idx = constraint.get_invalid(df)
         if not invalid_idx.empty:
             raise LLMConstraintViolationError(
-                f"{len(invalid_idx)} suggestion(s) violate the "
+                f"{len(invalid_idx)} recommendation(s) violate the "
                 f"'{type(constraint).__name__}' constraint on parameters "
                 f"{constraint.parameters}.",
                 constraint_name=type(constraint).__name__,
@@ -254,16 +254,17 @@ def parse_llm_response(
         unique_values = df[param_name].unique()
         if len(unique_values) > 1:
             raise LLMConstraintViolationError(
-                f"Suggestions violate the '{type(constraint).__name__}' constraint on "
-                f"parameter '{param_name}': all suggestions in a batch must share the "
-                f"same value, but received {list(unique_values)}.",
+                f"Recommendations violate the '{type(constraint).__name__}' "
+                f"constraint on parameter '{param_name}': all recommendations in a "
+                f"batch must share the same value, but received "
+                f"{list(unique_values)}.",
                 constraint_name=type(constraint).__name__,
                 parameters=constraint.parameters,
             )
 
     if (n_forbidden := _count_forbidden_configurations(df, searchspace)) > 0:
         raise LLMIneligiblePointsError(
-            f"{n_forbidden} suggestion(s) correspond to configurations that are "
+            f"{n_forbidden} recommendation(s) correspond to configurations that are "
             f"currently not selectable.",
             n_ineligible=n_forbidden,
         )
@@ -272,11 +273,12 @@ def parse_llm_response(
     # space object. Currently, we can e.g. not verify search space that use permutation
     # constraints as the search space contains an arbitrary representation of a
     # permutation group. Also, search spaces that are constructed as an explicit list of
-    # configurations (e.g. if generated from a DataFrame) can currently not be validated
+    # configurations (e.g. if generated from a dataframe) can currently not be validated
 
     if (n_duplicates := int(df.duplicated().sum())) > 0:
         raise LLMDuplicateRecommendationsError(
-            f"{n_duplicates} suggestion(s) duplicate another suggestion of the batch.",
+            f"{n_duplicates} recommendation(s) duplicate another recommendation of "
+            f"the batch.",
             n_duplicates=n_duplicates,
         )
     return df
