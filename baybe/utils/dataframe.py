@@ -20,7 +20,6 @@ import pandas as pd
 from narwhals.testing import assert_frame_equal
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
-from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
@@ -28,6 +27,7 @@ if TYPE_CHECKING:
     from narwhals.typing import IntoBackend
     from torch import Tensor
 
+    from baybe.parameters.base import Parameter
     from baybe.targets.base import Target
 
     _T = TypeVar("_T", bound=Parameter | Target)
@@ -207,6 +207,7 @@ def create_fake_input(
     Raises:
         ValueError: If less than one row was requested.
     """
+    from baybe.parameters.base import DiscreteParameter
     from baybe.parameters.numerical import NumericalContinuousParameter
 
     # Assert at least one fake entry is being generated
@@ -771,6 +772,7 @@ def normalize_input_dtypes(
 
     def needs_float_dtype(obj) -> bool:
         """Check if the object requires float dtype column representation."""
+        from baybe.parameters.base import Parameter
         from baybe.targets.numerical import NumericalTarget
 
         return (isinstance(obj, Parameter) and obj.is_numerical) or isinstance(
