@@ -195,22 +195,18 @@ def _to_json_lines(serialized_objects: Iterable[dict[str, Any]], /) -> str:
     return "\n".join(json.dumps(obj, ensure_ascii=False) for obj in serialized_objects)
 
 
-def _table_text(df: pd.DataFrame | None, columns: list[str], /) -> str | None:
-    """Render the given columns of a dataframe as a table.
-
-    Restricting the columns excludes non-experimental columns, such as the metadata
-    columns added by :class:`~baybe.campaign.Campaign`.
+def _table_text(df: pd.DataFrame | None, /) -> str | None:
+    """Render a dataframe as a table.
 
     Args:
         df: The optional dataframe to render.
-        columns: The columns to include.
 
     Returns:
         The rendered table, or ``None`` if no or an empty dataframe is provided.
     """
     if df is None or df.empty:
         return None
-    return df[columns].to_string(index=False)
+    return df.to_string(index=False)
 
 
 def _forbidden_configurations(searchspace: SearchSpace) -> str | None:
@@ -311,8 +307,16 @@ def make_prompt(
             if constraints
             else None
         ),
-        "measurements": _table_text(measurements, parameter_names + target_names),
-        "pending_experiments": _table_text(pending_experiments, parameter_names),
+        "measurements": (
+            _table_text(measurements[parameter_names + target_names])
+            if measurements is not None
+            else None
+        ),
+        "pending_experiments": (
+            _table_text(pending_experiments[parameter_names])
+            if pending_experiments is not None
+            else None
+        ),
         "forbidden_configurations": _forbidden_configurations(searchspace),
         "forbidden_instructions": _FORBIDDEN_INSTRUCTIONS,
         "batch_size": batch_size,
