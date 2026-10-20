@@ -16,10 +16,16 @@ from typing import (
 
 import narwhals.stable.v2 as nw
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
+from narwhals.stable.v2.dependencies import is_into_dataframe, is_into_series
 from narwhals.testing import assert_frame_equal
 
-from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
+from baybe.exceptions import (
+    IncompatibleArgumentError,
+    InputDataTypeWarning,
+    SearchSpaceMatchWarning,
+)
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
@@ -27,6 +33,7 @@ if TYPE_CHECKING:
     from narwhals.typing import IntoBackend
     from torch import Tensor
 
+    from baybe.constraints.base import DiscreteFilteringConstraint
     from baybe.parameters.base import Parameter
     from baybe.targets.base import Target
 
@@ -36,6 +43,27 @@ if TYPE_CHECKING:
     _IntoTensor: TypeAlias = (
         int | float | np.ndarray | nw.Series | nw.DataFrame | IntoSeries | IntoDataFrame
     )
+
+    Filter: TypeAlias = (
+        nw.Expr
+        | IntoSeries
+        | Sequence[bool]
+        | npt.NDArray[np.bool_]
+        | DiscreteFilteringConstraint
+        | IntoDataFrame
+    )
+    """A criterion for filtering a dataframe.
+
+    * :class:`narwhals.stable.v2.Expr`: A Boolean expression.
+    * A Boolean mask (:class:`~narwhals.stable.v2.typing.IntoSeries`, a plain
+      ``Sequence[bool]``, or a Boolean numpy array): Selects rows positionally.
+    * :class:`~baybe.constraints.base.DiscreteFilteringConstraint`: Applies the
+      constraint's validity criterion.
+    * A dataframe (:class:`~narwhals.stable.v2.typing.IntoDataFrame`): Selects
+      rows whose values match a row of the given dataframe in all of its
+      columns (semi-join semantics). Must use the same dataframe backend as
+      the filtered frame.
+    """
 
 _SeriesOrFrameT = TypeVar("_SeriesOrFrameT", nw.Series, nw.DataFrame)
 
@@ -672,6 +700,108 @@ def filter_df(
     out.index.name = index_name
 
     return out
+
+
+def _is_boolean_mask(x: Any, /) -> bool:
+    """Determine whether a given object is a Boolean mask.
+
+    Args:
+        x: The object to inspect.
+
+    Returns:
+        ``True`` if the object is a series (narwhals or native) with Boolean dtype,
+        a Boolean numpy array, or a plain sequence of ``bool``-like values.
+        ``False`` otherwise.
+    """
+    if is_into_series(x):
+        return nw.from_native(x, series_only=True).dtype == nw.Boolean
+    if isinstance(x, np.ndarray):
+        return x.dtype == bool
+    if isinstance(x, Sequence):
+        return all(isinstance(v, bool | np.bool_) for v in x)
+    return False
+
+
+def _apply_filter(lf: nw.LazyFrame, filter_: Filter, /) -> nw.LazyFrame:
+    """Narrow a lazyframe down to the rows matching a filter criterion.
+
+    Args:
+        lf: The lazyframe to be filtered.
+        filter_: The filter criterion.
+
+    Returns:
+        The filtered lazyframe.
+
+    Raises:
+        IncompatibleArgumentError: If the filter criterion is a dataframe using a
+            different dataframe backend than the frame to be filtered.
+        TypeError: If the filter criterion cannot be interpreted as a filter.
+    """
+    from baybe.constraints.base import DiscreteFilteringConstraint
+
+    match filter_:
+        case nw.Expr():
+            return lf.filter(filter_)
+
+        case DiscreteFilteringConstraint():
+            # TODO: Simplify once constraints expose a narwhals-native expression
+            #   (replacing the current pandas-index/Polars-expression duality).
+            eager = lf.collect()
+            native = eager.to_pandas()
+            valid = native.loc[filter_.get_valid(native)]
+            return _df_with_backend(
+                nw.from_native(valid, eager_only=True), nw.get_native_namespace(eager)
+            ).lazy()
+
+        case _ if is_into_dataframe(filter_):
+            other = nw.from_native(filter_, eager_only=True)
+            lf_backend = nw.get_native_namespace(lf)
+            other_backend = nw.get_native_namespace(other)
+            if other_backend != lf_backend:
+                raise IncompatibleArgumentError(
+                    f"The dataframe passed as a filter uses the "
+                    f"'{other_backend.__name__}' backend, but the filtered frame "
+                    f"uses '{lf_backend.__name__}'. Convert the filter dataframe "
+                    f"to the matching backend before passing it."
+                )
+            return lf.join(other.lazy(), on=other.columns, how="semi")
+
+        case _ if _is_boolean_mask(filter_):
+            mask = (
+                nw.from_native(filter_, series_only=True).to_list()
+                if is_into_series(filter_)
+                else [bool(v) for v in filter_]
+            )
+            return lf.collect().filter(mask).lazy()
+
+        case _:
+            raise TypeError(
+                f"'{filter_!r}' of type '{type(filter_).__name__}' cannot be used as "
+                f"a filter. See '{Filter}' for the supported types."
+            )
+
+
+def _filter_dataframe(
+    lf: nw.LazyFrame, /, *filters: Filter, complement: bool = False
+) -> nw.LazyFrame:
+    """Filter a lazyframe based on one or more filter criteria.
+
+    Multiple filters are combined conjunctively (logical AND), mirroring
+    :meth:`narwhals.stable.v2.LazyFrame.filter`.
+
+    Args:
+        lf: The lazyframe to be filtered.
+        *filters: One or more filter criteria.
+        complement: If ``False``, the rows matching all given filters are kept.
+            If ``True``, the complement set is kept instead.
+
+    Returns:
+        The filtered lazyframe.
+    """
+    matched = functools.reduce(_apply_filter, filters, lf)
+    if not complement:
+        return matched
+    return lf.join(matched, on=lf.columns, how="anti")
 
 
 def arrays_to_dataframes(
