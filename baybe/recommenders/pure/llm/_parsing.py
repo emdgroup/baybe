@@ -67,7 +67,7 @@ def _extract_json_array(response: str, /) -> str | None:
 
 
 def _count_forbidden_configurations(df: pd.DataFrame, searchspace: SearchSpace) -> int:
-    """Count the suggestions that match a currently not selectable configuration.
+    """Count the suggestions that match a currently non-selectable configuration.
 
     These are the discrete configurations filtered out of the search space passed to
     the recommender, i.e. excluded ones and, depending on the campaign settings, those
