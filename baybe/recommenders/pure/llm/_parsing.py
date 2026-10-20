@@ -160,6 +160,7 @@ def parse_llm_response(
     #   which error to report if too few valid recommendations remain.
     recommendations = recommendations[:batch_size]
 
+    param_names = {p.name for p in searchspace.parameters}
     configurations = []
     for recommendation in recommendations:
         if _PARAMETERS_FIELD not in recommendation:
@@ -176,7 +177,6 @@ def parse_llm_response(
         if not isinstance(params, dict):
             raise LLMMalformedResponseError("Parameters must be a JSON object.")
 
-        param_names = {p.name for p in searchspace.parameters}
         unknown = set(params.keys()) - param_names
         if unknown:
             raise LLMUnknownParameterError(
