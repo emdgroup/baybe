@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteLinearConstraint` for (optionally weighted) sum constraints on discrete
   parameters, supporting `coefficients` and mirroring `ContinuousLinearConstraint`'s
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
-- `LLMRecommender` for LLM-based experimental design suggestions via LiteLLM,
+- `LLMRecommender` for LLM-based experimental design via LiteLLM,
   available through the optional `llm` dependency group
 - `LLMTwoPhaseRecommender` and `LLMAlternatingRecommender` convenience recommenders
   built on top of `LLMRecommender`: the former warm-starts a campaign with the LLM and
