@@ -14,7 +14,7 @@ import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from attrs import define, field, fields
+from attrs import define, evolve, field, fields
 from attrs.validators import deep_iterable, instance_of
 from cattrs import IterableValidationError
 from typing_extensions import Self, override
@@ -54,6 +54,7 @@ if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoLazyFrame
 
     from baybe.searchspace.core import SearchSpace
+    from baybe.utils.dataframe import Filter
 
 
 @define(kw_only=True)
@@ -841,6 +842,27 @@ class SubspaceDiscrete(SerialMixin):
     def get_candidates(self) -> IntoLazyFrame:
         """Return all candidate parameter configurations."""
         return self._get_candidates().to_native()
+
+    def filter(self, *filters: Filter, complement: bool = False) -> Self:
+        """Filter the discrete candidate set.
+
+        Multiple filters are combined conjunctively (logical AND), mirroring
+        :meth:`narwhals.stable.v2.LazyFrame.filter`. Depending on the filter(s) and
+        the candidate representation involved, the result may be computed
+        symbolically (without materializing the underlying data) or may require
+        materialization.
+
+        Args:
+            *filters: One or more filter criteria.
+            complement: If ``False``, the rows matching all given filters are kept.
+                If ``True``, the complement set is kept instead.
+
+        Returns:
+            A new subspace whose candidate set is narrowed accordingly.
+        """
+        return evolve(
+            self, candidates=self.candidates.filter(*filters, complement=complement)
+        )
 
     def transform(
         self,
