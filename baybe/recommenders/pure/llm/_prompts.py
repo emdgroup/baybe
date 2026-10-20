@@ -157,12 +157,6 @@ def _drop_empty(obj: Any, /) -> Any:
 def _to_prompt_dict(obj: Parameter | Constraint | Objective, /) -> dict[str, Any]:
     """Serialize an object into the representation shown to the language model.
 
-    ``None`` values and empty dictionaries are dropped since they carry no information
-    for the language model. For label-like parameters, ``values`` holds the active
-    labels only. Substance parameters keep the SMILES of their active labels, while
-    the descriptor table of custom parameters is omitted since it is only relevant for
-    the surrogate model.
-
     Args:
         obj: The object to serialize.
 
@@ -173,13 +167,19 @@ def _to_prompt_dict(obj: Parameter | Constraint | Objective, /) -> dict[str, Any
     if isinstance(obj, _DiscreteLabelLikeParameter):
         active = list(obj.active_values)
         serialized.pop(fields(_DiscreteLabelLikeParameter)._active_values.alias)
+        # For label-like parameters, ``values`` holds the active labels only.
         serialized[fields(CategoricalParameter)._values.alias] = active
         if isinstance(obj, SubstanceParameter):
+            # Substance parameters keep the SMILES of their active labels.
             serialized[fields(SubstanceParameter).data.alias] = {
                 label: smiles for label, smiles in obj.data.items() if label in active
             }
         elif isinstance(obj, CustomDiscreteParameter):
+            # The descriptor table of custom parameters is omitted since it is only
+            # relevant for the surrogate model.
             del serialized[fields(CustomDiscreteParameter).data.alias]
+    # ``None`` values and empty dictionaries are dropped since they carry no
+    # information for the language model.
     return _drop_empty(serialized)
 
 
