@@ -30,7 +30,7 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.recommenders.pure.llm._parsing import extract_json_array, parse_llm_response
+from baybe.recommenders.pure.llm._parsing import _extract_json_array, parse_llm_response
 from baybe.recommenders.pure.llm._schema import (
     _EXPLANATION_FIELD,
     _PARAMETERS_FIELD,
@@ -97,7 +97,7 @@ def fixture_discrete_searchspace():
 )
 def test_extract_json_array(response, expected):
     """The extractor finds the last JSON array of objects."""
-    result = extract_json_array(response)
+    result = _extract_json_array(response)
     assert json.loads(result) == json.loads(expected)
 
 
@@ -114,7 +114,7 @@ def test_extract_json_array(response, expected):
 )
 def test_extract_json_array_returns_none(response):
     """The extractor returns None when no array of objects is found."""
-    assert extract_json_array(response) is None
+    assert _extract_json_array(response) is None
 
 
 @pytest.mark.parametrize("batch_size", [1, 3], ids=["single", "batch"])
