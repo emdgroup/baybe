@@ -123,18 +123,18 @@ Format your response as a JSON array of objects with the following structure \
 class _PromptContext(TypedDict):
     """Typed render context for the prompt."""
 
-    experiment_description: str
-    objective: str | None
-    parameters: str
+    batch_size: int
     constraints: str | None
-    measurements: str | None
-    pending_experiments: str | None
+    experiment_description: str
     forbidden_configurations: str | None
     forbidden_instructions: str
-    batch_size: int
-    response_format: str
-    recovery_instruction: str | None
+    measurements: str | None
+    objective: str | None
     original_response: str | None
+    parameters: str
+    pending_experiments: str | None
+    recovery_instruction: str | None
+    response_format: str
 
 
 def _drop_empty(obj: Any, /) -> Any:
