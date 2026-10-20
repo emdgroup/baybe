@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
 - Parameter-specific kernel overrides for conveniently composing Gaussian process
   kernels on individual parameter dimensions
-- `LLMRecommender` for LLM-based experimental design suggestions via LiteLLM,
+- `LLMRecommender` for LLM-based experimental design via LiteLLM,
   available through the optional `llm` dependency group
 - `LLMTwoPhaseRecommender` and `LLMAlternatingRecommender` convenience recommenders
   built on top of `LLMRecommender`: the former warm-starts a campaign with the LLM and
