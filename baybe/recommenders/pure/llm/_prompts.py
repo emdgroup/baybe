@@ -305,12 +305,12 @@ def make_prompt(
         ),
         "measurements": (
             _table_text(measurements[parameter_names + target_names])
-            if measurements is not None
+            if measurements is not None and not measurements.empty
             else None
         ),
         "pending_experiments": (
             _table_text(pending_experiments[parameter_names])
-            if pending_experiments is not None
+            if pending_experiments is not None and not pending_experiments.empty
             else None
         ),
         "forbidden_configurations": _forbidden_configurations(searchspace),
