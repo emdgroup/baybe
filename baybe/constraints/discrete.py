@@ -968,6 +968,11 @@ class DiscreteBatchConstraint(DiscreteConstraint):
             A list of Boolean masks, one per unique value of the constrained
             parameter.
         """
+        # TODO: This requires `candidates_exp` to already be materialized, even
+        #   though for `ProductCandidates`, each subset is really just "fix this
+        #   parameter to one of its `active_values`", which could be expressed as
+        #   an equality `DiscreteFilteringConstraint` (or narwhals `Expr`) and
+        #   applied via `ProductCandidates.filter` without ever materializing.
         param = self.parameters[0]
         return [
             (candidates_exp[param] == v).values for v in candidates_exp[param].unique()

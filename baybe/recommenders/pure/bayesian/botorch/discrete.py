@@ -8,10 +8,8 @@ from typing import TYPE_CHECKING
 import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
-from attrs import evolve
 
 from baybe.searchspace import SubspaceDiscrete
-from baybe.searchspace.candidates import TableCandidates
 from baybe.settings import active_settings
 from baybe.utils.dataframe import _df_with_backend, to_tensor
 
@@ -46,7 +44,6 @@ def recommend_discrete_with_subsets(
     """
     import torch
 
-    candidates = subspace_discrete._get_candidates().collect()
     masks: Iterable[npt.NDArray[np.bool_]]
     if subspace_discrete.n_subsets <= recommender.max_n_subsets:
         masks = subspace_discrete.subset_masks(min_candidates=batch_size)
@@ -60,14 +57,7 @@ def recommend_discrete_with_subsets(
         mask: np.ndarray,
     ) -> Callable[[], tuple[IntoDataFrame, Tensor]]:
         def optimize() -> tuple[IntoDataFrame, Tensor]:
-            # TODO: Replace with .filter() method to avoid materialization
-            subset_subspace = evolve(
-                subspace_discrete,
-                candidates=TableCandidates(
-                    subspace_discrete.parameters,
-                    candidates.filter(mask.tolist()).to_native(),
-                ),
-            )
+            subset_subspace = subspace_discrete.filter(mask)
 
             rec = recommend_discrete_without_subsets(
                 recommender, subset_subspace, batch_size

@@ -19,7 +19,6 @@ from baybe.exceptions import (
     MinimumCardinalityViolatedWarning,
 )
 from baybe.searchspace import SearchSpace
-from baybe.searchspace.candidates import TableCandidates
 from baybe.settings import active_settings
 from baybe.utils.basic import flatten
 from baybe.utils.dataframe import _df_with_backend, to_tensor
@@ -197,7 +196,6 @@ def recommend_hybrid_with_subsets(
     # NOTE: No min_discrete_candidates filtering in hybrid spaces because
     # optimize_acqf_mixed can produce multiple recommendations from a single
     # discrete candidate by varying continuous parameters.
-    candidates = searchspace.discrete._get_candidates().collect()
     combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
     if searchspace.n_subsets <= recommender.max_n_subsets:
         combined_masks = searchspace.subsets()
@@ -211,14 +209,7 @@ def recommend_hybrid_with_subsets(
         def optimize() -> tuple[IntoDataFrame, Tensor]:
             import torch
 
-            # TODO: Replace with SubspaceDiscrete.filter method to avoid materialization
-            mod_disc = evolve(
-                searchspace.discrete,
-                candidates=TableCandidates(
-                    searchspace.discrete.parameters,
-                    candidates.filter(d_mask.tolist()).to_native(),
-                ),
-            )
+            mod_disc = searchspace.discrete.filter(d_mask)
             mod_cont = (
                 subspace_c._enforce_cardinality_constraints(c_inactive_params)
                 if c_inactive_params
