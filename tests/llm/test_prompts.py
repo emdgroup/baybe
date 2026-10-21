@@ -25,6 +25,7 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.recommenders.pure.llm._prompts import (
+    _describe_transformations,
     _drop_empty,
     _forbidden_configurations,
     _to_prompt_dict,
@@ -33,6 +34,23 @@ from baybe.recommenders.pure.llm._prompts import (
 from baybe.searchspace import SearchSpace
 from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from baybe.targets import BinaryTarget, NumericalTarget
+from baybe.transformations import (
+    AbsoluteTransformation,
+    AdditiveTransformation,
+    AffineTransformation,
+    BellTransformation,
+    ChainedTransformation,
+    ClampingTransformation,
+    ExponentialTransformation,
+    IdentityTransformation,
+    LogarithmicTransformation,
+    MultiplicativeTransformation,
+    PowerTransformation,
+    SigmoidTransformation,
+    TriangularTransformation,
+    TwoSidedAffineTransformation,
+)
+from baybe.utils.interval import Interval
 
 if not JINJA2_INSTALLED:
     pytest.skip("Jinja2 not installed.", allow_module_level=True)
@@ -450,3 +468,160 @@ def test_full_prompt(recovery_kwargs, expected_present, expected_absent):
     # Jinja expressions are written with inner spaces, unlike nested JSON objects
     for residue in ("{{ ", " }}", "{%", "%}"):
         assert residue not in prompt
+
+
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
+@pytest.mark.parametrize(
+    ("transformation", "expected"),
+    [
+        param(
+            IdentityTransformation(),
+            "uses IdentityTransformation(): The identity transformation.",
+            id="IdentityTransformation",
+        ),
+        param(
+            AffineTransformation(),
+            (
+                "uses AffineTransformation(factor=1.0, shift=0.0): "
+                "An affine transformation."
+            ),
+            id="AffineTransformation",
+        ),
+        param(
+            TwoSidedAffineTransformation(slope_left=0.5, slope_right=2.0),
+            (
+                "uses TwoSidedAffineTransformation(slope_left=0.5, "
+                "slope_right=2.0, midpoint=0.0): A transformation with two "
+                "affine segments on either side of a midpoint."
+            ),
+            id="TwoSidedAffineTransformation",
+        ),
+        param(
+            BellTransformation(),
+            (
+                "uses BellTransformation(center=0.0, sigma=1.0): "
+                "A Gaussian bell curve transformation."
+            ),
+            id="BellTransformation",
+        ),
+        param(
+            AbsoluteTransformation(),
+            (
+                "uses AbsoluteTransformation(): "
+                "A transformation computing absolute values."
+            ),
+            id="AbsoluteTransformation",
+        ),
+        param(
+            TriangularTransformation(cutoffs=Interval(0.0, 1.0)),
+            (
+                "uses TriangularTransformation(cutoffs=Interval(lower=0.0, "
+                "upper=1.0), peak=0.5): A transformation with a triangular shape."
+            ),
+            id="TriangularTransformation",
+        ),
+        param(
+            LogarithmicTransformation(),
+            "uses LogarithmicTransformation(): A logarithmic transformation.",
+            id="LogarithmicTransformation",
+        ),
+        param(
+            ExponentialTransformation(),
+            "uses ExponentialTransformation(): An exponential transformation.",
+            id="ExponentialTransformation",
+        ),
+        param(
+            PowerTransformation(exponent=2.0),
+            (
+                "uses PowerTransformation(exponent=2.0): "
+                "A transformation computing the power."
+            ),
+            id="PowerTransformation",
+        ),
+        param(
+            SigmoidTransformation(),
+            (
+                "uses SigmoidTransformation(center=0.0, steepness=1.0): "
+                "A sigmoid transformation."
+            ),
+            id="SigmoidTransformation",
+        ),
+        param(
+            ClampingTransformation(min=0.0, max=1.0),
+            (
+                "uses ClampingTransformation(cutoffs=Interval(lower=0.0, "
+                "upper=1.0)): A transformation clamping values between "
+                "specified cutoffs."
+            ),
+            id="ClampingTransformation",
+        ),
+        param(
+            ChainedTransformation(
+                [AffineTransformation(factor=2.0), LogarithmicTransformation()]
+            ),
+            (
+                "uses ChainedTransformation(transformations=(AffineTransformation"
+                "(factor=2.0, shift=0.0), LogarithmicTransformation())): "
+                "A chained transformation composing several individual "
+                "transformations."
+            ),
+            id="ChainedTransformation",
+        ),
+        param(
+            AdditiveTransformation(
+                [LogarithmicTransformation(), PowerTransformation(exponent=2.0)]
+            ),
+            (
+                "uses AdditiveTransformation(transformations=("
+                "LogarithmicTransformation(), PowerTransformation"
+                "(exponent=2.0))): A transformation implementing the sum "
+                "of two transformations."
+            ),
+            id="AdditiveTransformation",
+        ),
+        param(
+            MultiplicativeTransformation(
+                [IdentityTransformation(), AffineTransformation()]
+            ),
+            (
+                "uses MultiplicativeTransformation(transformations=("
+                "IdentityTransformation(), AffineTransformation(factor=1.0, "
+                "shift=0.0))): A transformation implementing the product of "
+                "two transformations."
+            ),
+            id="MultiplicativeTransformation",
+        ),
+        param(
+            ChainedTransformation(
+                [
+                    AffineTransformation(factor=2.0, shift=1.0),
+                    ChainedTransformation(
+                        [
+                            LogarithmicTransformation(),
+                            SigmoidTransformation(),
+                        ]
+                    ),
+                    PowerTransformation(exponent=3.0),
+                ]
+            ),
+            (
+                "uses ChainedTransformation(transformations=(AffineTransformation"
+                "(factor=2.0, shift=1.0), LogarithmicTransformation(), "
+                "SigmoidTransformation(center=0.0, steepness=1.0), "
+                "PowerTransformation(exponent=3.0))): A chained transformation "
+                "composing several individual transformations."
+            ),
+            id="DeeplyChainedTransformation",
+        ),
+    ],
+)
+def test_describe_transformations(transformation, expected):
+    """The description includes the transformation class, parameters, and docstring."""
+    target = NumericalTarget(
+        name="test_target", minimize=False, transformation=transformation
+    )
+    objective = SingleTargetObjective(target=target)
+    description = _describe_transformations(objective)
+    print(f"\n--- {type(transformation).__name__} ---\n{description}")
+
+    assert description == f"- {target.name} {expected}"
