@@ -75,7 +75,6 @@ class LLMRecommender(PureRecommender, SerialMixin):
             # Values are intentionally unconstrained: LiteLLM accepts heterogeneous
             # argument types (str, int, float, bool, nested dicts, ...).
             value_validator=lambda *_: None,
-            mapping_validator=instance_of(dict),
         ),
     )
     """Additional arguments to pass to LiteLLM (e.g. ``temperature``, ``max_tokens``).
