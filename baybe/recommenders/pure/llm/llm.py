@@ -7,7 +7,7 @@ import warnings
 from typing import Any, ClassVar
 
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
@@ -32,6 +32,7 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.transformations.basic import CustomTransformation
 from baybe.transformations.utils import _iterate_transformations
 from baybe.utils.conversion import to_string
+from baybe.utils.metadata import Metadata
 
 # Keys that are controlled by the recommender itself and must not be overridden: the
 # model and messages are set explicitly, and the response must not be streamed since
@@ -247,10 +248,11 @@ class LLMRecommender(PureRecommender, SerialMixin):
 
         if objective is not None and objective.metadata.is_empty:
             warnings.warn(
-                "The objective has no metadata description. Without context on "
-                "what to optimize, the language model may produce suboptimal "
-                "recommendations. Set the 'description' field on the objective's "
-                "metadata to guide the LLM.",
+                f"The objective has no metadata description. Without context on "
+                f"what to optimize, the language model may produce suboptimal "
+                f"recommendations. Set the "
+                f"'{fields(Metadata).description.name}' field on the objective's "
+                f"metadata to guide the LLM.",
                 UserWarning,
                 stacklevel=2,
             )
