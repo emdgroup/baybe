@@ -112,9 +112,10 @@ def test_extract_json_array(response, expected):
         pytest.param('{"a": 1}, {"b": 2}]', id="incomplete_array_closing"),
     ],
 )
-def test_extract_json_array_returns_none(response):
-    """The extractor returns None when no array of objects is found."""
-    assert _extract_json_array(response) is None
+def test_extract_json_array_raises_on_invalid(response):
+    """The extractor raises ``ValueError`` when no array of objects is found."""
+    with pytest.raises(ValueError, match="No JSON array"):
+        _extract_json_array(response)
 
 
 @pytest.mark.parametrize("batch_size", [1, 3], ids=["single", "batch"])
@@ -130,7 +131,7 @@ def test_response_format(batch_size):
     [
         pytest.param(
             "Just some text without JSON.",
-            "Response contains no JSON array",
+            "could not be parsed as a JSON array",
             id="no_json",
         ),
         pytest.param(

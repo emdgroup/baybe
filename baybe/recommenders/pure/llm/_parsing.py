@@ -32,7 +32,7 @@ from baybe.utils.dataframe import normalize_input_dtypes
 from baybe.utils.validation import validate_parameter_input
 
 
-def _extract_json_array(response: str, /) -> str | None:
+def _extract_json_array(response: str, /) -> str:
     """Extract the JSON array payload from a raw language model response.
 
     Models often wrap the array in Markdown fences or prose, or emit several blocks
@@ -43,8 +43,10 @@ def _extract_json_array(response: str, /) -> str | None:
         response: The raw response text.
 
     Returns:
-        The substring spanning the extracted JSON array, or ``None`` if no array of
-        objects is found.
+        The substring spanning the extracted JSON array.
+
+    Raises:
+        ValueError: If no JSON array of objects is found in the response.
     """
     decoder = json.JSONDecoder()
     last_object_array: str | None = None
@@ -63,6 +65,8 @@ def _extract_json_array(response: str, /) -> str | None:
         if is_object_list:
             last_object_array = response[start:end]
         search_start = end  # keep scanning; a later block wins
+    if last_object_array is None:
+        raise ValueError("No JSON array of objects found in the response.")
     return last_object_array
 
 
@@ -137,9 +141,13 @@ def parse_llm_response(
             Continuous constraints cannot be validated after the fact, so compliance
             of the LLM recommendations with such constraints is not guaranteed.
     """
-    payload = _extract_json_array(response)
-    if payload is None:
-        raise LLMMalformedResponseError("Response contains no JSON array of objects.")
+    try:
+        payload = _extract_json_array(response)
+    except ValueError as e:
+        raise LLMMalformedResponseError(
+            "The language model response could not be parsed as a JSON array "
+            "of recommendations."
+        ) from e
     try:
         recommendations = json.loads(payload)
     except JSONDecodeError as e:
