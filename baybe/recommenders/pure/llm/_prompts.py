@@ -244,8 +244,7 @@ def make_prompt(
     pending_experiments: pd.DataFrame | None = None,
     *,
     experiment_description: str,
-    error: LLMResponseError | None = None,
-    original_response: str | None = None,
+    recovery: tuple[LLMResponseError, str | None] | None = None,
 ) -> str:
     """Construct the prompt for the language model.
 
@@ -257,9 +256,9 @@ def make_prompt(
     Measurements and pending experiments are restricted to their parameter and target
     columns.
 
-    When ``error`` is provided, the prompt is rendered in *recovery* mode: it carries
-    the exact same context as the original query and appends a correction section
-    asking the model to fix its previous response. Because each model call is
+    When ``recovery`` is provided, the prompt is rendered in *recovery* mode: it
+    carries the exact same context as the original query and appends a correction
+    section asking the model to fix its previous response. Because each model call is
     stateless, carrying the full context here is what lets the recovery attempt reason
     as well as the original one.
 
@@ -273,19 +272,16 @@ def make_prompt(
         measurements: Optional measurements to include in the prompt.
         pending_experiments: Optional pending experiments to include in the prompt.
         experiment_description: Textual description of the experiment.
-        error: If set, renders a recovery prompt using the error's
-            :attr:`~baybe.exceptions.LLMResponseError.recovery_instruction`.
-        original_response: The previous, rejected response to be corrected, if the
-            model returned any content. Requires ``error``.
-
-    Raises:
-        ValueError: If ``original_response`` is provided without ``error``.
+        recovery: Optional ``(error, original_response)`` tuple to render a recovery
+            prompt. The ``error`` provides the
+            :attr:`~baybe.exceptions.LLMResponseError.recovery_instruction`, and
+            ``original_response`` is the previous, rejected response to be corrected
+            (may be ``None`` if the model returned no content).
 
     Returns:
         The constructed prompt.
     """
-    if original_response is not None and error is None:
-        raise ValueError("'original_response' can only be provided with 'error'.")
+    error, original_response = recovery if recovery is not None else (None, None)
 
     from baybe._optional.llm import StrictUndefined, Template
 

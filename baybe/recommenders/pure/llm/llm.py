@@ -300,8 +300,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 self._measurements,
                 self._pending_experiments,
                 experiment_description=self.experiment_description,
-                error=initial_error,
-                original_response=content,
+                recovery=(initial_error, content),
             )
             try:
                 recovery_content = self._query_model(recovery_prompt)

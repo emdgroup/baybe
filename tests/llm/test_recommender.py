@@ -264,8 +264,7 @@ def test_recovery_prompt_content(bad_content):
     # Only the recovery instruction of the error type enters the prompt
     expected_recovery = make_prompt(
         **prompt_kwargs,
-        error=LLMMalformedResponseError("Unused message."),
-        original_response=bad_content,
+        recovery=(LLMMalformedResponseError("Unused message."), bad_content),
     )
 
     actual_first = mock.call_args_list[0].kwargs["messages"][0]["content"]
