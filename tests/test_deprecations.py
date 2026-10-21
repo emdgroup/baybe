@@ -1391,3 +1391,83 @@ def test_discrete_product_constraint_mixing_raises():
             operator=">=",
             condition=ThresholdCondition(threshold=30.0, operator=">="),
         )
+
+
+def _make_toggle_candidate_campaign() -> Campaign:
+    """Create a small campaign for exercising ``toggle_discrete_candidates``."""
+    subspace = SubspaceDiscrete.from_product(
+        [
+            NumericalDiscreteParameter("a", [0, 1]),
+            NumericalDiscreteParameter("b", [3, 4, 5]),
+        ]
+    )
+    return Campaign(subspace)
+
+
+@pytest.mark.parametrize(
+    "constraints",
+    [
+        pd.DataFrame({"a": [0]}),
+        [DiscreteSelectionConstraint(["a"], [SubSelectionCondition([0])])],
+    ],
+    ids=["dataframe", "constraints"],
+)
+@pytest.mark.parametrize(
+    "call",
+    [
+        param(
+            lambda c: dict(args=(c, True), kwargs={}),
+            id="positional_exclude",
+        ),
+        param(
+            lambda c: dict(args=(c, True, True), kwargs={}),
+            id="positional_exclude_complement",
+        ),
+        param(
+            lambda c: dict(args=(c, True), kwargs=dict(complement=True)),
+            id="positional_exclude_keyword_complement",
+        ),
+        param(
+            lambda c: dict(args=(c, True, True, False), kwargs={}),
+            id="positional_exclude_complement_dry_run",
+        ),
+        param(
+            lambda c: dict(args=(), kwargs=dict(constraints=c, exclude=True)),
+            id="keyword_constraints_keyword_exclude",
+        ),
+        param(
+            lambda c: dict(
+                args=(), kwargs=dict(constraints=c, exclude=True, complement=True)
+            ),
+            id="keyword_constraints_keyword_exclude_complement",
+        ),
+    ],
+)
+@Settings(default_dataframe_backend="pandas")
+def test_deprecated_toggle_discrete_candidates_signature(constraints, call):
+    """Calling toggle_discrete_candidates in any legacy style still works."""
+    campaign = _make_toggle_candidate_campaign()
+    spec = call(constraints)
+
+    with pytest.warns(DeprecationWarning, match="toggle_discrete_candidates"):
+        campaign.toggle_discrete_candidates(*spec["args"], **spec["kwargs"])
+
+
+def test_deprecated_toggle_discrete_candidates_conflicting_arguments():
+    """Providing both '*filters' and the legacy 'constraints' keyword errors out."""
+    campaign = _make_toggle_candidate_campaign()
+
+    with pytest.raises(TypeError, match="constraints"):
+        campaign.toggle_discrete_candidates(
+            pd.DataFrame({"a": [0]}), constraints=pd.DataFrame({"a": [0]}), exclude=True
+        )
+
+
+def test_deprecated_toggle_discrete_candidates_too_many_booleans():
+    """Providing more than three trailing positional Booleans errors out."""
+    campaign = _make_toggle_candidate_campaign()
+
+    with pytest.raises(TypeError, match="too many"):
+        campaign.toggle_discrete_candidates(
+            pd.DataFrame({"a": [0]}), True, True, False, True
+        )
