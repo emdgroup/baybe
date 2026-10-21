@@ -767,6 +767,18 @@ class SubspaceDiscrete(SerialMixin):
         Yields:
             A Boolean mask selecting the subset's rows.
         """
+        # TODO: Subsets are materialized as Boolean masks here and consumed via
+        #   `filter`, which is inherently eager (see `_is_boolean_mask`). Replacing
+        #   this with an expression-/filter-based description of each subset (see
+        #   `DiscreteBatchConstraint.subset_masks`) would let large combinatorial
+        #   sweeps over `ProductCandidates` stay fully symbolic until the actual
+        #   optimization routine needs concrete rows. This would need matching
+        #   changes to `SearchSpace.subsets`/`sample_subsets` and the recommenders
+        #   consuming these masks. Where materialization is unavoidable (e.g.
+        #   `TableCandidates`), replacing the current per-constraint masking,
+        #   Cartesian product, and `np.logical_and.reduce` combination below with a
+        #   single narwhals `group_by` on all batch-constrained parameters at once
+        #   would also be a more efficient way to enumerate subsets.
         if mode not in (allowed := {"sequential", "shuffled", "replace"}):
             raise ValueError(f"Invalid {mode=}. Must be one of {allowed}.")
 
