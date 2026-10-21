@@ -97,14 +97,12 @@ class LLMRecommender(PureRecommender, SerialMixin):
     @litellm_args.validator
     def _validate_litellm_args(self, attribute, value):  # noqa: DOC101, DOC103
         """Validate litellm_args does not contain reserved or credential keys."""
-        conflicts = _RESERVED_LITELLM_KEYS & set(value.keys())
-        if conflicts:
+        if conflicts := _RESERVED_LITELLM_KEYS & set(value.keys()):
             raise ValueError(
                 f"'{attribute.name}' must not contain keys that are controlled by the "
                 f"recommender itself: {sorted(conflicts)}."
             )
-        cred_conflicts = _CREDENTIAL_LITELLM_KEYS & set(value.keys())
-        if cred_conflicts:
+        if cred_conflicts := _CREDENTIAL_LITELLM_KEYS & set(value.keys()):
             raise ValueError(
                 f"'{attribute.name}' must not contain credential keys "
                 f"{cred_conflicts}. Supply credentials via environment variables "

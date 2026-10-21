@@ -177,8 +177,7 @@ def parse_llm_response(
         if not isinstance(params, dict):
             raise LLMMalformedResponseError("Parameters must be a JSON object.")
 
-        unknown = set(params.keys()) - param_names
-        if unknown:
+        if unknown := set(params.keys()) - param_names:
             raise LLMUnknownParameterError(
                 f"Response contains unknown parameter names: {unknown}.",
                 unknown_names=unknown,
@@ -190,8 +189,7 @@ def parse_llm_response(
     df = pd.DataFrame(configurations)
 
     # Detect missing columns up front so they surface as a distinct error.
-    missing = {p.name for p in searchspace.parameters}.difference(df.columns)
-    if missing:
+    if missing := {p.name for p in searchspace.parameters}.difference(df.columns):
         raise LLMMissingParameterError(
             f"Response is missing values for the following parameters: {missing}.",
             parameters=missing,
