@@ -243,15 +243,12 @@ _ALL_OPTIONAL_SECTIONS = {
             id="with_pending",
         ),
         param(
-            {
-                "error": LLMResponseError("test error"),
-                "original_response": "bad response",
-            },
+            {"recovery": (LLMResponseError("test error"), "bad response")},
             {"WHAT WENT WRONG", "ORIGINAL RESPONSE"},
             id="with_recovery",
         ),
         param(
-            {"error": LLMResponseError("test error")},
+            {"recovery": (LLMResponseError("test error"), None)},
             {"WHAT WENT WRONG"},
             id="with_recovery_without_response",
         ),
@@ -285,17 +282,6 @@ def test_make_prompt_optional_sections(kwargs, present_sections):
         assert section in prompt
     for section in _ALL_OPTIONAL_SECTIONS - present_sections:
         assert section not in prompt
-
-
-def test_make_prompt_original_response_requires_error():
-    """Providing ``original_response`` without ``error`` raises."""
-    with pytest.raises(ValueError, match="can only be provided with 'error'"):
-        make_prompt(
-            batch_size=1,
-            searchspace=_SEARCHSPACE,
-            experiment_description=_DESCRIPTION,
-            original_response="response text",
-        )
 
 
 @pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
@@ -411,10 +397,7 @@ def test_forbidden_configurations(searchspace, expected):
             id="without_recovery",
         ),
         param(
-            {
-                "error": LLMResponseError("test error"),
-                "original_response": "bad response",
-            },
+            {"recovery": (LLMResponseError("test error"), "bad response")},
             [
                 "WHAT WENT WRONG",
                 "ORIGINAL RESPONSE",
