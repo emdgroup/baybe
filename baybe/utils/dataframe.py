@@ -29,7 +29,12 @@ from baybe.exceptions import (
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrame, IntoFrame, IntoSeries
+    from narwhals.stable.v2.typing import (
+        IntoDataFrame,
+        IntoFrame,
+        IntoFrameT,
+        IntoSeries,
+    )
     from narwhals.typing import IntoBackend
     from torch import Tensor
 
@@ -808,8 +813,8 @@ def handle_missing_values(
 
 
 def normalize_input_dtypes(
-    df: pd.DataFrame, objects: Iterable[Parameter | Target], /
-) -> pd.DataFrame:
+    df: IntoFrameT, objects: Iterable[Parameter | Target], /
+) -> IntoFrameT:
     """Ensure that the input dataframe has the expected dtypes for all columns.
 
     Args:
@@ -830,22 +835,21 @@ def normalize_input_dtypes(
             obj, NumericalTarget
         )
 
+    df_nw = nw.from_native(df)
+    schema = df_nw.collect_schema()
+
     # Find columns that need conversion to float
     cols_to_convert = [
         o.name
         for o in objects
-        if needs_float_dtype(o)
-        and o.name in df.columns
-        and not pd.api.types.is_float_dtype(df[o.name])
+        if needs_float_dtype(o) and o.name in schema and not schema[o.name].is_float()
     ]
 
     if not cols_to_convert:
         return df
 
     # Warn only about truly problematic types (not integers)
-    warn_cols = [
-        col for col in cols_to_convert if not pd.api.types.is_integer_dtype(df[col])
-    ]
+    warn_cols = [col for col in cols_to_convert if not schema[col].is_integer()]
     if warn_cols:
         warnings.warn(
             f"The following columns have unexpected data types: {warn_cols}. "
@@ -853,10 +857,13 @@ def normalize_input_dtypes(
             InputDataTypeWarning,
         )
 
-    df = df.copy()
-    for col in cols_to_convert:
-        df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
-    return df
+    # TODO: `DTypeFloatNumpy` is a numpy-specific setting but is used here to control
+    #   the float precision of a potentially non-pandas/non-numpy-backed dataframe.
+    #   Revisit once a backend-agnostic float precision setting exists.
+    float_dtype = (
+        nw.Float32 if active_settings.DTypeFloatNumpy is np.float32 else nw.Float64
+    )
+    return df_nw.cast({col: float_dtype for col in cols_to_convert}).to_native()
 
 
 def _infer_backend(*frames: IntoFrame | None) -> IntoBackend:
