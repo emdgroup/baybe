@@ -6,6 +6,7 @@ import json
 import warnings
 from json import JSONDecodeError
 
+import cattrs
 import pandas as pd
 from exceptiongroup import ExceptionGroup
 
@@ -22,10 +23,7 @@ from baybe.exceptions import (
     LLMResponseWarning,
     LLMUnknownParameterError,
 )
-from baybe.recommenders.pure.llm._schema import (
-    _EXPLANATION_FIELD,
-    _PARAMETERS_FIELD,
-)
+from baybe.recommenders.pure.llm._schema import ResponseItem
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.validation import validate_dataframe_active_values
 from baybe.utils.dataframe import normalize_input_dtypes
@@ -168,33 +166,26 @@ def parse_llm_response(
     #   which error to report if too few valid recommendations remain.
     recommendations = recommendations[:batch_size]
 
+    # Structure the raw JSON into typed recommendation objects
+    try:
+        entries: list[ResponseItem] = cattrs.structure(
+            recommendations, list[ResponseItem]
+        )
+    except Exception as exc:
+        raise LLMMalformedResponseError(
+            f"The language model response does not match the expected format. {exc}"
+        ) from exc
+
+    df = pd.DataFrame([entry.parameters for entry in entries])
     param_names = {p.name for p in searchspace.parameters}
-    configurations = []
-    for recommendation in recommendations:
-        if _PARAMETERS_FIELD not in recommendation:
-            raise LLMMalformedResponseError(
-                f"Each recommendation must contain a '{_PARAMETERS_FIELD}' field."
-            )
 
-        if _EXPLANATION_FIELD not in recommendation:
-            raise LLMMalformedResponseError(
-                f"Each recommendation must contain an '{_EXPLANATION_FIELD}' field."
-            )
-
-        params = recommendation[_PARAMETERS_FIELD]
-        if not isinstance(params, dict):
-            raise LLMMalformedResponseError("Parameters must be a JSON object.")
-
-        if unknown := set(params.keys()) - param_names:
-            raise LLMUnknownParameterError(
-                f"Response contains unknown parameter names: {unknown}.",
-                unknown_names=unknown,
-                valid_names=param_names,
-            )
-
-        configurations.append(params)
-
-    df = pd.DataFrame(configurations)
+    # Check for unknown parameter names
+    if extra := set(df.columns) - param_names:
+        raise LLMUnknownParameterError(
+            f"Response contains unknown parameter names: {extra}.",
+            unknown_names=extra,
+            valid_names=param_names,
+        )
 
     # Detect missing columns up front so they surface as a distinct error.
     if missing := {p.name for p in searchspace.parameters}.difference(df.columns):

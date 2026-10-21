@@ -5,11 +5,27 @@ of those objects are defined here once, so that prompt construction and response
 parsing consume the same definitions and cannot silently drift apart.
 """
 
+import gc
+from typing import Any
+
+from attrs import define, field
+
 _EXPLANATION_FIELD = "explanation"
 """JSON field holding a recommendation's free-text explanation."""
 
 _PARAMETERS_FIELD = "parameters"
 """JSON field holding a recommendation's parameter assignments."""
+
+
+@define
+class ResponseItem:
+    """A single entry in the language model response JSON array."""
+
+    explanation: str = field()
+    """Free-text explanation of the recommendation."""
+
+    parameters: dict[str, Any] = field()
+    """Parameter assignments for the recommendation."""
 
 
 def _response_format(batch_size: int = 1) -> str:
@@ -34,3 +50,6 @@ def _response_format(batch_size: int = 1) -> str:
     )
     entries = ",\n".join(entry for _ in range(max(batch_size, 1)))
     return f"[\n{entries}\n]"
+
+
+gc.collect()
