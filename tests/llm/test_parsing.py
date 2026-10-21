@@ -136,17 +136,17 @@ def test_response_format(batch_size):
         ),
         pytest.param(
             '[{"explanation": "x"}]',
-            f"Each recommendation must contain a '{_PARAMETERS_FIELD}' field",
+            "does not match the expected format",
             id="no_parameters",
         ),
         pytest.param(
             '[{"parameters": {"any": 1}}]',
-            f"Each recommendation must contain an '{_EXPLANATION_FIELD}' field",
+            "does not match the expected format",
             id="no_explanation",
         ),
         pytest.param(
             '[{"explanation": "x", "parameters": [1, 2]}]',
-            "Parameters must be a JSON object",
+            "does not match the expected format",
             id="params_not_dict",
         ),
     ],
