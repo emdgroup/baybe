@@ -6,7 +6,6 @@ import gc
 import json
 import warnings
 from collections.abc import Collection, Sequence
-from functools import reduce
 from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, cast, overload
 
 import cattrs
@@ -34,7 +33,6 @@ from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
-from baybe.searchspace.candidates import TableCandidates
 from baybe.searchspace.core import (
     SearchSpace,
     SearchSpaceType,
@@ -52,7 +50,6 @@ from baybe.utils.dataframe import (
     _df_equals,
     _df_with_backend,
     _infer_backend,
-    filter_df,
     fuzzy_row_match,
 )
 from baybe.utils.validation import (
@@ -67,6 +64,7 @@ if TYPE_CHECKING:
     from botorch.posteriors import Posterior
 
     from baybe.acquisition.base import AcquisitionFunction
+    from baybe.utils.dataframe import Filter
 
     _T = TypeVar("_T")
 
@@ -452,31 +450,40 @@ class Campaign(SerialMixin):
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
-        constraints: Collection[DiscreteFilteringConstraint] | IntoDataFrame,
-        exclude: bool,
+        *filters: Filter,
+        exclude: bool | None = None,  # `None` is for deprecation-purposes only
         complement: bool = False,
         dry_run: bool = False,
+        constraints: Collection[DiscreteFilteringConstraint]
+        | IntoDataFrame
+        | None = None,
     ) -> IntoDataFrame:
         """In-/exclude certain discrete points in/from the candidate set.
 
         Args:
-            constraints: A filtering mechanism determining the candidates subset to be
-                in-/excluded. Can be either a collection of
-                :class:`~baybe.constraints.base.DiscreteFilteringConstraint` or a
-                dataframe. For the latter, see :func:`~baybe.utils.dataframe.filter_df`
-                for details.
+            *filters: One or more filter criteria determining the candidates subset
+                to be in-/excluded. Multiple filters are combined conjunctively
+                (logical AND).
             exclude: If ``True``, the specified candidates are excluded.
                 If ``False``, the candidates are considered for recommendation.
             complement: If ``True``, the filtering mechanism is inverted so that
-                the complement of the candidate subset specified by the filter is
-                toggled. For details, see :func:`~baybe.utils.dataframe.filter_df`.
+                the complement of the candidate subset specified by the filter(s) is
+                toggled.
             dry_run: If ``True``, the target subset is only extracted but not
                 affected. If ``False``, the candidate set is updated correspondingly.
                 Useful for setting up the correct filtering mechanism.
+            constraints: Deprecated! Provide the filter criteria via ``*filters``
+                instead.
 
         Returns:
             A new dataframe containing the discrete candidate set passing through the
             specified filter.
+
+        Raises:
+            TypeError: If ``exclude`` is not specified, if both ``*filters`` and
+                ``constraints`` are provided, or if more positional Boolean
+                arguments are given than can be mapped to ``exclude``,
+                ``complement`` and ``dry_run`` combined.
         """
         # IMPROVE: The cache invalidation could be made more fine-grained:
         #   * When including points, the cache only needs to be cleared if the active
@@ -487,41 +494,91 @@ class Campaign(SerialMixin):
         #  * Additional shortcuts might be possible.
         self.clear_cache()
 
-        df = self.searchspace.discrete._get_candidates().collect().to_pandas()
+        is_legacy_call = False
 
-        if is_into_dataframe(constraints):
-            # Determine the candidate subset to be toggled
-            points = filter_df(
-                df,
-                # TODO[typing]: https://github.com/facebook/pyrefly/issues/4849
-                nw.from_native(constraints, eager_only=True).to_pandas(),  # pyrefly: ignore[no-matching-overload]
-                complement,
-            )
+        # >>>>>>>>>> Deprecation
+        # Legacy call style: the filter criterion passed via the old `constraints`
+        # keyword argument instead of via `*filters`
+        if constraints is not None:
+            if filters:
+                raise TypeError(
+                    f"'{self.toggle_discrete_candidates.__name__}' received both "
+                    f"positional filter arguments and the legacy 'constraints' "
+                    f"keyword argument. Provide the filter criteria only once, "
+                    f"preferably via the new-style positional '*filters' arguments."
+                )
+            if is_into_dataframe(constraints):
+                filters = (cast("Filter", constraints),)
+            else:
+                filters = tuple(cast("Collection[Filter]", constraints))
+            is_legacy_call = True
 
-        elif isinstance(constraints, Collection) and is_all_instance(
-            constraints, DiscreteFilteringConstraint
-        ):
-            # TODO: Should be taken over by upcoming `SubspaceDiscrete.filter` method,
-            #   automatically choosing the appropriate backend (polars/pandas/...)
-
-            # Filter the search space dataframe according to the given constraint
-            idx = reduce(
-                lambda x, y: x.intersection(y), (c.get_valid(df) for c in constraints)
-            )
-
-            # Determine the candidate subset to be toggled
-            points = df.drop(index=idx) if complement else df.loc[idx].copy()
-
-        else:
+        # Legacy call style: `exclude`/`complement`/`dry_run` passed positionally,
+        # as a trailing run of plain `bool` arguments, in that order (unambiguous,
+        # since a bare `bool` is never a valid `Filter`)
+        n_trailing_bools = 0
+        for f in reversed(filters):
+            if isinstance(f, bool):
+                n_trailing_bools += 1
+            else:
+                break
+        if n_trailing_bools > 3:
             raise TypeError(
-                f"Candidate toggling requires a dataframe or a collection of "
-                f"'{DiscreteFilteringConstraint.__name__}' instances."
+                f"'{self.toggle_discrete_candidates.__name__}' received too many "
+                f"positional Boolean arguments."
+            )
+        if n_trailing_bools:
+            legacy_values = filters[-n_trailing_bools:]
+            filters = filters[:-n_trailing_bools]
+            for name, value in zip(
+                ("exclude", "complement", "dry_run"), legacy_values, strict=False
+            ):
+                if name == "exclude":
+                    exclude = cast(bool, value)
+                elif name == "complement":
+                    complement = cast(bool, value)
+                else:
+                    dry_run = cast(bool, value)
+            is_legacy_call = True
+
+        # Legacy call style: a collection of constraints passed as a single combined
+        # argument instead of as individual filter arguments
+        if (
+            len(filters) == 1
+            and isinstance(filters[0], Collection)
+            and not is_into_dataframe(filters[0])
+            and is_all_instance(filters[0], DiscreteFilteringConstraint)
+        ):
+            filters = tuple(filters[0])
+            is_legacy_call = True
+
+        if is_legacy_call:
+            warnings.warn(
+                f"Calling '{self.toggle_discrete_candidates.__name__}' with a "
+                f"single combined collection of "
+                f"'{DiscreteFilteringConstraint.__name__}' objects, the legacy "
+                f"'constraints' keyword argument, and/or a positional 'exclude' "
+                f"(or 'complement'/'dry_run') argument is deprecated and will be "
+                f"rejected in a future version. Pass the individual filter "
+                f"criteria as separate positional arguments and 'exclude' as a "
+                f"keyword argument instead.",
+                DeprecationWarning,
+                stacklevel=2,
             )
 
-        points_nw = _df_with_backend(
-            nw.from_native(points, eager_only=True),
-            nw.get_native_namespace(self._excluded_experiments),
-        )
+        # `exclude` only has a default value (`None`) to accommodate the legacy
+        # call styles above that can supply it after the fact. Once those are
+        # removed, `exclude` becomes a genuinely required keyword-only argument
+        # (no default) and Python's own argument binding takes over this check.
+        if exclude is None:
+            raise TypeError(
+                f"'{self.toggle_discrete_candidates.__name__}' is missing the "
+                f"required keyword argument 'exclude'."
+            )
+        # <<<<<<<<<< Deprecation
+
+        filtered = self.searchspace.discrete.filter(*filters, complement=complement)
+        points_nw = filtered._get_candidates().collect()
 
         if not dry_run:
             if exclude and not points_nw.is_empty():
@@ -603,70 +660,38 @@ class Campaign(SerialMixin):
 
         # Prepare the search space according to the current campaign state
         if self.searchspace.type is SearchSpaceType.DISCRETE:
-            # TODO: This implementation should at some point be hidden behind an
-            #   appropriate public interface, like `SubspaceDiscrete.filter()`
-            candidates = (
-                self.searchspace.discrete._get_candidates().collect().to_pandas()
-            )
-            mask_todrop = pd.Series(False, index=candidates.index)
+            discrete = self.searchspace.discrete
+
             if not self._excluded_experiments.is_empty():
-                mask_todrop |= (
-                    pd.merge(
-                        candidates,
-                        self._excluded_experiments.to_pandas(),
-                        indicator=True,
-                        how="left",
-                    )["_merge"]
-                    .eq("both")
-                    .to_numpy()
-                )
+                discrete = discrete.filter(self._excluded_experiments, complement=True)
             if (
                 not self.allow_recommending_already_recommended
                 and not self._recommended_experiments.is_empty()
             ):
-                mask_todrop |= (
-                    pd.merge(
-                        candidates,
-                        self._recommended_experiments.to_pandas(),
-                        indicator=True,
-                        how="left",
-                    )["_merge"]
-                    .eq("both")
-                    .to_numpy()
+                discrete = discrete.filter(
+                    self._recommended_experiments, complement=True
                 )
             if not self.allow_recommending_already_measured and self._measurements:
+                # Match against the full (unfiltered) candidate set, since the
+                # fuzzy match result can depend on which candidates are available
+                all_candidates_pd = (
+                    self.searchspace.discrete._get_candidates().collect().to_pandas()
+                )
                 measured_idxs = fuzzy_row_match(
-                    candidates,
+                    all_candidates_pd,
                     nw.from_native(self.measurements, eager_only=True).to_pandas(),
                     self.parameters,
                 )
-                mask_todrop.loc[measured_idxs] = True
+                discrete = discrete.filter(
+                    all_candidates_pd.loc[measured_idxs], complement=True
+                )
             if (
                 not self.allow_recommending_pending_experiments
                 and pending_experiments_pd is not None
             ):
-                mask_todrop |= (
-                    pd.merge(
-                        candidates,
-                        pending_experiments_pd,
-                        indicator=True,
-                        how="left",
-                    )["_merge"]
-                    .eq("both")
-                    .to_numpy()
-                )
-            # TODO: Replace index-based selection and explicit TableCandidates
-            #   instantiation with .filter() method to avoid materialization
-            searchspace = evolve(
-                self.searchspace,
-                discrete=evolve(
-                    self.searchspace.discrete,
-                    candidates=TableCandidates(
-                        self.searchspace.discrete.parameters,
-                        candidates.loc[~mask_todrop],
-                    ),
-                ),
-            )
+                discrete = discrete.filter(pending_experiments_pd, complement=True)
+
+            searchspace = evolve(self.searchspace, discrete=discrete)
         else:
             searchspace = self.searchspace
 

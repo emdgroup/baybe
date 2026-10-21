@@ -86,19 +86,23 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
 @pytest.mark.parametrize("complement", [False, True], ids=["regular", "complement"])
 @pytest.mark.parametrize("exclude", [True, False], ids=["exclude", "include"])
 @pytest.mark.parametrize(
-    "constraints",
+    "filter_factory",
     [
-        pd.DataFrame({"a": [0]}),
-        [
-            DiscreteSelectionConstraint(
+        param(lambda df: pd.DataFrame({"a": [0]}), id="dataframe"),
+        param(
+            lambda df: DiscreteSelectionConstraint(
                 ["a"], [SubSelectionCondition([1])], exclude=True
-            )
-        ],
+            ),
+            id="constraint",
+        ),
+        param(lambda df: nw.col("a") == 0, id="expression"),
+        param(lambda df: (df["a"] == 0).tolist(), id="mask_list"),
+        param(lambda df: (df["a"] == 0).to_numpy(), id="mask_ndarray"),
+        param(lambda df: df["a"] == 0, id="mask_series"),
     ],
-    ids=["dataframe", "constraints"],
 )
 @Settings(default_dataframe_backend="pandas")
-def test_candidate_toggling(constraints, exclude, complement):
+def test_candidate_toggling(filter_factory, exclude, complement):
     """Toggling discrete candidates updates the exclusion state accordingly."""
     subspace = SubspaceDiscrete.from_product(
         [
@@ -115,7 +119,8 @@ def test_candidate_toggling(constraints, exclude, complement):
         campaign.toggle_discrete_candidates(all_candidates, exclude=True)
 
     # Toggle the candidates
-    campaign.toggle_discrete_candidates(constraints, exclude, complement=complement)
+    filter_ = filter_factory(all_candidates)
+    campaign.toggle_discrete_candidates(filter_, exclude=exclude, complement=complement)
 
     # Determine which candidates should be affected by the toggle
     matches = all_candidates["a"] == 0
@@ -136,6 +141,32 @@ def test_candidate_toggling(constraints, exclude, complement):
 
     # Assert that recommendation with toggled candidates still works
     campaign.recommend(1)
+
+
+@Settings(default_dataframe_backend="pandas")
+def test_candidate_toggling_multiple_filters():
+    """Multiple filters passed at once are combined conjunctively."""
+    subspace = SubspaceDiscrete.from_product(
+        [
+            NumericalDiscreteParameter("a", [0, 1]),
+            NumericalDiscreteParameter("b", [3, 4, 5]),
+        ]
+    )
+    campaign = Campaign(subspace)
+    all_candidates = campaign.searchspace.discrete.get_candidates()
+
+    constraint = DiscreteSelectionConstraint(
+        ["a"], [SubSelectionCondition([1])], exclude=True
+    )
+    expr = nw.col("b") != 3
+
+    campaign.toggle_discrete_candidates(constraint, expr, exclude=True)
+
+    # Only the row matching both filters (a == 0 and b != 3) should be excluded
+    expected = all_candidates[(all_candidates["a"] == 0) & (all_candidates["b"] != 3)]
+    assert len(campaign._excluded_experiments) == len(expected)
+    merged = pd.merge(campaign._excluded_experiments.to_native(), expected, how="inner")
+    assert len(merged) == len(expected)
 
 
 @pytest.mark.parametrize(
