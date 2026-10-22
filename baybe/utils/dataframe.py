@@ -19,22 +19,21 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from narwhals.stable.v2.dependencies import is_into_dataframe, is_into_series
+from narwhals.stable.v2.typing import IntoDataFrame, IntoSeries
 from narwhals.testing import assert_frame_equal
 
+from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.exceptions import IncompatibleArgumentError, InputDataTypeWarning
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import (
-        IntoDataFrame,
         IntoFrame,
         IntoFrameT,
-        IntoSeries,
     )
     from narwhals.typing import IntoBackend
     from torch import Tensor
 
-    from baybe.constraints.base import DiscreteFilteringConstraint
     from baybe.parameters.base import Parameter
     from baybe.targets.base import Target
 
@@ -45,28 +44,37 @@ if TYPE_CHECKING:
         int | float | np.ndarray | nw.Series | nw.DataFrame | IntoSeries | IntoDataFrame
     )
 
-    Filter: TypeAlias = (
-        nw.Expr
-        | IntoSeries
-        | Sequence[bool]
-        | npt.NDArray[np.bool_]
-        | DiscreteFilteringConstraint
-        | IntoDataFrame
-    )
-    """A criterion for filtering a dataframe.
+Filter: TypeAlias = (
+    nw.Expr
+    | IntoSeries
+    | Sequence[bool]
+    | npt.NDArray[np.bool_]
+    | DiscreteFilteringConstraint
+    | IntoDataFrame
+)
+"""A criterion for filtering a dataframe.
 
-    * :class:`narwhals.stable.v2.Expr`: A Boolean expression.
-    * A Boolean mask (:class:`~narwhals.stable.v2.typing.IntoSeries`, a plain
-      ``Sequence[bool]``, or a Boolean numpy array): Selects rows positionally.
-    * :class:`~baybe.constraints.base.DiscreteFilteringConstraint`: Applies the
-      constraint's validity criterion.
-    * A dataframe (:class:`~narwhals.stable.v2.typing.IntoDataFrame`): Selects
-      rows whose values match a row of the given dataframe in all of its
-      columns (semi-join semantics). Must use the same dataframe backend as
-      the filtered frame.
-    """
+* :class:`narwhals.stable.v2.Expr`: A Boolean expression.
+* A Boolean mask (:class:`~narwhals.stable.v2.typing.IntoSeries`, a plain
+  ``Sequence[bool]``, or a Boolean numpy array): Selects rows positionally.
+* :class:`~baybe.constraints.base.DiscreteFilteringConstraint`: Applies the
+  constraint's validity criterion.
+* A dataframe (:class:`~narwhals.stable.v2.typing.IntoDataFrame`): Selects
+  rows whose values match a row of the given dataframe in all of its
+  columns (semi-join semantics). Must use the same dataframe backend as
+  the filtered frame.
+"""
 
 _SeriesOrFrameT = TypeVar("_SeriesOrFrameT", nw.Series, nw.DataFrame)
+
+
+def _is_filter(x: Any, /) -> bool:
+    """Determine whether an object can be used as a dataframe filter."""
+    return (
+        isinstance(x, nw.Expr | DiscreteFilteringConstraint)
+        or is_into_dataframe(x)
+        or _is_boolean_mask(x)
+    )
 
 
 @overload
@@ -897,8 +905,14 @@ def _df_with_backend(obj: _SeriesOrFrameT, backend: IntoBackend, /) -> _SeriesOr
     return nw.from_dict(obj.to_dict(), backend=backend)  # type: ignore[return-value]
 
 
-def _df_equals(df1: nw.DataFrame, df2: nw.DataFrame, /) -> bool:
-    """Check if two dataframes are equal."""
+def _df_equals(
+    df1: nw.DataFrame | nw.LazyFrame, df2: nw.DataFrame | nw.LazyFrame, /
+) -> bool:
+    """Check if two eager dataframes are equal."""
+    if isinstance(df1, nw.LazyFrame) or isinstance(df2, nw.LazyFrame):
+        raise TypeError(
+            "Equality comparisons involving lazy dataframes are not supported."
+        )
     # https://github.com/narwhals-dev/narwhals/issues/3715
     try:
         assert_frame_equal(df1, df2)

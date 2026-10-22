@@ -50,6 +50,7 @@ def test_empty_candidates():
         pytest.param(lambda pd_df: pd_df, id="pandas_eager"),
         pytest.param(pl.DataFrame, id="polars_eager"),
         pytest.param(lambda x: nw.from_native(x, eager_only=True), id="narwhals_eager"),
+        pytest.param(lambda x: pl.DataFrame(x).lazy(), id="polars_lazy"),
     ],
 )
 def test_table_candidates_generation(dataframe_factory):
@@ -97,16 +98,6 @@ def test_table_candidates_duplicate_rows():
         pytest.param([p_cont], edf, TypeError("be <class"), id="param_type"),
         pytest.param(p_disc, edf, TypeError("not iterable"), id="no_param_seq"),
         pytest.param([p_disc], 123, TypeError("Unsupported dataframe"), id="df_type"),
-        pytest.param([p_disc], pl.LazyFrame(), TypeError("eager_only"), id="pl_lazy"),
-        pytest.param(
-            [p_disc],
-            nw.from_native(pl.LazyFrame()),
-            TypeError("eager_only"),
-            id="nw_lazy",
-            marks=pytest.mark.xfail(
-                reason="https://github.com/narwhals-dev/narwhals/pull/3677", strict=True
-            ),
-        ),
         pytest.param(
             [p_disc],
             pd.DataFrame({"x": [1]}),
@@ -140,7 +131,7 @@ def test_table_candidates_validation(parameters, dataframe, error):
 
 
 @pytest.mark.parametrize(
-    ("constraints", "expected"),
+    ("filters", "expected"),
     [
         ([], [[1, 0], [1, 10], [2, 0], [2, 10]]),
         ([c_sum], [[1, 0], [2, 0]]),
@@ -148,10 +139,10 @@ def test_table_candidates_validation(parameters, dataframe, error):
     ],
     ids=["no_constraint", "sum", "subselection"],
 )
-def test_product_candidates_generation(constraints, expected):
+def test_product_candidates_generation(filters, expected):
     """ProductCandidates generates the expected lazy dataframe."""
     parameters = [p_disc, p_disc2]
-    candidates = ProductCandidates(parameters, constraints)
+    candidates = ProductCandidates(parameters, filters=filters)
     candidates_ldf = candidates._to_lazy()
     candidates_df = candidates_ldf.collect()
 
@@ -166,7 +157,7 @@ def test_product_candidates_generation(constraints, expected):
 
 
 @pytest.mark.parametrize(
-    ("parameters", "constraints", "error"),
+    ("parameters", "filters", "error"),
     [
         pytest.param([], (), ValueError(">= 1"), id="empty_param"),
         pytest.param(None, (), TypeError("not iterable"), id="none_param"),
@@ -174,11 +165,14 @@ def test_product_candidates_generation(constraints, expected):
         pytest.param(p_disc, (), TypeError("not iterable"), id="no_param_seq"),
         pytest.param([p_disc], None, TypeError("not iterable"), id="none_constraint"),
         pytest.param(
+            [p_disc], [object()], TypeError("Invalid filters"), id="invalid_filter"
+        ),
+        pytest.param(
             [p_disc2], [c_sum], ValueError("does not exist"), id="wrong_constraint"
         ),
     ],
 )
-def test_product_candidates_validation(parameters, constraints, error):
-    """Incompatible parameter and constraint inputs raise appropriate errors."""
+def test_product_candidates_validation(parameters, filters, error):
+    """Incompatible parameter and filter inputs raise appropriate errors."""
     with pytest.raises(error.__class__, match=str(error)):
-        ProductCandidates(parameters, constraints)
+        ProductCandidates(parameters, filters=filters)
