@@ -11,19 +11,19 @@ from attrs import Attribute, cmp_using, define, evolve, field
 from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
-from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
+from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.exceptions import InfiniteSpaceError
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import sort_parameters
 from baybe.searchspace.utils import build_constrained_product
 from baybe.searchspace.validation import validate_parameters
 from baybe.settings import active_settings
-from baybe.utils.basic import is_all_instance, to_tuple
-from baybe.utils.dataframe import _df_equals, _filter_dataframe
+from baybe.utils.basic import to_tuple
+from baybe.utils.dataframe import Filter, _df_equals, _filter_dataframe, _is_filter
 from baybe.utils.validation import validate_parameter_input
 
 if TYPE_CHECKING:
-    from baybe.utils.dataframe import Filter
+    from narwhals.stable.v2.typing import IntoFrame
 
 
 @runtime_checkable
@@ -49,13 +49,13 @@ class CandidatesProtocol(Protocol):
         """Generate all candidates."""
 
 
-def _materialize_filtered(
+def _filter_candidates(
     candidates: CandidatesProtocol, *filters: Filter, complement: bool
 ) -> TableCandidates:
-    """Materialize a filtered candidate set into a new :class:`TableCandidates`.
+    """Filter a candidate set into a new lazy :class:`TableCandidates`.
 
     Generic fallback used by candidate representations that cannot express the
-    given filters symbolically.
+    given filters as part of their native representation.
 
     Args:
         candidates: The candidate representation to be filtered.
@@ -64,12 +64,18 @@ def _materialize_filtered(
             If ``True``, the complement set is kept instead.
 
     Returns:
-        A new :class:`TableCandidates` object holding the filtered rows.
+        A new :class:`TableCandidates` object holding the filtered lazy frame.
     """
-    filtered = _filter_dataframe(
-        candidates._to_lazy(), *filters, complement=complement
-    ).collect()
-    return TableCandidates(candidates.parameters, filtered.to_native())
+    filtered = _filter_dataframe(candidates._to_lazy(), *filters, complement=complement)
+    return TableCandidates(candidates.parameters, filtered)
+
+
+def _to_dataframe_or_lazy(
+    dataframe: IntoFrame | nw.DataFrame | nw.LazyFrame, /
+) -> nw.DataFrame | nw.LazyFrame:
+    """Convert a native or Narwhals frame to a Narwhals dataframe or lazyframe."""
+    # TODO[typing]: https://github.com/facebook/pyrefly/issues/5331
+    return nw.from_native(dataframe)
 
 
 @define(frozen=True)
@@ -110,22 +116,24 @@ class ProductCandidates(CandidatesProtocol):
     )
     """See :attr:`CandidatesProtocol.parameters`."""
 
-    constraints: tuple[DiscreteConstraint, ...] = field(
-        default=(),
-        converter=lambda x: to_tuple(
-            sorted(
-                x, key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__)
-            )
-        ),
-        validator=deep_iterable(member_validator=instance_of(DiscreteConstraint)),
-    )
-    """Constraints to filter the Cartesian product of parameter values."""
+    filters: tuple[Filter, ...] = field(default=(), converter=to_tuple)
+    """Filters to apply to the Cartesian product."""
 
-    @constraints.validator
-    def _validate_constraints(
-        self, _: Attribute, value: tuple[DiscreteConstraint, ...]
-    ):  # noqa: DOC101, DOC103
-        validate_constraints(value, self.parameters)
+    @filters.validator
+    def _validate_filters(
+        self, attribute: Attribute, value: tuple[Filter, ...]
+    ) -> None:  # noqa: DOC101, DOC103
+        """Validate filters."""
+        if invalid := [filter_ for filter_ in value if not _is_filter(filter_)]:
+            raise TypeError(
+                f"Invalid arguments provided as '{attribute.alias}': {invalid!r}."
+            )
+        constraints = [
+            filter_
+            for filter_ in value
+            if isinstance(filter_, DiscreteFilteringConstraint)
+        ]
+        validate_constraints(constraints, self.parameters)
 
     @override
     @property
@@ -134,32 +142,25 @@ class ProductCandidates(CandidatesProtocol):
 
     @override
     def filter(self, *filters: Filter, complement: bool = False) -> CandidatesProtocol:
-        # Filtering constraints can be appended to the existing constraint list
-        # without ever materializing the candidate set, keeping it fully lazy
-        if is_all_instance(filters, DiscreteFilteringConstraint):
-            if not complement:
-                return evolve(self, constraints=self.constraints + tuple(filters))
-            if len(filters) == 1:
-                (f,) = filters
-                inverted = evolve(f, exclude=not f.exclude)
-                return evolve(self, constraints=self.constraints + (inverted,))
-            # Otherwise:
-            # ----------
-            # TODO: Complementing a conjunction of multiple constraints amounts to a
-            #   disjunction (De Morgan), which is not yet expressible as a single
-            #   `DiscreteFilteringConstraint`. A `DiscreteOrConstraint` combinator or
-            #   similar could close this gap; until then, fall back to materialization.
+        if not complement:
+            return evolve(self, filters=self.filters + tuple(filters))
 
-        # TODO: Non-constraint filters (narwhals `Expr`, dataframe/semi-join) could
-        #   in principle also stay lazy, e.g. via:
-        #   * An adapter `DiscreteFilteringConstraint` wrapping the filter so it
-        #     plugs into `build_constrained_product`'s incremental filtering.
-        #   * An explicit escape hatch on `ProductCandidates` for symbolic
-        #     non-constraint filters.
-        #   Boolean masks remain inherently eager, since they reference fixed row
-        #   positions that only exist once the candidate set is materialized.
+        if len(filters) == 1:
+            # IMPROVE: Potentially it makes sense to introduce a `negate_filter`
+            #    function or even turn the filter type union into an own type declaring
+            #    the corresponding methods.
+            match filter_ := filters[0]:
+                case DiscreteFilteringConstraint():
+                    inverted = evolve(filter_, exclude=not filter_.exclude)
+                    return evolve(self, filters=self.filters + (inverted,))
+                case nw.Expr():
+                    return evolve(self, filters=self.filters + (~filter_,))
 
-        return _materialize_filtered(self, *filters, complement=complement)
+        # TODO: Complementing a conjunction of multiple filtering constraints amounts
+        #   to a disjunction (De Morgan), which is not yet expressible as a single
+        #   `DiscreteFilteringConstraint`. A `DiscreteOrConstraint` combinator or
+        #   similar could close this gap; until then, fall back to a lazy table.
+        return _filter_candidates(self, *filters, complement=complement)
 
     @override
     def _to_lazy(self) -> nw.LazyFrame:
@@ -168,11 +169,25 @@ class ProductCandidates(CandidatesProtocol):
                 "Cannot generate all candidates from an infinite space."
             )
 
-        candidates_df = build_constrained_product(self.parameters, self.constraints)
+        constraints: list[DiscreteFilteringConstraint] = []
+        non_constraint_filters: list[Filter] = []
+        for filter_ in self.filters:
+            if isinstance(filter_, DiscreteFilteringConstraint):
+                constraints.append(filter_)
+            else:
+                non_constraint_filters.append(filter_)
+
+        constraints.sort(
+            key=lambda constraint: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(
+                constraint.__class__
+            )
+        )
+        candidates_df = build_constrained_product(self.parameters, constraints)
 
         # TODO: Remove to lazy once build_constrained_product returns a nw.LazyFrame
         assert not isinstance(candidates_df, nw.LazyFrame)
-        return nw.from_native(candidates_df).lazy()
+        candidates = nw.from_native(candidates_df).lazy()
+        return _filter_dataframe(candidates, *non_constraint_filters)
 
 
 @define(frozen=True)
@@ -189,14 +204,30 @@ class TableCandidates(CandidatesProtocol):
     )
     """See :attr:`CandidatesProtocol.parameters`."""
 
-    _dataframe: nw.DataFrame = field(
-        converter=lambda x: nw.from_native(x, eager_only=True),
+    _dataframe: nw.DataFrame | nw.LazyFrame = field(
+        converter=_to_dataframe_or_lazy,
         eq=cmp_using(eq=_df_equals),
     )
     """The dataframe containing the candidates."""
 
     @_dataframe.validator
-    def _validate_dataframe(self, _: Attribute, value: nw.DataFrame) -> None:  # noqa: DOC101, DOC103
+    def _validate_dataframe(
+        self, _: Attribute, value: nw.DataFrame | nw.LazyFrame
+    ) -> None:  # noqa: DOC101, DOC103
+        if isinstance(value, nw.LazyFrame):
+            columns = set(value.collect_schema().names())
+            parameter_names = {parameter.name for parameter in self.parameters}
+            if missing := parameter_names - columns:
+                raise ValueError(
+                    f"The input dataframe is missing columns for the following "
+                    f"parameters: {missing}"
+                )
+            if extra := columns - parameter_names:
+                raise ValueError(
+                    f"The input dataframe contains columns that do not correspond to "
+                    f"any parameter: {extra}"
+                )
+            return
         validate_parameter_input(
             value.to_pandas(),
             self.parameters,
@@ -211,12 +242,12 @@ class TableCandidates(CandidatesProtocol):
 
     @override
     def filter(self, *filters: Filter, complement: bool = False) -> CandidatesProtocol:
-        # TODO: If `_dataframe` were allowed to hold a `nw.LazyFrame` instead of
-        #   being restricted to `nw.DataFrame`, filtering could be applied lazily
-        return _materialize_filtered(self, *filters, complement=complement)
+        return _filter_candidates(self, *filters, complement=complement)
 
     @override
     def _to_lazy(self) -> nw.LazyFrame:
+        if isinstance(self._dataframe, nw.LazyFrame):
+            return self._dataframe
         return self._dataframe.lazy()
 
 
