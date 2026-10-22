@@ -631,24 +631,18 @@ class Campaign(SerialMixin):
             self.clear_cache()
 
         # Preprocess pending experiments
-        pending_experiments_pd: pd.DataFrame | None = (
-            nw.from_native(
-                preprocess_dataframe(
-                    pending_experiments,
-                    self.searchspace,
-                    numerical_measurements_must_be_within_tolerance=False,
-                ),
-                eager_only=True,
-            ).to_pandas()
-            if pending_experiments is not None
-            else None
-        )
+        if pending_experiments is not None:
+            pending_experiments = preprocess_dataframe(
+                pending_experiments,
+                self.searchspace,
+                numerical_measurements_must_be_within_tolerance=False,
+            )
 
         # TODO: Proper fix for the allow_* flags required
         if (
             active_settings.cache_campaign_recommendations
             and (cache := self._cached_recommendation) is not None
-            and pending_experiments_pd is None
+            and pending_experiments is None
             and self.allow_recommending_already_recommended
             and len(cache) == batch_size
         ):
@@ -680,9 +674,9 @@ class Campaign(SerialMixin):
             # Drop pending experiments
             if (
                 not self.allow_recommending_pending_experiments
-                and pending_experiments_pd is not None
+                and pending_experiments is not None
             ):
-                discrete = discrete.filter(pending_experiments_pd, complement=True)
+                discrete = discrete.filter(pending_experiments, complement=True)
 
             # Drop already measured experiments
             if not self.allow_recommending_already_measured and self._measurements:
@@ -715,7 +709,7 @@ class Campaign(SerialMixin):
                 searchspace,
                 self.objective,
                 self.measurements,
-                pending_experiments_pd,
+                pending_experiments,
             )
         is_nonpredictive = isinstance(recommender, NonPredictiveRecommender)
 
@@ -729,7 +723,7 @@ class Campaign(SerialMixin):
                     searchspace,
                     self.objective,
                     self.measurements,
-                    None if is_nonpredictive else pending_experiments_pd,
+                    None if is_nonpredictive else pending_experiments,
                 )
         except NotEnoughPointsLeftError as ex:
             # Aliases for code compactness
@@ -740,7 +734,7 @@ class Campaign(SerialMixin):
             ok_m_name = f._allow_recommending_already_measured.alias
             ok_r_name = f._allow_recommending_already_recommended.alias
             ok_p_name = f._allow_recommending_pending_experiments.alias
-            no_blocked_pending_points = ok_p or (pending_experiments_pd is None)
+            no_blocked_pending_points = ok_p or (pending_experiments is None)
 
             # If there are no candidate restrictions to be relaxed
             if ok_m and ok_r and no_blocked_pending_points:
@@ -765,7 +759,7 @@ class Campaign(SerialMixin):
 
         if (
             active_settings.cache_campaign_recommendations
-            and pending_experiments_pd is None  # see IMPROVE comment above
+            and pending_experiments is None  # see IMPROVE comment above
         ):
             self._cache_recommendation(rec_nw)
 
