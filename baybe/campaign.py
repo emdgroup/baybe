@@ -772,18 +772,12 @@ class Campaign(SerialMixin):
         # Track recommended experiments (deduplicated)
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
             param_cols = [p.name for p in self.parameters]
-            rec_params_pd = rec_nw.select(param_cols).to_pandas()
             frames = [
-                f
-                for f in (self._recommended_experiments.to_pandas(), rec_params_pd)
-                if not f.empty
+                frame
+                for frame in (self._recommended_experiments, rec_nw.select(param_cols))
+                if not frame.is_empty()
             ]
-            self._recommended_experiments = nw.from_native(
-                pd.concat(frames, axis=0, ignore_index=True)
-                .drop_duplicates()
-                .reset_index(drop=True),
-                eager_only=True,
-            )
+            self._recommended_experiments = nw.concat(frames, how="vertical").unique()
 
         return cast(
             IntoDataFrameT,
