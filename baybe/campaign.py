@@ -28,11 +28,13 @@ from baybe.exceptions import (
 )
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
+from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
+from baybe.searchspace.candidates import TableCandidates
 from baybe.searchspace.core import (
     SearchSpace,
     SearchSpaceType,
@@ -49,8 +51,8 @@ from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     _df_equals,
     _df_with_backend,
+    _fuzzy_anti_join,
     _infer_backend,
-    fuzzy_row_match,
 )
 from baybe.utils.validation import (
     preprocess_dataframe,
@@ -662,8 +664,11 @@ class Campaign(SerialMixin):
         if self.searchspace.type is SearchSpaceType.DISCRETE:
             discrete = self.searchspace.discrete
 
+            # Drop excluded experiments
             if not self._excluded_experiments.is_empty():
                 discrete = discrete.filter(self._excluded_experiments, complement=True)
+
+            # Drop already recommended experiments
             if (
                 not self.allow_recommending_already_recommended
                 and not self._recommended_experiments.is_empty()
@@ -671,25 +676,30 @@ class Campaign(SerialMixin):
                 discrete = discrete.filter(
                     self._recommended_experiments, complement=True
                 )
-            if not self.allow_recommending_already_measured and self._measurements:
-                # Match against the full (unfiltered) candidate set, since the
-                # fuzzy match result can depend on which candidates are available
-                all_candidates_pd = (
-                    self.searchspace.discrete._get_candidates().collect().to_pandas()
-                )
-                measured_idxs = fuzzy_row_match(
-                    all_candidates_pd,
-                    nw.from_native(self.measurements, eager_only=True).to_pandas(),
-                    self.parameters,
-                )
-                discrete = discrete.filter(
-                    all_candidates_pd.loc[measured_idxs], complement=True
-                )
+
+            # Drop pending experiments
             if (
                 not self.allow_recommending_pending_experiments
                 and pending_experiments_pd is not None
             ):
                 discrete = discrete.filter(pending_experiments_pd, complement=True)
+
+            # Drop already measured experiments
+            if not self.allow_recommending_already_measured and self._measurements:
+                tolerances = {
+                    p.name: p.tolerance
+                    for p in discrete.parameters
+                    if isinstance(p, NumericalDiscreteParameter)
+                }
+                filtered = _fuzzy_anti_join(
+                    discrete.get_candidates(), self.measurements, tolerances
+                ).collect()
+                discrete = evolve(
+                    discrete,
+                    candidates=TableCandidates(
+                        discrete.parameters, filtered.to_native()
+                    ),
+                )
 
             searchspace = evolve(self.searchspace, discrete=discrete)
         else:

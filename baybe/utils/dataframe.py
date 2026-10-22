@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import functools
 import warnings
-from collections.abc import Callable, Collection, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -21,11 +21,7 @@ import pandas as pd
 from narwhals.stable.v2.dependencies import is_into_dataframe, is_into_series
 from narwhals.testing import assert_frame_equal
 
-from baybe.exceptions import (
-    IncompatibleArgumentError,
-    InputDataTypeWarning,
-    SearchSpaceMatchWarning,
-)
+from baybe.exceptions import IncompatibleArgumentError, InputDataTypeWarning
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
@@ -404,106 +400,74 @@ def add_noise_to_perturb_degenerate_rows(
     return df
 
 
-def fuzzy_row_match(
-    left_df: pd.DataFrame,
-    right_df: pd.DataFrame,
-    parameters: Sequence[Parameter],
-) -> pd.Index:
-    """Match rows of the right dataframe to rows of the left dataframe.
+def _fuzzy_anti_join(
+    left: IntoFrame, right: IntoDataFrame, tolerances: dict[str, float], /
+) -> nw.LazyFrame:
+    """Return the rows of that do not fuzzily match any row of the second dataframe.
 
-    This is useful for matching measurements to entries in the search space, e.g. to
-    detect which ones have been measured. For categorical parameters, there needs to be
-    an exact match with any of the allowed values. For numerical parameters, the points
-    with the smallest deviation are considered.
-
-    Note:
-        This function assumes that the dataframes contain only allowed values as
-        specified in the parameter objects. No further validation to assert this is
-        done.
+    Columns for which a tolerance is specified are considered a match if the absolute
+    deviation is within that tolerance. All other columns require an exact match.
 
     Args:
-        left_df: The data that serves as lookup reference.
-        right_df: The data that is checked for matching rows in the left dataframe.
-        parameters: Parameter objects that identify the relevant column names and how
-            matching is performed.
+        left: The data to be filtered.
+        right: The data to be matched against.
+        tolerances: A mapping from column name to the absolute tolerance within
+            which a deviation in that column is still considered a match.
 
     Returns:
-        The index of the matching rows in ``left_df``.
+        The rows of the first dataframe that have no matching row in the second.
 
     Raises:
-        ValueError: If either ``left_df`` or ``right_df`` does not contain columns for
-            each entry in parameters.
+        ValueError: If the two dataframes share no columns at all.
+        ValueError: If a tolerance is specified for a column that is not shared by both
+            dataframes.
     """
-    # Separate columns types
-    cat_cols = {p.name for p in parameters if (not p.is_numerical and p.is_discrete)}
-    num_cols = {p.name for p in parameters if (p.is_numerical and p.is_discrete)}
-    non_discrete_cols = {p.name for p in parameters if not p.is_discrete}
+    left_lf = nw.from_native(left).lazy()
+    right_eager = nw.from_native(right, eager_only=True)
 
-    # Assert that all parameters appear in the given dataframes
-    if diff := (cat_cols | num_cols).difference(left_df.columns):
+    left_cols = set(left_lf.collect_schema().names())
+    right_cols = set(right_eager.columns)
+    common_cols = left_cols & right_cols
+
+    if not common_cols:
         raise ValueError(
-            f"For fuzzy row matching, all discrete parameters need to have a "
-            f"corresponding column in the left dataframe. Parameters not found: {diff})"
+            "The two dataframes have no columns in common, so no matching is possible."
         )
-    if diff := (cat_cols | num_cols).difference(right_df.columns):
+    if missing := set(tolerances) - common_cols:
         raise ValueError(
-            f"For fuzzy row matching, all discrete parameters need to have a "
-            f"corresponding column in the right dataframe. Parameters not found: "
-            f"{diff})"
+            f"A tolerance was specified for the following column(s), but they are "
+            f"not shared by both dataframes: {missing}"
         )
 
-    provided_cols = {p.name for p in parameters}
-    allowed_cols = cat_cols | num_cols | non_discrete_cols
-    assert allowed_cols == provided_cols, (
-        f"There are parameter types that would be silently ignored: "
-        f"{provided_cols.difference(allowed_cols)}"
-    )
+    exact_cols = common_cols - set(tolerances)
+    fuzzy_cols = common_cols & set(tolerances)
 
-    # Ensure the dtype consistency in the dataframes
-    left_df = normalize_input_dtypes(left_df, parameters)
-    right_df = normalize_input_dtypes(right_df, parameters)
+    if right_eager.is_empty():
+        return left_lf
 
-    # Initialize the match matrix. We will later filter it down using other
-    # matrices (representing the matches for individual parameters) via logical 'and'.
-    match_matrix = pd.DataFrame(
-        True, index=right_df.index, columns=left_df.index, dtype=bool
-    )
+    if not fuzzy_cols:
+        return left_lf.join(right_eager.lazy(), how="anti", on=list(exact_cols))
 
-    # Match categorical parameters
-    for col in cat_cols:
-        # Per categorical parameter, this identifies matches between all elements of
-        # left and right and stores them in a matrix.
-        match_matrix &= (
-            np.asarray(right_df[col])[:, None] == np.asarray(left_df[col])[None, :]
+    def tolerance_match(other: Mapping[str, Any], /) -> nw.Expr:
+        """Build an expression checking if all fuzzy columns match ``other``."""
+        return nw.all_horizontal(
+            *(
+                (nw.col(col) - other[col]).abs() <= tolerances[col]
+                for col in fuzzy_cols
+            ),
+            ignore_nulls=True,
         )
 
-    # Match numerical parameters
-    for col in num_cols:
-        # Compute absolute differences and find the minimum difference
-        abs_diff = np.abs(
-            np.asarray(right_df[col])[:, None] - np.asarray(left_df[col])[None, :]
+    if exact_cols:
+        joined = left_lf.join(right_eager.lazy(), how="inner", on=list(exact_cols))
+        joined = joined.filter(
+            tolerance_match({col: nw.col(f"{col}_right") for col in fuzzy_cols})
         )
-        min_diff = abs_diff.min(axis=1, keepdims=True)
-        match_matrix &= abs_diff == min_diff
+        matched = joined.select(list(left_cols)).unique()
+        return left_lf.join(matched, how="anti", on=list(left_cols))
 
-    # Find the matching indices. If a right row is not matched to any of the rows in
-    # left, idxmax would return the first index of left_df. Hence, we remember these
-    # cases and drop them explicitly.
-    matched_indices = pd.Index(match_matrix.idxmax(axis=1).values)
-    mask_no_match = ~match_matrix.any(axis=1)
-    matched_indices = matched_indices[~mask_no_match]
-
-    mask_multiple_matches = match_matrix.sum(axis=1) > 1
-    if multiple_match_indices := right_df.index[mask_multiple_matches].tolist():
-        w = SearchSpaceMatchWarning(
-            f"Some input rows have multiple matches with the search space. "
-            f"Matching only first occurrence for these rows. Indices with multiple "
-            f"matches: {multiple_match_indices}",
-            right_df.loc[multiple_match_indices],
-        )
-        warnings.warn(w)
-
-    return matched_indices
+    row_exprs = [tolerance_match(row) for row in right_eager.iter_rows(named=True)]
+    return left_lf.filter(~nw.any_horizontal(*row_exprs, ignore_nulls=True))
 
 
 def pretty_print_df(

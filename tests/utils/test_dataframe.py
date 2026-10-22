@@ -8,12 +8,12 @@ import pytest
 from pandas.testing import assert_frame_equal
 from pytest import param
 
-from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
+from baybe.exceptions import InputDataTypeWarning
 from baybe.targets import BinaryTarget, NumericalTarget
 from baybe.utils.dataframe import (
+    _fuzzy_anti_join,
     add_noise_to_perturb_degenerate_rows,
     add_parameter_noise,
-    fuzzy_row_match,
     handle_missing_values,
     normalize_input_dtypes,
 )
@@ -56,118 +56,110 @@ def test_degenerate_rows_invalid_input():
 
 
 @pytest.mark.parametrize(
-    ("parameter_names", "noise", "duplicated"),
+    "parameter_names",
     [
         param(
             ["Categorical_1", "Num_disc_1", "Some_Setting"],
-            False,
-            True,
-            id="discrete_num_noiseless_duplicated",
-        ),
-        param(
-            ["Categorical_1", "Num_disc_1", "Some_Setting"],
-            False,
-            False,
-            id="discrete_num_noiseless_unique",
-        ),
-        param(
-            ["Categorical_1", "Num_disc_1", "Some_Setting"],
-            True,
-            False,
-            id="discrete_num_noisy_unique",
+            id="fuzzy_and_exact",
         ),
         param(
             ["Categorical_1", "Switch_1", "Some_Setting"],
-            False,
-            False,
-            id="discrete_cat",
+            id="exact_only",
         ),
         param(
-            ["Categorical_1", "Switch_1", "Conti_finite1"],
-            False,
-            False,
-            id="hybrid_cat",
-        ),
-        param(
-            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
-            False,
-            False,
-            id="hybrid_num_noiseless_unique",
-        ),
-        param(
-            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
-            True,
-            False,
-            id="hybrid_num_noisy_unique",
-        ),
-        param(
-            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
-            False,
-            True,
-            id="hybrid_num_noiseless_duplicated",
+            ["Num_disc_1", "Fraction_1"],
+            id="fuzzy_only",
         ),
     ],
 )
-def test_fuzzy_row_match(searchspace, noise, duplicated):
-    """Fuzzy row matching returns expected indices."""
+def test_fuzzy_anti_join(searchspace, dataframe_constructor):
+    """Rows fuzzily matching the right dataframe are excluded from the result."""
     left_df = searchspace.discrete.get_candidates().copy()
     selected = np.random.choice(left_df.index, 4, replace=False)
     right_df = left_df.loc[selected].reset_index(drop=True)
 
-    context = nullcontext()
-    if duplicated:
-        # Set one of the input values to exactly the midpoint between two values to
-        # cause a degenerate match
-        vals = searchspace.get_parameters_by_name(["Num_disc_1"])[0].values
-        right_df.loc[0, "Num_disc_1"] = vals[0] + (vals[1] - vals[0]) / 2.0
-        context = pytest.warns(SearchSpaceMatchWarning, match="multiple matches")
+    # Perturb within tolerance, so the rows still count as matches
+    add_parameter_noise(
+        right_df,
+        searchspace.discrete.parameters,
+        noise_type="absolute",
+        noise_level=1e-6,
+    )
 
-    if noise:
-        add_parameter_noise(
-            right_df,
-            searchspace.discrete.parameters,
-            noise_type="relative_percent",
-            noise_level=0.1,
-        )
+    left = dataframe_constructor(left_df.to_dict(orient="list"))
+    right = dataframe_constructor(right_df.to_dict(orient="list"))
 
-    with context as c:
-        matched = fuzzy_row_match(left_df, right_df, searchspace.parameters)
+    tolerances = {
+        p.name: p.tolerance
+        for p in searchspace.discrete.parameters
+        if p.is_numerical and p.is_discrete
+    }
+    remaining = (
+        _fuzzy_anti_join(left, right, tolerances)
+        .collect()
+        .to_pandas()
+        .reset_index(drop=True)
+    )
 
-    if duplicated:
-        # Assert correct identification of problematic df parts
-        w = next(x for x in c if isinstance(x.message, SearchSpaceMatchWarning)).message
-        assert_frame_equal(right_df.loc[[0]], w.data)
+    def sort_rows(df: pd.DataFrame) -> pd.DataFrame:
+        cols = list(df.columns)
+        return df.sort_values(cols).reset_index(drop=True)
 
-        # Ignore problematic indices for subsequent equality check
-        selected = selected[1:]
-        matched = matched[1:]
-
-    assert set(selected) == set(matched), (selected, matched)
+    expected = left_df.drop(index=selected).reset_index(drop=True)
+    assert_frame_equal(
+        sort_rows(remaining), sort_rows(expected), check_dtype=False, check_like=True
+    )
 
 
 @pytest.mark.parametrize(
-    "parameter_names",
+    "parameter_names", [["Categorical_1", "Num_disc_1", "Some_Setting"]]
+)
+def test_fuzzy_anti_join_no_right_rows(searchspace):
+    """An empty ``right`` dataframe excludes no rows of ``left``."""
+    left_df = searchspace.discrete.get_candidates().copy()
+    right_df = left_df.iloc[0:0]
+
+    tolerances = {
+        p.name: p.tolerance
+        for p in searchspace.discrete.parameters
+        if p.is_numerical and p.is_discrete
+    }
+    remaining = _fuzzy_anti_join(left_df, right_df, tolerances).collect()
+    assert_frame_equal(remaining.to_pandas(), left_df)
+
+
+def test_fuzzy_anti_join_no_common_columns():
+    """If the two dataframes share no columns at all, an error is raised."""
+    left_df = pd.DataFrame({"a": [1, 2]})
+    right_df = pd.DataFrame({"z": [1]})
+
+    with pytest.raises(ValueError, match="no columns in common"):
+        _fuzzy_anti_join(left_df, right_df, {})
+
+
+@pytest.mark.parametrize(
+    "tolerances",
     [
-        param(["Categorical_1", "Categorical_2", "Switch_1"], id="discrete"),
-        param(["Categorical_1", "Num_disc_1", "Conti_finite1"], id="hybrid"),
+        param({"d": 0.1}, id="tolerance_column_missing_everywhere"),
+        param({"a": 0.1}, id="tolerance_column_missing_from_right"),
+        param({"c": 0.1}, id="tolerance_column_missing_from_left"),
     ],
 )
-@pytest.mark.parametrize("invalid", ["left", "right"])
-def test_invalid_fuzzy_row_match(searchspace, invalid):
-    """Returns expected errors when dataframes don't contain all expected columns."""
-    left_df = searchspace.discrete.get_candidates().copy()
-    selected = np.random.choice(left_df.index, 4, replace=False)
-    right_df = left_df.loc[selected].copy()
+def test_fuzzy_anti_join_invalid_columns(tolerances):
+    """Tolerance columns missing from ``left`` or ``right`` raise an error."""
+    left_df = pd.DataFrame({"a": [1, 2, 3], "b": [10, 20, 30]})
+    right_df = pd.DataFrame({"b": [1], "c": [2]})
+    with pytest.raises(ValueError, match="not shared by both dataframes"):
+        _fuzzy_anti_join(left_df, right_df, tolerances)
 
-    # Drop first column
-    if invalid == "left":
-        left_df = left_df.iloc[:, 1:]
-    else:
-        right_df = right_df.iloc[:, 1:]
 
-    match = f"corresponding column in the {invalid} dataframe."
-    with pytest.raises(ValueError, match=match):
-        fuzzy_row_match(left_df, right_df, searchspace.parameters)
+def test_fuzzy_anti_join_extra_right_columns():
+    """Columns present only in ``right`` are ignored."""
+    left_df = pd.DataFrame({"a": [1, 2, 3]})
+    right_df = pd.DataFrame({"a": [1], "z": [999]})
+
+    remaining = _fuzzy_anti_join(left_df, right_df, {}).collect()
+    assert sorted(remaining.to_pandas()["a"]) == [2, 3]
 
 
 def test_measurement_singletons():
