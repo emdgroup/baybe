@@ -27,7 +27,7 @@ from baybe.recommenders.pure.llm._parsing import parse_llm_response
 from baybe.recommenders.pure.llm._prompts import make_prompt
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
-from baybe.serialization import SerialMixin
+from baybe.serialization import SerialMixin, converter
 from baybe.transformations.basic import CustomTransformation
 from baybe.utils.conversion import to_string
 from baybe.utils.metadata import Metadata
@@ -36,12 +36,6 @@ from baybe.utils.metadata import Metadata
 # model and messages are set explicitly, and the response must not be streamed since
 # it is parsed as a whole.
 _RESERVED_LITELLM_KEYS = frozenset({"model", "messages", "stream"})
-
-# Credential keys that LiteLLM accepts inline but must be supplied via environment
-# variables instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY). Blocking them at
-# construction time prevents accidental exposure in logs, __str__, and serialization
-# strings.
-_CREDENTIAL_LITELLM_KEYS = frozenset({"api_key", "api_base", "api_version"})
 
 
 @define(slots=False)
@@ -69,6 +63,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
     litellm_args: dict[str, Any] = field(
         factory=dict,
         converter=dict,
+        repr=False,
         validator=deep_mapping(
             key_validator=instance_of(str),
             # Values are intentionally unconstrained: LiteLLM accepts heterogeneous
@@ -78,10 +73,11 @@ class LLMRecommender(PureRecommender, SerialMixin):
     )
     """Additional arguments to pass to LiteLLM (e.g. ``temperature``, ``max_tokens``).
 
-    API credentials must **not** be passed here — they would be stored in plain text
-    and appear in logs and serialized campaign files. Configure them via the
-    environment variables that LiteLLM reads automatically based on the model prefix
-    (e.g. ``OPENAI_API_KEY``, ``ANTHROPIC_API_KEY``).
+    Since these arguments may contain sensitive information, their values are neither
+    shown in string representations nor serialized, i.e. they need to be provided
+    again after deserialization. Nevertheless, prefer configuring API credentials via
+    the environment variables that LiteLLM reads automatically based on the model
+    prefix (e.g. ``OPENAI_API_KEY``, ``ANTHROPIC_API_KEY``).
     """
 
     # Stashed context necessary for prompt building
@@ -95,17 +91,11 @@ class LLMRecommender(PureRecommender, SerialMixin):
 
     @litellm_args.validator
     def _validate_litellm_args(self, attribute, value):  # noqa: DOC101, DOC103
-        """Validate litellm_args does not contain reserved or credential keys."""
+        """Validate litellm_args does not contain reserved keys."""
         if conflicts := _RESERVED_LITELLM_KEYS & set(value.keys()):
             raise ValueError(
                 f"'{attribute.name}' must not contain keys that are controlled by the "
                 f"recommender itself: {sorted(conflicts)}."
-            )
-        if cred_conflicts := _CREDENTIAL_LITELLM_KEYS & set(value.keys()):
-            raise ValueError(
-                f"'{attribute.name}' must not contain credential keys "
-                f"{cred_conflicts}. Supply credentials via environment variables "
-                f"instead (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY)."
             )
 
     @override
@@ -284,13 +274,35 @@ class LLMRecommender(PureRecommender, SerialMixin):
     def __str__(self) -> str:
         fields = [
             to_string("Model", self.model, single_line=True),
-            to_string("LiteLLM Args", self.litellm_args, single_line=True),
+            # Only the names are shown since the values may contain credentials
+            to_string("LiteLLM Arg Names", list(self.litellm_args), single_line=True),
             to_string(
                 "Experiment Description", self.experiment_description, single_line=True
             ),
         ]
         return to_string(self.__class__.__name__, *fields)
 
+
+_unstructure_with_litellm_args = converter.get_unstructure_hook(LLMRecommender)
+
+
+def _unstructure_without_litellm_args(obj: LLMRecommender, /) -> dict[str, Any]:
+    """Unstructure an LLM recommender without its LiteLLM arguments."""
+    attribute = fields(LLMRecommender).litellm_args
+    if obj.litellm_args:
+        warnings.warn(
+            f"The '{attribute.alias}' of '{obj.__class__.__name__}' "
+            f"({sorted(obj.litellm_args)}) are not serialized since they may contain "
+            f"sensitive information. Provide them again after deserialization.",
+            UserWarning,
+        )
+    specs = _unstructure_with_litellm_args(obj)
+    del specs[attribute.name]
+    return specs
+
+
+# The LiteLLM arguments may contain credentials and are hence never serialized
+converter.register_unstructure_hook(LLMRecommender, _unstructure_without_litellm_args)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

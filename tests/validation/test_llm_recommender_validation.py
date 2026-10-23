@@ -47,18 +47,6 @@ _VALID_KWARGS = {"model": "test/model", "experiment_description": "Test experime
             "'litellm_args' must not contain keys that are controlled by",
             id="reserved_key_stream",
         ),
-        param(
-            {"litellm_args": {"api_key": "x"}},
-            ValueError,
-            "'litellm_args' must not contain credential keys",
-            id="credential_key_api_key",
-        ),
-        param(
-            {"litellm_args": {"api_base": "x"}},
-            ValueError,
-            "'litellm_args' must not contain credential keys",
-            id="credential_key_api_base",
-        ),
     ],
 )
 def test_llm_recommender_invalid_construction(overrides, error_cls, match):

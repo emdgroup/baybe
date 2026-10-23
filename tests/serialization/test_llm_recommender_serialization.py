@@ -1,22 +1,52 @@
 """LLM recommender serialization tests."""
 
-import hypothesis.strategies as st
-from hypothesis import given
+from contextlib import nullcontext
 
-from baybe.recommenders import RandomRecommender
+import hypothesis.strategies as st
+import pytest
+from attrs import evolve
+from hypothesis import given
+from pytest import param
+
+from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 from baybe.recommenders.meta.llm import LLMTwoPhaseRecommender
 from baybe.recommenders.pure.llm.llm import LLMRecommender
 from tests.conftest import select_recommender
 from tests.hypothesis_strategies.recommenders import llm_recommenders
 from tests.serialization.utils import roundtrip
 
+_LLM_KWARGS = {"model": "test/model", "experiment_description": "Test."}
+_NOT_SERIALIZED = "'litellm_args' of 'LLMRecommender' .* are not serialized"
+
 
 @given(data=st.data())
 def test_llm_recommender_roundtrip(data: st.DataObject):
-    """A serialization roundtrip yields an equivalent object."""
+    """A serialization roundtrip yields an equivalent object without LiteLLM args."""
     recommender = data.draw(llm_recommenders())
-    roundtripped = LLMRecommender.from_json(recommender.to_json())
-    assert roundtripped == recommender
+    with (
+        pytest.warns(UserWarning, match=_NOT_SERIALIZED)
+        if recommender.litellm_args
+        else nullcontext()
+    ):
+        string = recommender.to_json()
+    roundtripped = LLMRecommender.from_json(string)
+    assert roundtripped == evolve(recommender, litellm_args={})
+
+
+@pytest.mark.parametrize(
+    "wrap",
+    [
+        param(lambda r: r, id="plain"),
+        param(lambda r: TwoPhaseMetaRecommender(recommender=r), id="nested"),
+    ],
+)
+def test_litellm_args_not_serialized(wrap):
+    """LiteLLM args are dropped from the serialized form, also when nested."""
+    recommender = LLMRecommender(**_LLM_KWARGS, litellm_args={"api_key": "secret"})
+    with pytest.warns(UserWarning, match=_NOT_SERIALIZED):
+        string = wrap(recommender).to_json()
+    assert "api_key" not in string
+    assert "secret" not in string
 
 
 def test_stashed_context_not_serialized():
@@ -35,9 +65,6 @@ def test_stashed_context_not_serialized():
     assert roundtripped._objective is None
     assert roundtripped._measurements is None
     assert roundtripped._pending_experiments is None
-
-
-_LLM_KWARGS = {"model": "test/model", "experiment_description": "Test."}
 
 
 def test_llm_two_phase_state_serialization():
