@@ -687,12 +687,10 @@ class Campaign(SerialMixin):
                 }
                 filtered = _fuzzy_anti_join(
                     discrete.get_candidates(), self.measurements, tolerances
-                ).collect()
+                )
                 discrete = evolve(
                     discrete,
-                    candidates=TableCandidates(
-                        discrete.parameters, filtered.to_native()
-                    ),
+                    candidates=TableCandidates(discrete.parameters, filtered),
                 )
 
             searchspace = evolve(self.searchspace, discrete=discrete)
