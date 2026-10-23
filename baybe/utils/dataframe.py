@@ -908,11 +908,13 @@ def _df_with_backend(obj: _SeriesOrFrameT, backend: IntoBackend, /) -> _SeriesOr
 def _df_equals(
     df1: nw.DataFrame | nw.LazyFrame, df2: nw.DataFrame | nw.LazyFrame, /
 ) -> bool:
-    """Check if two eager dataframes are equal."""
+    """Check if two dataframes are equal."""
     if isinstance(df1, nw.LazyFrame) or isinstance(df2, nw.LazyFrame):
-        raise TypeError(
-            "Equality comparisons involving lazy dataframes are not supported."
-        )
+        # TODO: This is a temporary workaround to avoid runtime errors while working on
+        #   the candidates framework but needs to be adressed in order to re-enable
+        #   recommendation caching (without having to materialize the lazy frames.)
+        return False
+
     # https://github.com/narwhals-dev/narwhals/issues/3715
     try:
         assert_frame_equal(df1, df2)
