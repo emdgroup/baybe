@@ -225,6 +225,7 @@ benchmarking = [
     { name = "boto3" },
     { name = "fpsample" },
     { name = "gitpython" },
+    { name = "lime" },
     { name = "matplotlib" },
     { name = "ngboost" },
     { name = "onnx" },
@@ -236,7 +237,7 @@ benchmarking = [
     { name = "psutil" },
     { name = "scikit-fingerprints" },
     { name = "seaborn" },
-    { name = "shap", extra = ["others"] },
+    { name = "shap" },
     { name = "skl2onnx" },
     { name = "streamlit" },
     { name = "torch" },
@@ -255,6 +256,7 @@ dev = [
     { name = "hypothesis", extra = ["pandas"] },
     { name = "jupyter" },
     { name = "jupytext" },
+    { name = "lime" },
     { name = "matplotlib" },
     { name = "mypy" },
     { name = "myst-parser" },
@@ -279,7 +281,7 @@ dev = [
     { name = "scikit-fingerprints" },
     { name = "seaborn" },
     { name = "setuptools-scm" },
-    { name = "shap", extra = ["others"] },
+    { name = "shap" },
     { name = "skl2onnx" },
     { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "sphinx", version = "8.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -307,6 +309,7 @@ docs = [
     { name = "furo" },
     { name = "jupyter" },
     { name = "jupytext" },
+    { name = "lime" },
     { name = "matplotlib" },
     { name = "myst-parser" },
     { name = "ngboost" },
@@ -318,7 +321,7 @@ docs = [
     { name = "polars", extra = ["pyarrow"] },
     { name = "scikit-fingerprints" },
     { name = "seaborn" },
-    { name = "shap", extra = ["others"] },
+    { name = "shap" },
     { name = "skl2onnx" },
     { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "sphinx", version = "8.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -335,6 +338,7 @@ docs = [
 ]
 examples = [
     { name = "fpsample" },
+    { name = "lime" },
     { name = "matplotlib" },
     { name = "ngboost" },
     { name = "onnx" },
@@ -345,7 +349,7 @@ examples = [
     { name = "polars", extra = ["pyarrow"] },
     { name = "scikit-fingerprints" },
     { name = "seaborn" },
-    { name = "shap", extra = ["others"] },
+    { name = "shap" },
     { name = "skl2onnx" },
     { name = "streamlit" },
     { name = "tornado" },
@@ -353,17 +357,19 @@ examples = [
 ]
 extras = [
     { name = "fpsample" },
+    { name = "lime" },
     { name = "ngboost" },
     { name = "onnx" },
     { name = "onnxruntime" },
     { name = "polars", extra = ["pyarrow"] },
     { name = "scikit-fingerprints" },
-    { name = "shap", extra = ["others"] },
+    { name = "shap" },
     { name = "skl2onnx" },
     { name = "xyzpy" },
 ]
 insights = [
-    { name = "shap", extra = ["others"] },
+    { name = "lime" },
+    { name = "shap" },
 ]
 lint = [
     { name = "flake8" },
@@ -441,6 +447,7 @@ requires-dist = [
     { name = "joblib", specifier = ">1.4.0,<2" },
     { name = "jupyter", marker = "extra == 'docs'", specifier = ">=1.1.1" },
     { name = "jupytext", marker = "extra == 'docs'", specifier = ">=1.16.4" },
+    { name = "lime", marker = "extra == 'insights'", specifier = ">=0.2.0.1" },
     { name = "matplotlib", marker = "extra == 'examples'", specifier = ">=3.7.3,!=3.9.1" },
     { name = "mypy", marker = "extra == 'mypy'", specifier = ">=1.19.1" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.0" },
@@ -470,7 +477,7 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.10.1" },
     { name = "seaborn", marker = "extra == 'examples'", specifier = ">=0.12.2" },
     { name = "setuptools-scm", marker = "extra == 'dev'", specifier = ">=7.1.0" },
-    { name = "shap", extras = ["others"], marker = "extra == 'insights'", specifier = ">=0.47.0" },
+    { name = "shap", marker = "extra == 'insights'", specifier = ">=0.47.0" },
     { name = "skl2onnx", marker = "extra == 'onnx'", specifier = ">=1.19.1" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=8.0.2" },
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'", specifier = ">=2.4.4" },
@@ -5527,11 +5534,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5c/91/a63e563f3dc8e134db12dd155a1a6ed5e0649f79fc8ac651aac1088e8652/shap-0.49.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d8dfa5654eccf4d13dcb262a10314a4e0eb1060db842b2ef31e9fb0038168bc1", size = 1022476, upload-time = "2025-10-14T10:04:38.171Z" },
     { url = "https://files.pythonhosted.org/packages/15/a2/89303c1f7eb206658bf9ec974dc6e69b0a6bd309cf5de0cfa8f92f5a8eb3/shap-0.49.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:ed3080030a6000d3737841c5770ed555b8a922b794fa0ba5aae1e45655eda1fa", size = 2087940, upload-time = "2025-10-14T10:04:39.497Z" },
     { url = "https://files.pythonhosted.org/packages/84/bd/0b9b3e19b9b8cda51463f8a749dc354eb9c87f42eddcbfdf742dceb3746b/shap-0.49.1-cp313-cp313-win_amd64.whl", hash = "sha256:6af779344c23b12a47063aab7fc135fefbdb5849233c1813f11dd8cf2fc73bea", size = 547806, upload-time = "2025-10-14T10:04:40.712Z" },
-]
-
-[package.optional-dependencies]
-others = [
-    { name = "lime" },
 ]
 
 [[package]]
