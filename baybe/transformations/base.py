@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define
-from typing_extensions import override
+from typing_extensions import TypeAliasType, override
 
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.basic import is_all_instance
@@ -15,13 +16,13 @@ from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import ConvertibleToInterval, Interval
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
 
-    TensorCallable = Callable[[Tensor], Tensor]
-    """Type alias for a torch-based function mapping from reals to reals."""
+# NOTE: Defined as runtime alias so that type hints referencing it can be resolved
+#   (e.g. by `cattrs`) without importing `torch`
+TensorCallable = TypeAliasType("TensorCallable", Callable[["Tensor"], "Tensor"])
+"""Type alias for a torch-based function mapping from reals to reals."""
 
 
 _TTransformation = TypeVar("_TTransformation", bound="Transformation")

@@ -46,6 +46,7 @@ autodoc_type_aliases = {
     "GPyTorchLikelihood": "GPyTorchLikelihood",
     "GPyTorchMean": "GPyTorchMean",
     "Smiles": "Smiles",
+    "TensorCallable": "TensorCallable",
 }
 
 # >>>>>>>>>> NOTE END <<<<<<<<<<
