@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Collection, Iterable
+from collections.abc import Collection, Iterable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -12,12 +12,7 @@ from baybe.transformations.basic import AffineTransformation, IdentityTransforma
 from baybe.utils.basic import is_all_instance
 
 if TYPE_CHECKING:
-    from torch import Tensor
-
-    from baybe.transformations.base import Transformation
-
-    TensorCallable = Callable[[Tensor], Tensor]
-    """Type alias for a torch-based function mapping from reals to reals."""
+    from baybe.transformations.base import TensorCallable, Transformation
 
 
 def convert_transformation(x: Transformation | TensorCallable, /) -> Transformation:
