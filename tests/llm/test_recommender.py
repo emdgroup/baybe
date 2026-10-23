@@ -97,6 +97,18 @@ def test_completion_arguments_forwarded():
     assert kwargs["max_tokens"] == 100
 
 
+def test_litellm_arg_values_hidden():
+    """String representations show the names of LiteLLM args but not their values."""
+    recommender = LLMRecommender(
+        model="test/model",
+        experiment_description="Test.",
+        litellm_args={"api_key": "secret"},
+    )
+    assert "api_key" in str(recommender)
+    assert "secret" not in str(recommender)
+    assert "secret" not in repr(recommender)
+
+
 _SEARCHSPACE = make_discrete_searchspace()
 _AUTH_ERROR = AuthenticationError(
     message="bad key", llm_provider="test", model="test/model"

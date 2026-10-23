@@ -2,15 +2,11 @@
 
 import hypothesis.strategies as st
 
-from baybe.recommenders.pure.llm.llm import (
-    _CREDENTIAL_LITELLM_KEYS,
-    _RESERVED_LITELLM_KEYS,
-    LLMRecommender,
+from baybe.recommenders.pure.llm.llm import _RESERVED_LITELLM_KEYS, LLMRecommender
+
+_litellm_arg_keys = st.text(min_size=1).filter(
+    lambda k: k not in _RESERVED_LITELLM_KEYS
 )
-
-_FORBIDDEN_KEYS = _RESERVED_LITELLM_KEYS | _CREDENTIAL_LITELLM_KEYS
-
-_litellm_arg_keys = st.text(min_size=1).filter(lambda k: k not in _FORBIDDEN_KEYS)
 
 _litellm_arg_values = st.one_of(
     st.integers(),
