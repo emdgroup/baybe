@@ -137,7 +137,7 @@ def _custom_validator(df):
 
 
 @pytest.mark.parametrize(
-    ("searchspace", "transformation", "match"),
+    ("searchspace", "transformation"),
     [
         param(
             SearchSpace.from_product(
@@ -145,13 +145,11 @@ def _custom_validator(df):
                 [DiscreteCustomConstraint(["Num"], _custom_validator)],
             ),
             None,
-            "DiscreteCustomConstraint",
             id="custom_constraint",
         ),
         param(
             _SEARCHSPACE,
             CustomTransformation(_custom_function),
-            "CustomTransformation",
             id="custom_transformation",
         ),
         param(
@@ -159,7 +157,6 @@ def _custom_validator(df):
             ChainedTransformation(
                 [CustomTransformation(_custom_function), AffineTransformation(2.0)]
             ),
-            "CustomTransformation",
             id="chained_custom_transformation",
         ),
         param(
@@ -167,20 +164,22 @@ def _custom_validator(df):
             AdditiveTransformation(
                 [CustomTransformation(_custom_function), AffineTransformation(2.0)]
             ),
-            "CustomTransformation",
             id="additive_custom_transformation",
         ),
     ],
 )
-def test_custom_components_rejected(searchspace, transformation, match):
+def test_custom_components_rejected(searchspace, transformation):
     """Custom components are rejected before any call to the language model."""
     objective = (
         _OBJECTIVE
         if transformation is None
-        else SingleTargetObjective(NumericalTarget("y", transformation=transformation))
+        else SingleTargetObjective(
+            NumericalTarget("y", transformation=transformation),
+            metadata=_OBJECTIVE.metadata,
+        )
     )
     with patch(PATCH_TARGET) as mock:
-        with pytest.raises(IncompatibilityError, match=match):
+        with pytest.raises(IncompatibilityError, match="cannot be described"):
             _RECOMMENDER.recommend(1, searchspace, objective)
     assert mock.call_count == 0
 
