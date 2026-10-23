@@ -11,10 +11,15 @@ from attrs import Factory, define, field
 from attrs.validators import gt, is_callable
 from typing_extensions import override
 
-from baybe.serialization import converter
+from baybe.serialization import (
+    block_deserialization_hook,
+    block_serialization_hook,
+    converter,
+)
 from baybe.settings import active_settings
 from baybe.transformations.base import (
     MonotonicTransformation,
+    TensorCallable,
     Transformation,
     _image_equals_codomain,
 )
@@ -25,8 +30,6 @@ from baybe.utils.validation import finite_float
 if TYPE_CHECKING:
     from botorch.acquisition.objective import ScalarizedPosteriorTransform
     from torch import Tensor
-
-    from baybe.transformations.base import TensorCallable
 
 
 @define(frozen=True)
@@ -514,6 +517,11 @@ class SigmoidTransformation(MonotonicTransformation):
 def _(dct, _) -> ClampingTransformation:
     cutoffs = Interval(**dct["cutoffs"])
     return ClampingTransformation(*cutoffs.to_tuple())
+
+
+# Prevent (de-)serialization of custom transformations
+converter.register_unstructure_hook(CustomTransformation, block_serialization_hook)
+converter.register_structure_hook(CustomTransformation, block_deserialization_hook)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
