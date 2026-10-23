@@ -70,11 +70,11 @@ representing a particular parameter configuration from the campaign's search spa
 Thus, the following might be a `DataFrame` returned by `recommend` in a search space
 with the three parameters `Categorical_1`, `Categorical_2` and `Num_disc_1`:
 
-|    | Categorical_1   | Categorical_2   |   Num_disc_1 |
-|---:|:----------------|:----------------|-------------:|
-| 15 | B               | good            |            1 |
-| 18 | C               | bad             |            1 |
-|  9 | B               | bad             |            1 |
+| Categorical_1   | Categorical_2   |   Num_disc_1 |
+|:----------------|:----------------|-------------:|
+| B               | good            |            1 |
+| C               | bad             |            1 |
+| B               | bad             |            1 |
 
 ```{admonition} Batch Optimization
 :class: important
@@ -179,11 +179,11 @@ new_rec = campaign.recommend(batch_size=5)
 After adding the measurements, the corresponding `DataFrame` thus has the following 
 form:
 
-|    | Categorical_1   | Categorical_2   |   Num_disc_1 |   Target_max |
-|---:|:----------------|:----------------|-------------:|-------------:|
-| 15 | B               | good            |            1 |            2 |
-| 18 | C               | bad             |            1 |            4 |
-|  9 | B               | bad             |            1 |            9 |
+| Categorical_1   | Categorical_2   |   Num_disc_1 |   Target_max |
+|:----------------|:----------------|-------------:|-------------:|
+| B               | good            |            1 |            2 |
+| C               | bad             |            1 |            4 |
+| B               | bad             |            1 |            9 |
 
 ```{admonition} Parameter tolerances
 :class: note
@@ -207,11 +207,11 @@ stats = campaign.posterior_stats(rec)
 This will return a table with mean and standard deviation (and possibly other 
 statistics) of the target predictions for the provided candidates:
 
-|    | Yield_mean | Yield_std | Selectivity_mean |  Selectivity_std | ... |
-|---:|:-----------|:----------|:-----------------|:-----------------|-----|
-| 15 | 83.54      | 5.23      | 91.22            | 7.42             | ... |
-| 18 | 56.12      | 2.34      | 87.32            | 12.38            | ... |
-|  9 | 59.10      | 5.34      | 83.72            | 9.62             | ... |
+| Yield_mean | Yield_std | Selectivity_mean |  Selectivity_std | ... |
+|:-----------|:----------|:-----------------|:-----------------|-----|
+| 83.54      | 5.23      | 91.22            | 7.42             | ... |
+| 56.12      | 2.34      | 87.32            | 12.38            | ... |
+| 59.10      | 5.34      | 83.72            | 9.62             | ... |
 
 You can also provide an optional sequence of statistic names to compute other 
 statistics. If a float is provided, the corresponding quantile points will be 
@@ -220,11 +220,11 @@ calculated:
 stats = campaign.posterior_stats(rec, stats=["mode", 0.5])
 ```
 
-|    | Yield_mode | Yield_Q_0.5 | Selectivity_mode | Selectivity_Q_0.5 | ... |
-|---:|:-----------|:------------|:-----------------|:------------------|-----|
-| 15 | 83.54      | 83.54       | 91.22            | 91.22             | ... |
-| 18 | 56.12      | 56.12       | 87.32            | 87.32             | ... |
-|  9 | 59.10      | 59.10       | 83.72            | 83.72             | ... |
+| Yield_mode | Yield_Q_0.5 | Selectivity_mode | Selectivity_Q_0.5 | ... |
+|:-----------|:------------|:-----------------|:------------------|-----|
+| 83.54      | 83.54       | 91.22            | 91.22             | ... |
+| 56.12      | 56.12       | 87.32            | 87.32             | ... |
+| 59.10      | 59.10       | 83.72            | 83.72             | ... |
 
 ```{admonition} Posterior Statistics with Desirability Objectives
 :class: note
