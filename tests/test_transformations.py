@@ -26,7 +26,6 @@ from baybe.transformations.composite import (
     AdditiveTransformation,
     MultiplicativeTransformation,
 )
-from baybe.transformations.utils import _iterate_transformations
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
 
@@ -81,27 +80,6 @@ def test_unnesting_chained_transformations():
         ],
     )
     assert c == ChainedTransformation([t(2), t(3), t(4), t(5), t(6), t(7), t(8), t(9)])
-
-
-def test_transformation_iteration():
-    """Iterating a transformation yields it and all its nested components."""
-    t1 = AffineTransformation(factor=2.0)
-    t2 = AbsoluteTransformation()
-    t3 = BellTransformation(center=1.0)
-    additive = AdditiveTransformation([t2, t3])
-    multiplicative = MultiplicativeTransformation([t1, additive])
-    chained = ChainedTransformation([multiplicative, t3])
-
-    assert list(_iterate_transformations(t1)) == [t1]
-    assert list(_iterate_transformations(chained)) == [
-        chained,
-        multiplicative,
-        t1,
-        additive,
-        t2,
-        t3,
-        t3,
-    ]
 
 
 def test_affine_transformation_compression():
