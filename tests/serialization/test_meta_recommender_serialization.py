@@ -1,7 +1,10 @@
 """Meta recommender serialization tests."""
 
+from collections.abc import Callable
+
 import pytest
 
+from baybe._optional.info import LLM_INSTALLED
 from baybe.recommenders import (
     FPSRecommender,
     RandomRecommender,
@@ -25,16 +28,30 @@ _LLM_KWARGS = {"model": "test/model", "experiment_description": "Test."}
     [
         TwoPhaseMetaRecommender(),
         SequentialMetaRecommender(recommenders=[RandomRecommender()]),
-        TwoPhaseMetaRecommender.with_llm_initial_recommender(
-            **_LLM_KWARGS, recommender=RandomRecommender()
-        ),
-        SequentialMetaRecommender.with_alternating_llm_recommender(
-            **_LLM_KWARGS, recommender=RandomRecommender()
-        ),
     ],
 )
 def test_roundtrip(recommender: MetaRecommender):
     """A serialization roundtrip yields an equivalent object."""
+    assert_roundtrip_consistency(recommender)
+
+
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
+@pytest.mark.parametrize(
+    "constructor",
+    [
+        pytest.param(
+            TwoPhaseMetaRecommender.with_llm_initial_recommender,
+            id="two_phase",
+        ),
+        pytest.param(
+            SequentialMetaRecommender.with_alternating_llm_recommender,
+            id="sequential",
+        ),
+    ],
+)
+def test_llm_roundtrip(constructor: Callable[..., MetaRecommender]):
+    """A serialization roundtrip yields an equivalent LLM meta recommender."""
+    recommender = constructor(**_LLM_KWARGS, recommender=RandomRecommender())
     assert_roundtrip_consistency(recommender)
 
 
