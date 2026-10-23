@@ -42,14 +42,14 @@ EXPERIMENT DESCRIPTION:
 {% if objective is not none %}
 OPTIMIZATION OBJECTIVE:
 Each target is optimized by maximizing its transformed value (or minimizing it if \
-"minimize" is true); "constructor_info", if present, shows how the target was defined, \
-e.g. the "match_value" of a match target.
+"minimize" is true), where the components of chained transformations are applied in \
+the given order. "constructor_info", if present, shows how the target was defined. \
+For match targets, "match_mode" defines which measured values count as a match: "=" \
+for values close to "match_value", ">=" for all values at or above it, and "<=" for \
+all values at or below it. If "mismatch_instead" is true, the goal is reversed, i.e. \
+the measured values should be as far as possible from a match. Binary targets are \
+optimized by obtaining their "success_value" as often as possible.
 {{ objective }}
-
-{% if transformation_descriptions %}
-Transformations map a measured value x to the value being optimized:
-{{ transformation_descriptions }}
-{% endif %}
 
 {% endif %}
 PARAMETERS:
@@ -122,7 +122,6 @@ class _PromptContext(TypedDict):
     pending_experiments: str | None
     recovery_instruction: str | None
     response_format: str
-    transformation_descriptions: str
 
 
 def _drop_empty(obj: Any, /) -> Any:
@@ -224,26 +223,6 @@ def _forbidden_configurations(searchspace: SearchSpace) -> str | None:
     return forbidden.to_string(index=False)
 
 
-def _describe_transformations(objective: Objective, /) -> str:
-    """Describe the transformations used by the objective's targets.
-
-    Args:
-        objective: The objective whose targets' transformations to describe.
-
-    Returns:
-        A text description to embed in the prompt.
-    """
-    lines: list[str] = []
-    for target in objective.targets:
-        if not hasattr(target, "transformation"):
-            continue
-        t = target.transformation
-        doc = (type(t).__doc__ or "").strip().split(".")[0]
-        lines.append(f"- {target.name} uses {t!s}: {doc}.")
-
-    return "\n".join(lines)
-
-
 def make_prompt(
     batch_size: int,
     searchspace: SearchSpace,
@@ -329,9 +308,6 @@ def make_prompt(
             error.recovery_instruction if error is not None else None
         ),
         "original_response": original_response,
-        "transformation_descriptions": (
-            _describe_transformations(objective) if objective is not None else ""
-        ),
     }
     template = Template(
         _PROMPT_TEMPLATE,
