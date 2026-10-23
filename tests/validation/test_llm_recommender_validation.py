@@ -3,6 +3,7 @@
 import pytest
 from pytest import param
 
+from baybe._optional.info import LLM_INSTALLED
 from baybe.recommenders import (
     RandomRecommender,
     SequentialMetaRecommender,
@@ -79,6 +80,7 @@ def test_llm_recommender_invalid_construction(overrides, error_cls, match):
         ),
     ],
 )
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
 def test_llm_meta_recommender_constructors(
     constructor, constructor_kwargs, expected_switch_after
 ):

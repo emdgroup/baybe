@@ -8,11 +8,16 @@ from attrs import evolve
 from hypothesis import given
 from pytest import param
 
+from baybe._optional.info import LLM_INSTALLED
 from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 from baybe.recommenders.pure.llm.llm import LLMRecommender
 from tests.conftest import select_recommender
 from tests.hypothesis_strategies.recommenders import llm_recommenders
 from tests.serialization.utils import roundtrip
+
+pytestmark = pytest.mark.skipif(
+    not LLM_INSTALLED, reason="LLM dependencies not installed."
+)
 
 _LLM_KWARGS = {"model": "test/model", "experiment_description": "Test."}
 _NOT_SERIALIZED = "'litellm_args' of 'LLMRecommender' .* are not serialized"
