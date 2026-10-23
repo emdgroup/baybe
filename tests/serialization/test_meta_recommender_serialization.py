@@ -10,10 +10,6 @@ from baybe.recommenders import (
     TwoPhaseMetaRecommender,
 )
 from baybe.recommenders.meta.base import MetaRecommender
-from baybe.recommenders.meta.llm import (
-    LLMAlternatingRecommender,
-    LLMTwoPhaseRecommender,
-)
 from tests.conftest import select_recommender
 from tests.serialization.utils import assert_roundtrip_consistency, roundtrip
 
@@ -29,10 +25,10 @@ _LLM_KWARGS = {"model": "test/model", "experiment_description": "Test."}
     [
         TwoPhaseMetaRecommender(),
         SequentialMetaRecommender(recommenders=[RandomRecommender()]),
-        LLMTwoPhaseRecommender.from_model(
+        TwoPhaseMetaRecommender.with_llm_initial_recommender(
             **_LLM_KWARGS, recommender=RandomRecommender()
         ),
-        LLMAlternatingRecommender.from_model(
+        SequentialMetaRecommender.with_alternating_llm_recommender(
             **_LLM_KWARGS, recommender=RandomRecommender()
         ),
     ],

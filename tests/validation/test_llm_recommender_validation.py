@@ -3,10 +3,10 @@
 import pytest
 from pytest import param
 
-from baybe.recommenders import RandomRecommender
-from baybe.recommenders.meta.llm import (
-    LLMAlternatingRecommender,
-    LLMTwoPhaseRecommender,
+from baybe.recommenders import (
+    RandomRecommender,
+    SequentialMetaRecommender,
+    TwoPhaseMetaRecommender,
 )
 from baybe.recommenders.pure.llm.llm import LLMRecommender
 
@@ -57,97 +57,41 @@ def test_llm_recommender_invalid_construction(overrides, error_cls, match):
 
 
 @pytest.mark.parametrize(
-    ("cls", "kwargs", "error_cls", "match"),
+    ("constructor", "constructor_kwargs", "expected_switch_after"),
     [
         param(
-            LLMTwoPhaseRecommender,
-            {
-                "initial_recommender": RandomRecommender(),
-                "recommender": RandomRecommender(),
-            },
-            TypeError,
-            "instance_of",
-            id="twophase_initial_not_llm",
-        ),
-        param(
-            LLMAlternatingRecommender,
-            {
-                "recommenders": (
-                    LLMRecommender(**_VALID_KWARGS),
-                    RandomRecommender(),
-                    RandomRecommender(),
-                ),
-                "mode": "cyclic",
-            },
-            ValueError,
-            "exactly two",
-            id="alternating_wrong_length",
-        ),
-        param(
-            LLMAlternatingRecommender,
-            {
-                "recommenders": (RandomRecommender(), RandomRecommender()),
-                "mode": "cyclic",
-            },
-            ValueError,
-            "first recommender",
-            id="alternating_first_not_llm",
-        ),
-        param(
-            LLMAlternatingRecommender,
-            {
-                "recommenders": (
-                    LLMRecommender(**_VALID_KWARGS),
-                    RandomRecommender(),
-                ),
-                "mode": "raise",
-            },
-            ValueError,
-            "mode",
-            id="alternating_wrong_mode",
-        ),
-    ],
-)
-def test_llm_meta_recommender_invalid_construction(cls, kwargs, error_cls, match):
-    """Invalid arguments to LLM meta recommenders raise at construction time."""
-    with pytest.raises(error_cls, match=match):
-        cls(**kwargs)
-
-
-@pytest.mark.parametrize(
-    ("cls", "from_model_kwargs", "expected_switch_after"),
-    [
-        param(
-            LLMTwoPhaseRecommender,
+            TwoPhaseMetaRecommender.with_llm_initial_recommender,
             {},
             1,
             id="twophase_defaults",
         ),
         param(
-            LLMTwoPhaseRecommender,
+            TwoPhaseMetaRecommender.with_llm_initial_recommender,
             {"switch_after": 5},
             5,
             id="twophase_custom_switch",
         ),
         param(
-            LLMAlternatingRecommender,
+            SequentialMetaRecommender.with_alternating_llm_recommender,
             {},
             None,
             id="alternating_defaults",
         ),
     ],
 )
-def test_from_model_constructors(cls, from_model_kwargs, expected_switch_after):
-    """The ``from_model`` classmethods wire up the internal structure correctly."""
+def test_llm_meta_recommender_constructors(
+    constructor, constructor_kwargs, expected_switch_after
+):
+    """The LLM meta recommender constructors wire up the internal structure."""
     secondary = RandomRecommender()
-    rec = cls.from_model(
+    rec = constructor(
         **_VALID_KWARGS,
         litellm_args={"temperature": 0.5},
         recommender=secondary,
-        **from_model_kwargs,
+        **constructor_kwargs,
     )
 
-    if cls is LLMTwoPhaseRecommender:
+    if isinstance(rec, TwoPhaseMetaRecommender):
         llm_rec = rec.initial_recommender
         assert rec.recommender is secondary
         assert rec.switch_after == expected_switch_after

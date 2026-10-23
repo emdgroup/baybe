@@ -10,12 +10,7 @@ from baybe.recommenders import (
     SequentialMetaRecommender,
     TwoPhaseMetaRecommender,
 )
-from baybe.recommenders.meta.llm import (
-    LLMAlternatingRecommender,
-    LLMTwoPhaseRecommender,
-)
 from baybe.recommenders.meta.sequential import StreamingSequentialMetaRecommender
-from baybe.recommenders.pure.llm.llm import LLMRecommender
 from tests.conftest import select_recommender
 
 RECOMMENDERS = [RandomRecommender(), FPSRecommender(), BotorchRecommender()]
@@ -137,14 +132,12 @@ _LLM_KWARGS = {"model": "test/model", "experiment_description": "Test."}
 
 
 def test_llm_two_phase_meta_recommender():
-    """The LLM two-phase recommender switches at the configured point."""
-    llm_rec = LLMRecommender(**_LLM_KWARGS)
+    """The two-phase recommender with LLM warm start switches at the right point."""
     secondary = RandomRecommender()
-    recommender = LLMTwoPhaseRecommender(
-        initial_recommender=llm_rec,
-        recommender=secondary,
-        switch_after=2,
+    recommender = TwoPhaseMetaRecommender.with_llm_initial_recommender(
+        **_LLM_KWARGS, recommender=secondary, switch_after=2
     )
+    llm_rec = recommender.initial_recommender
 
     assert select_recommender(recommender, 0) is llm_rec
     assert select_recommender(recommender, 1) is llm_rec
@@ -153,12 +146,12 @@ def test_llm_two_phase_meta_recommender():
 
 
 def test_llm_alternating_recommender():
-    """The LLM alternating recommender cycles between LLM and secondary."""
-    llm_rec = LLMRecommender(**_LLM_KWARGS)
+    """The sequential recommender with alternating LLM cycles between both."""
     secondary = RandomRecommender()
-    recommender = LLMAlternatingRecommender(
-        recommenders=(llm_rec, secondary), mode="cyclic"
+    recommender = SequentialMetaRecommender.with_alternating_llm_recommender(
+        **_LLM_KWARGS, recommender=secondary
     )
+    llm_rec = recommender.recommenders[0]
 
     rec = select_recommender(recommender, 1)
     assert rec is llm_rec
