@@ -1,9 +1,5 @@
 """BayBE recommenders."""
 
-from baybe.recommenders.meta.llm import (
-    LLMAlternatingRecommender,
-    LLMTwoPhaseRecommender,
-)
 from baybe.recommenders.meta.sequential import (
     SequentialMetaRecommender,
     StreamingSequentialMetaRecommender,
@@ -27,9 +23,7 @@ __all__ = [
     "FPSRecommender",
     "GaussianMixtureClusteringRecommender",
     "KMeansClusteringRecommender",
-    "LLMAlternatingRecommender",
     "LLMRecommender",
-    "LLMTwoPhaseRecommender",
     "PAMClusteringRecommender",
     "NaiveHybridSpaceRecommender",
     "RandomRecommender",

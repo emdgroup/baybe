@@ -9,7 +9,6 @@ from hypothesis import given
 from pytest import param
 
 from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
-from baybe.recommenders.meta.llm import LLMTwoPhaseRecommender
 from baybe.recommenders.pure.llm.llm import LLMRecommender
 from tests.conftest import select_recommender
 from tests.hypothesis_strategies.recommenders import llm_recommenders
@@ -68,14 +67,12 @@ def test_stashed_context_not_serialized():
 
 
 def test_llm_two_phase_state_serialization():
-    """The LLM two-phase recommender preserves its switching state."""
-    llm_rec = LLMRecommender(**_LLM_KWARGS)
+    """The two-phase recommender with LLM warm start preserves its switching state."""
     secondary = RandomRecommender()
-    recommender = LLMTwoPhaseRecommender(
-        initial_recommender=llm_rec,
-        recommender=secondary,
-        switch_after=1,
+    recommender = TwoPhaseMetaRecommender.with_llm_initial_recommender(
+        **_LLM_KWARGS, recommender=secondary
     )
+    llm_rec = recommender.initial_recommender
 
     assert select_recommender(recommender, 0) is llm_rec
     assert select_recommender(recommender, 1) is secondary
