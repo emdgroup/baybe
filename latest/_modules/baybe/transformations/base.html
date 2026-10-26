@@ -995,6 +995,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/baybe.transformations.html">baybe.transformations</a><input aria-label="Toggle navigation of baybe.transformations" class="toctree-checkbox" id="toctree-checkbox-133" name="toctree-checkbox-133" role="switch" type="checkbox"/><label for="toctree-checkbox-133"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.transformations.base.html">baybe.transformations.base</a><input aria-label="Toggle navigation of baybe.transformations.base" class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.transformations.base.TensorCallable.html">baybe.transformations.base.TensorCallable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.transformations.base.MonotonicTransformation.html">MonotonicTransformation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.transformations.base.Transformation.html">Transformation</a></li>
 </ul>
@@ -1226,10 +1227,11 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAliasType</span><span class="p">,</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.mixin</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerialMixin</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_all_instance</span>
@@ -1237,13 +1239,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.interval</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConvertibleToInterval</span><span class="p">,</span> <span class="n">Interval</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
-
     <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCAcquisitionObjective</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
-    <span class="n">TensorCallable</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Type alias for a torch-based function mapping from reals to reals.&quot;&quot;&quot;</span>
+<span class="c1"># NOTE: Defined as runtime alias so that type hints referencing it can be resolved</span>
+<span class="c1">#   (e.g. by `cattrs`) without importing `torch`</span>
+<span class="n">TensorCallable</span> <span class="o">=</span> <span class="n">TypeAliasType</span><span class="p">(</span><span class="s2">&quot;TensorCallable&quot;</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;Tensor&quot;</span><span class="p">],</span> <span class="s2">&quot;Tensor&quot;</span><span class="p">])</span>
+<span class="sd">&quot;&quot;&quot;Type alias for a torch-based function mapping from reals to reals.&quot;&quot;&quot;</span>
 
 
 <span class="n">_TTransformation</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_TTransformation&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;Transformation&quot;</span><span class="p">)</span>

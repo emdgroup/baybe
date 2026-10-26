@@ -995,6 +995,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/baybe.transformations.html">baybe.transformations</a><input aria-label="Toggle navigation of baybe.transformations" class="toctree-checkbox" id="toctree-checkbox-133" name="toctree-checkbox-133" role="switch" type="checkbox"/><label for="toctree-checkbox-133"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.transformations.base.html">baybe.transformations.base</a><input aria-label="Toggle navigation of baybe.transformations.base" class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.transformations.base.TensorCallable.html">baybe.transformations.base.TensorCallable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.transformations.base.MonotonicTransformation.html">MonotonicTransformation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.transformations.base.Transformation.html">Transformation</a></li>
 </ul>
@@ -1224,7 +1225,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Iterable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -1234,12 +1235,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_all_instance</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
-
-    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.transformations.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Transformation</span>
-
-    <span class="n">TensorCallable</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Type alias for a torch-based function mapping from reals to reals.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.transformations.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">TensorCallable</span><span class="p">,</span> <span class="n">Transformation</span>
 
 
 <div class="viewcode-block" id="convert_transformation">

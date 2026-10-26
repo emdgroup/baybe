@@ -1,0 +1,7 @@
+baybe.transformations.base.TensorCallable
+=========================================
+
+.. currentmodule:: baybe.transformations.base
+
+
+.. autodata:: TensorCallable

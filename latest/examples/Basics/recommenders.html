@@ -996,6 +996,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/baybe.transformations.html">baybe.transformations</a><input aria-label="Toggle navigation of baybe.transformations" class="toctree-checkbox" id="toctree-checkbox-133" name="toctree-checkbox-133" role="switch" type="checkbox"/><label for="toctree-checkbox-133"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.transformations.base.html">baybe.transformations.base</a><input aria-label="Toggle navigation of baybe.transformations.base" class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.transformations.base.TensorCallable.html">baybe.transformations.base.TensorCallable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.transformations.base.MonotonicTransformation.html">MonotonicTransformation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.transformations.base.Transformation.html">Transformation</a></li>
 </ul>
@@ -1435,15 +1436,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent                Base                        Ligand  \
-235           DMAc      Cesium acetate  Di-tert-butylphenylphosphine   
-329       p-Xylene      Cesium acetate                 (t-Bu)PhCPhos   
-215  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+           Solvent               Base         Ligand  Temperature  \
+68     Butyl Ester  Potassium acetate      BrettPhos        105.0   
+29     Butyl Ester    Cesium pivalate  (t-Bu)PhCPhos         90.0   
+111  Butyornitrile     Cesium acetate  (t-Bu)PhCPhos        105.0   
 
-     Temperature  Concentration  
-235         90.0          0.100  
-329        105.0          0.153  
-215        120.0          0.153  
+     Concentration  
+68           0.153  
+29           0.153  
+111          0.057  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1452,15 +1453,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent                Base                        Ligand  \
-235           DMAc      Cesium acetate  Di-tert-butylphenylphosphine   
-329       p-Xylene      Cesium acetate                 (t-Bu)PhCPhos   
-215  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+           Solvent               Base         Ligand  Temperature  \
+68     Butyl Ester  Potassium acetate      BrettPhos        105.0   
+29     Butyl Ester    Cesium pivalate  (t-Bu)PhCPhos         90.0   
+111  Butyornitrile     Cesium acetate  (t-Bu)PhCPhos        105.0   
 
-     Temperature  Concentration      yield  
-235         90.0          0.100 -72.286396  
-329        105.0          0.153  -2.095435  
-215        120.0          0.153 -42.869082  
+     Concentration      yield  
+68           0.153 -94.324417  
+29           0.153  10.382342  
+111          0.057  25.383731  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

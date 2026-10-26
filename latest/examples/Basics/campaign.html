@@ -996,6 +996,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/baybe.transformations.html">baybe.transformations</a><input aria-label="Toggle navigation of baybe.transformations" class="toctree-checkbox" id="toctree-checkbox-133" name="toctree-checkbox-133" role="switch" type="checkbox"/><label for="toctree-checkbox-133"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.transformations.base.html">baybe.transformations.base</a><input aria-label="Toggle navigation of baybe.transformations.base" class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.transformations.base.TensorCallable.html">baybe.transformations.base.TensorCallable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.transformations.base.MonotonicTransformation.html">MonotonicTransformation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.transformations.base.Transformation.html">Transformation</a></li>
 </ul>
@@ -1317,13 +1318,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-           Solvent               Base         Ligand  Temperature  \
-274           DMAc  Potassium acetate  (t-Bu)PhCPhos        105.0   
-177  Butyornitrile  Potassium acetate      BrettPhos        120.0   
+           Solvent            Base                        Ligand  Temperature  \
+126  Butyornitrile  Cesium acetate  Di-tert-butylphenylphosphine         90.0   
+12     Butyl Ester  Cesium acetate                     BrettPhos        105.0   
 
      Concentration  
-274          0.100  
-177          0.057  
+126          0.057  
+12           0.057  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1336,13 +1337,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base         Ligand  Temperature  \
-274           DMAc  Potassium acetate  (t-Bu)PhCPhos        105.0   
-177  Butyornitrile  Potassium acetate      BrettPhos        120.0   
+           Solvent            Base                        Ligand  Temperature  \
+126  Butyornitrile  Cesium acetate  Di-tert-butylphenylphosphine         90.0   
+12     Butyl Ester  Cesium acetate                     BrettPhos        105.0   
 
      Concentration      yield  
-274          0.100 -88.283426  
-177          0.057 -93.776750  
+126          0.057 -65.398465  
+12           0.057  80.122488  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
