@@ -3,12 +3,15 @@
 import json
 from collections.abc import Sequence
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 import pytest
 
+from baybe.constraints import DiscreteLinearConstraint
 from baybe.parameters.base import Parameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
+from baybe.searchspace.candidates import ProductCandidates
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.serialization.core import converter
 from tests.serialization.utils import assert_roundtrip_consistency
@@ -28,6 +31,28 @@ def test_roundtrip(parameters: Sequence[Parameter]) -> None:
     """A serialization roundtrip yields an equivalent object."""
     searchspace = SearchSpace.from_product(parameters)
     assert_roundtrip_consistency(searchspace)
+
+
+def test_product_candidates_filters_roundtrip() -> None:
+    """Product candidates serialize their discrete filtering constraints."""
+    parameters = (
+        NumericalDiscreteParameter("p1", [0.0, 1.0]),
+        NumericalDiscreteParameter("p2", [0.0, 1.0]),
+    )
+    constraint = DiscreteLinearConstraint(["p1", "p2"], operator="<=", rhs=1.0)
+    subspace = SubspaceDiscrete(ProductCandidates(parameters, filters=(constraint,)))
+
+    assert_roundtrip_consistency(subspace)
+
+
+def test_product_candidates_non_constraint_filter_serialization_fails() -> None:
+    """Product candidates reject non-constraint filters during serialization."""
+    parameter = NumericalDiscreteParameter("p", [0.0, 1.0])
+    candidates = ProductCandidates([parameter], filters=(nw.col("p") > 0,))
+    subspace = SubspaceDiscrete(candidates)
+
+    with pytest.raises(ValueError, match="Only 'DiscreteFilteringConstraint' filters"):
+        subspace.to_json()
 
 
 def test_from_dataframe_deserialization():

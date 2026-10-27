@@ -24,6 +24,7 @@ from narwhals.testing import assert_frame_equal
 
 from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.exceptions import IncompatibleArgumentError, InputDataTypeWarning
+from baybe.serialization import converter
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
@@ -66,6 +67,44 @@ Filter: TypeAlias = (
 """
 
 _SeriesOrFrameT = TypeVar("_SeriesOrFrameT", nw.Series, nw.DataFrame)
+
+
+def _unstructure_filter(filter_: Filter, /) -> dict[str, Any]:
+    """Unstructure a serializable filter.
+
+    Args:
+        filter_: The filter to unstructure.
+
+    Raises:
+        ValueError: If the given filter is not serializable.
+
+    Returns:
+        The unstructured filter.
+    """
+    # IMPROVE: Generalize to other union members such as nw.Expr:
+    #     https://github.com/narwhals-dev/narwhals/issues/2704
+    if not isinstance(filter_, DiscreteFilteringConstraint):
+        raise ValueError(
+            f"Only '{DiscreteFilteringConstraint.__name__}' filters can be serialized, "
+            f"but received: {filter_!r}."
+        )
+    return converter.unstructure(filter_, unstructure_as=DiscreteFilteringConstraint)
+
+
+def _structure_filter(data: dict[str, Any], _) -> DiscreteFilteringConstraint:
+    """Structure a serialized filter.
+
+    Args:
+        data: The serialized filter.
+
+    Returns:
+        The structured filter.
+    """
+    return converter.structure(data, DiscreteFilteringConstraint)
+
+
+converter.register_unstructure_hook(Filter, _unstructure_filter)
+converter.register_structure_hook(Filter, _structure_filter)
 
 
 def _is_filter(x: Any, /) -> bool:
