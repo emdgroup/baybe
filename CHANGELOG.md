@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Removed
 - `eval_during_creation` / `eval_during_modeling` constraint class variables
+- `filter_df` utility (replaced with new `Filter` concept)
+- `fuzzy_row_match` utility
+- `SearchSpaceMatchWarning` exception class
 
 ### Breaking Changes
 - For pandas users: series/dataframe indices are no longer used as information carriers
@@ -79,6 +82,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `replace_batch`/`drop_batch` methods to `Campaign` for replacing/dropping an entire
   batch of measurements
 - `Campaign.n_batches` property indicating the number of recorded measurement batches
+- `Filter` type (including constraints, Narwhals expressions, dataframe semi-joins, and
+  Boolean masks) for specifying filtering criteria in discrete candidate contexts
+- `filter` method to `SubspaceDiscrete` and `CandidatesProtocol`
+- Discrete Cartesian product spaces can now be filtered using arbitrary `Filter` 
+  objects in addition to using constraint-based filtering
+- `Campaign.toggle_discrete_candidates` now supports the new `Filter` mechanism, 
+  provided via positional filter arguments
 
 ### Changed
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
@@ -124,6 +134,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `deserialize_dataframe` now routes dictionary-based input via
   `narwhals.DataFrame` constructors (e.g. `from_dict`, `from_dicts`) and dispatches
   to the active dataframe backend instead of always returning pandas dataframes
+- Discrete numerical recommendations are now matched against all search space candidates
+  within the specified tolerance instead of just the nearest candidate
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
@@ -132,6 +144,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   performance problem for large candidate sets
 
 ### Deprecations
+- `Campaign.toggle_discrete_candidates` calls using the `constraints` argument.
+  Use the new filter mechanism instead, provided via positional `Filter` arguments
 - `DiscreteParameter.comp_df` property (use `transform()` instead)
 - `CustomEncoding` enum class
 - `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
