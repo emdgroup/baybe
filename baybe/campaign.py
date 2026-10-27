@@ -234,7 +234,9 @@ class Campaign(SerialMixin):
                 backend=active_settings.default_dataframe_backend,
             ).to_native()
 
-        return nw.concat(self._measurements, how="vertical").to_native()
+        return nw.maybe_reset_index(
+            nw.concat(self._measurements, how="vertical")
+        ).to_native()
 
     @property
     def n_batches_done(self) -> NoReturn:
@@ -580,7 +582,7 @@ class Campaign(SerialMixin):
         # <<<<<<<<<< Deprecation
 
         filtered = self.searchspace.discrete.filter(*filters, complement=complement)
-        points_nw = filtered._get_candidates().collect()
+        points_nw = nw.maybe_reset_index(filtered._get_candidates().collect())
 
         if not dry_run:
             if exclude and not points_nw.is_empty():
@@ -590,10 +592,14 @@ class Campaign(SerialMixin):
                     concatenated = nw.concat(
                         [self._excluded_experiments, points_nw], how="vertical"
                     )
-                    self._excluded_experiments = concatenated.unique()
+                    self._excluded_experiments = nw.maybe_reset_index(
+                        concatenated.unique()
+                    )
             elif not exclude and not self._excluded_experiments.is_empty():
-                self._excluded_experiments = self._excluded_experiments.join(
-                    points_nw, on=points_nw.columns, how="anti"
+                self._excluded_experiments = nw.maybe_reset_index(
+                    self._excluded_experiments.join(
+                        points_nw, on=points_nw.columns, how="anti"
+                    )
                 )
 
         return points_nw.to_native()
@@ -769,7 +775,9 @@ class Campaign(SerialMixin):
                 for frame in (self._recommended_experiments, rec_nw.select(param_cols))
                 if not frame.is_empty()
             ]
-            self._recommended_experiments = nw.concat(frames, how="vertical").unique()
+            self._recommended_experiments = nw.maybe_reset_index(
+                nw.concat(frames, how="vertical").unique()
+            )
 
         return cast(
             IntoDataFrameT,
