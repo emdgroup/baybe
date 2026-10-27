@@ -78,6 +78,17 @@ def test_recommend_happy_path(searchspace_factory, batch_size):
     assert set(result.columns) == {p.name for p in searchspace.parameters}
 
 
+@pytest.fixture(name="fixed_examples")
+def fixture_fixed_examples():
+    """Fix the randomly sampled example configurations to make prompts comparable."""
+    with patch(
+        "baybe.recommenders.pure.llm._prompts._sample_example_configurations",
+        return_value=pd.DataFrame({"Example": [1]}),
+    ):
+        yield
+
+
+@pytest.mark.usefixtures("fixed_examples")
 def test_completion_arguments_forwarded():
     """The model, prompt, and litellm_args are forwarded to the completion call."""
     searchspace = make_discrete_searchspace()
@@ -255,6 +266,7 @@ def test_recovery(first_response, batch_size, recovery_response, expected_error)
     assert mock.call_count == 2
 
 
+@pytest.mark.usefixtures("fixed_examples")
 @pytest.mark.parametrize(
     "bad_content",
     [
@@ -317,6 +329,7 @@ def test_objective_metadata_warning(objective, warns):
                 _RECOMMENDER.recommend(1, searchspace, objective)
 
 
+@pytest.mark.usefixtures("fixed_examples")
 def test_context_stash_replacement():
     """The stashed context reflects the current call, not a previous one."""
     searchspace = make_discrete_searchspace()
