@@ -25,7 +25,12 @@ if TYPE_CHECKING:
 
 @define(frozen=True)
 class ChainedTransformation(Transformation):
-    """A chained transformation composing several individual transformations."""
+    r"""Apply a sequence of transformations in the listed order.
+
+    For ``transformations = (t1, t2, ..., tn)``, computes
+    :math:`f(x) = t_n(\cdots t_2(t_1(x)) \cdots)`. Each receives the previous
+    one's output, so order matters. ``t1 | t2`` is equivalent syntax for two steps.
+    """
 
     transformations: tuple[Transformation, ...] = field(
         converter=compress_transformations,
@@ -34,7 +39,7 @@ class ChainedTransformation(Transformation):
             deep_iterable(member_validator=instance_of(Transformation)),
         ],
     )
-    """The transformations to be composed (the first element gets applied first)."""
+    """The transformations in application order, first element first."""
 
     @override
     def __new__(cls, *args: Any, **kwargs: Any) -> Transformation:  # type: ignore[misc]
@@ -70,7 +75,12 @@ class ChainedTransformation(Transformation):
 
 @define(frozen=True)
 class AdditiveTransformation(Transformation):
-    """A transformation implementing the sum of two transformations."""
+    """Sum the outputs of two transformations applied to the same input.
+
+    For ``transformations = (t1, t2)``, computes :math:`f(x) = t_1(x) + t_2(x)`.
+    Both receive :math:`x` independently, not each other's output. ``t1 + t2`` is
+    equivalent syntax; more terms can be combined by nesting additions.
+    """
 
     transformations: tuple[Transformation, Transformation] = field(
         converter=to_tuple,
@@ -79,7 +89,7 @@ class AdditiveTransformation(Transformation):
             member_validator=instance_of(Transformation),
         ),
     )
-    """The transformations to be added."""
+    """The two transformations whose outputs for the same input are added."""
 
     @override
     def __new__(cls, *args: Any, **kwargs: Any) -> Transformation:  # type: ignore[misc]
@@ -110,7 +120,12 @@ class AdditiveTransformation(Transformation):
 
 @define(frozen=True)
 class MultiplicativeTransformation(Transformation):
-    """A transformation implementing the product of two transformations."""
+    r"""Multiply the outputs of two transformations applied to the same input.
+
+    For ``transformations = (t1, t2)``, computes :math:`f(x) = t_1(x) \cdot t_2(x)`.
+    Both receive :math:`x` independently, not each other's output. ``t1 * t2`` is
+    equivalent syntax; more factors can be combined by nesting multiplications.
+    """
 
     transformations: tuple[Transformation, Transformation] = field(
         converter=to_tuple,
@@ -119,7 +134,7 @@ class MultiplicativeTransformation(Transformation):
             member_validator=instance_of(Transformation),
         ),
     )
-    """The transformations to be multiplied."""
+    """The two transformations whose outputs for the same input are multiplied."""
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
