@@ -6,10 +6,12 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe import Campaign
 from baybe._optional.info import LLM_INSTALLED
+from baybe.campaign import _RECOMMENDED
 from baybe.constraints import DiscreteCustomConstraint
 from baybe.exceptions import (
     IncompatibilityError,
@@ -19,6 +21,8 @@ from baybe.exceptions import (
     LLMResponseError,
 )
 from baybe.objectives import SingleTargetObjective
+from baybe.parameters import CategoricalParameter
+from baybe.recommenders import RandomRecommender, SequentialMetaRecommender
 from baybe.recommenders.pure.llm._prompts import make_prompt
 from baybe.recommenders.pure.llm.llm import LLMRecommender
 from baybe.searchspace import SearchSpace
@@ -373,3 +377,31 @@ def test_recommend_with_campaign():
     with patch(PATCH_TARGET) as mock:
         mock.return_value = mock_response(make_valid_json(searchspace, 1))
         campaign.recommend(batch_size=1)
+
+
+def test_llm_recommendations_preserved_and_not_tracked():
+    """LLM recommendations keep their values and only other turns are tracked."""
+    recommender = SequentialMetaRecommender(
+        (LLMRecommender("test/model", "Test."), RandomRecommender()), mode="cyclic"
+    )
+    campaign = Campaign(
+        SearchSpace.from_product([CategoricalParameter("c", ("A", "B", "C", "D"))]),
+        recommender=recommender,
+        # Lets the LLM propose "D" again, even if the random turn recommended it
+        allow_recommending_already_recommended=True,
+    )
+    # "D" is not the first candidate, so looking up stored rows via the response
+    # index would return "A" instead
+    response = '[{"explanation": "x", "parameters": {"c": "D"}}]'
+
+    with patch(PATCH_TARGET, return_value=mock_response(response)):
+        for is_llm in (True, False, True):
+            expected = campaign._searchspace_metadata.copy()
+            rec = campaign.recommend(1)
+            if is_llm:
+                assert rec["c"].tolist() == ["D"]
+            else:
+                expected.loc[rec.index, _RECOMMENDED] = True
+            # TODO: Expect tracking on LLM turns once value-based tracking exists
+            assert_frame_equal(campaign._searchspace_metadata, expected)
+            campaign.add_measurements(rec)
