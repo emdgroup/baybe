@@ -2,7 +2,6 @@
 
 import pandas as pd
 import pytest
-from attrs import evolve
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED, JINJA2_INSTALLED, LLM_INSTALLED
@@ -26,12 +25,10 @@ from baybe.parameters import (
 )
 from baybe.recommenders.pure.llm._prompts import (
     _drop_empty,
-    _forbidden_configurations,
     _to_prompt_dict,
     make_prompt,
 )
 from baybe.searchspace import SearchSpace
-from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from baybe.targets import BinaryTarget, NumericalTarget
 
 if not JINJA2_INSTALLED:
@@ -302,88 +299,12 @@ def test_make_prompt_excludes_metadata_columns():
     assert "FitNr" not in prompt
 
 
-def _filter_searchspace(searchspace, mask):
-    """Create a filtered copy of a search space."""
-    return evolve(
-        searchspace,
-        discrete=FilteredSubspaceDiscrete.from_subspace(
-            searchspace.discrete, mask.to_numpy()
-        ),
-    )
-
-
 _DISCRETE_SS = SearchSpace.from_product(
     [
         CategoricalParameter("Cat", ("A", "B", "C")),
         NumericalDiscreteParameter("Num", (1.0, 2.0)),
     ]
 )
-_HYBRID_SS = SearchSpace.from_product(
-    [
-        CategoricalParameter("Cat", ("A", "B", "C")),
-        NumericalContinuousParameter("Cont", bounds=(0.0, 10.0)),
-    ]
-)
-_CONTINUOUS_SS = SearchSpace.from_product(
-    [NumericalContinuousParameter("x", bounds=(0.0, 10.0))]
-)
-
-
-@pytest.mark.parametrize(
-    "searchspace",
-    [
-        param(_DISCRETE_SS, id="unfiltered_discrete"),
-        param(_CONTINUOUS_SS, id="continuous_only"),
-    ],
-)
-def test_forbidden_configurations_returns_none(searchspace):
-    """Without filtering or without a discrete part, the helper returns None."""
-    assert _forbidden_configurations(searchspace) is None
-
-
-@pytest.mark.parametrize(
-    ("searchspace", "expected"),
-    [
-        param(
-            _filter_searchspace(
-                _DISCRETE_SS,
-                _DISCRETE_SS.discrete.exp_rep["Cat"] != "B",
-            ),
-            "Cat  Num\n  B  1.0\n  B  2.0",
-            id="single_value_forbidden",
-        ),
-        param(
-            _filter_searchspace(
-                _DISCRETE_SS,
-                _DISCRETE_SS.discrete.exp_rep["Cat"].isin(["A"]),
-            ),
-            "Cat  Num\n  B  1.0\n  B  2.0\n  C  1.0\n  C  2.0",
-            id="multiple_values_forbidden",
-        ),
-        param(
-            _filter_searchspace(
-                _DISCRETE_SS,
-                ~(
-                    (_DISCRETE_SS.discrete.exp_rep["Cat"] == "A")
-                    & (_DISCRETE_SS.discrete.exp_rep["Num"] == 1.0)
-                ),
-            ),
-            "Cat  Num\n  A  1.0",
-            id="single_row_forbidden",
-        ),
-        param(
-            _filter_searchspace(
-                _HYBRID_SS,
-                _HYBRID_SS.discrete.exp_rep["Cat"] != "B",
-            ),
-            "Cat\n  B",
-            id="hybrid_forbidden",
-        ),
-    ],
-)
-def test_forbidden_configurations(searchspace, expected):
-    """The helper returns the correct forbidden rows."""
-    assert _forbidden_configurations(searchspace) == expected
 
 
 @pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
@@ -411,13 +332,9 @@ def test_forbidden_configurations(searchspace, expected):
 )
 def test_full_prompt(recovery_kwargs, expected_present, expected_absent):
     """A fully populated prompt contains all sections and no template residue."""
-    searchspace = _filter_searchspace(
-        _DISCRETE_SS,
-        _DISCRETE_SS.discrete.exp_rep["Cat"] != "B",
-    )
     prompt = make_prompt(
         batch_size=3,
-        searchspace=searchspace,
+        searchspace=_DISCRETE_SS,
         objective=SingleTargetObjective(
             target=NumericalTarget("yield"),
             metadata={"description": "Maximize yield"},
@@ -439,7 +356,6 @@ def test_full_prompt(recovery_kwargs, expected_present, expected_absent):
         "Num",
         "PREVIOUS MEASUREMENTS",
         "PENDING EXPERIMENTS",
-        "FORBIDDEN CONFIGURATIONS",
         "explanation",
         "parameters",
     ]

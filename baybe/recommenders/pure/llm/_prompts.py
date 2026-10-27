@@ -23,14 +23,6 @@ if TYPE_CHECKING:
     from baybe.objectives.base import Objective
     from baybe.parameters.base import Parameter
 
-_FORBIDDEN_INSTRUCTIONS = """\
-The following configurations are currently NOT selectable. You MUST NOT recommend any
-of them. Treat this list as the single source of truth about what not to recommend.
-Do not rely on your own memory of novelty. Before you output each recommendation,
-compare it row-by-row against this list; if it matches a row, discard it and choose a
-genuinely new configuration instead:\
-"""
-
 _PROMPT_TEMPLATE = """\
 You are an expert experimental design assistant. Your task is to recommend new \
 experimental conditions based on the following information. Objects are given in \
@@ -72,12 +64,6 @@ The following experiments have already been proposed and are awaiting results.
 Take them into account when generating your recommendations.
 {{ pending_experiments }}
 {% endif %}
-{%- if forbidden_configurations is not none %}
-
-FORBIDDEN CONFIGURATIONS:
-{{ forbidden_instructions }}
-{{ forbidden_configurations }}
-{% endif %}
 {%- if recovery_instruction is not none %}
 
 Your previous recommendation could not be used and needs to be corrected.
@@ -113,8 +99,6 @@ class _PromptContext(TypedDict):
     batch_size: int
     constraints: str | None
     experiment_description: str
-    forbidden_configurations: str | None
-    forbidden_instructions: str
     measurements: str | None
     objective: str | None
     original_response: str | None
@@ -196,33 +180,6 @@ def _table_text(df: pd.DataFrame | None, /) -> str | None:
     return df.to_string(index=False)
 
 
-def _forbidden_configurations(searchspace: SearchSpace) -> str | None:
-    """Render discrete configurations that should not be recommended currently.
-
-    Some candidates should not be recommended in the current iteration, since it might
-    be forbidden to recommend points already recommended (e.g. via setting
-    ``allow_recommending_already_recommended``) or because the points are currently
-    pending. Hence, those points are dropped from the eligible candidate set the
-    recommender receives. Surfacing them lets the model avoid proposing configurations
-    that would be rejected as ineligible.
-
-    Args:
-        searchspace: The search space to recommend for.
-
-    Returns:
-        A rendered table of the forbidden discrete configurations, or ``None`` if the
-        search space has no discrete part or nothing has been filtered out.
-    """
-    discrete = searchspace.discrete
-    if not discrete.parameters:
-        return None
-    eligible, _ = discrete.get_candidates()
-    forbidden = discrete.exp_rep[~discrete.exp_rep.index.isin(eligible.index)]
-    if forbidden.empty:
-        return None
-    return forbidden.to_string(index=False)
-
-
 def make_prompt(
     batch_size: int,
     searchspace: SearchSpace,
@@ -290,6 +247,12 @@ def make_prompt(
             if constraints
             else None
         ),
+        # NOTE: Measurements and pending experiments are the only information about
+        #   earlier experiments in the prompt. Configurations that are currently not
+        #   selectable for other reasons, e.g. excluded ones or ones recommended by
+        #   another recommender but not yet measured, are not shown upfront. Proposing
+        #   them is only caught by the search space validation of the response, which
+        #   reports them to the model for the recovery attempt.
         "measurements": (
             _table_text(measurements[parameter_names + target_names])
             if measurements is not None and not measurements.empty
@@ -300,8 +263,6 @@ def make_prompt(
             if pending_experiments is not None and not pending_experiments.empty
             else None
         ),
-        "forbidden_configurations": _forbidden_configurations(searchspace),
-        "forbidden_instructions": _FORBIDDEN_INSTRUCTIONS,
         "batch_size": batch_size,
         "response_format": _response_format(batch_size),
         "recovery_instruction": (
