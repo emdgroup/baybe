@@ -73,9 +73,10 @@ def _filter_candidates(
 def _to_dataframe_or_lazy(
     dataframe: IntoFrame | nw.DataFrame | nw.LazyFrame, /
 ) -> nw.DataFrame | nw.LazyFrame:
-    """Convert a native or Narwhals frame to a Narwhals dataframe or lazyframe."""
-    # TODO[typing]: https://github.com/facebook/pyrefly/issues/5331
-    return nw.from_native(dataframe)
+    """Convert a native frame to a Narwhals frame (with narwhals frame passthrough)."""
+    if isinstance(dataframe, (nw.DataFrame, nw.LazyFrame)):
+        return dataframe
+    return nw.maybe_reset_index(nw.from_native(dataframe))
 
 
 @define(frozen=True)
