@@ -6,6 +6,7 @@ import json
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, TypedDict
 
+import pandas as pd
 from attrs import fields
 
 from baybe.exceptions import LLMResponseError
@@ -17,11 +18,12 @@ from baybe.recommenders.pure.llm._schema import _response_format
 from baybe.searchspace import SearchSpace
 
 if TYPE_CHECKING:
-    import pandas as pd
-
     from baybe.constraints.base import Constraint
     from baybe.objectives.base import Objective
     from baybe.parameters.base import Parameter
+
+# The number of configurations sampled from the search space as examples
+_N_EXAMPLE_CONFIGURATIONS = 3
 
 _PROMPT_TEMPLATE = """\
 You are an expert experimental design assistant. Your task is to recommend new \
@@ -52,6 +54,12 @@ CONSTRAINTS:
 All recommendations must satisfy the following constraints.
 {{ constraints }}
 {% endif %}
+
+EXAMPLE CONFIGURATIONS:
+The following configurations are examples from the search space. Follow these \
+examples when making new recommendations, in particular regarding the format and \
+representation of the parameter values.
+{{ example_configurations }}
 {% if measurements is not none %}
 
 PREVIOUS MEASUREMENTS:
@@ -98,6 +106,7 @@ class _PromptContext(TypedDict):
 
     batch_size: int
     constraints: str | None
+    example_configurations: str
     experiment_description: str
     measurements: str | None
     objective: str | None
@@ -180,6 +189,29 @@ def _table_text(df: pd.DataFrame | None, /) -> str | None:
     return df.to_string(index=False)
 
 
+def _sample_example_configurations(searchspace: SearchSpace, /) -> pd.DataFrame:
+    """Sample configurations from the search space to serve as examples in the prompt.
+
+    The discrete part is drawn from the currently selectable candidates and the
+    continuous part uniformly from the continuous subspace, respecting its constraints.
+
+    Args:
+        searchspace: The search space to sample from.
+
+    Returns:
+        Up to :data:`_N_EXAMPLE_CONFIGURATIONS` configurations. Fewer are returned if
+        fewer discrete candidates are selectable.
+    """
+    n = _N_EXAMPLE_CONFIGURATIONS
+    if searchspace.discrete.is_empty:
+        return searchspace.continuous.sample_uniform(n)
+
+    candidates, _ = searchspace.discrete.get_candidates()
+    discrete = candidates.sample(min(n, len(candidates))).reset_index(drop=True)
+    continuous = searchspace.continuous.sample_uniform(len(discrete))
+    return pd.concat([discrete, continuous], axis=1)
+
+
 def make_prompt(
     batch_size: int,
     searchspace: SearchSpace,
@@ -198,7 +230,8 @@ def make_prompt(
 
     The objective, parameters and constraints are included in their serialized form.
     Measurements and pending experiments are restricted to their parameter and target
-    columns.
+    columns. In addition, a few configurations sampled from the search space are
+    included as examples (see :func:`_sample_example_configurations`).
 
     When ``recovery`` is provided, the prompt is rendered in *recovery* mode: it
     carries the exact same context as the original query and appends a correction
@@ -246,6 +279,9 @@ def make_prompt(
             _to_json_lines(_to_prompt_dict(c) for c in constraints)
             if constraints
             else None
+        ),
+        "example_configurations": _sample_example_configurations(searchspace).to_string(
+            index=False
         ),
         # NOTE: Measurements and pending experiments are the only information about
         #   earlier experiments in the prompt. Configurations that are currently not

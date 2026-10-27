@@ -25,6 +25,7 @@ from baybe.parameters import (
 )
 from baybe.recommenders.pure.llm._prompts import (
     _drop_empty,
+    _sample_example_configurations,
     _to_prompt_dict,
     make_prompt,
 )
@@ -307,6 +308,45 @@ _DISCRETE_SS = SearchSpace.from_product(
 )
 
 
+_MIXTURE_NAMES = ["a", "b", "c"]
+
+
+@pytest.mark.parametrize(
+    ("searchspace", "n_expected"),
+    [
+        param(_DISCRETE_SS, 3, id="discrete"),
+        param(
+            SearchSpace.from_product([CategoricalParameter("Cat", ("A", "B"))]),
+            2,
+            id="fewer_candidates",
+        ),
+        param(
+            SearchSpace.from_product(
+                [NumericalContinuousParameter(n, (0, 100)) for n in _MIXTURE_NAMES],
+                [ContinuousLinearConstraint(_MIXTURE_NAMES, "=", (1, 1, 1), 100)],
+            ),
+            3,
+            id="continuous",
+        ),
+        param(
+            SearchSpace.from_product(
+                [
+                    CategoricalParameter("Cat", ("A", "B", "C")),
+                    NumericalContinuousParameter("x", (0, 1)),
+                ]
+            ),
+            3,
+            id="hybrid",
+        ),
+    ],
+)
+def test_sample_example_configurations(searchspace, n_expected):
+    """The examples are configurations of the search space."""
+    examples = _sample_example_configurations(searchspace)
+    assert len(examples) == n_expected
+    searchspace._validate_configurations(examples)
+
+
 @pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
 @pytest.mark.parametrize(
     ("recovery_kwargs", "expected_present", "expected_absent"),
@@ -352,6 +392,7 @@ def test_full_prompt(recovery_kwargs, expected_present, expected_absent):
         "Maximize yield",
         "yield",
         "PARAMETERS",
+        "EXAMPLE CONFIGURATIONS",
         "Cat",
         "Num",
         "PREVIOUS MEASUREMENTS",
