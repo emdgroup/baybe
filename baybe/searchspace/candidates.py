@@ -18,6 +18,7 @@ from baybe.parameters.utils import sort_parameters
 from baybe.searchspace.utils import build_constrained_product
 from baybe.searchspace.validation import validate_parameters
 from baybe.settings import active_settings
+from baybe.utils._types import _NarwhalsFrame
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import Filter, _df_equals, _filter_dataframe, _is_filter
 from baybe.utils.validation import validate_parameter_input
@@ -70,9 +71,7 @@ def _filter_candidates(
     return TableCandidates(candidates.parameters, filtered)
 
 
-def _to_narwhals_frame(
-    dataframe: IntoFrame | nw.DataFrame | nw.LazyFrame, /
-) -> nw.DataFrame | nw.LazyFrame:
+def _to_narwhals_frame(dataframe: IntoFrame | _NarwhalsFrame, /) -> _NarwhalsFrame:
     """Convert a native frame to a Narwhals frame (with narwhals frame passthrough)."""
     if isinstance(dataframe, (nw.DataFrame, nw.LazyFrame)):
         return dataframe
@@ -205,16 +204,14 @@ class TableCandidates(CandidatesProtocol):
     )
     """See :attr:`CandidatesProtocol.parameters`."""
 
-    _dataframe: nw.DataFrame | nw.LazyFrame = field(
+    _dataframe: _NarwhalsFrame = field(
         converter=_to_narwhals_frame,
         eq=cmp_using(eq=_df_equals),
     )
     """The dataframe containing the candidates."""
 
     @_dataframe.validator
-    def _validate_dataframe(
-        self, _: Attribute, value: nw.DataFrame | nw.LazyFrame
-    ) -> None:  # noqa: DOC101, DOC103
+    def _validate_dataframe(self, _: Attribute, value: _NarwhalsFrame) -> None:  # noqa: DOC101, DOC103
         if isinstance(value, nw.LazyFrame):
             columns = set(value.collect_schema().names())
             parameter_names = {parameter.name for parameter in self.parameters}
