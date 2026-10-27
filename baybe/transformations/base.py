@@ -1,4 +1,4 @@
-"""Base classes for target transformations."""
+"""Base classes for transformations."""
 
 from __future__ import annotations
 
@@ -35,10 +35,9 @@ def _image_equals_codomain(cls: type[_TTransformation], /) -> type[_TTransformat
 
 @define(frozen=True)
 class Transformation(SerialMixin, ABC):
-    """Abstract base class for transformations of numerical target values.
+    """Abstract base class for one-dimensional maps from reals to reals.
 
-    Maps measured values :math:`x` to the values :math:`f(x)` used for optimization;
-    the target's ``minimize`` flag controls optimization direction separately.
+    Transforms an input :math:`x` into an output :math:`f(x)`.
     """
 
     @abstractmethod
