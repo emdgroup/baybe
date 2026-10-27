@@ -70,7 +70,7 @@ def _filter_candidates(
     return TableCandidates(candidates.parameters, filtered)
 
 
-def _to_dataframe_or_lazy(
+def _to_narwhals_frame(
     dataframe: IntoFrame | nw.DataFrame | nw.LazyFrame, /
 ) -> nw.DataFrame | nw.LazyFrame:
     """Convert a native frame to a Narwhals frame (with narwhals frame passthrough)."""
@@ -206,7 +206,7 @@ class TableCandidates(CandidatesProtocol):
     """See :attr:`CandidatesProtocol.parameters`."""
 
     _dataframe: nw.DataFrame | nw.LazyFrame = field(
-        converter=_to_dataframe_or_lazy,
+        converter=_to_narwhals_frame,
         eq=cmp_using(eq=_df_equals),
     )
     """The dataframe containing the candidates."""
