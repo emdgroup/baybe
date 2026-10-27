@@ -18,7 +18,7 @@ from cattrs import IterableValidationError
 from typing_extensions import Self, override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
-from baybe.constraints.base import DiscreteConstraint
+from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
 from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import DeprecationError
 from baybe.parameters import (
@@ -29,7 +29,11 @@ from baybe.parameters import (
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
-from baybe.searchspace.validation import validate_parameter_names, validate_parameters
+from baybe.searchspace.validation import (
+    get_value_failure_reason,
+    validate_parameter_names,
+    validate_parameters,
+)
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
@@ -699,6 +703,99 @@ class SubspaceDiscrete(SerialMixin):
                 n,
             )
         )
+
+    def _validate_configurations(self, df: pd.DataFrame, /) -> None:
+        """Validate that all configurations belong to the subspace.
+
+        A configuration with valid parameter values passes in one of two ways:
+
+        1. It matches one of the candidates returned by :meth:`get_candidates`.
+        2. It is not stored in the subspace at all, but satisfies all filtering
+           constraints. This admits, for example, an equivalent representation of a
+           configuration that a deduplicating constraint removed from storage.
+
+        All other configurations fail. In particular, stored configurations that are
+        not candidates (e.g. excluded or already measured ones) never pass.
+
+        Args:
+            df: The configurations to validate. Additional columns are ignored, and
+                missing parameter columns are treated as missing values.
+
+        Raises:
+            ValueError: If any configuration does not belong to the subspace. The
+                message lists each failing configuration together with the reason.
+        """
+        # NOTE: This could maybe be changed into a full _contains method
+        if self.is_empty:
+            return
+        names = list(self.parameter_names)
+        configurations = df.reindex(columns=names)
+
+        # Prepare the lookups, with each configuration represented as a tuple of values
+        # TODO: Values are compared exactly, i.e. tolerances are not taken into
+        #   account. A numerical value within tolerance of a parameter value (e.g. 2.2
+        #   for 2) matches neither a candidate nor a stored configuration and can
+        #   therefore pass path 2, even if the configuration was filtered.
+        candidates, _ = self.get_candidates()
+        candidate_rows = set(candidates[names].itertuples(index=False, name=None))
+        stored_rows = set(self.exp_rep[names].itertuples(index=False, name=None))
+        filtering_constraints = [
+            c for c in self.constraints if isinstance(c, DiscreteFilteringConstraint)
+        ]
+
+        # NOTE: The configurations are deliberately checked one by one for readability.
+        #   A vectorized comparison of complete rows (e.g. via `pd.MultiIndex`) could
+        #   probably be faster but makes the individual paths harder to follow.
+        def get_failure_reason(i: int) -> str | None:
+            # A column can contain values of different types across rows, so the types
+            # are inferred for the single configuration
+            configuration = configurations.iloc[[i]].infer_objects()
+
+            # Precondition: Configurations with missing or invalid values fail
+            if reason := get_value_failure_reason(configuration, self.parameters):
+                return reason
+            row = tuple(configuration.iloc[0])
+
+            # Path 1: Selectable candidates pass
+            if row in candidate_rows:
+                return None
+
+            # Stored configurations that are not candidates were filtered on purpose
+            # (e.g. excluded or already measured) and fail
+            if row in stored_rows:
+                return (
+                    "currently not selectable (excluded, already measured or "
+                    "recommended, or pending)"
+                )
+
+            # Path 2: Configurations unknown to the subspace pass if they satisfy all
+            # filtering constraints
+            # TODO: Path 2 cannot detect implicit restrictions of the stored
+            #   configurations. For example, a valid configuration missing from an
+            #   explicitly provided table or a simplex construction passes.
+            # TODO: Path 2 cannot detect configurations equivalent to filtered stored
+            #   ones, e.g. a permutation of an excluded configuration.
+            # TODO: Only the first violated constraint is reported per configuration.
+            for c in filtering_constraints:
+                if not c.get_invalid(configuration).empty:
+                    return (
+                        f"violates the '{type(c).__name__}' constraint on parameters "
+                        f"{c.parameters}"
+                    )
+            return None
+
+        failures: list[str] = []
+        for i in range(len(df)):
+            if (reason := get_failure_reason(i)) is not None:
+                values = ", ".join(
+                    f"{k}={v}" for k, v in configurations.iloc[i].dropna().items()
+                )
+                failures.append(f"- {values}: {reason}")
+        if failures:
+            raise ValueError(
+                f"{len(failures)} configuration(s) do not belong to the discrete "
+                f"subspace:\n" + "\n".join(failures)
+            )
 
     def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Return the set of candidate parameter settings that can be tested.

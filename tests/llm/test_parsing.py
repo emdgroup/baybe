@@ -2,26 +2,16 @@
 
 import json
 
-import numpy as np
 import pytest
-from attrs import evolve
 
-from baybe.constraints.conditions import ThresholdCondition
 from baybe.constraints.continuous import ContinuousLinearConstraint
-from baybe.constraints.discrete import (
-    DiscreteBatchConstraint,
-    DiscretePermutationInvarianceConstraint,
-    DiscreteSelectionConstraint,
-)
+from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import (
+    LLMBatchConstraintValidationError,
     LLMBatchSizeError,
-    LLMConstraintViolationError,
     LLMDuplicateRecommendationsError,
     LLMIneligiblePointsError,
-    LLMInvalidParameterValueError,
     LLMMalformedResponseError,
-    LLMMissingParameterError,
-    LLMNonNumericParameterError,
     LLMResponseWarning,
     LLMUnknownParameterError,
 )
@@ -37,21 +27,10 @@ from baybe.recommenders.pure.llm._schema import (
     _response_format,
 )
 from baybe.searchspace import SearchSpace
-from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from tests.llm._mock import (
     make_discrete_searchspace,
-    make_recommendation,
     make_response_json,
 )
-
-
-def _make_filtered_searchspace(params, *, forbidden_mask):
-    """Create a search space with certain candidates masked as ineligible."""
-    ss = SearchSpace.from_product(params)
-    filtered = FilteredSubspaceDiscrete.from_subspace(
-        ss.discrete, ~np.array(forbidden_mask)
-    )
-    return evolve(ss, discrete=filtered)
 
 
 @pytest.fixture(name="discrete_searchspace", scope="module")
@@ -157,104 +136,69 @@ def test_parse_llm_response_format_errors(discrete_searchspace, response, match)
         parse_llm_response(response, discrete_searchspace, batch_size=1)
 
 
+def test_parse_llm_response_unknown_parameter():
+    """Referencing an unknown parameter raises ``LLMUnknownParameterError``."""
+    searchspace = SearchSpace.from_product([CategoricalParameter("Cat", ("A", "B"))])
+    response = make_response_json(searchspace, Unknown="x")
+    with pytest.raises(
+        LLMUnknownParameterError, match="Response contains unknown parameter names"
+    ):
+        parse_llm_response(response, searchspace, batch_size=1)
+
+
+_CAT_NUM_PARAMETERS = [
+    CategoricalParameter("Cat", ("A", "B")),
+    NumericalDiscreteParameter("Num", (1.0, 2.0)),
+]
+
+
 @pytest.mark.parametrize(
-    ("searchspace", "overrides", "error_cls", "match"),
+    ("parameters", "configurations", "match"),
     [
         pytest.param(
-            SearchSpace.from_product([CategoricalParameter("Cat", ("A", "B"))]),
-            {"Unknown": "x"},
-            LLMUnknownParameterError,
-            "Response contains unknown parameter names",
-            id="unknown_param",
+            [CategoricalParameter("Cat", ("A", "B"))],
+            [{"Cat": "A"}, {"Cat": "Z"}],
+            r"^1 configuration\(s\) do not belong to the discrete subspace:\n- Cat=Z:",
+            id="valid_then_invalid",
         ),
         pytest.param(
-            SearchSpace.from_product(
-                [NumericalDiscreteParameter("Num", (1.0, 2.0, 3.0))]
-            ),
-            {"Num": "abc"},
-            LLMNonNumericParameterError,
-            "non-numeric entries in the provided dataframe",
-            id="non_numeric",
+            _CAT_NUM_PARAMETERS,
+            [{"Cat": "A", "Num": 1.0}, {"Num": 2.0}],
+            r"- Num=2.0: missing values for parameters \['Cat'\]",
+            id="partially_missing",
         ),
         pytest.param(
-            SearchSpace.from_product(
-                [NumericalDiscreteParameter("Num", (1.0, 2.0, 3.0))]
-            ),
-            {"Num": 999},
-            LLMInvalidParameterValueError,
-            "invalid values in parameter",
-            id="out_of_bounds",
-        ),
-        pytest.param(
-            SearchSpace.from_product([CategoricalParameter("Cat", ("A", "B"))]),
-            {"Cat": "Z"},
-            LLMInvalidParameterValueError,
-            "invalid values in parameter",
-            id="invalid_category",
-        ),
-        pytest.param(
-            SearchSpace.from_product(
-                [CategoricalParameter("Cat", ("A", "B"), active_values=("A",))]
-            ),
-            {"Cat": "B"},
-            LLMInvalidParameterValueError,
-            "Only values from the active values",
-            id="inactive_category",
-        ),
-        pytest.param(
-            SearchSpace.from_product(
-                [NumericalContinuousParameter("x", bounds=(0.0, 10.0))]
-            ),
-            {"x": 99.0},
-            LLMInvalidParameterValueError,
-            "invalid values in parameter",
-            id="continuous_out_of_bounds",
+            _CAT_NUM_PARAMETERS,
+            [{"Num": 1.0}],
+            r"- Num=1.0: missing values for parameters \['Cat'\]",
+            id="fully_missing",
         ),
     ],
 )
-def test_parse_llm_response_parameter_errors(searchspace, overrides, error_cls, match):
-    """Invalid parameter values raise the corresponding error."""
-    response = make_response_json(searchspace, **overrides)
-    with pytest.raises(error_cls, match=match):
-        parse_llm_response(response, searchspace, batch_size=1)
+def test_parse_llm_response_ineligible(parameters, configurations, match):
+    """Configurations rejected by the search space raise ``LLMIneligiblePointsError``.
 
-
-def test_parse_llm_response_missing_parameter():
-    """Omitting a required parameter raises ``LLMMissingParameterError``."""
-    searchspace = SearchSpace.from_product(
-        [
-            CategoricalParameter("Cat", ("A", "B")),
-            NumericalDiscreteParameter("Num", (1.0, 2.0)),
-        ]
+    The individual rejection reasons are tested with the search space validation.
+    """
+    searchspace = SearchSpace.from_product(parameters)
+    response = json.dumps(
+        [{"explanation": "x", "parameters": c} for c in configurations]
     )
-    recommendation = make_recommendation(searchspace)
-    del recommendation["parameters"]["Cat"]
-    response = json.dumps([recommendation])
-    with pytest.raises(
-        LLMMissingParameterError,
-        match="Response is missing values for the following parameters: {'Cat'}",
-    ):
-        parse_llm_response(response, searchspace, batch_size=1)
+    with pytest.raises(LLMIneligiblePointsError, match=match):
+        parse_llm_response(response, searchspace, batch_size=len(configurations))
 
 
-def test_parse_llm_response_selection_constraint_violation():
-    """Violating a discrete selection constraint raises the correct error."""
-    constraint = DiscreteSelectionConstraint(
-        parameters=["Num"],
-        conditions=[ThresholdCondition(threshold=1.5, operator=">=")],
-    )
-    searchspace = SearchSpace.from_product(
-        [
-            CategoricalParameter("Cat", ("A", "B")),
-            NumericalDiscreteParameter("Num", (1.0, 2.0, 3.0)),
-        ],
-        constraints=[constraint],
-    )
-    response = make_response_json(searchspace, Num=1.0)
-    with pytest.raises(
-        LLMConstraintViolationError, match="DiscreteSelectionConstraint"
-    ):
+def test_parse_llm_response_ineligible_recovery_instruction():
+    """The recovery instruction forwards the rejection reasons to the model."""
+    searchspace = SearchSpace.from_product([CategoricalParameter("Cat", ("A", "B"))])
+    response = json.dumps([{"explanation": "x", "parameters": {"Cat": "Z"}}])
+    with pytest.raises(LLMIneligiblePointsError, match="Cat=Z") as exc_info:
         parse_llm_response(response, searchspace, batch_size=1)
+    instruction = exc_info.value.recovery_instruction
+    assert "- Cat=Z: invalid values for parameters ['Cat']" in instruction
+    assert instruction.endswith(
+        "Propose different configurations that belong to the search space instead."
+    )
 
 
 def test_parse_llm_response_batch_constraint_violation():
@@ -272,7 +216,9 @@ def test_parse_llm_response_batch_constraint_violation():
         {"explanation": "second", "parameters": {"Cat": "B", "Num": 2.0}},
     ]
     response = json.dumps(recommendations)
-    with pytest.raises(LLMConstraintViolationError, match="DiscreteBatchConstraint"):
+    with pytest.raises(
+        LLMBatchConstraintValidationError, match="DiscreteBatchConstraint"
+    ):
         parse_llm_response(response, searchspace, batch_size=2)
 
 
@@ -315,49 +261,6 @@ def test_parse_llm_response_happy_path():
     assert list(result["Num"]) == [1.0, 2.0]
 
 
-@pytest.mark.parametrize(
-    ("searchspace", "overrides"),
-    [
-        pytest.param(
-            _make_filtered_searchspace(
-                [CategoricalParameter("Cat", ("A", "B", "C"))],
-                forbidden_mask=[False, True, False],  # B is forbidden
-            ),
-            {"Cat": "B"},
-            id="categorical_forbidden",
-        ),
-        pytest.param(
-            _make_filtered_searchspace(
-                [NumericalDiscreteParameter("Num", (1.0, 2.0, 3.0))],
-                forbidden_mask=[False, False, True],  # 3.0 is forbidden
-            ),
-            {"Num": 3.0},
-            id="numerical_forbidden",
-        ),
-    ],
-)
-def test_parse_llm_response_ineligible_points(searchspace, overrides):
-    """Proposing a forbidden candidate raises ``LLMIneligiblePointsError``."""
-    response = make_response_json(searchspace, **overrides)
-    with pytest.raises(LLMIneligiblePointsError):
-        parse_llm_response(response, searchspace, batch_size=1)
-
-
-def test_parse_llm_response_accepts_non_stored_configuration():
-    """Valid configurations need not match the stored search space representation."""
-    # Of the equivalent configurations (1, 2) and (2, 1), only the first is stored
-    searchspace = SearchSpace.from_product(
-        [
-            NumericalDiscreteParameter("x", (1.0, 2.0)),
-            NumericalDiscreteParameter("y", (1.0, 2.0)),
-        ],
-        constraints=[DiscretePermutationInvarianceConstraint(["x", "y"])],
-    )
-    response = make_response_json(searchspace, x=2.0, y=1.0)
-    result = parse_llm_response(response, searchspace, batch_size=1)
-    assert result[["x", "y"]].values.tolist() == [[2.0, 1.0]]
-
-
 def test_parse_llm_response_hybrid_output():
     """Hybrid spaces produce output with aligned discrete and continuous parts."""
     searchspace = SearchSpace.from_product(
@@ -374,33 +277,6 @@ def test_parse_llm_response_hybrid_output():
     assert set(result.columns) == {"Cat", "Cont"}
     assert list(result["Cat"]) == ["A", "A"]
     assert list(result["Cont"]) == [0.3, 0.7]
-
-
-def test_parse_llm_response_valid_then_invalid():
-    """An error in a later recommendation raises even if earlier ones are valid."""
-    searchspace = SearchSpace.from_product([CategoricalParameter("Cat", ("A", "B"))])
-    recommendations = [
-        {"explanation": "valid", "parameters": {"Cat": "A"}},
-        {"explanation": "invalid", "parameters": {"Cat": "Z"}},
-    ]
-    with pytest.raises(LLMInvalidParameterValueError):
-        parse_llm_response(json.dumps(recommendations), searchspace, batch_size=2)
-
-
-def test_parse_llm_response_partial_missing_parameter():
-    """A parameter present in one recommendation but absent in another is caught."""
-    searchspace = SearchSpace.from_product(
-        [
-            CategoricalParameter("Cat", ("A", "B")),
-            NumericalDiscreteParameter("Num", (1.0, 2.0)),
-        ]
-    )
-    recommendations = [
-        {"explanation": "first", "parameters": {"Cat": "A", "Num": 1.0}},
-        {"explanation": "second", "parameters": {"Num": 2.0}},
-    ]
-    with pytest.raises(LLMInvalidParameterValueError, match="missing values"):
-        parse_llm_response(json.dumps(recommendations), searchspace, batch_size=2)
 
 
 def test_parse_llm_response_continuous_only_happy_path():
@@ -420,12 +296,6 @@ def test_parse_llm_response_continuous_only_happy_path():
     assert set(result.columns) == {"x", "y"}
     assert list(result["x"]) == [3.0, 7.0]
     assert list(result["y"]) == [2.0, 4.0]
-
-
-_CAT_NUM_PARAMETERS = [
-    CategoricalParameter("Cat", ("A", "B")),
-    NumericalDiscreteParameter("Num", (1.0, 2.0)),
-]
 
 
 @pytest.mark.parametrize(

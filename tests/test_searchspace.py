@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from attrs import evolve
 from exceptiongroup import ExceptionGroup
 from pandas.testing import assert_frame_equal
 
@@ -11,6 +12,9 @@ from baybe.constraints import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
     DiscreteLinearConstraint,
+    DiscretePermutationInvarianceConstraint,
+    DiscreteSelectionConstraint,
+    ThresholdCondition,
 )
 from baybe.exceptions import (
     EmptySearchSpaceError,
@@ -29,6 +33,7 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
+from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from baybe.searchspace.utils import (
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
@@ -531,3 +536,171 @@ def test_sample_from_polytope_mixed_constraints_with_interpoint():
         # Verify interpoint constraint is satisfied across the batch
         interpoint_constraint_result = samples["Conti_finite1"].sum()
         assert np.isclose(interpoint_constraint_result, 0.6, atol=1e-6)
+
+
+_CAT_NUM_PARAMETERS = [
+    CategoricalParameter("Cat", ("A", "B")),
+    NumericalDiscreteParameter("Num", (1.0, 2.0, 3.0)),
+]
+_PRODUCT_SEARCHSPACE = SearchSpace.from_product(_CAT_NUM_PARAMETERS)
+_CONTINUOUS_PARAMETER = NumericalContinuousParameter("x", (0.0, 1.0))
+
+
+def _make_searchspace_without_cat_b() -> SearchSpace:
+    """Create a search space whose configurations with ``Cat=B`` are filtered."""
+    discrete = _PRODUCT_SEARCHSPACE.discrete
+    is_selectable = (discrete.exp_rep["Cat"] != "B").to_numpy()
+    return evolve(
+        _PRODUCT_SEARCHSPACE,
+        discrete=FilteredSubspaceDiscrete.from_subspace(discrete, is_selectable),
+    )
+
+
+@pytest.mark.parametrize(
+    ("searchspace", "configurations"),
+    [
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": 1.0}, {"Cat": "B", "Num": 3.0}],
+            id="candidates",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": 1.0, "Extra": "ignored"}],
+            id="extra_column",
+        ),
+        pytest.param(
+            # Of the equivalent configurations (1, 2) and (2, 1), only the first is
+            # stored, so the second one passes via the constraint check
+            SearchSpace.from_product(
+                [
+                    NumericalDiscreteParameter("p1", (1.0, 2.0)),
+                    NumericalDiscreteParameter("p2", (1.0, 2.0)),
+                ],
+                [DiscretePermutationInvarianceConstraint(["p1", "p2"])],
+            ),
+            [{"p1": 2.0, "p2": 1.0}],
+            id="non_stored_equivalent",
+        ),
+        pytest.param(
+            SearchSpace.from_product([_CONTINUOUS_PARAMETER]),
+            [{"x": 0.5}],
+            id="continuous_only",
+        ),
+        pytest.param(
+            SearchSpace.from_product(
+                [CategoricalParameter("Cat", ("A", "B")), _CONTINUOUS_PARAMETER]
+            ),
+            [{"Cat": "A", "x": 0.5}],
+            id="hybrid",
+        ),
+    ],
+)
+def test_validate_configurations_passes(searchspace, configurations):
+    """Configurations belonging to the search space pass the validation."""
+    searchspace._validate_configurations(pd.DataFrame(configurations))
+
+
+@pytest.mark.parametrize(
+    ("searchspace", "configurations", "match"),
+    [
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": "abc"}],
+            r"- Cat=A, Num=abc: invalid values for parameters \['Num'\]",
+            id="non_numeric",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": 999}],
+            r"- Cat=A, Num=999: invalid values for parameters \['Num'\]",
+            id="out_of_tolerance",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "Z", "Num": 1.0}],
+            r"- Cat=Z, Num=1.0: invalid values for parameters \['Cat'\]",
+            id="invalid_category",
+        ),
+        pytest.param(
+            SearchSpace.from_product(
+                [CategoricalParameter("Cat", ("A", "B"), active_values=("A",))]
+            ),
+            [{"Cat": "B"}],
+            r"- Cat=B: invalid values for parameters \['Cat'\]",
+            id="inactive_value",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A"}],
+            r"- Cat=A: missing values for parameters \['Num'\]",
+            id="missing_column",
+        ),
+        pytest.param(
+            # Only the configuration without a value may be reported
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": 1.0}, {"Cat": "B"}],
+            r"^1 configuration\(s\) do not belong to the discrete subspace:\n"
+            r"- Cat=B: missing values for parameters \['Num'\]$",
+            id="missing_value",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "Z", "Num": "abc"}],
+            r"- Cat=Z, Num=abc: invalid values for parameters \['Cat', 'Num'\]",
+            id="several_invalid_parameters",
+        ),
+        pytest.param(
+            SearchSpace.from_product(
+                _CAT_NUM_PARAMETERS,
+                [
+                    DiscreteSelectionConstraint(
+                        parameters=["Num"],
+                        conditions=[ThresholdCondition(threshold=1.5, operator=">=")],
+                    )
+                ],
+            ),
+            [{"Cat": "A", "Num": 1.0}],
+            r"- Cat=A, Num=1.0: violates the 'DiscreteSelectionConstraint' constraint "
+            r"on parameters \['Num'\]",
+            id="constraint_violation",
+        ),
+        pytest.param(
+            _make_searchspace_without_cat_b(),
+            [{"Cat": "B", "Num": 1.0}],
+            r"- Cat=B, Num=1.0: currently not selectable",
+            id="filtered",
+        ),
+        pytest.param(
+            SearchSpace.from_product(
+                [CategoricalParameter("Cat", ("A", "B")), _CONTINUOUS_PARAMETER]
+            ),
+            [{"Cat": "A", "x": 1.7}],
+            r"continuous subspace:\n- x=1.7: invalid values for parameters \['x'\]",
+            id="continuous_out_of_bounds",
+        ),
+        pytest.param(
+            # Only the configuration with the non-numeric value may be reported
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": "abc"}, {"Cat": "A", "Num": 1.0}],
+            r"^1 configuration\(s\) do not belong to the discrete subspace:\n"
+            r"- Cat=A, Num=abc: invalid values for parameters \['Num'\]$",
+            id="mixed_types",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [
+                {"Cat": "Z", "Num": 1.0},
+                {"Cat": "A", "Num": 1.0},
+                {"Cat": "Y", "Num": 1.0},
+            ],
+            r"^2 configuration\(s\) do not belong to the discrete subspace:\n"
+            r"- Cat=Z, Num=1.0: .*\n- Cat=Y, Num=1.0: .*$",
+            id="all_failures_listed",
+        ),
+    ],
+)
+def test_validate_configurations_fails(searchspace, configurations, match):
+    """Configurations outside the search space are reported with their reason."""
+    with pytest.raises(ValueError, match=match):
+        searchspace._validate_configurations(pd.DataFrame(configurations))
