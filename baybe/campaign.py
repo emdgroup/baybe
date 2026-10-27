@@ -30,6 +30,7 @@ from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.recommenders.pure.llm.llm import LLMRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from baybe.searchspace.core import (
@@ -499,6 +500,14 @@ class Campaign(SerialMixin):
     ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
 
+        Note:
+            Recommendations from an
+            :class:`~baybe.recommenders.pure.llm.llm.LLMRecommender` are temporarily not
+            marked as recommended. Consequently,
+            ``allow_recommending_already_recommended=False`` cannot prevent repeats of
+            experiments proposed only by the LLM. Measurement tracking and candidate
+            exclusions are unaffected.
+
         Args:
             batch_size: Number of requested recommendations.
             pending_experiments: Parameter configurations specifying experiments
@@ -635,8 +644,15 @@ class Campaign(SerialMixin):
         ):
             self._cache_recommendation(rec)
 
-        # Update metadata
-        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
+        # LLM indices do not identify stored candidates, especially for equivalent
+        # symmetry representations. Skip this write rather than mark unrelated rows;
+        # existing metadata, filtering and measurement tracking must remain intact.
+        # TODO: Replace the opt-out with value-based recommendation tracking.
+        #   Complete membership validation and symmetry-aware handling remain necessary;
+        if self.searchspace.type in (
+            SearchSpaceType.DISCRETE,
+            SearchSpaceType.HYBRID,
+        ) and not isinstance(recommender, LLMRecommender):
             self._searchspace_metadata.loc[rec.index, _RECOMMENDED] = True
 
         return rec

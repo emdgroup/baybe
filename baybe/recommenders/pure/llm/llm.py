@@ -19,6 +19,7 @@ from baybe.exceptions import (
     LLMCallError,
     LLMMalformedResponseError,
     LLMResponseError,
+    NotEnoughPointsLeftError,
     OptionalImportError,
 )
 from baybe.objectives.base import Objective
@@ -40,7 +41,21 @@ _RESERVED_LITELLM_KEYS = frozenset({"model", "messages", "stream"})
 
 @define(slots=False)
 class LLMRecommender(PureRecommender, SerialMixin):
-    """Recommender that uses a language model to recommend new experimental points."""
+    """Recommender that uses a language model to recommend new experimental points.
+
+    When used in a :class:`~baybe.campaign.Campaign`, its recommendations are not marked
+    as recommended, even if they match stored configurations. This temporary limitation
+    remains until value-based recommendation tracking is available. The campaign's
+    ``allow_recommending_already_recommended=False`` flag therefore cannot prevent
+    repeats solely because the LLM previously proposed an experiment. Existing tracked
+    recommendations, exclusions, and supplied pending experiments are still handled
+    according to the campaign's settings.
+
+    Measurements remain recorded and are included in the model's prompt. In discrete
+    campaigns, set ``allow_recommending_already_measured=False`` to exclude tracked
+    measured configurations. That flag defaults to ``True``, so adding results alone
+    does not prevent repeats. Symmetry-equivalent configurations may remain untracked.
+    """
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
@@ -269,6 +284,33 @@ class LLMRecommender(PureRecommender, SerialMixin):
                     f"even after a recovery attempt. Initial problem: {initial_error} "
                     f"Remaining problem after recovery: {recovery_error}"
                 ) from recovery_error
+
+    @override
+    def _recommend_with_discrete_parts(
+        self,
+        searchspace: SearchSpace,
+        batch_size: int,
+        pending_experiments: pd.DataFrame | None,
+    ) -> pd.DataFrame:
+        # The inherited discrete dispatch extracts candidate indices and reconstructs
+        # stored rows. LLM responses instead contain generated values, so that path
+        # would change the recommendations or fail for symmetry-equivalent variants.
+        # Override it locally to preserve output without changing the parent class.
+        candidates_exp, _ = searchspace.discrete.get_candidates()
+        # This recommender supports subset-generating constraints. Only the base
+        # dispatcher's candidate-count check must be repeated, before any model call.
+        if (
+            searchspace.type is SearchSpaceType.DISCRETE
+            and len(candidates_exp) < batch_size
+        ):
+            raise NotEnoughPointsLeftError(
+                f"Using the current settings, there are fewer than {batch_size} "
+                f"possible data points left to recommend."
+            )
+        # TODO: Remove this override when discrete hooks return dataframes (#837).
+        # Response parsing/recovery delegates validation to the search space; preserving
+        # output and validating configurations do not establish trackable indices.
+        return self._recommend_hybrid(searchspace, candidates_exp, batch_size)
 
     @override
     def __str__(self) -> str:
