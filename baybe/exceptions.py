@@ -260,60 +260,8 @@ class LLMUnknownParameterError(LLMResponseError):
         )
 
 
-class LLMMissingParameterError(LLMResponseError):
-    """A language model response omitted required search space parameters."""
-
-    def __init__(self, *args: Any, parameters: Collection[str]):
-        super().__init__(*args)
-        self.parameters = parameters
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            f"Your previous response did not specify values for the required "
-            f"parameters {sorted(self.parameters)}. Every recommendation must "
-            f"provide a value for all parameters."
-        )
-
-
-class LLMNonNumericParameterError(LLMResponseError):
-    """A language model response gave non-numeric values for a numerical parameter."""
-
-    def __init__(self, *args: Any, detail: str):
-        super().__init__(*args)
-        self.detail = detail
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            f"Your previous response provided non-numeric values for a numerical "
-            f"parameter: {self.detail} Provide numeric values for all numerical "
-            f"parameters."
-        )
-
-
-class LLMInvalidParameterValueError(LLMResponseError):
-    """A language model response contained invalid parameter values."""
-
-    def __init__(self, *args: Any, detail: str):
-        super().__init__(*args)
-        self.detail = detail
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            f"Your previous response contained invalid parameter values: {self.detail} "
-            f"Provide values that lie within the allowed range (for numerical "
-            f"parameters) or match an allowed choice exactly (for categorical "
-            f"parameters)."
-        )
-
-
-class LLMConstraintViolationError(LLMResponseError):
-    """A language model response violated a search space constraint."""
+class LLMBatchConstraintValidationError(LLMResponseError):
+    """A language model response violated a batch constraint of the search space."""
 
     def __init__(
         self,
@@ -336,19 +284,14 @@ class LLMConstraintViolationError(LLMResponseError):
 
 
 class LLMIneligiblePointsError(LLMResponseError):
-    """A language model response proposed points that are currently not selectable."""
-
-    def __init__(self, *args: Any, n_ineligible: int):
-        super().__init__(*args)
-        self.n_ineligible = n_ineligible
+    """A language model response proposed points outside the search space."""
 
     @property
     @override
     def recovery_instruction(self) -> str:
         return (
-            f"{self.n_ineligible} of your proposed configurations are currently not "
-            f"selectable (they are excluded, already measured or recommended, or "
-            f"pending). Propose different points from the available search space."
+            f"{self}\nPropose different configurations that belong to the search "
+            f"space instead."
         )
 
 
