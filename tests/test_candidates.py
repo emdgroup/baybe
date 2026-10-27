@@ -165,7 +165,7 @@ def test_product_candidates_generation(filters, expected):
         pytest.param(p_disc, (), TypeError("not iterable"), id="no_param_seq"),
         pytest.param([p_disc], None, TypeError("not iterable"), id="none_constraint"),
         pytest.param(
-            [p_disc], [object()], TypeError("Invalid filters"), id="invalid_filter"
+            [p_disc], [object()], TypeError("as 'filters'"), id="invalid_filter"
         ),
         pytest.param(
             [p_disc2], [c_sum], ValueError("does not exist"), id="wrong_constraint"
