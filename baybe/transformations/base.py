@@ -35,7 +35,11 @@ def _image_equals_codomain(cls: type[_TTransformation], /) -> type[_TTransformat
 
 @define(frozen=True)
 class Transformation(SerialMixin, ABC):
-    """Abstract base class for all transformations."""
+    """Abstract base class for transformations of numerical target values.
+
+    Maps measured values :math:`x` to the values :math:`f(x)` used for optimization;
+    the target's ``minimize`` flag controls optimization direction separately.
+    """
 
     @abstractmethod
     def __call__(self, x: Tensor, /) -> Tensor:
@@ -226,7 +230,11 @@ class Transformation(SerialMixin, ABC):
 @_image_equals_codomain
 @define(frozen=True)
 class MonotonicTransformation(Transformation, ABC):
-    """Abstract base class for monotonic transformations."""
+    """Abstract base class for monotonic transformations.
+
+    Outputs are nondecreasing or nonincreasing over the valid input domain.
+    Output bounds are computed by transforming the input interval's endpoints.
+    """
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
