@@ -116,7 +116,7 @@ class TaskParameter(CategoricalParameter):
                 return None
             case TransferLearningMode.RGPE:
                 # RGPE adds no task kernel; the surrogate dispatches to a dedicated
-                # ensemble instead (see `GaussianProcessSurrogate._fit`).
+                # ensemble instead
                 return None
             case TransferLearningMode.IDENTITY:
                 return IdentityKernel(parameter_names=names)
