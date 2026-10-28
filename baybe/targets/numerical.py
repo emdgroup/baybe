@@ -746,6 +746,7 @@ class NumericalTarget(Target, SerialMixin):
             self.transformation(to_tensor(series)).numpy(),
             index=series.index,
             name=series.name,
+            copy=False,
         )
 
     @override
