@@ -12,7 +12,6 @@ from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
 from baybe._optional.info import LLM_INSTALLED
-from baybe.constraints.discrete import DiscreteCustomConstraint
 from baybe.exceptions import (
     IncompatibilityError,
     LLMAuthenticationError,
@@ -29,7 +28,6 @@ from baybe.recommenders.pure.llm._prompts import make_prompt
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.serialization import SerialMixin, converter
-from baybe.transformations.basic import CustomTransformation
 from baybe.utils.conversion import to_string
 from baybe.utils.metadata import Metadata
 
@@ -252,13 +250,11 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 self._pending_experiments,
                 experiment_description=self.experiment_description,
             )
-        except NotImplementedError:
+        except NotImplementedError as ex:
             raise IncompatibilityError(
-                f"'{self.__class__.__name__}' does not support "
-                f"'{DiscreteCustomConstraint.__name__}' or "
-                f"'{CustomTransformation.__name__}' since their logic "
-                f"cannot be described to the language model."
-            ) from None
+                f"Could not construct a prompt for `{self.__class__.__name__}`"
+                f"from the provided recommendations context."
+            ) from ex
         # Stays `None` if the model returns no usable content
         content: str | None = None
         try:

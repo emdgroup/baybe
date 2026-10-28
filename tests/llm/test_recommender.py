@@ -206,9 +206,12 @@ def test_custom_components_rejected(searchspace, transformation):
         )
     )
     with patch(PATCH_TARGET) as mock:
-        with pytest.raises(IncompatibilityError, match="cannot be described"):
+        with pytest.raises(
+            IncompatibilityError, match="Could not construct a prompt"
+        ) as exc_info:
             _RECOMMENDER.recommend(1, searchspace, objective)
-    assert mock.call_count == 0
+    assert isinstance(exc_info.value.__cause__, NotImplementedError)
+    mock.assert_not_called()
 
 
 @pytest.mark.parametrize(
