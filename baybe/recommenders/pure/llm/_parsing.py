@@ -66,8 +66,8 @@ def parse_llm_response(
 ) -> pd.DataFrame:
     """Parse a language model response into a dataframe of recommendations.
 
-    Only the first ``batch_size`` recommendations are validated and returned, surplus
-    recommendations are discarded.
+    The response must contain exactly ``batch_size`` recommendations. A mismatch is
+    rejected before any individual recommendation is validated.
 
     Args:
         response: The response from the language model.
@@ -81,7 +81,7 @@ def parse_llm_response(
     Raises:
         LLMMalformedResponseError: If the response cannot be parsed into the expected
             JSON structure.
-        LLMBatchSizeError: If the response contains fewer than ``batch_size``
+        LLMBatchSizeError: If the response does not contain exactly ``batch_size``
             recommendations.
         LLMUnknownParameterError: If a recommendation references parameters not in the
             search space.
@@ -110,19 +110,13 @@ def parse_llm_response(
         raise LLMMalformedResponseError(f"Error parsing JSON output: {e}.") from e
 
     # Check the number of recommendations before validating any of them
-    if len(recommendations) < batch_size:
+    if len(recommendations) != batch_size:
         raise LLMBatchSizeError(
             f"The language model returned {len(recommendations)} recommendation(s) "
             f"instead of the requested {batch_size}.",
             requested=batch_size,
             received=len(recommendations),
         )
-    # IMPROVE: Instead of discarding surplus recommendations, all recommendations could
-    #   be validated individually and the first valid ones selected, saving a recovery
-    #   attempt when only some of them are invalid. This requires recommendation-wise
-    #   validation, a selection that respects batch constraints, and a decision on
-    #   which error to report if too few valid recommendations remain.
-    recommendations = recommendations[:batch_size]
 
     # Structure the raw JSON into typed recommendation objects
     try:

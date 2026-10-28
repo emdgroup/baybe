@@ -16,6 +16,7 @@ from baybe.constraints import DiscreteCustomConstraint
 from baybe.exceptions import (
     IncompatibilityError,
     LLMAuthenticationError,
+    LLMBatchSizeError,
     LLMCallError,
     LLMMalformedResponseError,
     LLMResponseError,
@@ -212,6 +213,36 @@ def test_custom_components_rejected(searchspace, transformation):
             _RECOMMENDER.recommend(1, searchspace, objective)
     assert isinstance(exc_info.value.__cause__, NotImplementedError)
     mock.assert_not_called()
+
+
+@pytest.mark.parametrize("n_first", [1, 3], ids=["too_few", "too_many"])
+@pytest.mark.parametrize(
+    "n_recovery", [1, 2, 3], ids=["too_few_again", "corrected", "too_many_again"]
+)
+def test_batch_size_recovery(n_first, n_recovery):
+    """A wrong batch size triggers one correction attempt with the actual counts."""
+    batch_size = 2
+    first_content = make_valid_json(_SEARCHSPACE, n_first)
+    recovery_content = make_valid_json(_SEARCHSPACE, n_recovery)
+    responses = [mock_response(first_content), mock_response(recovery_content)]
+    with patch(PATCH_TARGET, side_effect=responses) as mock:
+        if n_recovery == batch_size:
+            result = _RECOMMENDER.recommend(batch_size, _SEARCHSPACE, _OBJECTIVE)
+            assert len(result) == batch_size
+        else:
+            with pytest.raises(
+                LLMResponseError, match="even after a recovery attempt"
+            ) as exc_info:
+                _RECOMMENDER.recommend(batch_size, _SEARCHSPACE, _OBJECTIVE)
+            cause = exc_info.value.__cause__
+            assert isinstance(cause, LLMBatchSizeError)
+            assert cause.requested == batch_size
+            assert cause.received == n_recovery
+    assert mock.call_count == 2
+    recovery_prompt = mock.call_args_list[1].kwargs["messages"][0]["content"]
+    assert f"provided {n_first} recommendation(s)" in recovery_prompt
+    assert f"but exactly {batch_size} are required" in recovery_prompt
+    assert first_content in recovery_prompt
 
 
 @pytest.mark.parametrize(

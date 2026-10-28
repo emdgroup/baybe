@@ -30,6 +30,14 @@ You are an expert experimental design assistant. Your task is to recommend new \
 experimental conditions based on the following information. Objects are given in \
 JSON format, one object per line.
 
+BATCH REQUIREMENTS:
+Provide exactly {{ batch_size }} distinct recommendations, no more and no fewer.
+{% if batch_size > 1 %}
+Choose the recommendations jointly as a diversified batch, rather than \
+independently selecting each experiment. Avoid redundant experiments while \
+respecting all constraints.
+{% endif %}
+
 EXPERIMENT DESCRIPTION:
 {{ experiment_description }}
 
@@ -84,12 +92,12 @@ ORIGINAL RESPONSE:
 {{ original_response }}
 {% endif %}
 
-Provide a corrected set of {{ batch_size }} distinct experimental conditions \
+Provide a corrected set of exactly {{ batch_size }} distinct experimental conditions \
 that addresses the problem described above and improves the optimization objective.
 {% else %}
 
-Recommend {{ batch_size }} distinct new experimental conditions that are likely \
-to improve the optimization objective.
+Recommend exactly {{ batch_size }} distinct new experimental conditions that are \
+likely to improve the optimization objective.
 {% endif %}
 For each recommendation, provide:
 1. A brief explanation of why you chose these values

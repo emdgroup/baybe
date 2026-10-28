@@ -114,6 +114,11 @@ def test_response_format(batch_size):
             id="no_json",
         ),
         pytest.param(
+            "[]",
+            "could not be parsed as a JSON array",
+            id="empty_array",
+        ),
+        pytest.param(
             '[{"explanation": "x"}]',
             "does not match the expected format",
             id="no_parameters",
@@ -299,36 +304,50 @@ def test_parse_llm_response_continuous_only_happy_path():
 
 
 @pytest.mark.parametrize(
-    ("constraints", "surplus"),
+    ("batch_size", "constraints", "configurations"),
     [
-        pytest.param([], {"Cat": "Z", "Num": 1.0}, id="invalid_surplus"),
         pytest.param(
+            2,
+            [],
+            [{"Cat": "Z", "Num": 1.0}],
+            id="too_few_with_invalid_values",
+        ),
+        pytest.param(
+            1,
+            [],
+            [{"Cat": "A", "Num": 1.0}, {"Cat": "B", "Num": 2.0}],
+            id="valid_surplus",
+        ),
+        pytest.param(
+            1,
+            [],
+            [{"Cat": "A", "Num": 1.0}, {"Cat": "Z", "Num": 1.0}],
+            id="invalid_surplus",
+        ),
+        pytest.param(
+            1,
             [DiscreteBatchConstraint(parameters=["Cat"])],
-            {"Cat": "B", "Num": 2.0},
+            [{"Cat": "A", "Num": 1.0}, {"Cat": "B", "Num": 2.0}],
             id="batch_constraint_violated_by_surplus",
         ),
     ],
 )
-def test_parse_llm_response_surplus_discarded(constraints, surplus):
-    """Surplus recommendations are discarded without being validated."""
+def test_parse_llm_response_wrong_batch_size(batch_size, constraints, configurations):
+    """Wrong batch sizes raise before individual or batch-level content validation."""
     searchspace = SearchSpace.from_product(_CAT_NUM_PARAMETERS, constraints)
-    recommendations = [
-        {"explanation": "requested", "parameters": {"Cat": "A", "Num": 1.0}},
-        {"explanation": "surplus", "parameters": surplus},
-    ]
-    result = parse_llm_response(json.dumps(recommendations), searchspace, batch_size=1)
-    assert list(result["Cat"]) == ["A"]
-    assert list(result["Num"]) == [1.0]
-
-
-def test_parse_llm_response_too_few_recommendations():
-    """Too few recommendations raise before any recommendation is validated."""
-    searchspace = SearchSpace.from_product(_CAT_NUM_PARAMETERS)
-    recommendations = [
-        {"explanation": "invalid", "parameters": {"Cat": "Z", "Num": 1.0}}
-    ]
-    with pytest.raises(LLMBatchSizeError, match="returned 1 recommendation"):
-        parse_llm_response(json.dumps(recommendations), searchspace, batch_size=2)
+    recommendations = [{"explanation": "x", "parameters": c} for c in configurations]
+    received = len(recommendations)
+    with pytest.raises(
+        LLMBatchSizeError, match=f"returned {received} recommendation"
+    ) as exc_info:
+        parse_llm_response(
+            json.dumps(recommendations), searchspace, batch_size=batch_size
+        )
+    error = exc_info.value
+    assert error.requested == batch_size
+    assert error.received == received
+    assert f"provided {received} recommendation(s)" in error.recovery_instruction
+    assert f"but exactly {batch_size} are required" in error.recovery_instruction
 
 
 @pytest.mark.parametrize(
