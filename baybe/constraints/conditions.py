@@ -6,16 +6,13 @@ import gc
 import operator as ops
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from functools import partial
 from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 
-import numpy as np
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, in_, min_len
 from attrs.validators import optional as optional_v
-from numpy.typing import ArrayLike
 from typing_extensions import override
 
 from baybe.serialization import (
@@ -26,66 +23,23 @@ from baybe.utils.basic import to_tuple
 from baybe.utils.validation import finite_float, validate_unique_values
 
 if TYPE_CHECKING:
-    import polars as pl
-
-
-def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
-    """Return a Boolean array indicating where ``x`` and ``y`` are not close.
-
-    The counterpart to ``numpy.isclose``.
-
-    Args:
-        x: First input array to compare.
-        y: Second input array to compare.
-        rtol: The relative tolerance parameter.
-        atol: The absolute tolerance parameter.
-
-    Returns:
-        A Boolean array of where ``x`` and ``y`` are not equal within the
-        given tolerances.
-
-    """
-    return ~_is_close(x, y, rtol=rtol, atol=atol)
-
-
-def _is_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
-    """Return a Boolean array indicating where ``x`` and ``y`` are close.
-
-    The equivalent to :func:``numpy.isclose``.
-    Using ``numpy.isclose`` with Polars dataframes results in this error:
-    ``TypeError: ufunc 'isfinite' not supported for the input types``.
-
-    Args:
-        x: First input array to compare.
-        y: Second input array to compare.
-        rtol: The relative tolerance parameter.
-        atol: The absolute tolerance parameter.
-
-    Returns:
-        A Boolean array of where ``x`` and ``y`` are equal within the
-        given tolerances.
-
-    """
-    return np.abs(np.subtract(x, y)) <= atol + rtol * np.abs(y)
+    from narwhals.stable.v2 import Expr, Series
+    from narwhals.stable.v2.typing import IntoSeries
 
 
 ThresholdOperator: TypeAlias = Literal["<", "<=", "=", "==", "!=", ">", ">="]
 """An operator for comparing numerical values against a threshold."""
 
-# provide threshold operators
 _THRESHOLD_OPERATORS: dict[ThresholdOperator, Callable] = {
     "<": ops.lt,
     "<=": ops.le,
-    "=": partial(_is_close, rtol=0.0),
-    "==": partial(_is_close, rtol=0.0),
-    "!=": partial(_is_not_close, rtol=0.0),
+    "=": ops.eq,
+    "==": ops.eq,
+    "!=": ops.ne,
     ">": ops.gt,
     ">=": ops.ge,
 }
-
-# define operators that are eligible for tolerance
 _TOLERANCE_OPERATORS = ["=", "==", "!="]
-
 _LOGIC_COMBINERS = {
     "AND": ops.and_,
     "OR": ops.or_,
@@ -101,27 +55,38 @@ class Condition(ABC, SerialMixin):
     :class:`~baybe.symmetries.base.Symmetry` objects.
     """
 
-    @abstractmethod
-    def evaluate(self, data: pd.Series) -> pd.Series:
-        """Evaluate the condition on a given data series.
+    def __call__(self, series: IntoSeries, /) -> IntoSeries:
+        """Evaluate the condition and return the corresponding Boolean series.
 
         Args:
-            data: A series containing parameter values.
+            series: A native series containing the values to be evaluated.
 
         Returns:
-            A Boolean series indicating which elements satisfy the condition.
+            A native Boolean series indicating which values satisfy the condition.
+
+        Raises:
+            ValueError: If the input series is incompatible with the condition.
         """
+        nw_series = nw.from_native(series, series_only=True)
+        self._validate_series(nw_series)
+        nw_frame = nw_series.to_frame()
+        column = nw_frame.columns[0]
+        result = nw_frame.select(self._to_expr(nw.col(column)))
+        return result.get_column(result.columns[0]).to_native()
 
     @abstractmethod
-    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
-        """Apply the condition to a Polars expression.
+    def _to_expr(self, expr: Expr, /) -> Expr:
+        """Return the condition as a Narwhals expression.
 
         Args:
             expr: Input expression, for instance column selection etc.
 
         Returns:
-            An expression that can be used for filtering.
+            A backend-agnostic Boolean expression.
         """
+
+    def _validate_series(self, series: Series, /) -> None:
+        """Validate the input series before applying the condition."""
 
 
 @define
@@ -167,33 +132,29 @@ class ThresholdCondition(Condition):
                     f"or <= 0.0, but was {value}."
                 )
 
-    def _make_operator_function(self) -> Callable[..., Any]:
-        """Generate a function using operators to filter out undesired rows."""
-
-        def evaluate(x: ArrayLike, /, **kwargs) -> Any:
-            """Evaluate the condition on a given input."""
-            return _THRESHOLD_OPERATORS[self.operator](x, self.threshold, **kwargs)
-
-        if self.operator in _TOLERANCE_OPERATORS:
-            return partial(evaluate, atol=self.tolerance)
-
-        return evaluate
-
     @override
-    def evaluate(self, data: pd.Series) -> pd.Series:
-        if data.dtype.kind not in "iufb":
+    def _validate_series(self, data: Series, /) -> None:
+        if not isinstance(data.dtype, (nw.dtypes.NumericType, nw.dtypes.Boolean)):
             raise ValueError(
                 "You tried to apply a threshold condition to non-numeric data. "
                 "This operation is error-prone and not supported. Only use threshold "
                 "conditions with numerical parameters."
             )
-        func = self._make_operator_function()
-        return data.apply(func)
 
     @override
-    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
-        op = self._make_operator_function()
-        return op(expr)
+    def _to_expr(self, expr: Expr, /) -> Expr:
+        if self.operator in _TOLERANCE_OPERATORS:
+            assert self.tolerance is not None
+            close = (expr >= self.threshold - self.tolerance) & (
+                expr <= self.threshold + self.tolerance
+            )
+            if self.operator == "!=":
+                return (~close).fill_null(True)
+            return close.fill_null(False)
+
+        return _THRESHOLD_OPERATORS[self.operator](expr, self.threshold).fill_null(
+            False
+        )
 
 
 @define
@@ -222,12 +183,8 @@ class SubSelectionCondition(Condition):
         )
 
     @override
-    def evaluate(self, data: pd.Series) -> pd.Series:
-        return data.isin(self.selection)
-
-    @override
-    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
-        return expr.is_in(self.selection)
+    def _to_expr(self, expr: Expr, /) -> Expr:
+        return expr.is_in(self.selection).fill_null(False)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

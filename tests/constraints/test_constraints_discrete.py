@@ -318,7 +318,7 @@ def test_linear_constraint_coefficients(coefficients, threshold, operator, n_inv
     )
     coeffs = coefficients or (1.0, 1.0)
     weighted = df["A"] * coeffs[0] + df["B"] * coeffs[1]
-    expected = df.index[~ThresholdCondition(threshold, operator).evaluate(weighted)]
+    expected = df.index[~ThresholdCondition(threshold, operator)(weighted)]
     assert list(constraint.get_invalid(df)) == list(expected)
     assert len(constraint.get_invalid(df)) == n_invalid
 
