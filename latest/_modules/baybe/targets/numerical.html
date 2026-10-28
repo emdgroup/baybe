@@ -2039,9 +2039,10 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_tensor</span>
 
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transformation</span><span class="p">(</span><span class="n">to_tensor</span><span class="p">(</span><span class="n">series</span><span class="p">)),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transformation</span><span class="p">(</span><span class="n">to_tensor</span><span class="p">(</span><span class="n">series</span><span class="p">))</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
             <span class="n">index</span><span class="o">=</span><span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="n">series</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
