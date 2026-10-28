@@ -18,6 +18,7 @@ from baybe.exceptions import (
     IncompatibleAcquisitionFunctionError,
     InfeasibilityError,
 )
+from baybe.objectives.tfpr import TFPRObjective
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.bayesian.botorch.continuous import (
     recommend_continuous_torch,
@@ -175,6 +176,8 @@ class BotorchRecommender(BayesianRecommender):
             The dataframe indices of the recommended points in the provided
             experimental representation.
         """
+        if isinstance(self._objective, TFPRObjective):
+            return self._recommend_discrete_tfpr(candidates_exp, batch_size)
         if subspace_discrete.n_subsets > 0:
             return recommend_discrete_with_subsets(
                 self, subspace_discrete, candidates_exp, batch_size

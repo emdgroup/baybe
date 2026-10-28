@@ -46,3 +46,5 @@
   Adaptive hyper-prior tailored for reaction yield optimization tasks
 - Guanming Chen (PSL University, Paris, France):\
   Adaptive hyper-prior tailored for reaction yield optimization tasks
+- aebrer (Merck KGaA, Darmstadt, Germany):\
+  Top-fraction Pareto ranking (TFPR) recommender

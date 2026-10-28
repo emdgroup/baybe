@@ -14,6 +14,7 @@ from tests.hypothesis_strategies.objectives import (
     desirability_objectives,
     pareto_objectives,
     single_target_objectives,
+    tfpr_objectives,
 )
 from tests.serialization.utils import assert_roundtrip_consistency
 
@@ -33,6 +34,7 @@ def _get_involved_transformations(target: Target) -> list[Transformation]:
         param(single_target_objectives(), id="SingleTargetObjective"),
         param(desirability_objectives(), id="DesirabilityObjective"),
         param(pareto_objectives(), id="ParetoObjective"),
+        param(tfpr_objectives(), id="TFPRObjective"),
     ],
 )
 @given(data=st.data())

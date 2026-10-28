@@ -68,7 +68,7 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
     - Smartly acquire training data for model building via [active learning](https://emdgroup.github.io/baybe/stable/concepts/active_learning.html).
     - Conduct AB testing via [bandit models](https://emdgroup.github.io/baybe/stable/examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html).
   - Specify the desired target value via [target transformations](https://emdgroup.github.io/baybe/stable/components/transformations.html).
-  - Optimize multiple targets at the same time via [Pareto optimization](https://emdgroup.github.io/baybe/stable/components/objectives.html#paretoobjective) or [desirability scalarization](https://emdgroup.github.io/baybe/stable/components/objectives.html#desirabilityobjective).
+  - Optimize multiple targets at the same time via [Pareto optimization](https://emdgroup.github.io/baybe/stable/components/objectives.html#paretoobjective) (including a [fast ranking-based variant](https://emdgroup.github.io/baybe/stable/components/objectives.html) for large discrete search spaces) or [desirability scalarization](https://emdgroup.github.io/baybe/stable/components/objectives.html#desirabilityobjective).
 
   </div>
 </details>
