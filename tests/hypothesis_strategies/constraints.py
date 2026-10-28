@@ -6,9 +6,9 @@ import hypothesis.strategies as st
 from hypothesis import assume
 
 from baybe.constraints.conditions import (
-    _threshold_operators,
-    _valid_logic_combiners,
-    _valid_tolerance_operators,
+    _LOGIC_COMBINERS,
+    _THRESHOLD_OPERATORS,
+    _TOLERANCE_OPERATORS,
 )
 from baybe.constraints.continuous import (
     ContinuousLinearConstraint,
@@ -59,7 +59,7 @@ def discrete_selection_constraints(
             for p in parameters
         ]
 
-    combiner = draw(st.sampled_from(list(_valid_logic_combiners)))
+    combiner = draw(st.sampled_from(list(_LOGIC_COMBINERS)))
     exclude = draw(st.booleans())
     return DiscreteSelectionConstraint(
         parameter_names, conditions, combiner, exclude=exclude
@@ -186,13 +186,13 @@ def discrete_linear_constraints(
         assert len(parameter_names) == len(set(parameter_names))
         params = parameter_names
 
-    operator = draw(st.sampled_from(list(_threshold_operators.keys())))
+    operator = draw(st.sampled_from(list(_THRESHOLD_OPERATORS.keys())))
     rhs = draw(finite_floats())
     exclude = draw(st.booleans())
 
     # Optionally add tolerance for tolerance-enabled operators
     tolerance = None
-    if operator in _valid_tolerance_operators:
+    if operator in _TOLERANCE_OPERATORS:
         tolerance = draw(st.one_of(st.none(), positive_finite_floats()))
 
     # Optionally add coefficients
@@ -224,13 +224,13 @@ def discrete_product_constraints(
         assert len(parameter_names) == len(set(parameter_names))
         params = parameter_names
 
-    operator = draw(st.sampled_from(list(_threshold_operators.keys())))
+    operator = draw(st.sampled_from(list(_THRESHOLD_OPERATORS.keys())))
     rhs = draw(finite_floats())
     exclude = draw(st.booleans())
 
     # Optionally add tolerance for tolerance-enabled operators
     tolerance = None
-    if operator in _valid_tolerance_operators:
+    if operator in _TOLERANCE_OPERATORS:
         tolerance = draw(st.one_of(st.none(), positive_finite_floats()))
 
     return DiscreteProductConstraint(

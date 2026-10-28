@@ -10,7 +10,7 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe._optional.info import POLARS_INSTALLED
-from baybe.constraints.conditions import ThresholdCondition, _threshold_operators
+from baybe.constraints.conditions import _THRESHOLD_OPERATORS, ThresholdCondition
 from baybe.constraints.discrete import (
     DiscreteLinearConstraint,
     DiscreteProductConstraint,
@@ -463,7 +463,7 @@ _THRESHOLD_CASES = (
 def test_threshold_rows_completeness():
     """The expected filtering results cover all available threshold operators."""
     tables = (_LINEAR_ROWS, _PRODUCT_ROWS, _SELECTION_ROWS)
-    assert all(set(table) == set(_threshold_operators) for table in tables)
+    assert all(set(table) == set(_THRESHOLD_OPERATORS) for table in tables)
 
 
 @pytest.mark.parametrize(

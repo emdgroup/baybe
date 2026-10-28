@@ -73,7 +73,7 @@ ThresholdOperator: TypeAlias = Literal["<", "<=", "=", "==", "!=", ">", ">="]
 """An operator for comparing numerical values against a threshold."""
 
 # provide threshold operators
-_threshold_operators: dict[ThresholdOperator, Callable] = {
+_THRESHOLD_OPERATORS: dict[ThresholdOperator, Callable] = {
     "<": ops.lt,
     "<=": ops.le,
     "=": partial(_is_close, rtol=0.0),
@@ -84,12 +84,12 @@ _threshold_operators: dict[ThresholdOperator, Callable] = {
 }
 
 # define operators that are eligible for tolerance
-_valid_tolerance_operators = ["=", "==", "!="]
+_TOLERANCE_OPERATORS = ["=", "==", "!="]
 
-_valid_logic_combiners = {
+_LOGIC_COMBINERS = {
     "AND": ops.and_,
     "OR": ops.or_,
-    "XOR": ops.xor,
+    "XOR": ops.ne,
 }
 
 
@@ -132,7 +132,7 @@ class ThresholdCondition(Condition):
     threshold: float = field(converter=float, validator=finite_float)
     """The threshold value used in the condition."""
 
-    operator: ThresholdOperator = field(validator=[in_(_threshold_operators)])
+    operator: ThresholdOperator = field(validator=[in_(_THRESHOLD_OPERATORS)])
     """The operator used in the condition."""
 
     tolerance: float | None = field(
@@ -143,8 +143,7 @@ class ThresholdCondition(Condition):
     @tolerance.default
     def _tolerance_default(self) -> float | None:
         """Create the default value for the tolerance."""
-        # Default value for the tolerance.
-        return 1e-8 if self.operator in _valid_tolerance_operators else None
+        return 1e-8 if self.operator in _TOLERANCE_OPERATORS else None
 
     @tolerance.validator
     def _validate_tolerance(self, _: Any, value: float) -> None:  # noqa: DOC101, DOC103
@@ -155,16 +154,16 @@ class ThresholdCondition(Condition):
             ValueError: If the operator allows for setting a tolerance, but the provided
                 tolerance is either less than 0 or ``None``.
         """
-        if (self.operator not in _valid_tolerance_operators) and (value is not None):
+        if (self.operator not in _TOLERANCE_OPERATORS) and (value is not None):
             raise ValueError(
                 f"Setting the tolerance for a threshold condition is only valid "
-                f"with the following operators: {_valid_tolerance_operators}."
+                f"with the following operators: {_TOLERANCE_OPERATORS}."
             )
-        if self.operator in _valid_tolerance_operators:
+        if self.operator in _TOLERANCE_OPERATORS:
             if (value is None) or (value <= 0.0):
                 raise ValueError(
                     f"When using a tolerance-enabled operator"
-                    f" ({_valid_tolerance_operators}) the tolerance cannot be None "
+                    f" ({_TOLERANCE_OPERATORS}) the tolerance cannot be None "
                     f"or <= 0.0, but was {value}."
                 )
 
@@ -173,9 +172,9 @@ class ThresholdCondition(Condition):
 
         def evaluate(x: ArrayLike, /, **kwargs) -> Any:
             """Evaluate the condition on a given input."""
-            return _threshold_operators[self.operator](x, self.threshold, **kwargs)
+            return _THRESHOLD_OPERATORS[self.operator](x, self.threshold, **kwargs)
 
-        if self.operator in _valid_tolerance_operators:
+        if self.operator in _TOLERANCE_OPERATORS:
             return partial(evaluate, atol=self.tolerance)
 
         return evaluate

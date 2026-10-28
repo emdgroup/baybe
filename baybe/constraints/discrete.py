@@ -25,13 +25,13 @@ from baybe.constraints.base import (
     DiscreteFilteringConstraint,
 )
 from baybe.constraints.conditions import (
+    _LOGIC_COMBINERS,
+    _THRESHOLD_OPERATORS,
+    _TOLERANCE_OPERATORS,
     Condition,
     SubSelectionCondition,  # noqa: F401 (used in doctests)
     ThresholdCondition,
     ThresholdOperator,
-    _threshold_operators,
-    _valid_logic_combiners,
-    _valid_tolerance_operators,
 )
 from baybe.serialization import (
     block_deserialization_hook,
@@ -107,7 +107,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     conditions: list[Condition] = field(validator=min_len(1))
     """List of individual conditions."""
 
-    combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
+    combiner: str = field(default="AND", validator=in_(_LOGIC_COMBINERS))
     """Operator encoding how to combine the individual conditions."""
 
     @override
@@ -135,7 +135,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in df]
         satisfied = [cond.evaluate(df[p]) for p, cond in pairs]
-        res = reduce(_valid_logic_combiners[self.combiner], satisfied)
+        res = reduce(_LOGIC_COMBINERS[self.combiner], satisfied)
 
         return df.index[res]
 
@@ -147,7 +147,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         for k, cond in enumerate(self.conditions):
             satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
 
-        return pl.reduce(_valid_logic_combiners[self.combiner], satisfied)
+        return pl.reduce(_LOGIC_COMBINERS[self.combiner], satisfied)
 
 
 def _make_condition(
@@ -213,7 +213,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     # See base class.
 
     # object variables
-    operator: ThresholdOperator = field(validator=in_(_threshold_operators))
+    operator: ThresholdOperator = field(validator=in_(_THRESHOLD_OPERATORS))
     """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
     coefficients: tuple[float, ...] = field(
@@ -269,10 +269,10 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
         Raises:
             ValueError: If a tolerance is provided for a non-tolerance operator.
         """
-        if self.operator not in _valid_tolerance_operators and value is not None:
+        if self.operator not in _TOLERANCE_OPERATORS and value is not None:
             raise ValueError(
                 f"Setting the '{attribute.alias}' is only valid with the following "
-                f"operators: {_valid_tolerance_operators}, but got operator "
+                f"operators: {_TOLERANCE_OPERATORS}, but got operator "
                 f"'{self.operator}'."
             )
 
@@ -335,7 +335,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     """The modern constructor signature exposed to introspection tools."""
 
     # object variables
-    operator: ThresholdOperator = field(validator=in_(_threshold_operators))
+    operator: ThresholdOperator = field(validator=in_(_THRESHOLD_OPERATORS))
     """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
@@ -421,10 +421,10 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
         Raises:
             ValueError: If a tolerance is provided for a non-tolerance operator.
         """
-        if self.operator not in _valid_tolerance_operators and value is not None:
+        if self.operator not in _TOLERANCE_OPERATORS and value is not None:
             raise ValueError(
                 f"Setting the '{attribute.alias}' is only valid with the "
-                f"following operators: {_valid_tolerance_operators}, but got "
+                f"following operators: {_TOLERANCE_OPERATORS}, but got "
                 f"operator '{self.operator}'."
             )
 
