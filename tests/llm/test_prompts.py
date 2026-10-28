@@ -124,6 +124,28 @@ _T2 = NumericalTarget("cost", minimize=True)
 
 
 @pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
+@pytest.mark.parametrize("batch_size", [1, 2], ids=["single", "batch"])
+@pytest.mark.parametrize(
+    "recovery",
+    [None, (LLMResponseError("test error"), "bad response")],
+    ids=["initial", "recovery"],
+)
+def test_make_prompt_batch_requirements(batch_size, recovery):
+    """Initial and recovery prompts require the exact batch size and diversification."""
+    prompt = make_prompt(
+        batch_size=batch_size,
+        searchspace=_SEARCHSPACE,
+        experiment_description=_DESCRIPTION,
+        recovery=recovery,
+    )
+    assert (
+        f"Provide exactly {batch_size} distinct recommendations, no more and no fewer."
+        in prompt
+    )
+    assert ("diversified batch" in prompt) == (batch_size > 1)
+
+
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
 @pytest.mark.parametrize(
     ("objective", "expected_content"),
     [
@@ -352,7 +374,7 @@ def test_sample_example_configurations(searchspace, n_expected):
     [
         param(
             {},
-            ["Recommend 3 distinct new experimental conditions"],
+            ["Recommend exactly 3 distinct new experimental conditions"],
             ["WHAT WENT WRONG", "ORIGINAL RESPONSE"],
             id="without_recovery",
         ),
@@ -362,7 +384,7 @@ def test_sample_example_configurations(searchspace, n_expected):
                 "WHAT WENT WRONG",
                 "ORIGINAL RESPONSE",
                 "bad response",
-                "corrected set of 3",
+                "corrected set of exactly 3",
             ],
             ["Recommend"],
             id="with_recovery",
