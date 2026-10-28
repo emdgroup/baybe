@@ -76,6 +76,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteLinearConstraint` for (optionally weighted) sum constraints on discrete
   parameters, supporting `coefficients` and mirroring `ContinuousLinearConstraint`'s
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
+- `replace_batch`/`drop_batch` methods to `Campaign` for replacing/dropping an entire
+  batch of measurements
+- `Campaign.n_batches` property indicating the number of recorded measurement batches
 
 ### Changed
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
@@ -118,6 +121,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `exclusion_constraints` example to `selection_constraints`
 - `DiscreteProductConstraint` now uses `operator`/`rhs`/`tolerance` instead of
   `condition`
+- `deserialize_dataframe` now routes dictionary-based input via
+  `narwhals.DataFrame` constructors (e.g. `from_dict`, `from_dicts`) and dispatches
+  to the active dataframe backend instead of always returning pandas dataframes
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
@@ -129,6 +135,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteParameter.comp_df` property (use `transform()` instead)
 - `CustomEncoding` enum class
 - `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
+- `Campaign.update_measurements` (use `Campaign.replace_batch` instead)
 - `SubspaceDiscrete(parameters, exp_rep)` constructor call style
   (use `SubspaceDiscrete.from_dataframe(parameters, exp_rep)` or
   `SubspaceDiscrete(candidates=TableCandidates(parameters, exp_rep))` instead)
@@ -150,6 +157,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteSumConstraint` in favor of `DiscreteLinearConstraint`
 - `DiscreteProductConstraint(condition=ThresholdCondition(...))` in favor of
   `DiscreteProductConstraint(operator=..., rhs=...)`
+- (De)serialization of dataframes hardcoded against the pandas backend. New
+  serialization calls internally route via narwhals/parquet and produce
+  different serialization strings.
+- `deserialize_dataframe` dictionary input specifying a pandas-only constructor
+  (e.g. `from_records`) in favor of `narwhals.DataFrame`'s constructors
+  (e.g. `from_dict`, `from_dicts`)
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes

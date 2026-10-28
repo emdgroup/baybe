@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 import warnings
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, overload
 
 import narwhals.stable.v2 as nw
 import pandas as pd
@@ -28,8 +28,9 @@ from baybe.utils.metadata import Metadata, to_metadata
 from baybe.utils.validation import validate_target_input
 
 if TYPE_CHECKING:
+    import polars as pl
     from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
-    from narwhals.stable.v2.typing import IntoDataFrameT
+    from narwhals.stable.v2.typing import IntoDataFrameT, IntoSeries
 
 
 # TODO: Reactive slots in all classes once cached_property is supported:
@@ -277,9 +278,19 @@ class Objective(ABC, SerialMixin):
 
         return _copy_index(out, nw_df).to_native()
 
+    @overload
     def identify_non_dominated_configurations(
         self, configurations: pd.DataFrame, /
-    ) -> pd.Series:
+    ) -> pd.Series: ...
+
+    @overload
+    def identify_non_dominated_configurations(
+        self, configurations: pl.DataFrame, /
+    ) -> pl.Series: ...
+
+    def identify_non_dominated_configurations(
+        self, configurations: IntoDataFrameT, /
+    ) -> IntoSeries:
         """Create a Boolean mask indicating non-dominated target configurations.
 
         In case of duplicated non-dominated points, all duplicates are marked as
@@ -301,12 +312,19 @@ class Objective(ABC, SerialMixin):
         """
         from botorch.utils.multi_objective.pareto import is_non_dominated
 
-        validate_target_input(configurations, self.targets)
+        nw_df = nw.from_native(configurations, eager_only=True)
+        validate_target_input(nw_df.to_pandas(), self.targets)
 
         targets = self.transform(configurations, allow_extra=True)
         non_dominated = is_non_dominated(Y=to_tensor(targets), deduplicate=False)
 
-        return pd.Series(non_dominated.numpy(), name="is_non_dominated")
+        backend = nw.get_native_namespace(nw_df)
+        return _copy_index(
+            nw.Series.from_numpy(
+                "is_non_dominated", non_dominated.numpy(), backend=backend
+            ),
+            nw_df,
+        ).to_native()
 
 
 def to_objective(x: Target | Objective, /) -> Objective:
