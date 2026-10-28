@@ -169,7 +169,6 @@ def test_make_prompt_objective(objective, expected_content):
         objective=objective,
         experiment_description=_DESCRIPTION,
     )
-    print(prompt)
     assert expected_content in prompt
 
 
