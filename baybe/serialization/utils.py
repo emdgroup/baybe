@@ -128,14 +128,5 @@ def _structure_nw_dataframe(obj: str | dict, /) -> nw.DataFrame:
         obj.setdefault("backend", active_settings.default_dataframe_backend)
         return select_constructor_hook(obj, nw.DataFrame)
 
-    # IMPROVE: Replace tempfile with a direct buffer once narwhals supports
-    # nw.read_parquet from buffers (currently path-only):
-    # https://github.com/narwhals-dev/narwhals/issues/3948
-    import tempfile
-    from pathlib import Path
-
     backend = active_settings.default_dataframe_backend
-    with tempfile.TemporaryDirectory() as tmpdir:
-        path = Path(tmpdir) / "data.parquet"
-        path.write_bytes(base64.b64decode(obj))
-        return nw.read_parquet(path, backend=backend)
+    return nw.read_parquet(io.BytesIO(base64.b64decode(obj)), backend=backend)
