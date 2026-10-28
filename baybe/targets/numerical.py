@@ -743,9 +743,10 @@ class NumericalTarget(Target, SerialMixin):
         from baybe.utils.dataframe import to_tensor
 
         return pd.Series(
-            self.transformation(to_tensor(series)),
+            self.transformation(to_tensor(series)).numpy(),
             index=series.index,
             name=series.name,
+            copy=False,
         )
 
     @override

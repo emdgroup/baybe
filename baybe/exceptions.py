@@ -150,7 +150,7 @@ class OptionalImportError(ImportError):
         if self.msg is None and name is not None:
             group_str = f"`pip install 'baybe[{group}]'` or " if group else ""
             self.msg = (
-                f"The requested functionality requires the optional "  # pyrefly: ignore[bad-assignment]
+                f"The requested functionality requires the optional "
                 f"'{self.name}' package, which is currently not installed. "
                 f"Please install the dependency and try again. "
                 f"You can do so manually (e.g. `pip install {self.name}`) "
