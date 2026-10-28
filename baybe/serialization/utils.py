@@ -30,7 +30,7 @@ def deserialize_dataframe(serialized_df: str | dict, /) -> IntoDataFrame:
       ``from_dict``, ``from_dicts``) and the corresponding keyword arguments.
 
     The backend of the resulting frame is determined by
-    :attr:`baybe.active_settings.default_dataframe_backend`.
+    :attr:`~baybe.settings.Settings.default_dataframe_backend`.
 
     For backward compatibility, dictionaries specifying a pandas-only constructor
     (e.g. ``from_records``) are still supported but trigger a
