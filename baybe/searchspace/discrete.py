@@ -885,7 +885,7 @@ class SubspaceDiscrete(SerialMixin):
 def validate_simplex_subspace_from_config(specs: dict, _) -> None:
     """Validate the discrete space while skipping costly creation steps."""
     # Validate product inputs without constructing it
-    if specs.get(_CONSTRUCTOR_FIELD, None) == "from_product":
+    if specs.get(_CONSTRUCTOR_FIELD, None) == SubspaceDiscrete.from_product.__name__:
         parameters = converter.structure(specs["parameters"], list[DiscreteParameter])
         validate_parameters(parameters, allow_empty=True)
 
@@ -899,7 +899,7 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
             validate_constraints(constraints, parameters)
 
     # Validate simplex inputs without constructing it
-    elif specs.get(_CONSTRUCTOR_FIELD, None) == "from_simplex":
+    elif specs.get(_CONSTRUCTOR_FIELD, None) == SubspaceDiscrete.from_simplex.__name__:
         simplex_parameters = converter.structure(
             specs["simplex_parameters"], list[NumericalDiscreteParameter]
         )

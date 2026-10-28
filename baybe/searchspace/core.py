@@ -650,7 +650,7 @@ def to_searchspace(
 def validate_searchspace_from_config(specs: dict, _) -> None:
     """Validate the search space specifications while skipping costly creation steps."""
     # Validate product inputs without constructing it
-    if specs.get(_CONSTRUCTOR_FIELD, None) == "from_product":
+    if specs.get(_CONSTRUCTOR_FIELD, None) == SearchSpace.from_product.__name__:
         parameters = converter.structure(specs["parameters"], list[Parameter])
         validate_parameters(parameters)
 
@@ -661,7 +661,10 @@ def validate_searchspace_from_config(specs: dict, _) -> None:
 
     else:
         discrete_subspace_specs = specs.get("discrete", {})
-        if discrete_subspace_specs.get(_CONSTRUCTOR_FIELD, None) == "from_simplex":
+        if (
+            discrete_subspace_specs.get(_CONSTRUCTOR_FIELD, None)
+            == SubspaceDiscrete.from_simplex.__name__
+        ):
             # Validate discrete simplex subspace
             _validation_converter = converter.copy()
             _validation_converter.register_structure_hook(
