@@ -18,6 +18,7 @@ from baybe.serialization import converter
 from baybe.serialization.core import _TYPE_FIELD, add_type
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
+from baybe.utils.basic import is_all_instance
 
 if TYPE_CHECKING:
     from botorch.models.model import ModelList
@@ -127,12 +128,12 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         from botorch.models.model_list_gp_regression import ModelListGP
 
         models = [s.to_botorch() for s in self._surrogates_flat]
+
         # `ModelListGP` only accepts GPyTorch models (e.g. `SingleTaskGP`). If any
         # surrogate yields a plain `Model` (e.g. an RGPE ensemble), fall back to the
         # generic `ModelList`.
-        gp_models = [model for model in models if isinstance(model, GPyTorchModel)]
-        if len(gp_models) == len(models):
-            return ModelListGP(*gp_models)
+        if is_all_instance(models, GPyTorchModel):
+            return ModelListGP(*models)
         return ModelList(*models)
 
     def posterior(self, candidates: pd.DataFrame, joint: bool = True) -> PosteriorList:
