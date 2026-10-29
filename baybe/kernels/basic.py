@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NoReturn
 
 from attrs import define, field
 from attrs.converters import optional as optional_c
@@ -223,24 +223,16 @@ class RQKernel(BasicKernel):
 
 @define(frozen=True)
 class VanishingKernel(BasicKernel):
-    """A constant unit kernel acting as identity under kernel multiplication."""
+    """A kernel that vanishes in kernel sums and products.
+
+    Adding it to or multiplying it with a kernel returns that kernel, and additive or
+    product kernels drop it when converted to GPyTorch. It has no GPyTorch
+    representation of its own.
+    """
 
     @override
-    def _get_dimensions(
-        self, searchspace: SearchSpace
-    ) -> tuple[tuple[int, ...] | None, int | None]:
-        active_dims, _ = super()._get_dimensions(searchspace)
-        return active_dims, None
-
-    @override
-    def to_gpytorch(self, searchspace: SearchSpace):
-        from gpytorch.kernels import ConstantKernel
-
-        active_dims, _ = self._get_dimensions(searchspace)
-        kernel = ConstantKernel(active_dims=active_dims)
-        kernel.constant = kernel.constant.new_ones(kernel.constant.shape)
-        kernel.raw_constant.requires_grad_(False)
-        return kernel
+    def to_gpytorch(self, searchspace: SearchSpace) -> NoReturn:
+        raise TypeError(f"'{self.__class__.__name__}' has no GPyTorch representation.")
 
 
 @define(frozen=True)
