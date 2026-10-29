@@ -108,7 +108,11 @@ class TaskParameter(CategoricalParameter):
     @cached_property
     def override_kernel(self) -> Kernel | None:
         """The task kernel defined by the transfer learning mode, if any."""
-        from baybe.kernels.basic import IdentityKernel, IndexKernel, PositiveIndexKernel
+        from baybe.kernels.basic import (
+            IndexKernel,
+            PositiveIndexKernel,
+            VanishingKernel,
+        )
 
         n_tasks, names = len(self.values), (self.name,)
         match mode := self.override_transfer_learning_mode:
@@ -119,7 +123,7 @@ class TaskParameter(CategoricalParameter):
                 # ensemble instead
                 return None
             case TransferLearningMode.IDENTITY:
-                return IdentityKernel(parameter_names=names)
+                return VanishingKernel(parameter_names=names)
             case TransferLearningMode.POSITIVE_INDEX_KERNEL:
                 return PositiveIndexKernel(
                     num_tasks=n_tasks, rank=n_tasks, parameter_names=names

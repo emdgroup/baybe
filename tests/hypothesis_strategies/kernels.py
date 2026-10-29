@@ -6,7 +6,6 @@ from enum import Enum
 import hypothesis.strategies as st
 
 from baybe.kernels.basic import (
-    IdentityKernel,
     IndexKernel,
     LinearKernel,
     MaternKernel,
@@ -17,6 +16,7 @@ from baybe.kernels.basic import (
     RBFKernel,
     RFFKernel,
     RQKernel,
+    VanishingKernel,
 )
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from tests.hypothesis_strategies.basic import positive_finite_floats
@@ -39,14 +39,6 @@ def active_parameter_names(names: Sequence[str] | None = None):
             st.none(), st.lists(parameter_names, min_size=1, max_size=5, unique=True)
         )
     return st.just(names)
-
-
-def identity_kernels(parameter_names: Sequence[str] | None = None):
-    """A strategy that generates identity kernels."""
-    return st.builds(
-        IdentityKernel,
-        parameter_names=active_parameter_names(parameter_names),
-    )
 
 
 def linear_kernels(parameter_names: Sequence[str] | None = None):
@@ -135,6 +127,14 @@ def rq_kernels(parameter_names: Sequence[str] | None = None):
     )
 
 
+def vanishing_kernels(parameter_names: Sequence[str] | None = None):
+    """A strategy that generates vanishing kernels."""
+    return st.builds(
+        VanishingKernel,
+        parameter_names=active_parameter_names(parameter_names),
+    )
+
+
 @st.composite
 def index_kernels(
     draw: st.DrawFn,
@@ -153,7 +153,7 @@ def base_kernels(parameter_names: Sequence[str] | None = None):
     return st.one_of(
         [
             matern_kernels(parameter_names),  # on top because it is the default
-            identity_kernels(parameter_names),
+            vanishing_kernels(parameter_names),
             linear_kernels(parameter_names),
             rbf_kernels(parameter_names),
             rq_kernels(parameter_names),
