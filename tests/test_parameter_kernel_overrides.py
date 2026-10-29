@@ -18,7 +18,7 @@ from gpytorch.priors import GammaPrior as GPyTorchGammaPrior
 from pytest import param
 
 from baybe.exceptions import IncompatibleOverrideError
-from baybe.kernels import MaternKernel, RBFKernel
+from baybe.kernels import MaternKernel, RBFKernel, VanishingKernel
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
@@ -261,6 +261,7 @@ _X1_SELECTOR = BayBEKernelFactory(parameter_selector=NameSelector(("x1",), regex
 _TASK_KERNEL = IndexKernel(num_tasks=3, rank=3, parameter_names=("task",))
 _EXCLUDE_ERROR = "can exclude these parameters"
 _ARD_ERROR = "specifies 2 ARD dimensions, but the parameter has 3"
+_EMPTY_ERROR = "no parameter contributing a kernel"
 
 
 @pytest.mark.parametrize(
@@ -399,8 +400,21 @@ _ARD_ERROR = "specifies 2 ARD dimensions, but the parameter has 3"
         param(
             [_x("x1"), _task(_IDENTITY)],
             None,
-            {("x1",): [gk.MaternKernel], ("task",): [gk.ConstantKernel]},
+            {("x1",): [gk.MaternKernel]},
             id="task-identity",
+        ),
+        # Vanishing kernels contribute no factor
+        param(
+            [_x("x1"), _x("x2", VanishingKernel())],
+            None,
+            {("x1",): [gk.MaternKernel]},
+            id="vanishing-override",
+        ),
+        param(
+            _X2_RBF,
+            VanishingKernel(),
+            {("x2",): [gk.RBFKernel]},
+            id="vanishing-surrogate-kernel",
         ),
         param(
             [_x("x1"), _task(_INDEX)],
@@ -495,6 +509,12 @@ _ARD_ERROR = "specifies 2 ARD dimensions, but the parameter has 3"
             (IncompatibleOverrideError, _EXCLUDE_ERROR),
             id="task-index+icm-factory",
         ),
+        param(
+            [_x("x1"), _task(_IDENTITY)],
+            _TASK_KERNEL,
+            (IncompatibleOverrideError, _EMPTY_ERROR),
+            id="task-identity+task-only-kernel",
+        ),
     ],
 )
 def test_override_kernel_construction(
@@ -526,9 +546,6 @@ def test_override_kernel_construction(
     for k, names, columns in _basic_kernels(kernel, searchspace):
         if user_kernel or set(names) & gpytorch_overrides.keys():
             assert k.ard_num_dims in (None, len(columns))
-        elif isinstance(k, gk.ConstantKernel):
-            # The identity task kernel is constant and carries no ARD dimensions
-            assert k.ard_num_dims is None
         else:
             assert k.ard_num_dims == len(columns)
 

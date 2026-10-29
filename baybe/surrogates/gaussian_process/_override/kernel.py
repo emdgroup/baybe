@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, NoReturn
 
 from baybe.exceptions import IncompatibleOverrideError
 from baybe.kernels.base import Kernel
+from baybe.kernels.basic import VanishingKernel
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
@@ -20,17 +21,23 @@ if TYPE_CHECKING:
 
 def extract_parameter_kernel_overrides(
     searchspace: SearchSpace,
-) -> list[tuple[str, GPyTorchKernel]]:
+) -> list[tuple[str, GPyTorchKernel | None]]:
     """Extract the parameter-specific kernel overrides.
 
     Args:
         searchspace: The search space whose parameters are checked for overrides.
 
     Returns:
-        A ``(parameter_name, kernel)`` pair for each parameter with an override.
+        A ``(parameter_name, kernel)`` pair for each parameter with an override, where
+        the kernel is ``None`` for vanishing overrides.
     """
     return [
-        (p.name, make_parameter_override_kernel(p, searchspace))
+        (
+            p.name,
+            None
+            if isinstance(p.override_kernel, VanishingKernel)
+            else make_parameter_override_kernel(p, searchspace),
+        )
         for p in searchspace.parameters
         if p.override_kernel is not None
     ]
@@ -136,7 +143,7 @@ def reduce_kernel_spec(
         factory: The originating factory (for error messages).
 
     Returns:
-        The reduced kernel, or ``None`` if nothing remains.
+        The reduced kernel, or ``None`` if nothing or only a vanishing kernel remains.
     """
     if not isinstance(component, Kernel):
         raise_incompatible_override(excluded_names, factory)
@@ -150,7 +157,7 @@ def reduce_kernel_spec(
         except TypeError as ex:
             raise_incompatible_override(excluded_names, factory, ex)
 
-    return spec
+    return None if isinstance(spec, VanishingKernel) else spec
 
 
 def raise_incompatible_override(

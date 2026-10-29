@@ -19,6 +19,7 @@ from typing_extensions import Self, override
 
 from baybe.exceptions import (
     DeprecationError,
+    IncompatibleOverrideError,
     IncompatibleSearchSpaceError,
     IncompatibleSurrogateError,
     ModelNotTrainedError,
@@ -437,13 +438,14 @@ class GaussianProcessSurrogate(Surrogate):
         """Resolve the GP kernel, applying parameter-specific overrides.
 
         The effective kernel is the surrogate kernel restricted to the
-        non-overridden dimensions, multiplied by one factor per override.
+        non-overridden dimensions, multiplied by one factor per non-vanishing override.
 
         Args:
             context: The model context providing the inputs and override settings.
 
         Raises:
             ValueError: If the resolved kernels violate the override partition.
+            IncompatibleOverrideError: If no kernel factor remains.
 
         Returns:
             The resolved and partition-validated kernel.
@@ -456,13 +458,15 @@ class GaussianProcessSurrogate(Surrogate):
         excluded_dimensions: set[int] = set()
         for name, kernel in overrides:
             expected = set(searchspace.get_comp_rep_parameter_indices(name))
+            excluded_dimensions.update(expected)
+            if kernel is None:
+                continue
             actual = _override.get_active_dimensions(kernel, searchspace)
             if actual != expected:
                 raise ValueError(
                     f"The kernel override for '{name}' has 'active_dims' {actual}, "
                     f"but must use exactly the parameter indices {expected}."
                 )
-            excluded_dimensions.update(expected)
 
         if residual is not None and excluded_names:
             allowed = (
@@ -474,7 +478,11 @@ class GaussianProcessSurrogate(Surrogate):
                     f"The residual kernel's 'active_dims' {actual} must be a subset "
                     f"of the non-overridden indices {allowed}."
                 )
-        factors = ([] if residual is None else [residual]) + [k for _, k in overrides]
+        factors = [k for k in (residual, *(k for _, k in overrides)) if k is not None]
+        if not factors:
+            raise IncompatibleOverrideError(
+                "The kernel overrides leave no parameter contributing a kernel."
+            )
         return reduce(operator.mul, factors)
 
     def _resolve_residual_kernel(
