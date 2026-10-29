@@ -232,7 +232,8 @@ class MonotonicTransformation(Transformation, ABC):
     """Abstract base class for monotonic transformations.
 
     Outputs are nondecreasing or nonincreasing over the valid input domain.
-    Output bounds are computed by transforming the input interval's endpoints.
+    This allows codomain and image calculations to use only the input interval's
+    endpoints.
     """
 
     @override

@@ -34,7 +34,7 @@ class CustomTransformation(Transformation):
     r"""Apply a user-defined torch callable to the input tensor.
 
     Computes :math:`f(x) = \mathrm{function}(x)` on the entire tensor. Valid inputs
-    and outputs depend on the callable; output-bound queries raise
+    and outputs depend on the callable; codomain and image calculations raise
     ``NotImplementedError``.
     """
 
@@ -261,7 +261,7 @@ class BellTransformation(Transformation):
 
     .. math::
         f(x) = \exp\left[-\frac{1}{2}
-        \left(\frac{x - \mathrm{center}}{\sigma}\right)^2\right]
+        \left(\frac{x - \mathrm{center}}{\mathrm{sigma}}\right)^2\right]
 
     Highest at the center (output 1), decreasing symmetrically toward zero away
     from it. Larger ``sigma`` gives a wider bell.
@@ -451,8 +451,8 @@ class PowerTransformation(Transformation):
     r"""Raise input values to a specified exponent.
 
     Computes :math:`f(x) = x^{\mathrm{exponent}}`. Non-integer exponents require
-    non-negative inputs, otherwise raising ``RuntimeError``. Negative exponents
-    give reciprocal powers, with infinity at zero; exponent zero gives output 1.
+    non-negative inputs, otherwise raising ``RuntimeError``. Zero input with a
+    negative exponent produces infinity.
     """
 
     exponent: int = field(converter=float, validator=finite_float)
