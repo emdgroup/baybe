@@ -31,11 +31,10 @@ if TYPE_CHECKING:
 
 @define(frozen=True)
 class CustomTransformation(Transformation):
-    r"""Apply a user-defined torch callable to the input tensor.
+    """Apply a user-defined torch callable to the input tensor.
 
-    Computes :math:`f(x) = \mathrm{function}(x)` on the entire tensor. Valid inputs
-    and outputs depend on the callable; codomain and image calculations raise
-    ``NotImplementedError``.
+    The callable is applied to the whole tensor; valid inputs and outputs depend on
+    it. Codomain and image calculations raise ``NotImplementedError``.
     """
 
     function: TensorCallable = field(validator=is_callable())
@@ -84,14 +83,13 @@ class IdentityTransformation(MonotonicTransformation):
 class ClampingTransformation(MonotonicTransformation):
     r"""Limit input values to a specified interval.
 
-    Computes :math:`f(x) = \min(\max(x, l), u)`, where :math:`l` and :math:`u`
-    are ``cutoffs.lower`` and ``cutoffs.upper``. Values inside remain unchanged.
-    Constructor arguments ``min`` and ``max`` set the cutoffs; an omitted bound
+    Computes :math:`f(x) = \min(\max(x, l), u)`, where :math:`l` and :math:`u` are
+    the lower and upper bounds. Values inside remain unchanged; an omitted bound
     leaves that side unbounded.
     """
 
     cutoffs: Interval = field(converter=Interval.create)  # type: ignore[misc]
-    """The inclusive output interval, with bounds set by ``min`` and ``max``."""
+    """The inclusive interval to which inputs are clamped."""
 
     def __init__(self, min: float | None = None, max: float | None = None) -> None:
         if min is None and max is None:
@@ -107,10 +105,10 @@ class ClampingTransformation(MonotonicTransformation):
 class AffineTransformation(MonotonicTransformation):
     r"""Scale input values by a factor and add a constant shift.
 
-    Computes :math:`f(x) = \mathrm{factor} \cdot x + \mathrm{shift}` using stored
-    attributes. With ``shift_first=True``, constructor arguments specify
-    :math:`\mathrm{factor} \cdot (x + \mathrm{shift})` instead; the supplied shift is
-    scaled before storage.
+    Computes :math:`f(x) = a \cdot x + b`, where :math:`a` is the scale factor and
+    :math:`b` is the offset. When constructed with ``shift_first=True``, the same
+    values are interpreted as :math:`a \cdot (x + b)` instead; the offset is scaled
+    internally before storage.
     """
 
     # https://github.com/python-attrs/attrs/issues/1462
@@ -212,13 +210,12 @@ class TwoSidedAffineTransformation(Transformation):
 
     .. math::
         f(x) = \begin{cases}
-            \mathrm{slope\_left} \cdot (x - \mathrm{midpoint})
-                & x < \mathrm{midpoint} \\
-            \mathrm{slope\_right} \cdot (x - \mathrm{midpoint})
-                & x \geq \mathrm{midpoint}
+            s_l \cdot (x - m) & x < m \\
+            s_r \cdot (x - m) & x \geq m
         \end{cases}
 
-    Both segments meet at :math:`f(\mathrm{midpoint}) = 0`.
+    Here :math:`s_l`, :math:`s_r`, and :math:`m` are the left slope, right slope,
+    and midpoint. Both segments meet at :math:`f(m) = 0`.
     """
 
     slope_left: float = field(converter=float, validator=finite_float)
@@ -259,14 +256,13 @@ class TwoSidedAffineTransformation(Transformation):
 @_image_equals_codomain
 @define(frozen=True)
 class BellTransformation(Transformation):
-    r"""Map input values to a Gaussian bell-shaped score around a center.
+    r"""Map input values to a Gaussian bell-shaped score around a center point.
 
     .. math::
-        f(x) = \exp\left[-\frac{1}{2} \cdot
-        \left(\frac{x - \mathrm{center}}{\mathrm{sigma}}\right)^2\right]
+        f(x) = \exp\!\left[-\frac{1}{2}\left(\frac{x - c}{\sigma}\right)^2\right]
 
-    Highest at the center (output 1), decreasing symmetrically toward zero away
-    from it. Larger ``sigma`` gives a wider bell.
+    Output is 1 at the center point :math:`c` and decreases symmetrically toward
+    zero. A larger width parameter :math:`\sigma` gives a broader bell.
     """
 
     center: float = field(default=0.0, converter=float, validator=finite_float)
@@ -326,8 +322,8 @@ class TriangularTransformation(Transformation):
             0 & \text{otherwise}
         \end{cases}
 
-    Here :math:`l`, :math:`u`, and :math:`p` are ``cutoffs.lower``, ``cutoffs.upper``,
-    and ``peak``. Cutoffs must be finite, with :math:`l < p < u`.
+    Here :math:`l < p < u` are the lower cutoff, peak, and upper cutoff; both
+    cutoffs must be finite.
     """
 
     # TODO[typing]: https://github.com/python-attrs/attrs/issues/1435
@@ -452,9 +448,9 @@ class ExponentialTransformation(MonotonicTransformation):
 class PowerTransformation(Transformation):
     r"""Raise input values to a specified exponent.
 
-    Computes :math:`f(x) = x^{\mathrm{exponent}}`. Non-integer exponents require
-    non-negative inputs, otherwise raising ``RuntimeError``. Zero input with a
-    negative exponent produces infinity.
+    Computes :math:`f(x) = x^n`. Non-integer exponents require non-negative inputs,
+    otherwise raising ``RuntimeError``. Zero input with a negative exponent produces
+    infinity.
     """
 
     exponent: int = field(converter=float, validator=finite_float)
@@ -485,11 +481,12 @@ class SigmoidTransformation(MonotonicTransformation):
     r"""Map input values to a logistic S-shaped score.
 
     .. math::
-        f(x) = \frac{1}{1 + \exp[-\mathrm{steepness} \cdot (\mathrm{center} - x)]}
+        f(x) = \frac{1}{1 + e^{-k(c - x)}}
 
-    Output is 0.5 at the center. As :math:`x` increases, positive steepness decreases
-    the score toward 0; negative steepness increases it toward 1. Zero steepness
-    gives 0.5 for finite inputs; larger absolute steepness sharpens the transition.
+    Output is 0.5 at the center point :math:`c`. For positive slope :math:`k`,
+    larger :math:`x` decreases the score toward 0; negative :math:`k` increases it
+    toward 1. Zero :math:`k` gives 0.5 for all finite inputs; larger :math:`|k|`
+    sharpens the transition.
     """
 
     center: float = field(default=0.0, converter=float)
