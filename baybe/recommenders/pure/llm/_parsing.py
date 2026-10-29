@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import warnings
 from json import JSONDecodeError
+from typing import cast
 
 import cattrs
 import pandas as pd
@@ -21,6 +22,7 @@ from baybe.exceptions import (
 from baybe.recommenders.pure.llm._schema import ResponseItem
 from baybe.searchspace import SearchSpace
 from baybe.utils.dataframe import normalize_input_dtypes
+from baybe.utils.numerical import closest_element
 
 
 def _extract_json_array(response: str, /) -> str:
@@ -68,6 +70,9 @@ def parse_llm_response(
 
     The response must contain exactly ``batch_size`` recommendations. A mismatch is
     rejected before any individual recommendation is validated.
+
+    Numerical discrete values accepted by their parameter's range check are snapped
+    to the nearest grid value before configuration validation.
 
     Args:
         response: The response from the language model.
@@ -138,6 +143,17 @@ def parse_llm_response(
             unknown_names=extra,
             valid_names=param_names,
         )
+
+    # Snap eligible numerical discrete values before candidate and constraint checks
+    for p in searchspace.discrete.parameters:
+        # Since validation report missing or non-numeric columns, only attempt snapping
+        # for numeric columns that exist without already verifying
+        if p.is_numerical and p.name in df.select_dtypes(include="number"):
+            df[p.name] = df[p.name].map(
+                lambda x: (
+                    closest_element(p.values, cast(float, x)) if p.is_in_range(x) else x
+                )
+            )
 
     # The search space is responsible for validating the individual configurations
     try:

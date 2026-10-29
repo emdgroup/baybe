@@ -266,6 +266,28 @@ def test_parse_llm_response_happy_path():
     assert list(result["Num"]) == [1.0, 2.0]
 
 
+def test_parse_llm_response_snaps_discrete_values():
+    """Accepted off-grid values snap to the nearest grid value."""
+    searchspace = SearchSpace.from_parameter(
+        NumericalDiscreteParameter("Num", (1.0, 2.0), tolerance=0.1)
+    )
+    response = make_response_json(searchspace, Num=1.05)
+    result = parse_llm_response(response, searchspace, batch_size=1)
+    assert result["Num"].tolist() == [1.0]
+
+
+def test_parse_llm_response_rejects_out_of_tolerance():
+    """Out-of-tolerance values are not snapped into valid recommendations."""
+    searchspace = SearchSpace.from_parameter(
+        NumericalDiscreteParameter("Num", (1.0, 2.0), tolerance=0.1)
+    )
+    response = make_response_json(searchspace, Num=1.2)
+    with pytest.raises(
+        LLMIneligiblePointsError, match=r"invalid values for parameters \['Num'\]"
+    ):
+        parse_llm_response(response, searchspace, batch_size=1)
+
+
 def test_parse_llm_response_hybrid_output():
     """Hybrid spaces produce output with aligned discrete and continuous parts."""
     searchspace = SearchSpace.from_product(
