@@ -3,7 +3,7 @@
 import pytest
 from pytest import param
 
-from baybe.kernels.basic import MaternKernel
+from baybe.kernels.basic import MaternKernel, VanishingKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 
 base_kernel = MaternKernel()
@@ -41,3 +41,17 @@ def test_additive_and_product_kernel_validation(kernel_cls, base_kernels, error)
     """Providing invalid kernel arguments raises an exception."""
     with pytest.raises(error):
         kernel_cls(base_kernels)
+
+
+@pytest.mark.parametrize(
+    "make_kernel",
+    [
+        param(lambda: ScaleKernel(VanishingKernel()), id="scale"),
+        param(lambda: AdditiveKernel([VanishingKernel()] * 2), id="additive"),
+        param(lambda: ProductKernel([VanishingKernel()] * 2), id="product"),
+    ],
+)
+def test_vanishing_kernel_validation(make_kernel):
+    """Vanishing kernels cannot be scaled or be the only members of a composite."""
+    with pytest.raises(ValueError, match="vanish"):
+        make_kernel()

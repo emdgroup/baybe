@@ -153,7 +153,6 @@ def base_kernels(parameter_names: Sequence[str] | None = None):
     return st.one_of(
         [
             matern_kernels(parameter_names),  # on top because it is the default
-            vanishing_kernels(parameter_names),
             linear_kernels(parameter_names),
             rbf_kernels(parameter_names),
             rq_kernels(parameter_names),
@@ -197,8 +196,15 @@ def kernels(
     if kernel_type is KernelType.SINGLE:
         return draw(single_kernels(parameter_names=parameter_names))
 
+    # Vanishing kernels are only valid within sums and products
     base_kernels = draw(
-        st.lists(single_kernels(parameter_names=parameter_names), min_size=2)
+        st.lists(
+            st.one_of(
+                single_kernels(parameter_names=parameter_names),
+                vanishing_kernels(parameter_names),
+            ),
+            min_size=2,
+        ).filter(lambda ks: not all(isinstance(k, VanishingKernel) for k in ks))
     )
     if kernel_type is KernelType.ADDITIVE:
         return AdditiveKernel(base_kernels)
