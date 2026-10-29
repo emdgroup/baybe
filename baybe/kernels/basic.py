@@ -1,7 +1,9 @@
 """Collection of basic kernels."""
 
+from __future__ import annotations
+
 import gc
-from typing import Any
+from typing import TYPE_CHECKING, Any, NoReturn
 
 from attrs import define, field
 from attrs.converters import optional as optional_c
@@ -14,6 +16,9 @@ from baybe.priors.base import Prior
 from baybe.settings import active_settings
 from baybe.utils.conversion import fraction_to_float
 from baybe.utils.validation import finite_float
+
+if TYPE_CHECKING:
+    from baybe.searchspace.core import SearchSpace
 
 
 @define(frozen=True)
@@ -214,6 +219,20 @@ class RQKernel(BasicKernel):
         validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
+
+
+@define(frozen=True)
+class VanishingKernel(BasicKernel):
+    """A kernel that vanishes in kernel sums and products.
+
+    Adding it to or multiplying it with a kernel returns that kernel, and additive or
+    product kernels drop it when converted to GPyTorch. It has no GPyTorch
+    representation of its own.
+    """
+
+    @override
+    def to_gpytorch(self, searchspace: SearchSpace) -> NoReturn:
+        raise TypeError(f"'{self.__class__.__name__}' has no GPyTorch representation.")
 
 
 @define(frozen=True)

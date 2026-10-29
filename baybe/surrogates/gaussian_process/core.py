@@ -11,7 +11,7 @@ from functools import partial, reduce
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
-from attrs import Converter, define, field
+from attrs import Converter, define, evolve, field
 from attrs.converters import optional as optional_c
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
@@ -19,14 +19,18 @@ from typing_extensions import Self, override
 
 from baybe.exceptions import (
     DeprecationError,
+    IncompatibleOverrideError,
     IncompatibleSearchSpaceError,
+    IncompatibleSurrogateError,
     ModelNotTrainedError,
     _UnsupportedSearchSpaceAttributeError,
 )
 from baybe.kernels.base import Kernel
+from baybe.kernels.basic import VanishingKernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process import _override
@@ -253,6 +257,14 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The fitted BoTorch model."""
 
+    # TODO: type should be `Surrogate | None` but is currently omitted due to:
+    #   https://github.com/python-attrs/cattrs/issues/531
+    _delegate = field(init=False, default=None, eq=False)
+    """A transfer-learning surrogate to forward fitting and prediction to.
+
+    Set when a non-kernel mode (e.g.
+    :attr:`~baybe.parameters.enum.TransferLearningMode.RGPE`) is requested."""
+
     @staticmethod
     def _make_input_transform(context: _ModelContext) -> Normalize:
         """Create the input transform for the Gaussian process."""
@@ -352,7 +364,20 @@ class GaussianProcessSurrogate(Surrogate):
         Returns:
             A mean module ready to be used as the mean of a new
             :class:`GaussianProcessSurrogate`.
+
+        Raises:
+            IncompatibleSurrogateError: If the surrogate dispatches to a transfer
+                learning ensemble, for which posterior mean functions are not
+                implemented.
         """
+        if self._delegate is not None:
+            raise IncompatibleSurrogateError(
+                f"Providing a posterior mean function for a "
+                f"'{self.__class__.__name__}' that dispatches to a "
+                f"'{type(self._delegate).__name__}' transfer learning ensemble is not "
+                f"implemented."
+            )
+
         if self._model is None:
             warnings.warn(
                 f"'{self.__class__.__name__}' has not been fitted yet. "
@@ -381,6 +406,8 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def to_botorch(self) -> GPyTorchModel:
+        if self._delegate is not None:
+            return self._delegate.to_botorch()
         if self._model is None:
             raise ModelNotTrainedError(
                 "The surrogate must be trained before a BoTorch model can be created."
@@ -401,6 +428,9 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
+        # Forward to the transfer-learning delegate if one was set up during fitting.
+        if self._delegate is not None:
+            return self._delegate._posterior(candidates_comp_scaled)
         # Model being fit is guaranteed by the call in `posterior`
         assert self._model is not None
         return self._model.posterior(candidates_comp_scaled)
@@ -409,13 +439,14 @@ class GaussianProcessSurrogate(Surrogate):
         """Resolve the GP kernel, applying parameter-specific overrides.
 
         The effective kernel is the surrogate kernel restricted to the
-        non-overridden dimensions, multiplied by one factor per override.
+        non-overridden dimensions, multiplied by one factor per non-vanishing override.
 
         Args:
             context: The model context providing the inputs and override settings.
 
         Raises:
             ValueError: If the resolved kernels violate the override partition.
+            IncompatibleOverrideError: If no kernel factor remains.
 
         Returns:
             The resolved and partition-validated kernel.
@@ -428,13 +459,15 @@ class GaussianProcessSurrogate(Surrogate):
         excluded_dimensions: set[int] = set()
         for name, kernel in overrides:
             expected = set(searchspace.get_comp_rep_parameter_indices(name))
+            excluded_dimensions.update(expected)
+            if kernel is None:
+                continue
             actual = _override.get_active_dimensions(kernel, searchspace)
             if actual != expected:
                 raise ValueError(
                     f"The kernel override for '{name}' has 'active_dims' {actual}, "
                     f"but must use exactly the parameter indices {expected}."
                 )
-            excluded_dimensions.update(expected)
 
         if residual is not None and excluded_names:
             allowed = (
@@ -446,7 +479,11 @@ class GaussianProcessSurrogate(Surrogate):
                     f"The residual kernel's 'active_dims' {actual} must be a subset "
                     f"of the non-overridden indices {allowed}."
                 )
-        factors = ([] if residual is None else [residual]) + [k for _, k in overrides]
+        factors = [k for k in (residual, *(k for _, k in overrides)) if k is not None]
+        if not factors:
+            raise IncompatibleOverrideError(
+                "The kernel overrides leave no parameter contributing a kernel."
+            )
         return reduce(operator.mul, factors)
 
     def _resolve_residual_kernel(
@@ -553,11 +590,17 @@ class GaussianProcessSurrogate(Surrogate):
         """Resolve factory fields to concrete components.
 
         Resolves ``None`` fields to BayBE defaults and calls the factories with
-        the given context. This handles the standard resolution path.
+        the given context. This handles the standard resolution path. If the task
+        parameter has a vanishing kernel, the non-kernel components are built for the
+        reduced search space without it.
 
         Args:
             context: The model context providing searchspace, objective, and
                 measurements.
+
+        Raises:
+            IncompatibleSearchSpaceError: If a non-kernel factory cannot handle the
+                reduced search space without the task parameter.
 
         Returns:
             A tuple of (kernel, mean, likelihood, criterion).
@@ -568,17 +611,26 @@ class GaussianProcessSurrogate(Surrogate):
 
         kernel = self._resolve_kernel(context)
 
-        mean = mean_factory(
-            context.searchspace, context.objective, context.measurements
-        )
+        searchspace = context.searchspace
+        task_param = searchspace._task_parameter
+        if task_param is not None and isinstance(
+            task_param.override_kernel, VanishingKernel
+        ):
+            searchspace = searchspace._drop_parameters({task_param.name})
 
-        likelihood = likelihood_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-
-        criterion = criterion_factory(
-            context.searchspace, context.objective, context.measurements
-        )
+        args = (searchspace, context.objective, context.measurements)
+        # User-specified factories may access attributes that are blocked on the
+        # reduced search space
+        try:
+            mean = mean_factory(*args)
+            likelihood = likelihood_factory(*args)
+            criterion = criterion_factory(*args)
+        except _UnsupportedSearchSpaceAttributeError as ex:
+            raise IncompatibleSearchSpaceError(
+                "The mean, likelihood and fit criterion factories must support the "
+                "reduced search space without the task parameter when its kernel "
+                "vanishes."
+            ) from ex
 
         return kernel, mean, likelihood, criterion
 
@@ -598,10 +650,23 @@ class GaussianProcessSurrogate(Surrogate):
 
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
+        # RGPE is handled by a dedicated ensemble surrogate rather than a task kernel.
+        # Dispatch to it, reusing this GP's configuration for the inner models.
+        task_param = self._searchspace._task_parameter
+        if (
+            task_param is not None
+            and task_param.override_transfer_learning_mode is TransferLearningMode.RGPE
+        ):
+            from baybe.surrogates.transfer_learning.rgpe import RGPESurrogate
+
+            delegate = RGPESurrogate(base_surrogate=evolve(self))
+            delegate.fit(self._searchspace, self._objective, self._measurements)
+            self._delegate = delegate
+            return
+
         # Check for custom kernel + multi-task clash (only relevant when the task
         # parameter has no kernel override, since the override mechanism handles task
         # kernel attachment explicitly).
-        task_param = self._searchspace._task_parameter
         has_task_override = (
             task_param is not None and task_param.override_kernel is not None
         )

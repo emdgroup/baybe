@@ -182,6 +182,16 @@ class TransferLearningMode(Enum):
     INDEX_KERNEL = "INDEX_KERNEL"
     """:class:`gpytorch.kernels.IndexKernel` for arbitrary correlations."""
 
+    NAIVE = "NAIVE"
+    """Naive pooling of all tasks into a single-task model."""
+
     POSITIVE_INDEX_KERNEL = "POSITIVE_INDEX_KERNEL"
     """:class:`botorch.models.kernels.positive_index.PositiveIndexKernel` for positive
     correlations."""
+
+    RGPE = "RGPE"
+    """A rank-weighted ensemble of per-task Gaussian processes.
+
+    Adds no task kernel; instead dispatches the surrogate to a dedicated
+    :class:`~baybe.surrogates.transfer_learning.rgpe.RGPESurrogate`.
+    """
