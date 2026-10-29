@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gc
-import random
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
 from itertools import product
@@ -329,64 +328,43 @@ class SearchSpace(SerialMixin):
         self,
         n: int,
         min_discrete_candidates: int | None = None,
-        *,
-        max_rejections: int = 10,
     ) -> list[tuple[SubspaceDiscrete, frozenset[str]]]:
-        """Sample unique combined subset configurations.
+        """Sample combined subset configurations with replacement.
 
-        Samples a discrete subset and a continuous configuration with replacement,
-        producing random pairs from the Cartesian product. Duplicate pairs are skipped.
+        Draws a discrete subset and a continuous configuration independently for
+        each of the ``n`` samples. Duplicate configurations are possible.
 
         Args:
-            n: Number of unique configurations to sample.
+            n: Number of configurations to sample.
             min_discrete_candidates: If provided, discrete Subsets with fewer
                 matching candidates are excluded.
-            max_rejections: Maximum number of times a duplicate combination can
-                be drawn before raising ``InfeasibilityError``.
 
         Raises:
-            InfeasibilityError: If not enough unique subset configurations
-                are available.
+            ValueError: If ``n`` is not positive.
+            InfeasibilityError: If no feasible discrete subsets exist.
 
         Returns:
             A list of ``(discrete_subset, continuous_inactive_params)`` tuples.
         """
-        if n <= 0:
-            return []
+        if n < 1:
+            raise ValueError(f"{n=} must be a positive integer.")
 
-        discrete_subsets = list(
-            self.discrete.iter_subsets(min_n_candidates=min_discrete_candidates)
+        discrete_subsets = self.discrete.iter_subsets(
+            min_n_candidates=min_discrete_candidates,
+            with_replacement=True,
         )
-        if not discrete_subsets:
+        continuous_configs = self.continuous.inactive_parameter_combinations(
+            mode="replace"
+        )
+
+        try:
+            return [
+                (next(discrete_subsets), next(continuous_configs)) for _ in range(n)
+            ]
+        except StopIteration as ex:
             raise InfeasibilityError(
-                f"Not enough unique subset configurations available. Requested {n} "
-                "but no feasible discrete subsets could be found."
-            )
-
-        c_iter = self.continuous.inactive_parameter_combinations(mode="replace")
-
-        seen: set[tuple[int, frozenset[str]]] = set()
-        results: list[tuple[SubspaceDiscrete, frozenset[str]]] = []
-        rejections = 0
-
-        while len(results) < n:
-            discrete_index = random.randrange(len(discrete_subsets))
-            discrete_subspace = discrete_subsets[discrete_index]
-            c_config = next(c_iter)
-            key = (discrete_index, c_config)
-            if key in seen:
-                rejections += 1
-                if rejections > max_rejections:
-                    raise InfeasibilityError(
-                        f"Not enough unique subset configurations available. "
-                        f"Requested {n} but only {len(results)} could be found."
-                    )
-                continue
-            seen.add(key)
-            rejections = 0
-            results.append((discrete_subspace, c_config))
-
-        return results
+                "No feasible discrete subsets could be found."
+            ) from ex
 
     def get_comp_rep_parameter_indices(
         self,
