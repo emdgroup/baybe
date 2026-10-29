@@ -54,21 +54,24 @@ class RandomRecommender(NonPredictiveRecommender):
             if searchspace.type is SearchSpaceType.CONTINUOUS:
                 return cont_random.to_native()
 
-        candidates_exp = searchspace.discrete._get_candidates().collect()
-
-        # Restrict to a random subset if subset-generating constraints are present
+        # Choose a random feasible batch-constraint subset before sampling candidates
         if searchspace.discrete.n_subsets > 0:
-            masks = searchspace.discrete.sample_subset_masks(
-                n=1,
-                min_candidates=None if is_hybrid else batch_size,
-            )
-            if not masks:
+            try:
+                subset = next(
+                    searchspace.discrete.iter_subsets(
+                        min_n_candidates=None if is_hybrid else batch_size,
+                        with_replacement=True,
+                    )
+                )
+            except StopIteration as ex:
                 raise InfeasibilityError(
                     "No feasible subset found for the given "
                     "subset-generating constraints. All subsets have fewer "
                     f"candidates than the requested {batch_size=}."
-                )
-            candidates_exp = candidates_exp.filter(masks[0].tolist())
+                ) from ex
+            candidates_exp = subset._get_candidates().collect()
+        else:
+            candidates_exp = searchspace.discrete._get_candidates().collect()
 
         disc_random = nw.maybe_reset_index(
             _df_with_backend(

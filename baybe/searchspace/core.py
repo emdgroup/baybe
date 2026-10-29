@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import gc
+import random
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
 from itertools import product
 from typing import TYPE_CHECKING, ClassVar
 
 import narwhals.stable.v2 as nw
-import numpy as np
-import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from typing_extensions import Self, override
@@ -309,21 +308,20 @@ class SearchSpace(SerialMixin):
     def subsets(
         self,
         min_discrete_candidates: int | None = None,
-    ) -> Iterator[tuple[npt.NDArray[np.bool_], frozenset[str]]]:
+    ) -> Iterator[tuple[SubspaceDiscrete, frozenset[str]]]:
         r"""Get an iterator over all combined subset configurations.
 
-        Yields the Cartesian product of discrete masks and continuous
-        configurations.
+        Yields the Cartesian product of discrete subsets and continuous configurations.
 
         Args:
             min_discrete_candidates: If provided, discrete Subsets with fewer
                 matching candidates are skipped.
 
         Yields:
-            A discrete mask and continuous inactive parameters pair.
+            A discrete subset and continuous inactive parameters pair.
         """
         yield from product(
-            self.discrete.subset_masks(min_candidates=min_discrete_candidates),
+            self.discrete.iter_subsets(min_n_candidates=min_discrete_candidates),
             self.continuous.inactive_parameter_combinations(),
         )
 
@@ -333,12 +331,11 @@ class SearchSpace(SerialMixin):
         min_discrete_candidates: int | None = None,
         *,
         max_rejections: int = 10,
-    ) -> list[tuple[npt.NDArray[np.bool_], frozenset[str]]]:
+    ) -> list[tuple[SubspaceDiscrete, frozenset[str]]]:
         """Sample unique combined subset configurations.
 
-        Zips two independent with-replacement iterators from the discrete and
-        continuous sides, producing random pairs from the Cartesian product.
-        Duplicate pairs are skipped.
+        Samples a discrete subset and a continuous configuration with replacement,
+        producing random pairs from the Cartesian product. Duplicate pairs are skipped.
 
         Args:
             n: Number of unique configurations to sample.
@@ -352,20 +349,31 @@ class SearchSpace(SerialMixin):
                 are available.
 
         Returns:
-            A list of ``(discrete_mask, continuous_inactive_params)`` tuples.
+            A list of ``(discrete_subset, continuous_inactive_params)`` tuples.
         """
-        d_iter = self.discrete.subset_masks(
-            min_candidates=min_discrete_candidates,
-            mode="replace",
+        if n <= 0:
+            return []
+
+        discrete_subsets = list(
+            self.discrete.iter_subsets(min_n_candidates=min_discrete_candidates)
         )
+        if not discrete_subsets:
+            raise InfeasibilityError(
+                f"Not enough unique subset configurations available. Requested {n} "
+                "but no feasible discrete subsets could be found."
+            )
+
         c_iter = self.continuous.inactive_parameter_combinations(mode="replace")
 
-        seen: set[tuple[bytes, frozenset[str]]] = set()
-        results: list[tuple[npt.NDArray[np.bool_], frozenset[str]]] = []
+        seen: set[tuple[int, frozenset[str]]] = set()
+        results: list[tuple[SubspaceDiscrete, frozenset[str]]] = []
         rejections = 0
 
-        for d_mask, c_config in zip(d_iter, c_iter):
-            key = (d_mask.tobytes(), c_config)
+        while len(results) < n:
+            discrete_index = random.randrange(len(discrete_subsets))
+            discrete_subspace = discrete_subsets[discrete_index]
+            c_config = next(c_iter)
+            key = (discrete_index, c_config)
             if key in seen:
                 rejections += 1
                 if rejections > max_rejections:
@@ -376,15 +384,7 @@ class SearchSpace(SerialMixin):
                 continue
             seen.add(key)
             rejections = 0
-            results.append((d_mask, c_config))
-            if len(results) >= n:
-                break
-
-        if len(results) < n:
-            raise InfeasibilityError(
-                f"Not enough unique subspace configurations available. "
-                f"Requested {n} but only {len(results)} could be found."
-            )
+            results.append((discrete_subspace, c_config))
 
         return results
 

@@ -5,10 +5,10 @@ from __future__ import annotations
 import math
 import warnings
 from collections.abc import Callable, Iterable
+from itertools import starmap
 from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
-import numpy as np
 import pandas as pd
 from attrs import evolve
 
@@ -18,7 +18,7 @@ from baybe.exceptions import (
     IncompatibleAcquisitionFunctionError,
     MinimumCardinalityViolatedWarning,
 )
-from baybe.searchspace import SearchSpace, TableCandidates
+from baybe.searchspace import SearchSpace, SubspaceDiscrete
 from baybe.settings import active_settings
 from baybe.utils.basic import flatten
 from baybe.utils.dataframe import _df_with_backend, to_tensor
@@ -192,44 +192,30 @@ def recommend_hybrid_with_subsets(
     """
     subspace_c = searchspace.continuous
 
-    # Materialize a shared discrete candidate snapshot so that each subset filter
-    # below (including the continuous subsets sharing a discrete mask) reuses it
-    # instead of rebuilding the constrained Cartesian product per subset.
-    # TODO: Drop Boolean mask approach entirely and use a lazy subset representation
-    discrete_candidates = TableCandidates(
-        searchspace.discrete.parameters,
-        searchspace.discrete._get_candidates().collect(),
-    )
-    searchspace = evolve(
-        searchspace,
-        discrete=evolve(searchspace.discrete, candidates=discrete_candidates),
-    )
-
     # Get combined configurations, capped at max_n_subsets
     # NOTE: No min_discrete_candidates filtering in hybrid spaces because
     # optimize_acqf_mixed can produce multiple recommendations from a single
     # discrete candidate by varying continuous parameters.
-    combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
+    combined_subsets: Iterable[tuple[SubspaceDiscrete, frozenset[str]]]
     if searchspace.n_subsets <= recommender.max_n_subsets:
-        combined_masks = searchspace.subsets()
+        combined_subsets = searchspace.subsets()
     else:
-        combined_masks = searchspace.sample_subsets(recommender.max_n_subsets)
+        combined_subsets = searchspace.sample_subsets(recommender.max_n_subsets)
 
     def make_callable(
-        d_mask: np.ndarray,
+        discrete_subspace: SubspaceDiscrete,
         c_inactive_params: frozenset[str],
     ) -> Callable[[], tuple[IntoDataFrame, Tensor]]:
         def optimize() -> tuple[IntoDataFrame, Tensor]:
             import torch
 
-            mod_disc = searchspace.discrete.filter(d_mask)
             mod_cont = (
                 subspace_c._enforce_cardinality_constraints(c_inactive_params)
                 if c_inactive_params
                 else subspace_c
             )
             mod_searchspace = evolve(
-                searchspace, discrete=mod_disc, continuous=mod_cont
+                searchspace, discrete=discrete_subspace, continuous=mod_cont
             )
 
             rec = recommend_hybrid_without_subsets(
@@ -243,7 +229,7 @@ def recommend_hybrid_with_subsets(
 
         return optimize
 
-    callables = (make_callable(d_mask, c_ip) for d_mask, c_ip in combined_masks)
+    callables = starmap(make_callable, combined_subsets)
     best_rec, _ = recommender._optimize_over_subsets(callables)
 
     # Post-check minimum cardinality on continuous columns
