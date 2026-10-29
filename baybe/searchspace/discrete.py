@@ -6,13 +6,14 @@ import gc
 import random
 import warnings
 from collections.abc import Collection, Iterator, Sequence
-from itertools import islice
+from functools import reduce
+from itertools import repeat
 from math import prod
-from typing import TYPE_CHECKING, Any, Literal
+from operator import and_
+from typing import TYPE_CHECKING, Any
 
 import narwhals.stable.v2 as nw
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 from attrs import define, evolve, field, fields
 from attrs.validators import deep_iterable, instance_of
@@ -36,7 +37,7 @@ from baybe.searchspace.candidates import (
     ProductCandidates,
     TableCandidates,
 )
-from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
+from baybe.searchspace.utils import build_constrained_product
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.serialization.core import _CONSTRUCTOR_FIELD
@@ -740,112 +741,71 @@ class SubspaceDiscrete(SerialMixin):
             for c in self.batch_constraints
         )
 
-    def subset_masks(
+    def iter_subsets(
         self,
-        min_candidates: int | None = None,
-        mode: Literal["sequential", "shuffled", "replace"] = "shuffled",
-    ) -> Iterator[npt.NDArray[np.bool_]]:
-        """Get an iterator over all possible subset masks.
-
-        Collect masks from each subset-generating constraint, iterates the
-        Cartesian product, AND-reduces each combination, and yields feasible
-        combined masks.
+        *,
+        min_n_candidates: int | None = None,
+        with_replacement: bool = False,
+    ) -> Iterator[Self]:
+        """Yield a subspace for each feasible candidate subset.
 
         Args:
-            min_candidates: If provided, combined masks selecting fewer rows
-                are silently skipped.
-            mode: The iteration strategy.
-
-                * ``"sequential"`` iterates all combinations in deterministic order.
-                * ``"shuffled"`` iterates all combinations exactly once in random order.
-                * ``"replace"`` samples with replacement, producing an infinite iterator
-                  where each draw is independent.
-
-        Raises:
-            ValueError: If an invalid mode is provided.
+            min_n_candidates: If provided, skip subsets containing fewer elements.
+            with_replacement: Whether to sample feasible subsets with replacement.
 
         Yields:
-            A Boolean mask selecting the subset's rows.
+            A discrete subspace restricted to a candidate subset.
         """
-        # TODO: Subsets are materialized as Boolean masks here and consumed via
-        #   `filter`, which is inherently eager (see `_is_boolean_mask`). Replacing
-        #   this with an expression-/filter-based description of each subset (see
-        #   `DiscreteBatchConstraint.subset_masks`) would let large combinatorial
-        #   sweeps over `ProductCandidates` stay fully symbolic until the actual
-        #   optimization routine needs concrete rows. This would need matching
-        #   changes to `SearchSpace.subsets`/`sample_subsets` and the recommenders
-        #   consuming these masks. Where materialization is unavoidable (e.g.
-        #   `TableCandidates`), replacing the current per-constraint masking,
-        #   Cartesian product, and `np.logical_and.reduce` combination below with a
-        #   single narwhals `group_by` on all batch-constrained parameters at once
-        #   would also be a more efficient way to enumerate subsets.
-        if mode not in (allowed := {"sequential", "shuffled", "replace"}):
-            raise ValueError(f"Invalid {mode=}. Must be one of {allowed}.")
 
-        per_constraint: list[list[npt.NDArray[np.bool_]]]
-        if not self.batch_constraints:
-            per_constraint = [
-                [
-                    np.ones(
-                        self._get_candidates().select(nw.len()).collect().item(),
-                        dtype=bool,
-                    )
-                ]
-            ]
-        else:
-            per_constraint = [
-                c.subset_masks(self._get_candidates().collect().to_pandas())
-                for c in self.batch_constraints
-            ]
-
-        total = prod(len(masks) for masks in per_constraint)
-
-        if mode == "replace":
-            candidates = list(range(total))
-            while candidates:
-                idx_pos = random.randint(0, len(candidates) - 1)
-                flat_idx = candidates[idx_pos]
-                combined = np.logical_and.reduce(
-                    select_via_flat_index(flat_idx, per_constraint)
+        def make_filter(values: tuple[Any, ...]) -> nw.Expr:
+            """Combine per-parameter equality filters for one value combination."""
+            filters = (
+                nw.col(constraint.parameters[0]) == value
+                for constraint, value in zip(
+                    self.batch_constraints, values, strict=True
                 )
-                if min_candidates is not None and combined.sum() < min_candidates:
-                    candidates[idx_pos] = candidates[-1]
-                    candidates.pop()
-                    continue
-                yield combined
-        else:
-            order = list(range(total))
-            if mode == "shuffled":
-                random.shuffle(order)
-            for flat_idx in order:
-                combined = np.logical_and.reduce(
-                    select_via_flat_index(flat_idx, per_constraint)
-                )
-                if min_candidates is not None and combined.sum() < min_candidates:
-                    continue
-                yield combined
-
-    def sample_subset_masks(
-        self,
-        n: int,
-        min_candidates: int | None = None,
-    ) -> list[npt.NDArray[np.bool_]]:
-        """Sample subset masks (without replacement).
-
-        Args:
-            n: Number of masks to sample.
-            min_candidates: If provided, Subsets with fewer matching
-                candidates are skipped.
-
-        Returns:
-            A list of boolean masks.
-        """
-        return list(
-            islice(
-                self.subset_masks(min_candidates),
-                n,
             )
+            return reduce(and_, filters)
+
+        # If no batch constraints exist, the entire candidate set is a single subset
+        if not self.batch_constraints:
+            if (
+                min_n_candidates is not None
+                and self._get_candidates().select(nw.len()).collect().item()
+                < min_n_candidates
+            ):
+                # If the single subset does not meet the minimum candidate requirement,
+                # there effectively are no feasible subsets
+                return
+
+            # Otherwise, we (repeatedly) yield the single subset
+            yield from repeat(self) if with_replacement else (self,)
+            return
+
+        # Filter subsets according to their size
+        # IMPROVE: The grouped summary is eagerly collected here. If this becomes a
+        #   bottleneck, we can defer the size check into the iterator and evaluate it
+        #   only for each consumed group.
+        parameter_names = [
+            constraint.parameters[0] for constraint in self.batch_constraints
+        ]
+        groups = (
+            self._get_candidates()
+            .group_by(parameter_names)
+            .agg(nw.len().alias("n_candidates"))
         )
+        if min_n_candidates is not None:
+            groups = groups.filter(nw.col("n_candidates") >= min_n_candidates)
+        groups = groups.select(parameter_names)
+
+        # Iterate over the feasible subsets
+        group_rows = groups.collect().iter_rows()
+        if with_replacement:
+            group_values = list(group_rows)
+            while group_values:
+                yield self.filter(make_filter(random.choice(group_values)))
+        else:
+            yield from map(lambda values: self.filter(make_filter(values)), group_rows)
 
     def _get_candidates(self) -> nw.LazyFrame:
         """Return all candidate parameter configurations as a narwhals LazyFrame."""

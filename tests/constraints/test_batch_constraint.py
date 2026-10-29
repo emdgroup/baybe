@@ -19,7 +19,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
 )
-from baybe.searchspace import SearchSpace
+from baybe.searchspace import SearchSpace, SubspaceDiscrete
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
 
@@ -125,7 +125,7 @@ def test_batch_constraint_all_subsets_too_small():
 
 
 @pytest.mark.parametrize(
-    ("min_candidates", "expected_count", "constraint"),
+    ("min_n_candidates", "expected_count", "constraint"),
     [
         param(None, 3, None, id="no_filter"),
         param(4, 0, None, id="all_skipped"),
@@ -145,11 +145,12 @@ def test_batch_constraint_all_subsets_too_small():
         ),
     ],
 )
-def test_subset_masks_min_candidates(min_candidates, expected_count, constraint):
-    """Subset mask filtering by min_candidates."""
+def test_iter_subsets_min_n_candidates(min_n_candidates, expected_count, constraint):
+    """Iterated subsets honor the minimum candidate count."""
     constraints = [DiscreteBatchConstraint(parameters=["d0"])]
     if constraint is not None:
         constraints.append(constraint)
     searchspace = SearchSpace.from_product(_params, constraints)
-    masks = list(searchspace.discrete.subset_masks(min_candidates=min_candidates))
-    assert len(masks) == expected_count
+    subsets = list(searchspace.discrete.iter_subsets(min_n_candidates=min_n_candidates))
+    assert len(subsets) == expected_count
+    assert all(isinstance(subset, SubspaceDiscrete) for subset in subsets)
