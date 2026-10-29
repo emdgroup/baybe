@@ -26,6 +26,7 @@ from baybe.exceptions import (
     _UnsupportedSearchSpaceAttributeError,
 )
 from baybe.kernels.base import Kernel
+from baybe.kernels.basic import VanishingKernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
@@ -589,11 +590,17 @@ class GaussianProcessSurrogate(Surrogate):
         """Resolve factory fields to concrete components.
 
         Resolves ``None`` fields to BayBE defaults and calls the factories with
-        the given context. This handles the standard resolution path.
+        the given context. This handles the standard resolution path. If the task
+        parameter has a vanishing kernel, the non-kernel components are built for the
+        reduced search space without it.
 
         Args:
             context: The model context providing searchspace, objective, and
                 measurements.
+
+        Raises:
+            IncompatibleSearchSpaceError: If a non-kernel factory cannot handle the
+                reduced search space without the task parameter.
 
         Returns:
             A tuple of (kernel, mean, likelihood, criterion).
@@ -604,17 +611,26 @@ class GaussianProcessSurrogate(Surrogate):
 
         kernel = self._resolve_kernel(context)
 
-        mean = mean_factory(
-            context.searchspace, context.objective, context.measurements
-        )
+        searchspace = context.searchspace
+        task_param = searchspace._task_parameter
+        if task_param is not None and isinstance(
+            task_param.override_kernel, VanishingKernel
+        ):
+            searchspace = searchspace._drop_parameters({task_param.name})
 
-        likelihood = likelihood_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-
-        criterion = criterion_factory(
-            context.searchspace, context.objective, context.measurements
-        )
+        args = (searchspace, context.objective, context.measurements)
+        # User-specified factories may access attributes that are blocked on the
+        # reduced search space
+        try:
+            mean = mean_factory(*args)
+            likelihood = likelihood_factory(*args)
+            criterion = criterion_factory(*args)
+        except _UnsupportedSearchSpaceAttributeError as ex:
+            raise IncompatibleSearchSpaceError(
+                "The mean, likelihood and fit criterion factories must support the "
+                "reduced search space without the task parameter when its kernel "
+                "vanishes."
+            ) from ex
 
         return kernel, mean, likelihood, criterion
 
