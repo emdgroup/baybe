@@ -22,28 +22,6 @@ if TYPE_CHECKING:
 
 
 @define(frozen=True)
-class IdentityKernel(BasicKernel):
-    """A constant unit kernel acting as identity under kernel multiplication."""
-
-    @override
-    def _get_dimensions(
-        self, searchspace: SearchSpace
-    ) -> tuple[tuple[int, ...] | None, int | None]:
-        active_dims, _ = super()._get_dimensions(searchspace)
-        return active_dims, None
-
-    @override
-    def to_gpytorch(self, searchspace: SearchSpace):
-        from gpytorch.kernels import ConstantKernel
-
-        active_dims, _ = self._get_dimensions(searchspace)
-        kernel = ConstantKernel(active_dims=active_dims)
-        kernel.constant = kernel.constant.new_ones(kernel.constant.shape)
-        kernel.raw_constant.requires_grad_(False)
-        return kernel
-
-
-@define(frozen=True)
 class LinearKernel(BasicKernel):
     """A linear kernel."""
 
@@ -241,6 +219,28 @@ class RQKernel(BasicKernel):
         validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
+
+
+@define(frozen=True)
+class VanishingKernel(BasicKernel):
+    """A constant unit kernel acting as identity under kernel multiplication."""
+
+    @override
+    def _get_dimensions(
+        self, searchspace: SearchSpace
+    ) -> tuple[tuple[int, ...] | None, int | None]:
+        active_dims, _ = super()._get_dimensions(searchspace)
+        return active_dims, None
+
+    @override
+    def to_gpytorch(self, searchspace: SearchSpace):
+        from gpytorch.kernels import ConstantKernel
+
+        active_dims, _ = self._get_dimensions(searchspace)
+        kernel = ConstantKernel(active_dims=active_dims)
+        kernel.constant = kernel.constant.new_ones(kernel.constant.shape)
+        kernel.raw_constant.requires_grad_(False)
+        return kernel
 
 
 @define(frozen=True)

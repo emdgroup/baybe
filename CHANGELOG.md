@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TaskParameter`
 - `TransferLearningMode.IDENTITY`, a constant unit task kernel that pools all tasks into
   a single model fit with the marginal log-likelihood, matching naive pooling
-- `IdentityKernel`, a constant unit kernel that acts as an identity element under
+- `VanishingKernel`, a constant unit kernel that acts as an identity element under
   kernel multiplication
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
