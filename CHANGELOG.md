@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Transfer-learning convergence benchmarks now build the naive baseline from a
-  `TaskParameter` with `override_transfer_learning_mode="IDENTITY"` instead of dropping
+  `TaskParameter` with `override_transfer_learning_mode="NAIVE"` instead of dropping
   the task parameter, keeping it alongside the default transfer-learning variant
 
 ### Fixed
@@ -34,10 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RGPESurrogate`, a rank-weighted Gaussian process ensemble for transfer learning,
   selectable directly or by setting `override_transfer_learning_mode="RGPE"` on a
   `TaskParameter`
-- `TransferLearningMode.IDENTITY`, a constant unit task kernel that pools all tasks into
-  a single model fit with the marginal log-likelihood, matching naive pooling
-- `VanishingKernel`, a constant unit kernel that acts as an identity element under
-  kernel multiplication
+- `TransferLearningMode.NAIVE`, which pools all tasks into a single-task model
+- `VanishingKernel`, a kernel that vanishes in kernel sums and products
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
 - `Symmetry` concept for expressing symmetries of the optimization problem, including

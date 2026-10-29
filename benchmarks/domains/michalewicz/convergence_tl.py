@@ -120,7 +120,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     • Includes baseline with no transfer learning (0 points)
     • Creates two campaign types:
       - Transfer learning: with task parameter to distinguish data sources
-      - Non-transfer learning (naive): task parameter with an inert identity kernel
+      - Non-transfer learning (naive): task parameter in naive mode
 
     Args:
         settings: Configuration settings for the convergence benchmark
@@ -135,7 +135,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         "Target_Function": Michalewicz(dim=5, negate=True),
     }
     searchspace_nontl = make_searchspace(
-        transfer_learning_mode=TransferLearningMode.IDENTITY
+        transfer_learning_mode=TransferLearningMode.NAIVE
     )
     searchspace_tl = make_searchspace()
 

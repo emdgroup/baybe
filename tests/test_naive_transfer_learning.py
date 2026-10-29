@@ -27,7 +27,7 @@ _TASK = TaskParameter(
     "task",
     ("A", "B", "C"),
     active_values=("A",),
-    override_transfer_learning_mode="IDENTITY",
+    override_transfer_learning_mode="NAIVE",
 )
 _X1 = NumericalContinuousParameter("x1", (0, 1))
 _X2 = NumericalDiscreteParameter("x2", (0, 1, 2))

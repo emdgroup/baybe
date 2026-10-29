@@ -110,7 +110,7 @@ def _make_hartmann_tl_benchmark(
             name="Function",
             values=("Target_Function", "Source_Function"),
             active_values=("Target_Function",),
-            override_transfer_learning_mode=TransferLearningMode.IDENTITY,
+            override_transfer_learning_mode=TransferLearningMode.NAIVE,
         )
         params_tl = params + [task_param]
 
