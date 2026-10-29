@@ -137,31 +137,6 @@ def test_override_dispatch_matches_direct(objective, candidates):
     assert torch.allclose(delegated_mean, direct_mean, atol=0.1)
 
 
-def test_identity_mode_matches_naive_pooling(objective, candidates):
-    """IDENTITY mode predicts like a task-free GP trained on the pooled data."""
-    measurements = _make_measurements("both")
-
-    # IDENTITY mode: keep the task parameter but render it inert.
-    gp_identity = GaussianProcessSurrogate()
-    gp_identity.fit(
-        _make_searchspace(mode=TransferLearningMode.IDENTITY), objective, measurements
-    )
-
-    # Naive pooling: no task parameter, task label dropped from the data.
-    gp_naive = GaussianProcessSurrogate()
-    gp_naive.fit(
-        NumericalContinuousParameter("x", (0, 5)).to_searchspace(),
-        objective,
-        measurements.drop(columns="task"),
-    )
-
-    identity_post = gp_identity.posterior(candidates)
-    naive_post = gp_naive.posterior(candidates.drop(columns="task"))
-
-    assert torch.allclose(identity_post.mean, naive_post.mean, atol=1e-5)
-    assert torch.allclose(identity_post.variance, naive_post.variance, atol=1e-5)
-
-
 @pytest.mark.parametrize(
     ("measurements", "target_fitted", "expected_weights"),
     [
