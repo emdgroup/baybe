@@ -18,7 +18,7 @@ from baybe.exceptions import (
     IncompatibleAcquisitionFunctionError,
     MinimumCardinalityViolatedWarning,
 )
-from baybe.searchspace import SearchSpace
+from baybe.searchspace import SearchSpace, TableCandidates
 from baybe.settings import active_settings
 from baybe.utils.basic import flatten
 from baybe.utils.dataframe import _df_with_backend, to_tensor
@@ -191,6 +191,19 @@ def recommend_hybrid_with_subsets(
         The recommended points.
     """
     subspace_c = searchspace.continuous
+
+    # Materialize a shared discrete candidate snapshot so that each subset filter
+    # below (including the continuous subsets sharing a discrete mask) reuses it
+    # instead of rebuilding the constrained Cartesian product per subset.
+    # TODO: Drop Boolean mask approach entirely and use a lazy subset representation
+    discrete_candidates = TableCandidates(
+        searchspace.discrete.parameters,
+        searchspace.discrete._get_candidates().collect(),
+    )
+    searchspace = evolve(
+        searchspace,
+        discrete=evolve(searchspace.discrete, candidates=discrete_candidates),
+    )
 
     # Get combined configurations, capped at max_n_subsets
     # NOTE: No min_discrete_candidates filtering in hybrid spaces because
