@@ -120,7 +120,7 @@ def aryl_halide_tl_substance_benchmark(
         data=data,
         source_tasks=source_tasks,
         target_tasks=target_tasks,
-        transfer_learning_mode=TransferLearningMode.IDENTITY,
+        transfer_learning_mode=TransferLearningMode.NAIVE,
     )
 
     lookup = make_lookup(data, target_tasks)

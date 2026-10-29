@@ -223,7 +223,7 @@ class RGPESurrogate(Surrogate):
     """
 
     supports_kernel_overrides: ClassVar[bool] = True
-    # See base class. The inner GPs are fitted on the identity-mode space, which still
+    # See base class. The inner GPs are fitted on the naive-mode space, which still
     # carries the parameter overrides (only the task dimension is made inert).
 
     supports_transfer_learning: ClassVar[bool] = True
@@ -263,20 +263,20 @@ class RGPESurrogate(Surrogate):
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # The base-class inputs are ignored: the inner GPs are refitted from the stored
-        # measurements over the identity-mode space (task dimension inert).
+        # measurements over the naive-mode space (task dimension inert).
         import torch
 
         assert self._searchspace is not None  # ensured by base class
         assert self._objective is not None  # ensured by base class
         assert self._measurements is not None  # ensured by base class
 
-        identity_searchspace, sources, target_measurements = self._split_measurements()
+        naive_searchspace, sources, target_measurements = self._split_measurements()
 
         # Fit one source GP per source task that has data.
         source_gps = []
         for _, source_measurements in sources:
             source_gp = evolve(self.base_surrogate)
-            source_gp.fit(identity_searchspace, self._objective, source_measurements)
+            source_gp.fit(naive_searchspace, self._objective, source_measurements)
             source_gps.append(source_gp)
         self._source_gps = tuple(source_gps)
 
@@ -291,7 +291,7 @@ class RGPESurrogate(Surrogate):
             return
 
         self._target_gp = evolve(self.base_surrogate)
-        self._target_gp.fit(identity_searchspace, self._objective, target_measurements)
+        self._target_gp.fit(naive_searchspace, self._objective, target_measurements)
 
         n_models = len(source_models) + 1
         if n_target < 2:
@@ -300,7 +300,7 @@ class RGPESurrogate(Surrogate):
             return
 
         train_x_target = to_tensor(
-            identity_searchspace.transform(target_measurements, allow_extra=True)
+            naive_searchspace.transform(target_measurements, allow_extra=True)
         )
         train_y_target = to_tensor(
             self._objective._pre_transform(target_measurements, allow_extra=True)
@@ -371,7 +371,7 @@ class RGPESurrogate(Surrogate):
         """Validate the task configuration and split the measurements by task.
 
         Returns:
-            The search space switched to identity mode (task dimension inert but still
+            The search space switched to naive mode (task dimension inert but still
             present in the layout), an ordered list of ``(task_value, measurements)``
             pairs for the source tasks that have data, and the target-task measurements
             (which may be empty).
@@ -421,10 +421,8 @@ class RGPESurrogate(Surrogate):
             )
         target_measurements = measurements[measurements[task_name] == target_value]
 
-        identity_searchspace = searchspace._with_task_mode(
-            TransferLearningMode.IDENTITY
-        )
-        return identity_searchspace, sources, target_measurements
+        naive_searchspace = searchspace._with_task_mode(TransferLearningMode.NAIVE)
+        return naive_searchspace, sources, target_measurements
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

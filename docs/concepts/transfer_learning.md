@@ -158,9 +158,10 @@ for example, using multiple models, shared architectures, special kernels in a s
 model, etc.
 Encoding the context information via a [`TaskParameter`] is not restricted to any of
 these methods. BayBE currently implements a kernel-based variant (the Intrinsic
-Coregionalization Model {cite:p}`NIPS2007_66368270`) and an ensemble-based variant
-(the rank-weighted Gaussian process ensemble {cite:p}`Feurer2018`), selectable via
-the [`TaskParameter`]'s `override_transfer_learning_mode` argument.
+Coregionalization Model {cite:p}`NIPS2007_66368270`), an ensemble-based variant
+(the rank-weighted Gaussian process ensemble {cite:p}`Feurer2018`), and a naive variant
+that pools the data of all tasks into a single model, selectable via
+{attr}`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`.
 ```
 
 ## Seeing Transfer Learning in Action

@@ -95,7 +95,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
         name="Function",
         values=["Target_Function", "Source_Function"],
         active_values=["Target_Function"],
-        override_transfer_learning_mode=TransferLearningMode.IDENTITY,
+        override_transfer_learning_mode=TransferLearningMode.NAIVE,
     )
     params_tl = params + [task_param]
 

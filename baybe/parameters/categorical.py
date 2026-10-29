@@ -122,7 +122,7 @@ class TaskParameter(CategoricalParameter):
                 # RGPE adds no task kernel; the surrogate dispatches to a dedicated
                 # ensemble instead
                 return None
-            case TransferLearningMode.IDENTITY:
+            case TransferLearningMode.NAIVE:
                 return VanishingKernel(parameter_names=names)
             case TransferLearningMode.POSITIVE_INDEX_KERNEL:
                 return PositiveIndexKernel(

@@ -126,7 +126,7 @@ def direct_arylation_tl_temperature(
     )
     searchspace_nontl = make_searchspace(
         data=data,
-        transfer_learning_mode=TransferLearningMode.IDENTITY,
+        transfer_learning_mode=TransferLearningMode.NAIVE,
     )
 
     lookup = make_lookup(data)

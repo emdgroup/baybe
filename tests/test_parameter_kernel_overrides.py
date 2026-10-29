@@ -53,7 +53,7 @@ _TRAVERSE_ERROR = "Cannot traverse kernel"
 
 _INDEX = TransferLearningMode.INDEX_KERNEL
 _POSITIVE_INDEX = TransferLearningMode.POSITIVE_INDEX_KERNEL
-_IDENTITY = TransferLearningMode.IDENTITY
+_NAIVE = TransferLearningMode.NAIVE
 
 
 def _x(name, override_kernel=None):
@@ -398,10 +398,10 @@ _EMPTY_ERROR = "no parameter contributing a kernel"
             id="task-positive-index",
         ),
         param(
-            [_x("x1"), _task(_IDENTITY)],
+            [_x("x1"), _task(_NAIVE)],
             None,
             {("x1",): [gk.MaternKernel]},
-            id="task-identity",
+            id="task-naive",
         ),
         # Vanishing kernels contribute no factor
         param(
@@ -510,10 +510,10 @@ _EMPTY_ERROR = "no parameter contributing a kernel"
             id="task-index+icm-factory",
         ),
         param(
-            [_x("x1"), _task(_IDENTITY)],
+            [_x("x1"), _task(_NAIVE)],
             _TASK_KERNEL,
             (IncompatibleOverrideError, _EMPTY_ERROR),
-            id="task-identity+task-only-kernel",
+            id="task-naive+task-only-kernel",
         ),
     ],
 )

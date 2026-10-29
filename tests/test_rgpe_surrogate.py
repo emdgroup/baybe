@@ -95,10 +95,10 @@ def test_fit_and_posterior(objective, candidates):
     assert torch.isfinite(posterior.mean).all()
 
 
-def test_inner_gps_use_identity_mode_and_do_not_redispatch(objective):
-    """Inner GPs fit on the identity-mode space instead of re-dispatching to RGPE.
+def test_inner_gps_use_naive_mode_and_do_not_redispatch(objective):
+    """Inner GPs fit on the naive-mode space instead of re-dispatching to RGPE.
 
-    The inner GPs run on the identity-mode space, whose task parameter no longer carries
+    The inner GPs run on the naive-mode space, whose task parameter no longer carries
     the RGPE mode. This is what prevents infinite recursion in the factory dispatch.
     """
     surrogate = RGPESurrogate(n_mc_samples=32)
@@ -109,12 +109,10 @@ def test_inner_gps_use_identity_mode_and_do_not_redispatch(objective):
         # A concrete GP was fitted rather than dispatched to another RGPE ensemble.
         assert gp._delegate is None
         assert gp._model is not None
-        # The inner space carries the identity mode, which is the recursion guard.
+        # The inner space carries the naive mode, which is the recursion guard.
         task_param = gp._searchspace._task_parameter
         assert task_param is not None
-        assert (
-            task_param.override_transfer_learning_mode is TransferLearningMode.IDENTITY
-        )
+        assert task_param.override_transfer_learning_mode is TransferLearningMode.NAIVE
 
 
 def test_override_dispatch_matches_direct(objective, candidates):
