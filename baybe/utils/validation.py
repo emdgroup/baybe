@@ -178,6 +178,7 @@ def validate_parameter_input(
         ValueError: If the data misses columns for a parameter.
         ValueError: If the data contains columns that do not correspond to any parameter
             and the corresponding check is enabled.
+        ValueError: If the dataframe contains duplicate column names.
         ValueError: If the data contains duplicate parameter configurations and the
             corresponding check is enabled.
         ValueError: If a parameter contains NaN.
@@ -185,6 +186,9 @@ def validate_parameter_input(
     """
     if data.empty and not allow_empty:
         raise ValueError("The provided input dataframe cannot be empty.")
+
+    if len(data.columns) != len(set(data.columns)):
+        raise ValueError("The input dataframe contains duplicate column names.")
 
     if missing := {p.name for p in parameters} - set(data.columns):
         raise ValueError(
@@ -268,6 +272,8 @@ def preprocess_dataframe(
     searchspace: SearchSpace,
     objective: Objective | None = None,
     numerical_measurements_must_be_within_tolerance: bool = True,
+    *,
+    allow_extra: bool = True,
 ) -> IntoDataFrameT:
     """Preprocess an experimental dataframe by validating and normalizing its contents.
 
@@ -281,6 +287,7 @@ def preprocess_dataframe(
         objective: The objective to validate the dataframe columns against.
         numerical_measurements_must_be_within_tolerance:
             See :meth:`validate_parameter_input`.
+        allow_extra: Whether to allow columns that do not correspond to parameters.
 
     Returns:
         The preprocessed dataframe.
@@ -297,6 +304,7 @@ def preprocess_dataframe(
         df_pd,
         searchspace.parameters,
         numerical_measurements_must_be_within_tolerance,
+        allow_extra=allow_extra,
         allow_duplicates=True,
     )
     if objective is not None:

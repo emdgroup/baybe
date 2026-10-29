@@ -630,19 +630,20 @@ class Campaign(SerialMixin):
 
         backend = _infer_backend(pending_experiments)
 
-        # IMPROVE: Currently, we simply invalidate the cache whenever pending
-        #     experiments are provided, because in order to use it, we need to check if
-        #     the previous call was done with the same pending experiments.
-        if pending_experiments is not None:
-            self.clear_cache()
-
-        # Preprocess pending experiments
+        # Preprocess pending experiments before cache invalidation.
         if pending_experiments is not None:
             pending_experiments = preprocess_dataframe(
                 pending_experiments,
                 self.searchspace,
                 numerical_measurements_must_be_within_tolerance=False,
+                allow_extra=False,
             )
+
+        # IMPROVE: Currently, we simply invalidate the cache whenever pending
+        #     experiments are provided, because in order to use it, we need to check if
+        #     the previous call was done with the same pending experiments.
+        if pending_experiments is not None:
+            self.clear_cache()
 
         # TODO: Proper fix for the allow_* flags required
         if (
