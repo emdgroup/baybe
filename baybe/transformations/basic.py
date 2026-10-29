@@ -34,10 +34,14 @@ if TYPE_CHECKING:
 
 @define(frozen=True)
 class CustomTransformation(Transformation):
-    """A custom transformation applying an arbitrary torch callable."""
+    """Apply a user-defined torch callable to the input tensor.
+
+    The callable is applied to the whole tensor; valid inputs and outputs depend on
+    it. Codomain and image calculations raise ``NotImplementedError``.
+    """
 
     function: TensorCallable = field(validator=is_callable())
-    """The torch callable representing the transformation."""
+    """The callable accepting an input tensor and returning the transformed tensor."""
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
@@ -52,7 +56,7 @@ class CustomTransformation(Transformation):
 
 @define(frozen=True)
 class IdentityTransformation(MonotonicTransformation):
-    """The identity transformation."""
+    """Return input values unchanged: :math:`f(x) = x`."""
 
     def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
         """Convert to BoTorch posterior transform.
@@ -80,10 +84,15 @@ class IdentityTransformation(MonotonicTransformation):
 
 @define(frozen=True, init=False)
 class ClampingTransformation(MonotonicTransformation):
-    """A transformation clamping values between specified cutoffs."""
+    r"""Limit input values to a specified interval.
+
+    Computes :math:`f(x) = \min(\max(x, l), u)`, where :math:`l` and :math:`u` are
+    the lower and upper bounds. Values inside remain unchanged; an omitted bound
+    leaves that side unbounded.
+    """
 
     cutoffs: Interval = field(converter=Interval.create)  # type: ignore[misc]
-    """The range to which input values are clamped."""
+    """The inclusive interval to which inputs are clamped."""
 
     def __init__(self, min: float | None = None, max: float | None = None) -> None:
         if min is None and max is None:
@@ -97,7 +106,13 @@ class ClampingTransformation(MonotonicTransformation):
 
 @define(frozen=True, init=False)
 class AffineTransformation(MonotonicTransformation):
-    """An affine transformation."""
+    r"""Scale input values by a factor and add a constant shift.
+
+    Computes :math:`f(x) = a \cdot x + b`, where :math:`a` is the scale factor and
+    :math:`b` is the offset. When constructed with ``shift_first=True``, the same
+    values are interpreted as :math:`a \cdot (x + b)` instead; the offset is scaled
+    internally before storage.
+    """
 
     # https://github.com/python-attrs/attrs/issues/1462
     __hash__ = object.__hash__
@@ -194,7 +209,17 @@ class AffineTransformation(MonotonicTransformation):
 @_image_equals_codomain
 @define(frozen=True)
 class TwoSidedAffineTransformation(Transformation):
-    """A transformation with two affine segments on either side of a midpoint."""
+    r"""Apply separate linear slopes on either side of a midpoint.
+
+    .. math::
+        f(x) = \begin{cases}
+            s_l \cdot (x - m) & x < m \\
+            s_r \cdot (x - m) & x \geq m
+        \end{cases}
+
+    Here :math:`s_l`, :math:`s_r`, and :math:`m` are the left slope, right slope,
+    and midpoint. Both segments meet at :math:`f(m) = 0`.
+    """
 
     slope_left: float = field(converter=float, validator=finite_float)
     """The slope of the affine segment to the left of the midpoint."""
@@ -203,7 +228,7 @@ class TwoSidedAffineTransformation(Transformation):
     """The slope of the affine segment to the right of the midpoint."""
 
     midpoint: float = field(default=0.0, converter=float, validator=finite_float)
-    """The midpoint where the two affine segments meet."""
+    """The input value where both affine segments meet at output zero."""
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
@@ -234,7 +259,14 @@ class TwoSidedAffineTransformation(Transformation):
 @_image_equals_codomain
 @define(frozen=True)
 class BellTransformation(Transformation):
-    """A Gaussian bell curve transformation."""
+    r"""Map input values to a Gaussian bell-shaped score around a center point.
+
+    .. math::
+        f(x) = \exp\!\left[-\frac{1}{2}\left(\frac{x - c}{\sigma}\right)^2\right]
+
+    Output is 1 at the center point :math:`c` and decreases symmetrically toward
+    zero. A larger width parameter :math:`\sigma` gives a broader bell.
+    """
 
     center: float = field(default=0.0, converter=float, validator=finite_float)
     """The center point of the bell curve."""
@@ -242,12 +274,7 @@ class BellTransformation(Transformation):
     sigma: float = field(
         default=1.0, converter=float, validator=[finite_float, gt(0.0)]
     )
-    """The scale parameter of the transformation.
-
-    Concerning the width of the bell curve, it has the same interpretation as the
-    standard deviation in a Gaussian distribution. (The magnitude of the curve is
-    not affected and always reaches a maximum value of 1 at the center.)
-    """
+    """The positive width parameter, interpreted as a Gaussian standard deviation."""
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
@@ -268,7 +295,7 @@ class BellTransformation(Transformation):
 @_image_equals_codomain
 @define(frozen=True)
 class AbsoluteTransformation(Transformation):
-    """A transformation computing absolute values."""
+    r"""Return distance from zero: :math:`f(x) = \lvert x \rvert`."""
 
     _transformation: Transformation = field(
         factory=lambda: TwoSidedAffineTransformation(slope_left=-1, slope_right=1),
@@ -289,24 +316,17 @@ class AbsoluteTransformation(Transformation):
 @_image_equals_codomain
 @define(frozen=True)
 class TriangularTransformation(Transformation):
-    r"""A transformation with a triangular shape.
-
-    The transformation is defined by a peak location between two cutoff values. Outside
-    the region delimited by the cutoff values, the transformation is zero. Inside the
-    region, the transformed values increase linearly from both cutoffs to the peak,
-    where the highest value of 1 is reached:
+    r"""Map input values to a triangular score with a maximum of one at the peak.
 
     .. math::
-        f(x) =
-        \begin{cases}
-            0 & \text{if } x < c_1 \\
-            \frac{x - c_1}{p - c_1} & \text{if } c_1 \leq x < p \\
-            \frac{c_2 - x}{c_2 - p} & \text{if } p \leq x < c_2 \\
-            0 & \text{if } c_2 \leq x
+        f(x) = \begin{cases}
+            \frac{x - l}{p - l} & l \leq x < p \\
+            \frac{u - x}{u - p} & p \leq x \leq u \\
+            0 & \text{otherwise}
         \end{cases}
 
-    where :math:`c_1` and :math:`c_2` are the left and right cutoffs, respectively, and
-    :math:`p` is the peak location, with :math:`c_1 < p < c_2`.
+    Here :math:`l < p < u` are the lower cutoff, peak, and upper cutoff; both
+    cutoffs must be finite.
     """
 
     # TODO[typing]: https://github.com/python-attrs/attrs/issues/1435
@@ -395,7 +415,12 @@ class TriangularTransformation(Transformation):
 @_image_equals_codomain
 @define(frozen=True)
 class LogarithmicTransformation(MonotonicTransformation):
-    """A logarithmic transformation."""
+    r"""Take the natural logarithm of input values.
+
+    Computes :math:`f(x) = \ln(x)` (base :math:`e`), increasing for :math:`x > 0` while
+    compressing large magnitudes. Zero gives negative infinity; negative inputs
+    give ``NaN``.
+    """
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
@@ -410,7 +435,11 @@ class LogarithmicTransformation(MonotonicTransformation):
 
 @define(frozen=True)
 class ExponentialTransformation(MonotonicTransformation):
-    """An exponential transformation."""
+    r"""Apply the natural exponential function.
+
+    Computes :math:`f(x) = \exp(x) = e^x`, increasing and mapping zero to one.
+    Extreme inputs can overflow to infinity or underflow to zero.
+    """
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
@@ -420,10 +449,14 @@ class ExponentialTransformation(MonotonicTransformation):
 @_image_equals_codomain
 @define(frozen=True)
 class PowerTransformation(Transformation):
-    """A transformation computing the power."""
+    r"""Raise input values to a specified exponent.
+
+    Computes :math:`f(x) = x^n`. Non-integer exponents require non-negative inputs,
+    otherwise raising ``RuntimeError``.
+    """
 
     exponent: int = field(converter=float, validator=finite_float)
-    """The exponent of the power transformation."""
+    """The finite exponent; integer and non-integer values are supported."""
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
@@ -447,7 +480,16 @@ class PowerTransformation(Transformation):
 
 @define(frozen=True)
 class SigmoidTransformation(MonotonicTransformation):
-    """A sigmoid transformation."""
+    r"""Map input values to a logistic S-shaped score.
+
+    .. math::
+        f(x) = \frac{1}{1 + e^{-k(c - x)}}
+
+    Output is 0.5 at the center point :math:`c`. For positive slope :math:`k`,
+    larger :math:`x` decreases the score toward 0; negative :math:`k` increases it
+    toward 1. Zero :math:`k` gives 0.5 for all finite inputs; larger :math:`|k|`
+    sharpens the transition.
+    """
 
     center: float = field(default=0.0, converter=float)
     """The center of the sigmoid function, where it crosses 0.5."""

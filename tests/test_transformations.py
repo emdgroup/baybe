@@ -60,6 +60,22 @@ def test_transformation_chaining(chained_first):
     assert actual == expected
 
 
+def test_three_distinct_transformations_chaining() -> None:
+    """Verify three piped transformations apply in left-to-right order."""
+    t1 = AffineTransformation(factor=2, shift=1)
+    t2 = PowerTransformation(exponent=2)
+    t3 = ClampingTransformation(min=0, max=10)
+    x = torch.tensor([-3.0, -1.0, 0.0, 1.0, 3.0])
+
+    chained = t1 | t2 | t3
+    grouped = (t1 | t2) | t3
+    nested_output = t3(t2(t1(x)))
+
+    assert chained == grouped == ChainedTransformation([t1, t2, t3])
+    assert torch.equal(chained(x), nested_output)
+    assert torch.equal(grouped(x), nested_output)
+
+
 def test_unnesting_chained_transformations():
     """Chaining chained transformations flattens them."""
     t = PowerTransformation
