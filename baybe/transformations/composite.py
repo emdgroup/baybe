@@ -25,11 +25,10 @@ if TYPE_CHECKING:
 
 @define(frozen=True)
 class ChainedTransformation(Transformation):
-    r"""Apply a sequence of transformations in the listed order.
+    r"""Apply a sequence of transformations, passing each output as the next input.
 
-    For ``transformations = (t1, t2, ..., tn)``, computes
-    :math:`f(x) = t_n(\cdots t_2(t_1(x)) \cdots)`. Each receives the previous
-    one's output, so order matters. Equivalent to ``t1 | t2 | ... | tn``.
+    Computes :math:`f(x) = t_n(\cdots t_2(t_1(x)) \cdots)`, with :math:`t_1` applied
+    first. Sequences are applied in order. Equivalent to ``t1 | t2 | ... | tn``.
     """
 
     transformations: tuple[Transformation, ...] = field(
@@ -77,8 +76,8 @@ class ChainedTransformation(Transformation):
 class AdditiveTransformation(Transformation):
     """Sum the outputs of two transformations applied to the same input.
 
-    For ``transformations = (t1, t2)``, computes :math:`f(x) = t_1(x) + t_2(x)`.
-    Equivalent to ``t1 + t2``; more terms can be combined by nesting additions.
+    Computes :math:`f(x) = t_1(x) + t_2(x)`. Equivalent to ``t1 + t2``; more
+    terms can be combined by nesting additions.
     """
 
     transformations: tuple[Transformation, Transformation] = field(
@@ -121,8 +120,8 @@ class AdditiveTransformation(Transformation):
 class MultiplicativeTransformation(Transformation):
     r"""Multiply the outputs of two transformations applied to the same input.
 
-    For ``transformations = (t1, t2)``, computes :math:`f(x) = t_1(x) \cdot t_2(x)`.
-    Equivalent to ``t1 * t2``; more factors can be combined by nesting multiplications.
+    Computes :math:`f(x) = t_1(x) \cdot t_2(x)`. Equivalent to ``t1 * t2``; more
+    factors can be combined by nesting multiplications.
     """
 
     transformations: tuple[Transformation, Transformation] = field(
