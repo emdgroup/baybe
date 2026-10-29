@@ -107,9 +107,9 @@ class ClampingTransformation(MonotonicTransformation):
 class AffineTransformation(MonotonicTransformation):
     r"""Scale input values by a factor and add a constant shift.
 
-    Computes :math:`f(x) = \mathrm{factor}\,x + \mathrm{shift}` using stored attributes.
-    With ``shift_first=True``, constructor arguments specify
-    :math:`\mathrm{factor}\,(x + \mathrm{shift})` instead; the supplied shift is
+    Computes :math:`f(x) = \mathrm{factor} \cdot x + \mathrm{shift}` using stored
+    attributes. With ``shift_first=True``, constructor arguments specify
+    :math:`\mathrm{factor} \cdot (x + \mathrm{shift})` instead; the supplied shift is
     scaled before storage.
     """
 
@@ -120,7 +120,7 @@ class AffineTransformation(MonotonicTransformation):
     """The multiplicative factor of the transformation."""
 
     shift: float = field(default=0.0, converter=float, validator=finite_float)
-    """The constant added after scaling."""
+    """The constant shift of the transformation."""
 
     def __init__(
         self,
@@ -212,8 +212,10 @@ class TwoSidedAffineTransformation(Transformation):
 
     .. math::
         f(x) = \begin{cases}
-            \mathrm{slope\_left}\,(x - \mathrm{midpoint}) & x < \mathrm{midpoint} \\
-            \mathrm{slope\_right}\,(x - \mathrm{midpoint}) & x \geq \mathrm{midpoint}
+            \mathrm{slope\_left} \cdot (x - \mathrm{midpoint})
+                & x < \mathrm{midpoint} \\
+            \mathrm{slope\_right} \cdot (x - \mathrm{midpoint})
+                & x \geq \mathrm{midpoint}
         \end{cases}
 
     Both segments meet at :math:`f(\mathrm{midpoint}) = 0`.
@@ -260,7 +262,7 @@ class BellTransformation(Transformation):
     r"""Map input values to a Gaussian bell-shaped score around a center.
 
     .. math::
-        f(x) = \exp\left[-\frac{1}{2}
+        f(x) = \exp\left[-\frac{1}{2} \cdot
         \left(\frac{x - \mathrm{center}}{\mathrm{sigma}}\right)^2\right]
 
     Highest at the center (output 1), decreasing symmetrically toward zero away
@@ -483,7 +485,7 @@ class SigmoidTransformation(MonotonicTransformation):
     r"""Map input values to a logistic S-shaped score.
 
     .. math::
-        f(x) = \frac{1}{1 + \exp[-\mathrm{steepness}\,(\mathrm{center} - x)]}
+        f(x) = \frac{1}{1 + \exp[-\mathrm{steepness} \cdot (\mathrm{center} - x)]}
 
     Output is 0.5 at the center. As :math:`x` increases, positive steepness decreases
     the score toward 0; negative steepness increases it toward 1. Zero steepness

@@ -29,7 +29,7 @@ class ChainedTransformation(Transformation):
 
     For ``transformations = (t1, t2, ..., tn)``, computes
     :math:`f(x) = t_n(\cdots t_2(t_1(x)) \cdots)`. Each receives the previous
-    one's output, so order matters. ``t1 | t2`` is equivalent syntax for two steps.
+    one's output, so order matters. Equivalent to ``t1 | t2 | ... | tn``.
     """
 
     transformations: tuple[Transformation, ...] = field(
@@ -78,8 +78,7 @@ class AdditiveTransformation(Transformation):
     """Sum the outputs of two transformations applied to the same input.
 
     For ``transformations = (t1, t2)``, computes :math:`f(x) = t_1(x) + t_2(x)`.
-    Both receive :math:`x` independently, not each other's output. ``t1 + t2`` is
-    equivalent syntax; more terms can be combined by nesting additions.
+    Equivalent to ``t1 + t2``; more terms can be combined by nesting additions.
     """
 
     transformations: tuple[Transformation, Transformation] = field(
@@ -123,8 +122,7 @@ class MultiplicativeTransformation(Transformation):
     r"""Multiply the outputs of two transformations applied to the same input.
 
     For ``transformations = (t1, t2)``, computes :math:`f(x) = t_1(x) \cdot t_2(x)`.
-    Both receive :math:`x` independently, not each other's output. ``t1 * t2`` is
-    equivalent syntax; more factors can be combined by nesting multiplications.
+    Equivalent to ``t1 * t2``; more factors can be combined by nesting multiplications.
     """
 
     transformations: tuple[Transformation, Transformation] = field(
