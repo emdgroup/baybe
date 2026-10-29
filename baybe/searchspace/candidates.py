@@ -20,7 +20,13 @@ from baybe.searchspace.validation import validate_parameters
 from baybe.settings import active_settings
 from baybe.utils._types import _NarwhalsFrame
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import Filter, _df_equals, _filter_dataframe, _is_filter
+from baybe.utils.dataframe import (
+    Filter,
+    _df_equals,
+    _filter_dataframe,
+    _is_boolean_mask,
+    _is_filter,
+)
 from baybe.utils.validation import validate_parameter_input
 
 if TYPE_CHECKING:
@@ -171,23 +177,39 @@ class ProductCandidates(CandidatesProtocol):
 
         constraints: list[DiscreteFilteringConstraint] = []
         non_constraint_filters: list[Filter] = []
+        has_positional_mask = False
+        constraint_after_mask = False
         for filter_ in self.filters:
             if isinstance(filter_, DiscreteFilteringConstraint):
                 constraints.append(filter_)
+                constraint_after_mask |= has_positional_mask
             else:
                 non_constraint_filters.append(filter_)
+                has_positional_mask |= _is_boolean_mask(filter_)
 
-        constraints.sort(
-            key=lambda constraint: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(
-                constraint.__class__
+        filters_to_apply: tuple[Filter, ...]
+        if constraint_after_mask:
+            # Hoisting a later constraint ahead of a positional mask changes the
+            # number of rows to which the mask applies. Keep all filtering stages in
+            # their original order in this case.
+            # TODO: Drop Boolean mask filter support (for the above reason) once
+            #   there are no more paths relying on them.
+            constraints = []
+            filters_to_apply = self.filters
+        else:
+            constraints.sort(
+                key=lambda constraint: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(
+                    constraint.__class__
+                )
             )
-        )
+            filters_to_apply = tuple(non_constraint_filters)
+
         candidates_df = build_constrained_product(self.parameters, constraints)
 
         # TODO: Remove to lazy once build_constrained_product returns a nw.LazyFrame
         assert not isinstance(candidates_df, nw.LazyFrame)
         candidates = nw.from_native(candidates_df).lazy()
-        return _filter_dataframe(candidates, *non_constraint_filters)
+        return _filter_dataframe(candidates, *filters_to_apply)
 
 
 @define(frozen=True)
