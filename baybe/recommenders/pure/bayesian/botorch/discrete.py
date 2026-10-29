@@ -8,8 +8,9 @@ from typing import TYPE_CHECKING
 import narwhals.stable.v2 as nw
 import numpy as np
 import numpy.typing as npt
+from attrs import evolve
 
-from baybe.searchspace import SubspaceDiscrete
+from baybe.searchspace import SubspaceDiscrete, TableCandidates
 from baybe.settings import active_settings
 from baybe.utils.dataframe import _df_with_backend, to_tensor
 
@@ -43,6 +44,14 @@ def recommend_discrete_with_subsets(
         provided experimental representation.
     """
     import torch
+
+    # Materialize a shared candidate snapshot so that each subset filter below
+    # reuses it instead of rebuilding the constrained Cartesian product per subset.
+    # TODO: Drop Boolean mask approach entirely and use a lazy subset representation
+    candidates = TableCandidates(
+        subspace_discrete.parameters, subspace_discrete._get_candidates().collect()
+    )
+    subspace_discrete = evolve(subspace_discrete, candidates=candidates)
 
     masks: Iterable[npt.NDArray[np.bool_]]
     if subspace_discrete.n_subsets <= recommender.max_n_subsets:
