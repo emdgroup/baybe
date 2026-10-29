@@ -449,8 +449,7 @@ class PowerTransformation(Transformation):
     r"""Raise input values to a specified exponent.
 
     Computes :math:`f(x) = x^n`. Non-integer exponents require non-negative inputs,
-    otherwise raising ``RuntimeError``. Zero input with a negative exponent produces
-    infinity.
+    otherwise raising ``RuntimeError``.
     """
 
     exponent: int = field(converter=float, validator=finite_float)
