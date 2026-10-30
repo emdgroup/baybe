@@ -92,8 +92,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `replace_batch`/`drop_batch` methods to `Campaign` for replacing/dropping an entire
   batch of measurements
 - `Campaign.n_batches` property indicating the number of recorded measurement batches
-- `Filter` type (including constraints, Narwhals expressions, dataframe semi-joins, and
-  Boolean masks) for specifying filtering criteria in discrete candidate contexts
+- `Filter` type (including constraints, Narwhals expressions, and dataframe semi-joins)
+  for specifying filtering criteria in discrete candidate contexts
 - `filter` method to `SubspaceDiscrete` and `CandidatesProtocol`
 - Discrete Cartesian product spaces can now be filtered using arbitrary `Filter` 
   objects in addition to using constraint-based filtering
