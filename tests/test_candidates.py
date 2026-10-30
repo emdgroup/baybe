@@ -168,6 +168,9 @@ def test_product_candidates_generation(filters, expected):
             [p_disc], [object()], TypeError("as 'filters'"), id="invalid_filter"
         ),
         pytest.param(
+            [p_disc], [[True, False]], TypeError("as 'filters'"), id="boolean_mask"
+        ),
+        pytest.param(
             [p_disc2], [c_sum], ValueError("does not exist"), id="wrong_constraint"
         ),
     ],

@@ -96,9 +96,6 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
             id="constraint",
         ),
         param(lambda df: nw.col("a") == 0, id="expression"),
-        param(lambda df: (df["a"] == 0).tolist(), id="mask_list"),
-        param(lambda df: (df["a"] == 0).to_numpy(), id="mask_ndarray"),
-        param(lambda df: df["a"] == 0, id="mask_series"),
     ],
 )
 @Settings(default_dataframe_backend="pandas")

@@ -16,9 +16,8 @@ from typing import (
 
 import narwhals.stable.v2 as nw
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
-from narwhals.stable.v2.dependencies import is_into_dataframe, is_into_series
+from narwhals.stable.v2.dependencies import is_into_dataframe
 from narwhals.stable.v2.typing import IntoDataFrame, IntoSeries
 from narwhals.testing import assert_frame_equal
 
@@ -45,19 +44,10 @@ if TYPE_CHECKING:
         int | float | np.ndarray | nw.Series | nw.DataFrame | IntoSeries | IntoDataFrame
     )
 
-Filter: TypeAlias = (
-    nw.Expr
-    | IntoSeries
-    | Sequence[bool]
-    | npt.NDArray[np.bool_]
-    | DiscreteFilteringConstraint
-    | IntoDataFrame
-)
+Filter: TypeAlias = nw.Expr | DiscreteFilteringConstraint | IntoDataFrame
 """A criterion for filtering a dataframe.
 
 * :class:`narwhals.stable.v2.Expr`: A Boolean expression.
-* A Boolean mask (:class:`~narwhals.stable.v2.typing.IntoSeries`, a plain
-  ``Sequence[bool]``, or a Boolean numpy array): Selects rows positionally.
 * :class:`~baybe.constraints.base.DiscreteFilteringConstraint`: Applies the
   constraint's validity criterion.
 * A dataframe (:class:`~narwhals.stable.v2.typing.IntoDataFrame`): Selects
@@ -109,11 +99,7 @@ converter.register_structure_hook(Filter, _structure_filter)
 
 def _is_filter(x: Any, /) -> bool:
     """Determine whether an object can be used as a dataframe filter."""
-    return (
-        isinstance(x, nw.Expr | DiscreteFilteringConstraint)
-        or is_into_dataframe(x)
-        or _is_boolean_mask(x)
-    )
+    return isinstance(x, nw.Expr | DiscreteFilteringConstraint) or is_into_dataframe(x)
 
 
 @overload
@@ -639,26 +625,6 @@ def transform_target_columns(
     return transformed
 
 
-def _is_boolean_mask(x: Any, /) -> bool:
-    """Determine whether a given object is a Boolean mask.
-
-    Args:
-        x: The object to inspect.
-
-    Returns:
-        ``True`` if the object is a series (narwhals or native) with Boolean dtype,
-        a Boolean numpy array, or a plain sequence of ``bool``-like values.
-        ``False`` otherwise.
-    """
-    if is_into_series(x):
-        return nw.from_native(x, series_only=True).dtype == nw.Boolean
-    if isinstance(x, np.ndarray):
-        return x.dtype == bool
-    if isinstance(x, Sequence):
-        return all(isinstance(v, bool | np.bool_) for v in x)
-    return False
-
-
 def _apply_filter(lf: nw.LazyFrame, filter_: Filter, /) -> nw.LazyFrame:
     """Narrow a lazyframe down to the rows matching a filter criterion.
 
@@ -702,14 +668,6 @@ def _apply_filter(lf: nw.LazyFrame, filter_: Filter, /) -> nw.LazyFrame:
                     f"to the matching backend before passing it."
                 )
             return lf.join(other.lazy(), on=other.columns, how="semi")
-
-        case _ if _is_boolean_mask(filter_):
-            mask = (
-                nw.from_native(filter_, series_only=True).to_list()
-                if is_into_series(filter_)
-                else [bool(v) for v in filter_]
-            )
-            return lf.collect().filter(mask).lazy()
 
         case _:
             raise TypeError(
