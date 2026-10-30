@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import warnings
 from collections.abc import Callable, Iterable
-from itertools import starmap
+from itertools import islice, starmap
 from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
@@ -177,11 +177,6 @@ def recommend_hybrid_with_subsets(
 ) -> IntoDataFrame:
     """Recommend from a hybrid space with subset constraints.
 
-    Uses ``SearchSpace.subsets()`` to enumerate the Cartesian
-    product of discrete and continuous subset configurations, capped at
-    ``max_n_subsets`` total. In purely discrete search spaces, subsets
-    with fewer candidates than ``batch_size`` are pre-filtered.
-
     Args:
         recommender: The recommender instance.
         searchspace: The search space in which the recommendations should be made.
@@ -196,11 +191,12 @@ def recommend_hybrid_with_subsets(
     # NOTE: No candidate-count filtering in hybrid spaces because
     # optimize_acqf_mixed can produce multiple recommendations from a single
     # discrete candidate by varying continuous parameters.
-    combined_subsets: Iterable[tuple[SubspaceDiscrete, frozenset[str]]]
-    if searchspace.n_subsets <= recommender.max_n_subsets:
-        combined_subsets = searchspace.subsets()
-    else:
-        combined_subsets = searchspace.sample_subsets(recommender.max_n_subsets)
+    is_capped = searchspace.n_subsets > recommender.max_n_subsets
+    combined_subsets: Iterable[tuple[SubspaceDiscrete, frozenset[str]]] = (
+        searchspace._iter_subset_pairs(mode="shuffled" if is_capped else "ordered")
+    )
+    if is_capped:
+        combined_subsets = islice(combined_subsets, recommender.max_n_subsets)
 
     def make_callable(
         discrete_subspace: SubspaceDiscrete,
