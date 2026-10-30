@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Removed
 - `eval_during_creation` / `eval_during_modeling` constraint class variables
+- `filter_df` utility (replaced with new `Filter` concept)
+- `fuzzy_row_match` utility
+- `SearchSpaceMatchWarning` exception class
+- `SubspaceDiscrete.subset_masks` and `SubspaceDiscrete.sample_subset_masks`
+  (use `SubspaceDiscrete.iter_subsets` instead)
+- `DiscreteBatchConstraint.subset_masks`
+- `SearchSpace.subsets` and `SearchSpace.sample_subsets` (combined subset iteration
+  is temporarily private pending a public API that yields search spaces)
 
 ### Breaking Changes
 - For pandas users: series/dataframe indices are no longer used as information carriers
@@ -22,9 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as public utilities
 - `is_constrained` property removed from `SubspaceDiscrete`, `SubspaceContinuous`,
   and `SearchSpace`
-- `candidates_exp` argument removed from `SubspaceDiscrete.subset_masks`,
-  `SubspaceDiscrete.sample_subset_masks`, `SearchSpace.subsets`, and
-  `SearchSpace.sample_subsets`
 - `SubspaceDiscrete.get_candidates` now returns only the experimental representation
   instead of a tuple of experimental and computational representations
 - Optional/secondary fields of discrete parameter classes are now keyword-only
@@ -41,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   center, which caused `OptimizationGradientError` during recommendation
 - `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
   constraint filtering
+- Pending experiments containing extra columns or duplicate column names are now
+  rejected before recommendation
+- Subset sampling without replacement no longer relies on duplicate-rejection mechanism
+  that could raise `InfeasibilityError` for larger numbers of requested configurations
 
 ### Added
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
@@ -51,6 +60,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `CandidatesProtocol`
 - `DiscreteParameter.is_finite` property
 - `SubspaceDiscrete.batch_constraints` field for storing batch-level constraints
+- `SubspaceDiscrete.iter_subsets` for lazy iteration over filtered candidate subspaces
+  in ordered, shuffled, or with-replacement mode
+- `SubspaceDiscrete.count_candidates` method
+- `iter_indices` utility for ordered, shuffled, and with-replacement index iteration
 - `SubspaceDiscrete.from_dataframe` now accepts `batch_constraints`
 - `validate_parameter_input` now accepts an `allow_empty` flag to permit zero-row input
 - `Settings.default_dataframe_backend` attribute for convenient dataframe backend choice
@@ -79,6 +92,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `replace_batch`/`drop_batch` methods to `Campaign` for replacing/dropping an entire
   batch of measurements
 - `Campaign.n_batches` property indicating the number of recorded measurement batches
+- `Filter` type (including constraints, Narwhals expressions, and dataframe semi-joins)
+  for specifying filtering criteria in discrete candidate contexts
+- `filter` method to `SubspaceDiscrete` and `CandidatesProtocol`
+- Discrete Cartesian product spaces can now be filtered using arbitrary `Filter` 
+  objects in addition to using constraint-based filtering
+- `Campaign.toggle_discrete_candidates` now supports the new `Filter` mechanism, 
+  provided via positional filter arguments
 
 ### Changed
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
@@ -124,6 +144,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `deserialize_dataframe` now routes dictionary-based input via
   `narwhals.DataFrame` constructors (e.g. `from_dict`, `from_dicts`) and dispatches
   to the active dataframe backend instead of always returning pandas dataframes
+- Discrete numerical recommendations are now matched against all search space candidates
+  within the specified tolerance instead of just the nearest candidate
+- Discrete subsets are now represented as filtered `SubspaceDiscrete` objects instead of
+  Boolean masks over a materialized candidate dataframe, enabling more efficient and
+  flexible subset handling
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
@@ -132,6 +157,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   performance problem for large candidate sets
 
 ### Deprecations
+- `Campaign.toggle_discrete_candidates` calls using the `constraints` argument.
+  Use the new filter mechanism instead, provided via positional `Filter` arguments
 - `DiscreteParameter.comp_df` property (use `transform()` instead)
 - `CustomEncoding` enum class
 - `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes

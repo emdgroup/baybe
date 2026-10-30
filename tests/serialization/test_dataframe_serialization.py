@@ -10,8 +10,9 @@ from hypothesis import strategies as st
 from narwhals.testing import assert_frame_equal
 from pytest import mark, param
 
-from baybe.serialization import deserialize_dataframe, serialize_dataframe
+from baybe.serialization import converter, deserialize_dataframe, serialize_dataframe
 from baybe.settings import Settings
+from baybe.utils._types import _NarwhalsFrame
 from tests.hypothesis_strategies.dataframes import random_dataframes
 
 # ---------------------------------------------------------------------------
@@ -36,6 +37,26 @@ def test_native_dataframe_roundtrip(impl, data):
         result = deserialize_dataframe(serialize_dataframe(df))
 
     assert_frame_equal(nw_df, nw.from_native(result, eager_only=True))
+
+
+@mark.parametrize("lazy", [False, True], ids=["eager", "lazy"])
+def test_narwhals_frame_union_roundtrip(lazy: bool) -> None:
+    """Serialize eager Narwhals frames and reject lazy frames."""
+    eager = nw.from_dict({"x": [1, 2]}, backend="pandas")
+    frame = eager.lazy() if lazy else eager
+    frame_type = _NarwhalsFrame
+
+    if lazy:
+        with pytest.raises(ValueError, match="Serializing a Narwhals LazyFrame"):
+            converter.unstructure(frame, unstructure_as=frame_type)
+        return
+
+    serialized = converter.unstructure(frame, unstructure_as=frame_type)
+    with Settings(default_dataframe_backend="pandas"):
+        restored = converter.structure(serialized, frame_type)
+
+    assert isinstance(restored, nw.DataFrame)
+    assert_frame_equal(eager, restored)
 
 
 # ---------------------------------------------------------------------------

@@ -5,10 +5,10 @@ from __future__ import annotations
 import math
 import warnings
 from collections.abc import Callable, Iterable
+from itertools import islice, starmap
 from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
-import numpy as np
 import pandas as pd
 from attrs import evolve
 
@@ -18,8 +18,7 @@ from baybe.exceptions import (
     IncompatibleAcquisitionFunctionError,
     MinimumCardinalityViolatedWarning,
 )
-from baybe.searchspace import SearchSpace
-from baybe.searchspace.candidates import TableCandidates
+from baybe.searchspace import SearchSpace, SubspaceDiscrete
 from baybe.settings import active_settings
 from baybe.utils.basic import flatten
 from baybe.utils.dataframe import _df_with_backend, to_tensor
@@ -178,11 +177,6 @@ def recommend_hybrid_with_subsets(
 ) -> IntoDataFrame:
     """Recommend from a hybrid space with subset constraints.
 
-    Uses ``SearchSpace.subsets()`` to enumerate the Cartesian
-    product of discrete and continuous subset configurations, capped at
-    ``max_n_subsets`` total. In purely discrete search spaces, subsets
-    with fewer candidates than ``batch_size`` are pre-filtered.
-
     Args:
         recommender: The recommender instance.
         searchspace: The search space in which the recommendations should be made.
@@ -194,38 +188,32 @@ def recommend_hybrid_with_subsets(
     subspace_c = searchspace.continuous
 
     # Get combined configurations, capped at max_n_subsets
-    # NOTE: No min_discrete_candidates filtering in hybrid spaces because
-    # optimize_acqf_mixed can produce multiple recommendations from a single
-    # discrete candidate by varying continuous parameters.
-    candidates = searchspace.discrete._get_candidates().collect()
-    combined_masks: Iterable[tuple[np.ndarray, frozenset[str]]]
-    if searchspace.n_subsets <= recommender.max_n_subsets:
-        combined_masks = searchspace.subsets()
-    else:
-        combined_masks = searchspace.sample_subsets(recommender.max_n_subsets)
+    # NOTE: Empty discrete subsets are skipped because BoTorch requires a
+    #   non-empty list of fixed features. Unlike in purely discrete spaces, a single
+    #   candidate suffices because multiple recommendations can be generated from it by
+    #   varying the continuous parameters.
+    is_capped = searchspace.n_subsets > recommender.max_n_subsets
+    combined_subsets: Iterable[tuple[SubspaceDiscrete, frozenset[str]]] = filter(
+        lambda pair: pair[0].count_candidates() > 0,
+        searchspace._iter_subset_pairs(mode="shuffled" if is_capped else "ordered"),
+    )
+    if is_capped:
+        combined_subsets = islice(combined_subsets, recommender.max_n_subsets)
 
     def make_callable(
-        d_mask: np.ndarray,
+        discrete_subspace: SubspaceDiscrete,
         c_inactive_params: frozenset[str],
     ) -> Callable[[], tuple[IntoDataFrame, Tensor]]:
         def optimize() -> tuple[IntoDataFrame, Tensor]:
             import torch
 
-            # TODO: Replace with SubspaceDiscrete.filter method to avoid materialization
-            mod_disc = evolve(
-                searchspace.discrete,
-                candidates=TableCandidates(
-                    searchspace.discrete.parameters,
-                    candidates.filter(d_mask.tolist()).to_native(),
-                ),
-            )
             mod_cont = (
                 subspace_c._enforce_cardinality_constraints(c_inactive_params)
                 if c_inactive_params
                 else subspace_c
             )
             mod_searchspace = evolve(
-                searchspace, discrete=mod_disc, continuous=mod_cont
+                searchspace, discrete=discrete_subspace, continuous=mod_cont
             )
 
             rec = recommend_hybrid_without_subsets(
@@ -239,7 +227,7 @@ def recommend_hybrid_with_subsets(
 
         return optimize
 
-    callables = (make_callable(d_mask, c_ip) for d_mask, c_ip in combined_masks)
+    callables = starmap(make_callable, combined_subsets)
     best_rec, _ = recommender._optimize_over_subsets(callables)
 
     # Post-check minimum cardinality on continuous columns

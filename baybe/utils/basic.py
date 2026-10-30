@@ -6,13 +6,14 @@ import enum
 import functools
 import inspect
 import itertools
-from collections.abc import Callable, Collection, Iterable, Sequence
-from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar, get_origin
+import random
+from collections.abc import Callable, Collection, Iterable, Iterator, Sequence
+from typing import TYPE_CHECKING, Any, Literal, TypeGuard, TypeVar, get_origin
 
 import cattrs
 from attrs import asdict, has
 from joblib import Memory
-from typing_extensions import override
+from typing_extensions import assert_never, override
 
 from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
 
@@ -116,6 +117,62 @@ def hilberts_factory(factory: Callable[..., _T]) -> Iterable[_T]:
     """Provide an infinite stream of the factory's products."""
     while True:
         yield factory()
+
+
+def iter_indices(
+    n: int,
+    /,
+    *,
+    mode: Literal["ordered", "shuffled", "with_replacement"] = "ordered",
+) -> Iterator[int]:
+    """Iterate over the indices of an ``n``-element collection.
+
+    Args:
+        n: The number of indices/elements. Must be non-negative, and positive when
+            using ``"with_replacement"`` mode.
+        mode: The iteration strategy.
+
+            * ``"ordered"``: Iterates the indices in ascending order.
+            * ``"shuffled"``: Iterates all indices exactly once in random order using
+              a sparse Fisher-Yates shuffle.
+            * ``"with_replacement"``: Samples indices with replacement, producing an
+              infinite iterator where each draw is independent.
+
+    Raises:
+        ValueError: If ``n`` is negative, or if ``mode="with_replacement"`` and ``n``
+            is zero.
+
+    Yields:
+        The traversed indices.
+    """
+    if n < 0:
+        raise ValueError(f"{n=} must be non-negative.")
+    if mode == "with_replacement" and n == 0:
+        raise ValueError(
+            f"Cannot sample with replacement from an empty collection ({n=})."
+        )
+
+    match mode:
+        case "ordered":
+            yield from range(n)
+
+        case "shuffled":
+            # Sparse Fisher-Yates shuffle: only store displaced indices, so memory
+            # grows with the number of consumed indices instead of upfront
+            swapped: dict[int, int] = {}
+            for i in range(n):
+                j = random.randrange(i, n)
+                value = swapped.pop(i, i)
+                if j != i:
+                    swapped[j], value = value, swapped.get(j, j)
+                yield value
+
+        case "with_replacement":
+            while n:
+                yield random.randrange(n)
+
+        case _:
+            assert_never(mode)
 
 
 def group_duplicate_values(dictionary: dict[_T, _U]) -> dict[_U, list[_T]]:

@@ -3,18 +3,15 @@
 from __future__ import annotations
 
 import gc
-import random
 import warnings
 from collections.abc import Collection, Iterator, Sequence
-from itertools import islice
 from math import prod
 from typing import TYPE_CHECKING, Any, Literal
 
 import narwhals.stable.v2 as nw
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
-from attrs import define, field, fields
+from attrs import define, evolve, field, fields
 from attrs.validators import deep_iterable, instance_of
 from cattrs import IterableValidationError
 from typing_extensions import Self, override
@@ -36,12 +33,20 @@ from baybe.searchspace.candidates import (
     ProductCandidates,
     TableCandidates,
 )
-from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
+from baybe.searchspace.utils import (
+    build_constrained_product,
+    select_via_flat_index,
+)
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.serialization.core import _CONSTRUCTOR_FIELD
 from baybe.settings import active_settings
-from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, to_tuple
+from baybe.utils.basic import (
+    UNSPECIFIED,
+    UnspecifiedType,
+    iter_indices,
+    to_tuple,
+)
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     get_transform_objects,
@@ -54,6 +59,7 @@ if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoLazyFrame
 
     from baybe.searchspace.core import SearchSpace
+    from baybe.utils.dataframe import Filter
 
 
 @define(kw_only=True)
@@ -739,100 +745,48 @@ class SubspaceDiscrete(SerialMixin):
             for c in self.batch_constraints
         )
 
-    def subset_masks(
-        self,
-        min_candidates: int | None = None,
-        mode: Literal["sequential", "shuffled", "replace"] = "shuffled",
-    ) -> Iterator[npt.NDArray[np.bool_]]:
-        """Get an iterator over all possible subset masks.
+    def _get_nth_subspace(self, n: int, /) -> Self:
+        """Get the n-th candidate subset via flat indexing."""
+        if not self.batch_constraints:
+            return self
 
-        Collect masks from each subset-generating constraint, iterates the
-        Cartesian product, AND-reduces each combination, and yields feasible
-        combined masks.
+        parameters = [
+            self.get_parameters_by_name([constraint.parameters[0]])[0]
+            for constraint in self.batch_constraints
+        ]
+        values = select_via_flat_index(
+            n, [parameter.active_values for parameter in parameters]
+        )
+        filters = (
+            nw.col(constraint.parameters[0]) == value
+            for constraint, value in zip(self.batch_constraints, values, strict=True)
+        )
+        return self.filter(*filters)
+
+    def iter_subsets(
+        self,
+        *,
+        mode: Literal["ordered", "shuffled", "with_replacement"] = "ordered",
+    ) -> Iterator[Self]:
+        """Yield a subspace for each candidate subset.
 
         Args:
-            min_candidates: If provided, combined masks selecting fewer rows
-                are silently skipped.
             mode: The iteration strategy.
 
-                * ``"sequential"`` iterates all combinations in deterministic order.
-                * ``"shuffled"`` iterates all combinations exactly once in random order.
-                * ``"replace"`` samples with replacement, producing an infinite iterator
-                  where each draw is independent.
-
-        Raises:
-            ValueError: If an invalid mode is provided.
+                * ``"ordered"``: Iterates all subsets in deterministic order.
+                * ``"shuffled"``: Iterates all subsets exactly once in random order.
+                * ``"with_replacement"``: Samples with replacement, producing an
+                  infinite iterator where each draw is independent.
 
         Yields:
-            A Boolean mask selecting the subset's rows.
+            A discrete subspace restricted to a candidate subset.
         """
-        if mode not in (allowed := {"sequential", "shuffled", "replace"}):
-            raise ValueError(f"Invalid {mode=}. Must be one of {allowed}.")
+        n = self.n_subsets if self.batch_constraints else 1
+        yield from map(self._get_nth_subspace, iter_indices(n, mode=mode))
 
-        per_constraint: list[list[npt.NDArray[np.bool_]]]
-        if not self.batch_constraints:
-            per_constraint = [
-                [
-                    np.ones(
-                        self._get_candidates().select(nw.len()).collect().item(),
-                        dtype=bool,
-                    )
-                ]
-            ]
-        else:
-            per_constraint = [
-                c.subset_masks(self._get_candidates().collect().to_pandas())
-                for c in self.batch_constraints
-            ]
-
-        total = prod(len(masks) for masks in per_constraint)
-
-        if mode == "replace":
-            candidates = list(range(total))
-            while candidates:
-                idx_pos = random.randint(0, len(candidates) - 1)
-                flat_idx = candidates[idx_pos]
-                combined = np.logical_and.reduce(
-                    select_via_flat_index(flat_idx, per_constraint)
-                )
-                if min_candidates is not None and combined.sum() < min_candidates:
-                    candidates[idx_pos] = candidates[-1]
-                    candidates.pop()
-                    continue
-                yield combined
-        else:
-            order = list(range(total))
-            if mode == "shuffled":
-                random.shuffle(order)
-            for flat_idx in order:
-                combined = np.logical_and.reduce(
-                    select_via_flat_index(flat_idx, per_constraint)
-                )
-                if min_candidates is not None and combined.sum() < min_candidates:
-                    continue
-                yield combined
-
-    def sample_subset_masks(
-        self,
-        n: int,
-        min_candidates: int | None = None,
-    ) -> list[npt.NDArray[np.bool_]]:
-        """Sample subset masks (without replacement).
-
-        Args:
-            n: Number of masks to sample.
-            min_candidates: If provided, Subsets with fewer matching
-                candidates are skipped.
-
-        Returns:
-            A list of boolean masks.
-        """
-        return list(
-            islice(
-                self.subset_masks(min_candidates),
-                n,
-            )
-        )
+    def count_candidates(self) -> int:
+        """Count the candidates in the subspace."""
+        return self._get_candidates().select(nw.len()).collect().item()
 
     def _get_candidates(self) -> nw.LazyFrame:
         """Return all candidate parameter configurations as a narwhals LazyFrame."""
@@ -841,6 +795,27 @@ class SubspaceDiscrete(SerialMixin):
     def get_candidates(self) -> IntoLazyFrame:
         """Return all candidate parameter configurations."""
         return self._get_candidates().to_native()
+
+    def filter(self, *filters: Filter, complement: bool = False) -> Self:
+        """Filter the discrete candidate set.
+
+        Multiple filters are combined conjunctively (logical AND), mirroring
+        :meth:`narwhals.stable.v2.LazyFrame.filter`. Depending on the filter(s) and
+        the candidate representation involved, the result may be computed
+        symbolically (without materializing the underlying data) or may require
+        materialization.
+
+        Args:
+            *filters: One or more filter criteria.
+            complement: If ``False``, the rows matching all given filters are kept.
+                If ``True``, the complement set is kept instead.
+
+        Returns:
+            A new subspace whose candidate set is narrowed accordingly.
+        """
+        return evolve(
+            self, candidates=self.candidates.filter(*filters, complement=complement)
+        )
 
     def transform(
         self,

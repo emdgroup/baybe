@@ -5,22 +5,16 @@ from __future__ import annotations
 import gc
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
-from itertools import product
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 import narwhals.stable.v2 as nw
-import numpy as np
-import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
-from typing_extensions import Self, override
+from typing_extensions import Self, assert_never, override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
-from baybe.exceptions import (
-    InfeasibilityError,
-    _UnsupportedSearchSpaceAttributeError,
-)
+from baybe.exceptions import _UnsupportedSearchSpaceAttributeError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
 from baybe.searchspace.candidates import TableCandidates
@@ -36,6 +30,7 @@ from baybe.searchspace.validation import (
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.serialization.core import _CONSTRUCTOR_FIELD
+from baybe.utils.basic import iter_indices
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -306,87 +301,52 @@ class SearchSpace(SerialMixin):
             return 0
         return max(d, 1) * max(c, 1)
 
-    def subsets(
+    def _iter_subset_pairs(
         self,
-        min_discrete_candidates: int | None = None,
-    ) -> Iterator[tuple[npt.NDArray[np.bool_], frozenset[str]]]:
-        r"""Get an iterator over all combined subset configurations.
+        *,
+        mode: Literal["ordered", "shuffled", "with_replacement"] = "ordered",
+    ) -> Iterator[tuple[SubspaceDiscrete, frozenset[str]]]:
+        r"""Get an iterator over combined subset configurations.
 
-        Yields the Cartesian product of discrete masks and continuous
-        configurations.
+        Temporary helper until subset iteration can return full search spaces.
 
         Args:
-            min_discrete_candidates: If provided, discrete Subsets with fewer
-                matching candidates are skipped.
+            mode: The iteration strategy.
+
+                * ``"ordered"``: Iterates all configurations in deterministic order.
+                * ``"shuffled"``: Iterates all configurations exactly once in random
+                  order.
+                * ``"with_replacement"``: Samples with replacement, producing an
+                  infinite iterator where each draw is independent.
 
         Yields:
-            A discrete mask and continuous inactive parameters pair.
+            A discrete subset and continuous inactive parameters pair.
         """
-        yield from product(
-            self.discrete.subset_masks(min_candidates=min_discrete_candidates),
-            self.continuous.inactive_parameter_combinations(),
-        )
+        # TODO: Elevate the interface to return an `Iterator[Self]` and rename to
+        #    `iter_subsets` once the continuous subset iteration has been refactored
 
-    def sample_subsets(
-        self,
-        n: int,
-        min_discrete_candidates: int | None = None,
-        *,
-        max_rejections: int = 10,
-    ) -> list[tuple[npt.NDArray[np.bool_], frozenset[str]]]:
-        """Sample unique combined subset configurations.
+        match mode:
+            case "with_replacement":
+                discrete_subsets = self.discrete.iter_subsets(mode="with_replacement")
+                continuous_draws = self.continuous.inactive_parameter_combinations(
+                    mode="replace"
+                )
+                while True:
+                    yield next(discrete_subsets), next(continuous_draws)
 
-        Zips two independent with-replacement iterators from the discrete and
-        continuous sides, producing random pairs from the Cartesian product.
-        Duplicate pairs are skipped.
-
-        Args:
-            n: Number of unique configurations to sample.
-            min_discrete_candidates: If provided, discrete Subsets with fewer
-                matching candidates are excluded.
-            max_rejections: Maximum number of times a duplicate combination can
-                be drawn before raising ``InfeasibilityError``.
-
-        Raises:
-            InfeasibilityError: If not enough unique subset configurations
-                are available.
-
-        Returns:
-            A list of ``(discrete_mask, continuous_inactive_params)`` tuples.
-        """
-        d_iter = self.discrete.subset_masks(
-            min_candidates=min_discrete_candidates,
-            mode="replace",
-        )
-        c_iter = self.continuous.inactive_parameter_combinations(mode="replace")
-
-        seen: set[tuple[bytes, frozenset[str]]] = set()
-        results: list[tuple[npt.NDArray[np.bool_], frozenset[str]]] = []
-        rejections = 0
-
-        for d_mask, c_config in zip(d_iter, c_iter):
-            key = (d_mask.tobytes(), c_config)
-            if key in seen:
-                rejections += 1
-                if rejections > max_rejections:
-                    raise InfeasibilityError(
-                        f"Not enough unique subset configurations available. "
-                        f"Requested {n} but only {len(results)} could be found."
+            case "ordered" | "shuffled":
+                continuous_configs = list(
+                    self.continuous.inactive_parameter_combinations(mode="sequential")
+                )
+                for idx in iter_indices(self.n_subsets or 1, mode=mode):
+                    d_idx, c_idx = divmod(idx, len(continuous_configs))
+                    yield (
+                        self.discrete._get_nth_subspace(d_idx),
+                        continuous_configs[c_idx],
                     )
-                continue
-            seen.add(key)
-            rejections = 0
-            results.append((d_mask, c_config))
-            if len(results) >= n:
-                break
 
-        if len(results) < n:
-            raise InfeasibilityError(
-                f"Not enough unique subspace configurations available. "
-                f"Requested {n} but only {len(results)} could be found."
-            )
-
-        return results
+            case _:
+                assert_never(mode)
 
     def get_comp_rep_parameter_indices(
         self,

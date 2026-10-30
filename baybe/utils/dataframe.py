@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import functools
 import warnings
-from collections.abc import Callable, Collection, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -17,17 +17,24 @@ from typing import (
 import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
+from narwhals.stable.v2.dependencies import is_into_dataframe
+from narwhals.stable.v2.typing import IntoDataFrame, IntoSeries
 from narwhals.testing import assert_frame_equal
 
-from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
-from baybe.parameters.base import DiscreteParameter, Parameter
+from baybe.constraints.base import DiscreteFilteringConstraint
+from baybe.exceptions import IncompatibleArgumentError, InputDataTypeWarning
+from baybe.serialization import converter
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrame, IntoFrame, IntoSeries
+    from narwhals.stable.v2.typing import (
+        IntoFrame,
+        IntoFrameT,
+    )
     from narwhals.typing import IntoBackend
     from torch import Tensor
 
+    from baybe.parameters.base import Parameter
     from baybe.targets.base import Target
 
     _T = TypeVar("_T", bound=Parameter | Target)
@@ -37,7 +44,62 @@ if TYPE_CHECKING:
         int | float | np.ndarray | nw.Series | nw.DataFrame | IntoSeries | IntoDataFrame
     )
 
+Filter: TypeAlias = nw.Expr | DiscreteFilteringConstraint | IntoDataFrame
+"""A criterion for filtering a dataframe.
+
+* :class:`narwhals.stable.v2.Expr`: A Boolean expression.
+* :class:`~baybe.constraints.base.DiscreteFilteringConstraint`: Applies the
+  constraint's validity criterion.
+* A dataframe (:class:`~narwhals.stable.v2.typing.IntoDataFrame`): Selects
+  rows whose values match a row of the given dataframe in all of its
+  columns (semi-join semantics). Must use the same dataframe backend as
+  the filtered frame.
+"""
+
 _SeriesOrFrameT = TypeVar("_SeriesOrFrameT", nw.Series, nw.DataFrame)
+
+
+def _unstructure_filter(filter_: Filter, /) -> dict[str, Any]:
+    """Unstructure a serializable filter.
+
+    Args:
+        filter_: The filter to unstructure.
+
+    Raises:
+        ValueError: If the given filter is not serializable.
+
+    Returns:
+        The unstructured filter.
+    """
+    # IMPROVE: Generalize to other union members such as nw.Expr:
+    #     https://github.com/narwhals-dev/narwhals/issues/2704
+    if not isinstance(filter_, DiscreteFilteringConstraint):
+        raise ValueError(
+            f"Only '{DiscreteFilteringConstraint.__name__}' filters can be serialized, "
+            f"but received: {filter_!r}."
+        )
+    return converter.unstructure(filter_, unstructure_as=DiscreteFilteringConstraint)
+
+
+def _structure_filter(data: dict[str, Any], _) -> DiscreteFilteringConstraint:
+    """Structure a serialized filter.
+
+    Args:
+        data: The serialized filter.
+
+    Returns:
+        The structured filter.
+    """
+    return converter.structure(data, DiscreteFilteringConstraint)
+
+
+converter.register_unstructure_hook(Filter, _unstructure_filter)
+converter.register_structure_hook(Filter, _structure_filter)
+
+
+def _is_filter(x: Any, /) -> bool:
+    """Determine whether an object can be used as a dataframe filter."""
+    return isinstance(x, nw.Expr | DiscreteFilteringConstraint) or is_into_dataframe(x)
 
 
 @overload
@@ -207,6 +269,7 @@ def create_fake_input(
     Raises:
         ValueError: If less than one row was requested.
     """
+    from baybe.parameters.base import DiscreteParameter
     from baybe.parameters.numerical import NumericalContinuousParameter
 
     # Assert at least one fake entry is being generated
@@ -370,106 +433,74 @@ def add_noise_to_perturb_degenerate_rows(
     return df
 
 
-def fuzzy_row_match(
-    left_df: pd.DataFrame,
-    right_df: pd.DataFrame,
-    parameters: Sequence[Parameter],
-) -> pd.Index:
-    """Match rows of the right dataframe to rows of the left dataframe.
+def _fuzzy_anti_join(
+    left: IntoFrame, right: IntoDataFrame, tolerances: dict[str, float], /
+) -> nw.LazyFrame:
+    """Return the rows of that do not fuzzily match any row of the second dataframe.
 
-    This is useful for matching measurements to entries in the search space, e.g. to
-    detect which ones have been measured. For categorical parameters, there needs to be
-    an exact match with any of the allowed values. For numerical parameters, the points
-    with the smallest deviation are considered.
-
-    Note:
-        This function assumes that the dataframes contain only allowed values as
-        specified in the parameter objects. No further validation to assert this is
-        done.
+    Columns for which a tolerance is specified are considered a match if the absolute
+    deviation is within that tolerance. All other columns require an exact match.
 
     Args:
-        left_df: The data that serves as lookup reference.
-        right_df: The data that is checked for matching rows in the left dataframe.
-        parameters: Parameter objects that identify the relevant column names and how
-            matching is performed.
+        left: The data to be filtered.
+        right: The data to be matched against.
+        tolerances: A mapping from column name to the absolute tolerance within
+            which a deviation in that column is still considered a match.
 
     Returns:
-        The index of the matching rows in ``left_df``.
+        The rows of the first dataframe that have no matching row in the second.
 
     Raises:
-        ValueError: If either ``left_df`` or ``right_df`` does not contain columns for
-            each entry in parameters.
+        ValueError: If the two dataframes share no columns at all.
+        ValueError: If a tolerance is specified for a column that is not shared by both
+            dataframes.
     """
-    # Separate columns types
-    cat_cols = {p.name for p in parameters if (not p.is_numerical and p.is_discrete)}
-    num_cols = {p.name for p in parameters if (p.is_numerical and p.is_discrete)}
-    non_discrete_cols = {p.name for p in parameters if not p.is_discrete}
+    left_lf = nw.from_native(left).lazy()
+    right_eager = nw.from_native(right, eager_only=True)
 
-    # Assert that all parameters appear in the given dataframes
-    if diff := (cat_cols | num_cols).difference(left_df.columns):
+    left_cols = set(left_lf.collect_schema().names())
+    right_cols = set(right_eager.columns)
+    common_cols = left_cols & right_cols
+
+    if not common_cols:
         raise ValueError(
-            f"For fuzzy row matching, all discrete parameters need to have a "
-            f"corresponding column in the left dataframe. Parameters not found: {diff})"
+            "The two dataframes have no columns in common, so no matching is possible."
         )
-    if diff := (cat_cols | num_cols).difference(right_df.columns):
+    if missing := set(tolerances) - common_cols:
         raise ValueError(
-            f"For fuzzy row matching, all discrete parameters need to have a "
-            f"corresponding column in the right dataframe. Parameters not found: "
-            f"{diff})"
+            f"A tolerance was specified for the following column(s), but they are "
+            f"not shared by both dataframes: {missing}"
         )
 
-    provided_cols = {p.name for p in parameters}
-    allowed_cols = cat_cols | num_cols | non_discrete_cols
-    assert allowed_cols == provided_cols, (
-        f"There are parameter types that would be silently ignored: "
-        f"{provided_cols.difference(allowed_cols)}"
-    )
+    exact_cols = common_cols - set(tolerances)
+    fuzzy_cols = common_cols & set(tolerances)
 
-    # Ensure the dtype consistency in the dataframes
-    left_df = normalize_input_dtypes(left_df, parameters)
-    right_df = normalize_input_dtypes(right_df, parameters)
+    if right_eager.is_empty():
+        return left_lf
 
-    # Initialize the match matrix. We will later filter it down using other
-    # matrices (representing the matches for individual parameters) via logical 'and'.
-    match_matrix = pd.DataFrame(
-        True, index=right_df.index, columns=left_df.index, dtype=bool
-    )
+    if not fuzzy_cols:
+        return left_lf.join(right_eager.lazy(), how="anti", on=list(exact_cols))
 
-    # Match categorical parameters
-    for col in cat_cols:
-        # Per categorical parameter, this identifies matches between all elements of
-        # left and right and stores them in a matrix.
-        match_matrix &= (
-            np.asarray(right_df[col])[:, None] == np.asarray(left_df[col])[None, :]
+    def tolerance_match(other: Mapping[str, Any], /) -> nw.Expr:
+        """Build an expression checking if all fuzzy columns match ``other``."""
+        return nw.all_horizontal(
+            *(
+                (nw.col(col) - other[col]).abs() <= tolerances[col]
+                for col in fuzzy_cols
+            ),
+            ignore_nulls=True,
         )
 
-    # Match numerical parameters
-    for col in num_cols:
-        # Compute absolute differences and find the minimum difference
-        abs_diff = np.abs(
-            np.asarray(right_df[col])[:, None] - np.asarray(left_df[col])[None, :]
+    if exact_cols:
+        joined = left_lf.join(right_eager.lazy(), how="inner", on=list(exact_cols))
+        joined = joined.filter(
+            tolerance_match({col: nw.col(f"{col}_right") for col in fuzzy_cols})
         )
-        min_diff = abs_diff.min(axis=1, keepdims=True)
-        match_matrix &= abs_diff == min_diff
+        matched = joined.select(list(left_cols)).unique()
+        return left_lf.join(matched, how="anti", on=list(left_cols))
 
-    # Find the matching indices. If a right row is not matched to any of the rows in
-    # left, idxmax would return the first index of left_df. Hence, we remember these
-    # cases and drop them explicitly.
-    matched_indices = pd.Index(match_matrix.idxmax(axis=1).values)
-    mask_no_match = ~match_matrix.any(axis=1)
-    matched_indices = matched_indices[~mask_no_match]
-
-    mask_multiple_matches = match_matrix.sum(axis=1) > 1
-    if multiple_match_indices := right_df.index[mask_multiple_matches].tolist():
-        w = SearchSpaceMatchWarning(
-            f"Some input rows have multiple matches with the search space. "
-            f"Matching only first occurrence for these rows. Indices with multiple "
-            f"matches: {multiple_match_indices}",
-            right_df.loc[multiple_match_indices],
-        )
-        warnings.warn(w)
-
-    return matched_indices
+    row_exprs = [tolerance_match(row) for row in right_eager.iter_rows(named=True)]
+    return left_lf.filter(~nw.any_horizontal(*row_exprs, ignore_nulls=True))
 
 
 def pretty_print_df(
@@ -594,83 +625,78 @@ def transform_target_columns(
     return transformed
 
 
-def filter_df(
-    df: pd.DataFrame, /, to_keep: pd.DataFrame, complement: bool = False
-) -> pd.DataFrame:
-    """Filter a dataframe based on a second dataframe defining filtering conditions.
-
-    Filtering is done via a join (see ``complement`` argument for details) between the
-    input dataframe and the filter dataframe.
+def _apply_filter(lf: nw.LazyFrame, filter_: Filter, /) -> nw.LazyFrame:
+    """Narrow a lazyframe down to the rows matching a filter criterion.
 
     Args:
-        df: The dataframe to be filtered.
-        to_keep: The dataframe defining the filtering conditions. By default
-            (see ``complement`` argument), it defines the rows to be kept in the sense
-            of an inner join.
-        complement: If ``False``, the filter dataframe determines the rows to be kept
-            (i.e. selection via inner join). If ``True``, the filtering mechanism is
-            inverted so that the complement set of rows is kept (i.e. selection
-            via anti-join).
+        lf: The lazyframe to be filtered.
+        filter_: The filter criterion.
 
     Returns:
-        A new dataframe containing the result of the filtering process.
+        The filtered lazyframe.
 
-    Examples:
-        >>> df = pd.DataFrame(
-        ...         [[0, "a"], [0, "b"], [1, "a"], [1, "b"]],
-        ...         columns=["num", "cat"]
-        ... )
-        >>> df
-           num cat
-        0    0   a
-        1    0   b
-        2    1   a
-        3    1   b
-
-        >>> filter_df(df, pd.DataFrame([0], columns=["num"]), complement=False)
-           num cat
-        0    0   a
-        1    0   b
-
-        >>> filter_df(df, pd.DataFrame([0], columns=["num"]), complement=True)
-           num cat
-        2    1   a
-        3    1   b
-
-        >>> filter_df(df, pd.DataFrame(), complement=True)
-           num cat
-        0    0   a
-        1    0   b
-        2    1   a
-        3    1   b
-
-        >>> filter_df(df, pd.DataFrame(), complement=False)
-        Empty DataFrame
-        Columns: [num, cat]
-        Index: []
-
+    Raises:
+        IncompatibleArgumentError: If the filter criterion is a dataframe using a
+            different dataframe backend than the frame to be filtered.
+        TypeError: If the filter criterion cannot be interpreted as a filter.
     """
-    # Handle special case of empty filter
-    if to_keep.empty:
-        return df if complement else pd.DataFrame(columns=df.columns)
+    from baybe.constraints.base import DiscreteFilteringConstraint
 
-    # Remember original index name
-    index_name = df.index.name
+    match filter_:
+        case nw.Expr():
+            return lf.filter(filter_)
 
-    # Identify rows to be dropped
-    out = pd.merge(
-        df.reset_index(names="_df_index"), to_keep, how="left", indicator=True
-    ).set_index("_df_index")
-    to_drop = out["_merge"] == ("both" if complement else "left_only")
+        case DiscreteFilteringConstraint():
+            # TODO: Simplify once constraints expose a narwhals-native expression
+            #   (replacing the current pandas-index/Polars-expression duality).
+            eager = lf.collect()
+            native = eager.to_pandas()
+            valid = native.loc[filter_.get_valid(native)]
+            return _df_with_backend(
+                nw.from_native(valid, eager_only=True), nw.get_native_namespace(eager)
+            ).lazy()
 
-    # Drop the points
-    out.drop(index=out[to_drop].index, inplace=True)
-    out.drop("_merge", axis=1, inplace=True)
+        case _ if is_into_dataframe(filter_):
+            other = nw.from_native(filter_, eager_only=True)
+            lf_backend = nw.get_native_namespace(lf)
+            other_backend = nw.get_native_namespace(other)
+            if other_backend != lf_backend:
+                raise IncompatibleArgumentError(
+                    f"The dataframe passed as a filter uses the "
+                    f"'{other_backend.__name__}' backend, but the filtered frame "
+                    f"uses '{lf_backend.__name__}'. Convert the filter dataframe "
+                    f"to the matching backend before passing it."
+                )
+            return lf.join(other.lazy(), on=other.columns, how="semi")
 
-    # Restore original index name
-    out.index.name = index_name
+        case _:
+            raise TypeError(
+                f"'{filter_!r}' of type '{type(filter_).__name__}' cannot be used as "
+                f"a filter. See '{Filter}' for the supported types."
+            )
 
-    return out
+
+def _filter_dataframe(
+    lf: nw.LazyFrame, /, *filters: Filter, complement: bool = False
+) -> nw.LazyFrame:
+    """Filter a lazyframe based on one or more filter criteria.
+
+    Multiple filters are combined conjunctively (logical AND), mirroring
+    :meth:`narwhals.stable.v2.LazyFrame.filter`.
+
+    Args:
+        lf: The lazyframe to be filtered.
+        *filters: One or more filter criteria.
+        complement: If ``False``, the rows matching all given filters are kept.
+            If ``True``, the complement set is kept instead.
+
+    Returns:
+        The filtered lazyframe.
+    """
+    matched = functools.reduce(_apply_filter, filters, lf)
+    if not complement:
+        return matched
+    return lf.join(matched, on=lf.columns, how="anti")
 
 
 def arrays_to_dataframes(
@@ -756,8 +782,8 @@ def handle_missing_values(
 
 
 def normalize_input_dtypes(
-    df: pd.DataFrame, objects: Iterable[Parameter | Target], /
-) -> pd.DataFrame:
+    df: IntoFrameT, objects: Iterable[Parameter | Target], /
+) -> IntoFrameT:
     """Ensure that the input dataframe has the expected dtypes for all columns.
 
     Args:
@@ -771,28 +797,28 @@ def normalize_input_dtypes(
 
     def needs_float_dtype(obj) -> bool:
         """Check if the object requires float dtype column representation."""
+        from baybe.parameters.base import Parameter
         from baybe.targets.numerical import NumericalTarget
 
         return (isinstance(obj, Parameter) and obj.is_numerical) or isinstance(
             obj, NumericalTarget
         )
 
+    df_nw = nw.from_native(df)
+    schema = df_nw.collect_schema()
+
     # Find columns that need conversion to float
     cols_to_convert = [
         o.name
         for o in objects
-        if needs_float_dtype(o)
-        and o.name in df.columns
-        and not pd.api.types.is_float_dtype(df[o.name])
+        if needs_float_dtype(o) and o.name in schema and not schema[o.name].is_float()
     ]
 
     if not cols_to_convert:
         return df
 
     # Warn only about truly problematic types (not integers)
-    warn_cols = [
-        col for col in cols_to_convert if not pd.api.types.is_integer_dtype(df[col])
-    ]
+    warn_cols = [col for col in cols_to_convert if not schema[col].is_integer()]
     if warn_cols:
         warnings.warn(
             f"The following columns have unexpected data types: {warn_cols}. "
@@ -800,10 +826,13 @@ def normalize_input_dtypes(
             InputDataTypeWarning,
         )
 
-    df = df.copy()
-    for col in cols_to_convert:
-        df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
-    return df
+    # TODO: `DTypeFloatNumpy` is a numpy-specific setting but is used here to control
+    #   the float precision of a potentially non-pandas/non-numpy-backed dataframe.
+    #   Revisit once a backend-agnostic float precision setting exists.
+    float_dtype = (
+        nw.Float32 if active_settings.DTypeFloatNumpy is np.float32 else nw.Float64
+    )
+    return df_nw.cast({col: float_dtype for col in cols_to_convert}).to_native()
 
 
 def _infer_backend(*frames: IntoFrame | None) -> IntoBackend:
@@ -873,8 +902,16 @@ def _df_with_backend(obj: _SeriesOrFrameT, backend: IntoBackend, /) -> _SeriesOr
     return nw.from_dict(obj.to_dict(), backend=backend)  # type: ignore[return-value]
 
 
-def _df_equals(df1: nw.DataFrame, df2: nw.DataFrame, /) -> bool:
+def _df_equals(
+    df1: nw.DataFrame | nw.LazyFrame, df2: nw.DataFrame | nw.LazyFrame, /
+) -> bool:
     """Check if two dataframes are equal."""
+    if isinstance(df1, nw.LazyFrame) or isinstance(df2, nw.LazyFrame):
+        # TODO: This is a temporary workaround to avoid runtime errors while working on
+        #   the candidates framework but needs to be adressed in order to re-enable
+        #   recommendation caching (without having to materialize the lazy frames.)
+        return False
+
     # https://github.com/narwhals-dev/narwhals/issues/3715
     try:
         assert_frame_equal(df1, df2)

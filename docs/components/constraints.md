@@ -325,11 +325,11 @@ DiscreteRepetitionLimitConstraint(
 )
 ```
 
-|   | Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteRepetitionLimitConstraint |
-|---|-----------|-----------|-----------|----------------------------------------|
-| 1 | Water     | Water     | THF       | removed (Water appears twice)          |
-| 2 | THF       | Water     | Octanol   | kept                                   |
-| 3 | Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times)      |
+| Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteRepetitionLimitConstraint |
+|-----------|-----------|-----------|----------------------------------------|
+| Water     | Water     | THF       | removed (Water appears twice)          |
+| THF       | Water     | Octanol   | kept                                   |
+| Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times)      |
 
 The constraint can also enforce that **all values are identical** by excluding rows
 where a value appears at most one fewer times than there are parameters. This is
@@ -358,11 +358,11 @@ DiscreteRepetitionLimitConstraint(
 )
 ```
 
-|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionLimitConstraint |
-|---|-------------------|---------------------|-----------------------------------|
-| 1 | Water             | Water               | kept                              |
-| 2 | THF               | Water               | removed                           |
-| 3 | Octanol           | Octanol             | kept                              |
+| Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionLimitConstraint |
+|-------------------|---------------------|----------------------------------------|
+| Water             | Water               | kept                                   |
+| THF               | Water               | removed                                |
+| Octanol           | Octanol             | kept                                   |
 
 The usage of `DiscreteRepetitionLimitConstraint` is part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
@@ -435,14 +435,14 @@ Suppose we create a mixture containing up to three solvents, i.e. parameters
 In this situation, all combinations from the following table would be equivalent,
 hence the `SearchSpace` should effectively only contain one of them.
 
-|   | Solvent_1    | Solvent_2    | Solvent_3    |
-|---|--------------|--------------|--------------|
-| 1 | Substance_43 | Substance_3  | Substance_12 |
-| 2 | Substance_43 | Substance_12 | Substance_3  |
-| 3 | Substance_3  | Substance_12 | Substance_43 |
-| 4 | Substance_3  | Substance_43 | Substance_12 |
-| 5 | Substance_12 | Substance_43 | Substance_3  |
-| 6 | Substance_12 | Substance_3  | Substance_43 |
+| Solvent_1    | Solvent_2    | Solvent_3    |
+|--------------|--------------|--------------|
+| Substance_43 | Substance_3  | Substance_12 |
+| Substance_43 | Substance_12 | Substance_3  |
+| Substance_3  | Substance_12 | Substance_43 |
+| Substance_3  | Substance_43 | Substance_12 |
+| Substance_12 | Substance_43 | Substance_3  |
+| Substance_12 | Substance_3  | Substance_43 |
 
 ```{admonition} Influence on Surrogate Models
 :class: note

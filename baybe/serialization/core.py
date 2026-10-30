@@ -26,6 +26,7 @@ from baybe.serialization.utils import (
     _structure_nw_dataframe,
     _unstructure_nw_dataframe,
 )
+from baybe.utils._types import _NarwhalsFrame
 from baybe.utils.basic import find_subclass, refers_to
 from baybe.utils.boolean import (
     AutoBool,
@@ -47,6 +48,16 @@ _CONSTRUCTOR_FIELD = "constructor"
 
 converter = cattrs.Converter(unstruct_collection_overrides={set: list}, use_alias=True)
 """The default converter for (de-)serializing BayBE-related objects."""
+
+
+def _unstructure_nw_frame(frame: _NarwhalsFrame, /) -> str:
+    """Unstructure a Narwhals frame (blocking lazy frames)."""
+    if isinstance(frame, nw.LazyFrame):
+        raise ValueError(
+            "Serializing a Narwhals LazyFrame is not supported. Collect it explicitly "
+            "before serializing."
+        )
+    return converter.unstructure(frame, unstructure_as=nw.DataFrame)
 
 
 def _add_type_to_dict(dct: dict[str, Any], type_: str, /) -> dict[str, Any]:
@@ -267,6 +278,10 @@ converter.register_structure_hook_factory(
 converter.register_unstructure_hook(nw.DataFrame, _unstructure_nw_dataframe)
 converter.register_structure_hook(
     nw.DataFrame, lambda obj, _: _structure_nw_dataframe(obj)
+)
+converter.register_unstructure_hook(_NarwhalsFrame, _unstructure_nw_frame)
+converter.register_structure_hook(
+    _NarwhalsFrame, lambda obj, _: _structure_nw_dataframe(obj)
 )
 converter.register_unstructure_hook(datetime, lambda x: x.isoformat())
 converter.register_structure_hook(datetime, lambda x, _: datetime.fromisoformat(x))
