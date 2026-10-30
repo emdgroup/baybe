@@ -128,7 +128,8 @@ def iter_indices(
     """Iterate over the indices of an ``n``-element collection.
 
     Args:
-        n: The number of indices/elements.
+        n: The number of indices/elements. Must be non-negative, and positive when
+            using ``"with_replacement"`` mode.
         mode: The iteration strategy.
 
             * ``"ordered"``: Iterates the indices in ascending order.
@@ -137,9 +138,20 @@ def iter_indices(
             * ``"with_replacement"``: Samples indices with replacement, producing an
               infinite iterator where each draw is independent.
 
+    Raises:
+        ValueError: If ``n`` is negative, or if ``mode="with_replacement"`` and ``n``
+            is zero.
+
     Yields:
         The traversed indices.
     """
+    if n < 0:
+        raise ValueError(f"{n=} must be non-negative.")
+    if mode == "with_replacement" and n == 0:
+        raise ValueError(
+            f"Cannot sample with replacement from an empty collection ({n=})."
+        )
+
     match mode:
         case "ordered":
             yield from range(n)
