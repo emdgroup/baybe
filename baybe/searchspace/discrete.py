@@ -3,14 +3,10 @@
 from __future__ import annotations
 
 import gc
-import random
 import warnings
 from collections.abc import Collection, Iterator, Sequence
-from functools import reduce
-from itertools import repeat
 from math import prod
-from operator import and_
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import narwhals.stable.v2 as nw
 import numpy as np
@@ -37,12 +33,20 @@ from baybe.searchspace.candidates import (
     ProductCandidates,
     TableCandidates,
 )
-from baybe.searchspace.utils import build_constrained_product
+from baybe.searchspace.utils import (
+    build_constrained_product,
+    select_via_flat_index,
+)
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.serialization.core import _CONSTRUCTOR_FIELD
 from baybe.settings import active_settings
-from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, to_tuple
+from baybe.utils.basic import (
+    UNSPECIFIED,
+    UnspecifiedType,
+    iter_indices,
+    to_tuple,
+)
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     get_transform_objects,
@@ -741,71 +745,48 @@ class SubspaceDiscrete(SerialMixin):
             for c in self.batch_constraints
         )
 
+    def _get_nth_subspace(self, n: int, /) -> Self:
+        """Get the n-th candidate subset via flat indexing."""
+        if not self.batch_constraints:
+            return self
+
+        parameters = [
+            self.get_parameters_by_name([constraint.parameters[0]])[0]
+            for constraint in self.batch_constraints
+        ]
+        values = select_via_flat_index(
+            n, [parameter.active_values for parameter in parameters]
+        )
+        filters = (
+            nw.col(constraint.parameters[0]) == value
+            for constraint, value in zip(self.batch_constraints, values, strict=True)
+        )
+        return self.filter(*filters)
+
     def iter_subsets(
         self,
         *,
-        min_n_candidates: int | None = None,
-        with_replacement: bool = False,
+        mode: Literal["ordered", "shuffled", "with_replacement"] = "ordered",
     ) -> Iterator[Self]:
-        """Yield a subspace for each feasible candidate subset.
+        """Yield a subspace for each candidate subset.
 
         Args:
-            min_n_candidates: If provided, skip subsets containing fewer elements.
-            with_replacement: Whether to sample feasible subsets with replacement.
+            mode: The iteration strategy.
+
+                * ``"ordered"``: Iterates all subsets in deterministic order.
+                * ``"shuffled"``: Iterates all subsets exactly once in random order.
+                * ``"with_replacement"``: Samples with replacement, producing an
+                  infinite iterator where each draw is independent.
 
         Yields:
             A discrete subspace restricted to a candidate subset.
         """
+        n = self.n_subsets if self.batch_constraints else 1
+        yield from map(self._get_nth_subspace, iter_indices(n, mode=mode))
 
-        def make_filter(values: tuple[Any, ...]) -> nw.Expr:
-            """Combine per-parameter equality filters for one value combination."""
-            filters = (
-                nw.col(constraint.parameters[0]) == value
-                for constraint, value in zip(
-                    self.batch_constraints, values, strict=True
-                )
-            )
-            return reduce(and_, filters)
-
-        # If no batch constraints exist, the entire candidate set is a single subset
-        if not self.batch_constraints:
-            if (
-                min_n_candidates is not None
-                and self._get_candidates().select(nw.len()).collect().item()
-                < min_n_candidates
-            ):
-                # If the single subset does not meet the minimum candidate requirement,
-                # there effectively are no feasible subsets
-                return
-
-            # Otherwise, we (repeatedly) yield the single subset
-            yield from repeat(self) if with_replacement else (self,)
-            return
-
-        # Filter subsets according to their size
-        # IMPROVE: The grouped summary is eagerly collected here. If this becomes a
-        #   bottleneck, we can defer the size check into the iterator and evaluate it
-        #   only for each consumed group.
-        parameter_names = [
-            constraint.parameters[0] for constraint in self.batch_constraints
-        ]
-        groups = (
-            self._get_candidates()
-            .group_by(parameter_names)
-            .agg(nw.len().alias("n_candidates"))
-        )
-        if min_n_candidates is not None:
-            groups = groups.filter(nw.col("n_candidates") >= min_n_candidates)
-        groups = groups.select(parameter_names)
-
-        # Iterate over the feasible subsets
-        group_rows = groups.collect().iter_rows()
-        if with_replacement:
-            group_values = list(group_rows)
-            while group_values:
-                yield self.filter(make_filter(random.choice(group_values)))
-        else:
-            yield from map(lambda values: self.filter(make_filter(values)), group_rows)
+    def count_candidates(self) -> int:
+        """Count the candidates in the subspace."""
+        return self._get_candidates().select(nw.len()).collect().item()
 
     def _get_candidates(self) -> nw.LazyFrame:
         """Return all candidate parameter configurations as a narwhals LazyFrame."""

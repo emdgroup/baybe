@@ -193,7 +193,7 @@ def recommend_hybrid_with_subsets(
     subspace_c = searchspace.continuous
 
     # Get combined configurations, capped at max_n_subsets
-    # NOTE: No min_discrete_candidates filtering in hybrid spaces because
+    # NOTE: No candidate-count filtering in hybrid spaces because
     # optimize_acqf_mixed can produce multiple recommendations from a single
     # discrete candidate by varying continuous parameters.
     combined_subsets: Iterable[tuple[SubspaceDiscrete, frozenset[str]]]
