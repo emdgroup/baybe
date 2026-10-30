@@ -5,13 +5,12 @@ from __future__ import annotations
 import gc
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
-from itertools import product
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, field
-from typing_extensions import Self, override
+from typing_extensions import Self, assert_never, override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
@@ -31,6 +30,7 @@ from baybe.searchspace.validation import (
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.serialization.core import _CONSTRUCTOR_FIELD
+from baybe.utils.basic import iter_indices
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -301,46 +301,52 @@ class SearchSpace(SerialMixin):
             return 0
         return max(d, 1) * max(c, 1)
 
-    def subsets(self) -> Iterator[tuple[SubspaceDiscrete, frozenset[str]]]:
-        r"""Get an iterator over all combined subset configurations.
+    def _iter_subset_pairs(
+        self,
+        *,
+        mode: Literal["ordered", "shuffled", "with_replacement"] = "ordered",
+    ) -> Iterator[tuple[SubspaceDiscrete, frozenset[str]]]:
+        r"""Get an iterator over combined subset configurations.
 
-        Yields the Cartesian product of discrete subsets and continuous configurations.
+        Temporary helper until subset iteration can return full search spaces.
+
+        Args:
+            mode: The iteration strategy.
+
+                * ``"ordered"``: Iterates all configurations in deterministic order.
+                * ``"shuffled"``: Iterates all configurations exactly once in random
+                  order.
+                * ``"with_replacement"``: Samples with replacement, producing an
+                  infinite iterator where each draw is independent.
 
         Yields:
             A discrete subset and continuous inactive parameters pair.
         """
-        yield from product(
-            self.discrete.iter_subsets(),
-            self.continuous.inactive_parameter_combinations(),
-        )
+        # TODO: Elevate the interface to return an `Iterator[Self]` and rename to
+        #    `iter_subsets` once the continuous subset iteration has been refactored
 
-    def sample_subsets(
-        self,
-        n: int,
-    ) -> list[tuple[SubspaceDiscrete, frozenset[str]]]:
-        """Sample combined subset configurations with replacement.
+        match mode:
+            case "with_replacement":
+                discrete_subsets = self.discrete.iter_subsets(mode="with_replacement")
+                continuous_draws = self.continuous.inactive_parameter_combinations(
+                    mode="replace"
+                )
+                while True:
+                    yield next(discrete_subsets), next(continuous_draws)
 
-        Draws a discrete subset and a continuous configuration independently for
-        each of the ``n`` samples. Duplicate configurations are possible.
+            case "ordered" | "shuffled":
+                continuous_configs = list(
+                    self.continuous.inactive_parameter_combinations(mode="sequential")
+                )
+                for idx in iter_indices(self.n_subsets or 1, mode=mode):
+                    d_idx, c_idx = divmod(idx, len(continuous_configs))
+                    yield (
+                        self.discrete._get_nth_subspace(d_idx),
+                        continuous_configs[c_idx],
+                    )
 
-        Args:
-            n: Number of configurations to sample.
-
-        Raises:
-            ValueError: If ``n`` is not positive.
-
-        Returns:
-            A list of ``(discrete_subset, continuous_inactive_params)`` tuples.
-        """
-        if n < 1:
-            raise ValueError(f"{n=} must be a positive integer.")
-
-        discrete_subsets = self.discrete.iter_subsets(mode="with_replacement")
-        continuous_configs = self.continuous.inactive_parameter_combinations(
-            mode="replace"
-        )
-
-        return [(next(discrete_subsets), next(continuous_configs)) for _ in range(n)]
+            case _:
+                assert_never(mode)
 
     def get_comp_rep_parameter_indices(
         self,
