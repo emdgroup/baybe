@@ -1,5 +1,8 @@
 """Tests for the searchspace module."""
 
+from collections.abc import Iterable
+from itertools import islice, product
+
 import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
@@ -8,7 +11,11 @@ from exceptiongroup import ExceptionGroup
 from pandas.testing import assert_frame_equal
 
 from baybe._optional.info import POLARS_INSTALLED
-from baybe.constraints import ContinuousLinearConstraint, DiscreteLinearConstraint
+from baybe.constraints import (
+    ContinuousLinearConstraint,
+    DiscreteBatchConstraint,
+    DiscreteLinearConstraint,
+)
 from baybe.exceptions import (
     EmptySearchSpaceError,
     IncompatibilityError,
@@ -67,6 +74,57 @@ def test_empty_parameter_bounds():
         searchspace_continuous.comp_rep_bounds,
     ]:
         assert nw.from_native(bounds, eager_only=True).is_empty()
+
+
+@pytest.fixture(name="subset_subspace")
+def fixture_subset_subspace():
+    """A discrete subspace with subsets."""
+    parameters = [
+        NumericalDiscreteParameter("d0", values=(0.0, 0.5, 1.0)),
+        NumericalDiscreteParameter("d1", values=(10.0, 20.0)),
+        NumericalDiscreteParameter("d2", values=(100.0, 200.0)),
+    ]
+    constraints = [
+        DiscreteBatchConstraint(parameters=["d0"]),
+        DiscreteBatchConstraint(parameters=["d1"]),
+    ]
+    return SubspaceDiscrete.from_product(parameters, constraints)
+
+
+def _subset_signatures(subsets: Iterable[SubspaceDiscrete]) -> list[tuple[float, ...]]:
+    """Extract the constrained parameter values identifying each subset."""
+    signatures = []
+    for subspace in subsets:
+        rows = subspace._get_candidates().select("d0", "d1").unique().collect().rows()
+        assert len(rows) == 1
+        signatures.append(tuple(float(value) for value in rows[0]))
+    return signatures
+
+
+def test_iter_subsets_ordered(subset_subspace):
+    """Ordered iteration yields all subsets in deterministic order."""
+    signatures = _subset_signatures(subset_subspace.iter_subsets(mode="ordered"))
+
+    assert signatures == list(product((0.0, 0.5, 1.0), (10.0, 20.0)))
+
+
+def test_iter_subsets_shuffled(subset_subspace):
+    """Shuffled iteration yields each subset exactly once."""
+    ordered = _subset_signatures(subset_subspace.iter_subsets(mode="ordered"))
+    shuffled = _subset_signatures(subset_subspace.iter_subsets(mode="shuffled"))
+
+    assert len(shuffled) == len(ordered)
+    assert set(shuffled) == set(ordered)
+
+
+def test_iter_subsets_with_replacement(subset_subspace):
+    """With-replacement iteration produces valid draws indefinitely."""
+    signatures = _subset_signatures(
+        islice(subset_subspace.iter_subsets(mode="with_replacement"), 10)
+    )
+
+    assert len(signatures) == 10
+    assert set(signatures) <= set(product((0.0, 0.5, 1.0), (10.0, 20.0)))
 
 
 def test_discrete_searchspace_creation_from_dataframe():
