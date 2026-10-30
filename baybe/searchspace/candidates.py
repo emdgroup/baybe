@@ -10,7 +10,7 @@ from attr.validators import deep_iterable, instance_of, min_len
 from attrs import Attribute, cmp_using, define, evolve, field
 from typing_extensions import override
 
-from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
+from baybe.constraints import validate_constraints
 from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.exceptions import InfiniteSpaceError
 from baybe.parameters.base import DiscreteParameter
@@ -177,11 +177,6 @@ class ProductCandidates(CandidatesProtocol):
             else:
                 non_constraint_filters.append(filter_)
 
-        constraints.sort(
-            key=lambda constraint: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(
-                constraint.__class__
-            )
-        )
         candidates_df = build_constrained_product(self.parameters, constraints)
 
         # TODO: Remove to lazy once build_constrained_product returns a nw.LazyFrame
