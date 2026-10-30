@@ -1,9 +1,12 @@
 """Tests for candidate generators."""
 
+from typing import Any
+
 import narwhals.stable.v2 as nw
 import pandas as pd
 import polars as pl
 import pytest
+from narwhals.testing import assert_frame_equal as assert_nw_frame_equal
 from pandas.testing import assert_frame_equal
 
 from baybe.constraints import DiscreteLinearConstraint
@@ -15,10 +18,12 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
 )
 from baybe.searchspace.candidates import (
+    CandidatesProtocol,
     EmptyCandidates,
     ProductCandidates,
     TableCandidates,
 )
+from baybe.settings import active_settings
 from baybe.utils.dataframe import create_fake_input
 
 p_disc = NumericalDiscreteParameter("disc", (1, 2))
@@ -179,3 +184,112 @@ def test_product_candidates_validation(parameters, filters, error):
     """Incompatible parameter and filter inputs raise appropriate errors."""
     with pytest.raises(error.__class__, match=str(error)):
         ProductCandidates(parameters, filters=filters)
+
+
+def _assert_candidate_rows(
+    candidates: CandidatesProtocol, expected: dict[str, list[Any]]
+) -> None:
+    """Assert that a candidate set contains exactly the expected rows."""
+    expected_df = nw.from_dict(
+        expected, backend=active_settings.default_dataframe_backend
+    )
+    assert_nw_frame_equal(
+        candidates._to_lazy().collect(backend=nw.get_native_namespace(expected_df)),
+        expected_df,
+    )
+
+
+def test_empty_candidates_filter():
+    """Filtering empty candidates returns the sentinel itself."""
+    candidates = EmptyCandidates()
+
+    assert candidates.filter(nw.col("disc") == 1) is candidates
+    assert candidates.filter(nw.col("disc") == 1, complement=True) is candidates
+
+
+@pytest.fixture(
+    name="candidates",
+    params=[
+        pytest.param(ProductCandidates([p_disc, p_disc2]), id="product"),
+        pytest.param(
+            TableCandidates(
+                [p_disc, p_disc2],
+                pd.DataFrame(
+                    {"disc": [1.0, 1.0, 2.0, 2.0], "disc2": [0.0, 10.0, 0.0, 10.0]}
+                ),
+            ),
+            id="table",
+        ),
+    ],
+)
+def fixture_candidates(request):
+    """Provide the same effective candidate set in both representations."""
+    return request.param
+
+
+@pytest.mark.parametrize("complement", [False, True], ids=["keep", "complement"])
+@pytest.mark.parametrize(
+    ("filters", "expected"),
+    [
+        pytest.param(
+            [nw.col("disc") == 1],
+            {
+                False: {"disc": [1.0, 1.0], "disc2": [0.0, 10.0]},
+                True: {"disc": [2.0, 2.0], "disc2": [0.0, 10.0]},
+            },
+            id="expr",
+        ),
+        pytest.param(
+            [c_sum],
+            {
+                False: {"disc": [1.0, 2.0], "disc2": [0.0, 0.0]},
+                True: {"disc": [1.0, 2.0], "disc2": [10.0, 10.0]},
+            },
+            id="constraint",
+        ),
+        pytest.param(
+            [nw.col("disc") == 1, nw.col("disc2") == 0],
+            {
+                False: {"disc": [1.0], "disc2": [0.0]},
+                True: {"disc": [1.0, 2.0, 2.0], "disc2": [10.0, 0.0, 10.0]},
+            },
+            id="multiple",
+        ),
+    ],
+)
+def test_candidates_filter(candidates, filters, complement, expected):
+    """Filtering yields the same rows for all candidate representations."""
+    filtered = candidates.filter(*filters, complement=complement)
+    _assert_candidate_rows(filtered, expected[complement])
+
+
+def test_candidates_filter_dataframe(candidates):
+    """Dataframe filtering yields the same rows for all representations."""
+    filter_df = pd.DataFrame({"disc": [1, 2], "disc2": [0, 10]})
+    filtered = candidates.filter(filter_df)
+    _assert_candidate_rows(filtered, {"disc": [1.0, 2.0], "disc2": [0.0, 10.0]})
+
+
+@pytest.mark.parametrize(
+    "filter_",
+    [
+        pytest.param(object(), id="unsupported_object"),
+        pytest.param([True, False], id="boolean_mask"),
+    ],
+)
+def test_candidates_filter_invalid(candidates, filter_):
+    """Unsupported filter criteria raise a TypeError."""
+    with pytest.raises(TypeError, match="filter"):
+        candidates.filter(filter_)
+
+
+def test_product_candidates_filter_representation():
+    """ProductCandidates remains symbolic except for multi-filter complements."""
+    candidates = ProductCandidates([p_disc, p_disc2])
+    expr = nw.col("disc") == 1
+
+    assert isinstance(candidates.filter(expr), ProductCandidates)
+    assert isinstance(candidates.filter(expr, complement=True), ProductCandidates)
+    assert isinstance(candidates.filter(c_sum), ProductCandidates)
+    assert isinstance(candidates.filter(c_sum, complement=True), ProductCandidates)
+    assert isinstance(candidates.filter(expr, c_sum, complement=True), TableCandidates)
