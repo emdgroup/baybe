@@ -5,7 +5,6 @@ from contextlib import nullcontext
 import pytest
 from pytest import param
 
-from baybe.constraints import DiscreteSelectionConstraint, SubSelectionCondition
 from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import (
     IncompatibilityError,
@@ -19,7 +18,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
 )
-from baybe.searchspace import SearchSpace, SubspaceDiscrete
+from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
 
@@ -122,35 +121,3 @@ def test_batch_constraint_all_subsets_too_small():
         BotorchRecommender().recommend(
             4, searchspace, TARGET.to_objective(), measurements
         )
-
-
-@pytest.mark.parametrize(
-    ("min_n_candidates", "expected_count", "constraint"),
-    [
-        param(None, 3, None, id="no_filter"),
-        param(4, 0, None, id="all_skipped"),
-        param(3, 3, None, id="all_retained"),
-        param(
-            2,
-            2,
-            DiscreteSelectionConstraint(
-                parameters=["d0", "d1"],
-                conditions=[
-                    SubSelectionCondition(selection=[0.0]),
-                    SubSelectionCondition(selection=[0.0, 0.5]),
-                ],
-                exclude=True,
-            ),
-            id="partial",
-        ),
-    ],
-)
-def test_iter_subsets_min_n_candidates(min_n_candidates, expected_count, constraint):
-    """Iterated subsets honor the minimum candidate count."""
-    constraints = [DiscreteBatchConstraint(parameters=["d0"])]
-    if constraint is not None:
-        constraints.append(constraint)
-    searchspace = SearchSpace.from_product(_params, constraints)
-    subsets = list(searchspace.discrete.iter_subsets(min_n_candidates=min_n_candidates))
-    assert len(subsets) == expected_count
-    assert all(isinstance(subset, SubspaceDiscrete) for subset in subsets)

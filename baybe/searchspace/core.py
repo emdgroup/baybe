@@ -15,10 +15,7 @@ from typing_extensions import Self, override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
-from baybe.exceptions import (
-    InfeasibilityError,
-    _UnsupportedSearchSpaceAttributeError,
-)
+from baybe.exceptions import _UnsupportedSearchSpaceAttributeError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
 from baybe.searchspace.candidates import TableCandidates
@@ -304,30 +301,22 @@ class SearchSpace(SerialMixin):
             return 0
         return max(d, 1) * max(c, 1)
 
-    def subsets(
-        self,
-        min_discrete_candidates: int | None = None,
-    ) -> Iterator[tuple[SubspaceDiscrete, frozenset[str]]]:
+    def subsets(self) -> Iterator[tuple[SubspaceDiscrete, frozenset[str]]]:
         r"""Get an iterator over all combined subset configurations.
 
         Yields the Cartesian product of discrete subsets and continuous configurations.
-
-        Args:
-            min_discrete_candidates: If provided, discrete Subsets with fewer
-                matching candidates are skipped.
 
         Yields:
             A discrete subset and continuous inactive parameters pair.
         """
         yield from product(
-            self.discrete.iter_subsets(min_n_candidates=min_discrete_candidates),
+            self.discrete.iter_subsets(),
             self.continuous.inactive_parameter_combinations(),
         )
 
     def sample_subsets(
         self,
         n: int,
-        min_discrete_candidates: int | None = None,
     ) -> list[tuple[SubspaceDiscrete, frozenset[str]]]:
         """Sample combined subset configurations with replacement.
 
@@ -336,12 +325,9 @@ class SearchSpace(SerialMixin):
 
         Args:
             n: Number of configurations to sample.
-            min_discrete_candidates: If provided, discrete Subsets with fewer
-                matching candidates are excluded.
 
         Raises:
             ValueError: If ``n`` is not positive.
-            InfeasibilityError: If no feasible discrete subsets exist.
 
         Returns:
             A list of ``(discrete_subset, continuous_inactive_params)`` tuples.
@@ -349,22 +335,12 @@ class SearchSpace(SerialMixin):
         if n < 1:
             raise ValueError(f"{n=} must be a positive integer.")
 
-        discrete_subsets = self.discrete.iter_subsets(
-            min_n_candidates=min_discrete_candidates,
-            with_replacement=True,
-        )
+        discrete_subsets = self.discrete.iter_subsets(mode="with_replacement")
         continuous_configs = self.continuous.inactive_parameter_combinations(
             mode="replace"
         )
 
-        try:
-            return [
-                (next(discrete_subsets), next(continuous_configs)) for _ in range(n)
-            ]
-        except StopIteration as ex:
-            raise InfeasibilityError(
-                "No feasible discrete subsets could be found."
-            ) from ex
+        return [(next(discrete_subsets), next(continuous_configs)) for _ in range(n)]
 
     def get_comp_rep_parameter_indices(
         self,

@@ -56,13 +56,15 @@ class RandomRecommender(NonPredictiveRecommender):
 
         # Choose a random feasible batch-constraint subset before sampling candidates
         if searchspace.discrete.n_subsets > 0:
-            try:
-                subset = next(
-                    searchspace.discrete.iter_subsets(
-                        min_n_candidates=None if is_hybrid else batch_size,
-                        with_replacement=True,
-                    )
+            subsets = searchspace.discrete.iter_subsets(
+                mode="with_replacement" if is_hybrid else "shuffled"
+            )
+            if not is_hybrid:
+                subsets = filter(
+                    lambda subset: subset.count_candidates() >= batch_size, subsets
                 )
+            try:
+                subset = next(subsets)
             except StopIteration as ex:
                 raise InfeasibilityError(
                     "No feasible subset found for the given "

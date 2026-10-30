@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import random
 from collections.abc import Callable, Iterable
+from itertools import islice
 from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
@@ -43,14 +43,13 @@ def recommend_discrete_with_subsets(
     """
     import torch
 
-    subsets: Iterable[SubspaceDiscrete] = subspace_discrete.iter_subsets(
-        min_n_candidates=batch_size
+    is_capped = subspace_discrete.n_subsets > recommender.max_n_subsets
+    subsets: Iterable[SubspaceDiscrete] = filter(
+        lambda subset: subset.count_candidates() >= batch_size,
+        subspace_discrete.iter_subsets(mode="shuffled" if is_capped else "ordered"),
     )
-    if subspace_discrete.n_subsets > recommender.max_n_subsets:
-        subset_list = list(subsets)
-        subsets = random.sample(
-            subset_list, min(len(subset_list), recommender.max_n_subsets)
-        )
+    if is_capped:
+        subsets = islice(subsets, recommender.max_n_subsets)
 
     def make_callable(
         subset_subspace: SubspaceDiscrete,
