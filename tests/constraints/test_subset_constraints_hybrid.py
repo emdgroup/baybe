@@ -3,10 +3,12 @@
 import pytest
 from pytest import param
 
+from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.constraints.discrete import (
     DiscreteBatchConstraint,
     DiscreteCardinalityConstraint,
+    DiscreteSelectionConstraint,
 )
 from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.parameters.numerical import (
@@ -109,3 +111,31 @@ def test_subset_constraints_hybrid(constraints):
                 f"Batch constraint violated for '{c.parameters[0]}': "
                 f"found {rec[c.parameters[0]].nunique()} unique values"
             )
+
+
+def test_hybrid_recommendation_skips_empty_subsets():
+    """Empty discrete subsets do not prevent a feasible recommendation."""
+    parameters = [
+        NumericalDiscreteParameter("d0", values=(0.0, 1.0)),
+        NumericalContinuousParameter("c0", bounds=(0, 1)),
+    ]
+    constraints = [
+        DiscreteBatchConstraint(parameters=["d0"]),
+        # Remove all candidates belonging to the batch-constraint subset d0 == 1
+        DiscreteSelectionConstraint(
+            parameters=["d0"],
+            conditions=[SubSelectionCondition(selection=[1.0])],
+            exclude=True,
+        ),
+    ]
+    searchspace = SearchSpace.from_product(parameters, constraints)
+
+    assert searchspace.n_subsets == 2
+    assert [s.count_candidates() for s in searchspace.discrete.iter_subsets()] == [1, 0]
+
+    measurements = create_fake_input(parameters, [TARGET], n_rows=3)
+    rec = BotorchRecommender().recommend(
+        BATCH_SIZE, searchspace, TARGET.to_objective(), measurements
+    )
+
+    assert (rec["d0"] == 0.0).all()
