@@ -188,12 +188,14 @@ def recommend_hybrid_with_subsets(
     subspace_c = searchspace.continuous
 
     # Get combined configurations, capped at max_n_subsets
-    # NOTE: No candidate-count filtering in hybrid spaces because
-    # optimize_acqf_mixed can produce multiple recommendations from a single
-    # discrete candidate by varying continuous parameters.
+    # NOTE: Empty discrete subsets are skipped because BoTorch requires a
+    #   non-empty list of fixed features. Unlike in purely discrete spaces, a single
+    #   candidate suffices because multiple recommendations can be generated from it by
+    #   varying the continuous parameters.
     is_capped = searchspace.n_subsets > recommender.max_n_subsets
-    combined_subsets: Iterable[tuple[SubspaceDiscrete, frozenset[str]]] = (
-        searchspace._iter_subset_pairs(mode="shuffled" if is_capped else "ordered")
+    combined_subsets: Iterable[tuple[SubspaceDiscrete, frozenset[str]]] = filter(
+        lambda pair: pair[0].count_candidates() > 0,
+        searchspace._iter_subset_pairs(mode="shuffled" if is_capped else "ordered"),
     )
     if is_capped:
         combined_subsets = islice(combined_subsets, recommender.max_n_subsets)
