@@ -253,7 +253,7 @@ class SequentialMetaRecommender(BaseSequentialMetaRecommender):
 
     * ``"raise"``: An error is raised.
     * ``"reuse_last"``: The last recommender in the sequence is used indefinitely.
-    * ``"cycle"``: The selection restarts from the beginning of the sequence.
+    * ``"cyclic"``: The selection restarts from the beginning of the sequence.
     """
 
     @classmethod
