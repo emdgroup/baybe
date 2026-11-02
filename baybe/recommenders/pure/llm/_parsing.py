@@ -69,7 +69,8 @@ def parse_llm_response(
     """Parse a language model response into a dataframe of recommendations.
 
     The response must contain exactly ``batch_size`` recommendations. A mismatch is
-    rejected before any individual recommendation is validated.
+    rejected before any individual recommendation is validated. The columns of the
+    returned dataframe correspond to the parameters of the search space.
 
     Numerical discrete values accepted by their parameter's range check are snapped
     to the nearest grid value before configuration validation.
@@ -200,4 +201,4 @@ def parse_llm_response(
             f"the batch.",
             n_duplicates=n_duplicates,
         )
-    return df
+    return df.loc[:, [p.name for p in searchspace.parameters]]

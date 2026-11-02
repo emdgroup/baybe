@@ -266,6 +266,24 @@ def test_parse_llm_response_happy_path():
     assert list(result["Num"]) == [1.0, 2.0]
 
 
+def test_parse_llm_response_column_order():
+    """LLM response columns are ordered such that they match the search space."""
+    searchspace = SearchSpace.from_product(
+        [*_CAT_NUM_PARAMETERS, NumericalContinuousParameter("Cont", (0.0, 1.0))]
+    )
+    recommendations = [
+        {"explanation": "first", "parameters": {"Cont": 0.3, "Num": 1.0, "Cat": "A"}},
+        {"explanation": "second", "parameters": {"Num": 2.0, "Cat": "B", "Cont": 0.7}},
+    ]
+
+    result = parse_llm_response(json.dumps(recommendations), searchspace, batch_size=2)
+
+    assert list(result.columns) == [p.name for p in searchspace.parameters]
+    assert list(result["Cat"]) == ["A", "B"]
+    assert list(result["Num"]) == [1.0, 2.0]
+    assert list(result["Cont"]) == [0.3, 0.7]
+
+
 def test_parse_llm_response_snaps_discrete_values():
     """Accepted off-grid values snap to the nearest grid value."""
     searchspace = SearchSpace.from_parameter(
