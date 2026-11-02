@@ -29,6 +29,7 @@ from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.serialization import SerialMixin, converter
 from baybe.utils.conversion import to_string
+from baybe.utils.dataframe import fuzzy_row_match
 from baybe.utils.metadata import Metadata
 
 # Keys that are controlled by the recommender itself and must not be overridden: the
@@ -41,13 +42,9 @@ _RESERVED_LITELLM_KEYS = frozenset({"model", "messages", "stream"})
 class LLMRecommender(PureRecommender, SerialMixin):
     """Recommender that uses a language model to recommend new experimental points.
 
-    When used in a :class:`~baybe.campaign.Campaign`, its recommendations are not marked
-    as recommended, even if they match stored configurations. This temporary limitation
-    remains until value-based recommendation tracking is available. The campaign's
-    ``allow_recommending_already_recommended=False`` flag therefore cannot prevent
-    repeats solely because the LLM previously proposed an experiment. Existing tracked
-    recommendations, exclusions, and supplied pending experiments are still handled
-    according to the campaign's settings.
+    Recommendations involving a discrete subspace are indexed by the matching stored
+    configurations. Recommendations without a matching stored configuration have missing
+    indices and remain untracked when used in a :class:`~baybe.campaign.Campaign`.
 
     Measurements remain recorded and are included in the model's prompt. In discrete
     campaigns, set ``allow_recommending_already_measured=False`` to exclude tracked
@@ -304,9 +301,14 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 f"possible data points left to recommend."
             )
         # TODO: Remove this override when discrete hooks return dataframes (#837).
-        # Response parsing/recovery delegates validation to the search space; preserving
-        # output and validating configurations do not establish trackable indices.
-        return self._recommend_hybrid(searchspace, candidates_exp, batch_size)
+        rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
+        rec.index = fuzzy_row_match(
+            searchspace.discrete.exp_rep,
+            rec,
+            searchspace.discrete.parameters,
+            keep_unmatched=True,
+        )
+        return rec
 
     @override
     def __str__(self) -> str:
