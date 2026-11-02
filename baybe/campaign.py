@@ -502,8 +502,6 @@ class Campaign(SerialMixin):
         #    points were part of the cached recommendations.
         #  * Additional shortcuts might be possible.
 
-        is_legacy_call = False
-
         # >>>>>>>>>> Deprecation
         # Legacy call style: the filter criterion passed via the old `constraints`
         # keyword argument instead of via `*filters`
@@ -519,7 +517,14 @@ class Campaign(SerialMixin):
                 filters = (cast("Filter", constraints),)
             else:
                 filters = tuple(cast("Collection[Filter]", constraints))
-            is_legacy_call = True
+            warnings.warn(
+                f"Passing filter criteria via the 'constraints' argument of "
+                f"'{self.toggle_discrete_candidates.__name__}' is deprecated and "
+                f"will be rejected in a future version. Pass them as positional "
+                f"arguments instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         # Legacy call style: `exclude`/`complement`/`dry_run` passed positionally,
         # as a trailing run of plain `bool` arguments, in that order (unambiguous,
@@ -547,7 +552,14 @@ class Campaign(SerialMixin):
                     complement = cast(bool, value)
                 else:
                     dry_run = cast(bool, value)
-            is_legacy_call = True
+            warnings.warn(
+                f"Passing 'exclude' (and 'complement'/'dry_run') positionally to "
+                f"'{self.toggle_discrete_candidates.__name__}' is deprecated and "
+                f"will be rejected in a future version. Pass 'exclude' as a keyword "
+                f"argument instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         # Legacy call style: a collection of constraints passed as a single combined
         # argument instead of as individual filter arguments
@@ -558,18 +570,12 @@ class Campaign(SerialMixin):
             and is_all_instance(filters[0], DiscreteFilteringConstraint)
         ):
             filters = tuple(filters[0])
-            is_legacy_call = True
-
-        if is_legacy_call:
             warnings.warn(
-                f"Calling '{self.toggle_discrete_candidates.__name__}' with a "
-                f"single combined collection of "
-                f"'{DiscreteFilteringConstraint.__name__}' objects, the legacy "
-                f"'constraints' keyword argument, and/or a positional 'exclude' "
-                f"(or 'complement'/'dry_run') argument is deprecated and will be "
-                f"rejected in a future version. Pass the individual filter "
-                f"criteria as separate positional arguments and 'exclude' as a "
-                f"keyword argument instead.",
+                f"Passing a combined collection of "
+                f"'{DiscreteFilteringConstraint.__name__}' objects to "
+                f"'{self.toggle_discrete_candidates.__name__}' is deprecated and "
+                f"will be rejected in a future version. Pass the constraints as "
+                f"separate positional arguments instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
