@@ -298,6 +298,32 @@ def test_empty_candidates_filter_invalid(filter_):
         EmptyCandidates().filter(filter_)
 
 
+@pytest.mark.parametrize(
+    "dataframe_factory",
+    [
+        pytest.param(pd.DataFrame, id="pandas"),
+        pytest.param(pl.DataFrame, id="polars"),
+    ],
+)
+@pytest.mark.parametrize(
+    "filter_",
+    [
+        pytest.param(nw.col("disc"), id="non_boolean_column"),
+        pytest.param(nw.col("disc") * 2, id="non_boolean_arithmetic"),
+        pytest.param(nw.lit(1), id="non_boolean_literal"),
+        pytest.param(nw.all(), id="multiple_columns"),
+    ],
+)
+def test_table_candidates_filter_invalid_expression(dataframe_factory, filter_):
+    """Filter expressions must evaluate to a single Boolean column."""
+    candidates = TableCandidates(
+        [p_disc, p_disc2], dataframe_factory({"disc": [1.0, 2.0], "disc2": [0.0, 10.0]})
+    )
+
+    with pytest.raises(TypeError, match="single Boolean column"):
+        candidates.filter(filter_)
+
+
 def test_product_candidates_filter_representation():
     """ProductCandidates remains symbolic except for multi-filter complements."""
     candidates = ProductCandidates([p_disc, p_disc2])
