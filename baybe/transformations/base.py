@@ -1,4 +1,4 @@
-"""Base classes for target transformations."""
+"""Base classes for transformations."""
 
 from __future__ import annotations
 
@@ -36,7 +36,10 @@ def _image_equals_codomain(cls: type[_TTransformation], /) -> type[_TTransformat
 
 @define(frozen=True)
 class Transformation(SerialMixin, ABC):
-    """Abstract base class for all transformations."""
+    """Abstract base class for one-dimensional maps from reals to reals.
+
+    Transforms an input :math:`x` into an output :math:`f(x)`.
+    """
 
     @abstractmethod
     def __call__(self, x: Tensor, /) -> Tensor:
@@ -227,7 +230,10 @@ class Transformation(SerialMixin, ABC):
 @_image_equals_codomain
 @define(frozen=True)
 class MonotonicTransformation(Transformation, ABC):
-    """Abstract base class for monotonic transformations."""
+    """Abstract base class for monotonic transformations.
+
+    Outputs are nondecreasing or nonincreasing over the valid input domain.
+    """
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
