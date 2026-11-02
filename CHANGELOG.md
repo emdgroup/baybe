@@ -31,9 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constraint filtering
 
 ### Added
-- `RGPESurrogate`, a rank-weighted Gaussian process ensemble for transfer learning,
-  selectable directly or by setting `override_transfer_learning_mode="RGPE"` on a
-  `TaskParameter`
+- `TransferLearningMode.RGPE`, a rank-weighted Gaussian process ensemble for transfer
+  learning, selectable via `override_transfer_learning_mode="RGPE"` on a `TaskParameter`
 - `TransferLearningMode.NAIVE`, which pools all tasks into a single-task model
 - `VanishingKernel`, a kernel that vanishes in kernel sums and products
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
