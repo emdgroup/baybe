@@ -310,7 +310,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
 
     @override
     def __str__(self) -> str:
-        fields = [
+        flds = [
             to_string("Model", self.model, single_line=True),
             # Only the names are shown since the values may contain credentials
             to_string("LiteLLM Arg Names", list(self.litellm_args), single_line=True),
@@ -318,7 +318,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 "Experiment Description", self.experiment_description, single_line=True
             ),
         ]
-        return to_string(self.__class__.__name__, *fields)
+        return to_string(self.__class__.__name__, *flds)
 
 
 _unstructure_with_litellm_args = converter.get_unstructure_hook(LLMRecommender)
