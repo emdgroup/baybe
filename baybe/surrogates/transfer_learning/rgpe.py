@@ -20,181 +20,13 @@ from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     import pandas as pd
-    from botorch.models.gpytorch import GPyTorchModel
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import GPyTorchPosterior, Posterior
-    from gpytorch.means import Mean
-    from gpytorch.module import Module
     from torch import Tensor
 
     from baybe.parameters.base import Parameter
     from baybe.searchspace.core import SearchSpace
-
-
-def _roll_col(x: Tensor, shift: int) -> Tensor:
-    """Rotate the columns of a tensor to the right by ``shift``.
-
-    Args:
-        x: The tensor whose last dimension is rotated.
-        shift: The number of positions to rotate by.
-
-    Returns:
-        The column-rotated tensor.
-    """
-    import torch
-
-    return torch.cat((x[..., -shift:], x[..., :-shift]), dim=-1)
-
-
-def _compute_ranking_loss(f_samps: Tensor, target_y: Tensor) -> Tensor:
-    """Compute the ranking loss of each posterior sample against the target points.
-
-    The loss counts discordant pairwise orderings between the sampled predictions and
-    the observed targets. A 3D ``f_samps`` holds leave-one-out samples of the target
-    model (its diagonal are the out-of-sample predictions); a 2D ``f_samps`` holds
-    source-model samples.
-
-    Args:
-        f_samps: An ``n_samples x n x n`` tensor (target LOOCV samples) or an
-            ``n_samples x n`` tensor (source-model samples).
-        target_y: An ``n x 1`` tensor of observed target values.
-
-    Returns:
-        An ``n_samples`` tensor with the ranking loss per sample.
-    """
-    import torch
-
-    n = target_y.shape[0]
-    if f_samps.ndim == 3:
-        # Target model: compare each LOO out-of-sample prediction (the diagonal) to
-        # every in-sample prediction.
-        cartesian_y = torch.cartesian_prod(
-            target_y.squeeze(-1),
-            target_y.squeeze(-1),
-        ).view(n, n, 2)
-        rank_loss = (
-            (
-                (f_samps.diagonal(dim1=1, dim2=2).unsqueeze(-1) < f_samps)
-                ^ (cartesian_y[..., 0] < cartesian_y[..., 1])
-            )
-            .sum(dim=-1)
-            .sum(dim=-1)
-        )
-    else:
-        rank_loss = torch.zeros(
-            f_samps.shape[0], dtype=torch.long, device=target_y.device
-        )
-        y_stack = target_y.squeeze(-1).expand(f_samps.shape)
-        for i in range(1, n):
-            rank_loss += (
-                (_roll_col(f_samps, i) < f_samps) ^ (_roll_col(y_stack, i) < y_stack)
-            ).sum(dim=-1)
-    return rank_loss
-
-
-def _loocv_sample_preds(
-    train_x: Tensor, train_y: Tensor, target_model: GPyTorchModel, n_samples: int
-) -> Tensor:
-    """Draw leave-one-out cross-validation samples of the target model.
-
-    Builds a batch GP in the target model's transformed input/output space, reusing its
-    fitted hyperparameters, with each batch element trained on all but one target point.
-    Working in the transformed space is fine because the ranking loss only depends on
-    the ordering of predictions, which output standardization preserves.
-
-    Args:
-        train_x: The target inputs in the model's transformed input space (``n x d``).
-        train_y: The target values in the model's transformed output space (``n x 1``).
-        target_model: The fitted target Gaussian process model.
-        n_samples: The number of Monte Carlo samples to draw.
-
-    Returns:
-        An ``n_samples x n x n`` tensor, indexing the ``n`` leave-one-out models along
-        dimension 1 and the ``n`` target points along dimension 2.
-    """
-    from copy import deepcopy
-
-    import torch
-    from botorch.models import SingleTaskGP
-    from botorch.sampling.normal import SobolQMCNormalSampler
-
-    n = len(train_x)
-    masks = torch.eye(n, dtype=torch.bool, device=train_x.device)
-    train_x_cv = torch.stack([train_x[~m] for m in masks])
-    train_y_cv = torch.stack([train_y[~m] for m in masks])
-
-    # Transform-free batch GP reusing the target model's fitted modules, which broadcast
-    # across the LOO batch. Transforms are off since the data is already in the model's
-    # transformed space (this also avoids re-standardizing the standardized targets).
-    model = SingleTaskGP(
-        train_x_cv,
-        train_y_cv,
-        covar_module=cast("Module", deepcopy(target_model.covar_module)),
-        mean_module=cast("Mean", deepcopy(target_model.mean_module)),
-        likelihood=deepcopy(target_model.likelihood),
-        input_transform=None,
-        outcome_transform=None,
-    )
-    model.eval()
-    with torch.no_grad():
-        posterior = model.posterior(train_x)
-        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
-        return sampler(posterior).squeeze(-1)
-
-
-def _compute_rank_weights(
-    train_x: Tensor,
-    train_y: Tensor,
-    source_models: tuple[GPyTorchModel, ...],
-    target_model: GPyTorchModel,
-    n_samples: int,
-) -> Tensor:
-    """Compute the RGPE rank weights for the source and target models.
-
-    Each model is weighted by the Monte Carlo probability that it has the lowest ranking
-    loss on the target points, following Feurer, Letham and Bakshy (ICML 2018 AutoML
-    Workshop). Mirrors the BoTorch RGPE tutorial without weight-dilution regularization.
-
-    Args:
-        train_x: The target training inputs (raw comp-rep, ``n x d``).
-        train_y: The target training targets (``n x 1``).
-        source_models: The fitted source Gaussian process models.
-        target_model: The fitted target Gaussian process model.
-        n_samples: The number of Monte Carlo samples used to estimate the weights.
-
-    Returns:
-        A tensor of length ``len(source_models) + 1`` with the model weights, ordered as
-        ``(sources..., target)``.
-    """
-    import torch
-    from botorch.sampling.normal import SobolQMCNormalSampler
-
-    ranking_losses = []
-    sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
-    for model in source_models:
-        posterior = model.posterior(train_x)
-        f_samps = sampler(posterior).squeeze(-1).squeeze(-1)
-        ranking_losses.append(_compute_ranking_loss(f_samps, train_y))
-
-    # The target model's LOOCV samples are drawn in its transformed space. The output
-    # transform is only order-preserving, which is all the ranking loss depends on.
-    target_model.eval()
-    transformed_x = target_model.transform_inputs(train_x)
-    # `outcome_transform` is always present on a fitted SingleTaskGP, but mypy sees it
-    # as an optional, non-callable attribute.
-    transformed_y, _ = target_model.outcome_transform(train_y)  # type: ignore[operator]
-    target_f_samps = _loocv_sample_preds(
-        transformed_x, transformed_y, target_model, n_samples
-    )
-    ranking_losses.append(_compute_ranking_loss(target_f_samps, train_y))
-
-    ranking_loss_tensor = torch.stack(ranking_losses)
-    best_models = torch.argmin(ranking_loss_tensor, dim=0)
-    rank_weights = (
-        best_models.bincount(minlength=len(ranking_losses)).type_as(train_x) / n_samples
-    )
-    return rank_weights
 
 
 @define
@@ -265,6 +97,8 @@ class RGPESurrogate(Surrogate):
         # The base-class inputs are ignored: the inner GPs are refitted from the stored
         # measurements over the naive-mode space (task dimension inert).
         import torch
+
+        from baybe.surrogates.gaussian_process._rgpe import _compute_rank_weights
 
         assert self._searchspace is not None  # ensured by base class
         assert self._objective is not None  # ensured by base class
