@@ -173,30 +173,34 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     :paramref:`DiscreteLinearConstraint.operator`.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({"A": [1.0, 3.0, 5.0], "B": [2.0, 1.0, 3.0]})
         >>> df
              A    B
         0  1.0  2.0
         1  3.0  1.0
         2  5.0  3.0
-        >>> c = DiscreteLinearConstraint(
+        >>> constraint = DiscreteLinearConstraint(
         ...     parameters=["A", "B"],
         ...     operator="<=",
         ...     rhs=5.0,
         ... )
-        >>> list(c.get_invalid(df))
-        [2]
+        >>> constraint(df)
+             A    B
+        0  1.0  2.0
+        1  3.0  1.0
 
         With coefficients, the weighted sum is checked instead:
 
-        >>> c = DiscreteLinearConstraint(
+        >>> constraint = DiscreteLinearConstraint(
         ...     parameters=["A", "B"],
         ...     coefficients=(2.0, 1.0),
         ...     operator="<=",
         ...     rhs=5.0,
         ... )
-        >>> list(c.get_invalid(df))
-        [1, 2]
+        >>> constraint(df)
+             A    B
+        0  1.0  2.0
     """
 
     # IMPROVE: Look-ahead filtering would be possible if parameter
@@ -273,25 +277,13 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
             )
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        evaluate_df = pd.Series(
-            sum(
-                df[p].to_numpy() * c for p, c in zip(self.parameters, self.coefficients)
-            ),
-            index=df.index,
-        )
+    def _to_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        weighted = [
+            nw.col(p) * c
+            for p, c in zip(self.parameters, self.coefficients, strict=True)
+        ]
         condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        mask_good = condition.evaluate(evaluate_df)
-
-        return df.index[mask_good]
-
-    @override
-    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
-
-        weighted = [pl.col(p) * c for p, c in zip(self.parameters, self.coefficients)]
-        condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        return condition.to_polars(pl.sum_horizontal(weighted))
+        return condition._to_expr(nw.sum_horizontal(weighted))
 
 
 @define(init=False)
