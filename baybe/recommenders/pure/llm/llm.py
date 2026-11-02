@@ -215,7 +215,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 f"The objective has no metadata description. Without context on "
                 f"what to optimize, the language model may produce suboptimal "
                 f"recommendations. Set the "
-                f"'{fields(Metadata).description.name}' field on the objective's "
+                f"'{fields(Metadata).description.alias}' field on the objective's "
                 f"metadata to guide the LLM.",
                 UserWarning,
                 stacklevel=2,
