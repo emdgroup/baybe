@@ -1,5 +1,7 @@
 """Tests for LLM prompt construction."""
 
+import inspect
+
 import pandas as pd
 import pytest
 from pytest import param
@@ -31,6 +33,7 @@ from baybe.recommenders.pure.llm._prompts import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.targets import BinaryTarget, NumericalTarget
+from baybe.transformations import BellTransformation
 
 if not JINJA2_INSTALLED:
     pytest.skip("Jinja2 not installed.", allow_module_level=True)
@@ -158,6 +161,13 @@ def test_make_prompt_batch_requirements(batch_size, recovery):
             id="match_target",
         ),
         param(
+            SingleTargetObjective(
+                NumericalTarget.match_bell("pH", match_value=7.0, sigma=0.5)
+            ),
+            f"BellTransformation: {inspect.getdoc(BellTransformation)}",
+            id="transformation_docstring",
+        ),
+        param(
             DesirabilityObjective(
                 [
                     NumericalTarget.normalized_ramp("yield", (0, 100)),
@@ -196,6 +206,7 @@ def test_make_prompt_objective(objective, expected_content):
 
 _ALL_OPTIONAL_SECTIONS = {
     "OPTIMIZATION OBJECTIVE",
+    "TRANSFORMATIONS",
     "CONSTRAINTS",
     "PREVIOUS MEASUREMENTS",
     "PENDING EXPERIMENTS",
@@ -220,8 +231,13 @@ _ALL_OPTIONAL_SECTIONS = {
                     metadata={"description": "Maximize yield"},
                 ),
             },
-            {"OPTIMIZATION OBJECTIVE"},
+            {"OPTIMIZATION OBJECTIVE", "TRANSFORMATIONS"},
             id="with_objective",
+        ),
+        param(
+            {"objective": SingleTargetObjective(BinaryTarget("success"))},
+            {"OPTIMIZATION OBJECTIVE"},
+            id="with_objective_without_transformations",
         ),
         param(
             {

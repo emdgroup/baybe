@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, TypedDict
@@ -16,6 +17,8 @@ from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.substance import SubstanceParameter
 from baybe.recommenders.pure.llm._schema import _response_format
 from baybe.searchspace import SearchSpace
+from baybe.transformations.base import Transformation
+from baybe.utils.basic import get_subclasses
 
 if TYPE_CHECKING:
     from baybe.constraints.base import Constraint
@@ -44,14 +47,15 @@ EXPERIMENT DESCRIPTION:
 {% if objective is not none %}
 OPTIMIZATION OBJECTIVE:
 Each target is optimized by maximizing its transformed value (or minimizing it if \
-"minimize" is true), where the components of chained transformations are applied in \
-the given order. "constructor_info", if present, shows how the target was defined. \
-For match targets, "match_mode" defines which measured values count as a match: "=" \
-for values close to "match_value", ">=" for all values at or above it, and "<=" for \
-all values at or below it. If "mismatch_instead" is true, the goal is reversed, i.e. \
-the measured values should be as far as possible from a match. Binary targets are \
-optimized by obtaining their "success_value" as often as possible.
+"minimize" is true). "constructor_info", if present, shows how the target was defined. \
+Binary targets are optimized by obtaining their "success_value" as often as possible.
 {{ objective }}
+{% if transformations is not none %}
+
+TRANSFORMATIONS:
+The transformations used by the targets are defined as follows.
+{{ transformations }}
+{% endif %}
 
 {% endif %}
 PARAMETERS:
@@ -123,6 +127,7 @@ class _PromptContext(TypedDict):
     pending_experiments: str | None
     recovery_instruction: str | None
     response_format: str
+    transformations: str | None
 
 
 def _drop_empty(obj: Any, /) -> Any:
@@ -183,6 +188,28 @@ def _to_json_lines(serialized_objects: Iterable[dict[str, Any]], /) -> str:
     return "\n".join(json.dumps(obj, ensure_ascii=False) for obj in serialized_objects)
 
 
+def _describe_transformations(objective_json: str, /) -> str | None:
+    """Describe the transformations used in an objective via their docstrings.
+
+    Args:
+        objective_json: The objective as rendered in the prompt.
+
+    Returns:
+        One description per used transformation type, or ``None`` if the objective
+        uses no transformations.
+    """
+    # Matching the quoted type name avoids partial matches, e.g. of
+    # "AffineTransformation" within "TwoSidedAffineTransformation"
+    used = [
+        t
+        for t in get_subclasses(Transformation)
+        if f'"type": "{t.__name__}"' in objective_json
+    ]
+    if not used:
+        return None
+    return "\n\n".join(f"{t.__name__}: {inspect.getdoc(t)}" for t in used)
+
+
 def _table_text(df: pd.DataFrame | None, /) -> str | None:
     """Render a dataframe as a table.
 
@@ -236,7 +263,8 @@ def make_prompt(
     :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`; the LLM-specific
     ``experiment_description`` is keyword-only.
 
-    The objective, parameters and constraints are included in their serialized form.
+    The objective, parameters and constraints are included in their serialized form,
+    and the transformations used by the objective are described via their docstrings.
     Measurements and pending experiments are restricted to their parameter and target
     columns. In addition, a few configurations sampled from the search space are
     included as examples (see :func:`_sample_example_configurations`).
@@ -273,11 +301,15 @@ def make_prompt(
     parameter_names = [p.name for p in searchspace.parameters]
     target_names = [t.name for t in objective.targets] if objective is not None else []
     constraints = searchspace.constraints
+    objective_json = (
+        _to_json_lines([_to_prompt_dict(objective)]) if objective is not None else None
+    )
     context: _PromptContext = {
         "experiment_description": experiment_description,
-        "objective": (
-            _to_json_lines([_to_prompt_dict(objective)])
-            if objective is not None
+        "objective": objective_json,
+        "transformations": (
+            _describe_transformations(objective_json)
+            if objective_json is not None
             else None
         ),
         "parameters": _to_json_lines(
