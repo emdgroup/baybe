@@ -44,7 +44,7 @@ from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.categorical import CategoricalParameter, TaskParameter
 from baybe.parameters.custom import CustomDiscreteParameter
-from baybe.parameters.enum import SubstanceEncoding
+from baybe.parameters.enum import SubstanceEncoding, TransferLearningMode
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -559,15 +559,23 @@ def test_deprecated_cache_environment_variables(monkeypatch, value: str, expecte
         assert Settings(restore_environment=True).cache_directory == expected
 
 
+@pytest.mark.parametrize(
+    "mode", [None, TransferLearningMode.INDEX_KERNEL], ids=["no_mode", "mode"]
+)
 @pytest.mark.parametrize("custom", [False, True], ids=["default", "custom"])
 @pytest.mark.parametrize("env", [False, True], ids=["no_env", "env"])
 @pytest.mark.parametrize("task", [False, True], ids=["no_task", "task"])
-def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task: bool):
+def test_multitask_kernel_deprecation(
+    monkeypatch, custom: bool, env: bool, task: bool, mode: TransferLearningMode | None
+):
     """Providing a custom kernel in a transfer learning context raises a deprecation
-    error unless explicitly disabled via environment variable."""  # noqa
+    error unless explicitly disabled via environment variable or a transfer learning
+    mode defines the task kernel."""  # noqa
     parameters = [NumericalDiscreteParameter("p", [0, 1])]
     if task:
-        parameters.append(TaskParameter("task", ["a", "b"]))
+        parameters.append(
+            TaskParameter("task", ["a", "b"], override_transfer_learning_mode=mode)
+        )
     searchspace = SearchSpace.from_product(parameters)
     objective = NumericalTarget("t").to_objective()
     measurements = create_fake_input(
@@ -580,7 +588,7 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
 
     context = (
         pytest.raises(DeprecationError)
-        if task and custom and not env
+        if task and custom and not env and mode is None
         else nullcontext()
     )
     with context:

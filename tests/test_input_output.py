@@ -51,7 +51,7 @@ def test_bad_parameter_input_value(campaign, bad_val, fake_measurements):
 @Settings(default_dataframe_backend="pandas")
 def test_bad_target_input_value(campaign, bad_val):
     """Test attempting to read in an invalid target value."""
-    rec = campaign.recommend(batch_size=3)
+    rec = campaign.recommend(batch_size=2)
     add_fake_measurements(rec, campaign.targets)
 
     col = campaign.targets[0].name

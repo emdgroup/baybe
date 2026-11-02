@@ -48,6 +48,7 @@ autodoc_type_aliases = {
     "GPyTorchLikelihood": "GPyTorchLikelihood",
     "GPyTorchMean": "GPyTorchMean",
     "Smiles": "Smiles",
+    "TensorCallable": "TensorCallable",
 }
 
 # >>>>>>>>>> NOTE END <<<<<<<<<<
@@ -130,7 +131,7 @@ nitpick_ignore_regex = [
     (r"py:class", r"^(dtype=np\.int64|if metric == 'precomputed')$"),
     ##### Type aliases in TYPE_CHECKING blocks #####
     # These exist only at type-checking time and cannot be resolved by Sphinx.
-    (r"py:class", r"^(GPComponent|TensorCallable|ConvertibleToFloat)$"),
+    (r"py:class", r"^(GPComponent|KernelOverride|TensorCallable|ConvertibleToFloat)$"),
     (r"py:class", r"^(GPyTorchKernel|GPyTorchLikelihood|GPyTorchMean|GPyTorchModel)$"),
     (r"py:class", r"^(pd\.DataFrame|pl\.Expr)$"),
     (r"py:class", r"^(TypeAliasForwardRef|P)$"),

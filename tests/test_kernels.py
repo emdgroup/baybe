@@ -273,21 +273,67 @@ def fixture_task_searchspace() -> SearchSpace:
             None,
             id="scale_kernel_over_sole_parameter_collapses_to_none",
         ),
+        param(
+            MaternKernel() + RBFKernel(),
+            MaternKernel(parameter_names=("x",)) + RBFKernel(parameter_names=("x",)),
+            id="sum_reduces_each_summand",
+        ),
+        param(
+            MaternKernel() + RBFKernel(parameter_names=("Task",)),
+            MaternKernel(parameter_names=("x",)),
+            id="sum_collapses_to_single_summand",
+        ),
+        param(
+            MaternKernel(parameter_names=("Task",))
+            + RBFKernel(parameter_names=("Task",)),
+            None,
+            id="sum_collapses_to_none",
+        ),
+        param(
+            MaternKernel() * (MaternKernel() + RBFKernel()),
+            MaternKernel(parameter_names=("x",))
+            * (
+                MaternKernel(parameter_names=("x",)) + RBFKernel(parameter_names=("x",))
+            ),
+            id="nested_sum_under_product",
+        ),
+        param(
+            MaternKernel() * RBFKernel(),
+            MaternKernel(parameter_names=("x",)) * RBFKernel(parameter_names=("x",)),
+            id="product_reduces_each_factor",
+        ),
+        param(
+            MaternKernel() * RBFKernel(parameter_names=("Task",)),
+            MaternKernel(parameter_names=("x",)),
+            id="product_collapses_to_single_factor",
+        ),
+        param(
+            MaternKernel(parameter_names=("Task",))
+            * RBFKernel(parameter_names=("Task",)),
+            None,
+            id="product_collapses_to_none",
+        ),
+        param(
+            ScaleKernel(
+                ProductKernel(
+                    [
+                        MaternKernel(),
+                        ProductKernel(
+                            [
+                                RBFKernel(parameter_names=("Task",)),
+                                RBFKernel(parameter_names=("x",)),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            ScaleKernel(
+                MaternKernel(parameter_names=("x",)) * RBFKernel(parameter_names=("x",))
+            ),
+            id="nested_product_under_scale",
+        ),
     ],
 )
 def test_without_parameter(kernel, expected, task_searchspace):
-    """Removing a parameter reduces basic and scaled kernels as expected."""
+    """Removing a parameter reduces basic, scaled, and composite kernels as expected."""
     assert kernel._without_parameter("Task", task_searchspace) == expected
-
-
-@pytest.mark.parametrize(
-    "kernel",
-    [
-        param(MaternKernel() * RBFKernel(), id="product_kernel"),
-        param(MaternKernel() + RBFKernel(), id="additive_kernel"),
-    ],
-)
-def test_without_parameter_unsupported(kernel, task_searchspace):
-    """Kernels that cannot be reduced unambiguously raise ``TypeError``."""
-    with pytest.raises(TypeError, match="Cannot remove a parameter"):
-        kernel._without_parameter("Task", task_searchspace)

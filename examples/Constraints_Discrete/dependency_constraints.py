@@ -75,6 +75,7 @@ print(campaign)
 
 # The following loop performs some recommendations and manually verifies the given constraints.
 
+BATCH_SIZE = 2 if SMOKE_TEST else 5
 N_ITERATIONS = 2 if SMOKE_TEST else 5
 for kIter in range(N_ITERATIONS):
     candidates = campaign.searchspace.discrete.get_candidates()
@@ -102,6 +103,6 @@ for kIter in range(N_ITERATIONS):
         ((candidates["Switch1"] == "off") & (candidates["Switch2"] == "left")).sum(),
     )
 
-    rec = campaign.recommend(batch_size=5)
+    rec = campaign.recommend(batch_size=BATCH_SIZE)
     add_fake_measurements(rec, campaign.targets)
     campaign.add_measurements(rec)
