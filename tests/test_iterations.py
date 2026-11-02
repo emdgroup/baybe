@@ -59,7 +59,6 @@ from baybe.surrogates.gaussian_process.presets import (
     EDBOKernelFactory,
 )
 from baybe.surrogates.linear import BayesianLinearSurrogate
-from baybe.surrogates.transfer_learning.rgpe import RGPESurrogate
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import create_fake_input
@@ -83,9 +82,6 @@ for cls in get_subclasses(Surrogate):
     if issubclass(cls, CustomONNXSurrogate) or issubclass(
         cls, BetaBernoulliMultiArmedBanditSurrogate
     ):
-        continue
-    # RGPE needs a transfer-learning space (a task parameter); see test_rgpe_surrogate.
-    if issubclass(cls, RGPESurrogate):
         continue
     p = param(
         cls(),
@@ -419,7 +415,12 @@ def _make_override_parameters(mode: TransferLearningMode | None = None) -> list:
     ]
     if mode is not None:
         parameters.append(
-            TaskParameter("task", ["a", "b"], override_transfer_learning_mode=mode)
+            TaskParameter(
+                "task",
+                ["a", "b"],
+                active_values=["a"],
+                override_transfer_learning_mode=mode,
+            )
         )
     return parameters
 
@@ -432,12 +433,17 @@ def _make_override_parameters(mode: TransferLearningMode | None = None) -> list:
         *(
             param(_make_override_parameters(mode), id=mode.name)
             for mode in TransferLearningMode
-            if mode is not TransferLearningMode.RGPE
         ),
     ],
 )
 def test_kernel_override_iteration(ongoing_campaign, n_iterations, batch_size):
     """A full optimization loop runs with kernel overrides."""
+    if "task" in ongoing_campaign.searchspace.parameter_names:
+        # RGPE needs source task data
+        source = create_fake_input(
+            ongoing_campaign.parameters, ongoing_campaign.targets, n_rows=1
+        )
+        ongoing_campaign.add_measurements(source.assign(task="b"))
     run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
