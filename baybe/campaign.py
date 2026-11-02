@@ -234,9 +234,10 @@ class Campaign(SerialMixin):
                 backend=active_settings.default_dataframe_backend,
             ).to_native()
 
-        return nw.maybe_reset_index(
-            nw.concat(self._measurements, how="vertical")
-        ).to_native()
+        combined = nw.maybe_reset_index(nw.concat(self._measurements, how="vertical"))
+        # Clone to prevent aliasing: the returned native frame would otherwise share
+        # storage with the stored measurement batches
+        return combined.clone().to_native()
 
     @property
     def n_batches_done(self) -> NoReturn:
@@ -323,7 +324,7 @@ class Campaign(SerialMixin):
     def _cache_recommendation(self, df: nw.DataFrame, /) -> None:
         """Cache the given recommendation."""
         # Clone to prevent aliasing: the caller still holds a reference to ``df``
-        # whose native storage would otherwise be shared with the cache.
+        # whose native storage would otherwise be shared with the cache
         self._cached_recommendation = df.clone()
 
     def clear_cache(self) -> None:
@@ -408,7 +409,9 @@ class Campaign(SerialMixin):
             The batch previously stored at the index.
         """
         if dry_run:
-            return self._measurements[batch_index].to_native()
+            # Clone to prevent aliasing: the returned frame would otherwise share
+            # storage with the stored batch
+            return self._measurements[batch_index].clone().to_native()
 
         # Preprocess incoming data
         data_nw = nw.from_native(
@@ -447,7 +450,9 @@ class Campaign(SerialMixin):
             The dropped batch data.
         """
         if dry_run:
-            return self._measurements[batch_index].to_native()
+            # Clone to prevent aliasing: the returned frame would otherwise share
+            # storage with the stored batch
+            return self._measurements[batch_index].clone().to_native()
 
         self.clear_cache()
         return self._measurements.pop(batch_index).to_native()
@@ -586,11 +591,14 @@ class Campaign(SerialMixin):
 
         if not dry_run:
             if exclude and not points_nw.is_empty():
+                # Clone to prevent aliasing: the returned native frame would otherwise
+                # share storage with the exclusion record
+                to_store = points_nw.clone()
                 if self._excluded_experiments.is_empty():
-                    self._excluded_experiments = points_nw
+                    self._excluded_experiments = to_store
                 else:
                     concatenated = nw.concat(
-                        [self._excluded_experiments, points_nw], how="vertical"
+                        [self._excluded_experiments, to_store], how="vertical"
                     )
                     self._excluded_experiments = nw.maybe_reset_index(
                         concatenated.unique()
@@ -655,7 +663,7 @@ class Campaign(SerialMixin):
         ):
             # TODO: Potentially the cast becomes obsolete once Campaign is generic
             # Clone to prevent aliasing: the returned native frame would
-            # otherwise share storage with the cache.
+            # otherwise share storage with the cache
             return cast(
                 IntoDataFrameT,
                 _df_with_backend(cache.clone(), backend).to_native(),
