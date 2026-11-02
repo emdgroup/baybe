@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constraint filtering
 - Pending experiments containing extra columns or duplicate column names are now
   rejected before recommendation
-- Subset sampling without replacement no longer relies on duplicate-rejection mechanism
+- Subset sampling without replacement no longer relies on a duplicate-rejection mechanism
   that could raise `InfeasibilityError` for larger numbers of requested configurations
 
 ### Added
@@ -95,9 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Filter` type (including constraints, Narwhals expressions, and dataframe semi-joins)
   for specifying filtering criteria in discrete candidate contexts
 - `filter` method to `SubspaceDiscrete` and `CandidatesProtocol`
-- Discrete Cartesian product spaces can now be filtered using arbitrary `Filter` 
-  objects in addition to using constraint-based filtering
-- `Campaign.toggle_discrete_candidates` now supports the new `Filter` mechanism, 
+- Discrete Cartesian product spaces can now be filtered using arbitrary `Filter`
+  objects in addition to constraint-based filtering
+- `Campaign.toggle_discrete_candidates` now supports the new `Filter` mechanism,
   provided via positional filter arguments
 - Parameter-specific kernel overrides for conveniently composing Gaussian process
   kernels on individual parameter dimensions
@@ -159,8 +159,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   performance problem for large candidate sets
 
 ### Deprecations
-- `Campaign.toggle_discrete_candidates` calls using the `constraints` argument.
-  Use the new filter mechanism instead, provided via positional `Filter` arguments
+- `Campaign.toggle_discrete_candidates` calls passing filter criteria via the
+  `constraints` argument (use positional `Filter` arguments instead)
 - `DiscreteParameter.comp_df` property (use `transform()` instead)
 - `CustomEncoding` enum class
 - `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
