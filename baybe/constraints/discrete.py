@@ -295,19 +295,22 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     :paramref:`DiscreteProductConstraint.operator`.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({"A": [2.0, 3.0, 5.0], "B": [3.0, 2.0, 2.0]})
         >>> df
              A    B
         0  2.0  3.0
         1  3.0  2.0
         2  5.0  2.0
-        >>> c = DiscreteProductConstraint(
+        >>> constraint = DiscreteProductConstraint(
         ...     parameters=["A", "B"],
         ...     operator="<=",
         ...     rhs=8.0,
         ... )
-        >>> list(c.get_invalid(df))
-        [2]
+        >>> constraint(df)
+             A    B
+        0  2.0  3.0
+        1  3.0  2.0
     """
 
     # IMPROVE: Look-ahead filtering would be possible if parameter
@@ -417,20 +420,11 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
             )
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        evaluate_df = df[self.parameters].prod(axis=1)
+    def _to_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        factors = [nw.col(p) for p in self.parameters]
+        product = reduce(lambda left, right: left * right, factors)
         condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        mask_good = condition.evaluate(evaluate_df)
-
-        return df.index[mask_good]
-
-    @override
-    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
-
-        condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        expr = pl.reduce(lambda acc, x: acc * x, pl.col(self.parameters))
-        return condition.to_polars(expr)
+        return condition._to_expr(product)
 
 
 # >>>>>>>>>> Deprecation
