@@ -207,6 +207,7 @@ class RGPEModel(GPyTorchModel, FantasizeMixin):
 
     Note:
         Tools that require a single exact GP (e.g. pathwise sampling) are not supported.
+        Fantasies condition all members and keep the weights fixed.
     """
 
     # Required by `ModelListGP`, which sums its members' outputs

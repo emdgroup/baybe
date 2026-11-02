@@ -190,7 +190,9 @@ class TransferLearningMode(Enum):
     correlations."""
 
     RGPE = "RGPE"
-    """A rank-weighted ensemble of per-task Gaussian processes.
+    """A rank-weighted ensemble of per-task Gaussian processes :cite:p:`Feurer2018`.
 
-    Fits one Gaussian process per task with data. Requires exactly one active task.
+    Fits one Gaussian process per task and weights them by how well they rank the
+    target data. Requires exactly one active task and data for at least one source
+    task. Look-ahead acquisition functions keep the weights fixed.
     """
