@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 import narwhals.stable.v2 as nw
 import pandas as pd
+import polars as pl
 import pytest
 from attrs import evolve
 from narwhals.testing import assert_frame_equal
@@ -28,6 +29,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
 )
+from baybe.searchspace.candidates import TableCandidates
 from baybe.searchspace.core import SearchSpace, SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.settings import Settings
@@ -164,6 +166,54 @@ def test_candidate_toggling_multiple_filters():
     assert len(campaign._excluded_experiments) == len(expected)
     merged = pd.merge(campaign._excluded_experiments.to_native(), expected, how="inner")
     assert len(merged) == len(expected)
+
+
+@pytest.mark.parametrize("n_batches", [1, 2], ids=["single_batch", "multi_batch"])
+@pytest.mark.parametrize(
+    ("export", "get_state"),
+    [
+        param(
+            lambda c: c.measurements,
+            lambda c: list(c._measurements),
+            id="measurements",
+        ),
+        param(
+            lambda c: c.replace_batch(
+                pl.DataFrame({"a": [1.0], "y": [2.0]}), dry_run=True
+            ),
+            lambda c: list(c._measurements),
+            id="replace_batch",
+        ),
+        param(
+            lambda c: c.drop_batch(dry_run=True),
+            lambda c: list(c._measurements),
+            id="drop_batch",
+        ),
+        param(
+            lambda c: c.toggle_discrete_candidates(nw.col("a") == 0.0, exclude=True),
+            lambda c: [c._excluded_experiments],
+            id="toggle_discrete_candidates",
+        ),
+    ],
+)
+def test_exported_frames_do_not_alias_campaign_state(export, get_state, n_batches):
+    """Mutating an exported frame leaves the campaign state untouched."""
+    candidates = TableCandidates(
+        [NumericalDiscreteParameter("a", [0.0, 1.0])],
+        pl.DataFrame({"a": [0.0, 1.0]}),
+    )
+    campaign = Campaign(SubspaceDiscrete(candidates), objective=NumericalTarget("y"))
+    for _ in range(n_batches):
+        campaign.add_measurements(pl.DataFrame({"a": [0.0], "y": [1.0]}))
+
+    exported = export(campaign)
+    assert isinstance(exported, pl.DataFrame)
+    before = [frame.clone() for frame in get_state(campaign)]
+
+    exported[0, exported.columns[0]] = 99.0
+
+    for expected, actual in zip(before, get_state(campaign), strict=True):
+        assert_frame_equal(expected, actual)
 
 
 @pytest.mark.parametrize(
