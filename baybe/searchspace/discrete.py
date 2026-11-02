@@ -30,7 +30,7 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.utils import build_constrained_product, select_via_flat_index
 from baybe.searchspace.validation import (
-    get_value_failure_reason,
+    _get_value_failure_reason,
     validate_parameter_names,
     validate_parameters,
 )
@@ -752,7 +752,7 @@ class SubspaceDiscrete(SerialMixin):
             configuration = configurations.iloc[[i]].infer_objects()
 
             # Precondition: Configurations with missing or invalid values fail
-            if reason := get_value_failure_reason(configuration, self.parameters):
+            if reason := _get_value_failure_reason(configuration, self.parameters):
                 return reason
             row = tuple(configuration.iloc[0])
 

@@ -34,7 +34,7 @@ from baybe.parameters.utils import (
 )
 from baybe.searchspace.utils import select_via_flat_index
 from baybe.searchspace.validation import (
-    get_value_failure_reason,
+    _get_value_failure_reason,
     validate_parameter_names,
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
@@ -508,7 +508,7 @@ class SubspaceContinuous(SerialMixin):
             # A column can contain values of different types across rows, so the types
             # are inferred for the single configuration
             configuration = configurations.iloc[[i]].infer_objects()
-            if reason := get_value_failure_reason(configuration, self.parameters):
+            if reason := _get_value_failure_reason(configuration, self.parameters):
                 values = ", ".join(
                     f"{k}={v}" for k, v in configurations.iloc[i].dropna().items()
                 )

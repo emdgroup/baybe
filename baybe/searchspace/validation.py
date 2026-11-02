@@ -83,7 +83,7 @@ def validate_dataframe_active_values(
         raise ExceptionGroup("Dataframe validation errors", exceptions)
 
 
-def get_value_failure_reason(
+def _get_value_failure_reason(
     configuration: pd.DataFrame, /, parameters: Sequence[Parameter]
 ) -> str | None:
     """Get the reason why a configuration has missing or invalid parameter values.
