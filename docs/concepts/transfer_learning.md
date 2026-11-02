@@ -162,6 +162,8 @@ Coregionalization Model {cite:p}`NIPS2007_66368270`), an ensemble-based variant
 (the rank-weighted Gaussian process ensemble {cite:p}`Feurer2018`), and a naive variant
 that pools the data of all tasks into a single model, selectable via
 {attr}`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`.
+The ensemble-based variant requires exactly one active task value and measurements for
+at least one other task.
 ```
 
 ## Seeing Transfer Learning in Action
