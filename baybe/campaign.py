@@ -487,12 +487,6 @@ class Campaign(SerialMixin):
         Returns:
             A new dataframe containing the discrete candidate set passing through the
             specified filter.
-
-        Raises:
-            TypeError: If ``exclude`` is not specified, if both ``*filters`` and
-                ``constraints`` are provided, or if more positional Boolean
-                arguments are given than can be mapped to ``exclude``,
-                ``complement`` and ``dry_run`` combined.
         """
         # IMPROVE: The cache invalidation could be made more fine-grained:
         #   * When including points, the cache only needs to be cleared if the active
@@ -503,6 +497,49 @@ class Campaign(SerialMixin):
         #  * Additional shortcuts might be possible.
 
         # >>>>>>>>>> Deprecation
+        filters, exclude, complement, dry_run = self._resolve_legacy_toggle_args(
+            filters, exclude, complement, dry_run, constraints
+        )
+        # <<<<<<<<<< Deprecation
+
+        self.clear_cache()
+
+        filtered = self.searchspace.discrete.filter(*filters, complement=complement)
+        points_nw = nw.maybe_reset_index(filtered._get_candidates().collect())
+
+        if not dry_run:
+            if exclude and not points_nw.is_empty():
+                # Clone to prevent aliasing: the returned native frame would otherwise
+                # share storage with the exclusion record
+                to_store = points_nw.clone()
+                if self._excluded_experiments.is_empty():
+                    self._excluded_experiments = to_store
+                else:
+                    concatenated = nw.concat(
+                        [self._excluded_experiments, to_store], how="vertical"
+                    )
+                    self._excluded_experiments = nw.maybe_reset_index(
+                        concatenated.unique()
+                    )
+            elif not exclude and not self._excluded_experiments.is_empty():
+                self._excluded_experiments = nw.maybe_reset_index(
+                    self._excluded_experiments.join(
+                        points_nw, on=points_nw.columns, how="anti"
+                    )
+                )
+
+        return points_nw.to_native()
+
+    # >>>>>>>>>> Deprecation
+    def _resolve_legacy_toggle_args(
+        self,
+        filters: tuple[Filter, ...],
+        exclude: bool | None,
+        complement: bool,
+        dry_run: bool,
+        constraints: Collection[DiscreteFilteringConstraint] | IntoDataFrame | None,
+    ) -> tuple[tuple[Filter, ...], bool, bool, bool]:
+        """Normalize legacy ``toggle_discrete_candidates`` call styles."""
         # Legacy call style: the filter criterion passed via the old `constraints`
         # keyword argument instead of via `*filters`
         if constraints is not None:
@@ -523,7 +560,7 @@ class Campaign(SerialMixin):
                 f"will be rejected in a future version. Pass them as positional "
                 f"arguments instead.",
                 DeprecationWarning,
-                stacklevel=2,
+                stacklevel=3,
             )
 
         # Legacy call style: `exclude`/`complement`/`dry_run` passed positionally,
@@ -558,7 +595,7 @@ class Campaign(SerialMixin):
                 f"will be rejected in a future version. Pass 'exclude' as a keyword "
                 f"argument instead.",
                 DeprecationWarning,
-                stacklevel=2,
+                stacklevel=3,
             )
 
         # Legacy call style: a collection of constraints passed as a single combined
@@ -577,7 +614,7 @@ class Campaign(SerialMixin):
                 f"will be rejected in a future version. Pass the constraints as "
                 f"separate positional arguments instead.",
                 DeprecationWarning,
-                stacklevel=2,
+                stacklevel=3,
             )
 
         # `exclude` only has a default value (`None`) to accommodate the legacy
@@ -589,35 +626,9 @@ class Campaign(SerialMixin):
                 f"'{self.toggle_discrete_candidates.__name__}' is missing the "
                 f"required keyword argument 'exclude'."
             )
-        # <<<<<<<<<< Deprecation
+        return filters, exclude, complement, dry_run
 
-        self.clear_cache()
-
-        filtered = self.searchspace.discrete.filter(*filters, complement=complement)
-        points_nw = nw.maybe_reset_index(filtered._get_candidates().collect())
-
-        if not dry_run:
-            if exclude and not points_nw.is_empty():
-                # Clone to prevent aliasing: the returned native frame would otherwise
-                # share storage with the exclusion record
-                to_store = points_nw.clone()
-                if self._excluded_experiments.is_empty():
-                    self._excluded_experiments = to_store
-                else:
-                    concatenated = nw.concat(
-                        [self._excluded_experiments, to_store], how="vertical"
-                    )
-                    self._excluded_experiments = nw.maybe_reset_index(
-                        concatenated.unique()
-                    )
-            elif not exclude and not self._excluded_experiments.is_empty():
-                self._excluded_experiments = nw.maybe_reset_index(
-                    self._excluded_experiments.join(
-                        points_nw, on=points_nw.columns, how="anti"
-                    )
-                )
-
-        return points_nw.to_native()
+    # <<<<<<<<<< Deprecation
 
     def recommend(
         self,
