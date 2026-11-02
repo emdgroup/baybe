@@ -109,9 +109,8 @@ class AffineTransformation(MonotonicTransformation):
     r"""Scale input values by a factor and add a constant shift.
 
     Computes :math:`f(x) = a \cdot x + b`, where :math:`a` is the scale factor and
-    :math:`b` is the offset. When constructed with ``shift_first=True``, the same
-    values are interpreted as :math:`a \cdot (x + b)` instead; the offset is scaled
-    internally before storage.
+    :math:`b` is the shift. When constructed with ``shift_first=True``, the
+    transformation computes :math:`a \cdot (x + b)` instead.
     """
 
     # https://github.com/python-attrs/attrs/issues/1462
@@ -485,9 +484,9 @@ class SigmoidTransformation(MonotonicTransformation):
     .. math::
         f(x) = \frac{1}{1 + e^{-k(c - x)}}
 
-    Output is 0.5 at the center point :math:`c`. For positive slope :math:`k`,
-    larger :math:`x` decreases the score toward 0; negative :math:`k` increases it
-    toward 1. Zero :math:`k` gives 0.5 for all finite inputs; larger :math:`|k|`
+    Output is 0.5 at the center point :math:`c`. For positive steepness :math:`k`,
+    larger :math:`x` decreases the score toward 0; negative steepness increases it
+    toward 1. Zero steepness gives 0.5 for all finite inputs; larger :math:`|k|`
     sharpens the transition.
     """
 
