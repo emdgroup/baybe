@@ -100,10 +100,10 @@ def test_polars_sum_constraint(parameters, coefficients, threshold, operator):
     # Correctness: all remaining rows satisfy the constraint
     condition = ThresholdCondition(threshold=threshold, operator=operator)
     weighted_pd = sum(df_pd[n] * c for n, c in zip(names, coeffs))
-    assert condition(weighted_pd).all()
+    assert condition.evaluate(weighted_pd).all()
 
     weighted_pl = sum(df_pl[n] * c for n, c in zip(names, coeffs))
-    assert condition(weighted_pl).all()
+    assert condition.evaluate(weighted_pl).all()
 
     # Consistency: both paths agree
     cols = df_pd.columns.tolist()

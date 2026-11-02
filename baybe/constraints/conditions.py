@@ -24,7 +24,7 @@ from baybe.utils.validation import finite_float, validate_unique_values
 
 if TYPE_CHECKING:
     from narwhals.stable.v2 import Expr, Series
-    from narwhals.stable.v2.typing import IntoSeries
+    from narwhals.stable.v2.typing import IntoSeries, IntoSeriesT
 
 
 ThresholdOperator: TypeAlias = Literal["<", "<=", "=", "==", "!=", ">", ">="]
@@ -55,7 +55,23 @@ class Condition(ABC, SerialMixin):
     :class:`~baybe.symmetries.base.Symmetry` objects.
     """
 
-    def __call__(self, series: IntoSeries, /) -> IntoSeries:
+    def __call__(self, series: IntoSeriesT, /) -> IntoSeriesT:
+        """Apply the condition and return the values that satisfy it.
+
+        Args:
+            series: A native series containing the values to be filtered.
+
+        Returns:
+            A native series containing only the values that satisfy the condition.
+
+        Raises:
+            ValueError: If the input series is incompatible with the condition.
+        """
+        nw_series = nw.from_native(series, series_only=True)
+        mask = nw.from_native(self.evaluate(series), series_only=True)
+        return nw_series.filter(mask).to_native()
+
+    def evaluate(self, series: IntoSeries, /) -> IntoSeries:
         """Evaluate the condition and return the corresponding Boolean series.
 
         Args:
@@ -72,7 +88,7 @@ class Condition(ABC, SerialMixin):
         nw_frame = nw_series.to_frame()
         column = nw_frame.columns[0]
         result = nw_frame.select(self._to_expr(nw.col(column)))
-        return result.get_column(result.columns[0]).to_native()
+        return result.get_column(result.columns[0]).alias(nw_series.name).to_native()
 
     @abstractmethod
     def _to_expr(self, expr: Expr, /) -> Expr:
