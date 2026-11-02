@@ -13,17 +13,20 @@ from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.sampling import SobolQMCNormalSampler
 from gpytorch.kernels import MaternKernel, ScaleKernel
+from gpytorch.likelihoods import GaussianLikelihood
+from gpytorch.means import ConstantMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from pytest import param
 
 from baybe.acquisition import EI, qKG, qLogEI, qLogNEHVI, qLogNEI, qNIPV
-from baybe.exceptions import IncompatibleSearchSpaceError
+from baybe.exceptions import IncompatibleSearchSpaceError, IncompatibleSurrogateError
 from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process._rgpe import RGPEModel, make_rgpe_model
+from baybe.surrogates.gaussian_process.components import FitCriterion
 from baybe.surrogates.gaussian_process.core import _ModelContext
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import to_tensor
@@ -326,6 +329,36 @@ def test_several_active_values_raise():
             active_values=("T", "A"),
             override_transfer_learning_mode="RGPE",
         )
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        param(
+            {"fit_criterion_or_factory": FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD},
+            "requires the fit criterion",
+            id="loocv",
+        ),
+        param({"mean_or_factory": ConstantMean()}, "'mean_or_factory'", id="raw_mean"),
+        param(
+            {"likelihood_or_factory": GaussianLikelihood()},
+            "'likelihood_or_factory'",
+            id="raw_likelihood",
+        ),
+    ],
+)
+def test_conflicting_components_raise(kwargs, match):
+    """User components conflicting with RGPE raise."""
+    with pytest.raises(IncompatibleSurrogateError, match=match):
+        _fit(_SURROGATE_MEASUREMENTS, **kwargs)
+
+
+@pytest.mark.parametrize("preset", ["BAYBE", "CHEN", "EDBO", "EDBO_SMOOTHED"])
+def test_presets_fit(preset):
+    """Presets are compatible with RGPE."""
+    gp = GaussianProcessSurrogate.from_preset(preset)
+    gp.fit(_make_searchspace(), _OBJECTIVE, _SURROGATE_MEASUREMENTS)
+    assert isinstance(gp.to_botorch(), RGPEModel)
 
 
 def test_missing_source_data_raises():

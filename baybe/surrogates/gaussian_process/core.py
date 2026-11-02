@@ -12,7 +12,7 @@ from functools import partial, reduce
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
-from attrs import Converter, define, field
+from attrs import Converter, define, field, fields
 from attrs.converters import optional as optional_c
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
@@ -22,6 +22,7 @@ from baybe.exceptions import (
     DeprecationError,
     IncompatibleOverrideError,
     IncompatibleSearchSpaceError,
+    IncompatibleSurrogateError,
     ModelNotTrainedError,
     _UnsupportedSearchSpaceAttributeError,
 )
@@ -41,6 +42,7 @@ from baybe.surrogates.gaussian_process.components.fit_criterion import (
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentType,
     PlainGPComponentFactory,
+    _is_gpytorch_component,
     to_component_factory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
@@ -609,6 +611,26 @@ class GaussianProcessSurrogate(Surrogate):
 
         return kernel, mean, likelihood, criterion
 
+    def _validate_rgpe_components(self, criterion: FitCriterion, /) -> None:
+        """Validate that the user-specified components are compatible with RGPE."""
+        mode = TransferLearningMode.RGPE.name
+        if criterion is not FitCriterion.MARGINAL_LOG_LIKELIHOOD:
+            raise IncompatibleSurrogateError(
+                f"The transfer learning mode '{mode}' requires the fit criterion "
+                f"'{FitCriterion.MARGINAL_LOG_LIKELIHOOD.name}', but "
+                f"'{criterion.name}' was specified."
+            )
+        flds = fields(type(self))
+        for fld in (flds.mean_factory, flds.likelihood_factory):
+            factory = getattr(self, fld.name)
+            if isinstance(factory, PlainGPComponentFactory) and _is_gpytorch_component(
+                factory.component
+            ):
+                raise IncompatibleSurrogateError(
+                    f"The transfer learning mode '{mode}' does not support GPyTorch "
+                    f"modules for '{fld.alias}'. Use a factory instead."
+                )
+
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         assert self._searchspace is not None  # ensured by base class
@@ -687,6 +709,7 @@ class GaussianProcessSurrogate(Surrogate):
         ):
             from baybe.surrogates.gaussian_process._rgpe import make_rgpe_model
 
+            self._validate_rgpe_components(criterion)
             self._model = make_rgpe_model(
                 context, train_x, train_y, partial(fit_gp, copy_components=True)
             )
