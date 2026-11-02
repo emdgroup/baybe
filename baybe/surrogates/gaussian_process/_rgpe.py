@@ -34,21 +34,6 @@ _N_MC_SAMPLES = 256
 """Monte Carlo samples for estimating the ranking weights."""
 
 
-def _roll_col(x: Tensor, shift: int) -> Tensor:
-    """Rotate the columns of a tensor to the right by ``shift``.
-
-    Args:
-        x: The tensor whose last dimension is rotated.
-        shift: The number of positions to rotate by.
-
-    Returns:
-        The column-rotated tensor.
-    """
-    import torch
-
-    return torch.cat((x[..., -shift:], x[..., :-shift]), dim=-1)
-
-
 def _compute_ranking_loss(f_samps: Tensor, target_y: Tensor) -> Tensor:
     """Compute the ranking loss of each posterior sample against the target points.
 
@@ -90,7 +75,8 @@ def _compute_ranking_loss(f_samps: Tensor, target_y: Tensor) -> Tensor:
         y_stack = target_y.squeeze(-1).expand(f_samps.shape)
         for i in range(1, n):
             rank_loss += (
-                (_roll_col(f_samps, i) < f_samps) ^ (_roll_col(y_stack, i) < y_stack)
+                (torch.roll(f_samps, i, dims=-1) < f_samps)
+                ^ (torch.roll(y_stack, i, dims=-1) < y_stack)
             ).sum(dim=-1)
     return rank_loss
 
