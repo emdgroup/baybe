@@ -7,11 +7,12 @@ import importlib
 import operator
 import os
 import warnings
+from copy import deepcopy
 from functools import partial, reduce
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
-from attrs import Converter, define, evolve, field
+from attrs import Converter, define, field
 from attrs.converters import optional as optional_c
 from attrs.converters import pipe
 from attrs.validators import instance_of, is_callable, optional
@@ -21,7 +22,6 @@ from baybe.exceptions import (
     DeprecationError,
     IncompatibleOverrideError,
     IncompatibleSearchSpaceError,
-    IncompatibleSurrogateError,
     ModelNotTrainedError,
     _UnsupportedSearchSpaceAttributeError,
 )
@@ -66,6 +66,7 @@ from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
+    from botorch.models import SingleTaskGP
     from botorch.models.gpytorch import GPyTorchModel
     from botorch.models.transforms.input import InputTransform, Normalize
     from botorch.models.transforms.outcome import OutcomeTransform, Standardize
@@ -252,18 +253,10 @@ class GaussianProcessSurrogate(Surrogate):
     _symmetries: tuple[Symmetry, ...] = field(factory=tuple, init=False, eq=False)
     """Symmetries for future architecture adjustments (e.g., invariant kernels)."""
 
-    # TODO: type should be SingleTaskGP | None but is currently omitted due to:
-    #   https://github.com/python-attrs/cattrs/issues/531
+    # TODO: type should be `SingleTaskGP | RGPEModel | None` but is currently omitted
+    #   due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
     """The fitted BoTorch model."""
-
-    # TODO: type should be `Surrogate | None` but is currently omitted due to:
-    #   https://github.com/python-attrs/cattrs/issues/531
-    _delegate = field(init=False, default=None, eq=False)
-    """A transfer-learning surrogate to forward fitting and prediction to.
-
-    Set when a non-kernel mode (e.g.
-    :attr:`~baybe.parameters.enum.TransferLearningMode.RGPE`) is requested."""
 
     @staticmethod
     def _make_input_transform(context: _ModelContext) -> Normalize:
@@ -364,20 +357,7 @@ class GaussianProcessSurrogate(Surrogate):
         Returns:
             A mean module ready to be used as the mean of a new
             :class:`GaussianProcessSurrogate`.
-
-        Raises:
-            IncompatibleSurrogateError: If the surrogate dispatches to a transfer
-                learning ensemble, for which posterior mean functions are not
-                implemented.
         """
-        if self._delegate is not None:
-            raise IncompatibleSurrogateError(
-                f"Providing a posterior mean function for a "
-                f"'{self.__class__.__name__}' that dispatches to a "
-                f"'{type(self._delegate).__name__}' transfer learning ensemble is not "
-                f"implemented."
-            )
-
         if self._model is None:
             warnings.warn(
                 f"'{self.__class__.__name__}' has not been fitted yet. "
@@ -406,8 +386,6 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def to_botorch(self) -> GPyTorchModel:
-        if self._delegate is not None:
-            return self._delegate.to_botorch()
         if self._model is None:
             raise ModelNotTrainedError(
                 "The surrogate must be trained before a BoTorch model can be created."
@@ -428,9 +406,6 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
-        # Forward to the transfer-learning delegate if one was set up during fitting.
-        if self._delegate is not None:
-            return self._delegate._posterior(candidates_comp_scaled)
         # Model being fit is guaranteed by the call in `posterior`
         assert self._model is not None
         return self._model.posterior(candidates_comp_scaled)
@@ -650,19 +625,7 @@ class GaussianProcessSurrogate(Surrogate):
 
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
-        # RGPE is handled by a dedicated ensemble surrogate rather than a task kernel.
-        # Dispatch to it, reusing this GP's configuration for the inner models.
         task_param = self._searchspace._task_parameter
-        if (
-            task_param is not None
-            and task_param.override_transfer_learning_mode is TransferLearningMode.RGPE
-        ):
-            from baybe.surrogates.transfer_learning.rgpe import RGPESurrogate
-
-            delegate = RGPESurrogate(base_surrogate=evolve(self))
-            delegate.fit(self._searchspace, self._objective, self._measurements)
-            self._delegate = delegate
-            return
 
         # Check for custom kernel + multi-task clash (only relevant when the task
         # parameter has no kernel override, since the override mechanism handles task
@@ -696,20 +659,39 @@ class GaussianProcessSurrogate(Surrogate):
         ### Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
         input_transform = self._make_input_transform(context)
-        outcome_transform = self._make_outcome_transform(train_y)
 
         ### Model construction and fitting
-        self._model = botorch.models.SingleTaskGP(
-            train_x,
-            train_y,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            mean_module=mean,
-            covar_module=kernel,
-            likelihood=likelihood,
-        )
-        mll = criterion.to_gpytorch(self._model.likelihood, self._model)
-        botorch.fit.fit_gpytorch_mll(mll)
+        def fit_gp(
+            x: Tensor, y: Tensor, /, *, copy_components: bool = False
+        ) -> SingleTaskGP:
+            modules = (input_transform, mean, kernel, likelihood)
+            if copy_components:
+                # Several RGPE members are built from the same components
+                modules = deepcopy(modules)
+            input_tf, mean_module, covar_module, lik = modules
+            model = botorch.models.SingleTaskGP(
+                x,
+                y,
+                input_transform=input_tf,
+                outcome_transform=self._make_outcome_transform(y),
+                mean_module=mean_module,
+                covar_module=covar_module,
+                likelihood=lik,
+            )
+            botorch.fit.fit_gpytorch_mll(criterion.to_gpytorch(model.likelihood, model))
+            return model
+
+        if (
+            task_param is not None
+            and task_param.override_transfer_learning_mode is TransferLearningMode.RGPE
+        ):
+            from baybe.surrogates.gaussian_process._rgpe import make_rgpe_model
+
+            self._model = make_rgpe_model(
+                context, train_x, train_y, partial(fit_gp, copy_components=True)
+            )
+        else:
+            self._model = fit_gp(train_x, train_y)
 
     @override
     def __str__(self) -> str:

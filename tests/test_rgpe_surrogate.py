@@ -7,10 +7,7 @@ import pytest
 import torch
 
 from baybe import Campaign
-from baybe.exceptions import (
-    IncompatibleSearchSpaceError,
-    IncompatibleSurrogateError,
-)
+from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.parameters.enum import TransferLearningMode
@@ -93,46 +90,6 @@ def test_fit_and_posterior(objective, candidates):
     assert posterior.mean.numel() == len(candidates)
     assert torch.all(posterior.variance > 0)
     assert torch.isfinite(posterior.mean).all()
-
-
-def test_inner_gps_use_naive_mode_and_do_not_redispatch(objective):
-    """Inner GPs fit on the naive-mode space instead of re-dispatching to RGPE.
-
-    The inner GPs run on the naive-mode space, whose task parameter no longer carries
-    the RGPE mode. This is what prevents infinite recursion in the factory dispatch.
-    """
-    surrogate = RGPESurrogate(n_mc_samples=32)
-    surrogate.fit(_make_searchspace(), objective, _make_measurements("both"))
-
-    for gp in (*surrogate._source_gps, surrogate._target_gp):
-        assert gp is not None
-        # A concrete GP was fitted rather than dispatched to another RGPE ensemble.
-        assert gp._delegate is None
-        assert gp._model is not None
-        # The inner space carries the naive mode, which is the recursion guard.
-        task_param = gp._searchspace._task_parameter
-        assert task_param is not None
-        assert task_param.override_transfer_learning_mode is TransferLearningMode.NAIVE
-
-
-def test_override_dispatch_matches_direct(objective, candidates):
-    """Selecting RGPE via the task override dispatches to an RGPE delegate."""
-    measurements = _make_measurements("both")
-
-    gp = GaussianProcessSurrogate()
-    gp.fit(_make_searchspace(mode=TransferLearningMode.RGPE), objective, measurements)
-    assert isinstance(gp._delegate, RGPESurrogate)
-    # The undelegated GP model is never built along the dispatch path.
-    assert gp._model is None
-
-    # The dispatched delegate produces the same posterior as a direct RGPE surrogate
-    # (up to Monte Carlo noise in the weights).
-    direct = RGPESurrogate()
-    direct.fit(_make_searchspace(), objective, measurements)
-
-    delegated_mean = gp.posterior(candidates).mean
-    direct_mean = direct.posterior(candidates).mean
-    assert torch.allclose(delegated_mean, direct_mean, atol=0.1)
 
 
 @pytest.mark.parametrize(
@@ -222,17 +179,3 @@ def test_campaign_recommendation(objective, via_override):
 
     recommendations = campaign.recommend(batch_size=2)
     assert (recommendations["task"] == _TARGET).all()
-
-
-def test_posterior_mean_function_rejects_delegate(objective):
-    """A dispatched GP has no single mean module and fails loudly if asked for one."""
-    gp = GaussianProcessSurrogate()
-    gp.fit(
-        _make_searchspace(mode=TransferLearningMode.RGPE),
-        objective,
-        _make_measurements("both"),
-    )
-    with pytest.raises(IncompatibleSurrogateError, match="not implemented"):
-        gp.posterior_mean_function(
-            _make_searchspace(), objective, _make_measurements("both")
-        )

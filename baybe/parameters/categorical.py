@@ -6,7 +6,7 @@ from functools import cached_property
 import numpy as np
 import pandas as pd
 from attr.converters import optional as optional_c
-from attrs import Converter, define, field
+from attrs import Converter, define, field, fields
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import assert_never, override
 
@@ -99,10 +99,22 @@ class TaskParameter(CategoricalParameter):
     """Optional override for how the task dimension is modeled.
 
     Only applies to :class:`.GaussianProcessSurrogate`. When ``None``, the kernel
-    factory decides. The kernel modes attach the chosen task kernel to the base kernel,
-    while :attr:`~baybe.parameters.enum.TransferLearningMode.RGPE` dispatches to a
-    :class:`~baybe.surrogates.transfer_learning.rgpe.RGPESurrogate` ensemble.
+    factory decides. For the available modes, see
+    :class:`~baybe.parameters.enum.TransferLearningMode`.
     """
+
+    def __attrs_post_init__(self) -> None:
+        """Validate that RGPE has exactly one target task."""
+        if (
+            self.override_transfer_learning_mode is TransferLearningMode.RGPE
+            and len(self.active_values) != 1
+        ):
+            raise ValueError(
+                f"The transfer learning mode "
+                f"'{TransferLearningMode.RGPE.name}' requires exactly one value in "
+                f"'{fields(type(self))._active_values.alias}', but got "
+                f"{len(self.active_values)}."
+            )
 
     @override
     @cached_property
@@ -118,11 +130,9 @@ class TaskParameter(CategoricalParameter):
         match mode := self.override_transfer_learning_mode:
             case None:
                 return None
-            case TransferLearningMode.RGPE:
-                # RGPE adds no task kernel; the surrogate dispatches to a dedicated
-                # ensemble instead
-                return None
-            case TransferLearningMode.NAIVE:
+            case TransferLearningMode.NAIVE | TransferLearningMode.RGPE:
+                # Neither mode models the task with a kernel: NAIVE pools all tasks
+                # into one GP, RGPE fits one GP per task
                 return VanishingKernel(parameter_names=names)
             case TransferLearningMode.POSITIVE_INDEX_KERNEL:
                 return PositiveIndexKernel(
