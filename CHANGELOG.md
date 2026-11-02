@@ -17,11 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SequentialMetaRecommender.recommenders` is now a `tuple` instead of a `list`, making
   the attribute immutable. Serialization is unaffected
 
-### Changed
-- Transfer-learning convergence benchmarks now build the naive baseline from a
-  `TaskParameter` with `override_transfer_learning_mode="NAIVE"` instead of dropping
-  the task parameter, keeping it alongside the default transfer-learning variant
-
 ### Fixed
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
   values of invariant points are degenerate
