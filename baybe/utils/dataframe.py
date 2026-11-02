@@ -651,12 +651,22 @@ def _apply_filter(lf: nw.LazyFrame, filter_: Filter, /) -> nw.LazyFrame:
     Raises:
         IncompatibleArgumentError: If the filter criterion is a dataframe using a
             different dataframe backend than the frame to be filtered.
-        TypeError: If the filter criterion cannot be interpreted as a filter.
+        TypeError: If the filter criterion cannot be interpreted as a filter or if a
+            filter expression does not evaluate to a single Boolean column.
     """
     from baybe.constraints.base import DiscreteFilteringConstraint
 
     match filter_:
         case nw.Expr():
+            # Narwhals does not enforce that the expression evaluates to a single
+            # Boolean column, and the backends disagree on what happens otherwise:
+            # Polars silently casts to truthiness, whereas pandas raises a `KeyError`.
+            dtypes = lf.select(filter_).collect_schema().dtypes()
+            if dtypes != [nw.Boolean]:
+                raise TypeError(
+                    f"The filter expression must evaluate to a single Boolean column, "
+                    f"but it evaluates to {len(dtypes)} column(s) of type {dtypes}."
+                )
             return lf.filter(filter_)
 
         case DiscreteFilteringConstraint():
