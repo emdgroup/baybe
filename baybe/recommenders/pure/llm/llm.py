@@ -252,7 +252,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
             )
         except NotImplementedError as ex:
             raise IncompatibilityError(
-                f"Could not construct a prompt for `{self.__class__.__name__}`"
+                f"Could not construct a prompt for `{self.__class__.__name__}` "
                 f"from the provided recommendations context."
             ) from ex
         # Stays `None` if the model returns no usable content
