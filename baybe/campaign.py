@@ -501,7 +501,6 @@ class Campaign(SerialMixin):
         #  * When excluding points, the cache only needs to be cleared if the excluded
         #    points were part of the cached recommendations.
         #  * Additional shortcuts might be possible.
-        self.clear_cache()
 
         is_legacy_call = False
 
@@ -585,6 +584,8 @@ class Campaign(SerialMixin):
                 f"required keyword argument 'exclude'."
             )
         # <<<<<<<<<< Deprecation
+
+        self.clear_cache()
 
         filtered = self.searchspace.discrete.filter(*filters, complement=complement)
         points_nw = nw.maybe_reset_index(filtered._get_candidates().collect())
