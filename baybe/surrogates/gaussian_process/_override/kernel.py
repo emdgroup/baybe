@@ -176,7 +176,8 @@ def raise_incompatible_override(
         IncompatibleOverrideError: Always.
     """
     raise IncompatibleOverrideError(
-        f"Kernel overrides for {sorted(parameter_names)} require a surrogate "
-        f"kernel (factory) that can exclude these parameters. "
-        f"'{type(factory).__name__}' does not satisfy this requirement."
+        f"The kernel overrides or transfer learning modes of "
+        f"{sorted(parameter_names)} require a kernel (factory) that can exclude "
+        f"these parameters, which '{type(factory).__name__}' cannot. "
+        f"Use a BayBE kernel or kernel factory instead."
     ) from cause
