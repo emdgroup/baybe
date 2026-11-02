@@ -356,11 +356,7 @@ def test_filtering_partial_evaluation(combiner, exclude, partial_ok):
 
 
 def test_filtering_xor_partial_does_not_drop_valid_rows():
-    """A valid XOR row is not removed when evaluated with missing columns.
-
-    With ``allow_missing=True`` and only one operand present, a premature XOR
-    evaluation would wrongly drop rows; the constraint must instead defer.
-    """
+    """The builder defers XOR filtering until every operand is available."""
     constraint = DiscreteSelectionConstraint(
         parameters=["A", "B"],
         conditions=[
@@ -369,16 +365,19 @@ def test_filtering_xor_partial_does_not_drop_valid_rows():
         ],
         combiner="XOR",
     )
+
     # Row where only "A" is known so far; "B" is still missing.
     partial_df = pd.DataFrame({"A": [1.0, 0.0]})
-    # Deferred: nothing may be dropped yet.
-    assert list(constraint.get_invalid(partial_df, allow_missing=True)) == []
+    # The constraint is not callable yet, so incremental construction defers it.
+    assert constraint._can_evaluate(set(partial_df.columns)) is False
+    with pytest.raises(ValueError, match="missing from the provided dataframe"):
+        constraint(partial_df)
 
     # Once both columns are present, XOR keeps rows where exactly one holds.
     full_df = pd.DataFrame({"A": [1.0, 1.0, 0.0], "B": [0.0, 1.0, 0.0]})
-    invalid = constraint.get_invalid(full_df, allow_missing=True)
+    filtered = constraint(full_df)
     # Rows 1 (both > 0) and 2 (neither > 0) violate XOR; row 0 is kept.
-    assert list(invalid) == [1, 2]
+    assert list(filtered.index) == [0]
 
 
 _DF = pd.DataFrame(

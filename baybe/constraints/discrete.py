@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from functools import reduce
 from inspect import Parameter, Signature, signature
 from typing import TYPE_CHECKING, Any, ClassVar, cast, get_type_hints, overload
 
 import cattrs
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from attrs import define, field, fields
@@ -81,6 +82,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     """Class for filtering search space entries based on conditions.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({
         ...     "Solvent": ["Water", "Water", "Hexane", "Hexane"],
         ...     "Temp": [80.0, 120.0, 80.0, 120.0],
@@ -91,7 +93,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         1   Water  120.0
         2  Hexane   80.0
         3  Hexane  120.0
-        >>> c = DiscreteSelectionConstraint(
+        >>> constraint = DiscreteSelectionConstraint(
         ...     parameters=["Solvent", "Temp"],
         ...     conditions=[
         ...         SubSelectionCondition(selection=["Hexane"]),
@@ -99,8 +101,11 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         ...     ],
         ...     exclude=True,
         ... )
-        >>> list(c.get_invalid(df))
-        [3]
+        >>> constraint(df)
+          Solvent   Temp
+        0   Water   80.0
+        1   Water  120.0
+        2  Hexane   80.0
     """
 
     # object variables
@@ -132,22 +137,13 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         return True
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in df]
-        satisfied = [cond.evaluate(df[p]) for p, cond in pairs]
-        res = reduce(_LOGIC_COMBINERS[self.combiner], satisfied)
-
-        return df.index[res]
-
-    @override
-    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
-
-        satisfied = []
-        for k, cond in enumerate(self.conditions):
-            satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
-
-        return pl.reduce(_LOGIC_COMBINERS[self.combiner], satisfied)
+    def _to_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        satisfied = [
+            cond._to_expr(nw.col(param))
+            for param, cond in zip(self.parameters, self.conditions, strict=True)
+            if param in schema
+        ]
+        return reduce(_LOGIC_COMBINERS[self.combiner], satisfied)
 
 
 def _make_condition(
