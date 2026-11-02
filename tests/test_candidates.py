@@ -270,6 +270,7 @@ def test_candidates_filter_dataframe(candidates):
     _assert_candidate_rows(filtered, {"disc": [1.0, 2.0], "disc2": [0.0, 10.0]})
 
 
+@pytest.mark.parametrize("complement", [False, True], ids=["keep", "complement"])
 @pytest.mark.parametrize(
     "filter_",
     [
@@ -277,10 +278,24 @@ def test_candidates_filter_dataframe(candidates):
         pytest.param([True, False], id="boolean_mask"),
     ],
 )
-def test_candidates_filter_invalid(candidates, filter_):
+def test_candidates_filter_invalid(candidates, filter_, complement):
     """Unsupported filter criteria raise a TypeError."""
     with pytest.raises(TypeError, match="filter"):
-        candidates.filter(filter_)
+        candidates.filter(filter_, complement=complement)
+
+
+@pytest.mark.parametrize(
+    "filter_",
+    [
+        pytest.param(object(), id="unsupported_object"),
+        pytest.param("disc == 1", id="string"),
+        pytest.param([True, False], id="boolean_mask"),
+    ],
+)
+def test_empty_candidates_filter_invalid(filter_):
+    """Unsupported filter criteria raise a TypeError instead of being ignored."""
+    with pytest.raises(TypeError, match="as 'filters'"):
+        EmptyCandidates().filter(filter_)
 
 
 def test_product_candidates_filter_representation():

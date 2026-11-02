@@ -20,7 +20,12 @@ from baybe.searchspace.validation import validate_parameters
 from baybe.settings import active_settings
 from baybe.utils._types import _NarwhalsFrame
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import Filter, _df_equals, _filter_dataframe, _is_filter
+from baybe.utils.dataframe import (
+    Filter,
+    _df_equals,
+    _filter_dataframe,
+    _validate_filter_types,
+)
 from baybe.utils.validation import validate_parameter_input
 
 if TYPE_CHECKING:
@@ -67,6 +72,7 @@ def _filter_candidates(
     Returns:
         A new :class:`TableCandidates` object holding the filtered lazy frame.
     """
+    _validate_filter_types(*filters)
     filtered = _filter_dataframe(candidates._to_lazy(), *filters, complement=complement)
     return TableCandidates(candidates.parameters, filtered)
 
@@ -94,6 +100,7 @@ class EmptyCandidates(CandidatesProtocol):
 
     @override
     def filter(self, *filters: Filter, complement: bool = False) -> CandidatesProtocol:
+        _validate_filter_types(*filters)
         return self
 
     @override
@@ -120,14 +127,9 @@ class ProductCandidates(CandidatesProtocol):
     """Filters to apply to the Cartesian product."""
 
     @filters.validator
-    def _validate_filters(
-        self, attribute: Attribute, value: tuple[Filter, ...]
-    ) -> None:  # noqa: DOC101, DOC103
+    def _validate_filters(self, _: Attribute, value: tuple[Filter, ...]) -> None:  # noqa: DOC101, DOC103
         """Validate filters."""
-        if invalid := [filter_ for filter_ in value if not _is_filter(filter_)]:
-            raise TypeError(
-                f"Invalid arguments provided as '{attribute.alias}': {invalid!r}."
-            )
+        _validate_filter_types(*value)
         constraints = [
             filter_
             for filter_ in value

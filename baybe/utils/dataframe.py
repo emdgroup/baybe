@@ -102,6 +102,19 @@ def _is_filter(x: Any, /) -> bool:
     return isinstance(x, nw.Expr | DiscreteFilteringConstraint) or is_into_dataframe(x)
 
 
+def _validate_filter_types(*filters: Filter) -> None:
+    """Raise if any of the given objects cannot be used as a filter criterion.
+
+    Args:
+        *filters: The filter criteria to validate.
+
+    Raises:
+        TypeError: If at least one of the objects is not a valid filter criterion.
+    """
+    if invalid := [filter_ for filter_ in filters if not _is_filter(filter_)]:
+        raise TypeError(f"Invalid arguments provided as 'filters': {invalid!r}.")
+
+
 @overload
 def to_tensor(x: _IntoTensor, /) -> Tensor: ...
 
