@@ -1250,7 +1250,11 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.composite.ChainedTransformation.html#baybe.transformations.composite.ChainedTransformation">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ChainedTransformation</span><span class="p">(</span><span class="n">Transformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A chained transformation composing several individual transformations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Apply a sequence of transformations, passing each output as the next input.</span>
+
+<span class="sd">    Computes :math:`f(x) = t_n(\cdots t_2(t_1(x)) \cdots)`, with :math:`t_1` applied</span>
+<span class="sd">    first. Sequences are applied in order. Equivalent to ``t1 | t2 | ... | tn``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">transformations</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Transformation</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">converter</span><span class="o">=</span><span class="n">compress_transformations</span><span class="p">,</span>
@@ -1259,7 +1263,7 @@
             <span class="n">deep_iterable</span><span class="p">(</span><span class="n">member_validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="n">Transformation</span><span class="p">)),</span>
         <span class="p">],</span>
     <span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The transformations to be composed (the first element gets applied first).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The transformations in application order, first element first.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ChainedTransformation.__new__">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.composite.ChainedTransformation.html#baybe.transformations.composite.ChainedTransformation.__new__">[docs]</a>
@@ -1310,7 +1314,11 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.composite.AdditiveTransformation.html#baybe.transformations.composite.AdditiveTransformation">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AdditiveTransformation</span><span class="p">(</span><span class="n">Transformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A transformation implementing the sum of two transformations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sum the outputs of two transformations applied to the same input.</span>
+
+<span class="sd">    Computes :math:`f(x) = t_1(x) + t_2(x)`. Equivalent to ``t1 + t2``; more</span>
+<span class="sd">    terms can be combined by nesting additions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">transformations</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Transformation</span><span class="p">,</span> <span class="n">Transformation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">converter</span><span class="o">=</span><span class="n">to_tuple</span><span class="p">,</span>
@@ -1319,7 +1327,7 @@
             <span class="n">member_validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="n">Transformation</span><span class="p">),</span>
         <span class="p">),</span>
     <span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The transformations to be added.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The two transformations whose outputs for the same input are added.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="AdditiveTransformation.__new__">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.composite.AdditiveTransformation.html#baybe.transformations.composite.AdditiveTransformation.__new__">[docs]</a>
@@ -1362,7 +1370,11 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.composite.MultiplicativeTransformation.html#baybe.transformations.composite.MultiplicativeTransformation">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultiplicativeTransformation</span><span class="p">(</span><span class="n">Transformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A transformation implementing the product of two transformations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Multiply the outputs of two transformations applied to the same input.</span>
+
+<span class="sd">    Computes :math:`f(x) = t_1(x) \cdot t_2(x)`. Equivalent to ``t1 * t2``; more</span>
+<span class="sd">    factors can be combined by nesting multiplications.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">transformations</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Transformation</span><span class="p">,</span> <span class="n">Transformation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">converter</span><span class="o">=</span><span class="n">to_tuple</span><span class="p">,</span>
@@ -1371,7 +1383,7 @@
             <span class="n">member_validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="n">Transformation</span><span class="p">),</span>
         <span class="p">),</span>
     <span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The transformations to be multiplied.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The two transformations whose outputs for the same input are multiplied.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="MultiplicativeTransformation.get_codomain">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.composite.MultiplicativeTransformation.html#baybe.transformations.composite.MultiplicativeTransformation.get_codomain">[docs]</a>

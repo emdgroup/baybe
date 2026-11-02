@@ -1259,10 +1259,14 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.CustomTransformation.html#baybe.transformations.basic.CustomTransformation">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CustomTransformation</span><span class="p">(</span><span class="n">Transformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A custom transformation applying an arbitrary torch callable.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply a user-defined torch callable to the input tensor.</span>
+
+<span class="sd">    The callable is applied to the whole tensor; valid inputs and outputs depend on</span>
+<span class="sd">    it. Codomain and image calculations raise ``NotImplementedError``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">function</span><span class="p">:</span> <span class="n">TensorCallable</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">is_callable</span><span class="p">())</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The torch callable representing the transformation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The callable accepting an input tensor and returning the transformed tensor.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="CustomTransformation.get_codomain">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.CustomTransformation.html#baybe.transformations.basic.CustomTransformation.get_codomain">[docs]</a>
@@ -1286,7 +1290,7 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.IdentityTransformation.html#baybe.transformations.basic.IdentityTransformation">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">IdentityTransformation</span><span class="p">(</span><span class="n">MonotonicTransformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The identity transformation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return input values unchanged: :math:`f(x) = x`.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="IdentityTransformation.to_botorch_posterior_transform">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.IdentityTransformation.html#baybe.transformations.basic.IdentityTransformation.to_botorch_posterior_transform">[docs]</a>
@@ -1323,10 +1327,15 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.ClampingTransformation.html#baybe.transformations.basic.ClampingTransformation">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClampingTransformation</span><span class="p">(</span><span class="n">MonotonicTransformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A transformation clamping values between specified cutoffs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Limit input values to a specified interval.</span>
+
+<span class="sd">    Computes :math:`f(x) = \min(\max(x, l), u)`, where :math:`l` and :math:`u` are</span>
+<span class="sd">    the lower and upper bounds. Values inside remain unchanged; an omitted bound</span>
+<span class="sd">    leaves that side unbounded.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">cutoffs</span><span class="p">:</span> <span class="n">Interval</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">converter</span><span class="o">=</span><span class="n">Interval</span><span class="o">.</span><span class="n">create</span><span class="p">)</span>  <span class="c1"># type: ignore[misc]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The range to which input values are clamped.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The inclusive interval to which inputs are clamped.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ClampingTransformation.__init__">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.ClampingTransformation.html#baybe.transformations.basic.ClampingTransformation.__init__">[docs]</a>
@@ -1349,7 +1358,12 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.AffineTransformation.html#baybe.transformations.basic.AffineTransformation">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AffineTransformation</span><span class="p">(</span><span class="n">MonotonicTransformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An affine transformation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Scale input values by a factor and add a constant shift.</span>
+
+<span class="sd">    Computes :math:`f(x) = a \cdot x + b`, where :math:`a` is the scale factor and</span>
+<span class="sd">    :math:`b` is the shift. When constructed with ``shift_first=True``, the</span>
+<span class="sd">    transformation computes :math:`a \cdot (x + b)` instead.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># https://github.com/python-attrs/attrs/issues/1462</span>
     <span class="fm">__hash__</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__hash__</span>
@@ -1461,7 +1475,17 @@
 <span class="nd">@_image_equals_codomain</span>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TwoSidedAffineTransformation</span><span class="p">(</span><span class="n">Transformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A transformation with two affine segments on either side of a midpoint.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Apply separate linear slopes on either side of a midpoint.</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        f(x) = \begin{cases}</span>
+<span class="sd">            s_l \cdot (x - m) &amp; x &lt; m \\</span>
+<span class="sd">            s_r \cdot (x - m) &amp; x \geq m</span>
+<span class="sd">        \end{cases}</span>
+
+<span class="sd">    Here :math:`s_l`, :math:`s_r`, and :math:`m` are the left slope, right slope,</span>
+<span class="sd">    and midpoint. Both segments meet at :math:`f(m) = 0`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">slope_left</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">converter</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">finite_float</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The slope of the affine segment to the left of the midpoint.&quot;&quot;&quot;</span>
@@ -1470,7 +1494,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The slope of the affine segment to the right of the midpoint.&quot;&quot;&quot;</span>
 
     <span class="n">midpoint</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">finite_float</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The midpoint where the two affine segments meet.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The input value where both affine segments meet at output zero.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="TwoSidedAffineTransformation.get_codomain">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.TwoSidedAffineTransformation.html#baybe.transformations.basic.TwoSidedAffineTransformation.get_codomain">[docs]</a>
@@ -1510,7 +1534,14 @@
 <span class="nd">@_image_equals_codomain</span>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BellTransformation</span><span class="p">(</span><span class="n">Transformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A Gaussian bell curve transformation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Map input values to a Gaussian bell-shaped score around a center point.</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        f(x) = \exp\!\left[-\frac{1}{2}\left(\frac{x - c}{\sigma}\right)^2\right]</span>
+
+<span class="sd">    Output is 1 at the center point :math:`c` and decreases symmetrically toward</span>
+<span class="sd">    zero. A larger width parameter :math:`\sigma` gives a broader bell.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">center</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">finite_float</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The center point of the bell curve.&quot;&quot;&quot;</span>
@@ -1518,12 +1549,7 @@
     <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="p">[</span><span class="n">finite_float</span><span class="p">,</span> <span class="n">gt</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)]</span>
     <span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The scale parameter of the transformation.</span>
-
-<span class="sd">    Concerning the width of the bell curve, it has the same interpretation as the</span>
-<span class="sd">    standard deviation in a Gaussian distribution. (The magnitude of the curve is</span>
-<span class="sd">    not affected and always reaches a maximum value of 1 at the center.)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The positive width parameter, interpreted as a Gaussian standard deviation.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="BellTransformation.get_codomain">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.BellTransformation.html#baybe.transformations.basic.BellTransformation.get_codomain">[docs]</a>
@@ -1553,7 +1579,7 @@
 <span class="nd">@_image_equals_codomain</span>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbsoluteTransformation</span><span class="p">(</span><span class="n">Transformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A transformation computing absolute values.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return distance from zero: :math:`f(x) = \lvert x \rvert`.&quot;&quot;&quot;</span>
 
     <span class="n">_transformation</span><span class="p">:</span> <span class="n">Transformation</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">TwoSidedAffineTransformation</span><span class="p">(</span><span class="n">slope_left</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">slope_right</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
@@ -1583,24 +1609,17 @@
 <span class="nd">@_image_equals_codomain</span>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TriangularTransformation</span><span class="p">(</span><span class="n">Transformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;A transformation with a triangular shape.</span>
-
-<span class="sd">    The transformation is defined by a peak location between two cutoff values. Outside</span>
-<span class="sd">    the region delimited by the cutoff values, the transformation is zero. Inside the</span>
-<span class="sd">    region, the transformed values increase linearly from both cutoffs to the peak,</span>
-<span class="sd">    where the highest value of 1 is reached:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Map input values to a triangular score with a maximum of one at the peak.</span>
 
 <span class="sd">    .. math::</span>
-<span class="sd">        f(x) =</span>
-<span class="sd">        \begin{cases}</span>
-<span class="sd">            0 &amp; \text{if } x &lt; c_1 \\</span>
-<span class="sd">            \frac{x - c_1}{p - c_1} &amp; \text{if } c_1 \leq x &lt; p \\</span>
-<span class="sd">            \frac{c_2 - x}{c_2 - p} &amp; \text{if } p \leq x &lt; c_2 \\</span>
-<span class="sd">            0 &amp; \text{if } c_2 \leq x</span>
+<span class="sd">        f(x) = \begin{cases}</span>
+<span class="sd">            \frac{x - l}{p - l} &amp; l \leq x &lt; p \\</span>
+<span class="sd">            \frac{u - x}{u - p} &amp; p \leq x \leq u \\</span>
+<span class="sd">            0 &amp; \text{otherwise}</span>
 <span class="sd">        \end{cases}</span>
 
-<span class="sd">    where :math:`c_1` and :math:`c_2` are the left and right cutoffs, respectively, and</span>
-<span class="sd">    :math:`p` is the peak location, with :math:`c_1 &lt; p &lt; c_2`.</span>
+<span class="sd">    Here :math:`l &lt; p &lt; u` are the lower cutoff, peak, and upper cutoff; both</span>
+<span class="sd">    cutoffs must be finite.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># TODO[typing]: https://github.com/python-attrs/attrs/issues/1435</span>
@@ -1704,7 +1723,12 @@
 <span class="nd">@_image_equals_codomain</span>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogarithmicTransformation</span><span class="p">(</span><span class="n">MonotonicTransformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A logarithmic transformation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Take the natural logarithm of input values.</span>
+
+<span class="sd">    Computes :math:`f(x) = \ln(x)` (base :math:`e`), increasing for :math:`x &gt; 0` while</span>
+<span class="sd">    compressing large magnitudes. Zero gives negative infinity; negative inputs</span>
+<span class="sd">    give ``NaN``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="LogarithmicTransformation.__call__">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.LogarithmicTransformation.html#baybe.transformations.basic.LogarithmicTransformation.__call__">[docs]</a>
@@ -1728,7 +1752,11 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.ExponentialTransformation.html#baybe.transformations.basic.ExponentialTransformation">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExponentialTransformation</span><span class="p">(</span><span class="n">MonotonicTransformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An exponential transformation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Apply the natural exponential function.</span>
+
+<span class="sd">    Computes :math:`f(x) = \exp(x) = e^x`, increasing and mapping zero to one.</span>
+<span class="sd">    Extreme inputs can overflow to infinity or underflow to zero.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ExponentialTransformation.__call__">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.ExponentialTransformation.html#baybe.transformations.basic.ExponentialTransformation.__call__">[docs]</a>
@@ -1744,10 +1772,14 @@
 <span class="nd">@_image_equals_codomain</span>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PowerTransformation</span><span class="p">(</span><span class="n">Transformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A transformation computing the power.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Raise input values to a specified exponent.</span>
+
+<span class="sd">    Computes :math:`f(x) = x^n`. Non-integer exponents require non-negative inputs,</span>
+<span class="sd">    otherwise raising ``RuntimeError``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">exponent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">converter</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">finite_float</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The exponent of the power transformation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The finite exponent; integer and non-integer values are supported.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="PowerTransformation.get_codomain">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.PowerTransformation.html#baybe.transformations.basic.PowerTransformation.get_codomain">[docs]</a>
@@ -1780,7 +1812,16 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.basic.SigmoidTransformation.html#baybe.transformations.basic.SigmoidTransformation">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SigmoidTransformation</span><span class="p">(</span><span class="n">MonotonicTransformation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A sigmoid transformation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Map input values to a logistic S-shaped score.</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        f(x) = \frac{1}{1 + e^{-k(c - x)}}</span>
+
+<span class="sd">    Output is 0.5 at the center point :math:`c`. For positive steepness :math:`k`,</span>
+<span class="sd">    larger :math:`x` decreases the score toward 0; negative steepness increases it</span>
+<span class="sd">    toward 1. Zero steepness gives 0.5 for all finite inputs; larger :math:`|k|`</span>
+<span class="sd">    sharpens the transition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">center</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The center of the sigmoid function, where it crosses 0.5.&quot;&quot;&quot;</span>

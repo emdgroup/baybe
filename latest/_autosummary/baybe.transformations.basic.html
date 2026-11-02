@@ -1235,40 +1235,40 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.transformations.basic.AbsoluteTransformation.html#baybe.transformations.basic.AbsoluteTransformation" title="baybe.transformations.basic.AbsoluteTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AbsoluteTransformation</span></code></a></p></td>
-<td><p>A transformation computing absolute values.</p></td>
+<td><p>Return distance from zero: <span class="math notranslate nohighlight">\(f(x) = \lvert x \rvert\)</span>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.transformations.basic.AffineTransformation.html#baybe.transformations.basic.AffineTransformation" title="baybe.transformations.basic.AffineTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AffineTransformation</span></code></a></p></td>
-<td><p>An affine transformation.</p></td>
+<td><p>Scale input values by a factor and add a constant shift.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.transformations.basic.BellTransformation.html#baybe.transformations.basic.BellTransformation" title="baybe.transformations.basic.BellTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BellTransformation</span></code></a></p></td>
-<td><p>A Gaussian bell curve transformation.</p></td>
+<td><p>Map input values to a Gaussian bell-shaped score around a center point.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.transformations.basic.ClampingTransformation.html#baybe.transformations.basic.ClampingTransformation" title="baybe.transformations.basic.ClampingTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ClampingTransformation</span></code></a></p></td>
-<td><p>A transformation clamping values between specified cutoffs.</p></td>
+<td><p>Limit input values to a specified interval.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.transformations.basic.CustomTransformation.html#baybe.transformations.basic.CustomTransformation" title="baybe.transformations.basic.CustomTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CustomTransformation</span></code></a></p></td>
-<td><p>A custom transformation applying an arbitrary torch callable.</p></td>
+<td><p>Apply a user-defined torch callable to the input tensor.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.transformations.basic.ExponentialTransformation.html#baybe.transformations.basic.ExponentialTransformation" title="baybe.transformations.basic.ExponentialTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExponentialTransformation</span></code></a></p></td>
-<td><p>An exponential transformation.</p></td>
+<td><p>Apply the natural exponential function.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.transformations.basic.IdentityTransformation.html#baybe.transformations.basic.IdentityTransformation" title="baybe.transformations.basic.IdentityTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IdentityTransformation</span></code></a></p></td>
-<td><p>The identity transformation.</p></td>
+<td><p>Return input values unchanged: <span class="math notranslate nohighlight">\(f(x) = x\)</span>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.transformations.basic.LogarithmicTransformation.html#baybe.transformations.basic.LogarithmicTransformation" title="baybe.transformations.basic.LogarithmicTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LogarithmicTransformation</span></code></a></p></td>
-<td><p>A logarithmic transformation.</p></td>
+<td><p>Take the natural logarithm of input values.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.transformations.basic.PowerTransformation.html#baybe.transformations.basic.PowerTransformation" title="baybe.transformations.basic.PowerTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PowerTransformation</span></code></a></p></td>
-<td><p>A transformation computing the power.</p></td>
+<td><p>Raise input values to a specified exponent.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.transformations.basic.SigmoidTransformation.html#baybe.transformations.basic.SigmoidTransformation" title="baybe.transformations.basic.SigmoidTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SigmoidTransformation</span></code></a></p></td>
-<td><p>A sigmoid transformation.</p></td>
+<td><p>Map input values to a logistic S-shaped score.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.transformations.basic.TriangularTransformation.html#baybe.transformations.basic.TriangularTransformation" title="baybe.transformations.basic.TriangularTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TriangularTransformation</span></code></a></p></td>
-<td><p>A transformation with a triangular shape.</p></td>
+<td><p>Map input values to a triangular score with a maximum of one at the peak.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.transformations.basic.TwoSidedAffineTransformation.html#baybe.transformations.basic.TwoSidedAffineTransformation" title="baybe.transformations.basic.TwoSidedAffineTransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation</span></code></a></p></td>
-<td><p>A transformation with two affine segments on either side of a midpoint.</p></td>
+<td><p>Apply separate linear slopes on either side of a midpoint.</p></td>
 </tr>
 </tbody>
 </table>

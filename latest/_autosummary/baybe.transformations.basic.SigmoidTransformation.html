@@ -1233,7 +1233,15 @@
 <dt class="sig sig-object py" id="baybe.transformations.basic.SigmoidTransformation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baybe.transformations.basic.</span></span><span class="sig-name descname"><span class="pre">SigmoidTransformation</span></span><a class="reference internal" href="../_modules/baybe/transformations/basic.html#SigmoidTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.transformations.basic.SigmoidTransformation" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="baybe.transformations.base.MonotonicTransformation.html#baybe.transformations.base.MonotonicTransformation" title="baybe.transformations.base.MonotonicTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">MonotonicTransformation</span></code></a></p>
-<p>A sigmoid transformation.</p>
+<p>Map input values to a logistic S-shaped score.</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[f(x) = \frac{1}{1 + e^{-k(c - x)}}\]</div>
+</div>
+<p>Output is 0.5 at the center point <span class="math notranslate nohighlight">\(c\)</span>. For positive steepness <span class="math notranslate nohighlight">\(k\)</span>,
+larger <span class="math notranslate nohighlight">\(x\)</span> decreases the score toward 0; negative steepness increases it
+toward 1. Zero steepness gives 0.5 for all finite inputs; larger <span class="math notranslate nohighlight">\(|k|\)</span>
+sharpens the transition.</p>
 <p class="rubric">Public methods</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -1715,5 +1723,7 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>
 </html>

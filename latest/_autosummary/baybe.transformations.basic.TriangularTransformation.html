@@ -1233,23 +1233,17 @@
 <dt class="sig sig-object py" id="baybe.transformations.basic.TriangularTransformation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baybe.transformations.basic.</span></span><span class="sig-name descname"><span class="pre">TriangularTransformation</span></span><a class="reference internal" href="../_modules/baybe/transformations/basic.html#TriangularTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.transformations.basic.TriangularTransformation" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></p>
-<p>A transformation with a triangular shape.</p>
-<p>The transformation is defined by a peak location between two cutoff values. Outside
-the region delimited by the cutoff values, the transformation is zero. Inside the
-region, the transformed values increase linearly from both cutoffs to the peak,
-where the highest value of 1 is reached:</p>
+<p>Map input values to a triangular score with a maximum of one at the peak.</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
-\[\begin{split}f(x) =
-\begin{cases}
-    0 &amp; \text{if } x &lt; c_1 \\
-    \frac{x - c_1}{p - c_1} &amp; \text{if } c_1 \leq x &lt; p \\
-    \frac{c_2 - x}{c_2 - p} &amp; \text{if } p \leq x &lt; c_2 \\
-    0 &amp; \text{if } c_2 \leq x
+\[\begin{split}f(x) = \begin{cases}
+    \frac{x - l}{p - l} &amp; l \leq x &lt; p \\
+    \frac{u - x}{u - p} &amp; p \leq x \leq u \\
+    0 &amp; \text{otherwise}
 \end{cases}\end{split}\]</div>
 </div>
-<p>where <span class="math notranslate nohighlight">\(c_1\)</span> and <span class="math notranslate nohighlight">\(c_2\)</span> are the left and right cutoffs, respectively, and
-<span class="math notranslate nohighlight">\(p\)</span> is the peak location, with <span class="math notranslate nohighlight">\(c_1 &lt; p &lt; c_2\)</span>.</p>
+<p>Here <span class="math notranslate nohighlight">\(l &lt; p &lt; u\)</span> are the lower cutoff, peak, and upper cutoff; both
+cutoffs must be finite.</p>
 <p class="rubric">Public methods</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">

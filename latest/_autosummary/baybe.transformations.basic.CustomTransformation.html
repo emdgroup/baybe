@@ -1233,7 +1233,9 @@
 <dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baybe.transformations.basic.</span></span><span class="sig-name descname"><span class="pre">CustomTransformation</span></span><a class="reference internal" href="../_modules/baybe/transformations/basic.html#CustomTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></p>
-<p>A custom transformation applying an arbitrary torch callable.</p>
+<p>Apply a user-defined torch callable to the input tensor.</p>
+<p>The callable is applied to the whole tensor; valid inputs and outputs depend on
+it. Codomain and image calculations raise <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>.</p>
 <p class="rubric">Public methods</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -1300,7 +1302,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.function" title="baybe.transformations.basic.CustomTransformation.function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">function</span></code></a></p></td>
-<td><p>The torch callable representing the transformation.</p></td>
+<td><p>The callable accepting an input tensor and returning the transformed tensor.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1564,7 +1566,7 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 <dl class="py attribute">
 <dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.function">
 <span class="sig-name descname"><span class="pre">function</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TensorCallable</span></em><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.function" title="Link to this definition">¶</a></dt>
-<dd><p>The torch callable representing the transformation.</p>
+<dd><p>The callable accepting an input tensor and returning the transformed tensor.</p>
 </dd></dl>
 
 </dd></dl>

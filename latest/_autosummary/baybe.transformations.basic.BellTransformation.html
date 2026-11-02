@@ -1233,7 +1233,13 @@
 <dt class="sig sig-object py" id="baybe.transformations.basic.BellTransformation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baybe.transformations.basic.</span></span><span class="sig-name descname"><span class="pre">BellTransformation</span></span><a class="reference internal" href="../_modules/baybe/transformations/basic.html#BellTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.transformations.basic.BellTransformation" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></p>
-<p>A Gaussian bell curve transformation.</p>
+<p>Map input values to a Gaussian bell-shaped score around a center point.</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[f(x) = \exp\!\left[-\frac{1}{2}\left(\frac{x - c}{\sigma}\right)^2\right]\]</div>
+</div>
+<p>Output is 1 at the center point <span class="math notranslate nohighlight">\(c\)</span> and decreases symmetrically toward
+zero. A larger width parameter <span class="math notranslate nohighlight">\(\sigma\)</span> gives a broader bell.</p>
 <p class="rubric">Public methods</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -1303,7 +1309,7 @@
 <td><p>The center point of the bell curve.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.BellTransformation.sigma" title="baybe.transformations.basic.BellTransformation.sigma"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sigma</span></code></a></p></td>
-<td><p>The scale parameter of the transformation.</p></td>
+<td><p>The positive width parameter, interpreted as a Gaussian standard deviation.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1573,10 +1579,7 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 <dl class="py attribute">
 <dt class="sig sig-object py" id="baybe.transformations.basic.BellTransformation.sigma">
 <span class="sig-name descname"><span class="pre">sigma</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></em><a class="headerlink" href="#baybe.transformations.basic.BellTransformation.sigma" title="Link to this definition">¶</a></dt>
-<dd><p>The scale parameter of the transformation.</p>
-<p>Concerning the width of the bell curve, it has the same interpretation as the
-standard deviation in a Gaussian distribution. (The magnitude of the curve is
-not affected and always reaches a maximum value of 1 at the center.)</p>
+<dd><p>The positive width parameter, interpreted as a Gaussian standard deviation.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1680,5 +1683,7 @@ not affected and always reaches a maximum value of 1 at the center.)</p>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>
 </html>

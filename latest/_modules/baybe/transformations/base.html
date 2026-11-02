@@ -1221,7 +1221,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for baybe.transformations.base</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Base classes for target transformations.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Base classes for transformations.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -1261,7 +1261,10 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Transformation</span><span class="p">(</span><span class="n">SerialMixin</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all transformations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for one-dimensional maps from reals to reals.</span>
+
+<span class="sd">    Transforms an input :math:`x` into an output :math:`f(x)`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="Transformation.__call__">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation.__call__">[docs]</a>
@@ -1494,7 +1497,10 @@
 <span class="nd">@_image_equals_codomain</span>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MonotonicTransformation</span><span class="p">(</span><span class="n">Transformation</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for monotonic transformations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for monotonic transformations.</span>
+
+<span class="sd">    Outputs are nondecreasing or nonincreasing over the valid input domain.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="MonotonicTransformation.get_codomain">
 <a class="viewcode-back" href="../../../_autosummary/baybe.transformations.base.MonotonicTransformation.html#baybe.transformations.base.MonotonicTransformation.get_codomain">[docs]</a>
