@@ -192,6 +192,5 @@ class TransferLearningMode(Enum):
     RGPE = "RGPE"
     """A rank-weighted ensemble of per-task Gaussian processes.
 
-    Adds no task kernel; instead dispatches the surrogate to a dedicated
-    :class:`~baybe.surrogates.transfer_learning.rgpe.RGPESurrogate`.
+    Fits one Gaussian process per task with data. Requires exactly one active task.
     """
