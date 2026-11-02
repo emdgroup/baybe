@@ -5,9 +5,11 @@ from collections.abc import Sequence
 from itertools import combinations_with_replacement
 from warnings import WarningMessage
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 import pytest
+from narwhals.stable.v2.typing import IntoDataFrame
 from pytest import param
 
 from baybe.constraints.continuous import (
@@ -26,7 +28,7 @@ from tests.conftest import FAST_OPTIMIZATION_SETTINGS
 
 
 def _validate_cardinality_constrained_batch(
-    batch: pd.DataFrame,
+    batch: IntoDataFrame,
     subspace_continuous: SubspaceContinuous,
     batch_size: int,
     captured_warnings: Sequence[WarningMessage],
@@ -56,7 +58,7 @@ def _validate_cardinality_constrained_batch(
     assert is_min_cardinality_fulfilled != bool(cardinality_warnings)
 
     # Assert that we obtain as many samples as requested
-    assert batch.shape[0] == batch_size
+    assert len(batch) == batch_size
 
     # Sanity check: If all recommendations in the batch are identical, something is
     # fishy – unless the cardinality is 0, in which case the entire batch must contain
@@ -70,10 +72,10 @@ def _validate_cardinality_constrained_batch(
     max_cardinalities = [
         c.max_cardinality for c in subspace_continuous.constraints_cardinality
     ]
-    if len(unique_row := batch.drop_duplicates()) == 1:
-        assert (unique_row.iloc[0] == 0.0).all() and all(
-            max_cardinality == 0 for max_cardinality in max_cardinalities
-        )
+    if len(unique_row := nw.from_native(batch).unique()) == 1:
+        assert unique_row.select(
+            nw.all_horizontal(nw.all() == 0.0, ignore_nulls=True).all()
+        ).item() and all(max_cardinality == 0 for max_cardinality in max_cardinalities)
 
 
 # Combinations of cardinalities to be tested
@@ -106,9 +108,7 @@ def test_sampling_cardinality_constraint(cardinality_bounds: tuple[int, int]):
         ),
     )
 
-    subspace_continous = SubspaceContinuous(
-        parameters=parameters, constraints_nonlin=constraints
-    )
+    subspace_continous = SubspaceContinuous(parameters, constraints)
 
     with warnings.catch_warnings(record=True) as w:
         samples = subspace_continous.sample_uniform(BATCH_SIZE)

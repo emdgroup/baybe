@@ -7,6 +7,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from baybe._optional.info import CHEM_INSTALLED, LINT_INSTALLED
+from baybe.settings import Settings
 from baybe.utils.dataframe import create_fake_input
 from tests.docs.utils import extract_code_blocks
 
@@ -30,6 +31,7 @@ doc_files_pseudocode = list(map(str, [Path("docs/components/campaigns.md")]))
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
 @pytest.mark.parametrize("file", doc_files, ids=doc_files)
+@Settings(default_dataframe_backend="pandas")
 def test_code_executability(file: Path, campaign, searchspace, objective, recommender):
     """The code blocks in the file become a valid python script when concatenated.
 
@@ -56,6 +58,7 @@ def test_code_executability(file: Path, campaign, searchspace, objective, recomm
 
 # TODO: Needs a refactoring (files codeblocks should be auto-detected)
 @pytest.mark.parametrize("file", doc_files_pseudocode, ids=doc_files_pseudocode)
+@Settings(default_dataframe_backend="pandas")
 def test_pseudocode_executability(file: Path, searchspace, objective, recommender):
     """The pseudocode blocks in the file are a valid python script when using fixtures.
 

@@ -5,17 +5,27 @@ from __future__ import annotations
 import functools
 import warnings
 from collections.abc import Callable, Collection, Iterable, Sequence
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    TypeAlias,
+    TypeVar,
+    overload,
+)
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
-from typing_extensions import assert_never
+from narwhals.testing import assert_frame_equal
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoFrame, IntoSeries
+    from narwhals.typing import IntoBackend
     from torch import Tensor
 
     from baybe.targets.base import Target
@@ -23,19 +33,23 @@ if TYPE_CHECKING:
     _T = TypeVar("_T", bound=Parameter | Target)
     _ArrayLike = TypeVar("_ArrayLike", np.ndarray, Tensor)
 
-_ConvertibleToTensor = int | float | np.ndarray | pd.Series | pd.DataFrame
+    _IntoTensor: TypeAlias = (
+        int | float | np.ndarray | nw.Series | nw.DataFrame | IntoSeries | IntoDataFrame
+    )
+
+_SeriesOrFrameT = TypeVar("_SeriesOrFrameT", nw.Series, nw.DataFrame)
 
 
 @overload
-def to_tensor(x: _ConvertibleToTensor, /) -> Tensor: ...
+def to_tensor(x: _IntoTensor, /) -> Tensor: ...
 
 
 @overload
-def to_tensor(*x: _ConvertibleToTensor) -> tuple[Tensor, ...]: ...
+def to_tensor(*x: _IntoTensor) -> tuple[Tensor, ...]: ...
 
 
-def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
-    """Convert ints, floats, numpy arrays and pandas series/dataframes to tensors.
+def to_tensor(*x: _IntoTensor) -> Tensor | tuple[Tensor, ...]:
+    """Convert ints, floats, numpy arrays and series/dataframes to tensors.
 
     Args:
         *x: The int(s)/float(s)/array(s)/series/dataframe(s) to be converted.
@@ -51,9 +65,11 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
 
     from baybe.utils.torch import torch_to_numpy_dtype_mapping
 
-    numpy_dtype = torch_to_numpy_dtype_mapping[active_settings.DTypeFloatTorch]
+    torch_dtype = active_settings.DTypeFloatTorch
+    nw_dtype = nw.Float32 if torch_dtype == torch.float32 else nw.Float64
+    numpy_dtype = torch_to_numpy_dtype_mapping[torch_dtype]
 
-    def _convert(x: _ConvertibleToTensor, /) -> Tensor:
+    def _convert(x: _IntoTensor, /) -> Tensor:
         match x:
             case int() | float():
                 return torch.tensor(x, dtype=active_settings.DTypeFloatTorch)
@@ -65,22 +81,12 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
                 if not x.flags.writeable:
                     x = x.copy()
                 tensor = torch.from_numpy(x)
-            case pd.Series() | pd.DataFrame():
-                # We already coerce to the target dtype during the dataframe-to-numpy
-                # conversion since this step might otherwise return an array of type
-                # `object` in case of mixed column types, which would cause the
-                # subsequent numpy-to-torch conversion to fail. This happens, for
-                # example, when the dataframe contains Boolean and integer columns.
-
-                # tensors with negative strides are not supported by PyTorch
-                fix_strides = any(s < 0 for s in x.to_numpy().strides)
-                array = x.to_numpy(numpy_dtype, copy=fix_strides)
-                # Copy if read-only (possible under pandas 3 Copy-on-Write)
-                if not array.flags.writeable:
-                    array = array.copy()
-                tensor = torch.from_numpy(array)
+            case nw.DataFrame():
+                return _convert(x.select(nw.all().cast(nw_dtype)).to_numpy())
+            case nw.Series():
+                return _convert(x.cast(nw_dtype).to_numpy())
             case _:
-                assert_never(x)
+                return _convert(nw.from_native(x, allow_series=True))
 
         # The `contiguous` call brings us closest to getting reproducible
         # results downstream in the torch ecosystem
@@ -513,7 +519,7 @@ def pretty_print_df(
 
 
 def get_transform_objects(
-    df: pd.DataFrame,
+    df: IntoDataFrame,
     objects: Sequence[_T],
     /,
     *,
@@ -543,23 +549,24 @@ def get_transform_objects(
     Returns:
         The (subset of) objects that need to be considered for the transformation.
     """
+    columns = set(df.columns)
     names = [p.name for p in objects]
 
-    if (not allow_missing) and (missing := set(names) - set(df)):  # type: ignore[arg-type]
+    if (not allow_missing) and (missing := set(names) - columns):
         raise ValueError(
             f"The object(s) named {missing} cannot be matched against "
             f"the provided dataframe. If you want to transform a subset of "
-            f"columns, explicitly set `allow_missing=True`."
+            f"columns, explicitly set 'allow_missing=True'."
         )
 
-    if (not allow_extra) and (extra := set(df) - set(names)):
+    if (not allow_extra) and (extra := columns - set(names)):
         raise ValueError(
             f"The provided dataframe column(s) {extra} cannot be matched against "
             f"the given objects. If you want to transform a dataframe "
-            f"with additional columns, explicitly set `allow_extra=True'."
+            f"with additional columns, explicitly set 'allow_extra=True'."
         )
 
-    return [p for p in objects if p.name in df]
+    return [p for p in objects if p.name in columns]
 
 
 def transform_target_columns(
@@ -797,3 +804,80 @@ def normalize_input_dtypes(
     for col in cols_to_convert:
         df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
     return df
+
+
+def _infer_backend(*frames: IntoFrame | None) -> IntoBackend:
+    """Infer the dataframe backend from the first non-``None`` frame.
+
+    Falls back to :attr:`~baybe.settings.Settings.default_dataframe_backend` if all
+    provided frames are ``None``.
+
+    Args:
+        *frames: The frames to inspect. Accepts both eager and lazy frames.
+            Any of them may be ``None``.
+
+    Returns:
+        The inferred backend.
+    """
+    for frame in frames:
+        if frame is not None:
+            return nw.get_native_namespace(frame)
+    return active_settings.default_dataframe_backend
+
+
+def _copy_index(
+    output: _SeriesOrFrameT, source: nw.DataFrame | nw.Series, /
+) -> _SeriesOrFrameT:
+    """Copy the pandas index from one series/dataframe to another.
+
+    For non-pandas backends this is a no-op, since they have no index concept.
+
+    Args:
+        output: The narwhals Series or DataFrame to copy the index onto.
+        source: The narwhals Series or DataFrame whose index is to be copied.
+
+    Returns:
+        The output with the index copied from the source.
+    """
+    # TODO: Replace once built-in solution is available
+    # https://github.com/narwhals-dev/narwhals/issues/3693
+    # https://github.com/narwhals-dev/narwhals/issues/3864
+    if (index := nw.maybe_get_index(source)) is not None:
+        return nw.maybe_set_index(
+            output, index=nw.from_native(pd.Series(index), series_only=True)
+        )
+    return output
+
+
+def _df_with_backend(obj: _SeriesOrFrameT, backend: IntoBackend, /) -> _SeriesOrFrameT:
+    """Convert a narwhals Series/DataFrame to a different native backend.
+
+    Args:
+        obj: The narwhals Series/DataFrame to convert.
+        backend: The target backend to convert to.
+
+    Returns:
+        The input object converted to the specified backend.
+    """
+    # TODO: Replace once built-in solution is available
+    # https://github.com/narwhals-dev/narwhals/issues/3812
+
+    incoming = nw.Implementation.from_backend(nw.get_native_namespace(obj))
+    target = nw.Implementation.from_backend(backend)
+    if incoming == target:
+        return obj
+
+    if isinstance(obj, nw.Series):
+        name = obj.name
+        return nw.from_dict(obj.to_frame().to_dict(), backend=backend)[name]  # type: ignore[return-value]
+    return nw.from_dict(obj.to_dict(), backend=backend)  # type: ignore[return-value]
+
+
+def _df_equals(df1: nw.DataFrame, df2: nw.DataFrame, /) -> bool:
+    """Check if two dataframes are equal."""
+    # https://github.com/narwhals-dev/narwhals/issues/3715
+    try:
+        assert_frame_equal(df1, df2)
+        return True
+    except AssertionError:
+        return False

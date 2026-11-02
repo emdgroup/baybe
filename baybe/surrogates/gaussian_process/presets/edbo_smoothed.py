@@ -6,7 +6,6 @@ import gc
 from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
-import pandas as pd
 from attrs import define
 from typing_extensions import override
 
@@ -29,6 +28,7 @@ from baybe.surrogates.gaussian_process.components.mean import LazyConstantMeanFa
 
 if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
+    from narwhals.stable.v2.typing import IntoDataFrame
 
     from baybe.kernels.base import Kernel
     from baybe.searchspace.core import SearchSpace
@@ -53,7 +53,10 @@ class SmoothedEDBOKernelFactory(_PureKernelFactory):
 
     @override
     def _make(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> Kernel:
         effective_dims = self._get_effective_dimensionality(searchspace)
 
@@ -98,7 +101,10 @@ class SmoothedEDBOLikelihoodFactory(LikelihoodFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> GPyTorchLikelihood:
         import torch
         from gpytorch.likelihoods import GaussianLikelihood

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec, TypeVar
 
 from attrs import AttrsInstance, evolve, fields, fields_dict
 
+from baybe.serialization.core import _CONSTRUCTOR_FIELD
 from baybe.transformations.basic import IdentityTransformation
 
 _T = TypeVar("_T", bound=AttrsInstance)
@@ -65,7 +66,7 @@ def capture_constructor_info(
 
         # Store argument history
         constructor_info: dict[str, Any] = {
-            "constructor": constructor.__name__,
+            _CONSTRUCTOR_FIELD: constructor.__name__,
             **{
                 k: v
                 for k, v in bound.arguments.items()

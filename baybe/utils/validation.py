@@ -7,6 +7,7 @@ from collections import Counter
 from collections.abc import Callable, Collection, Iterable, Sequence
 from typing import TYPE_CHECKING, Any
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 from attrs import Attribute
@@ -15,6 +16,8 @@ from baybe.exceptions import IncompleteMeasurementsError
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrameT
+
     from baybe.objectives.base import Objective
     from baybe.parameters.base import Parameter
     from baybe.searchspace.core import SearchSpace
@@ -101,7 +104,7 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
     if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
 
-    if missing := {t.name for t in targets}.difference(data.columns):
+    if missing := {t.name for t in targets} - set(data.columns):
         raise ValueError(
             f"The input dataframe is missing columns for the following targets: "
             f"{missing}"
@@ -147,8 +150,12 @@ def validate_objective_input(data: pd.DataFrame, objective: Objective) -> None:
 
 def validate_parameter_input(
     data: pd.DataFrame,
-    parameters: Iterable[Parameter],
+    parameters: Sequence[Parameter],
     numerical_measurements_must_be_within_tolerance: bool = False,
+    *,
+    allow_extra: bool = True,
+    allow_empty: bool = False,
+    allow_duplicates: bool = False,
 ) -> None:
     """Validate input dataframe columns corresponding to parameters.
 
@@ -158,21 +165,41 @@ def validate_parameter_input(
         numerical_measurements_must_be_within_tolerance: If ``True``, numerical
             parameter values must match to parameter values within the
             parameter-specific tolerance.
+        allow_extra: If ``False``, the dataframe is not allowed to contain columns that
+            do not correspond to any parameter.
+        allow_empty: If ``True``, an empty dataframe with the correct columns is
+            accepted. If ``False``, an empty dataframe always raises.
+        allow_duplicates: If ``False``, the dataframe is not allowed to contain
+            duplicate parameter configurations (i.e., rows where the corresponding
+            parameter values coincide).
 
     Raises:
-        ValueError: If the data is empty.
+        ValueError: If the data is empty and ``allow_empty`` is ``False``.
         ValueError: If the data misses columns for a parameter.
+        ValueError: If the data contains columns that do not correspond to any parameter
+            and the corresponding check is enabled.
+        ValueError: If the data contains duplicate parameter configurations and the
+            corresponding check is enabled.
         ValueError: If a parameter contains NaN.
         TypeError: If a parameter contains non-numeric values.
     """
-    if data.empty:
+    if data.empty and not allow_empty:
         raise ValueError("The provided input dataframe cannot be empty.")
 
-    if missing := {p.name for p in parameters}.difference(data.columns):
+    if missing := {p.name for p in parameters} - set(data.columns):
         raise ValueError(
             f"The input dataframe is missing columns for the following parameters: "
             f"{missing}"
         )
+
+    if not allow_extra and (extra := set(data.columns) - {p.name for p in parameters}):
+        raise ValueError(
+            f"The input dataframe contains columns that do not correspond to any "
+            f"parameter: {extra}"
+        )
+
+    if data.empty:
+        return
 
     for p in parameters:
         if data[p.name].isna().any():
@@ -187,24 +214,34 @@ def validate_parameter_input(
             )
 
         # Check if all rows have valid inputs matching allowed parameter values
-        for ind, row in data.iterrows():
-            valid = True
-            if p.is_numerical:
-                if numerical_measurements_must_be_within_tolerance:
-                    valid &= p.is_in_range(row[p.name])
-            else:
-                valid &= p.is_in_range(row[p.name])
-            if not valid:
-                raise ValueError(
-                    f"Input data on row with the index {row.name} has invalid "
-                    f"values in parameter '{p.name}'. "
-                    f"For categorical parameters, values need to exactly match a "
-                    f"valid choice defined in your config. "
-                    f"For numerical parameters, a match is accepted only if "
-                    f"the input value is within the specified tolerance/range. Set "
-                    f"the flag 'numerical_measurements_must_be_within_tolerance' "
-                    f"to 'False' to disable this behavior."
-                )
+        if p.is_numerical:
+            valid = (
+                not numerical_measurements_must_be_within_tolerance
+                or data[p.name].map(p.is_in_range).all()
+            )
+        else:
+            from baybe.parameters.base import _EncodedDiscreteParameter
+
+            assert isinstance(p, _EncodedDiscreteParameter)
+            valid = data[p.name].isin(p.values).all()
+        if not valid:
+            raise ValueError(
+                f"The provided dataframe has invalid values for parameter '{p.name}'. "
+                f"For categorical parameters, values need to exactly match a "
+                f"valid choice defined in your config. "
+                f"For numerical parameters, a match is accepted only if "
+                f"the input value is within the specified tolerance/range. Set "
+                f"the flag 'numerical_measurements_must_be_within_tolerance' "
+                f"to 'False' to disable this behavior."
+            )
+
+    if (
+        not allow_duplicates
+        and data.duplicated(subset=[p.name for p in parameters]).any()
+    ):
+        raise ValueError(
+            "The input dataframe must not contain duplicate parameter configurations."
+        )
 
 
 def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
@@ -226,12 +263,12 @@ def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
 
 
 def preprocess_dataframe(
-    df: pd.DataFrame,
+    df: IntoDataFrameT,
     /,
     searchspace: SearchSpace,
     objective: Objective | None = None,
     numerical_measurements_must_be_within_tolerance: bool = True,
-) -> pd.DataFrame:
+) -> IntoDataFrameT:
     """Preprocess an experimental dataframe by validating and normalizing its contents.
 
     Checks that the dataframe contains all required columns for the given
@@ -248,21 +285,31 @@ def preprocess_dataframe(
     Returns:
         The preprocessed dataframe.
     """
+    from baybe.utils.dataframe import _df_with_backend, normalize_input_dtypes
+
+    df_nw = nw.from_native(df, eager_only=True)
+    df_pd = df_nw.to_pandas()
+
     if not active_settings.preprocess_dataframes:
         return df
 
     validate_parameter_input(
-        df, searchspace.parameters, numerical_measurements_must_be_within_tolerance
+        df_pd,
+        searchspace.parameters,
+        numerical_measurements_must_be_within_tolerance,
+        allow_duplicates=True,
     )
     if objective is not None:
         targets = objective.targets
-        validate_target_input(df, targets)
-        validate_objective_input(df, objective)
+        validate_target_input(df_pd, targets)
+        validate_objective_input(df_pd, objective)
     else:
         targets = ()
-    from baybe.utils.dataframe import normalize_input_dtypes
 
-    return normalize_input_dtypes(df, [*searchspace.parameters, *targets])
+    result_pd = normalize_input_dtypes(df_pd, [*searchspace.parameters, *targets])
+    return _df_with_backend(
+        nw.from_native(result_pd, eager_only=True), df_nw.implementation
+    ).to_native()
 
 
 def validate_is_finite(  # noqa: DOC101, DOC103

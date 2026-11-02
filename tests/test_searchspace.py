@@ -1,5 +1,6 @@
 """Tests for the searchspace module."""
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 import pytest
@@ -7,11 +8,7 @@ from exceptiongroup import ExceptionGroup
 from pandas.testing import assert_frame_equal
 
 from baybe._optional.info import POLARS_INSTALLED
-from baybe.constraints import (
-    ContinuousCardinalityConstraint,
-    ContinuousLinearConstraint,
-    DiscreteLinearConstraint,
-)
+from baybe.constraints import ContinuousLinearConstraint, DiscreteLinearConstraint
 from baybe.exceptions import (
     EmptySearchSpaceError,
     IncompatibilityError,
@@ -56,22 +53,20 @@ def test_bounds_order():
     searchspace = SearchSpace.from_product(parameters=parameters)
     expected = np.array([[1.0, 7.0, 4.0, 10.0], [3.0, 9.0, 6.0, 12.0]])
     assert np.array_equal(
-        searchspace.comp_rep_bounds.values,
+        searchspace.comp_rep_bounds.to_numpy(),
         expected,
     )
 
 
 def test_empty_parameter_bounds():
-    """Asserts that the correct bounds are produced for empty search spaces.
-
-    Also checks for the correct shapes.
-    """
-    parameters = []
-    searchspace_discrete = SubspaceDiscrete.from_product(parameters=parameters)
-    searchspace_continuous = SubspaceContinuous(parameters=parameters)
-    expected = pd.DataFrame(np.empty((2, 0)), index=["min", "max"])
-    pd.testing.assert_frame_equal(searchspace_discrete.comp_rep_bounds, expected)
-    pd.testing.assert_frame_equal(searchspace_continuous.comp_rep_bounds, expected)
+    """Asserts that bounds can be evaluated for empty search spaces."""
+    searchspace_discrete = SubspaceDiscrete.empty()
+    searchspace_continuous = SubspaceContinuous.empty()
+    for bounds in [
+        searchspace_discrete.comp_rep_bounds,
+        searchspace_continuous.comp_rep_bounds,
+    ]:
+        assert nw.from_native(bounds, eager_only=True).is_empty()
 
 
 def test_discrete_searchspace_creation_from_dataframe():
@@ -94,7 +89,7 @@ def test_discrete_searchspace_creation_from_dataframe():
 
     assert searchspace.type == SearchSpaceType.DISCRETE
     assert searchspace.parameters == all_params
-    assert df.equals(searchspace.discrete.exp_rep)
+    assert df.equals(searchspace.discrete.get_candidates())
 
 
 def test_discrete_from_dataframe_dtype_consistency():
@@ -113,7 +108,7 @@ def test_discrete_from_dataframe_dtype_consistency():
         next(p for p in subspace.parameters if p.name == "C"),
         NumericalDiscreteParameter,
     )
-    assert pd.api.types.is_float_dtype(subspace.exp_rep["C"])
+    assert pd.api.types.is_float_dtype(subspace.get_candidates()["C"])
 
 
 def test_invalid_simplex_creating_with_overlapping_parameters():
@@ -156,11 +151,12 @@ def test_from_simplex_with_degenerate_parameter_count(simplex_parameters, expect
             product_parameters=product_parameters,
         )
 
-    assert len(subspace.exp_rep) == expected_len
+    candidates = subspace.get_candidates()
+    assert len(candidates) == expected_len
 
     if simplex_parameters:
         simplex_cols = [p.name for p in simplex_parameters]
-        assert all(subspace.exp_rep[simplex_cols].sum(axis=1) <= 1.0)
+        assert all(candidates[simplex_cols].sum(axis=1) <= 1.0)
 
 
 def test_continuous_searchspace_creation_from_bounds():
@@ -305,10 +301,10 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
     estimate_exp = estimate.exp_rep_bytes
     estimate_comp = estimate.comp_rep_bytes
 
-    actual_exp = searchspace.discrete.exp_rep.memory_usage(deep=True, index=False).sum()
-    actual_comp = searchspace.discrete.comp_rep.memory_usage(
-        deep=True, index=False
-    ).sum()
+    candidates = searchspace.discrete.get_candidates()
+    candidates_comp = searchspace.discrete.transform(candidates)
+    actual_exp = candidates.memory_usage(deep=True, index=False).sum()
+    actual_comp = candidates_comp.memory_usage(deep=True, index=False).sum()
 
     assert 0.95 <= estimate_exp / actual_exp <= 1.05, (
         "Exp: ",
@@ -320,48 +316,6 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
         estimate_comp,
         actual_comp,
     )
-
-
-def test_cardinality_constraints_with_overlapping_parameters():
-    """Creating cardinality constraints with overlapping parameters raises an error."""
-    parameters = (
-        NumericalContinuousParameter("c1", (0, 1)),
-        NumericalContinuousParameter("c2", (0, 1)),
-        NumericalContinuousParameter("c3", (0, 1)),
-    )
-    with pytest.raises(ValueError, match="cannot share the same parameters"):
-        SubspaceContinuous(
-            parameters=parameters,
-            constraints_nonlin=(
-                ContinuousCardinalityConstraint(
-                    parameters=["c1", "c2"],
-                    max_cardinality=1,
-                ),
-                ContinuousCardinalityConstraint(
-                    parameters=["c2", "c3"],
-                    max_cardinality=1,
-                ),
-            ),
-        )
-
-
-def test_cardinality_constraint_with_invalid_parameter_bounds():
-    """Imposing a cardinality constraint on a parameter whose range does not include
-    zero raises an error."""  # noqa
-    parameters = (
-        NumericalContinuousParameter("c1", (0, 1)),
-        NumericalContinuousParameter("c2", (1, 2)),
-    )
-    with pytest.raises(ValueError, match="must include zero"):
-        SubspaceContinuous(
-            parameters=parameters,
-            constraints_nonlin=(
-                ContinuousCardinalityConstraint(
-                    parameters=["c1", "c2"],
-                    max_cardinality=1,
-                ),
-            ),
-        )
 
 
 @pytest.mark.skipif(
@@ -447,8 +401,9 @@ def test_task_parameter_active_values_validation():
     searchspace = SearchSpace.from_dataframe(
         target_df, parameters=[num_param, task_param, cat_param]
     )
-    assert len(searchspace.discrete.exp_rep) == 1
-    assert all(searchspace.discrete.exp_rep["task"] == "target")
+    candidates = searchspace.discrete.get_candidates()
+    assert len(candidates) == 1
+    assert all(candidates["task"] == "target")
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -482,7 +437,7 @@ def test_sample_from_polytope_with_interpoint_constraints(
 
     # Test batch_size=1 and batch_size>1 as those the first one is a special case
     for batch_size in [1, 42]:
-        bounds = subspace.comp_rep_bounds.values
+        bounds = subspace.comp_rep_bounds.to_numpy()
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
         constraint_result = calculation(samples)
@@ -514,15 +469,14 @@ def test_sample_from_polytope_mixed_constraints_with_interpoint():
 
     subspace = SubspaceContinuous(
         parameters=parameters,
-        constraints_lin_ineq=[regular_constraint],
-        constraints_lin_eq=[interpoint_constraint],
+        constraints=[regular_constraint, interpoint_constraint],
     )
 
     assert subspace.has_interpoint_constraints
 
     # Test batch size of 1 as well as one small and one large batch size
     for batch_size in [1, 2, 42]:
-        bounds = subspace.comp_rep_bounds.values
+        bounds = nw.from_native(subspace.comp_rep_bounds, eager_only=True).to_numpy()
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
         # Verify regular constraint is satisfied for each row

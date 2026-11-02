@@ -1,14 +1,15 @@
 """Constraint utilities."""
 
+import narwhals.stable.v2 as nw
 import numpy as np
-import pandas as pd
+from narwhals.stable.v2.typing import IntoDataFrame
 
 from baybe.parameters.utils import is_inactive
 from baybe.searchspace import SubspaceContinuous
 
 
 def is_cardinality_fulfilled(
-    df: pd.DataFrame,
+    df: IntoDataFrame,
     subspace_continuous: SubspaceContinuous,
     *,
     check_minimum: bool = True,
@@ -25,6 +26,7 @@ def is_cardinality_fulfilled(
     Returns:
         ``True`` if all cardinality constraints are fulfilled, ``False`` otherwise.
     """
+    df = nw.from_native(df, eager_only=True).to_pandas()
     for c in subspace_continuous.constraints_cardinality:
         # Get the activity thresholds for all parameters
         cols = df[c.parameters]

@@ -97,6 +97,7 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
         ),
     ],
 )
+@Settings(default_dataframe_backend="pandas")
 def test_pending_points(campaign, batch_size, fake_measurements):
     """Test there is no recommendation overlap if pending experiments are specified."""
     warnings.filterwarnings("ignore", category=UnusedObjectWarning)

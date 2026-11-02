@@ -7,9 +7,10 @@ import inspect
 import warnings
 from collections.abc import Sequence
 from operator import add, mul, sub
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any
 
 import cattrs
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import define, evolve, field, fields
 from attrs.validators import instance_of
@@ -17,7 +18,11 @@ from typing_extensions import Self, assert_never, override
 
 from baybe.exceptions import IncompatibilityError
 from baybe.serialization import SerialMixin, converter
-from baybe.serialization.core import _TYPE_FIELD, select_constructor_hook
+from baybe.serialization.core import (
+    _CONSTRUCTOR_FIELD,
+    _TYPE_FIELD,
+    select_constructor_hook,
+)
 from baybe.targets._deprecated import (
     _VALID_TRANSFORMATIONS,
     TargetMode,
@@ -45,12 +50,16 @@ from baybe.transformations import (
     convert_transformation,
 )
 from baybe.utils.boolean import UncertainBool
+from baybe.utils.dataframe import _copy_index, to_tensor
 from baybe.utils.interval import ConvertibleToInterval, Interval
 from baybe.utils.metadata import (
     ConvertibleToMeasurableMetadata,
     MeasurableMetadata,
     to_metadata,
 )
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoSeriesT
 
 
 @define
@@ -104,12 +113,9 @@ def _translate_legacy_arguments(
             modern_transformation = BellTransformation(bounds.center, width)
         else:
             # Use transformation from what would have been the appropriate calls
-            modern_transformation = cast(
-                Transformation,
-                NumericalTarget.match_triangular(
-                    "dummy", cutoffs=bounds
-                ).transformation,
-            )
+            modern_transformation = NumericalTarget.match_triangular(
+                "dummy", cutoffs=bounds
+            ).transformation
         return (modern_transformation, False)
 
 
@@ -204,13 +210,13 @@ class NumericalTarget(Target, SerialMixin):
         info: dict[str, Any] = {}
         if self._constructor_info is None:
             # The init constructor has no temporary arguments
-            info["constructor"] = "__init__"
+            info[_CONSTRUCTOR_FIELD] = "__init__"
             parameters = init_fields
         else:
             # This includes the constructor name and temporary arguments
             info.update(self._constructor_info)
 
-            constructor = getattr(self, info["constructor"])
+            constructor = getattr(self, info[_CONSTRUCTOR_FIELD])
             sig = inspect.signature(constructor)
             parameters = list(sig.parameters.keys())
 
@@ -232,7 +238,7 @@ class NumericalTarget(Target, SerialMixin):
         """  # noqa: D401
         info = constructor_info.copy()
 
-        c = info.pop("constructor")
+        c = info.pop(_CONSTRUCTOR_FIELD)
         if c == "__init__":
             return cls(**info)
         else:
@@ -718,8 +724,8 @@ class NumericalTarget(Target, SerialMixin):
 
     @override
     def transform(
-        self, series: pd.Series | None = None, /, *, data: pd.DataFrame | None = None
-    ) -> pd.Series:
+        self, series: IntoSeriesT | None = None, /, *, data: pd.DataFrame | None = None
+    ) -> IntoSeriesT:
         # >>>>>>>>>> Deprecation
         if not ((series is None) ^ (data is None)):
             raise ValueError(
@@ -728,7 +734,7 @@ class NumericalTarget(Target, SerialMixin):
 
         if data is not None:
             assert data.shape[1] == 1
-            series = data.iloc[:, 0]
+            series = data.iloc[:, 0]  # type: ignore[assignment]
             warnings.warn(
                 "Providing a dataframe via the `data` argument is deprecated and "
                 "will be removed in a future version. Please pass your data "
@@ -737,17 +743,16 @@ class NumericalTarget(Target, SerialMixin):
             )
 
         # Mypy does not infer from the above that `series` must be a series here
-        assert isinstance(series, pd.Series)
+        assert series is not None
         # <<<<<<<<<< Deprecation
 
-        from baybe.utils.dataframe import to_tensor
-
-        return pd.Series(
-            self.transformation(to_tensor(series)).numpy(),
-            index=series.index,
-            name=series.name,
-            copy=False,
+        nw_series = nw.from_native(series, series_only=True)
+        out = nw.new_series(
+            name=nw_series.name,
+            values=self.transformation(to_tensor(series)).numpy(),
+            backend=nw.get_native_namespace(nw_series),
         )
+        return _copy_index(out, nw_series).to_native()
 
     @override
     def summary(self):

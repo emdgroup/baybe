@@ -110,7 +110,7 @@ def test_degenerate_rows_invalid_input():
 )
 def test_fuzzy_row_match(searchspace, noise, duplicated):
     """Fuzzy row matching returns expected indices."""
-    left_df = searchspace.discrete.exp_rep.copy()
+    left_df = searchspace.discrete.get_candidates().copy()
     selected = np.random.choice(left_df.index, 4, replace=False)
     right_df = left_df.loc[selected].reset_index(drop=True)
 
@@ -155,7 +155,7 @@ def test_fuzzy_row_match(searchspace, noise, duplicated):
 @pytest.mark.parametrize("invalid", ["left", "right"])
 def test_invalid_fuzzy_row_match(searchspace, invalid):
     """Returns expected errors when dataframes don't contain all expected columns."""
-    left_df = searchspace.discrete.exp_rep.copy()
+    left_df = searchspace.discrete.get_candidates().copy()
     selected = np.random.choice(left_df.index, 4, replace=False)
     right_df = left_df.loc[selected].copy()
 

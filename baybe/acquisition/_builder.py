@@ -4,9 +4,9 @@ from collections.abc import Callable, Iterable
 from functools import cached_property
 from inspect import signature
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Generic
 
-import pandas as pd
+import narwhals.stable.v2 as nw
 import torch
 from attrs import Attribute, asdict, define, field, fields
 from attrs.validators import instance_of, optional
@@ -17,6 +17,7 @@ from botorch.models.model import Model
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
 )
+from narwhals.stable.v2.typing import IntoDataFrameT
 from torch import Tensor
 
 from baybe.acquisition.acqfs import (
@@ -42,7 +43,7 @@ from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
 from baybe.transformations import IdentityTransformation
 from baybe.utils.basic import match_attributes
-from baybe.utils.dataframe import handle_missing_values, to_tensor
+from baybe.utils.dataframe import _df_with_backend, handle_missing_values, to_tensor
 
 _OPT_FIELD: None = object()  # type: ignore[assignment]
 """Sentinel value indicating optional acquisition function attributes."""
@@ -96,7 +97,7 @@ flds = fields(BotorchAcquisitionArgs)
 
 
 @define
-class BotorchAcquisitionFunctionBuilder:
+class BotorchAcquisitionFunctionBuilder(Generic[IntoDataFrameT]):
     """A class for building BoTorch acquisition functions from BayBE objects."""
 
     # The BayBE acquisition function to be translated
@@ -106,8 +107,8 @@ class BotorchAcquisitionFunctionBuilder:
     surrogate: SurrogateProtocol = field()
     searchspace: SearchSpace = field()
     objective: Objective = field()
-    measurements: pd.DataFrame = field()
-    pending_experiments: pd.DataFrame | None = field(default=None)
+    measurements: IntoDataFrameT = field()
+    pending_experiments: IntoDataFrameT | None = field(default=None)
 
     # Context shared across building methods
     _args: BotorchAcquisitionArgs = field(init=False)
@@ -134,7 +135,7 @@ class BotorchAcquisitionFunctionBuilder:
         return self.surrogate.to_botorch()
 
     @cached_property
-    def _train_x(self) -> pd.DataFrame:
+    def _train_x(self) -> IntoDataFrameT:
         """The training parameter values."""
         return self.searchspace.transform(self.measurements, allow_extra=True)
 
@@ -161,7 +162,7 @@ class BotorchAcquisitionFunctionBuilder:
         return mean.squeeze(-2)
 
     @cached_property
-    def _target_configurations(self) -> pd.DataFrame:
+    def _target_configurations(self) -> IntoDataFrameT:
         """The target configurations used for reference point calculation.
 
         Only completely measured points are considered.
@@ -172,9 +173,11 @@ class BotorchAcquisitionFunctionBuilder:
         Raises:
             ValueError: If no complete measurement exists.
         """
+        target_names = [t.name for t in self.objective.targets]
+        measurements_nw = nw.from_native(self.measurements, eager_only=True)
         configurations = handle_missing_values(
-            self.measurements[[t.name for t in self.objective.targets]],
-            [t.name for t in self.objective.targets],
+            measurements_nw.select(target_names).to_pandas(),
+            target_names,
             drop=True,
         )
 
@@ -190,7 +193,10 @@ class BotorchAcquisitionFunctionBuilder:
                 f"argument of '{self.acqf.__class__.__name__}' explicitly."
             )
 
-        return configurations
+        return _df_with_backend(
+            nw.from_native(configurations, eager_only=True),
+            measurements_nw.implementation,
+        ).to_native()
 
     def build(self) -> BoAcquisitionFunction:
         """Build the BoTorch acquisition function object."""

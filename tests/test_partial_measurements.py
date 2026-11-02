@@ -71,7 +71,7 @@ def test_partial_measurements(ongoing_campaign):
     # Mark some measurements as unmeasured / failed
     m.iloc[0, m.columns.get_loc(ts[0].name)] = np.nan
     m.iloc[-1, m.columns.get_loc(ts[-1].name)] = np.nan
-    ongoing_campaign.update_measurements(m)
+    ongoing_campaign.replace_batch(m)
 
     # Trigger refit
     ongoing_campaign.recommend(2)

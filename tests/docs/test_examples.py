@@ -39,6 +39,7 @@ def test_example(example: str):
     env = os.environ | {
         "PYTHONPATH": os.getcwd(),  # to ensure examples are found
         "MPLBACKEND": "Agg",  # avoid popups resulting from plt.show()
+        "BAYBE_DEFAULT_DATAFRAME_BACKEND": "pandas",
         "BAYBE_PARALLELIZE_SIMULATION_RUNS": str(
             example in _PARALLEL_SIMULATION_EXAMPLES
         ).lower(),
