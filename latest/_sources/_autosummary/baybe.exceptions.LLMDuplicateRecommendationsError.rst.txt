@@ -1,0 +1,6 @@
+baybe.exceptions.LLMDuplicateRecommendationsError
+=================================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: LLMDuplicateRecommendationsError

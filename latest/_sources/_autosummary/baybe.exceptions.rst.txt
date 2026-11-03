@@ -35,6 +35,17 @@ baybe.exceptions
       InfeasibilityError
       InputDataTypeWarning
       InvalidTargetValueError
+      LLMAuthenticationError
+      LLMBatchConstraintValidationError
+      LLMBatchSizeError
+      LLMCallError
+      LLMDuplicateRecommendationsError
+      LLMError
+      LLMIneligiblePointsError
+      LLMMalformedResponseError
+      LLMResponseError
+      LLMResponseWarning
+      LLMUnknownParameterError
       MinimumCardinalityViolatedWarning
       ModelNotTrainedError
       NoMCAcquisitionFunctionError

@@ -33,5 +33,7 @@ baybe.recommenders.pure
 
    bayesian
 
+   llm
+
    nonpredictive
 
