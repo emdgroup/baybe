@@ -20,6 +20,7 @@ from baybe.settings import active_settings
 from baybe.utils.basic import classproperty, get_baseclasses, match_attributes, to_tuple
 
 if TYPE_CHECKING:
+    from baybe.kernels.composite import AdditiveKernel, ProductKernel
     from baybe.searchspace.core import SearchSpace
     from baybe.surrogates.gaussian_process.components.kernel import PlainKernelFactory
 
@@ -33,16 +34,12 @@ class Kernel(ABC, SerialMixin):
 
         Flattens nested sums so that ``(a + b) + c`` yields
         ``AdditiveKernel([a, b, c])`` instead of
-        ``AdditiveKernel([AdditiveKernel([a, b]), c])``.
+        ``AdditiveKernel([AdditiveKernel([a, b]), c])``. Vanishing kernels are dropped.
         """
         if isinstance(other, Kernel):
             from baybe.kernels.composite import AdditiveKernel
 
-            left = self.base_kernels if isinstance(self, AdditiveKernel) else (self,)
-            right = (
-                other.base_kernels if isinstance(other, AdditiveKernel) else (other,)
-            )
-            return AdditiveKernel([*left, *right])
+            return _compose(AdditiveKernel, self, other)
         return NotImplemented
 
     def __radd__(self, other: Any) -> Kernel:
@@ -59,15 +56,14 @@ class Kernel(ABC, SerialMixin):
 
         When multiplied with another kernel, a product kernel is created. Nested
         products are flattened so that ``(a * b) * c`` yields
-        ``ProductKernel([a, b, c])``. When multiplied with a numeric constant, a scale
-        kernel with a fixed (non-trainable) output scale is created.
+        ``ProductKernel([a, b, c])`` and vanishing kernels are dropped. When multiplied
+        with a numeric constant, a scale kernel with a fixed (non-trainable) output
+        scale is created.
         """
         if isinstance(other, Kernel):
             from baybe.kernels.composite import ProductKernel
 
-            left = self.base_kernels if isinstance(self, ProductKernel) else (self,)
-            right = other.base_kernels if isinstance(other, ProductKernel) else (other,)
-            return ProductKernel([*left, *right])
+            return _compose(ProductKernel, self, other)
         if isinstance(other, (int, float)):
             if other == 1:
                 return self
@@ -304,6 +300,38 @@ class CompositeKernel(Kernel, ABC):
         self, searchspace: SearchSpace
     ) -> tuple[tuple[int, ...] | None, int | None]:
         return None, None
+
+
+def _compose(
+    composite_cls: type[AdditiveKernel | ProductKernel], left: Kernel, right: Kernel, /
+) -> Kernel:
+    """Combine two kernels into a flattened composite, dropping vanishing kernels.
+
+    Args:
+        composite_cls: The composite kernel class representing the operation.
+        left: The left operand.
+        right: The right operand.
+
+    Returns:
+        The composite kernel, the sole remaining kernel, or a vanishing kernel if all
+        kernels vanish.
+    """
+    from baybe.kernels.basic import VanishingKernel
+    from baybe.kernels.composite import _is_vanishing
+
+    members = [
+        k
+        for operand in (left, right)
+        for k in (
+            operand.base_kernels if isinstance(operand, composite_cls) else (operand,)
+        )
+        if not _is_vanishing(k)
+    ]
+    if not members:
+        return VanishingKernel()
+    if len(members) == 1:
+        return members[0]
+    return composite_cls(members)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

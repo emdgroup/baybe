@@ -353,3 +353,10 @@ not support kernel overrides; use
 {attr}`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`
 instead. Kernel overrides of other parameters can be combined with a transfer learning
 override of the task parameter, in which case their kernel factors are multiplied.
+In the {attr}`~baybe.parameters.enum.TransferLearningMode.NAIVE` and
+{attr}`~baybe.parameters.enum.TransferLearningMode.RGPE` modes, the task kernel is a
+{class}`~baybe.kernels.basic.VanishingKernel`, and custom mean, likelihood and fit
+criterion factories receive the search space without the task parameter. The
+{attr}`~baybe.parameters.enum.TransferLearningMode.RGPE` mode additionally requires the
+marginal log-likelihood as fit criterion and does not accept raw GPyTorch means or
+likelihoods.

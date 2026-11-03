@@ -193,10 +193,15 @@ def task_parameters(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.categorical.TaskParameter`."""
     name = draw(parameter_names)
     values = draw(categories)
-    active_values = draw(_active_values(values))
     param_metadata = draw(measurable_metadata())
     override_transfer_learning_mode = draw(
         st.one_of(st.none(), st.sampled_from(TransferLearningMode))
+    )
+    # RGPE requires a single target task
+    active_values = (
+        [draw(st.sampled_from(values))]
+        if override_transfer_learning_mode is TransferLearningMode.RGPE
+        else draw(_active_values(values))
     )
     return TaskParameter(
         name=name,

@@ -6,7 +6,7 @@ from functools import cached_property
 import numpy as np
 import pandas as pd
 from attr.converters import optional as optional_c
-from attrs import Converter, define, field
+from attrs import Converter, define, field, fields
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import assert_never, override
 
@@ -98,22 +98,42 @@ class TaskParameter(CategoricalParameter):
     )
     """Optional override for how the task dimension is modeled.
 
-    Only applies to :class:`.GaussianProcessSurrogate`. When ``None``, the surrogate's
-    kernel factory decides how the task dimension is treated. When set, the surrogate
-    attaches the requested task kernel to a task-free base kernel derived from the
-    configured factory.
+    Only applies to :class:`.GaussianProcessSurrogate`. When ``None``, the kernel
+    factory decides. For the available modes, see
+    :class:`~baybe.parameters.enum.TransferLearningMode`.
     """
+
+    def __attrs_post_init__(self) -> None:
+        """Validate that RGPE has exactly one target task."""
+        if (
+            self.override_transfer_learning_mode is TransferLearningMode.RGPE
+            and len(self.active_values) != 1
+        ):
+            raise ValueError(
+                f"The transfer learning mode "
+                f"'{TransferLearningMode.RGPE.name}' requires exactly one value in "
+                f"'{fields(type(self))._active_values.alias}', but got "
+                f"{len(self.active_values)}."
+            )
 
     @override
     @cached_property
     def override_kernel(self) -> Kernel | None:
         """The task kernel defined by the transfer learning mode, if any."""
-        from baybe.kernels.basic import IndexKernel, PositiveIndexKernel
+        from baybe.kernels.basic import (
+            IndexKernel,
+            PositiveIndexKernel,
+            VanishingKernel,
+        )
 
         n_tasks, names = len(self.values), (self.name,)
         match mode := self.override_transfer_learning_mode:
             case None:
                 return None
+            case TransferLearningMode.NAIVE | TransferLearningMode.RGPE:
+                # Neither mode models the task with a kernel: NAIVE pools all tasks
+                # into one GP, RGPE fits one GP per task
+                return VanishingKernel(parameter_names=names)
             case TransferLearningMode.POSITIVE_INDEX_KERNEL:
                 return PositiveIndexKernel(
                     num_tasks=n_tasks, rank=n_tasks, parameter_names=names
