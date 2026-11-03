@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, TypedDict
 import pandas as pd
 from attrs import fields
 
-from baybe.exceptions import LLMResponseError
+from baybe._llm.exceptions import LLMResponseError
 from baybe.parameters.base import _DiscreteLabelLikeParameter
 from baybe.parameters.categorical import CategoricalParameter
 from baybe.parameters.custom import CustomDiscreteParameter
@@ -287,7 +287,7 @@ def make_prompt(
         experiment_description: Textual description of the experiment.
         recovery: Optional ``(error, original_response)`` tuple to render a recovery
             prompt. The ``error`` provides the
-            :attr:`~baybe.exceptions.LLMResponseError.recovery_instruction`, and
+            ``LLMResponseError.recovery_instruction``, and
             ``original_response`` is the previous, rejected response to be corrected
             (may be ``None`` if the model returned no content).
 

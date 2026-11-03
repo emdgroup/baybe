@@ -6,13 +6,13 @@ import pandas as pd
 import pytest
 from pytest import param
 
+from baybe._llm.exceptions import LLMResponseError
 from baybe._optional.info import CHEM_INSTALLED, JINJA2_INSTALLED, LLM_INSTALLED
 from baybe.constraints import (
     ContinuousLinearConstraint,
     DiscreteSelectionConstraint,
     SubSelectionCondition,
 )
-from baybe.exceptions import LLMResponseError
 from baybe.objectives import (
     DesirabilityObjective,
     ParetoObjective,
