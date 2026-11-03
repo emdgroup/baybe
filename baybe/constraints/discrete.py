@@ -859,17 +859,20 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
     """Class for discrete cardinality constraints.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({"A": [0.0, 1.0, 1.0], "B": [0.0, 0.0, 1.0]})
         >>> df
              A    B
         0  0.0  0.0
         1  1.0  0.0
         2  1.0  1.0
-        >>> c = DiscreteCardinalityConstraint(
+        >>> constraint = DiscreteCardinalityConstraint(
         ...     parameters=["A", "B"], max_cardinality=1
         ... )
-        >>> list(c.get_invalid(df))
-        [2]
+        >>> constraint(df)
+             A    B
+        0  0.0  0.0
+        1  1.0  0.0
     """
 
     # Class variables
@@ -883,24 +886,28 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
         # nonzero count only grows), so all parameters must be present first.
         if self.exclude:
             return self._required_parameters <= available
+
         # The max-cardinality check is safe on any non-empty subset: the
         # nonzero count can only increase as more parameters are added.
         return bool(available & set(self.parameters))
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        params = [p for p in self.parameters if p in set(df.columns)]
-        all_present = len(params) == len(self.parameters)
+    def _to_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        parameters = [p for p in self.parameters if p in schema]
+        n_active = nw.sum_horizontal(
+            (nw.col(p) != 0.0).cast(nw.UInt16) for p in parameters
+        )
 
-        non_zeros = (df[params] != 0.0).sum(axis=1)
-        # The max_cardinality check is safe on a partial subset: the nonzero
-        # count can only increase as more parameters are added.
-        mask_good = non_zeros <= self.max_cardinality
-        # The min_cardinality check can only be applied when all parameters
-        # are present, since missing parameters could still add nonzero values.
-        if all_present:
-            mask_good &= non_zeros >= self.min_cardinality
-        return df.index[mask_good]
+        # The upper bound is safe on partial frames: the nonzero count can only grow
+        # as missing parameters are added.
+        expr = n_active <= self.max_cardinality
+
+        # The lower bound can only be checked once all parameters are available;
+        # a partial row may still reach the minimum cardinality later.
+        if set(self.parameters) <= set(schema):
+            expr = expr & (n_active >= self.min_cardinality)
+
+        return expr
 
 
 # Filtering constraints are approximately ordered according to increasing computational
