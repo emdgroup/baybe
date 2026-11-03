@@ -14,6 +14,7 @@ from baybe.transformations import (
     IdentityTransformation,
     LogarithmicTransformation,
     PowerTransformation,
+    SigmoidTransformation,
     TriangularTransformation,
     TwoSidedAffineTransformation,
 )
@@ -96,6 +97,14 @@ def power_transformations(draw: st.DrawFn) -> PowerTransformation:
     """Generate :class:`baybe.transformations.basic.PowerTransformation`."""
     exponent = draw(st.integers(min_value=2))
     return PowerTransformation(exponent=exponent)
+
+
+@st.composite
+def sigmoid_transformations(draw: st.DrawFn) -> SigmoidTransformation:
+    """Generate :class:`baybe.transformations.basic.SigmoidTransformation`."""
+    center = draw(finite_floats())
+    slope = draw(finite_floats())
+    return SigmoidTransformation(center=center, slope=slope)
 
 
 @st.composite
