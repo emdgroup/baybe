@@ -19,6 +19,7 @@ from baybe.transformations import (
     IdentityTransformation,
     LogarithmicTransformation,
     PowerTransformation,
+    SigmoidTransformation,
     TriangularTransformation,
     TwoSidedAffineTransformation,
 )
@@ -305,6 +306,68 @@ def test_exponential_transformation_values(inputs, expected):
     ("transformation", "inputs", "expected"),
     [
         param(
+            SigmoidTransformation(),
+            [-2.0, 0.0, 1.0],
+            [1 / (1 + np.exp(-2.0)), 0.5, 1 / (1 + np.exp(1.0))],
+            id="standard",
+        ),
+        param(
+            SigmoidTransformation(center=1.0, steepness=2.0),
+            [0.0, 1.0, 2.0],
+            [1 / (1 + np.exp(-2.0)), 0.5, 1 / (1 + np.exp(2.0))],
+            id="decreasing",
+        ),
+        param(
+            SigmoidTransformation(center=1.0, steepness=-2.0),
+            [0.0, 1.0, 2.0],
+            [1 / (1 + np.exp(2.0)), 0.5, 1 / (1 + np.exp(-2.0))],
+            id="increasing",
+        ),
+        param(
+            SigmoidTransformation(steepness=0.0),
+            [-1e6, 0.0, 1e6],
+            [0.5, 0.5, 0.5],
+            id="zero-steepness",
+        ),
+    ],
+)
+def test_sigmoid_transformation_values(transformation, inputs, expected):
+    """Sigmoid transformations map values according to their center and steepness."""
+    _assert_transformation_values(transformation, inputs, expected)
+
+
+@pytest.mark.parametrize(
+    ("anchors", "inputs", "expected"),
+    [
+        param([(-2.0, 0.1), (5.0, 0.6)], [-2.0, 5.0], [0.1, 0.6], id="increasing"),
+        param([(-2.0, 0.9), (5.0, 0.4)], [-2.0, 5.0], [0.9, 0.4], id="decreasing"),
+    ],
+)
+def test_sigmoid_transformation_from_anchors(anchors, inputs, expected):
+    """Sigmoid transformations pass through their anchor points."""
+    _assert_transformation_values(
+        SigmoidTransformation.from_anchors(anchors), inputs, expected
+    )
+
+
+@pytest.mark.parametrize(
+    ("anchors", "match"),
+    [
+        param([(0.0, 0.1)], "convertible to two pairs", id="wrong-number"),
+        param([(0.0, 0.0), (1.0, 0.5)], "open interval", id="lower-bound"),
+        param([(0.0, 0.5), (1.0, 1.0)], "open interval", id="upper-bound"),
+    ],
+)
+def test_sigmoid_transformation_from_anchors_rejects_invalid_anchors(anchors, match):
+    """Sigmoid transformations reject malformed or out-of-range anchors."""
+    with pytest.raises(ValueError, match=match):
+        SigmoidTransformation.from_anchors(anchors)
+
+
+@pytest.mark.parametrize(
+    ("transformation", "inputs", "expected"),
+    [
+        param(
             PowerTransformation(exponent=2),
             [-2.0, -0.5, 0.0, 1.5, 3.0],
             [4.0, 0.25, 0.0, 2.25, 9.0],
@@ -535,6 +598,9 @@ abs = AbsoluteTransformation()
 tri = TriangularTransformation(cutoffs=(2, 8), peak=4)
 log = LogarithmicTransformation()
 exp = ExponentialTransformation()
+sig_dec = SigmoidTransformation(center=2, steepness=1)
+sig_inc = SigmoidTransformation(center=2, steepness=-1)
+sig_const = SigmoidTransformation(steepness=0)
 pow_even = PowerTransformation(exponent=2)
 pow_odd = PowerTransformation(exponent=3)
 chain = ChainedTransformation([abs, clamp, aff])
@@ -544,6 +610,8 @@ aff_0 = aff(to_tensor(0))
 aff_1 = aff(to_tensor(1))
 bell_off_1 = bell(to_tensor(bell.center + 1))
 bell_off_01 = bell(to_tensor(bell.center + 0.1))
+sig_dec_3 = sig_dec(to_tensor(3))
+sig_inc_3 = sig_inc(to_tensor(3))
 
 
 @pytest.mark.parametrize(
@@ -586,6 +654,10 @@ bell_off_01 = bell(to_tensor(bell.center + 0.1))
         param(log, (1, np.exp(1)), (0, 1), id="log_unit"),
         param(exp, (None, None), (0, None), id="exp_open"),
         param(exp, (0, 1), (1, np.exp(1)), id="exp_unit"),
+        param(sig_dec, (None, None), (0, 1), id="sig_dec_open"),
+        param(sig_dec, (3, None), (0, sig_dec_3), id="sig_dec_half_open_reduced"),
+        param(sig_inc, (3, None), (sig_inc_3, 1), id="sig_inc_half_open_reduced"),
+        param(sig_const, (-1, 1), (0.5, 0.5), id="sig_const_finite"),
         param(pow_even, (1, None), (1, None), id="pow_even_open_right"),
         param(pow_even, (None, -1), (1, None), id="pow_even_open_left"),
         param(pow_even, (-2, 3), (0, 9), id="pow_even_with_center"),
