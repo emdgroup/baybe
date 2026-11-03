@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from functools import reduce
 from inspect import Parameter, Signature, signature
-from typing import TYPE_CHECKING, Any, ClassVar, cast, get_type_hints, overload
+from typing import TYPE_CHECKING, Any, ClassVar, get_type_hints, overload
 
 import cattrs
 import narwhals.stable.v2 as nw
@@ -627,6 +627,7 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
     a single constraint.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({
         ...     "Switch": ["on", "off", "off"],
         ...     "Temp": [100, 200, 100],
@@ -636,13 +637,15 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         0     on   100
         1    off   200
         2    off   100
-        >>> c = DiscreteDependenciesConstraint(
+        >>> constraint = DiscreteDependenciesConstraint(
         ...     parameters=["Switch"],
         ...     conditions=[SubSelectionCondition(selection=["on"])],
         ...     affected_parameters=[["Temp"]],
         ... )
-        >>> list(c.get_invalid(df))
-        [2]
+        >>> constraint(df)
+          Switch  Temp
+        0     on   100
+        1    off   200
     """
 
     # object variables
@@ -683,46 +686,6 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
             params.update(group)
         return params
 
-    @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        # Build an invariant indicator for each affected parameter: pair each value
-        # with the value of the parameter it depends on. For rows where the dependency
-        # condition is not met, use None as a sentinel so that all such rows with the
-        # same dependency value appear identical, causing them to be detected as
-        # duplicates. The indicator tuples are constructed directly without storing
-        # any intermediate sentinel in the typed columns.
-        censored_df = df.copy()
-        for k, param in enumerate(self.parameters):
-            invalid = ~self.conditions[k].evaluate(df[self.parameters[k]])
-            for affected_param in self.affected_parameters[k]:
-                censored_df[affected_param] = [
-                    (None if inv else val, dep)
-                    for val, dep, inv in zip(
-                        censored_df[affected_param], censored_df[param], invalid
-                    )
-                ]
-
-        # Merge the invariant indicator with all other parameters (i.e. neither the
-        # affected nor the dependency-causing ones) and detect duplicates in that space.
-        all_affected_params = [col for cols in self.affected_parameters for col in cols]
-        other_params = (
-            df.columns.drop(all_affected_params).drop(self.parameters).tolist()
-        )
-        invariant_indicator = censored_df[all_affected_params].apply(
-            cast(Callable, frozenset)
-            if self.permutation_invariant
-            else cast(Callable, tuple),
-            axis=1,
-        )
-        # Only include the other_params DataFrame if it is non-empty to avoid
-        # pandas FutureWarning about concatenation with empty entries
-        parts = [censored_df[other_params]] if other_params else []
-        parts.append(invariant_indicator)
-        df_eval = pd.concat(parts, axis=1)
-        inds_good = df.index[~df_eval.duplicated(keep="first")]
-
-        return inds_good
-
     def to_symmetries(self) -> tuple[DependencySymmetry, ...]:
         """Convert to :class:`~baybe.symmetries.dependency.DependencySymmetry` objects.
 
@@ -758,15 +721,18 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
     evaluated during modeling to make use of the invariance.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({"A": ["x", "y", "z"], "B": ["y", "x", "x"]})
         >>> df
            A  B
         0  x  y
         1  y  x
         2  z  x
-        >>> c = DiscretePermutationInvarianceConstraint(parameters=["A", "B"])
-        >>> list(c.get_invalid(df))
-        [1]
+        >>> constraint = DiscretePermutationInvarianceConstraint(parameters=["A", "B"])
+        >>> constraint(df)
+           A  B
+        0  x  y
+        2  z  x
     """
 
     # object variables
@@ -819,34 +785,6 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
         # cross-product, rows that are permutation-equivalent on the available
         # subset will produce identical expansions.
         return len(available & set(self.parameters)) >= 2
-
-    @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        cols = set(df.columns)
-        params = [p for p in self.parameters if p in cols]
-
-        # Merge a permutation invariant representation of all affected parameters with
-        # the other parameters and indicate duplicates. This ensures that variation in
-        # other parameters is also accounted for.
-        other_params = df.columns.drop(params).tolist()
-        frozen = df[params].apply(cast(Callable, frozenset), axis=1)
-        parts = [df[other_params].copy(), frozen] if other_params else [frozen]
-        df_eval = pd.concat(parts, axis=1)
-        mask_canonical = ~df_eval.duplicated(keep="first")
-
-        # Indices of canonical (non-duplicate) permutations
-        inds_valid = df_eval.index[mask_canonical]
-
-        # If there are dependencies connected to the invariant parameters evaluate them
-        # here and remove resulting duplicates with a DependenciesConstraint
-        if self.dependencies and self.dependencies._can_evaluate(set(df.columns)):
-            self.dependencies.permutation_invariant = True
-            inds_duplicate_independency_adjusted = self.dependencies.get_invalid(
-                df.loc[inds_valid]
-            )
-            inds_valid = inds_valid.drop(inds_duplicate_independency_adjusted)
-
-        return inds_valid
 
     def to_symmetry(self) -> PermutationSymmetry:
         """Convert to a :class:`~baybe.symmetries.permutation.PermutationSymmetry`.
