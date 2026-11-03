@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from attrs import Factory, define, field
+from attrs import Factory, define, field, fields
 from attrs.validators import gt, is_callable
 from typing_extensions import override
 
@@ -16,6 +17,7 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
+from baybe.serialization.core import _TYPE_FIELD
 from baybe.settings import active_settings
 from baybe.transformations.base import (
     MonotonicTransformation,
@@ -477,7 +479,7 @@ class PowerTransformation(Transformation):
         return x.pow(self.exponent)
 
 
-@define(frozen=True)
+@define(frozen=True, init=False)
 class SigmoidTransformation(MonotonicTransformation):
     r"""Map input values to a logistic S-shaped score.
 
@@ -494,6 +496,35 @@ class SigmoidTransformation(MonotonicTransformation):
 
     slope: float = field(default=0.25, converter=float)
     """The slope of the sigmoid function at its center."""
+
+    def __init__(
+        self,
+        center: float = 0.0,
+        slope: float | None = None,
+        *,
+        steepness: float | None = None,
+    ) -> None:
+        slope_name = fields(type(self)).slope.alias
+
+        # >>>>>>>>>> Deprecation
+        if steepness is not None:
+            if slope is not None:
+                raise ValueError(
+                    f"Cannot specify both '{slope_name}' and the deprecated "
+                    f"'steepness'."
+                )
+            warnings.warn(
+                f"The 'steepness' argument of '{type(self).__name__}' is deprecated. "
+                f"Use '{slope_name}' instead. The provided value is converted to "
+                f"'{slope_name} = -steepness / 4' to preserve the transformation "
+                f"behavior.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            slope = -steepness / 4
+        # <<<<<<<<<< Deprecation
+
+        self.__attrs_init__(center=center, slope=0.25 if slope is None else slope)
 
     @classmethod
     def from_anchors(cls, anchors: Sequence[Sequence[float]]) -> SigmoidTransformation:
@@ -572,6 +603,30 @@ class SigmoidTransformation(MonotonicTransformation):
 def _(dct, _) -> ClampingTransformation:
     cutoffs = Interval(**dct["cutoffs"])
     return ClampingTransformation(*cutoffs.to_tuple())
+
+
+# >>>>>>>>>> Deprecation
+_sigmoid_structure_hook = converter.get_structure_hook(SigmoidTransformation)
+
+
+@converter.register_structure_hook
+def _structure_sigmoid_with_legacy_steepness(
+    dct: dict[str, Any], cls: type
+) -> SigmoidTransformation:
+    """Structure a sigmoid transformation, converting legacy ``steepness``."""
+    dct = dict(dct)
+    if "steepness" not in dct:
+        return _sigmoid_structure_hook(dct, cls)
+
+    # Let the regular hook reject mismatching type tags
+    if dct.get(_TYPE_FIELD, cls.__name__) != cls.__name__:
+        return _sigmoid_structure_hook(dct, cls)
+
+    dct.pop(_TYPE_FIELD, None)
+    return SigmoidTransformation(**dct)
+
+
+# <<<<<<<<<< Deprecation
 
 
 # Prevent (de-)serialization of custom transformations
