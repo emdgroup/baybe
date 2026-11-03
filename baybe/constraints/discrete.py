@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast, get_type_hints, overload
 
 import cattrs
 import narwhals.stable.v2 as nw
-import numpy as np
 import pandas as pd
 from attrs import define, field, fields
 from attrs.converters import optional as optional_c
@@ -44,8 +43,6 @@ from baybe.utils.boolean import is_abstract
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
-    import polars as pl
-
     from baybe.symmetries.dependency import DependencySymmetry
     from baybe.symmetries.permutation import PermutationSymmetry
 
@@ -483,6 +480,7 @@ class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
     times across the specified parameters.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({"A": ["x", "y", "x"], "B": ["y", "x", "x"]})
         >>> df
            A  B
@@ -492,19 +490,22 @@ class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
 
         Upper bound: row 2 has "x" twice, violating ``n_max_repetitions=1``:
 
-        >>> c = DiscreteRepetitionLimitConstraint(
+        >>> constraint = DiscreteRepetitionLimitConstraint(
         ...     parameters=["A", "B"], n_max_repetitions=1
         ... )
-        >>> list(c.get_invalid(df))
-        [2]
+        >>> constraint(df)
+           A  B
+        0  x  y
+        1  y  x
 
         With ``exclude=True``, the logic inverts and only repeated rows are kept:
 
-        >>> c = DiscreteRepetitionLimitConstraint(
+        >>> constraint = DiscreteRepetitionLimitConstraint(
         ...     parameters=["A", "B"], n_max_repetitions=1, exclude=True
         ... )
-        >>> list(c.get_invalid(df))
-        [0, 1]
+        >>> constraint(df)
+           A  B
+        2  x  x
     """
 
     # object variables
@@ -531,65 +532,45 @@ class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
         n_available = len(available & set(self.parameters))
+
         if self.exclude:
             # Once even assigning every missing parameter the same value cannot
             # exceed the maximum, the row is guaranteed to be excluded.
             return n_available >= len(self.parameters) - self.n_max_repetitions + 1
+
         # Exceeding the maximum requires at least one more available parameter.
         return n_available >= self.n_max_repetitions + 1
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        params = [p for p in self.parameters if p in df]
+    def _to_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        params = [p for p in self.parameters if p in schema]
 
-        # Encode all values to integer codes with a single global mapping so that
-        # equality matches pandas semantics exactly (avoids false duplicates that a
-        # naive string cast would introduce, e.g. int 1 vs. str "1"). Sorting the
-        # integer codes per row groups equal values together.
-        block = df[params].to_numpy()
-        codes = pd.factorize(block.ravel())[0].reshape(block.shape)
-        sorted_codes = np.sort(codes, axis=1)
+        def _safe_eq(left: str, right: str) -> nw.Expr:
+            """Compare two columns while handling dtype differences safely."""
+            left_dtype, right_dtype = schema[left], schema[right]
+            if left_dtype != right_dtype and not (
+                isinstance(left_dtype, nw.dtypes.NumericType)
+                and isinstance(right_dtype, nw.dtypes.NumericType)
+            ):
+                return nw.lit(False)
 
-        # Mark the start of each run of equal values along the sorted row, then
-        # assign an increasing run id to every position via a cumulative sum.
-        is_run_start = np.empty(sorted_codes.shape, dtype=bool)
-        is_run_start[:, 0] = True
-        is_run_start[:, 1:] = sorted_codes[:, 1:] != sorted_codes[:, :-1]
-        run_ids = np.cumsum(is_run_start, axis=1)
+            return nw.col(left) == nw.col(right)
 
-        # The largest run (i.e. the highest per-value multiplicity) is found by
-        # counting, for each possible run id, how many positions carry it. This
-        # loop runs over the (small) number of parameters, not the dataframe rows.
-        max_multiplicity = np.zeros(sorted_codes.shape[0], dtype=int)
-        for run_id in range(1, sorted_codes.shape[1] + 1):
-            max_multiplicity = np.maximum(
-                max_multiplicity, (run_ids == run_id).sum(axis=1)
-            )
+        counts = [
+            nw.sum_horizontal(_safe_eq(left, right).cast(nw.UInt16) for right in params)
+            for left in params
+        ]
+        max_multiplicity = nw.max_horizontal(counts)
+        if self.exclude:
+            # Missing parameters can only increase the final multiplicity. Add them
+            # to obtain an upper bound, so that only rows guaranteed to satisfy the
+            # limit are removed by the constraint inversion
+            n_missing = len(self.parameters) - len(params)
+            return max_multiplicity + n_missing <= self.n_max_repetitions
 
-        n_missing = len(self.parameters) - len(params)
-        max_possible_multiplicity = (
-            max_multiplicity + n_missing if self.exclude else max_multiplicity
-        )
-        mask_good = max_possible_multiplicity <= self.n_max_repetitions
-
-        return df.index[mask_good]
-
-    @override
-    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
-
-        def _safe_eq(ci: str, cj: str) -> pl.Expr:
-            """Compare two columns, returning ``False`` for incompatible dtypes."""
-            di, dj = schema[ci], schema[cj]
-            if di == dj or (di.is_numeric() and dj.is_numeric()):
-                return pl.col(ci).eq_missing(pl.col(cj))
-            return pl.lit(False)
-
-        params = self.parameters
-        counts = [pl.sum_horizontal(_safe_eq(ci, cj) for cj in params) for ci in params]
-        max_count = pl.max_horizontal(counts)
-
-        return max_count <= self.n_max_repetitions
+        # The partial count is a lower bound: rows already exceeding the limit are
+        # definitely invalid; others are re-evaluated later
+        return max_multiplicity <= self.n_max_repetitions
 
 
 # >>>>>>>>>> Deprecation
