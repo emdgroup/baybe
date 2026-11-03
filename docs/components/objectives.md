@@ -187,6 +187,53 @@ If you attempt to use a  single-output model, BayBE will automatically turn it i
 using [independent replicates](auto_replication).
 ```
 
+### TFPRObjective
+The [`TFPRObjective`](baybe.objectives.tfpr.TFPRObjective) is a fast alternative to
+the [`ParetoObjective`](#ParetoObjective) for **discrete** search spaces. Instead of
+optimizing an acquisition function, the
+{class}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender` ranks the
+entire candidate set with Top-Fraction Pareto Ranking (TFPR), based on the posterior
+means and standard deviations of the surrogate model. This makes it particularly
+suitable when many targets or a large measured Pareto front make hypervolume-based
+acquisition expensive.
+
+TFPR's dominance and fitness approach builds on Pareto-optimal embedded modeling
+(POEM) {cite:p}`Brereton2020`. Its top-fraction cutoff is a later heuristic and is not
+part of the published POEM method.
+
+TFPR compares target values through pairwise dominance rather than combining
+differently scaled values into a single weighted sum. The objective is configured via:
+* `weights`: Integer weights controlling how strongly each target contributes. A weight
+  of `k` counts the target `k` times in the dominance comparison. Non-integer inputs are
+  rounded to the nearest integer.
+* `tolerances`: Relative tolerances within which target values are considered tied.
+* `optimism_lambda`: A multiple of the posterior standard deviation that is added in
+  each target's favorable direction.
+* `top_fraction`: The fraction of per-target top candidates considered in the ranking.
+  When omitted, an automatic rule based on the number of candidates is used.
+
+```python
+from baybe.objectives import TFPRObjective
+from baybe.targets import NumericalTarget
+
+objective = TFPRObjective(
+    targets=[NumericalTarget("yield"), NumericalTarget("impurity", minimize=True)],
+    weights=[4, 2],
+    tolerances=[0.03, 0.05],
+    optimism_lambda=0.5,
+)
+```
+
+```{admonition} Limitations
+:class: important
+* Only targets without transformations are currently supported.
+* The search space must be discrete and must not contain subset-generating constraints.
+* Pending experiments and explicit acquisition functions are not supported.
+* Pairwise comparisons are limited by `top_fraction` but their cost remains quadratic
+  in the retained per-target sets, so extremely large candidate sets can require a
+  smaller explicit fraction.
+```
+
 ## Identifying Non-Dominated Configurations
 The {meth}`~baybe.objectives.base.Objective.identify_non_dominated_configurations`
 method provides a straightforward way to identify *non-dominated* target configurations
