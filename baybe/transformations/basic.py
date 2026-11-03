@@ -485,11 +485,8 @@ class SigmoidTransformation(MonotonicTransformation):
         f(x) = \frac{1}{1 + e^{-4s(x - c)}}
 
     Here :math:`c` is the center point where the output crosses 0.5 and :math:`s` is
-    the slope of the curve at that point, i.e. :math:`f'(c) = s`. Positive slopes
-    yield increasing transformations, negative slopes decreasing ones. Zero slope
-    gives 0.5 for all finite inputs; larger :math:`\lvert s \rvert` sharpens the
-    transition. The default :math:`s = 0.25` yields the standard logistic function
-    :math:`1 / (1 + e^{-x})`.
+    the slope of the curve at that point, i.e. :math:`f'(c) = s`. Zero slope gives
+    0.5 for all finite inputs; larger :math:`\lvert s \rvert` sharpens the transition.
     """
 
     center: float = field(default=0.0, converter=float)
