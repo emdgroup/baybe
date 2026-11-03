@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `df_apply_permutation_augmentation` has a different interface and now expects
   permutation groups instead of column groups
 - `ParameterSelectorProtocol.__call__` now declares its input as positional-only
+- `SequentialMetaRecommender.recommenders` is now a `tuple` instead of a `list`, making
+  the attribute immutable. Serialization is unaffected
 
 ### Fixed
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
@@ -50,6 +52,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
 - Parameter-specific kernel overrides for conveniently composing Gaussian process
   kernels on individual parameter dimensions
+- `LLMRecommender` for LLM-based experimental design via LiteLLM,
+  available through the optional `llm` dependency group
+- `TwoPhaseMetaRecommender.with_llm_initial_recommender` and
+  `SequentialMetaRecommender.with_alternating_llm_recommender` convenience constructors
+  built on top of `LLMRecommender`: the former warm-starts a campaign with the LLM and
+  then switches to another recommender, the latter alternates between the two
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance

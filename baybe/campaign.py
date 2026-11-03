@@ -635,9 +635,11 @@ class Campaign(SerialMixin):
         ):
             self._cache_recommendation(rec)
 
-        # Update metadata
-        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            self._searchspace_metadata.loc[rec.index, _RECOMMENDED] = True
+        if self.searchspace.type in (
+            SearchSpaceType.DISCRETE,
+            SearchSpaceType.HYBRID,
+        ):
+            self._searchspace_metadata.loc[rec.index.dropna(), _RECOMMENDED] = True
 
         return rec
 

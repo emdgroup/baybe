@@ -62,6 +62,7 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 extras = [
     "baybe[chem]",
     "baybe[insights]",
+    "baybe[llm]",
     "baybe[onnx]",
     "baybe[polars]",
     "baybe[simulation]",
@@ -102,6 +103,11 @@ dev = [
 insights = [
     "lime>=0.2.0.1",
     "shap>=0.47.0",
+]
+
+llm = [
+    "jinja2>=3.1.0",
+    "litellm>=1.97.0",
 ]
 
 docs = [
