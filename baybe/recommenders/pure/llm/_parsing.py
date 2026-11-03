@@ -10,7 +10,7 @@ from typing import cast
 import cattrs
 import pandas as pd
 
-from baybe.exceptions import (
+from baybe._llm.exceptions import (
     LLMBatchConstraintValidationError,
     LLMBatchSizeError,
     LLMDuplicateRecommendationsError,

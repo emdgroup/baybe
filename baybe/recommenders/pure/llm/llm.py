@@ -11,13 +11,15 @@ from attrs import define, field, fields
 from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
-from baybe._optional.info import LLM_INSTALLED
-from baybe.exceptions import (
-    IncompatibilityError,
+from baybe._llm.exceptions import (
     LLMAuthenticationError,
     LLMCallError,
     LLMMalformedResponseError,
     LLMResponseError,
+)
+from baybe._optional.info import LLM_INSTALLED
+from baybe.exceptions import (
+    IncompatibilityError,
     NotEnoughPointsLeftError,
     OptionalImportError,
 )

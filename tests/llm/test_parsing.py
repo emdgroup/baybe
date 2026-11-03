@@ -4,9 +4,7 @@ import json
 
 import pytest
 
-from baybe.constraints.continuous import ContinuousLinearConstraint
-from baybe.constraints.discrete import DiscreteBatchConstraint
-from baybe.exceptions import (
+from baybe._llm.exceptions import (
     LLMBatchConstraintValidationError,
     LLMBatchSizeError,
     LLMDuplicateRecommendationsError,
@@ -15,6 +13,8 @@ from baybe.exceptions import (
     LLMResponseWarning,
     LLMUnknownParameterError,
 )
+from baybe.constraints.continuous import ContinuousLinearConstraint
+from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
