@@ -44,6 +44,311 @@ def tensor() -> torch.Tensor:
     return to_tensor(sample_input())
 
 
+def _assert_transformation_values(transformation, inputs, expected):
+    """Assert that a transformation maps the given inputs to the expected values."""
+    torch.testing.assert_close(
+        transformation(to_tensor(np.array(inputs))),
+        to_tensor(np.array(expected)),
+        equal_nan=True,
+    )
+
+
+@pytest.mark.parametrize(
+    ("function", "inputs", "expected"),
+    [
+        param(torch.neg, [-2.5, 0.5, 3.0], [2.5, -0.5, -3.0], id="negation"),
+        param(torch.square, [-2.0, 0.0, 3.0], [4.0, 0.0, 9.0], id="square"),
+    ],
+)
+def test_custom_transformation_values(function, inputs, expected):
+    """Custom transformations apply the wrapped torch callable."""
+    _assert_transformation_values(CustomTransformation(function), inputs, expected)
+
+
+@pytest.mark.parametrize(
+    ("inputs", "expected"),
+    [
+        param([-3.5, 0.25, 2.0], [-3.5, 0.25, 2.0], id="mixed-values"),
+        param([-1e6, 0.5, 2.5e6], [-1e6, 0.5, 2.5e6], id="large-magnitudes"),
+    ],
+)
+def test_identity_transformation_values(inputs, expected):
+    """Identity transformations return their inputs unchanged."""
+    _assert_transformation_values(IdentityTransformation(), inputs, expected)
+
+
+@pytest.mark.parametrize(
+    ("transformation", "inputs", "expected"),
+    [
+        param(
+            ClampingTransformation(min=-1.0, max=1.0),
+            [-3.0, 0.25, 1.5],
+            [-1.0, 0.25, 1.0],
+            id="two-sided",
+        ),
+        param(
+            ClampingTransformation(min=2.0),
+            [-4.0, 2.0, 5.0],
+            [2.0, 2.0, 5.0],
+            id="lower-only",
+        ),
+        param(
+            ClampingTransformation(max=2.0),
+            [-5.0, 0.5, 3.0],
+            [-5.0, 0.5, 2.0],
+            id="upper-only",
+        ),
+    ],
+)
+def test_clamping_transformation_values(transformation, inputs, expected):
+    """Clamping transformations limit values according to their configured cutoffs."""
+    _assert_transformation_values(transformation, inputs, expected)
+
+
+@pytest.mark.parametrize(
+    ("transformation", "inputs", "expected"),
+    [
+        param(
+            AffineTransformation(),
+            [-3.0, 0.5, 2.0],
+            [-3.0, 0.5, 2.0],
+            id="identity",
+        ),
+        param(
+            AffineTransformation(factor=2.0),
+            [-3.0, 0.5, 2.0],
+            [-6.0, 1.0, 4.0],
+            id="scale",
+        ),
+        param(
+            AffineTransformation(shift=3.0),
+            [-3.0, 0.5, 2.0],
+            [0.0, 3.5, 5.0],
+            id="shift",
+        ),
+        param(
+            AffineTransformation(factor=-1.0, shift=1.0),
+            [-3.0, 0.5, 2.0],
+            [4.0, 0.5, -1.0],
+            id="negative-scale",
+        ),
+        param(
+            AffineTransformation(factor=2.0, shift=3.0, shift_first=True),
+            [-3.0, 0.5, 2.0],
+            [0.0, 7.0, 10.0],
+            id="shift-then-scale",
+        ),
+        param(
+            AffineTransformation(factor=0.0, shift=3.0),
+            [-np.inf, -3.0, 0.5, 2.0, np.inf],
+            [3.0, 3.0, 3.0, 3.0, 3.0],
+            id="zero-factor",
+        ),
+    ],
+)
+def test_affine_transformation_values(transformation, inputs, expected):
+    """Affine transformations scale and shift their inputs as configured."""
+    _assert_transformation_values(transformation, inputs, expected)
+
+
+@pytest.mark.parametrize(
+    ("transformation", "inputs", "expected"),
+    [
+        param(
+            TwoSidedAffineTransformation(slope_left=-1.0, slope_right=1.0),
+            [-2.5, 0.25, 1.5],
+            [2.5, 0.25, 1.5],
+            id="absolute",
+        ),
+        param(
+            TwoSidedAffineTransformation(
+                slope_left=2.0, slope_right=-1.0, midpoint=1.0
+            ),
+            [-1.0, 0.5, 2.5],
+            [-4.0, -1.0, -1.5],
+            id="positive-left-negative-right",
+        ),
+        param(
+            TwoSidedAffineTransformation(slope_left=0.0, slope_right=1.0, midpoint=1.0),
+            [-np.inf, -1.0, 1.0, 3.0],
+            [0.0, 0.0, 0.0, 2.0],
+            id="zero-left-slope",
+        ),
+        param(
+            TwoSidedAffineTransformation(slope_left=1.0, slope_right=0.0, midpoint=1.0),
+            [-3.0, 1.0, 3.0, np.inf],
+            [-4.0, 0.0, 0.0, 0.0],
+            id="zero-right-slope",
+        ),
+    ],
+)
+def test_two_sided_affine_transformation_values(transformation, inputs, expected):
+    """Two-sided affine transformations apply the configured per-side slopes."""
+    _assert_transformation_values(transformation, inputs, expected)
+
+
+@pytest.mark.parametrize(
+    ("transformation", "inputs", "expected"),
+    [
+        param(
+            BellTransformation(center=0.0, sigma=1.0),
+            [-2.5, 0.0, 0.5],
+            [np.exp(-3.125), 1.0, np.exp(-0.125)],
+            id="standard",
+        ),
+        param(
+            BellTransformation(center=1.0, sigma=1.0),
+            [-1.5, 1.0, 1.5],
+            [np.exp(-3.125), 1.0, np.exp(-0.125)],
+            id="shift-only",
+        ),
+        param(
+            BellTransformation(center=0.0, sigma=0.5),
+            [-1.0, 0.0, 0.25],
+            [np.exp(-2.0), 1.0, np.exp(-0.125)],
+            id="scale-only",
+        ),
+        param(
+            BellTransformation(center=1.0, sigma=2.0),
+            [-3.0, 1.0, 2.0],
+            [np.exp(-2.0), 1.0, np.exp(-0.125)],
+            id="shift-and-scale",
+        ),
+    ],
+)
+def test_bell_transformation_values(transformation, inputs, expected):
+    """Bell transformations peak at their center and decay with their width."""
+    _assert_transformation_values(transformation, inputs, expected)
+
+
+@pytest.mark.parametrize(
+    ("inputs", "expected"),
+    [
+        param(
+            [-2.5, -1.0, 0.25, 1.5],
+            [2.5, 1.0, 0.25, 1.5],
+            id="mixed-signs",
+        ),
+        param(
+            [-1.5e6, 1e-3, 2.5e6],
+            [1.5e6, 1e-3, 2.5e6],
+            id="large-magnitudes",
+        ),
+    ],
+)
+def test_absolute_transformation_values(inputs, expected):
+    """Absolute transformations return the distance from zero."""
+    _assert_transformation_values(AbsoluteTransformation(), inputs, expected)
+
+
+@pytest.mark.parametrize(
+    ("transformation", "inputs", "expected"),
+    [
+        param(
+            TriangularTransformation(cutoffs=(-1.0, 1.0), peak=0.0),
+            [-2.0, -1.0, -0.75, 0.0, 0.25, 1.0, 2.5],
+            [0.0, 0.0, 0.25, 1.0, 0.75, 0.0, 0.0],
+            id="centered",
+        ),
+        param(
+            TriangularTransformation(cutoffs=(0.0, 4.0), peak=1.0),
+            [-1.0, 0.0, 0.5, 1.0, 3.0, 4.0, 5.0],
+            [0.0, 0.0, 0.5, 1.0, 1 / 3, 0.0, 0.0],
+            id="peak-left",
+        ),
+        param(
+            TriangularTransformation(cutoffs=(0.0, 4.0), peak=3.0),
+            [-1.0, 0.0, 1.5, 3.0, 3.5, 4.0, 5.0],
+            [0.0, 0.0, 0.5, 1.0, 0.5, 0.0, 0.0],
+            id="peak-right",
+        ),
+    ],
+)
+def test_triangular_transformation_values(transformation, inputs, expected):
+    """Triangular transformations interpolate between cutoffs and peak."""
+    _assert_transformation_values(transformation, inputs, expected)
+
+
+@pytest.mark.parametrize(
+    ("inputs", "expected"),
+    [
+        param([0.25, 1.0, np.exp(1.0)], [np.log(0.25), 0.0, 1.0], id="positive"),
+        param([-1.0, 0.0], [np.nan, -np.inf], id="outside-domain"),
+    ],
+)
+def test_logarithmic_transformation_values(inputs, expected):
+    """Logarithmic transformations map positive inputs to their natural logarithm."""
+    _assert_transformation_values(LogarithmicTransformation(), inputs, expected)
+
+
+@pytest.mark.parametrize(
+    ("inputs", "expected"),
+    [
+        param(
+            [-2.0, 0.5, 1.0],
+            [np.exp(-2.0), np.exp(0.5), np.exp(1.0)],
+            id="finite",
+        ),
+        param(
+            [-np.inf, 0.5, np.inf],
+            [0.0, np.exp(0.5), np.inf],
+            id="limits",
+        ),
+    ],
+)
+def test_exponential_transformation_values(inputs, expected):
+    """Exponential transformations map inputs to their natural exponential."""
+    _assert_transformation_values(ExponentialTransformation(), inputs, expected)
+
+
+@pytest.mark.parametrize(
+    ("transformation", "inputs", "expected"),
+    [
+        param(
+            PowerTransformation(exponent=2),
+            [-2.0, -0.5, 0.0, 1.5, 3.0],
+            [4.0, 0.25, 0.0, 2.25, 9.0],
+            id="even",
+        ),
+        param(
+            PowerTransformation(exponent=3),
+            [-2.0, -0.5, 0.0, 1.5, 3.0],
+            [-8.0, -0.125, 0.0, 3.375, 27.0],
+            id="odd",
+        ),
+        param(
+            PowerTransformation(exponent=1.5),
+            [0.0, 0.25, 4.0],
+            [0.0, 0.125, 8.0],
+            id="non-integer",
+        ),
+        param(
+            PowerTransformation(exponent=-1),
+            [0.5, 1.0, 4.0],
+            [2.0, 1.0, 0.25],
+            id="negative",
+        ),
+        param(
+            PowerTransformation(exponent=0),
+            [-3.0, 0.5, 2.0],
+            [1.0, 1.0, 1.0],
+            id="zero",
+        ),
+    ],
+)
+def test_power_transformation_values(transformation, inputs, expected):
+    """Power transformations raise their inputs to the configured exponent."""
+    _assert_transformation_values(transformation, inputs, expected)
+
+
+def test_power_transformation_rejects_negative_input_for_non_integer_exponent():
+    """Non-integer power transformations reject negative inputs."""
+    transformation = PowerTransformation(exponent=1.5)
+
+    with pytest.raises(RuntimeError, match="must contain non-negative elements"):
+        transformation(to_tensor(np.array([-0.25, 1.0])))
+
+
 @pytest.mark.parametrize("chained_first", [True, False])
 def test_transformation_chaining(chained_first):
     """Transformation chaining and flattening works as expected."""
