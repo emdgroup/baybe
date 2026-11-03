@@ -482,19 +482,21 @@ class SigmoidTransformation(MonotonicTransformation):
     r"""Map input values to a logistic S-shaped score.
 
     .. math::
-        f(x) = \frac{1}{1 + e^{-k(c - x)}}
+        f(x) = \frac{1}{1 + e^{-4s(x - c)}}
 
-    Output is 0.5 at the center point :math:`c`. For positive steepness :math:`k`,
-    larger :math:`x` decreases the score toward 0; negative steepness increases it
-    toward 1. Zero steepness gives 0.5 for all finite inputs; larger :math:`|k|`
-    sharpens the transition.
+    Here :math:`c` is the center point where the output crosses 0.5 and :math:`s` is
+    the slope of the curve at that point, i.e. :math:`f'(c) = s`. Positive slopes
+    yield increasing transformations, negative slopes decreasing ones. Zero slope
+    gives 0.5 for all finite inputs; larger :math:`\lvert s \rvert` sharpens the
+    transition. The default :math:`s = 0.25` yields the standard logistic function
+    :math:`1 / (1 + e^{-x})`.
     """
 
     center: float = field(default=0.0, converter=float)
     """The center of the sigmoid function, where it crosses 0.5."""
 
-    steepness: float = field(default=1.0, converter=float)
-    """The steepness of the sigmoid function."""
+    slope: float = field(default=0.25, converter=float)
+    """The slope of the sigmoid function at its center."""
 
     @classmethod
     def from_anchors(cls, anchors: Sequence[Sequence[float]]) -> SigmoidTransformation:
@@ -508,6 +510,7 @@ class SigmoidTransformation(MonotonicTransformation):
         Raises:
             ValueError: If the input given as anchors does not represent two points.
             ValueError: If the ordinates of the anchors are not in the unit interval.
+            ValueError: If the anchor points share an abscissa or an ordinate.
 
         Returns:
             A sigmoid transformation passing through the specified anchor points.
@@ -539,19 +542,33 @@ class SigmoidTransformation(MonotonicTransformation):
                 f"The ordinates of the anchor points must be in the open "
                 f"interval (0, 1). Given: {y1=} and {y2=}."
             )
+        if x1 == x2:
+            raise ValueError(
+                f"The abscissas of the anchor points must be distinct. "
+                f"Given: {x1=} and {x2=}."
+            )
+        if y1 == y2:
+            raise ValueError(
+                f"The ordinates of the anchor points must be distinct. "
+                f"Given: {y1=} and {y2=}."
+            )
 
-        k1 = np.log(1 / y1 - 1)
-        k2 = np.log(1 / y2 - 1)
-        shift = (k2 * x1 - k1 * x2) / (k2 - k1)
-        steepness = (k2 - k1) / (x2 - x1)
-        return SigmoidTransformation(shift, steepness)
+        logit1 = np.log(y1 / (1 - y1))
+        logit2 = np.log(y2 / (1 - y2))
+        slope = (logit2 - logit1) / (4 * (x2 - x1))
+        center = x1 - logit1 / (4 * slope)
+        return SigmoidTransformation(center=center, slope=slope)
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         import torch
 
+        # Handle the degenerate zero-slope case to avoid 0 * inf producing NaN
+        if self.slope == 0.0:
+            return x.new_full(x.shape, 0.5)
+
         # NOTE: `torch.sigmoid(z)` is defined as `1 / (1 + exp(-z))`
-        return torch.sigmoid(self.steepness * (self.center - x))
+        return torch.sigmoid(4 * self.slope * (x - self.center))
 
 
 @converter.register_structure_hook

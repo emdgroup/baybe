@@ -307,59 +307,112 @@ def test_exponential_transformation_values(inputs, expected):
     [
         param(
             SigmoidTransformation(),
-            [-2.0, 0.0, 1.0],
-            [1 / (1 + np.exp(-2.0)), 0.5, 1 / (1 + np.exp(1.0))],
+            [-2.0, 0.5, 1.5],
+            [
+                1 / (1 + np.exp(2.0)),
+                1 / (1 + np.exp(-0.5)),
+                1 / (1 + np.exp(-1.5)),
+            ],
             id="standard",
         ),
         param(
-            SigmoidTransformation(center=1.0, steepness=2.0),
-            [0.0, 1.0, 2.0],
-            [1 / (1 + np.exp(-2.0)), 0.5, 1 / (1 + np.exp(2.0))],
+            SigmoidTransformation(center=1.0),
+            [-1.5, 1.0, 2.5],
+            [
+                1 / (1 + np.exp(2.5)),
+                0.5,
+                1 / (1 + np.exp(-1.5)),
+            ],
+            id="shift-only",
+        ),
+        param(
+            SigmoidTransformation(slope=0.5),
+            [-2.0, 0.5, 1.5],
+            [
+                1 / (1 + np.exp(4.0)),
+                1 / (1 + np.exp(-1.0)),
+                1 / (1 + np.exp(-3.0)),
+            ],
+            id="scale-only",
+        ),
+        param(
+            SigmoidTransformation(center=1.0, slope=1.5),
+            [-1.0, 1.0, 2.5],
+            [
+                1 / (1 + np.exp(12.0)),
+                0.5,
+                1 / (1 + np.exp(-9.0)),
+            ],
+            id="shift-and-scale",
+        ),
+        param(
+            SigmoidTransformation(center=1.0, slope=-1.0),
+            [-1.0, 1.0, 2.5],
+            [
+                1 / (1 + np.exp(-8.0)),
+                0.5,
+                1 / (1 + np.exp(6.0)),
+            ],
             id="decreasing",
         ),
         param(
-            SigmoidTransformation(center=1.0, steepness=-2.0),
-            [0.0, 1.0, 2.0],
-            [1 / (1 + np.exp(2.0)), 0.5, 1 / (1 + np.exp(-2.0))],
-            id="increasing",
-        ),
-        param(
-            SigmoidTransformation(steepness=0.0),
-            [-1e6, 0.0, 1e6],
+            SigmoidTransformation(slope=0.0),
+            [-1e6, 0.5, 2.5e6],
             [0.5, 0.5, 0.5],
-            id="zero-steepness",
+            id="zero-slope",
         ),
     ],
 )
 def test_sigmoid_transformation_values(transformation, inputs, expected):
-    """Sigmoid transformations map values according to their center and steepness."""
+    """Sigmoid transformations map values according to their center and slope."""
     _assert_transformation_values(transformation, inputs, expected)
 
 
+@pytest.mark.parametrize("slope", [-2.0, -0.25, 0.25, 1.0, 3.0])
+def test_sigmoid_transformation_slope_matches_derivative(slope):
+    """The slope parameter equals the derivative of the sigmoid at its center."""
+    center = 1.5
+    transformation = SigmoidTransformation(center=center, slope=slope)
+    x = torch.tensor([center], dtype=torch.float64, requires_grad=True)
+
+    (gradient,) = torch.autograd.grad(transformation(x), x)
+
+    torch.testing.assert_close(gradient, torch.tensor([slope], dtype=torch.float64))
+
+
 @pytest.mark.parametrize(
-    ("anchors", "inputs", "expected"),
+    ("anchors", "expected_slope_sign"),
     [
-        param([(-2.0, 0.1), (5.0, 0.6)], [-2.0, 5.0], [0.1, 0.6], id="increasing"),
-        param([(-2.0, 0.9), (5.0, 0.4)], [-2.0, 5.0], [0.9, 0.4], id="decreasing"),
+        param([(-2.0, 0.1), (5.0, 0.6)], 1, id="increasing"),
+        param([(-2.0, 0.9), (5.0, 0.4)], -1, id="decreasing"),
     ],
 )
-def test_sigmoid_transformation_from_anchors(anchors, inputs, expected):
-    """Sigmoid transformations pass through their anchor points."""
-    _assert_transformation_values(
-        SigmoidTransformation.from_anchors(anchors), inputs, expected
-    )
+def test_sigmoid_transformation_from_anchors(anchors, expected_slope_sign):
+    """Sigmoid transformations pass through their anchors in the expected direction."""
+    transformation = SigmoidTransformation.from_anchors(anchors)
+
+    assert np.sign(transformation.slope) == expected_slope_sign
+
+    x = np.array([x for x, _ in anchors])
+    y = np.array([y for _, y in anchors])
+    torch.testing.assert_close(transformation(to_tensor(x)), to_tensor(y))
 
 
 @pytest.mark.parametrize(
     ("anchors", "match"),
     [
         param([(0.0, 0.1)], "convertible to two pairs", id="wrong-number"),
+        param([("a", 0.1), (5.0, 0.6)], "convertible to two pairs", id="non-numeric"),
         param([(0.0, 0.0), (1.0, 0.5)], "open interval", id="lower-bound"),
         param([(0.0, 0.5), (1.0, 1.0)], "open interval", id="upper-bound"),
+        param([(0.0, -0.1), (1.0, 0.5)], "open interval", id="below-interval"),
+        param([(0.0, 0.5), (1.0, 1.1)], "open interval", id="above-interval"),
+        param([(0.0, 0.1), (0.0, 0.6)], "abscissas", id="duplicate-abscissa"),
+        param([(0.0, 0.5), (1.0, 0.5)], "ordinates", id="duplicate-ordinate"),
     ],
 )
 def test_sigmoid_transformation_from_anchors_rejects_invalid_anchors(anchors, match):
-    """Sigmoid transformations reject malformed or out-of-range anchors."""
+    """Sigmoid transformations reject malformed or underdetermined anchors."""
     with pytest.raises(ValueError, match=match):
         SigmoidTransformation.from_anchors(anchors)
 
@@ -598,9 +651,9 @@ abs = AbsoluteTransformation()
 tri = TriangularTransformation(cutoffs=(2, 8), peak=4)
 log = LogarithmicTransformation()
 exp = ExponentialTransformation()
-sig_dec = SigmoidTransformation(center=2, steepness=1)
-sig_inc = SigmoidTransformation(center=2, steepness=-1)
-sig_const = SigmoidTransformation(steepness=0)
+sig_inc = SigmoidTransformation(center=2, slope=1)
+sig_dec = SigmoidTransformation(center=2, slope=-1)
+sig_const = SigmoidTransformation(slope=0)
 pow_even = PowerTransformation(exponent=2)
 pow_odd = PowerTransformation(exponent=3)
 chain = ChainedTransformation([abs, clamp, aff])
@@ -610,8 +663,8 @@ aff_0 = aff(to_tensor(0))
 aff_1 = aff(to_tensor(1))
 bell_off_1 = bell(to_tensor(bell.center + 1))
 bell_off_01 = bell(to_tensor(bell.center + 0.1))
-sig_dec_3 = sig_dec(to_tensor(3))
 sig_inc_3 = sig_inc(to_tensor(3))
+sig_dec_3 = sig_dec(to_tensor(3))
 
 
 @pytest.mark.parametrize(
@@ -654,9 +707,11 @@ sig_inc_3 = sig_inc(to_tensor(3))
         param(log, (1, np.exp(1)), (0, 1), id="log_unit"),
         param(exp, (None, None), (0, None), id="exp_open"),
         param(exp, (0, 1), (1, np.exp(1)), id="exp_unit"),
+        param(sig_inc, (None, None), (0, 1), id="sig_inc_open"),
+        param(sig_inc, (3, None), (sig_inc_3, 1), id="sig_inc_half_open_reduced"),
         param(sig_dec, (None, None), (0, 1), id="sig_dec_open"),
         param(sig_dec, (3, None), (0, sig_dec_3), id="sig_dec_half_open_reduced"),
-        param(sig_inc, (3, None), (sig_inc_3, 1), id="sig_inc_half_open_reduced"),
+        param(sig_const, (None, None), (0.5, 0.5), id="sig_const_open"),
         param(sig_const, (-1, 1), (0.5, 0.5), id="sig_const_finite"),
         param(pow_even, (1, None), (1, None), id="pow_even_open_right"),
         param(pow_even, (None, -1), (1, None), id="pow_even_open_left"),
@@ -722,17 +777,18 @@ def test_transformation_equality(t1, t2):
 
 
 @pytest.mark.parametrize(
-    "transformation",
+    ("transformation", "expected"),
     [
-        param(AffineTransformation(factor=0.0), id="affine"),
-        param(TwoSidedAffineTransformation(0, 0), id="two_sided"),
-        param(ClampingTransformation(0, 0), id="clamping"),
+        param(AffineTransformation(factor=0.0), Interval(0, 0), id="affine"),
+        param(TwoSidedAffineTransformation(0, 0), Interval(0, 0), id="two_sided"),
+        param(ClampingTransformation(0, 0), Interval(0, 0), id="clamping"),
+        param(SigmoidTransformation(slope=0), Interval(0.5, 0.5), id="sigmoid"),
     ],
 )
-def test_degenerate_transformations(transformation):
+def test_degenerate_transformations(transformation, expected):
     """Degenerate transformations produce proper (non-nan) outputs."""
-    assert transformation.get_image() == Interval(0, 0)
-    assert transformation.get_image((20, None)) == Interval(0, 0)
+    assert transformation.get_image() == expected
+    assert transformation.get_image((20, None)) == expected
 
 
 def test_additive_transformation(tensor):
