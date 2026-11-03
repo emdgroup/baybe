@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from attrs import Factory, define, field
+from attrs import Factory, define, field, fields
 from attrs.validators import gt, is_callable
 from typing_extensions import override
 
@@ -16,6 +17,7 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
+from baybe.serialization.core import _TYPE_FIELD
 from baybe.settings import active_settings
 from baybe.transformations.base import (
     MonotonicTransformation,
@@ -477,24 +479,52 @@ class PowerTransformation(Transformation):
         return x.pow(self.exponent)
 
 
-@define(frozen=True)
+@define(frozen=True, init=False)
 class SigmoidTransformation(MonotonicTransformation):
     r"""Map input values to a logistic S-shaped score.
 
     .. math::
-        f(x) = \frac{1}{1 + e^{-k(c - x)}}
+        f(x) = \frac{1}{1 + e^{-4s(x - c)}}
 
-    Output is 0.5 at the center point :math:`c`. For positive steepness :math:`k`,
-    larger :math:`x` decreases the score toward 0; negative steepness increases it
-    toward 1. Zero steepness gives 0.5 for all finite inputs; larger :math:`|k|`
-    sharpens the transition.
+    Here :math:`c` is the center point where the output crosses 0.5 and :math:`s` is
+    the slope of the curve at that point, i.e. :math:`f'(c) = s`. Zero slope gives
+    0.5 for all finite inputs; larger :math:`\lvert s \rvert` sharpens the transition.
     """
 
     center: float = field(default=0.0, converter=float)
     """The center of the sigmoid function, where it crosses 0.5."""
 
-    steepness: float = field(default=1.0, converter=float)
-    """The steepness of the sigmoid function."""
+    slope: float = field(default=0.25, converter=float)
+    """The slope of the sigmoid function at its center."""
+
+    def __init__(
+        self,
+        center: float = 0.0,
+        slope: float | None = None,
+        *,
+        steepness: float | None = None,
+    ) -> None:
+        slope_name = fields(type(self)).slope.alias
+
+        # >>>>>>>>>> Deprecation
+        if steepness is not None:
+            if slope is not None:
+                raise ValueError(
+                    f"Cannot specify both '{slope_name}' and the deprecated "
+                    f"'steepness'."
+                )
+            warnings.warn(
+                f"The 'steepness' argument of '{type(self).__name__}' is deprecated. "
+                f"Use '{slope_name}' instead. The provided value is converted to "
+                f"'{slope_name} = -steepness / 4' to preserve the transformation "
+                f"behavior.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            slope = -steepness / 4
+        # <<<<<<<<<< Deprecation
+
+        self.__attrs_init__(center=center, slope=0.25 if slope is None else slope)
 
     @classmethod
     def from_anchors(cls, anchors: Sequence[Sequence[float]]) -> SigmoidTransformation:
@@ -508,6 +538,7 @@ class SigmoidTransformation(MonotonicTransformation):
         Raises:
             ValueError: If the input given as anchors does not represent two points.
             ValueError: If the ordinates of the anchors are not in the unit interval.
+            ValueError: If the anchor points share an abscissa or an ordinate.
 
         Returns:
             A sigmoid transformation passing through the specified anchor points.
@@ -539,25 +570,63 @@ class SigmoidTransformation(MonotonicTransformation):
                 f"The ordinates of the anchor points must be in the open "
                 f"interval (0, 1). Given: {y1=} and {y2=}."
             )
+        if x1 == x2:
+            raise ValueError(
+                f"The abscissas of the anchor points must be distinct. "
+                f"Given: {x1=} and {x2=}."
+            )
+        if y1 == y2:
+            raise ValueError(
+                f"The ordinates of the anchor points must be distinct. "
+                f"Given: {y1=} and {y2=}."
+            )
 
-        k1 = np.log(1 / y1 - 1)
-        k2 = np.log(1 / y2 - 1)
-        shift = (k2 * x1 - k1 * x2) / (k2 - k1)
-        steepness = (k2 - k1) / (x2 - x1)
-        return SigmoidTransformation(shift, steepness)
+        logit1 = np.log(y1 / (1 - y1))
+        logit2 = np.log(y2 / (1 - y2))
+        slope = (logit2 - logit1) / (4 * (x2 - x1))
+        center = x1 - logit1 / (4 * slope)
+        return SigmoidTransformation(center=center, slope=slope)
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         import torch
 
+        # Handle the degenerate zero-slope case to avoid 0 * inf producing NaN
+        if self.slope == 0.0:
+            return x.new_full(x.shape, 0.5)
+
         # NOTE: `torch.sigmoid(z)` is defined as `1 / (1 + exp(-z))`
-        return torch.sigmoid(self.steepness * (self.center - x))
+        return torch.sigmoid(4 * self.slope * (x - self.center))
 
 
 @converter.register_structure_hook
 def _(dct, _) -> ClampingTransformation:
     cutoffs = Interval(**dct["cutoffs"])
     return ClampingTransformation(*cutoffs.to_tuple())
+
+
+# >>>>>>>>>> Deprecation
+_sigmoid_structure_hook = converter.get_structure_hook(SigmoidTransformation)
+
+
+@converter.register_structure_hook
+def _structure_sigmoid_with_legacy_steepness(
+    dct: dict[str, Any], cls: type
+) -> SigmoidTransformation:
+    """Structure a sigmoid transformation, converting legacy ``steepness``."""
+    dct = dict(dct)
+    if "steepness" not in dct:
+        return _sigmoid_structure_hook(dct, cls)
+
+    # Let the regular hook reject mismatching type tags
+    if dct.get(_TYPE_FIELD, cls.__name__) != cls.__name__:
+        return _sigmoid_structure_hook(dct, cls)
+
+    dct.pop(_TYPE_FIELD, None)
+    return SigmoidTransformation(**dct)
+
+
+# <<<<<<<<<< Deprecation
 
 
 # Prevent (de-)serialization of custom transformations
