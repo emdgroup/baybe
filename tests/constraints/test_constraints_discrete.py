@@ -3,7 +3,7 @@
 import itertools
 import math
 import os
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from inspect import signature
 
 import narwhals.stable.v2 as nw
@@ -47,14 +47,17 @@ def _frame(data: dict[str, list], backend: nw.Implementation) -> nw.DataFrame:
 
 def _assert_filter(
     constraint: DiscreteFilteringConstraint,
-    data: dict[str, list],
-    expected_rows: Sequence[int],
+    data: Sequence[Mapping[str, object]],
+    expected_rows: Sequence[Mapping[str, object]],
     backend: nw.Implementation,
 ) -> None:
     """Assert that a constraint keeps exactly the expected rows."""
-    frame = _frame(data, backend)
+    frame = nw.from_dicts(data, backend=backend)
     result = constraint(frame.to_native())
-    assert_nw_frame_equal(nw.from_native(result, eager_only=True), frame[expected_rows])
+    expected = (
+        nw.from_dicts(expected_rows, backend=backend) if expected_rows else frame[[]]
+    )
+    assert_nw_frame_equal(nw.from_native(result, eager_only=True), expected)
 
 
 @pytest.mark.parametrize(
@@ -135,37 +138,85 @@ def test_simple_dependency(campaign, n_grid_points, mock_substances, mock_catego
     assert num_entries == 1
 
 
+_EXCLUSION_DATA = [
+    {"temperature": 1.0, "pressure": 1.0, "solvent": "water"},
+    {"temperature": 1.0, "pressure": 0.0, "solvent": "ethanol"},
+    {"temperature": 0.0, "pressure": 1.0, "solvent": "methanol"},
+    {"temperature": 0.0, "pressure": 0.0, "solvent": "acetone"},
+]
+
+
 @pytest.mark.parametrize(
-    "parameter_names",
-    [["Solvent_1", "Some_Setting", "Temperature", "Pressure"]],
+    ("combiner", "exclude", "expected_rows"),
+    [
+        param(
+            "AND",
+            False,
+            [
+                {"temperature": 1.0, "pressure": 1.0, "solvent": "water"},
+            ],
+            id="AND-keep",
+        ),
+        param(
+            "AND",
+            True,
+            [
+                {"temperature": 1.0, "pressure": 0.0, "solvent": "ethanol"},
+                {"temperature": 0.0, "pressure": 1.0, "solvent": "methanol"},
+                {"temperature": 0.0, "pressure": 0.0, "solvent": "acetone"},
+            ],
+            id="AND-exclude",
+        ),
+        param(
+            "OR",
+            False,
+            [
+                {"temperature": 1.0, "pressure": 1.0, "solvent": "water"},
+                {"temperature": 1.0, "pressure": 0.0, "solvent": "ethanol"},
+                {"temperature": 0.0, "pressure": 1.0, "solvent": "methanol"},
+            ],
+            id="OR-keep",
+        ),
+        param(
+            "OR",
+            True,
+            [
+                {"temperature": 0.0, "pressure": 0.0, "solvent": "acetone"},
+            ],
+            id="OR-exclude",
+        ),
+        param(
+            "XOR",
+            False,
+            [
+                {"temperature": 1.0, "pressure": 0.0, "solvent": "ethanol"},
+                {"temperature": 0.0, "pressure": 1.0, "solvent": "methanol"},
+            ],
+            id="XOR-keep",
+        ),
+        param(
+            "XOR",
+            True,
+            [
+                {"temperature": 1.0, "pressure": 1.0, "solvent": "water"},
+                {"temperature": 0.0, "pressure": 0.0, "solvent": "acetone"},
+            ],
+            id="XOR-exclude",
+        ),
+    ],
 )
-@pytest.mark.parametrize(
-    "constraint_names", [["Constraint_4", "Constraint_5", "Constraint_6"]]
-)
-def test_exclusion(campaign, mock_substances):
-    """Tests exclusion constraint."""
-    candidates = campaign.searchspace.discrete.get_candidates()
-
-    # Number of entries with either first/second substance and a temperature above 151
-    num_entries = (
-        candidates["Temperature"].apply(lambda x: x > 151)
-        & candidates["Solvent_1"].apply(lambda x: x in list(mock_substances)[:2])
-    ).sum()
-    assert num_entries == 0
-
-    # Number of entries with either last / second last substance and a pressure above 5
-    num_entries = (
-        candidates["Pressure"].apply(lambda x: x > 5)
-        & candidates["Solvent_1"].apply(lambda x: x in list(mock_substances)[-2:])
-    ).sum()
-    assert num_entries == 0
-
-    # Number of entries with pressure below 3 and temperature above 120
-    num_entries = (
-        candidates["Pressure"].apply(lambda x: x < 3)
-        & candidates["Temperature"].apply(lambda x: x > 120)
-    ).sum()
-    assert num_entries == 0
+def test_exclusion(combiner, exclude, expected_rows, backend):
+    """Selection constraints cover all combiner and exclusion regimes."""
+    constraint = DiscreteSelectionConstraint(
+        parameters=["temperature", "pressure"],
+        conditions=[
+            ThresholdCondition(threshold=0.0, operator=">"),
+            ThresholdCondition(threshold=0.0, operator=">"),
+        ],
+        combiner=combiner,
+        exclude=exclude,
+    )
+    _assert_filter(constraint, _EXCLUSION_DATA, expected_rows, backend)
 
 
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
