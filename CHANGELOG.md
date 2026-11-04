@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constraint filtering
 - `ThresholdCondition` now treats missing values as non-matching for all operators;
   previously, the `!=` operator admitted them
+- `ThresholdCondition` now rejects Boolean data instead of treating it as numerical
 - `SubSelectionCondition` now supports Boolean selection entries for both pandas and
   Polars backends; previously, they were coerced to floats, which broke Polars filtering
 - `SubSelectionCondition` now rejects selection entries of different types and raises a

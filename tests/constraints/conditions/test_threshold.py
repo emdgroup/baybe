@@ -111,8 +111,14 @@ def test_threshold_condition_default_tolerance(operator, tolerance):
     assert ThresholdCondition(threshold=2.0, operator=operator).tolerance == tolerance
 
 
-def test_threshold_condition_non_numeric_series(backend):
-    """Threshold conditions reject non-numeric series."""
+@pytest.mark.parametrize(
+    "values",
+    [
+        param(["a", "b"], id="strings"),
+        param([True, False], id="booleans"),
+    ],
+)
+def test_threshold_condition_non_numeric_series(values, backend):
     condition = ThresholdCondition(threshold=2.0, operator="<")
-    with pytest.raises(ValueError, match="non-numeric data"):
-        apply_condition(condition, ["a", "b"], backend)
+    with pytest.raises(ValueError, match="non-numerical data"):
+        apply_condition(condition, values, backend)

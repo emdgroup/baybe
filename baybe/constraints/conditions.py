@@ -164,9 +164,9 @@ class ThresholdCondition(Condition):
 
     @override
     def _validate_series(self, series: Series, /) -> None:
-        if not isinstance(series.dtype, (nw.dtypes.NumericType, nw.dtypes.Boolean)):
+        if not isinstance(series.dtype, nw.dtypes.NumericType):
             raise ValueError(
-                "You tried to apply a threshold condition to non-numeric data. "
+                "You tried to apply a threshold condition to non-numerical data. "
                 "This operation is error-prone and not supported. Only use threshold "
                 "conditions with numerical parameters."
             )
