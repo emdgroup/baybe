@@ -398,15 +398,131 @@ def test_linear_constraint(
     _assert_filter(constraint, _LINEAR_DATA, expected_rows, backend)
 
 
-@pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
-@pytest.mark.parametrize("constraint_names", [["Constraint_9"]])
-def test_prodsum2(campaign):
-    """Tests product constrain."""
-    candidates = campaign.searchspace.discrete.get_candidates()
+_PRODUCT_DATA = [
+    {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
+    {"amount_1": 1.0, "amount_2": 0.0, "solvent": "ethanol"},
+    {"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"},
+    {"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"},
+    {"amount_1": 2.0, "amount_2": 2.0, "solvent": "water"},
+    {"amount_1": 5.0, "amount_2": 2.0, "solvent": "hexane"},
+]
 
-    # Number of entries with product under 30
-    num_entries = (candidates[["Fraction_1", "Fraction_2"]].prod(axis=1) < 30).sum()
-    assert num_entries == 0
+
+@pytest.mark.parametrize(
+    ("operator", "rhs", "tolerance", "exclude", "expected_rows"),
+    [
+        param(
+            "<",
+            2.0,
+            None,
+            False,
+            [
+                {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 1.0, "amount_2": 0.0, "solvent": "ethanol"},
+                {"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"},
+            ],
+            id="operator-lt",
+        ),
+        param(
+            "<=",
+            2.0,
+            None,
+            False,
+            [
+                {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 1.0, "amount_2": 0.0, "solvent": "ethanol"},
+                {"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"},
+                {"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"},
+            ],
+            id="operator-le",
+        ),
+        param(
+            "=",
+            2.0,
+            None,
+            False,
+            [{"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"}],
+            id="operator-eq",
+        ),
+        param(
+            "==",
+            2.0,
+            None,
+            False,
+            [{"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"}],
+            id="operator-eq-alias",
+        ),
+        param(
+            "!=",
+            2.0,
+            None,
+            False,
+            [
+                {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 1.0, "amount_2": 0.0, "solvent": "ethanol"},
+                {"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"},
+                {"amount_1": 2.0, "amount_2": 2.0, "solvent": "water"},
+                {"amount_1": 5.0, "amount_2": 2.0, "solvent": "hexane"},
+            ],
+            id="operator-ne",
+        ),
+        param(
+            ">",
+            2.0,
+            None,
+            False,
+            [
+                {"amount_1": 2.0, "amount_2": 2.0, "solvent": "water"},
+                {"amount_1": 5.0, "amount_2": 2.0, "solvent": "hexane"},
+            ],
+            id="operator-gt",
+        ),
+        param(
+            ">=",
+            2.0,
+            None,
+            False,
+            [
+                {"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"},
+                {"amount_1": 2.0, "amount_2": 2.0, "solvent": "water"},
+                {"amount_1": 5.0, "amount_2": 2.0, "solvent": "hexane"},
+            ],
+            id="operator-ge",
+        ),
+        param(
+            "=",
+            1.5,
+            0.5,
+            False,
+            [
+                {"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"},
+                {"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"},
+            ],
+            id="tolerance",
+        ),
+        param(
+            "<=",
+            2.0,
+            None,
+            True,
+            [
+                {"amount_1": 2.0, "amount_2": 2.0, "solvent": "water"},
+                {"amount_1": 5.0, "amount_2": 2.0, "solvent": "hexane"},
+            ],
+            id="exclude",
+        ),
+    ],
+)
+def test_product_constraint(operator, rhs, tolerance, exclude, expected_rows, backend):
+    """Cover all product-constraint comparison regimes."""
+    constraint = DiscreteProductConstraint(
+        parameters=["amount_1", "amount_2"],
+        operator=operator,
+        rhs=rhs,
+        tolerance=tolerance,
+        exclude=exclude,
+    )
+    _assert_filter(constraint, _PRODUCT_DATA, expected_rows, backend)
 
 
 @pytest.mark.parametrize(
@@ -602,17 +718,6 @@ _PARAMETERS = [
 ]
 """The parameters spanning the unconstrained product."""
 
-_PRODUCT_ROWS = {
-    "<": [0, 1, 3],
-    "<=": [0, 1, 2, 3, 4, 6],
-    "=": [2, 4, 6],
-    "==": [2, 4, 6],
-    "!=": [0, 1, 3, 5, 7, 8],
-    ">": [5, 7, 8],
-    ">=": [2, 4, 5, 6, 7, 8],
-}
-"""The rows of ``_DF`` whose column product satisfies the operator against 4.0."""
-
 _SELECTION_ROWS = {
     "<": [0, 1, 2],
     "<=": [0, 1, 2, 3, 4, 5],
@@ -625,13 +730,6 @@ _SELECTION_ROWS = {
 """The rows of ``_DF`` whose column ``a`` satisfies the operator against 2.0."""
 
 _THRESHOLD_CASES = [
-    param(
-        DiscreteProductConstraint(parameters=["a", "b"], operator=operator, rhs=4.0),
-        rows,
-        id=f"product-{operator}",
-    )
-    for operator, rows in _PRODUCT_ROWS.items()
-] + [
     param(
         DiscreteSelectionConstraint(
             parameters=["a"], conditions=[ThresholdCondition(2.0, operator)]
@@ -646,7 +744,7 @@ _THRESHOLD_CASES = [
 
 def test_threshold_rows_completeness():
     """The expected filtering results cover all available threshold operators."""
-    tables = (_PRODUCT_ROWS, _SELECTION_ROWS)
+    tables = (_SELECTION_ROWS,)
     assert all(set(table) == set(_THRESHOLD_OPERATORS) for table in tables)
 
 
