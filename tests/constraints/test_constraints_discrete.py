@@ -15,6 +15,7 @@ from pytest import param
 from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.constraints.conditions import _THRESHOLD_OPERATORS, ThresholdCondition
 from baybe.constraints.discrete import (
+    DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteLinearConstraint,
     DiscreteProductConstraint,
@@ -637,24 +638,89 @@ def test_custom_constraint(exclude, expected_rows, backend):
     _assert_filter(constraint, _CUSTOM_DATA, expected_rows, backend)
 
 
+_CARDINALITY_DATA = [
+    {"amount_1": 0.0, "amount_2": 0.0, "amount_3": 0.0, "group": "a"},
+    {"amount_1": 1.0, "amount_2": 0.0, "amount_3": 0.0, "group": "b"},
+    {"amount_1": 1.0, "amount_2": 1.0, "amount_3": 0.0, "group": "c"},
+    {"amount_1": 1.0, "amount_2": 1.0, "amount_3": 1.0, "group": "d"},
+]
+
+
 @pytest.mark.parametrize(
-    "parameter_names",
-    [["Some_Setting", "Fraction_1", "Fraction_2", "Fraction_3"]],
+    ("min_cardinality", "max_cardinality", "exclude", "expected_rows"),
+    [
+        param(
+            1,
+            2,
+            False,
+            [
+                {"amount_1": 1.0, "amount_2": 0.0, "amount_3": 0.0, "group": "b"},
+                {"amount_1": 1.0, "amount_2": 1.0, "amount_3": 0.0, "group": "c"},
+            ],
+            id="bounds",
+        ),
+        param(
+            1,
+            2,
+            True,
+            [
+                {"amount_1": 0.0, "amount_2": 0.0, "amount_3": 0.0, "group": "a"},
+                {"amount_1": 1.0, "amount_2": 1.0, "amount_3": 1.0, "group": "d"},
+            ],
+            id="bounds-exclude",
+        ),
+        param(
+            0,
+            1,
+            False,
+            [
+                {"amount_1": 0.0, "amount_2": 0.0, "amount_3": 0.0, "group": "a"},
+                {"amount_1": 1.0, "amount_2": 0.0, "amount_3": 0.0, "group": "b"},
+            ],
+            id="upper-only",
+        ),
+        param(
+            2,
+            2,
+            False,
+            [
+                {"amount_1": 1.0, "amount_2": 1.0, "amount_3": 0.0, "group": "c"},
+            ],
+            id="exact",
+        ),
+        param(
+            1,
+            3,
+            False,
+            [
+                {"amount_1": 1.0, "amount_2": 0.0, "amount_3": 0.0, "group": "b"},
+                {"amount_1": 1.0, "amount_2": 1.0, "amount_3": 0.0, "group": "c"},
+                {"amount_1": 1.0, "amount_2": 1.0, "amount_3": 1.0, "group": "d"},
+            ],
+            id="lower-only",
+        ),
+        param(
+            1,
+            3,
+            True,
+            [
+                {"amount_1": 0.0, "amount_2": 0.0, "amount_3": 0.0, "group": "a"},
+            ],
+            id="lower-only-exclude",
+        ),
+    ],
 )
-@pytest.mark.parametrize("constraint_names", [["Constraint_14"]])
-def test_cardinality(campaign):
-    """Test discrete cardinality constraint."""
-    candidates = campaign.searchspace.discrete.get_candidates()
-
-    # Number of non-zeros
-    non_zeros = (candidates[["Fraction_1", "Fraction_2", "Fraction_3"]] != 0.0).sum(
-        axis=1
+def test_cardinality_constraint(
+    min_cardinality, max_cardinality, exclude, expected_rows, backend
+):
+    """Cardinality constraints cover bound and exclusion regimes."""
+    constraint = DiscreteCardinalityConstraint(
+        parameters=["amount_1", "amount_2", "amount_3"],
+        min_cardinality=min_cardinality,
+        max_cardinality=max_cardinality,
+        exclude=exclude,
     )
-
-    # number of non-zeros fulfills cardinality
-    min_cardinality = 1
-    max_cardinality = 2
-    assert non_zeros.between(min_cardinality, max_cardinality).all()
+    _assert_filter(constraint, _CARDINALITY_DATA, expected_rows, backend)
 
 
 @pytest.mark.parametrize(
