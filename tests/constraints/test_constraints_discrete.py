@@ -712,3 +712,37 @@ def test_cardinality_constraint(
         exclude=exclude,
     )
     _assert_filter(constraint, _CARDINALITY_DATA, expected_rows, backend)
+
+
+_CARDINALITY_PARTIAL_DATA = (
+    nw.from_dicts(_CARDINALITY_DATA, backend=nw.Implementation.POLARS)
+    .select("amount_1", "amount_2", "group")
+    .rows(named=True)
+)
+
+
+def test_cardinality_constraint_partial_accepted(backend):
+    """Max-only cardinality filtering is valid on a non-empty subset."""
+    constraint = DiscreteCardinalityConstraint(
+        parameters=["amount_1", "amount_2", "amount_3"],
+        max_cardinality=1,
+    )
+    _assert_filter(
+        constraint,
+        _CARDINALITY_PARTIAL_DATA,
+        [
+            {"amount_1": 0.0, "amount_2": 0.0, "group": "a"},
+            {"amount_1": 1.0, "amount_2": 0.0, "group": "b"},
+        ],
+        backend,
+    )
+
+
+def test_cardinality_constraint_partial_rejected(backend):
+    """Excluded cardinality constraints require all parameters."""
+    constraint = DiscreteCardinalityConstraint(
+        parameters=["amount_1", "amount_2", "amount_3"],
+        min_cardinality=2,
+        exclude=True,
+    )
+    _assert_partial_rejected(constraint, _CARDINALITY_PARTIAL_DATA, backend)
