@@ -13,6 +13,31 @@ from tests.constraints.discrete.utils import (
 
 pytestmark = requires_fulltest
 
+##### API #####
+
+
+@pytest.mark.parametrize(
+    ("n_max_repetitions", "error", "match"),
+    [
+        param(2.0, TypeError, "must be <class 'int'>", id="type"),
+        param(0, ValueError, "must be >= 1", id="too-small"),
+        param(4, ValueError, "must be less than the number", id="too-large"),
+        param(3, ValueError, "meaningful constraint", id="no-op"),
+    ],
+)
+def test_repetition_limit_constraint_invalid_max_repetitions(
+    n_max_repetitions, error, match
+):
+    """Repetition limits reject invalid maximum repetition counts."""
+    with pytest.raises(error, match=match):
+        DiscreteRepetitionLimitConstraint(
+            parameters=["A", "B", "C"],
+            n_max_repetitions=n_max_repetitions,
+        )
+
+
+##### Behavior #####
+
 
 _REPETITION_DATA = [
     {"a": 1.0, "b": 2.0, "c": 3.0, "group": "a"},
