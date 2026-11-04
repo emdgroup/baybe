@@ -90,7 +90,7 @@ def test_product_constructor(args, kwargs):
     )
 
 
-_EXCLUSION_DATA = [
+_SELECTION_DATA = [
     {"temperature": 1.0, "pressure": 1.0, "solvent": "water"},
     {"temperature": 1.0, "pressure": 0.0, "solvent": "ethanol"},
     {"temperature": 0.0, "pressure": 1.0, "solvent": "methanol"},
@@ -157,7 +157,7 @@ _EXCLUSION_DATA = [
         ),
     ],
 )
-def test_exclusion(combiner, exclude, expected_rows, backend):
+def test_selection_constraint(combiner, exclude, expected_rows, backend):
     """Selection constraints cover all combiner and exclusion regimes."""
     constraint = DiscreteSelectionConstraint(
         parameters=["temperature", "pressure"],
@@ -168,11 +168,11 @@ def test_exclusion(combiner, exclude, expected_rows, backend):
         combiner=combiner,
         exclude=exclude,
     )
-    _assert_filter(constraint, _EXCLUSION_DATA, expected_rows, backend)
+    _assert_filter(constraint, _SELECTION_DATA, expected_rows, backend)
 
 
 _SELECTION_PARTIAL_DATA = (
-    nw.from_dicts(_EXCLUSION_DATA, backend=nw.Implementation.POLARS)
+    nw.from_dicts(_SELECTION_DATA, backend=nw.Implementation.POLARS)
     .select("temperature", "solvent")
     .rows(named=True)
 )
