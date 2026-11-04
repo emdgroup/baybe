@@ -14,6 +14,8 @@ from baybe.constraints.continuous import (
     ContinuousLinearConstraint,
 )
 from baybe.constraints.discrete import (
+    DiscreteBatchConstraint,
+    DiscreteCardinalityConstraint,
     DiscreteDependenciesConstraint,
     DiscreteLinearConstraint,
     DiscretePermutationInvarianceConstraint,
@@ -254,6 +256,43 @@ def discrete_repetition_limit_constraints(
     return DiscreteRepetitionLimitConstraint(
         params, n_max_repetitions=n_max, exclude=exclude
     )
+
+
+@st.composite
+def discrete_cardinality_constraints(
+    draw: st.DrawFn, parameter_names: list[str] | None = None
+):
+    """Generate a :class:`~baybe.constraints.DiscreteCardinalityConstraint`."""
+    if parameter_names is None:
+        params = draw(st.lists(st.text(), unique=True, min_size=2))
+    else:
+        assert len(parameter_names) >= 2
+        params = parameter_names
+
+    n = len(params)
+    min_cardinality = draw(st.integers(min_value=0, max_value=n))
+    max_cardinality = draw(st.integers(min_value=min_cardinality, max_value=n))
+    assume(not (min_cardinality == 0 and max_cardinality == n))
+    exclude = draw(st.booleans())
+    return DiscreteCardinalityConstraint(
+        params,
+        min_cardinality=min_cardinality,
+        max_cardinality=max_cardinality,
+        exclude=exclude,
+    )
+
+
+@st.composite
+def discrete_batch_constraints(
+    draw: st.DrawFn, parameter_names: list[str] | None = None
+):
+    """Generate a :class:`~baybe.constraints.DiscreteBatchConstraint`."""
+    if parameter_names is None:
+        params = draw(st.lists(st.text(), unique=True, min_size=1, max_size=1))
+    else:
+        assert len(parameter_names) >= 1
+        params = [draw(st.sampled_from(parameter_names))]
+    return DiscreteBatchConstraint(params)
 
 
 @st.composite
