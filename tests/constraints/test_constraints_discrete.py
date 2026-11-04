@@ -90,11 +90,6 @@ def test_product_constructor(args, kwargs):
     )
 
 
-def test_simple_dependency():
-    """Dependency constraint filtering is not implemented yet."""
-    raise NotImplementedError
-
-
 _EXCLUSION_DATA = [
     {"temperature": 1.0, "pressure": 1.0, "solvent": "water"},
     {"temperature": 1.0, "pressure": 0.0, "solvent": "ethanol"},
@@ -704,11 +699,6 @@ def test_repetition_limit_constraint_partial_rejected(
     _assert_partial_rejected(constraint, data, backend)
 
 
-def test_mixture():
-    """Mixture constraint filtering is not implemented yet."""
-    raise NotImplementedError
-
-
 _CUSTOM_DATA = [
     {"temperature": 1.0, "pressure": 1.0, "solvent": "water"},
     {"temperature": 2.0, "pressure": 1.0, "solvent": "ethanol"},
@@ -879,3 +869,13 @@ def test_cardinality_constraint_partial_rejected(backend):
         exclude=True,
     )
     _assert_partial_rejected(constraint, _CARDINALITY_PARTIAL_DATA, backend)
+
+
+def test_simple_dependency():
+    """Dependency constraint filtering is not implemented yet."""
+    raise NotImplementedError
+
+
+def test_permutation_invariance():
+    """Permutation invariance filtering is not implemented yet."""
+    raise NotImplementedError
