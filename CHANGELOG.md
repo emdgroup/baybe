@@ -159,6 +159,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Discrete subsets are now represented as filtered `SubspaceDiscrete` objects instead of
   Boolean masks over a materialized candidate dataframe, enabling more efficient and
   flexible subset handling
+- Constraint and condition objects are now immutable, and their sequence attributes
+  (`parameters`, `conditions`, `affected_parameters`) are stored as tuples
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings

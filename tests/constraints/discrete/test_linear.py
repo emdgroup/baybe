@@ -19,7 +19,7 @@ pytestmark = requires_fulltest
     ("parameters", "error", "match"),
     [
         param([], ValueError, "Length of 'parameters' must be >= 1", id="empty"),
-        param(["A", "A"], ValueError, "must have unique values", id="duplicate"),
+        param(["A", "A"], ValueError, "must be unique", id="duplicate"),
         param([1, 2], TypeError, "must be <class 'str'>", id="type-int"),
         param(["A", None], TypeError, "must be <class 'str'>", id="type-none"),
     ],
@@ -51,8 +51,8 @@ def test_linear_constraint_invalid_operator(operator):
 @pytest.mark.parametrize(
     ("coefficients", "match"),
     [
-        param((1.0, 2.0), "'coefficients' list must have one", id="length-mismatch"),
-        param((1.0, 0.0, 1.0), "'coefficients' must be non-zero", id="zero"),
+        param((1.0, 2.0), "one coefficient per parameter", id="length-mismatch"),
+        param((1.0, 0.0, 1.0), "must be non-zero", id="zero"),
         param((1.0, float("nan"), 1.0), "cannot be 'nan'", id="nan"),
         param((1.0, float("inf"), 1.0), "cannot be 'inf'", id="inf"),
     ],

@@ -12,7 +12,7 @@ from attrs import define, field
 from attrs.validators import deep_iterable, ge, instance_of, min_len
 
 from baybe.serialization import SerialMixin
-from baybe.utils.basic import classproperty
+from baybe.utils.basic import classproperty, to_tuple
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import FrameT, IntoDataFrameT, IntoLazyFrameT
@@ -22,20 +22,19 @@ if TYPE_CHECKING:
 class Constraint(ABC, SerialMixin):
     """Abstract base class for all constraints."""
 
-    # class variables
     numerical_only: ClassVar[bool] = False
     """Class variable encoding whether the constraint is valid only for numerical
     parameters."""
 
-    # Object variables
-    parameters: list[str] = field(
-        validator=[min_len(1), deep_iterable(member_validator=instance_of(str))]
+    parameters: tuple[str, ...] = field(
+        converter=to_tuple,
+        validator=[min_len(1), deep_iterable(member_validator=instance_of(str))],
     )
-    """The list of parameters used for the constraint."""
+    """The parameters used for the constraint."""
 
     @parameters.validator
     def _validate_params(  # noqa: DOC101, DOC103
-        self, _: Any, params: list[str]
+        self, _: Any, params: tuple[str, ...]
     ) -> None:
         """Validate the parameter list.
 
@@ -43,10 +42,7 @@ class Constraint(ABC, SerialMixin):
             ValueError: If ``params`` contains duplicate values.
         """
         if len(params) != len(set(params)):
-            raise ValueError(
-                f"The given 'parameters' list must have unique values "
-                f"but was: {params}."
-            )
+            raise ValueError(f"The parameter names must be unique, but got: {params}.")
 
     def summary(self) -> dict:
         """Return a custom summarization of the constraint."""
@@ -77,12 +73,12 @@ class Constraint(ABC, SerialMixin):
         return set(self.parameters)
 
 
-@define
-class DiscreteConstraint(Constraint, ABC):
+@define(frozen=True)
+class DiscreteConstraint(Constraint, ABC):  # pyrefly: ignore[invalid-inheritance]
     """Abstract base class for discrete constraints."""
 
 
-@define
+@define(frozen=True)
 class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
     """Abstract base class for discrete constraints that filter the search space.
 
@@ -95,7 +91,6 @@ class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
     ``_to_matching_mask`` for frame-wise constraints.
     """
 
-    # object variables
     exclude: bool = field(default=False, kw_only=True, validator=instance_of(bool))
     """Whether to invert the selection (keep the complement of the specification)."""
 
@@ -241,7 +236,6 @@ class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
 class ContinuousConstraint(Constraint, ABC):
     """Abstract base class for continuous constraints."""
 
-    # class variables
     numerical_only: ClassVar[bool] = True
     # See base class.
 
@@ -262,11 +256,9 @@ class CardinalityConstraint(Constraint, ABC):
     containing the specified parameters.
     """
 
-    # class variable
     numerical_only: ClassVar[bool] = True
     # See base class.
 
-    # object variables
     min_cardinality: int = field(default=0, validator=[instance_of(int), ge(0)])
     "The minimum required cardinality."
 

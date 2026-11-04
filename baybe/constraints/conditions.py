@@ -119,11 +119,10 @@ class Condition(ABC, SerialMixin):
         """Validate the input series before applying the condition."""
 
 
-@define
+@define(frozen=True)
 class ThresholdCondition(Condition):
     """Class for modelling threshold-based conditions."""
 
-    # object variables
     threshold: float = field(converter=float, validator=finite_float)
     """The threshold value used in the condition."""
 
@@ -185,11 +184,10 @@ class ThresholdCondition(Condition):
         return (matching & ~expr.is_null()).fill_null(False)
 
 
-@define
+@define(frozen=True)
 class SubSelectionCondition(Condition):
     """Class for defining valid parameter entries."""
 
-    # object variables
     selection: tuple = field(
         converter=to_tuple,
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197

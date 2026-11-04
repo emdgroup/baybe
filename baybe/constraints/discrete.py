@@ -47,6 +47,7 @@ from baybe.serialization import (
     converter,
 )
 from baybe.serialization.core import _TYPE_FIELD, make_base_structure_hook
+from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import is_abstract
 from baybe.utils.validation import finite_float
 
@@ -82,7 +83,7 @@ def DiscreteExcludeConstraint(  # noqa: N802
 # <<<<<<<<<< Deprecation
 
 
-@define
+@define(frozen=True)
 class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     """Class for filtering search space entries based on conditions.
 
@@ -113,20 +114,20 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         2  Hexane   80.0
     """
 
-    # object variables
-    conditions: list[Condition] = field(
+    conditions: tuple[Condition, ...] = field(
+        converter=to_tuple,
         validator=[
             min_len(1),
             deep_iterable(member_validator=instance_of(Condition)),
-        ]
+        ],
     )
-    """List of individual conditions."""
+    """The individual conditions."""
 
     combiner: str = field(default="AND", validator=in_(_LOGIC_COMBINERS))
     """Operator encoding how to combine the individual conditions."""
 
     @conditions.validator
-    def _validate_conditions(self, _: Any, conditions: list[Condition]) -> None:
+    def _validate_conditions(self, _: Any, conditions: tuple[Condition, ...]) -> None:
         if len(conditions) != len(self.parameters):
             raise ValueError(
                 f"'{fields(type(self)).conditions.alias}' must contain exactly one "
@@ -182,7 +183,7 @@ def _make_condition(
     return ThresholdCondition(threshold=rhs, operator=operator, **kwargs)
 
 
-@define
+@define(frozen=True)
 class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     """Class for modeling linear (weighted-sum) constraints on discrete parameters.
 
@@ -227,11 +228,9 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     # bound-based pruning of partial sums before all parameters are
     # present. This could be expressed via a _can_evaluate override.
 
-    # class variables
     numerical_only: ClassVar[bool] = True
     # See base class.
 
-    # object variables
     operator: ThresholdOperator = field(validator=in_(_THRESHOLD_OPERATORS))
     """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
@@ -273,11 +272,12 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
         """
         if len(self.parameters) != len(coefficients):
             raise ValueError(
-                "The given 'coefficients' list must have one floating point entry for "
-                "each entry in 'parameters'."
+                f"There must be exactly one coefficient per parameter, but got "
+                f"{len(coefficients)} coefficients for {len(self.parameters)} "
+                f"parameters."
             )
         if any(c == 0.0 for c in coefficients):
-            raise ValueError("All entries in 'coefficients' must be non-zero.")
+            raise ValueError("All coefficients must be non-zero.")
 
     @tolerance.validator
     def _validate_tolerance(  # noqa: DOC101, DOC103
@@ -305,7 +305,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
         return condition._to_expr(nw.sum_horizontal(weighted))
 
 
-@define(init=False)
+@define(init=False, frozen=True)
 class DiscreteProductConstraint(DiscreteFilteringConstraint):
     """Class for modeling product constraints on discrete parameters.
 
@@ -337,14 +337,12 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     # bound-based pruning of partial products before all parameters are
     # present. This could be expressed via a _can_evaluate override.
 
-    # class variables
     numerical_only: ClassVar[bool] = True
     # See base class.
 
     __signature__: ClassVar[Signature]
     """The modern constructor signature exposed to introspection tools."""
 
-    # object variables
     operator: ThresholdOperator = field(validator=in_(_THRESHOLD_OPERATORS))
     """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
@@ -494,7 +492,7 @@ def DiscreteSumConstraint(  # noqa: N802
 # <<<<<<<<<< Deprecation
 
 
-@define
+@define(frozen=True)
 class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
     """Class for constraining value repetition across parameters.
 
@@ -530,7 +528,6 @@ class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
         2  x  x
     """
 
-    # object variables
     n_max_repetitions: int = field(
         default=1, validator=[instance_of(int), ge(1)], kw_only=True
     )
@@ -642,7 +639,7 @@ def DiscreteLinkedParametersConstraint(  # noqa: N802
 # <<<<<<<<<< Deprecation
 
 
-@define
+@define(frozen=True)
 class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
     """Constraint that specifies dependencies between parameters.
 
@@ -672,11 +669,10 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         1    off   200
     """
 
-    # object variables
-    conditions: list[Condition] = field()
+    conditions: tuple[Condition, ...] = field()
     """The list of individual conditions."""
 
-    affected_parameters: list[list[str]] = field()
+    affected_parameters: tuple[tuple[str, ...], ...] = field()
     """The parameters affected by the individual conditions."""
 
     # for internal use only
@@ -686,7 +682,7 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
 
     @affected_parameters.validator
     def _validate_affected_parameters(  # noqa: DOC101, DOC103
-        self, _: Any, value: list[list[str]]
+        self, _: Any, value: tuple[tuple[str, ...], ...]
     ) -> None:
         """Validate the affected parameters.
 
@@ -696,9 +692,8 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         """
         if len(self.conditions) != len(value):
             raise ValueError(
-                f"For the {self.__class__.__name__}, for each item in the "
-                f"affected_parameters list you must provide exactly one condition in "
-                f"the conditions list."
+                f"Each group of affected parameters needs exactly one condition, "
+                f"but got {len(value)} groups and {len(self.conditions)} conditions."
             )
 
     @property
@@ -734,7 +729,7 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         )
 
 
-@define
+@define(frozen=True)
 class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
     """Constraint class for declaring that a set of parameters is permutation invariant.
 
@@ -759,7 +754,6 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
         2  z  x
     """
 
-    # object variables
     dependencies: DiscreteDependenciesConstraint | None = field(default=None)
     """Dependencies connected with the invariant parameters."""
 
@@ -774,8 +768,8 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
         """
         if value is not None and value.exclude:
             raise ValueError(
-                "Dependencies of a permutation invariance constraint cannot use "
-                "'exclude=True'."
+                "The dependencies of a permutation invariance constraint cannot be "
+                "inverted."
             )
 
     @property
@@ -824,15 +818,14 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
 
         groups = [self.parameters]
         if self.dependencies:
-            groups.append(list(self.dependencies.parameters))
+            groups.append(self.dependencies.parameters)
         return PermutationSymmetry(permutation_groups=groups)
 
 
-@define
+@define(frozen=True)
 class DiscreteCustomConstraint(DiscreteFilteringConstraint):
     """Class for user-defined custom constraints."""
 
-    # object variables
     validator: Callable[[IntoDataFrame], IntoSeries] = field(validator=is_callable())
     """A user-defined function that receives the selected parameters as a native
     dataframe and returns a Boolean series of the same backend."""
@@ -844,7 +837,7 @@ class DiscreteCustomConstraint(DiscreteFilteringConstraint):
         return nw.from_native(native_mask, series_only=True)
 
 
-@define
+@define(frozen=True)
 class DiscreteBatchConstraint(DiscreteConstraint):
     """Constraint ensuring recommendations in a batch share certain parameter values.
 
@@ -878,7 +871,9 @@ class DiscreteBatchConstraint(DiscreteConstraint):
 
 
 @define
-class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringConstraint):
+class DiscreteCardinalityConstraint(  # pyrefly: ignore[invalid-inheritance]
+    CardinalityConstraint, DiscreteFilteringConstraint
+):
     """Class for discrete cardinality constraints.
 
     Examples:
@@ -898,7 +893,6 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
         1  1.0  0.0
     """
 
-    # Class variables
     numerical_only: ClassVar[bool] = True
     # See base class.
 
