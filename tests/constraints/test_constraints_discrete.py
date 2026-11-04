@@ -2,14 +2,18 @@
 
 import itertools
 import math
+import os
+from collections.abc import Sequence
 from inspect import signature
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 import pytest
+from narwhals.testing import assert_frame_equal as assert_nw_frame_equal
 from pandas.testing import assert_frame_equal
 from pytest import param
 
-from baybe._optional.info import POLARS_INSTALLED
+from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.constraints.conditions import _THRESHOLD_OPERATORS, ThresholdCondition
 from baybe.constraints.discrete import (
     DiscreteLinearConstraint,
@@ -19,6 +23,38 @@ from baybe.constraints.discrete import (
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
+    reason="Requires the optional Polars dependency.",
+)
+
+
+@pytest.fixture(
+    params=[nw.Implementation.PANDAS, nw.Implementation.POLARS],
+    ids=["pandas", "polars"],
+    name="backend",
+)
+def fixture_backend(request: pytest.FixtureRequest) -> nw.Implementation:
+    """Return the dataframe backend used to construct test frames."""
+    return request.param
+
+
+def _frame(data: dict[str, list], backend: nw.Implementation) -> nw.DataFrame:
+    """Create a Narwhals frame from column data for the given backend."""
+    return nw.from_dict(data, backend=backend)
+
+
+def _assert_filter(
+    constraint: DiscreteFilteringConstraint,
+    data: dict[str, list],
+    expected_rows: Sequence[int],
+    backend: nw.Implementation,
+) -> None:
+    """Assert that a constraint keeps exactly the expected rows."""
+    frame = _frame(data, backend)
+    result = constraint(frame.to_native())
+    assert_nw_frame_equal(nw.from_native(result, eager_only=True), frame[expected_rows])
 
 
 @pytest.mark.parametrize(
@@ -470,13 +506,7 @@ def test_threshold_rows_completeness():
     "use_polars",
     [
         param(False, id="pandas"),
-        param(
-            True,
-            marks=pytest.mark.skipif(
-                not POLARS_INSTALLED, reason="Optional polars dependency not installed."
-            ),
-            id="polars",
-        ),
+        param(True, id="polars"),
     ],
 )
 @pytest.mark.parametrize(("constraint", "expected_rows"), _THRESHOLD_CASES)
