@@ -1,7 +1,5 @@
 """Tests for the discrete product constraint."""
 
-from inspect import signature
-
 import pytest
 from pytest import param
 
@@ -13,33 +11,6 @@ from tests.constraints.discrete.utils import (
 )
 
 pytestmark = requires_fulltest
-
-
-@pytest.mark.parametrize(
-    ("args", "kwargs"),
-    [
-        param((["A", "B"], "=", 8.0, 0.01), {}, id="positional"),
-        param((["A", "B"], "="), {"rhs": 8.0, "tolerance": 0.01}, id="mixed"),
-        param(
-            (),
-            {"parameters": ["A", "B"], "operator": "=", "rhs": 8.0, "tolerance": 0.01},
-            id="keyword",
-        ),
-    ],
-)
-def test_product_constructor(args, kwargs):
-    """Modern Product call styles produce the same constraint."""
-    result = DiscreteProductConstraint(*args, **kwargs)
-    assert result == DiscreteProductConstraint(
-        ["A", "B"], operator="=", rhs=8.0, tolerance=0.01
-    )
-    assert tuple(signature(DiscreteProductConstraint).parameters) == (
-        "parameters",
-        "operator",
-        "rhs",
-        "tolerance",
-        "exclude",
-    )
 
 
 _PRODUCT_DATA = [

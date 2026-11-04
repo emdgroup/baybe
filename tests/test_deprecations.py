@@ -6,6 +6,7 @@ import pickle
 import warnings
 from contextlib import nullcontext
 from copy import deepcopy
+from inspect import signature
 from itertools import pairwise
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -690,6 +691,44 @@ def test_discrete_constraint_deprecation(
     assert result == expected
     assert len(recorded) == 1
     assert recorded[0].filename == __file__
+
+
+@pytest.mark.parametrize(
+    ("args", "kwargs"),
+    [
+        param((["A", "B"], "=", 8.0, 0.01), {}, id="positional"),
+        param((["A", "B"], "="), {"rhs": 8.0, "tolerance": 0.01}, id="mixed"),
+        param(
+            (),
+            {"parameters": ["A", "B"], "operator": "=", "rhs": 8.0, "tolerance": 0.01},
+            id="keyword",
+        ),
+    ],
+)
+def test_product_constructor(args, kwargs):
+    """Modern Product call styles produce the same constraint."""
+    result = DiscreteProductConstraint(*args, **kwargs)
+    assert result == DiscreteProductConstraint(
+        ["A", "B"], operator="=", rhs=8.0, tolerance=0.01
+    )
+    assert tuple(signature(DiscreteProductConstraint).parameters) == (
+        "parameters",
+        "operator",
+        "rhs",
+        "tolerance",
+        "exclude",
+    )
+
+
+def test_deprecated_product_condition_conflict():
+    """Mixing the legacy condition with modern comparison arguments is rejected."""
+    with pytest.raises(ValueError, match="Cannot specify both 'condition'"):
+        DiscreteProductConstraint(
+            parameters=["A", "B"],
+            condition=ThresholdCondition(threshold=1.0, operator="=", tolerance=0.1),
+            operator="=",
+            rhs=1.0,
+        )
 
 
 @pytest.mark.parametrize(
