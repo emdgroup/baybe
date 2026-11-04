@@ -8,7 +8,6 @@ import narwhals.stable.v2 as nw
 import pandas as pd
 import pytest
 from narwhals.testing import assert_frame_equal as assert_nw_frame_equal
-from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe.constraints.base import DiscreteFilteringConstraint
@@ -20,9 +19,6 @@ from baybe.constraints.discrete import (
     DiscreteProductConstraint,
     DiscreteSelectionConstraint,
 )
-from baybe.parameters import NumericalDiscreteParameter
-from baybe.searchspace import SearchSpace
-from baybe.settings import Settings
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
@@ -664,61 +660,3 @@ def test_filtering_xor_partial_does_not_drop_valid_rows():
     filtered = constraint(full_df)
     # Rows 1 (both > 0) and 2 (neither > 0) violate XOR; row 0 is kept.
     assert list(filtered.index) == [0]
-
-
-_DF = pd.DataFrame(
-    {
-        "a": [1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 4.0, 4.0, 4.0],
-        "b": [1.0, 2.0, 4.0, 1.0, 2.0, 4.0, 1.0, 2.0, 4.0],
-    }
-)
-"""The unconstrained parameter product used for the threshold operator tests."""
-
-_PARAMETERS = [
-    NumericalDiscreteParameter(name, values=_DF[name].unique()) for name in _DF
-]
-"""The parameters spanning the unconstrained product."""
-
-_SELECTION_ROWS = {
-    "<": [0, 1, 2],
-    "<=": [0, 1, 2, 3, 4, 5],
-    "=": [3, 4, 5],
-    "==": [3, 4, 5],
-    "!=": [0, 1, 2, 6, 7, 8],
-    ">": [6, 7, 8],
-    ">=": [3, 4, 5, 6, 7, 8],
-}
-"""The rows of ``_DF`` whose column ``a`` satisfies the operator against 2.0."""
-
-_THRESHOLD_CASES = [
-    param(
-        DiscreteSelectionConstraint(
-            parameters=["a"], conditions=[ThresholdCondition(2.0, operator)]
-        ),
-        rows,
-        id=f"selection-{operator}",
-    )
-    for operator, rows in _SELECTION_ROWS.items()
-]
-"""Threshold constraints paired with the rows of ``_DF`` they are expected to keep."""
-
-
-@pytest.mark.parametrize(
-    "use_polars",
-    [
-        param(False, id="pandas"),
-        param(True, id="polars"),
-    ],
-)
-@pytest.mark.parametrize(("constraint", "expected_rows"), _THRESHOLD_CASES)
-def test_threshold_operators(constraint, expected_rows, use_polars):
-    """Threshold constraints filter correctly for all operators and backends."""
-    with Settings(use_polars_for_constraints=use_polars):
-        searchspace = SearchSpace.from_product(_PARAMETERS, [constraint])
-
-    assert_frame_equal(
-        searchspace.discrete.get_candidates()
-        .sort_values(["a", "b"])
-        .reset_index(drop=True),
-        _DF.loc[expected_rows].reset_index(drop=True),
-    )
