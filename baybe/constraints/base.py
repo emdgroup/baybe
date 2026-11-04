@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import narwhals.stable.v2 as nw
 from attrs import define, field
-from attrs.validators import ge, instance_of, min_len
+from attrs.validators import deep_iterable, ge, instance_of, min_len
 
 from baybe.serialization import SerialMixin
 from baybe.utils.basic import classproperty
@@ -28,7 +28,9 @@ class Constraint(ABC, SerialMixin):
     parameters."""
 
     # Object variables
-    parameters: list[str] = field(validator=min_len(1))
+    parameters: list[str] = field(
+        validator=[min_len(1), deep_iterable(member_validator=instance_of(str))]
+    )
     """The list of parameters used for the constraint."""
 
     @parameters.validator

@@ -17,6 +17,24 @@ pytestmark = requires_fulltest
 ##### API #####
 
 
+@pytest.mark.parametrize(
+    ("parameters", "error", "match"),
+    [
+        param([], ValueError, "Length of 'parameters' must be >= 1", id="empty"),
+        param(["A", "A"], ValueError, "must have unique values", id="duplicate"),
+        param([1, 2], TypeError, "must be <class 'str'>", id="type-int"),
+        param(["A", None], TypeError, "must be <class 'str'>", id="type-none"),
+    ],
+)
+def test_selection_constraint_invalid_parameters(parameters, error, match):
+    """Selection constraints require a non-empty list of unique parameter names."""
+    with pytest.raises(error, match=match):
+        DiscreteSelectionConstraint(
+            parameters=parameters,
+            conditions=[ThresholdCondition(threshold=0.0, operator=">")],
+        )
+
+
 def test_selection_constraint_invalid_conditions():
     """Selection constraints require at least one condition."""
     with pytest.raises(ValueError, match="Length of 'conditions' must be >= 1"):

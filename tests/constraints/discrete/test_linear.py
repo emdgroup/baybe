@@ -16,6 +16,25 @@ pytestmark = requires_fulltest
 
 
 @pytest.mark.parametrize(
+    ("parameters", "error", "match"),
+    [
+        param([], ValueError, "Length of 'parameters' must be >= 1", id="empty"),
+        param(["A", "A"], ValueError, "must have unique values", id="duplicate"),
+        param([1, 2], TypeError, "must be <class 'str'>", id="type-int"),
+        param(["A", None], TypeError, "must be <class 'str'>", id="type-none"),
+    ],
+)
+def test_linear_constraint_invalid_parameters(parameters, error, match):
+    """Linear constraints require a non-empty list of unique parameter names."""
+    with pytest.raises(error, match=match):
+        DiscreteLinearConstraint(
+            parameters=parameters,
+            operator="<=",
+            rhs=1.0,
+        )
+
+
+@pytest.mark.parametrize(
     "operator",
     [
         param("~", id="unknown"),

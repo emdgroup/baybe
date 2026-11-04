@@ -17,6 +17,24 @@ pytestmark = requires_fulltest
 
 
 @pytest.mark.parametrize(
+    ("parameters", "error", "match"),
+    [
+        param([], ValueError, "Length of 'parameters' must be >= 1", id="empty"),
+        param(["A", "A"], ValueError, "must have unique values", id="duplicate"),
+        param([1, 2], TypeError, "must be <class 'str'>", id="type-int"),
+        param(["A", None], TypeError, "must be <class 'str'>", id="type-none"),
+    ],
+)
+def test_repetition_limit_constraint_invalid_parameters(parameters, error, match):
+    """Repetition limit constraints require a non-empty list of unique names."""
+    with pytest.raises(error, match=match):
+        DiscreteRepetitionLimitConstraint(
+            parameters=parameters,
+            n_max_repetitions=1,
+        )
+
+
+@pytest.mark.parametrize(
     ("n_max_repetitions", "error", "match"),
     [
         param(2.0, TypeError, "must be <class 'int'>", id="type"),
