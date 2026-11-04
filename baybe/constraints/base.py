@@ -15,7 +15,7 @@ from baybe.serialization import SerialMixin
 from baybe.utils.basic import classproperty
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoDataFrameT, IntoLazyFrameT
+    from narwhals.stable.v2.typing import FrameT, IntoDataFrameT, IntoLazyFrameT
 
 
 @define
@@ -100,21 +100,38 @@ class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
     def __call__(
         self, df: IntoDataFrameT | IntoLazyFrameT, /
     ) -> IntoDataFrameT | IntoLazyFrameT:
-        """Apply the constraint and return the filtered native frame.
+        """Filter a native frame by the constraint.
 
         Args:
             df: A native frame where each row represents a parameter configuration.
+
+        Returns:
+            The filtered native frame. Lazy inputs remain lazy, although frame-wise
+            constraints materialize them while evaluating their mask.
+        """
+        # TODO[typing]: https://github.com/narwhals-dev/narwhals/issues/3319
+        return self._filter(  # type: ignore[type-var]
+            nw.from_native(df)  # pyrefly: ignore[bad-argument-type]
+        ).to_native()
+
+    def _filter(self, df: FrameT, /) -> FrameT:
+        """Filter a Narwhals frame by the constraint.
+
+        Use this internally when the caller already has a Narwhals frame. Public
+        callers should use :meth:`__call__` with a native frame.
+
+        Args:
+            df: A Narwhals frame where each row represents a parameter configuration.
 
         Raises:
             ValueError: If the frame does not contain all columns required for
                 constraint evaluation.
 
         Returns:
-            The filtered native frame. Lazy inputs remain lazy, although frame-based
+            The filtered Narwhals frame. Lazy inputs remain lazy, although frame-wise
             constraints materialize them while evaluating their mask.
         """
-        nw_df = nw.from_native(df)
-        available = set(nw_df.columns)
+        available = set(df.columns)
         if not self._can_evaluate(available):
             missing = self._required_parameters - available
             raise ValueError(
@@ -123,20 +140,15 @@ class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
             )
 
         if self._has_expression_implementation:
-            filtered = nw_df.filter(self._to_expr(nw_df.collect_schema()))
-        else:
-            if isinstance(nw_df, nw.LazyFrame):
-                eager_df = nw_df.collect()
-                is_lazy = True
-            else:
-                eager_df = nw_df
-                is_lazy = False
+            return df.filter(self._to_expr(df.collect_schema()))
 
+        if isinstance(df, nw.LazyFrame):
+            eager_df = df.collect()
             filtered = eager_df.filter(self._to_mask(eager_df))
-            if is_lazy:
-                filtered = filtered.lazy()
+            # TODO[typing]: https://github.com/facebook/pyrefly/issues/1575
+            return filtered.lazy()  # pyrefly: ignore[bad-return]
 
-        return filtered.to_native()
+        return df.filter(self._to_mask(df))
 
     def _can_evaluate(self, available: set[str], /) -> bool:
         """Indicate whether the constraint can be (partially) evaluated.
