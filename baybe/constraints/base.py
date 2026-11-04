@@ -89,8 +89,8 @@ class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
     specification instead defines which entries are **removed** and the complement is
     kept.
 
-    Subclasses implement ``_to_expr`` for row-wise constraints or ``_to_mask`` for
-    frame-wise constraints.
+    Subclasses implement ``_to_matching_expr`` for row-wise constraints or
+    ``_to_matching_mask`` for frame-wise constraints.
     """
 
     # object variables
@@ -123,9 +123,7 @@ class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
             )
 
         if self._has_expression_implementation:
-            matching_expr = self._to_expr(nw_df.collect_schema())
-            keep_expr = ~matching_expr if self.exclude else matching_expr
-            filtered = nw_df.filter(keep_expr)
+            filtered = nw_df.filter(self._to_expr(nw_df.collect_schema()))
         else:
             if isinstance(nw_df, nw.LazyFrame):
                 eager_df = nw_df.collect()
@@ -134,9 +132,7 @@ class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
                 eager_df = nw_df
                 is_lazy = False
 
-            matching_mask = self._to_mask(eager_df)
-            keep_mask = ~matching_mask if self.exclude else matching_mask
-            filtered = eager_df.filter(keep_mask)
+            filtered = eager_df.filter(self._to_mask(eager_df))
             if is_lazy:
                 filtered = filtered.lazy()
 
@@ -164,31 +160,63 @@ class DiscreteFilteringConstraint(DiscreteConstraint, ABC):
     @classproperty
     def _has_expression_implementation(cls) -> bool:
         """Whether this constraint can be represented by a row-wise expression."""
-        return cls._to_expr is not DiscreteFilteringConstraint._to_expr
+        return (
+            cls._to_matching_expr is not DiscreteFilteringConstraint._to_matching_expr
+        )
 
     def _to_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
-        """Return a row-wise expression identifying matching rows.
+        """Return a row-wise expression identifying rows to keep.
 
         Args:
             schema: The schema of the incoming dataframe.
 
         Returns:
+            An expression that evaluates to ``True`` for rows kept by the constraint.
+        """
+        matching = self._to_matching_expr(schema)
+        return ~matching if self.exclude else matching
+
+    def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        """Return a row-wise expression identifying matching rows.
+
+        Args:
+            schema: The schema of the incoming dataframe.
+
+        Raises:
+            NotImplementedError: If the constraint has no expression implementation.
+
+        Returns:
             An expression that evaluates to ``True`` for rows matching the constraint
-            specification (before applying :attr:`exclude`).
+            specification before applying :attr:`exclude`.
         """
         raise NotImplementedError(
             f"'{self.__class__.__name__}' does not have an expression implementation."
         )
 
     def _to_mask(self, df: nw.DataFrame, /) -> nw.Series:
-        """Return a Boolean Narwhals series of rows matching a frame-wise constraint.
+        """Return a Boolean Narwhals series identifying rows to keep.
 
         Args:
             df: The Narwhals dataframe to evaluate.
 
         Returns:
+            A Boolean Narwhals series identifying rows kept by the constraint.
+        """
+        matching = self._to_matching_mask(df)
+        return ~matching if self.exclude else matching
+
+    def _to_matching_mask(self, df: nw.DataFrame, /) -> nw.Series:
+        """Return a Boolean Narwhals series identifying matching rows.
+
+        Args:
+            df: The Narwhals dataframe to evaluate.
+
+        Raises:
+            NotImplementedError: If the constraint has no frame-wise implementation.
+
+        Returns:
             A Boolean Narwhals series identifying rows matching the constraint
-            specification (before applying :attr:`exclude`).
+            specification before applying :attr:`exclude`.
         """
         raise NotImplementedError(
             f"'{self.__class__.__name__}' does not implement frame-wise evaluation."

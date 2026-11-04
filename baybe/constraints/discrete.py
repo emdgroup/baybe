@@ -142,7 +142,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         return True
 
     @override
-    def _to_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+    def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
         satisfied = [
             cond._to_expr(nw.col(param))
             for param, cond in zip(self.parameters, self.conditions, strict=True)
@@ -282,7 +282,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
             )
 
     @override
-    def _to_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+    def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
         weighted = [
             nw.col(p) * c
             for p, c in zip(self.parameters, self.coefficients, strict=True)
@@ -425,7 +425,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
             )
 
     @override
-    def _to_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+    def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
         factors = [nw.col(p) for p in self.parameters]
         product = reduce(lambda left, right: left * right, factors)
         condition = _make_condition(self.operator, self.rhs, self.tolerance)
@@ -550,7 +550,7 @@ class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
         return n_available >= self.n_max_repetitions + 1
 
     @override
-    def _to_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+    def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
         params = [p for p in self.parameters if p in schema]
 
         def _safe_eq(left: str, right: str) -> nw.Expr:
@@ -570,15 +570,17 @@ class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
         ]
         max_multiplicity = nw.max_horizontal(counts)
         if self.exclude:
-            # Missing parameters can only increase the final multiplicity. Add them
+            # Missing parameters can only increase the multiplicity. Add them
             # to obtain an upper bound, so that only rows guaranteed to satisfy the
-            # limit are removed by the constraint inversion
+            # limit can be removed by the constraint inversion.
             n_missing = len(self.parameters) - len(params)
-            return max_multiplicity + n_missing <= self.n_max_repetitions
+            matching = max_multiplicity + n_missing <= self.n_max_repetitions
+        else:
+            # The partial count is a lower bound: rows already exceeding the limit are
+            # definitely invalid; others are re-evaluated later.
+            matching = max_multiplicity <= self.n_max_repetitions
 
-        # The partial count is a lower bound: rows already exceeding the limit are
-        # definitely invalid; others are re-evaluated later
-        return max_multiplicity <= self.n_max_repetitions
+        return matching
 
 
 # >>>>>>>>>> Deprecation
@@ -822,7 +824,7 @@ class DiscreteCustomConstraint(DiscreteFilteringConstraint):
     dataframe and returns a Boolean series of the same backend."""
 
     @override
-    def _to_mask(self, df: nw.DataFrame, /) -> nw.Series:
+    def _to_matching_mask(self, df: nw.DataFrame, /) -> nw.Series:
         native_df = df.select(self.parameters).to_native()
         native_mask = self.validator(native_df)
         return nw.from_native(native_mask, series_only=True)
@@ -899,7 +901,7 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
         return bool(available & set(self.parameters))
 
     @override
-    def _to_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+    def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
         parameters = [p for p in self.parameters if p in schema]
         n_active = nw.sum_horizontal(
             (nw.col(p) != 0.0).cast(nw.UInt16) for p in parameters
@@ -907,14 +909,14 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
 
         # The upper bound is safe on partial frames: the nonzero count can only grow
         # as missing parameters are added.
-        expr = n_active <= self.max_cardinality
+        matching = n_active <= self.max_cardinality
 
         # The lower bound can only be checked once all parameters are available;
         # a partial row may still reach the minimum cardinality later.
         if set(self.parameters) <= set(schema):
-            expr = expr & (n_active >= self.min_cardinality)
+            matching = matching & (n_active >= self.min_cardinality)
 
-        return expr
+        return matching
 
 
 # Filtering constraints are approximately ordered according to increasing computational
