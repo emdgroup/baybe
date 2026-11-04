@@ -620,6 +620,15 @@ def test_custom_constraint(exclude, expected_rows, backend):
     _assert_filter(constraint, _CUSTOM_DATA, expected_rows, backend)
 
 
+def test_custom_constraint_partial_rejected(backend):
+    """Custom constraints defer until all parameters are available."""
+    constraint = DiscreteCustomConstraint(
+        parameters=["temperature", "pressure"],
+        validator=lambda df: df,
+    )
+    _assert_partial_rejected(constraint, [{"temperature": 1.0}], backend)
+
+
 _CARDINALITY_DATA = [
     {"amount_1": 0.0, "amount_2": 0.0, "amount_3": 0.0, "group": "a"},
     {"amount_1": 1.0, "amount_2": 0.0, "amount_3": 0.0, "group": "b"},
