@@ -13,6 +13,34 @@ from tests.constraints.discrete.utils import (
 
 pytestmark = requires_fulltest
 
+##### API #####
+
+
+@pytest.mark.parametrize(
+    ("min_cardinality", "max_cardinality", "error", "match"),
+    [
+        param("0", 0, TypeError, "must be <class 'int'>", id="type-min"),
+        param(0, "1", TypeError, "must be <class 'int'>", id="type-max"),
+        param(-1, 0, ValueError, "'min_cardinality' must be >= 0", id="too-small"),
+        param(1, 0, ValueError, "larger than the upper bound", id="wrong-order"),
+        param(0, 3, ValueError, "exceed the number of parameters", id="too-large"),
+        param(0, 2, ValueError, r"No constraint .* required", id="inactive"),
+    ],
+)
+def test_cardinality_constraint_invalid_bounds(
+    min_cardinality, max_cardinality, error, match
+):
+    """Cardinality constraints reject invalid bounds."""
+    with pytest.raises(error, match=match):
+        DiscreteCardinalityConstraint(
+            parameters=["amount_1", "amount_2"],
+            min_cardinality=min_cardinality,
+            max_cardinality=max_cardinality,
+        )
+
+
+##### Behavior #####
+
 
 _CARDINALITY_DATA = [
     {"amount_1": 0.0, "amount_2": 0.0, "amount_3": 0.0, "group": "a"},
