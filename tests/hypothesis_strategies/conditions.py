@@ -9,14 +9,21 @@ from baybe.constraints.conditions import _THRESHOLD_OPERATORS, _TOLERANCE_OPERAT
 from tests.hypothesis_strategies.basic import finite_floats, positive_finite_floats
 
 
-def sub_selection_conditions(superset: list[Any] | None = None):
+@st.composite
+def sub_selection_conditions(draw: st.DrawFn, superset: list[Any] | None = None):
     """Generate :class:`baybe.constraints.conditions.SubSelectionCondition`."""
     if superset is None:
-        element_strategy = st.text()
+        element_strategy = draw(
+            st.sampled_from([st.text(), finite_floats(), st.booleans()])
+        )
     else:
+        # A valid superset implies homogeneous, supported entries, so every
+        # selection drawn from it is constructible.
+        SubSelectionCondition(superset)
         element_strategy = st.sampled_from(superset)
-    return st.builds(
-        SubSelectionCondition, st.lists(element_strategy, unique=True, min_size=1)
+
+    return SubSelectionCondition(
+        draw(st.lists(element_strategy, unique=True, min_size=1))
     )
 
 
