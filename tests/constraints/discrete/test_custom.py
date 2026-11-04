@@ -13,6 +13,26 @@ from tests.constraints.discrete.utils import (
 
 pytestmark = requires_fulltest
 
+##### API #####
+
+
+@pytest.mark.parametrize(
+    "validator",
+    [
+        param(1, id="int"),
+        param(None, id="none"),
+        param("callable", id="str"),
+        param([1], id="list"),
+    ],
+)
+def test_custom_constraint_invalid_validator(validator):
+    """Custom constraints require a callable validator."""
+    with pytest.raises(TypeError, match="must be callable"):
+        DiscreteCustomConstraint(parameters=["temperature"], validator=validator)
+
+
+##### Behavior #####
+
 
 _CUSTOM_DATA = [
     {"temperature": 1.0, "pressure": 1.0, "solvent": "water"},
