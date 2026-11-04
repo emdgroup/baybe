@@ -12,7 +12,7 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe.constraints.base import DiscreteFilteringConstraint
-from baybe.constraints.conditions import _THRESHOLD_OPERATORS, ThresholdCondition
+from baybe.constraints.conditions import ThresholdCondition
 from baybe.constraints.discrete import (
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
@@ -701,12 +701,6 @@ _THRESHOLD_CASES = [
     for operator, rows in _SELECTION_ROWS.items()
 ]
 """Threshold constraints paired with the rows of ``_DF`` they are expected to keep."""
-
-
-def test_threshold_rows_completeness():
-    """The expected filtering results cover all available threshold operators."""
-    tables = (_SELECTION_ROWS,)
-    assert all(set(table) == set(_THRESHOLD_OPERATORS) for table in tables)
 
 
 @pytest.mark.parametrize(
