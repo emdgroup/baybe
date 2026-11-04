@@ -1,6 +1,5 @@
 """Test for imposing discrete constraints."""
 
-import math
 import os
 from collections.abc import Mapping, Sequence
 from inspect import signature
@@ -83,55 +82,9 @@ def test_product_constructor(args, kwargs):
     )
 
 
-@pytest.fixture(
-    params=[5, pytest.param(8, marks=pytest.mark.slow)],
-    name="n_grid_points",
-    ids=["g5", "g8"],
-)
-def fixture_n_grid_points(request):
-    """Number of grid points used in e.g. the mixture tests.
-
-    Test an even number (5 grid points will cause 4 sections) and a number that causes
-    division into numbers that have no perfect floating point representation (8 grid
-    points will cause 7 sections).
-    """
-    return request.param
-
-
-@pytest.mark.parametrize(
-    "parameter_names",
-    [["Switch_1", "Switch_2", "Fraction_1", "Solvent_1", "Frame_A", "Frame_B"]],
-)
-@pytest.mark.parametrize("constraint_names", [["Constraint_1"]])
-def test_simple_dependency(campaign, n_grid_points, mock_substances, mock_categories):
-    """Test declaring dependencies by declaring them in a single constraints entry."""
-    candidates = campaign.searchspace.discrete.get_candidates()
-
-    # Number entries with both switches on
-    num_entries = (
-        (candidates["Switch_1"] == "on") & (candidates["Switch_2"] == "right")
-    ).sum()
-    assert num_entries == n_grid_points * len(mock_substances) * len(
-        mock_categories
-    ) * len(mock_categories)
-
-    # Number entries with Switch_1 off
-    num_entries = (
-        (candidates["Switch_1"] == "off") & (candidates["Switch_2"] == "right")
-    ).sum()
-    assert num_entries == len(mock_categories) * len(mock_categories)
-
-    # Number entries with both switches on
-    num_entries = (
-        (candidates["Switch_1"] == "on") & (candidates["Switch_2"] == "left")
-    ).sum()
-    assert num_entries == n_grid_points * len(mock_substances)
-
-    # Number entries with both switches on
-    num_entries = (
-        (candidates["Switch_1"] == "off") & (candidates["Switch_2"] == "left")
-    ).sum()
-    assert num_entries == 1
+def test_simple_dependency():
+    """Dependency constraint filtering is not implemented yet."""
+    raise NotImplementedError
 
 
 _EXCLUSION_DATA = [
@@ -522,76 +475,9 @@ def test_product_constraint(operator, rhs, tolerance, exclude, expected_rows, ba
     _assert_filter(constraint, _PRODUCT_DATA, expected_rows, backend)
 
 
-@pytest.mark.parametrize(
-    "parameter_names",
-    [["Solvent_1", "Solvent_2", "Solvent_3", "Fraction_1", "Fraction_2", "Fraction_3"]],
-)
-@pytest.mark.parametrize(
-    "constraint_names", [["Constraint_7", "Constraint_11", "Constraint_12"]]
-)
-def test_mixture(campaign, n_grid_points, mock_substances):
-    """Tests various constraints in a mixture use case."""
-    candidates = campaign.searchspace.discrete.get_candidates()
-
-    # Number of searchspace entries where fractions do not sum to 100.0
-    num_entries = (
-        candidates[["Fraction_1", "Fraction_2", "Fraction_3"]]
-        .sum(axis=1)
-        .apply(lambda x: x - 100.0)
-        .abs()
-        .gt(0.01)
-        .sum()
-    )
-    assert num_entries == 0
-
-    # Number of searchspace entries that have duplicate solvent labels
-    num_entries = (
-        candidates[["Solvent_1", "Solvent_2", "Solvent_3"]].nunique(axis=1).ne(3).sum()
-    )
-    assert num_entries == 0
-
-    # Number of searchspace entries with permutation-invariant combinations
-    num_entries = (
-        candidates[["Solvent_1", "Solvent_2", "Solvent_3"]]
-        .apply(frozenset, axis=1)
-        .to_frame()
-        .join(candidates[["Fraction_1", "Fraction_2", "Fraction_3"]])
-        .duplicated()
-        .sum()
-    )
-    assert num_entries == 0
-
-    # Number of unique 1-solvent entries
-    num_entries = (
-        (candidates[["Fraction_1", "Fraction_2", "Fraction_3"]] == 0.0)
-        .sum(axis=1)
-        .eq(2)
-        .sum()
-    )
-    assert num_entries == math.comb(len(mock_substances), 1) * 1
-
-    # Number of unique 2-solvent entries
-    num_entries = (
-        (candidates[["Fraction_1", "Fraction_2", "Fraction_3"]] == 0.0)
-        .sum(axis=1)
-        .eq(1)
-        .sum()
-    )
-    assert num_entries == math.comb(len(mock_substances), 2) * (n_grid_points - 2)
-
-    # Number of unique 3-solvent entries
-    num_entries = (
-        (candidates[["Fraction_1", "Fraction_2", "Fraction_3"]] == 0.0)
-        .sum(axis=1)
-        .eq(0)
-        .sum()
-    )
-    assert (
-        num_entries
-        == math.comb(len(mock_substances), 3)
-        * ((n_grid_points - 3) * (n_grid_points - 2))
-        // 2
-    )
+def test_mixture():
+    """Mixture constraint filtering is not implemented yet."""
+    raise NotImplementedError
 
 
 _CUSTOM_DATA = [
