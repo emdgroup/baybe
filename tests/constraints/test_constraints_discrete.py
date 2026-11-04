@@ -15,6 +15,7 @@ from pytest import param
 from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.constraints.conditions import _THRESHOLD_OPERATORS, ThresholdCondition
 from baybe.constraints.discrete import (
+    DiscreteCustomConstraint,
     DiscreteLinearConstraint,
     DiscreteProductConstraint,
     DiscreteSelectionConstraint,
@@ -37,11 +38,6 @@ pytestmark = pytest.mark.skipif(
 def fixture_backend(request: pytest.FixtureRequest) -> nw.Implementation:
     """Return the dataframe backend used to construct test frames."""
     return request.param
-
-
-def _frame(data: dict[str, list], backend: nw.Implementation) -> nw.DataFrame:
-    """Create a Narwhals frame from column data for the given backend."""
-    return nw.from_dict(data, backend=backend)
 
 
 def _assert_filter(
@@ -597,35 +593,48 @@ def test_mixture(campaign, n_grid_points, mock_substances):
     )
 
 
+_CUSTOM_DATA = [
+    {"temperature": 1.0, "pressure": 1.0, "solvent": "water"},
+    {"temperature": 2.0, "pressure": 1.0, "solvent": "ethanol"},
+    {"temperature": 1.0, "pressure": 2.0, "solvent": "methanol"},
+    {"temperature": 2.0, "pressure": 2.0, "solvent": "acetone"},
+]
+
+
 @pytest.mark.parametrize(
-    "parameter_names",
-    [["Solvent_1", "Some_Setting", "Temperature", "Pressure"]],
+    ("exclude", "expected_rows"),
+    [
+        param(
+            False,
+            [
+                {"temperature": 2.0, "pressure": 1.0, "solvent": "ethanol"},
+                {"temperature": 1.0, "pressure": 2.0, "solvent": "methanol"},
+                {"temperature": 2.0, "pressure": 2.0, "solvent": "acetone"},
+            ],
+            id="keep",
+        ),
+        param(
+            True,
+            [{"temperature": 1.0, "pressure": 1.0, "solvent": "water"}],
+            id="exclude",
+        ),
+    ],
 )
-@pytest.mark.parametrize("constraint_names", [["Constraint_13"]])
-def test_custom(campaign):
-    """Tests custom constraint (uses config from exclude test)."""
-    candidates = campaign.searchspace.discrete.get_candidates()
+def test_custom_constraint(exclude, expected_rows, backend):
+    """Custom constraints apply a backend-native validator with optional inversion."""
 
-    num_entries = (
-        candidates["Pressure"].apply(lambda x: x > 5)
-        & candidates["Temperature"].apply(lambda x: x > 120)
-        & candidates["Solvent_1"].eq("water")
-    ).sum()
-    assert num_entries == 0
+    def validator(df):
+        nw_df = nw.from_native(df, eager_only=True)
+        assert nw_df.implementation == backend
+        assert set(nw_df.columns) == {"temperature", "pressure"}
+        return (nw_df["temperature"] + nw_df["pressure"] >= 3.0).to_native()
 
-    (
-        candidates["Pressure"].apply(lambda x: x > 3)
-        & candidates["Temperature"].apply(lambda x: x > 180)
-        & candidates["Solvent_1"].eq("C2")
-    ).sum()
-    assert num_entries == 0
-
-    (
-        candidates["Pressure"].apply(lambda x: x > 3)
-        & candidates["Temperature"].apply(lambda x: x < 150)
-        & candidates["Solvent_1"].eq("C3")
-    ).sum()
-    assert num_entries == 0
+    constraint = DiscreteCustomConstraint(
+        parameters=["temperature", "pressure"],
+        validator=validator,
+        exclude=exclude,
+    )
+    _assert_filter(constraint, _CUSTOM_DATA, expected_rows, backend)
 
 
 @pytest.mark.parametrize(
