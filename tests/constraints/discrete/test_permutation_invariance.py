@@ -1,6 +1,6 @@
 """Tests for the discrete permutation invariance constraint."""
 
-from tests.constraints.discrete.utils import requires_fulltest
+from tests.constraints.utils import requires_fulltest
 
 pytestmark = requires_fulltest
 

@@ -1,4 +1,4 @@
-"""Fixtures for discrete constraint tests."""
+"""Fixtures for constraint tests."""
 
 import narwhals.stable.v2 as nw
 import pytest

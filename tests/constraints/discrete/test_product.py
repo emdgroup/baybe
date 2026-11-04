@@ -7,8 +7,8 @@ from baybe.constraints.discrete import DiscreteProductConstraint
 from tests.constraints.discrete.utils import (
     assert_filter,
     assert_partial_rejected,
-    requires_fulltest,
 )
+from tests.constraints.utils import requires_fulltest
 
 pytestmark = requires_fulltest
 

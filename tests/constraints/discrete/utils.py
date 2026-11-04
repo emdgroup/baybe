@@ -1,6 +1,5 @@
 """Shared helpers for discrete constraint tests."""
 
-import os
 from collections.abc import Mapping, Sequence
 
 import narwhals.stable.v2 as nw
@@ -8,12 +7,6 @@ import pytest
 from narwhals.testing import assert_frame_equal as assert_nw_frame_equal
 
 from baybe.constraints.base import DiscreteFilteringConstraint
-
-#: Module-level mark restricting a test module to the full test environment.
-requires_fulltest = pytest.mark.skipif(
-    os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
-    reason="Requires the optional Polars dependency.",
-)
 
 
 def assert_filter(
