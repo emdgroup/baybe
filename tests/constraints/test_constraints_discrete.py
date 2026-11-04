@@ -424,6 +424,16 @@ def test_linear_constraint(
     _assert_filter(constraint, _LINEAR_DATA, expected_rows, backend)
 
 
+def test_linear_constraint_partial_rejected(backend):
+    """Linear constraints defer until all parameters are available."""
+    constraint = DiscreteLinearConstraint(
+        parameters=["amount_1", "amount_2"],
+        operator="<=",
+        rhs=2.0,
+    )
+    _assert_partial_rejected(constraint, [{"amount_1": 1.0}], backend)
+
+
 _PRODUCT_DATA = [
     {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
     {"amount_1": 1.0, "amount_2": 0.0, "solvent": "ethanol"},
