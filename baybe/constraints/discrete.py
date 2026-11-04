@@ -11,11 +11,19 @@ from typing import TYPE_CHECKING, Any, ClassVar, get_type_hints, overload
 
 import cattrs
 import narwhals.stable.v2 as nw
-import pandas as pd
 from attrs import define, field, fields
 from attrs.converters import optional as optional_c
-from attrs.validators import deep_iterable, ge, gt, in_, instance_of, min_len
+from attrs.validators import (
+    deep_iterable,
+    ge,
+    gt,
+    in_,
+    instance_of,
+    is_callable,
+    min_len,
+)
 from attrs.validators import optional as optional_v
+from narwhals.stable.v2.typing import IntoDataFrame, IntoSeries
 from typing_extensions import override
 
 from baybe.constraints.base import (
@@ -809,16 +817,15 @@ class DiscreteCustomConstraint(DiscreteFilteringConstraint):
     """Class for user-defined custom constraints."""
 
     # object variables
-    validator: Callable[[pd.DataFrame], pd.Series] = field()
-    """A user-defined function modeling the validation of the constraint. The expected
-    return is a pandas series with Boolean entries True/False for search space elements
-    you want to keep/remove."""
+    validator: Callable[[IntoDataFrame], IntoSeries] = field(validator=is_callable())
+    """A user-defined function that receives the selected parameters as a native
+    dataframe and returns a Boolean series of the same backend."""
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        mask_good = self.validator(df[self.parameters])
-
-        return df.index[mask_good]
+    def _to_mask(self, df: nw.DataFrame, /) -> nw.Series:
+        native_df = df.select(self.parameters).to_native()
+        native_mask = self.validator(native_df)
+        return nw.from_native(native_mask, series_only=True)
 
 
 @define

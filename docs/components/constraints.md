@@ -523,15 +523,17 @@ DiscreteCardinalityConstraint(
 
 #### DiscreteCustomConstraint
 With a [`DiscreteCustomConstraint`](baybe.constraints.discrete.DiscreteCustomConstraint) 
-constraint, you can specify a completely custom filter:
+constraint, you can specify a completely custom filter. The validator receives the
+selected parameters as a native dataframe of the active backend (e.g. pandas or Polars)
+and must return a native Boolean series.
 
 ```python
-import pandas as pd
 import numpy as np
+import pandas as pd
 from baybe.constraints import DiscreteCustomConstraint
 
 
-def custom_filter(df: pd.DataFrame) -> pd.Series:  # this signature is required
+def custom_filter(df: pd.DataFrame) -> pd.Series:
     """
     In this example, we exclude entries where the square root of the
     temperature times the cubed pressure are larger than 5.6.
