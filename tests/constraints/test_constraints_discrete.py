@@ -1,6 +1,5 @@
 """Test for imposing discrete constraints."""
 
-import itertools
 import math
 import os
 from collections.abc import Mapping, Sequence
@@ -219,15 +218,184 @@ def test_exclusion(combiner, exclude, expected_rows, backend):
     _assert_filter(constraint, _EXCLUSION_DATA, expected_rows, backend)
 
 
-@pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
-@pytest.mark.parametrize("constraint_names", [["Constraint_8"]])
-def test_prodsum1(campaign):
-    """Tests sum constraint."""
-    candidates = campaign.searchspace.discrete.get_candidates()
+_LINEAR_DATA = [
+    {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
+    {"amount_1": 1.0, "amount_2": 0.0, "solvent": "ethanol"},
+    {"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"},
+    {"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"},
+    {"amount_1": 5.0, "amount_2": 0.0, "solvent": "water"},
+    {"amount_1": 10.0, "amount_2": 0.0, "solvent": "hexane"},
+]
 
-    # Number of entries with 1,2-sum above 150
-    num_entries = (candidates[["Fraction_1", "Fraction_2"]].sum(axis=1) > 150.0).sum()
-    assert num_entries == 0
+
+@pytest.mark.parametrize(
+    ("coefficients", "operator", "rhs", "tolerance", "exclude", "expected_rows"),
+    [
+        param(
+            None,
+            "<",
+            2.0,
+            None,
+            False,
+            [
+                {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 1.0, "amount_2": 0.0, "solvent": "ethanol"},
+            ],
+            id="operator-lt",
+        ),
+        param(
+            None,
+            "<=",
+            2.0,
+            None,
+            False,
+            [
+                {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 1.0, "amount_2": 0.0, "solvent": "ethanol"},
+                {"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"},
+            ],
+            id="operator-le",
+        ),
+        param(
+            None,
+            "=",
+            2.0,
+            None,
+            False,
+            [{"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"}],
+            id="operator-eq",
+        ),
+        param(
+            None,
+            "==",
+            2.0,
+            None,
+            False,
+            [{"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"}],
+            id="operator-eq-alias",
+        ),
+        param(
+            None,
+            "!=",
+            2.0,
+            None,
+            False,
+            [
+                {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 1.0, "amount_2": 0.0, "solvent": "ethanol"},
+                {"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"},
+                {"amount_1": 5.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 10.0, "amount_2": 0.0, "solvent": "hexane"},
+            ],
+            id="operator-ne",
+        ),
+        param(
+            None,
+            ">",
+            2.0,
+            None,
+            False,
+            [
+                {"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"},
+                {"amount_1": 5.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 10.0, "amount_2": 0.0, "solvent": "hexane"},
+            ],
+            id="operator-gt",
+        ),
+        param(
+            None,
+            ">=",
+            2.0,
+            None,
+            False,
+            [
+                {"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"},
+                {"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"},
+                {"amount_1": 5.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 10.0, "amount_2": 0.0, "solvent": "hexane"},
+            ],
+            id="operator-ge",
+        ),
+        param(
+            (2.0, 1.0),
+            "<=",
+            2.0,
+            None,
+            False,
+            [
+                {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 1.0, "amount_2": 0.0, "solvent": "ethanol"},
+            ],
+            id="coefficients-scaled",
+        ),
+        param(
+            (1.0, -1.0),
+            "<=",
+            0.0,
+            None,
+            False,
+            [
+                {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"},
+            ],
+            id="coefficients-negative",
+        ),
+        param(
+            (2.0, 1.0),
+            "=",
+            3.0,
+            None,
+            False,
+            [{"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"}],
+            id="coefficients-equality",
+        ),
+        param(
+            None,
+            "=",
+            2.5,
+            0.5,
+            False,
+            [
+                {"amount_1": 1.0, "amount_2": 1.0, "solvent": "methanol"},
+                {"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"},
+            ],
+            id="tolerance",
+        ),
+        param(
+            None,
+            "<=",
+            2.0,
+            None,
+            True,
+            [
+                {"amount_1": 2.0, "amount_2": 1.0, "solvent": "acetone"},
+                {"amount_1": 5.0, "amount_2": 0.0, "solvent": "water"},
+                {"amount_1": 10.0, "amount_2": 0.0, "solvent": "hexane"},
+            ],
+            id="exclude",
+        ),
+    ],
+)
+def test_linear_constraint(
+    coefficients,
+    operator,
+    rhs,
+    tolerance,
+    exclude,
+    expected_rows,
+    backend,
+):
+    """Cover all operator, coefficient, tolerance, and exclusion regimes."""
+    kwargs = {} if coefficients is None else {"coefficients": coefficients}
+    constraint = DiscreteLinearConstraint(
+        parameters=["amount_1", "amount_2"],
+        operator=operator,
+        rhs=rhs,
+        tolerance=tolerance,
+        exclude=exclude,
+        **kwargs,
+    )
+    _assert_filter(constraint, _LINEAR_DATA, expected_rows, backend)
 
 
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
@@ -238,23 +406,6 @@ def test_prodsum2(campaign):
 
     # Number of entries with product under 30
     num_entries = (candidates[["Fraction_1", "Fraction_2"]].prod(axis=1) < 30).sum()
-    assert num_entries == 0
-
-
-@pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
-@pytest.mark.parametrize("constraint_names", [["Constraint_10"]])
-def test_prodsum3(campaign):
-    """Tests exact sum constraint."""
-    candidates = campaign.searchspace.discrete.get_candidates()
-    # Number of entries with sum unequal to 100
-    num_entries = (
-        candidates[["Fraction_1", "Fraction_2"]]
-        .sum(axis=1)
-        .apply(lambda x: x - 100.0)
-        .abs()
-        .gt(0.01)
-        .sum()
-    )
     assert num_entries == 0
 
 
@@ -382,36 +533,6 @@ def test_cardinality(campaign):
 
 
 @pytest.mark.parametrize(
-    ("coefficients", "threshold", "operator", "n_invalid"),
-    [
-        param(None, 1.0, "<=", 3, id="default"),
-        param((1.0, 1.0), 1.0, "<=", 3, id="all-ones"),
-        param((2.0, 1.0), 1.0, "<=", 5, id="scaled"),
-        param((1.0, -1.0), 0.5, "<=", 1, id="negative"),
-        param((1.0, 1.0), 1.0, "=", 6, id="equality"),
-    ],
-)
-def test_linear_constraint_coefficients(coefficients, threshold, operator, n_invalid):
-    """DiscreteLinearConstraint filters with default and custom coefficients."""
-    kwargs = {} if coefficients is None else {"coefficients": coefficients}
-    constraint = DiscreteLinearConstraint(
-        parameters=["A", "B"],
-        operator=operator,
-        rhs=threshold,
-        **kwargs,
-    )
-    df = pd.DataFrame(
-        list(itertools.product([0.0, 0.5, 1.0], repeat=2)), columns=["A", "B"]
-    )
-    coeffs = coefficients or (1.0, 1.0)
-    weighted = df["A"] * coeffs[0] + df["B"] * coeffs[1]
-    expected = df.index[ThresholdCondition(threshold, operator).evaluate(weighted)]
-    filtered = constraint(df)
-    assert list(filtered.index) == list(expected)
-    assert len(df) - len(filtered) == n_invalid
-
-
-@pytest.mark.parametrize(
     ("combiner", "exclude", "partial_ok"),
     [
         param("AND", False, True, id="AND-keep"),
@@ -481,17 +602,6 @@ _PARAMETERS = [
 ]
 """The parameters spanning the unconstrained product."""
 
-_LINEAR_ROWS = {
-    "<": [0, 1, 3],
-    "<=": [0, 1, 3, 4],
-    "=": [4],
-    "==": [4],
-    "!=": [0, 1, 2, 3, 5, 6, 7, 8],
-    ">": [2, 5, 6, 7, 8],
-    ">=": [2, 4, 5, 6, 7, 8],
-}
-"""The rows of ``_DF`` whose column sum satisfies the operator against 4.0."""
-
 _PRODUCT_ROWS = {
     "<": [0, 1, 3],
     "<=": [0, 1, 2, 3, 4, 6],
@@ -514,42 +624,29 @@ _SELECTION_ROWS = {
 }
 """The rows of ``_DF`` whose column ``a`` satisfies the operator against 2.0."""
 
-_THRESHOLD_CASES = (
-    [
-        param(
-            DiscreteLinearConstraint(parameters=["a", "b"], operator=operator, rhs=4.0),
-            rows,
-            id=f"linear-{operator}",
-        )
-        for operator, rows in _LINEAR_ROWS.items()
-    ]
-    + [
-        param(
-            DiscreteProductConstraint(
-                parameters=["a", "b"], operator=operator, rhs=4.0
-            ),
-            rows,
-            id=f"product-{operator}",
-        )
-        for operator, rows in _PRODUCT_ROWS.items()
-    ]
-    + [
-        param(
-            DiscreteSelectionConstraint(
-                parameters=["a"], conditions=[ThresholdCondition(2.0, operator)]
-            ),
-            rows,
-            id=f"selection-{operator}",
-        )
-        for operator, rows in _SELECTION_ROWS.items()
-    ]
-)
+_THRESHOLD_CASES = [
+    param(
+        DiscreteProductConstraint(parameters=["a", "b"], operator=operator, rhs=4.0),
+        rows,
+        id=f"product-{operator}",
+    )
+    for operator, rows in _PRODUCT_ROWS.items()
+] + [
+    param(
+        DiscreteSelectionConstraint(
+            parameters=["a"], conditions=[ThresholdCondition(2.0, operator)]
+        ),
+        rows,
+        id=f"selection-{operator}",
+    )
+    for operator, rows in _SELECTION_ROWS.items()
+]
 """Threshold constraints paired with the rows of ``_DF`` they are expected to keep."""
 
 
 def test_threshold_rows_completeness():
     """The expected filtering results cover all available threshold operators."""
-    tables = (_LINEAR_ROWS, _PRODUCT_ROWS, _SELECTION_ROWS)
+    tables = (_PRODUCT_ROWS, _SELECTION_ROWS)
     assert all(set(table) == set(_THRESHOLD_OPERATORS) for table in tables)
 
 
