@@ -12,6 +12,81 @@ from tests.constraints.discrete.utils import (
 
 pytestmark = requires_fulltest
 
+##### API #####
+
+
+@pytest.mark.parametrize(
+    "operator",
+    [
+        param("~", id="unknown"),
+        param("<>", id="wrong"),
+        param("=<", id="reversed"),
+    ],
+)
+def test_linear_constraint_invalid_operator(operator):
+    """Linear constraints reject unknown comparison operators."""
+    with pytest.raises(ValueError, match="'operator' must be in"):
+        DiscreteLinearConstraint(parameters=["A", "B"], operator=operator, rhs=1.0)
+
+
+@pytest.mark.parametrize(
+    ("coefficients", "match"),
+    [
+        param((1.0, 2.0), "'coefficients' list must have one", id="length-mismatch"),
+        param((1.0, 0.0, 1.0), "'coefficients' must be non-zero", id="zero"),
+        param((1.0, float("nan"), 1.0), "cannot be 'nan'", id="nan"),
+        param((1.0, float("inf"), 1.0), "cannot be 'inf'", id="inf"),
+    ],
+)
+def test_linear_constraint_invalid_coefficients(coefficients, match):
+    """Linear constraints reject invalid coefficient vectors."""
+    with pytest.raises(ValueError, match=match):
+        DiscreteLinearConstraint(
+            parameters=["A", "B", "C"],
+            operator="<=",
+            rhs=1.0,
+            coefficients=coefficients,
+        )
+
+
+@pytest.mark.parametrize(
+    ("rhs", "match"),
+    [
+        param(float("nan"), "cannot be 'nan'", id="nan"),
+        param(float("inf"), "cannot be 'inf'", id="inf"),
+        param(-float("inf"), "cannot be 'inf'", id="neg-inf"),
+    ],
+)
+def test_linear_constraint_invalid_rhs(rhs, match):
+    """Linear constraints reject non-finite right-hand sides."""
+    with pytest.raises(ValueError, match=match):
+        DiscreteLinearConstraint(parameters=["A", "B"], operator="<=", rhs=rhs)
+
+
+@pytest.mark.parametrize(
+    ("operator", "tolerance", "match"),
+    [
+        param("=", float("nan"), "cannot be 'nan'", id="nan"),
+        param("=", float("inf"), "cannot be 'inf'", id="inf"),
+        param("=", -float("inf"), "cannot be 'inf'", id="neg-inf"),
+        param("=", 0.0, "must be > 0", id="zero"),
+        param("=", -1.0, "must be > 0", id="negative"),
+        param(">=", 0.1, "valid with the following operators", id="wrong-operator"),
+    ],
+)
+def test_linear_constraint_invalid_tolerance(operator, tolerance, match):
+    """Linear constraints reject invalid or inapplicable tolerances."""
+    with pytest.raises(ValueError, match=match):
+        DiscreteLinearConstraint(
+            parameters=["A", "B"],
+            operator=operator,
+            rhs=1.0,
+            tolerance=tolerance,
+        )
+
+
+##### Behavior #####
+
 
 _LINEAR_DATA = [
     {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
