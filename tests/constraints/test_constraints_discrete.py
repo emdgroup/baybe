@@ -561,6 +561,16 @@ def test_product_constraint(operator, rhs, tolerance, exclude, expected_rows, ba
     _assert_filter(constraint, _PRODUCT_DATA, expected_rows, backend)
 
 
+def test_product_constraint_partial_rejected(backend):
+    """Product constraints defer until all parameters are available."""
+    constraint = DiscreteProductConstraint(
+        parameters=["amount_1", "amount_2"],
+        operator="<=",
+        rhs=2.0,
+    )
+    _assert_partial_rejected(constraint, [{"amount_1": 1.0}], backend)
+
+
 def test_mixture():
     """Mixture constraint filtering is not implemented yet."""
     raise NotImplementedError
