@@ -114,11 +114,25 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     """
 
     # object variables
-    conditions: list[Condition] = field(validator=min_len(1))
+    conditions: list[Condition] = field(
+        validator=[
+            min_len(1),
+            deep_iterable(member_validator=instance_of(Condition)),
+        ]
+    )
     """List of individual conditions."""
 
     combiner: str = field(default="AND", validator=in_(_LOGIC_COMBINERS))
     """Operator encoding how to combine the individual conditions."""
+
+    @conditions.validator
+    def _validate_conditions(self, _: Any, conditions: list[Condition]) -> None:
+        if len(conditions) != len(self.parameters):
+            raise ValueError(
+                f"'{fields(type(self)).conditions.alias}' must contain exactly one "
+                f"condition per parameter, but got {len(conditions)} conditions for "
+                f"{len(self.parameters)} parameters."
+            )
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:

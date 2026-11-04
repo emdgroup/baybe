@@ -35,10 +35,34 @@ def test_selection_constraint_invalid_parameters(parameters, error, match):
         )
 
 
-def test_selection_constraint_invalid_conditions():
-    """Selection constraints require at least one condition."""
-    with pytest.raises(ValueError, match="Length of 'conditions' must be >= 1"):
-        DiscreteSelectionConstraint(parameters=["temperature"], conditions=[])
+@pytest.mark.parametrize(
+    ("parameters", "conditions", "error", "match"),
+    [
+        param(["temperature"], [], ValueError, "must be >= 1", id="empty"),
+        param(
+            ["temperature", "pressure"],
+            [ThresholdCondition(threshold=0.0, operator=">")],
+            ValueError,
+            "exactly one condition per parameter",
+            id="too-few",
+        ),
+        param(
+            ["temperature"],
+            [
+                ThresholdCondition(threshold=0.0, operator=">"),
+                ThresholdCondition(threshold=1.0, operator="<"),
+            ],
+            ValueError,
+            "exactly one condition per parameter",
+            id="too-many",
+        ),
+        param(["temperature"], [1], TypeError, "Condition", id="type"),
+    ],
+)
+def test_selection_constraint_invalid_conditions(parameters, conditions, error, match):
+    """Selection constraints require exactly one condition per parameter."""
+    with pytest.raises(error, match=match):
+        DiscreteSelectionConstraint(parameters=parameters, conditions=conditions)
 
 
 @pytest.mark.parametrize(
