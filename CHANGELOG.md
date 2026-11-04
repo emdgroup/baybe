@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   center, which caused `OptimizationGradientError` during recommendation
 - `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
   constraint filtering
+- `ThresholdCondition` now treats missing values as non-matching for all operators;
+  previously, the `!=` operator admitted them
 - Pending experiments containing extra columns or duplicate column names are now
   rejected before recommendation
 - Subset sampling without replacement no longer relies on a duplicate-rejection mechanism

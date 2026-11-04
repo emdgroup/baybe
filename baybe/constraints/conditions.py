@@ -164,13 +164,11 @@ class ThresholdCondition(Condition):
             close = (expr >= self.threshold - self.tolerance) & (
                 expr <= self.threshold + self.tolerance
             )
-            if self.operator == "!=":
-                return (~close).fill_null(True)
-            return close.fill_null(False)
+            matching = ~close if self.operator == "!=" else close
+        else:
+            matching = _THRESHOLD_OPERATORS[self.operator](expr, self.threshold)
 
-        return _THRESHOLD_OPERATORS[self.operator](expr, self.threshold).fill_null(
-            False
-        )
+        return (matching & ~expr.is_null()).fill_null(False)
 
 
 @define
