@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection, Sequence
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
@@ -249,28 +249,6 @@ def parameter_cartesian_prod_pandas_constrained(
     if original_columns:
         df = df[original_columns]
     df.reset_index(drop=True, inplace=True)
-
-    return df
-
-
-def _apply_constraint_filter_pandas(
-    df: pd.DataFrame, constraints: Collection[DiscreteFilteringConstraint]
-) -> pd.DataFrame:
-    """Remove discrete search space entries based on constraints.
-
-    The filtering is done inplace, but the modified object is still returned.
-
-    Args:
-        df: The data in experimental representation to be modified inplace.
-        constraints: Filtering constraints to apply.
-
-    Returns:
-        The filtered dataframe.
-    """
-    for constraint in constraints:
-        idxs = constraint.get_invalid(df)
-        df.drop(index=idxs, inplace=True)
-    df.reset_index(inplace=True, drop=True)
 
     return df
 

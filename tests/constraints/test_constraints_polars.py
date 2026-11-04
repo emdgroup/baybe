@@ -12,12 +12,12 @@ from baybe.constraints import (
 )
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace.utils import (
-    _apply_constraint_filter_pandas,
     _apply_constraint_filter_polars,
     build_constrained_product,
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )
+from tests.constraints.utils import apply_filtering_constraints
 
 pytestmark = pytest.mark.skipif(
     not POLARS_INSTALLED, reason="Optional polars dependency not installed."
@@ -94,7 +94,7 @@ def test_polars_sum_constraint(parameters, coefficients, threshold, operator):
     ldf = _lazyframe_from_product(parameters)
     df_pd = parameter_cartesian_prod_pandas(parameters)
 
-    _apply_constraint_filter_pandas(df_pd, [constraint])
+    df_pd = apply_filtering_constraints(df_pd, [constraint])
     df_pl = _apply_constraint_filter_polars(ldf, [constraint]).collect().to_pandas()
 
     # Correctness: all remaining rows satisfy the constraint
@@ -206,7 +206,7 @@ def test_polars_product(constraints, parameters):
     assert_frame_equal(df_pl.to_pandas(), df_pd)
 
     # Apply constraints
-    df_pd_filtered = _apply_constraint_filter_pandas(df_pd, constraints)
+    df_pd_filtered = apply_filtering_constraints(df_pd, constraints)
     df_pl_filtered = (
         _apply_constraint_filter_polars(ldf, constraints).collect().to_pandas()
     )
@@ -247,7 +247,7 @@ def test_mixed_polars_pandas_constraints():
 
     # Naive reference: full product then filter
     df_naive = parameter_cartesian_prod_pandas(parameters)
-    _apply_constraint_filter_pandas(df_naive, constraints)
+    df_naive = apply_filtering_constraints(df_naive, constraints)
 
     # Under test: build_constrained_product routes through Polars partitioning
     df_result = build_constrained_product(parameters, constraints)

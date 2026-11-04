@@ -24,10 +24,10 @@ from baybe.constraints.base import DiscreteConstraint
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace.utils import (
-    _apply_constraint_filter_pandas,
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_pandas_constrained,
 )
+from tests.constraints.utils import apply_filtering_constraints
 
 
 def _no_constraints_scenario() -> tuple[
@@ -292,8 +292,9 @@ def test_constrained_cartesian_product(scenario):
     )
 
     # Naive approach: full product then filter
-    df_naive = parameter_cartesian_prod_pandas(parameters)
-    _apply_constraint_filter_pandas(df_naive, constraints)
+    df_naive = apply_filtering_constraints(
+        parameter_cartesian_prod_pandas(parameters), constraints
+    )
 
     # Incremental approach
     df_incremental = parameter_cartesian_prod_pandas_constrained(
