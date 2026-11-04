@@ -98,6 +98,13 @@ _SELECTION_DATA = [
 ]
 
 
+_SELECTION_PARTIAL_DATA = (
+    nw.from_dicts(_SELECTION_DATA, backend=nw.Implementation.POLARS)
+    .select("temperature", "solvent")
+    .rows(named=True)
+)
+
+
 @pytest.mark.parametrize(
     ("combiner", "exclude", "expected_rows"),
     [
@@ -169,13 +176,6 @@ def test_selection_constraint(combiner, exclude, expected_rows, backend):
         exclude=exclude,
     )
     _assert_filter(constraint, _SELECTION_DATA, expected_rows, backend)
-
-
-_SELECTION_PARTIAL_DATA = (
-    nw.from_dicts(_SELECTION_DATA, backend=nw.Implementation.POLARS)
-    .select("temperature", "solvent")
-    .rows(named=True)
-)
 
 
 @pytest.mark.parametrize(
@@ -576,6 +576,13 @@ _REPETITION_DATA = [
 ]
 
 
+_REPETITION_PARTIAL_DATA = (
+    nw.from_dicts(_REPETITION_DATA, backend=nw.Implementation.POLARS)
+    .select("a", "b", "group")
+    .rows(named=True)
+)
+
+
 @pytest.mark.parametrize(
     ("n_max_repetitions", "exclude", "expected_rows"),
     [
@@ -635,13 +642,6 @@ def test_repetition_limit_constraint_dtype_mismatch(backend):
         n_max_repetitions=1,
     )
     _assert_filter(constraint, data, data, backend)
-
-
-_REPETITION_PARTIAL_DATA = (
-    nw.from_dicts(_REPETITION_DATA, backend=nw.Implementation.POLARS)
-    .select("a", "b", "group")
-    .rows(named=True)
-)
 
 
 @pytest.mark.parametrize(
@@ -760,6 +760,13 @@ _CARDINALITY_DATA = [
 ]
 
 
+_CARDINALITY_PARTIAL_DATA = (
+    nw.from_dicts(_CARDINALITY_DATA, backend=nw.Implementation.POLARS)
+    .select("amount_1", "amount_2", "group")
+    .rows(named=True)
+)
+
+
 @pytest.mark.parametrize(
     ("min_cardinality", "max_cardinality", "exclude", "expected_rows"),
     [
@@ -835,13 +842,6 @@ def test_cardinality_constraint(
         exclude=exclude,
     )
     _assert_filter(constraint, _CARDINALITY_DATA, expected_rows, backend)
-
-
-_CARDINALITY_PARTIAL_DATA = (
-    nw.from_dicts(_CARDINALITY_DATA, backend=nw.Implementation.POLARS)
-    .select("amount_1", "amount_2", "group")
-    .rows(named=True)
-)
 
 
 def test_cardinality_constraint_partial_accepted(backend):
