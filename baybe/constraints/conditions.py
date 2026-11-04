@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import numbers
 import operator as ops
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -18,7 +19,6 @@ from typing_extensions import override
 from baybe.serialization import (
     SerialMixin,
 )
-from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
 from baybe.utils.validation import finite_float, validate_unique_values
 
@@ -45,6 +45,20 @@ _LOGIC_COMBINERS = {
     "OR": ops.or_,
     "XOR": ops.ne,
 }
+
+
+def _selection_dtypes(value: Any) -> tuple[type, ...]:
+    """Return the Narwhals dtypes that a sub-selection entry can be matched against."""
+    if isinstance(value, bool):
+        return (nw.dtypes.Boolean,)
+    if isinstance(value, numbers.Real):
+        return (nw.dtypes.NumericType,)
+    if isinstance(value, str):
+        return nw.dtypes.String, nw.dtypes.Categorical, nw.dtypes.Enum
+    raise ValueError(
+        f"Sub-selection entries must be strings, Booleans, or numbers, but got "
+        f"{value!r}."
+    )
 
 
 class Condition(ABC, SerialMixin):
@@ -149,8 +163,8 @@ class ThresholdCondition(Condition):
                 )
 
     @override
-    def _validate_series(self, data: Series, /) -> None:
-        if not isinstance(data.dtype, (nw.dtypes.NumericType, nw.dtypes.Boolean)):
+    def _validate_series(self, series: Series, /) -> None:
+        if not isinstance(series.dtype, (nw.dtypes.NumericType, nw.dtypes.Boolean)):
             raise ValueError(
                 "You tried to apply a threshold condition to non-numeric data. "
                 "This operation is error-prone and not supported. Only use threshold "
@@ -176,7 +190,7 @@ class SubSelectionCondition(Condition):
     """Class for defining valid parameter entries."""
 
     # object variables
-    _selection: tuple = field(
+    selection: tuple = field(
         converter=to_tuple,
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
@@ -184,16 +198,32 @@ class SubSelectionCondition(Condition):
             validate_unique_values,
         ],
     )
-    """The internal list of items which are considered valid."""
+    """The items that are considered valid."""
+
+    @selection.validator
+    def _validate_selection(self, _: Any, selection: tuple) -> None:
+        dtypes = _selection_dtypes(selection[0])
+        if any(_selection_dtypes(item) != dtypes for item in selection[1:]):
+            raise ValueError(
+                f"All entries of a '{type(self).__name__}' must have a common type, "
+                f"but got {selection!r}."
+            )
 
     @property
-    def selection(self) -> tuple:
-        """The list of items which are considered valid."""
-        return tuple(
-            active_settings.DTypeFloatNumpy(itm)
-            if isinstance(itm, (float, int, bool))
-            else itm
-            for itm in self._selection
+    def _dtypes(self) -> tuple[type, ...]:
+        """The Narwhals dtypes that the selection entries can be matched against."""
+        return _selection_dtypes(self.selection[0])
+
+    @override
+    def _validate_series(self, series: Series, /) -> None:
+        # All-null series are typeless, and the backends report different dtypes for
+        # them, so no compatibility check is possible.
+        if isinstance(series.dtype, self._dtypes) or series.is_null().all():
+            return
+
+        raise ValueError(
+            f"A '{type(self).__name__}' with entries {self.selection!r} cannot "
+            f"be applied to data of type '{series.dtype}'."
         )
 
     @override

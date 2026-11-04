@@ -17,10 +17,12 @@ pytestmark = requires_fulltest
     [
         param([], "must be >= 1", id="empty"),
         param(["a", "a"], "must be unique", id="duplicate"),
+        param(["a", 1], "common type", id="mixed"),
+        param([None], "must be strings, Booleans, or numbers", id="none"),
     ],
 )
 def test_subselection_condition_invalid_selection(selection, match):
-    """Sub-selection conditions require a non-empty list of unique values."""
+    """Sub-selection conditions require unique values of a single type."""
     with pytest.raises(ValueError, match=match):
         SubSelectionCondition(selection=selection)
 
@@ -33,12 +35,31 @@ def test_subselection_condition_invalid_selection(selection, match):
     [
         param(["a", "b"], ["a", "b", "c", None], ["a", "b"], id="strings"),
         param([1.0, 2.0], [1, 2, 3], [1, 2], id="integers"),
-        param([1.5], [1.5, 2.5, None], [1.5], id="floats"),
+        param([1, 2], [1.0, 2.0, 3.0], [1.0, 2.0], id="floats"),
+        param([1.5], [1.5, 2.5, None], [1.5], id="floats-nullable"),
+        param([True], [True, False], [True], id="booleans"),
         param(["x"], ["a", "b"], [], id="no-match"),
-        param(["a"], [None, None], [], id="all-null"),
+        param([1], [None, None], [], id="all-null"),
     ],
 )
 def test_subselection_condition_filters_values(selection, values, expected, backend):
     """Sub-selection conditions keep only the selected values."""
     condition = SubSelectionCondition(selection=selection)
     assert apply_condition(condition, values, backend) == expected
+
+
+@pytest.mark.parametrize(
+    ("selection", "values"),
+    [
+        param([True], [1, 2], id="boolean-on-numeric"),
+        param([1], [True, False], id="numeric-on-boolean"),
+        param([1], ["a", "b"], id="numeric-on-string"),
+        param(["a"], [1.0, 2.0], id="string-on-numeric"),
+        param(["a"], [True, False], id="string-on-boolean"),
+    ],
+)
+def test_subselection_condition_incompatible_values(selection, values, backend):
+    """Sub-selection conditions reject values of a different type."""
+    condition = SubSelectionCondition(selection=selection)
+    with pytest.raises(ValueError, match="cannot be applied to data of type"):
+        apply_condition(condition, values, backend)

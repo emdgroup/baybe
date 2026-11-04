@@ -48,6 +48,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constraint filtering
 - `ThresholdCondition` now treats missing values as non-matching for all operators;
   previously, the `!=` operator admitted them
+- `SubSelectionCondition` now supports Boolean selection entries for both pandas and
+  Polars backends; previously, they were coerced to floats, which broke Polars filtering
+- `SubSelectionCondition` now rejects selection entries of different types and raises a
+  descriptive error when applied to data of an incompatible dtype, instead of behaving
+  differently depending on the dataframe backend
 - Pending experiments containing extra columns or duplicate column names are now
   rejected before recommendation
 - Subset sampling without replacement no longer relies on a duplicate-rejection mechanism
