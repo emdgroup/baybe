@@ -5,7 +5,6 @@ from collections.abc import Mapping, Sequence
 from inspect import signature
 
 import narwhals.stable.v2 as nw
-import pandas as pd
 import pytest
 from narwhals.testing import assert_frame_equal as assert_nw_frame_equal
 from pytest import param
@@ -49,6 +48,18 @@ def _assert_filter(
         nw.from_dicts(expected_rows, backend=backend) if expected_rows else frame[[]]
     )
     assert_nw_frame_equal(nw.from_native(result, eager_only=True), expected)
+
+
+def _assert_partial_rejected(
+    constraint: DiscreteFilteringConstraint,
+    data: Sequence[Mapping[str, object]],
+    backend: nw.Implementation,
+) -> None:
+    """Assert that a constraint rejects a non-evaluable partial frame."""
+    assert constraint._can_evaluate(set(data[0])) is False
+    frame = nw.from_dicts(data, backend=backend)
+    with pytest.raises(ValueError, match="missing from the provided dataframe"):
+        constraint(frame.to_native())
 
 
 @pytest.mark.parametrize(
@@ -162,6 +173,75 @@ def test_exclusion(combiner, exclude, expected_rows, backend):
         exclude=exclude,
     )
     _assert_filter(constraint, _EXCLUSION_DATA, expected_rows, backend)
+
+
+_SELECTION_PARTIAL_DATA = (
+    nw.from_dicts(_EXCLUSION_DATA, backend=nw.Implementation.POLARS)
+    .select("temperature", "solvent")
+    .rows(named=True)
+)
+
+
+@pytest.mark.parametrize(
+    ("combiner", "exclude", "expected_rows"),
+    [
+        param(
+            "AND",
+            False,
+            [
+                {"temperature": 1.0, "solvent": "water"},
+                {"temperature": 1.0, "solvent": "ethanol"},
+            ],
+            id="and-keep",
+        ),
+        param(
+            "OR",
+            True,
+            [
+                {"temperature": 0.0, "solvent": "methanol"},
+                {"temperature": 0.0, "solvent": "acetone"},
+            ],
+            id="or-exclude",
+        ),
+    ],
+)
+def test_selection_constraint_partial_accepted(
+    combiner, exclude, expected_rows, backend
+):
+    """Accepted partial selection filtering uses only the available columns."""
+    constraint = DiscreteSelectionConstraint(
+        parameters=["temperature", "pressure"],
+        conditions=[
+            ThresholdCondition(0.0, ">"),
+            ThresholdCondition(0.0, ">"),
+        ],
+        combiner=combiner,
+        exclude=exclude,
+    )
+    _assert_filter(constraint, _SELECTION_PARTIAL_DATA, expected_rows, backend)
+
+
+@pytest.mark.parametrize(
+    ("combiner", "exclude"),
+    [
+        param("AND", True, id="and-exclude"),
+        param("OR", False, id="or-keep"),
+        param("XOR", False, id="xor-keep"),
+        param("XOR", True, id="xor-exclude"),
+    ],
+)
+def test_selection_constraint_partial_rejected(combiner, exclude, backend):
+    """Rejected partial selection filtering raises."""
+    constraint = DiscreteSelectionConstraint(
+        parameters=["temperature", "pressure"],
+        conditions=[
+            ThresholdCondition(0.0, ">"),
+            ThresholdCondition(0.0, ">"),
+        ],
+        combiner=combiner,
+        exclude=exclude,
+    )
+    _assert_partial_rejected(constraint, _SELECTION_PARTIAL_DATA, backend)
 
 
 _LINEAR_DATA = [
@@ -603,60 +683,3 @@ def test_cardinality_constraint(
         exclude=exclude,
     )
     _assert_filter(constraint, _CARDINALITY_DATA, expected_rows, backend)
-
-
-@pytest.mark.parametrize(
-    ("combiner", "exclude", "partial_ok"),
-    [
-        param("AND", False, True, id="AND-keep"),
-        param("AND", True, False, id="AND-exclude"),
-        param("OR", False, False, id="OR-keep"),
-        param("OR", True, True, id="OR-exclude"),
-        param("XOR", False, False, id="XOR-keep"),
-        param("XOR", True, False, id="XOR-exclude"),
-    ],
-)
-def test_filtering_partial_evaluation(combiner, exclude, partial_ok):
-    """Partial evaluation is only allowed when the drop decision cannot reverse.
-
-    In particular, an ``XOR`` combination must never be evaluated partially, since
-    its result can flip as further operands become available.
-    """
-    constraint = DiscreteSelectionConstraint(
-        parameters=["A", "B"],
-        conditions=[
-            ThresholdCondition(threshold=0.0, operator=">"),
-            ThresholdCondition(threshold=0.0, operator=">"),
-        ],
-        combiner=combiner,
-        exclude=exclude,
-    )
-    # Only a subset of the involved parameters is available
-    assert constraint._can_evaluate({"A"}) is partial_ok
-    # All parameters available -> always evaluable
-    assert constraint._can_evaluate({"A", "B"}) is True
-
-
-def test_filtering_xor_partial_does_not_drop_valid_rows():
-    """The builder defers XOR filtering until every operand is available."""
-    constraint = DiscreteSelectionConstraint(
-        parameters=["A", "B"],
-        conditions=[
-            ThresholdCondition(threshold=0.0, operator=">"),
-            ThresholdCondition(threshold=0.0, operator=">"),
-        ],
-        combiner="XOR",
-    )
-
-    # Row where only "A" is known so far; "B" is still missing.
-    partial_df = pd.DataFrame({"A": [1.0, 0.0]})
-    # The constraint is not callable yet, so incremental construction defers it.
-    assert constraint._can_evaluate(set(partial_df.columns)) is False
-    with pytest.raises(ValueError, match="missing from the provided dataframe"):
-        constraint(partial_df)
-
-    # Once both columns are present, XOR keeps rows where exactly one holds.
-    full_df = pd.DataFrame({"A": [1.0, 1.0, 0.0], "B": [0.0, 1.0, 0.0]})
-    filtered = constraint(full_df)
-    # Rows 1 (both > 0) and 2 (neither > 0) violate XOR; row 0 is kept.
-    assert list(filtered.index) == [0]
