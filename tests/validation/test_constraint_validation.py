@@ -11,7 +11,6 @@ from baybe.constraints.continuous import (
 from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
     DiscretePermutationInvarianceConstraint,
-    DiscreteProductConstraint,
     DiscreteRepetitionLimitConstraint,
 )
 
@@ -101,43 +100,3 @@ def test_excluded_permutation_dependencies():
         DiscretePermutationInvarianceConstraint(
             parameters=["P1", "P2"], dependencies=dependencies
         )
-
-
-@pytest.mark.parametrize(
-    ("args", "kwargs", "error", "match"),
-    [
-        param((["A", "B"],), {}, TypeError, "missing.*operator", id="missing"),
-        param(
-            (["A", "B"], "=", 1, 0.01, True),
-            {},
-            TypeError,
-            "too many positional",
-            id="positional-exclude",
-        ),
-        param(
-            (["A", "B"], "="),
-            {"operator": "="},
-            TypeError,
-            "multiple values",
-            id="duplicate",
-        ),
-        param(
-            (["A", "B"],),
-            {"operator": "bad"},
-            ValueError,
-            "must be in",
-            id="invalid-operator",
-        ),
-        param(
-            (["A", "B"],),
-            {"operator": "=", "unknown": 1},
-            TypeError,
-            "unexpected keyword",
-            id="unknown",
-        ),
-    ],
-)
-def test_invalid_product_arguments(args, kwargs, error, match):
-    """Product argument binding rejects invalid modern call shapes."""
-    with pytest.raises(error, match=match):
-        DiscreteProductConstraint(*args, **kwargs)

@@ -12,6 +12,61 @@ from tests.constraints.discrete.utils import (
 
 pytestmark = requires_fulltest
 
+##### API #####
+
+
+@pytest.mark.parametrize(
+    "operator",
+    [
+        param("~", id="unknown"),
+        param("<>", id="wrong"),
+        param("=<", id="reversed"),
+    ],
+)
+def test_product_constraint_invalid_operator(operator):
+    """Product constraints reject unknown comparison operators."""
+    with pytest.raises(ValueError, match="'operator' must be in"):
+        DiscreteProductConstraint(parameters=["A", "B"], operator=operator, rhs=1.0)
+
+
+@pytest.mark.parametrize(
+    ("rhs", "match"),
+    [
+        param(float("nan"), "cannot be 'nan'", id="nan"),
+        param(float("inf"), "cannot be 'inf'", id="inf"),
+        param(-float("inf"), "cannot be 'inf'", id="neg-inf"),
+    ],
+)
+def test_product_constraint_invalid_rhs(rhs, match):
+    """Product constraints reject non-finite right-hand sides."""
+    with pytest.raises(ValueError, match=match):
+        DiscreteProductConstraint(parameters=["A", "B"], operator="<=", rhs=rhs)
+
+
+@pytest.mark.parametrize(
+    ("operator", "tolerance", "match"),
+    [
+        param("=", float("nan"), "cannot be 'nan'", id="nan"),
+        param("=", float("inf"), "cannot be 'inf'", id="inf"),
+        param("=", -float("inf"), "cannot be 'inf'", id="neg-inf"),
+        param("=", 0.0, "must be > 0", id="zero"),
+        param("=", -1.0, "must be > 0", id="negative"),
+        param(">=", 0.1, "valid with the following operators", id="wrong-operator"),
+    ],
+)
+def test_product_constraint_invalid_tolerance(operator, tolerance, match):
+    """Product constraints reject invalid or inapplicable tolerances."""
+    with pytest.raises(ValueError, match=match):
+        DiscreteProductConstraint(
+            parameters=["A", "B"],
+            operator=operator,
+            rhs=1.0,
+            tolerance=tolerance,
+        )
+
+
+##### Behavior #####
+
 
 _PRODUCT_DATA = [
     {"amount_1": 0.0, "amount_2": 0.0, "solvent": "water"},
