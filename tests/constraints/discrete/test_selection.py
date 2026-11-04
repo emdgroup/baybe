@@ -14,6 +14,36 @@ from tests.constraints.discrete.utils import (
 
 pytestmark = requires_fulltest
 
+##### API #####
+
+
+def test_selection_constraint_invalid_conditions():
+    """Selection constraints require at least one condition."""
+    with pytest.raises(ValueError, match="Length of 'conditions' must be >= 1"):
+        DiscreteSelectionConstraint(parameters=["temperature"], conditions=[])
+
+
+@pytest.mark.parametrize(
+    "combiner",
+    [
+        param("NAND", id="unknown"),
+        param("and", id="lowercase"),
+        param("", id="empty"),
+    ],
+)
+def test_selection_constraint_invalid_combiner(combiner):
+    """Selection constraints reject unknown logic combiners."""
+    with pytest.raises(ValueError, match="'combiner' must be in"):
+        DiscreteSelectionConstraint(
+            parameters=["temperature"],
+            conditions=[ThresholdCondition(threshold=0.0, operator=">")],
+            combiner=combiner,
+        )
+
+
+##### Behavior #####
+
+
 _SELECTION_DATA = [
     {"temperature": 1.0, "pressure": 1.0, "solvent": "water"},
     {"temperature": 1.0, "pressure": 0.0, "solvent": "ethanol"},
