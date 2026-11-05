@@ -6,7 +6,7 @@ import gc
 import warnings
 from collections.abc import Collection, Iterator, Sequence
 from math import prod
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 import narwhals.stable.v2 as nw
 import numpy as np
@@ -43,6 +43,7 @@ from baybe.serialization.core import _CONSTRUCTOR_FIELD
 from baybe.settings import active_settings
 from baybe.utils.basic import (
     UNSPECIFIED,
+    IterationMode,
     UnspecifiedType,
     iter_indices,
     to_tuple,
@@ -766,7 +767,7 @@ class SubspaceDiscrete(SerialMixin):
     def iter_subsets(
         self,
         *,
-        mode: Literal["ordered", "shuffled", "with_replacement"] = "ordered",
+        mode: IterationMode = "ordered",
     ) -> Iterator[Self]:
         """Yield a subspace for each candidate subset.
 

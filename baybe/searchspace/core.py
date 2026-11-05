@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar
 
 import narwhals.stable.v2 as nw
 import pandas as pd
@@ -30,7 +30,7 @@ from baybe.searchspace.validation import (
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.serialization.core import _CONSTRUCTOR_FIELD
-from baybe.utils.basic import iter_indices
+from baybe.utils.basic import IterationMode, iter_indices
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -304,7 +304,7 @@ class SearchSpace(SerialMixin):
     def _iter_subset_pairs(
         self,
         *,
-        mode: Literal["ordered", "shuffled", "with_replacement"] = "ordered",
+        mode: IterationMode = "ordered",
     ) -> Iterator[tuple[SubspaceDiscrete, frozenset[str]]]:
         r"""Get an iterator over combined subset configurations.
 

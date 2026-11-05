@@ -8,7 +8,15 @@ import inspect
 import itertools
 import random
 from collections.abc import Callable, Collection, Iterable, Iterator, Sequence
-from typing import TYPE_CHECKING, Any, Literal, TypeGuard, TypeVar, get_origin
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    TypeAlias,
+    TypeGuard,
+    TypeVar,
+    get_origin,
+)
 
 import cattrs
 from attrs import asdict, has
@@ -22,6 +30,9 @@ if TYPE_CHECKING:
 
 _T = TypeVar("_T")
 _U = TypeVar("_U")
+
+IterationMode: TypeAlias = Literal["ordered", "shuffled", "with_replacement"]
+"""Strategy for traversing a collection of indexed items."""
 
 
 class UnspecifiedType(enum.Enum):
@@ -123,7 +134,7 @@ def iter_indices(
     n: int,
     /,
     *,
-    mode: Literal["ordered", "shuffled", "with_replacement"] = "ordered",
+    mode: IterationMode = "ordered",
 ) -> Iterator[int]:
     """Iterate over the indices of an ``n``-element collection.
 
