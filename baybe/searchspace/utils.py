@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, TypeVar
 
 import narwhals.stable.v2 as nw
 import numpy as np
-import pandas as pd
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
 from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
@@ -110,28 +109,6 @@ def optimize_parameter_order(
     # Unconstrained parameters go last
     ordered.extend(unconstrained)
     return ordered
-
-
-def parameter_cartesian_prod_pandas(
-    parameters: Sequence[DiscreteParameter],
-) -> pd.DataFrame:
-    """Create the Cartesian product of discrete parameter values using Pandas.
-
-    Args:
-        parameters: List of discrete parameter objects.
-
-    Returns:
-        A dataframe containing all possible discrete parameter value combinations.
-    """
-    if not parameters:
-        return pd.DataFrame()
-
-    index = pd.MultiIndex.from_product(
-        [p.active_values for p in parameters], names=[p.name for p in parameters]
-    )
-    ret = pd.DataFrame(index=index).reset_index()
-
-    return ret
 
 
 def _apply_evaluable_constraints(
