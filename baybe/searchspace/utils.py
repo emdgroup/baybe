@@ -9,6 +9,7 @@ import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 
+from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
 from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
 from baybe.parameters.base import DiscreteParameter
 from baybe.utils.dataframe import Filter, _filter_dataframe, _infer_backend
@@ -133,109 +134,64 @@ def parameter_cartesian_prod_pandas(
     return ret
 
 
-def parameter_cartesian_prod_pandas_constrained(
-    parameters: Sequence[DiscreteParameter],
-    constraints: Sequence[DiscreteConstraint],
-    initial_df: pd.DataFrame | None = None,
-) -> pd.DataFrame:
-    """Build a Cartesian product of parameters with incremental constraint filtering.
-
-    Instead of creating the full Cartesian product and then filtering, this
-    function cross-merges parameters one by one, applying constraint filters
-    as early as possible. This significantly reduces memory usage and
-    construction time for highly constrained spaces.
-
-    Parameters are ordered so that constrained parameters come first, enabling
-    constraints to fire early when the intermediate dataframe is still small.
+def _apply_evaluable_constraints(
+    frame: nw.LazyFrame,
+    constraints: Sequence[DiscreteFilteringConstraint],
+) -> tuple[nw.LazyFrame, list[DiscreteFilteringConstraint]]:
+    """Apply all evaluable constraints and return those still pending.
 
     Args:
-        parameters: The discrete parameters to combine.
-        constraints: The discrete constraints to apply.
-        initial_df: An optional starting dataframe. When provided, the given
-            parameters are cross-merged into it (its columns count as already
-            available for constraint evaluation).
+        frame: The frame to filter.
+        constraints: The constraints to consider.
 
     Returns:
-        A dataframe containing all valid parameter combinations.
+        The filtered frame and the constraints whose required parameters are not yet
+        all available.
     """
-    # Filter to constraints that should be applied during creation
-    filtering_constraints = [
-        c for c in constraints if isinstance(c, DiscreteFilteringConstraint)
-    ]
+    available = set(frame.collect_schema().names())
+    pending: list[DiscreteFilteringConstraint] = []
+    for constraint in constraints:
+        if constraint._can_evaluate(available):
+            frame = constraint._filter(frame)
+        if constraint._required_parameters - available:
+            pending.append(constraint)
+    return frame, pending
 
-    # Fast path: no constraints and no initial dataframe
-    if not filtering_constraints and initial_df is None:
-        return parameter_cartesian_prod_pandas(parameters)
 
-    # Compute optimal parameter order
-    ordered_params = optimize_parameter_order(parameters, filtering_constraints)
-
-    # Determine which parameter names each constraint needs for completion
-    pending: list[tuple[DiscreteFilteringConstraint, set[str]]] = [
-        (c, c._required_parameters) for c in filtering_constraints
-    ]
-
-    # Initialize the dataframe
-    df = pd.DataFrame() if initial_df is None else initial_df
-
-    # Original column order for final reindexing
-    original_columns = (list(initial_df.columns) if initial_df is not None else []) + [
-        p.name for p in parameters
-    ]
-
-    # Incremental cross-merge loop
-    for param in ordered_params:
-        param_df = pd.DataFrame({param.name: param.active_values})
-        if df.empty:
-            df = param_df
-        else:
-            df = pd.merge(df, param_df, how="cross")
-
-        available = set(df.columns)
-        still_pending: list[tuple[DiscreteFilteringConstraint, set[str]]] = []
-
-        for constraint, all_params in pending:
-            idxs = constraint.get_invalid(df, allow_missing=True)
-            df.drop(index=idxs, inplace=True)
-
-            if not (all_params <= available):
-                still_pending.append((constraint, all_params))
-
-        pending = still_pending
-
-    # Apply any remaining constraints whose parameters were already present
-    # in the initial_df (i.e., no new parameters were needed to complete them)
-    if pending and not df.empty:
-        available = set(df.columns)
-        for constraint, all_params in pending:
-            if all_params <= available:
-                idxs = constraint.get_invalid(df)
-                df.drop(index=idxs, inplace=True)
-
-    # Reorder columns and reset index
-    if original_columns:
-        df = df[original_columns]
-    df.reset_index(drop=True, inplace=True)
-
-    return df
+def _sort_filters(filters: Sequence[Filter]) -> list[Filter]:
+    """Order filtering constraints canonically, moving all other filters last."""
+    constraints = sorted(
+        (f for f in filters if isinstance(f, DiscreteFilteringConstraint)),
+        key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
+    )
+    others = [f for f in filters if not isinstance(f, DiscreteFilteringConstraint)]
+    return [*constraints, *others]
 
 
 def _make_filtered_cartesian_product(
     parameters: Sequence[DiscreteParameter],
     filters: Sequence[Filter],
     initial_df: IntoFrame | None = None,
+    *,
+    sort_filters: bool = False,
 ) -> IntoLazyFrame:
-    """Create the Cartesian product of the given parameters and apply the given filters.
+    """Create the Cartesian parameter product and apply the given filters.
 
     Args:
         parameters: The discrete parameters to combine.
         filters: The filters to apply to the product, in the given order.
-        initial_df: An optional starting frame, whose columns are
-            cross-joined with the parameter values.
+        initial_df: An optional starting frame, whose columns are cross-joined with the
+            parameter values.
+        sort_filters: If ``True``, apply filters in their canonical order
+            (see :data:`DISCRETE_CONSTRAINTS_FILTERING_ORDER`) instead of the
+            order in which they are passed.
 
     Returns:
         The filtered frame as a lazy native frame.
     """
+    if sort_filters:
+        filters = _sort_filters(filters)
+
     backend = _infer_backend(initial_df)
 
     frames = [
@@ -254,3 +210,82 @@ def _make_filtered_cartesian_product(
         product = product.join(frame, how="cross")
 
     return _filter_dataframe(product, *filters).to_native()
+
+
+def _make_filtered_cartesian_product_incremental(
+    parameters: Sequence[DiscreteParameter],
+    filters: Sequence[Filter],
+    initial_df: IntoFrame | None = None,
+    *,
+    sort_filters: bool = False,
+    sort_parameters: bool = False,
+) -> IntoLazyFrame:
+    """Create a Cartesian parameter product, applying filters as early as possible.
+
+    Unlike :func:`_make_filtered_cartesian_product`, which builds the full product
+    before filtering, this variant cross-joins parameters one at a time and applies
+    each filtering constraint as soon as it can be (partially) evaluated. Constraints
+    are re-evaluated after every join until all of their required parameters are
+    available.
+
+    Args:
+        parameters: The discrete parameters to combine.
+        filters: The filters to apply to the product. Filtering constraints are
+            applied incrementally; all other filters are applied at the end.
+        initial_df: An optional starting frame, whose columns are cross-joined with
+            the parameter values.
+        sort_filters: If ``True``, apply filters in their canonical order
+            (see :data:`DISCRETE_CONSTRAINTS_FILTERING_ORDER`) instead of the
+            order in which they are passed.
+        sort_parameters: If ``True``, join parameters in the order given by
+            :func:`optimize_parameter_order`. Otherwise, keep the given order.
+
+    Returns:
+        The filtered frame as a lazy native frame.
+    """
+    if sort_filters:
+        filters = _sort_filters(filters)
+
+    backend = _infer_backend(initial_df)
+
+    constraints = [f for f in filters if isinstance(f, DiscreteFilteringConstraint)]
+    other_filters = [
+        f for f in filters if not isinstance(f, DiscreteFilteringConstraint)
+    ]
+    ordered_parameters = (
+        optimize_parameter_order(parameters, constraints)
+        if sort_parameters
+        else list(parameters)
+    )
+
+    frames = [
+        nw.new_series(parameter.name, parameter.active_values, backend=backend)
+        .to_frame()
+        .lazy()
+        for parameter in ordered_parameters
+    ]
+    if initial_df is not None:
+        frames.insert(0, nw.from_native(initial_df).lazy())
+
+    if not frames:
+        return nw.from_dict({}, backend=backend).lazy().to_native()
+
+    product = frames[0]
+    product, pending = _apply_evaluable_constraints(product, constraints)
+
+    for column in frames[1:]:
+        product = product.join(column, how="cross")
+        product, pending = _apply_evaluable_constraints(product, pending)
+
+    # All constraints must have been fully applied after the last join
+    assert not pending
+
+    # Restore the original column order (incremental construction may reorder them)
+    if parameters:
+        initial_columns = (
+            nw.from_native(initial_df).columns if initial_df is not None else []
+        )
+        columns = [*initial_columns, *(parameter.name for parameter in parameters)]
+        product = product.select(columns)
+
+    return _filter_dataframe(product, *other_filters).to_native()
