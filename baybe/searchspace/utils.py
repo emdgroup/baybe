@@ -14,7 +14,6 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.utils.dataframe import Filter, _filter_dataframe, _infer_backend
 
 if TYPE_CHECKING:
-    import polars as pl
     from narwhals.stable.v2.typing import IntoFrame, IntoLazyFrame
 
 _T = TypeVar("_T")
@@ -110,40 +109,6 @@ def optimize_parameter_order(
     # Unconstrained parameters go last
     ordered.extend(unconstrained)
     return ordered
-
-
-def parameter_cartesian_prod_polars(
-    parameters: Sequence[DiscreteParameter],
-    initial_ldf: pl.LazyFrame | None = None,
-) -> pl.LazyFrame:
-    """Create the Cartesian product of discrete parameter values using Polars.
-
-    Args:
-        parameters: List of discrete parameter objects.
-        initial_ldf: An optional starting lazy dataframe. When provided, the
-            given parameters are cross-joined into it.
-
-    Returns:
-        A lazy dataframe containing all possible discrete parameter value combinations.
-    """
-    from baybe._optional.polars import polars as pl
-
-    # Convert each parameter to a lazy dataframe for cross-join operation
-    param_frames = [pl.LazyFrame({p.name: p.active_values}) for p in parameters]
-
-    # Determine the starting frame
-    if initial_ldf is not None:
-        res = initial_ldf
-    elif param_frames:
-        res = param_frames.pop(0)
-    else:
-        return pl.LazyFrame()
-
-    # Cross-join remaining parameter frames
-    for frame in param_frames:
-        res = res.join(frame, how="cross", force_parallel=True)
-
-    return res
 
 
 def parameter_cartesian_prod_pandas(

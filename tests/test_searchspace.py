@@ -34,8 +34,8 @@ from baybe.searchspace import (
     SubspaceDiscrete,
 )
 from baybe.searchspace.utils import (
+    _make_filtered_cartesian_product,
     parameter_cartesian_prod_pandas,
-    parameter_cartesian_prod_polars,
 )
 from baybe.settings import Settings
 from baybe.utils.basic import is_all_instance
@@ -404,10 +404,11 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
     ],
     ids=["simple", "with_active_values"],
 )
+@Settings(default_dataframe_backend="polars")
 def test_polars_pandas_equivalence(parameters):
     """Search spaces created with Polars and Pandas are identical."""
     # Do Polars product
-    ldf = parameter_cartesian_prod_polars(parameters)
+    ldf = _make_filtered_cartesian_product(parameters, [])
     df_pl = ldf.collect()
 
     # Do Pandas product
