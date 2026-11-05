@@ -96,6 +96,42 @@ def test_table_candidates_duplicate_rows():
 
 
 @pytest.mark.parametrize(
+    ("parameter", "values", "match"),
+    [
+        pytest.param(
+            CategoricalParameter("cat", ("a", "b", "c")),
+            ["a", "d"],
+            "exactly match a valid choice",
+            id="out_of_values",
+        ),
+        pytest.param(
+            CategoricalParameter("cat", ("a", "b"), active_values=("a",)),
+            ["a", "b"],
+            "not among its active values",
+            id="out_of_active",
+        ),
+        pytest.param(
+            NumericalDiscreteParameter("disc", (0.0, 1.0), tolerance=0.1),
+            [0.5, 1.5],
+            "not among its active values",
+            id="out_of_tolerance",
+        ),
+        pytest.param(
+            NumericalDiscreteParameter("disc", (0.0, 1.0), tolerance=0.1),
+            [0.05, 0.95],
+            "not among its active values",
+            id="within",
+        ),
+    ],
+)
+def test_table_candidates_reject_inactive_values(parameter, values, match):
+    """Dataframe values must exactly match the active parameter values."""
+    data = pd.DataFrame({parameter.name: values})
+    with pytest.raises(ValueError, match=match):
+        TableCandidates([parameter], data)
+
+
+@pytest.mark.parametrize(
     ("parameters", "dataframe", "error"),
     [
         pytest.param([], edf, ValueError(">= 1"), id="empty_param"),

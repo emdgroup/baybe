@@ -211,12 +211,29 @@ class TableCandidates(CandidatesProtocol):
                     f"any parameter: {extra}"
                 )
             return
+
+        dataframe = value.to_pandas()
         validate_parameter_input(
-            value.to_pandas(),
+            dataframe,
             self.parameters,
             allow_extra=False,
             allow_empty=True,
         )
+
+        # We need to ensure that all provided values actually comply with the parameter
+        # definitions since the latter are taken as source of truth for many downstream
+        # operations (e.g. iterating candidates subsets)
+        # TODO: This is yet another place where refactored semantics of
+        #   `validate_parameter_input` would be needed, i.e. the current tolerance
+        #   handling argument is useless here
+        for parameter in self.parameters:
+            if invalid := set(dataframe[parameter.name]) - set(parameter.active_values):
+                raise ValueError(
+                    f"The provided dataframe contains values for parameter "
+                    f"'{parameter.name}' that are not among its active values. "
+                    f"Invalid values: {list(invalid)}. Active values: "
+                    f"{parameter.active_values}."
+                )
 
     @override
     @property
