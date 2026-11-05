@@ -654,8 +654,6 @@ def _apply_filter(lf: nw.LazyFrame, filter_: Filter, /) -> nw.LazyFrame:
         TypeError: If the filter criterion cannot be interpreted as a filter or if a
             filter expression does not evaluate to a single Boolean column.
     """
-    from baybe.constraints.base import DiscreteFilteringConstraint
-
     match filter_:
         case nw.Expr():
             # Narwhals does not enforce that the expression evaluates to a single
