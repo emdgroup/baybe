@@ -520,13 +520,30 @@ def test_deprecated_floating_point_environment_variables(
 )
 def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
     """Using the deprecated polars environment variables raises warnings."""
+    monkeypatch.setenv("BAYBE_USE_POLARS_FOR_CONSTRAINTS", "")
     monkeypatch.setenv("BAYBE_DEACTIVATE_POLARS", str(value))
-    with pytest.warns(
-        DeprecationWarning, match="'BAYBE_DEACTIVATE_POLARS' has been deprecated"
-    ):
-        assert (
-            Settings(restore_environment=True).use_polars_for_constraints is not value
-        )
+    with pytest.warns(DeprecationWarning) as records:
+        settings = Settings(restore_environment=True)
+        assert settings.use_polars_for_constraints is not value
+
+    messages = [str(record.message) for record in records]
+    assert any(
+        "'BAYBE_DEACTIVATE_POLARS' has been deprecated" in msg for msg in messages
+    )
+    assert any("use_polars_for_constraints" in msg for msg in messages)
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_deprecated_use_polars_for_constraints_setting(value: bool):
+    """Using the deprecated polars constraint setting raises warnings."""
+    with pytest.warns(DeprecationWarning, match="use_polars_for_constraints"):
+        settings = Settings(use_polars_for_constraints=value)
+
+    with pytest.warns(DeprecationWarning, match="use_polars_for_constraints"):
+        assert settings.use_polars_for_constraints is value
+
+    with pytest.warns(DeprecationWarning, match="use_polars_for_constraints"):
+        settings.use_polars_for_constraints = value
 
 
 @pytest.mark.parametrize("value", [True, False])

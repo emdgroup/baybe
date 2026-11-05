@@ -148,6 +148,30 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
     return results
 
 
+def _use_polars_for_constraints_deprecation_msg() -> str:
+    """Create the deprecation message for the polars constraint setting."""
+    name = fields(Settings)._use_polars_for_constraints.alias
+    backend = fields(Settings)._default_dataframe_backend.alias
+    return (
+        f"The setting '{name}' is deprecated and will be removed in a future version. "
+        f"Discrete constraints are now always evaluated on the active dataframe "
+        f"backend, so the setting no longer has any effect. Use '{backend}' to "
+        f"choose the backend."
+    )
+
+
+def _convert_use_polars_for_constraints(value: Any, /) -> AutoBool:
+    """Convert the deprecated polars constraint setting, warning when used."""
+    converted = AutoBool.from_unstructured(value)
+    if converted is not AutoBool.AUTO:
+        warnings.warn(
+            _use_polars_for_constraints_deprecation_msg(),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    return converted
+
+
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
     """Activate the random seed when changing the attribute of the active settings."""
     if id(instance) == Settings._active_settings_id and value is not None:
@@ -257,9 +281,9 @@ class Settings(_SlottedContextDecorator):
     _use_polars_for_constraints: AutoBool = field(
         alias="use_polars_for_constraints",
         default=AutoBool.AUTO,
-        converter=AutoBool.from_unstructured,  # type: ignore[misc]
+        converter=_convert_use_polars_for_constraints,
     )
-    """Controls if `polars <https://pola.rs/>`_ acceleration is to be used for constraints, if available."""  # noqa: E501
+    """Deprecated! Discrete constraints are evaluated on the active backend."""
 
     use_single_precision_numpy: bool = field(default=False, validator=instance_of(bool))
     """Controls the floating point precision used for `numpy <https://numpy.org/>`_ arrays."""  # noqa: E501
@@ -356,7 +380,12 @@ class Settings(_SlottedContextDecorator):
 
     @property
     def use_polars_for_constraints(self) -> bool:
-        """Indicates if ``polars`` is enabled (i.e., installed and set to be used)."""
+        """Deprecated! Discrete constraints are evaluated on the active backend."""
+        warnings.warn(
+            _use_polars_for_constraints_deprecation_msg(),
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._use_polars_for_constraints.evaluate(lambda: POLARS_INSTALLED)
 
     @use_polars_for_constraints.setter

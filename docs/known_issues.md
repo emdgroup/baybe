@@ -25,8 +25,7 @@ This is in particular the case for M1 Macs, as these do not offer this support.
 
 ```{admonition} Suggested Fix
 :class: tip
-Instead of `polars`, install `polars-lts-cpu`. BayBE will automatically detect the
-presence of `polars` and active its advanced machinery. For more details, we refer to the
+Instead of `polars`, install `polars-lts-cpu`. For more details, we refer to the
 [polars installation guide](https://docs.pola.rs/user-guide/installation/).
 ```
 

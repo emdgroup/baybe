@@ -202,6 +202,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `deserialize_dataframe` dictionary input specifying a pandas-only constructor
   (e.g. `from_records`) in favor of `narwhals.DataFrame`'s constructors
   (e.g. `from_dict`, `from_dicts`)
+- `Settings.use_polars_for_constraints` and the corresponding
+  `BAYBE_DEACTIVATE_POLARS` environment variable. Discrete constraints are now
+  evaluated on the active dataframe backend, so use
+  `Settings.default_dataframe_backend` to control the backend instead.
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes

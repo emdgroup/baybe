@@ -16,7 +16,7 @@ import narwhals.stable.v2 as nw
 import numpy as np
 import pytest
 import torch
-from attrs import Attribute
+from attrs import Attribute, fields
 
 from baybe import Settings, active_settings
 from baybe.campaign import Campaign
@@ -44,6 +44,13 @@ INVALID_VALUES: dict[str, tuple[Any, type[Exception], str]] = {
     "use_single_precision_numpy": (0, TypeError, "must be <class 'bool'>"),
     "use_single_precision_torch": (0, TypeError, "must be <class 'bool'>"),
 }
+
+
+# Settings excluded from generic value-toggling tests because they are deprecated.
+_DEPRECATED_SETTINGS = {fields(Settings)._use_polars_for_constraints.name}
+_SETTINGS_ATTRIBUTES = tuple(
+    fld for fld in Settings._settings_attributes if fld.name not in _DEPRECATED_SETTINGS
+)
 
 
 def _import_but_not(excluded: str, /):
@@ -110,8 +117,7 @@ def draw_random_numbers() -> tuple[float, ...]:
 def original_values():
     """The original settings values."""
     return {
-        fld.name: getattr(active_settings, fld.name)
-        for fld in Settings._settings_attributes
+        fld.name: getattr(active_settings, fld.name) for fld in _SETTINGS_ATTRIBUTES
     }
 
 
@@ -120,7 +126,7 @@ def toggled_values():
     """Toggled settings values (i.e. differing from the original values)."""
     return {
         fld.alias: toggle(getattr(active_settings, fld.name), fld)
-        for fld in Settings._settings_attributes
+        for fld in _SETTINGS_ATTRIBUTES
     }
 
 
@@ -138,9 +144,7 @@ def test_setting_unknown_attribute():
         Settings(unknown_setting=True)
 
 
-@pytest.mark.parametrize(
-    "attribute", Settings._settings_attributes, ids=lambda a: a.name
-)
+@pytest.mark.parametrize("attribute", _SETTINGS_ATTRIBUTES, ids=lambda a: a.name)
 def test_invalid_setting(attribute: Attribute):
     """Attempting to activate an invalid settings value raises an error."""
     invalid, error, match = INVALID_VALUES[attribute.alias]
@@ -150,9 +154,7 @@ def test_invalid_setting(attribute: Attribute):
         Settings(**{attribute.alias: invalid})
 
 
-@pytest.mark.parametrize(
-    "attribute", Settings._settings_attributes, ids=lambda a: a.name
-)
+@pytest.mark.parametrize("attribute", _SETTINGS_ATTRIBUTES, ids=lambda a: a.name)
 def test_direct_setting(attribute: Attribute):
     """Attributes of the active settings object can be directly modified."""
     original_value = getattr(active_settings, attribute.name)
@@ -188,7 +190,7 @@ def test_sequential_setting_via_activation(original_values):
     # We iterate over the random seed last because changing it does not propagate to
     # the subsequent settings objects
     attrs = sorted(
-        Settings._settings_attributes,
+        _SETTINGS_ATTRIBUTES,
         key=lambda a: a.name == _RANDOM_SEED_ATTRIBUTE_NAME,
     )
 
@@ -499,7 +501,7 @@ def test_seed_to_state_conversion():
 
 def test_settings_are_sorted_alphabetically():
     """The available settings are sorted alphabetically by their name."""
-    names = [fld.alias for fld in Settings._settings_attributes]
+    names = [fld.alias for fld in _SETTINGS_ATTRIBUTES]
     assert names == sorted(names)
 
 

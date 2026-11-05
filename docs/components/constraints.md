@@ -211,20 +211,6 @@ Discrete constraints operate on discrete parameters.
 For instance, a search space created via [`from_product`](baybe.searchspace.core.SearchSpace.from_product) 
 might include invalid combinations, which can be removed again by applying constraints.
 
-```{admonition} Efficient Constraint Implementation via Polars
-:class: tip
-In the default implementation, BayBE first creates the full discrete searchspace and
-then applies filters to it to remove candidates not complying with discrete constraints.
-This requires that the entire unfiltered searchspace fits into memory, which is
-inefficient, given that the filtering might reduce the amount of relevant candidates by
-orders of magnitude. For many discrete constraints, BayBE offers a more efficient
-implementation via [polars] that needs much less memory. This is automatically activated
-if [polars] is present in the Python environment, for instance if BayBE was installed
-with the optional dependency group via `pip install baybe[polars]`. In many cases, this
-is required to enable working with large discrete searchspaces, however, [polars] is not
-currently a main dependency of BayBE.
-```
-
 Discrete constraints have in common that they operate on one or more parameters,
 identified by the `parameters` member, which expects a list of parameter names as
 strings.
