@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteBatchConstraint.subset_masks`
 - `SearchSpace.subsets` and `SearchSpace.sample_subsets` (combined subset iteration
   is temporarily private pending a public API that yields search spaces)
+- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars`
+  (product construction is now narwhals-based)
 
 ### Breaking Changes
 - For pandas users: series/dataframe indices are no longer used as information carriers
@@ -161,6 +163,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   flexible subset handling
 - Constraint and condition objects are now immutable, and their sequence attributes
   (`parameters`, `conditions`, `affected_parameters`) are stored as tuples
+- Discrete constraints are now evaluated via `narwhals` on the active dataframe
+  backend instead of using a separate Polars code path
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
