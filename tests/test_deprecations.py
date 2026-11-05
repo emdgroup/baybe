@@ -19,7 +19,7 @@ import torch
 from pandas.testing import assert_frame_equal, assert_series_equal
 from pytest import param
 
-from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
+from baybe._optional.info import CHEM_INSTALLED
 from baybe.campaign import _EXCLUDED, _MEASURED, _RECOMMENDED, Campaign
 from baybe.constraints import (
     ContinuousLinearConstraint,
@@ -506,43 +506,31 @@ def test_deprecated_floating_point_environment_variables(
     assert attr is namespace.float32 if value else namespace.float64
 
 
-@pytest.mark.parametrize(
-    "value",
-    [
-        pytest.param(
-            False,
-            marks=pytest.mark.skipif(
-                not POLARS_INSTALLED, reason="Optional polars dependency not installed."
-            ),
-        ),
-        True,
-    ],
-)
+@pytest.mark.parametrize("value", [True, False])
 def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
-    """Using the deprecated polars environment variables raises warnings."""
+    """Using the deprecated polars environment variable raises an error."""
     monkeypatch.setenv("BAYBE_USE_POLARS_FOR_CONSTRAINTS", "")
     monkeypatch.setenv("BAYBE_DEACTIVATE_POLARS", str(value))
-    with pytest.warns(DeprecationWarning) as records:
-        settings = Settings(restore_environment=True)
-        assert settings.use_polars_for_constraints is not value
-
-    messages = [str(record.message) for record in records]
-    assert any(
-        "'BAYBE_DEACTIVATE_POLARS' has been deprecated" in msg for msg in messages
-    )
-    assert any("use_polars_for_constraints" in msg for msg in messages)
+    with (
+        pytest.warns(
+            DeprecationWarning, match="'BAYBE_DEACTIVATE_POLARS' has been deprecated"
+        ),
+        pytest.raises(DeprecationError, match="use_polars_for_constraints"),
+    ):
+        Settings(restore_environment=True)
 
 
 @pytest.mark.parametrize("value", [True, False])
-def test_deprecated_use_polars_for_constraints_setting(value: bool):
-    """Using the deprecated polars constraint setting raises warnings."""
-    with pytest.warns(DeprecationWarning, match="use_polars_for_constraints"):
-        settings = Settings(use_polars_for_constraints=value)
+def test_removed_use_polars_for_constraints_setting(value: bool):
+    """Using the removed polars constraint setting raises an error."""
+    with pytest.raises(DeprecationError, match="use_polars_for_constraints"):
+        Settings(use_polars_for_constraints=value)
 
-    with pytest.warns(DeprecationWarning, match="use_polars_for_constraints"):
-        assert settings.use_polars_for_constraints is value
+    settings = Settings()
+    with pytest.raises(DeprecationError, match="use_polars_for_constraints"):
+        settings.use_polars_for_constraints
 
-    with pytest.warns(DeprecationWarning, match="use_polars_for_constraints"):
+    with pytest.raises(DeprecationError, match="use_polars_for_constraints"):
         settings.use_polars_for_constraints = value
 
 
