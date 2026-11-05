@@ -131,9 +131,9 @@ def toggled_values():
 
 
 @pytest.fixture()
-def reset_settings_imports():
-    """Remove the setting module from the cache."""
-    sys.modules.pop("baybe.settings", None)
+def reset_settings_imports(monkeypatch):
+    """Temporarily remove the setting module from the cache."""
+    monkeypatch.delitem(sys.modules, "baybe.settings", raising=False)
 
 
 def test_setting_unknown_attribute():
