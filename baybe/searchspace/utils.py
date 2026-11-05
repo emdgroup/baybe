@@ -255,27 +255,6 @@ def parameter_cartesian_prod_pandas_constrained(
     return df
 
 
-def _apply_constraint_filter_polars(
-    ldf: pl.LazyFrame,
-    constraints: Sequence[DiscreteFilteringConstraint],
-) -> pl.LazyFrame:
-    """Remove discrete search space entries based on constraints.
-
-    Args:
-        ldf: The data in experimental representation to be filtered.
-        constraints: Filtering constraints to apply.
-
-    Returns:
-        The Polars lazyframe with undesired rows removed.
-    """
-    schema = ldf.collect_schema()
-    for c in constraints:
-        to_keep = c.get_invalid_polars(schema).not_()
-        ldf = ldf.filter(to_keep)
-
-    return ldf
-
-
 def _make_filtered_cartesian_product(
     parameters: Sequence[DiscreteParameter],
     filters: Sequence[Filter],
