@@ -99,8 +99,16 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    """Changes pytest marker configuration."""
+    """Changes pytest configuration."""
     config.addinivalue_line("markers", "slow: mark test as slow to run")
+
+    try:
+        from pandas.errors import Pandas4Warning
+    except ImportError:
+        pass
+    else:
+        category = f"{Pandas4Warning.__module__}.{Pandas4Warning.__name__}"
+        config.addinivalue_line("filterwarnings", f"ignore::{category}")
 
 
 def pytest_collection_modifyitems(config, items):
