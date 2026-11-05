@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+from itertools import islice
 from typing import TYPE_CHECKING
 
 import narwhals.stable.v2 as nw
-import numpy as np
-import numpy.typing as npt
-from attrs import evolve
 
 from baybe.searchspace import SubspaceDiscrete
-from baybe.searchspace.candidates import TableCandidates
 from baybe.settings import active_settings
 from baybe.utils.dataframe import _df_with_backend, to_tensor
 
@@ -46,29 +43,18 @@ def recommend_discrete_with_subsets(
     """
     import torch
 
-    candidates = subspace_discrete._get_candidates().collect()
-    masks: Iterable[npt.NDArray[np.bool_]]
-    if subspace_discrete.n_subsets <= recommender.max_n_subsets:
-        masks = subspace_discrete.subset_masks(min_candidates=batch_size)
-    else:
-        masks = subspace_discrete.sample_subset_masks(
-            recommender.max_n_subsets,
-            min_candidates=batch_size,
-        )
+    is_capped = subspace_discrete.n_subsets > recommender.max_n_subsets
+    subsets: Iterable[SubspaceDiscrete] = filter(
+        lambda subset: subset.count_candidates() >= batch_size,
+        subspace_discrete.iter_subsets(mode="shuffled" if is_capped else "ordered"),
+    )
+    if is_capped:
+        subsets = islice(subsets, recommender.max_n_subsets)
 
     def make_callable(
-        mask: np.ndarray,
+        subset_subspace: SubspaceDiscrete,
     ) -> Callable[[], tuple[IntoDataFrame, Tensor]]:
         def optimize() -> tuple[IntoDataFrame, Tensor]:
-            # TODO: Replace with .filter() method to avoid materialization
-            subset_subspace = evolve(
-                subspace_discrete,
-                candidates=TableCandidates(
-                    subspace_discrete.parameters,
-                    candidates.filter(mask.tolist()).to_native(),
-                ),
-            )
-
             rec = recommend_discrete_without_subsets(
                 recommender, subset_subspace, batch_size
             )
@@ -80,7 +66,7 @@ def recommend_discrete_with_subsets(
 
         return optimize
 
-    callables = (make_callable(m) for m in masks)
+    callables = map(make_callable, subsets)
     best_rec, _ = recommender._optimize_over_subsets(callables)
     return best_rec
 

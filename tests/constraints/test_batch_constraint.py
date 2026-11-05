@@ -5,7 +5,6 @@ from contextlib import nullcontext
 import pytest
 from pytest import param
 
-from baybe.constraints import DiscreteSelectionConstraint, SubSelectionCondition
 from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import (
     IncompatibilityError,
@@ -122,34 +121,3 @@ def test_batch_constraint_all_subsets_too_small():
         BotorchRecommender().recommend(
             4, searchspace, TARGET.to_objective(), measurements
         )
-
-
-@pytest.mark.parametrize(
-    ("min_candidates", "expected_count", "constraint"),
-    [
-        param(None, 3, None, id="no_filter"),
-        param(4, 0, None, id="all_skipped"),
-        param(3, 3, None, id="all_retained"),
-        param(
-            2,
-            2,
-            DiscreteSelectionConstraint(
-                parameters=["d0", "d1"],
-                conditions=[
-                    SubSelectionCondition(selection=[0.0]),
-                    SubSelectionCondition(selection=[0.0, 0.5]),
-                ],
-                exclude=True,
-            ),
-            id="partial",
-        ),
-    ],
-)
-def test_subset_masks_min_candidates(min_candidates, expected_count, constraint):
-    """Subset mask filtering by min_candidates."""
-    constraints = [DiscreteBatchConstraint(parameters=["d0"])]
-    if constraint is not None:
-        constraints.append(constraint)
-    searchspace = SearchSpace.from_product(_params, constraints)
-    masks = list(searchspace.discrete.subset_masks(min_candidates=min_candidates))
-    assert len(masks) == expected_count

@@ -6,7 +6,6 @@ import gc
 import json
 import warnings
 from collections.abc import Collection, Sequence
-from functools import reduce
 from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, cast, overload
 
 import cattrs
@@ -29,6 +28,7 @@ from baybe.exceptions import (
 )
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
+from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
@@ -51,9 +51,8 @@ from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     _df_equals,
     _df_with_backend,
+    _fuzzy_anti_join,
     _infer_backend,
-    filter_df,
-    fuzzy_row_match,
 )
 from baybe.utils.validation import (
     preprocess_dataframe,
@@ -67,6 +66,7 @@ if TYPE_CHECKING:
     from botorch.posteriors import Posterior
 
     from baybe.acquisition.base import AcquisitionFunction
+    from baybe.utils.dataframe import Filter
 
     _T = TypeVar("_T")
 
@@ -234,7 +234,10 @@ class Campaign(SerialMixin):
                 backend=active_settings.default_dataframe_backend,
             ).to_native()
 
-        return nw.concat(self._measurements, how="vertical").to_native()
+        combined = nw.maybe_reset_index(nw.concat(self._measurements, how="vertical"))
+        # Clone to prevent aliasing: the returned native frame would otherwise share
+        # storage with the stored measurement batches
+        return combined.clone().to_native()
 
     @property
     def n_batches_done(self) -> NoReturn:
@@ -321,7 +324,7 @@ class Campaign(SerialMixin):
     def _cache_recommendation(self, df: nw.DataFrame, /) -> None:
         """Cache the given recommendation."""
         # Clone to prevent aliasing: the caller still holds a reference to ``df``
-        # whose native storage would otherwise be shared with the cache.
+        # whose native storage would otherwise be shared with the cache
         self._cached_recommendation = df.clone()
 
     def clear_cache(self) -> None:
@@ -406,7 +409,9 @@ class Campaign(SerialMixin):
             The batch previously stored at the index.
         """
         if dry_run:
-            return self._measurements[batch_index].to_native()
+            # Clone to prevent aliasing: the returned frame would otherwise share
+            # storage with the stored batch
+            return self._measurements[batch_index].clone().to_native()
 
         # Preprocess incoming data
         data_nw = nw.from_native(
@@ -445,34 +450,39 @@ class Campaign(SerialMixin):
             The dropped batch data.
         """
         if dry_run:
-            return self._measurements[batch_index].to_native()
+            # Clone to prevent aliasing: the returned frame would otherwise share
+            # storage with the stored batch
+            return self._measurements[batch_index].clone().to_native()
 
         self.clear_cache()
         return self._measurements.pop(batch_index).to_native()
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
-        constraints: Collection[DiscreteFilteringConstraint] | IntoDataFrame,
-        exclude: bool,
+        *filters: Filter,
+        exclude: bool | None = None,  # `None` is for deprecation-purposes only
         complement: bool = False,
         dry_run: bool = False,
+        constraints: Collection[DiscreteFilteringConstraint]
+        | IntoDataFrame
+        | None = None,
     ) -> IntoDataFrame:
         """In-/exclude certain discrete points in/from the candidate set.
 
         Args:
-            constraints: A filtering mechanism determining the candidates subset to be
-                in-/excluded. Can be either a collection of
-                :class:`~baybe.constraints.base.DiscreteFilteringConstraint` or a
-                dataframe. For the latter, see :func:`~baybe.utils.dataframe.filter_df`
-                for details.
+            *filters: One or more filter criteria determining the candidates subset
+                to be in-/excluded. Multiple filters are combined conjunctively
+                (logical AND).
             exclude: If ``True``, the specified candidates are excluded.
                 If ``False``, the candidates are considered for recommendation.
             complement: If ``True``, the filtering mechanism is inverted so that
-                the complement of the candidate subset specified by the filter is
-                toggled. For details, see :func:`~baybe.utils.dataframe.filter_df`.
+                the complement of the candidate subset specified by the filter(s) is
+                toggled.
             dry_run: If ``True``, the target subset is only extracted but not
                 affected. If ``False``, the candidate set is updated correspondingly.
                 Useful for setting up the correct filtering mechanism.
+            constraints: Deprecated! Provide the filter criteria via ``*filters``
+                instead.
 
         Returns:
             A new dataframe containing the discrete candidate set passing through the
@@ -485,59 +495,140 @@ class Campaign(SerialMixin):
         #  * When excluding points, the cache only needs to be cleared if the excluded
         #    points were part of the cached recommendations.
         #  * Additional shortcuts might be possible.
+
+        # >>>>>>>>>> Deprecation
+        filters, exclude, complement, dry_run = self._resolve_legacy_toggle_args(
+            filters, exclude, complement, dry_run, constraints
+        )
+        # <<<<<<<<<< Deprecation
+
         self.clear_cache()
 
-        df = self.searchspace.discrete._get_candidates().collect().to_pandas()
-
-        if is_into_dataframe(constraints):
-            # Determine the candidate subset to be toggled
-            points = filter_df(
-                df,
-                # TODO[typing]: https://github.com/facebook/pyrefly/issues/4849
-                nw.from_native(constraints, eager_only=True).to_pandas(),  # pyrefly: ignore[no-matching-overload]
-                complement,
-            )
-
-        elif isinstance(constraints, Collection) and is_all_instance(
-            constraints, DiscreteFilteringConstraint
-        ):
-            # TODO: Should be taken over by upcoming `SubspaceDiscrete.filter` method,
-            #   automatically choosing the appropriate backend (polars/pandas/...)
-
-            # Filter the search space dataframe according to the given constraint
-            idx = reduce(
-                lambda x, y: x.intersection(y), (c.get_valid(df) for c in constraints)
-            )
-
-            # Determine the candidate subset to be toggled
-            points = df.drop(index=idx) if complement else df.loc[idx].copy()
-
-        else:
-            raise TypeError(
-                f"Candidate toggling requires a dataframe or a collection of "
-                f"'{DiscreteFilteringConstraint.__name__}' instances."
-            )
-
-        points_nw = _df_with_backend(
-            nw.from_native(points, eager_only=True),
-            nw.get_native_namespace(self._excluded_experiments),
-        )
+        filtered = self.searchspace.discrete.filter(*filters, complement=complement)
+        points_nw = nw.maybe_reset_index(filtered._get_candidates().collect())
 
         if not dry_run:
             if exclude and not points_nw.is_empty():
+                # Clone to prevent aliasing: the returned native frame would otherwise
+                # share storage with the exclusion record
+                to_store = points_nw.clone()
                 if self._excluded_experiments.is_empty():
-                    self._excluded_experiments = points_nw
+                    self._excluded_experiments = to_store
                 else:
                     concatenated = nw.concat(
-                        [self._excluded_experiments, points_nw], how="vertical"
+                        [self._excluded_experiments, to_store], how="vertical"
                     )
-                    self._excluded_experiments = concatenated.unique()
+                    self._excluded_experiments = nw.maybe_reset_index(
+                        concatenated.unique()
+                    )
             elif not exclude and not self._excluded_experiments.is_empty():
-                self._excluded_experiments = self._excluded_experiments.join(
-                    points_nw, on=points_nw.columns, how="anti"
+                self._excluded_experiments = nw.maybe_reset_index(
+                    self._excluded_experiments.join(
+                        points_nw, on=points_nw.columns, how="anti"
+                    )
                 )
 
         return points_nw.to_native()
+
+    # >>>>>>>>>> Deprecation
+    def _resolve_legacy_toggle_args(
+        self,
+        filters: tuple[Filter, ...],
+        exclude: bool | None,
+        complement: bool,
+        dry_run: bool,
+        constraints: Collection[DiscreteFilteringConstraint] | IntoDataFrame | None,
+    ) -> tuple[tuple[Filter, ...], bool, bool, bool]:
+        """Normalize legacy ``toggle_discrete_candidates`` call styles."""
+        # Legacy call style: the filter criterion passed via the old `constraints`
+        # keyword argument instead of via `*filters`
+        if constraints is not None:
+            if filters:
+                raise TypeError(
+                    f"'{self.toggle_discrete_candidates.__name__}' received both "
+                    f"positional filter arguments and the legacy 'constraints' "
+                    f"keyword argument. Provide the filter criteria only once, "
+                    f"preferably via the new-style positional '*filters' arguments."
+                )
+            if is_into_dataframe(constraints):
+                filters = (cast("Filter", constraints),)
+            else:
+                filters = tuple(cast("Collection[Filter]", constraints))
+            warnings.warn(
+                f"Passing filter criteria via the 'constraints' argument of "
+                f"'{self.toggle_discrete_candidates.__name__}' is deprecated and "
+                f"will be rejected in a future version. Pass them as positional "
+                f"arguments instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+
+        # Legacy call style: `exclude`/`complement`/`dry_run` passed positionally,
+        # as a trailing run of plain `bool` arguments, in that order (unambiguous,
+        # since a bare `bool` is never a valid `Filter`)
+        n_trailing_bools = 0
+        for f in reversed(filters):
+            if isinstance(f, bool):
+                n_trailing_bools += 1
+            else:
+                break
+        if n_trailing_bools > 3:
+            raise TypeError(
+                f"'{self.toggle_discrete_candidates.__name__}' received too many "
+                f"positional Boolean arguments."
+            )
+        if n_trailing_bools:
+            legacy_values = filters[-n_trailing_bools:]
+            filters = filters[:-n_trailing_bools]
+            for name, value in zip(
+                ("exclude", "complement", "dry_run"), legacy_values, strict=False
+            ):
+                if name == "exclude":
+                    exclude = cast(bool, value)
+                elif name == "complement":
+                    complement = cast(bool, value)
+                else:
+                    dry_run = cast(bool, value)
+            warnings.warn(
+                f"Passing 'exclude' (and 'complement'/'dry_run') positionally to "
+                f"'{self.toggle_discrete_candidates.__name__}' is deprecated and "
+                f"will be rejected in a future version. Pass 'exclude' as a keyword "
+                f"argument instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+
+        # Legacy call style: a collection of constraints passed as a single combined
+        # argument instead of as individual filter arguments
+        if (
+            len(filters) == 1
+            and isinstance(filters[0], Collection)
+            and not is_into_dataframe(filters[0])
+            and is_all_instance(filters[0], DiscreteFilteringConstraint)
+        ):
+            filters = tuple(filters[0])
+            warnings.warn(
+                f"Passing a combined collection of "
+                f"'{DiscreteFilteringConstraint.__name__}' objects to "
+                f"'{self.toggle_discrete_candidates.__name__}' is deprecated and "
+                f"will be rejected in a future version. Pass the constraints as "
+                f"separate positional arguments instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+
+        # `exclude` only has a default value (`None`) to accommodate the legacy
+        # call styles above that can supply it after the fact. Once those are
+        # removed, `exclude` becomes a genuinely required keyword-only argument
+        # (no default) and Python's own argument binding takes over this check.
+        if exclude is None:
+            raise TypeError(
+                f"'{self.toggle_discrete_candidates.__name__}' is missing the "
+                f"required keyword argument 'exclude'."
+            )
+        return filters, exclude, complement, dry_run
+
+    # <<<<<<<<<< Deprecation
 
     def recommend(
         self,
@@ -565,37 +656,32 @@ class Campaign(SerialMixin):
 
         backend = _infer_backend(pending_experiments)
 
+        # Preprocess pending experiments before cache invalidation.
+        if pending_experiments is not None:
+            pending_experiments = preprocess_dataframe(
+                pending_experiments,
+                self.searchspace,
+                numerical_measurements_must_be_within_tolerance=False,
+                allow_extra=False,
+            )
+
         # IMPROVE: Currently, we simply invalidate the cache whenever pending
         #     experiments are provided, because in order to use it, we need to check if
         #     the previous call was done with the same pending experiments.
         if pending_experiments is not None:
             self.clear_cache()
 
-        # Preprocess pending experiments
-        pending_experiments_pd: pd.DataFrame | None = (
-            nw.from_native(
-                preprocess_dataframe(
-                    pending_experiments,
-                    self.searchspace,
-                    numerical_measurements_must_be_within_tolerance=False,
-                ),
-                eager_only=True,
-            ).to_pandas()
-            if pending_experiments is not None
-            else None
-        )
-
         # TODO: Proper fix for the allow_* flags required
         if (
             active_settings.cache_campaign_recommendations
             and (cache := self._cached_recommendation) is not None
-            and pending_experiments_pd is None
+            and pending_experiments is None
             and self.allow_recommending_already_recommended
             and len(cache) == batch_size
         ):
             # TODO: Potentially the cast becomes obsolete once Campaign is generic
             # Clone to prevent aliasing: the returned native frame would
-            # otherwise share storage with the cache.
+            # otherwise share storage with the cache
             return cast(
                 IntoDataFrameT,
                 _df_with_backend(cache.clone(), backend).to_native(),
@@ -603,70 +689,44 @@ class Campaign(SerialMixin):
 
         # Prepare the search space according to the current campaign state
         if self.searchspace.type is SearchSpaceType.DISCRETE:
-            # TODO: This implementation should at some point be hidden behind an
-            #   appropriate public interface, like `SubspaceDiscrete.filter()`
-            candidates = (
-                self.searchspace.discrete._get_candidates().collect().to_pandas()
-            )
-            mask_todrop = pd.Series(False, index=candidates.index)
+            discrete = self.searchspace.discrete
+
+            # Drop excluded experiments
             if not self._excluded_experiments.is_empty():
-                mask_todrop |= (
-                    pd.merge(
-                        candidates,
-                        self._excluded_experiments.to_pandas(),
-                        indicator=True,
-                        how="left",
-                    )["_merge"]
-                    .eq("both")
-                    .to_numpy()
-                )
+                discrete = discrete.filter(self._excluded_experiments, complement=True)
+
+            # Drop already recommended experiments
             if (
                 not self.allow_recommending_already_recommended
                 and not self._recommended_experiments.is_empty()
             ):
-                mask_todrop |= (
-                    pd.merge(
-                        candidates,
-                        self._recommended_experiments.to_pandas(),
-                        indicator=True,
-                        how="left",
-                    )["_merge"]
-                    .eq("both")
-                    .to_numpy()
+                discrete = discrete.filter(
+                    self._recommended_experiments, complement=True
                 )
-            if not self.allow_recommending_already_measured and self._measurements:
-                measured_idxs = fuzzy_row_match(
-                    candidates,
-                    nw.from_native(self.measurements, eager_only=True).to_pandas(),
-                    self.parameters,
-                )
-                mask_todrop.loc[measured_idxs] = True
+
+            # Drop pending experiments
             if (
                 not self.allow_recommending_pending_experiments
-                and pending_experiments_pd is not None
+                and pending_experiments is not None
             ):
-                mask_todrop |= (
-                    pd.merge(
-                        candidates,
-                        pending_experiments_pd,
-                        indicator=True,
-                        how="left",
-                    )["_merge"]
-                    .eq("both")
-                    .to_numpy()
+                discrete = discrete.filter(pending_experiments, complement=True)
+
+            # Drop already measured experiments
+            if not self.allow_recommending_already_measured and self._measurements:
+                tolerances = {
+                    p.name: p.tolerance
+                    for p in discrete.parameters
+                    if isinstance(p, NumericalDiscreteParameter)
+                }
+                filtered = _fuzzy_anti_join(
+                    discrete.get_candidates(), self.measurements, tolerances
                 )
-            # TODO: Replace index-based selection and explicit TableCandidates
-            #   instantiation with .filter() method to avoid materialization
-            searchspace = evolve(
-                self.searchspace,
-                discrete=evolve(
-                    self.searchspace.discrete,
-                    candidates=TableCandidates(
-                        self.searchspace.discrete.parameters,
-                        candidates.loc[~mask_todrop],
-                    ),
-                ),
-            )
+                discrete = evolve(
+                    discrete,
+                    candidates=TableCandidates(discrete.parameters, filtered),
+                )
+
+            searchspace = evolve(self.searchspace, discrete=discrete)
         else:
             searchspace = self.searchspace
 
@@ -680,7 +740,7 @@ class Campaign(SerialMixin):
                 searchspace,
                 self.objective,
                 self.measurements,
-                pending_experiments_pd,
+                pending_experiments,
             )
         is_nonpredictive = isinstance(recommender, NonPredictiveRecommender)
 
@@ -694,7 +754,7 @@ class Campaign(SerialMixin):
                     searchspace,
                     self.objective,
                     self.measurements,
-                    None if is_nonpredictive else pending_experiments_pd,
+                    None if is_nonpredictive else pending_experiments,
                 )
         except NotEnoughPointsLeftError as ex:
             # Aliases for code compactness
@@ -705,7 +765,7 @@ class Campaign(SerialMixin):
             ok_m_name = f._allow_recommending_already_measured.alias
             ok_r_name = f._allow_recommending_already_recommended.alias
             ok_p_name = f._allow_recommending_pending_experiments.alias
-            no_blocked_pending_points = ok_p or (pending_experiments_pd is None)
+            no_blocked_pending_points = ok_p or (pending_experiments is None)
 
             # If there are no candidate restrictions to be relaxed
             if ok_m and ok_r and no_blocked_pending_points:
@@ -730,24 +790,20 @@ class Campaign(SerialMixin):
 
         if (
             active_settings.cache_campaign_recommendations
-            and pending_experiments_pd is None  # see IMPROVE comment above
+            and pending_experiments is None  # see IMPROVE comment above
         ):
             self._cache_recommendation(rec_nw)
 
         # Track recommended experiments (deduplicated)
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
             param_cols = [p.name for p in self.parameters]
-            rec_params_pd = rec_nw.select(param_cols).to_pandas()
             frames = [
-                f
-                for f in (self._recommended_experiments.to_pandas(), rec_params_pd)
-                if not f.empty
+                frame
+                for frame in (self._recommended_experiments, rec_nw.select(param_cols))
+                if not frame.is_empty()
             ]
-            self._recommended_experiments = nw.from_native(
-                pd.concat(frames, axis=0, ignore_index=True)
-                .drop_duplicates()
-                .reset_index(drop=True),
-                eager_only=True,
+            self._recommended_experiments = nw.maybe_reset_index(
+                nw.concat(frames, how="vertical").unique()
             )
 
         return cast(

@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast, get_type_hints, overload
 
 import cattrs
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 from attrs import define, field, fields
 from attrs.converters import optional as optional_c
@@ -952,26 +951,6 @@ class DiscreteBatchConstraint(DiscreteConstraint):
                 f"'{self.__class__.__name__}' requires exactly one parameter, "
                 f"but {len(self.parameters)} were provided: {self.parameters}."
             )
-
-    def subset_masks(
-        self, candidates_exp: pd.DataFrame, /
-    ) -> list[npt.NDArray[np.bool_]]:
-        """Return Boolean masks defining the subsets for this constraint.
-
-        Each mask selects the rows in ``candidates_exp`` that belong to one
-        subset, i.e. share the same value for the constrained parameter.
-
-        Args:
-            candidates_exp: The experimental representation of candidate points.
-
-        Returns:
-            A list of Boolean masks, one per unique value of the constrained
-            parameter.
-        """
-        param = self.parameters[0]
-        return [
-            (candidates_exp[param] == v).values for v in candidates_exp[param].unique()
-        ]
 
 
 @define
