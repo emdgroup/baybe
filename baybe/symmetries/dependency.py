@@ -80,14 +80,11 @@ class DependencySymmetry(Symmetry):
         # augmented.
         param = searchspace.discrete.get_parameters_by_name((self._parameter_name,))[0]
 
+        active_mask = self.condition.evaluate(pd.Series(param.values))
         causing_values = [
-            x
-            for x, flag in zip(
-                param.values,
-                ~self.condition.evaluate(pd.Series(param.values)),
-                strict=True,
-            )
-            if flag
+            value
+            for value, is_active in zip(param.values, active_mask, strict=True)
+            if not is_active
         ]
         causing = (param.name, causing_values)
 

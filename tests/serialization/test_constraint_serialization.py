@@ -7,6 +7,8 @@ from pytest import param
 
 from tests.hypothesis_strategies.constraints import (
     continuous_linear_constraints,
+    discrete_batch_constraints,
+    discrete_cardinality_constraints,
     discrete_dependencies_constraints,
     discrete_linear_constraints,
     discrete_permutation_invariance_constraints,
@@ -32,6 +34,11 @@ from tests.serialization.utils import assert_roundtrip_consistency
             discrete_repetition_limit_constraints(),
             id="DiscreteRepetitionLimitConstraint",
         ),
+        param(
+            discrete_cardinality_constraints(),
+            id="DiscreteCardinalityConstraint",
+        ),
+        param(discrete_batch_constraints(), id="DiscreteBatchConstraint"),
         param(
             continuous_linear_constraints(),
             id="ContinuousLinearConstraint",

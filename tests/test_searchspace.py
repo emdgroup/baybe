@@ -8,9 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from exceptiongroup import ExceptionGroup
-from pandas.testing import assert_frame_equal
 
-from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import (
     ContinuousLinearConstraint,
     DiscreteBatchConstraint,
@@ -33,10 +31,7 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
-from baybe.searchspace.utils import (
-    parameter_cartesian_prod_pandas,
-    parameter_cartesian_prod_polars,
-)
+from baybe.settings import Settings
 from baybe.utils.basic import is_all_instance
 
 
@@ -187,6 +182,7 @@ def test_invalid_simplex_creating_with_overlapping_parameters():
         )
 
 
+@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize(
     ("simplex_parameters", "expected_len"),
     [
@@ -353,6 +349,7 @@ def test_invalid_constraint_parameter_combos():
     ],
     ids=["simple", "with_active_values"],
 )
+@Settings(default_dataframe_backend="pandas")
 def test_searchspace_memory_estimate(searchspace: SearchSpace):
     """The memory estimate doesn't differ by more than 5% from the actual memory."""
     estimate = searchspace.estimate_product_space_size(searchspace.parameters)
@@ -374,44 +371,6 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
         estimate_comp,
         actual_comp,
     )
-
-
-@pytest.mark.skipif(
-    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
-)
-@pytest.mark.parametrize(
-    "parameter_names",
-    [
-        [
-            "Categorical_1",
-            "Categorical_2",
-            "Custom_1",
-            "Solvent_1",
-            "Solvent_2",
-            "Fraction_1",
-        ],
-        [
-            "Categorical_1_subset",
-            "Categorical_2",
-            "Custom_1_subset",
-            "Solvent_1_subset",
-            "Solvent_2",
-            "Fraction_1",
-        ],
-    ],
-    ids=["simple", "with_active_values"],
-)
-def test_polars_pandas_equivalence(parameters):
-    """Search spaces created with Polars and Pandas are identical."""
-    # Do Polars product
-    ldf = parameter_cartesian_prod_polars(parameters)
-    df_pl = ldf.collect()
-
-    # Do Pandas product
-    df_pd = parameter_cartesian_prod_pandas(parameters)
-
-    # Assert equality
-    assert_frame_equal(df_pl.to_pandas(), df_pd)
 
 
 def test_task_parameter_active_values_validation():

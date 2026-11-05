@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteBatchConstraint.subset_masks`
 - `SearchSpace.subsets` and `SearchSpace.sample_subsets` (combined subset iteration
   is temporarily private pending a public API that yields search spaces)
+- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars`
+  (product construction is now narwhals-based)
 
 ### Breaking Changes
 - For pandas users: series/dataframe indices are no longer used as information carriers
@@ -46,6 +48,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   center, which caused `OptimizationGradientError` during recommendation
 - `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
   constraint filtering
+- `ThresholdCondition` now treats missing values as non-matching for all operators;
+  previously, the `!=` operator admitted them
+- `ThresholdCondition` now rejects Boolean data instead of treating it as numerical
+- `SubSelectionCondition` now supports Boolean selection entries for both pandas and
+  Polars backends; previously, they were coerced to floats, which broke Polars filtering
+- `SubSelectionCondition` now rejects selection entries of different types and raises a
+  descriptive error when applied to data of an incompatible dtype, instead of behaving
+  differently depending on the dataframe backend
 - Pending experiments containing extra columns or duplicate column names are now
   rejected before recommendation
 - Subset sampling without replacement no longer relies on a duplicate-rejection mechanism
@@ -151,6 +161,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Discrete subsets are now represented as filtered `SubspaceDiscrete` objects instead of
   Boolean masks over a materialized candidate dataframe, enabling more efficient and
   flexible subset handling
+- Constraint and condition objects are now immutable, and their sequence attributes
+  (`parameters`, `conditions`, `affected_parameters`) are stored as tuples
+- Discrete constraints are now evaluated via `narwhals` on the active dataframe
+  backend instead of using a separate Polars code path
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
@@ -192,6 +206,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `deserialize_dataframe` dictionary input specifying a pandas-only constructor
   (e.g. `from_records`) in favor of `narwhals.DataFrame`'s constructors
   (e.g. `from_dict`, `from_dicts`)
+- `Settings.use_polars_for_constraints` and the corresponding
+  `BAYBE_DEACTIVATE_POLARS` environment variable. Discrete constraints are now
+  evaluated on the active dataframe backend, so use
+  `Settings.default_dataframe_backend` to control the backend instead.
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
