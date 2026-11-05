@@ -47,7 +47,7 @@ from baybe.serialization import (
     converter,
 )
 from baybe.serialization.core import _TYPE_FIELD, make_base_structure_hook
-from baybe.utils.basic import to_tuple
+from baybe.utils.basic import to_tuple, validate_all_instance
 from baybe.utils.boolean import is_abstract
 from baybe.utils.validation import finite_float
 
@@ -159,7 +159,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     @override
     def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
         satisfied = [
-            cond._to_expr(nw.col(param))
+            cond._to_expr(nw.col(param), schema[param])
             for param, cond in zip(self.parameters, self.conditions, strict=True)
             if param in schema
         ]
@@ -297,12 +297,15 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
 
     @override
     def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        validate_all_instance(
+            [schema[p] for p in self.parameters], nw.dtypes.NumericType
+        )
         weighted = [
             nw.col(p) * c
             for p, c in zip(self.parameters, self.coefficients, strict=True)
         ]
         condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        return condition._to_expr(nw.sum_horizontal(weighted))
+        return condition._to_expr(nw.sum_horizontal(weighted), nw.dtypes.NumericType())
 
 
 @define(init=False, frozen=True)
@@ -438,10 +441,13 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
 
     @override
     def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        validate_all_instance(
+            [schema[p] for p in self.parameters], nw.dtypes.NumericType
+        )
         factors = [nw.col(p) for p in self.parameters]
         product = reduce(lambda left, right: left * right, factors)
         condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        return condition._to_expr(product)
+        return condition._to_expr(product, nw.dtypes.NumericType())
 
 
 # >>>>>>>>>> Deprecation
@@ -911,6 +917,7 @@ class DiscreteCardinalityConstraint(  # pyrefly: ignore[invalid-inheritance]
     @override
     def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
         parameters = [p for p in self.parameters if p in schema]
+        validate_all_instance([schema[p] for p in parameters], nw.dtypes.NumericType)
         n_active = nw.sum_horizontal(
             (nw.col(p) != 0.0).cast(nw.UInt16) for p in parameters
         )

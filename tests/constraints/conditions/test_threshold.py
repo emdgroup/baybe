@@ -1,5 +1,6 @@
 """Tests for threshold conditions."""
 
+import narwhals.stable.v2 as nw
 import pytest
 from pytest import param
 
@@ -116,9 +117,12 @@ def test_threshold_condition_default_tolerance(operator, tolerance):
     [
         param(["a", "b"], id="strings"),
         param([True, False], id="booleans"),
+        param([None, None], id="all-null"),
     ],
 )
-def test_threshold_condition_non_numeric_series(values, backend):
+def test_threshold_condition_non_numeric_dtype(values, backend):
+    """Threshold condition expressions reject non-numerical dtypes."""
+    dtype = nw.new_series("value", values, backend=backend).dtype
     condition = ThresholdCondition(threshold=2.0, operator="<")
-    with pytest.raises(ValueError, match="non-numerical data"):
-        apply_condition(condition, values, backend)
+    with pytest.raises(TypeError, match="NumericType"):
+        condition._to_expr(nw.col("value"), dtype)

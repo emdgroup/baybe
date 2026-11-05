@@ -1,5 +1,6 @@
 """Tests for sub-selection conditions."""
 
+import narwhals.stable.v2 as nw
 import pytest
 from pytest import param
 
@@ -39,7 +40,6 @@ def test_subselection_condition_invalid_selection(selection, match):
         param([1.5], [1.5, 2.5, None], [1.5], id="floats-nullable"),
         param([True], [True, False], [True], id="booleans"),
         param(["x"], ["a", "b"], [], id="no-match"),
-        param([1], [None, None], [], id="all-null"),
     ],
 )
 def test_subselection_condition_filters_values(selection, values, expected, backend):
@@ -54,12 +54,14 @@ def test_subselection_condition_filters_values(selection, values, expected, back
         param([True], [1, 2], id="boolean-on-numeric"),
         param([1], [True, False], id="numeric-on-boolean"),
         param([1], ["a", "b"], id="numeric-on-string"),
+        param([1], [None, None], id="numeric-on-all-null"),
         param(["a"], [1.0, 2.0], id="string-on-numeric"),
         param(["a"], [True, False], id="string-on-boolean"),
     ],
 )
-def test_subselection_condition_incompatible_values(selection, values, backend):
-    """Sub-selection conditions reject values of a different type."""
+def test_subselection_condition_incompatible_dtype(selection, values, backend):
+    """Sub-selection condition expressions reject incompatible dtypes."""
+    dtype = nw.new_series("value", values, backend=backend).dtype
     condition = SubSelectionCondition(selection=selection)
-    with pytest.raises(ValueError, match="cannot be applied to data of type"):
-        apply_condition(condition, values, backend)
+    with pytest.raises(TypeError, match="cannot be applied to data of type"):
+        condition._to_expr(nw.col("value"), dtype)

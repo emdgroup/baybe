@@ -19,11 +19,11 @@ from typing_extensions import override
 from baybe.serialization import (
     SerialMixin,
 )
-from baybe.utils.basic import to_tuple
+from baybe.utils.basic import to_tuple, validate_all_instance
 from baybe.utils.validation import finite_float, validate_unique_values
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2 import Expr, Series
+    from narwhals.stable.v2 import Expr
     from narwhals.stable.v2.typing import IntoSeries, IntoSeriesT
 
 
@@ -77,9 +77,6 @@ class Condition(ABC, SerialMixin):
 
         Returns:
             A native series containing only the values that satisfy the condition.
-
-        Raises:
-            ValueError: If the input series is incompatible with the condition.
         """
         nw_series = nw.from_native(series, series_only=True)
         mask = nw.from_native(self.evaluate(series), series_only=True)
@@ -93,30 +90,28 @@ class Condition(ABC, SerialMixin):
 
         Returns:
             A native Boolean series indicating which values satisfy the condition.
-
-        Raises:
-            ValueError: If the input series is incompatible with the condition.
         """
         nw_series = nw.from_native(series, series_only=True)
-        self._validate_series(nw_series)
         nw_frame = nw_series.to_frame()
         column = nw_frame.columns[0]
-        result = nw_frame.select(self._to_expr(nw.col(column)))
+        result = nw_frame.select(self._to_expr(nw.col(column), nw_series.dtype))
         return result.get_column(result.columns[0]).alias(nw_series.name).to_native()
 
     @abstractmethod
-    def _to_expr(self, expr: Expr, /) -> Expr:
+    def _to_expr(self, expr: Expr, dtype: Any, /) -> Expr:
         """Return the condition as a Narwhals expression.
 
         Args:
-            expr: Input expression, for instance column selection etc.
+            expr: An expression that evaluates to a single column (for example, a
+                single-column selection or a column aggregation such as averaging).
+            dtype: The dtype of the input expression.
+
+        Raises:
+            TypeError: If the condition cannot be applied to the given dtype.
 
         Returns:
             A backend-agnostic Boolean expression.
         """
-
-    def _validate_series(self, series: Series, /) -> None:
-        """Validate the input series before applying the condition."""
 
 
 @define(frozen=True)
@@ -162,16 +157,9 @@ class ThresholdCondition(Condition):
                 )
 
     @override
-    def _validate_series(self, series: Series, /) -> None:
-        if not isinstance(series.dtype, nw.dtypes.NumericType):
-            raise ValueError(
-                "You tried to apply a threshold condition to non-numerical data. "
-                "This operation is error-prone and not supported. Only use threshold "
-                "conditions with numerical parameters."
-            )
+    def _to_expr(self, expr: Expr, dtype: Any, /) -> Expr:
+        validate_all_instance((dtype,), nw.dtypes.NumericType)
 
-    @override
-    def _to_expr(self, expr: Expr, /) -> Expr:
         if self.operator in _TOLERANCE_OPERATORS:
             assert self.tolerance is not None
             close = (expr >= self.threshold - self.tolerance) & (
@@ -213,19 +201,13 @@ class SubSelectionCondition(Condition):
         return _selection_dtypes(self.selection[0])
 
     @override
-    def _validate_series(self, series: Series, /) -> None:
-        # All-null series are typeless, and the backends report different dtypes for
-        # them, so no compatibility check is possible.
-        if isinstance(series.dtype, self._dtypes) or series.is_null().all():
-            return
+    def _to_expr(self, expr: Expr, dtype: Any, /) -> Expr:
+        if not isinstance(dtype, self._dtypes):
+            raise TypeError(
+                f"A '{type(self).__name__}' with entries {self.selection!r} cannot "
+                f"be applied to data of type '{dtype}'."
+            )
 
-        raise ValueError(
-            f"A '{type(self).__name__}' with entries {self.selection!r} cannot "
-            f"be applied to data of type '{series.dtype}'."
-        )
-
-    @override
-    def _to_expr(self, expr: Expr, /) -> Expr:
         return expr.is_in(self.selection).fill_null(False)
 
 
