@@ -23,7 +23,7 @@ from baybe.searchspace.candidates import (
     ProductCandidates,
     TableCandidates,
 )
-from baybe.settings import active_settings
+from baybe.settings import Settings, active_settings
 from baybe.utils.dataframe import create_fake_input
 
 p_disc = NumericalDiscreteParameter("disc", (1, 2))
@@ -263,9 +263,13 @@ def test_candidates_filter(candidates, filters, complement, expected):
     _assert_candidate_rows(filtered, expected[complement])
 
 
+@Settings(default_dataframe_backend="pandas")
 def test_candidates_filter_dataframe(candidates):
     """Dataframe filtering yields the same rows for all representations."""
-    filter_df = pd.DataFrame({"disc": [1, 2], "disc2": [0, 10]})
+    filter_df = nw.from_dict(
+        {"disc": [1.0, 2.0], "disc2": [0.0, 10.0]},
+        backend=active_settings.default_dataframe_backend,
+    )
     filtered = candidates.filter(filter_df)
     _assert_candidate_rows(filtered, {"disc": [1.0, 2.0], "disc2": [0.0, 10.0]})
 

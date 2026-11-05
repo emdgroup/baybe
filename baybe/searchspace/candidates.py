@@ -15,7 +15,7 @@ from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.exceptions import InfiniteSpaceError
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import sort_parameters
-from baybe.searchspace.utils import build_constrained_product
+from baybe.searchspace.utils import _make_filtered_cartesian_product
 from baybe.searchspace.validation import validate_parameters
 from baybe.settings import active_settings
 from baybe.utils._types import _NarwhalsFrame
@@ -170,21 +170,9 @@ class ProductCandidates(CandidatesProtocol):
             raise InfiniteSpaceError(
                 "Cannot generate all candidates from an infinite space."
             )
-
-        constraints: list[DiscreteFilteringConstraint] = []
-        non_constraint_filters: list[Filter] = []
-        for filter_ in self.filters:
-            if isinstance(filter_, DiscreteFilteringConstraint):
-                constraints.append(filter_)
-            else:
-                non_constraint_filters.append(filter_)
-
-        candidates_df = build_constrained_product(self.parameters, constraints)
-
-        # TODO: Remove to lazy once build_constrained_product returns a nw.LazyFrame
-        assert not isinstance(candidates_df, nw.LazyFrame)
-        candidates = nw.from_native(candidates_df).lazy()
-        return _filter_dataframe(candidates, *non_constraint_filters)
+        return nw.from_native(
+            _make_filtered_cartesian_product(self.parameters, self.filters)
+        ).lazy()
 
 
 @define(frozen=True)

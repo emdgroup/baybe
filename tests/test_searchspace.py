@@ -37,6 +37,7 @@ from baybe.searchspace.utils import (
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )
+from baybe.settings import Settings
 from baybe.utils.basic import is_all_instance
 
 
@@ -187,6 +188,7 @@ def test_invalid_simplex_creating_with_overlapping_parameters():
         )
 
 
+@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize(
     ("simplex_parameters", "expected_len"),
     [
@@ -353,6 +355,7 @@ def test_invalid_constraint_parameter_combos():
     ],
     ids=["simple", "with_active_values"],
 )
+@Settings(default_dataframe_backend="pandas")
 def test_searchspace_memory_estimate(searchspace: SearchSpace):
     """The memory estimate doesn't differ by more than 5% from the actual memory."""
     estimate = searchspace.estimate_product_space_size(searchspace.parameters)

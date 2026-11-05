@@ -13,7 +13,7 @@ from baybe.constraints import (
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace.utils import (
     _apply_constraint_filter_polars,
-    build_constrained_product,
+    _make_filtered_cartesian_product,
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )
@@ -220,11 +220,10 @@ def test_polars_product(constraints, parameters):
 
 
 def test_mixed_polars_pandas_constraints():
-    """build_constrained_product with Polars active matches naive pandas result.
+    """Mixed pandas/narwhals constraints match the naive pandas result.
 
-    Verifies that parameters shared between Polars and pandas constraints are
-    handled correctly — parameters in the Polars product remain available for
-    subsequent pandas constraint filtering.
+    Verifies that constraints covering different parameter sets are applied
+    correctly when combined in a single filtering pipeline.
     """
     parameters = [
         NumericalDiscreteParameter(name="A", values=[0.0, 50.0, 100.0]),
@@ -249,8 +248,10 @@ def test_mixed_polars_pandas_constraints():
     df_naive = parameter_cartesian_prod_pandas(parameters)
     df_naive = apply_filtering_constraints(df_naive, constraints)
 
-    # Under test: build_constrained_product routes through Polars partitioning
-    df_result = build_constrained_product(parameters, constraints)
+    # Under test: unified cartesian product filtering pipeline
+    df_result = (
+        _make_filtered_cartesian_product(parameters, constraints).collect().to_pandas()
+    )
 
     cols = df_naive.columns.tolist()
     assert_frame_equal(

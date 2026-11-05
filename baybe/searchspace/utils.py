@@ -5,15 +5,17 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, TypeVar
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 
-from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
 from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
 from baybe.parameters.base import DiscreteParameter
+from baybe.utils.dataframe import Filter, _filter_dataframe, _infer_backend
 
 if TYPE_CHECKING:
     import polars as pl
+    from narwhals.stable.v2.typing import IntoFrame, IntoLazyFrame
 
 _T = TypeVar("_T")
 
@@ -274,67 +276,37 @@ def _apply_constraint_filter_polars(
     return ldf
 
 
-def build_constrained_product(
+def _make_filtered_cartesian_product(
     parameters: Sequence[DiscreteParameter],
-    constraints: Sequence[DiscreteConstraint],
-    initial_df: pd.DataFrame | None = None,
-) -> pd.DataFrame:
-    """Build a constrained Cartesian product, using Polars if configured.
-
-    Partitions constraints by Polars support and builds the product accordingly.
-    Parameters covered by Polars-capable constraints are cross-joined and
-    filtered in Polars first, then the remaining parameters and constraints are
-    handled via incremental pandas filtering.
+    filters: Sequence[Filter],
+    initial_df: IntoFrame | None = None,
+) -> IntoLazyFrame:
+    """Create the Cartesian product of the given parameters and apply the given filters.
 
     Args:
         parameters: The discrete parameters to combine.
-        constraints: The discrete constraints to apply during construction.
-        initial_df: An optional starting dataframe whose columns count as
-            already available for constraint evaluation.
+        filters: The filters to apply to the product, in the given order.
+        initial_df: An optional starting frame, whose columns are
+            cross-joined with the parameter values.
 
     Returns:
-        A dataframe containing all valid parameter combinations.
+        The filtered frame as a lazy native frame.
     """
-    from baybe.settings import active_settings
+    backend = _infer_backend(initial_df)
 
-    filtering_constraints = sorted(
-        (c for c in constraints if isinstance(c, DiscreteFilteringConstraint)),
-        key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
-    )
+    frames = [
+        nw.new_series(parameter.name, parameter.active_values, backend=backend)
+        .to_frame()
+        .lazy()
+        for parameter in parameters
+    ]
+    if initial_df is not None:
+        frames.insert(0, nw.from_native(initial_df).lazy())
+    if not frames:
+        return nw.from_dict({}, backend=backend).lazy().to_native()
 
-    remaining_params = list(parameters)
-    remaining_constraints = list(filtering_constraints)
+    product = frames[0]
+    for frame in frames[1:]:
+        product = product.join(frame, how="cross")
 
-    if active_settings.use_polars_for_constraints:
-        from baybe._optional.polars import polars as pl
-
-        polars_constraints = [
-            c for c in filtering_constraints if c.has_polars_implementation
-        ]
-
-        # Determine which parameters are needed by Polars-capable constraints
-        polars_param_names: set[str] = set()
-        for c in polars_constraints:
-            polars_param_names.update(c._required_parameters)
-        polars_params = [p for p in parameters if p.name in polars_param_names]
-
-        if polars_params:
-            initial_ldf = (
-                pl.from_pandas(initial_df).lazy() if initial_df is not None else None
-            )
-            lazy_df = parameter_cartesian_prod_polars(
-                polars_params, initial_ldf=initial_ldf
-            )
-            lazy_df = _apply_constraint_filter_polars(lazy_df, polars_constraints)
-            initial_df = lazy_df.collect().to_pandas()
-
-            remaining_params = [
-                p for p in parameters if p.name not in polars_param_names
-            ]
-            remaining_constraints = [
-                c for c in filtering_constraints if not c.has_polars_implementation
-            ]
-
-    return parameter_cartesian_prod_pandas_constrained(
-        remaining_params, remaining_constraints, initial_df=initial_df
-    )
+    return _filter_dataframe(product, *filters).to_native()

@@ -17,7 +17,7 @@ from cattrs import IterableValidationError
 from typing_extensions import Self, override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
-from baybe.constraints.base import DiscreteConstraint
+from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
 from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import DeprecationError
 from baybe.parameters import (
@@ -34,7 +34,7 @@ from baybe.searchspace.candidates import (
     TableCandidates,
 )
 from baybe.searchspace.utils import (
-    build_constrained_product,
+    _make_filtered_cartesian_product,
     select_via_flat_index,
 )
 from baybe.searchspace.validation import validate_parameters
@@ -573,18 +573,18 @@ class SubspaceDiscrete(SerialMixin):
             arr = arr[mask]
 
         # Wrap in DataFrame
-        exp_rep = pd.DataFrame(arr, columns=[p.name for p in simplex_parameters])
+        simplex = pd.DataFrame(arr, columns=[p.name for p in simplex_parameters])
 
         batch_constraints_list = [
             c for c in constraints if isinstance(c, DiscreteBatchConstraint)
         ]
-        filtering_constraints = [
-            c for c in constraints if not isinstance(c, DiscreteBatchConstraint)
+        filtering_constraints: list[Filter] = [
+            c for c in constraints if isinstance(c, DiscreteFilteringConstraint)
         ]
 
-        # Merge product parameters and apply filtering constraints incrementally
-        exp_rep = build_constrained_product(
-            product_parameters, filtering_constraints, initial_df=exp_rep
+        # Merge product parameters and apply the filtering constraints
+        exp_rep = _make_filtered_cartesian_product(
+            product_parameters, filtering_constraints, initial_df=simplex
         )
 
         all_parameters = [*simplex_parameters, *product_parameters]
