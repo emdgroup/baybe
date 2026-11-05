@@ -916,6 +916,7 @@ def test_legacy_campaign_counter_deserialization(ongoing_campaign):
 
 @pytest.mark.parametrize("batch_size", [3], ids=["b3"])
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+@Settings(default_dataframe_backend="pandas")
 def test_legacy_recommended_metadata_deserialization(ongoing_campaign):
     """Legacy searchspace_metadata 'recommended' column migrates to new field."""
     # Recommend to mark some entries as recommended
@@ -966,6 +967,7 @@ def test_legacy_empty_dataframe_schema_deserialization():
     assert restored._measurements == []
 
 
+@Settings(default_dataframe_backend="pandas")
 def test_legacy_measured_metadata_deserialization():
     """Legacy searchspace_metadata 'measured' column is discarded during loading."""
     p = NumericalDiscreteParameter("x", [1, 2, 3])
@@ -988,6 +990,7 @@ def test_legacy_measured_metadata_deserialization():
     assert restored == campaign
 
 
+@Settings(default_dataframe_backend="pandas")
 def test_legacy_excluded_metadata_deserialization():
     """Legacy searchspace_metadata 'excluded' column migrates to new field."""
     p = NumericalDiscreteParameter("x", [1, 2, 3])
@@ -1286,6 +1289,7 @@ def test_batch_constraints_deserialization():
     ["from_product", "from_simplex"],
     ids=["from_product", "from_simplex"],
 )
+@Settings(default_dataframe_backend="pandas")
 def test_filtering_constraints_deserialization(constructor):
     """Deserializing ``from_*`` configs must not drop filtering constraints."""
     p1 = NumericalDiscreteParameter("p1", [0, 1, 2])
@@ -1337,6 +1341,7 @@ def test_deprecated_constraints_argument():
     assert subspace.batch_constraints == (batch_c,)
 
 
+@Settings(default_dataframe_backend="pandas")
 def test_deprecated_constraints_argument_from_product():
     """Passing mixed constraints to ``from_product`` routes batch constraints correctly."""  # noqa: E501
     p = CategoricalParameter("p", ["a", "b"])
@@ -1384,6 +1389,7 @@ def test_deprecated_constraints_batch_property():
     assert result == subspace.batch_constraints == (batch_c,)
 
 
+@Settings(default_dataframe_backend="pandas")
 def test_deprecated_exp_rep_property():
     """Accessing ``exp_rep`` on ``SubspaceDiscrete`` emits a deprecation warning."""
     subspace = CategoricalParameter("p", ["a", "b"]).to_subspace()
@@ -1392,6 +1398,7 @@ def test_deprecated_exp_rep_property():
     assert_frame_equal(result, subspace.get_candidates())
 
 
+@Settings(default_dataframe_backend="pandas")
 def test_deprecated_comp_rep_property():
     """Accessing ``comp_rep`` on ``SubspaceDiscrete`` emits a deprecation warning."""
     subspace = CategoricalParameter("p", ["a", "b"]).to_subspace()
