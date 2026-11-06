@@ -163,7 +163,10 @@ Coregionalization Model {cite:p}`NIPS2007_66368270`), an ensemble-based variant
 that pools the data of all tasks into a single model, selectable via
 {attr}`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`.
 The ensemble-based variant requires exactly one active task value and measurements for
-at least one other task.
+at least one other task. It does not support acquisition functions that rely on
+fantasized observations, such as
+{class}`~baybe.acquisition.acqfs.qKnowledgeGradient` or
+{class}`~baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance`.
 ```
 
 ## Seeing Transfer Learning in Action
