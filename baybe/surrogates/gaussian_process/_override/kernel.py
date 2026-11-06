@@ -177,7 +177,7 @@ def raise_incompatible_override(
     """
     raise IncompatibleOverrideError(
         f"The kernel overrides or transfer learning modes of "
-        f"{sorted(parameter_names)} require a kernel (factory) that can exclude "
-        f"these parameters, which '{type(factory).__name__}' cannot. "
-        f"Use a BayBE kernel or kernel factory instead."
+        f"{sorted(parameter_names)} require a kernel (factory) or preset that can "
+        f"exclude these parameters, which '{type(factory).__name__}' cannot. "
+        f"Use a BayBE kernel, kernel factory, or a compatible preset instead."
     ) from cause
