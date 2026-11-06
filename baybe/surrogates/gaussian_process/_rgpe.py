@@ -182,11 +182,10 @@ def _compute_rank_weights(
     ranking_losses.append(_compute_ranking_loss(target_f_samps, train_y))
 
     ranking_loss_tensor = torch.stack(ranking_losses)
-    best_models = torch.argmin(ranking_loss_tensor, dim=0)
-    rank_weights = (
-        best_models.bincount(minlength=len(ranking_losses)).type_as(train_x) / n_samples
-    )
-    return rank_weights
+    # Ties split the sample's weight evenly across all tied models
+    is_best = ranking_loss_tensor == ranking_loss_tensor.min(dim=0, keepdim=True).values
+    rank_weights = (is_best / is_best.sum(dim=0, keepdim=True)).mean(dim=1)
+    return rank_weights.type_as(train_x)
 
 
 class RGPEModel(GPyTorchModel):
