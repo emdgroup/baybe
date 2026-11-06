@@ -11,7 +11,6 @@ from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
-from botorch.sampling import SobolQMCNormalSampler
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
@@ -134,21 +133,20 @@ def test_posterior_arguments(members):
         model.posterior(X, output_indices=[1])
 
 
-@pytest.mark.parametrize("wrap", [False, True], ids=["plain", "model_list"])
-def test_fantasize(members, wrap):
-    """Fantasizing conditions every member on normalized fantasy inputs."""
+@pytest.mark.parametrize(
+    "condition",
+    [
+        param(lambda m, X: m.condition_on_observations(X, X), id="condition"),
+        param(lambda m, X: m.fantasize(X, None), id="fantasize"),
+        param(lambda m, X: ModelListGP(m).fantasize(X, None), id="model_list"),
+    ],
+)
+def test_conditioning_raises(members, condition):
+    """Conditioning on observations and fantasizing are not supported."""
     model = RGPEModel(members, torch.full((3,), 1 / 3, dtype=torch.float64))
     X = torch.tensor([[4.0]], dtype=torch.float64)
-    sampler = SobolQMCNormalSampler(sample_shape=torch.Size([4]))
-
-    fantasy = (ModelListGP(model) if wrap else model).fantasize(X, sampler)
-    rgpe = fantasy.models[0] if wrap else fantasy
-    assert fantasy.posterior(X).mean.shape == (4, 1, 1)
-    assert (fantasy.posterior(X).variance < model.posterior(X).variance).all()
-    for m in rgpe._members:
-        assert torch.allclose(
-            m.train_inputs[0][..., -1, :], torch.tensor([0.8]).double()
-        )
+    with pytest.raises(NotImplementedError, match="does not support conditioning"):
+        condition(model, X)
 
 
 def test_model_contract(members):
@@ -375,8 +373,6 @@ def test_missing_source_data_raises():
         param(EI(), 1, ["y"], id="EI"),
         param(qLogEI(), 2, ["y"], id="qLogEI"),
         param(qLogNEI(), 2, ["y"], id="qLogNEI"),
-        param(qKG(), 1, ["y"], id="qKG"),
-        param(qNIPV(), 2, ["y"], id="qNIPV"),
         param(qLogNEHVI(), 2, ["y", "z"], id="qLogNEHVI"),
     ],
 )
@@ -394,3 +390,15 @@ def test_recommendation(acqf, batch_size, targets):
         batch_size, _make_searchspace(), objective, _SURROGATE_MEASUREMENTS
     )
     assert (recommendations["task"] == "T").all()
+
+
+@pytest.mark.parametrize("acqf", [qKG(), qNIPV()], ids=["qKG", "qNIPV"])
+def test_fantasy_acqfs_raise(acqf):
+    """Acquisition functions that require fantasizing raise."""
+    recommender = BotorchRecommender(
+        acquisition_function=acqf, **FAST_OPTIMIZATION_SETTINGS
+    )
+    with pytest.raises(NotImplementedError, match="does not support conditioning"):
+        recommender.recommend(
+            1, _make_searchspace(), _OBJECTIVE, _SURROGATE_MEASUREMENTS
+        )

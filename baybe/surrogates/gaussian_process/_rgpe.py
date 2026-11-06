@@ -5,11 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from functools import reduce
 from operator import add
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 import torch
 from botorch.models.gpytorch import GPyTorchModel
-from botorch.models.model import FantasizeMixin
 from botorch.posteriors import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.likelihoods import LikelihoodList
@@ -32,6 +31,10 @@ if TYPE_CHECKING:
 
 _N_MC_SAMPLES = 256
 """Monte Carlo samples for estimating the ranking weights."""
+
+_CONDITIONING_ERROR_MESSAGE = (
+    "'{}' does not support conditioning on observations or fantasizing."
+)
 
 
 def _compute_ranking_loss(f_samps: Tensor, target_y: Tensor) -> Tensor:
@@ -185,7 +188,7 @@ def _compute_rank_weights(
     return rank_weights
 
 
-class RGPEModel(GPyTorchModel, FantasizeMixin):
+class RGPEModel(GPyTorchModel):
     """A rank-weighted ensemble of per-task Gaussian processes.
 
     The posterior is the weighted sum of the members' posteriors. Observation noise is
@@ -193,7 +196,7 @@ class RGPEModel(GPyTorchModel, FantasizeMixin):
 
     Note:
         Tools that require a single exact GP (e.g. pathwise sampling) are not supported.
-        Fantasies condition all members and keep the weights fixed.
+        Neither is conditioning on observations, and hence fantasizing.
     """
 
     # Required by `ModelListGP`, which sums its members' outputs
@@ -216,8 +219,8 @@ class RGPEModel(GPyTorchModel, FantasizeMixin):
         # Position of the target member; `None` at cold start (no target data)
         self.target_index = target_index
 
-        # Required by `ModelListGP` and BoTorch's generic `fantasize`. Never used for
-        # noise computation, which `posterior` handles explicitly.
+        # Required by `ModelListGP`. Never used for noise computation, which
+        # `posterior` handles explicitly.
         self.likelihood = LikelihoodList(*(m.likelihood for m in models))
 
     @property
@@ -234,16 +237,27 @@ class RGPEModel(GPyTorchModel, FantasizeMixin):
     @override
     def condition_on_observations(
         self, X: Tensor, Y: Tensor, noise: Tensor | None = None, **kwargs: Any
-    ) -> Self:
-        # All members condition on the same observations; the weights stay fixed since
-        # re-ranking on fantasies would be expensive and not differentiable
-        members = [
-            cast(
-                "SingleTaskGP", m.condition_on_observations(X, Y, noise=noise, **kwargs)
-            )
-            for m in self._members
-        ]
-        return self.__class__(members, self.weights, target_index=self.target_index)
+    ) -> NoReturn:
+        raise NotImplementedError(
+            _CONDITIONING_ERROR_MESSAGE.format(self.__class__.__name__)
+        )
+
+    def fantasize(self, *args: Any, **kwargs: Any) -> NoReturn:
+        """Raise, since conditioning on (fantasized) observations is not supported.
+
+        Defined explicitly so that fantasy-based tools (e.g. knowledge gradient)
+        fail with an informative error.
+
+        Args:
+            *args: Ignored.
+            **kwargs: Ignored.
+
+        Raises:
+            NotImplementedError: Always.
+        """
+        raise NotImplementedError(
+            _CONDITIONING_ERROR_MESSAGE.format(self.__class__.__name__)
+        )
 
     @classmethod
     def from_ranked_models(

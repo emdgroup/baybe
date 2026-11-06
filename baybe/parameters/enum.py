@@ -194,5 +194,6 @@ class TransferLearningMode(Enum):
 
     Fits one Gaussian process per task and weights them by how well they rank the
     target data. Requires exactly one active task and data for at least one source
-    task. Look-ahead acquisition functions keep the weights fixed.
+    task. Acquisition functions that rely on fantasized observations are not
+    supported.
     """
