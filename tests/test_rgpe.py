@@ -65,42 +65,96 @@ def _get_noise(model: SingleTaskGP, X: torch.Tensor) -> torch.Tensor:
     return (noisy - model.posterior(X).variance).squeeze(-1)
 
 
+def _make_model(members, weights) -> RGPEModel:
+    """Make an ensemble whose target is the last member."""
+    return RGPEModel(members, weights, target_index=len(members) - 1)
+
+
+def _rescale(model: SingleTaskGP, scale: float, shift: float) -> SingleTaskGP:
+    """Get a copy of a GP as if fitted on affinely transformed outputs."""
+    model = deepcopy(model)
+    transform = model.outcome_transform
+    transform.means = scale * transform.means + shift
+    transform.stdvs = scale * transform.stdvs
+    transform._stdvs_sq = transform.stdvs**2
+    return model
+
+
+_AFFINE_MAPS = [
+    param(1.0, 10.0, id="shift"),
+    param(3.0, 0.0, id="scale"),
+    param(0.5, -7.0, id="both"),
+]
+
+
 @pytest.mark.parametrize(
     "shape", [(4, 1), (3, 2, 1), (2, 3, 2, 1)], ids=["n", "b_q", "s_b_q"]
 )
-def test_posterior_combines_members(members, shape):
-    """The posterior is the weighted sum of the members' posteriors."""
+def test_posterior_combines_standardized_members(members, shape):
+    """The posterior combines standardized members in target units."""
     weights = torch.tensor([0.2, 0.3, 0.5], dtype=torch.float64)
-    model = RGPEModel(members, weights, target_index=2)
+    model = _make_model(members, weights)
     X = 5 * torch.rand(shape, dtype=torch.float64)
 
     posterior = model.posterior(X)
-    posteriors = [m.posterior(X) for m in members]
-    mean = sum(w * p.mean for w, p in zip(weights, posteriors))
-    cov = sum(
-        w**2 * p.distribution.covariance_matrix for w, p in zip(weights, posteriors)
+    target_tf = members[-1].outcome_transform
+    mean, cov = 0, 0
+    for w, m in zip(weights, members):
+        p, tf = m.posterior(X), m.outcome_transform
+        mean = mean + w * (p.mean - tf.means) / tf.stdvs
+        cov = cov + w**2 * p.distribution.covariance_matrix / tf.stdvs.squeeze() ** 2
+    assert torch.allclose(posterior.mean, target_tf.means + target_tf.stdvs * mean)
+    assert torch.allclose(
+        posterior.distribution.covariance_matrix, target_tf.stdvs.squeeze() ** 2 * cov
     )
-    assert torch.allclose(posterior.mean, mean)
-    assert torch.allclose(posterior.distribution.covariance_matrix, cov)
 
 
-@pytest.mark.parametrize("noise", ["target", "tensor", "cold_start"])
+@pytest.mark.parametrize("observation_noise", [False, True], ids=["noiseless", "noisy"])
+def test_target_only_matches_target_gp(members, observation_noise):
+    """With all weight on the target, the ensemble behaves like the target GP."""
+    model = _make_model(members, torch.tensor([0.0, 0.0, 1.0], dtype=torch.float64))
+    target = members[-1]
+
+    X = torch.tensor([[0.3], [2.2], [4.1]], dtype=torch.float64)
+    actual = model.posterior(X, observation_noise=observation_noise)
+    expected = target.posterior(X, observation_noise=observation_noise)
+    assert torch.allclose(actual.mean, expected.mean)
+    assert torch.allclose(actual.variance, expected.variance)
+
+
+@pytest.mark.parametrize(("scale", "shift"), _AFFINE_MAPS)
+@pytest.mark.parametrize("member", [0, 2], ids=["source", "target"])
+def test_affine_output_maps(members, scale, shift, member):
+    """Source output maps leave the posterior unchanged, target maps carry over."""
+    weights = torch.tensor([0.2, 0.3, 0.5], dtype=torch.float64)
+    mapped = list(members)
+    mapped[member] = _rescale(members[member], scale, shift)
+    model, mapped_model = _make_model(members, weights), _make_model(mapped, weights)
+    X = torch.tensor([[0.3], [2.2], [4.1]], dtype=torch.float64)
+
+    a, c = (scale, shift) if member == 2 else (1.0, 0.0)
+    posterior = model.posterior(X, observation_noise=True)
+    mapped_posterior = mapped_model.posterior(X, observation_noise=True)
+    assert torch.allclose(mapped_posterior.mean, a * posterior.mean + c)
+    assert torch.allclose(
+        mapped_posterior.distribution.covariance_matrix,
+        a**2 * posterior.distribution.covariance_matrix,
+    )
+
+
+@pytest.mark.parametrize("noise", ["target", "tensor"])
 def test_observation_noise(members, noise):
-    """Observation noise is added once, in original outcome units."""
+    """Observation noise is added once, in the transformed target space."""
     weights = torch.tensor([0.2, 0.3, 0.5], dtype=torch.float64)
     X = torch.tensor([[1.0], [2.5]], dtype=torch.float64)
+    model = _make_model(members, weights)
     match noise:
         case "target":
-            model = RGPEModel(members, weights, target_index=2)
             observation_noise, expected = True, _get_noise(members[2], X)
         case "tensor":
-            model = RGPEModel(members, weights, target_index=2)
             observation_noise = torch.tensor(0.3, dtype=torch.float64)
-            expected = observation_noise.expand(2)
-        case "cold_start":
-            model = RGPEModel(members, weights)
-            observation_noise = True
-            expected = sum(w * _get_noise(m, X) for w, m in zip(weights, members))
+            stdv_sq = members[2].outcome_transform.stdvs.squeeze() ** 2
+            expected = (observation_noise * stdv_sq).expand(2)
 
     added = model.posterior(X, observation_noise=observation_noise).variance
     added = (added - model.posterior(X).variance).squeeze(-1)
@@ -111,20 +165,15 @@ def test_pruning_keeps_target(members):
     """Zero-weight sources are pruned, a zero-weight target is kept."""
     weights = torch.tensor([0.6, 0.0, 0.0], dtype=torch.float64)
     model = RGPEModel.from_ranked_models(members, weights, target_index=2)
-    X = torch.tensor([[1.0]], dtype=torch.float64)
 
     assert model._members == (members[0], members[2])
     assert model.target_index == 1
     assert torch.equal(model.weights, torch.tensor([1.0, 0.0], dtype=torch.float64))
-    assert torch.allclose(model.posterior(X).mean, members[0].posterior(X).mean)
-    noisy = model.posterior(X, observation_noise=True).variance
-    noise = (noisy - model.posterior(X).variance).squeeze(-1)
-    assert torch.allclose(noise, _get_noise(members[2], X))
 
 
 def test_posterior_arguments(members):
     """Positional arguments follow BoTorch's order and only output 0 exists."""
-    model = RGPEModel(members, torch.full((3,), 1 / 3, dtype=torch.float64))
+    model = _make_model(members, torch.full((3,), 1 / 3, dtype=torch.float64))
     X = torch.tensor([[1.0]], dtype=torch.float64)
 
     positional = model.posterior(X, [0], True).variance
@@ -143,7 +192,7 @@ def test_posterior_arguments(members):
 )
 def test_conditioning_raises(members, condition):
     """Conditioning on observations and fantasizing are not supported."""
-    model = RGPEModel(members, torch.full((3,), 1 / 3, dtype=torch.float64))
+    model = _make_model(members, torch.full((3,), 1 / 3, dtype=torch.float64))
     X = torch.tensor([[4.0]], dtype=torch.float64)
     with pytest.raises(NotImplementedError, match="does not support conditioning"):
         condition(model, X)
@@ -151,7 +200,7 @@ def test_conditioning_raises(members, condition):
 
 def test_model_contract(members):
     """The ensemble is a GPyTorch model without a single training dataset."""
-    model = RGPEModel(members, torch.tensor([0.2, 0.3, 0.5], dtype=torch.float64))
+    model = _make_model(members, torch.tensor([0.2, 0.3, 0.5], dtype=torch.float64))
     restored = deepcopy(model)
     restored.weights.fill_(1 / 3)
     restored.load_state_dict(model.state_dict())
@@ -207,6 +256,16 @@ def test_make_rgpe_model(sources, n_target, n_members, is_uniform):
         assert len(model._members) == n_members
         assert torch.allclose(model.weights, model.weights[0])
     assert model.target_index == (None if n_target == 0 else len(model._members) - 1)
+
+
+def test_make_rgpe_model_constant_target():
+    """A constant target defines the output units with unit scale around its value."""
+    context, train_x, train_y, fit_gp = _make_data({"A": 5}, 3)
+    train_y[:3] = 1.0  # The target rows come first
+    model = make_rgpe_model(context, train_x, train_y, fit_gp)
+    assert model.outcome_transform is model._members[-1].outcome_transform
+    assert torch.equal(model.outcome_transform.means, torch.ones((1, 1)).double())
+    assert torch.equal(model.outcome_transform.stdvs, torch.ones((1, 1)).double())
 
 
 def test_make_rgpe_model_requires_source_data():

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 import torch
 from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.utils import gpt_posterior_settings
 from botorch.posteriors import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.likelihoods import LikelihoodList
@@ -191,8 +192,9 @@ def _compute_rank_weights(
 class RGPEModel(GPyTorchModel):
     """A rank-weighted ensemble of per-task Gaussian processes.
 
-    The posterior is the weighted sum of the members' posteriors. Observation noise is
-    the target task's, added once at ensemble level.
+    The posterior is the weighted sum of the members' posteriors in their standardized
+    output spaces, mapped to the target's output units via the target member's outcome
+    transform. Observation noise is the target task's, added once at ensemble level.
 
     Note:
         Tools that require a single exact GP (e.g. pathwise sampling) are not supported.
@@ -218,6 +220,11 @@ class RGPEModel(GPyTorchModel):
         self.register_buffer("weights", weights)
         # Position of the target member; `None` at cold start (no target data)
         self.target_index = target_index
+        if target_index is not None:
+            # Only set with a target, as BoTorch checks for the attribute's existence
+            self.outcome_transform = cast(
+                "Standardize", models[target_index].outcome_transform
+            )
 
         # Required by `ModelListGP`. Never used for noise computation, which
         # `posterior` handles explicitly.
@@ -305,28 +312,32 @@ class RGPEModel(GPyTorchModel):
         if output_indices not in (None, [0]):
             raise ValueError(f"'{self.__class__.__name__}' has a single output.")
 
-        # Members are combined latent and in original output units:
-        # mean Σ wᵢμᵢ, covariance Σ wᵢ²Σᵢ
-        # Members have linear outcome transforms, so their posteriors are Gaussian
-        posteriors = [cast(GPyTorchPosterior, m.posterior(X)) for m in self._members]
-        mean = reduce(
-            add, (w * p.mean.squeeze(-1) for w, p in zip(self.weights, posteriors))
-        )
+        # Mean Σ wᵢμᵢ and covariance Σ wᵢ²Σᵢ, without observation noise
+        self.eval()
+        if self.target_index is None:
+            # Without a target scale, the members are combined in their own units
+            distributions = [
+                cast(GPyTorchPosterior, m.posterior(X)).distribution
+                for m in self._members
+            ]
+        else:
+            # Standardized member distributions, i.e. before their outcome transforms
+            with gpt_posterior_settings():
+                distributions = [m(m.transform_inputs(X)) for m in self._members]
+        mean = reduce(add, (w * d.mean for w, d in zip(self.weights, distributions)))
         covariance = reduce(
             add,
             (
-                cast("LinearOperator", p.distribution.lazy_covariance_matrix) * w**2
-                for w, p in zip(self.weights, posteriors)
+                cast("LinearOperator", d.lazy_covariance_matrix) * w**2
+                for w, d in zip(self.weights, distributions)
             ),
         )
 
         if observation_noise is not False:
             if isinstance(observation_noise, Tensor):
                 noise = observation_noise
-            elif self.target_index is not None:
-                noise = _compute_outcome_noise(self._members[self.target_index])
-            else:
-                # Cold start: no target noise exists, use the weighted source noises
+            elif self.target_index is None:
+                # No target noise exists, use the weighted source noises
                 noise = reduce(
                     add,
                     (
@@ -334,11 +345,20 @@ class RGPEModel(GPyTorchModel):
                         for w, m in zip(self.weights, self._members)
                     ),
                 )
+            else:
+                # The likelihood noise lives in the standardized target space
+                target = self._members[self.target_index]
+                noise = cast("GaussianLikelihood", target.likelihood).noise
             covariance = covariance + noise * torch.eye(
                 covariance.shape[-1], dtype=covariance.dtype, device=covariance.device
             )
 
         posterior = GPyTorchPosterior(MultivariateNormal(mean, covariance))
+        if self.target_index is not None:
+            posterior = cast(
+                GPyTorchPosterior,
+                self.outcome_transform.untransform_posterior(posterior),
+            )
         if posterior_transform is None:
             return posterior
         # BoTorch types the result as `Posterior`, but scalarization keeps it Gaussian
@@ -411,4 +431,7 @@ def make_rgpe_model(
             target_model,
             _N_MC_SAMPLES,
         )
+
+    # The target's standardization defines the ensemble's output units. For a single
+    # or constant target point, BoTorch falls back to unit scale around the mean.
     return RGPEModel.from_ranked_models(models, weights, target_index=len(models) - 1)
