@@ -318,16 +318,24 @@ def _compose(
     """
     from baybe.kernels.basic import VanishingKernel
 
-    members = [
+    kernels = [
         k
         for operand in (left, right)
         for k in (
             operand.base_kernels if isinstance(operand, composite_cls) else (operand,)
         )
-        if not isinstance(k, VanishingKernel)
     ]
+    members = [k for k in kernels if not isinstance(k, VanishingKernel)]
     if not members:
-        return VanishingKernel()
+        # Merge the scopes of the vanishing operands, where None means all parameters
+        scopes = [k.parameter_names for k in kernels if isinstance(k, VanishingKernel)]
+        if any(s is None for s in scopes):
+            return VanishingKernel()
+        return VanishingKernel(
+            parameter_names=tuple(
+                dict.fromkeys(n for s in scopes if s is not None for n in s)
+            )
+        )
     if len(members) == 1:
         return members[0]
     return composite_cls(members)
