@@ -17,7 +17,7 @@ from torch import Tensor
 from torch.nn import ModuleList
 from typing_extensions import Self, override
 
-from baybe.exceptions import IncompatibleSearchSpaceError
+from baybe.exceptions import NoMeasurementsError
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import PosteriorTransform
@@ -380,7 +380,7 @@ def _split_by_task(
         if (mask := task_column == float(codes[value])).any()
     )
     if not source_masks:
-        raise IncompatibleSearchSpaceError(
+        raise NoMeasurementsError(
             "RGPE requires measurements for at least one source task, but none were "
             "provided."
         )

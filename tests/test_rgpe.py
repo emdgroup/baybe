@@ -18,7 +18,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from pytest import param
 
 from baybe.acquisition import EI, qKG, qLogEI, qLogNEHVI, qLogNEI, qNIPV
-from baybe.exceptions import IncompatibleSearchSpaceError
+from baybe.exceptions import NoMeasurementsError
 from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.recommenders import BotorchRecommender
@@ -271,7 +271,7 @@ def test_make_rgpe_model_constant_target():
 def test_make_rgpe_model_requires_source_data():
     """Fitting without source data raises."""
     context, train_x, train_y, fit_gp = _make_data({"A": 0}, 3)
-    with pytest.raises(IncompatibleSearchSpaceError, match="at least one source"):
+    with pytest.raises(NoMeasurementsError, match="at least one source"):
         make_rgpe_model(context, train_x, train_y, fit_gp)
 
 
@@ -431,7 +431,7 @@ def test_presets_fit(preset):
 def test_missing_source_data_raises():
     """Fitting without source data raises."""
     target = _SURROGATE_MEASUREMENTS[_SURROGATE_MEASUREMENTS["task"] == "T"]
-    with pytest.raises(IncompatibleSearchSpaceError, match="at least one source"):
+    with pytest.raises(NoMeasurementsError, match="at least one source"):
         _fit(target)
 
 
