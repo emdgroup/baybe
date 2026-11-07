@@ -7,6 +7,7 @@ from collections.abc import Callable
 import numpy as np
 import pandas as pd
 import torch
+from attrs import evolve
 from botorch.test_functions.synthetic import Hartmann
 
 from baybe.campaign import Campaign
@@ -106,11 +107,8 @@ def _make_hartmann_tl_benchmark(
             values=("Target_Function", "Source_Function"),
             active_values=("Target_Function",),
         )
-        task_param_naive = TaskParameter(
-            name="Function",
-            values=("Target_Function", "Source_Function"),
-            active_values=("Target_Function",),
-            override_transfer_learning_mode=TransferLearningMode.NAIVE,
+        task_param_naive = evolve(
+            task_param, override_transfer_learning_mode=TransferLearningMode.NAIVE
         )
         params_tl = params + [task_param]
 
