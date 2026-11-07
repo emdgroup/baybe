@@ -252,6 +252,28 @@ def test_mul_constant_produces_constant_scale_kernel(left, right, searchspace):
             id="chain",
         ),
         param(VanishingKernel() * VanishingKernel(), VanishingKernel(), id="V*V"),
+        param(
+            VanishingKernel(parameter_names=["a", "b"])
+            + VanishingKernel(parameter_names=["b", "c"]),
+            VanishingKernel(parameter_names=["a", "b", "c"]),
+            id="V+V-merged-scopes",
+        ),
+        param(
+            VanishingKernel(parameter_names=["a", "b"])
+            * VanishingKernel(parameter_names=["b", "c"]),
+            VanishingKernel(parameter_names=["a", "b", "c"]),
+            id="V*V-merged-scopes",
+        ),
+        param(
+            VanishingKernel(parameter_names=["a"]) * VanishingKernel(),
+            VanishingKernel(),
+            id="V*V-unscoped",
+        ),
+        param(
+            VanishingKernel(parameter_names=["a"]) + VanishingKernel(),
+            VanishingKernel(),
+            id="V+V-unscoped",
+        ),
         param(VanishingKernel() * 1, VanishingKernel(), id="V*1"),
     ],
 )
