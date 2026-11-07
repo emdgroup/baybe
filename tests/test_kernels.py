@@ -252,11 +252,25 @@ def test_mul_constant_produces_constant_scale_kernel(left, right, searchspace):
             id="chain",
         ),
         param(VanishingKernel() * VanishingKernel(), VanishingKernel(), id="V*V"),
+        param(VanishingKernel() * 1, VanishingKernel(), id="V*1"),
     ],
 )
 def test_vanishing_kernel_arithmetic(result, expected):
     """Vanishing kernels drop out of kernel arithmetic."""
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    "scale",
+    [
+        param(lambda k: k * 2, id="right"),
+        param(lambda k: 2 * k, id="left"),
+    ],
+)
+def test_vanishing_kernel_cannot_be_scaled(scale):
+    """Scaling a vanishing kernel by a constant raises an error."""
+    with pytest.raises(ValueError, match="cannot be scaled"):
+        scale(VanishingKernel())
 
 
 def test_vanishing_kernel_has_no_gpytorch_representation(searchspace):
