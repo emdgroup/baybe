@@ -151,22 +151,24 @@ def _compute_rank_weights(
 
     ranking_losses = []
     sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
-    for model in source_models:
-        posterior = model.posterior(train_x)
-        f_samps = sampler(posterior).squeeze(-1).squeeze(-1)
-        ranking_losses.append(_compute_ranking_loss(f_samps, train_y))
+    with torch.no_grad():
+        for model in source_models:
+            posterior = model.posterior(train_x)
+            f_samps = sampler(posterior).squeeze(-1).squeeze(-1)
+            ranking_losses.append(_compute_ranking_loss(f_samps, train_y))
 
-    # The target model's LOOCV samples are drawn in its transformed space. The output
-    # transform is only order-preserving, which is all the ranking loss depends on.
-    target_model.eval()
-    transformed_x = target_model.transform_inputs(train_x)
-    # `outcome_transform` is always present on a fitted SingleTaskGP, but mypy sees it
-    # as an optional, non-callable attribute.
-    transformed_y, _ = target_model.outcome_transform(train_y)  # type: ignore[operator]
-    target_f_samps = _loocv_sample_preds(
-        transformed_x, transformed_y, target_model, n_samples
-    )
-    ranking_losses.append(_compute_ranking_loss(target_f_samps, train_y))
+        # The target model's LOOCV samples are drawn in its transformed space. The
+        # output transform is only order-preserving, which is all the ranking loss
+        # depends on.
+        target_model.eval()
+        transformed_x = target_model.transform_inputs(train_x)
+        # `outcome_transform` is always present on a fitted SingleTaskGP, but mypy
+        # sees it as an optional, non-callable attribute.
+        transformed_y, _ = target_model.outcome_transform(train_y)  # type: ignore[operator]
+        target_f_samps = _loocv_sample_preds(
+            transformed_x, transformed_y, target_model, n_samples
+        )
+        ranking_losses.append(_compute_ranking_loss(target_f_samps, train_y))
 
     ranking_loss_tensor = torch.stack(ranking_losses)
     # Ties split the sample's weight evenly across all tied models
