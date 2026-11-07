@@ -103,12 +103,12 @@ class TaskParameter(CategoricalParameter):
     :class:`~baybe.parameters.enum.TransferLearningMode`.
     """
 
-    def __attrs_post_init__(self) -> None:
+    @override_transfer_learning_mode.validator
+    def _validate_override_transfer_learning_mode(  # noqa: DOC101, DOC103
+        self, attribute, value
+    ) -> None:
         """Validate that RGPE has exactly one target task."""
-        if (
-            self.override_transfer_learning_mode is TransferLearningMode.RGPE
-            and len(self.active_values) != 1
-        ):
+        if value is TransferLearningMode.RGPE and len(self.active_values) != 1:
             raise ValueError(
                 f"The transfer learning mode "
                 f"'{TransferLearningMode.RGPE.name}' requires exactly one value in "
