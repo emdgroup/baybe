@@ -18,7 +18,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from pytest import param
 
 from baybe.acquisition import EI, qKG, qLogEI, qLogNEHVI, qLogNEI, qNIPV
-from baybe.exceptions import IncompatibleSearchSpaceError, IncompatibleSurrogateError
+from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.recommenders import BotorchRecommender
@@ -389,25 +389,35 @@ def test_several_active_values_raise():
 
 
 @pytest.mark.parametrize(
-    ("kwargs", "match"),
+    ("kwargs", "attr"),
     [
         param(
             {"fit_criterion_or_factory": FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD},
-            "requires the fit criterion",
+            None,
             id="loocv",
         ),
-        param({"mean_or_factory": ConstantMean()}, "'mean_or_factory'", id="raw_mean"),
+        param({"mean_or_factory": ConstantMean()}, "mean_module", id="raw_mean"),
         param(
             {"likelihood_or_factory": GaussianLikelihood()},
-            "'likelihood_or_factory'",
+            "likelihood",
             id="raw_likelihood",
         ),
     ],
 )
-def test_conflicting_components_raise(kwargs, match):
-    """User components conflicting with RGPE raise."""
-    with pytest.raises(IncompatibleSurrogateError, match=match):
-        _fit(_SURROGATE_MEASUREMENTS, **kwargs)
+def test_custom_components(kwargs, attr):
+    """Custom components are copied to each member, leaving the original unchanged."""
+    originals = deepcopy(kwargs)
+    model = _fit(_SURROGATE_MEASUREMENTS, **kwargs).to_botorch()
+    assert isinstance(model, RGPEModel)
+    if attr is not None:
+        (user_module,) = kwargs.values()
+        modules = [getattr(m, attr) for m in model.models]
+        assert len({id(m) for m in [user_module, *modules]}) == len(modules) + 1
+        (original,) = originals.values()
+        assert all(
+            torch.equal(p1, p2)
+            for p1, p2 in zip(user_module.parameters(), original.parameters())
+        )
 
 
 @pytest.mark.parametrize("preset", ["BAYBE", "CHEN", "EDBO", "EDBO_SMOOTHED"])
