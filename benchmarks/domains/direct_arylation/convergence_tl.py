@@ -41,7 +41,7 @@ def load_data() -> pd.DataFrame:
 
 def make_searchspace(
     data: pd.DataFrame,
-    use_task_parameter: bool = True,
+    use_task_parameter: bool,
     transfer_learning_mode: TransferLearningMode | None = None,
 ) -> SearchSpace:
     """Create the search space for the benchmark."""
@@ -123,9 +123,11 @@ def direct_arylation_tl_temperature(
 
     searchspace = make_searchspace(
         data=data,
+        use_task_parameter=True,
     )
     searchspace_nontl = make_searchspace(
         data=data,
+        use_task_parameter=True,
         transfer_learning_mode=TransferLearningMode.NAIVE,
     )
 

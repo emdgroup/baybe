@@ -6,6 +6,7 @@ import math
 
 import numpy as np
 import pandas as pd
+from attrs import evolve
 
 from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
@@ -91,11 +92,8 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
         values=["Target_Function", "Source_Function"],
         active_values=["Target_Function"],
     )
-    task_param_naive = TaskParameter(
-        name="Function",
-        values=["Target_Function", "Source_Function"],
-        active_values=["Target_Function"],
-        override_transfer_learning_mode=TransferLearningMode.NAIVE,
+    task_param_naive = evolve(
+        task_param, override_transfer_learning_mode=TransferLearningMode.NAIVE
     )
     params_tl = params + [task_param]
 
