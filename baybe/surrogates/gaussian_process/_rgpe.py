@@ -94,7 +94,6 @@ def _loocv_sample_preds(
     """
     from copy import deepcopy
 
-    import torch
     from botorch.models import SingleTaskGP
     from botorch.sampling.normal import SobolQMCNormalSampler
 
@@ -146,7 +145,6 @@ def _compute_rank_weights(
         A tensor of length ``len(source_models) + 1`` with the model weights, ordered as
         ``(sources..., target)``.
     """
-    import torch
     from botorch.sampling.normal import SobolQMCNormalSampler
 
     ranking_losses = []
