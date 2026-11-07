@@ -317,7 +317,6 @@ def _compose(
         kernels vanish.
     """
     from baybe.kernels.basic import VanishingKernel
-    from baybe.kernels.composite import _is_vanishing
 
     members = [
         k
@@ -325,7 +324,7 @@ def _compose(
         for k in (
             operand.base_kernels if isinstance(operand, composite_cls) else (operand,)
         )
-        if not _is_vanishing(k)
+        if not isinstance(k, VanishingKernel)
     ]
     if not members:
         return VanishingKernel()

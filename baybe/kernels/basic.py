@@ -225,9 +225,9 @@ class RQKernel(BasicKernel):
 class VanishingKernel(BasicKernel):
     """A kernel that vanishes in kernel sums and products.
 
-    Adding it to or multiplying it with a kernel returns that kernel, and additive or
-    product kernels drop it when converted to GPyTorch. It has no GPyTorch
-    representation of its own.
+    Kernel arithmetic drops it immediately. Explicitly constructed additive or product
+    kernels keep it as a member but drop it when converted to GPyTorch. It has no
+    GPyTorch representation of its own.
     """
 
     @override
