@@ -47,42 +47,29 @@ def _compute_ranking_loss(f_samps: Tensor, target_y: Tensor) -> Tensor:
     source-model samples.
 
     Args:
-        f_samps: An ``n_samples x n x n`` tensor (target LOOCV samples) or an
-            ``n_samples x n`` tensor (source-model samples).
+        f_samps: Samples of shape ``n_samples x n x n`` (target LOOCV) or
+            ``n_samples x n`` (sources), for ``n`` target points.
         target_y: An ``n x 1`` tensor of observed target values.
 
     Returns:
         An ``n_samples`` tensor with the ranking loss per sample.
-    """
-    import torch
 
-    n = target_y.shape[0]
+    Raises:
+        ValueError: If ``f_samps`` is neither 2D nor 3D.
+    """
+    y = target_y.squeeze(-1)
+    y_less = y.unsqueeze(-1) < y.unsqueeze(0)  # y_j < y_k
     if f_samps.ndim == 3:
         # Target model: compare each LOO out-of-sample prediction (the diagonal) to
-        # every in-sample prediction.
-        cartesian_y = torch.cartesian_prod(
-            target_y.squeeze(-1),
-            target_y.squeeze(-1),
-        ).view(n, n, 2)
-        rank_loss = (
-            (
-                (f_samps.diagonal(dim1=1, dim2=2).unsqueeze(-1) < f_samps)
-                ^ (cartesian_y[..., 0] < cartesian_y[..., 1])
-            )
-            .sum(dim=-1)
-            .sum(dim=-1)
-        )
+        # every in-sample prediction
+        f_less = f_samps.diagonal(dim1=1, dim2=2).unsqueeze(-1) < f_samps
+    elif f_samps.ndim == 2:
+        # Source model: compare all ordered pairs; the diagonal is zero under the
+        # strict comparison
+        f_less = f_samps.unsqueeze(-1) < f_samps.unsqueeze(-2)  # f_j < f_k
     else:
-        rank_loss = torch.zeros(
-            f_samps.shape[0], dtype=torch.long, device=target_y.device
-        )
-        y_stack = target_y.squeeze(-1).expand(f_samps.shape)
-        for i in range(1, n):
-            rank_loss += (
-                (torch.roll(f_samps, i, dims=-1) < f_samps)
-                ^ (torch.roll(y_stack, i, dims=-1) < y_stack)
-            ).sum(dim=-1)
-    return rank_loss
+        raise ValueError(f"Expected 2D or 3D samples but got {f_samps.ndim=}.")
+    return (f_less ^ y_less).sum(dim=(-2, -1))
 
 
 def _loocv_sample_preds(
