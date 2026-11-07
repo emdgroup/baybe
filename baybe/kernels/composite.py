@@ -14,34 +14,14 @@ from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.kernels.base import CompositeKernel, Kernel
+from baybe.kernels.basic import VanishingKernel
 from baybe.priors.base import Prior
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from gpytorch.kernels import Kernel as GPyTorchKernel
-
     from baybe.searchspace.core import SearchSpace
-
-
-def _is_vanishing(kernel: Kernel, /) -> bool:
-    """Check whether a kernel vanishes under kernel arithmetic."""
-    from baybe.kernels.basic import VanishingKernel
-
-    return isinstance(kernel, VanishingKernel)
-
-
-def _validate_not_vanishing(instance: Any, attribute: Attribute, value: Any) -> None:  # noqa: DOC101, DOC103
-    """Reject a vanishing kernel in a single kernel slot.
-
-    Raises:
-        ValueError: If the kernel vanishes under kernel arithmetic.
-    """
-    if _is_vanishing(value):
-        raise ValueError(f"'{type(instance).__name__}' cannot wrap a vanishing kernel.")
 
 
 def _validate_not_all_vanishing(  # noqa: DOC101, DOC103
@@ -52,29 +32,11 @@ def _validate_not_all_vanishing(  # noqa: DOC101, DOC103
     Raises:
         ValueError: If all kernels vanish under kernel arithmetic.
     """
-    if all(_is_vanishing(k) for k in value):
+    if all(isinstance(k, VanishingKernel) for k in value):
         raise ValueError(
             f"'{type(instance).__name__}' must contain at least one kernel that does "
             f"not vanish under kernel arithmetic."
         )
-
-
-def _to_gpytorch_factors(
-    base_kernels: Iterable[Kernel], searchspace: SearchSpace
-) -> list[GPyTorchKernel]:
-    """Convert base kernels to GPyTorch, dropping the vanishing ones.
-
-    Args:
-        base_kernels: The base kernels of a composite kernel.
-        searchspace: The search space the kernels operate on.
-
-    Returns:
-        The GPyTorch kernels of the non-vanishing base kernels.
-    """
-    factors = [k.to_gpytorch(searchspace) for k in base_kernels if not _is_vanishing(k)]
-    # Guaranteed by the composite kernel validators
-    assert factors
-    return factors
 
 
 def _reduce_base_kernels(
@@ -97,7 +59,7 @@ def _reduce_base_kernels(
         reduced
         for k in kernel.base_kernels
         if (reduced := k._without_parameter(name, searchspace)) is not None
-        and not _is_vanishing(reduced)
+        and not isinstance(reduced, VanishingKernel)
     )
     if not remaining:
         return None
@@ -110,9 +72,7 @@ def _reduce_base_kernels(
 class ScaleKernel(CompositeKernel):
     """A kernel for decorating existing kernels with an outputscale."""
 
-    base_kernel: Kernel = field(
-        validator=[instance_of(Kernel), _validate_not_vanishing]
-    )
+    base_kernel: Kernel = field(validator=instance_of(Kernel))
     """The base kernel that is being decorated."""
 
     outputscale_prior: Prior | None = field(
@@ -132,6 +92,18 @@ class ScaleKernel(CompositeKernel):
 
     If ``False``, the output scale is frozen at its initial value and excluded from
     optimization."""
+
+    @base_kernel.validator
+    def _validate_base_kernel(self, _, value: Kernel) -> None:  # noqa: DOC101, DOC103
+        """Reject a vanishing base kernel.
+
+        Raises:
+            ValueError: If the base kernel is a vanishing kernel.
+        """
+        if isinstance(value, VanishingKernel):
+            raise ValueError(
+                f"'{self.__class__.__name__}' cannot wrap a vanishing kernel."
+            )
 
     @override
     def _without_parameter(
@@ -186,7 +158,14 @@ class AdditiveKernel(CompositeKernel):
 
     @override
     def to_gpytorch(self, *args, **kwargs):
-        return reduce(add, _to_gpytorch_factors(self.base_kernels, *args, **kwargs))
+        return reduce(
+            add,
+            [
+                k.to_gpytorch(*args, **kwargs)
+                for k in self.base_kernels
+                if not isinstance(k, VanishingKernel)
+            ],
+        )
 
 
 @define(frozen=True)
@@ -217,7 +196,14 @@ class ProductKernel(CompositeKernel):
 
     @override
     def to_gpytorch(self, *args, **kwargs):
-        return reduce(mul, _to_gpytorch_factors(self.base_kernels, *args, **kwargs))
+        return reduce(
+            mul,
+            [
+                k.to_gpytorch(*args, **kwargs)
+                for k in self.base_kernels
+                if not isinstance(k, VanishingKernel)
+            ],
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
