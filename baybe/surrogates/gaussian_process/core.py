@@ -426,17 +426,20 @@ class GaussianProcessSurrogate(Surrogate):
         Returns:
             The resolved and partition-validated kernel.
         """
-        overrides = _override.extract_parameter_kernel_overrides(context.searchspace)
-
-        excluded_names = {name for name, _ in overrides}
-        residual = self._resolve_residual_kernel(context, excluded_names)
         searchspace = context.searchspace
-        excluded_dimensions: set[int] = set()
+        overrides = _override.extract_parameter_kernel_overrides(searchspace)
+
+        excluded_names = {
+            p.name for p in searchspace.parameters if p.override_kernel is not None
+        }
+        residual = self._resolve_residual_kernel(context, excluded_names)
+        excluded_dimensions = {
+            i
+            for name in excluded_names
+            for i in searchspace.get_comp_rep_parameter_indices(name)
+        }
         for name, kernel in overrides:
             expected = set(searchspace.get_comp_rep_parameter_indices(name))
-            excluded_dimensions.update(expected)
-            if kernel is None:
-                continue
             actual = _override.get_active_dimensions(kernel, searchspace)
             if actual != expected:
                 raise ValueError(
@@ -454,7 +457,9 @@ class GaussianProcessSurrogate(Surrogate):
                     f"The residual kernel's 'active_dims' {actual} must be a subset "
                     f"of the non-overridden indices {allowed}."
                 )
-        factors = [k for k in (residual, *(k for _, k in overrides)) if k is not None]
+        factors = [k for _, k in overrides]
+        if residual is not None:
+            factors.insert(0, residual)
         if not factors:
             raise IncompatibleOverrideError(
                 "The kernel overrides leave no parameter contributing a kernel."

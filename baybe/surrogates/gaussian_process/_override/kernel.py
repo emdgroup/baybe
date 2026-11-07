@@ -21,25 +21,22 @@ if TYPE_CHECKING:
 
 def extract_parameter_kernel_overrides(
     searchspace: SearchSpace,
-) -> list[tuple[str, GPyTorchKernel | None]]:
-    """Extract the parameter-specific kernel overrides.
+) -> list[tuple[str, GPyTorchKernel]]:
+    """Extract the kernel factors of the parameter-specific kernel overrides.
+
+    Vanishing overrides are skipped since they contribute no kernel factor.
 
     Args:
         searchspace: The search space whose parameters are checked for overrides.
 
     Returns:
-        A ``(parameter_name, kernel)`` pair for each parameter with an override, where
-        the kernel is ``None`` for vanishing overrides.
+        A ``(parameter_name, kernel)`` pair for each non-vanishing override.
     """
     return [
-        (
-            p.name,
-            None
-            if isinstance(p.override_kernel, VanishingKernel)
-            else make_parameter_override_kernel(p, searchspace),
-        )
+        (p.name, make_parameter_override_kernel(p, searchspace))
         for p in searchspace.parameters
         if p.override_kernel is not None
+        and not isinstance(p.override_kernel, VanishingKernel)
     ]
 
 
