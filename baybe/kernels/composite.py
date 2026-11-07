@@ -102,7 +102,8 @@ class ScaleKernel(CompositeKernel):
         """
         if isinstance(value, VanishingKernel):
             raise ValueError(
-                f"'{self.__class__.__name__}' cannot wrap a vanishing kernel."
+                f"'{self.__class__.__name__}' cannot wrap a vanishing kernel, hence "
+                f"a vanishing kernel also cannot be scaled by a constant."
             )
 
     @override
