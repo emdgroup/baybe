@@ -685,9 +685,9 @@ class GaussianProcessSurrogate(Surrogate):
             task_param is not None
             and task_param.override_transfer_learning_mode is TransferLearningMode.RGPE
         ):
-            from baybe.surrogates.gaussian_process._rgpe import make_rgpe_model
+            from baybe.surrogates.gaussian_process._rgpe import RGPEModel
 
-            self._model = make_rgpe_model(
+            self._model = RGPEModel.from_context(
                 context, train_x, train_y, partial(fit_gp, copy_components=True)
             )
         else:

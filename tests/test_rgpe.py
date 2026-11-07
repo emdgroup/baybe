@@ -24,7 +24,7 @@ from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
-from baybe.surrogates.gaussian_process._rgpe import RGPEModel, make_rgpe_model
+from baybe.surrogates.gaussian_process._rgpe import RGPEModel
 from baybe.surrogates.gaussian_process.components import FitCriterion
 from baybe.surrogates.gaussian_process.core import _ModelContext
 from baybe.targets import NumericalTarget
@@ -245,10 +245,10 @@ def _make_data(sources: dict[str, int], n_target: int) -> tuple:
         param({"A": 5, "B": 0, "C": 4}, 4, None, False, id="ranked"),
     ],
 )
-def test_make_rgpe_model(sources, n_target, n_members, is_uniform):
+def test_from_context(sources, n_target, n_members, is_uniform):
     """Members are fitted per task with data and weighted as specified."""
     context, train_x, train_y, fit_gp = _make_data(sources, n_target)
-    model = make_rgpe_model(context, train_x, train_y, fit_gp)
+    model = RGPEModel.from_context(context, train_x, train_y, fit_gp)
 
     assert model.weights.dtype == train_x.dtype
     assert torch.isclose(model.weights.sum(), torch.tensor(1.0, dtype=torch.float64))
@@ -258,21 +258,21 @@ def test_make_rgpe_model(sources, n_target, n_members, is_uniform):
     assert model.target_index == (None if n_target == 0 else len(model._members) - 1)
 
 
-def test_make_rgpe_model_constant_target():
+def test_from_context_constant_target():
     """A constant target defines the output units with unit scale around its value."""
     context, train_x, train_y, fit_gp = _make_data({"A": 5}, 3)
     train_y[:3] = 1.0  # The target rows come first
-    model = make_rgpe_model(context, train_x, train_y, fit_gp)
+    model = RGPEModel.from_context(context, train_x, train_y, fit_gp)
     assert model.outcome_transform is model._members[-1].outcome_transform
     assert torch.equal(model.outcome_transform.means, torch.ones((1, 1)).double())
     assert torch.equal(model.outcome_transform.stdvs, torch.ones((1, 1)).double())
 
 
-def test_make_rgpe_model_requires_source_data():
+def test_from_context_requires_source_data():
     """Fitting without source data raises."""
     context, train_x, train_y, fit_gp = _make_data({"A": 0}, 3)
     with pytest.raises(NoMeasurementsError, match="at least one source"):
-        make_rgpe_model(context, train_x, train_y, fit_gp)
+        RGPEModel.from_context(context, train_x, train_y, fit_gp)
 
 
 _SURROGATE_MEASUREMENTS = pd.DataFrame(

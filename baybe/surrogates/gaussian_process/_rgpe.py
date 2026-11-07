@@ -255,6 +255,56 @@ class RGPEModel(GPyTorchModel):
         )
 
     @classmethod
+    def from_context(
+        cls,
+        context: _ModelContext,
+        train_x: Tensor,
+        train_y: Tensor,
+        fit_gp: Callable[[Tensor, Tensor], SingleTaskGP],
+        /,
+    ) -> Self:
+        """Fit one GP per task and combine them into a rank-weighted ensemble.
+
+        Args:
+            context: The model context providing the search space with the task
+                parameter identifying the target and source tasks.
+            train_x: The training inputs of all tasks (comp-rep, ``n x d``).
+            train_y: The training targets of all tasks (``n x 1``).
+            fit_gp: A callable fitting a Gaussian process to a subset of the data.
+
+        Returns:
+            The fitted ensemble, weighted by how well each member ranks the target
+            data. Falls back to uniform weights with fewer than two target points.
+        """
+        target_mask, source_masks = _split_by_task(context, train_x)
+
+        # Sources are fitted before the target, as the weights depend on the RNG state
+        source_models = tuple(fit_gp(train_x[m], train_y[m]) for m in source_masks)
+        n_target = int(target_mask.sum())
+        if n_target == 0:
+            weights = train_x.new_full((len(source_models),), 1 / len(source_models))
+            return cls.from_ranked_models(source_models, weights)
+
+        target_model = fit_gp(train_x[target_mask], train_y[target_mask])
+        models = (*source_models, target_model)
+        if n_target < 2:
+            # Ranking needs at least two target points
+            weights = train_x.new_full((len(models),), 1 / len(models))
+        else:
+            weights = _compute_rank_weights(
+                train_x[target_mask],
+                train_y[target_mask],
+                source_models,
+                target_model,
+                _N_MC_SAMPLES,
+            )
+
+        # The target's standardization defines the ensemble's output units. For a
+        # single or constant target point, BoTorch falls back to unit scale around
+        # the mean.
+        return cls.from_ranked_models(models, weights, target_index=len(models) - 1)
+
+    @classmethod
     def from_ranked_models(
         cls,
         models: Sequence[SingleTaskGP],
@@ -385,41 +435,3 @@ def _split_by_task(
             "provided."
         )
     return target_mask, source_masks
-
-
-def make_rgpe_model(
-    context: _ModelContext,
-    train_x: Tensor,
-    train_y: Tensor,
-    fit_gp: Callable[[Tensor, Tensor], SingleTaskGP],
-    /,
-) -> RGPEModel:
-    """Fit one GP per task and combine them into a rank-weighted ensemble."""
-    target_mask, source_masks = _split_by_task(context, train_x)
-
-    # Sources are fitted before the target, as the weights depend on the RNG state
-    source_models = tuple(fit_gp(train_x[m], train_y[m]) for m in source_masks)
-    n_target = int(target_mask.sum())
-    if n_target == 0:
-        weights = torch.full(
-            (len(source_models),), 1 / len(source_models), dtype=train_x.dtype
-        )
-        return RGPEModel.from_ranked_models(source_models, weights)
-
-    target_model = fit_gp(train_x[target_mask], train_y[target_mask])
-    models = (*source_models, target_model)
-    if n_target < 2:
-        # Ranking needs at least two target points
-        weights = torch.full((len(models),), 1 / len(models), dtype=train_x.dtype)
-    else:
-        weights = _compute_rank_weights(
-            train_x[target_mask],
-            train_y[target_mask],
-            source_models,
-            target_model,
-            _N_MC_SAMPLES,
-        )
-
-    # The target's standardization defines the ensemble's output units. For a single
-    # or constant target point, BoTorch falls back to unit scale around the mean.
-    return RGPEModel.from_ranked_models(models, weights, target_index=len(models) - 1)
