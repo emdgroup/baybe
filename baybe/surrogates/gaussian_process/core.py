@@ -566,8 +566,8 @@ class GaussianProcessSurrogate(Surrogate):
 
         Resolves ``None`` fields to BayBE defaults and calls the factories with
         the given context. This handles the standard resolution path. If the task
-        parameter has a vanishing kernel, the non-kernel components are built for the
-        reduced search space without it.
+        parameter has a :class:`~baybe.kernels.basic.VanishingKernel`, the non-kernel
+        components are built for the reduced search space without it.
 
         Args:
             context: The model context providing searchspace, objective, and
