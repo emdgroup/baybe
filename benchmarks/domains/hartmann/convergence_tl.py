@@ -110,12 +110,11 @@ def _make_hartmann_tl_benchmark(
         task_param_naive = evolve(
             task_param, override_transfer_learning_mode=TransferLearningMode.NAIVE
         )
-        params_tl = params + [task_param]
 
         searchspace_nontl = SearchSpace.from_product(
             parameters=params + [task_param_naive]
         )
-        searchspace_tl = SearchSpace.from_product(parameters=params_tl)
+        searchspace_tl = SearchSpace.from_product(parameters=params + [task_param])
 
         objective = SingleTargetObjective(
             target=NumericalTarget(name="Target", minimize=True)
