@@ -80,7 +80,7 @@ def make_lookup(data: pd.DataFrame) -> pd.DataFrame:
 
     Note that we filter the data to only include the target tasks.
     Without the filtering, there would be multiple entries for the same parameter
-    configuration. Since this might yield issues for the non-transfer learning
+    configuration. Since this might yield issues for the naive transfer learning
     campaigns, we filter the data to only include the target tasks.
     """
     return data[data["Temp_C"] == "105"]
@@ -98,7 +98,7 @@ def direct_arylation_tl_temperature(
 
     Key characteristics:
     • Uses one temperature as source (90°C and 120°C) and another as target (105°C)
-    • Compares transfer learning vs. non-transfer learning approaches
+    • Compares default vs. naive transfer learning
     • Tests varying amounts of source data:
       - 1% of source data
       - 10% of source data
@@ -125,7 +125,7 @@ def direct_arylation_tl_temperature(
         data=data,
         use_task_parameter=True,
     )
-    searchspace_nontl = make_searchspace(
+    searchspace_naive = make_searchspace(
         data=data,
         use_task_parameter=True,
         transfer_learning_mode=TransferLearningMode.NAIVE,
@@ -136,7 +136,7 @@ def direct_arylation_tl_temperature(
     objective = make_objective()
 
     tl_campaign = Campaign(searchspace=searchspace, objective=objective)
-    non_tl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
+    naive_campaign = Campaign(searchspace=searchspace_naive, objective=objective)
 
     percentages = [0.01, 0.1, 0.2]
 
@@ -153,7 +153,7 @@ def direct_arylation_tl_temperature(
             simulate_scenarios(
                 {
                     f"{int(100 * p)}": tl_campaign,
-                    f"{int(100 * p)}_naive": non_tl_campaign,
+                    f"{int(100 * p)}_naive": naive_campaign,
                 },
                 lookup,
                 initial_data=initial_data_samples[p],
@@ -165,7 +165,7 @@ def direct_arylation_tl_temperature(
         )
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": non_tl_campaign},
+            {"0": tl_campaign, "0_naive": naive_campaign},
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

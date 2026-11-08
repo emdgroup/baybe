@@ -96,7 +96,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
         task_param, override_transfer_learning_mode=TransferLearningMode.NAIVE
     )
 
-    searchspace_nontl = SearchSpace.from_product(parameters=params + [task_param_naive])
+    searchspace_naive = SearchSpace.from_product(parameters=params + [task_param_naive])
     searchspace_tl = SearchSpace.from_product(parameters=params + [task_param])
 
     objective = SingleTargetObjective(
@@ -106,8 +106,8 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
         searchspace=searchspace_tl,
         objective=objective,
     )
-    nontl_campaign = Campaign(
-        searchspace=searchspace_nontl,
+    naive_campaign = Campaign(
+        searchspace=searchspace_naive,
         objective=objective,
     )
 
@@ -142,7 +142,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
             simulate_scenarios(
                 {
                     f"{int(100 * p)}": tl_campaign,
-                    f"{int(100 * p)}_naive": nontl_campaign,
+                    f"{int(100 * p)}_naive": naive_campaign,
                 },
                 lookup,
                 initial_data=initial_data_samples[p],
@@ -154,7 +154,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
         )
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": nontl_campaign},
+            {"0": tl_campaign, "0_naive": naive_campaign},
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

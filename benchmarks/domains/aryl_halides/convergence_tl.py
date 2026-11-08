@@ -35,7 +35,7 @@ def aryl_halide_CT_I_BM_tl(
     """Benchmark function for transfer learning with aryl halide reactions.
 
     Key characteristics:
-    • Compares transfer learning vs. non-transfer learning approaches
+    • Compares default vs. naive transfer learning
     • Source tasks:
       - 1-chloro-4-(trifluoromethyl)benzene
       - 2-iodopyridine
@@ -71,7 +71,7 @@ def aryl_halide_CT_IM_tl(
     """Benchmark function for transfer learning with aryl halide reactions.
 
     Key characteristics:
-    • Compares transfer learning vs. non-transfer learning approaches
+    • Compares default vs. naive transfer learning
     • Source task: 1-chloro-4-(trifluoromethyl)benzene
     • Target task: 1-iodo-4-methoxybenzene
     • Tests varying amounts of source data:
@@ -105,7 +105,7 @@ def aryl_halide_IP_CP_tl(
     """Benchmark function for transfer learning with aryl halide reactions.
 
     Key characteristics:
-    • Compares transfer learning vs. non-transfer learning approaches
+    • Compares default vs. naive transfer learning
     • Source task: 2-iodopyridine
     • Target task: 3-chloropyridine
     • Tests varying amounts of source data:
