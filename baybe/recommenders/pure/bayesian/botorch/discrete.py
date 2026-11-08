@@ -130,13 +130,14 @@ def recommend_discrete_without_subsets(
     #   `SearchSpace._match_measurement_with_searchspace_indices` does, though using
     #   a simpler matching logic. When refactoring the SearchSpace class to
     #   handle continuous parameters, a corresponding utility could be extracted.
+    index_column = object()  # opaque carrier for the original index, collision-free
     idxs = pd.Index(
         pd.merge(
-            pd.DataFrame(points, columns=candidates_comp.columns),
-            candidates_comp.reset_index(),
-            on=list(candidates_comp),
+            pd.DataFrame(points.numpy(), columns=candidates_comp.columns),
+            candidates_comp.reset_index(names=[index_column]),
+            on=list(candidates_comp.columns),
             how="left",
-        )["index"]
+        )[index_column]
     )
 
     return idxs
