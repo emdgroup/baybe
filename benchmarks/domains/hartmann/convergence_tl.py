@@ -111,7 +111,7 @@ def _make_hartmann_tl_benchmark(
             task_param, override_transfer_learning_mode=TransferLearningMode.NAIVE
         )
 
-        searchspace_nontl = SearchSpace.from_product(
+        searchspace_naive = SearchSpace.from_product(
             parameters=params + [task_param_naive]
         )
         searchspace_tl = SearchSpace.from_product(parameters=params + [task_param])
@@ -123,8 +123,8 @@ def _make_hartmann_tl_benchmark(
             searchspace=searchspace_tl,
             objective=objective,
         )
-        nontl_campaign = Campaign(
-            searchspace=searchspace_nontl,
+        naive_campaign = Campaign(
+            searchspace=searchspace_naive,
             objective=objective,
         )
 
@@ -166,7 +166,7 @@ def _make_hartmann_tl_benchmark(
                 simulate_scenarios(
                     {
                         f"{int(100 * p)}": tl_campaign,
-                        f"{int(100 * p)}_naive": nontl_campaign,
+                        f"{int(100 * p)}_naive": naive_campaign,
                     },
                     lookup,
                     initial_data=initial_data_samples[p],
@@ -178,7 +178,7 @@ def _make_hartmann_tl_benchmark(
             )
         results.append(
             simulate_scenarios(
-                {"0": tl_campaign, "0_naive": nontl_campaign},
+                {"0": tl_campaign, "0_naive": naive_campaign},
                 lookup,
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
