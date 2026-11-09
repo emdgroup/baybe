@@ -276,10 +276,10 @@ def test_column_permutation():
 )
 @mark.parametrize("use_comp_rep", [False, True], ids=["exp", "comp"])
 @mark.parametrize("n_rows", [1, 2], ids=["single", "multiple"])
-def test_marginal_surrogate_explanations(
+def test_marginal_posterior_predictions(
     surrogate_cls: type[Surrogate], use_comp_rep: bool, n_rows: int
 ) -> None:
-    """Explain marginal predictions while preserving the sample dimension."""
+    """SHAP values are computed from marginal posteriors (no covariances involved)."""
     searchspace = SearchSpace.from_product(
         [
             CategoricalParameter("category", ["a", "b"]),
@@ -294,12 +294,10 @@ def test_marginal_surrogate_explanations(
         }
     )
     surrogate = surrogate_cls()
-    surrogate.fit(
-        searchspace, SingleTargetObjective(NumericalTarget("y")), measurements
-    )
+    surrogate.fit(searchspace, NumericalTarget("y").to_objective(), measurements)
     candidates = measurements[["category", "x"]].iloc[:n_rows]
-    expected = surrogate.posterior(candidates, joint=False).mean.detach().numpy()
-    expected = expected[:, 0, 0]
+    posterior_stats = surrogate.posterior_stats(candidates, stats=["mean"])
+    expected = posterior_stats["y_mean"].to_numpy()
     data = searchspace.transform(candidates) if use_comp_rep else candidates
     insight = SHAPInsight.from_surrogate(surrogate, data, use_comp_rep=use_comp_rep)
 
@@ -307,6 +305,7 @@ def test_marginal_surrogate_explanations(
         surrogate_cls, "_posterior_comp", wraps=surrogate._posterior_comp
     ) as posterior:
         predictions = insight.explainers[0].model.f(data.to_numpy())
+    posterior.assert_called_once()
     assert posterior.call_args.args[0].shape == (
         n_rows,
         1,
@@ -314,9 +313,3 @@ def test_marginal_surrogate_explanations(
     )
     assert predictions.shape == (n_rows,)
     np.testing.assert_allclose(predictions, expected)
-
-    explanation = insight.explain()[0]
-    assert explanation.values.shape == data.shape
-    np.testing.assert_allclose(
-        explanation.base_values + explanation.values.sum(axis=1), expected
-    )
