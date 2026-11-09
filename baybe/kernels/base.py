@@ -32,9 +32,8 @@ class Kernel(ABC, SerialMixin):
     def __add__(self, other: Any) -> Kernel:
         """Create a sum kernel from two kernels.
 
-        Flattens nested sums so that ``(a + b) + c`` yields
-        ``AdditiveKernel([a, b, c])`` instead of
-        ``AdditiveKernel([AdditiveKernel([a, b]), c])``. Vanishing kernels are dropped.
+        Nested additive kernels are flattened, so ``(a + b) + c`` yields
+        ``AdditiveKernel([a, b, c])``. Vanishing kernels are dropped.
         """
         if isinstance(other, Kernel):
             from baybe.kernels.composite import AdditiveKernel
@@ -52,13 +51,12 @@ class Kernel(ABC, SerialMixin):
         return NotImplemented
 
     def __mul__(self, other: Any) -> Kernel:
-        """Create a product kernel or scale kernel.
+        """Create a product kernel from two kernels or scale a kernel.
 
-        When multiplied with another kernel, a product kernel is created. Nested
-        products are flattened so that ``(a * b) * c`` yields
-        ``ProductKernel([a, b, c])`` and vanishing kernels are dropped. When multiplied
-        with a numeric constant, a scale kernel with a fixed (non-trainable) output
-        scale is created.
+        Nested product kernels are flattened, so ``(a * b) * c`` yields
+        ``ProductKernel([a, b, c])``. Vanishing kernels are dropped. Multiplication by
+        a numeric constant creates a scale kernel with a fixed (non-trainable) output
+        scale.
         """
         if isinstance(other, Kernel):
             from baybe.kernels.composite import ProductKernel
