@@ -60,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   then switches to another recommender, the latter alternates between the two
 
 ### Changed
+- `SHAPInsight` now uses marginal posteriors in both representations, avoiding joint
+  covariance computation and supporting independent surrogates with multiple rows
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
   kernel in multi-task scenarios, matching BoTorch's `MultiTaskGP` defaults introduced
   in version `0.18.0`
