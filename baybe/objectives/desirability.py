@@ -205,7 +205,7 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def _oriented_targets(self) -> tuple[Target, ...]:
+    def _oriented_targets(self) -> tuple[NumericalTarget, ...]:
         # For desirability, we do not only negate but also shift by 1 so that
         # normalized minimization targets are still mapped to [0, 1] instead of [-1, 0]
         # to enable geometric averaging.
@@ -291,7 +291,7 @@ class DesirabilityObjective(Objective):
         import torch
         from botorch.acquisition.objective import ScalarizedPosteriorTransform
 
-        oriented = cast(tuple[NumericalTarget, ...], self._oriented_targets)
+        oriented = self._oriented_targets
 
         # Treat identity transformations as affine for harmonized logic below
         # TODO[typing]: The cast is necessary because the `is_all_instance` TypeGuard
