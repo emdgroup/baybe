@@ -42,9 +42,6 @@ def assert_partial_rejected(
         constraint: The constraint to evaluate.
         data: The partial input rows.
         backend: The dataframe backend used to construct the frame.
-
-    Raises:
-        ValueError: If the constraint does not reject the frame.
     """
     assert constraint._can_evaluate(set(data[0])) is False
     frame = nw.from_dicts(data, backend=backend)
