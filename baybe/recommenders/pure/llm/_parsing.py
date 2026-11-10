@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import json
 import warnings
-from json import JSONDecodeError
 from typing import cast
 
 import cattrs
@@ -19,48 +17,11 @@ from baybe._llm.exceptions import (
     LLMResponseWarning,
     LLMUnknownParameterError,
 )
+from baybe._llm.extraction import extract_json_array
 from baybe.recommenders.pure.llm._schema import ResponseItem
 from baybe.searchspace import SearchSpace
 from baybe.utils.dataframe import normalize_input_dtypes
 from baybe.utils.numerical import closest_element
-
-
-def _extract_json_array(response: str, /) -> str:
-    """Extract the JSON array payload from a raw language model response.
-
-    Models often wrap the array in Markdown fences or prose, or emit several blocks
-    (e.g. after reconsidering). Return the *last* array that is a list of objects (the
-    intended answer), ignoring prose and stray brackets like ``x[0]``.
-
-    Args:
-        response: The raw response text.
-
-    Returns:
-        The substring spanning the extracted JSON array.
-
-    Raises:
-        ValueError: If no JSON array of objects is found in the response.
-    """
-    decoder = json.JSONDecoder()
-    last_object_array: str | None = None
-    search_start = 0
-    while (start := response.find("[", search_start)) != -1:
-        try:
-            value, end = decoder.raw_decode(response, start)
-        except JSONDecodeError:
-            search_start = start + 1  # not a valid array here; try the next "["
-            continue
-        is_object_list = (
-            isinstance(value, list)
-            and bool(value)
-            and all(isinstance(x, dict) for x in value)
-        )
-        if is_object_list:
-            last_object_array = response[start:end]
-        search_start = end  # keep scanning; a later block wins
-    if last_object_array is None:
-        raise ValueError("No JSON array of objects found in the response.")
-    return last_object_array
 
 
 def parse_llm_response(
@@ -104,16 +65,12 @@ def parse_llm_response(
             of the LLM recommendations with such constraints is not guaranteed.
     """
     try:
-        payload = _extract_json_array(response)
+        recommendations = extract_json_array(response)
     except ValueError as e:
         raise LLMMalformedResponseError(
             "The language model response could not be parsed as a JSON array "
             "of recommendations."
         ) from e
-    try:
-        recommendations = json.loads(payload)
-    except JSONDecodeError as e:
-        raise LLMMalformedResponseError(f"Error parsing JSON output: {e}.") from e
 
     # Check the number of recommendations before validating any of them
     if len(recommendations) != batch_size:
