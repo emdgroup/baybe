@@ -24,122 +24,119 @@ if TYPE_CHECKING:
     from botorch.models import SingleTaskGP
     from botorch.models.transforms.outcome import Standardize
     from gpytorch.likelihoods import GaussianLikelihood
-    from gpytorch.means import Mean
-    from gpytorch.module import Module
     from linear_operator.operators import LinearOperator
 
     from baybe.surrogates.gaussian_process.core import _ModelContext
 
 _N_MC_SAMPLES = 256
-"""Monte Carlo samples for estimating the ranking weights."""
+"""The number of posterior samples used to estimate the rank weights."""
 
 _CONDITIONING_ERROR_MESSAGE = (
     "'{}' does not support conditioning on observations or fantasizing."
 )
 
 
-def _compute_ranking_loss(f_samps: Tensor, target_y: Tensor) -> Tensor:
-    """Compute the ranking loss of each posterior sample against the target points.
+def _compute_ranking_loss(samples: Tensor, targets: Tensor, /) -> Tensor:
+    """Compute the ranking loss, i.e. the number of misranked pairs, per sample.
 
-    The loss counts discordant pairwise orderings between the sampled predictions and
-    the observed targets. A 3D ``f_samps`` holds leave-one-out samples of the target
-    model (its diagonal are the out-of-sample predictions); a 2D ``f_samps`` holds
-    source-model samples.
+    Row ``j`` of ``samples`` holds the predictions of the model used to rank the target
+    point ``j``. A pair ``(j, k)`` is misranked if the order of ``samples[s, j, j]`` and
+    ``samples[s, j, k]`` disagrees with the order of ``targets[j]`` and ``targets[k]``.
+
+    For a source model, every row holds the same predictions. For the target model, row
+    ``j`` holds the predictions of its leave-one-out model without point ``j``.
 
     Args:
-        f_samps: Samples of shape ``n_samples x n x n`` (target LOOCV) or
-            ``n_samples x n`` (sources), for ``n`` target points.
-        target_y: An ``n x 1`` tensor of observed target values.
+        samples: A ``n_samples x n x n`` tensor of predictions at the ``n`` target
+            points, whose entry ``[s, j, k]`` is the ``s``-th posterior sample of the
+            model for row ``j``, evaluated at point ``k``.
+        targets: A tensor of the ``n`` observed target values.
 
     Returns:
-        An ``n_samples`` tensor with the ranking loss per sample.
-
-    Raises:
-        ValueError: If ``f_samps`` is neither 2D nor 3D.
+        An ``n_samples`` tensor with the number of misranked pairs per sample.
     """
-    y = target_y.squeeze(-1)
-    y_less = y.unsqueeze(-1) < y.unsqueeze(0)  # y_j < y_k
-    if f_samps.ndim == 3:
-        # Target model: compare each LOO out-of-sample prediction (the diagonal) to
-        # every in-sample prediction
-        f_less = f_samps.diagonal(dim1=1, dim2=2).unsqueeze(-1) < f_samps
-    elif f_samps.ndim == 2:
-        # Source model: compare all ordered pairs; the diagonal is zero under the
-        # strict comparison
-        f_less = f_samps.unsqueeze(-1) < f_samps.unsqueeze(-2)  # f_j < f_k
-    else:
-        raise ValueError(f"Expected 2D or 3D samples but got {f_samps.ndim=}.")
-    return (f_less ^ y_less).sum(dim=(-2, -1))
+    predictions = samples.diagonal(dim1=-2, dim2=-1)
+    predictions_less = predictions.unsqueeze(-1) < samples
+    targets_less = targets.unsqueeze(-1) < targets.unsqueeze(-2)
+    return (predictions_less ^ targets_less).sum(dim=(-2, -1))
 
 
-def _loocv_sample_preds(
-    train_x: Tensor, train_y: Tensor, target_model: GPyTorchModel, n_samples: int
-) -> Tensor:
-    """Draw leave-one-out cross-validation samples of the target model.
+def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
+    """Draw posterior samples from the leave-one-out versions of a fitted GP.
 
-    Builds a batch GP in the target model's transformed input/output space, reusing its
-    fitted hyperparameters, with each batch element trained on all but one target point.
-    Working in the transformed space is fine because the ranking loss only depends on
-    the ordering of predictions, which output standardization preserves.
+    The ``j``-th leave-one-out GP is the given GP conditioned on all its training points
+    except the ``j``-th one, keeping the fitted hyperparameters. Each of these GPs is
+    sampled jointly at all ``n`` training points, including the one it left out.
+
+    The samples are drawn from the latent function, i.e. without observation noise, and
+    in the model's standardized output space. This suffices for the ranking loss, which
+    only depends on the order of the predictions.
 
     Args:
-        train_x: The target inputs in the model's transformed input space (``n x d``).
-        train_y: The target values in the model's transformed output space (``n x 1``).
-        target_model: The fitted target Gaussian process model.
-        n_samples: The number of Monte Carlo samples to draw.
+        model: The fitted Gaussian process model.
+        n_samples: The number of posterior samples to draw.
 
     Returns:
-        An ``n_samples x n x n`` tensor, indexing the ``n`` leave-one-out models along
-        dimension 1 and the ``n`` target points along dimension 2.
+        A tensor of shape ``n_samples x n x n``, whose entry ``[s, j, k]`` is the
+        ``s``-th posterior sample of the GP without training point ``j``, evaluated at
+        training point ``k``.
     """
     from copy import deepcopy
 
-    from botorch.models import SingleTaskGP
     from botorch.sampling.normal import SobolQMCNormalSampler
 
-    n = len(train_x)
-    masks = torch.eye(n, dtype=torch.bool, device=train_x.device)
-    train_x_cv = torch.stack([train_x[~m] for m in masks])
-    train_y_cv = torch.stack([train_y[~m] for m in masks])
-
-    # Transform-free batch GP reusing the target model's fitted modules, which broadcast
-    # across the LOO batch. Transforms are off since the data is already in the model's
-    # transformed space (this also avoids re-standardizing the standardized targets).
-    model = SingleTaskGP(
-        train_x_cv,
-        train_y_cv,
-        covar_module=cast("Module", deepcopy(target_model.covar_module)),
-        mean_module=cast("Mean", deepcopy(target_model.mean_module)),
-        likelihood=deepcopy(target_model.likelihood),
-        input_transform=None,
-        outcome_transform=None,
-    )
+    # In eval mode, the training data is in transformed form
     model.eval()
-    with torch.no_grad():
-        posterior = model.posterior(train_x)
+    train_x = model.train_inputs[0]
+    train_y = model.train_targets
+
+    # Fold j contains all training points except point j
+    masks = torch.eye(len(train_x), dtype=torch.bool, device=train_x.device)
+
+    # Copy with the folds as batched training data, which `set_train_data` stores as is
+    loo_model = deepcopy(model)
+    # `set_train_data` comes from GPyTorch, which mypy can't see, so mypy
+    # falls back to `nn.Module.__getattr__` and types it as a tensor
+    loo_model.set_train_data(  # type: ignore[operator]
+        torch.stack([train_x[~m] for m in masks]),
+        torch.stack([train_y[~m] for m in masks]),
+        strict=False,
+    )
+
+    with torch.no_grad(), gpt_posterior_settings():
+        # Calling the model directly skips the transforms
+        posterior = GPyTorchPosterior(loo_model(train_x))
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
         return sampler(posterior).squeeze(-1)
 
 
 def _compute_rank_weights(
     train_x: Tensor,
-    train_y: Tensor,
-    source_models: tuple[GPyTorchModel, ...],
-    target_model: GPyTorchModel,
+    targets: Tensor,
+    source_models: tuple[SingleTaskGP, ...],
+    target_model: SingleTaskGP,
+    /,
+    *,
     n_samples: int,
 ) -> Tensor:
-    """Compute the RGPE rank weights for the source and target models.
+    """Compute the rank weights for the source and target models.
 
-    Each model is weighted by the Monte Carlo probability that it has the lowest ranking
-    loss on the target points, following Feurer, Letham and Bakshy (ICML 2018 AutoML
-    Workshop). Mirrors the BoTorch RGPE tutorial without weight-dilution regularization.
+    Each model is weighted by the probability that it has the lowest ranking loss on
+    the target points, i.e. that it orders them best. The probability is estimated from
+    ``n_samples`` joint posterior samples per model: in each sample, the models with the
+    lowest ranking loss share one vote evenly, and a model's weight is its average vote.
+
+    Source models are evaluated at the target points directly. The target model, which
+    was trained on these points, is instead evaluated via its leave-one-out models, so
+    that its ranking loss measures generalization rather than in-sample fit.
 
     Args:
-        train_x: The target training inputs (raw comp-rep, ``n x d``).
-        train_y: The target training targets (``n x 1``).
+        train_x: The inputs of the ``n`` target points (comp-rep, ``n x d``).
+        targets: The ``n`` observed target values.
         source_models: The fitted source Gaussian process models.
-        target_model: The fitted target Gaussian process model.
-        n_samples: The number of Monte Carlo samples used to estimate the weights.
+        target_model: The fitted target Gaussian process model, trained on
+            ``train_x`` and ``targets``.
+        n_samples: The number of posterior samples used to estimate the weights.
 
     Returns:
         A tensor of length ``len(source_models) + 1`` with the model weights, ordered as
@@ -147,29 +144,23 @@ def _compute_rank_weights(
     """
     from botorch.sampling.normal import SobolQMCNormalSampler
 
+    n = len(targets)
     ranking_losses = []
-    sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
     with torch.no_grad():
         for model in source_models:
-            posterior = model.posterior(train_x)
-            f_samps = sampler(posterior).squeeze(-1).squeeze(-1)
-            ranking_losses.append(_compute_ranking_loss(f_samps, train_y))
+            # Each source gets its own sampler, so their samples are independent
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
+            f = sampler(model.posterior(train_x)).squeeze(-1)
+            # A source model ranks every point itself, so all rows are the same
+            samples = f.unsqueeze(-2).expand(-1, n, -1)
+            ranking_losses.append(_compute_ranking_loss(samples, targets))
 
-        # The target model's LOOCV samples are drawn in its transformed space. The
-        # output transform is only order-preserving, which is all the ranking loss
-        # depends on.
-        target_model.eval()
-        transformed_x = target_model.transform_inputs(train_x)
-        # `outcome_transform` is always present on a fitted SingleTaskGP, but mypy
-        # sees it as an optional, non-callable attribute.
-        transformed_y, _ = target_model.outcome_transform(train_y)  # type: ignore[operator]
-        target_f_samps = _loocv_sample_preds(
-            transformed_x, transformed_y, target_model, n_samples
-        )
-        ranking_losses.append(_compute_ranking_loss(target_f_samps, train_y))
+        # The target model ranks point j with its leave-one-out model without point j
+        samples = _sample_loocv_predictions(target_model, n_samples)
+        ranking_losses.append(_compute_ranking_loss(samples, targets))
 
     ranking_loss_tensor = torch.stack(ranking_losses)
-    # Ties split the sample's weight evenly across all tied models
+    # In each sample, the models with the lowest loss share one vote evenly
     is_best = ranking_loss_tensor == ranking_loss_tensor.min(dim=0, keepdim=True).values
     rank_weights = (is_best / is_best.sum(dim=0, keepdim=True)).mean(dim=1)
     return rank_weights.type_as(train_x)
@@ -291,10 +282,10 @@ class RGPEModel(GPyTorchModel):
         else:
             weights = _compute_rank_weights(
                 train_x[target_mask],
-                train_y[target_mask],
+                train_y[target_mask].squeeze(-1),
                 source_models,
                 target_model,
-                _N_MC_SAMPLES,
+                n_samples=_N_MC_SAMPLES,
             )
 
         # The target's standardization defines the ensemble's output units. For a
