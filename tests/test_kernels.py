@@ -141,8 +141,7 @@ def validate_gpytorch_kernel_components(  # noqa: DOC501
         # ignoring vanishing members
         elif isinstance(component, tuple) and all(has(c) for c in component):
             surviving = [c for c in component if not isinstance(c, VanishingKernel)]
-            assert len(surviving) == len(mapped_component)
-            for c, m in zip(surviving, mapped_component):
+            for c, m in zip(surviving, mapped_component, strict=True):
                 validate_gpytorch_kernel_components(c, m, searchspace)
 
         # On the lowest component level, simply check for equality
