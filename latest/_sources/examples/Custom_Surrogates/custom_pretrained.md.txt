@@ -151,8 +151,8 @@ print(recommendation)
 ```
 
     Recommendation from campaign:
-       Pressure[bar]  Temperature[degree_C]
-    4            1.0             144.444444
+        Pressure[bar]  Temperature[degree_C]
+    14            5.0             144.444444
 
 
 Add some fake results
@@ -171,11 +171,6 @@ campaign.add_measurements(recommendation)
 recommendation = campaign.recommend(batch_size=1)
 ```
 
-    [0;93m2026-11-03 15:04:44.402246899 [W:onnxruntime:Default, device_discovery.cc:164
-DiscoverDevicesForPlatform] GPU device discovery failed: device_discovery.cc:89
-ReadFileContents Failed to open file: "/sys/class/drm/card0/device/vendor"[m
-
-
 Print second round of recommendation
 
 
@@ -187,7 +182,7 @@ print(recommendation)
     Recommendation from campaign:
            Pressure[bar]  Temperature[degree_C]
     index                                      
-    0                1.0                  100.0
+    20              10.0                  100.0
 
 
 ## Using configuration instead
