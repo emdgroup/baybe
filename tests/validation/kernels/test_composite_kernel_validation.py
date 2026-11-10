@@ -44,14 +44,24 @@ def test_additive_and_product_kernel_validation(kernel_cls, base_kernels, error)
 
 
 @pytest.mark.parametrize(
-    "make_kernel",
+    ("make_kernel", "match"),
     [
-        param(lambda: ScaleKernel(VanishingKernel()), id="scale"),
-        param(lambda: AdditiveKernel([VanishingKernel()] * 2), id="additive"),
-        param(lambda: ProductKernel([VanishingKernel()] * 2), id="product"),
+        param(lambda: ScaleKernel(VanishingKernel()), "cannot be scaled", id="scale"),
+        param(lambda: VanishingKernel() * 2, "cannot be scaled", id="mul_constant"),
+        param(lambda: 2 * VanishingKernel(), "cannot be scaled", id="rmul_constant"),
+        param(
+            lambda: AdditiveKernel([VanishingKernel()] * 2),
+            "does not vanish",
+            id="additive",
+        ),
+        param(
+            lambda: ProductKernel([VanishingKernel()] * 2),
+            "does not vanish",
+            id="product",
+        ),
     ],
 )
-def test_vanishing_kernel_validation(make_kernel):
+def test_vanishing_kernel_validation(make_kernel, match):
     """Vanishing kernels cannot be scaled or be the only members of a composite."""
-    with pytest.raises(ValueError, match="vanish"):
+    with pytest.raises(ValueError, match=match):
         make_kernel()
