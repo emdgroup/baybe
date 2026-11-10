@@ -11,12 +11,8 @@ from attrs import define, field, fields
 from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
-from baybe._llm.exceptions import (
-    LLMAuthenticationError,
-    LLMCallError,
-    LLMMalformedResponseError,
-    LLMResponseError,
-)
+from baybe._llm.exceptions import LLMResponseError
+from baybe._llm.query import query_model, validate_litellm_args
 from baybe._optional.info import LLM_INSTALLED
 from baybe.exceptions import (
     IncompatibilityError,
@@ -33,11 +29,6 @@ from baybe.serialization import SerialMixin, converter
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import fuzzy_row_match
 from baybe.utils.metadata import Metadata
-
-# Keys that are controlled by the recommender itself and must not be overridden: the
-# model and messages are set explicitly, and the response must not be streamed since
-# it is parsed as a whole.
-_RESERVED_LITELLM_KEYS = frozenset({"model", "messages", "stream"})
 
 
 @define(slots=False)
@@ -76,11 +67,15 @@ class LLMRecommender(PureRecommender, SerialMixin):
         factory=dict,
         converter=dict,
         repr=False,
-        validator=deep_mapping(
-            key_validator=instance_of(str),
-            # Values are intentionally unconstrained: LiteLLM accepts heterogeneous
-            # argument types (str, int, float, bool, nested dicts, ...).
-            value_validator=lambda *_: None,
+        validator=(
+            deep_mapping(
+                key_validator=instance_of(str),
+                # Values are intentionally unconstrained: LiteLLM accepts
+                # heterogeneous argument types (str, int, float, bool, nested
+                # dicts, ...).
+                value_validator=lambda *_: None,
+            ),
+            validate_litellm_args,
         ),
     )
     """Additional arguments to pass to LiteLLM (e.g. ``temperature``, ``max_tokens``).
@@ -101,15 +96,6 @@ class LLMRecommender(PureRecommender, SerialMixin):
         default=None, init=False, eq=False
     )
 
-    @litellm_args.validator
-    def _validate_litellm_args(self, attribute, value):  # noqa: DOC101, DOC103
-        """Validate litellm_args does not contain reserved keys."""
-        if conflicts := _RESERVED_LITELLM_KEYS & set(value.keys()):
-            raise ValueError(
-                f"'{attribute.name}' must not contain keys that are controlled by the "
-                f"recommender itself: {sorted(conflicts)}."
-            )
-
     @override
     def __attrs_post_init__(self) -> None:
         """Raise if the optional LLM dependencies are not installed."""
@@ -117,60 +103,9 @@ class LLMRecommender(PureRecommender, SerialMixin):
         if not LLM_INSTALLED:
             raise OptionalImportError(name="litellm", group="llm")
 
-    def _query_model(self, prompt: str) -> str:
-        """Query the language model and return the raw response text.
-
-        Args:
-            prompt: The prompt to send to the language model.
-
-        Returns:
-            The raw text content of the model response.
-
-        Raises:
-            LLMAuthenticationError: If authentication with the provider fails.
-            LLMCallError: If the call fails for another reason (e.g. network, rate
-                limiting, timeout, unknown model) before a response is produced.
-            LLMMalformedResponseError: If a response is returned but has an unexpected
-                structure or no content.
-        """
-        from baybe._optional.llm import AuthenticationError, completion
-
-        try:
-            response = completion(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                **self.litellm_args,
-            )
-        except AuthenticationError as e:
-            raise LLMAuthenticationError(
-                f"Authentication with the language model provider failed "
-                f"({type(e).__name__}): {e}. Check the API credentials for model "
-                f"'{self.model}' (e.g. the provider's API key environment variable)."
-            ) from e
-        except Exception as e:
-            raise LLMCallError(
-                f"The call to the language model failed ({type(e).__name__}): {e}. "
-                f"Check your network connection and the model identifier "
-                f"'{self.model}'."
-            ) from e
-
-        # NOTE: `completion()` is typed to also return a stream, which lacks `.choices`.
-        #   Streaming is excluded via `_RESERVED_LITELLM_KEYS`, and the `except` below
-        #   guards against any other unexpected response type at runtime.
-        try:
-            choices = response.choices  # pyrefly: ignore[missing-attribute]
-            content = choices[0].message.content
-        except (AttributeError, IndexError, TypeError) as e:
-            raise LLMMalformedResponseError(
-                f"The language model returned an unexpected response structure: {e}."
-            ) from e
-
-        if content is None:
-            raise LLMMalformedResponseError(
-                "The language model returned empty content (None)."
-            )
-
-        return content
+    def _query_model(self, prompt: str, /) -> str:
+        """Query the language model through the shared LLM query utility."""
+        return query_model(prompt, model=self.model, litellm_args=self.litellm_args)
 
     @override
     def recommend(
