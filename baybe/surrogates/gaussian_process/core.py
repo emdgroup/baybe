@@ -9,7 +9,7 @@ import os
 import warnings
 from copy import deepcopy
 from functools import partial, reduce
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attrs import Converter, define, field
@@ -669,20 +669,16 @@ class GaussianProcessSurrogate(Surrogate):
         def fit_gp(
             x: Tensor, y: Tensor, /, *, copy_components: bool = False
         ) -> SingleTaskGP:
-            modules = (input_transform, mean, kernel, likelihood)
+            model_kwargs: dict[str, Any] = {
+                "input_transform": input_transform,
+                "mean_module": mean,
+                "covar_module": kernel,
+                "likelihood": likelihood,
+            }
             if copy_components:
-                # Several RGPE members are built from the same components
-                modules = deepcopy(modules)
-            input_tf, mean_module, covar_module, lik = modules
-            model = botorch.models.SingleTaskGP(
-                x,
-                y,
-                input_transform=input_tf,
-                outcome_transform=self._make_outcome_transform(y),
-                mean_module=mean_module,
-                covar_module=covar_module,
-                likelihood=lik,
-            )
+                model_kwargs = deepcopy(model_kwargs)
+            model_kwargs["outcome_transform"] = self._make_outcome_transform(y)
+            model = botorch.models.SingleTaskGP(x, y, **model_kwargs)
             botorch.fit.fit_gpytorch_mll(criterion.to_gpytorch(model.likelihood, model))
             return model
 
