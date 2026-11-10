@@ -35,9 +35,8 @@ class LLMResponseError(LLMError):
     def recovery_instruction(self) -> str:
         """Guidance for the language model on how to correct its response."""
         return (
-            "Your previous response could not be used. Please provide a new "
-            "recommendation that follows the required format and respects the search "
-            "space."
+            "Your previous response could not be used. Provide a new response that "
+            "follows all instructions in the prompt."
         )
 
 
@@ -48,9 +47,9 @@ class LLMMalformedResponseError(LLMResponseError):
     @override
     def recovery_instruction(self) -> str:
         return (
-            "Your previous response was not valid JSON in the required format. Return "
-            "a JSON array of objects, each with an 'explanation' string and a "
-            "'parameters' object mapping parameter names to values, and nothing else."
+            "Your previous response did not contain valid JSON in the required "
+            "format. Return JSON that follows the required response format, and "
+            "nothing else."
         )
 
 
