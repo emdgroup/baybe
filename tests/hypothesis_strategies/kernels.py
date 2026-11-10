@@ -28,6 +28,7 @@ class KernelType(Enum):
     """Taxonomy of kernel types."""
 
     SINGLE = "SINGLE"
+    VANISHING = "VANISHING"
     ADDITIVE = "ADDITIVE"
     PRODUCT = "PRODUCT"
 
@@ -195,8 +196,10 @@ def kernels(
 
     if kernel_type is KernelType.SINGLE:
         return draw(single_kernels(parameter_names=parameter_names))
+    if kernel_type is KernelType.VANISHING:
+        return draw(vanishing_kernels(parameter_names))
 
-    # Vanishing kernels are only valid within sums and products
+    # Composites require at least one non-vanishing member
     base_kernels = draw(
         st.lists(
             st.one_of(

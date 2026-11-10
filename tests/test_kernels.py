@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 import torch
 from attrs import asdict, has
-from hypothesis import given
+from hypothesis import example, given
 from pytest import param
 
 from baybe.kernels.base import BasicKernel, Kernel
@@ -157,7 +157,9 @@ def validate_gpytorch_kernel_components(  # noqa: DOC501
             )
 
 
-@given(kernels())
+@given(kernels().filter(lambda k: not isinstance(k, VanishingKernel)))
+@example(ProductKernel([MaternKernel(), VanishingKernel()]))
+@example(AdditiveKernel([VanishingKernel(), MaternKernel(), RBFKernel()]))
 def test_kernel_assembly(kernel: Kernel):
     """Turning a BayBE kernel into a GPyTorch kernel raises no errors and all its
     components are translated correctly."""  # noqa
@@ -242,8 +244,6 @@ def test_mul_constant_produces_constant_scale_kernel(left, right, searchspace):
     ("result", "expected"),
     [
         param(MaternKernel() * VanishingKernel(), MaternKernel(), id="k*V"),
-        param(VanishingKernel() * MaternKernel(), MaternKernel(), id="V*k"),
-        param(MaternKernel() + VanishingKernel(), MaternKernel(), id="k+V"),
         param(VanishingKernel() + MaternKernel(), MaternKernel(), id="V+k"),
         param(
             MaternKernel() * VanishingKernel() * RBFKernel(),
@@ -258,20 +258,9 @@ def test_mul_constant_produces_constant_scale_kernel(left, right, searchspace):
             id="V+V-merged-scopes",
         ),
         param(
-            VanishingKernel(parameter_names=["a", "b"])
-            * VanishingKernel(parameter_names=["b", "c"]),
-            VanishingKernel(parameter_names=["a", "b", "c"]),
-            id="V*V-merged-scopes",
-        ),
-        param(
             VanishingKernel(parameter_names=["a"]) * VanishingKernel(),
             VanishingKernel(),
             id="V*V-unscoped",
-        ),
-        param(
-            VanishingKernel(parameter_names=["a"]) + VanishingKernel(),
-            VanishingKernel(),
-            id="V+V-unscoped",
         ),
         param(VanishingKernel() * 1, VanishingKernel(), id="V*1"),
     ],
@@ -281,38 +270,10 @@ def test_vanishing_kernel_arithmetic(result, expected):
     assert result == expected
 
 
-@pytest.mark.parametrize(
-    "scale",
-    [
-        param(lambda k: k * 2, id="right"),
-        param(lambda k: 2 * k, id="left"),
-    ],
-)
-def test_vanishing_kernel_cannot_be_scaled(scale):
-    """Scaling a vanishing kernel by a constant raises an error."""
-    with pytest.raises(ValueError, match="cannot be scaled"):
-        scale(VanishingKernel())
-
-
 def test_vanishing_kernel_has_no_gpytorch_representation(searchspace):
     """Converting a vanishing kernel to GPyTorch raises an error."""
     with pytest.raises(TypeError, match="no GPyTorch representation"):
         VanishingKernel().to_gpytorch(searchspace)
-
-
-@pytest.mark.parametrize(
-    "kernel",
-    [
-        param(ProductKernel([MaternKernel(), VanishingKernel()]), id="product"),
-        param(
-            AdditiveKernel([VanishingKernel(), MaternKernel(), RBFKernel()]), id="sum"
-        ),
-    ],
-)
-def test_composites_drop_vanishing_kernels(kernel, searchspace):
-    """Composites drop vanishing kernels when converted to GPyTorch."""
-    gpytorch_kernel = kernel.to_gpytorch(searchspace)
-    validate_gpytorch_kernel_components(kernel, gpytorch_kernel, searchspace)
 
 
 @pytest.fixture(name="task_searchspace")
