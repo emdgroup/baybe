@@ -291,16 +291,16 @@ class DesirabilityObjective(Objective):
         import torch
         from botorch.acquisition.objective import ScalarizedPosteriorTransform
 
-        oriented = self._oriented_targets
-
         # Treat identity transformations as affine for harmonized logic below
         # TODO[typing]: The cast is necessary because the `is_all_instance` TypeGuard
         #   above does not properly handle union types
         converted = cast(
             list[AffineTransformation],
             [
-                AffineTransformation() if isinstance(tr, IdentityTransformation) else tr
-                for tr in (t.transformation for t in oriented)
+                AffineTransformation()
+                if isinstance(t := target.transformation, IdentityTransformation)
+                else t
+                for target in self._oriented_targets
             ],
         )
 
