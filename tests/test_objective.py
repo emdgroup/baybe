@@ -206,3 +206,68 @@ def test_pareto_objective(minimize):
         axis=1,
     )
     assert_frame_equal(transformed, expected)
+
+
+@pytest.mark.parametrize(
+    ("minimize1", "minimize2", "weights", "factors", "shifts"),
+    [
+        (True, False, [1, 3], [0.1, 0.01], [-1.0, 0.1]),
+        (False, False, [1, 1], [1.0, 2.0], [0.0, 0.5]),
+        (True, True, [2, 1], [-0.5, 1.5], [1.0, -0.2]),
+        (False, True, [3, 1], [0.5, 0.25], [-0.5, 0.0]),
+    ],
+)
+def test_desirability_posterior_transform(
+    minimize1, minimize2, weights, factors, shifts
+):
+    """Affine desirability preserves the analytical Gaussian mean and variance."""
+    import torch
+    from botorch.posteriors import GPyTorchPosterior
+    from gpytorch.distributions import MultitaskMultivariateNormal
+
+    from baybe.transformations.basic import AffineTransformation
+
+    t1 = NumericalTarget(
+        "t1",
+        AffineTransformation(factor=factors[0], shift=shifts[0]),
+        minimize=minimize1,
+    )
+    t2 = NumericalTarget(
+        "t2",
+        AffineTransformation(factor=factors[1], shift=shifts[1]),
+        minimize=minimize2,
+    )
+    obj = DesirabilityObjective(
+        [t1, t2],
+        scalarizer=Scalarizer.MEAN,
+        weights=weights,
+        require_normalization=False,
+    )
+
+    transform = obj.to_botorch_posterior_transform()
+
+    # Two independent candidate posteriors, each with correlated target outputs.
+    mean = torch.tensor([[12.0, 70.0], [16.0, 30.0]], dtype=torch.float64)
+    cov = torch.tensor(
+        [
+            [[2.0, 0.5], [0.5, 3.0]],
+            [[1.5, -0.2], [-0.2, 2.5]],
+        ],
+        dtype=torch.float64,
+    )
+    mvn = MultitaskMultivariateNormal(mean=mean.unsqueeze(-2), covariance_matrix=cov)
+    posterior = GPyTorchPosterior(mvn)
+    transformed_posterior = transform(posterior)
+
+    normalized_weights = torch.tensor(weights, dtype=mean.dtype) / sum(weights)
+    factors = torch.tensor(factors, dtype=mean.dtype)
+    shifts = torch.tensor(shifts, dtype=mean.dtype)
+    minimize = torch.tensor([minimize1, minimize2])
+    desirabilities = mean * factors + shifts
+    desirabilities = torch.where(minimize, 1 - desirabilities, desirabilities)
+    expected_mean = (normalized_weights * desirabilities).sum(-1)
+    torch.testing.assert_close(transformed_posterior.mean[..., 0, 0], expected_mean)
+
+    effective_weights = normalized_weights * factors * torch.where(minimize, -1, 1)
+    expected_var = torch.einsum("i,bij,j->b", effective_weights, cov, effective_weights)
+    torch.testing.assert_close(transformed_posterior.variance[..., 0, 0], expected_var)
