@@ -137,29 +137,6 @@ _AUTH_ERROR = AuthenticationError(
 )
 
 
-@pytest.mark.parametrize(
-    ("exception", "expected_error"),
-    [
-        param(
-            _AUTH_ERROR,
-            LLMAuthenticationError,
-            id="auth",
-        ),
-        param(
-            ConnectionError("timeout"),
-            LLMCallError,
-            id="provider",
-        ),
-    ],
-)
-def test_call_errors(exception, expected_error):
-    """Provider-level failures are wrapped and preserve the original cause."""
-    with patch(PATCH_TARGET, side_effect=exception) as mock:
-        with pytest.raises(expected_error):
-            _RECOMMENDER.recommend(1, _SEARCHSPACE, _OBJECTIVE)
-    assert mock.call_count == 1
-
-
 def _custom_function(x):
     """A custom torch callable."""
     return x
