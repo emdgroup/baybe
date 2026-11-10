@@ -13,6 +13,7 @@ from typing_extensions import override
 
 from baybe._llm.exceptions import LLMResponseError
 from baybe._llm.query import query_model, validate_litellm_args
+from baybe._llm.recovery import query_with_recovery
 from baybe._optional.info import LLM_INSTALLED
 from baybe.exceptions import (
     IncompatibilityError,
@@ -103,6 +104,34 @@ class LLMRecommender(PureRecommender, SerialMixin):
         if not LLM_INSTALLED:
             raise OptionalImportError(name="litellm", group="llm")
 
+    def _make_prompt(
+        self,
+        searchspace: SearchSpace,
+        batch_size: int,
+        *,
+        recovery: tuple[LLMResponseError, str | None] | None = None,
+    ) -> str:
+        """Render a prompt for the current recommendation context.
+
+        Args:
+            searchspace: The search space to generate recommendations for.
+            batch_size: The number of recommendations to request.
+            recovery: Optional error and previous response to render a corrective
+                prompt.
+
+        Returns:
+            The rendered prompt.
+        """
+        return make_prompt(
+            batch_size,
+            searchspace,
+            self._objective,
+            self._measurements,
+            self._pending_experiments,
+            experiment_description=self.experiment_description,
+            recovery=recovery,
+        )
+
     def _query_model(self, prompt: str, /) -> str:
         """Query the language model through the shared LLM query utility."""
         return query_model(prompt, model=self.model, litellm_args=self.litellm_args)
@@ -176,44 +205,21 @@ class LLMRecommender(PureRecommender, SerialMixin):
         batch_size: int,
     ) -> pd.DataFrame:
         try:
-            prompt = make_prompt(
-                batch_size,
-                searchspace,
-                self._objective,
-                self._measurements,
-                self._pending_experiments,
-                experiment_description=self.experiment_description,
-            )
+            prompt = self._make_prompt(searchspace, batch_size)
         except NotImplementedError as ex:
             raise IncompatibilityError(
                 f"Could not construct a prompt for `{self.__class__.__name__}` "
                 f"from the provided recommendations context."
             ) from ex
-        # Stays `None` if the model returns no usable content
-        content: str | None = None
-        try:
-            content = self._query_model(prompt)
-            return parse_llm_response(content, searchspace, batch_size)
-        except LLMResponseError as initial_error:
-            # The recommendation had an issue. Make a recovery attempt.
-            recovery_prompt = make_prompt(
-                batch_size,
-                searchspace,
-                self._objective,
-                self._measurements,
-                self._pending_experiments,
-                experiment_description=self.experiment_description,
-                recovery=(initial_error, content),
-            )
-            try:
-                recovery_content = self._query_model(recovery_prompt)
-                return parse_llm_response(recovery_content, searchspace, batch_size)
-            except LLMResponseError as recovery_error:
-                raise LLMResponseError(
-                    f"The language model failed to produce a valid recommendation, "
-                    f"even after a recovery attempt. Initial problem: {initial_error} "
-                    f"Remaining problem after recovery: {recovery_error}"
-                ) from recovery_error
+
+        return query_with_recovery(
+            prompt,
+            query=self._query_model,
+            parse=lambda content: parse_llm_response(content, searchspace, batch_size),
+            make_recovery_prompt=lambda error, content: self._make_prompt(
+                searchspace, batch_size, recovery=(error, content)
+            ),
+        )
 
     @override
     def _recommend_with_discrete_parts(
