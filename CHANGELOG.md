@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `TFPRObjective` for fast ranking-based multi-target optimization in discrete
   search spaces via Top-Fraction Pareto Ranking, with configurable optimism, target
-  weights, and tie tolerances
+  weights, tie tolerances, and dominance threshold
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
 - `Symmetry` concept for expressing symmetries of the optimization problem, including
