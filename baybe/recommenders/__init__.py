@@ -9,6 +9,7 @@ from baybe.recommenders.naive import NaiveHybridSpaceRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.experimental_feasibility import (
     ExperimentFeasibilityRecommender,
+    InfeasibleMeasurementMode,
 )
 from baybe.recommenders.pure.llm import LLMRecommender
 from baybe.recommenders.pure.nonpredictive.clustering import (
@@ -26,6 +27,7 @@ __all__ = [
     "ExperimentFeasibilityRecommender",
     "FPSRecommender",
     "GaussianMixtureClusteringRecommender",
+    "InfeasibleMeasurementMode",
     "KMeansClusteringRecommender",
     "LLMRecommender",
     "PAMClusteringRecommender",
