@@ -5,7 +5,6 @@ from __future__ import annotations
 import warnings
 from typing import Any, cast
 
-import cattrs
 import pandas as pd
 
 from baybe._llm.exceptions import (
@@ -17,7 +16,7 @@ from baybe._llm.exceptions import (
     LLMResponseWarning,
     LLMUnknownParameterError,
 )
-from baybe._llm.extraction import extract_json
+from baybe._llm.extraction import extract_json, structure_json
 from baybe.recommenders.pure.llm._schema import ResponseItem
 from baybe.searchspace import SearchSpace
 from baybe.utils.dataframe import normalize_input_dtypes
@@ -91,14 +90,7 @@ def parse_llm_response(
         )
 
     # Structure the raw JSON into typed recommendation objects
-    try:
-        entries: list[ResponseItem] = cattrs.structure(
-            recommendations, list[ResponseItem]
-        )
-    except Exception as exc:
-        raise LLMMalformedResponseError(
-            f"The language model response does not match the expected format. {exc}"
-        ) from exc
+    entries = structure_json(recommendations, list[ResponseItem])
 
     df = pd.DataFrame([entry.parameters for entry in entries])
     param_names = {p.name for p in searchspace.parameters}
