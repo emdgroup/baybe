@@ -151,6 +151,7 @@ class ProductCandidates(CandidatesProtocol):
             # IMPROVE: Potentially it makes sense to introduce a `negate_filter`
             #    function or even turn the filter type union into an own type declaring
             #    the corresponding methods.
+            inverted: DiscreteFilteringConstraint | nw.Expr
             match filter_ := filters[0]:
                 case DiscreteFilteringConstraint():
                     inverted = evolve(filter_, exclude=not filter_.exclude)
