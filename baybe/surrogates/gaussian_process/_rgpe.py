@@ -366,7 +366,7 @@ def _compute_outcome_noise(model: SingleTaskGP, /) -> Tensor:
 def _split_by_task(
     context: _ModelContext, train_x: Tensor, /
 ) -> tuple[Tensor, tuple[Tensor, ...]]:
-    """Split the training rows into a target mask and one mask per source task."""
+    """Split the training rows into a target mask and masks for sources with data."""
     task_param = context.searchspace._task_parameter
     assert task_param is not None
     assert len(task_param.active_values) == 1
