@@ -177,7 +177,14 @@ class ProductCandidates(CandidatesProtocol):
 
 @define(frozen=True)
 class TableCandidates(CandidatesProtocol):
-    """Class for managing candidates provided in a tabular format."""
+    """Class for managing candidates provided in a tabular format.
+
+    .. warning::
+        Lazy input receives schema validation only. Content defects (e.g., missing
+        values, invalid parameter values, or duplicate configurations) are not detected.
+        If content validation is required, use an eager frame for automatic validation
+        or validate lazy input manually before use.
+    """
 
     parameters: tuple[DiscreteParameter, ...] = field(
         converter=sort_parameters,
@@ -210,6 +217,8 @@ class TableCandidates(CandidatesProtocol):
                     f"The input dataframe contains columns that do not correspond to "
                     f"any parameter: {extra}"
                 )
+            # IMPROVE: Content checks require executing the lazy plan. For now, we skip
+            #   them to avoid scanning or materializing the input.
             return
 
         dataframe = value.to_pandas()
