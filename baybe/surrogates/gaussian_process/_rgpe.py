@@ -177,9 +177,6 @@ class RGPEModel(Model):
         Neither is conditioning on observations, and hence fantasizing.
     """
 
-    weights: Tensor
-    """The normalized ensemble weights, aligned with the members."""
-
     def __init__(
         self,
         models: Sequence[SingleTaskGP],
@@ -190,6 +187,8 @@ class RGPEModel(Model):
     ):
         super().__init__()
         self.models = ModuleList(models)
+        # The normalized ensemble weights, aligned with the members
+        self.weights: Tensor
         self.register_buffer("weights", weights)
         # Position of the target member; `None` at cold start (no target data)
         self.target_index = target_index
