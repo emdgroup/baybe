@@ -206,3 +206,74 @@ def test_pareto_objective(minimize):
         axis=1,
     )
     assert_frame_equal(transformed, expected)
+
+
+@pytest.mark.parametrize(
+    ("minimize_flags", "weights", "factors", "shifts"),
+    [
+        pytest.param((True, False), [2, 5], [0.1, 0.01], [-1.0, 0.1], id="min-max"),
+        pytest.param((False, False), [3, 7], [1.0, 2.0], [0.0, 0.5], id="max-max"),
+        pytest.param((True, True), [4, 9], [-0.5, 1.5], [1.0, -0.2], id="min-min"),
+        pytest.param((False, True), [5, 8], [0.5, 0.25], [-0.5, 0.0], id="max-min"),
+    ],
+)
+def test_desirability_analytic_posterior_transform(
+    minimize_flags, weights, factors, shifts
+):
+    """The analytic posterior transform yields the expected Gaussian moments."""
+    import torch
+    from botorch.posteriors import GPyTorchPosterior
+    from gpytorch.distributions import MultitaskMultivariateNormal
+
+    from baybe.settings import active_settings
+    from baybe.transformations.basic import AffineTransformation
+
+    t1 = NumericalTarget(
+        "t1",
+        AffineTransformation(factor=factors[0], shift=shifts[0]),
+        minimize=minimize_flags[0],
+    )
+    t2 = NumericalTarget(
+        "t2",
+        AffineTransformation(factor=factors[1], shift=shifts[1]),
+        minimize=minimize_flags[1],
+    )
+    obj = DesirabilityObjective(
+        [t1, t2],
+        scalarizer=Scalarizer.MEAN,
+        weights=weights,
+        require_normalization=False,
+    )
+
+    transform = obj.to_botorch_posterior_transform()
+
+    # Two independent candidate posteriors with correlated target outputs
+    dtype = active_settings.DTypeFloatTorch
+    mean = torch.tensor([[12.0, 70.0], [16.0, 30.0]], dtype=dtype)
+    cov = torch.tensor(
+        [
+            [[2.0, 0.5], [0.5, 3.0]],
+            [[1.5, -0.2], [-0.2, 2.5]],
+        ],
+        dtype=dtype,
+    )
+    mvn = MultitaskMultivariateNormal(mean=mean.unsqueeze(-2), covariance_matrix=cov)
+    posterior = GPyTorchPosterior(mvn)
+    transformed_posterior = transform(posterior)
+
+    # Prepare inputs for independent mean and variance calculations
+    normalized_weights = torch.tensor(weights, dtype=dtype) / sum(weights)
+    factors = torch.tensor(factors, dtype=dtype)
+    shifts = torch.tensor(shifts, dtype=dtype)
+    minimize = torch.tensor(minimize_flags, dtype=torch.bool)
+
+    # Verify the posterior mean
+    desirabilities = mean * factors + shifts
+    desirabilities = torch.where(minimize, 1 - desirabilities, desirabilities)
+    expected_mean = (normalized_weights * desirabilities).sum(-1)
+    torch.testing.assert_close(transformed_posterior.mean[..., 0, 0], expected_mean)
+
+    # Verify the posterior variance
+    effective_weights = normalized_weights * factors * torch.where(minimize, -1, 1)
+    expected_var = torch.einsum("i,bij,j->b", effective_weights, cov, effective_weights)
+    torch.testing.assert_close(transformed_posterior.variance[..., 0, 0], expected_var)

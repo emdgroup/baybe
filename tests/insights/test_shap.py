@@ -17,6 +17,14 @@ from baybe.objectives import (
     ParetoObjective,
     SingleTargetObjective,
 )
+from baybe.parameters import CategoricalParameter, NumericalContinuousParameter
+from baybe.searchspace import SearchSpace
+from baybe.surrogates import (
+    BayesianLinearSurrogate,
+    GaussianProcessSurrogate,
+    MeanPredictionSurrogate,
+)
+from baybe.surrogates.base import Surrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import is_all_instance
 
@@ -259,3 +267,49 @@ def test_column_permutation():
     ex2 = insight.explain(df[["z", "x", "y"]])
 
     assert np.array_equal(ex1[0].values, ex2[0][:, [1, 2, 0]].values)
+
+
+@mark.parametrize(
+    "surrogate_cls",
+    [MeanPredictionSurrogate, BayesianLinearSurrogate, GaussianProcessSurrogate],
+    ids=["mean", "linear", "gp"],
+)
+@mark.parametrize("use_comp_rep", [False, True], ids=["exp", "comp"])
+@mark.parametrize("n_rows", [1, 2], ids=["single", "multiple"])
+def test_marginal_posterior_predictions(
+    surrogate_cls: type[Surrogate], use_comp_rep: bool, n_rows: int
+) -> None:
+    """SHAP values are computed from marginal posteriors (no covariances involved)."""
+    searchspace = SearchSpace.from_product(
+        [
+            CategoricalParameter("category", ["a", "b"]),
+            NumericalContinuousParameter("x", bounds=(0, 1)),
+        ]
+    )
+    measurements = pd.DataFrame(
+        {
+            "category": ["a", "b", "a", "b"],
+            "x": [0.0, 0.25, 0.75, 1.0],
+            "y": [1.0, 3.0, 5.0, 7.0],
+        }
+    )
+    surrogate = surrogate_cls()
+    surrogate.fit(searchspace, NumericalTarget("y").to_objective(), measurements)
+    candidates = measurements[["category", "x"]].iloc[:n_rows]
+    posterior_stats = surrogate.posterior_stats(candidates, stats=["mean"])
+    expected = posterior_stats["y_mean"].to_numpy()
+    data = searchspace.transform(candidates) if use_comp_rep else candidates
+    insight = SHAPInsight.from_surrogate(surrogate, data, use_comp_rep=use_comp_rep)
+
+    with mock.patch.object(
+        surrogate_cls, "_posterior_comp", wraps=surrogate._posterior_comp
+    ) as posterior:
+        predictions = insight.explainers[0].model.f(data.to_numpy())
+    posterior.assert_called_once()
+    assert posterior.call_args.args[0].shape == (
+        n_rows,
+        1,
+        len(searchspace.comp_rep_columns),
+    )
+    assert predictions.shape == (n_rows,)
+    np.testing.assert_allclose(predictions, expected)
