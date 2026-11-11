@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from functools import reduce
 from operator import add
 from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 import torch
-from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.model import Model
 from botorch.models.utils import gpt_posterior_settings
 from botorch.posteriors import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.likelihoods import LikelihoodList
 from torch import Tensor
 from torch.nn import ModuleList
 from typing_extensions import Self, override
@@ -166,7 +165,7 @@ def _compute_rank_weights(
     return rank_weights.type_as(train_x)
 
 
-class RGPEModel(GPyTorchModel):
+class RGPEModel(Model):
     """A rank-weighted ensemble of per-task Gaussian processes.
 
     The posterior is the weighted sum of the members' posteriors in their standardized
@@ -177,9 +176,6 @@ class RGPEModel(GPyTorchModel):
         Tools that require a single exact GP (e.g. pathwise sampling) are not supported.
         Neither is conditioning on observations, and hence fantasizing.
     """
-
-    # Required by `ModelListGP`, which sums its members' outputs
-    _num_outputs = 1
 
     weights: Tensor
     """The normalized ensemble weights, aligned with the members."""
@@ -203,10 +199,6 @@ class RGPEModel(GPyTorchModel):
                 "Standardize", models[target_index].outcome_transform
             )
 
-        # Required by `ModelListGP`. Never used for noise computation, which
-        # `posterior` handles explicitly.
-        self.likelihood = LikelihoodList(*(m.likelihood for m in models))
-
     @property
     def _members(self) -> tuple[SingleTaskGP, ...]:
         """The members with their concrete type."""
@@ -215,16 +207,12 @@ class RGPEModel(GPyTorchModel):
     @override
     @property
     def batch_shape(self) -> torch.Size:
-        # The inherited version reads `train_inputs`, which this model doesn't have
         return torch.broadcast_shapes(*(m.batch_shape for m in self._members))
 
     @override
-    def condition_on_observations(
-        self, X: Tensor, Y: Tensor, noise: Tensor | None = None, **kwargs: Any
-    ) -> NoReturn:
-        raise NotImplementedError(
-            _CONDITIONING_ERROR_MESSAGE.format(self.__class__.__name__)
-        )
+    @property
+    def num_outputs(self) -> int:
+        return 1
 
     def fantasize(self, *args: Any, **kwargs: Any) -> NoReturn:
         """Raise, since conditioning on (fantasized) observations is not supported.
@@ -316,19 +304,7 @@ class RGPEModel(GPyTorchModel):
         )
 
     @override
-    def load_state_dict(  # type: ignore[override]  # BoTorch adds `keep_transforms`
-        self,
-        state_dict: Mapping[str, Any],
-        strict: bool = True,
-        keep_transforms: bool = True,
-        assign: bool = False,
-    ) -> None:
-        # The inherited version reads `train_targets`, which this model doesn't have.
-        # Each member keeps its own transforms, so `keep_transforms` has no effect.
-        torch.nn.Module.load_state_dict(self, state_dict, strict=strict, assign=assign)
-
-    @override
-    def posterior(  # type: ignore[override]  # Follows `Model`; GPyTorchModel differs
+    def posterior(
         self,
         X: Tensor,
         output_indices: list[int] | None = None,
