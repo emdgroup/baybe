@@ -5,12 +5,15 @@ from __future__ import annotations
 import gc
 import warnings
 from collections.abc import Callable, Iterable
+from enum import Enum
 from typing import TYPE_CHECKING, ClassVar, cast
 
 import numpy as np
 import pandas as pd
-from attrs import define, evolve, field
+from attrs import define, evolve, field, fields
+from attrs.converters import optional as optional_c
 from attrs.validators import ge, instance_of, le
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.constraints.base import ContinuousNonlinearConstraint
@@ -21,6 +24,7 @@ from baybe.exceptions import (
     NoFeasibleObservationWarning,
 )
 from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType
@@ -31,6 +35,8 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
+from baybe.surrogates.base import Surrogate
+from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.gaussian_process.core import (
     GaussianProcessSurrogate,
     _ModelContext,
@@ -38,6 +44,7 @@ from baybe.surrogates.gaussian_process.core import (
 from baybe.targets.binary import BinaryTarget
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import to_tensor
+from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
     from botorch.posteriors import Posterior
@@ -46,6 +53,27 @@ if TYPE_CHECKING:
 
     from baybe.objectives.base import Objective
     from baybe.parameters import NumericalContinuousParameter
+
+
+class InfeasibleMeasurementMode(Enum):
+    """Enum representing how measurements of infeasible experiments are used."""
+
+    EXCLUDE = "EXCLUDE"
+    """Remove infeasible experiments from model training."""
+
+    OBSERVED = "OBSERVED"
+    """Use the objective values observed for infeasible experiments, if available."""
+
+    DUMMY = "DUMMY"
+    """Replace the objective values of infeasible experiments with a dummy value."""
+
+    PREDICTED_MEAN = "PREDICTED_MEAN"
+    """Replace the objective values of infeasible experiments with posterior means.
+
+    The posterior means are computed by a surrogate trained on the feasible
+    measurements only, emulating the prediction made before the experiments were
+    carried out.
+    """
 
 
 @define
@@ -183,6 +211,11 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
       must declare support for continuous nonlinear constraints. This keeps the
       continuous space fully continuous instead of discretizing it.
 
+    The objective measurements of infeasible experiments are forwarded to the wrapped
+    recommender according to :attr:`infeasible_measurement_mode`, which controls
+    whether their objective values are excluded, kept, replaced by a dummy value, or
+    replaced by posterior means predicted from the feasible measurements only.
+
     As long as all measured experiments are infeasible, no decision boundary can be
     learned and the wrapped recommender is executed without filtering, since failed
     experiments do not rule out feasible configurations elsewhere.
@@ -201,14 +234,25 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
     )
     """Minimum predicted feasibility probability required for a candidate."""
 
-    include_infeasible_measurements: bool = field(
-        default=True, validator=instance_of(bool)
+    infeasible_measurement_mode: InfeasibleMeasurementMode = field(
+        default=InfeasibleMeasurementMode.OBSERVED,
+        converter=InfeasibleMeasurementMode,
     )
-    """Whether measurements of infeasible experiments are used for model training.
+    """How objective values of infeasible experiments are treated during training.
 
-    Only experiments containing values for all objective targets are affected.
-    Experiments without such values are left unchanged, i.e. no dummy values are
-    introduced.
+    Only affects predictive wrapped recommenders whose objective measurements are
+    used for model fitting.
+    """
+
+    infeasible_dummy_value: float | None = field(
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v(finite_float),
+    )
+    """Objective value assigned to infeasible experiments in ``DUMMY`` mode.
+
+    A single value is used for all objective targets. It is optional in general
+    but must be provided when ``infeasible_measurement_mode`` is set to ``DUMMY``.
     """
 
     recommender: PureRecommender = field(
@@ -218,6 +262,26 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
 
     target: BinaryTarget = field(validator=instance_of(BinaryTarget))
     """The binary target encoding feasibility."""
+
+    @infeasible_dummy_value.validator
+    def _validate_infeasible_dummy_value(  # noqa: DOC101, DOC103
+        self, _, value: float | None
+    ) -> None:
+        """Validate that a dummy value is provided when required.
+
+        Raises:
+            ValueError: If ``DUMMY`` mode is selected without providing a dummy value.
+        """
+        if (
+            self.infeasible_measurement_mode is InfeasibleMeasurementMode.DUMMY
+            and value is None
+        ):
+            raise ValueError(
+                f"'{fields(type(self)).infeasible_measurement_mode.alias}' is set to "
+                f"'{InfeasibleMeasurementMode.DUMMY.name}', which requires a dummy "
+                f"value to be provided via "
+                f"'{fields(type(self)).infeasible_dummy_value.alias}'."
+            )
 
     @override
     def __str__(self) -> str:
@@ -229,8 +293,8 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
                 "Feasibility threshold", self.feasibility_threshold, single_line=True
             ),
             to_string(
-                "Include infeasible measurements",
-                self.include_infeasible_measurements,
+                "Infeasible measurement mode",
+                self.infeasible_measurement_mode.name,
                 single_line=True,
             ),
         )
@@ -249,7 +313,9 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
         If all measured feasibility labels are identical, no decision boundary can be
         learned and the wrapped recommender is executed without filtering. If all
         labels are infeasible, a
-        :class:`~baybe.exceptions.NoFeasibleObservationWarning` is emitted.
+        :class:`~baybe.exceptions.NoFeasibleObservationWarning` is emitted, unless
+        :attr:`infeasible_measurement_mode` requires training data that is then no
+        longer available.
 
         Args:
             batch_size: The number of recommendations to generate.
@@ -261,10 +327,14 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
 
         Raises:
             IncompatibilityError: If the search space has a continuous part and the
-                wrapped recommender does not support continuous nonlinear constraints.
+                wrapped recommender does not support continuous nonlinear constraints,
+                or if ``PREDICTED_MEAN`` mode is incompatible with the wrapped
+                recommender or the objective.
             IncompleteMeasurementsError: If no measurements or no feasibility labels
                 are provided, or if no measurements remain for model training.
             InfeasibilityError: If no configuration reaches the feasibility threshold.
+            ValueError: If ``DUMMY`` mode is selected without configuring a dummy
+                value.
 
         Returns:
             A dataframe containing the recommendations as individual rows.
@@ -277,7 +347,7 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
 
         labels = self._extract_labels(measurements)
         objective_measurements = self._objective_measurements(
-            measurements, labels, objective
+            measurements, labels, objective, searchspace
         )
         if labels.nunique() == 1:
             # A single observed class yields no decision boundary, so filtering
@@ -400,49 +470,122 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
         measurements: pd.DataFrame,
         labels: pd.Series,
         objective: Objective | None,
+        searchspace: SearchSpace,
         /,
     ) -> pd.DataFrame:
         """Get the measurements passed on to the wrapped recommender.
 
-        Measurements of infeasible experiments are only removed if they contain
-        values for all objective targets. Experiments without such values are left
-        unchanged, i.e. no dummy values are introduced.
+        Infeasible experiments are treated according to
+        :attr:`infeasible_measurement_mode`: they are removed from the data, their
+        observed objective values are kept, or their objective values are replaced by
+        either a configured dummy value or posterior means predicted from the feasible
+        measurements only.
 
         Args:
             measurements: The available experimentation data.
             labels: The feasibility labels matching the rows of ``measurements``.
             objective: The objective passed on to the wrapped recommender.
+            searchspace: The search space in which the experiments are conducted.
 
         Raises:
-            IncompleteMeasurementsError: If no measurements remain for model
-                training after removing the infeasible ones.
+            IncompatibilityError: If ``PREDICTED_MEAN`` mode is used with a wrapped
+                recommender that does not provide posterior predictions, or with an
+                objective whose pre-transformation prevents mapping predictions back
+                to the objective targets.
+            IncompleteMeasurementsError: If no measurements remain for model training
+                or if ``PREDICTED_MEAN`` mode lacks feasible data to learn from.
+            ValueError: If ``DUMMY`` mode is used without providing a dummy value.
 
         Returns:
             The measurements to be passed on to the wrapped recommender.
         """
-        if (
-            self.include_infeasible_measurements
-            or objective is None
-            or isinstance(self.recommender, NonPredictiveRecommender)
-        ):
+        if objective is None or isinstance(self.recommender, NonPredictiveRecommender):
             return measurements
 
-        values = [t.name for t in objective.targets if t.name in measurements.columns]
-        if not values:
-            return measurements
-
-        has_values = measurements[values].notna().all(axis=1).to_numpy()
         is_infeasible = labels.to_numpy() == 0
-        filtered = measurements.loc[~(is_infeasible & has_values)]
+        mode = self.infeasible_measurement_mode
+        if not is_infeasible.any() or mode is InfeasibleMeasurementMode.OBSERVED:
+            return measurements
 
-        if filtered.empty:
+        if mode is InfeasibleMeasurementMode.EXCLUDE:
+            filtered = measurements.loc[~is_infeasible]
+            if filtered.empty:
+                raise IncompleteMeasurementsError(
+                    f"No measurements remain for model training because all measured "
+                    f"experiments are infeasible and "
+                    f"'{fields(type(self)).infeasible_measurement_mode.alias}' is set "
+                    f"to '{mode.name}'."
+                )
+            return filtered
+
+        target_names = [t.name for t in objective.targets]
+        if absent := [n for n in target_names if n not in measurements.columns]:
             raise IncompleteMeasurementsError(
-                "No measurements remain for model training because all measured "
-                "experiments are infeasible and 'include_infeasible_measurements' "
-                "is disabled."
+                f"The measurements do not contain the objective target(s) {absent}, "
+                f"which are required for the '{mode.name}' mode."
             )
 
-        return filtered
+        imputed = measurements.copy()
+        # Ensure the target columns can hold arbitrary values without triggering
+        # pandas' incompatible-dtype warning upon assignment.
+        for name in target_names:
+            if not pd.api.types.is_float_dtype(imputed[name]):
+                imputed[name] = imputed[name].astype(float)
+
+        if mode is InfeasibleMeasurementMode.DUMMY:
+            value = self.infeasible_dummy_value
+            if value is None:
+                raise ValueError(
+                    f"'{fields(type(self)).infeasible_measurement_mode.alias}' is set "
+                    f"to '{mode.name}', which requires a dummy value to be provided "
+                    f"via '{fields(type(self)).infeasible_dummy_value.alias}'."
+                )
+            for name in target_names:
+                imputed.loc[is_infeasible, name] = value
+            return imputed
+
+        # Remaining case: InfeasibleMeasurementMode.PREDICTED_MEAN
+        if not isinstance(self.recommender, BayesianRecommender):
+            raise IncompatibilityError(
+                f"'{fields(type(self)).infeasible_measurement_mode.alias}' is set to "
+                f"'{mode.name}', which requires a predictive wrapped recommender of "
+                f"type '{BayesianRecommender.__name__}', but "
+                f"'{self.recommender.__class__.__name__}' was provided."
+            )
+
+        quantities = objective._model_quantities_to_target_names
+        if set(quantities) - set(target_names):
+            raise IncompatibilityError(
+                f"'{mode.name}' cannot map the predictions of the objective back to "
+                f"its targets because the objective pre-transforms its targets into "
+                f"the quantities {sorted(quantities)}."
+            )
+
+        feasible = measurements.loc[~is_infeasible]
+        for quantity, names in quantities.items():
+            if not feasible[names].notna().all(axis=1).any():
+                raise IncompleteMeasurementsError(
+                    f"'{mode.name}' requires at least one feasible measurement with "
+                    f"complete values for the targets {names} (modeled quantity "
+                    f"'{quantity}'), but none was found."
+                )
+
+        surrogate = self.recommender.get_surrogate(searchspace, objective, feasible)
+        if not isinstance(surrogate, (Surrogate, CompositeSurrogate)):
+            raise IncompatibilityError(
+                f"'{mode.name}' requires a surrogate that provides posterior "
+                f"statistics, but the wrapped recommender provided "
+                f"'{surrogate.__class__.__name__}'."
+            )
+
+        posterior_means = surrogate.posterior_stats(
+            measurements.loc[is_infeasible], stats=("mean",)
+        )
+        for quantity in quantities:
+            imputed.loc[is_infeasible, quantity] = posterior_means[
+                f"{quantity}_mean"
+            ].to_numpy()
+        return imputed
 
     def _restrict_searchspace(
         self, searchspace: SearchSpace, classifier: _GaussianProcessClassifier, /
