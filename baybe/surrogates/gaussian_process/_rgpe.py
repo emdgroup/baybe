@@ -333,7 +333,8 @@ class RGPEModel(Model):
             if isinstance(observation_noise, Tensor):
                 noise = observation_noise
             elif self.target_index is None:
-                # No target noise exists, use the weighted source noises
+                # No target noise exists, so it is estimated as the weighted average of
+                # the source noises. Squared weights would shrink it with more sources.
                 noise = reduce(
                     add,
                     (
