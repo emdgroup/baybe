@@ -21,9 +21,8 @@ import numpy as np
 ```python
 from baybe import Campaign
 from baybe.constraints import (
+    DiscreteLinearConstraint,
     DiscreteProductConstraint,
-    DiscreteSumConstraint,
-    ThresholdCondition,
 )
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import (
@@ -100,17 +99,21 @@ Thus, they need to be defined prior to the searchspace creation.
 
 
 ```python
-sum_constraint_1 = DiscreteSumConstraint(
+sum_constraint_1 = DiscreteLinearConstraint(
     parameters=["NumParam1", "NumParam2"],
-    condition=ThresholdCondition(threshold=150.0, operator="<="),
+    operator="<=",
+    rhs=150.0,
 )
-sum_constraint_2 = DiscreteSumConstraint(
+sum_constraint_2 = DiscreteLinearConstraint(
     parameters=["NumParam5", "NumParam6"],
-    condition=ThresholdCondition(threshold=100, operator="=", tolerance=1.0),
+    operator="=",
+    rhs=100,
+    tolerance=1.0,
 )
 prod_constraint = DiscreteProductConstraint(
     parameters=["NumParam3", "NumParam4"],
-    condition=ThresholdCondition(threshold=30, operator=">="),
+    operator=">=",
+    rhs=30,
 )
 ```
 
@@ -188,8 +191,8 @@ NaN
                 [864 rows x 8 columns]
              Constraints
                               Type Affected_Paramet
-                0  DiscreteSumC...  [NumParam1, ...
-                1  DiscreteSumC...  [NumParam5, ...
+                0  DiscreteLine...  [NumParam1, ...
+                1  DiscreteLine...  [NumParam5, ...
                 2  DiscreteProd...  [NumParam3, ...
              Computational Representation
                      NumParam1  NumParam2  ...  Solvent_RDKIT2DD  Speed
@@ -216,11 +219,9 @@ NaN
                 Surrogate
                    CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianPr
 ocessSurrogate(_searchspace=None, _objective=None, _measurements=None,
-_measurements_hash=None, _input_scaler=None, _output_scaler=None,
-kernel_factory=BayBEKernelFactory(parameter_selector=None),
-mean_factory=BayBEMeanFactory(), likelihood_factory=BayBELikelihoodFactory(),
-fit_criterion_factory=BayBEFitCriterionFactory(), _model=None), _data={}),
-_modeled_quantity_names=None)
+_measurements_hash=None, _input_scaler=None, _output_scaler=None, kernel_factory=None,
+mean_factory=None, likelihood_factory=None, fit_criterion_factory=None, _symmetries=(),
+_model=None), _data={}), _modeled_quantity_names=None)
                 Acquisition function: None
                 Compatibility: SearchSpaceType.HYBRID
                 Sequential continuous: True
@@ -238,6 +239,7 @@ constraints.
 
 
 ```python
+BATCH_SIZE = 2 if SMOKE_TEST else 5
 N_ITERATIONS = 2 if SMOKE_TEST else 5
 for kIter in range(N_ITERATIONS):
     print(f"\n\n#### ITERATION {kIter + 1} ####")
@@ -271,7 +273,7 @@ for kIter in range(N_ITERATIONS):
         .sum(),
     )
 
-    rec = campaign.recommend(batch_size=5)
+    rec = campaign.recommend(batch_size=BATCH_SIZE)
     add_fake_measurements(rec, campaign.targets)
     campaign.add_measurements(rec)
 ```

@@ -170,11 +170,9 @@ NaN
                 Surrogate
                    CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianPr
 ocessSurrogate(_searchspace=None, _objective=None, _measurements=None,
-_measurements_hash=None, _input_scaler=None, _output_scaler=None,
-kernel_factory=BayBEKernelFactory(parameter_selector=None),
-mean_factory=BayBEMeanFactory(), likelihood_factory=BayBELikelihoodFactory(),
-fit_criterion_factory=BayBEFitCriterionFactory(), _model=None), _data={}),
-_modeled_quantity_names=None)
+_measurements_hash=None, _input_scaler=None, _output_scaler=None, kernel_factory=None,
+mean_factory=None, likelihood_factory=None, fit_criterion_factory=None, _symmetries=(),
+_model=None), _data={}), _modeled_quantity_names=None)
                 Acquisition function: None
                 Compatibility: SearchSpaceType.HYBRID
                 Sequential continuous: True
@@ -192,6 +190,7 @@ constraints.
 
 
 ```python
+BATCH_SIZE = 2 if SMOKE_TEST else 5
 N_ITERATIONS = 2 if SMOKE_TEST else 5
 for kIter in range(N_ITERATIONS):
     print(f"\n#### ITERATION {kIter + 1} ####")
@@ -229,7 +228,7 @@ for kIter in range(N_ITERATIONS):
         ).sum(),
     )
 
-    rec = campaign.recommend(batch_size=5)
+    rec = campaign.recommend(batch_size=BATCH_SIZE)
     add_fake_measurements(rec, campaign.targets)
     campaign.add_measurements(rec)
 ```

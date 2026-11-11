@@ -49,5 +49,6 @@ BotorchRecommender
       ~BotorchRecommender.compatibility
       ~BotorchRecommender.max_n_subspaces
       ~BotorchRecommender.supports_discrete_subset_generating_constraints
+      ~BotorchRecommender.symmetries
    
    

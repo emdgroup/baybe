@@ -23,6 +23,7 @@ baybe.parameters.enum
       CustomEncoding
       ParameterEncoding
       SubstanceEncoding
+      TransferLearningMode
    
    
 

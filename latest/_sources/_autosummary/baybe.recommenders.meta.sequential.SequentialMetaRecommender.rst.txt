@@ -35,6 +35,8 @@ SequentialMetaRecommender
    
       ~SequentialMetaRecommender.to_json
    
+      ~SequentialMetaRecommender.with_alternating_llm_recommender
+   
    
    
 

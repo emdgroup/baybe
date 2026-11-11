@@ -42,10 +42,10 @@ DiscreteProductConstraint
 
    .. autosummary::
    
-      ~DiscreteProductConstraint.condition
-      ~DiscreteProductConstraint.eval_during_augmentation
-      ~DiscreteProductConstraint.eval_during_creation
-      ~DiscreteProductConstraint.eval_during_modeling
+      ~DiscreteProductConstraint.operator
+      ~DiscreteProductConstraint.rhs
+      ~DiscreteProductConstraint.tolerance
+      ~DiscreteProductConstraint.exclude
       ~DiscreteProductConstraint.has_polars_implementation
       ~DiscreteProductConstraint.is_continuous
       ~DiscreteProductConstraint.is_discrete

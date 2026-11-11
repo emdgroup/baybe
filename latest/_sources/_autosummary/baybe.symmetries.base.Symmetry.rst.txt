@@ -1,0 +1,45 @@
+Symmetry
+========
+
+.. currentmodule:: baybe.symmetries.base
+
+.. autoclass:: Symmetry
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Symmetry.__init__
+   
+      ~Symmetry.augment_measurements
+   
+      ~Symmetry.from_dict
+   
+      ~Symmetry.from_json
+   
+      ~Symmetry.summary
+   
+      ~Symmetry.to_dict
+   
+      ~Symmetry.to_json
+   
+      ~Symmetry.validate_searchspace_context
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Symmetry.parameter_names
+   
+   

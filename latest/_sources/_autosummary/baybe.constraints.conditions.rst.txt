@@ -5,6 +5,14 @@ baybe.constraints.conditions
   
    
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      ThresholdOperator
+   
    
 
    

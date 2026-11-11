@@ -45,6 +45,7 @@ IndependentGaussianSurrogate
    .. autosummary::
    
       ~IndependentGaussianSurrogate.is_available
+      ~IndependentGaussianSurrogate.supports_kernel_overrides
       ~IndependentGaussianSurrogate.supports_multi_output
       ~IndependentGaussianSurrogate.supports_transfer_learning
    

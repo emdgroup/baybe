@@ -5,6 +5,14 @@ baybe.transformations.base
   
    
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      TensorCallable
+   
    
 
    

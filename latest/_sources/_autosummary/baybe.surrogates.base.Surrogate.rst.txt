@@ -45,6 +45,7 @@ Surrogate
    .. autosummary::
    
       ~Surrogate.is_available
+      ~Surrogate.supports_kernel_overrides
       ~Surrogate.supports_multi_output
       ~Surrogate.supports_transfer_learning
    

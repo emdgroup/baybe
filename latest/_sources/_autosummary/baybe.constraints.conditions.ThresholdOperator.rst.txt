@@ -1,0 +1,7 @@
+baybe.constraints.conditions.ThresholdOperator
+==============================================
+
+.. currentmodule:: baybe.constraints.conditions
+
+
+.. autodata:: ThresholdOperator

@@ -1,0 +1,6 @@
+baybe.exceptions.LLMMalformedResponseError
+==========================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: LLMMalformedResponseError

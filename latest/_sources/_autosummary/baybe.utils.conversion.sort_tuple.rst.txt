@@ -1,0 +1,6 @@
+baybe.utils.conversion.sort\_tuple
+==================================
+
+.. currentmodule:: baybe.utils.conversion
+
+.. autofunction:: sort_tuple

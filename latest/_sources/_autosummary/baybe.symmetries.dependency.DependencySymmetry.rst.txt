@@ -1,0 +1,48 @@
+DependencySymmetry
+==================
+
+.. currentmodule:: baybe.symmetries.dependency
+
+.. autoclass:: DependencySymmetry
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DependencySymmetry.__init__
+   
+      ~DependencySymmetry.augment_measurements
+   
+      ~DependencySymmetry.from_dict
+   
+      ~DependencySymmetry.from_json
+   
+      ~DependencySymmetry.summary
+   
+      ~DependencySymmetry.to_dict
+   
+      ~DependencySymmetry.to_json
+   
+      ~DependencySymmetry.validate_searchspace_context
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DependencySymmetry.condition
+      ~DependencySymmetry.affected_parameter_names
+      ~DependencySymmetry.n_discretization_points
+      ~DependencySymmetry.parameter_names
+   
+   

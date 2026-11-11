@@ -57,7 +57,6 @@ SearchSpace
       ~SearchSpace.comp_rep_bounds
       ~SearchSpace.comp_rep_columns
       ~SearchSpace.constraints
-      ~SearchSpace.constraints_augmentable
       ~SearchSpace.is_constrained
       ~SearchSpace.n_subsets
       ~SearchSpace.n_tasks

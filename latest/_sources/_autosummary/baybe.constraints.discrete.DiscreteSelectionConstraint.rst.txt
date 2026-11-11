@@ -1,0 +1,54 @@
+DiscreteSelectionConstraint
+===========================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteSelectionConstraint
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteSelectionConstraint.__init__
+   
+      ~DiscreteSelectionConstraint.from_dict
+   
+      ~DiscreteSelectionConstraint.from_json
+   
+      ~DiscreteSelectionConstraint.get_invalid
+   
+      ~DiscreteSelectionConstraint.get_invalid_polars
+   
+      ~DiscreteSelectionConstraint.get_valid
+   
+      ~DiscreteSelectionConstraint.summary
+   
+      ~DiscreteSelectionConstraint.to_dict
+   
+      ~DiscreteSelectionConstraint.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteSelectionConstraint.conditions
+      ~DiscreteSelectionConstraint.combiner
+      ~DiscreteSelectionConstraint.exclude
+      ~DiscreteSelectionConstraint.has_polars_implementation
+      ~DiscreteSelectionConstraint.is_continuous
+      ~DiscreteSelectionConstraint.is_discrete
+      ~DiscreteSelectionConstraint.numerical_only
+      ~DiscreteSelectionConstraint.parameters
+   
+   

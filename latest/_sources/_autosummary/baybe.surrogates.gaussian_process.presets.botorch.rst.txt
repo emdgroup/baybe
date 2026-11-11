@@ -13,6 +13,14 @@ baybe.surrogates.gaussian\_process.presets.botorch
 
    
    
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      BotorchKernelFactory
+   
    
 
    

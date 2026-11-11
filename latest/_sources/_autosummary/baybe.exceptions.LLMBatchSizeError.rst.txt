@@ -1,0 +1,6 @@
+baybe.exceptions.LLMBatchSizeError
+==================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: LLMBatchSizeError

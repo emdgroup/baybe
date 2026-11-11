@@ -1,7 +1,7 @@
 FPSInitialization
 =================
 
-.. currentmodule:: baybe.recommenders.pure.nonpredictive.sampling
+.. currentmodule:: baybe.utils.sampling_algorithms
 
 .. autoclass:: FPSInitialization
    :members:                              

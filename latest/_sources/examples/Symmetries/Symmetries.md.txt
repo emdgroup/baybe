@@ -1,0 +1,8 @@
+# Symmetries
+
+These examples demonstrate the impact of Symmetries.
+```{toctree}
+:maxdepth: 1
+
+Permutation<permutation>
+```

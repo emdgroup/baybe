@@ -21,6 +21,8 @@ TaskParameter
    
       ~TaskParameter.from_json
    
+      ~TaskParameter.is_equivalent
+   
       ~TaskParameter.is_in_range
    
       ~TaskParameter.summary
@@ -51,9 +53,11 @@ TaskParameter
       ~TaskParameter.is_continuous
       ~TaskParameter.is_discrete
       ~TaskParameter.is_numerical
+      ~TaskParameter.override_kernel
       ~TaskParameter.unit
       ~TaskParameter.values
       ~TaskParameter.encoding
+      ~TaskParameter.override_transfer_learning_mode
       ~TaskParameter.name
       ~TaskParameter.metadata
    
