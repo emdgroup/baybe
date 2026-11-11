@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe._llm.rendering import _drop_empty, to_prompt_dict
-from baybe._optional.info import CHEM_INSTALLED
+from baybe._llm.rendering import _drop_empty, render_template, to_prompt_dict
+from baybe._optional.info import CHEM_INSTALLED, LLM_INSTALLED
 from baybe.parameters import (
     CategoricalParameter,
     CustomDiscreteParameter,
@@ -93,3 +93,29 @@ def test_drop_empty():
         "falsy": 0,
         "empty_list": [],
     }
+
+
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
+@pytest.mark.parametrize(
+    ("template", "context", "expected"),
+    [
+        param(
+            "a\n{% if x %}\nb\n{% endif %}\nc", {"x": True}, "a\nb\nc", id="trim_blocks"
+        ),
+        param(
+            "a\n{% if x %}\nb\n{% endif %}\nc", {"x": False}, "a\nc", id="block_omitted"
+        ),
+    ],
+)
+def test_render_template(template, context, expected):
+    """Block tags leave no blank lines, and the context is applied."""
+    assert render_template(template, context) == expected
+
+
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
+def test_render_template_raises_on_undefined():
+    """A missing variable raises instead of rendering an empty string."""
+    from jinja2.exceptions import UndefinedError
+
+    with pytest.raises(UndefinedError):
+        render_template("{{ missing }}", {})

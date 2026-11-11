@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any
 
 from attrs import fields
@@ -98,3 +98,24 @@ def to_json_lines(serialized_objects: Iterable[dict[str, Any]], /) -> str:
         The rendered objects.
     """
     return "\n".join(json.dumps(obj, ensure_ascii=False) for obj in serialized_objects)
+
+
+def render_template(template: str, /, context: Mapping[str, Any]) -> str:
+    """Render a prompt template with the shared Jinja configuration.
+
+    Block tags leave no blank lines in the rendered prompt because ``trim_blocks``
+    is enabled, and an undefined variable raises instead of silently rendering an
+    empty string because ``StrictUndefined`` is used.
+
+    Args:
+        template: The Jinja template to render.
+        context: The variables passed to the template.
+
+    Returns:
+        The rendered template.
+    """
+    from baybe._optional.llm import StrictUndefined, Template
+
+    return Template(template, trim_blocks=True, undefined=StrictUndefined).render(
+        context
+    )
