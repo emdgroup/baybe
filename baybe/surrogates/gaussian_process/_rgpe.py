@@ -170,8 +170,9 @@ class RGPEModel(Model):
     transform. Observation noise is the target task's, added once at ensemble level.
 
     Note:
-        Tools that require a single exact GP (e.g. pathwise sampling) are not supported.
-        Neither is conditioning on observations, and hence fantasizing.
+        Conditioning on observations is not supported, and hence neither are
+        acquisition functions that fantasize observations, such as
+        :class:`~baybe.acquisition.acqfs.qKnowledgeGradient`.
     """
 
     def __init__(
