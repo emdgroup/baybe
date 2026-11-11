@@ -67,6 +67,9 @@ from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.botorch import (
     BotorchRecommender,
 )
+from baybe.recommenders.pure.experimental_feasibility import (
+    ExperimentFeasibilityRecommender,
+)
 from baybe.recommenders.pure.llm.llm import LLMRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
@@ -88,7 +91,10 @@ FAST_OPTIMIZATION_SETTINGS = {"n_restarts": 2, "n_raw_samples": 16}
 
 # Recommenders excluded from automatic subclass enumeration because they cannot be
 # default-constructed
-RECOMMENDERS_EXCLUDED_FROM_AUTOTEST: set[type] = {LLMRecommender}
+RECOMMENDERS_EXCLUDED_FROM_AUTOTEST: set[type] = {
+    ExperimentFeasibilityRecommender,
+    LLMRecommender,
+}
 
 
 def autotestable_recommenders(base: type) -> list[type]:
