@@ -31,10 +31,6 @@ if TYPE_CHECKING:
 _N_MC_SAMPLES = 256
 """The number of posterior samples used to estimate the rank weights."""
 
-_CONDITIONING_ERROR_MESSAGE = (
-    "'{}' does not support conditioning on observations or fantasizing."
-)
-
 
 def _compute_ranking_loss(samples: Tensor, targets: Tensor, /) -> Tensor:
     """Compute the ranking loss, i.e. the number of misranked pairs, per sample.
@@ -230,7 +226,7 @@ class RGPEModel(Model):
             NotImplementedError: Always.
         """
         raise NotImplementedError(
-            _CONDITIONING_ERROR_MESSAGE.format(self.__class__.__name__)
+            f"'{self.__class__.__name__}' does not support fantasizing observations."
         )
 
     @classmethod
