@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 import torch
 from botorch.models.model import Model
+from botorch.models.transforms.outcome import Standardize
 from botorch.models.utils import gpt_posterior_settings
 from botorch.posteriors import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
@@ -21,7 +22,7 @@ from baybe.exceptions import NoMeasurementsError
 if TYPE_CHECKING:
     from botorch.acquisition.objective import PosteriorTransform
     from botorch.models import SingleTaskGP
-    from botorch.models.transforms.outcome import Standardize
+    from botorch.posteriors import Posterior
     from gpytorch.likelihoods import GaussianLikelihood
     from linear_operator.operators import LinearOperator
 
@@ -193,10 +194,12 @@ class RGPEModel(Model):
         # Position of the target member; `None` at cold start (no target data)
         self.target_index = target_index
         if target_index is not None:
-            # Only set with a target, as BoTorch checks for the attribute's existence
-            self.outcome_transform = cast(
-                "Standardize", models[target_index].outcome_transform
-            )
+            # Only set with a target, as BoTorch checks for the attribute's existence.
+            # The transform maps the combined standardized predictions to target units,
+            # which requires it to be affine.
+            outcome_transform = models[target_index].outcome_transform
+            assert isinstance(outcome_transform, Standardize)  # ensured by the GP fit
+            self.outcome_transform = outcome_transform
 
     @property
     def _members(self) -> tuple[SingleTaskGP, ...]:
@@ -310,7 +313,7 @@ class RGPEModel(Model):
         observation_noise: bool | Tensor = False,
         posterior_transform: PosteriorTransform | None = None,
         **kwargs: Any,
-    ) -> GPyTorchPosterior:
+    ) -> Posterior:
         if output_indices not in (None, [0]):
             raise ValueError(f"'{self.__class__.__name__}' has a single output.")
 
@@ -318,10 +321,12 @@ class RGPEModel(Model):
         self.eval()
         if self.target_index is None:
             # Without a target scale, the members are combined in their own units
-            distributions = [
-                cast(GPyTorchPosterior, m.posterior(X)).distribution
-                for m in self._members
-            ]
+            distributions = []
+            for m in self._members:
+                member_posterior = m.posterior(X)
+                # Gaussian, since the members' outcome transforms are affine
+                assert isinstance(member_posterior, GPyTorchPosterior)
+                distributions.append(member_posterior.distribution)
         else:
             # Standardized member distributions, i.e. before their outcome transforms
             with gpt_posterior_settings():
@@ -355,23 +360,20 @@ class RGPEModel(Model):
                 covariance.shape[-1], dtype=covariance.dtype, device=covariance.device
             )
 
-        posterior = GPyTorchPosterior(MultivariateNormal(mean, covariance))
+        posterior: Posterior = GPyTorchPosterior(MultivariateNormal(mean, covariance))
         if self.target_index is not None:
-            posterior = cast(
-                GPyTorchPosterior,
-                self.outcome_transform.untransform_posterior(posterior),
-            )
+            posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is None:
             return posterior
-        # BoTorch types the result as `Posterior`, but scalarization keeps it Gaussian
-        return cast(GPyTorchPosterior, posterior_transform(posterior))
+        return posterior_transform(posterior)
 
 
 def _compute_outcome_noise(model: SingleTaskGP, /) -> Tensor:
     """Compute a member's observation noise in original outcome units."""
     # The likelihood noise lives in the member's standardized output space
     likelihood = cast("GaussianLikelihood", model.likelihood)
-    outcome_transform = cast("Standardize", model.outcome_transform)
+    outcome_transform = model.outcome_transform
+    assert isinstance(outcome_transform, Standardize)  # ensured by the GP fit
     return likelihood.noise * outcome_transform.stdvs.squeeze(-1) ** 2
 
 
