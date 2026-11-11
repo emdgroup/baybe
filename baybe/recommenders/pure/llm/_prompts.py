@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, TypedDict
 import pandas as pd
 
 from baybe._llm.exceptions import LLMResponseError
-from baybe._llm.rendering import to_json_lines, to_prompt_dict
+from baybe._llm.rendering import render_template, to_json_lines, to_prompt_dict
 from baybe.recommenders.pure.llm._schema import _response_format
 from baybe.searchspace import SearchSpace
 from baybe.transformations.base import Transformation
@@ -216,8 +216,6 @@ def make_prompt(
     """
     error, original_response = recovery if recovery is not None else (None, None)
 
-    from baybe._optional.llm import StrictUndefined, Template
-
     parameter_names = [p.name for p in searchspace.parameters]
     target_names = [t.name for t in objective.targets] if objective is not None else []
     constraints = searchspace.constraints
@@ -264,10 +262,4 @@ def make_prompt(
         ),
         "original_response": original_response,
     }
-    template = Template(
-        _PROMPT_TEMPLATE,
-        trim_blocks=True,
-        lstrip_blocks=True,
-        undefined=StrictUndefined,
-    )
-    return template.render(context)
+    return render_template(_PROMPT_TEMPLATE, context)
