@@ -1,8 +1,12 @@
 """Tests for JSON extraction from language model responses."""
 
-import pytest
+import gc
 
-from baybe._llm.extraction import extract_json
+import pytest
+from attrs import define
+
+from baybe._llm.exceptions import LLMMalformedResponseError
+from baybe._llm.extraction import extract_json, structure_json
 from baybe.recommenders.pure.llm._parsing import _is_object_array
 
 
@@ -121,3 +125,26 @@ def test_extract_json_raises_on_invalid(response, accept):
     """The extractor raises ``ValueError`` when no accepted value is found."""
     with pytest.raises(ValueError, match="No accepted JSON value"):
         extract_json(response, accept)
+
+
+@define
+class _Item:
+    value: int
+
+
+def test_structure_json():
+    """The helper structures a decoded value into the given type."""
+    assert structure_json({"value": 1}, _Item) == _Item(value=1)
+
+
+def test_structure_json_raises_on_invalid():
+    """The helper maps structuring failures to a chained format error."""
+    with pytest.raises(
+        LLMMalformedResponseError, match="does not match the expected format"
+    ) as exc_info:
+        structure_json({}, _Item)
+    assert exc_info.value.__cause__ is not None
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

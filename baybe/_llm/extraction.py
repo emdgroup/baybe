@@ -6,7 +6,13 @@ import json
 import re
 from collections.abc import Callable
 from json import JSONDecodeError
-from typing import Any
+from typing import Any, TypeVar
+
+import cattrs
+
+from baybe._llm.exceptions import LLMMalformedResponseError
+
+_T = TypeVar("_T")
 
 _BRACKET_PATTERN = re.compile(r"[\[{]")
 """Pattern matching the start of a JSON array or object."""
@@ -55,3 +61,24 @@ def extract_json(
     if not found:
         raise ValueError("No accepted JSON value found in the response.")
     return last_accepted
+
+
+def structure_json(value: Any, cl: type[_T], /) -> _T:
+    """Structure a decoded JSON value into the given type.
+
+    Args:
+        value: The decoded JSON value.
+        cl: The type to structure the value into.
+
+    Returns:
+        The structured value.
+
+    Raises:
+        LLMMalformedResponseError: If the value does not match the expected structure.
+    """
+    try:
+        return cattrs.structure(value, cl)
+    except Exception as exc:
+        raise LLMMalformedResponseError(
+            f"The language model response does not match the expected format. {exc}"
+        ) from exc
