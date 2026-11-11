@@ -156,7 +156,8 @@ class ProductCandidates(CandidatesProtocol):
                     inverted = evolve(filter_, exclude=not filter_.exclude)
                     return evolve(self, filters=self.filters + (inverted,))
                 case nw.Expr():
-                    return evolve(self, filters=self.filters + (~filter_,))
+                    inverted = ~filter_.fill_null(False)
+                    return evolve(self, filters=self.filters + (inverted,))
 
         # TODO: Complementing a conjunction of multiple filtering constraints amounts
         #   to a disjunction (De Morgan), which is not yet expressible as a single

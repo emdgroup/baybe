@@ -276,6 +276,18 @@ def fixture_candidates(request):
             id="expr",
         ),
         pytest.param(
+            [
+                nw.when(nw.col("disc") == 1)
+                .then(True)
+                .otherwise(nw.lit(None, dtype=nw.Boolean))
+            ],
+            {
+                False: {"disc": [1.0, 1.0], "disc2": [0.0, 10.0]},
+                True: {"disc": [2.0, 2.0], "disc2": [0.0, 10.0]},
+            },
+            id="nullable-expr",
+        ),
+        pytest.param(
             [c_sum],
             {
                 False: {"disc": [1.0, 2.0], "disc2": [0.0, 0.0]},
