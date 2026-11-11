@@ -321,10 +321,14 @@ def test_model_list_posterior(members):
             "not implemented",
             id="condition",
         ),
-        param(lambda m, X: m.fantasize(X, None), "does not support", id="fantasize"),
+        param(
+            lambda m, X: m.fantasize(X, None),
+            "does not support fantasizing",
+            id="fantasize",
+        ),
         param(
             lambda m, X: ModelList(m).fantasize(X, None),
-            "does not support",
+            "does not support fantasizing",
             id="model_list",
         ),
     ],
