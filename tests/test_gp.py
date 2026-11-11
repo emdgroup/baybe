@@ -200,6 +200,10 @@ def test_invalid_components():
 #   HVARFNER parametrization needs to be dropped.
 @pytest.mark.parametrize("preset", ["BOTORCH", "HVARFNER"], ids=["botorch", "hvarfner"])
 @pytest.mark.parametrize("multitask", [False, True], ids=["single-task", "multi-task"])
+@pytest.mark.xfail(
+    reason="BoTorch logic changed in 0.18.0 but the change has not been backported to "
+    "the patch release, to keep preset logic consistent with the previous version."
+)
 def test_botorch_preset(multitask: bool, preset: str):
     """The BoTorch/Hvarfner presets exactly mimic BoTorch's behavior."""
     if multitask:
