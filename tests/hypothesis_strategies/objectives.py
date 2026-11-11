@@ -99,6 +99,9 @@ def tfpr_objectives(draw: st.DrawFn, target_names: Sequence[str] | None = None):
     top_fraction = draw(
         st.none() | finite_floats(min_value=0.0, max_value=1.0, exclude_min=True)
     )
+    dominance_threshold = draw(
+        finite_floats(min_value=0.5, max_value=1.0, exclude_max=True)
+    )
     objective_metadata = draw(metadata())
     return TFPRObjective(
         targets,
@@ -106,6 +109,7 @@ def tfpr_objectives(draw: st.DrawFn, target_names: Sequence[str] | None = None):
         tolerances,
         optimism_lambda=optimism_lambda,
         top_fraction=top_fraction,
+        dominance_threshold=dominance_threshold,
         metadata=objective_metadata,
     )
 

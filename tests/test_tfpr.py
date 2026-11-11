@@ -92,6 +92,7 @@ def _dense_tfpr_fitness(
     weights: np.ndarray,
     tolerances: np.ndarray,
     top_fraction: float | None,
+    dominance_threshold: float = 0.5,
 ) -> np.ndarray:
     """Compute dense-matrix TFPR fitness for comparison in tests."""
     n_candidates, n_objectives = values.shape
@@ -120,15 +121,17 @@ def _dense_tfpr_fitness(
                     counts[left, right] += weight
 
     total_weight = weights.sum()
-    threshold = 0.5 * total_weight
+    dominating_threshold = dominance_threshold * total_weight
+    submitting_threshold = (1.0 - dominance_threshold) * total_weight
     fitness = np.zeros(n_candidates, dtype=float)
     for candidate_index in range(n_candidates):
         others = np.arange(n_candidates) != candidate_index
         mean_dominance = counts[candidate_index].sum() / (
             (n_candidates - 1) * total_weight
         )
-        n_dominating = np.count_nonzero(counts[candidate_index, others] > threshold)
-        n_submitting = np.count_nonzero(counts[candidate_index, others] < threshold)
+        row = counts[candidate_index, others]
+        n_dominating = np.count_nonzero(row > dominating_threshold)
+        n_submitting = np.count_nonzero(row < submitting_threshold)
         fitness[candidate_index] = (
             mean_dominance * (n_dominating + _EPSILON) / (n_submitting + _EPSILON)
         )
@@ -161,35 +164,73 @@ def test_auto_top_fraction(n_candidates: int, expected: float) -> None:
     assert _auto_top_fraction(n_candidates) == pytest.approx(expected)
 
 
+_MAJORITY_VS_STRICT_VALUES = [[3.0, 3.0, 1.0], [2.0, 2.0, 3.0], [1.0, 1.0, 2.0]]
+"""Candidates where the first wins a majority against all others and the second wins
+all targets against the third."""
+
+
 @pytest.mark.parametrize(
-    ("values", "top_fraction", "expected"),
+    ("values", "top_fraction", "dominance_threshold", "expected"),
     [
         pytest.param(
             [[3.0], [2.0], [1.0]],
             1.0,
+            0.5,
             [41.0, 0.5, 0.0],
             id="known_ranking",
         ),
         pytest.param(
             [[1.0], [1.0]],
             1.0,
+            0.5,
             [0.5, 0.5],
             id="exact_tie",
         ),
         pytest.param(
             [[4.0], [3.0], [2.0], [1.0]],
             0.5,
+            0.5,
             [1.05 / (3 * 2.05), 0.0, 0.0, 0.0],
             id="top_fraction",
+        ),
+        pytest.param(
+            _MAJORITY_VS_STRICT_VALUES,
+            1.0,
+            0.5,
+            [
+                2 / 3 * (2 + _EPSILON) / _EPSILON,
+                2 / 3,
+                1 / 6 * _EPSILON / (2 + _EPSILON),
+            ],
+            id="majority_threshold",
+        ),
+        pytest.param(
+            _MAJORITY_VS_STRICT_VALUES,
+            1.0,
+            0.8,
+            [
+                2 / 3,
+                2 / 3 * (1 + _EPSILON) / _EPSILON,
+                1 / 6 * _EPSILON / (1 + _EPSILON),
+            ],
+            id="strict_threshold",
         ),
     ],
 )
 def test_tfpr_fitness_matches_hand_calculation(
-    values: list[list[float]], top_fraction: float, expected: list[float]
+    values: list[list[float]],
+    top_fraction: float,
+    dominance_threshold: float,
+    expected: list[float],
 ) -> None:
     """TFPR fitness matches values calculated directly from its definition."""
+    n_objectives = len(values[0])
     actual = _tfpr_fitness(
-        np.array(values), np.array([1]), np.array([0.0]), top_fraction
+        np.array(values),
+        np.ones(n_objectives, dtype=int),
+        np.zeros(n_objectives),
+        top_fraction,
+        dominance_threshold,
     )
 
     assert_allclose(actual, expected)
@@ -211,6 +252,7 @@ def test_tfpr_fitness_uses_automatic_top_fraction(
         np.array([1]),
         np.array([0.0]),
         None,
+        0.5,
     )
 
     assert_allclose(actual, [1.05 / (3 * 2.05), 0.0, 0.0, 0.0])
@@ -229,12 +271,20 @@ def test_tfpr_fitness_matches_dense_reference() -> None:
     weights = np.array([2, 1])
     tolerances = np.array([0.0, 0.2])
 
-    actual = _tfpr_fitness(values, weights, tolerances, 0.75)
+    actual = _tfpr_fitness(values, weights, tolerances, 0.75, 0.5)
     expected = _dense_tfpr_fitness(values, weights, tolerances, 0.75)
 
     assert_allclose(actual, expected)
 
 
+@pytest.mark.parametrize(
+    "dominance_threshold",
+    [
+        pytest.param(0.5, id="majority"),
+        pytest.param(0.8, id="strict"),
+        pytest.param(0.99, id="near_unanimous"),
+    ],
+)
 @pytest.mark.parametrize(
     ("n_candidates", "n_objectives", "top_fraction", "seed"),
     [
@@ -250,6 +300,7 @@ def test_tfpr_fitness_matches_dense_reference_randomized(
     n_objectives: int,
     top_fraction: float | None,
     seed: int,
+    dominance_threshold: float,
 ) -> None:
     """Vectorized fitness matches the dense reference across varied inputs."""
     rng = np.random.default_rng(seed)
@@ -258,8 +309,12 @@ def test_tfpr_fitness_matches_dense_reference_randomized(
     weights[0] = 1
     tolerances = rng.choice([0.0, 0.05, 0.2], size=n_objectives)
 
-    actual = _tfpr_fitness(values, weights, tolerances, top_fraction)
-    expected = _dense_tfpr_fitness(values, weights, tolerances, top_fraction)
+    actual = _tfpr_fitness(
+        values, weights, tolerances, top_fraction, dominance_threshold
+    )
+    expected = _dense_tfpr_fitness(
+        values, weights, tolerances, top_fraction, dominance_threshold
+    )
 
     assert_allclose(actual, expected)
 
@@ -363,6 +418,18 @@ def test_recommend_checks_surrogate_capability_before_fitting(
         ),
         pytest.param({"top_fraction": 0.0}, ValueError, "> 0", id="top_zero"),
         pytest.param({"top_fraction": 1.1}, ValueError, "<= 1", id="top_high"),
+        pytest.param(
+            {"dominance_threshold": 0.4}, ValueError, ">= 0.5", id="threshold_low"
+        ),
+        pytest.param(
+            {"dominance_threshold": 1.0}, ValueError, "< 1", id="threshold_high"
+        ),
+        pytest.param(
+            {"dominance_threshold": float("nan")},
+            ValueError,
+            "nan",
+            id="threshold_nan",
+        ),
     ],
 )
 def test_init_validation(
@@ -389,6 +456,7 @@ def test_init_rejects_target_transformations() -> None:
     [
         pytest.param({}, "weights", (1, 1), id="default_weights"),
         pytest.param({}, "tolerances", (0.0, 0.0), id="default_tolerances"),
+        pytest.param({}, "dominance_threshold", 0.5, id="default_threshold"),
         pytest.param({"weights": [True, 2]}, "weights", (1, 2), id="boolean_weight"),
         pytest.param({"weights": [1.9, 2.2]}, "weights", (2, 2), id="rounded_weight"),
         pytest.param(
@@ -438,7 +506,7 @@ def test_recommend_honors_target_direction(
 def test_small_top_fraction_still_produces_ranking_signal() -> None:
     """Small positive fractions retain enough candidates for a comparison."""
     values = np.array([[0.0], [1.0], [2.0], [3.0]])
-    fitness = _tfpr_fitness(values, np.array([1]), np.array([0.0]), 0.01)
+    fitness = _tfpr_fitness(values, np.array([1]), np.array([0.0]), 0.01, 0.5)
 
     assert fitness[3] > fitness[2]
     assert fitness[2] == fitness[1] == fitness[0] == 0.0
@@ -525,6 +593,33 @@ def test_acquisition_values_reject_tfpr(
         _recommender(FakePosteriorStatsSurrogate()).acquisition_values(
             measurements[["p"]], searchspace, _objective(), measurements
         )
+
+
+@pytest.mark.parametrize(
+    ("dominance_threshold", "expected_best"),
+    [
+        pytest.param(0.5, "majority_winner", id="majority"),
+        pytest.param(0.8, "strict_dominator", id="strict"),
+    ],
+)
+def test_compute_fitness_applies_dominance_threshold(
+    dominance_threshold: float, expected_best: str
+) -> None:
+    """Stricter thresholds stop rewarding majority wins as dominance."""
+    names = ["a", "b", "c"]
+    objective = TFPRObjective(
+        [NumericalTarget(n) for n in names],
+        top_fraction=1.0,
+        dominance_threshold=dominance_threshold,
+    )
+    means = pd.DataFrame(
+        _MAJORITY_VS_STRICT_VALUES,
+        columns=[f"{n}_mean" for n in names],
+        index=["majority_winner", "strict_dominator", "loser"],
+    )
+    stats = means.assign(**{f"{n}_std": 0.0 for n in names})
+
+    assert objective.compute_fitness(stats).idxmax() == expected_best
 
 
 @pytest.mark.parametrize(

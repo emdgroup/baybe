@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional as optional_c
-from attrs.validators import deep_iterable, ge, gt, instance_of, le, min_len
+from attrs.validators import deep_iterable, ge, gt, instance_of, le, lt, min_len
 from attrs.validators import optional as optional_v
 from cattrs.gen import make_dict_structure_fn
 from typing_extensions import override
@@ -72,6 +72,7 @@ def _tfpr_fitness(
     weights: np.ndarray,
     tolerances: np.ndarray,
     top_fraction: float | None,
+    dominance_threshold: float,
     /,
 ) -> np.ndarray:
     """Compute exact TFPR fitness with vectorized pairwise comparisons."""
@@ -85,7 +86,11 @@ def _tfpr_fitness(
         _auto_top_fraction(n_candidates) if top_fraction is None else top_fraction
     )
     top_k = min(n_candidates, max(2, math.ceil(n_candidates * fraction)))
-    threshold = 0.5 * total_weight
+    # A candidate dominates another one if it secures more than the threshold share
+    # of the total weight and submits to it if it secures less than the complementary
+    # share. Both thresholds coincide at the original TFPR value of 0.5.
+    dominating_threshold = dominance_threshold * total_weight
+    submitting_threshold = (1.0 - dominance_threshold) * total_weight
 
     top_indices: list[np.ndarray] = []
     top_masks: list[np.ndarray] = []
@@ -123,9 +128,12 @@ def _tfpr_fitness(
             dominance[positions[ties & not_self]] += weight / 2
 
         mean_dominance = dominance.sum() / ((n_candidates - 1) * total_weight)
-        n_dominating = np.count_nonzero(dominance > threshold)
-        # Self-comparisons remain zero and must not count as submissions.
-        n_submitting = np.count_nonzero(dominance < threshold) - 1 + n_inactive
+        n_dominating = np.count_nonzero(dominance > dominating_threshold)
+        # Self-comparisons remain zero, which is always below the submitting
+        # threshold since the dominance threshold is below 1, and must not count.
+        n_submitting = (
+            np.count_nonzero(dominance < submitting_threshold) - 1 + n_inactive
+        )
         fitness[candidate_index] = (
             mean_dominance * (n_dominating + _EPSILON) / (n_submitting + _EPSILON)
         )
@@ -189,6 +197,22 @@ class TFPRObjective(Objective):
     """Fraction of per-target top candidates considered in the ranking.
 
     ``None`` activates an automatic rule based on the number of candidates.
+    """
+
+    dominance_threshold: float = field(
+        default=0.5,
+        converter=float,
+        validator=[finite_float, ge(0.5), lt(1)],
+        kw_only=True,
+    )
+    """Share of the total weight required for a candidate to dominate another one.
+
+    In each pairwise comparison, a candidate secures the weights of the targets it
+    wins and half the weights of the targets it ties. It dominates the other candidate
+    if it secures more than this share of the total weight and is dominated if it
+    secures less than the complementary share. The default of ``0.5`` corresponds to
+    a weighted majority. Higher values make dominance stricter, with values close
+    to ``1`` requiring a candidate to win (nearly) all weighted targets.
     """
 
     @weights.default
@@ -258,6 +282,9 @@ class TFPRObjective(Objective):
             to_string("Targets", pretty_print_df(targets_df)),
             to_string("Optimism lambda", self.optimism_lambda, single_line=True),
             to_string("Top fraction", self.top_fraction, single_line=True),
+            to_string(
+                "Dominance threshold", self.dominance_threshold, single_line=True
+            ),
         ]
         return to_string("Objective", *fields)
 
@@ -295,6 +322,7 @@ class TFPRObjective(Objective):
             np.asarray(self.weights),
             np.asarray(self.tolerances),
             self.top_fraction,
+            self.dominance_threshold,
         )
         return pd.Series(fitness, index=posterior_stats.index, name="Fitness")
 

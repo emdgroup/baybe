@@ -211,6 +211,11 @@ differently scaled values into a single weighted sum. The objective is configure
   each target's favorable direction.
 * `top_fraction`: The fraction of per-target top candidates considered in the ranking.
   When omitted, an automatic rule based on the number of candidates is used.
+* `dominance_threshold`: The share of the total weight a candidate must secure in a
+  pairwise comparison to dominate the other candidate, where won targets count with
+  their full weight and tied targets with half of it. The default of `0.5`
+  corresponds to a weighted majority. Higher values make dominance stricter, with
+  values close to `1` requiring a candidate to win (nearly) all weighted targets.
 
 ```python
 from baybe.objectives import TFPRObjective
