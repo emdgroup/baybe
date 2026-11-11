@@ -182,7 +182,7 @@ def test_invalid_acqf(searchspace, objective, batch_size, acqf, fake_measurement
         param(["Task", "Num_disc_1"], np.nan, id="task_param_nan"),
     ],
 )
-@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("batch_size", [2], ids=["b2"])
 def test_invalid_input(
     searchspace,
     recommender,

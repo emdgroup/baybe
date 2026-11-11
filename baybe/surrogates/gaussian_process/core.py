@@ -4,29 +4,39 @@ from __future__ import annotations
 
 import gc
 import importlib
+import operator
 import os
-from functools import partial
+import warnings
+from functools import partial, reduce
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
 from attrs import Converter, define, field
+from attrs.converters import optional as optional_c
 from attrs.converters import pipe
-from attrs.validators import instance_of, is_callable
+from attrs.validators import instance_of, is_callable, optional
 from typing_extensions import Self, override
 
-from baybe.exceptions import DeprecationError
+from baybe.exceptions import (
+    DeprecationError,
+    IncompatibleSearchSpaceError,
+    ModelNotTrainedError,
+    _UnsupportedSearchSpaceAttributeError,
+)
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
+from baybe.surrogates.gaussian_process import _override
 from baybe.surrogates.gaussian_process.components.fit_criterion import (
     FitCriterion,
     FitCriterionFactoryProtocol,
 )
 from baybe.surrogates.gaussian_process.components.generic import (
     GPComponentType,
+    PlainGPComponentFactory,
     to_component_factory,
 )
 from baybe.surrogates.gaussian_process.components.kernel import (
@@ -46,18 +56,22 @@ from baybe.surrogates.gaussian_process.presets.baybe import (
     BayBELikelihoodFactory,
     BayBEMeanFactory,
 )
+from baybe.symmetries.base import Symmetry
 from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
+from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     from botorch.models.gpytorch import GPyTorchModel
-    from botorch.models.transforms.input import InputTransform
-    from botorch.models.transforms.outcome import OutcomeTransform
+    from botorch.models.transforms.input import InputTransform, Normalize
+    from botorch.models.transforms.outcome import OutcomeTransform, Standardize
     from botorch.posteriors import Posterior
     from gpytorch.kernels import Kernel as GPyTorchKernel
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.means import Mean as GPyTorchMean
     from torch import Tensor
+
+    from baybe.parameters.selectors import ParameterSelectorProtocol
 
 
 @define
@@ -112,10 +126,10 @@ class _ModelContext:
 
 
 def _mark_custom_kernel(
-    value: Kernel | KernelFactoryProtocol, self: GaussianProcessSurrogate
-) -> Kernel | KernelFactoryProtocol:
+    value: Kernel | KernelFactoryProtocol | None, self: GaussianProcessSurrogate
+) -> Kernel | KernelFactoryProtocol | None:
     """Mark the surrogate as using a custom kernel (for deprecation purposes)."""
-    if type(value) is not BayBEKernelFactory:
+    if value is not None and type(value) is not BayBEKernelFactory:
         self._custom_kernel = True
 
     return value
@@ -140,76 +154,124 @@ class GaussianProcessSurrogate(Surrogate):
     # to `optimize_acqf_*`, which is configured to be called on the original scale.
     # Moving the scaling operation into the botorch GP object avoids this conflict.
 
+    supports_kernel_overrides: ClassVar[bool] = True
+    # See base class.
+
     supports_transfer_learning: ClassVar[bool] = True
     # See base class.
 
     _custom_kernel: bool = field(init=False, default=False, repr=False, eq=False)
-    # For deprecation only!
+    """Legacy flag for custom surrogate kernels affected by task-attachment changes.
 
-    kernel_factory: KernelFactoryProtocol = field(
+    Parameter overrides do not set this flag: default residual construction still
+    attaches the default task kernel unless an explicit TL override replaces it.
+    This flag does not classify the final composed covariance.
+    """
+
+    kernel_factory: KernelFactoryProtocol | None = field(
         alias="kernel_or_factory",
         converter=pipe(  # type: ignore[misc]
             Converter(_mark_custom_kernel, takes_self=True),  # type: ignore[call-overload]
-            partial(to_component_factory, component_type=GPComponentType.KERNEL),
+            optional_c(
+                partial(to_component_factory, component_type=GPComponentType.KERNEL)
+            ),
         ),
-        factory=BayBEKernelFactory,
-        validator=is_callable(),
+        default=None,
+        validator=optional(is_callable()),
     )
     """The factory used to create the kernel for the Gaussian process.
 
     Accepts:
         * :class:`baybe.kernels.base.Kernel`
-        * :class:`.components.kernel.KernelFactory`
+        * :obj:`.components.kernel.KernelFactoryProtocol`
         * :class:`gpytorch.kernels.Kernel`
+
+    A :attr:`~baybe.parameters.base.Parameter.override_kernel` removes its parameter
+    from this kernel and contributes a separate multiplicative factor. For task
+    parameters, it is derived from
+    :attr:`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`
+    and replaces the task factor in the same way. When not all parameters are removed
+    by an override, the configured kernel or factory must support excluding the
+    overridden parameters; otherwise,
+    :class:`~baybe.exceptions.IncompatibleOverrideError` is raised. If all parameters
+    are overridden, this kernel or factory is not used. Without overrides, it is used
+    unchanged.
+
+    See :ref:`parameter_kernel_overrides` for details and limitations.
     """
 
-    mean_factory: MeanFactoryProtocol = field(
+    mean_factory: MeanFactoryProtocol | None = field(
         alias="mean_or_factory",
-        factory=BayBEMeanFactory,
-        converter=partial(to_component_factory, component_type=GPComponentType.MEAN),  # type: ignore[misc]
-        validator=is_callable(),
+        default=None,
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.MEAN)  # type: ignore[misc]
+        ),
+        validator=optional(is_callable()),
     )
     """The factory used to create the mean function for the Gaussian process.
 
     Accepts:
-        * :class:`.components.mean.MeanFactory`
+        * :obj:`.components.mean.MeanFactoryProtocol`
         * :class:`gpytorch.means.Mean`
     """
 
-    likelihood_factory: LikelihoodFactoryProtocol = field(
+    likelihood_factory: LikelihoodFactoryProtocol | None = field(
         alias="likelihood_or_factory",
-        factory=BayBELikelihoodFactory,
-        converter=partial(  # type: ignore[misc]
-            to_component_factory, component_type=GPComponentType.LIKELIHOOD
+        default=None,
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.LIKELIHOOD)  # type: ignore[misc]
         ),
-        validator=is_callable(),
+        validator=optional(is_callable()),
     )
     """The factory used to create the likelihood for the Gaussian process.
 
     Accepts:
-        * :class:`.components.likelihood.LikelihoodFactory`
+        * :obj:`.components.likelihood.LikelihoodFactoryProtocol`
         * :class:`gpytorch.likelihoods.Likelihood`
     """
 
-    fit_criterion_factory: FitCriterionFactoryProtocol = field(
+    fit_criterion_factory: FitCriterionFactoryProtocol | None = field(
         alias="fit_criterion_or_factory",
-        factory=BayBEFitCriterionFactory,
-        converter=partial(  # type: ignore[misc]
-            to_component_factory, component_type=GPComponentType.CRITERION
+        default=None,
+        converter=optional_c(
+            partial(to_component_factory, component_type=GPComponentType.CRITERION)  # type: ignore[misc]
         ),
-        validator=is_callable(),
+        validator=optional(is_callable()),
     )
     """The fitting criterion for Gaussian process hyperparameter optimization.
 
     Accepts:
         * :class:`.components.fit_criterion.FitCriterion`
-        * :class:`.components.fit_criterion.FitCriterionFactoryProtocol`
+        * :obj:`.components.fit_criterion.FitCriterionFactoryProtocol`
     """
 
-    # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
-    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
+    _symmetries: tuple[Symmetry, ...] = field(factory=tuple, init=False, eq=False)
+    """Symmetries for future architecture adjustments (e.g., invariant kernels)."""
+
+    # TODO: type should be SingleTaskGP | None but is currently omitted due to:
+    #   https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
-    """The actual model."""
+    """The fitted BoTorch model."""
+
+    @staticmethod
+    def _make_input_transform(context: _ModelContext) -> Normalize:
+        """Create the input transform for the Gaussian process."""
+        from botorch.models.transforms.input import Normalize
+
+        return Normalize(
+            len(context.searchspace.comp_rep_columns),
+            bounds=context.parameter_bounds,
+            indices=context.numerical_indices,
+        )
+
+    @staticmethod
+    def _make_outcome_transform(train_y: Tensor) -> Standardize:
+        """Create the (unfitted) outcome transform for the Gaussian process."""
+        from botorch.models.transforms.outcome import Standardize
+
+        outcome_transform = Standardize(m=train_y.shape[-1])
+        outcome_transform(train_y)
+        return outcome_transform
 
     @classmethod
     def from_preset(
@@ -227,7 +289,22 @@ class GaussianProcessSurrogate(Surrogate):
         | FitCriterionFactoryProtocol
         | None = None,
     ) -> Self:
-        """Create a Gaussian process surrogate from one of the defined presets."""
+        """Create a Gaussian process surrogate from one of the defined presets.
+
+        Unlike the regular constructor, where a ``None`` value for a factory argument
+        defers to context-dependent auto-selection at fit time, a ``None`` value here
+        falls back to the corresponding default of the chosen preset.
+
+        Args:
+            preset: The preset to use.
+            kernel_or_factory: The kernel (factory) to use.
+            mean_or_factory: The mean (factory) to use.
+            likelihood_or_factory: The likelihood (factory) to use.
+            fit_criterion_or_factory: The fit criterion (factory) to use.
+
+        Returns:
+            The Gaussian process surrogate configured according to the preset.
+        """
         preset = GaussianProcessPreset(preset)
 
         module_name = (
@@ -246,15 +323,73 @@ class GaussianProcessSurrogate(Surrogate):
         gp._custom_kernel = False  # preset are first-party features
         return gp
 
+    def posterior_mean_function(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> GPyTorchMean:
+        """Create a GPyTorch mean module representing the surrogate's posterior mean.
+
+        The method can be used to create the mean for a new
+        :class:`GaussianProcessSurrogate` in two ways:
+
+        * **Eagerly:** By calling the method and passing the returned module to a GP.
+        * **Lazily:** By passing the bound method itself, without eagerly calling it.
+            This works because the method signature complies with
+            :obj:`~.components.mean.MeanFactoryProtocol`, i.e., the new GP will use it
+            as a factory and call it automatically at fit time.
+
+        If the mean-providing GP has not been fitted at call time, its prior mean module
+        is returned instead (which coincides with the posterior in this case) and a
+        :class:`UserWarning` is emitted.
+
+        Args:
+            searchspace: The search space of the *new* GP.
+            objective: The objective of the *new* GP.
+            measurements: The training data of the *new* GP.
+
+        Returns:
+            A mean module ready to be used as the mean of a new
+            :class:`GaussianProcessSurrogate`.
+        """
+        if self._model is None:
+            warnings.warn(
+                f"'{self.__class__.__name__}' has not been fitted yet. "
+                f"Therefore, the prior mean is returned (which coincides with the "
+                f"posterior in this case).",
+                UserWarning,
+            )
+            mean_factory = self.mean_factory or BayBEMeanFactory()
+            return mean_factory(searchspace, objective, measurements)
+
+        context = _ModelContext(searchspace, objective, measurements)
+
+        train_y = to_tensor(objective._pre_transform(measurements, allow_extra=True))
+        if train_y.ndim == 1:
+            train_y = train_y.unsqueeze(-1)
+
+        input_transform = self._make_input_transform(context)
+        input_transform.eval()
+
+        outcome_transform = self._make_outcome_transform(train_y)
+        outcome_transform.eval()
+
+        return _make_posterior_mean_module(
+            self._model, input_transform, outcome_transform
+        )
+
     @override
     def to_botorch(self) -> GPyTorchModel:
+        if self._model is None:
+            raise ModelNotTrainedError(
+                "The surrogate must be trained before a BoTorch model can be created."
+            )
         return self._model
 
     @override
     @staticmethod
-    def _make_parameter_scaler_factory(
-        parameter: Parameter,
-    ) -> type[InputTransform] | None:
+    def _make_parameter_scaler_factory(_: Parameter, /) -> type[InputTransform] | None:
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         return None
 
@@ -266,21 +401,214 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
+        # Model being fit is guaranteed by the call in `posterior`
+        assert self._model is not None
         return self._model.posterior(candidates_comp_scaled)
+
+    def _resolve_kernel(self, context: _ModelContext) -> GPyTorchKernel:
+        """Resolve the GP kernel, applying parameter-specific overrides.
+
+        The effective kernel is the surrogate kernel restricted to the
+        non-overridden dimensions, multiplied by one factor per override.
+
+        Args:
+            context: The model context providing the inputs and override settings.
+
+        Raises:
+            ValueError: If the resolved kernels violate the override partition.
+
+        Returns:
+            The resolved and partition-validated kernel.
+        """
+        overrides = _override.extract_parameter_kernel_overrides(context.searchspace)
+
+        excluded_names = {name for name, _ in overrides}
+        residual = self._resolve_residual_kernel(context, excluded_names)
+        searchspace = context.searchspace
+        excluded_dimensions: set[int] = set()
+        for name, kernel in overrides:
+            expected = set(searchspace.get_comp_rep_parameter_indices(name))
+            actual = _override.get_active_dimensions(kernel, searchspace)
+            if actual != expected:
+                raise ValueError(
+                    f"The kernel override for '{name}' has 'active_dims' {actual}, "
+                    f"but must use exactly the parameter indices {expected}."
+                )
+            excluded_dimensions.update(expected)
+
+        if residual is not None and excluded_names:
+            allowed = (
+                set(range(len(searchspace.comp_rep_columns))) - excluded_dimensions
+            )
+            actual = _override.get_active_dimensions(residual, searchspace)
+            if not actual <= allowed:
+                raise ValueError(
+                    f"The residual kernel's 'active_dims' {actual} must be a subset "
+                    f"of the non-overridden indices {allowed}."
+                )
+        factors = ([] if residual is None else [residual]) + [k for _, k in overrides]
+        return reduce(operator.mul, factors)
+
+    def _resolve_residual_kernel(
+        self, context: _ModelContext, excluded_names: set[str]
+    ) -> GPyTorchKernel | None:
+        """Resolve the surrogate kernel restricted to the non-excluded dimensions.
+
+        This is intentionally task-agnostic: it only removes ``excluded_names``.
+        A task parameter is excluded here only if a transfer-learning override
+        already replaced it; otherwise it is preserved by the surrogate kernel.
+        """
+        searchspace = context.searchspace
+        factory = self.kernel_factory or BayBEKernelFactory()
+        if not excluded_names:
+            kernel = factory(searchspace, context.objective, context.measurements)
+            return (
+                kernel.to_gpytorch(searchspace)
+                if isinstance(kernel, Kernel)
+                else kernel
+            )
+
+        if all(p.name in excluded_names for p in searchspace.parameters):
+            return None
+
+        # Default kernel: build the (task-free) numerical base restricted to the
+        # remaining parameters and re-add the default task kernel unless overridden.
+        if isinstance(factory, BayBEKernelFactory):
+            return self._resolve_default_base(
+                context, excluded_names, factory.parameter_selector
+            )
+
+        # A fixed kernel is reduced directly by removing the excluded parameters.
+        if isinstance(factory, PlainGPComponentFactory):
+            spec = _override.reduce_kernel_spec(
+                factory.component, excluded_names, searchspace, factory
+            )
+            return None if spec is None else spec.to_gpytorch(searchspace)
+
+        # Any other callable factory: call it on the reduced space and reduce the
+        # returned BayBE kernel. Factories needing full-space information or
+        # returning a raw kernel are unsupported.
+        reduced_space = searchspace._drop_parameters(excluded_names)
+        try:
+            returned = factory(reduced_space, context.objective, context.measurements)
+        except (
+            IncompatibleSearchSpaceError,
+            _UnsupportedSearchSpaceAttributeError,
+        ) as ex:
+            _override.raise_incompatible_override(excluded_names, factory, ex)
+        spec = _override.reduce_kernel_spec(
+            returned, excluded_names, searchspace, factory
+        )
+        return None if spec is None else spec.to_gpytorch(searchspace)
+
+    def _resolve_default_base(
+        self,
+        context: _ModelContext,
+        excluded_names: set[str],
+        selector: ParameterSelectorProtocol | None,
+    ) -> GPyTorchKernel | None:
+        """Resolve the default kernel base, excluding the given parameters.
+
+        The numerical base always excludes the task; the default task kernel is
+        re-added unless the task is itself overridden (i.e. already excluded).
+        """
+        # TODO: This method might become obsolete once it can be married with the lazy
+        #  searchspace updates. In that case, it should be reworked so it is largely or
+        #  fully replaced by a simple factory call.
+
+        from baybe.surrogates.gaussian_process.presets.baybe import (
+            _BayBENumericalKernelFactory,
+            _BayBETaskKernelFactory,
+        )
+
+        searchspace = context.searchspace
+        task_param = searchspace._task_parameter
+
+        keep: ParameterSelectorProtocol = lambda parameter: (  # noqa: E731
+            parameter.name not in excluded_names
+            and parameter is not task_param
+            and (selector is None or selector(parameter))
+        )
+        factors: list[GPyTorchKernel] = []
+        if any(keep(p) for p in searchspace.parameters):
+            base = _BayBENumericalKernelFactory(parameter_selector=keep)(
+                searchspace, context.objective, context.measurements
+            )
+            factors.append(
+                base.to_gpytorch(searchspace) if isinstance(base, Kernel) else base
+            )
+        if task_param is not None and task_param.name not in excluded_names:
+            task = _BayBETaskKernelFactory()(
+                searchspace, context.objective, context.measurements
+            )
+            factors.append(
+                task.to_gpytorch(searchspace) if isinstance(task, Kernel) else task
+            )
+
+        return reduce(operator.mul, factors) if factors else None
+
+    def _resolve_components(
+        self, context: _ModelContext
+    ) -> tuple[GPyTorchKernel, GPyTorchMean, GPyTorchLikelihood, FitCriterion]:
+        """Resolve factory fields to concrete components.
+
+        Resolves ``None`` fields to BayBE defaults and calls the factories with
+        the given context. This handles the standard resolution path.
+
+        Args:
+            context: The model context providing searchspace, objective, and
+                measurements.
+
+        Returns:
+            A tuple of (kernel, mean, likelihood, criterion).
+        """
+        mean_factory = self.mean_factory or BayBEMeanFactory()
+        likelihood_factory = self.likelihood_factory or BayBELikelihoodFactory()
+        criterion_factory = self.fit_criterion_factory or BayBEFitCriterionFactory()
+
+        kernel = self._resolve_kernel(context)
+
+        mean = mean_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        likelihood = likelihood_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        criterion = criterion_factory(
+            context.searchspace, context.objective, context.measurements
+        )
+
+        return kernel, mean, likelihood, criterion
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
-        import botorch
-        from botorch.models.transforms import Normalize, Standardize
+        assert self._searchspace is not None  # ensured by base class
+        assert self._objective is not None  # ensured by base class
+        assert self._measurements is not None  # ensured by base class
 
-        assert self._searchspace is not None  # provided by base class
-        assert self._objective is not None  # provided by base class
-        assert self._measurements is not None  # provided by base class
+        # Symmetry-aware architecture adjustment (planned for future implementation)
+        if self._symmetries:
+            raise NotImplementedError(
+                "Symmetry-aware surrogate architecture is not yet implemented."
+            )
+            for s in self._symmetries:
+                s.validate_searchspace_context(self._searchspace)
+
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
+        # Check for custom kernel + multi-task clash (only relevant when the task
+        # parameter has no kernel override, since the override mechanism handles task
+        # kernel attachment explicitly).
+        task_param = self._searchspace._task_parameter
+        has_task_override = (
+            task_param is not None and task_param.override_kernel is not None
+        )
         if (
             context.is_multitask
             and self._custom_kernel
+            and not has_task_override
             and not strtobool(os.getenv("BAYBE_DISABLE_CUSTOM_KERNEL_WARNING", "False"))
         ):
             raise DeprecationError(
@@ -296,36 +624,14 @@ class GaussianProcessSurrogate(Surrogate):
                 f"environment variable to a truthy value."
             )
 
+        kernel, mean, likelihood, criterion = self._resolve_components(context)
+
+        import botorch
+
         ### Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
-        input_transform = Normalize(
-            train_x.shape[-1],
-            bounds=context.parameter_bounds,
-            indices=context.numerical_indices,
-        )
-        outcome_transform = Standardize(train_y.shape[-1])
-
-        ### Mean
-        mean = self.mean_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-
-        ### Kernel
-        kernel = self.kernel_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-        if isinstance(kernel, Kernel):
-            kernel = kernel.to_gpytorch(searchspace=context.searchspace)
-
-        ### Likelihood
-        likelihood = self.likelihood_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-
-        ### Criterion
-        criterion = self.fit_criterion_factory(
-            context.searchspace, context.objective, context.measurements
-        )
+        input_transform = self._make_input_transform(context)
+        outcome_transform = self._make_outcome_transform(train_y)
 
         ### Model construction and fitting
         self._model = botorch.models.SingleTaskGP(
@@ -343,14 +649,87 @@ class GaussianProcessSurrogate(Surrogate):
     @override
     def __str__(self) -> str:
         fields = [
-            to_string("Kernel factory", self.kernel_factory, single_line=True),
-            to_string("Mean factory", self.mean_factory, single_line=True),
-            to_string("Likelihood factory", self.likelihood_factory, single_line=True),
             to_string(
-                "Fit criterion factory", self.fit_criterion_factory, single_line=True
+                "Kernel factory", self.kernel_factory or "auto", single_line=True
+            ),
+            to_string("Mean factory", self.mean_factory or "auto", single_line=True),
+            to_string(
+                "Likelihood factory",
+                self.likelihood_factory or "auto",
+                single_line=True,
+            ),
+            to_string(
+                "Fit criterion factory",
+                self.fit_criterion_factory or "auto",
+                single_line=True,
             ),
         ]
         return to_string(super().__str__(), *fields)
+
+
+def _make_posterior_mean_module(
+    model: GPyTorchModel,
+    input_transform: Normalize,
+    outcome_transform: Standardize,
+) -> GPyTorchMean:
+    """Make a :class:`~gpytorch.means.Mean` that represents the posterior mean of a GP.
+
+    Computationally, this is achieved by wrapping a deep copy of the provided GP with
+    all parameters frozen, so that training a new GP consuming the module cannot alter
+    the pretrained one.
+
+    Transformations are applied to automatically align the spaces of the providing and
+    consuming model, bridging the gap between their different modeling contexts:
+
+    * **Input un-normalization**:
+      When the new GP calls the produced module during training or inference, the inputs
+      have already been normalized by the new GP's input transform. For this purpose,
+      the inputs are un-normalized before passed to the pretrained GP. Without this
+      step, the pretrained GP would receive inputs on the wrong scale and return
+      meaningless predictions.
+
+    * Output **un-standardization:**
+      The produced mean values are expected in the original GP's output space, i.e.,
+      the prior mean of the consuming GP should exactly match the posterior mean of the
+      pretrained GP. However, the consuming GP transforms the output values of the
+      mean module into its own scale, which would corrupt the result. To cancel out
+      this effect, the inverse of this transformation is applied to the pretrained
+      module output before passing it to the consuming GP.
+
+    Args:
+        model: The fitted GP whose posterior mean is to be extracted.
+        input_transform: The new GP's input transform, used to un-normalize inputs.
+        outcome_transform: The new GP's outcome transform, used to un-standardize
+            outputs.
+
+    Returns:
+        A mean module ready for use in a new GP.
+    """
+    from copy import deepcopy
+
+    import gpytorch
+
+    frozen_model = deepcopy(model)
+    for param in frozen_model.parameters():
+        param.requires_grad = False
+    frozen_model.eval()
+
+    class _PosteriorMean(gpytorch.means.Mean):
+        """GPyTorch mean wrapping a frozen GP's posterior."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.gp = frozen_model
+
+        @override
+        def forward(self, x: Tensor) -> Tensor:
+            """Compute the prior mean in the new GP's standardized output space."""
+            x_raw = input_transform.untransform(x)
+            posterior_mean = self.gp.posterior(x_raw).mean
+            standardized, _ = outcome_transform(posterior_mean)
+            return standardized.squeeze(-1)
+
+    return _PosteriorMean()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

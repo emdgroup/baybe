@@ -49,7 +49,10 @@ class NGBoostSurrogate(IndependentGaussianSurrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
+    _default_model_params: ClassVar[_NGBRegressorParams] = {
+        "n_estimators": 25,
+        "verbose": False,
+    }
     """Class variable encoding the default model parameters."""
 
     model_params: _NGBRegressorParams = field(
@@ -74,9 +77,7 @@ class NGBoostSurrogate(IndependentGaussianSurrogate):
 
     @override
     @staticmethod
-    def _make_parameter_scaler_factory(
-        parameter: Parameter,
-    ) -> type[InputTransform] | None:
+    def _make_parameter_scaler_factory(_: Parameter, /) -> type[InputTransform] | None:
         # Tree-like models do not require any input scaling
         return None
 

@@ -1,6 +1,5 @@
 """Recommenders based on sampling."""
 
-from enum import Enum
 from typing import ClassVar
 
 import numpy as np
@@ -14,7 +13,7 @@ from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.settings import Settings, active_settings
 from baybe.utils.conversion import to_string
-from baybe.utils.sampling_algorithms import farthest_point_sampling
+from baybe.utils.sampling_algorithms import FPSInitialization, farthest_point_sampling
 
 
 class RandomRecommender(NonPredictiveRecommender):
@@ -34,15 +33,11 @@ class RandomRecommender(NonPredictiveRecommender):
         candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
-        is_hybrid = searchspace.type is SearchSpaceType.HYBRID
-
-        # Sample continuous part if applicable
-        if is_hybrid or searchspace.type is SearchSpaceType.CONTINUOUS:
-            cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
-            if searchspace.type is SearchSpaceType.CONTINUOUS:
-                return cont_random
+        if searchspace.type is SearchSpaceType.CONTINUOUS:
+            return searchspace.continuous.sample_uniform(batch_size=batch_size)
 
         # Restrict to a random subset if subset-generating constraints are present
+        is_hybrid = searchspace.type is SearchSpaceType.HYBRID
         if searchspace.discrete.n_subsets > 0:
             masks = searchspace.discrete.sample_subset_masks(
                 candidates_exp,
@@ -65,6 +60,7 @@ class RandomRecommender(NonPredictiveRecommender):
         if not is_hybrid:
             return disc_random
 
+        cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
         cont_random.index = disc_random.index
         return pd.concat([disc_random, cont_random], axis=1)
 
@@ -72,16 +68,6 @@ class RandomRecommender(NonPredictiveRecommender):
     def __str__(self) -> str:
         fields = [to_string("Compatibility", self.compatibility, single_line=True)]
         return to_string(self.__class__.__name__, *fields)
-
-
-class FPSInitialization(Enum):
-    """Initialization methods for farthest point sampling."""
-
-    FARTHEST = "farthest"
-    """Selects the first two points with the largest distance."""
-
-    RANDOM = "random"
-    """Selects the first point uniformly at random."""
 
 
 @define
@@ -104,7 +90,7 @@ class FPSRecommender(NonPredictiveRecommender):
     """See :func:`~baybe.utils.sampling_algorithms.farthest_point_sampling`.
 
     If the optional package 'fpsample' is used, only
-    :attr:`~baybe.recommenders.pure.nonpredictive.sampling.FPSInitialization.FARTHEST`
+    :attr:`~baybe.utils.sampling_algorithms.FPSInitialization.FARTHEST`
     is supported.
     """
 
@@ -171,7 +157,7 @@ class FPSRecommender(NonPredictiveRecommender):
             ilocs = farthest_point_sampling(
                 candidates_scaled,
                 batch_size,
-                initialization=self.initialization.value,
+                initialization=self.initialization,
                 random_tie_break=self.random_tie_break,
             )
         return candidates_comp.index[ilocs]

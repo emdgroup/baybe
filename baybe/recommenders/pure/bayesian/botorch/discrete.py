@@ -132,7 +132,7 @@ def recommend_discrete_without_subsets(
     #   handle continuous parameters, a corresponding utility could be extracted.
     idxs = pd.Index(
         pd.merge(
-            pd.DataFrame(points, columns=candidates_comp.columns),
+            pd.DataFrame(points.numpy(), columns=candidates_comp.columns),
             candidates_comp.reset_index(),
             on=list(candidates_comp),
             how="left",

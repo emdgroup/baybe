@@ -5,16 +5,13 @@ from collections.abc import Collection, Sequence
 from typing import TypeVar
 
 import pandas as pd
+from exceptiongroup import ExceptionGroup
 
 from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
 from baybe.utils.dataframe import get_transform_objects
-
-try:  # For python < 3.11, use the exceptiongroup backport
-    ExceptionGroup
-except NameError:
-    from exceptiongroup import ExceptionGroup
+from baybe.utils.validation import validate_parameter_input
 
 _T = TypeVar("_T", bound=Parameter)
 
@@ -84,6 +81,41 @@ def validate_dataframe_active_values(
                 )
     if exceptions:
         raise ExceptionGroup("Dataframe validation errors", exceptions)
+
+
+def _get_value_failure_reason(
+    configuration: pd.DataFrame, /, parameters: Sequence[Parameter]
+) -> str | None:
+    """Get the reason why a configuration has missing or invalid parameter values.
+
+    A value is invalid if it fails
+    :func:`~baybe.utils.validation.validate_parameter_input`, with numerical values
+    required to be within tolerance, or :func:`validate_dataframe_active_values`.
+
+    Args:
+        configuration: A dataframe containing a single configuration, with a column
+            for each parameter. Additional columns are ignored.
+        parameters: The parameters to check against.
+
+    Returns:
+        The reason naming the affected parameters, or ``None`` if all values are valid.
+    """
+    if missing := [p.name for p in parameters if configuration[p.name].isna().any()]:
+        return f"missing values for parameters {missing}"
+
+    def is_valid(p: Parameter) -> bool:
+        try:
+            validate_parameter_input(
+                configuration, [p], numerical_measurements_must_be_within_tolerance=True
+            )
+            validate_dataframe_active_values(configuration, [p])
+        except (TypeError, ValueError, ExceptionGroup):
+            return False
+        return True
+
+    if invalid := [p.name for p in parameters if not is_valid(p)]:
+        return f"invalid values for parameters {invalid}"
+    return None
 
 
 def get_transform_parameters(

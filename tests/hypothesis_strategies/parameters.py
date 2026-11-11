@@ -12,6 +12,7 @@ from baybe.parameters.categorical import (
     TaskParameter,
 )
 from baybe.parameters.custom import CustomDiscreteParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -35,6 +36,29 @@ categories = st.lists(
     st.one_of(st.text(min_size=1), st.booleans()), min_size=2, unique=True
 )
 """A strategy that generates parameter categories."""
+
+
+@st.composite
+def kernel_overrides(draw: st.DrawFn, parameter_name: str, scoped: bool | None = None):
+    """Generate valid kernel overrides for a parameter.
+
+    Args:
+        draw: Hypothesis draw object.
+        parameter_name: The name of the parameter the override belongs to.
+        scoped: Whether the kernel is scoped to the parameter (``True``), unscoped
+            (``False``), or either (``None``).
+
+    Returns:
+        A kernel override or ``None``.
+    """
+    from tests.hypothesis_strategies.kernels import kernels
+
+    kernel = draw(st.one_of(st.none(), kernels(parameter_names=(parameter_name,))))
+    if scoped is None:
+        scoped = draw(st.booleans())
+    if kernel is not None and not scoped:
+        kernel = kernel._scope_to_parameter(None)
+    return kernel
 
 
 @st.composite
@@ -120,8 +144,13 @@ def numerical_discrete_parameters(
             )
         )
     param_metadata = draw(measurable_metadata())
+    override_kernel = draw(kernel_overrides(name))
     return NumericalDiscreteParameter(
-        name=name, values=values, tolerance=tolerance, metadata=param_metadata
+        name=name,
+        values=values,
+        tolerance=tolerance,
+        metadata=param_metadata,
+        override_kernel=override_kernel,
     )
 
 
@@ -131,8 +160,12 @@ def numerical_continuous_parameters(draw: st.DrawFn):
     name = draw(parameter_names)
     bounds = draw(intervals(exclude_half_bounded=True, exclude_fully_unbounded=True))
     param_metadata = draw(measurable_metadata())
+    override_kernel = draw(kernel_overrides(name))
     return NumericalContinuousParameter(
-        name=name, bounds=bounds, metadata=param_metadata
+        name=name,
+        bounds=bounds,
+        metadata=param_metadata,
+        override_kernel=override_kernel,
     )
 
 
@@ -144,12 +177,14 @@ def categorical_parameters(draw: st.DrawFn):
     encoding = draw(st.sampled_from(CategoricalEncoding))
     active_values = draw(_active_values(values))
     param_metadata = draw(measurable_metadata())
+    override_kernel = draw(kernel_overrides(name))
     return CategoricalParameter(
         name=name,
         values=values,
         encoding=encoding,
         active_values=active_values,
         metadata=param_metadata,
+        override_kernel=override_kernel,
     )
 
 
@@ -160,8 +195,15 @@ def task_parameters(draw: st.DrawFn):
     values = draw(categories)
     active_values = draw(_active_values(values))
     param_metadata = draw(measurable_metadata())
+    override_transfer_learning_mode = draw(
+        st.one_of(st.none(), st.sampled_from(TransferLearningMode))
+    )
     return TaskParameter(
-        name=name, values=values, active_values=active_values, metadata=param_metadata
+        name=name,
+        values=values,
+        active_values=active_values,
+        metadata=param_metadata,
+        override_transfer_learning_mode=override_transfer_learning_mode,
     )
 
 
@@ -180,6 +222,7 @@ def substance_parameters(draw: st.DrawFn):
     encoding = draw(st.sampled_from(encodings))
 
     param_metadata = draw(measurable_metadata())
+    override_kernel = draw(kernel_overrides(name))
 
     return SubstanceParameter(
         name=name,
@@ -188,6 +231,7 @@ def substance_parameters(draw: st.DrawFn):
         encoding=encoding,
         active_values=active_values,
         metadata=param_metadata,
+        override_kernel=override_kernel,
     )
 
 
@@ -199,12 +243,14 @@ def custom_parameters(draw: st.DrawFn):
     decorrelate = draw(decorrelations)
     active_values = draw(_active_values(list(data.index)))
     param_metadata = draw(measurable_metadata())
+    override_kernel = draw(kernel_overrides(name))
     return CustomDiscreteParameter(
         name=name,
         data=data,
         decorrelate=decorrelate,
         active_values=active_values,
         metadata=param_metadata,
+        override_kernel=override_kernel,
     )
 
 

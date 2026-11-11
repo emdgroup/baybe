@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Collection, Iterable
+from collections.abc import Collection, Iterable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -12,12 +12,7 @@ from baybe.transformations.basic import AffineTransformation, IdentityTransforma
 from baybe.utils.basic import is_all_instance
 
 if TYPE_CHECKING:
-    from torch import Tensor
-
-    from baybe.transformations.base import Transformation
-
-    TensorCallable = Callable[[Tensor], Tensor]
-    """Type alias for a torch-based function mapping from reals to reals."""
+    from baybe.transformations.base import TensorCallable, Transformation
 
 
 def convert_transformation(x: Transformation | TensorCallable, /) -> Transformation:
@@ -94,7 +89,11 @@ def compress_transformations(
         if t == id_:
             continue
 
-        last = aggregated.pop() if aggregated else None
+        if not aggregated:
+            aggregated.append(t)
+            continue
+
+        last = aggregated.pop()
         match (last, t):
             case AffineTransformation(), AffineTransformation():
                 # Two subsequent affine transformations
@@ -110,10 +109,8 @@ def compress_transformations(
                 aggregated.append(
                     evolve(t, peak=t.peak - last.shift, cutoffs=t.cutoffs - last.shift)
                 )
-            case (None, _):
-                aggregated.append(t)
-            case (l, _):
-                aggregated.append(l)
+            case _:
+                aggregated.append(last)
                 aggregated.append(t)
 
     # Handle edge case when there was only a single identity transformation
@@ -152,7 +149,7 @@ def sum_affine_transformations(
     affines = [tr for tr, is_aff in zip(transformations, is_affine) if is_aff]
     non_affines = [tr for tr, is_aff in zip(transformations, is_affine) if not is_aff]
 
-    # Compute the combined affine transformation coeffiecients
+    # Compute the combined affine transformation coefficients
     factor = sum(
         tr.factor if isinstance(tr, AffineTransformation) else 1.0 for tr in affines
     )

@@ -138,7 +138,7 @@ def recommend_hybrid_without_subsets(
     # index during the merge, which is used later for back-translation into the
     # experimental representation
     merged = pd.merge(
-        pd.DataFrame(points),
+        pd.DataFrame(points.numpy()),
         candidates_comp.reset_index(),
         on=list(candidates_comp.columns),
         how="left",

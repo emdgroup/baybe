@@ -33,7 +33,7 @@ dynamic = ['version']
 dependencies = [
     "attrs>=26.1.0",
     "botorch>=0.13.0,<1",
-    "cattrs>=25.2.0",
+    "cattrs>=26.1.0",
     "exceptiongroup",
     "gpytorch>=1.9.1,<2",
     "joblib>1.4.0,<2",
@@ -63,6 +63,7 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 extras = [
     "baybe[chem]",
     "baybe[insights]",
+    "baybe[llm]",
     "baybe[onnx]",
     "baybe[polars]",
     "baybe[simulation]",
@@ -91,18 +92,23 @@ dev = [
     "baybe[examples]",
     "baybe[docs]",
     "baybe[lint]",
-    "baybe[mypy]",
+    "baybe[typecheck]",
     "baybe[test]",
     "baybe[benchmarking]",
     "pip-audit>=2.5.5",
     "setuptools-scm>=7.1.0",
     "tox-uv>=1.7.0",
-    "uv>=0.11.3",
+    "uv>=0.11.25",
 ]
 
 insights = [
     "lime>=0.2.0.1",
     "shap>=0.47.0",
+]
+
+llm = [
+    "jinja2>=3.1.0",
+    "litellm>=1.97.0",
 ]
 
 docs = [
@@ -136,8 +142,8 @@ lint = [
     "pre-commit==4.2.0", # see DEV TOOLS NOTE
     "pydoclint==0.5.5", # see DEV TOOLS NOTE
     "pyupgrade==3.21.2", # see DEV TOOLS NOTE
-    "ruff==0.15.9", # see DEV TOOLS NOTE
-    "zizmor==1.25.2", # see DEV TOOLS NOTE
+    "ruff==0.15.20", # see DEV TOOLS NOTE
+    "zizmor==1.26.1", # see DEV TOOLS NOTE
 ]
 
 mypy = [
@@ -148,8 +154,13 @@ mypy = [
     "types-tqdm"
 ]
 
+typecheck = [
+    "baybe[mypy]",
+    "pyrefly>=1.4.0,<2",
+]
+
 polars = [
-    "polars[pyarrow]>=0.19.19,<2",
+    "polars[pyarrow]>=0.20.8,<2",
 ]
 
 simulation = [
@@ -172,6 +183,7 @@ test = [
     "tenacity>=8.5.0",
     "pytest>=7.2.0",
     "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.5.0",
 ]
 
 [build-system]
@@ -191,3 +203,17 @@ packages = ["baybe"]
 
 [tool.uv]
 exclude-newer = "7 days"
+
+[tool.pyrefly]
+project-includes = ["baybe"]
+project-excludes = [
+    "baybe/recommenders/naive.py",
+    "baybe/simulation/**",
+    "baybe/utils/dataframe.py",
+    "baybe/utils/clustering_algorithms/third_party/kmedoids.py",
+]
+replace-imports-with-any = ["sklearn.*", "shap"]
+
+[tool.pyrefly.errors]
+unused-ignore = "error"
+missing-override-decorator = "error"

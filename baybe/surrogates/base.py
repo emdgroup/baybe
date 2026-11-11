@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from enum import Enum, auto
@@ -13,7 +14,11 @@ from attrs import define, field
 from joblib.hashing import hash
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibleSurrogateError, ModelNotTrainedError
+from baybe.exceptions import (
+    IncompatibleSurrogateError,
+    ModelNotTrainedError,
+    UnusedObjectWarning,
+)
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
@@ -82,6 +87,10 @@ class SurrogateProtocol(Protocol):
 class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Abstract base class for all surrogate models."""
 
+    supports_kernel_overrides: ClassVar[bool] = False
+    """Class variable encoding whether or not the surrogate supports
+    parameter-specific kernel overrides."""
+
     supports_transfer_learning: ClassVar[bool]
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
@@ -99,7 +108,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     _measurements: pd.DataFrame | None = field(init=False, default=None, eq=False)
     """The measurements used for training. Available after fitting."""
 
-    _measurements_hash: str = field(init=False, default=None, eq=False)
+    _measurements_hash: str | None = field(init=False, default=None, eq=False)
     """The hash of the data the surrogate was trained on."""
 
     _input_scaler: ColumnTransformer | None = field(init=False, default=None, eq=False)
@@ -151,7 +160,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
     @staticmethod
     def _make_parameter_scaler_factory(
-        parameter: Parameter,
+        parameter: Parameter, /
     ) -> type[InputTransform] | None:
         """Return the scaler factory to be used for the given parameter.
 
@@ -406,7 +415,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         # TODO: consider adding a validation step for `measurements`
 
         # Validate multi-target compatibility
-        if objective.is_multi_output and not self.supports_multi_output:
+        if objective._is_multi_model and not self.supports_multi_output:
             raise IncompatibleSurrogateError(
                 f"You attempted to train a single-output surrogate in a "
                 f"{len(objective.targets)}-target multi-output context. Either use "
@@ -429,6 +438,15 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 f"The search space contains task parameters but the selected "
                 f"surrogate model type ({self.__class__.__name__}) does not "
                 f"support transfer learning."
+            )
+
+        if not self.supports_kernel_overrides and (
+            names := [p.name for p in searchspace.parameters if p.override_kernel]
+        ):
+            warnings.warn(
+                f"The selected surrogate model ({self.__class__.__name__}) does not "
+                f"use the kernel overrides specified for parameters {names}.",
+                UnusedObjectWarning,
             )
 
         # Block partial measurements

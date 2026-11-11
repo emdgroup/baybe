@@ -7,12 +7,13 @@ import math
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from itertools import combinations
 from math import comb
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias, get_args
 
 import cattrs
 import numpy as np
-from attrs import define, field
+from attrs import define, evolve, field
 from attrs.validators import deep_iterable, gt, in_, instance_of, lt
+from typing_extensions import Self
 
 from baybe.constraints.base import (
     CardinalityConstraint,
@@ -29,7 +30,10 @@ if TYPE_CHECKING:
 
     ConstraintTuple = tuple[Tensor, Tensor, float]
 
-_valid_linear_constraint_operators = ["=", ">=", "<="]
+LinearConstraintOperator: TypeAlias = Literal["=", ">=", "<="]
+"""An operator supported by continuous linear constraints."""
+
+_valid_linear_constraint_operators = get_args(LinearConstraintOperator)
 
 
 @define
@@ -41,7 +45,9 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     """
 
     # object variables
-    operator: str = field(validator=in_(_valid_linear_constraint_operators))
+    operator: LinearConstraintOperator = field(
+        validator=in_(_valid_linear_constraint_operators)
+    )
     """Defines the operator used in the equation. Internally this will negate rhs and
     coefficients for `<=`."""
 
@@ -49,7 +55,9 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
         validator=deep_iterable(member_validator=finite_float),
     )
-    """In-/equality coefficient for each entry in ``parameters``."""
+    """The coefficients for the weighted sum, one per entry in ``parameters``.
+
+    Defaults to all-ones, i.e. an unweighted sum."""
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
@@ -81,6 +89,8 @@ class ContinuousLinearConstraint(ContinuousConstraint):
                 "The given 'coefficients' list must have one floating point entry for "
                 "each entry in 'parameters'."
             )
+        if any(c == 0.0 for c in coefficients):
+            raise ValueError("All entries in 'coefficients' must be non-zero.")
 
     @coefficients.default
     def _default_coefficients(self) -> tuple[float, ...]:
@@ -97,9 +107,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         """Whether this constraint models an equality (assumed inequality otherwise)."""
         return self.operator == "="
 
-    def _drop_parameters(
-        self, parameter_names: Collection[str]
-    ) -> ContinuousLinearConstraint:
+    def _drop_parameters(self, parameter_names: Collection[str]) -> Self:
         """Create a copy of the constraint with certain parameters removed.
 
         Args:
@@ -114,9 +122,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             for p, c in zip(self.parameters, self.coefficients, strict=True)
             if p not in parameter_names
         )
-        return ContinuousLinearConstraint(
-            parameters, self.operator, coefficients, self.rhs
-        )
+        return evolve(self, parameters=parameters, coefficients=coefficients)
 
     def to_botorch(
         self,
@@ -244,7 +250,10 @@ class ContinuousCardinalityConstraint(
     def inactive_parameter_combinations(self) -> Iterator[frozenset[str]]:
         """Get an iterator over all possible combinations of inactive parameters."""
         for n_inactive_parameters in self._inactive_set_sizes():
-            yield from combinations(self.parameters, n_inactive_parameters)
+            yield from (
+                frozenset(c)
+                for c in combinations(self.parameters, n_inactive_parameters)
+            )
 
     def sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample sets of inactive parameters according to the cardinality constraints.

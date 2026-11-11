@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import gc
 import sys
+from collections.abc import Collection
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeAlias, TypeVar
 
 import pandas as pd
 from attrs import Attribute, define, field
-from typing_extensions import override
+from typing_extensions import TypeIs, override
 
 from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
@@ -83,15 +84,46 @@ class GPComponentType(Enum):
         return tuple(types)
 
 
-def _is_gpytorch_component_class(obj: Any, /) -> bool:
-    """Check if a class is a GPyTorch component class using lazy loading."""
-    if sys.modules.get("gpytorch") is None:
-        return False
-    from gpytorch.kernels import Kernel as GPyTorchKernel
-    from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
-    from gpytorch.means import Mean as GPyTorchMean
+def _is_gpytorch_component_class(
+    obj: Any,
+    /,
+    component_types: Collection[GPComponentType] = tuple(GPComponentType),
+) -> bool:
+    """Check if a class is a GPyTorch component class using lazy loading.
 
-    return issubclass(obj, (GPyTorchKernel, GPyTorchMean, GPyTorchLikelihood))
+    Args:
+        obj: The class to check.
+        component_types: The component types to check against.
+
+    Returns:
+        ``True`` if the class is a GPyTorch class of one of the given component types.
+    """
+    # GPyTorch types are only returned if GPyTorch has already been imported
+    types = tuple(
+        t
+        for c in component_types
+        for t in c.get_types()
+        if not issubclass(t, BayBEGPComponent)
+    )
+    return issubclass(obj, types)
+
+
+def _is_gpytorch_component(
+    obj: Any,
+    /,
+    component_types: Collection[GPComponentType] = tuple(GPComponentType),
+) -> TypeIs[GPyTorchGPComponent]:
+    """Check if an object is a GPyTorch component instance using lazy loading.
+
+    Args:
+        obj: The object to check.
+        component_types: The component types to check against.
+
+    Returns:
+        ``True`` if the object is a GPyTorch instance of one of the given component
+        types.
+    """
+    return _is_gpytorch_component_class(type(obj), component_types)
 
 
 def _validate_component(instance: Any, attribute: Attribute, value: Any) -> None:
@@ -156,7 +188,7 @@ def to_component_factory(
     Raises:
         TypeError: If the given component does not match the allowed types.
     """
-    if isinstance(obj, BayBEGPComponent) or _is_gpytorch_component_class(type(obj)):
+    if isinstance(obj, BayBEGPComponent) or _is_gpytorch_component(obj):
         if component_type is not None:
             allowed_types = component_type.get_types()
             if not isinstance(obj, allowed_types):

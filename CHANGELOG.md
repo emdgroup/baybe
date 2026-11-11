@@ -4,6 +4,94 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Removed
+- `eval_during_creation` / `eval_during_modeling` constraint class variables
+
+### Breaking Changes
+- All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
+  are now keyword-only
+- `df_apply_permutation_augmentation` has a different interface and now expects
+  permutation groups instead of column groups
+- `ParameterSelectorProtocol.__call__` now declares its input as positional-only
+- `SequentialMetaRecommender.recommenders` is now a `tuple` instead of a `list`, making
+  the attribute immutable. Serialization is unaffected
+
+### Fixed
+- `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
+  values of invariant points are degenerate
+- Multi-output surrogate compatibility check in `Surrogate.fit` now correctly uses the
+  number of required models instead of the number of transform outputs
+- `SigmoidTransformation` no longer produces NaN gradients for inputs far from its
+  center, which caused `OptimizationGradientError` during recommendation
+- `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
+  constraint filtering
+
+### Added
+- `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
+  weighted simplex sum constraints
+- `Symmetry` concept for expressing symmetries of the optimization problem, including
+  `PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry` classes, which trigger
+  automatic data augmentation when assigned to the `symmetries` attribute of a
+  `BayesianRecommender`
+- `Parameter.is_equivalent` method for structural parameter comparison
+- `posterior_mean_function` method to `GaussianProcessSurrogate`
+- `exclude` keyword-only flag available on all discrete filtering constraints,
+  inverting the specification to keep the complement
+- `DiscreteSelectionConstraint` as the condition-based filtering constraint
+  (inclusion-by-default; replaces `DiscreteExcludeConstraint`)
+- `TaskParameter.override_transfer_learning_mode` (and the corresponding
+  `TransferLearningMode` enum) for selecting the kernel that models the task
+  correlations in transfer learning, taking precedence over the task kernel of the
+  configured kernel factory
+- `DiscreteRepetitionLimitConstraint` for controlling value repetition across parameters
+  via `n_max_repetitions` (replaces `DiscreteNoLabelDuplicatesConstraint` and
+  `DiscreteLinkedParametersConstraint`)
+- `DiscreteLinearConstraint` for (optionally weighted) sum constraints on discrete
+  parameters, supporting `coefficients` and mirroring `ContinuousLinearConstraint`'s
+  `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
+- Parameter-specific kernel overrides for conveniently composing Gaussian process
+  kernels on individual parameter dimensions
+- `LLMRecommender` for LLM-based experimental design via LiteLLM,
+  available through the optional `llm` dependency group
+- `TwoPhaseMetaRecommender.with_llm_initial_recommender` and
+  `SequentialMetaRecommender.with_alternating_llm_recommender` convenience constructors
+  built on top of `LLMRecommender`: the former warm-starts a campaign with the LLM and
+  then switches to another recommender, the latter alternates between the two
+
+### Changed
+- `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
+  kernel in multi-task scenarios, matching BoTorch's `MultiTaskGP` defaults introduced
+  in version `0.18.0`
+- The `BOTORCH` GP preset now requires BoTorch `>= 0.18.0` and raises an
+  `IncompatibilityError` if an older version is installed
+- `ContinuousLinearConstraint` and `SubspaceDiscrete.from_simplex`
+   now forbid 0 as coefficients
+- `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
+- Bumped polars to `>=0.20.8`
+- Bumped cattrs to `>=26.1.0`
+- The factory fields of `GaussianProcessSurrogate` (`kernel_factory`,
+  `mean_factory`, `likelihood_factory`, `fit_criterion_factory`) now default to
+  `None`, meaning "auto-select based on context at fit time". Accessing a field
+  before fitting may return `None` instead of a concrete factory.
+- Discrete filtering constraints now uniformly define what is **kept** in the search
+  space; set `exclude=True` to invert and keep the complement instead
+- Renamed `exclusion_constraints` example to `selection_constraints`
+- `DiscreteProductConstraint` now uses `operator`/`rhs`/`tolerance` instead of
+  `condition`
+
+### Deprecations
+- `DiscreteExcludeConstraint` in favor of
+  `DiscreteSelectionConstraint(..., exclude=True)`
+- `DiscreteNoLabelDuplicatesConstraint` in favor of
+  `DiscreteRepetitionLimitConstraint(..., n_max_repetitions=1)`
+- `DiscreteLinkedParametersConstraint` in favor of
+  `DiscreteRepetitionLimitConstraint(..., n_max_repetitions=len(parameters)-1,
+  exclude=True)`
+- `DiscreteSumConstraint` in favor of `DiscreteLinearConstraint`
+- `DiscreteProductConstraint(condition=ThresholdCondition(...))` in favor of
+  `DiscreteProductConstraint(operator=..., rhs=...)`
+
 ## [0.15.1] - 2026-11-11
 ### Added
 - Support for Python 3.15
