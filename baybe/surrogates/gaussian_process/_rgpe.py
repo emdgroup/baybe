@@ -213,18 +213,7 @@ class RGPEModel(Model):
         return 1
 
     def fantasize(self, *args: Any, **kwargs: Any) -> NoReturn:
-        """Raise, since conditioning on (fantasized) observations is not supported.
-
-        Defined explicitly so that fantasy-based tools (e.g. knowledge gradient)
-        fail with an informative error.
-
-        Args:
-            *args: Ignored.
-            **kwargs: Ignored.
-
-        Raises:
-            NotImplementedError: Always.
-        """
+        """Raise, since fantasizing is not supported."""
         raise NotImplementedError(
             f"'{self.__class__.__name__}' does not support fantasizing observations."
         )
