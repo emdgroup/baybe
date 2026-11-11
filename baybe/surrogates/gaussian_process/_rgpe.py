@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any, NoReturn, cast
 import torch
 from botorch.models.model import Model
 from botorch.models.transforms.outcome import Standardize
-from botorch.models.utils import gpt_posterior_settings
 from botorch.posteriors import GPyTorchPosterior
 from gpytorch import settings as gpytorch_settings
 from gpytorch.distributions import MultivariateNormal
@@ -100,7 +99,7 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
         strict=False,
     )
 
-    with torch.no_grad(), gpt_posterior_settings():
+    with torch.no_grad():
         # Calling the model directly skips the transforms
         posterior = GPyTorchPosterior(loo_model(train_x))
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
