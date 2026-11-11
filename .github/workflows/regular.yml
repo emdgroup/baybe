@@ -80,8 +80,7 @@ jobs:
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'},
                       {semantic: '3.13', tox: 'py313'}, 
-                      {semantic: '3.14', tox: 'py314'},
-                      {semantic: '3.15', tox: 'py315'} ]
+                      {semantic: '3.14', tox: 'py314'} ]
     name: Type Check ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:

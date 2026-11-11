@@ -107,7 +107,7 @@ jobs:
     needs: [lint]
     strategy:
       matrix:
-        py-version: [ {semantic: '3.15', tox: 'py315'} ]
+        py-version: [ {semantic: '3.14', tox: 'py314'} ]
     name: Type Check ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
