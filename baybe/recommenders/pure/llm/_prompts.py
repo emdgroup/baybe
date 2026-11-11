@@ -3,27 +3,19 @@
 from __future__ import annotations
 
 import inspect
-import json
-from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 import pandas as pd
-from attrs import fields
 
 from baybe._llm.exceptions import LLMResponseError
-from baybe.parameters.base import _DiscreteLabelLikeParameter
-from baybe.parameters.categorical import CategoricalParameter
-from baybe.parameters.custom import CustomDiscreteParameter
-from baybe.parameters.substance import SubstanceParameter
+from baybe._llm.rendering import to_json_lines, to_prompt_dict
 from baybe.recommenders.pure.llm._schema import _response_format
 from baybe.searchspace import SearchSpace
 from baybe.transformations.base import Transformation
 from baybe.utils.basic import get_subclasses
 
 if TYPE_CHECKING:
-    from baybe.constraints.base import Constraint
     from baybe.objectives.base import Objective
-    from baybe.parameters.base import Parameter
 
 # The number of configurations sampled from the search space as examples
 _N_EXAMPLE_CONFIGURATIONS = 3
@@ -130,64 +122,6 @@ class _PromptContext(TypedDict):
     transformations: str | None
 
 
-def _drop_empty(obj: Any, /) -> Any:
-    """Recursively drop ``None`` values and empty dictionaries from dictionaries.
-
-    Args:
-        obj: The serialized object to clean up.
-
-    Returns:
-        The cleaned-up object.
-    """
-    if isinstance(obj, dict):
-        cleaned = {key: _drop_empty(value) for key, value in obj.items()}
-        return {k: v for k, v in cleaned.items() if v is not None and v != {}}
-    if isinstance(obj, list):
-        return [_drop_empty(value) for value in obj]
-    return obj
-
-
-def _to_prompt_dict(obj: Parameter | Constraint | Objective, /) -> dict[str, Any]:
-    """Serialize an object into the representation shown to the language model.
-
-    Args:
-        obj: The object to serialize.
-
-    Returns:
-        The serialized object.
-    """
-    serialized = obj.to_dict()
-    if isinstance(obj, _DiscreteLabelLikeParameter):
-        active = list(obj.active_values)
-        serialized.pop(fields(_DiscreteLabelLikeParameter)._active_values.alias)
-        # For label-like parameters, ``values`` holds the active labels only.
-        serialized[fields(CategoricalParameter)._values.alias] = active
-        if isinstance(obj, SubstanceParameter):
-            # Substance parameters keep the SMILES of their active labels.
-            serialized[fields(SubstanceParameter).data.alias] = {
-                label: smiles for label, smiles in obj.data.items() if label in active
-            }
-        elif isinstance(obj, CustomDiscreteParameter):
-            # The descriptor table of custom parameters is omitted since it is only
-            # relevant for the surrogate model.
-            del serialized[fields(CustomDiscreteParameter).data.alias]
-    # ``None`` values and empty dictionaries are dropped since they carry no
-    # information for the language model.
-    return _drop_empty(serialized)
-
-
-def _to_json_lines(serialized_objects: Iterable[dict[str, Any]], /) -> str:
-    """Render serialized objects as JSON, one object per line.
-
-    Args:
-        serialized_objects: The serialized objects to render.
-
-    Returns:
-        The rendered objects.
-    """
-    return "\n".join(json.dumps(obj, ensure_ascii=False) for obj in serialized_objects)
-
-
 def _describe_transformations(objective_json: str, /) -> str | None:
     """Describe the transformations used in an objective via their docstrings.
 
@@ -208,20 +142,6 @@ def _describe_transformations(objective_json: str, /) -> str | None:
     if not used:
         return None
     return "\n\n".join(f"{t.__name__}: {inspect.getdoc(t)}" for t in used)
-
-
-def _table_text(df: pd.DataFrame | None, /) -> str | None:
-    """Render a dataframe as a table.
-
-    Args:
-        df: The optional dataframe to render.
-
-    Returns:
-        The rendered table, or ``None`` if no or an empty dataframe is provided.
-    """
-    if df is None or df.empty:
-        return None
-    return df.to_string(index=False)
 
 
 def _sample_example_configurations(searchspace: SearchSpace, /) -> pd.DataFrame:
@@ -302,7 +222,7 @@ def make_prompt(
     target_names = [t.name for t in objective.targets] if objective is not None else []
     constraints = searchspace.constraints
     objective_json = (
-        _to_json_lines([_to_prompt_dict(objective)]) if objective is not None else None
+        to_json_lines([to_prompt_dict(objective)]) if objective is not None else None
     )
     context: _PromptContext = {
         "experiment_description": experiment_description,
@@ -312,11 +232,9 @@ def make_prompt(
             if objective_json is not None
             else None
         ),
-        "parameters": _to_json_lines(
-            _to_prompt_dict(p) for p in searchspace.parameters
-        ),
+        "parameters": to_json_lines(to_prompt_dict(p) for p in searchspace.parameters),
         "constraints": (
-            _to_json_lines(_to_prompt_dict(c) for c in constraints)
+            to_json_lines(to_prompt_dict(c) for c in constraints)
             if constraints
             else None
         ),
@@ -330,12 +248,12 @@ def make_prompt(
         #   them is only caught by the search space validation of the response, which
         #   reports them to the model for the recovery attempt.
         "measurements": (
-            _table_text(measurements[parameter_names + target_names])
+            measurements[parameter_names + target_names].to_string(index=False)
             if measurements is not None and not measurements.empty
             else None
         ),
         "pending_experiments": (
-            _table_text(pending_experiments[parameter_names])
+            pending_experiments[parameter_names].to_string(index=False)
             if pending_experiments is not None and not pending_experiments.empty
             else None
         ),
