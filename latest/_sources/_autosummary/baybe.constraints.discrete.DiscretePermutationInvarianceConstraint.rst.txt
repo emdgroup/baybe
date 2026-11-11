@@ -33,8 +33,6 @@ DiscretePermutationInvarianceConstraint
    
       ~DiscretePermutationInvarianceConstraint.to_json
    
-      ~DiscretePermutationInvarianceConstraint.to_symmetry
-   
    
    
 
@@ -45,7 +43,9 @@ DiscretePermutationInvarianceConstraint
    .. autosummary::
    
       ~DiscretePermutationInvarianceConstraint.dependencies
-      ~DiscretePermutationInvarianceConstraint.exclude
+      ~DiscretePermutationInvarianceConstraint.eval_during_augmentation
+      ~DiscretePermutationInvarianceConstraint.eval_during_creation
+      ~DiscretePermutationInvarianceConstraint.eval_during_modeling
       ~DiscretePermutationInvarianceConstraint.has_polars_implementation
       ~DiscretePermutationInvarianceConstraint.is_continuous
       ~DiscretePermutationInvarianceConstraint.is_discrete

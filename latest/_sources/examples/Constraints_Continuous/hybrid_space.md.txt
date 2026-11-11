@@ -14,11 +14,6 @@ details on this aspect.
 
 
 ```python
-import os
-```
-
-
-```python
 import numpy as np
 import pandas as pd
 from botorch.test_functions import Rastrigin
@@ -29,7 +24,8 @@ from botorch.test_functions import Rastrigin
 from baybe import Campaign
 from baybe.constraints import (
     ContinuousLinearConstraint,
-    DiscreteLinearConstraint,
+    DiscreteSumConstraint,
+    ThresholdCondition,
 )
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
@@ -103,11 +99,11 @@ We model the following constraints:
 
 ```python
 constraints = [
-    DiscreteLinearConstraint(
+    DiscreteSumConstraint(
         parameters=["x_1", "x_2"],
-        operator="==",
-        rhs=1.0,
-        tolerance=STRIDE / 2.0,
+        condition=ThresholdCondition(
+            threshold=1.0, operator="==", tolerance=STRIDE / 2.0
+        ),
     ),
     ContinuousLinearConstraint(
         parameters=["x_3", "x_4"], operator="=", coefficients=(1.0, -1.0), rhs=2.0
@@ -143,12 +139,7 @@ campaign = Campaign(
 
 
 ```python
-SMOKE_TEST = "SMOKE_TEST" in os.environ
-```
-
-
-```python
-BATCH_SIZE = 2 if SMOKE_TEST else 5
+BATCH_SIZE = 5
 N_ITERATIONS = 2
 ```
 

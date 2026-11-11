@@ -1,0 +1,31 @@
+baybe.utils.clustering\_algorithms.third\_party.kmedoids
+========================================================
+
+.. automodule:: baybe.utils.clustering_algorithms.third_party.kmedoids
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      KMedoids
+   
+   
+
+   
+   
+   
+
+
+

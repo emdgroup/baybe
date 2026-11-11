@@ -1,0 +1,6 @@
+baybe.constraints.validation.validate\_cardinality\_constraint\_parameter\_bounds
+=================================================================================
+
+.. currentmodule:: baybe.constraints.validation
+
+.. autofunction:: validate_cardinality_constraint_parameter_bounds

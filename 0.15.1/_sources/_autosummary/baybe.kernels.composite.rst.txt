@@ -1,0 +1,33 @@
+baybe.kernels.composite
+=======================
+
+.. automodule:: baybe.kernels.composite
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      AdditiveKernel
+      ProductKernel
+      ScaleKernel
+   
+   
+
+   
+   
+   
+
+
+

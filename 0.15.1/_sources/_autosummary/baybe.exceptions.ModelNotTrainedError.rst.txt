@@ -1,0 +1,6 @@
+baybe.exceptions.ModelNotTrainedError
+=====================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: ModelNotTrainedError

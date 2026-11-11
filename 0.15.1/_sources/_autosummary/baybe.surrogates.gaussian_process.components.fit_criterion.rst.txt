@@ -1,0 +1,40 @@
+baybe.surrogates.gaussian\_process.components.fit\_criterion
+============================================================
+
+.. automodule:: baybe.surrogates.gaussian_process.components.fit_criterion
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      FitCriterionFactoryProtocol
+      PlainFitCriterionFactory
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      FitCriterion
+   
+   
+
+   
+   
+   
+
+
+

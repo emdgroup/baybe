@@ -1,0 +1,7 @@
+baybe.insights.shap.SHAP\_PLOTS
+===============================
+
+.. currentmodule:: baybe.insights.shap
+
+
+.. autodata:: SHAP_PLOTS

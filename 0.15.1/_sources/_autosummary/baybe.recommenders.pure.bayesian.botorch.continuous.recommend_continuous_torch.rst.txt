@@ -1,0 +1,6 @@
+baybe.recommenders.pure.bayesian.botorch.continuous.recommend\_continuous\_torch
+================================================================================
+
+.. currentmodule:: baybe.recommenders.pure.bayesian.botorch.continuous
+
+.. autofunction:: recommend_continuous_torch

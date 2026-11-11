@@ -1,0 +1,6 @@
+baybe.utils.dataframe.add\_noise\_to\_perturb\_degenerate\_rows
+===============================================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: add_noise_to_perturb_degenerate_rows

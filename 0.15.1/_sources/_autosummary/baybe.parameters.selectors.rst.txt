@@ -1,0 +1,41 @@
+baybe.parameters.selectors
+==========================
+
+.. automodule:: baybe.parameters.selectors
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      to_parameter_selector
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      NameSelector
+      ParameterSelector
+      ParameterSelectorProtocol
+      TypeSelector
+   
+   
+
+   
+   
+   
+
+
+

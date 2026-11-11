@@ -1,0 +1,25 @@
+FPSInitialization
+=================
+
+.. currentmodule:: baybe.recommenders.pure.nonpredictive.sampling
+
+.. autoclass:: FPSInitialization
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~FPSInitialization.FARTHEST
+      ~FPSInitialization.RANDOM
+   
+   

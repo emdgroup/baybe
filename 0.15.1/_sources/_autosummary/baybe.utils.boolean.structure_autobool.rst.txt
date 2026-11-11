@@ -1,0 +1,6 @@
+baybe.utils.boolean.structure\_autobool
+=======================================
+
+.. currentmodule:: baybe.utils.boolean
+
+.. autofunction:: structure_autobool

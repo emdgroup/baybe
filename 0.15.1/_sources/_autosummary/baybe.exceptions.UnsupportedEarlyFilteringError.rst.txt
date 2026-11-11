@@ -1,0 +1,6 @@
+baybe.exceptions.UnsupportedEarlyFilteringError
+===============================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: UnsupportedEarlyFilteringError

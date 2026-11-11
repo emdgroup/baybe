@@ -1,0 +1,6 @@
+baybe.parameters.utils.activate\_parameter
+==========================================
+
+.. currentmodule:: baybe.parameters.utils
+
+.. autofunction:: activate_parameter

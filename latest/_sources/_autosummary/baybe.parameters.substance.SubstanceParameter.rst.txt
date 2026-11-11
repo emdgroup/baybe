@@ -21,8 +21,6 @@ SubstanceParameter
    
       ~SubstanceParameter.from_json
    
-      ~SubstanceParameter.is_equivalent
-   
       ~SubstanceParameter.is_in_range
    
       ~SubstanceParameter.summary
@@ -53,7 +51,6 @@ SubstanceParameter
       ~SubstanceParameter.is_continuous
       ~SubstanceParameter.is_discrete
       ~SubstanceParameter.is_numerical
-      ~SubstanceParameter.override_kernel
       ~SubstanceParameter.unit
       ~SubstanceParameter.values
       ~SubstanceParameter.data

@@ -1,0 +1,37 @@
+PartialAcquisitionFunction
+==========================
+
+.. currentmodule:: baybe.acquisition.partial
+
+.. autoclass:: PartialAcquisitionFunction
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PartialAcquisitionFunction.__init__
+   
+      ~PartialAcquisitionFunction.__call__
+   
+      ~PartialAcquisitionFunction.set_X_pending
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PartialAcquisitionFunction.botorch_acqf
+      ~PartialAcquisitionFunction.pinned_part
+      ~PartialAcquisitionFunction.pin_discrete
+   
+   

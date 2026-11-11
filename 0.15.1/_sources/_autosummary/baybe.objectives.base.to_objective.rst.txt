@@ -1,0 +1,6 @@
+baybe.objectives.base.to\_objective
+===================================
+
+.. currentmodule:: baybe.objectives.base
+
+.. autofunction:: to_objective

@@ -1,6 +1,0 @@
-baybe.exceptions.LLMIneligiblePointsError
-=========================================
-
-.. currentmodule:: baybe.exceptions
-
-.. autoexception:: LLMIneligiblePointsError

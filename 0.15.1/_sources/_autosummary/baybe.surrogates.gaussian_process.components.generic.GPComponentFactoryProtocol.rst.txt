@@ -1,0 +1,27 @@
+GPComponentFactoryProtocol
+==========================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.generic
+
+.. autoclass:: GPComponentFactoryProtocol
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~GPComponentFactoryProtocol.__init__
+   
+      ~GPComponentFactoryProtocol.__call__
+   
+   
+   
+
+   
+   
+   

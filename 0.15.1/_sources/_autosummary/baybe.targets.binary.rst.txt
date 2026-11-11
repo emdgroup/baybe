@@ -1,0 +1,39 @@
+baybe.targets.binary
+====================
+
+.. automodule:: baybe.targets.binary
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      ChoiceValue
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      BinaryTarget
+   
+   
+
+   
+   
+   
+
+
+

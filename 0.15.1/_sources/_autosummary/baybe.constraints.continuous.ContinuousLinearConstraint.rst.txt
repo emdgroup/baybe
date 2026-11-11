@@ -1,0 +1,54 @@
+ContinuousLinearConstraint
+==========================
+
+.. currentmodule:: baybe.constraints.continuous
+
+.. autoclass:: ContinuousLinearConstraint
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ContinuousLinearConstraint.__init__
+   
+      ~ContinuousLinearConstraint.from_dict
+   
+      ~ContinuousLinearConstraint.from_json
+   
+      ~ContinuousLinearConstraint.summary
+   
+      ~ContinuousLinearConstraint.to_botorch
+   
+      ~ContinuousLinearConstraint.to_dict
+   
+      ~ContinuousLinearConstraint.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ContinuousLinearConstraint.operator
+      ~ContinuousLinearConstraint.coefficients
+      ~ContinuousLinearConstraint.rhs
+      ~ContinuousLinearConstraint.is_interpoint
+      ~ContinuousLinearConstraint.eval_during_augmentation
+      ~ContinuousLinearConstraint.eval_during_creation
+      ~ContinuousLinearConstraint.eval_during_modeling
+      ~ContinuousLinearConstraint.is_continuous
+      ~ContinuousLinearConstraint.is_discrete
+      ~ContinuousLinearConstraint.is_eq
+      ~ContinuousLinearConstraint.numerical_only
+      ~ContinuousLinearConstraint.parameters
+   
+   

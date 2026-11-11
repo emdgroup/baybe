@@ -1,0 +1,39 @@
+baybe.acquisition
+=================
+
+.. automodule:: baybe.acquisition
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+
+   acqfs
+
+   base
+
+   partial
+
+   utils
+

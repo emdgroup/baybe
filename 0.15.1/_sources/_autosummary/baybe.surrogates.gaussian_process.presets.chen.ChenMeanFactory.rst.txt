@@ -1,0 +1,27 @@
+ChenMeanFactory
+===============
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.chen
+
+.. autoclass:: ChenMeanFactory
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ChenMeanFactory.__init__
+   
+      ~ChenMeanFactory.__call__
+   
+   
+   
+
+   
+   
+   

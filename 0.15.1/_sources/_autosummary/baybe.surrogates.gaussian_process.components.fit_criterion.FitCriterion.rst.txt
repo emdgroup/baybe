@@ -1,0 +1,32 @@
+FitCriterion
+============
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.fit_criterion
+
+.. autoclass:: FitCriterion
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~FitCriterion.to_gpytorch
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~FitCriterion.MARGINAL_LOG_LIKELIHOOD
+      ~FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
+   
+   

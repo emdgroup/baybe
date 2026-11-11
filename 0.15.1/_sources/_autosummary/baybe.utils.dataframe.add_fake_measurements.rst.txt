@@ -1,0 +1,6 @@
+baybe.utils.dataframe.add\_fake\_measurements
+=============================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: add_fake_measurements

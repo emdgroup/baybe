@@ -1,0 +1,6 @@
+baybe.searchspace.utils.select\_via\_flat\_index
+================================================
+
+.. currentmodule:: baybe.searchspace.utils
+
+.. autofunction:: select_via_flat_index

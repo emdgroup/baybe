@@ -1,0 +1,6 @@
+baybe.utils.dataframe.handle\_missing\_values
+=============================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: handle_missing_values

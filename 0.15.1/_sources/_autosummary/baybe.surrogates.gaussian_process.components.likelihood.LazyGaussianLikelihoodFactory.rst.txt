@@ -1,0 +1,27 @@
+LazyGaussianLikelihoodFactory
+=============================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.likelihood
+
+.. autoclass:: LazyGaussianLikelihoodFactory
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~LazyGaussianLikelihoodFactory.__init__
+   
+      ~LazyGaussianLikelihoodFactory.__call__
+   
+   
+   
+
+   
+   
+   

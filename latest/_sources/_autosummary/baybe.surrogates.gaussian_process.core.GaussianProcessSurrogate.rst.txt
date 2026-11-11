@@ -27,8 +27,6 @@ GaussianProcessSurrogate
    
       ~GaussianProcessSurrogate.posterior
    
-      ~GaussianProcessSurrogate.posterior_mean_function
-   
       ~GaussianProcessSurrogate.posterior_stats
    
       ~GaussianProcessSurrogate.replicate
@@ -53,7 +51,6 @@ GaussianProcessSurrogate
       ~GaussianProcessSurrogate.likelihood_factory
       ~GaussianProcessSurrogate.fit_criterion_factory
       ~GaussianProcessSurrogate.is_available
-      ~GaussianProcessSurrogate.supports_kernel_overrides
       ~GaussianProcessSurrogate.supports_multi_output
       ~GaussianProcessSurrogate.supports_transfer_learning
    

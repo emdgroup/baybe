@@ -151,9 +151,11 @@ print(recommender)
              Surrogate
                 CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianProce
 ssSurrogate(_searchspace=None, _objective=None, _measurements=None,
-_measurements_hash=None, _input_scaler=None, _output_scaler=None, kernel_factory=None,
-mean_factory=None, likelihood_factory=None, fit_criterion_factory=None, _symmetries=(),
-_model=None), _data={}), _modeled_quantity_names=None)
+_measurements_hash=None, _input_scaler=None, _output_scaler=None,
+kernel_factory=BayBEKernelFactory(parameter_selector=None),
+mean_factory=BayBEMeanFactory(), likelihood_factory=BayBELikelihoodFactory(),
+fit_criterion_factory=BayBEFitCriterionFactory(), _model=None), _data={}),
+_modeled_quantity_names=None)
              Acquisition function: qLogExpectedImprovement()
              Compatibility: SearchSpaceType.HYBRID
              Sequential continuous: True
@@ -248,15 +250,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    421       p-Xylene  Potassium pivalate                     BrettPhos   
-    200  Butyornitrile  Potassium pivalate                     BrettPhos   
-    188  Butyornitrile   Potassium acetate  Di-tert-butylphenylphosphine   
+             Solvent                Base                        Ligand  \
+    427     p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
+    95   Butyl Ester  Potassium pivalate                     BrettPhos   
+    391     p-Xylene   Potassium acetate                     BrettPhos   
     
          Temperature  Concentration  
-    421        120.0          0.100  
-    200         90.0          0.153  
-    188        120.0          0.153  
+    427        105.0          0.100  
+    95         105.0          0.153  
+    391        105.0          0.100  
 
 
 
@@ -269,15 +271,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    421       p-Xylene  Potassium pivalate                     BrettPhos   
-    200  Butyornitrile  Potassium pivalate                     BrettPhos   
-    188  Butyornitrile   Potassium acetate  Di-tert-butylphenylphosphine   
+             Solvent                Base                        Ligand  \
+    427     p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
+    95   Butyl Ester  Potassium pivalate                     BrettPhos   
+    391     p-Xylene   Potassium acetate                     BrettPhos   
     
          Temperature  Concentration      yield  
-    421        120.0          0.100  -5.584517  
-    200         90.0          0.153  -7.732175  
-    188        120.0          0.153 -26.054078  
+    427        105.0          0.100  99.583120  
+    95         105.0          0.153 -71.758752  
+    391        105.0          0.100 -85.161329  
 
 
 

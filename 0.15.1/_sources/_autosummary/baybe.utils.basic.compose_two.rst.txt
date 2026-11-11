@@ -1,0 +1,6 @@
+baybe.utils.basic.compose\_two
+==============================
+
+.. currentmodule:: baybe.utils.basic
+
+.. autofunction:: compose_two

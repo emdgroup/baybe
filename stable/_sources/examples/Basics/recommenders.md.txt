@@ -250,15 +250,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent             Base                        Ligand  Temperature  \
-    49   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine        105.0   
-    231         DMAc   Cesium acetate                     BrettPhos        120.0   
-    334     p-Xylene   Cesium acetate                     BrettPhos         90.0   
+             Solvent                Base                        Ligand  \
+    427     p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
+    95   Butyl Ester  Potassium pivalate                     BrettPhos   
+    391     p-Xylene   Potassium acetate                     BrettPhos   
     
-         Concentration  
-    49           0.100  
-    231          0.057  
-    334          0.100  
+         Temperature  Concentration  
+    427        105.0          0.100  
+    95         105.0          0.153  
+    391        105.0          0.100  
 
 
 
@@ -271,15 +271,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent             Base                        Ligand  Temperature  \
-    49   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine        105.0   
-    231         DMAc   Cesium acetate                     BrettPhos        120.0   
-    334     p-Xylene   Cesium acetate                     BrettPhos         90.0   
+             Solvent                Base                        Ligand  \
+    427     p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
+    95   Butyl Ester  Potassium pivalate                     BrettPhos   
+    391     p-Xylene   Potassium acetate                     BrettPhos   
     
-         Concentration      yield  
-    49           0.100 -10.406065  
-    231          0.057 -99.893894  
-    334          0.100  12.724842  
+         Temperature  Concentration      yield  
+    427        105.0          0.100  99.583120  
+    95         105.0          0.153 -71.758752  
+    391        105.0          0.100 -85.161329  
 
 
 

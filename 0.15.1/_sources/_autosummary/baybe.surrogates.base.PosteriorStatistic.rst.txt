@@ -1,0 +1,7 @@
+baybe.surrogates.base.PosteriorStatistic
+========================================
+
+.. currentmodule:: baybe.surrogates.base
+
+
+.. autodata:: PosteriorStatistic

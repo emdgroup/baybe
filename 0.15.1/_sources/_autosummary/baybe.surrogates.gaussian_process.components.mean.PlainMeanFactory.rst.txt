@@ -1,0 +1,7 @@
+baybe.surrogates.gaussian\_process.components.mean.PlainMeanFactory
+===================================================================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.mean
+
+
+.. autodata:: PlainMeanFactory

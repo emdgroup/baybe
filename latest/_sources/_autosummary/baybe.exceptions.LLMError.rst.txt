@@ -1,6 +1,0 @@
-baybe.exceptions.LLMError
-=========================
-
-.. currentmodule:: baybe.exceptions
-
-.. autoexception:: LLMError

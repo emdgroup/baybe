@@ -1,0 +1,6 @@
+baybe.utils.numerical.closest\_element
+======================================
+
+.. currentmodule:: baybe.utils.numerical
+
+.. autofunction:: closest_element

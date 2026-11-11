@@ -9,16 +9,6 @@ baybe.constraints.discrete
 
    
    
-   .. rubric:: Functions
-
-   .. autosummary::
-      :toctree:                                       
-   
-      DiscreteExcludeConstraint
-      DiscreteLinkedParametersConstraint
-      DiscreteNoLabelDuplicatesConstraint
-      DiscreteSumConstraint
-   
    
 
    
@@ -33,11 +23,12 @@ baybe.constraints.discrete
       DiscreteCardinalityConstraint
       DiscreteCustomConstraint
       DiscreteDependenciesConstraint
-      DiscreteLinearConstraint
+      DiscreteExcludeConstraint
+      DiscreteLinkedParametersConstraint
+      DiscreteNoLabelDuplicatesConstraint
       DiscretePermutationInvarianceConstraint
       DiscreteProductConstraint
-      DiscreteRepetitionLimitConstraint
-      DiscreteSelectionConstraint
+      DiscreteSumConstraint
    
    
 

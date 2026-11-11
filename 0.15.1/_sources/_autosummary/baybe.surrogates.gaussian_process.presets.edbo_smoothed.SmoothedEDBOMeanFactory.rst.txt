@@ -1,0 +1,27 @@
+SmoothedEDBOMeanFactory
+=======================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.edbo_smoothed
+
+.. autoclass:: SmoothedEDBOMeanFactory
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SmoothedEDBOMeanFactory.__init__
+   
+      ~SmoothedEDBOMeanFactory.__call__
+   
+   
+   
+
+   
+   
+   

@@ -21,8 +21,6 @@ NumericalDiscreteParameter
    
       ~NumericalDiscreteParameter.from_json
    
-      ~NumericalDiscreteParameter.is_equivalent
-   
       ~NumericalDiscreteParameter.is_in_range
    
       ~NumericalDiscreteParameter.summary
@@ -53,7 +51,6 @@ NumericalDiscreteParameter
       ~NumericalDiscreteParameter.is_continuous
       ~NumericalDiscreteParameter.is_discrete
       ~NumericalDiscreteParameter.is_numerical
-      ~NumericalDiscreteParameter.override_kernel
       ~NumericalDiscreteParameter.unit
       ~NumericalDiscreteParameter.values
       ~NumericalDiscreteParameter.tolerance

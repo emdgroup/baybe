@@ -1,7 +1,0 @@
-baybe.constraints.continuous.LinearConstraintOperator
-=====================================================
-
-.. currentmodule:: baybe.constraints.continuous
-
-
-.. autodata:: LinearConstraintOperator

@@ -1,0 +1,40 @@
+baybe.surrogates.gaussian\_process.components.generic
+=====================================================
+
+.. automodule:: baybe.surrogates.gaussian_process.components.generic
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      to_component_factory
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      GPComponentFactoryProtocol
+      GPComponentType
+      PlainGPComponentFactory
+   
+   
+
+   
+   
+   
+
+
+

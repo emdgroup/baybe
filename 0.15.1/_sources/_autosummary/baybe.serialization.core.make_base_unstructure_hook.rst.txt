@@ -1,0 +1,6 @@
+baybe.serialization.core.make\_base\_unstructure\_hook
+======================================================
+
+.. currentmodule:: baybe.serialization.core
+
+.. autofunction:: make_base_unstructure_hook

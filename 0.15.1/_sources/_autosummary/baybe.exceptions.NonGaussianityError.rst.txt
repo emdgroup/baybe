@@ -1,0 +1,6 @@
+baybe.exceptions.NonGaussianityError
+====================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: NonGaussianityError

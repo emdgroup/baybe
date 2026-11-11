@@ -1,0 +1,42 @@
+baybe.transformations.basic
+===========================
+
+.. automodule:: baybe.transformations.basic
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      AbsoluteTransformation
+      AffineTransformation
+      BellTransformation
+      ClampingTransformation
+      CustomTransformation
+      ExponentialTransformation
+      IdentityTransformation
+      LogarithmicTransformation
+      PowerTransformation
+      SigmoidTransformation
+      TriangularTransformation
+      TwoSidedAffineTransformation
+   
+   
+
+   
+   
+   
+
+
+

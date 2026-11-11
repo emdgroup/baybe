@@ -1,0 +1,7 @@
+baybe.utils.basic.UNSPECIFIED
+=============================
+
+.. currentmodule:: baybe.utils.basic
+
+
+.. autodata:: UNSPECIFIED

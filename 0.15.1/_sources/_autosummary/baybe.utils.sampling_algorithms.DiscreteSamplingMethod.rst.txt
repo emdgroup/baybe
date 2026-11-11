@@ -1,0 +1,25 @@
+DiscreteSamplingMethod
+======================
+
+.. currentmodule:: baybe.utils.sampling_algorithms
+
+.. autoclass:: DiscreteSamplingMethod
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteSamplingMethod.Random
+      ~DiscreteSamplingMethod.FPS
+   
+   

@@ -1,0 +1,27 @@
+SupportsWrite
+=============
+
+.. currentmodule:: baybe.serialization.mixin
+
+.. autoclass:: SupportsWrite
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SupportsWrite.__init__
+   
+      ~SupportsWrite.write
+   
+   
+   
+
+   
+   
+   

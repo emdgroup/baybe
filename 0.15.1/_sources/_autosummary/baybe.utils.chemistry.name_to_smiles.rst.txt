@@ -1,0 +1,6 @@
+baybe.utils.chemistry.name\_to\_smiles
+======================================
+
+.. currentmodule:: baybe.utils.chemistry
+
+.. autofunction:: name_to_smiles

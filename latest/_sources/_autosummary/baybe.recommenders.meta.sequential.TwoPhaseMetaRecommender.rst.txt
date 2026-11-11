@@ -35,8 +35,6 @@ TwoPhaseMetaRecommender
    
       ~TwoPhaseMetaRecommender.to_json
    
-      ~TwoPhaseMetaRecommender.with_llm_initial_recommender
-   
    
    
 

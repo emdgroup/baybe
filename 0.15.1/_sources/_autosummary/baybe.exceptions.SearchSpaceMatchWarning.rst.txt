@@ -1,0 +1,6 @@
+baybe.exceptions.SearchSpaceMatchWarning
+========================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: SearchSpaceMatchWarning

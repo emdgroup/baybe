@@ -1,0 +1,24 @@
+UnspecifiedType
+===============
+
+.. currentmodule:: baybe.utils.basic
+
+.. autoclass:: UnspecifiedType
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~UnspecifiedType.UNSPECIFIED
+   
+   

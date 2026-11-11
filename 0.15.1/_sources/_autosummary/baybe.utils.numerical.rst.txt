@@ -1,0 +1,39 @@
+baybe.utils.numerical
+=====================
+
+.. automodule:: baybe.utils.numerical
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      DTypeFloatONNX
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      closer_element
+      closest_element
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

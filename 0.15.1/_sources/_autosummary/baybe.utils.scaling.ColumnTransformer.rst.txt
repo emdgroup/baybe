@@ -1,0 +1,35 @@
+ColumnTransformer
+=================
+
+.. currentmodule:: baybe.utils.scaling
+
+.. autoclass:: ColumnTransformer
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ColumnTransformer.__init__
+   
+      ~ColumnTransformer.fit
+   
+      ~ColumnTransformer.transform
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ColumnTransformer.mapping
+   
+   

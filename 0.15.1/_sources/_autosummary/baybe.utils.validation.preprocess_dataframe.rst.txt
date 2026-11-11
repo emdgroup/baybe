@@ -1,0 +1,6 @@
+baybe.utils.validation.preprocess\_dataframe
+============================================
+
+.. currentmodule:: baybe.utils.validation
+
+.. autofunction:: preprocess_dataframe

@@ -1,0 +1,7 @@
+﻿baybe.utils.validation.finite\_float
+====================================
+
+.. currentmodule:: baybe.utils.validation
+
+
+.. autofunction:: finite_float
