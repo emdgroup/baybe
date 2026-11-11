@@ -573,7 +573,11 @@ class SubspaceDiscrete(SerialMixin):
             arr = arr[mask]
 
         # Wrap in DataFrame
-        simplex = pd.DataFrame(arr, columns=[p.name for p in simplex_parameters])
+        simplex = nw.from_numpy(
+            arr,
+            schema=[p.name for p in simplex_parameters],
+            backend=active_settings.default_dataframe_backend,
+        ).to_native()
 
         batch_constraints_list = [
             c for c in constraints if isinstance(c, DiscreteBatchConstraint)
