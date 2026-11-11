@@ -62,6 +62,9 @@ class BotorchRecommender(BayesianRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
+    supports_continuous_nonlinear_constraints: ClassVar[bool] = True
+    # See base class.
+
     supports_discrete_subset_generating_constraints: ClassVar[bool] = True
     # See base class.
 
@@ -254,13 +257,13 @@ class BotorchRecommender(BayesianRecommender):
 
         Each callable performs optimization for one subset configuration and returns
         a ``(result, acquisition_value)`` tuple. Subsets that raise
-        ``InfeasibilityError`` are silently skipped.
+        ``InfeasibilityError`` or ``CandidateGenerationError`` are silently skipped.
 
         Args:
             subset_callables: An iterable of zero-argument callables. Each callable
                 runs the optimization for one subset and returns
-                ``(result, acqf_value)``. It may raise ``InfeasibilityError`` if the
-                subset is infeasible.
+                ``(result, acqf_value)``. It may raise ``InfeasibilityError`` or
+                ``CandidateGenerationError`` if the subset is infeasible.
 
         Raises:
             InfeasibilityError: If none of the subsets has a feasible solution.
@@ -268,7 +271,12 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The result and acquisition value of the best subset.
         """
-        from botorch.exceptions.errors import InfeasibilityError as BoInfeasibilityError
+        from botorch.exceptions.errors import (
+            CandidateGenerationError as BoCandidateGenerationError,
+        )
+        from botorch.exceptions.errors import (
+            InfeasibilityError as BoInfeasibilityError,
+        )
 
         results_all: list = []
         acqf_values_all: list[Tensor] = []
@@ -278,7 +286,11 @@ class BotorchRecommender(BayesianRecommender):
                 result, acqf_value = optimize_fn()
                 results_all.append(result)
                 acqf_values_all.append(acqf_value)
-            except (BoInfeasibilityError, InfeasibilityError):
+            except (
+                BoCandidateGenerationError,
+                BoInfeasibilityError,
+                InfeasibilityError,
+            ):
                 pass
 
         if not results_all:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
@@ -15,6 +16,9 @@ from baybe.utils.basic import classproperty
 
 if TYPE_CHECKING:
     import polars as pl
+    from torch import Tensor
+
+    from baybe.parameters import NumericalContinuousParameter
 
 
 @define
@@ -305,6 +309,44 @@ class CardinalityConstraint(Constraint, ABC):
 
 class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
     """Abstract base class for continuous nonlinear constraints."""
+
+    def to_botorch(
+        self,
+        parameters: Iterable[NumericalContinuousParameter],
+        idx_offset: int = 0,
+        *,
+        batch_size: int | None = None,
+    ) -> list[tuple[Callable[[Tensor], Tensor], bool]]:
+        """Cast the constraint in a format required by botorch.
+
+        Used in calling ``optimize_acqf_*`` functions, for details see
+        :func:`botorch.optim.optimize.optimize_acqf`. Each returned tuple consists of
+        a callable encoding the constraint as ``callable(x) >= 0`` and a Boolean
+        indicating whether it is an intra-point constraint, i.e. whether the callable
+        applies to individual points of a batch.
+
+        Constraints that are resolved by other means, such as cardinality constraints
+        handled through subset enumeration, do not implement this method. Recommenders
+        must therefore exclude such constraints explicitly instead of relying on a
+        silent capability check.
+
+        Args:
+            parameters: The parameter objects of the continuous space.
+            idx_offset: An offset added to the provided parameter indices. This is
+                useful when the parameters are represented as part of a larger input
+                tensor and do not start at index zero.
+            batch_size: The batch size used for the recommendation.
+
+        Raises:
+            NotImplementedError: If the constraint class does not support translation
+                to BoTorch.
+
+        Returns:
+            A collection of tuples representing the constraint in BoTorch format.
+        """
+        raise NotImplementedError(
+            f"'{self.__class__.__name__}' does not support translation to BoTorch."
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

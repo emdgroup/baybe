@@ -10,11 +10,16 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
+from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import (
     IncompatibilityError,
     IncompatibleAcquisitionFunctionError,
+    InfeasibilityError,
     MinimumCardinalityViolatedWarning,
+)
+from baybe.recommenders.pure.bayesian.botorch.continuous import (
+    make_feasible_ic_generator,
 )
 from baybe.searchspace import SearchSpace
 from baybe.utils.basic import flatten
@@ -25,6 +30,124 @@ if TYPE_CHECKING:
     from torch import Tensor
 
     from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
+
+
+def _recommend_hybrid_with_nonlinear_constraints(
+    recommender: BotorchRecommender,
+    searchspace: SearchSpace,
+    candidates_comp: pd.DataFrame,
+    fixed_features_list: list[dict[int, float]],
+    nonlinear_inequality_constraints: list[tuple[Callable[[Tensor], Tensor], bool]],
+    equality_constraints: list[tuple[Tensor, Tensor, float]],
+    inequality_constraints: list[tuple[Tensor, Tensor, float]],
+    batch_size: int,
+) -> Tensor:
+    """Recommend from a hybrid space with nonlinear constraints.
+
+    The discrete configurations are enumerated and the continuous part is optimized
+    for each of them, keeping the candidate with the best acquisition value. Since
+    BoTorch cannot combine fixed features with nonlinear constraints, each
+    configuration is pinned by turning the bounds of its discrete columns into
+    degenerate intervals, see
+    https://github.com/meta-pytorch/botorch/issues/3332.
+
+    Args:
+        recommender: The recommender instance.
+        searchspace: The search space in which the recommendations should be made.
+        candidates_comp: The computational representation of the considered discrete
+            candidates.
+        fixed_features_list: The discrete configurations to enumerate, in the format
+            ``{index: value}``.
+        nonlinear_inequality_constraints: The nonlinear constraints in BoTorch format.
+        equality_constraints: The linear equality constraints in BoTorch format.
+        inequality_constraints: The linear inequality constraints in BoTorch format.
+        batch_size: The size of the calculated batch.
+
+    Raises:
+        InfeasibilityError: If candidate generation fails for all discrete
+            configurations.
+
+    Returns:
+        The recommended points of shape ``batch_size x d``.
+    """
+    import torch
+    from botorch.exceptions.errors import CandidateGenerationError
+    from botorch.exceptions.warnings import OptimizationWarning
+    from botorch.optim import optimize_acqf
+
+    num_comp_columns = len(candidates_comp.columns)
+    bounds = torch.from_numpy(searchspace.comp_rep_bounds.to_numpy(copy=True))
+    nonlinear_constraints = [
+        constraint for constraint, _ in nonlinear_inequality_constraints
+    ]
+
+    best_candidate: Tensor | None = None
+    best_acqf_value: float | None = None
+    num_failures = 0
+
+    for fixed_features in fixed_features_list:
+        # Pin the discrete configuration via degenerate bounds, which the optimizer
+        # respects natively
+        config_bounds = bounds.clone()
+        for index, value in fixed_features.items():
+            config_bounds[:, index] = value
+
+        try:
+            candidates, acqf_value = optimize_acqf(
+                acq_function=recommender._botorch_acqf,
+                bounds=config_bounds,
+                q=batch_size,
+                num_restarts=recommender.n_restarts,
+                raw_samples=recommender.n_raw_samples,
+                equality_constraints=equality_constraints or None,
+                inequality_constraints=inequality_constraints or None,
+                nonlinear_inequality_constraints=nonlinear_inequality_constraints,
+                ic_generator=make_feasible_ic_generator(
+                    nonlinear_constraints,
+                    searchspace.continuous,
+                    idx_offset=num_comp_columns,
+                    preset_fixed_features=fixed_features,
+                ),
+            )
+        except CandidateGenerationError:
+            num_failures += 1
+            continue
+
+        # Snap the discrete part to the exact values of the configuration, which the
+        # optimizer only fulfills up to numerical tolerance
+        discrete_values = torch.tensor(
+            [fixed_features[i] for i in range(num_comp_columns)],
+            dtype=bounds.dtype,
+            device=bounds.device,
+        )
+        candidate = torch.cat(
+            [
+                discrete_values.expand(*candidates.shape[:-1], -1),
+                candidates[..., num_comp_columns:],
+            ],
+            dim=-1,
+        )
+
+        acqf_value_scalar = acqf_value.item()
+        if best_acqf_value is None or acqf_value_scalar > best_acqf_value:
+            best_candidate, best_acqf_value = candidate, acqf_value_scalar
+
+    if best_candidate is None:
+        raise InfeasibilityError(
+            f"No feasible candidates could be generated for any of the "
+            f"{len(fixed_features_list)} discrete configurations. Potentially "
+            f"the specified constraints are too restrictive."
+        )
+
+    if num_failures:
+        warnings.warn(
+            f"Candidate generation failed for {num_failures} of the "
+            f"{len(fixed_features_list)} discrete configurations, which are skipped.",
+            OptimizationWarning,
+            stacklevel=3,
+        )
+
+    return best_candidate
 
 
 def recommend_hybrid_without_subsets(
@@ -100,39 +223,74 @@ def recommend_hybrid_without_subsets(
     # List[Dict[int, float]] format expected by BoTorch.
     num_comp_columns = len(candidates_comp.columns)
     candidates_comp.columns = list(range(num_comp_columns))
-    fixed_features_list = candidates_comp.to_dict("records")
+    fixed_features_list: list[dict[int, float]] = [
+        dict(enumerate(record.values()))
+        for record in candidates_comp.to_dict("records")
+    ]
 
-    # Actual call of the BoTorch optimization routine
-    # NOTE: The explicit `or None` conversion is added as an additional safety net
-    #   because it is unclear if the corresponding presence checks for these
-    #   arguments is correctly implemented in all invoked BoTorch subroutines.
-    #   For details: https://github.com/pytorch/botorch/issues/2042
-    points, _ = optimize_acqf_mixed(
-        acq_function=recommender._botorch_acqf,
-        bounds=torch.from_numpy(searchspace.comp_rep_bounds.to_numpy(copy=True)),
-        q=batch_size,
-        num_restarts=recommender.n_restarts,
-        raw_samples=recommender.n_raw_samples,
-        fixed_features_list=fixed_features_list,  # type: ignore[arg-type]
-        equality_constraints=flatten(
-            c.to_botorch(
-                searchspace.continuous.parameters,
-                idx_offset=len(candidates_comp.columns),
-                batch_size=batch_size if c.is_interpoint else None,
-            )
-            for c in searchspace.continuous.constraints_lin_eq
+    # Translate the nonlinear constraints, excluding cardinality constraints since
+    # those are already handled by the subset-based optimization routines.
+    nonlinear_inequality_constraints = flatten(
+        c.to_botorch(
+            searchspace.continuous.parameters,
+            idx_offset=num_comp_columns,
         )
-        or None,
-        inequality_constraints=flatten(
-            c.to_botorch(
-                searchspace.continuous.parameters,
-                idx_offset=num_comp_columns,
-                batch_size=batch_size if c.is_interpoint else None,
-            )
-            for c in searchspace.continuous.constraints_lin_ineq
-        )
-        or None,
+        for c in searchspace.continuous.constraints_nonlin
+        if not isinstance(c, ContinuousCardinalityConstraint)
     )
+
+    equality_constraints = flatten(
+        c.to_botorch(
+            searchspace.continuous.parameters,
+            idx_offset=num_comp_columns,
+            batch_size=batch_size if c.is_interpoint else None,
+        )
+        for c in searchspace.continuous.constraints_lin_eq
+    )
+    inequality_constraints = flatten(
+        c.to_botorch(
+            searchspace.continuous.parameters,
+            idx_offset=num_comp_columns,
+            batch_size=batch_size if c.is_interpoint else None,
+        )
+        for c in searchspace.continuous.constraints_lin_ineq
+    )
+
+    bounds = torch.from_numpy(searchspace.comp_rep_bounds.to_numpy(copy=True))
+
+    if nonlinear_inequality_constraints:
+        # BoTorch cannot combine fixed features with nonlinear constraints, so the
+        # discrete configurations are pinned through degenerate bounds instead of
+        # `fixed_features_list` (see `_recommend_hybrid_with_nonlinear_constraints`).
+        # TODO: Revert to `optimize_acqf_mixed` once the fix from
+        #   https://github.com/meta-pytorch/botorch/pull/3333 is part of a botorch
+        #   release (merged, but not yet released as of botorch 0.18.1).
+        points = _recommend_hybrid_with_nonlinear_constraints(
+            recommender=recommender,
+            searchspace=searchspace,
+            candidates_comp=candidates_comp,
+            fixed_features_list=fixed_features_list,
+            nonlinear_inequality_constraints=nonlinear_inequality_constraints,
+            equality_constraints=equality_constraints,
+            inequality_constraints=inequality_constraints,
+            batch_size=batch_size,
+        )
+    else:
+        # Actual call of the BoTorch optimization routine
+        # NOTE: The explicit `or None` conversion is added as an additional safety net
+        #   because it is unclear if the corresponding presence checks for these
+        #   arguments is correctly implemented in all invoked BoTorch subroutines.
+        #   For details: https://github.com/pytorch/botorch/issues/2042
+        points, _ = optimize_acqf_mixed(
+            acq_function=recommender._botorch_acqf,
+            bounds=bounds,
+            q=batch_size,
+            num_restarts=recommender.n_restarts,
+            raw_samples=recommender.n_raw_samples,
+            fixed_features_list=fixed_features_list,
+            equality_constraints=equality_constraints or None,
+            inequality_constraints=inequality_constraints or None,
+        )
 
     # Align candidates with search space index. Done via including the search space
     # index during the merge, which is used later for back-translation into the

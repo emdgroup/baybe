@@ -42,6 +42,10 @@ class PureRecommender(ABC, RecommenderProtocol):
     compatibility: ClassVar[SearchSpaceType]
     """Class variable reflecting the search space compatibility."""
 
+    supports_continuous_nonlinear_constraints: ClassVar[bool] = False
+    """Class variable indicating whether the recommender supports continuous
+    nonlinear constraints."""
+
     supports_discrete_subset_generating_constraints: ClassVar[bool] = False
     """Class variable indicating whether the recommender supports discrete
     subset-generating constraints."""
