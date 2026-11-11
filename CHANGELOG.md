@@ -48,8 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   center, which caused `OptimizationGradientError` during recommendation
 - `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
   constraint filtering
-- `ThresholdCondition` now treats missing values as non-matching for all operators;
-  previously, the `!=` operator admitted them
+- Conditions now treat null and NaN values as non-matching on all backends; NaN cannot
+  be included in a `SubSelectionCondition` selection
 - `ThresholdCondition` now rejects Boolean data instead of treating it as numerical
 - `SubSelectionCondition` now supports Boolean selection entries for both pandas and
   Polars backends; previously, they were coerced to floats, which broke Polars filtering

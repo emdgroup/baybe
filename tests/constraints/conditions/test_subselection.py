@@ -20,6 +20,7 @@ pytestmark = requires_fulltest
         param(["a", "a"], "must be unique", id="duplicate"),
         param(["a", 1], "common type", id="mixed"),
         param([None], "must be strings, Booleans, or numbers", id="none"),
+        param([float("nan")], "NaN cannot be used", id="nan"),
     ],
 )
 def test_subselection_condition_invalid_selection(selection, match):

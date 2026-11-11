@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import math
 import numbers
 import operator as ops
 from abc import ABC, abstractmethod
@@ -64,9 +65,12 @@ def _selection_dtypes(value: Any) -> tuple[type, ...]:
 class Condition(ABC, SerialMixin):
     """Abstract base class for all conditions.
 
-    Conditions always evaluate an expression regarding a single parameter.
-    Conditions are part of :class:`~baybe.constraints.base.Constraint` and
-    :class:`~baybe.symmetries.base.Symmetry` objects.
+    A condition is a predicate: it evaluates a value against a criterion and marks
+    it as a match or non-match. It can be applied to a series or an expression that
+    evaluates to one column. :class:`~baybe.constraints.base.Constraint` and
+    :class:`~baybe.symmetries.base.Symmetry` use conditions to build more complex rules.
+
+    Null and NaN values never match a condition.
     """
 
     def __call__(self, series: IntoSeriesT, /) -> IntoSeriesT:
@@ -97,7 +101,6 @@ class Condition(ABC, SerialMixin):
         result = nw_frame.select(self._to_expr(nw.col(column), nw_series.dtype))
         return result.get_column(result.columns[0]).alias(nw_series.name).to_native()
 
-    @abstractmethod
     def _to_expr(self, expr: Expr, dtype: Any, /) -> Expr:
         """Return the condition as a Narwhals expression.
 
@@ -106,12 +109,18 @@ class Condition(ABC, SerialMixin):
                 single-column selection or a column aggregation such as averaging).
             dtype: The dtype of the input expression.
 
-        Raises:
-            TypeError: If the condition cannot be applied to the given dtype.
-
         Returns:
             A backend-agnostic Boolean expression.
         """
+        matching = self._to_raw_expr(expr, dtype)
+        missing = expr.is_null()
+        if dtype.is_numeric() and not dtype.is_decimal():
+            missing = missing | expr.is_nan()
+        return (matching & ~missing).fill_null(False)
+
+    @abstractmethod
+    def _to_raw_expr(self, expr: Expr, dtype: Any, /) -> Expr:
+        """Like :meth:`_to_expr`, but without handling missing values."""
 
 
 @define(frozen=True)
@@ -157,7 +166,7 @@ class ThresholdCondition(Condition):
                 )
 
     @override
-    def _to_expr(self, expr: Expr, dtype: Any, /) -> Expr:
+    def _to_raw_expr(self, expr: Expr, dtype: Any, /) -> Expr:
         validate_all_instance((dtype,), nw.dtypes.NumericType)
 
         if self.operator in _TOLERANCE_OPERATORS:
@@ -169,7 +178,7 @@ class ThresholdCondition(Condition):
         else:
             matching = _THRESHOLD_OPERATORS[self.operator](expr, self.threshold)
 
-        return (matching & ~expr.is_null()).fill_null(False)
+        return matching
 
 
 @define(frozen=True)
@@ -194,6 +203,10 @@ class SubSelectionCondition(Condition):
                 f"All entries of a '{type(self).__name__}' must have a common type, "
                 f"but got {selection!r}."
             )
+        if any(
+            isinstance(item, numbers.Real) and math.isnan(item) for item in selection
+        ):
+            raise ValueError("NaN cannot be used in a sub-selection.")
 
     @property
     def _dtypes(self) -> tuple[type, ...]:
@@ -201,14 +214,14 @@ class SubSelectionCondition(Condition):
         return _selection_dtypes(self.selection[0])
 
     @override
-    def _to_expr(self, expr: Expr, dtype: Any, /) -> Expr:
+    def _to_raw_expr(self, expr: Expr, dtype: Any, /) -> Expr:
         if not isinstance(dtype, self._dtypes):
             raise TypeError(
                 f"A '{type(self).__name__}' with entries {self.selection!r} cannot "
                 f"be applied to data of type '{dtype}'."
             )
 
-        return expr.is_in(self.selection).fill_null(False)
+        return expr.is_in(self.selection)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
