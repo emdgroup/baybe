@@ -49,6 +49,10 @@ class MinimumCardinalityViolatedWarning(UserWarning):
     """Minimum cardinality constraints are violated."""
 
 
+class NoFeasibleObservationWarning(UserWarning):
+    """No experiment has been observed as feasible so far."""
+
+
 ##### Exceptions #####
 
 
