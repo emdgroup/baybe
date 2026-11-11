@@ -157,16 +157,16 @@ Note that the transfer learning mechanism can be implement in many different way
 for example, using multiple models, shared architectures, special kernels in a single
 model, etc.
 Encoding the context information via a [`TaskParameter`] is not restricted to any of
-these methods. BayBE currently implements a kernel-based variant (the Intrinsic
-Coregionalization Model {cite:p}`NIPS2007_66368270`), an ensemble-based variant
-(the rank-weighted Gaussian process ensemble {cite:p}`Feurer2018`), and a naive variant
-that pools the data of all tasks into a single model, selectable via
-{attr}`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`.
-The ensemble-based variant requires exactly one active task value and measurements for
-at least one other task. It does not support acquisition functions that rely on
-fantasized observations, such as
-{class}`~baybe.acquisition.acqfs.qKnowledgeGradient` or
-{class}`~baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance`.
+these methods. BayBE currently offers the following variants, selectable via
+{attr}`~baybe.parameters.categorical.TaskParameter.override_transfer_learning_mode`:
+
+| Mode | How the tasks are combined | Requirements and limitations |
+|---|---|---|
+| `None` (default) | Decided by the kernel factory; BayBE's default uses a positive index kernel | – |
+| {attr}`~baybe.parameters.enum.TransferLearningMode.INDEX_KERNEL` | A single model with a kernel learning the task correlations (Intrinsic Coregionalization Model {cite:p}`NIPS2007_66368270`) | – |
+| {attr}`~baybe.parameters.enum.TransferLearningMode.POSITIVE_INDEX_KERNEL` | As above, restricted to positive task correlations | – |
+| {attr}`~baybe.parameters.enum.TransferLearningMode.NAIVE` | A single model pooling the data of all tasks, ignoring the task | – |
+| {attr}`~baybe.parameters.enum.TransferLearningMode.RGPE` | One model per task, combined into an ensemble weighted by how well each model ranks the target data (rank-weighted Gaussian process ensemble {cite:p}`Feurer2018`) | Exactly one active task value; measurements for at least one other task; no acquisition functions relying on fantasized observations, such as {class}`~baybe.acquisition.acqfs.qKnowledgeGradient` or {class}`~baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance` |
 ```
 
 ## Seeing Transfer Learning in Action
