@@ -67,7 +67,7 @@ from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     from botorch.models import SingleTaskGP
-    from botorch.models.gpytorch import GPyTorchModel
+    from botorch.models.model import Model
     from botorch.models.transforms.input import InputTransform, Normalize
     from botorch.models.transforms.outcome import OutcomeTransform, Standardize
     from botorch.posteriors import Posterior
@@ -385,7 +385,7 @@ class GaussianProcessSurrogate(Surrogate):
         )
 
     @override
-    def to_botorch(self) -> GPyTorchModel:
+    def to_botorch(self) -> Model:
         if self._model is None:
             raise ModelNotTrainedError(
                 "The surrogate must be trained before a BoTorch model can be created."
@@ -716,7 +716,7 @@ class GaussianProcessSurrogate(Surrogate):
 
 
 def _make_posterior_mean_module(
-    model: GPyTorchModel,
+    model: Model,
     input_transform: Normalize,
     outcome_transform: Standardize,
 ) -> GPyTorchMean:
@@ -772,8 +772,13 @@ def _make_posterior_mean_module(
         @override
         def forward(self, x: Tensor) -> Tensor:
             """Compute the prior mean in the new GP's standardized output space."""
+            from botorch.posteriors import GPyTorchPosterior
+
             x_raw = input_transform.untransform(x)
-            posterior_mean = self.gp.posterior(x_raw).mean
+            posterior = self.gp.posterior(x_raw)
+            # Gaussian, since the GP's outcome transform is affine
+            assert isinstance(posterior, GPyTorchPosterior)
+            posterior_mean = posterior.mean
             standardized, _ = outcome_transform(posterior_mean)
             return standardized.squeeze(-1)
 

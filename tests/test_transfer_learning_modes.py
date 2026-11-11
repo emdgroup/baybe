@@ -9,8 +9,8 @@ import pandas as pd
 import pytest
 import torch
 from botorch.fit import fit_gpytorch_mll
-from botorch.models import ModelListGP, SingleTaskGP
-from botorch.models.gpytorch import GPyTorchModel
+from botorch.models import ModelList, SingleTaskGP
+from botorch.models.model import Model
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -308,36 +308,44 @@ def test_model_list_posterior(members):
     other = _make_model(members, torch.tensor([0.5, 0.3, 0.2], dtype=torch.float64))
     X = torch.tensor([[1.0], [3.0]], dtype=torch.float64)
 
-    posterior = ModelListGP(model, other).posterior(X)
+    posterior = ModelList(model, other).posterior(X)
     expected = torch.cat([model.posterior(X).mean, other.posterior(X).mean], dim=-1)
     assert torch.allclose(posterior.mean, expected)
 
 
 @pytest.mark.parametrize(
-    "condition",
+    ("condition", "match"),
     [
-        param(lambda m, X: m.condition_on_observations(X, X), id="condition"),
-        param(lambda m, X: m.fantasize(X, None), id="fantasize"),
-        param(lambda m, X: ModelListGP(m).fantasize(X, None), id="model_list"),
+        param(
+            lambda m, X: m.condition_on_observations(X, X),
+            "not implemented",
+            id="condition",
+        ),
+        param(lambda m, X: m.fantasize(X, None), "does not support", id="fantasize"),
+        param(
+            lambda m, X: ModelList(m).fantasize(X, None),
+            "does not support",
+            id="model_list",
+        ),
     ],
 )
-def test_conditioning_raises(members, condition):
+def test_conditioning_raises(members, condition, match):
     """Conditioning on observations and fantasizing are not supported."""
     model = _make_model(members, torch.full((3,), 1 / 3, dtype=torch.float64))
     X = torch.tensor([[4.0]], dtype=torch.float64)
-    with pytest.raises(NotImplementedError, match="does not support conditioning"):
+    with pytest.raises(NotImplementedError, match=match):
         condition(model, X)
 
 
 def test_model_contract(members):
-    """The ensemble is a GPyTorch model without a single training dataset."""
+    """The ensemble is a BoTorch model without a single training dataset."""
     model = _make_model(members, torch.tensor([0.2, 0.3, 0.5], dtype=torch.float64))
     restored = deepcopy(model)
     restored.weights.fill_(1 / 3)
     restored.load_state_dict(model.state_dict())
     X = torch.tensor([[1.0], [3.0]], dtype=torch.float64)
 
-    assert isinstance(model, GPyTorchModel)
+    assert isinstance(model, Model)
     assert not hasattr(model, "train_inputs")
     assert torch.equal(restored.posterior(X).mean, model.posterior(X).mean)
 
