@@ -1,5 +1,6 @@
 """Tests for the Gaussian Process surrogate."""
 
+import botorch
 import pandas as pd
 import pytest
 import torch
@@ -29,6 +30,8 @@ from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets import GaussianProcessPreset
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import create_fake_input, to_tensor
+
+_BOTORCH_VERSION = tuple(int(part) for part in botorch.__version__.split(".")[:2])
 
 searchspace = NumericalContinuousParameter("p", (0, 1)).to_searchspace()
 searchspace_mt = SearchSpace.from_product(
@@ -199,10 +202,23 @@ def test_invalid_components():
 #   change in the future. If that happens, the test below will start to fail and the
 #   HVARFNER parametrization needs to be dropped.
 @pytest.mark.parametrize("preset", ["BOTORCH", "HVARFNER"], ids=["botorch", "hvarfner"])
-@pytest.mark.parametrize("multitask", [False, True], ids=["single-task", "multi-task"])
-@pytest.mark.xfail(
-    reason="BoTorch logic changed in 0.18.0 but the change has not been backported to "
-    "the patch release, to keep preset logic consistent with the previous version."
+@pytest.mark.parametrize(
+    "multitask",
+    [
+        param(False, id="single-task"),
+        param(
+            True,
+            id="multi-task",
+            marks=pytest.mark.xfail(
+                condition=_BOTORCH_VERSION >= (0, 18),
+                reason=(
+                    "BoTorch 0.18 added a default task covariance prior. This behavior "
+                    "is not backported to the patch release to keep preset logic "
+                    "consistent with the previous version."
+                ),
+            ),
+        ),
+    ],
 )
 def test_botorch_preset(multitask: bool, preset: str):
     """The BoTorch/Hvarfner presets exactly mimic BoTorch's behavior."""
