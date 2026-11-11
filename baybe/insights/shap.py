@@ -108,24 +108,24 @@ def make_explainer_for_surrogate(
         @torch.no_grad()
         def model(x: np.ndarray) -> np.ndarray:
             tensor = to_tensor(x)
-            posterior = surrogate._posterior_comp(tensor)
+            posterior = surrogate._posterior_comp(tensor.unsqueeze(-2))
             if not hasattr(posterior, "mean"):
                 raise IncompatibilityError(
                     "SHAP explainers require a posterior that allows mean computation."
                 )
-            return posterior.mean.numpy().squeeze(-1)
+            return posterior.mean.numpy().squeeze(axis=(-1, -2))
 
     else:
 
         @torch.no_grad()
         def model(x: np.ndarray) -> np.ndarray:
             df = pd.DataFrame(x, columns=data.columns)
-            posterior = surrogate.posterior(df)
+            posterior = surrogate.posterior(df, joint=False)
             if not hasattr(posterior, "mean"):
                 raise IncompatibilityError(
                     "SHAP explainers require a posterior that allows mean computation."
                 )
-            return posterior.mean.numpy().squeeze(-1)
+            return posterior.mean.numpy().squeeze(axis=(-1, -2))
 
     # Handle special settings: Lime default mode is otherwise set to "classification"
     kwargs = {"mode": "regression"} if explainer_cls.__name__ == "LimeTabular" else {}
