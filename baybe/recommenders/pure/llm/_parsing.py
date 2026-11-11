@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import cast
+from typing import Any, cast
 
 import cattrs
 import pandas as pd
@@ -17,11 +17,20 @@ from baybe._llm.exceptions import (
     LLMResponseWarning,
     LLMUnknownParameterError,
 )
-from baybe._llm.extraction import extract_json_array
+from baybe._llm.extraction import extract_json
 from baybe.recommenders.pure.llm._schema import ResponseItem
 from baybe.searchspace import SearchSpace
 from baybe.utils.dataframe import normalize_input_dtypes
 from baybe.utils.numerical import closest_element
+
+
+def _is_object_array(value: Any) -> bool:
+    """Return whether a decoded JSON value is a non-empty array of objects."""
+    return (
+        isinstance(value, list)
+        and bool(value)
+        and all(isinstance(entry, dict) for entry in value)
+    )
 
 
 def parse_llm_response(
@@ -65,7 +74,7 @@ def parse_llm_response(
             of the LLM recommendations with such constraints is not guaranteed.
     """
     try:
-        recommendations = extract_json_array(response)
+        recommendations = extract_json(response, _is_object_array)
     except ValueError as e:
         raise LLMMalformedResponseError(
             "The language model response could not be parsed as a JSON array "
