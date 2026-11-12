@@ -68,6 +68,24 @@ from baybe.recommenders.pure.llm._parsing import _is_object_array
             id="braces_in_prose",
         ),
         pytest.param(
+            '{"result": [1, 2], "note": "[3, 4]"}',
+            lambda value: isinstance(value, list),
+            [1, 2],
+            id="string_literal_array_ignored",
+        ),
+        pytest.param(
+            '[{"a": 1}]\n["note about [{}]"]',
+            _is_object_array,
+            [{"a": 1}],
+            id="array_in_later_string_ignored",
+        ),
+        pytest.param(
+            '{"recommendations": [{"x": 1}], "note": "e.g. [{}]"}',
+            _is_object_array,
+            [{"x": 1}],
+            id="wrapper_payload_beats_string_example",
+        ),
+        pytest.param(
             '{"outer": {"inner": 1}}',
             lambda value: isinstance(value, dict),
             {"outer": {"inner": 1}},
@@ -113,6 +131,11 @@ def test_extract_json(response, accept, expected):
         ),
         pytest.param(
             '{"a": 1}', lambda value: isinstance(value, list), id="dict_not_list"
+        ),
+        pytest.param(
+            '["see {", ": 1}"]',
+            lambda value: isinstance(value, dict),
+            id="no_dict_stitched_from_strings",
         ),
         pytest.param(
             "The answer is 42.",

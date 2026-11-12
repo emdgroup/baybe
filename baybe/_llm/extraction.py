@@ -23,28 +23,23 @@ def extract_json(
     /,
     accept: Callable[[Any], bool],
 ) -> Any:
-    """Extract a JSON payload from a raw language model response.
+    """Extract the last JSON array or object accepted by ``accept``.
 
-    Models often wrap the payload in Markdown fences or prose, or emit several blocks
-    (e.g. after reconsidering). Scan for JSON arrays and objects and return the *last*
-    value accepted by ``accept``. Rejected values are searched for nested accepted
-    values, which handles wrappers such as ``{"recommendations": [...]}``. Accepted
-    values are skipped as a whole.
+    Decoded values are skipped as a whole, so brackets inside strings are ignored;
+    rejected containers are searched through their decoded children.
 
     Args:
         response: The raw response text.
-        accept: Predicate deciding whether a decoded JSON value is the intended
-            payload.
+        accept: Predicate selecting the intended payload.
 
     Returns:
-        The last decoded JSON value accepted by ``accept``.
+        The last accepted value.
 
     Raises:
-        ValueError: If no accepted JSON value is found in the response.
+        ValueError: If no accepted value is found.
     """
     decoder = json.JSONDecoder()
     last_accepted: Any = None
-    found = False
     skip_until = 0
     for match in _BRACKET_PATTERN.finditer(response):
         start = match.start()
@@ -54,11 +49,22 @@ def extract_json(
             value, end = decoder.raw_decode(response, start)
         except JSONDecodeError:
             continue  # not valid JSON here; try the next candidate
-        if accept(value):
-            last_accepted = value
-            found = True
-            skip_until = end  # accepted values are skipped as a whole
-    if not found:
+
+        skip_until = end  # never scan the decoded value's raw text again
+        candidates = [value]
+        while candidates:
+            candidate = candidates.pop()
+            if accept(candidate):
+                last_accepted = candidate
+                continue  # accepted values are atomic
+            children = candidate.values() if isinstance(candidate, dict) else candidate
+            candidates.extend(
+                child
+                for child in reversed(list(children))
+                if isinstance(child, (dict, list))
+            )
+    # Candidates are always containers, so ``None`` can only mean "nothing accepted."
+    if last_accepted is None:
         raise ValueError("No accepted JSON value found in the response.")
     return last_accepted
 
