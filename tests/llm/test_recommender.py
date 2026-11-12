@@ -2,7 +2,6 @@
 
 import json
 import warnings
-from types import SimpleNamespace
 from unittest.mock import patch
 
 import numpy as np
@@ -12,20 +11,18 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe import Campaign
+from baybe._llm.exceptions import (
+    LLMBatchSizeError,
+    LLMMalformedResponseError,
+    LLMResponseError,
+)
 from baybe._optional.info import LLM_INSTALLED
 from baybe.campaign import _MEASURED, _RECOMMENDED
 from baybe.constraints import (
     DiscreteCustomConstraint,
     DiscretePermutationInvarianceConstraint,
 )
-from baybe.exceptions import (
-    IncompatibilityError,
-    LLMAuthenticationError,
-    LLMBatchSizeError,
-    LLMCallError,
-    LLMMalformedResponseError,
-    LLMResponseError,
-)
+from baybe.exceptions import IncompatibilityError
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import CategoricalParameter, NumericalContinuousParameter
 from baybe.recommenders import RandomRecommender, SequentialMetaRecommender
@@ -53,8 +50,6 @@ from tests.llm._mock import (
 if not LLM_INSTALLED:
     pytest.skip("LLM dependencies not installed.", allow_module_level=True)
 
-
-from baybe._optional.llm import AuthenticationError
 
 _RECOMMENDER = LLMRecommender(
     model="test/model", experiment_description="Test experiment."
@@ -132,32 +127,6 @@ def test_litellm_arg_values_hidden():
 
 
 _SEARCHSPACE = make_discrete_searchspace()
-_AUTH_ERROR = AuthenticationError(
-    message="bad key", llm_provider="test", model="test/model"
-)
-
-
-@pytest.mark.parametrize(
-    ("exception", "expected_error"),
-    [
-        param(
-            _AUTH_ERROR,
-            LLMAuthenticationError,
-            id="auth",
-        ),
-        param(
-            ConnectionError("timeout"),
-            LLMCallError,
-            id="provider",
-        ),
-    ],
-)
-def test_call_errors(exception, expected_error):
-    """Provider-level failures are wrapped and preserve the original cause."""
-    with patch(PATCH_TARGET, side_effect=exception) as mock:
-        with pytest.raises(expected_error):
-            _RECOMMENDER.recommend(1, _SEARCHSPACE, _OBJECTIVE)
-    assert mock.call_count == 1
 
 
 def _custom_function(x):
@@ -249,61 +218,6 @@ def test_batch_size_recovery(n_first, n_recovery):
     assert f"provided {n_first} recommendation(s)" in recovery_prompt
     assert f"but exactly {batch_size} are required" in recovery_prompt
     assert first_content in recovery_prompt
-
-
-@pytest.mark.parametrize(
-    "first_response",
-    [
-        param(mock_response("not valid json"), id="invalid_json"),
-        param(mock_response(None), id="empty_content"),
-        param(SimpleNamespace(), id="unexpected_structure"),
-    ],
-)
-@pytest.mark.parametrize(
-    ("batch_size", "recovery_response", "expected_error"),
-    [
-        param(
-            1,
-            mock_response(make_valid_json(_SEARCHSPACE, 1)),
-            None,
-            id="success_single",
-        ),
-        param(
-            3,
-            mock_response(make_valid_json(_SEARCHSPACE, 3)),
-            None,
-            id="success_batch",
-        ),
-        param(
-            1,
-            mock_response("not valid json"),
-            LLMResponseError,
-            id="bad_again",
-        ),
-        param(
-            1,
-            _AUTH_ERROR,
-            LLMAuthenticationError,
-            id="auth_on_recovery",
-        ),
-        param(
-            1,
-            ConnectionError("timeout"),
-            LLMCallError,
-            id="provider_on_recovery",
-        ),
-    ],
-)
-def test_recovery(first_response, batch_size, recovery_response, expected_error):
-    """After an unusable first response, a recovery attempt is made exactly once."""
-    side_effect = [first_response, recovery_response]
-    with patch(PATCH_TARGET, side_effect=side_effect) as mock:
-        if expected_error is None:
-            _RECOMMENDER.recommend(batch_size, _SEARCHSPACE, _OBJECTIVE)
-        else:
-            with pytest.raises(expected_error):
-                _RECOMMENDER.recommend(batch_size, _SEARCHSPACE, _OBJECTIVE)
-    assert mock.call_count == 2
 
 
 @pytest.mark.usefixtures("fixed_examples")

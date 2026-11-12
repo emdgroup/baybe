@@ -11,13 +11,12 @@ from attrs import define, field, fields
 from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
+from baybe._llm.exceptions import LLMResponseError
+from baybe._llm.query import query_model, validate_litellm_args
+from baybe._llm.recovery import query_with_recovery
 from baybe._optional.info import LLM_INSTALLED
 from baybe.exceptions import (
     IncompatibilityError,
-    LLMAuthenticationError,
-    LLMCallError,
-    LLMMalformedResponseError,
-    LLMResponseError,
     NotEnoughPointsLeftError,
     OptionalImportError,
 )
@@ -31,11 +30,6 @@ from baybe.serialization import SerialMixin, converter
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import fuzzy_row_match
 from baybe.utils.metadata import Metadata
-
-# Keys that are controlled by the recommender itself and must not be overridden: the
-# model and messages are set explicitly, and the response must not be streamed since
-# it is parsed as a whole.
-_RESERVED_LITELLM_KEYS = frozenset({"model", "messages", "stream"})
 
 
 @define(slots=False)
@@ -74,11 +68,15 @@ class LLMRecommender(PureRecommender, SerialMixin):
         factory=dict,
         converter=dict,
         repr=False,
-        validator=deep_mapping(
-            key_validator=instance_of(str),
-            # Values are intentionally unconstrained: LiteLLM accepts heterogeneous
-            # argument types (str, int, float, bool, nested dicts, ...).
-            value_validator=lambda *_: None,
+        validator=(
+            deep_mapping(
+                key_validator=instance_of(str),
+                # Values are intentionally unconstrained: LiteLLM accepts
+                # heterogeneous argument types (str, int, float, bool, nested
+                # dicts, ...).
+                value_validator=lambda *_: None,
+            ),
+            validate_litellm_args,
         ),
     )
     """Additional arguments to pass to LiteLLM (e.g. ``temperature``, ``max_tokens``).
@@ -99,15 +97,6 @@ class LLMRecommender(PureRecommender, SerialMixin):
         default=None, init=False, eq=False
     )
 
-    @litellm_args.validator
-    def _validate_litellm_args(self, attribute, value):  # noqa: DOC101, DOC103
-        """Validate litellm_args does not contain reserved keys."""
-        if conflicts := _RESERVED_LITELLM_KEYS & set(value.keys()):
-            raise ValueError(
-                f"'{attribute.name}' must not contain keys that are controlled by the "
-                f"recommender itself: {sorted(conflicts)}."
-            )
-
     @override
     def __attrs_post_init__(self) -> None:
         """Raise if the optional LLM dependencies are not installed."""
@@ -115,60 +104,37 @@ class LLMRecommender(PureRecommender, SerialMixin):
         if not LLM_INSTALLED:
             raise OptionalImportError(name="litellm", group="llm")
 
-    def _query_model(self, prompt: str) -> str:
-        """Query the language model and return the raw response text.
+    def _make_prompt(
+        self,
+        searchspace: SearchSpace,
+        batch_size: int,
+        *,
+        recovery: tuple[LLMResponseError, str | None] | None = None,
+    ) -> str:
+        """Render a prompt for the current recommendation context.
 
         Args:
-            prompt: The prompt to send to the language model.
+            searchspace: The search space to generate recommendations for.
+            batch_size: The number of recommendations to request.
+            recovery: Optional error and previous response to render a corrective
+                prompt.
 
         Returns:
-            The raw text content of the model response.
-
-        Raises:
-            LLMAuthenticationError: If authentication with the provider fails.
-            LLMCallError: If the call fails for another reason (e.g. network, rate
-                limiting, timeout, unknown model) before a response is produced.
-            LLMMalformedResponseError: If a response is returned but has an unexpected
-                structure or no content.
+            The rendered prompt.
         """
-        from baybe._optional.llm import AuthenticationError, completion
+        return make_prompt(
+            batch_size,
+            searchspace,
+            self._objective,
+            self._measurements,
+            self._pending_experiments,
+            experiment_description=self.experiment_description,
+            recovery=recovery,
+        )
 
-        try:
-            response = completion(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                **self.litellm_args,
-            )
-        except AuthenticationError as e:
-            raise LLMAuthenticationError(
-                f"Authentication with the language model provider failed "
-                f"({type(e).__name__}): {e}. Check the API credentials for model "
-                f"'{self.model}' (e.g. the provider's API key environment variable)."
-            ) from e
-        except Exception as e:
-            raise LLMCallError(
-                f"The call to the language model failed ({type(e).__name__}): {e}. "
-                f"Check your network connection and the model identifier "
-                f"'{self.model}'."
-            ) from e
-
-        # NOTE: `completion()` is typed to also return a stream, which lacks `.choices`.
-        #   Streaming is excluded via `_RESERVED_LITELLM_KEYS`, and the `except` below
-        #   guards against any other unexpected response type at runtime.
-        try:
-            choices = response.choices  # pyrefly: ignore[missing-attribute]
-            content = choices[0].message.content
-        except (AttributeError, IndexError, TypeError) as e:
-            raise LLMMalformedResponseError(
-                f"The language model returned an unexpected response structure: {e}."
-            ) from e
-
-        if content is None:
-            raise LLMMalformedResponseError(
-                "The language model returned empty content (None)."
-            )
-
-        return content
+    def _query_model(self, prompt: str, /) -> str:
+        """Query the language model through the shared LLM query utility."""
+        return query_model(prompt, model=self.model, litellm_args=self.litellm_args)
 
     @override
     def recommend(
@@ -194,12 +160,15 @@ class LLMRecommender(PureRecommender, SerialMixin):
         Raises:
             IncompatibilityError: If the searchspace or objective contains a custom
                 component that cannot be described to the language model.
-            LLMAuthenticationError: If authentication with the provider fails.
-            LLMCallError: If the call to the language model fails (e.g. network, rate
-                limiting, timeout) before a response is produced.
-            LLMResponseError: If the response cannot be turned into a valid
+            LLMError: If the language model interaction fails, i.e. authentication or
+                the call itself fails, or the response cannot be turned into a valid
                 recommendation batch even after a recovery attempt.
             ValueError: If ``batch_size`` is smaller than 1.
+
+        Warns:
+            LLMResponseWarning: If the search space contains continuous constraints
+                that cannot be validated. Compliance of the recommendations with these
+                constraints is not guaranteed.
         """
         if batch_size < 1:
             raise ValueError(
@@ -239,44 +208,21 @@ class LLMRecommender(PureRecommender, SerialMixin):
         batch_size: int,
     ) -> pd.DataFrame:
         try:
-            prompt = make_prompt(
-                batch_size,
-                searchspace,
-                self._objective,
-                self._measurements,
-                self._pending_experiments,
-                experiment_description=self.experiment_description,
-            )
+            prompt = self._make_prompt(searchspace, batch_size)
         except NotImplementedError as ex:
             raise IncompatibilityError(
                 f"Could not construct a prompt for `{self.__class__.__name__}` "
                 f"from the provided recommendations context."
             ) from ex
-        # Stays `None` if the model returns no usable content
-        content: str | None = None
-        try:
-            content = self._query_model(prompt)
-            return parse_llm_response(content, searchspace, batch_size)
-        except LLMResponseError as initial_error:
-            # The recommendation had an issue. Make a recovery attempt.
-            recovery_prompt = make_prompt(
-                batch_size,
-                searchspace,
-                self._objective,
-                self._measurements,
-                self._pending_experiments,
-                experiment_description=self.experiment_description,
-                recovery=(initial_error, content),
-            )
-            try:
-                recovery_content = self._query_model(recovery_prompt)
-                return parse_llm_response(recovery_content, searchspace, batch_size)
-            except LLMResponseError as recovery_error:
-                raise LLMResponseError(
-                    f"The language model failed to produce a valid recommendation, "
-                    f"even after a recovery attempt. Initial problem: {initial_error} "
-                    f"Remaining problem after recovery: {recovery_error}"
-                ) from recovery_error
+
+        return query_with_recovery(
+            prompt,
+            query=self._query_model,
+            parse=lambda content: parse_llm_response(content, searchspace, batch_size),
+            make_recovery_prompt=lambda error, content: self._make_prompt(
+                searchspace, batch_size, recovery=(error, content)
+            ),
+        )
 
     @override
     def _recommend_with_discrete_parts(
