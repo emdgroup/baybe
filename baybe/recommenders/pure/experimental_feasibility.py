@@ -6,11 +6,11 @@ import gc
 import warnings
 from collections.abc import Callable, Iterable
 from enum import Enum
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, Protocol, cast, runtime_checkable
 
 import numpy as np
 import pandas as pd
-from attrs import define, evolve, field, fields
+from attrs import Factory, define, evolve, field, fields
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, instance_of, le
 from attrs.validators import optional as optional_v
@@ -21,6 +21,7 @@ from baybe.exceptions import (
     IncompatibilityError,
     IncompleteMeasurementsError,
     InfeasibilityError,
+    InvalidTargetValueError,
     NoFeasibleObservationWarning,
 )
 from baybe.recommenders.pure.base import PureRecommender
@@ -41,7 +42,9 @@ from baybe.surrogates.gaussian_process.core import (
     GaussianProcessSurrogate,
     _ModelContext,
 )
+from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.validation import finite_float
@@ -76,8 +79,47 @@ class InfeasibleMeasurementMode(Enum):
     """
 
 
+@runtime_checkable
+class _FeasibilityModelProtocol(Protocol):
+    """Protocol for surrogates predicting feasibility probabilities.
+
+    The protocol combines the fitting interface of
+    :class:`~baybe.surrogates.base.SurrogateProtocol` with a method predicting the
+    probability that a configuration is feasible.
+    """
+
+    __slots__ = ()
+
+    def fit(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
+        """Fit the surrogate to training data in a given modelling context.
+
+        The method matches the fitting interface of
+        :class:`~baybe.surrogates.base.SurrogateProtocol`.
+
+        Args:
+            searchspace: The search space on which the model operates.
+            objective: The objective for which the model is trained.
+            measurements: The measurements used for training.
+        """
+
+    def posterior_probabilities(self, candidates_comp: Tensor, /) -> Tensor:
+        """Predict the feasibility probabilities for computationally represented input.
+
+        Args:
+            candidates_comp: The candidates in computational representation.
+
+        Returns:
+            The predicted feasibility probabilities as a flat tensor.
+        """
+
+
 @define
-class _GaussianProcessClassifier(GaussianProcessSurrogate):
+class _GaussianProcessClassifier(GaussianProcessSurrogate, _FeasibilityModelProtocol):
     """Gaussian process classifier tailored to the feasibility filtering.
 
     The model is a variational Gaussian process with Bernoulli likelihood, predicting
@@ -132,6 +174,7 @@ class _GaussianProcessClassifier(GaussianProcessSurrogate):
         # latent Gaussian distribution into class probabilities.
         return self._model.posterior(candidates_comp_scaled, observation_noise=True)
 
+    @override
     def posterior_probabilities(self, candidates_comp: Tensor, /) -> Tensor:
         """Predict the feasibility probabilities for computationally represented input.
 
@@ -145,18 +188,50 @@ class _GaussianProcessClassifier(GaussianProcessSurrogate):
         return posterior.mean.reshape(-1)
 
 
+@define
+class _GaussianProcessRegressor(GaussianProcessSurrogate, _FeasibilityModelProtocol):
+    r"""Gaussian process regressor estimating feasibility from constraint values.
+
+    The model is fitted to the transformed values of a numerical feasibility target,
+    which are interpreted as constraint values: A configuration is feasible when its
+    constraint value is non-positive. Since the remaining Bayesian optimization
+    machinery operates on feasibility probabilities, the Gaussian posterior is
+    converted to the probability :math:`P(c(x) \leq 0)` of being feasible.
+    """
+
+    @override
+    def posterior_probabilities(self, candidates_comp: Tensor, /) -> Tensor:
+        """Predict the feasibility probabilities for computationally represented input.
+
+        Args:
+            candidates_comp: The candidates in computational representation.
+
+        Returns:
+            The predicted feasibility probabilities as a flat tensor.
+        """
+        from torch.special import ndtr
+
+        # Lower variance bound keeping the division in the probability well-defined
+        _ZERO_DIVISION_EPSILON = 1e-12
+
+        posterior = cast("GPyTorchPosterior", self._posterior_comp(candidates_comp))
+        mean = posterior.mean.reshape(-1)
+        std = posterior.variance.clamp_min(_ZERO_DIVISION_EPSILON).sqrt().reshape(-1)
+        return ndtr(-mean / std)
+
+
 @define(eq=False)
 class _FeasibilityConstraint(ContinuousNonlinearConstraint):
     """Constraint restricting a continuous space to predicted-feasible configurations.
 
-    The constraint encodes the decision boundary of the feasibility classifier as
+    The constraint encodes the decision boundary of the feasibility model as
     ``p(x) - threshold >= 0``, where ``p(x)`` is the predicted feasibility
     probability. The constraint operates on the full computational representation,
     i.e. it also accesses the discrete columns when applied to a hybrid space.
     """
 
-    classifier: _GaussianProcessClassifier = field(repr=False)
-    """The fitted classifier predicting the feasibility probability."""
+    model: _FeasibilityModelProtocol = field(repr=False)
+    """The fitted model predicting the feasibility probability."""
 
     threshold: float = field(validator=[instance_of(float), ge(0.0), le(1.0)])
     """Minimum predicted feasibility probability required for a configuration."""
@@ -177,7 +252,7 @@ class _FeasibilityConstraint(ContinuousNonlinearConstraint):
 
         Args:
             parameters: The parameter objects of the continuous space. Unused because
-                the underlying classifier operates on the full computational
+                the underlying model operates on the full computational
                 representation.
             idx_offset: The index offset of the continuous parameters within the full
                 computational representation. Unused for the same reason.
@@ -191,19 +266,46 @@ class _FeasibilityConstraint(ContinuousNonlinearConstraint):
 
         def constraint(x: Tensor) -> Tensor:
             flat = x.reshape(-1, x.shape[-1])
-            probabilities = self.classifier.posterior_probabilities(flat)
+            probabilities = self.model.posterior_probabilities(flat)
             return (probabilities - self.threshold).reshape(x.shape[:-1])
 
         return [(constraint, True)]
+
+
+def _make_feasibility_model(target: Target) -> _FeasibilityModelProtocol:
+    """Create the feasibility model matching the type of the given target.
+
+    Args:
+        target: The feasibility target of the recommender.
+
+    Returns:
+        The classifier for a binary target, the regressor for a numerical target.
+    """
+    if isinstance(target, BinaryTarget):
+        return _GaussianProcessClassifier()
+    return _GaussianProcessRegressor()
 
 
 @define(kw_only=True)
 class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
     """Recommender that restricts the search space and delegates to another recommender.
 
-    A probabilistic classifier is fitted on the feasibility labels contained in the
-    measurements. The search space is then restricted to the configurations predicted
-    feasible before the wrapped recommender is executed:
+    A probabilistic model is fitted on the feasibility target contained in the
+    measurements, whose type determines the modeling approach:
+
+    * For a :class:`~baybe.targets.binary.BinaryTarget`, a variational Gaussian
+      process classifier is fitted on the feasibility labels.
+    * For a :class:`~baybe.targets.numerical.NumericalTarget`, a Gaussian process
+      regressor is fitted on the transformed target values, which are interpreted as
+      constraint values. A configuration is considered feasible when its constraint
+      value is non-positive, so the target transformation encodes the direction and
+      location of the constraint boundary. For example, a target created via
+      ``NumericalTarget("yield", transformation=AffineTransformation(factor=-1,
+      shift=80))`` encodes a minimum yield of 80.
+
+    In both cases, the model predicts the feasibility probability, which is compared
+    against :attr:`feasibility_threshold`. The search space is then restricted to the
+    configurations predicted feasible before the wrapped recommender is executed:
 
     * For purely discrete spaces, the candidate set is filtered.
     * For spaces with a continuous part, a nonlinear constraint encoding the predicted
@@ -223,11 +325,6 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
 
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
-
-    _classifier: _GaussianProcessClassifier = field(
-        factory=_GaussianProcessClassifier, init=False, eq=False, repr=False
-    )
-    """The classifier predicting the feasibility probability."""
 
     feasibility_threshold: float = field(
         default=0.5, validator=[instance_of(float), ge(0.0), le(1.0)]
@@ -260,8 +357,24 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
     )
     """The recommender that is executed on the restricted search space."""
 
-    target: BinaryTarget = field(validator=instance_of(BinaryTarget))
-    """The binary target encoding feasibility."""
+    target: Target = field(validator=instance_of(Target))
+    """The target encoding feasibility.
+
+    Must be either a :class:`~baybe.targets.binary.BinaryTarget` or a
+    :class:`~baybe.targets.numerical.NumericalTarget`. For numerical targets, the
+    transformed target values are interpreted as constraint values, where non-positive
+    values are considered feasible.
+    """
+
+    _feasibility_model: _FeasibilityModelProtocol = field(
+        init=False,
+        eq=False,
+        repr=False,
+        default=Factory(
+            lambda self: _make_feasibility_model(self.target), takes_self=True
+        ),
+    )
+    """The model predicting the feasibility probability, selected by the target type."""
 
     @infeasible_dummy_value.validator
     def _validate_infeasible_dummy_value(  # noqa: DOC101, DOC103
@@ -281,6 +394,28 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
                 f"'{InfeasibleMeasurementMode.DUMMY.name}', which requires a dummy "
                 f"value to be provided via "
                 f"'{fields(type(self)).infeasible_dummy_value.alias}'."
+            )
+
+    @target.validator
+    def _validate_target(self, _, value: Target) -> None:  # noqa: DOC101, DOC103
+        """Validate that the target type is supported.
+
+        Raises:
+            ValueError: If the target is neither binary nor numerical, or if a
+                numerical target is flagged for minimization.
+        """
+        if not isinstance(value, (BinaryTarget, NumericalTarget)):
+            raise ValueError(
+                f"The feasibility target must be of type "
+                f"'{BinaryTarget.__name__}' or '{NumericalTarget.__name__}', but "
+                f"'{type(value).__name__}' was provided."
+            )
+        if isinstance(value, NumericalTarget) and value.minimize:
+            raise ValueError(
+                f"A numerical feasibility target must not set "
+                f"'{fields(NumericalTarget).minimize.alias}' to 'True'. Feasibility "
+                f"is determined by the transformed target values being non-positive, "
+                f"so encode the constraint direction via the target transformation."
             )
 
     @override
@@ -310,9 +445,9 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
     ) -> pd.DataFrame:
         """Recommend from the configurations predicted to be feasible.
 
-        If all measured feasibility labels are identical, no decision boundary can be
-        learned and the wrapped recommender is executed without filtering. If all
-        labels are infeasible, a
+        If all measured experiments have the same observed feasibility, no decision
+        boundary can be learned and the wrapped recommender is executed without
+        filtering. If all experiments are infeasible, a
         :class:`~baybe.exceptions.NoFeasibleObservationWarning` is emitted, unless
         :attr:`infeasible_measurement_mode` requires training data that is then no
         longer available.
@@ -321,7 +456,7 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
             batch_size: The number of recommendations to generate.
             searchspace: The search space to generate recommendations from.
             objective: An optional objective passed on to the wrapped recommender.
-            measurements: The measurements containing the feasibility labels.
+            measurements: The measurements containing the feasibility target.
             pending_experiments: Optional pending experiments passed on to the
                 wrapped recommender.
 
@@ -330,9 +465,11 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
                 wrapped recommender does not support continuous nonlinear constraints,
                 or if ``PREDICTED_MEAN`` mode is incompatible with the wrapped
                 recommender or the objective.
-            IncompleteMeasurementsError: If no measurements or no feasibility labels
-                are provided, or if no measurements remain for model training.
+            IncompleteMeasurementsError: If no measurements or no feasibility target
+                values are provided, or if no measurements remain for model training.
             InfeasibilityError: If no configuration reaches the feasibility threshold.
+            InvalidTargetValueError: If the feasibility target column contains values
+                that are invalid for the configured target.
             ValueError: If ``DUMMY`` mode is selected without configuring a dummy
                 value.
 
@@ -345,14 +482,15 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
                 f"the feasibility target '{self.target.name}'."
             )
 
-        labels = self._extract_labels(measurements)
+        values = self._extract_values(measurements)
+        is_feasible = self._observed_feasibility(values)
         objective_measurements = self._objective_measurements(
-            measurements, labels, objective, searchspace
+            measurements, is_feasible, objective, searchspace
         )
-        if labels.nunique() == 1:
-            # A single observed class yields no decision boundary, so filtering
+        if is_feasible.nunique() == 1:
+            # A single observed feasibility yields no decision boundary, so filtering
             # would either keep everything or nothing. Delegate unfiltered instead.
-            if labels.iloc[0] < self.feasibility_threshold:
+            if not is_feasible.iloc[0]:
                 warnings.warn(
                     f"None of the measured experiments has been observed as "
                     f"feasible for the target '{self.target.name}'. Failed "
@@ -375,13 +513,12 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
                     f"compatible recommender via the 'recommender' field."
                 )
             feasibility_measurements = measurements.copy()
-            feasibility_measurements[self.target.name] = labels
+            feasibility_measurements[self.target.name] = values
             # The fit is cached by the surrogate and only repeated if the search
             # space or the measurements changed.
-            self._classifier.fit(
-                searchspace, self.target.to_objective(), feasibility_measurements
-            )
-            prepared = self._restrict_searchspace(searchspace, self._classifier)
+            model = self._feasibility_model
+            model.fit(searchspace, self.target.to_objective(), feasibility_measurements)
+            prepared = self._restrict_searchspace(searchspace, model)
 
         return self.recommender.recommend(
             batch_size,
@@ -391,8 +528,8 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
             pending_experiments,
         )
 
-    def _extract_labels(self, measurements: pd.DataFrame, /) -> pd.Series:
-        """Extract the feasibility labels from the given measurements.
+    def _extract_values(self, measurements: pd.DataFrame, /) -> pd.Series:
+        """Extract the feasibility target values from the given measurements.
 
         Args:
             measurements: The measurements containing the feasibility target.
@@ -400,9 +537,11 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
         Raises:
             IncompleteMeasurementsError: If the feasibility column is missing or
                 contains missing values.
+            InvalidTargetValueError: If the feasibility column contains non-numeric
+                values for a numerical target.
 
         Returns:
-            The feasibility labels in computational representation.
+            The feasibility target values in computational representation.
         """
         if (name := self.target.name) not in measurements.columns:
             raise IncompleteMeasurementsError(
@@ -418,16 +557,24 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
                 f"indices {list(series.index[missing])}."
             )
 
+        if isinstance(
+            self.target, NumericalTarget
+        ) and not pd.api.types.is_numeric_dtype(series):
+            raise InvalidTargetValueError(
+                f"The feasibility target '{name}' must contain numeric values, but "
+                f"the measured column has dtype '{series.dtype}'."
+            )
+
         return self.target.transform(series)
 
     def _filter_searchspace(
-        self, searchspace: SearchSpace, classifier: _GaussianProcessClassifier, /
+        self, searchspace: SearchSpace, model: _FeasibilityModelProtocol, /
     ) -> SearchSpace:
         """Restrict the discrete candidate set to the points predicted feasible.
 
         Args:
             searchspace: The search space to filter.
-            classifier: The fitted feasibility classifier.
+            model: The fitted model predicting the feasibility probability.
 
         Raises:
             InfeasibilityError: If no candidate reaches the feasibility threshold.
@@ -438,9 +585,7 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
         subspace = searchspace.discrete
         candidates_exp, _ = subspace.get_candidates()
         probabilities = (
-            classifier.posterior_probabilities(
-                to_tensor(subspace.transform(candidates_exp))
-            )
+            model.posterior_probabilities(to_tensor(subspace.transform(candidates_exp)))
             .detach()
             .numpy()
         )
@@ -468,7 +613,7 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
     def _objective_measurements(
         self,
         measurements: pd.DataFrame,
-        labels: pd.Series,
+        is_feasible: pd.Series,
         objective: Objective | None,
         searchspace: SearchSpace,
         /,
@@ -483,7 +628,8 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
 
         Args:
             measurements: The available experimentation data.
-            labels: The feasibility labels matching the rows of ``measurements``.
+            is_feasible: The observed feasibility matching the rows of
+                ``measurements``.
             objective: The objective passed on to the wrapped recommender.
             searchspace: The search space in which the experiments are conducted.
 
@@ -502,7 +648,7 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
         if objective is None or isinstance(self.recommender, NonPredictiveRecommender):
             return measurements
 
-        is_infeasible = labels.to_numpy() == 0
+        is_infeasible = ~is_feasible.to_numpy()
         mode = self.infeasible_measurement_mode
         if not is_infeasible.any() or mode is InfeasibleMeasurementMode.OBSERVED:
             return measurements
@@ -587,8 +733,25 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
             ].to_numpy()
         return imputed
 
+    def _observed_feasibility(self, values: pd.Series, /) -> pd.Series:
+        """Determine the observed feasibility from the feasibility target values.
+
+        Binary targets directly encode feasibility in their computational
+        representation, whereas numerical targets are considered feasible when their
+        transformed value is non-positive.
+
+        Args:
+            values: The feasibility target values in computational representation.
+
+        Returns:
+            A boolean series indicating which experiments were feasible.
+        """
+        if isinstance(self.target, BinaryTarget):
+            return values.astype(bool)
+        return values <= 0.0
+
     def _restrict_searchspace(
-        self, searchspace: SearchSpace, classifier: _GaussianProcessClassifier, /
+        self, searchspace: SearchSpace, model: _FeasibilityModelProtocol, /
     ) -> SearchSpace:
         """Restrict the search space to the configurations predicted feasible.
 
@@ -598,18 +761,18 @@ class ExperimentFeasibilityRecommender(PureRecommender, SerialMixin):
 
         Args:
             searchspace: The search space to restrict.
-            classifier: The fitted feasibility classifier.
+            model: The fitted model predicting the feasibility probability.
 
         Returns:
             The restricted search space.
         """
         if searchspace.type is SearchSpaceType.DISCRETE:
-            return self._filter_searchspace(searchspace, classifier)
+            return self._filter_searchspace(searchspace, model)
 
         continuous = searchspace.continuous
         constraint = _FeasibilityConstraint(
             parameters=list(continuous.parameter_names),
-            classifier=classifier,
+            model=model,
             threshold=self.feasibility_threshold,
         )
         return evolve(
