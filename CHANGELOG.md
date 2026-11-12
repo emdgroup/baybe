@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SHAPInsight` now uses marginal posteriors, avoiding unnecessary covariance
   computation and supporting independent surrogates with multiple rows
 - `BotorchRecommender` recommendation for discrete and hybrid search spaces no longer
-  fails with `KeyError` when candidate dataframes have a named index (e.g. `material_id`)
+  fails with `KeyError` when candidate dataframes have a named index
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
