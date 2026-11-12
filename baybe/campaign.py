@@ -558,10 +558,10 @@ class Campaign(SerialMixin):
                 not self.allow_recommending_pending_experiments
                 and pending_experiments is not None
             ):
-                parameter_columns = [p.name for p in self.parameters]
+                parameter_names = list(self.searchspace.discrete.parameter_names)
                 mask_todrop |= pd.MultiIndex.from_frame(
-                    self.searchspace.discrete.exp_rep[parameter_columns]
-                ).isin(pd.MultiIndex.from_frame(pending_experiments[parameter_columns]))
+                    self.searchspace.discrete.exp_rep[parameter_names]
+                ).isin(pd.MultiIndex.from_frame(pending_experiments[parameter_names]))
             searchspace = evolve(
                 self.searchspace,
                 discrete=FilteredSubspaceDiscrete.from_subspace(
