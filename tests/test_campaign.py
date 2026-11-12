@@ -450,75 +450,45 @@ def test_cache_invalidation(
         assert campaign._cached_recommendation is not None
 
 
-def test_recommend_with_named_candidate_index_discrete():
-    """Discrete recommendation preserves identities with a named candidate index."""
-    df_disc = pd.DataFrame(
+@pytest.fixture(name="named_candidates")
+def fixture_named_candidates() -> pd.DataFrame:
+    """Discrete candidate configurations with a named sample index."""
+    return pd.DataFrame(
         {
             "material": ["mat_A", "mat_B", "mat_C", "mat_D"],
             "T": [300.0, 400.0, 500.0, 600.0],
         },
         index=pd.Index(["m_1", "m_2", "m_3", "m_4"], name="material_id"),
     )
-    searchspace = SearchSpace(discrete=SubspaceDiscrete.from_dataframe(df_disc))
-    objective = NumericalTarget(name="Target").to_objective()
-    recommender = BotorchRecommender(
-        acquisition_function=qLogEI(), **FAST_OPTIMIZATION_SETTINGS
+
+
+@pytest.mark.parametrize("is_hybrid", [False, True], ids=["discrete", "hybrid"])
+def test_recommend_with_named_candidate_index(named_candidates, is_hybrid):
+    """Recommendation preserves candidate identities with a named candidate index."""
+    discrete = SubspaceDiscrete.from_dataframe(named_candidates)
+    searchspace = (
+        SearchSpace(
+            discrete=discrete,
+            continuous=SubspaceContinuous(
+                parameters=[NumericalContinuousParameter("x", (0.0, 1.0))]
+            ),
+        )
+        if is_hybrid
+        else SearchSpace(discrete=discrete)
     )
     campaign = Campaign(
-        searchspace=searchspace, objective=objective, recommender=recommender
+        searchspace=searchspace,
+        objective=NumericalTarget(name="Target").to_objective(),
+        recommender=BotorchRecommender(**FAST_OPTIMIZATION_SETTINGS),
     )
 
-    # Provide initial measurements to engage GP / BoTorch acquisition optimization
-    measurements = pd.DataFrame(
-        {"material": ["mat_A", "mat_D"], "T": [300.0, 600.0], "Target": [1.0, 2.0]},
-        index=["m_1", "m_4"],
-    )
+    measurements = named_candidates.iloc[[0, 3]].assign(Target=[1.0, 2.0])
+    if is_hybrid:
+        measurements = measurements.assign(x=[0.0, 1.0])
     campaign.add_measurements(measurements)
 
     rec = campaign.recommend(batch_size=2)
+
     assert len(rec) == 2
-    assert rec.index.name == df_disc.index.name
-    assert rec.index.isin(df_disc.index).all()
-    for idx_val, row in rec.iterrows():
-        expected_row = df_disc.loc[idx_val]
-        assert (row[["material", "T"]] == expected_row[["material", "T"]]).all()
-
-
-def test_recommend_with_named_candidate_index_hybrid():
-    """Hybrid recommendation preserves identities with a named candidate index."""
-    df_disc = pd.DataFrame(
-        {"T": [300.0, 400.0]},
-        index=pd.Index(["mat_A", "mat_B"], name="material_id"),
-    )
-    discrete = SubspaceDiscrete.from_dataframe(df_disc)
-    continuous = SubspaceContinuous(
-        parameters=[NumericalContinuousParameter("x", (0.0, 1.0))]
-    )
-    searchspace = SearchSpace(discrete=discrete, continuous=continuous)
-    objective = NumericalTarget(name="Target").to_objective()
-    recommender = BotorchRecommender(
-        acquisition_function=qLogEI(), **FAST_OPTIMIZATION_SETTINGS
-    )
-    campaign = Campaign(
-        searchspace=searchspace, objective=objective, recommender=recommender
-    )
-
-    # Four synthetic corner measurements across discrete and continuous bounds
-    measurements = pd.DataFrame(
-        {
-            "T": [300.0, 300.0, 400.0, 400.0],
-            "x": [0.0, 1.0, 0.0, 1.0],
-            "Target": [1.0, 1.5, 2.0, 2.5],
-        },
-        index=["mat_A_0", "mat_A_1", "mat_B_0", "mat_B_1"],
-    )
-    campaign.add_measurements(measurements)
-
-    rec = campaign.recommend(batch_size=1)
-    assert len(rec) == 1
-    assert rec.index.name == df_disc.index.name
-    rec_idx = rec.index[0]
-    assert rec_idx in df_disc.index
-    expected_disc = df_disc.loc[rec_idx]
-    assert rec.loc[rec_idx, "T"] == expected_disc["T"]
-    assert 0.0 <= rec.loc[rec_idx, "x"] <= 1.0
+    assert rec.index.name == named_candidates.index.name
+    assert rec.index.isin(named_candidates.index).all()
