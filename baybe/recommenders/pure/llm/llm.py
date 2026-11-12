@@ -160,12 +160,15 @@ class LLMRecommender(PureRecommender, SerialMixin):
         Raises:
             IncompatibilityError: If the searchspace or objective contains a custom
                 component that cannot be described to the language model.
-            LLMAuthenticationError: If authentication with the provider fails.
-            LLMCallError: If the call to the language model fails (e.g. network, rate
-                limiting, timeout) before a response is produced.
-            LLMResponseError: If the response cannot be turned into a valid
+            LLMError: If the language model interaction fails, i.e. authentication or
+                the call itself fails, or the response cannot be turned into a valid
                 recommendation batch even after a recovery attempt.
             ValueError: If ``batch_size`` is smaller than 1.
+
+        Warns:
+            LLMResponseWarning: If the search space contains continuous constraints
+                that cannot be validated. Compliance of the recommendations with these
+                constraints is not guaranteed.
         """
         if batch_size < 1:
             raise ValueError(

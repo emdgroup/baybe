@@ -8,11 +8,11 @@ from attr.validators import instance_of
 from attrs import define, field
 from typing_extensions import override
 
-# The LLM exception hierarchy lives in the private LLM package; only the public
-# catch-all is re-exported here.
-from baybe._llm.exceptions import LLMError  # noqa: F401
-
 ##### Warnings #####
+
+
+class LLMResponseWarning(UserWarning):
+    """A language model response did not fully meet the request."""
 
 
 class InputDataTypeWarning(UserWarning):
@@ -49,6 +49,14 @@ class MinimumCardinalityViolatedWarning(UserWarning):
 
 
 ##### Exceptions #####
+
+
+class LLMError(Exception):
+    """A language model interaction failed.
+
+    The remaining LLM-specific subclasses live in ``baybe._llm.exceptions``. Code
+    outside the LLM layer should catch this public base class.
+    """
 
 
 class IncompatibilityError(Exception):

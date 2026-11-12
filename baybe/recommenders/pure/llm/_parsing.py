@@ -13,10 +13,10 @@ from baybe._llm.exceptions import (
     LLMDuplicateRecommendationsError,
     LLMIneligiblePointsError,
     LLMMalformedResponseError,
-    LLMResponseWarning,
     LLMUnknownParameterError,
 )
 from baybe._llm.extraction import extract_json, structure_json
+from baybe.exceptions import LLMResponseWarning
 from baybe.recommenders.pure.llm._schema import ResponseItem
 from baybe.searchspace import SearchSpace
 from baybe.utils.dataframe import normalize_input_dtypes

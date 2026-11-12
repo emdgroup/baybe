@@ -10,11 +10,11 @@ from baybe._llm.exceptions import (
     LLMDuplicateRecommendationsError,
     LLMIneligiblePointsError,
     LLMMalformedResponseError,
-    LLMResponseWarning,
     LLMUnknownParameterError,
 )
 from baybe.constraints.continuous import ContinuousLinearConstraint
 from baybe.constraints.discrete import DiscreteBatchConstraint
+from baybe.exceptions import LLMResponseWarning
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
