@@ -20,7 +20,6 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.recommenders import BotorchRecommender
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import (
@@ -36,7 +35,7 @@ from baybe.surrogates import (
 )
 from baybe.targets import BinaryTarget, NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
-from tests.conftest import FAST_OPTIMIZATION_SETTINGS, run_iterations
+from tests.conftest import run_iterations
 
 
 @pytest.fixture
@@ -476,11 +475,7 @@ def test_recommend_with_named_candidate_index(named_candidates, is_hybrid):
         if is_hybrid
         else SearchSpace(discrete=discrete)
     )
-    campaign = Campaign(
-        searchspace=searchspace,
-        objective=NumericalTarget(name="Target").to_objective(),
-        recommender=BotorchRecommender(**FAST_OPTIMIZATION_SETTINGS),
-    )
+    campaign = Campaign(searchspace, NumericalTarget(name="Target").to_objective())
 
     measurements = named_candidates.iloc[[0, 3]].assign(Target=[1.0, 2.0])
     if is_hybrid:
