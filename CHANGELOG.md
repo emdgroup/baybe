@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   center, which caused `OptimizationGradientError` during recommendation
 - `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
   constraint filtering
+- `SigmoidTransformation` now uses `slope` instead of `steepness`, where `slope`
+  denotes the actual slope of the curve at its center. This fixes the inverted sign
+  convention so that positive slopes produce increasing transformations.
 
 ### Added
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
@@ -91,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteSumConstraint` in favor of `DiscreteLinearConstraint`
 - `DiscreteProductConstraint(condition=ThresholdCondition(...))` in favor of
   `DiscreteProductConstraint(operator=..., rhs=...)`
+- `SigmoidTransformation.steepness` in favor of `SigmoidTransformation.slope`
 
 ## [0.15.1] - 2026-11-11
 ### Added

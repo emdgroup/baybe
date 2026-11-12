@@ -57,7 +57,8 @@ from baybe.targets._deprecated import (
 )
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
-from baybe.transformations.basic import AffineTransformation
+from baybe.transformations import Transformation
+from baybe.transformations.basic import AffineTransformation, SigmoidTransformation
 from baybe.utils.dataframe import create_fake_input
 from baybe.utils.random import set_random_seed, temporary_seed
 
@@ -803,3 +804,28 @@ def test_discrete_product_constraint_mixing_raises():
             operator=">=",
             condition=ThresholdCondition(threshold=30.0, operator=">="),
         )
+
+
+def test_sigmoid_transformation_steepness_deprecation():
+    """Passing the deprecated steepness argument emits a warning."""
+    with pytest.warns(DeprecationWarning, match="steepness"):
+        SigmoidTransformation(center=1.0, steepness=2.0)
+
+
+def test_sigmoid_transformation_mixing_slope_and_steepness_raises():
+    """Passing both slope and steepness raises."""
+    with pytest.raises(ValueError, match="Cannot specify both"):
+        SigmoidTransformation(slope=1.0, steepness=1.0)
+
+
+@pytest.mark.parametrize(
+    "annotation",
+    [SigmoidTransformation, Transformation],
+    ids=["concrete", "abstract"],
+)
+def test_sigmoid_transformation_legacy_deserialization(annotation):
+    """Legacy serialized sigmoid transformations emit a warning."""
+    payload = {"type": "SigmoidTransformation", "center": 1.0, "steepness": 2.0}
+
+    with pytest.warns(DeprecationWarning, match="steepness"):
+        converter.structure(deepcopy(payload), annotation)
