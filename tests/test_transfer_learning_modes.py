@@ -1,5 +1,6 @@
 """Tests for the naive and the rank-weighted ensemble (RGPE) transfer learning modes."""
 
+import sys
 from copy import deepcopy
 from functools import partial
 from unittest.mock import patch
@@ -105,6 +106,11 @@ _REDUCED_SEARCHSPACE_UNSUPPORTED = pytest.mark.xfail(
     reason="Factories requiring the comp rep of the reduced search space",
 )
 
+_BOTORCH_PRESET_UNAVAILABLE = pytest.mark.skipif(
+    sys.version_info < (3, 11),
+    reason="BoTorch >=0.18.0 requires Python >=3.11.",
+)
+
 _SURROGATE_FACTORIES = [
     # The default kernel is reduced by a dedicated code path
     param(GaussianProcessSurrogate, id="default"),
@@ -124,13 +130,15 @@ _SURROGATE_FACTORIES = [
         param(partial(GaussianProcessSurrogate.from_preset, p), id=p)
         for p in ("CHEN", "EDBO", "EDBO_SMOOTHED")
     ),
-    *(
-        param(
-            partial(GaussianProcessSurrogate.from_preset, p),
-            id=p,
-            marks=_REDUCED_SEARCHSPACE_UNSUPPORTED,
-        )
-        for p in ("HVARFNER", "BOTORCH")
+    param(
+        partial(GaussianProcessSurrogate.from_preset, "HVARFNER"),
+        id="HVARFNER",
+        marks=_REDUCED_SEARCHSPACE_UNSUPPORTED,
+    ),
+    param(
+        partial(GaussianProcessSurrogate.from_preset, "BOTORCH"),
+        id="BOTORCH",
+        marks=[_BOTORCH_PRESET_UNAVAILABLE, _REDUCED_SEARCHSPACE_UNSUPPORTED],
     ),
 ]
 """Surrogate factories whose components must be made for the reduced search space."""
