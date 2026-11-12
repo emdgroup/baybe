@@ -1,11 +1,16 @@
 """Tests for the shared LLM query utility."""
 
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 from pytest import param
 
-from baybe._llm.exceptions import LLMAuthenticationError, LLMCallError
+from baybe._llm.exceptions import (
+    LLMAuthenticationError,
+    LLMCallError,
+    LLMMalformedResponseError,
+)
 from baybe._llm.query import query_model
 from baybe._optional.info import LLM_INSTALLED
 from tests.llm._mock import PATCH_TARGET
@@ -39,9 +44,27 @@ _AUTH_ERROR = AuthenticationError(
 def test_call_errors(exception, expected_error):
     """Provider-level failures are wrapped and preserve the original cause."""
     with patch(PATCH_TARGET, side_effect=exception) as mock:
-        with pytest.raises(expected_error):
+        with pytest.raises(expected_error) as exc_info:
             query_model("Prompt.", model="test/model")
     assert mock.call_count == 1
+    assert exc_info.value.__cause__ is exception
+
+
+@pytest.mark.parametrize(
+    ("response", "cause_type"),
+    [
+        param(SimpleNamespace(), AttributeError, id="missing_choices"),
+        param(SimpleNamespace(choices=[]), IndexError, id="empty_choices"),
+    ],
+)
+def test_malformed_response_structure(response, cause_type):
+    """A response without usable choices is reported as malformed."""
+    with patch(PATCH_TARGET, return_value=response):
+        with pytest.raises(
+            LLMMalformedResponseError, match="unexpected response structure"
+        ) as exc_info:
+            query_model("Prompt.", model="test/model")
+    assert isinstance(exc_info.value.__cause__, cause_type)
 
 
 @pytest.mark.parametrize("reserved_key", ["model", "messages", "stream"])
