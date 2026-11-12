@@ -26,6 +26,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
 )
+from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpace, SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.surrogates import (
@@ -446,3 +447,43 @@ def test_cache_invalidation(
         assert campaign._cached_recommendation is None
     else:
         assert campaign._cached_recommendation is not None
+
+
+@pytest.fixture(name="named_candidates")
+def fixture_named_candidates() -> pd.DataFrame:
+    """Discrete candidate configurations with a named sample index."""
+    return pd.DataFrame(
+        {
+            "material": ["mat_A", "mat_B", "mat_C", "mat_D"],
+            "T": [300.0, 400.0, 500.0, 600.0],
+        },
+        index=pd.Index(["m_1", "m_2", "m_3", "m_4"], name="material_id"),
+    )
+
+
+@pytest.mark.parametrize("is_hybrid", [False, True], ids=["discrete", "hybrid"])
+def test_recommend_with_named_candidate_index(named_candidates, is_hybrid):
+    """Recommendation preserves candidate identities with a named candidate index."""
+    discrete = SubspaceDiscrete.from_dataframe(named_candidates)
+    searchspace = (
+        SearchSpace(
+            discrete=discrete,
+            continuous=SubspaceContinuous(
+                parameters=[NumericalContinuousParameter("x", (0.0, 1.0))]
+            ),
+        )
+        if is_hybrid
+        else SearchSpace(discrete=discrete)
+    )
+    campaign = Campaign(searchspace, NumericalTarget(name="Target").to_objective())
+
+    measurements = named_candidates.iloc[[0, 3]].assign(Target=[1.0, 2.0])
+    if is_hybrid:
+        measurements = measurements.assign(x=[0.0, 1.0])
+    campaign.add_measurements(measurements)
+
+    rec = campaign.recommend(batch_size=2)
+
+    assert len(rec) == 2
+    assert rec.index.name == named_candidates.index.name
+    assert rec.index.isin(named_candidates.index).all()
