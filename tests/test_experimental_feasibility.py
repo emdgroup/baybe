@@ -6,6 +6,7 @@ import pytest
 import torch
 from pandas.testing import assert_frame_equal, assert_index_equal
 
+from baybe.exceptions import InvalidTargetValueError
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
@@ -13,16 +14,21 @@ from baybe.recommenders.pure.experimental_feasibility import (
     ExperimentFeasibilityRecommender,
     InfeasibleMeasurementMode,
     _GaussianProcessClassifier,
+    _GaussianProcessRegressor,
 )
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.targets import NumericalTarget
+from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from tests.conftest import FAST_OPTIMIZATION_SETTINGS
 
 _FEASIBILITY_TARGET = BinaryTarget(name="Feasibility")
 """The binary target encoding whether an experiment was feasible."""
+
+_NUMERICAL_FEASIBILITY_TARGET = NumericalTarget(name="Constraint")
+"""The numerical target encoding constraint values; non-positive values are feasible."""
 
 _N_CONTINUOUS_SAMPLES = 4
 """Number of continuous configurations sampled per discrete configuration."""
@@ -44,21 +50,27 @@ _CONTINUOUS_PARAMETER_NAMES = ["Conti_finite1", "Conti_finite2"]
 _HYBRID_PARAMETER_NAMES = ["Categorical_1", "Num_disc_1", "Conti_finite1"]
 
 
-def _make_recommender(**kwargs) -> ExperimentFeasibilityRecommender:
+def _make_recommender(
+    target: Target = _FEASIBILITY_TARGET, **kwargs
+) -> ExperimentFeasibilityRecommender:
     """Create the recommender under test."""
     return ExperimentFeasibilityRecommender(
-        target=_FEASIBILITY_TARGET,
+        target=target,
         recommender=BotorchRecommender(**FAST_OPTIMIZATION_SETTINGS),
         **kwargs,
     )
 
 
-def _make_measurements(searchspace: SearchSpace, targets) -> pd.DataFrame:
+def _make_measurements(
+    searchspace: SearchSpace,
+    targets,
+    feasibility_target: Target = _FEASIBILITY_TARGET,
+) -> pd.DataFrame:
     """Create deterministic measurements covering the whole search space.
 
-    The feasibility labels are derived from a single parameter, yielding an
+    The feasibility values are derived from a single parameter, yielding an
     unambiguous decision boundary. Every discrete configuration is combined with
-    continuous configurations from both sides of the boundary, so that the classifier
+    continuous configurations from both sides of the boundary, so that the model
     cannot mistake a configuration for being entirely infeasible.
     """
     continuous = searchspace.continuous
@@ -86,21 +98,25 @@ def _make_measurements(searchspace: SearchSpace, targets) -> pd.DataFrame:
 
     measurements = discrete_part.merge(continuous_part, how="cross")
     values = measurements[split_parameter.name]
-    measurements[_FEASIBILITY_TARGET.name] = values <= (values.min() + values.max()) / 2
+    midpoint = (values.min() + values.max()) / 2
+    if isinstance(feasibility_target, BinaryTarget):
+        measurements[feasibility_target.name] = values <= midpoint
+    else:
+        measurements[feasibility_target.name] = values - midpoint
     for target in targets:
         measurements[target.name] = np.linspace(0.0, 1.0, len(measurements))
     return measurements
 
 
-def _stub_probabilities(monkeypatch, column: int, threshold: float) -> None:
-    """Replace the classifier prediction with a deterministic threshold rule."""
+def _stub_probabilities(
+    monkeypatch, model_cls: type, column: int, threshold: float
+) -> None:
+    """Replace the model prediction with a deterministic threshold rule."""
 
     def posterior_probabilities(self, candidates_comp, /):
         return (candidates_comp[:, column] <= threshold).to(candidates_comp.dtype)
 
-    monkeypatch.setattr(
-        _GaussianProcessClassifier, "posterior_probabilities", posterior_probabilities
-    )
+    monkeypatch.setattr(model_cls, "posterior_probabilities", posterior_probabilities)
 
 
 @pytest.mark.parametrize(
@@ -173,11 +189,12 @@ def test_infeasible_measurement_modes(
         infeasible_measurement_mode=mode,
         infeasible_dummy_value=_DUMMY_VALUE,
     )
-    labels = recommender._extract_labels(measurements)
-    is_infeasible = labels.to_numpy() == 0
+    values = recommender._extract_values(measurements)
+    is_feasible = recommender._observed_feasibility(values)
+    is_infeasible = ~is_feasible.to_numpy()
 
     result = recommender._objective_measurements(
-        measurements, labels, objective, searchspace
+        measurements, is_feasible, objective, searchspace
     )
 
     if mode is InfeasibleMeasurementMode.OBSERVED:
@@ -196,15 +213,26 @@ def test_infeasible_measurement_modes(
     assert_frame_equal(result, expected)
 
 
-def test_discrete_candidates_are_filtered(monkeypatch, searchspace):
+@pytest.mark.parametrize(
+    ("target", "model_cls"),
+    [
+        pytest.param(_FEASIBILITY_TARGET, _GaussianProcessClassifier, id="binary"),
+        pytest.param(
+            _NUMERICAL_FEASIBILITY_TARGET, _GaussianProcessRegressor, id="numerical"
+        ),
+    ],
+)
+def test_discrete_candidates_are_filtered(monkeypatch, searchspace, target, model_cls):
     """Candidates predicted infeasible are removed from the discrete space."""
     assert searchspace.type is SearchSpaceType.DISCRETE
     split_name, split_value = "Num_disc_1", 1.5
     column = searchspace.comp_rep_columns.index(split_name)
-    _stub_probabilities(monkeypatch, column, split_value)
+    _stub_probabilities(monkeypatch, model_cls, column, split_value)
 
-    recommender = _make_recommender()
-    restricted = recommender._restrict_searchspace(searchspace, recommender._classifier)
+    recommender = _make_recommender(target=target)
+    model = recommender._feasibility_model
+    assert isinstance(model, model_cls)
+    restricted = recommender._restrict_searchspace(searchspace, model)
 
     candidates_exp, _ = searchspace.discrete.get_candidates()
     retained_exp, _ = restricted.discrete.get_candidates()
@@ -224,17 +252,28 @@ def test_discrete_candidates_are_filtered(monkeypatch, searchspace):
         pytest.param(_HYBRID_PARAMETER_NAMES, SearchSpaceType.HYBRID, id="hybrid"),
     ],
 )
+@pytest.mark.parametrize(
+    ("target", "model_cls"),
+    [
+        pytest.param(_FEASIBILITY_TARGET, _GaussianProcessClassifier, id="binary"),
+        pytest.param(
+            _NUMERICAL_FEASIBILITY_TARGET, _GaussianProcessRegressor, id="numerical"
+        ),
+    ],
+)
 def test_continuous_constraint_rejects_infeasible_configurations(
-    monkeypatch, searchspace_type, searchspace
+    monkeypatch, searchspace_type, searchspace, target, model_cls
 ):
     """The added nonlinear constraint rejects configurations predicted infeasible."""
     assert searchspace.type is searchspace_type
     split_name, split_value = "Conti_finite1", 0.5
     column = searchspace.comp_rep_columns.index(split_name)
-    _stub_probabilities(monkeypatch, column, split_value)
+    _stub_probabilities(monkeypatch, model_cls, column, split_value)
 
-    recommender = _make_recommender()
-    restricted = recommender._restrict_searchspace(searchspace, recommender._classifier)
+    recommender = _make_recommender(target=target)
+    model = recommender._feasibility_model
+    assert isinstance(model, model_cls)
+    restricted = recommender._restrict_searchspace(searchspace, model)
 
     assert len(restricted.continuous.constraints_nonlin) == 1
     [(constraint, is_intra_point)] = restricted.continuous.constraints_nonlin[
@@ -249,3 +288,59 @@ def test_continuous_constraint_rejects_infeasible_configurations(
 
     assert constraint(probe(split_value / 2)) >= 0
     assert constraint(probe(1.5 * split_value)) < 0
+
+
+@pytest.mark.parametrize(
+    ("parameter_names", "searchspace_type"),
+    [
+        pytest.param(
+            _DISCRETE_PARAMETER_NAMES, SearchSpaceType.DISCRETE, id="discrete"
+        ),
+        pytest.param(
+            _CONTINUOUS_PARAMETER_NAMES, SearchSpaceType.CONTINUOUS, id="continuous"
+        ),
+        pytest.param(_HYBRID_PARAMETER_NAMES, SearchSpaceType.HYBRID, id="hybrid"),
+    ],
+)
+def test_numerical_target_recommendation(
+    searchspace_type, targets, searchspace, objective
+):
+    """A numerical feasibility target yields a full batch for every space type."""
+    assert searchspace.type is searchspace_type
+
+    measurements = _make_measurements(
+        searchspace, targets, _NUMERICAL_FEASIBILITY_TARGET
+    )
+    recommender = _make_recommender(target=_NUMERICAL_FEASIBILITY_TARGET)
+
+    rec = recommender.recommend(2, searchspace, objective, measurements)
+
+    assert len(rec) == 2
+    assert set(rec.columns) == set(searchspace.parameter_names)
+
+
+def test_numerical_observed_feasibility():
+    """Numerical constraint values are feasible when they are non-positive."""
+    recommender = _make_recommender(target=_NUMERICAL_FEASIBILITY_TARGET)
+
+    feasibility = recommender._observed_feasibility(pd.Series([-1.0, 0.0, 0.5]))
+
+    assert feasibility.tolist() == [True, True, False]
+
+
+def test_numerical_target_minimize_is_rejected():
+    """A numerical feasibility target must not be configured for minimization."""
+    with pytest.raises(ValueError, match="minimize"):
+        _make_recommender(target=NumericalTarget(name="Constraint", minimize=True))
+
+
+def test_non_numeric_constraint_values_raise(searchspace, targets):
+    """Non-numeric measurement values cannot train a numerical feasibility model."""
+    measurements = _make_measurements(
+        searchspace, targets, _NUMERICAL_FEASIBILITY_TARGET
+    )
+    measurements[_NUMERICAL_FEASIBILITY_TARGET.name] = "invalid"
+    recommender = _make_recommender(target=_NUMERICAL_FEASIBILITY_TARGET)
+
+    with pytest.raises(InvalidTargetValueError, match="must contain numeric values"):
+        recommender._extract_values(measurements)
