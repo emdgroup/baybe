@@ -1,4 +1,9 @@
-"""LLM-specific exceptions and warnings."""
+"""LLM-specific exceptions.
+
+The public base error and the public warning are defined in ``baybe.exceptions`` so
+that they are part of the documented public surface; this module imports the error to
+build the internal subclass hierarchy.
+"""
 
 from __future__ import annotations
 
@@ -7,13 +12,7 @@ from typing import Any
 
 from typing_extensions import override
 
-
-class LLMResponseWarning(UserWarning):
-    """A language model response did not fully meet the request."""
-
-
-class LLMError(Exception):
-    """A language model interaction failed."""
+from baybe.exceptions import LLMError
 
 
 class LLMCallError(LLMError):
