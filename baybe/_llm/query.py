@@ -22,15 +22,28 @@ it is parsed as a whole.
 """
 
 
+def _check_reserved_keys(args: Mapping[str, Any], name: str, /) -> None:
+    """Reject LiteLLM arguments that BayBE controls itself.
+
+    Args:
+        args: The LiteLLM arguments to check.
+        name: The name of the argument mapping, used in the error message.
+
+    Raises:
+        ValueError: If at least one reserved key is present.
+    """
+    if conflicts := RESERVED_LITELLM_KEYS & set(args):
+        raise ValueError(
+            f"'{name}' must not contain keys that are controlled by "
+            f"BayBE itself: {sorted(conflicts)}."
+        )
+
+
 def validate_litellm_args(  # noqa: DOC101, DOC103
     _: Any, attribute: Attribute, value: Any
 ) -> None:
     """Validate that LiteLLM arguments do not contain reserved keys."""
-    if conflicts := RESERVED_LITELLM_KEYS & set(value):
-        raise ValueError(
-            f"'{attribute.name}' must not contain keys that are controlled by "
-            f"BayBE itself: {sorted(conflicts)}."
-        )
+    _check_reserved_keys(value, attribute.name)
 
 
 def query_model(
@@ -50,12 +63,15 @@ def query_model(
         The raw text content of the model response.
 
     Raises:
+        ValueError: If ``litellm_args`` contains a reserved key.
         LLMAuthenticationError: If authentication with the provider fails.
         LLMCallError: If the call fails for another reason (e.g. network, rate
             limiting, timeout, unknown model) before a response is produced.
         LLMMalformedResponseError: If a response is returned but has an unexpected
             structure or no content.
     """
+    _check_reserved_keys(litellm_args or {}, "litellm_args")
+
     from baybe._optional.llm import AuthenticationError, completion
 
     try:
@@ -77,8 +93,8 @@ def query_model(
         ) from e
 
     # NOTE: `completion()` is typed to also return a stream, which lacks `.choices`.
-    #   Streaming is excluded via `RESERVED_LITELLM_KEYS`, and the `except` below
-    #   guards against any other unexpected response type at runtime.
+    #   `query_model` rejects streaming via `RESERVED_LITELLM_KEYS` above, and the
+    #   `except` below guards against any other unexpected response type at runtime.
     try:
         choices = response.choices  # pyrefly: ignore[missing-attribute]
         content = choices[0].message.content

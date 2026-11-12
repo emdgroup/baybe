@@ -42,3 +42,16 @@ def test_call_errors(exception, expected_error):
         with pytest.raises(expected_error):
             query_model("Prompt.", model="test/model")
     assert mock.call_count == 1
+
+
+@pytest.mark.parametrize("reserved_key", ["model", "messages", "stream"])
+def test_reserved_litellm_args_rejected(reserved_key):
+    """Reserved LiteLLM arguments are rejected before any provider call."""
+    with patch(PATCH_TARGET) as mock:
+        with pytest.raises(ValueError, match="controlled by BayBE"):
+            query_model(
+                "Prompt.",
+                model="test/model",
+                litellm_args={reserved_key: True},
+            )
+    mock.assert_not_called()
