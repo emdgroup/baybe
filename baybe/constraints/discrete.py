@@ -3,19 +3,27 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from functools import reduce
 from inspect import Parameter, Signature, signature
-from typing import TYPE_CHECKING, Any, ClassVar, cast, get_type_hints, overload
+from typing import TYPE_CHECKING, Any, ClassVar, get_type_hints, overload
 
 import cattrs
-import numpy as np
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import define, field, fields
 from attrs.converters import optional as optional_c
-from attrs.validators import deep_iterable, ge, gt, in_, instance_of, min_len
+from attrs.validators import (
+    deep_iterable,
+    ge,
+    gt,
+    in_,
+    instance_of,
+    is_callable,
+    min_len,
+)
 from attrs.validators import optional as optional_v
+from narwhals.stable.v2.typing import IntoDataFrame, IntoSeries
 from typing_extensions import override
 
 from baybe.constraints.base import (
@@ -25,13 +33,13 @@ from baybe.constraints.base import (
     DiscreteFilteringConstraint,
 )
 from baybe.constraints.conditions import (
+    _LOGIC_COMBINERS,
+    _THRESHOLD_OPERATORS,
+    _TOLERANCE_OPERATORS,
     Condition,
     SubSelectionCondition,  # noqa: F401 (used in doctests)
     ThresholdCondition,
     ThresholdOperator,
-    _threshold_operators,
-    _valid_logic_combiners,
-    _valid_tolerance_operators,
 )
 from baybe.serialization import (
     block_deserialization_hook,
@@ -39,12 +47,11 @@ from baybe.serialization import (
     converter,
 )
 from baybe.serialization.core import _TYPE_FIELD, make_base_structure_hook
+from baybe.utils.basic import to_tuple, validate_all_instance
 from baybe.utils.boolean import is_abstract
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
-    import polars as pl
-
     from baybe.symmetries.dependency import DependencySymmetry
     from baybe.symmetries.permutation import PermutationSymmetry
 
@@ -76,11 +83,12 @@ def DiscreteExcludeConstraint(  # noqa: N802
 # <<<<<<<<<< Deprecation
 
 
-@define
+@define(frozen=True)
 class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     """Class for filtering search space entries based on conditions.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({
         ...     "Solvent": ["Water", "Water", "Hexane", "Hexane"],
         ...     "Temp": [80.0, 120.0, 80.0, 120.0],
@@ -91,7 +99,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         1   Water  120.0
         2  Hexane   80.0
         3  Hexane  120.0
-        >>> c = DiscreteSelectionConstraint(
+        >>> constraint = DiscreteSelectionConstraint(
         ...     parameters=["Solvent", "Temp"],
         ...     conditions=[
         ...         SubSelectionCondition(selection=["Hexane"]),
@@ -99,16 +107,33 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         ...     ],
         ...     exclude=True,
         ... )
-        >>> list(c.get_invalid(df))
-        [3]
+        >>> constraint(df)
+          Solvent   Temp
+        0   Water   80.0
+        1   Water  120.0
+        2  Hexane   80.0
     """
 
-    # object variables
-    conditions: list[Condition] = field(validator=min_len(1))
-    """List of individual conditions."""
+    conditions: tuple[Condition, ...] = field(
+        converter=to_tuple,
+        validator=[
+            min_len(1),
+            deep_iterable(member_validator=instance_of(Condition)),
+        ],
+    )
+    """The individual conditions."""
 
-    combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
+    combiner: str = field(default="AND", validator=in_(_LOGIC_COMBINERS))
     """Operator encoding how to combine the individual conditions."""
+
+    @conditions.validator
+    def _validate_conditions(self, _: Any, conditions: tuple[Condition, ...]) -> None:
+        if len(conditions) != len(self.parameters):
+            raise ValueError(
+                f"'{fields(type(self)).conditions.alias}' must contain exactly one "
+                f"condition per parameter, but got {len(conditions)} conditions for "
+                f"{len(self.parameters)} parameters."
+            )
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
@@ -132,22 +157,13 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
         return True
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in df]
-        satisfied = [cond.evaluate(df[p]) for p, cond in pairs]
-        res = reduce(_valid_logic_combiners[self.combiner], satisfied)
-
-        return df.index[res]
-
-    @override
-    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
-
-        satisfied = []
-        for k, cond in enumerate(self.conditions):
-            satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
-
-        return pl.reduce(_valid_logic_combiners[self.combiner], satisfied)
+    def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        satisfied = [
+            cond._to_expr(nw.col(param), schema[param])
+            for param, cond in zip(self.parameters, self.conditions, strict=True)
+            if param in schema
+        ]
+        return reduce(_LOGIC_COMBINERS[self.combiner], satisfied)
 
 
 def _make_condition(
@@ -167,7 +183,7 @@ def _make_condition(
     return ThresholdCondition(threshold=rhs, operator=operator, **kwargs)
 
 
-@define
+@define(frozen=True)
 class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     """Class for modeling linear (weighted-sum) constraints on discrete parameters.
 
@@ -177,30 +193,34 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     :paramref:`DiscreteLinearConstraint.operator`.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({"A": [1.0, 3.0, 5.0], "B": [2.0, 1.0, 3.0]})
         >>> df
              A    B
         0  1.0  2.0
         1  3.0  1.0
         2  5.0  3.0
-        >>> c = DiscreteLinearConstraint(
+        >>> constraint = DiscreteLinearConstraint(
         ...     parameters=["A", "B"],
         ...     operator="<=",
         ...     rhs=5.0,
         ... )
-        >>> list(c.get_invalid(df))
-        [2]
+        >>> constraint(df)
+             A    B
+        0  1.0  2.0
+        1  3.0  1.0
 
         With coefficients, the weighted sum is checked instead:
 
-        >>> c = DiscreteLinearConstraint(
+        >>> constraint = DiscreteLinearConstraint(
         ...     parameters=["A", "B"],
         ...     coefficients=(2.0, 1.0),
         ...     operator="<=",
         ...     rhs=5.0,
         ... )
-        >>> list(c.get_invalid(df))
-        [1, 2]
+        >>> constraint(df)
+             A    B
+        0  1.0  2.0
     """
 
     # IMPROVE: Look-ahead filtering would be possible if parameter
@@ -208,12 +228,10 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
     # bound-based pruning of partial sums before all parameters are
     # present. This could be expressed via a _can_evaluate override.
 
-    # class variables
     numerical_only: ClassVar[bool] = True
     # See base class.
 
-    # object variables
-    operator: ThresholdOperator = field(validator=in_(_threshold_operators))
+    operator: ThresholdOperator = field(validator=in_(_THRESHOLD_OPERATORS))
     """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
     coefficients: tuple[float, ...] = field(
@@ -254,11 +272,12 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
         """
         if len(self.parameters) != len(coefficients):
             raise ValueError(
-                "The given 'coefficients' list must have one floating point entry for "
-                "each entry in 'parameters'."
+                f"There must be exactly one coefficient per parameter, but got "
+                f"{len(coefficients)} coefficients for {len(self.parameters)} "
+                f"parameters."
             )
         if any(c == 0.0 for c in coefficients):
-            raise ValueError("All entries in 'coefficients' must be non-zero.")
+            raise ValueError("All coefficients must be non-zero.")
 
     @tolerance.validator
     def _validate_tolerance(  # noqa: DOC101, DOC103
@@ -269,36 +288,27 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
         Raises:
             ValueError: If a tolerance is provided for a non-tolerance operator.
         """
-        if self.operator not in _valid_tolerance_operators and value is not None:
+        if self.operator not in _TOLERANCE_OPERATORS and value is not None:
             raise ValueError(
                 f"Setting the '{attribute.alias}' is only valid with the following "
-                f"operators: {_valid_tolerance_operators}, but got operator "
+                f"operators: {_TOLERANCE_OPERATORS}, but got operator "
                 f"'{self.operator}'."
             )
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        evaluate_df = pd.Series(
-            sum(
-                df[p].to_numpy() * c for p, c in zip(self.parameters, self.coefficients)
-            ),
-            index=df.index,
+    def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        validate_all_instance(
+            [schema[p] for p in self.parameters], nw.dtypes.NumericType
         )
+        weighted = [
+            nw.col(p) * c
+            for p, c in zip(self.parameters, self.coefficients, strict=True)
+        ]
         condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        mask_good = condition.evaluate(evaluate_df)
-
-        return df.index[mask_good]
-
-    @override
-    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
-
-        weighted = [pl.col(p) * c for p, c in zip(self.parameters, self.coefficients)]
-        condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        return condition.to_polars(pl.sum_horizontal(weighted))
+        return condition._to_expr(nw.sum_horizontal(weighted), nw.dtypes.NumericType())
 
 
-@define(init=False)
+@define(init=False, frozen=True)
 class DiscreteProductConstraint(DiscreteFilteringConstraint):
     """Class for modeling product constraints on discrete parameters.
 
@@ -307,19 +317,22 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     :paramref:`DiscreteProductConstraint.operator`.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({"A": [2.0, 3.0, 5.0], "B": [3.0, 2.0, 2.0]})
         >>> df
              A    B
         0  2.0  3.0
         1  3.0  2.0
         2  5.0  2.0
-        >>> c = DiscreteProductConstraint(
+        >>> constraint = DiscreteProductConstraint(
         ...     parameters=["A", "B"],
         ...     operator="<=",
         ...     rhs=8.0,
         ... )
-        >>> list(c.get_invalid(df))
-        [2]
+        >>> constraint(df)
+             A    B
+        0  2.0  3.0
+        1  3.0  2.0
     """
 
     # IMPROVE: Look-ahead filtering would be possible if parameter
@@ -327,15 +340,13 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     # bound-based pruning of partial products before all parameters are
     # present. This could be expressed via a _can_evaluate override.
 
-    # class variables
     numerical_only: ClassVar[bool] = True
     # See base class.
 
     __signature__: ClassVar[Signature]
     """The modern constructor signature exposed to introspection tools."""
 
-    # object variables
-    operator: ThresholdOperator = field(validator=in_(_threshold_operators))
+    operator: ThresholdOperator = field(validator=in_(_THRESHOLD_OPERATORS))
     """The comparison operator (e.g. ``"="``, ``">="``, ``"<"``)."""
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
@@ -421,28 +432,22 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
         Raises:
             ValueError: If a tolerance is provided for a non-tolerance operator.
         """
-        if self.operator not in _valid_tolerance_operators and value is not None:
+        if self.operator not in _TOLERANCE_OPERATORS and value is not None:
             raise ValueError(
                 f"Setting the '{attribute.alias}' is only valid with the "
-                f"following operators: {_valid_tolerance_operators}, but got "
+                f"following operators: {_TOLERANCE_OPERATORS}, but got "
                 f"operator '{self.operator}'."
             )
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        evaluate_df = df[self.parameters].prod(axis=1)
+    def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        validate_all_instance(
+            [schema[p] for p in self.parameters], nw.dtypes.NumericType
+        )
+        factors = [nw.col(p) for p in self.parameters]
+        product = reduce(lambda left, right: left * right, factors)
         condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        mask_good = condition.evaluate(evaluate_df)
-
-        return df.index[mask_good]
-
-    @override
-    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
-
-        condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        expr = pl.reduce(lambda acc, x: acc * x, pl.col(self.parameters))
-        return condition.to_polars(expr)
+        return condition._to_expr(product, nw.dtypes.NumericType())
 
 
 # >>>>>>>>>> Deprecation
@@ -493,7 +498,7 @@ def DiscreteSumConstraint(  # noqa: N802
 # <<<<<<<<<< Deprecation
 
 
-@define
+@define(frozen=True)
 class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
     """Class for constraining value repetition across parameters.
 
@@ -501,6 +506,7 @@ class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
     times across the specified parameters.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({"A": ["x", "y", "x"], "B": ["y", "x", "x"]})
         >>> df
            A  B
@@ -510,22 +516,24 @@ class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
 
         Upper bound: row 2 has "x" twice, violating ``n_max_repetitions=1``:
 
-        >>> c = DiscreteRepetitionLimitConstraint(
+        >>> constraint = DiscreteRepetitionLimitConstraint(
         ...     parameters=["A", "B"], n_max_repetitions=1
         ... )
-        >>> list(c.get_invalid(df))
-        [2]
+        >>> constraint(df)
+           A  B
+        0  x  y
+        1  y  x
 
         With ``exclude=True``, the logic inverts and only repeated rows are kept:
 
-        >>> c = DiscreteRepetitionLimitConstraint(
+        >>> constraint = DiscreteRepetitionLimitConstraint(
         ...     parameters=["A", "B"], n_max_repetitions=1, exclude=True
         ... )
-        >>> list(c.get_invalid(df))
-        [0, 1]
+        >>> constraint(df)
+           A  B
+        2  x  x
     """
 
-    # object variables
     n_max_repetitions: int = field(
         default=1, validator=[instance_of(int), ge(1)], kw_only=True
     )
@@ -549,65 +557,47 @@ class DiscreteRepetitionLimitConstraint(DiscreteFilteringConstraint):
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
         n_available = len(available & set(self.parameters))
+
         if self.exclude:
             # Once even assigning every missing parameter the same value cannot
             # exceed the maximum, the row is guaranteed to be excluded.
             return n_available >= len(self.parameters) - self.n_max_repetitions + 1
+
         # Exceeding the maximum requires at least one more available parameter.
         return n_available >= self.n_max_repetitions + 1
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        params = [p for p in self.parameters if p in df]
+    def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        params = [p for p in self.parameters if p in schema]
 
-        # Encode all values to integer codes with a single global mapping so that
-        # equality matches pandas semantics exactly (avoids false duplicates that a
-        # naive string cast would introduce, e.g. int 1 vs. str "1"). Sorting the
-        # integer codes per row groups equal values together.
-        block = df[params].to_numpy()
-        codes = pd.factorize(block.ravel())[0].reshape(block.shape)
-        sorted_codes = np.sort(codes, axis=1)
+        def _safe_eq(left: str, right: str) -> nw.Expr:
+            """Compare two columns while handling dtype differences safely."""
+            left_dtype, right_dtype = schema[left], schema[right]
+            if left_dtype != right_dtype and not (
+                isinstance(left_dtype, nw.dtypes.NumericType)
+                and isinstance(right_dtype, nw.dtypes.NumericType)
+            ):
+                return nw.lit(False)
 
-        # Mark the start of each run of equal values along the sorted row, then
-        # assign an increasing run id to every position via a cumulative sum.
-        is_run_start = np.empty(sorted_codes.shape, dtype=bool)
-        is_run_start[:, 0] = True
-        is_run_start[:, 1:] = sorted_codes[:, 1:] != sorted_codes[:, :-1]
-        run_ids = np.cumsum(is_run_start, axis=1)
+            return nw.col(left) == nw.col(right)
 
-        # The largest run (i.e. the highest per-value multiplicity) is found by
-        # counting, for each possible run id, how many positions carry it. This
-        # loop runs over the (small) number of parameters, not the dataframe rows.
-        max_multiplicity = np.zeros(sorted_codes.shape[0], dtype=int)
-        for run_id in range(1, sorted_codes.shape[1] + 1):
-            max_multiplicity = np.maximum(
-                max_multiplicity, (run_ids == run_id).sum(axis=1)
-            )
+        counts = [
+            nw.sum_horizontal(_safe_eq(left, right).cast(nw.UInt16) for right in params)
+            for left in params
+        ]
+        max_multiplicity = nw.max_horizontal(counts)
+        if self.exclude:
+            # Missing parameters can only increase the multiplicity. Add them
+            # to obtain an upper bound, so that only rows guaranteed to satisfy the
+            # limit can be removed by the constraint inversion.
+            n_missing = len(self.parameters) - len(params)
+            matching = max_multiplicity + n_missing <= self.n_max_repetitions
+        else:
+            # The partial count is a lower bound: rows already exceeding the limit are
+            # definitely invalid; others are re-evaluated later.
+            matching = max_multiplicity <= self.n_max_repetitions
 
-        n_missing = len(self.parameters) - len(params)
-        max_possible_multiplicity = (
-            max_multiplicity + n_missing if self.exclude else max_multiplicity
-        )
-        mask_good = max_possible_multiplicity <= self.n_max_repetitions
-
-        return df.index[mask_good]
-
-    @override
-    def _get_matching_rows_polars(self, schema: pl.Schema) -> pl.Expr:
-        from baybe._optional.polars import polars as pl
-
-        def _safe_eq(ci: str, cj: str) -> pl.Expr:
-            """Compare two columns, returning ``False`` for incompatible dtypes."""
-            di, dj = schema[ci], schema[cj]
-            if di == dj or (di.is_numeric() and dj.is_numeric()):
-                return pl.col(ci).eq_missing(pl.col(cj))
-            return pl.lit(False)
-
-        params = self.parameters
-        counts = [pl.sum_horizontal(_safe_eq(ci, cj) for cj in params) for ci in params]
-        max_count = pl.max_horizontal(counts)
-
-        return max_count <= self.n_max_repetitions
+        return matching
 
 
 # >>>>>>>>>> Deprecation
@@ -655,7 +645,7 @@ def DiscreteLinkedParametersConstraint(  # noqa: N802
 # <<<<<<<<<< Deprecation
 
 
-@define
+@define(frozen=True)
 class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
     """Constraint that specifies dependencies between parameters.
 
@@ -664,6 +654,7 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
     a single constraint.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({
         ...     "Switch": ["on", "off", "off"],
         ...     "Temp": [100, 200, 100],
@@ -673,20 +664,21 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         0     on   100
         1    off   200
         2    off   100
-        >>> c = DiscreteDependenciesConstraint(
+        >>> constraint = DiscreteDependenciesConstraint(
         ...     parameters=["Switch"],
         ...     conditions=[SubSelectionCondition(selection=["on"])],
         ...     affected_parameters=[["Temp"]],
         ... )
-        >>> list(c.get_invalid(df))
-        [2]
+        >>> constraint(df)
+          Switch  Temp
+        0     on   100
+        1    off   200
     """
 
-    # object variables
-    conditions: list[Condition] = field()
+    conditions: tuple[Condition, ...] = field()
     """The list of individual conditions."""
 
-    affected_parameters: list[list[str]] = field()
+    affected_parameters: tuple[tuple[str, ...], ...] = field()
     """The parameters affected by the individual conditions."""
 
     # for internal use only
@@ -696,7 +688,7 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
 
     @affected_parameters.validator
     def _validate_affected_parameters(  # noqa: DOC101, DOC103
-        self, _: Any, value: list[list[str]]
+        self, _: Any, value: tuple[tuple[str, ...], ...]
     ) -> None:
         """Validate the affected parameters.
 
@@ -706,9 +698,8 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         """
         if len(self.conditions) != len(value):
             raise ValueError(
-                f"For the {self.__class__.__name__}, for each item in the "
-                f"affected_parameters list you must provide exactly one condition in "
-                f"the conditions list."
+                f"Each group of affected parameters needs exactly one condition, "
+                f"but got {len(value)} groups and {len(self.conditions)} conditions."
             )
 
     @property
@@ -719,46 +710,6 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         for group in self.affected_parameters:
             params.update(group)
         return params
-
-    @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        # Build an invariant indicator for each affected parameter: pair each value
-        # with the value of the parameter it depends on. For rows where the dependency
-        # condition is not met, use None as a sentinel so that all such rows with the
-        # same dependency value appear identical, causing them to be detected as
-        # duplicates. The indicator tuples are constructed directly without storing
-        # any intermediate sentinel in the typed columns.
-        censored_df = df.copy()
-        for k, param in enumerate(self.parameters):
-            invalid = ~self.conditions[k].evaluate(df[self.parameters[k]])
-            for affected_param in self.affected_parameters[k]:
-                censored_df[affected_param] = [
-                    (None if inv else val, dep)
-                    for val, dep, inv in zip(
-                        censored_df[affected_param], censored_df[param], invalid
-                    )
-                ]
-
-        # Merge the invariant indicator with all other parameters (i.e. neither the
-        # affected nor the dependency-causing ones) and detect duplicates in that space.
-        all_affected_params = [col for cols in self.affected_parameters for col in cols]
-        other_params = (
-            df.columns.drop(all_affected_params).drop(self.parameters).tolist()
-        )
-        invariant_indicator = censored_df[all_affected_params].apply(
-            cast(Callable, frozenset)
-            if self.permutation_invariant
-            else cast(Callable, tuple),
-            axis=1,
-        )
-        # Only include the other_params DataFrame if it is non-empty to avoid
-        # pandas FutureWarning about concatenation with empty entries
-        parts = [censored_df[other_params]] if other_params else []
-        parts.append(invariant_indicator)
-        df_eval = pd.concat(parts, axis=1)
-        inds_good = df.index[~df_eval.duplicated(keep="first")]
-
-        return inds_good
 
     def to_symmetries(self) -> tuple[DependencySymmetry, ...]:
         """Convert to :class:`~baybe.symmetries.dependency.DependencySymmetry` objects.
@@ -784,7 +735,7 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         )
 
 
-@define
+@define(frozen=True)
 class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
     """Constraint class for declaring that a set of parameters is permutation invariant.
 
@@ -795,18 +746,20 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
     evaluated during modeling to make use of the invariance.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({"A": ["x", "y", "z"], "B": ["y", "x", "x"]})
         >>> df
            A  B
         0  x  y
         1  y  x
         2  z  x
-        >>> c = DiscretePermutationInvarianceConstraint(parameters=["A", "B"])
-        >>> list(c.get_invalid(df))
-        [1]
+        >>> constraint = DiscretePermutationInvarianceConstraint(parameters=["A", "B"])
+        >>> constraint(df)
+           A  B
+        0  x  y
+        2  z  x
     """
 
-    # object variables
     dependencies: DiscreteDependenciesConstraint | None = field(default=None)
     """Dependencies connected with the invariant parameters."""
 
@@ -821,8 +774,8 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
         """
         if value is not None and value.exclude:
             raise ValueError(
-                "Dependencies of a permutation invariance constraint cannot use "
-                "'exclude=True'."
+                "The dependencies of a permutation invariance constraint cannot be "
+                "inverted."
             )
 
     @property
@@ -857,34 +810,6 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
         # subset will produce identical expansions.
         return len(available & set(self.parameters)) >= 2
 
-    @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        cols = set(df.columns)
-        params = [p for p in self.parameters if p in cols]
-
-        # Merge a permutation invariant representation of all affected parameters with
-        # the other parameters and indicate duplicates. This ensures that variation in
-        # other parameters is also accounted for.
-        other_params = df.columns.drop(params).tolist()
-        frozen = df[params].apply(cast(Callable, frozenset), axis=1)
-        parts = [df[other_params].copy(), frozen] if other_params else [frozen]
-        df_eval = pd.concat(parts, axis=1)
-        mask_canonical = ~df_eval.duplicated(keep="first")
-
-        # Indices of canonical (non-duplicate) permutations
-        inds_valid = df_eval.index[mask_canonical]
-
-        # If there are dependencies connected to the invariant parameters evaluate them
-        # here and remove resulting duplicates with a DependenciesConstraint
-        if self.dependencies and self.dependencies._can_evaluate(set(df.columns)):
-            self.dependencies.permutation_invariant = True
-            inds_duplicate_independency_adjusted = self.dependencies.get_invalid(
-                df.loc[inds_valid]
-            )
-            inds_valid = inds_valid.drop(inds_duplicate_independency_adjusted)
-
-        return inds_valid
-
     def to_symmetry(self) -> PermutationSymmetry:
         """Convert to a :class:`~baybe.symmetries.permutation.PermutationSymmetry`.
 
@@ -899,28 +824,26 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
 
         groups = [self.parameters]
         if self.dependencies:
-            groups.append(list(self.dependencies.parameters))
+            groups.append(self.dependencies.parameters)
         return PermutationSymmetry(permutation_groups=groups)
 
 
-@define
+@define(frozen=True)
 class DiscreteCustomConstraint(DiscreteFilteringConstraint):
     """Class for user-defined custom constraints."""
 
-    # object variables
-    validator: Callable[[pd.DataFrame], pd.Series] = field()
-    """A user-defined function modeling the validation of the constraint. The expected
-    return is a pandas series with Boolean entries True/False for search space elements
-    you want to keep/remove."""
+    validator: Callable[[IntoDataFrame], IntoSeries] = field(validator=is_callable())
+    """A user-defined function that receives the selected parameters as a native
+    dataframe and returns a Boolean series of the same backend."""
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        mask_good = self.validator(df[self.parameters])
+    def _to_matching_mask(self, df: nw.DataFrame, /) -> nw.Series:
+        native_df = df.select(self.parameters).to_native()
+        native_mask = self.validator(native_df)
+        return nw.from_native(native_mask, series_only=True)
 
-        return df.index[mask_good]
 
-
-@define
+@define(frozen=True)
 class DiscreteBatchConstraint(DiscreteConstraint):
     """Constraint ensuring recommendations in a batch share certain parameter values.
 
@@ -954,24 +877,28 @@ class DiscreteBatchConstraint(DiscreteConstraint):
 
 
 @define
-class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringConstraint):
+class DiscreteCardinalityConstraint(  # pyrefly: ignore[invalid-inheritance]
+    CardinalityConstraint, DiscreteFilteringConstraint
+):
     """Class for discrete cardinality constraints.
 
     Examples:
+        >>> import pandas as pd
         >>> df = pd.DataFrame({"A": [0.0, 1.0, 1.0], "B": [0.0, 0.0, 1.0]})
         >>> df
              A    B
         0  0.0  0.0
         1  1.0  0.0
         2  1.0  1.0
-        >>> c = DiscreteCardinalityConstraint(
+        >>> constraint = DiscreteCardinalityConstraint(
         ...     parameters=["A", "B"], max_cardinality=1
         ... )
-        >>> list(c.get_invalid(df))
-        [2]
+        >>> constraint(df)
+             A    B
+        0  0.0  0.0
+        1  1.0  0.0
     """
 
-    # Class variables
     numerical_only: ClassVar[bool] = True
     # See base class.
 
@@ -982,24 +909,29 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteFilteringCons
         # nonzero count only grows), so all parameters must be present first.
         if self.exclude:
             return self._required_parameters <= available
+
         # The max-cardinality check is safe on any non-empty subset: the
         # nonzero count can only increase as more parameters are added.
         return bool(available & set(self.parameters))
 
     @override
-    def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
-        params = [p for p in self.parameters if p in set(df.columns)]
-        all_present = len(params) == len(self.parameters)
+    def _to_matching_expr(self, schema: Mapping[str, Any], /) -> nw.Expr:
+        parameters = [p for p in self.parameters if p in schema]
+        validate_all_instance([schema[p] for p in parameters], nw.dtypes.NumericType)
+        n_active = nw.sum_horizontal(
+            (nw.col(p) != 0.0).cast(nw.UInt16) for p in parameters
+        )
 
-        non_zeros = (df[params] != 0.0).sum(axis=1)
-        # The max_cardinality check is safe on a partial subset: the nonzero
-        # count can only increase as more parameters are added.
-        mask_good = non_zeros <= self.max_cardinality
-        # The min_cardinality check can only be applied when all parameters
-        # are present, since missing parameters could still add nonzero values.
-        if all_present:
-            mask_good &= non_zeros >= self.min_cardinality
-        return df.index[mask_good]
+        # The upper bound is safe on partial frames: the nonzero count can only grow
+        # as missing parameters are added.
+        matching = n_active <= self.max_cardinality
+
+        # The lower bound can only be checked once all parameters are available;
+        # a partial row may still reach the minimum cardinality later.
+        if set(self.parameters) <= set(schema):
+            matching = matching & (n_active >= self.min_cardinality)
+
+        return matching
 
 
 # Filtering constraints are approximately ordered according to increasing computational

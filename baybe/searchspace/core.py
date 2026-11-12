@@ -324,25 +324,33 @@ class SearchSpace(SerialMixin):
         """
         # TODO: Elevate the interface to return an `Iterator[Self]` and rename to
         #    `iter_subsets` once the continuous subset iteration has been refactored
+        # TODO: Once continuous subset generation has been refactored:
+        #   - Harmonize subset iteration mode names across search spaces.
+        #   - Replace the with-replacement draws used in ordered/shuffled modes. They
+        #     avoid materializing the full continuous subset product but can yield
+        #     duplicates; use lazy continuous iteration to preserve unique subsets.
 
         match mode:
             case "with_replacement":
                 discrete_subsets = self.discrete.iter_subsets(mode="with_replacement")
-                continuous_draws = self.continuous.inactive_parameter_combinations(
+                continuous_subsets = self.continuous.inactive_parameter_combinations(
                     mode="replace"
                 )
                 while True:
-                    yield next(discrete_subsets), next(continuous_draws)
+                    yield next(discrete_subsets), next(continuous_subsets)
 
             case "ordered" | "shuffled":
-                continuous_configs = list(
-                    self.continuous.inactive_parameter_combinations(mode="sequential")
+                n_continuous_subsets = max(self.continuous.n_subsets, 1)
+                continuous_subsets = self.continuous.inactive_parameter_combinations(
+                    mode="replace"
                 )
-                for idx in iter_indices(self.n_subsets or 1, mode=mode):
-                    d_idx, c_idx = divmod(idx, len(continuous_configs))
+                for combined_subset_idx in iter_indices(self.n_subsets or 1, mode=mode):
+                    discrete_subset_idx, _ = divmod(
+                        combined_subset_idx, n_continuous_subsets
+                    )
                     yield (
-                        self.discrete._get_nth_subspace(d_idx),
-                        continuous_configs[c_idx],
+                        self.discrete._get_nth_subspace(discrete_subset_idx),
+                        next(continuous_subsets),
                     )
 
             case _:

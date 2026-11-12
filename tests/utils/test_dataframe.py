@@ -9,6 +9,7 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe.exceptions import InputDataTypeWarning
+from baybe.settings import Settings
 from baybe.targets import BinaryTarget, NumericalTarget
 from baybe.utils.dataframe import (
     _fuzzy_anti_join,
@@ -55,6 +56,7 @@ def test_degenerate_rows_invalid_input():
         add_noise_to_perturb_degenerate_rows(df)
 
 
+@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize(
     "parameter_names",
     [
@@ -111,6 +113,7 @@ def test_fuzzy_anti_join(searchspace, dataframe_constructor):
     )
 
 
+@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize(
     "parameter_names", [["Categorical_1", "Num_disc_1", "Some_Setting"]]
 )

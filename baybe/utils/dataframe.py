@@ -668,14 +668,7 @@ def _apply_filter(lf: nw.LazyFrame, filter_: Filter, /) -> nw.LazyFrame:
             return lf.filter(filter_)
 
         case DiscreteFilteringConstraint():
-            # TODO: Simplify once constraints expose a narwhals-native expression
-            #   (replacing the current pandas-index/Polars-expression duality).
-            eager = lf.collect()
-            native = eager.to_pandas()
-            valid = native.loc[filter_.get_valid(native)]
-            return _df_with_backend(
-                nw.from_native(valid, eager_only=True), nw.get_native_namespace(eager)
-            ).lazy()
+            return filter_._filter(lf)
 
         case _ if is_into_dataframe(filter_):
             other = nw.from_native(filter_, eager_only=True)
