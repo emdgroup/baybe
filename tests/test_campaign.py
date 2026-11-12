@@ -477,6 +477,7 @@ def test_recommend_with_named_candidate_index_discrete():
 
     rec = campaign.recommend(batch_size=2)
     assert len(rec) == 2
+    assert rec.index.name == df_disc.index.name
     assert rec.index.isin(df_disc.index).all()
     for idx_val, row in rec.iterrows():
         expected_row = df_disc.loc[idx_val]
@@ -515,6 +516,7 @@ def test_recommend_with_named_candidate_index_hybrid():
 
     rec = campaign.recommend(batch_size=1)
     assert len(rec) == 1
+    assert rec.index.name == df_disc.index.name
     rec_idx = rec.index[0]
     assert rec_idx in df_disc.index
     expected_disc = df_disc.loc[rec_idx]
