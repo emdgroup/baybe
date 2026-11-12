@@ -14,7 +14,7 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.utils.dataframe import Filter, _filter_dataframe, _infer_backend
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoFrame, IntoLazyFrame
+    from narwhals.stable.v2.typing import IntoFrame
 
 _T = TypeVar("_T")
 
@@ -151,7 +151,7 @@ def _make_filtered_cartesian_product(
     initial_df: IntoFrame | None = None,
     *,
     sort_filters: bool = False,
-) -> IntoLazyFrame:
+) -> nw.LazyFrame:
     """Create the Cartesian parameter product and apply the given filters.
 
     Args:
@@ -164,7 +164,7 @@ def _make_filtered_cartesian_product(
             order in which they are passed.
 
     Returns:
-        The filtered frame as a lazy native frame.
+        The filtered Narwhals lazy frame.
     """
     if sort_filters:
         filters = _sort_filters(filters)
@@ -180,13 +180,13 @@ def _make_filtered_cartesian_product(
     if initial_df is not None:
         frames.insert(0, nw.from_native(initial_df).lazy())
     if not frames:
-        return nw.from_dict({}, backend=backend).lazy().to_native()
+        return nw.from_dict({}, backend=backend).lazy()
 
     product = frames[0]
     for frame in frames[1:]:
         product = product.join(frame, how="cross")
 
-    return _filter_dataframe(product, *filters).to_native()
+    return _filter_dataframe(product, *filters)
 
 
 def _make_filtered_cartesian_product_incremental(
@@ -196,7 +196,7 @@ def _make_filtered_cartesian_product_incremental(
     *,
     sort_filters: bool = False,
     sort_parameters: bool = False,
-) -> IntoLazyFrame:
+) -> nw.LazyFrame:
     """Create a Cartesian parameter product, applying filters as early as possible.
 
     Unlike :func:`_make_filtered_cartesian_product`, which builds the full product
@@ -218,7 +218,7 @@ def _make_filtered_cartesian_product_incremental(
             :func:`optimize_parameter_order`. Otherwise, keep the given order.
 
     Returns:
-        The filtered frame as a lazy native frame.
+        The filtered Narwhals lazy frame.
     """
     if sort_filters:
         filters = _sort_filters(filters)
@@ -245,7 +245,7 @@ def _make_filtered_cartesian_product_incremental(
         frames.insert(0, nw.from_native(initial_df).lazy())
 
     if not frames:
-        return nw.from_dict({}, backend=backend).lazy().to_native()
+        return nw.from_dict({}, backend=backend).lazy()
 
     product = frames[0]
     product, pending = _apply_evaluable_constraints(product, constraints)
@@ -265,4 +265,4 @@ def _make_filtered_cartesian_product_incremental(
         columns = [*initial_columns, *(parameter.name for parameter in parameters)]
         product = product.select(columns)
 
-    return _filter_dataframe(product, *other_filters).to_native()
+    return _filter_dataframe(product, *other_filters)

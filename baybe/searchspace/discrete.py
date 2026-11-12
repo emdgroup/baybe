@@ -597,7 +597,7 @@ class SubspaceDiscrete(SerialMixin):
         #   space serializable. We should either use `ProductCandidates` (depending on
         #   whether we can skip manual construction altogether, see above) or introduce
         #   a dedicated `SimplexCandidates` class to preserve laziness.
-        exp_rep = nw.from_native(exp_rep).collect().to_native()
+        exp_rep = exp_rep.collect().to_native()
         all_parameters = [*simplex_parameters, *product_parameters]
         candidates = TableCandidates(all_parameters, exp_rep)
 

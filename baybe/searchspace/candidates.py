@@ -172,9 +172,7 @@ class ProductCandidates(CandidatesProtocol):
             raise InfiniteSpaceError(
                 "Cannot generate all candidates from an infinite space."
             )
-        return nw.from_native(
-            _make_filtered_cartesian_product(self.parameters, self.filters)
-        ).lazy()
+        return _make_filtered_cartesian_product(self.parameters, self.filters)
 
 
 @define(frozen=True)
