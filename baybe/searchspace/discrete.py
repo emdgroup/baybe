@@ -591,13 +591,17 @@ class SubspaceDiscrete(SerialMixin):
             product_parameters, filtering_constraints, initial_df=simplex
         )
 
+        # TODO: Investigate how off-the-shelf query optimization using
+        #   `ProductCandidates` performs against our custom from_simplex construction
+        # TODO: The `collect` call should be avoided but is required to make the
+        #   space serializable. We should either use `ProductCandidates` (depending on
+        #   whether we can skip manual construction altogether, see above) or introduce
+        #   a dedicated `SimplexCandidates` class to preserve laziness.
+        exp_rep = nw.from_native(exp_rep).collect().to_native()
         all_parameters = [*simplex_parameters, *product_parameters]
-        return cls(
-            # TODO: Investigate how off-the-shelf query optimization performs against
-            #   our custom TableCandidates construction
-            candidates=TableCandidates(all_parameters, exp_rep),
-            batch_constraints=batch_constraints_list,
-        )
+        candidates = TableCandidates(all_parameters, exp_rep)
+
+        return cls(candidates, batch_constraints=batch_constraints_list)
 
     @property
     def metadata(self) -> pd.DataFrame:
