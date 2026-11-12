@@ -3,7 +3,7 @@
 import gc
 
 import pytest
-from attrs import define
+from attrs import define, field
 
 from baybe._llm.exceptions import LLMMalformedResponseError
 from baybe._llm.extraction import extract_json, structure_json
@@ -155,6 +155,11 @@ class _Item:
     value: int
 
 
+@define
+class _DefaultedItem:
+    values: list[dict] = field(factory=list)
+
+
 def test_structure_json():
     """The helper structures a decoded value into the given type."""
     assert structure_json({"value": 1}, _Item) == _Item(value=1)
@@ -166,6 +171,27 @@ def test_structure_json_raises_on_invalid():
         LLMMalformedResponseError, match="does not match the expected format"
     ) as exc_info:
         structure_json({}, _Item)
+    assert exc_info.value.__cause__ is not None
+
+
+def test_structure_json_ignores_unknown_keys_by_default():
+    """Unknown keys fall back to defaults unless strict structuring is requested."""
+    assert structure_json({"value": [{"x": 1}]}, _DefaultedItem) == _DefaultedItem(
+        values=[]
+    )
+
+
+def test_structure_json_rejects_unknown_keys_when_requested():
+    """Strict structuring accepts exact keys and rejects unknown ones."""
+    payload = {"values": [{"x": 1}]}
+    assert structure_json(
+        payload, _DefaultedItem, forbid_extra_keys=True
+    ) == _DefaultedItem(values=[{"x": 1}])
+
+    with pytest.raises(
+        LLMMalformedResponseError, match="does not match the expected format"
+    ) as exc_info:
+        structure_json({"value": [{"x": 1}]}, _DefaultedItem, forbid_extra_keys=True)
     assert exc_info.value.__cause__ is not None
 
 

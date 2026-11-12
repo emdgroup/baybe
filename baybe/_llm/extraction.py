@@ -69,12 +69,20 @@ def extract_json(
     return last_accepted
 
 
-def structure_json(value: Any, cl: type[_T], /) -> _T:
+def structure_json(
+    value: Any,
+    cl: type[_T],
+    /,
+    *,
+    forbid_extra_keys: bool = False,
+) -> _T:
     """Structure a decoded JSON value into the given type.
 
     Args:
         value: The decoded JSON value.
         cl: The type to structure the value into.
+        forbid_extra_keys: Whether to reject keys not defined by the target type.
+            By default, unknown keys are ignored.
 
     Returns:
         The structured value.
@@ -82,8 +90,13 @@ def structure_json(value: Any, cl: type[_T], /) -> _T:
     Raises:
         LLMMalformedResponseError: If the value does not match the expected structure.
     """
+    structure = (
+        cattrs.Converter(forbid_extra_keys=True).structure
+        if forbid_extra_keys
+        else cattrs.structure
+    )
     try:
-        return cattrs.structure(value, cl)
+        return structure(value, cl)
     except Exception as exc:
         raise LLMMalformedResponseError(
             f"The language model response does not match the expected format. {exc}"
