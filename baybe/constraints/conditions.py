@@ -191,9 +191,7 @@ class ThresholdCondition(Condition):
 
         if self.operator in _TOLERANCE_OPERATORS:
             assert self.tolerance is not None
-            close = (expr >= self.threshold - self.tolerance) & (
-                expr <= self.threshold + self.tolerance
-            )
+            close = (expr - self.threshold).abs() <= self.tolerance
             matching = ~close if self.operator == "!=" else close
         else:
             matching = _THRESHOLD_OPERATORS[self.operator](expr, self.threshold)
@@ -205,9 +203,7 @@ class ThresholdCondition(Condition):
     def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
         if self.operator in _TOLERANCE_OPERATORS:
             assert self.tolerance is not None
-            close = (expr >= self.threshold - self.tolerance) & (
-                expr <= self.threshold + self.tolerance
-            )
+            close = (expr - self.threshold).abs() <= self.tolerance
             matching = ~close if self.operator == "!=" else close
         else:
             matching = _THRESHOLD_OPERATORS[self.operator](expr, self.threshold)
