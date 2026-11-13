@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `eval_during_creation` / `eval_during_modeling` constraint class variables
 - `filter_df` utility (replaced with new `Filter` concept)
 - `fuzzy_row_match` utility
-- `SearchSpaceMatchWarning` exception class
+- `SearchSpaceMatchWarning` warning class
 - `SubspaceDiscrete.subset_masks` and `SubspaceDiscrete.sample_subset_masks`
   (use `SubspaceDiscrete.iter_subsets` instead)
 - `DiscreteBatchConstraint.subset_masks`
@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is temporarily private pending a public API that yields search spaces)
 - `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars`
   (product construction is now narwhals-based)
+- `DiscreteFilteringConstraint.get_valid`, `get_invalid`, and `get_invalid_polars`
+  (use the constraint as a dataframe filter instead)
+- `DiscreteFilteringConstraint.has_polars_implementation`
+- `Condition.to_polars` (conditions now evaluate through the backend-agnostic interface)
+- `build_constrained_product` and `parameter_cartesian_prod_pandas_constrained`
 
 ### Breaking Changes
 - For pandas users: series/dataframe indices are no longer used as information carriers
@@ -38,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `df_apply_permutation_augmentation` has a different interface and now expects
   permutation groups instead of column groups
 - `ParameterSelectorProtocol.__call__` now declares its input as positional-only
+- `Campaign.toggle_discrete_candidates` now requires `exclude` as a keyword argument
 
 ### Fixed
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
@@ -56,10 +62,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubSelectionCondition` now rejects selection entries of different types and raises a
   descriptive error when applied to data of an incompatible dtype, instead of behaving
   differently depending on the dataframe backend
+- `validate_parameter_input` no longer uses row-by-row iteration, fixing a significant
+  performance problem for large candidate sets
+- Exported campaign frames no longer alias the campaign's internal state
 - Pending experiments containing extra columns or duplicate column names are now
   rejected before recommendation
-- Subset sampling without replacement no longer relies on a duplicate-rejection mechanism
-  that could raise `InfeasibilityError` for larger numbers of requested configurations
+- Hybrid recommendation no longer uses `SearchSpace.sample_subsets`' bounded
+  duplicate-rejection loop, which could raise `InfeasibilityError` after repeated
+  duplicate draws
+- Shuffled discrete-subset index iteration uses sparse Fisher–Yates, storing displaced
+  indices rather than materializing the full index order
 
 ### Added
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
@@ -168,9 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
-- Missing validators and converters were added to several parameter fields
-- `validate_parameter_input` no longer uses row-by-row iteration, fixing a significant
-  performance problem for large candidate sets
+- Missing validators and converters were added to parameters/constraints
 
 ### Deprecations
 - `Campaign.toggle_discrete_candidates` calls passing filter criteria via the
