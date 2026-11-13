@@ -555,7 +555,7 @@ def fixture_named_candidates() -> pd.DataFrame:
 
 
 @pytest.mark.parametrize("is_hybrid", [False, True], ids=["discrete", "hybrid"])
-def test_recommend_with_named_candidate_index(named_candidates, is_hybrid):
+def test_recommend_with_named_candidate_index(named_candidates, is_hybrid, recommender):
     """Recommendation preserves candidate identities with a named candidate index."""
     discrete = SubspaceDiscrete.from_dataframe(named_candidates)
     searchspace = (
@@ -568,7 +568,11 @@ def test_recommend_with_named_candidate_index(named_candidates, is_hybrid):
         if is_hybrid
         else SearchSpace(discrete=discrete)
     )
-    campaign = Campaign(searchspace, NumericalTarget(name="Target").to_objective())
+    campaign = Campaign(
+        searchspace,
+        NumericalTarget(name="Target").to_objective(),
+        recommender=recommender,
+    )
 
     measurements = named_candidates.iloc[[0, 3]].assign(Target=[1.0, 2.0])
     if is_hybrid:
