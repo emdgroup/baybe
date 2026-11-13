@@ -69,6 +69,7 @@ def _selection_dtypes(value: Any) -> tuple[type, ...]:
     )
 
 
+@define(frozen=True)
 class Condition(ABC, SerialMixin):
     """Abstract base class for all conditions.
 
