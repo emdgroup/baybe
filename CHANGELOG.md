@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `df_apply_permutation_augmentation` has a different interface and now expects
   permutation groups instead of column groups
 - `ParameterSelectorProtocol.__call__` now declares its input as positional-only
+- Condition objects are now immutable
+- `SubSelectionCondition` rejects selection entries of different types as well as
+  NaN entries
 
 ### Fixed
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
@@ -46,6 +49,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   center, which caused `OptimizationGradientError` during recommendation
 - `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
   constraint filtering
+- Conditions now treat null and NaN values as non-matching on all backends; NaN cannot
+  be included in a `SubSelectionCondition` selection
+- `ThresholdCondition` now rejects Boolean data instead of treating it as numerical
+- `SubSelectionCondition` now supports Boolean selection entries for both pandas and
+  Polars backends; previously, they were coerced to floats, which broke Polars filtering
+- `SubSelectionCondition` now raises a descriptive error when applied to data of an
+  incompatible dtype, instead of behaving differently depending on the dataframe backend
 - Pending experiments containing extra columns or duplicate column names are now
   rejected before recommendation
 - Subset sampling without replacement no longer relies on a duplicate-rejection mechanism

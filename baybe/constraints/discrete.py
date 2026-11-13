@@ -135,7 +135,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in df]
         satisfied = [cond.evaluate(df[p]) for p, cond in pairs]
-        res = reduce(_valid_logic_combiners[self.combiner], satisfied)
+        res = cast(pd.Series, reduce(_valid_logic_combiners[self.combiner], satisfied))
 
         return df.index[res]
 
@@ -285,7 +285,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
             index=df.index,
         )
         condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        mask_good = condition.evaluate(evaluate_df)
+        mask_good = cast(pd.Series, condition.evaluate(evaluate_df))
 
         return df.index[mask_good]
 
@@ -432,7 +432,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = df[self.parameters].prod(axis=1)
         condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        mask_good = condition.evaluate(evaluate_df)
+        mask_good = cast(pd.Series, condition.evaluate(evaluate_df))
 
         return df.index[mask_good]
 
@@ -730,7 +730,8 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         # any intermediate sentinel in the typed columns.
         censored_df = df.copy()
         for k, param in enumerate(self.parameters):
-            invalid = ~self.conditions[k].evaluate(df[self.parameters[k]])
+            mask = self.conditions[k].evaluate(df[self.parameters[k]])
+            invalid = ~cast(pd.Series, mask)
             for affected_param in self.affected_parameters[k]:
                 censored_df[affected_param] = [
                     (None if inv else val, dep)

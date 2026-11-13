@@ -3,115 +3,134 @@
 from __future__ import annotations
 
 import gc
+import math
+import numbers
 import operator as ops
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from functools import partial
 from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 
-import numpy as np
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, in_, min_len
 from attrs.validators import optional as optional_v
-from numpy.typing import ArrayLike
 from typing_extensions import override
 
 from baybe.serialization import (
     SerialMixin,
 )
-from baybe.settings import active_settings
-from baybe.utils.basic import to_tuple
+from baybe.utils.basic import to_tuple, validate_all_instance
 from baybe.utils.validation import finite_float, validate_unique_values
 
 if TYPE_CHECKING:
     import polars as pl
-
-
-def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
-    """Return a Boolean array indicating where ``x`` and ``y`` are not close.
-
-    The counterpart to ``numpy.isclose``.
-
-    Args:
-        x: First input array to compare.
-        y: Second input array to compare.
-        rtol: The relative tolerance parameter.
-        atol: The absolute tolerance parameter.
-
-    Returns:
-        A Boolean array of where ``x`` and ``y`` are not equal within the
-        given tolerances.
-
-    """
-    return ~_is_close(x, y, rtol=rtol, atol=atol)
-
-
-def _is_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
-    """Return a Boolean array indicating where ``x`` and ``y`` are close.
-
-    The equivalent to :func:``numpy.isclose``.
-    Using ``numpy.isclose`` with Polars dataframes results in this error:
-    ``TypeError: ufunc 'isfinite' not supported for the input types``.
-
-    Args:
-        x: First input array to compare.
-        y: Second input array to compare.
-        rtol: The relative tolerance parameter.
-        atol: The absolute tolerance parameter.
-
-    Returns:
-        A Boolean array of where ``x`` and ``y`` are equal within the
-        given tolerances.
-
-    """
-    return np.abs(np.subtract(x, y)) <= atol + rtol * np.abs(y)
+    from narwhals.stable.v2 import Expr
+    from narwhals.stable.v2.typing import IntoSeries, IntoSeriesT
 
 
 ThresholdOperator: TypeAlias = Literal["<", "<=", "=", "==", "!=", ">", ">="]
 """An operator for comparing numerical values against a threshold."""
 
-# provide threshold operators
-_threshold_operators: dict[ThresholdOperator, Callable] = {
+_THRESHOLD_OPERATORS: dict[ThresholdOperator, Callable] = {
     "<": ops.lt,
     "<=": ops.le,
-    "=": partial(_is_close, rtol=0.0),
-    "==": partial(_is_close, rtol=0.0),
-    "!=": partial(_is_not_close, rtol=0.0),
+    "=": ops.eq,
+    "==": ops.eq,
+    "!=": ops.ne,
     ">": ops.gt,
     ">=": ops.ge,
 }
-
-# define operators that are eligible for tolerance
-_valid_tolerance_operators = ["=", "==", "!="]
-
-_valid_logic_combiners = {
+_TOLERANCE_OPERATORS = ["=", "==", "!="]
+_LOGIC_COMBINERS = {
     "AND": ops.and_,
     "OR": ops.or_,
-    "XOR": ops.xor,
+    "XOR": ops.ne,
 }
 
+# TODO[bridge]: Temporary aliases used by the not-yet-narwhalified constraint
+#   implementation.
+_threshold_operators = _THRESHOLD_OPERATORS
+_valid_tolerance_operators = _TOLERANCE_OPERATORS
+_valid_logic_combiners = _LOGIC_COMBINERS
 
+
+def _selection_dtypes(value: Any) -> tuple[type, ...]:
+    """Return the Narwhals dtypes that a sub-selection entry can be matched against."""
+    if isinstance(value, bool):
+        return (nw.dtypes.Boolean,)
+    if isinstance(value, numbers.Real):
+        return (nw.dtypes.NumericType,)
+    if isinstance(value, str):
+        return nw.dtypes.String, nw.dtypes.Categorical, nw.dtypes.Enum
+    raise ValueError(
+        f"Sub-selection entries must be strings, Booleans, or numbers, but got "
+        f"{value!r}."
+    )
+
+
+@define(frozen=True)
 class Condition(ABC, SerialMixin):
     """Abstract base class for all conditions.
 
-    Conditions always evaluate an expression regarding a single parameter.
-    Conditions are part of :class:`~baybe.constraints.base.Constraint` and
-    :class:`~baybe.symmetries.base.Symmetry` objects.
+    A condition is a predicate: it evaluates a value against a criterion and marks
+    it as a match or non-match. It can be applied to a series or an expression that
+    evaluates to one column. :class:`~baybe.constraints.base.Constraint` and
+    :class:`~baybe.symmetries.base.Symmetry` use conditions to build more complex rules.
+
+    Null and NaN values never match a condition.
     """
 
-    @abstractmethod
-    def evaluate(self, data: pd.Series) -> pd.Series:
-        """Evaluate the condition on a given data series.
+    def __call__(self, series: IntoSeriesT, /) -> IntoSeriesT:
+        """Apply the condition and return the values that satisfy it.
 
         Args:
-            data: A series containing parameter values.
+            series: A native series containing the values to be filtered.
 
         Returns:
-            A Boolean series indicating which elements satisfy the condition.
+            A native series containing only the values that satisfy the condition.
         """
+        nw_series = nw.from_native(series, series_only=True)
+        mask = nw.from_native(self.evaluate(series), series_only=True)
+        return nw_series.filter(mask).to_native()
 
+    def evaluate(self, series: IntoSeries, /) -> IntoSeries:
+        """Evaluate the condition and return the corresponding Boolean series.
+
+        Args:
+            series: A native series containing the values to be evaluated.
+
+        Returns:
+            A native Boolean series indicating which values satisfy the condition.
+        """
+        nw_series = nw.from_native(series, series_only=True)
+        nw_frame = nw_series.to_frame()
+        column = nw_frame.columns[0]
+        result = nw_frame.select(self._to_expr(nw.col(column), nw_series.dtype))
+        return result.get_column(result.columns[0]).alias(nw_series.name).to_native()
+
+    def _to_expr(self, expr: Expr, dtype: Any, /) -> Expr:
+        """Return the condition as a Narwhals expression.
+
+        Args:
+            expr: An expression that evaluates to a single column (for example, a
+                single-column selection or a column aggregation such as averaging).
+            dtype: The dtype of the input expression.
+
+        Returns:
+            A backend-agnostic Boolean expression.
+        """
+        matching = self._to_raw_expr(expr, dtype)
+        missing = expr.is_null()
+        if dtype.is_numeric() and not dtype.is_decimal():
+            missing = missing | expr.is_nan()
+        return (matching & ~missing).fill_null(False)
+
+    @abstractmethod
+    def _to_raw_expr(self, expr: Expr, dtype: Any, /) -> Expr:
+        """Like :meth:`_to_expr`, but without handling missing values."""
+
+    # TODO[bridge]: Drop once the constraint filtering pipeline is narwhalified.
     @abstractmethod
     def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
         """Apply the condition to a Polars expression.
@@ -124,15 +143,14 @@ class Condition(ABC, SerialMixin):
         """
 
 
-@define
+@define(frozen=True)
 class ThresholdCondition(Condition):
     """Class for modelling threshold-based conditions."""
 
-    # object variables
     threshold: float = field(converter=float, validator=finite_float)
     """The threshold value used in the condition."""
 
-    operator: ThresholdOperator = field(validator=[in_(_threshold_operators)])
+    operator: ThresholdOperator = field(validator=[in_(_THRESHOLD_OPERATORS)])
     """The operator used in the condition."""
 
     tolerance: float | None = field(
@@ -143,8 +161,7 @@ class ThresholdCondition(Condition):
     @tolerance.default
     def _tolerance_default(self) -> float | None:
         """Create the default value for the tolerance."""
-        # Default value for the tolerance.
-        return 1e-8 if self.operator in _valid_tolerance_operators else None
+        return 1e-8 if self.operator in _TOLERANCE_OPERATORS else None
 
     @tolerance.validator
     def _validate_tolerance(self, _: Any, value: float) -> None:  # noqa: DOC101, DOC103
@@ -155,54 +172,51 @@ class ThresholdCondition(Condition):
             ValueError: If the operator allows for setting a tolerance, but the provided
                 tolerance is either less than 0 or ``None``.
         """
-        if (self.operator not in _valid_tolerance_operators) and (value is not None):
+        if (self.operator not in _TOLERANCE_OPERATORS) and (value is not None):
             raise ValueError(
                 f"Setting the tolerance for a threshold condition is only valid "
-                f"with the following operators: {_valid_tolerance_operators}."
+                f"with the following operators: {_TOLERANCE_OPERATORS}."
             )
-        if self.operator in _valid_tolerance_operators:
+        if self.operator in _TOLERANCE_OPERATORS:
             if (value is None) or (value <= 0.0):
                 raise ValueError(
                     f"When using a tolerance-enabled operator"
-                    f" ({_valid_tolerance_operators}) the tolerance cannot be None "
+                    f" ({_TOLERANCE_OPERATORS}) the tolerance cannot be None "
                     f"or <= 0.0, but was {value}."
                 )
 
-    def _make_operator_function(self) -> Callable[..., Any]:
-        """Generate a function using operators to filter out undesired rows."""
-
-        def evaluate(x: ArrayLike, /, **kwargs) -> Any:
-            """Evaluate the condition on a given input."""
-            return _threshold_operators[self.operator](x, self.threshold, **kwargs)
-
-        if self.operator in _valid_tolerance_operators:
-            return partial(evaluate, atol=self.tolerance)
-
-        return evaluate
-
     @override
-    def evaluate(self, data: pd.Series) -> pd.Series:
-        if data.dtype.kind not in "iufb":
-            raise ValueError(
-                "You tried to apply a threshold condition to non-numeric data. "
-                "This operation is error-prone and not supported. Only use threshold "
-                "conditions with numerical parameters."
-            )
-        func = self._make_operator_function()
-        return data.apply(func)
+    def _to_raw_expr(self, expr: Expr, dtype: Any, /) -> Expr:
+        validate_all_instance((dtype,), nw.dtypes.NumericType)
 
+        if self.operator in _TOLERANCE_OPERATORS:
+            assert self.tolerance is not None
+            close = (expr - self.threshold).abs() <= self.tolerance
+            matching = ~close if self.operator == "!=" else close
+        else:
+            matching = _THRESHOLD_OPERATORS[self.operator](expr, self.threshold)
+
+        return matching
+
+    # TODO[bridge]: Drop once the constraint filtering pipeline is narwhalified.
     @override
     def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
-        op = self._make_operator_function()
-        return op(expr)
+        if self.operator in _TOLERANCE_OPERATORS:
+            assert self.tolerance is not None
+            close = (expr - self.threshold).abs() <= self.tolerance
+            matching = ~close if self.operator == "!=" else close
+        else:
+            matching = _THRESHOLD_OPERATORS[self.operator](expr, self.threshold)
+
+        # Null and NaN values never match a condition.
+        return (matching & expr.is_not_nan() & expr.is_not_null()).fill_null(False)
 
 
-@define
+@define(frozen=True)
 class SubSelectionCondition(Condition):
     """Class for defining valid parameter entries."""
 
-    # object variables
-    _selection: tuple = field(
+    selection: tuple = field(
         converter=to_tuple,
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
@@ -210,25 +224,40 @@ class SubSelectionCondition(Condition):
             validate_unique_values,
         ],
     )
-    """The internal list of items which are considered valid."""
+    """The items that are considered valid."""
+
+    @selection.validator
+    def _validate_selection(self, _: Any, selection: tuple) -> None:
+        dtypes = _selection_dtypes(selection[0])
+        if any(_selection_dtypes(item) != dtypes for item in selection[1:]):
+            raise ValueError(
+                f"All entries of a '{type(self).__name__}' must have a common type, "
+                f"but got {selection!r}."
+            )
+        if any(
+            isinstance(item, numbers.Real) and math.isnan(item) for item in selection
+        ):
+            raise ValueError("NaN cannot be used in a sub-selection.")
 
     @property
-    def selection(self) -> tuple:
-        """The list of items which are considered valid."""
-        return tuple(
-            active_settings.DTypeFloatNumpy(itm)
-            if isinstance(itm, (float, int, bool))
-            else itm
-            for itm in self._selection
-        )
+    def _dtypes(self) -> tuple[type, ...]:
+        """The Narwhals dtypes that the selection entries can be matched against."""
+        return _selection_dtypes(self.selection[0])
 
     @override
-    def evaluate(self, data: pd.Series) -> pd.Series:
-        return data.isin(self.selection)
+    def _to_raw_expr(self, expr: Expr, dtype: Any, /) -> Expr:
+        if not isinstance(dtype, self._dtypes):
+            raise TypeError(
+                f"A '{type(self).__name__}' with entries {self.selection!r} cannot "
+                f"be applied to data of type '{dtype}'."
+            )
 
+        return expr.is_in(self.selection)
+
+    # TODO[bridge]: Drop once the constraint filtering pipeline is narwhalified.
     @override
     def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
-        return expr.is_in(self.selection)
+        return expr.is_in(self.selection).fill_null(False)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

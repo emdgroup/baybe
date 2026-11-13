@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
@@ -84,7 +84,7 @@ class DependencySymmetry(Symmetry):
             x
             for x, flag in zip(
                 param.values,
-                ~self.condition.evaluate(pd.Series(param.values)),
+                ~cast(pd.Series, self.condition.evaluate(pd.Series(param.values))),
                 strict=True,
             )
             if flag
