@@ -24,6 +24,7 @@ from baybe.utils.basic import to_tuple, validate_all_instance
 from baybe.utils.validation import finite_float, validate_unique_values
 
 if TYPE_CHECKING:
+    import polars as pl
     from narwhals.stable.v2 import Expr
     from narwhals.stable.v2.typing import IntoSeries, IntoSeriesT
 
@@ -46,6 +47,12 @@ _LOGIC_COMBINERS = {
     "OR": ops.or_,
     "XOR": ops.ne,
 }
+
+# TODO[bridge]: Temporary aliases used by the not-yet-narwhalified constraint
+#   implementation.
+_threshold_operators = _THRESHOLD_OPERATORS
+_valid_tolerance_operators = _TOLERANCE_OPERATORS
+_valid_logic_combiners = _LOGIC_COMBINERS
 
 
 def _selection_dtypes(value: Any) -> tuple[type, ...]:
@@ -122,6 +129,18 @@ class Condition(ABC, SerialMixin):
     def _to_raw_expr(self, expr: Expr, dtype: Any, /) -> Expr:
         """Like :meth:`_to_expr`, but without handling missing values."""
 
+    # TODO[bridge]: Drop once the constraint filtering pipeline is narwhalified.
+    @abstractmethod
+    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
+        """Apply the condition to a Polars expression.
+
+        Args:
+            expr: Input expression, for instance column selection etc.
+
+        Returns:
+            An expression that can be used for filtering.
+        """
+
 
 @define(frozen=True)
 class ThresholdCondition(Condition):
@@ -180,6 +199,21 @@ class ThresholdCondition(Condition):
 
         return matching
 
+    # TODO[bridge]: Drop once the constraint filtering pipeline is narwhalified.
+    @override
+    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
+        if self.operator in _TOLERANCE_OPERATORS:
+            assert self.tolerance is not None
+            close = (expr >= self.threshold - self.tolerance) & (
+                expr <= self.threshold + self.tolerance
+            )
+            matching = ~close if self.operator == "!=" else close
+        else:
+            matching = _THRESHOLD_OPERATORS[self.operator](expr, self.threshold)
+
+        # Null and NaN values never match a condition.
+        return (matching & expr.is_not_nan() & expr.is_not_null()).fill_null(False)
+
 
 @define(frozen=True)
 class SubSelectionCondition(Condition):
@@ -222,6 +256,11 @@ class SubSelectionCondition(Condition):
             )
 
         return expr.is_in(self.selection)
+
+    # TODO[bridge]: Drop once the constraint filtering pipeline is narwhalified.
+    @override
+    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
+        return expr.is_in(self.selection).fill_null(False)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
