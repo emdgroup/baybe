@@ -6,7 +6,6 @@ import pickle
 import warnings
 from contextlib import nullcontext
 from copy import deepcopy
-from inspect import signature
 from itertools import pairwise
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -19,7 +18,7 @@ import torch
 from pandas.testing import assert_frame_equal, assert_series_equal
 from pytest import param
 
-from baybe._optional.info import CHEM_INSTALLED
+from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
 from baybe.campaign import _EXCLUDED, _MEASURED, _RECOMMENDED, Campaign
 from baybe.constraints import (
     ContinuousLinearConstraint,
@@ -506,32 +505,27 @@ def test_deprecated_floating_point_environment_variables(
     assert attr is namespace.float32 if value else namespace.float64
 
 
-@pytest.mark.parametrize("value", [True, False])
-def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
-    """Using the deprecated polars environment variable raises an error."""
-    monkeypatch.setenv("BAYBE_USE_POLARS_FOR_CONSTRAINTS", "")
-    monkeypatch.setenv("BAYBE_DEACTIVATE_POLARS", str(value))
-    with (
-        pytest.warns(
-            DeprecationWarning, match="'BAYBE_DEACTIVATE_POLARS' has been deprecated"
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param(
+            False,
+            marks=pytest.mark.skipif(
+                not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+            ),
         ),
-        pytest.raises(DeprecationError, match="use_polars_for_constraints"),
+        True,
+    ],
+)
+def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
+    """Using the deprecated polars environment variables raises warnings."""
+    monkeypatch.setenv("BAYBE_DEACTIVATE_POLARS", str(value))
+    with pytest.warns(
+        DeprecationWarning, match="'BAYBE_DEACTIVATE_POLARS' has been deprecated"
     ):
-        Settings(restore_environment=True)
-
-
-@pytest.mark.parametrize("value", [True, False])
-def test_removed_use_polars_for_constraints_setting(value: bool):
-    """Using the removed polars constraint setting raises an error."""
-    with pytest.raises(DeprecationError, match="use_polars_for_constraints"):
-        Settings(use_polars_for_constraints=value)
-
-    settings = Settings()
-    with pytest.raises(DeprecationError, match="use_polars_for_constraints"):
-        settings.use_polars_for_constraints
-
-    with pytest.raises(DeprecationError, match="use_polars_for_constraints"):
-        settings.use_polars_for_constraints = value
+        assert (
+            Settings(restore_environment=True).use_polars_for_constraints is not value
+        )
 
 
 @pytest.mark.parametrize("value", [True, False])
@@ -696,44 +690,6 @@ def test_discrete_constraint_deprecation(
     assert result == expected
     assert len(recorded) == 1
     assert recorded[0].filename == __file__
-
-
-@pytest.mark.parametrize(
-    ("args", "kwargs"),
-    [
-        param((["A", "B"], "=", 8.0, 0.01), {}, id="positional"),
-        param((["A", "B"], "="), {"rhs": 8.0, "tolerance": 0.01}, id="mixed"),
-        param(
-            (),
-            {"parameters": ["A", "B"], "operator": "=", "rhs": 8.0, "tolerance": 0.01},
-            id="keyword",
-        ),
-    ],
-)
-def test_product_constructor(args, kwargs):
-    """Modern Product call styles produce the same constraint."""
-    result = DiscreteProductConstraint(*args, **kwargs)
-    assert result == DiscreteProductConstraint(
-        ["A", "B"], operator="=", rhs=8.0, tolerance=0.01
-    )
-    assert tuple(signature(DiscreteProductConstraint).parameters) == (
-        "parameters",
-        "operator",
-        "rhs",
-        "tolerance",
-        "exclude",
-    )
-
-
-def test_deprecated_product_condition_conflict():
-    """Mixing the legacy condition with modern comparison arguments is rejected."""
-    with pytest.raises(ValueError, match="Cannot specify both 'condition'"):
-        DiscreteProductConstraint(
-            parameters=["A", "B"],
-            condition=ThresholdCondition(threshold=1.0, operator="=", tolerance=0.1),
-            operator="=",
-            rhs=1.0,
-        )
 
 
 @pytest.mark.parametrize(
@@ -904,7 +860,6 @@ def test_legacy_campaign_counter_deserialization(ongoing_campaign):
 
 @pytest.mark.parametrize("batch_size", [3], ids=["b3"])
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
-@Settings(default_dataframe_backend="pandas")
 def test_legacy_recommended_metadata_deserialization(ongoing_campaign):
     """Legacy searchspace_metadata 'recommended' column migrates to new field."""
     # Recommend to mark some entries as recommended
@@ -955,7 +910,6 @@ def test_legacy_empty_dataframe_schema_deserialization():
     assert restored._measurements == []
 
 
-@Settings(default_dataframe_backend="pandas")
 def test_legacy_measured_metadata_deserialization():
     """Legacy searchspace_metadata 'measured' column is discarded during loading."""
     p = NumericalDiscreteParameter("x", [1, 2, 3])
@@ -978,7 +932,6 @@ def test_legacy_measured_metadata_deserialization():
     assert restored == campaign
 
 
-@Settings(default_dataframe_backend="pandas")
 def test_legacy_excluded_metadata_deserialization():
     """Legacy searchspace_metadata 'excluded' column migrates to new field."""
     p = NumericalDiscreteParameter("x", [1, 2, 3])
@@ -1277,7 +1230,6 @@ def test_batch_constraints_deserialization():
     ["from_product", "from_simplex"],
     ids=["from_product", "from_simplex"],
 )
-@Settings(default_dataframe_backend="pandas")
 def test_filtering_constraints_deserialization(constructor):
     """Deserializing ``from_*`` configs must not drop filtering constraints."""
     p1 = NumericalDiscreteParameter("p1", [0, 1, 2])
@@ -1329,7 +1281,6 @@ def test_deprecated_constraints_argument():
     assert subspace.batch_constraints == (batch_c,)
 
 
-@Settings(default_dataframe_backend="pandas")
 def test_deprecated_constraints_argument_from_product():
     """Passing mixed constraints to ``from_product`` routes batch constraints correctly."""  # noqa: E501
     p = CategoricalParameter("p", ["a", "b"])
@@ -1377,7 +1328,6 @@ def test_deprecated_constraints_batch_property():
     assert result == subspace.batch_constraints == (batch_c,)
 
 
-@Settings(default_dataframe_backend="pandas")
 def test_deprecated_exp_rep_property():
     """Accessing ``exp_rep`` on ``SubspaceDiscrete`` emits a deprecation warning."""
     subspace = CategoricalParameter("p", ["a", "b"]).to_subspace()
@@ -1386,7 +1336,6 @@ def test_deprecated_exp_rep_property():
     assert_frame_equal(result, subspace.get_candidates())
 
 
-@Settings(default_dataframe_backend="pandas")
 def test_deprecated_comp_rep_property():
     """Accessing ``comp_rep`` on ``SubspaceDiscrete`` emits a deprecation warning."""
     subspace = CategoricalParameter("p", ["a", "b"]).to_subspace()

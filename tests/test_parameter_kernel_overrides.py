@@ -5,7 +5,6 @@ from copy import deepcopy
 from functools import partial
 from unittest.mock import Mock
 
-import narwhals.stable.v2 as nw
 import pandas as pd
 import pytest
 import torch
@@ -495,7 +494,7 @@ def test_override_kernel_construction(
     searchspace, objective, kernel_or_factory, expected
 ):
     """Kernel construction with overrides yields the expected kernel or error."""
-    context = _ModelContext(searchspace, objective, nw.from_native(pd.DataFrame()))
+    context = _ModelContext(searchspace, objective, pd.DataFrame())
     surrogate = GaussianProcessSurrogate(kernel_or_factory=kernel_or_factory)
 
     # Invalid configurations raise during construction

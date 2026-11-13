@@ -1,0 +1,259 @@
+"""Test Polars implementations of constraints."""
+
+import pytest
+from pandas.testing import assert_frame_equal
+from pytest import param
+
+from baybe._optional.info import POLARS_INSTALLED
+from baybe.constraints import (
+    DiscreteCustomConstraint,
+    DiscreteLinearConstraint,
+    ThresholdCondition,
+)
+from baybe.parameters import NumericalDiscreteParameter
+from baybe.searchspace.utils import (
+    _apply_constraint_filter_pandas,
+    _apply_constraint_filter_polars,
+    build_constrained_product,
+    parameter_cartesian_prod_pandas,
+    parameter_cartesian_prod_polars,
+)
+
+pytestmark = pytest.mark.skipif(
+    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+)
+
+
+if POLARS_INSTALLED:
+    import polars as pl
+
+
+@pytest.fixture(autouse=True)
+def _assert_polars_active():
+    """Assert that polars is enabled in the active settings."""
+    from baybe.settings import active_settings
+
+    assert active_settings.use_polars_for_constraints
+
+
+def _lazyframe_from_product(parameters):
+    """Create a Polars lazyframe from the product of given parameters and return it."""
+    param_frames = [pl.LazyFrame({p.name: p.values}) for p in parameters]
+
+    # Handling edge cases
+    if len(param_frames) == 1:
+        return param_frames[0]
+
+    # Cross-join parameters
+    res = param_frames[0]
+    for frame in param_frames[1:]:
+        res = res.join(frame, how="cross", force_parallel=True)
+
+    return res
+
+
+@pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
+@pytest.mark.parametrize("constraint_names", [["Constraint_9"]])
+def test_polars_product_constraint(parameters, constraints):
+    """Tests Polars implementation of product constraint."""
+    ldf = _lazyframe_from_product(parameters)
+    ldf = _apply_constraint_filter_polars(ldf, constraints)
+
+    # Number of entries with product under 30
+    df = ldf.filter(
+        pl.reduce(lambda acc, x: acc * x, pl.col(["Fraction_1", "Fraction_2"])).alias(
+            "prod"
+        )
+        < 30
+    ).collect()
+
+    num_entries = len(df)
+    assert num_entries == 0
+
+
+@pytest.mark.parametrize(
+    ("coefficients", "threshold", "operator"),
+    [
+        param(None, 150.0, "<=", id="unweighted-le"),
+        param(None, 100.0, "=", id="unweighted-eq"),
+        param((2.0, 1.0), 150.0, "<=", id="weighted-le"),
+        param((1.0, -1.0), 50.0, "<=", id="negative-le"),
+        param((0.5, 0.5), 50.0, "=", id="weighted-eq"),
+    ],
+)
+@pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
+def test_polars_sum_constraint(parameters, coefficients, threshold, operator):
+    """Polars and Pandas paths produce correct and identical results."""
+    names = [p.name for p in parameters]
+    kwargs = {} if coefficients is None else {"coefficients": coefficients}
+    constraint = DiscreteLinearConstraint(
+        parameters=names, operator=operator, rhs=threshold, **kwargs
+    )
+    coeffs = coefficients or (1.0,) * len(parameters)
+
+    ldf = _lazyframe_from_product(parameters)
+    df_pd = parameter_cartesian_prod_pandas(parameters)
+
+    _apply_constraint_filter_pandas(df_pd, [constraint])
+    df_pl = _apply_constraint_filter_polars(ldf, [constraint]).collect().to_pandas()
+
+    # Correctness: all remaining rows satisfy the constraint
+    condition = ThresholdCondition(threshold=threshold, operator=operator)
+    weighted_pd = sum(df_pd[n] * c for n, c in zip(names, coeffs))
+    assert condition.evaluate(weighted_pd).all()
+
+    weighted_pl = sum(df_pl[n] * c for n, c in zip(names, coeffs))
+    assert condition.evaluate(weighted_pl).all()
+
+    # Consistency: both paths agree
+    cols = df_pd.columns.tolist()
+    assert_frame_equal(
+        df_pd.sort_values(cols).reset_index(drop=True),
+        df_pl.sort_values(cols).reset_index(drop=True),
+    )
+
+
+@pytest.mark.parametrize(
+    "parameter_names",
+    [["Solvent_1", "Some_Setting", "Temperature", "Pressure"]],
+)
+@pytest.mark.parametrize(
+    "constraint_names", [["Constraint_4", "Constraint_5", "Constraint_6"]]
+)
+def test_polars_exclusion(mock_substances, parameters, constraints):
+    """Tests Polars implementation of exclusion constraint."""
+    ldf = _lazyframe_from_product(parameters)
+    ldf = _apply_constraint_filter_polars(ldf, constraints)
+
+    # Number of entries with either first/second substance and a temperature above 151
+    df = ldf.filter(
+        (pl.col("Temperature") > 151)
+        & (pl.col("Solvent_1").is_in(list(mock_substances)[:2]))
+    ).collect()
+    num_entries = len(df)
+    assert num_entries == 0
+
+    # Number of entries with either last / second last substance and a pressure above 5
+    df = ldf.filter(
+        (pl.col("Pressure") > 5)
+        & (pl.col("Solvent_1").is_in(list(mock_substances)[-2:]))
+    ).collect()
+    num_entries = len(df)
+    assert num_entries == 0
+
+    # Number of entries with pressure below 3 and temperature above 120
+    df = ldf.filter((pl.col("Pressure") < 3) & (pl.col("Temperature") > 120)).collect()
+    num_entries = len(df)
+    assert num_entries == 0
+
+
+@pytest.mark.parametrize("parameter_names", [["Solvent_1", "Solvent_2", "Solvent_3"]])
+@pytest.mark.parametrize(
+    ("constraint_names", "n_unique"),
+    [
+        pytest.param(["Constraint_7"], 3, id="maximum-one"),
+        pytest.param(["Constraint_15"], 1, id="inverted-maximum"),
+    ],
+)
+def test_polars_repetition_limit_constraint(parameters, constraints, n_unique):
+    """Test the Polars implementation of the repetition-limit constraint."""
+    ldf = _lazyframe_from_product(parameters)
+    ldf = _apply_constraint_filter_polars(ldf, constraints)
+
+    ldf = ldf.with_columns(
+        pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
+        .list.n_unique()
+        .alias("n_unique")
+    )
+    df = ldf.filter(pl.col("n_unique") != n_unique).collect()
+
+    num_entries = len(df)
+    assert num_entries == 0
+
+
+@pytest.mark.parametrize(
+    "parameter_names",
+    [
+        [
+            "Temperature",
+            "Solvent_1",
+            "Solvent_2",
+            "Solvent_3",
+            "Fraction_1",
+            "Fraction_2",
+            "Fraction_3",
+        ]
+    ],
+)
+@pytest.mark.parametrize(
+    "constraint_names",
+    [
+        ["Constraint_4"],
+        ["Constraint_12"],
+        ["Constraint_15", "Constraint_8", "Constraint_9"],
+    ],
+)
+def test_polars_product(constraints, parameters):
+    """Test the result of parameter product and filtering."""
+    # Do Polars product
+    ldf = parameter_cartesian_prod_polars(parameters)
+    df_pl = ldf.collect()
+
+    # Do Pandas product
+    df_pd = parameter_cartesian_prod_pandas(parameters)
+
+    # Assert equality before filtering
+    assert_frame_equal(df_pl.to_pandas(), df_pd)
+
+    # Apply constraints
+    df_pd_filtered = _apply_constraint_filter_pandas(df_pd, constraints)
+    df_pl_filtered = (
+        _apply_constraint_filter_polars(ldf, constraints).collect().to_pandas()
+    )
+
+    # Assert order-agnostic equality of the two dataframes
+    cols = df_pd_filtered.columns.tolist()
+    assert_frame_equal(
+        df_pd_filtered.sort_values(cols).reset_index(drop=True),
+        df_pl_filtered.sort_values(cols).reset_index(drop=True),
+    )
+
+
+def test_mixed_polars_pandas_constraints():
+    """build_constrained_product with Polars active matches naive pandas result.
+
+    Verifies that parameters shared between Polars and pandas constraints are
+    handled correctly — parameters in the Polars product remain available for
+    subsequent pandas constraint filtering.
+    """
+    parameters = [
+        NumericalDiscreteParameter(name="A", values=[0.0, 50.0, 100.0]),
+        NumericalDiscreteParameter(name="B", values=[0.0, 50.0, 100.0]),
+        NumericalDiscreteParameter(name="C", values=[0.0, 50.0, 100.0]),
+    ]
+    constraints = [
+        # Polars-capable: operates on [A, B]
+        DiscreteLinearConstraint(
+            parameters=["A", "B"],
+            operator="=",
+            rhs=100,
+        ),
+        # Pandas-only: operates on [B, C] — B is shared with the Polars constraint
+        DiscreteCustomConstraint(
+            parameters=["B", "C"],
+            validator=lambda df: df["B"] == df["C"],
+        ),
+    ]
+
+    # Naive reference: full product then filter
+    df_naive = parameter_cartesian_prod_pandas(parameters)
+    _apply_constraint_filter_pandas(df_naive, constraints)
+
+    # Under test: build_constrained_product routes through Polars partitioning
+    df_result = build_constrained_product(parameters, constraints)
+
+    cols = df_naive.columns.tolist()
+    assert_frame_equal(
+        df_result.sort_values(cols).reset_index(drop=True),
+        df_naive.sort_values(cols).reset_index(drop=True),
+    )

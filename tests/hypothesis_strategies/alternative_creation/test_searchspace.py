@@ -18,7 +18,6 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace, SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
-from baybe.settings import Settings
 from tests.hypothesis_strategies.parameters import numerical_discrete_parameters
 
 # Discrete inputs for testing
@@ -117,7 +116,6 @@ def test_discrete_searchspace_creation_from_degenerate_dataframe():
     assert nw.from_native(subspace.get_candidates()).collect().is_empty()
 
 
-@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize("boundary_only", (False, True))
 @given(
     parameters=st.lists(
@@ -159,7 +157,6 @@ p_c1 = CategoricalParameter(name="c1", values=["A", "B"])
 p_c2 = CategoricalParameter(name="c2", values=["A", "B"])
 
 
-@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize(
     ("simplex_parameters", "product_parameters", "n_elements"),
     [
@@ -185,7 +182,6 @@ def test_discrete_space_creation_from_simplex_mixed(
     assert all(p.name in candidates.columns for p in subspace.parameters)
 
 
-@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize("boundary_only", (False, True))
 def test_discrete_space_creation_from_simplex_restricted(boundary_only):
     """The number of nonzero simplex parameters is controllable."""
@@ -237,7 +233,6 @@ def _brute_force_weighted_simplex(
     return df[mask].reset_index(drop=True)
 
 
-@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize(
     ("params", "coefficients", "max_sum", "boundary_only"),
     [

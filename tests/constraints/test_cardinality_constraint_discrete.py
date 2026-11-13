@@ -8,7 +8,6 @@ import pytest
 from baybe.constraints.discrete import DiscreteCardinalityConstraint
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
-from baybe.settings import Settings
 
 # Combinations of cardinalities to be tested
 cardinality_bounds_combinations = sorted(combinations(range(0, 5), 2))
@@ -19,7 +18,6 @@ cardinality_bounds_combinations = sorted(combinations(range(0, 5), 2))
     cardinality_bounds_combinations,
     ids=[str(x) for x in cardinality_bounds_combinations],
 )
-@Settings(default_dataframe_backend="pandas")
 def test_cardinality_constraint_discrete(
     cardinality_bounds: tuple[int, int], n_grid_points: int
 ):

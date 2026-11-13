@@ -9,19 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `eval_during_creation` / `eval_during_modeling` constraint class variables
 - `filter_df` utility (replaced with new `Filter` concept)
 - `fuzzy_row_match` utility
-- `SearchSpaceMatchWarning` warning class
+- `SearchSpaceMatchWarning` exception class
 - `SubspaceDiscrete.subset_masks` and `SubspaceDiscrete.sample_subset_masks`
   (use `SubspaceDiscrete.iter_subsets` instead)
 - `DiscreteBatchConstraint.subset_masks`
 - `SearchSpace.subsets` and `SearchSpace.sample_subsets` (combined subset iteration
   is temporarily private pending a public API that yields search spaces)
-- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars`
-  (product construction is now narwhals-based)
-- `DiscreteFilteringConstraint.get_valid`, `get_invalid`, and `get_invalid_polars`
-  (use the constraint as a dataframe filter instead)
-- `DiscreteFilteringConstraint.has_polars_implementation`
-- `Condition.to_polars` (conditions now evaluate through the backend-agnostic interface)
-- `build_constrained_product` and `parameter_cartesian_prod_pandas_constrained`
 
 ### Breaking Changes
 - For pandas users: series/dataframe indices are no longer used as information carriers
@@ -43,7 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `df_apply_permutation_augmentation` has a different interface and now expects
   permutation groups instead of column groups
 - `ParameterSelectorProtocol.__call__` now declares its input as positional-only
-- `Campaign.toggle_discrete_candidates` now requires `exclude` as a keyword argument
+- Condition objects are now immutable
+- `SubSelectionCondition` rejects selection entries of different types as well as
+  NaN entries
 
 ### Fixed
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
@@ -59,19 +54,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ThresholdCondition` now rejects Boolean data instead of treating it as numerical
 - `SubSelectionCondition` now supports Boolean selection entries for both pandas and
   Polars backends; previously, they were coerced to floats, which broke Polars filtering
-- `SubSelectionCondition` now rejects selection entries of different types and raises a
-  descriptive error when applied to data of an incompatible dtype, instead of behaving
-  differently depending on the dataframe backend
-- `validate_parameter_input` no longer uses row-by-row iteration, fixing a significant
-  performance problem for large candidate sets
-- Exported campaign frames no longer alias the campaign's internal state
+- `SubSelectionCondition` now raises a descriptive error when applied to data of an
+  incompatible dtype, instead of behaving differently depending on the dataframe backend
 - Pending experiments containing extra columns or duplicate column names are now
   rejected before recommendation
-- Hybrid recommendation no longer uses `SearchSpace.sample_subsets`' bounded
-  duplicate-rejection loop, which could raise `InfeasibilityError` after repeated
-  duplicate draws
-- Shuffled discrete-subset index iteration uses sparse Fisher–Yates, storing displaced
-  indices rather than materializing the full index order
+- Subset sampling without replacement no longer relies on a duplicate-rejection mechanism
+  that could raise `InfeasibilityError` for larger numbers of requested configurations
 
 ### Added
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
@@ -173,14 +161,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Discrete subsets are now represented as filtered `SubspaceDiscrete` objects instead of
   Boolean masks over a materialized candidate dataframe, enabling more efficient and
   flexible subset handling
-- Constraint and condition objects are now immutable, and their sequence attributes
-  (`parameters`, `conditions`, `affected_parameters`) are stored as tuples
-- Discrete constraints are now evaluated via `narwhals` on the active dataframe
-  backend instead of using a separate Polars code path
 
 ### Fixed
 - Deserialization with constructor selection now correctly respects converter settings
-- Missing validators and converters were added to parameters/constraints
+- Missing validators and converters were added to several parameter fields
+- `validate_parameter_input` no longer uses row-by-row iteration, fixing a significant
+  performance problem for large candidate sets
 
 ### Deprecations
 - `Campaign.toggle_discrete_candidates` calls passing filter criteria via the
@@ -216,10 +202,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `deserialize_dataframe` dictionary input specifying a pandas-only constructor
   (e.g. `from_records`) in favor of `narwhals.DataFrame`'s constructors
   (e.g. `from_dict`, `from_dicts`)
-- `Settings.use_polars_for_constraints` and the corresponding
-  `BAYBE_DEACTIVATE_POLARS` environment variable. Discrete constraints are now
-  evaluated on the active dataframe backend, so use
-  `Settings.default_dataframe_backend` to control the backend instead.
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes

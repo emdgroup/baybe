@@ -29,7 +29,7 @@ def is_cardinality_fulfilled(
     df = nw.from_native(df, eager_only=True).to_pandas()
     for c in subspace_continuous.constraints_cardinality:
         # Get the activity thresholds for all parameters
-        cols = df[list(c.parameters)]
+        cols = df[c.parameters]
         thresholds = {
             p.name: c.get_absolute_thresholds(p.bounds)
             for p in subspace_continuous.get_parameters_by_name(c.parameters)

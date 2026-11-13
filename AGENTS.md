@@ -293,10 +293,6 @@ Three tiers:
 - Top-level exports: `Campaign`, `Settings`, `active_settings`, `__version__`.
 - Subpackage `__init__.py` re-exports for convenient imports.
 - Aliases allowed (e.g., `EI = ExpectedImprovement`).
-- Keep Narwhals wrapper objects (e.g., `nw.DataFrame`, `nw.LazyFrame`, and `nw.Series`)
-  internal. Do not expose them as public argument or return types, or return them from
-  public methods. Use native backend objects or BayBE abstractions at public boundaries,
-  and convert to or from Narwhals inside the implementation.
 
 ## 14. Tooling and CI
 | Tool | Config | Purpose |

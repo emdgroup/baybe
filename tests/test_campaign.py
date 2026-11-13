@@ -532,7 +532,6 @@ def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
         ongoing_campaign.posterior_stats(ongoing_campaign.measurements, stats)
 
 
-@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
 @pytest.mark.parametrize("batch_size", [2], ids=["b2"])
 def test_acquisition_value_computation(ongoing_campaign: Campaign):

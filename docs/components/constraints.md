@@ -211,6 +211,20 @@ Discrete constraints operate on discrete parameters.
 For instance, a search space created via [`from_product`](baybe.searchspace.core.SearchSpace.from_product) 
 might include invalid combinations, which can be removed again by applying constraints.
 
+```{admonition} Efficient Constraint Implementation via Polars
+:class: tip
+In the default implementation, BayBE first creates the full discrete searchspace and
+then applies filters to it to remove candidates not complying with discrete constraints.
+This requires that the entire unfiltered searchspace fits into memory, which is
+inefficient, given that the filtering might reduce the amount of relevant candidates by
+orders of magnitude. For many discrete constraints, BayBE offers a more efficient
+implementation via [polars] that needs much less memory. This is automatically activated
+if [polars] is present in the Python environment, for instance if BayBE was installed
+with the optional dependency group via `pip install baybe[polars]`. In many cases, this
+is required to enable working with large discrete searchspaces, however, [polars] is not
+currently a main dependency of BayBE.
+```
+
 Discrete constraints have in common that they operate on one or more parameters,
 identified by the `parameters` member, which expects a list of parameter names as
 strings.
@@ -509,17 +523,15 @@ DiscreteCardinalityConstraint(
 
 #### DiscreteCustomConstraint
 With a [`DiscreteCustomConstraint`](baybe.constraints.discrete.DiscreteCustomConstraint) 
-constraint, you can specify a completely custom filter. The validator receives the
-selected parameters as a native dataframe of the active backend (e.g. pandas or Polars)
-and must return a native Boolean series.
+constraint, you can specify a completely custom filter:
 
 ```python
-import numpy as np
 import pandas as pd
+import numpy as np
 from baybe.constraints import DiscreteCustomConstraint
 
 
-def custom_filter(df: pd.DataFrame) -> pd.Series:
+def custom_filter(df: pd.DataFrame) -> pd.Series:  # this signature is required
     """
     In this example, we exclude entries where the square root of the
     temperature times the cubed pressure are larger than 5.6.

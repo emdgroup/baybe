@@ -6,16 +6,14 @@ import hypothesis.strategies as st
 from hypothesis import assume
 
 from baybe.constraints.conditions import (
-    _LOGIC_COMBINERS,
-    _THRESHOLD_OPERATORS,
-    _TOLERANCE_OPERATORS,
+    _threshold_operators,
+    _valid_logic_combiners,
+    _valid_tolerance_operators,
 )
 from baybe.constraints.continuous import (
     ContinuousLinearConstraint,
 )
 from baybe.constraints.discrete import (
-    DiscreteBatchConstraint,
-    DiscreteCardinalityConstraint,
     DiscreteDependenciesConstraint,
     DiscreteLinearConstraint,
     DiscretePermutationInvarianceConstraint,
@@ -61,7 +59,7 @@ def discrete_selection_constraints(
             for p in parameters
         ]
 
-    combiner = draw(st.sampled_from(list(_LOGIC_COMBINERS)))
+    combiner = draw(st.sampled_from(list(_valid_logic_combiners)))
     exclude = draw(st.booleans())
     return DiscreteSelectionConstraint(
         parameter_names, conditions, combiner, exclude=exclude
@@ -188,13 +186,13 @@ def discrete_linear_constraints(
         assert len(parameter_names) == len(set(parameter_names))
         params = parameter_names
 
-    operator = draw(st.sampled_from(list(_THRESHOLD_OPERATORS.keys())))
+    operator = draw(st.sampled_from(list(_threshold_operators.keys())))
     rhs = draw(finite_floats())
     exclude = draw(st.booleans())
 
     # Optionally add tolerance for tolerance-enabled operators
     tolerance = None
-    if operator in _TOLERANCE_OPERATORS:
+    if operator in _valid_tolerance_operators:
         tolerance = draw(st.one_of(st.none(), positive_finite_floats()))
 
     # Optionally add coefficients
@@ -226,13 +224,13 @@ def discrete_product_constraints(
         assert len(parameter_names) == len(set(parameter_names))
         params = parameter_names
 
-    operator = draw(st.sampled_from(list(_THRESHOLD_OPERATORS.keys())))
+    operator = draw(st.sampled_from(list(_threshold_operators.keys())))
     rhs = draw(finite_floats())
     exclude = draw(st.booleans())
 
     # Optionally add tolerance for tolerance-enabled operators
     tolerance = None
-    if operator in _TOLERANCE_OPERATORS:
+    if operator in _valid_tolerance_operators:
         tolerance = draw(st.one_of(st.none(), positive_finite_floats()))
 
     return DiscreteProductConstraint(
@@ -256,43 +254,6 @@ def discrete_repetition_limit_constraints(
     return DiscreteRepetitionLimitConstraint(
         params, n_max_repetitions=n_max, exclude=exclude
     )
-
-
-@st.composite
-def discrete_cardinality_constraints(
-    draw: st.DrawFn, parameter_names: list[str] | None = None
-):
-    """Generate a :class:`~baybe.constraints.DiscreteCardinalityConstraint`."""
-    if parameter_names is None:
-        params = draw(st.lists(st.text(), unique=True, min_size=2))
-    else:
-        assert len(parameter_names) >= 2
-        params = parameter_names
-
-    n = len(params)
-    min_cardinality = draw(st.integers(min_value=0, max_value=n))
-    max_cardinality = draw(st.integers(min_value=min_cardinality, max_value=n))
-    assume(not (min_cardinality == 0 and max_cardinality == n))
-    exclude = draw(st.booleans())
-    return DiscreteCardinalityConstraint(
-        params,
-        min_cardinality=min_cardinality,
-        max_cardinality=max_cardinality,
-        exclude=exclude,
-    )
-
-
-@st.composite
-def discrete_batch_constraints(
-    draw: st.DrawFn, parameter_names: list[str] | None = None
-):
-    """Generate a :class:`~baybe.constraints.DiscreteBatchConstraint`."""
-    if parameter_names is None:
-        params = draw(st.lists(st.text(), unique=True, min_size=1, max_size=1))
-    else:
-        assert len(parameter_names) >= 1
-        params = [draw(st.sampled_from(parameter_names))]
-    return DiscreteBatchConstraint(params)
 
 
 @st.composite

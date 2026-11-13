@@ -11,7 +11,7 @@ import warnings
 from copy import deepcopy
 from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
 import narwhals.stable.v2 as nw
 import numpy as np
@@ -23,8 +23,8 @@ from attrs.validators import optional as optional_v
 from narwhals.typing import EagerAllowed  # not available in narwhals.stable.v2.typing
 from typing_extensions import override
 
-from baybe._optional.info import FPSAMPLE_INSTALLED
-from baybe.exceptions import DeprecationError, NotAllowedError, OptionalImportError
+from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
+from baybe.exceptions import NotAllowedError, OptionalImportError
 from baybe.utils.basic import classproperty
 from baybe.utils.boolean import AutoBool, strtobool, to_bool
 from baybe.utils.random import _RandomState
@@ -148,25 +148,6 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
     return results
 
 
-def _use_polars_for_constraints_deprecation_msg() -> str:
-    """Create the deprecation message for the polars constraint setting."""
-    name = fields(Settings)._use_polars_for_constraints.alias
-    backend = fields(Settings)._default_dataframe_backend.alias
-    return (
-        f"The setting '{name}' is no longer supported. Discrete constraints are now "
-        f"always evaluated on the active dataframe backend. Use '{backend}' to choose "
-        f"the backend."
-    )
-
-
-def _convert_use_polars_for_constraints(value: Any, /) -> AutoBool:
-    """Convert the removed polars constraint setting, rejecting explicit use."""
-    converted = AutoBool.from_unstructured(value)
-    if converted is not AutoBool.AUTO:
-        raise DeprecationError(_use_polars_for_constraints_deprecation_msg())
-    return converted
-
-
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
     """Activate the random seed when changing the attribute of the active settings."""
     if id(instance) == Settings._active_settings_id and value is not None:
@@ -276,9 +257,9 @@ class Settings(_SlottedContextDecorator):
     _use_polars_for_constraints: AutoBool = field(
         alias="use_polars_for_constraints",
         default=AutoBool.AUTO,
-        converter=_convert_use_polars_for_constraints,
+        converter=AutoBool.from_unstructured,  # type: ignore[misc]
     )
-    """Removed! Discrete constraints are evaluated on the active backend."""
+    """Controls if `polars <https://pola.rs/>`_ acceleration is to be used for constraints, if available."""  # noqa: E501
 
     use_single_precision_numpy: bool = field(default=False, validator=instance_of(bool))
     """Controls the floating point precision used for `numpy <https://numpy.org/>`_ arrays."""  # noqa: E501
@@ -348,6 +329,13 @@ class Settings(_SlottedContextDecorator):
                 f"be set to '{module_name}' because the latter is not installed."
             ) from ex
 
+    @_use_polars_for_constraints.validator
+    def _validate_use_polars_for_constraints(self, _, value: AutoBool) -> None:
+        if value is AutoBool.TRUE and not POLARS_INSTALLED:
+            raise OptionalImportError(
+                _MISSING_PACKAGE_ERROR_MESSAGE.format(package_name="polars")
+            )
+
     @_use_fpsample.validator
     def _validate_use_fpsample(self, _, value: AutoBool) -> None:
         if value is AutoBool.TRUE and not FPSAMPLE_INSTALLED:
@@ -367,9 +355,9 @@ class Settings(_SlottedContextDecorator):
         self._default_dataframe_backend = value
 
     @property
-    def use_polars_for_constraints(self) -> NoReturn:
-        """Removed! Discrete constraints are evaluated on the active backend."""
-        raise DeprecationError(_use_polars_for_constraints_deprecation_msg())
+    def use_polars_for_constraints(self) -> bool:
+        """Indicates if ``polars`` is enabled (i.e., installed and set to be used)."""
+        return self._use_polars_for_constraints.evaluate(lambda: POLARS_INSTALLED)
 
     @use_polars_for_constraints.setter
     def use_polars_for_constraints(self, value: AutoBool | bool, /) -> None:
