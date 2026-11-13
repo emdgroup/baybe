@@ -1,0 +1,33 @@
+baybe.transformations.composite
+===============================
+
+.. automodule:: baybe.transformations.composite
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      AdditiveTransformation
+      ChainedTransformation
+      MultiplicativeTransformation
+   
+   
+
+   
+   
+   
+
+
+

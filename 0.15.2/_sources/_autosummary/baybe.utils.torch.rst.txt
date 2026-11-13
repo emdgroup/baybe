@@ -1,0 +1,31 @@
+baybe.utils.torch
+=================
+
+.. automodule:: baybe.utils.torch
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      torch_to_numpy_dtype_mapping
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

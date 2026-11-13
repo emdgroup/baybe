@@ -1,0 +1,58 @@
+baybe.exceptions
+================
+
+.. automodule:: baybe.exceptions
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+      :toctree:
+   
+      DeprecationError
+      EmptySearchSpaceError
+      IncompatibilityError
+      IncompatibleAcquisitionFunctionError
+      IncompatibleArgumentError
+      IncompatibleExplainerError
+      IncompatibleSearchSpaceError
+      IncompatibleSurrogateError
+      IncompleteMeasurementsError
+      InfeasibilityError
+      InputDataTypeWarning
+      InvalidTargetValueError
+      MinimumCardinalityViolatedWarning
+      ModelNotTrainedError
+      NoMCAcquisitionFunctionError
+      NoMeasurementsError
+      NoRecommendersLeftError
+      NonGaussianityError
+      NotAllowedError
+      NotEnoughPointsLeftError
+      NothingToComputeError
+      NothingToSimulateError
+      NumericalUnderflowError
+      OptionalImportError
+      SearchSpaceMatchWarning
+      UnidentifiedSubclassError
+      UnmatchedAttributeError
+      UnsupportedEarlyFilteringError
+      UnusedObjectWarning
+   
+   
+
+
+

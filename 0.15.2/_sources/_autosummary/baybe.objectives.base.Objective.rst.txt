@@ -1,0 +1,55 @@
+Objective
+=========
+
+.. currentmodule:: baybe.objectives.base
+
+.. autoclass:: Objective
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Objective.__init__
+   
+      ~Objective.from_dict
+   
+      ~Objective.from_json
+   
+      ~Objective.handle_missing_values
+   
+      ~Objective.identify_non_dominated_configurations
+   
+      ~Objective.to_botorch
+   
+      ~Objective.to_botorch_posterior_transform
+   
+      ~Objective.to_dict
+   
+      ~Objective.to_json
+   
+      ~Objective.transform
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Objective.description
+      ~Objective.n_outputs
+      ~Objective.output_names
+      ~Objective.supports_partial_measurements
+      ~Objective.targets
+      ~Objective.is_multi_output
+      ~Objective.metadata
+   
+   

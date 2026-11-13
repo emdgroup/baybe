@@ -21,6 +21,12 @@ DiscreteBatchConstraint
    
       ~DiscreteBatchConstraint.from_json
    
+      ~DiscreteBatchConstraint.get_invalid
+   
+      ~DiscreteBatchConstraint.get_invalid_polars
+   
+      ~DiscreteBatchConstraint.get_valid
+   
       ~DiscreteBatchConstraint.subset_masks
    
       ~DiscreteBatchConstraint.summary
@@ -38,6 +44,10 @@ DiscreteBatchConstraint
 
    .. autosummary::
    
+      ~DiscreteBatchConstraint.eval_during_augmentation
+      ~DiscreteBatchConstraint.eval_during_creation
+      ~DiscreteBatchConstraint.eval_during_modeling
+      ~DiscreteBatchConstraint.has_polars_implementation
       ~DiscreteBatchConstraint.is_continuous
       ~DiscreteBatchConstraint.is_discrete
       ~DiscreteBatchConstraint.numerical_only

@@ -1,0 +1,42 @@
+MeasurableMetadata
+==================
+
+.. currentmodule:: baybe.utils.metadata
+
+.. autoclass:: MeasurableMetadata
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~MeasurableMetadata.__init__
+   
+      ~MeasurableMetadata.from_dict
+   
+      ~MeasurableMetadata.from_json
+   
+      ~MeasurableMetadata.to_dict
+   
+      ~MeasurableMetadata.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~MeasurableMetadata.unit
+      ~MeasurableMetadata.description
+      ~MeasurableMetadata.is_empty
+      ~MeasurableMetadata.misc
+   
+   

@@ -1,0 +1,45 @@
+qKnowledgeGradient
+==================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: qKnowledgeGradient
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~qKnowledgeGradient.__init__
+   
+      ~qKnowledgeGradient.evaluate
+   
+      ~qKnowledgeGradient.from_dict
+   
+      ~qKnowledgeGradient.from_json
+   
+      ~qKnowledgeGradient.to_botorch
+   
+      ~qKnowledgeGradient.to_dict
+   
+      ~qKnowledgeGradient.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~qKnowledgeGradient.num_fantasies
+      ~qKnowledgeGradient.abbreviation
+      ~qKnowledgeGradient.supports_multi_output
+   
+   

@@ -1,0 +1,7 @@
+baybe.surrogates.gaussian\_process.components.fit\_criterion.FitCriterionFactoryProtocol
+========================================================================================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.fit_criterion
+
+
+.. autodata:: FitCriterionFactoryProtocol

@@ -1,0 +1,6 @@
+baybe.parameters.validation.validate\_is\_finite
+================================================
+
+.. currentmodule:: baybe.parameters.validation
+
+.. autofunction:: validate_is_finite

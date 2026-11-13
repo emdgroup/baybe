@@ -1,0 +1,6 @@
+baybe.utils.conversion.nonstring\_to\_tuple
+===========================================
+
+.. currentmodule:: baybe.utils.conversion
+
+.. autofunction:: nonstring_to_tuple

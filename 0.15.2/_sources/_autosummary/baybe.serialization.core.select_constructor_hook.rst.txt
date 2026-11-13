@@ -1,0 +1,6 @@
+baybe.serialization.core.select\_constructor\_hook
+==================================================
+
+.. currentmodule:: baybe.serialization.core
+
+.. autofunction:: select_constructor_hook

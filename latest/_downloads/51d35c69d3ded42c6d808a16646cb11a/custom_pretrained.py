@@ -60,7 +60,8 @@ train_y = torch.rand(train_x.size(dim=0))  # train with a random y vector
 
 # Define model and fit
 
-model = BayesianRidge().fit(train_x, train_y)
+model = BayesianRidge()
+model.fit(train_x, train_y)
 
 
 ### Convert model to onnx
@@ -142,7 +143,6 @@ CONFIG = {
 }
 
 ### Model creation from dict (or json if string)
-
 model_from_python = CustomONNXSurrogate(
     onnx_str=onnx_str, onnx_input_name=ONNX_INPUT_NAME
 )

@@ -1,0 +1,34 @@
+TypeSelector
+============
+
+.. currentmodule:: baybe.parameters.selectors
+
+.. autoclass:: TypeSelector
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~TypeSelector.__init__
+   
+      ~TypeSelector.__call__
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~TypeSelector.types
+      ~TypeSelector.exclude
+   
+   

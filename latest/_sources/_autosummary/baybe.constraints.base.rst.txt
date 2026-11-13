@@ -24,7 +24,6 @@ baybe.constraints.base
       ContinuousConstraint
       ContinuousNonlinearConstraint
       DiscreteConstraint
-      DiscreteFilteringConstraint
    
    
 

@@ -1,0 +1,33 @@
+ParameterSelector
+=================
+
+.. currentmodule:: baybe.parameters.selectors
+
+.. autoclass:: ParameterSelector
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ParameterSelector.__init__
+   
+      ~ParameterSelector.__call__
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ParameterSelector.exclude
+   
+   

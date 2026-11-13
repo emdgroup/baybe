@@ -21,8 +21,6 @@ DiscreteParameter
    
       ~DiscreteParameter.from_json
    
-      ~DiscreteParameter.is_equivalent
-   
       ~DiscreteParameter.is_in_range
    
       ~DiscreteParameter.summary
@@ -52,7 +50,6 @@ DiscreteParameter
       ~DiscreteParameter.description
       ~DiscreteParameter.is_continuous
       ~DiscreteParameter.is_discrete
-      ~DiscreteParameter.override_kernel
       ~DiscreteParameter.unit
       ~DiscreteParameter.values
       ~DiscreteParameter.encoding

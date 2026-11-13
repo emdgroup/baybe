@@ -1,0 +1,7 @@
+baybe.surrogates.gaussian\_process.components.likelihood.PlainLikelihoodFactory
+===============================================================================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.likelihood
+
+
+.. autodata:: PlainLikelihoodFactory

@@ -151,9 +151,11 @@ print(recommender)
              Surrogate
                 CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianProce
 ssSurrogate(_searchspace=None, _objective=None, _measurements=None,
-_measurements_hash=None, _input_scaler=None, _output_scaler=None, kernel_factory=None,
-mean_factory=None, likelihood_factory=None, fit_criterion_factory=None, _symmetries=(),
-_model=None), _data={}), _modeled_quantity_names=None)
+_measurements_hash=None, _input_scaler=None, _output_scaler=None,
+kernel_factory=BayBEKernelFactory(parameter_selector=None),
+mean_factory=BayBEMeanFactory(), likelihood_factory=BayBELikelihoodFactory(),
+fit_criterion_factory=BayBEFitCriterionFactory(), _model=None), _data={}),
+_modeled_quantity_names=None)
              Acquisition function: qLogExpectedImprovement()
              Compatibility: SearchSpaceType.HYBRID
              Sequential continuous: True
@@ -248,15 +250,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent             Base                        Ligand  \
-    136  Butyornitrile  Cesium pivalate                 (t-Bu)PhCPhos   
-    147  Butyornitrile  Cesium pivalate                     BrettPhos   
-    47     Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    379       p-Xylene   Potassium acetate                 (t-Bu)PhCPhos   
+    188  Butyornitrile   Potassium acetate  Di-tert-butylphenylphosphine   
+    429       p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration  
-    136         90.0          0.100  
-    147        105.0          0.057  
-    47          90.0          0.153  
+    379         90.0          0.100  
+    188        120.0          0.153  
+    429        120.0          0.057  
 
 
 
@@ -269,15 +271,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent             Base                        Ligand  \
-    136  Butyornitrile  Cesium pivalate                 (t-Bu)PhCPhos   
-    147  Butyornitrile  Cesium pivalate                     BrettPhos   
-    47     Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    379       p-Xylene   Potassium acetate                 (t-Bu)PhCPhos   
+    188  Butyornitrile   Potassium acetate  Di-tert-butylphenylphosphine   
+    429       p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration      yield  
-    136         90.0          0.100 -88.055314  
-    147        105.0          0.057  24.308795  
-    47          90.0          0.153   9.130365  
+    379         90.0          0.100  41.422047  
+    188        120.0          0.153 -51.124959  
+    429        120.0          0.057 -30.408142  
 
 
 

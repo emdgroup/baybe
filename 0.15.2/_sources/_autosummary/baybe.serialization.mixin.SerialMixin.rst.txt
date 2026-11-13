@@ -1,0 +1,33 @@
+SerialMixin
+===========
+
+.. currentmodule:: baybe.serialization.mixin
+
+.. autoclass:: SerialMixin
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SerialMixin.__init__
+   
+      ~SerialMixin.from_dict
+   
+      ~SerialMixin.from_json
+   
+      ~SerialMixin.to_dict
+   
+      ~SerialMixin.to_json
+   
+   
+   
+
+   
+   
+   

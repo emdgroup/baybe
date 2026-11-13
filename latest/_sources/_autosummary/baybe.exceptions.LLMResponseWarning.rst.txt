@@ -1,6 +1,0 @@
-baybe.exceptions.LLMResponseWarning
-===================================
-
-.. currentmodule:: baybe.exceptions
-
-.. autoexception:: LLMResponseWarning

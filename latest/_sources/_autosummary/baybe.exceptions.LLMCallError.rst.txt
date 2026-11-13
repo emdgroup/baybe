@@ -1,6 +1,0 @@
-baybe.exceptions.LLMCallError
-=============================
-
-.. currentmodule:: baybe.exceptions
-
-.. autoexception:: LLMCallError

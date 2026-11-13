@@ -1,0 +1,45 @@
+RQKernel
+========
+
+.. currentmodule:: baybe.kernels.basic
+
+.. autoclass:: RQKernel
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~RQKernel.__init__
+   
+      ~RQKernel.from_dict
+   
+      ~RQKernel.from_json
+   
+      ~RQKernel.to_dict
+   
+      ~RQKernel.to_factory
+   
+      ~RQKernel.to_gpytorch
+   
+      ~RQKernel.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~RQKernel.lengthscale_prior
+      ~RQKernel.lengthscale_initial_value
+      ~RQKernel.parameter_names
+   
+   

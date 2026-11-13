@@ -1,0 +1,31 @@
+baybe.recommenders.pure.bayesian.botorch.hybrid
+===============================================
+
+.. automodule:: baybe.recommenders.pure.bayesian.botorch.hybrid
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      recommend_hybrid_with_subsets
+      recommend_hybrid_without_subsets
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,45 @@
+baybe.surrogates.gaussian\_process.presets
+==========================================
+
+.. automodule:: baybe.surrogates.gaussian_process.presets
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+
+   baybe
+
+   botorch
+
+   chen
+
+   core
+
+   edbo
+
+   edbo_smoothed
+
+   hvarfner
+

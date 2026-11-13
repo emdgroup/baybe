@@ -1,0 +1,25 @@
+Scalarizer
+==========
+
+.. currentmodule:: baybe.objectives.enum
+
+.. autoclass:: Scalarizer
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Scalarizer.MEAN
+      ~Scalarizer.GEOM_MEAN
+   
+   

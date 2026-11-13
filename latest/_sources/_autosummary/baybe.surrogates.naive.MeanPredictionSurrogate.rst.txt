@@ -45,7 +45,6 @@ MeanPredictionSurrogate
    .. autosummary::
    
       ~MeanPredictionSurrogate.is_available
-      ~MeanPredictionSurrogate.supports_kernel_overrides
       ~MeanPredictionSurrogate.supports_multi_output
       ~MeanPredictionSurrogate.supports_transfer_learning
    

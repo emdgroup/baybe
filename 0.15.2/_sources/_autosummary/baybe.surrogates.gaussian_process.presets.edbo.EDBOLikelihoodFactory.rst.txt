@@ -1,0 +1,27 @@
+EDBOLikelihoodFactory
+=====================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.edbo
+
+.. autoclass:: EDBOLikelihoodFactory
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~EDBOLikelihoodFactory.__init__
+   
+      ~EDBOLikelihoodFactory.__call__
+   
+   
+   
+
+   
+   
+   

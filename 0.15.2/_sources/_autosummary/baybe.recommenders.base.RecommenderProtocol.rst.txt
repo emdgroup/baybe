@@ -1,0 +1,27 @@
+RecommenderProtocol
+===================
+
+.. currentmodule:: baybe.recommenders.base
+
+.. autoclass:: RecommenderProtocol
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~RecommenderProtocol.__init__
+   
+      ~RecommenderProtocol.recommend
+   
+   
+   
+
+   
+   
+   

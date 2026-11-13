@@ -1,0 +1,46 @@
+ScaleKernel
+===========
+
+.. currentmodule:: baybe.kernels.composite
+
+.. autoclass:: ScaleKernel
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ScaleKernel.__init__
+   
+      ~ScaleKernel.from_dict
+   
+      ~ScaleKernel.from_json
+   
+      ~ScaleKernel.to_dict
+   
+      ~ScaleKernel.to_factory
+   
+      ~ScaleKernel.to_gpytorch
+   
+      ~ScaleKernel.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ScaleKernel.base_kernel
+      ~ScaleKernel.outputscale_prior
+      ~ScaleKernel.outputscale_initial_value
+      ~ScaleKernel.outputscale_trainable
+   
+   

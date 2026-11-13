@@ -1,0 +1,40 @@
+baybe.kernels.basic
+===================
+
+.. automodule:: baybe.kernels.basic
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      IndexKernel
+      LinearKernel
+      MaternKernel
+      PeriodicKernel
+      PiecewisePolynomialKernel
+      PolynomialKernel
+      PositiveIndexKernel
+      RBFKernel
+      RFFKernel
+      RQKernel
+   
+   
+
+   
+   
+   
+
+
+

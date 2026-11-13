@@ -1,0 +1,45 @@
+IndexKernel
+===========
+
+.. currentmodule:: baybe.kernels.basic
+
+.. autoclass:: IndexKernel
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~IndexKernel.__init__
+   
+      ~IndexKernel.from_dict
+   
+      ~IndexKernel.from_json
+   
+      ~IndexKernel.to_dict
+   
+      ~IndexKernel.to_factory
+   
+      ~IndexKernel.to_gpytorch
+   
+      ~IndexKernel.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~IndexKernel.num_tasks
+      ~IndexKernel.rank
+      ~IndexKernel.parameter_names
+   
+   

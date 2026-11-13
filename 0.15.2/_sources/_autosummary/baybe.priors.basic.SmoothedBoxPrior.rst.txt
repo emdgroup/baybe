@@ -1,0 +1,43 @@
+SmoothedBoxPrior
+================
+
+.. currentmodule:: baybe.priors.basic
+
+.. autoclass:: SmoothedBoxPrior
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SmoothedBoxPrior.__init__
+   
+      ~SmoothedBoxPrior.from_dict
+   
+      ~SmoothedBoxPrior.from_json
+   
+      ~SmoothedBoxPrior.to_dict
+   
+      ~SmoothedBoxPrior.to_gpytorch
+   
+      ~SmoothedBoxPrior.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SmoothedBoxPrior.a
+      ~SmoothedBoxPrior.b
+      ~SmoothedBoxPrior.sigma
+   
+   

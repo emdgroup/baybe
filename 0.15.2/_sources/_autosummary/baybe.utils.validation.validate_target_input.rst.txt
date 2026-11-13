@@ -1,0 +1,6 @@
+baybe.utils.validation.validate\_target\_input
+==============================================
+
+.. currentmodule:: baybe.utils.validation
+
+.. autofunction:: validate_target_input

@@ -1,0 +1,6 @@
+baybe.utils.basic.flatten
+=========================
+
+.. currentmodule:: baybe.utils.basic
+
+.. autofunction:: flatten

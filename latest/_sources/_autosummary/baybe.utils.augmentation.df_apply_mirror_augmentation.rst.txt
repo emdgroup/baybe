@@ -1,6 +1,0 @@
-baybe.utils.augmentation.df\_apply\_mirror\_augmentation
-========================================================
-
-.. currentmodule:: baybe.utils.augmentation
-
-.. autofunction:: df_apply_mirror_augmentation

@@ -2096,11 +2096,12 @@
     <span class="c1"># index during the merge, which is used later for back-translation into the</span>
     <span class="c1"># experimental representation</span>
     <span class="n">merged</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
-        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">points</span><span class="p">),</span>
-        <span class="n">candidates_comp</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(),</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">numpy</span><span class="p">()),</span>
+        <span class="n">candidates_comp</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="s2">&quot;_df_index&quot;</span><span class="p">),</span>
         <span class="n">on</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">candidates_comp</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span>
         <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;_df_index&quot;</span><span class="p">)</span>
+    <span class="n">merged</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">candidates_comp</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span>
 
     <span class="c1"># Get experimental representation of discrete part</span>
     <span class="n">rec_disc_exp</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">merged</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>

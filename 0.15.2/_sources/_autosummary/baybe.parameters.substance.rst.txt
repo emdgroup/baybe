@@ -1,0 +1,39 @@
+baybe.parameters.substance
+==========================
+
+.. automodule:: baybe.parameters.substance
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      Smiles
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      SubstanceParameter
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,7 @@
+﻿baybe.utils.validation.non\_nan\_float
+======================================
+
+.. currentmodule:: baybe.utils.validation
+
+
+.. autofunction:: non_nan_float

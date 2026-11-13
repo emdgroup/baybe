@@ -21,8 +21,6 @@ CustomDiscreteParameter
    
       ~CustomDiscreteParameter.from_json
    
-      ~CustomDiscreteParameter.is_equivalent
-   
       ~CustomDiscreteParameter.is_in_range
    
       ~CustomDiscreteParameter.summary
@@ -53,7 +51,6 @@ CustomDiscreteParameter
       ~CustomDiscreteParameter.is_continuous
       ~CustomDiscreteParameter.is_discrete
       ~CustomDiscreteParameter.is_numerical
-      ~CustomDiscreteParameter.override_kernel
       ~CustomDiscreteParameter.unit
       ~CustomDiscreteParameter.values
       ~CustomDiscreteParameter.data

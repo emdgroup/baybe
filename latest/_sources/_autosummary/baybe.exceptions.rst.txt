@@ -28,24 +28,12 @@ baybe.exceptions
       IncompatibleAcquisitionFunctionError
       IncompatibleArgumentError
       IncompatibleExplainerError
-      IncompatibleOverrideError
       IncompatibleSearchSpaceError
       IncompatibleSurrogateError
       IncompleteMeasurementsError
       InfeasibilityError
       InputDataTypeWarning
       InvalidTargetValueError
-      LLMAuthenticationError
-      LLMBatchConstraintValidationError
-      LLMBatchSizeError
-      LLMCallError
-      LLMDuplicateRecommendationsError
-      LLMError
-      LLMIneligiblePointsError
-      LLMMalformedResponseError
-      LLMResponseError
-      LLMResponseWarning
-      LLMUnknownParameterError
       MinimumCardinalityViolatedWarning
       ModelNotTrainedError
       NoMCAcquisitionFunctionError

@@ -1,0 +1,32 @@
+baybe.recommenders.pure.bayesian.botorch.continuous
+===================================================
+
+.. automodule:: baybe.recommenders.pure.bayesian.botorch.continuous
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      recommend_continuous_torch
+      recommend_continuous_with_cardinality_constraints
+      recommend_continuous_without_cardinality_constraints
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

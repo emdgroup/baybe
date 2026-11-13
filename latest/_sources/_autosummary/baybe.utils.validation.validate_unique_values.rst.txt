@@ -1,6 +1,0 @@
-baybe.utils.validation.validate\_unique\_values
-===============================================
-
-.. currentmodule:: baybe.utils.validation
-
-.. autofunction:: validate_unique_values

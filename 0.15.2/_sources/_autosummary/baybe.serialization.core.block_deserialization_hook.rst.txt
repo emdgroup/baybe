@@ -1,0 +1,6 @@
+baybe.serialization.core.block\_deserialization\_hook
+=====================================================
+
+.. currentmodule:: baybe.serialization.core
+
+.. autofunction:: block_deserialization_hook

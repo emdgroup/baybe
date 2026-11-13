@@ -1,0 +1,39 @@
+baybe.searchspace.discrete
+==========================
+
+.. automodule:: baybe.searchspace.discrete
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      validate_simplex_subspace_from_config
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      MemorySize
+      SubspaceDiscrete
+   
+   
+
+   
+   
+   
+
+
+

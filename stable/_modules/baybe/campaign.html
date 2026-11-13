@@ -2536,12 +2536,10 @@
                 <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_pending_experiments</span>
                 <span class="ow">and</span> <span class="n">pending_experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="p">):</span>
-                <span class="n">mask_todrop</span> <span class="o">|=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">,</span>
-                    <span class="n">pending_experiments</span><span class="p">,</span>
-                    <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
-                <span class="p">)[</span><span class="s2">&quot;_merge&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;both&quot;</span><span class="p">)</span>
+                <span class="n">parameter_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">)</span>
+                <span class="n">mask_todrop</span> <span class="o">|=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_frame</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">[</span><span class="n">parameter_names</span><span class="p">]</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_frame</span><span class="p">(</span><span class="n">pending_experiments</span><span class="p">[</span><span class="n">parameter_names</span><span class="p">]))</span>
             <span class="n">searchspace</span> <span class="o">=</span> <span class="n">evolve</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span>
                 <span class="n">discrete</span><span class="o">=</span><span class="n">FilteredSubspaceDiscrete</span><span class="o">.</span><span class="n">from_subspace</span><span class="p">(</span>

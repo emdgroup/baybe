@@ -1,0 +1,37 @@
+baybe.serialization
+===================
+
+.. automodule:: baybe.serialization
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+
+   core
+
+   mixin
+
+   utils
+

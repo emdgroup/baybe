@@ -1,0 +1,53 @@
+BotorchRecommender
+==================
+
+.. currentmodule:: baybe.recommenders.pure.bayesian.botorch.core
+
+.. autoclass:: BotorchRecommender
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BotorchRecommender.__init__
+   
+      ~BotorchRecommender.acquisition_values
+   
+      ~BotorchRecommender.get_acquisition_function
+   
+      ~BotorchRecommender.get_surrogate
+   
+      ~BotorchRecommender.joint_acquisition_value
+   
+      ~BotorchRecommender.recommend
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~BotorchRecommender.sequential_continuous
+      ~BotorchRecommender.hybrid_sampler
+      ~BotorchRecommender.sampling_percentage
+      ~BotorchRecommender.n_restarts
+      ~BotorchRecommender.n_raw_samples
+      ~BotorchRecommender.max_n_subsets
+      ~BotorchRecommender.acquisition_function
+      ~BotorchRecommender.allow_recommending_already_measured
+      ~BotorchRecommender.allow_recommending_pending_experiments
+      ~BotorchRecommender.allow_repeated_recommendations
+      ~BotorchRecommender.compatibility
+      ~BotorchRecommender.max_n_subspaces
+      ~BotorchRecommender.supports_discrete_subset_generating_constraints
+   
+   

@@ -1,0 +1,6 @@
+baybe.utils.validation.validate\_objective\_input
+=================================================
+
+.. currentmodule:: baybe.utils.validation
+
+.. autofunction:: validate_objective_input

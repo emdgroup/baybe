@@ -1,0 +1,6 @@
+baybe.recommenders.pure.bayesian.botorch.discrete.recommend\_discrete\_without\_subsets
+=======================================================================================
+
+.. currentmodule:: baybe.recommenders.pure.bayesian.botorch.discrete
+
+.. autofunction:: recommend_discrete_without_subsets

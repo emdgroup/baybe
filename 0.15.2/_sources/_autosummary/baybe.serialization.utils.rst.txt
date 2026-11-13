@@ -1,0 +1,31 @@
+baybe.serialization.utils
+=========================
+
+.. automodule:: baybe.serialization.utils
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      deserialize_dataframe
+      serialize_dataframe
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

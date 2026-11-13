@@ -1,0 +1,27 @@
+LazyConstantMeanFactory
+=======================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.components.mean
+
+.. autoclass:: LazyConstantMeanFactory
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~LazyConstantMeanFactory.__init__
+   
+      ~LazyConstantMeanFactory.__call__
+   
+   
+   
+
+   
+   
+   

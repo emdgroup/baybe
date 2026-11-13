@@ -1,0 +1,26 @@
+MatchMode
+=========
+
+.. currentmodule:: baybe.targets.enum
+
+.. autoclass:: MatchMode
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~MatchMode.LE
+      ~MatchMode.EQ
+      ~MatchMode.GE
+   
+   

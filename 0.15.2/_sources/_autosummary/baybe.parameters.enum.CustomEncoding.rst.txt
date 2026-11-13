@@ -1,0 +1,24 @@
+CustomEncoding
+==============
+
+.. currentmodule:: baybe.parameters.enum
+
+.. autoclass:: CustomEncoding
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~CustomEncoding.CUSTOM
+   
+   
