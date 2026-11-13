@@ -4,14 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### Added
-- Support for Python 3.15
-
+## [0.15.2] - 2026-11-13
 ### Fixed
-- Analytic desirability posterior means for minimized targets with affine or identity
-  transformations now include the minimization offset, matching sampled objectives
-- `SHAPInsight` now uses marginal posteriors, avoiding unnecessary covariance
-  computation and supporting independent surrogates with multiple rows
 - `BotorchRecommender` recommendation for discrete and hybrid search spaces no longer
   fails with `KeyError` when candidate dataframes have a named index
 - With `allow_recommending_pending_experiments=False`, campaign-based recommendation no
@@ -20,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   same pending experiment was provided more than once
 
 ## [0.15.1] - 2026-11-11
+### Added
+- Support for Python 3.15
+
+### Fixed
+- Analytic desirability posterior means for minimized targets with affine or identity
+  transformations now include the minimization offset, matching sampled objectives
+- `SHAPInsight` now uses marginal posteriors, avoiding unnecessary covariance
+  computation and supporting independent surrogates with multiple rows
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes
