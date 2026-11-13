@@ -13,7 +13,11 @@ from pytest import param
 from baybe.kernels.base import BasicKernel, Kernel
 from baybe.kernels.basic import IndexKernel, MaternKernel, RBFKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
-from baybe.parameters import NumericalContinuousParameter
+from baybe.parameters import (
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+    TaskParameter,
+)
 from baybe.searchspace.core import SearchSpace
 from tests.hypothesis_strategies.kernels import kernels
 
@@ -223,3 +227,113 @@ def test_mul_constant_produces_constant_scale_kernel(left, right, searchspace):
     optimizer = torch.optim.SGD(gpytorch_kernel.parameters(), lr=0.1)
     optimizer.step()
     assert gpytorch_kernel.outputscale.item() == initial_outputscale
+
+
+@pytest.fixture(name="task_searchspace")
+def fixture_task_searchspace() -> SearchSpace:
+    """A search space with a numerical (``x``) and a task (``Task``) parameter."""
+    return SearchSpace.from_product(
+        [
+            NumericalDiscreteParameter("x", [1, 2, 3]),
+            TaskParameter("Task", ["A", "B", "C"]),
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    ("kernel", "expected"),
+    [
+        param(
+            MaternKernel(parameter_names=("x", "Task")),
+            MaternKernel(parameter_names=("x",)),
+            id="named_kernel_drops_parameter",
+        ),
+        param(
+            MaternKernel(),
+            MaternKernel(parameter_names=("x",)),
+            id="unnamed_kernel_pins_to_remaining",
+        ),
+        param(
+            MaternKernel(parameter_names=("x",)),
+            MaternKernel(parameter_names=("x",)),
+            id="absent_parameter_leaves_kernel_unchanged",
+        ),
+        param(
+            IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",)),
+            None,
+            id="sole_parameter_collapses_to_none",
+        ),
+        param(
+            ScaleKernel(MaternKernel()),
+            ScaleKernel(MaternKernel(parameter_names=("x",))),
+            id="scale_kernel_recurses_into_base",
+        ),
+        param(
+            ScaleKernel(IndexKernel(num_tasks=3, rank=3, parameter_names=("Task",))),
+            None,
+            id="scale_kernel_over_sole_parameter_collapses_to_none",
+        ),
+        param(
+            MaternKernel() + RBFKernel(),
+            MaternKernel(parameter_names=("x",)) + RBFKernel(parameter_names=("x",)),
+            id="sum_reduces_each_summand",
+        ),
+        param(
+            MaternKernel() + RBFKernel(parameter_names=("Task",)),
+            MaternKernel(parameter_names=("x",)),
+            id="sum_collapses_to_single_summand",
+        ),
+        param(
+            MaternKernel(parameter_names=("Task",))
+            + RBFKernel(parameter_names=("Task",)),
+            None,
+            id="sum_collapses_to_none",
+        ),
+        param(
+            MaternKernel() * (MaternKernel() + RBFKernel()),
+            MaternKernel(parameter_names=("x",))
+            * (
+                MaternKernel(parameter_names=("x",)) + RBFKernel(parameter_names=("x",))
+            ),
+            id="nested_sum_under_product",
+        ),
+        param(
+            MaternKernel() * RBFKernel(),
+            MaternKernel(parameter_names=("x",)) * RBFKernel(parameter_names=("x",)),
+            id="product_reduces_each_factor",
+        ),
+        param(
+            MaternKernel() * RBFKernel(parameter_names=("Task",)),
+            MaternKernel(parameter_names=("x",)),
+            id="product_collapses_to_single_factor",
+        ),
+        param(
+            MaternKernel(parameter_names=("Task",))
+            * RBFKernel(parameter_names=("Task",)),
+            None,
+            id="product_collapses_to_none",
+        ),
+        param(
+            ScaleKernel(
+                ProductKernel(
+                    [
+                        MaternKernel(),
+                        ProductKernel(
+                            [
+                                RBFKernel(parameter_names=("Task",)),
+                                RBFKernel(parameter_names=("x",)),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            ScaleKernel(
+                MaternKernel(parameter_names=("x",)) * RBFKernel(parameter_names=("x",))
+            ),
+            id="nested_product_under_scale",
+        ),
+    ],
+)
+def test_without_parameter(kernel, expected, task_searchspace):
+    """Removing a parameter reduces basic, scaled, and composite kernels as expected."""
+    assert kernel._without_parameter("Task", task_searchspace) == expected

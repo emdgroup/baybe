@@ -6,7 +6,7 @@ import functools
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from functools import partial
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import pandas as pd
 from attrs import define, field, fields
@@ -83,10 +83,8 @@ class _PureKernelFactory(KernelFactoryProtocol, SerialMixin, ABC):
 
     def _get_effective_dimensionality(self, searchspace: SearchSpace) -> int:
         """Get the number of computational columns for the selected parameters."""
-        return len(
-            searchspace.get_comp_rep_parameter_indices(
-                self.parameter_selector or (lambda _: True)
-            )
+        return searchspace._get_n_comp_rep_columns(
+            self.parameter_selector or (lambda _: True)
         )
 
     def _validate_parameter_kinds(self, parameters: Iterable[Parameter]) -> None:
@@ -182,7 +180,7 @@ def _enable_transfer_learning(
         }
         ns["__doc__"] = cls.__doc__
         ns["__module__"] = cls.__module__
-        target_cls = type(name, cls.__bases__, ns)
+        target_cls = cast(type[_PureKernelFactory], type(name, cls.__bases__, ns))
 
     original_call = cls.__call__
     original_supported_kinds = cls._supported_parameter_kinds
@@ -213,7 +211,7 @@ def _enable_transfer_learning(
             target_cls._supported_parameter_kinds = broadened_kinds
             self.parameter_selector = original_selector
 
-        if searchspace.task_idx is not None:
+        if searchspace.n_tasks > 1:
             icm = ICMKernelFactory(base_kernel_or_factory=base_kernel)
             return icm(searchspace, objective, measurements)
         return base_kernel
@@ -301,7 +299,7 @@ class ICMKernelFactory(_MetaKernelFactory):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> Kernel | GPyTorchKernel:
-        if searchspace.task_idx is None:
+        if searchspace.n_tasks == 1:
             raise IncompatibleSearchSpaceError(
                 f"'{type(self).__name__}' can only be used with a searchspace that "
                 f"contains a '{TaskParameter.__name__}'."
@@ -319,10 +317,14 @@ class ICMKernelFactory(_MetaKernelFactory):
         allowed_task_idcs = {searchspace.task_idx}
         allowed_base_idcs = all_idcs - allowed_task_idcs
         base_idcs = (
-            set(d.tolist()) if (d := base_kernel.active_dims) is not None else all_idcs
+            {int(i) for i in d}
+            if (d := base_kernel.active_dims) is not None
+            else all_idcs
         )
         task_idcs = (
-            set(d.tolist()) if (d := task_kernel.active_dims) is not None else all_idcs
+            {int(i) for i in d}
+            if (d := task_kernel.active_dims) is not None
+            else all_idcs
         )
 
         if not base_idcs <= allowed_base_idcs:

@@ -12,10 +12,13 @@ from baybe.constraints.discrete import (
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
     DiscreteExcludeConstraint,
+    DiscreteLinearConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
+    DiscreteRepetitionLimitConstraint,
+    DiscreteSelectionConstraint,
     DiscreteSumConstraint,
 )
 from baybe.constraints.validation import validate_constraints
@@ -33,10 +36,13 @@ __all__ = [
     "DiscreteCustomConstraint",
     "DiscreteDependenciesConstraint",
     "DiscreteExcludeConstraint",
+    "DiscreteLinearConstraint",
     "DiscreteLinkedParametersConstraint",
     "DiscreteNoLabelDuplicatesConstraint",
     "DiscretePermutationInvarianceConstraint",
     "DiscreteProductConstraint",
+    "DiscreteRepetitionLimitConstraint",
+    "DiscreteSelectionConstraint",
     "DiscreteSumConstraint",
     # --- Other --- #
     "validate_constraints",

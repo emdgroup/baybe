@@ -17,7 +17,7 @@ from baybe.utils.conversion import nonstring_to_tuple
 class ParameterSelectorProtocol(Protocol):
     """Type protocol specifying the interface parameter selectors need to implement."""
 
-    def __call__(self, parameter: Parameter) -> bool:
+    def __call__(self, parameter: Parameter, /) -> bool:
         """Determine if a parameter should be included in the selection."""
 
 
@@ -33,7 +33,7 @@ class ParameterSelector(ParameterSelectorProtocol, ABC):
         """Determine if a parameter meets the selection criterion."""
 
     @override
-    def __call__(self, parameter: Parameter) -> bool:
+    def __call__(self, parameter: Parameter, /) -> bool:
         """Determine if a parameter should be included in the selection."""
         result = self._is_match(parameter)
         return not result if self.exclude else result

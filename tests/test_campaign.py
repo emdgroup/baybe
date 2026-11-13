@@ -13,7 +13,7 @@ from pytest import param
 from baybe.acquisition import qLogEI, qLogNEHVI, qTS, qUCB
 from baybe.campaign import _EXCLUDED, Campaign
 from baybe.constraints.conditions import SubSelectionCondition
-from baybe.constraints.discrete import DiscreteExcludeConstraint
+from baybe.constraints.discrete import DiscreteSelectionConstraint
 from baybe.exceptions import IncompatibilityError, NotEnoughPointsLeftError
 from baybe.objectives import DesirabilityObjective, ParetoObjective
 from baybe.parameters.numerical import (
@@ -87,7 +87,11 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
     "constraints",
     [
         pd.DataFrame({"a": [0]}),
-        [DiscreteExcludeConstraint(["a"], [SubSelectionCondition([1])])],
+        [
+            DiscreteSelectionConstraint(
+                ["a"], [SubSelectionCondition([1])], exclude=True
+            )
+        ],
     ],
     ids=["dataframe", "constraints"],
 )
@@ -378,7 +382,7 @@ def test_update_measurements(ongoing_campaign):
             NumericalTarget("t1").to_objective(),
             GaussianProcessSurrogate(),
             qLogEI(),
-            3,
+            2,
             id="single_target",
         ),
         param(
@@ -393,7 +397,7 @@ def test_update_measurements(ongoing_campaign):
             ),
             GaussianProcessSurrogate(),
             qLogEI(),
-            3,
+            2,
             id="desirability",
         ),
         param(
@@ -403,7 +407,7 @@ def test_update_measurements(ongoing_campaign):
             ),
             GaussianProcessSurrogate(),
             qLogNEHVI(),
-            3,
+            2,
             id="pareto",
         ),
         param(
@@ -479,7 +483,7 @@ def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     ],
 )
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
-@pytest.mark.parametrize("batch_size", [1], ids=["b3"])
+@pytest.mark.parametrize("batch_size", [1], ids=["b1"])
 def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
     """Invalid inputs for posterior statistics raise expected exceptions."""
     with pytest.raises(error, match=match):
@@ -487,7 +491,7 @@ def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
 
 
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
-@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("batch_size", [2], ids=["b2"])
 def test_acquisition_value_computation(ongoing_campaign: Campaign):
     """Acquisition values have the expected shape."""
     df = ongoing_campaign.searchspace.discrete.exp_rep

@@ -26,7 +26,7 @@ jobs:
       issues: write  # Required for reminder-action to post issue comments
     steps:
       - name: check reminders and notify
-        uses: agrc/reminder-action@76a6297d144adb572b4cf6d9c0ee667f0ec6b832 # v1
+        uses: agrc/reminder-action@ab1f38534c17a1c16ba96eaf5fb9c0015d509301 # v1
 
   # Warns about broken links in the docs. Especially useful for
   # those that point to our own github.io page (linkcheck is disabled in the
@@ -36,10 +36,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with: {python-version: "3.10"}
       - name: Build Docs
         run: |
@@ -59,10 +59,10 @@ jobs:
     name: Lint ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -80,22 +80,21 @@ jobs:
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'},
                       {semantic: '3.13', tox: 'py313'}, 
-                      {semantic: '3.14', tox: 'py314'},
-                      {semantic: '3.15', tox: 'py315'} ]
+                      {semantic: '3.14', tox: 'py314'} ]
     name: Type Check ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
       - name: Run type check
         run: |
           pip install tox-uv
-          tox -e mypy-${{ matrix.py-version.tox }}
+          tox -e typecheck-${{ matrix.py-version.tox }}
 
   audit:
     needs: [lint]
@@ -111,10 +110,10 @@ jobs:
     name: Audit ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -137,10 +136,10 @@ jobs:
     name: Core Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -162,10 +161,10 @@ jobs:
     name: Full Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
@@ -201,10 +200,10 @@ jobs:
     name: GPU Tests ${{ matrix.py-version.semantic }}
     runs-on: XS-GPU
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}

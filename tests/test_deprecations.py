@@ -3,6 +3,7 @@
 import os
 import warnings
 from contextlib import nullcontext
+from copy import deepcopy
 from itertools import pairwise
 from pathlib import Path
 from unittest.mock import patch
@@ -15,12 +16,23 @@ from pandas.testing import assert_series_equal
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
+from baybe.constraints import SubSelectionCondition, ThresholdCondition
+from baybe.constraints import base as base_module
+from baybe.constraints import discrete as discrete_module
+from baybe.constraints.discrete import (
+    DiscreteExcludeConstraint,
+    DiscreteLinearConstraint,
+    DiscreteProductConstraint,
+    DiscreteRepetitionLimitConstraint,
+    DiscreteSelectionConstraint,
+    DiscreteSumConstraint,
+)
 from baybe.exceptions import DeprecationError
 from baybe.kernels.basic import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.categorical import TaskParameter
-from baybe.parameters.enum import SubstanceEncoding
+from baybe.parameters.enum import SubstanceEncoding, TransferLearningMode
 from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
 )
@@ -32,6 +44,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace.core import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
+from baybe.serialization import converter
 from baybe.settings import Settings
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
@@ -530,15 +543,23 @@ def test_deprecated_cache_environment_variables(monkeypatch, value: str, expecte
         assert Settings(restore_environment=True).cache_directory == expected
 
 
+@pytest.mark.parametrize(
+    "mode", [None, TransferLearningMode.INDEX_KERNEL], ids=["no_mode", "mode"]
+)
 @pytest.mark.parametrize("custom", [False, True], ids=["default", "custom"])
 @pytest.mark.parametrize("env", [False, True], ids=["no_env", "env"])
 @pytest.mark.parametrize("task", [False, True], ids=["no_task", "task"])
-def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task: bool):
+def test_multitask_kernel_deprecation(
+    monkeypatch, custom: bool, env: bool, task: bool, mode: TransferLearningMode | None
+):
     """Providing a custom kernel in a transfer learning context raises a deprecation
-    error unless explicitly disabled via environment variable."""  # noqa
+    error unless explicitly disabled via environment variable or a transfer learning
+    mode defines the task kernel."""  # noqa
     parameters = [NumericalDiscreteParameter("p", [0, 1])]
     if task:
-        parameters.append(TaskParameter("task", ["a", "b"]))
+        parameters.append(
+            TaskParameter("task", ["a", "b"], override_transfer_learning_mode=mode)
+        )
     searchspace = SearchSpace.from_product(parameters)
     objective = NumericalTarget("t").to_objective()
     measurements = create_fake_input(
@@ -551,8 +572,234 @@ def test_multitask_kernel_deprecation(monkeypatch, custom: bool, env: bool, task
 
     context = (
         pytest.raises(DeprecationError)
-        if task and custom and not env
+        if task and custom and not env and mode is None
         else nullcontext()
     )
     with context:
         GaussianProcessSurrogate(*args).fit(searchspace, objective, measurements)
+
+
+@pytest.mark.parametrize(
+    ("factory", "args", "kwargs", "warning_match", "expected"),
+    [
+        pytest.param(
+            DiscreteExcludeConstraint,
+            (),
+            {
+                "parameters": ["A"],
+                "conditions": [SubSelectionCondition(selection=["a"])],
+            },
+            "DiscreteExcludeConstraint",
+            DiscreteSelectionConstraint(
+                parameters=["A"],
+                conditions=[SubSelectionCondition(selection=["a"])],
+                exclude=True,
+            ),
+            id="exclude",
+        ),
+        pytest.param(
+            discrete_module.DiscreteNoLabelDuplicatesConstraint,
+            (),
+            {"parameters": ["A", "B", "C"]},
+            "DiscreteNoLabelDuplicatesConstraint",
+            DiscreteRepetitionLimitConstraint(
+                parameters=["A", "B", "C"], n_max_repetitions=1
+            ),
+            id="no-label-duplicates",
+        ),
+        pytest.param(
+            discrete_module.DiscreteLinkedParametersConstraint,
+            (),
+            {"parameters": ["A", "B", "C"]},
+            "DiscreteLinkedParametersConstraint",
+            DiscreteRepetitionLimitConstraint(
+                parameters=["A", "B", "C"],
+                n_max_repetitions=2,
+                exclude=True,
+            ),
+            id="linked-parameters",
+        ),
+        pytest.param(
+            DiscreteSumConstraint,
+            (),
+            {
+                "parameters": ["A", "B"],
+                "condition": ThresholdCondition(threshold=100.0, operator="<="),
+                "coefficients": (2.0, 3.0),
+            },
+            "DiscreteSumConstraint",
+            DiscreteLinearConstraint(
+                parameters=["A", "B"],
+                operator="<=",
+                rhs=100.0,
+                coefficients=(2.0, 3.0),
+            ),
+            id="sum",
+        ),
+        pytest.param(
+            DiscreteSumConstraint,
+            (["A", "B"], ThresholdCondition(threshold=100.0, operator="<=")),
+            {},
+            "DiscreteSumConstraint",
+            DiscreteLinearConstraint(["A", "B"], operator="<=", rhs=100.0),
+            id="sum-positional-default-coefficients",
+        ),
+        pytest.param(
+            DiscreteProductConstraint,
+            (),
+            {
+                "parameters": ["A", "B"],
+                "condition": ThresholdCondition(threshold=30.0, operator=">="),
+            },
+            "condition",
+            DiscreteProductConstraint(parameters=["A", "B"], operator=">=", rhs=30.0),
+            id="product-condition-keyword",
+        ),
+        pytest.param(
+            DiscreteProductConstraint,
+            (["A", "B"], ThresholdCondition(threshold=30.0, operator=">=")),
+            {},
+            "condition",
+            DiscreteProductConstraint(parameters=["A", "B"], operator=">=", rhs=30.0),
+            id="product-condition-positional",
+        ),
+    ],
+)
+def test_discrete_constraint_deprecation(
+    factory, args, kwargs, warning_match, expected
+):
+    """Constructing deprecated constraints emits a deprecation warning."""
+    with pytest.warns(DeprecationWarning, match=warning_match) as recorded:
+        result = factory(*args, **kwargs)
+    assert result == expected
+    assert len(recorded) == 1
+    assert recorded[0].filename == __file__
+
+
+@pytest.mark.parametrize(
+    "annotation",
+    ["Constraint", "DiscreteConstraint", "DiscreteFilteringConstraint"],
+)
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        pytest.param(
+            {
+                "type": "DiscreteExcludeConstraint",
+                "parameters": ["A"],
+                "conditions": [{"type": "SubSelectionCondition", "selection": ["a"]}],
+                "combiner": "AND",
+            },
+            DiscreteSelectionConstraint(
+                parameters=["A"],
+                conditions=[SubSelectionCondition(selection=["a"])],
+                combiner="AND",
+                exclude=True,
+            ),
+            id="exclude",
+        ),
+        pytest.param(
+            {
+                "type": "DiscreteNoLabelDuplicatesConstraint",
+                "parameters": ["A", "B", "C"],
+            },
+            DiscreteRepetitionLimitConstraint(
+                parameters=["A", "B", "C"], n_max_repetitions=1
+            ),
+            id="no-label-duplicates",
+        ),
+        pytest.param(
+            {
+                "type": "DiscreteLinkedParametersConstraint",
+                "parameters": ["A", "B", "C"],
+            },
+            DiscreteRepetitionLimitConstraint(
+                parameters=["A", "B", "C"],
+                n_max_repetitions=2,
+                exclude=True,
+            ),
+            id="linked-parameters",
+        ),
+        pytest.param(
+            {
+                "type": "DiscreteSumConstraint",
+                "parameters": ["A", "B"],
+                "condition": {
+                    "type": "ThresholdCondition",
+                    "threshold": 100.0,
+                    "operator": "=",
+                    "tolerance": 0.01,
+                },
+                "coefficients": [1.0, 1.0],
+            },
+            DiscreteLinearConstraint(
+                parameters=["A", "B"],
+                operator="=",
+                rhs=100.0,
+                tolerance=0.01,
+                coefficients=(1.0, 1.0),
+            ),
+            id="sum",
+        ),
+        pytest.param(
+            {
+                "type": "DiscreteProductConstraint",
+                "parameters": ["A", "B"],
+                "condition": {
+                    "type": "ThresholdCondition",
+                    "threshold": 30.0,
+                    "operator": ">=",
+                },
+            },
+            DiscreteProductConstraint(parameters=["A", "B"], operator=">=", rhs=30.0),
+            id="product-condition",
+        ),
+    ],
+)
+def test_discrete_constraint_deserialization(annotation, payload, expected):
+    """Legacy constraints deserialize regardless of the abstract annotation."""
+    target = getattr(base_module, annotation)
+    with pytest.warns(DeprecationWarning) as recorded:
+        result = converter.structure(deepcopy(payload), target)
+    assert result == expected
+    assert len(recorded) == 1
+    assert payload["type"] in str(recorded[0].message)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        assert converter.structure(result.to_dict(), target) == result
+
+
+@pytest.mark.parametrize(
+    "operator", ["=", ">="], ids=["default-tolerance", "no-tolerance"]
+)
+def test_product_legacy_concrete_deserialization(operator):
+    """Concrete Product deserialization uses the same deprecated input adapter."""
+    condition = ThresholdCondition(threshold=1.0, operator=operator)
+    payload = {
+        "type": "DiscreteProductConstraint",
+        "parameters": ["A", "B"],
+        "condition": {
+            "type": "ThresholdCondition",
+            "threshold": 1.0,
+            "operator": operator,
+        },
+    }
+    original = deepcopy(payload)
+    with pytest.warns(DeprecationWarning, match="condition") as recorded:
+        result = converter.structure(payload, DiscreteProductConstraint)
+    assert len(recorded) == 1
+    assert payload == original
+    assert result == DiscreteProductConstraint(
+        ["A", "B"], operator=operator, rhs=1.0, tolerance=condition.tolerance
+    )
+    assert "condition" not in result.to_dict()
+
+
+def test_discrete_product_constraint_mixing_raises():
+    """Passing both condition= and operator= to DiscreteProductConstraint raises."""
+    with pytest.raises(ValueError, match="Cannot specify both"):
+        DiscreteProductConstraint(
+            parameters=["A", "B"],
+            operator=">=",
+            condition=ThresholdCondition(threshold=30.0, operator=">="),
+        )

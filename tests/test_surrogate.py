@@ -8,7 +8,8 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe.exceptions import IncompatibleSurrogateError
+from baybe.exceptions import IncompatibleSurrogateError, UnusedObjectWarning
+from baybe.kernels import RBFKernel
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.pareto import ParetoObjective
@@ -46,6 +47,19 @@ def test_caching(patched, searchspace, objective, fake_measurements):
     # Second call
     surrogate.fit(searchspace, objective, fake_measurements)
     patched.assert_not_called()
+
+
+def test_ignored_kernel_override_warning():
+    """Non-GP surrogates warn when ignoring a parameter kernel override."""
+    parameter = NumericalDiscreteParameter("x", [0, 1], override_kernel=RBFKernel())
+    measurements = pd.DataFrame({"x": [0, 1], "y": [0.0, 1.0]})
+
+    with pytest.warns(UnusedObjectWarning, match=r"kernel overrides.*\['x'\]"):
+        MeanPredictionSurrogate().fit(
+            parameter.to_searchspace(),
+            NumericalTarget("y").to_objective(),
+            measurements,
+        )
 
 
 @pytest.mark.parametrize(
@@ -242,3 +256,34 @@ def test_batching_incompatibility(
         match="cannot be used for joint posterior evaluation",
     ):
         surrogate.posterior(measurements, joint=True)
+
+
+@pytest.mark.parametrize(
+    "objective",
+    [
+        param(
+            DesirabilityObjective(
+                [NumericalTarget("t1"), NumericalTarget("t2")],
+                scalarizer="MEAN",
+                require_normalization=False,
+                as_pre_transformation=False,
+            ),
+            id="desirability",
+        ),
+        param(
+            ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2")]),
+            id="pareto",
+        ),
+    ],
+)
+def test_multi_model_incompatibility(objective: Objective):
+    """Single-output surrogates reject multi-model objectives in fit."""
+    searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
+    measurements = create_fake_input(searchspace.parameters, objective.targets)
+    surrogate = GaussianProcessSurrogate()
+
+    with pytest.raises(
+        IncompatibleSurrogateError,
+        match="single-output surrogate",
+    ):
+        surrogate.fit(searchspace, objective, measurements)

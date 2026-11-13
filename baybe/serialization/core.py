@@ -19,9 +19,10 @@ from typing import (
 import attrs
 import cattrs
 import pandas as pd
+from cattrs.gen import make_dict_structure_fn
 from cattrs.strategies import configure_union_passthrough
 
-from baybe.utils.basic import find_subclass
+from baybe.utils.basic import find_subclass, refers_to
 from baybe.utils.boolean import (
     AutoBool,
     is_abstract,
@@ -147,6 +148,33 @@ def make_base_structure_hook(base: type[_T]):
     return structure_base
 
 
+def _make_block_mismatching_type_hook(cls: type[_T]):
+    """Create a hook that blocks structuring when the ``type`` field mismatches.
+
+    If the input dict contains a ``type`` field, it is consumed and validated against
+    the target class, raising a :class:`TypeError` on mismatch. If absent, structuring
+    proceeds normally.
+    """
+    if is_abstract(cls):
+        raise ValueError(
+            f"This hook factory is intended for non-abstract classes only. "
+            f"Given: '{cls.__name__}' (which is abstract).",
+        )
+
+    inner = make_dict_structure_fn(cls, converter)
+
+    def structure_concrete(val: dict[str, Any], _cls: type[_T]) -> _T:
+        if type_ := val.pop(_TYPE_FIELD, None):
+            if not refers_to(_cls, type_):
+                raise TypeError(
+                    f"The type field '{type_}' does not match the target class "
+                    f"'{_cls.__name__}'."
+                )
+        return inner(val, _cls)
+
+    return structure_concrete
+
+
 def _structure_dataframe_hook(obj: str | dict, _) -> pd.DataFrame:
     """Deserialize a DataFrame."""
     if isinstance(obj, str):
@@ -240,10 +268,15 @@ converter.register_unstructure_hook_factory(
     lambda cls: is_abstract(cls) and cls.__module__.startswith("baybe."),
     make_base_unstructure_hook,
 )
-
 converter.register_structure_hook_factory(
     lambda cls: is_abstract(cls) and cls.__module__.startswith("baybe."),
     make_base_structure_hook,
+)
+converter.register_structure_hook_factory(
+    lambda cls: (
+        attrs.has(cls) and not is_abstract(cls) and cls.__module__.startswith("baybe.")
+    ),
+    _make_block_mismatching_type_hook,
 )
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
 converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)

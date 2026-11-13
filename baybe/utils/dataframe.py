@@ -12,7 +12,7 @@ import pandas as pd
 from typing_extensions import assert_never
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
-from baybe.parameters.base import Parameter
+from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.settings import active_settings
 
 if TYPE_CHECKING:
@@ -150,6 +150,8 @@ def add_parameter_noise(
         ValueError: If ``noise_type`` is neither ``absolute`` nor
             ``relative_percent``.
     """
+    from baybe.parameters.numerical import NumericalContinuousParameter
+
     # Validate input
     if noise_type not in ("relative_percent", "absolute"):
         raise ValueError(
@@ -167,7 +169,7 @@ def add_parameter_noise(
             data[param.name] += np.random.uniform(-noise_level, noise_level, len(data))
 
         # Respect continuous intervals
-        if param.is_continuous:
+        if isinstance(param, NumericalContinuousParameter):
             data[param.name] = data[param.name].clip(
                 param.bounds.lower, param.bounds.upper
             )
@@ -199,6 +201,8 @@ def create_fake_input(
     Raises:
         ValueError: If less than one row was requested.
     """
+    from baybe.parameters.numerical import NumericalContinuousParameter
+
     # Assert at least one fake entry is being generated
     if n_rows < 1:
         raise ValueError(
@@ -209,10 +213,12 @@ def create_fake_input(
     # Create fake parameter values from their definitions
     content = {}
     for p in parameters:
-        if p.is_discrete:
+        if isinstance(p, DiscreteParameter):
             vals = np.random.choice(p.values, n_rows, replace=True)
-        else:
+        elif isinstance(p, NumericalContinuousParameter):
             vals = np.random.uniform(p.bounds.lower, p.bounds.upper, n_rows)
+        else:
+            raise NotImplementedError(f"Unsupported parameter type: {type(p).__name__}")
 
         content[p.name] = vals
 
@@ -225,7 +231,7 @@ def create_fake_input(
 
 
 def df_drop_single_value_columns(
-    df: pd.DataFrame, lst_exclude: list = None
+    df: pd.DataFrame, lst_exclude: list | None = None
 ) -> pd.DataFrame:
     """Drop dataframe columns with zero variance.
 
@@ -362,6 +368,8 @@ def fuzzy_row_match(
     left_df: pd.DataFrame,
     right_df: pd.DataFrame,
     parameters: Sequence[Parameter],
+    *,
+    keep_unmatched: bool = False,
 ) -> pd.Index:
     """Match rows of the right dataframe to rows of the left dataframe.
 
@@ -380,9 +388,13 @@ def fuzzy_row_match(
         right_df: The data that is checked for matching rows in the left dataframe.
         parameters: Parameter objects that identify the relevant column names and how
             matching is performed.
+        keep_unmatched: If ``True``, return one index per row of ``right_df``, with
+            missing indices for unmatched rows. Otherwise, omit unmatched rows.
 
     Returns:
-        The index of the matching rows in ``left_df``.
+        The indices of the matching rows in ``left_df``, in the order of the rows in
+        ``right_df``. If ``keep_unmatched`` is ``True``, unmatched rows have missing
+        indices, including when ``left_df`` is empty.
 
     Raises:
         ValueError: If either ``left_df`` or ``right_df`` does not contain columns for
@@ -413,6 +425,9 @@ def fuzzy_row_match(
         f"{provided_cols.difference(allowed_cols)}"
     )
 
+    if keep_unmatched and left_df.empty:
+        return pd.Index([np.nan] * len(right_df), dtype=object)
+
     # Ensure the dtype consistency in the dataframes
     left_df = normalize_input_dtypes(left_df, parameters)
     right_df = normalize_input_dtypes(right_df, parameters)
@@ -441,11 +456,18 @@ def fuzzy_row_match(
         match_matrix &= abs_diff == min_diff
 
     # Find the matching indices. If a right row is not matched to any of the rows in
-    # left, idxmax would return the first index of left_df. Hence, we remember these
-    # cases and drop them explicitly.
+    # left, idxmax would return the first index of left_df. Hence, unmatched rows must
+    # be identified separately, either to mark their indices as missing or omit them.
     matched_indices = pd.Index(match_matrix.idxmax(axis=1).values)
     mask_no_match = ~match_matrix.any(axis=1)
-    matched_indices = matched_indices[~mask_no_match]
+    if keep_unmatched:
+        if mask_no_match.any():
+            # Preserve stored labels rather than coercing integer indices to floats.
+            matched_indices = matched_indices.astype(object).where(
+                ~mask_no_match, np.nan
+            )
+    else:
+        matched_indices = matched_indices[~mask_no_match]
 
     mask_multiple_matches = match_matrix.sum(axis=1) > 1
     if multiple_match_indices := right_df.index[mask_multiple_matches].tolist():

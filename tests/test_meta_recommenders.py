@@ -2,6 +2,7 @@
 
 import pytest
 
+from baybe._optional.info import LLM_INSTALLED
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.recommenders import (
     BotorchRecommender,
@@ -126,3 +127,42 @@ def test_sequential_meta_recommender(cls, mode):
 
         # Pretend the recommender was used
         meta_recommender._was_used = True
+
+
+_LLM_KWARGS = {"model": "test/model", "experiment_description": "Test."}
+
+
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
+def test_llm_two_phase_meta_recommender():
+    """The two-phase recommender with LLM warm start switches at the right point."""
+    secondary = RandomRecommender()
+    recommender = TwoPhaseMetaRecommender.with_llm_initial_recommender(
+        **_LLM_KWARGS, recommender=secondary, switch_after=2
+    )
+    llm_rec = recommender.initial_recommender
+
+    assert select_recommender(recommender, 0) is llm_rec
+    assert select_recommender(recommender, 1) is llm_rec
+    assert select_recommender(recommender, 2) is secondary
+    assert select_recommender(recommender, 3) is secondary
+
+
+@pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")
+def test_llm_alternating_recommender():
+    """The sequential recommender with alternating LLM cycles between both."""
+    secondary = RandomRecommender()
+    recommender = SequentialMetaRecommender.with_alternating_llm_recommender(
+        **_LLM_KWARGS, recommender=secondary
+    )
+    llm_rec = recommender.recommenders[0]
+
+    rec = select_recommender(recommender, 1)
+    assert rec is llm_rec
+    recommender._was_used = True
+
+    rec = select_recommender(recommender, 2)
+    assert rec is secondary
+    recommender._was_used = True
+
+    rec = select_recommender(recommender, 3)
+    assert rec is llm_rec

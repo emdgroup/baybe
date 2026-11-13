@@ -48,26 +48,26 @@ class PureRecommender(ABC, RecommenderProtocol):
 
     _deprecated_allow_repeated_recommendations: bool = field(
         alias="allow_repeated_recommendations",
-        default=None,
+        default=None,  # pyrefly: ignore[bad-assignment]
         kw_only=True,
     )
     "Deprecated! Now handled by :class:`baybe.campaign.Campaign`."
 
     _deprecated_allow_recommending_already_measured: bool = field(
         alias="allow_recommending_already_measured",
-        default=None,
+        default=None,  # pyrefly: ignore[bad-assignment]
         kw_only=True,
     )
     "Deprecated! Now handled by :class:`baybe.campaign.Campaign`."
 
     _deprecated_allow_recommending_pending_experiments: bool = field(
         alias="allow_recommending_pending_experiments",
-        default=None,
+        default=None,  # pyrefly: ignore[bad-assignment]
         kw_only=True,
     )
     "Deprecated! Now handled by :class:`baybe.campaign.Campaign`."
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         if (
             self._deprecated_allow_repeated_recommendations is not None
             or self._deprecated_allow_recommending_already_measured is not None
@@ -240,7 +240,10 @@ class PureRecommender(ABC, RecommenderProtocol):
         Returns:
             A dataframe containing the recommendations as individual rows.
         """
-        raise NotImplementedError("Hybrid recommendation is not implemented.")
+        raise NotImplementedError(
+            f"A hybrid search space was provided, but the used recommender "
+            f"'{self.__class__.__name__}' does not implement hybrid recommendation."
+        )
 
     def _recommend_with_discrete_parts(
         self,

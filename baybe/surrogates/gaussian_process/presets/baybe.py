@@ -276,7 +276,7 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
     ) -> FitCriterion:
         return (
             FitCriterion.MARGINAL_LOG_LIKELIHOOD
-            if searchspace.task_idx is None
+            if searchspace.n_tasks == 1
             else FitCriterion.LEAVE_ONE_OUT_PSEUDOLIKELIHOOD
         )
 

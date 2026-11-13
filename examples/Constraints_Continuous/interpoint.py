@@ -172,7 +172,7 @@ for it in range(N_ITERATIONS):
 # * The total solvent used for any individual plate never exceeds the given budget of
 # 1.2 mL, even though the exact amount varies across plates and distributes differently
 # among individual experiments.
-# * By constrast, the total catalyst amount per plate is always
+# * By contrast, the total catalyst amount per plate is always
 # exactly 8 µmol, even though individual experiments have varying amounts.
 
 # fmt: off

@@ -3,6 +3,8 @@
 from collections.abc import Collection
 from itertools import combinations
 
+from exceptiongroup import ExceptionGroup
+
 from baybe.constraints.base import Constraint
 from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.constraints.discrete import (
@@ -11,11 +13,6 @@ from baybe.constraints.discrete import (
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import Parameter
-
-try:  # For python < 3.11, use the exceptiongroup backport
-    ExceptionGroup
-except NameError:
-    from exceptiongroup import ExceptionGroup
 
 
 def validate_constraints(  # noqa: DOC101, DOC103

@@ -13,12 +13,16 @@ Every example follows this pattern:
 4. Imports: stdlib / third-party / BayBE / example utils (same ordering as main
    codebase)
 5. SMOKE_TEST: `SMOKE_TEST = "SMOKE_TEST" in os.environ` then conditional
-   constants: `N_DOE_ITERATIONS = 2 if SMOKE_TEST else 20`
+   constants: `N_DOE_ITERATIONS = 2 if SMOKE_TEST else 20`. Smoke values may only
+   reduce cost and must keep the current smoke regime (batch 1 stays 1, >1 stays >1;
+   at least one Bayesian step; >=2 MC runs if aggregated) as well as values
+   referenced in the prose. Note that the docs render smoke values.
 6. Constants: `SCREAMING_SNAKE_CASE` (`DIMENSION`, `BATCH_SIZE`)
 7. Inline docs: Explanatory comments between code blocks
 8. Print results: `print(recommendation)`
 9. Fake measurements: Non-simulation examples use
    `add_fake_measurements(recommendation, campaign.targets)`
+10. File outputs: Guard `plt.savefig(...)` with `if not SMOKE_TEST`.
 ## Purpose
 The purpose of the examples are to demonstrate how to use BayBE and its component.
 Ideally, an example should not simply show a feature, but embed the feature into an

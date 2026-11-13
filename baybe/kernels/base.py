@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from itertools import chain
 from typing import TYPE_CHECKING, Any
 
-from attrs import define, field
+from attrs import define, evolve, field
 from attrs.converters import optional as optional_c
 from attrs.validators import deep_iterable, instance_of
 from attrs.validators import optional as optional_v
@@ -15,12 +15,12 @@ from typing_extensions import override
 
 from baybe.exceptions import UnmatchedAttributeError
 from baybe.priors.base import Prior
-from baybe.searchspace.core import SearchSpace
 from baybe.serialization.mixin import SerialMixin
 from baybe.settings import active_settings
 from baybe.utils.basic import classproperty, get_baseclasses, match_attributes, to_tuple
 
 if TYPE_CHECKING:
+    from baybe.searchspace.core import SearchSpace
     from baybe.surrogates.gaussian_process.components.kernel import PlainKernelFactory
 
 
@@ -98,6 +98,45 @@ class Kernel(ABC, SerialMixin):
         )
 
         return PlainKernelFactory(self)
+
+    def _without_parameter(
+        self, name: str, searchspace: SearchSpace, /
+    ) -> Kernel | None:
+        """Return a copy of the kernel that no longer acts on the specified parameter.
+
+        Args:
+            name: The name of the parameter to ignore.
+            searchspace: The search space, used to enumerate the remaining parameter
+                names when the kernel does not explicitly specify the ones it acts on.
+
+        Raises:
+            TypeError: If the kernel structure does not support removing a single
+                parameter unambiguously.
+
+        Returns:
+            The reduced kernel, or ``None`` if removing the parameter leaves the
+            kernel with no parameters to act on.
+        """
+        raise TypeError(
+            f"Cannot remove a parameter from kernel '{self.__class__.__name__}'. "
+        )
+
+    def _scope_to_parameter(self, name: str | None, /) -> Kernel:
+        """Return a copy of the kernel that acts only on the named parameter.
+
+        Args:
+            name: The name of the parameter to scope the kernel to, or ``None`` to
+                remove all scoping so that the kernel acts on all dimensions.
+
+        Raises:
+            TypeError: If the kernel structure cannot be scoped unambiguously.
+
+        Returns:
+            The scoped kernel.
+        """
+        raise TypeError(
+            f"Cannot scope kernel '{self.__class__.__name__}' to a parameter."
+        )
 
     @abstractmethod
     def _get_dimensions(
@@ -209,7 +248,7 @@ class BasicKernel(Kernel, ABC):
         ),
         kw_only=True,
     )
-    """An optional set of names specifiying the parameters the kernel should act on."""
+    """An optional set of names specifying the parameters the kernel should act on."""
 
     @override
     @classproperty
@@ -238,6 +277,22 @@ class BasicKernel(Kernel, ABC):
             else len(searchspace.comp_rep_columns)
         )
         return active_dims, ard_num_dims
+
+    @override
+    def _without_parameter(
+        self, name: str, searchspace: SearchSpace, /
+    ) -> Kernel | None:
+        if self.parameter_names is None:
+            remaining = tuple(n for n in searchspace.parameter_names if n != name)
+        elif name in self.parameter_names:
+            remaining = tuple(n for n in self.parameter_names if n != name)
+        else:
+            return self
+        return evolve(self, parameter_names=remaining) if remaining else None
+
+    @override
+    def _scope_to_parameter(self, name: str | None, /) -> Kernel:
+        return evolve(self, parameter_names=None if name is None else (name,))
 
 
 @define(frozen=True)

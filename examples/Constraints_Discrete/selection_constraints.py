@@ -1,6 +1,6 @@
-## Example for using exclusion constraints in discrete searchspaces
+## Example for using selection constraints in discrete searchspaces
 
-# This examples shows how an exclusion constraint can be created for a discrete searchspace.
+# This example shows how a selection constraint can be created for a discrete searchspace.
 # This can be used if some parameter values are incompatible with values of another parameter.
 
 # This example assumes some basic familiarity with using BayBE.
@@ -8,11 +8,13 @@
 
 ### Necessary imports for this example
 
+import os
+
 import numpy as np
 
 from baybe import Campaign
 from baybe.constraints import (
-    DiscreteExcludeConstraint,
+    DiscreteSelectionConstraint,
     SubSelectionCondition,
     ThresholdCondition,
 )
@@ -60,37 +62,40 @@ parameters = [solvent, speed, temperature, pressure]
 # This constraint simulates a situation where solvents `C2` and `C4` are not
 # compatible with temperatures larger than 151 and should thus be excluded.
 
-constraint_1 = DiscreteExcludeConstraint(
+constraint_1 = DiscreteSelectionConstraint(
     parameters=["Temp", "Solv"],
     combiner="AND",
     conditions=[
         ThresholdCondition(threshold=151, operator=">"),
         SubSelectionCondition(selection=["C4", "C2"]),
     ],
+    exclude=True,
 )
 
 # This constraint simulates a situation where solvents `C5` and `C6` are not
 # compatible with pressures larger than 5 and should thus be excluded.
 
-constraint_2 = DiscreteExcludeConstraint(
+constraint_2 = DiscreteSelectionConstraint(
     parameters=["Pressure", "Solv"],
     combiner="AND",
     conditions=[
         ThresholdCondition(threshold=5, operator=">"),
         SubSelectionCondition(selection=["C5", "C6"]),
     ],
+    exclude=True,
 )
 
 # This constraint simulates a situation where pressures below 3 should never be
 # combined with temperatures above 120.
 
-constraint_3 = DiscreteExcludeConstraint(
+constraint_3 = DiscreteSelectionConstraint(
     parameters=["Pressure", "Temp"],
     combiner="AND",
     conditions=[
         ThresholdCondition(threshold=3.0, operator="<"),
         ThresholdCondition(threshold=120.0, operator=">"),
     ],
+    exclude=True,
 )
 
 ### Creating the searchspace and the objective
@@ -112,7 +117,9 @@ print(campaign)
 
 # The following loop performs some iterations and manually verifies the given constraints.
 
-N_ITERATIONS = 3
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+BATCH_SIZE = 2 if SMOKE_TEST else 5
+N_ITERATIONS = 2 if SMOKE_TEST else 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n#### ITERATION {kIter + 1} ####")
 
@@ -143,6 +150,6 @@ for kIter in range(N_ITERATIONS):
         ).sum(),
     )
 
-    rec = campaign.recommend(batch_size=5)
+    rec = campaign.recommend(batch_size=BATCH_SIZE)
     add_fake_measurements(rec, campaign.targets)
     campaign.add_measurements(rec)

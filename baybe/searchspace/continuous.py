@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field, fields
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
@@ -34,6 +34,7 @@ from baybe.parameters.utils import (
 )
 from baybe.searchspace.utils import select_via_flat_index
 from baybe.searchspace.validation import (
+    _get_value_failure_reason,
     validate_parameter_names,
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
@@ -223,9 +224,9 @@ class SubspaceContinuous(SerialMixin):
         return SearchSpace(continuous=self)
 
     @classmethod
-    def empty(cls) -> SubspaceContinuous:
+    def empty(cls) -> Self:
         """Create an empty continuous subspace."""
-        return SubspaceContinuous(())
+        return cls(())
 
     @classmethod
     def from_parameter(cls, parameter: ContinuousParameter) -> SubspaceContinuous:
@@ -244,14 +245,14 @@ class SubspaceContinuous(SerialMixin):
         cls,
         parameters: Sequence[ContinuousParameter],
         constraints: Sequence[ContinuousConstraint] | None = None,
-    ) -> SubspaceContinuous:
+    ) -> Self:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         constraints = constraints or []
 
         if constraints:
             validate_constraints(constraints, parameters)
 
-        return SubspaceContinuous(
+        return cls(
             parameters=[p for p in parameters if p.is_continuous],
             constraints_lin_eq=[
                 c
@@ -269,7 +270,7 @@ class SubspaceContinuous(SerialMixin):
         )
 
     @classmethod
-    def from_bounds(cls, bounds: pd.DataFrame) -> SubspaceContinuous:
+    def from_bounds(cls, bounds: pd.DataFrame) -> Self:
         """Create a hyperrectangle-shaped continuous subspace with given bounds.
 
         Args:
@@ -288,7 +289,7 @@ class SubspaceContinuous(SerialMixin):
             NumericalContinuousParameter(cast(str, name), bound)
             for (name, bound) in bounds.items()
         ]
-        return SubspaceContinuous(parameters)
+        return cls(parameters)
 
     @classmethod
     def from_dataframe(
@@ -375,7 +376,7 @@ class SubspaceContinuous(SerialMixin):
         """The bounds used for scaling the surrogate model input."""
         return self.comp_rep_bounds
 
-    def _drop_parameters(self, parameter_names: Collection[str]) -> SubspaceContinuous:
+    def _drop_parameters(self, parameter_names: Collection[str]) -> Self:
         """Create a copy of the subspace with certain parameters removed.
 
         Args:
@@ -384,7 +385,8 @@ class SubspaceContinuous(SerialMixin):
         Returns:
             The reduced subspace.
         """
-        return SubspaceContinuous(
+        return evolve(
+            self,
             parameters=[p for p in self.parameters if p.name not in parameter_names],
             constraints_lin_eq=[
                 c._drop_parameters(parameter_names)
@@ -419,7 +421,7 @@ class SubspaceContinuous(SerialMixin):
     def _enforce_cardinality_constraints(
         self,
         inactive_parameter_names: Collection[str],
-    ) -> SubspaceContinuous:
+    ) -> Self:
         """Create a copy of the subspace with fixed inactive parameters.
 
         The returned subspace requires no cardinality constraints since – for the
@@ -480,6 +482,42 @@ class SubspaceContinuous(SerialMixin):
                 if not isinstance(c, ContinuousCardinalityConstraint)
             ],
         )
+
+    def _validate_configurations(self, df: pd.DataFrame, /) -> None:
+        """Validate that all configurations belong to the subspace.
+
+        A configuration passes if all its parameter values lie within the parameter
+        bounds. Continuous constraints are not checked.
+
+        Args:
+            df: The configurations to validate. Additional columns are ignored, and
+                missing parameter columns are treated as missing values.
+
+        Raises:
+            ValueError: If any configuration does not belong to the subspace. The
+                message lists each failing configuration together with the reason.
+        """
+        # NOTE: This could maybe be changed into a full _contains method
+        # TODO: No check for continuous constraints beyond bounds
+        if self.is_empty:
+            return
+        configurations = df.reindex(columns=list(self.parameter_names))
+
+        failures: list[str] = []
+        for i in range(len(df)):
+            # A column can contain values of different types across rows, so the types
+            # are inferred for the single configuration
+            configuration = configurations.iloc[[i]].infer_objects()
+            if reason := _get_value_failure_reason(configuration, self.parameters):
+                values = ", ".join(
+                    f"{k}={v}" for k, v in configurations.iloc[i].dropna().items()
+                )
+                failures.append(f"- {values}: {reason}")
+        if failures:
+            raise ValueError(
+                f"{len(failures)} configuration(s) do not belong to the continuous "
+                f"subspace:\n" + "\n".join(failures)
+            )
 
     def transform(
         self,
@@ -568,7 +606,7 @@ class SubspaceContinuous(SerialMixin):
                 batch_size, bounds_tensor
             )
 
-        return pd.DataFrame(points, columns=self.parameter_names)
+        return pd.DataFrame(points.numpy(), columns=self.parameter_names)
 
     def _sample_from_polytope_with_interpoint_constraints(
         self, batch_size: int, bounds: Tensor

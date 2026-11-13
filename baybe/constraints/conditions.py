@@ -7,7 +7,7 @@ import operator as ops
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from functools import partial
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 
 import numpy as np
 import pandas as pd
@@ -18,13 +18,12 @@ from attrs.validators import optional as optional_v
 from numpy.typing import ArrayLike
 from typing_extensions import override
 
-from baybe.parameters.validation import validate_unique_values
 from baybe.serialization import (
     SerialMixin,
 )
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
-from baybe.utils.validation import finite_float
+from baybe.utils.validation import finite_float, validate_unique_values
 
 if TYPE_CHECKING:
     import polars as pl
@@ -46,7 +45,7 @@ def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.nd
         given tolerances.
 
     """
-    return np.logical_not(_is_close(x, y, rtol=rtol, atol=atol))
+    return ~_is_close(x, y, rtol=rtol, atol=atol)
 
 
 def _is_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
@@ -70,8 +69,11 @@ def _is_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarra
     return np.abs(np.subtract(x, y)) <= atol + rtol * np.abs(y)
 
 
+ThresholdOperator: TypeAlias = Literal["<", "<=", "=", "==", "!=", ">", ">="]
+"""An operator for comparing numerical values against a threshold."""
+
 # provide threshold operators
-_threshold_operators: dict[str, Callable] = {
+_threshold_operators: dict[ThresholdOperator, Callable] = {
     "<": ops.lt,
     "<=": ops.le,
     "=": partial(_is_close, rtol=0.0),
@@ -95,7 +97,8 @@ class Condition(ABC, SerialMixin):
     """Abstract base class for all conditions.
 
     Conditions always evaluate an expression regarding a single parameter.
-    Conditions are part of constraints, a constraint can have multiple conditions.
+    Conditions are part of :class:`~baybe.constraints.base.Constraint` and
+    :class:`~baybe.symmetries.base.Symmetry` objects.
     """
 
     @abstractmethod
@@ -129,7 +132,7 @@ class ThresholdCondition(Condition):
     threshold: float = field(converter=float, validator=finite_float)
     """The threshold value used in the condition."""
 
-    operator: str = field(validator=[in_(_threshold_operators)])
+    operator: ThresholdOperator = field(validator=[in_(_threshold_operators)])
     """The operator used in the condition."""
 
     tolerance: float | None = field(
@@ -165,10 +168,10 @@ class ThresholdCondition(Condition):
                     f"or <= 0.0, but was {value}."
                 )
 
-    def _make_operator_function(self):
+    def _make_operator_function(self) -> Callable[..., Any]:
         """Generate a function using operators to filter out undesired rows."""
 
-        def evaluate(x: ArrayLike, /, **kwargs) -> Callable:
+        def evaluate(x: ArrayLike, /, **kwargs) -> Any:
             """Evaluate the condition on a given input."""
             return _threshold_operators[self.operator](x, self.threshold, **kwargs)
 
@@ -204,7 +207,7 @@ class SubSelectionCondition(Condition):
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(1),
-            validate_unique_values,  # type: ignore
+            validate_unique_values,
         ],
     )
     """The internal list of items which are considered valid."""

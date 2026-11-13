@@ -13,7 +13,7 @@ from baybe.utils.validation import validate_parameter_input
 def test_dataframes_are_preprocessed_only_once(mock, campaign):
     """Data preprocessing happens only once, regardless of the entry point."""
     # NOTE: The call count is tracked based on the first (unconditionally) executed
-    #   statement in the fucntion when validation is active: `validate_parameter_input`
+    #   statement in the function when validation is active: `validate_parameter_input`
 
     # Get some fake data to be preprocessed
     df = campaign.recommend(1)

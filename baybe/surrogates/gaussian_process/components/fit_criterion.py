@@ -66,7 +66,7 @@ class _MLLForNonTLFitCriterionFactory(FitCriterionFactoryProtocol):
     def __call__(
         self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
     ) -> FitCriterion:
-        if searchspace.task_idx is None:
+        if searchspace.n_tasks == 1:
             return FitCriterion.MARGINAL_LOG_LIKELIHOOD
 
         from baybe.surrogates.gaussian_process.presets.baybe import (
