@@ -6,8 +6,10 @@ import pkgutil
 import subprocess
 import sys
 from collections.abc import Sequence
+from importlib.metadata import version
 
 import pytest
+from packaging.version import Version
 from pytest import param
 
 pytestmark = pytest.mark.skipif(
@@ -16,6 +18,9 @@ pytestmark = pytest.mark.skipif(
 )
 
 _EAGER_LOADING_EXIT_CODE = 42
+
+_BOTORCH_LOADS_SCIPY = Version(version("botorch")) < Version("0.18")
+"""Whether importing BoTorch's model and posterior modules loads scipy."""
 
 
 def find_modules() -> list[str]:
@@ -88,6 +93,7 @@ WHITELISTS = {
         "baybe.insights.shap",
         "baybe.objectives.botorch",
         "baybe.surrogates._adapter",
+        *(["baybe.surrogates.gaussian_process._rgpe"] if _BOTORCH_LOADS_SCIPY else []),
         "baybe.surrogates.gaussian_process.components._gpytorch",
         "baybe.utils.chemistry",
         "baybe.utils.clustering_algorithms",
