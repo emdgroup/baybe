@@ -7,8 +7,9 @@ import importlib
 import operator
 import os
 import warnings
+from copy import deepcopy
 from functools import partial, reduce
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attrs import Converter, define, field
@@ -19,14 +20,17 @@ from typing_extensions import Self, override
 
 from baybe.exceptions import (
     DeprecationError,
+    IncompatibleOverrideError,
     IncompatibleSearchSpaceError,
     ModelNotTrainedError,
     _UnsupportedSearchSpaceAttributeError,
 )
 from baybe.kernels.base import Kernel
+from baybe.kernels.basic import VanishingKernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process import _override
@@ -62,7 +66,8 @@ from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
-    from botorch.models.gpytorch import GPyTorchModel
+    from botorch.models import SingleTaskGP
+    from botorch.models.model import Model
     from botorch.models.transforms.input import InputTransform, Normalize
     from botorch.models.transforms.outcome import OutcomeTransform, Standardize
     from botorch.posteriors import Posterior
@@ -248,8 +253,8 @@ class GaussianProcessSurrogate(Surrogate):
     _symmetries: tuple[Symmetry, ...] = field(factory=tuple, init=False, eq=False)
     """Symmetries for future architecture adjustments (e.g., invariant kernels)."""
 
-    # TODO: type should be SingleTaskGP | None but is currently omitted due to:
-    #   https://github.com/python-attrs/cattrs/issues/531
+    # TODO: type should be `SingleTaskGP | RGPEModel | None` but is currently omitted
+    #   due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
     """The fitted BoTorch model."""
 
@@ -380,7 +385,7 @@ class GaussianProcessSurrogate(Surrogate):
         )
 
     @override
-    def to_botorch(self) -> GPyTorchModel:
+    def to_botorch(self) -> Model:
         if self._model is None:
             raise ModelNotTrainedError(
                 "The surrogate must be trained before a BoTorch model can be created."
@@ -409,23 +414,30 @@ class GaussianProcessSurrogate(Surrogate):
         """Resolve the GP kernel, applying parameter-specific overrides.
 
         The effective kernel is the surrogate kernel restricted to the
-        non-overridden dimensions, multiplied by one factor per override.
+        non-overridden dimensions, multiplied by one factor per non-vanishing override.
 
         Args:
             context: The model context providing the inputs and override settings.
 
         Raises:
             ValueError: If the resolved kernels violate the override partition.
+            IncompatibleOverrideError: If no kernel factor remains.
 
         Returns:
             The resolved and partition-validated kernel.
         """
-        overrides = _override.extract_parameter_kernel_overrides(context.searchspace)
-
-        excluded_names = {name for name, _ in overrides}
-        residual = self._resolve_residual_kernel(context, excluded_names)
         searchspace = context.searchspace
-        excluded_dimensions: set[int] = set()
+        overrides = _override.extract_parameter_kernel_overrides(searchspace)
+
+        excluded_names = {
+            p.name for p in searchspace.parameters if p.override_kernel is not None
+        }
+        residual = self._resolve_residual_kernel(context, excluded_names)
+        excluded_dimensions = {
+            i
+            for name in excluded_names
+            for i in searchspace.get_comp_rep_parameter_indices(name)
+        }
         for name, kernel in overrides:
             expected = set(searchspace.get_comp_rep_parameter_indices(name))
             actual = _override.get_active_dimensions(kernel, searchspace)
@@ -434,7 +446,6 @@ class GaussianProcessSurrogate(Surrogate):
                     f"The kernel override for '{name}' has 'active_dims' {actual}, "
                     f"but must use exactly the parameter indices {expected}."
                 )
-            excluded_dimensions.update(expected)
 
         if residual is not None and excluded_names:
             allowed = (
@@ -446,7 +457,13 @@ class GaussianProcessSurrogate(Surrogate):
                     f"The residual kernel's 'active_dims' {actual} must be a subset "
                     f"of the non-overridden indices {allowed}."
                 )
-        factors = ([] if residual is None else [residual]) + [k for _, k in overrides]
+        factors = [k for _, k in overrides]
+        if residual is not None:
+            factors.insert(0, residual)
+        if not factors:
+            raise IncompatibleOverrideError(
+                "The kernel overrides leave no parameter contributing a kernel."
+            )
         return reduce(operator.mul, factors)
 
     def _resolve_residual_kernel(
@@ -553,11 +570,17 @@ class GaussianProcessSurrogate(Surrogate):
         """Resolve factory fields to concrete components.
 
         Resolves ``None`` fields to BayBE defaults and calls the factories with
-        the given context. This handles the standard resolution path.
+        the given context. This handles the standard resolution path. If the task
+        parameter has a :class:`~baybe.kernels.basic.VanishingKernel`, the non-kernel
+        components are built for the reduced search space without it.
 
         Args:
             context: The model context providing searchspace, objective, and
                 measurements.
+
+        Raises:
+            IncompatibleSearchSpaceError: If a non-kernel factory cannot handle the
+                reduced search space without the task parameter.
 
         Returns:
             A tuple of (kernel, mean, likelihood, criterion).
@@ -568,17 +591,26 @@ class GaussianProcessSurrogate(Surrogate):
 
         kernel = self._resolve_kernel(context)
 
-        mean = mean_factory(
-            context.searchspace, context.objective, context.measurements
-        )
+        searchspace = context.searchspace
+        task_param = searchspace._task_parameter
+        if task_param is not None and isinstance(
+            task_param.override_kernel, VanishingKernel
+        ):
+            searchspace = searchspace._drop_parameters({task_param.name})
 
-        likelihood = likelihood_factory(
-            context.searchspace, context.objective, context.measurements
-        )
-
-        criterion = criterion_factory(
-            context.searchspace, context.objective, context.measurements
-        )
+        args = (searchspace, context.objective, context.measurements)
+        # User-specified factories may access attributes that are blocked on the
+        # reduced search space
+        try:
+            mean = mean_factory(*args)
+            likelihood = likelihood_factory(*args)
+            criterion = criterion_factory(*args)
+        except _UnsupportedSearchSpaceAttributeError as ex:
+            raise IncompatibleSearchSpaceError(
+                "The mean, likelihood and fit criterion factories must support the "
+                "reduced search space without the task parameter when its kernel "
+                "vanishes."
+            ) from ex
 
         return kernel, mean, likelihood, criterion
 
@@ -598,10 +630,11 @@ class GaussianProcessSurrogate(Surrogate):
 
         context = _ModelContext(self._searchspace, self._objective, self._measurements)
 
+        task_param = self._searchspace._task_parameter
+
         # Check for custom kernel + multi-task clash (only relevant when the task
         # parameter has no kernel override, since the override mechanism handles task
         # kernel attachment explicitly).
-        task_param = self._searchspace._task_parameter
         has_task_override = (
             task_param is not None and task_param.override_kernel is not None
         )
@@ -631,20 +664,35 @@ class GaussianProcessSurrogate(Surrogate):
         ### Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
         input_transform = self._make_input_transform(context)
-        outcome_transform = self._make_outcome_transform(train_y)
 
         ### Model construction and fitting
-        self._model = botorch.models.SingleTaskGP(
-            train_x,
-            train_y,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            mean_module=mean,
-            covar_module=kernel,
-            likelihood=likelihood,
-        )
-        mll = criterion.to_gpytorch(self._model.likelihood, self._model)
-        botorch.fit.fit_gpytorch_mll(mll)
+        def fit_gp(
+            x: Tensor, y: Tensor, /, *, copy_components: bool = False
+        ) -> SingleTaskGP:
+            model_kwargs: dict[str, Any] = {
+                "input_transform": input_transform,
+                "mean_module": mean,
+                "covar_module": kernel,
+                "likelihood": likelihood,
+            }
+            if copy_components:
+                model_kwargs = deepcopy(model_kwargs)
+            model_kwargs["outcome_transform"] = self._make_outcome_transform(y)
+            model = botorch.models.SingleTaskGP(x, y, **model_kwargs)
+            botorch.fit.fit_gpytorch_mll(criterion.to_gpytorch(model.likelihood, model))
+            return model
+
+        if (
+            task_param is not None
+            and task_param.override_transfer_learning_mode is TransferLearningMode.RGPE
+        ):
+            from baybe.surrogates.gaussian_process._rgpe import RGPEModel
+
+            self._model = RGPEModel.from_context(
+                context, train_x, train_y, partial(fit_gp, copy_components=True)
+            )
+        else:
+            self._model = fit_gp(train_x, train_y)
 
     @override
     def __str__(self) -> str:
@@ -668,7 +716,7 @@ class GaussianProcessSurrogate(Surrogate):
 
 
 def _make_posterior_mean_module(
-    model: GPyTorchModel,
+    model: Model,
     input_transform: Normalize,
     outcome_transform: Standardize,
 ) -> GPyTorchMean:
@@ -724,8 +772,13 @@ def _make_posterior_mean_module(
         @override
         def forward(self, x: Tensor) -> Tensor:
             """Compute the prior mean in the new GP's standardized output space."""
+            from botorch.posteriors import GPyTorchPosterior
+
             x_raw = input_transform.untransform(x)
-            posterior_mean = self.gp.posterior(x_raw).mean
+            posterior = self.gp.posterior(x_raw)
+            # Gaussian, since the GP's outcome transform is affine
+            assert isinstance(posterior, GPyTorchPosterior)
+            posterior_mean = posterior.mean
             standardized, _ = outcome_transform(posterior_mean)
             return standardized.squeeze(-1)
 

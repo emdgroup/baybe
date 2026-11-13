@@ -16,6 +16,7 @@ from baybe.kernels.basic import (
     RBFKernel,
     RFFKernel,
     RQKernel,
+    VanishingKernel,
 )
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from tests.hypothesis_strategies.basic import positive_finite_floats
@@ -27,6 +28,7 @@ class KernelType(Enum):
     """Taxonomy of kernel types."""
 
     SINGLE = "SINGLE"
+    VANISHING = "VANISHING"
     ADDITIVE = "ADDITIVE"
     PRODUCT = "PRODUCT"
 
@@ -126,6 +128,14 @@ def rq_kernels(parameter_names: Sequence[str] | None = None):
     )
 
 
+def vanishing_kernels(parameter_names: Sequence[str] | None = None):
+    """A strategy that generates vanishing kernels."""
+    return st.builds(
+        VanishingKernel,
+        parameter_names=active_parameter_names(parameter_names),
+    )
+
+
 @st.composite
 def index_kernels(
     draw: st.DrawFn,
@@ -186,9 +196,18 @@ def kernels(
 
     if kernel_type is KernelType.SINGLE:
         return draw(single_kernels(parameter_names=parameter_names))
+    if kernel_type is KernelType.VANISHING:
+        return draw(vanishing_kernels(parameter_names))
 
+    # Composites require at least one non-vanishing member
     base_kernels = draw(
-        st.lists(single_kernels(parameter_names=parameter_names), min_size=2)
+        st.lists(
+            st.one_of(
+                single_kernels(parameter_names=parameter_names),
+                vanishing_kernels(parameter_names),
+            ),
+            min_size=2,
+        ).filter(lambda ks: not all(isinstance(k, VanishingKernel) for k in ks))
     )
     if kernel_type is KernelType.ADDITIVE:
         return AdditiveKernel(base_kernels)

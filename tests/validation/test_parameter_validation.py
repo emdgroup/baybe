@@ -130,6 +130,17 @@ def test_invalid_values_task_parameter(values, active_values, error):
         TaskParameter(name="invalid_values", values=values, active_values=active_values)
 
 
+def test_rgpe_task_parameter_requires_single_active_value():
+    """The RGPE mode requires exactly one active value."""
+    with pytest.raises(ValueError, match="exactly one value in 'active_values'"):
+        TaskParameter(
+            "task",
+            ("T", "A"),
+            active_values=("T", "A"),
+            override_transfer_learning_mode="RGPE",
+        )
+
+
 @pytest.mark.skipif(
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )

@@ -18,6 +18,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.parameters.base import Parameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -26,7 +27,9 @@ from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSett
 from benchmarks.definition.base import RunMode
 
 
-def make_searchspace(use_task_parameter: bool) -> SearchSpace:
+def make_searchspace(
+    transfer_learning_mode: TransferLearningMode | None = None,
+) -> SearchSpace:
     """Create search space for the benchmark."""
     params: list[Parameter] = [
         NumericalContinuousParameter(
@@ -35,14 +38,14 @@ def make_searchspace(use_task_parameter: bool) -> SearchSpace:
         )
         for k in range(5)
     ]
-    if use_task_parameter:
-        params.append(
-            TaskParameter(
-                name="Function",
-                values=["Target_Function", "Source_Function"],
-                active_values=["Target_Function"],
-            )
+    params.append(
+        TaskParameter(
+            name="Function",
+            values=["Target_Function", "Source_Function"],
+            active_values=["Target_Function"],
+            override_transfer_learning_mode=transfer_learning_mode,
         )
+    )
 
     return SearchSpace.from_product(parameters=params)
 
@@ -109,15 +112,15 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     """Benchmark function for transfer learning with the Michalewicz function in 5D.
 
     Key characteristics:
-    • Compares transfer learning vs. non-transfer learning approaches
+    • Compares default vs. naive transfer learning
     • Uses two versions of Michalewicz function:
       - Target: standard negated Michalewicz
       - Source: negated Michalewicz with added noise (noise_std=0.15)
     • Tests varying amounts of source data (1, 10, 50, 100 points)
     • Includes baseline with no transfer learning (0 points)
     • Creates two campaign types:
-      - Transfer learning: with task parameter to distinguish data sources
-      - Non-transfer learning (naive): without task parameter
+      - Default transfer learning: task parameter with the default task kernel
+      - Naive transfer learning: task parameter in naive mode
 
     Args:
         settings: Configuration settings for the convergence benchmark
@@ -131,16 +134,18 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         "Source_Function": Michalewicz(dim=5, negate=True, noise_std=0.15),
         "Target_Function": Michalewicz(dim=5, negate=True),
     }
-    searchspace_nontl = make_searchspace(use_task_parameter=False)
-    searchspace_tl = make_searchspace(use_task_parameter=True)
+    searchspace_naive = make_searchspace(
+        transfer_learning_mode=TransferLearningMode.NAIVE
+    )
+    searchspace_tl = make_searchspace()
 
     objective = make_objective()
     campaign_tl = Campaign(
         searchspace=searchspace_tl,
         objective=objective,
     )
-    campaign_nontl = Campaign(
-        searchspace=searchspace_nontl,
+    campaign_naive = Campaign(
+        searchspace=searchspace_naive,
         objective=objective,
     )
 
@@ -158,7 +163,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     for p in n_points:
         results.append(
             simulate_scenarios(
-                {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
+                {f"{p}": campaign_tl, f"{p}_naive": campaign_naive},
                 lambda x: wrap_function(
                     functions["Target_Function"], "Target_Function", x
                 ),
@@ -171,7 +176,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         )
     results.append(
         simulate_scenarios(
-            {"0": campaign_tl, "0_naive": campaign_nontl},
+            {"0": campaign_tl, "0_naive": campaign_naive},
             lambda x: wrap_function(functions["Target_Function"], "Target_Function", x),
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

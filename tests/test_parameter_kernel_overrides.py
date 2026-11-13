@@ -18,7 +18,7 @@ from gpytorch.priors import GammaPrior as GPyTorchGammaPrior
 from pytest import param
 
 from baybe.exceptions import IncompatibleOverrideError
-from baybe.kernels import MaternKernel, RBFKernel
+from baybe.kernels import MaternKernel, RBFKernel, VanishingKernel
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
@@ -53,6 +53,7 @@ _TRAVERSE_ERROR = "Cannot traverse kernel"
 
 _INDEX = TransferLearningMode.INDEX_KERNEL
 _POSITIVE_INDEX = TransferLearningMode.POSITIVE_INDEX_KERNEL
+_NAIVE = TransferLearningMode.NAIVE
 
 
 def _x(name, override_kernel=None):
@@ -260,6 +261,7 @@ _X1_SELECTOR = BayBEKernelFactory(parameter_selector=NameSelector(("x1",), regex
 _TASK_KERNEL = IndexKernel(num_tasks=3, rank=3, parameter_names=("task",))
 _EXCLUDE_ERROR = "can exclude these parameters"
 _ARD_ERROR = "specifies 2 ARD dimensions, but the parameter has 3"
+_EMPTY_ERROR = "no parameter contributing a kernel"
 
 
 @pytest.mark.parametrize(
@@ -396,6 +398,25 @@ _ARD_ERROR = "specifies 2 ARD dimensions, but the parameter has 3"
             id="task-positive-index",
         ),
         param(
+            [_x("x1"), _task(_NAIVE)],
+            None,
+            {("x1",): [gk.MaternKernel]},
+            id="task-naive",
+        ),
+        # Vanishing kernels contribute no factor
+        param(
+            [_x("x1"), _x("x2", VanishingKernel())],
+            None,
+            {("x1",): [gk.MaternKernel]},
+            id="vanishing-override",
+        ),
+        param(
+            _X2_RBF,
+            VanishingKernel(),
+            {("x2",): [gk.RBFKernel]},
+            id="vanishing-surrogate-kernel",
+        ),
+        param(
             [_x("x1"), _task(_INDEX)],
             MaternKernel(parameter_names=("x1", "task")),
             {("x1",): [gk.MaternKernel], ("task",): [gk.IndexKernel]},
@@ -487,6 +508,12 @@ _ARD_ERROR = "specifies 2 ARD dimensions, but the parameter has 3"
             ICMKernelFactory(task_kernel_or_factory=_TASK_KERNEL),
             (IncompatibleOverrideError, _EXCLUDE_ERROR),
             id="task-index+icm-factory",
+        ),
+        param(
+            [_x("x1"), _task(_NAIVE)],
+            _TASK_KERNEL,
+            (IncompatibleOverrideError, _EMPTY_ERROR),
+            id="task-naive+task-only-kernel",
         ),
     ],
 )

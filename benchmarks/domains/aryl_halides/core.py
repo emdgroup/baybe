@@ -1,8 +1,8 @@
 """Benchmark on aryl halides data with two distinct aryl halides as TL tasks.
 
 This module provides the basic structure for creating different
-benchmarks by changing the source and target tasks. The benchmark compares TL and
-non-TL campaigns.
+benchmarks by changing the source and target tasks. The benchmark compares default
+and naive TL campaigns.
 
 By convention, the benchmarks name use the format
 "sou_<Source tasks>_tar_<Target task>".
@@ -18,6 +18,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import SubstanceParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -48,6 +49,7 @@ def make_searchspace(
     data: pd.DataFrame,
     target_tasks: Sequence[str] | None = None,
     source_tasks: Sequence[str] | None = None,
+    transfer_learning_mode: TransferLearningMode | None = None,
 ) -> SearchSpace:
     """Create the search space for the benchmark."""
     params: list[DiscreteParameter] = [
@@ -65,6 +67,7 @@ def make_searchspace(
                 name="aryl_halide",
                 values=all_tasks,
                 active_values=target_tasks,
+                override_transfer_learning_mode=transfer_learning_mode,
             )
         )
     return SearchSpace.from_product(parameters=params)
@@ -74,7 +77,7 @@ def make_lookup(data: pd.DataFrame, target_tasks: Sequence[str]) -> pd.DataFrame
     """Create the lookup for the benchmark.
 
     Without the filtering, there would be multiple entries for the same parameter
-    configuration. Since this might yield issues for the non-transfer learning
+    configuration. Since this might yield issues for the naive transfer learning
     campaigns, we filter the data to only include the target tasks.
     """
     return data[data["aryl_halide"].isin(target_tasks)]
@@ -96,7 +99,7 @@ def aryl_halide_tl_substance_benchmark(
     target_tasks: Sequence[str],
     percentages: Sequence[float],
 ) -> pd.DataFrame:
-    """Abstract benchmark function comparing TL and non-TL campaigns.
+    """Abstract benchmark function comparing default and naive TL campaigns.
 
     Inputs:
         base:           Substance parameter
@@ -113,7 +116,12 @@ def aryl_halide_tl_substance_benchmark(
         source_tasks=source_tasks,
         target_tasks=target_tasks,
     )
-    searchspace_nontl = make_searchspace(data=data)
+    searchspace_naive = make_searchspace(
+        data=data,
+        source_tasks=source_tasks,
+        target_tasks=target_tasks,
+        transfer_learning_mode=TransferLearningMode.NAIVE,
+    )
 
     lookup = make_lookup(data, target_tasks)
     initial_data = make_initial_data(data, source_tasks)
@@ -123,7 +131,7 @@ def aryl_halide_tl_substance_benchmark(
         searchspace=searchspace,
         objective=objective,
     )
-    nontl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
+    naive_campaign = Campaign(searchspace=searchspace_naive, objective=objective)
 
     initial_data_samples = {}
     with Settings(random_seed=settings.random_seed):
@@ -138,7 +146,7 @@ def aryl_halide_tl_substance_benchmark(
             simulate_scenarios(
                 {
                     f"{int(100 * p)}": tl_campaign,
-                    f"{int(100 * p)}_naive": nontl_campaign,
+                    f"{int(100 * p)}_naive": naive_campaign,
                 },
                 lookup,
                 initial_data=initial_data_samples[p],
@@ -150,7 +158,7 @@ def aryl_halide_tl_substance_benchmark(
         )
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": nontl_campaign},
+            {"0": tl_campaign, "0_naive": naive_campaign},
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

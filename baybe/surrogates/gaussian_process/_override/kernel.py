@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, NoReturn
 
 from baybe.exceptions import IncompatibleOverrideError
 from baybe.kernels.base import Kernel
+from baybe.kernels.basic import VanishingKernel
 
 if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
@@ -21,18 +22,21 @@ if TYPE_CHECKING:
 def extract_parameter_kernel_overrides(
     searchspace: SearchSpace,
 ) -> list[tuple[str, GPyTorchKernel]]:
-    """Extract the parameter-specific kernel overrides.
+    """Extract the kernel factors of the parameter-specific kernel overrides.
+
+    Vanishing overrides are skipped since they contribute no kernel factor.
 
     Args:
         searchspace: The search space whose parameters are checked for overrides.
 
     Returns:
-        A ``(parameter_name, kernel)`` pair for each parameter with an override.
+        A ``(parameter_name, kernel)`` pair for each non-vanishing override.
     """
     return [
         (p.name, make_parameter_override_kernel(p, searchspace))
         for p in searchspace.parameters
         if p.override_kernel is not None
+        and not isinstance(p.override_kernel, VanishingKernel)
     ]
 
 
@@ -130,7 +134,7 @@ def reduce_kernel_spec(
         factory: The originating factory (for error messages).
 
     Returns:
-        The reduced kernel, or ``None`` if nothing remains.
+        The reduced kernel, or ``None`` if nothing or only a vanishing kernel remains.
     """
     if not isinstance(component, Kernel):
         raise_incompatible_override(excluded_names, factory)
@@ -144,7 +148,7 @@ def reduce_kernel_spec(
         except TypeError as ex:
             raise_incompatible_override(excluded_names, factory, ex)
 
-    return spec
+    return None if isinstance(spec, VanishingKernel) else spec
 
 
 def raise_incompatible_override(
@@ -163,7 +167,8 @@ def raise_incompatible_override(
         IncompatibleOverrideError: Always.
     """
     raise IncompatibleOverrideError(
-        f"Kernel overrides for {sorted(parameter_names)} require a surrogate "
-        f"kernel (factory) that can exclude these parameters. "
-        f"'{type(factory).__name__}' does not satisfy this requirement."
+        f"The kernel overrides or transfer learning modes of "
+        f"{sorted(parameter_names)} require a kernel (factory) or preset that can "
+        f"exclude these parameters, which '{type(factory).__name__}' cannot. "
+        f"Use a BayBE kernel, kernel factory, or a compatible preset instead."
     ) from cause
