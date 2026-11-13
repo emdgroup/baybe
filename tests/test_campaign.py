@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 from attrs import evolve
-from pandas.testing import assert_index_equal
+from pandas.testing import assert_frame_equal, assert_index_equal
 from pytest import param
 
 from baybe.acquisition import qLogEI, qLogNEHVI, qTS, qUCB
@@ -255,6 +255,95 @@ def test_allow_pending_flag(campaign_for_flag_test: Campaign):
     with nullcontext() if flag else pytest.raises(NotEnoughPointsLeftError):
         campaign.recommend(1, pending_experiments=pd.DataFrame({"p": [0, 1]}))
         assert mock_recommend.call_count == 3
+
+
+@pytest.mark.parametrize(
+    ("exp_rep", "pending_df", "batch_size", "allow_pending", "expected_index"),
+    [
+        param(
+            pd.DataFrame(
+                {"T": [300, 400, 500]}, index=["sampleA", "sampleB", "sampleC"]
+            ),
+            pd.DataFrame({"T": [300, 300]}),
+            2,
+            False,
+            ["sampleB", "sampleC"],
+            id="string_index_duplicate_pending",
+        ),
+        param(
+            pd.DataFrame({"T": [300, 400, 500]}, index=[2, 0, 1]),
+            pd.DataFrame({"T": [300]}),
+            2,
+            False,
+            [0, 1],
+            id="reordered_numeric_index_single_pending",
+        ),
+        param(
+            pd.DataFrame({"T": [300, 300, 400]}, index=["row0", "row1", "row2"]),
+            pd.DataFrame({"T": [300]}),
+            1,
+            False,
+            ["row2"],
+            id="duplicate_candidate_configurations",
+        ),
+        param(
+            pd.DataFrame(
+                {"T": [300, 400, 500]},
+                index=pd.Index(["sampleA", "sampleB", "sampleC"], name="sample_id"),
+            ),
+            pd.DataFrame({"T": [300, 300]}),
+            2,
+            False,
+            ["sampleB", "sampleC"],
+            id="named_index_duplicate_pending",
+        ),
+        param(
+            pd.DataFrame(
+                {"T": [300, 400, 500]}, index=["sampleA", "sampleB", "sampleC"]
+            ),
+            pd.DataFrame({"T": [300, 300]}),
+            3,
+            True,
+            ["sampleA", "sampleB", "sampleC"],
+            id="allow_pending_returns_all",
+        ),
+        param(
+            pd.DataFrame(
+                {"T": [300, 400, 500]}, index=["sampleA", "sampleB", "sampleC"]
+            ),
+            pd.DataFrame({"T": [999]}),
+            3,
+            False,
+            ["sampleA", "sampleB", "sampleC"],
+            id="nonmatching_pending_unchanged",
+        ),
+        # Pending contains ('A', 10) and ('B', 20). A per-column membership check
+        # would also drop the valid candidates ('A', 20) and ('B', 10).
+        param(
+            pd.DataFrame(
+                {"cat": ["A", "A", "B", "B"], "num": [10, 20, 10, 20]},
+                index=["row0", "row1", "row2", "row3"],
+            ),
+            pd.DataFrame({"cat": ["A", "B"], "num": [10, 20]}),
+            2,
+            False,
+            ["row1", "row2"],
+            id="mixed_parameters_joint_matching",
+        ),
+    ],
+)
+def test_pending_experiments_filtering(
+    exp_rep, pending_df, batch_size, allow_pending, expected_index
+):
+    """Pending experiments are filtered by exact joint parameter configurations."""
+    campaign = Campaign(
+        searchspace=SubspaceDiscrete.from_dataframe(exp_rep),
+        recommender=RandomRecommender(),
+        allow_recommending_pending_experiments=allow_pending,
+    )
+    rec = campaign.recommend(batch_size, pending_experiments=pending_df)
+    expected = exp_rep.loc[expected_index]
+    assert_frame_equal(rec.sort_index(), expected.sort_index(), check_dtype=False)
 
 
 @pytest.mark.parametrize(
