@@ -81,17 +81,16 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
 
     from botorch.sampling.normal import SobolQMCNormalSampler
 
-    # In eval mode, the training data is in transformed form
-    model.eval()
-    train_x = model.train_inputs[0]
-    train_y = model.train_targets
+    loo_model = deepcopy(model)
+    loo_model.eval()
+    train_x = loo_model.train_inputs[0]
+    train_y = loo_model.train_targets
 
     # Fold j contains all training points except point j
     masks = torch.eye(len(train_x), dtype=torch.bool, device=train_x.device)
 
-    # Copy with the folds as batched training data, which `set_train_data` stores as is
-    loo_model = deepcopy(model)
-    # `set_train_data` comes from GPyTorch, which mypy can't see, so mypy
+    # Store the folds as batched training data, which `set_train_data` keeps as is
+    # Note: `set_train_data` comes from GPyTorch, which mypy can't see, so mypy
     # falls back to `nn.Module.__getattr__` and types it as a tensor
     loo_model.set_train_data(  # type: ignore[operator]
         torch.stack([train_x[~m] for m in masks]),
@@ -100,7 +99,8 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
     )
 
     with torch.no_grad():
-        # Calling the model directly skips the transforms
+        # Calling the model directly skips the input transform, so both the folds
+        # and `train_x` must already be transformed, as set by `eval()` above
         posterior = GPyTorchPosterior(loo_model(train_x))
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
         return sampler(posterior).squeeze(-1)
