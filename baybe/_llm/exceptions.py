@@ -1,9 +1,4 @@
-"""LLM-specific exceptions.
-
-The public base error and the public warning are defined in ``baybe.exceptions`` so
-that they are part of the documented public surface; this module imports the error to
-build the internal subclass hierarchy.
-"""
+"""LLM-specific exceptions."""
 
 from __future__ import annotations
 
