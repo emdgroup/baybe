@@ -1,0 +1,25 @@
+TransferLearningMode
+====================
+
+.. currentmodule:: baybe.parameters.enum
+
+.. autoclass:: TransferLearningMode
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~TransferLearningMode.INDEX_KERNEL
+      ~TransferLearningMode.POSITIVE_INDEX_KERNEL
+   
+   

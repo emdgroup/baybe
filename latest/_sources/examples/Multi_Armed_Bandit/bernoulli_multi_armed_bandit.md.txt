@@ -127,7 +127,7 @@ ACQFS = [
     PosteriorStandardDeviation(),  # Active learning
 ]
 N_MC_RUNS = 3 if SMOKE_TEST else 10
-N_ITERATIONS = 50 if SMOKE_TEST else 200
+N_ITERATIONS = 2 if SMOKE_TEST else 200
 ```
 
 ## Building the Model
@@ -239,17 +239,15 @@ for acqf in ACQFS:
     qThompsonSampling
     -----------------
     Optimal win rate: 0.8
-    Achieved win rate: 0.62
-    Mean squared error (last iteration): 0.1381325940926448
+    Achieved win rate: 0.8333333333333334
+    Mean squared error (last iteration): 0.1558333326710602
     
     
-
-
     PosteriorStandardDeviation
     --------------------------
     Optimal win rate: 0.8
-    Achieved win rate: 0.5066666666666667
-    Mean squared error (last iteration): 0.10030469692230562
+    Achieved win rate: 0.5
+    Mean squared error (last iteration): 0.1502777837382428
     
     
 

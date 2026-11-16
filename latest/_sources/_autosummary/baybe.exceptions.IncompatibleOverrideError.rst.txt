@@ -1,0 +1,6 @@
+baybe.exceptions.IncompatibleOverrideError
+==========================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: IncompatibleOverrideError

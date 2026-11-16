@@ -1,0 +1,6 @@
+baybe.exceptions.LLMAuthenticationError
+=======================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: LLMAuthenticationError

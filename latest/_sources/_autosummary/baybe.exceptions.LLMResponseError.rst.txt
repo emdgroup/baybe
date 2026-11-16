@@ -1,0 +1,6 @@
+baybe.exceptions.LLMResponseError
+=================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: LLMResponseError

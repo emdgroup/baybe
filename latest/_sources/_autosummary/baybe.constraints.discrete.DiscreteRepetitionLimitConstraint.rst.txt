@@ -1,0 +1,53 @@
+DiscreteRepetitionLimitConstraint
+=================================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteRepetitionLimitConstraint
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteRepetitionLimitConstraint.__init__
+   
+      ~DiscreteRepetitionLimitConstraint.from_dict
+   
+      ~DiscreteRepetitionLimitConstraint.from_json
+   
+      ~DiscreteRepetitionLimitConstraint.get_invalid
+   
+      ~DiscreteRepetitionLimitConstraint.get_invalid_polars
+   
+      ~DiscreteRepetitionLimitConstraint.get_valid
+   
+      ~DiscreteRepetitionLimitConstraint.summary
+   
+      ~DiscreteRepetitionLimitConstraint.to_dict
+   
+      ~DiscreteRepetitionLimitConstraint.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteRepetitionLimitConstraint.n_max_repetitions
+      ~DiscreteRepetitionLimitConstraint.exclude
+      ~DiscreteRepetitionLimitConstraint.has_polars_implementation
+      ~DiscreteRepetitionLimitConstraint.is_continuous
+      ~DiscreteRepetitionLimitConstraint.is_discrete
+      ~DiscreteRepetitionLimitConstraint.numerical_only
+      ~DiscreteRepetitionLimitConstraint.parameters
+   
+   

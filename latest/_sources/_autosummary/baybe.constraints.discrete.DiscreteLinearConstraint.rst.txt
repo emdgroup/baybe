@@ -1,0 +1,56 @@
+DiscreteLinearConstraint
+========================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteLinearConstraint
+   :members:                              
+   :special-members: __call__
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteLinearConstraint.__init__
+   
+      ~DiscreteLinearConstraint.from_dict
+   
+      ~DiscreteLinearConstraint.from_json
+   
+      ~DiscreteLinearConstraint.get_invalid
+   
+      ~DiscreteLinearConstraint.get_invalid_polars
+   
+      ~DiscreteLinearConstraint.get_valid
+   
+      ~DiscreteLinearConstraint.summary
+   
+      ~DiscreteLinearConstraint.to_dict
+   
+      ~DiscreteLinearConstraint.to_json
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteLinearConstraint.operator
+      ~DiscreteLinearConstraint.coefficients
+      ~DiscreteLinearConstraint.rhs
+      ~DiscreteLinearConstraint.tolerance
+      ~DiscreteLinearConstraint.exclude
+      ~DiscreteLinearConstraint.has_polars_implementation
+      ~DiscreteLinearConstraint.is_continuous
+      ~DiscreteLinearConstraint.is_discrete
+      ~DiscreteLinearConstraint.numerical_only
+      ~DiscreteLinearConstraint.parameters
+   
+   

@@ -125,7 +125,7 @@ p2_json = """
 p1_via_json = CategoricalParameter.from_json(p1_json)
 p2_via_json = CategoricalParameter.from_json(p2_json)
 
-assert p1 == p1_via_json == p2 == p2_via_json 
+assert p1 == p1_via_json == p2 == p2_via_json
 ```
 
 ### Automatic field conversion

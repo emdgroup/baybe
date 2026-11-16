@@ -104,7 +104,7 @@ $\{w_i\}$ are the corresponding target weights:
 ```
 
 #### Example 1 – Normalized Targets
-Here, we consider four **normalized** targets, each with a distict
+Here, we consider four **normalized** targets, each with a distinct
 {ref}`optimization goal <components/targets:NumericalTarget>` chosen arbitrarily
 for demonstration purposes. The first target is given twice as much importance as each
 of the other three by assigning it a higher weight:
