@@ -139,10 +139,11 @@ def recommend_hybrid_without_subsets(
     # experimental representation
     merged = pd.merge(
         pd.DataFrame(points.numpy()),
-        candidates_comp.reset_index(),
+        candidates_comp.reset_index(names="_df_index"),
         on=list(candidates_comp.columns),
         how="left",
-    ).set_index("index")
+    ).set_index("_df_index")
+    merged.index.name = candidates_comp.index.name
 
     # Get experimental representation of discrete part
     rec_disc_exp = searchspace.discrete.exp_rep.loc[merged.index]

@@ -92,6 +92,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteProductConstraint(condition=ThresholdCondition(...))` in favor of
   `DiscreteProductConstraint(operator=..., rhs=...)`
 
+## [0.15.2] - 2026-11-13
+### Fixed
+- `BotorchRecommender` recommendation for discrete and hybrid search spaces no longer
+  fails with `KeyError` when candidate dataframes have a named index
+- With `allow_recommending_pending_experiments=False`, campaign-based recommendation no
+  longer returns pending experiments or drops valid candidates in discrete search spaces
+  when the search space was created from a dataframe with a custom index or when the
+  same pending experiment was provided more than once
+
 ## [0.15.1] - 2026-11-11
 ### Added
 - Support for Python 3.15

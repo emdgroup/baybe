@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - 'dev/**'
+      - 'patch/**'
   workflow_dispatch:
 
 env:

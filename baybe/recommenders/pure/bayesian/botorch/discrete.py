@@ -133,10 +133,10 @@ def recommend_discrete_without_subsets(
     idxs = pd.Index(
         pd.merge(
             pd.DataFrame(points.numpy(), columns=candidates_comp.columns),
-            candidates_comp.reset_index(),
-            on=list(candidates_comp),
+            candidates_comp.reset_index(names="_df_index"),
+            on=list(candidates_comp.columns),
             how="left",
-        )["index"]
-    )
+        )["_df_index"]
+    ).rename(candidates_comp.index.name)
 
     return idxs
