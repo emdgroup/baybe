@@ -11,12 +11,12 @@ from typing_extensions import override
 ##### Warnings #####
 
 
-class LLMResponseWarning(UserWarning):
-    """A language model response did not fully meet the request."""
-
-
 class InputDataTypeWarning(UserWarning):
     """An input has unexpected data type."""
+
+
+class LLMResponseWarning(UserWarning):
+    """A language model response did not fully meet the request."""
 
 
 class UnusedObjectWarning(UserWarning):
