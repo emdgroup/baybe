@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Collection
-from typing import Any
 
 from typing_extensions import override
 
@@ -52,11 +51,12 @@ class LLMUnknownParameterError(LLMResponseError):
 
     def __init__(
         self,
-        *args: Any,
+        message: str,
+        *,
         unknown_names: Collection[str],
         valid_names: Collection[str],
-    ):
-        super().__init__(*args)
+    ) -> None:
+        super().__init__(message)
         self.unknown_names = unknown_names
         self.valid_names = valid_names
 
@@ -75,11 +75,12 @@ class LLMBatchConstraintValidationError(LLMResponseError):
 
     def __init__(
         self,
-        *args: Any,
+        message: str,
+        *,
         constraint_name: str,
         parameters: Collection[str],
-    ):
-        super().__init__(*args)
+    ) -> None:
+        super().__init__(message)
         self.constraint_name = constraint_name
         self.parameters = parameters
 
@@ -108,8 +109,8 @@ class LLMIneligiblePointsError(LLMResponseError):
 class LLMDuplicateRecommendationsError(LLMResponseError):
     """A language model response contained identical recommendations."""
 
-    def __init__(self, *args: Any, n_duplicates: int):
-        super().__init__(*args)
+    def __init__(self, message: str, *, n_duplicates: int) -> None:
+        super().__init__(message)
         self.n_duplicates = n_duplicates
 
     @property
@@ -125,8 +126,8 @@ class LLMDuplicateRecommendationsError(LLMResponseError):
 class LLMBatchSizeError(LLMResponseError):
     """A language model response contained the wrong number of recommendations."""
 
-    def __init__(self, *args: Any, requested: int, received: int):
-        super().__init__(*args)
+    def __init__(self, message: str, *, requested: int, received: int) -> None:
+        super().__init__(message)
         self.requested = requested
         self.received = received
 
