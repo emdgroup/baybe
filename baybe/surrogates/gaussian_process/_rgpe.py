@@ -87,14 +87,14 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
     train_y = loo_model.train_targets
 
     # Fold j contains all training points except point j
-    masks = torch.eye(len(train_x), dtype=torch.bool, device=train_x.device)
+    folds = ~torch.eye(len(train_x), dtype=torch.bool)
 
     # Store the folds as batched training data, which `set_train_data` keeps as is
     # Note: `set_train_data` comes from GPyTorch, which mypy can't see, so mypy
     # falls back to `nn.Module.__getattr__` and types it as a tensor
     loo_model.set_train_data(  # type: ignore[operator]
-        torch.stack([train_x[~m] for m in masks]),
-        torch.stack([train_y[~m] for m in masks]),
+        torch.stack([train_x[m] for m in folds]),
+        torch.stack([train_y[m] for m in folds]),
         strict=False,
     )
 
