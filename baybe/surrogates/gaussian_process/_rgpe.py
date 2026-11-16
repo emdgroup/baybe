@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from copy import deepcopy
 from functools import reduce
 from operator import add
 from typing import TYPE_CHECKING, Any, NoReturn, cast
@@ -77,8 +78,6 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
         ``s``-th posterior sample of the GP without training point ``j``, evaluated at
         training point ``k``.
     """
-    from copy import deepcopy
-
     from botorch.sampling.normal import SobolQMCNormalSampler
 
     loo_model = deepcopy(model)
