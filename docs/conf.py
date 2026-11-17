@@ -110,6 +110,12 @@ nitpick_ignore_regex = [
         r"py:.*",
         r"(pandas|numpy|torch|botorch|gpytorch|scipy|sklearn|pathlib|polars|attr|joblib|matplotlib|skfp|rdkit|shap|xyzpy|typing|narwhals)[\._].*",
     ),  # noqa: E501
+    ##### Bare names in the generated ``Settings.__init__`` annotations #####
+    # Postponed annotations make attrs build the ``__init__`` signature from raw
+    # annotation strings such as ``"str | Path | None"``. Sphinx renders the bare name
+    # and cannot derive a qualified reference, although ``Path`` is documented as
+    # ``pathlib.Path`` and Narwhals documents ``PluginName`` under qualified names.
+    (r"py:class", r"^(Path|PluginName)$"),
     ##### Inherited torch.nn.Module docstring references #####
     # Unqualified names from inherited external docstrings (torch, botorch, sklearn)
     # that cannot be resolved outside their original documentation context.
@@ -192,8 +198,15 @@ nitpick_ignore_regex = [
 ]
 
 
-# Ignore the warnings that are given by autosectionlabel
-suppress_warnings = ["autosectionlabel.*"]
+# Ignore warnings that are expected from documentation tooling.
+# Names that are only imported under ``TYPE_CHECKING`` cannot be bound while the docs
+# are built, so the type-hint extension cannot resolve the corresponding annotations
+# and reports them as unresolved forward references.
+suppress_warnings = [
+    "autosectionlabel.*",
+    "sphinx_autodoc_typehints.forward_reference",
+    "sphinx_autodoc_typehints.guarded_import",
+]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
