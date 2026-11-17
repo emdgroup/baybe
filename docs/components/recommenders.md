@@ -63,6 +63,52 @@ representation and BayBE will train the model on this point plus augmented point
 can be generated from it. To see the effect in practice, refer to
 [this example](/examples/Symmetries/permutation).
 
+### TFPR Recommender
+
+The **[`TFPRRecommender`](baybe.recommenders.pure.tfpr.TFPRRecommender)** is a fast
+alternative to hypervolume-based Bayesian optimization of a
+{class}`~baybe.objectives.pareto.ParetoObjective` in **discrete** search spaces.
+Instead of optimizing an acquisition function, it ranks the entire candidate set with
+Top-Fraction Pareto Ranking (TFPR), based on the posterior means and standard
+deviations of its surrogate model. This makes it particularly suitable when many
+targets or a large measured Pareto front make hypervolume-based acquisition expensive.
+
+TFPR's dominance and fitness approach builds on Pareto-optimal embedded modeling
+(POEM) {cite:p}`Brereton2020`. Its top-fraction cutoff is a later heuristic and is not
+part of the published POEM method.
+
+TFPR compares target values through pairwise dominance rather than combining
+differently scaled values into a single weighted sum. The ranking is configured via:
+* {attr}`~baybe.recommenders.pure.tfpr.TFPRRecommender.optimism_lambda`: A multiple of
+  the posterior standard deviation that is added in each target's favorable direction.
+* {attr}`~baybe.recommenders.pure.tfpr.TFPRRecommender.top_fraction`: The fraction of
+  per-target top candidates considered in the ranking. When omitted, an automatic rule
+  based on the number of candidates is used.
+* {attr}`~baybe.recommenders.pure.tfpr.TFPRRecommender.dominance_threshold`: The share
+  of the targets a candidate must secure in a pairwise comparison to dominate the other
+  candidate, where won targets count fully and tied targets count half. The default of
+  `0.5` corresponds to a majority. Higher values make dominance stricter, with values
+  close to `1` requiring a candidate to win (nearly) all targets.
+
+```python
+from baybe.recommenders import FPSRecommender, TFPRRecommender, TwoPhaseMetaRecommender
+
+recommender = TwoPhaseMetaRecommender(
+    initial_recommender=FPSRecommender(),
+    recommender=TFPRRecommender(optimism_lambda=0.5),
+)
+```
+
+```{admonition} Limitations
+:class: important
+* Only Pareto objectives whose targets have no transformations are currently supported.
+* The search space must be discrete and must not contain subset-generating constraints.
+* Pending experiments are not supported.
+* Pairwise comparisons are limited by `top_fraction` but their cost remains quadratic
+  in the retained per-target sets, so extremely large candidate sets can require a
+  smaller explicit fraction.
+```
+
 ### Clustering Recommenders
 
 BayBE offers a set of recommenders leveraging techniques to facilitate point selection
