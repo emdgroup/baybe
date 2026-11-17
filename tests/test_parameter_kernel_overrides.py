@@ -262,6 +262,7 @@ _TASK_KERNEL = IndexKernel(num_tasks=3, rank=3, parameter_names=("task",))
 _EXCLUDE_ERROR = "can exclude these parameters"
 _ARD_ERROR = "specifies 2 ARD dimensions, but the parameter has 3"
 _EMPTY_ERROR = "no parameter contributing a kernel"
+_VANISHING_ERROR = "requires at least one non-vanishing kernel override"
 
 
 @pytest.mark.parametrize(
@@ -514,6 +515,12 @@ _EMPTY_ERROR = "no parameter contributing a kernel"
             _TASK_KERNEL,
             (IncompatibleOverrideError, _EMPTY_ERROR),
             id="task-naive+task-only-kernel",
+        ),
+        param(
+            [_x("x1"), _x("x2")],
+            VanishingKernel(),
+            (IncompatibleOverrideError, _VANISHING_ERROR),
+            id="vanishing-surrogate-kernel-without-overrides",
         ),
     ],
 )

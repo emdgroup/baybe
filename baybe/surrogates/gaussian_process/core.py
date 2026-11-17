@@ -479,6 +479,11 @@ class GaussianProcessSurrogate(Surrogate):
         factory = self.kernel_factory or BayBEKernelFactory()
         if not excluded_names:
             kernel = factory(searchspace, context.objective, context.measurements)
+            if isinstance(kernel, VanishingKernel):
+                raise IncompatibleOverrideError(
+                    f"A '{VanishingKernel.__name__}' requires at least one "
+                    f"non-vanishing kernel override."
+                )
             return (
                 kernel.to_gpytorch(searchspace)
                 if isinstance(kernel, Kernel)
