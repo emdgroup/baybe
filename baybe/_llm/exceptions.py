@@ -6,6 +6,7 @@ from collections.abc import Collection
 
 from typing_extensions import override
 
+from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import LLMError
 
 
@@ -77,24 +78,18 @@ class LLMUnknownParameterError(LLMResponseError):
 class LLMBatchConstraintValidationError(LLMResponseError):
     """A language model response violated a batch constraint of the search space."""
 
-    def __init__(
-        self,
-        message: str,
-        *,
-        constraint_name: str,
-        parameters: Collection[str],
-    ) -> None:
+    def __init__(self, message: str, *, parameters: Collection[str]) -> None:
         super().__init__(message)
-        self.constraint_name = constraint_name
         self.parameters = parameters
 
     @property
     @override
     def recovery_instruction(self) -> str:
         return (
-            f"Your previous response violated the '{self.constraint_name}' constraint "
-            f"on parameters {list(self.parameters)}. Ensure all recommendations "
-            f"satisfy this constraint."
+            f"Your previous response violated the "
+            f"'{DiscreteBatchConstraint.__name__}' constraint on parameters "
+            f"{list(self.parameters)}. Ensure all recommendations satisfy this "
+            f"constraint."
         )
 
 

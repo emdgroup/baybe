@@ -131,7 +131,6 @@ def parse_llm_response(
                 f"constraint on parameter '{param_name}': all recommendations in a "
                 f"batch must share the same value, but received "
                 f"{list(unique_values)}.",
-                constraint_name=type(constraint).__name__,
                 parameters=constraint.parameters,
             )
 
