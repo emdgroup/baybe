@@ -1,8 +1,7 @@
 """# Top-Fraction Pareto Ranking (TFPR)
 
-The purpose of this dashboard is to explore how the settings of the `TFPRObjective`
-affect the recommendations of the `BotorchRecommender`, using synthetic quadratic
-targets with a known Pareto set.
+The purpose of this dashboard is to explore how the settings of the `TFPRRecommender`
+affect its recommendations, using synthetic quadratic targets with a known Pareto set.
 """  # noqa: D415
 
 import time
@@ -17,9 +16,10 @@ from matplotlib.figure import Figure
 from sklearn.decomposition import PCA
 
 from baybe import Settings
-from baybe.objectives import ParetoObjective, TFPRObjective
+from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalDiscreteParameter
-from baybe.recommenders import BotorchRecommender
+from baybe.recommenders import BotorchRecommender, TFPRRecommender
+from baybe.recommenders.pure.tfpr import _tfpr_fitness
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 
@@ -31,7 +31,7 @@ PARAMETER_NAMES = ["x0", "x1"]
 CENTER_RADIUS = np.sqrt(0.5)
 CENTER_START_ANGLE = 1.25 * np.pi
 
-# Maximum integer weight accepted by the TFPR objective
+# Maximum weight offered by the weight sliders
 MAX_WEIGHT = 10
 
 # Resolution of the grid used for drawing contour lines
@@ -199,15 +199,15 @@ def make_problem(
 
 
 def recommend_tfpr(
-    problem: Problem, objective: TFPRObjective, batch_size: int
+    problem: Problem, recommender: TFPRRecommender, batch_size: int
 ) -> tuple[pd.DataFrame, float]:
     """Recommend candidates via TFPR on the surrogate posterior."""
     with Settings(random_seed=problem.seed):
         start = time.perf_counter()
-        recommendations = BotorchRecommender().recommend(
+        recommendations = recommender.recommend(
             batch_size=batch_size,
             searchspace=problem.searchspace,
-            objective=objective,
+            objective=ParetoObjective(problem.targets),
             measurements=problem.measurements,
         )
         elapsed = time.perf_counter() - start
@@ -215,17 +215,21 @@ def recommend_tfpr(
 
 
 def rank_ground_truth(
-    problem: Problem, objective: TFPRObjective, batch_size: int
+    problem: Problem, recommender: TFPRRecommender, batch_size: int
 ) -> pd.DataFrame:
     """Select the top candidates by TFPR fitness computed from the true values."""
-    stats = {}
-    for i, target in enumerate(problem.targets):
-        stats[f"{target.name}_mean"] = problem.values[:, i]
-        stats[f"{target.name}_std"] = np.zeros(len(problem.candidates))
-    fitness = objective.compute_fitness(
-        pd.DataFrame(stats, index=problem.candidates.index)
+    assert recommender._weights is not None
+    assert recommender._tolerances is not None
+    names = [t.name for t in problem.targets]
+    directions = np.array([-1.0 if t.minimize else 1.0 for t in problem.targets])
+    fitness = _tfpr_fitness(
+        directions * problem.values,
+        np.array([recommender._weights[n] for n in names]),
+        np.array([recommender._tolerances[n] for n in names]),
+        recommender.top_fraction,
+        recommender.dominance_threshold,
     )
-    order = np.argsort(-fitness.to_numpy(), kind="stable")[:batch_size]
+    order = np.argsort(-fitness, kind="stable")[:batch_size]
     return problem.candidates.iloc[order]
 
 
@@ -248,15 +252,15 @@ def recommend_qnehvi(
 
 
 def make_recommendations(
-    problem: Problem, objective: TFPRObjective, batch_size: int, compare: bool
+    problem: Problem, recommender: TFPRRecommender, batch_size: int, compare: bool
 ) -> tuple[dict[str, pd.DataFrame], dict[str, float]]:
     """Collect the recommendations and runtimes of all requested methods."""
     recommendations: dict[str, pd.DataFrame] = {}
     runtimes: dict[str, float] = {}
     recommendations[TFPR_MODEL], runtimes[TFPR_MODEL] = recommend_tfpr(
-        problem, objective, batch_size
+        problem, recommender, batch_size
     )
-    recommendations[TFPR_TRUTH] = rank_ground_truth(problem, objective, batch_size)
+    recommendations[TFPR_TRUTH] = rank_ground_truth(problem, recommender, batch_size)
     if compare:
         recommendations[QNEHVI], runtimes[QNEHVI] = recommend_qnehvi(
             len(problem.targets),
@@ -288,8 +292,8 @@ def problem_sidebar() -> tuple[int, int, int]:
 
 
 def tfpr_sidebar(
-    targets: Sequence[NumericalTarget], weights: Sequence[int]
-) -> TFPRObjective:
+    targets: Sequence[NumericalTarget], weights: Sequence[float]
+) -> tuple[TFPRRecommender, list[float]]:
     """Create the sidebar controls for the remaining TFPR settings."""
     dominance_threshold = st.sidebar.slider(
         "Dominance threshold",
@@ -337,17 +341,18 @@ def tfpr_sidebar(
     )
 
     try:
-        return TFPRObjective(
-            targets,
-            weights=weights,
-            tolerances=tolerances,
+        recommender = TFPRRecommender(
             optimism_lambda=optimism_lambda,
             top_fraction=top_fraction,
             dominance_threshold=dominance_threshold,
         )
+        # NOTE: Weights and tolerances are private settings of the recommender
+        recommender._weights = {t.name: w for t, w in zip(targets, weights)}
+        recommender._tolerances = {t.name: tol for t, tol in zip(targets, tolerances)}
     except ValueError as ex:
         st.error(str(ex))
         st.stop()
+    return recommender, tolerances
 
 
 def recommendation_sidebar(
@@ -437,10 +442,10 @@ def show_tie_bands(problem: Problem, tolerances: Sequence[float]) -> None:
     plt.close(fig)
 
 
-def show_objective(objective: TFPRObjective) -> None:
-    """Display the configured objective."""
-    with st.expander("Objective"):
-        st.code(str(objective), language=None)
+def show_recommender(recommender: TFPRRecommender) -> None:
+    """Display the configured recommender."""
+    with st.expander("Recommender"):
+        st.code(str(recommender), language=None)
 
 
 def plot_two_targets(
@@ -627,7 +632,7 @@ def two_target_page() -> None:
     st.title("TFPR on the Pareto Example")
     st.markdown(
         f"This page turns the [Pareto example]({PARETO_EXAMPLE_URL}) into an "
-        "interactive comparison for the `TFPRObjective`. Two TFPR selections are "
+        "interactive comparison for the `TFPRRecommender`. Two TFPR selections are "
         f"shown: **{TFPR_MODEL}** is what the recommender picks based on the "
         f"surrogate posterior, and **{TFPR_TRUTH}** is what TFPR picks when ranking "
         "the true target values, i.e. with a perfect model. Training points are "
@@ -648,22 +653,24 @@ def two_target_page() -> None:
         format_func=lambda s: f"{MAX_WEIGHT - s} : {s}",
         help="Left puts all weight on y0, right puts all weight on y1.",
     )
-    objective = tfpr_sidebar(problem.targets, (MAX_WEIGHT - weight_y1, weight_y1))
+    recommender, tolerances = tfpr_sidebar(
+        problem.targets, (MAX_WEIGHT - weight_y1, weight_y1)
+    )
     batch_size, compare = recommendation_sidebar(
         compare_default=True,
-        compare_help="Also recommend with a ParetoObjective, which uses the "
+        compare_help="Also recommend with the BotorchRecommender, which uses the "
         "hypervolume-based qLogNEHVI acquisition function on the same candidates.",
     )
 
     recommendations, runtimes = make_recommendations(
-        problem, objective, batch_size, compare
+        problem, recommender, batch_size, compare
     )
     show_runtimes(problem, runtimes)
-    fig = plot_two_targets(problem, recommendations, objective.tolerances)
+    fig = plot_two_targets(problem, recommendations, tolerances)
     st.pyplot(fig)
     plt.close(fig)
-    show_tie_bands(problem, objective.tolerances)
-    show_objective(objective)
+    show_tie_bands(problem, tolerances)
+    show_recommender(recommender)
 
 
 def many_target_page() -> None:
@@ -695,10 +702,10 @@ def many_target_page() -> None:
         weights = [
             st.slider(f"Weight {t.name}", 0, MAX_WEIGHT, 1) for t in problem.targets
         ]
-    objective = tfpr_sidebar(problem.targets, weights)
+    recommender, tolerances = tfpr_sidebar(problem.targets, weights)
     batch_size, compare = recommendation_sidebar(
         compare_default=False,
-        compare_help="Also recommend with a ParetoObjective, which uses the "
+        compare_help="Also recommend with the BotorchRecommender, which uses the "
         "hypervolume-based qLogNEHVI acquisition function on the same candidates. "
         "This gets very slow with many targets: with six targets on a 41 x 41 "
         "grid, a local test took about 45 s for one recommendation and about "
@@ -706,14 +713,14 @@ def many_target_page() -> None:
     )
 
     recommendations, runtimes = make_recommendations(
-        problem, objective, batch_size, compare
+        problem, recommender, batch_size, compare
     )
     show_runtimes(problem, runtimes)
     fig = plot_many_targets(problem, recommendations)
     st.pyplot(fig)
     plt.close(fig)
-    show_tie_bands(problem, objective.tolerances)
-    show_objective(objective)
+    show_tie_bands(problem, tolerances)
+    show_recommender(recommender)
 
 
 def main():
