@@ -12,6 +12,8 @@
 
 ### Necessary imports for this example
 
+import os
+
 import numpy as np
 import pandas as pd
 from botorch.test_functions import Rastrigin
@@ -103,7 +105,9 @@ campaign = Campaign(
     objective=objective,
 )
 
-BATCH_SIZE = 5
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+
+BATCH_SIZE = 2 if SMOKE_TEST else 5
 N_ITERATIONS = 2
 
 for _ in range(N_ITERATIONS):

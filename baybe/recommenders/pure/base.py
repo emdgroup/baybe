@@ -67,7 +67,7 @@ class PureRecommender(ABC, RecommenderProtocol):
     )
     "Deprecated! Now handled by :class:`baybe.campaign.Campaign`."
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         if (
             self._deprecated_allow_repeated_recommendations is not None
             or self._deprecated_allow_recommending_already_measured is not None

@@ -67,6 +67,7 @@ from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.botorch import (
     BotorchRecommender,
 )
+from baybe.recommenders.pure.llm.llm import LLMRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
@@ -74,13 +75,38 @@ from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
 from baybe.targets.binary import BinaryTarget
-from baybe.utils.basic import hilberts_factory
+from baybe.utils.basic import get_subclasses, hilberts_factory
 from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import (
     add_fake_measurements,
     add_parameter_noise,
     create_fake_input,
 )
+
+FAST_OPTIMIZATION_SETTINGS = {"n_restarts": 2, "n_raw_samples": 16}
+"""Reduced acquisition optimization effort for tests not concerned with its quality."""
+
+# Recommenders excluded from automatic subclass enumeration because they cannot be
+# default-constructed
+RECOMMENDERS_EXCLUDED_FROM_AUTOTEST: set[type] = {LLMRecommender}
+
+
+def autotestable_recommenders(base: type) -> list[type]:
+    """Return subclasses of ``base`` eligible for automatic testing.
+
+    Args:
+        base: The recommender base class whose subclasses are enumerated.
+
+    Returns:
+        The subclasses of ``base`` excluding those in
+        :data:`RECOMMENDERS_EXCLUDED_FROM_AUTOTEST`.
+    """
+    return [
+        cls
+        for cls in get_subclasses(base)
+        if cls not in RECOMMENDERS_EXCLUDED_FROM_AUTOTEST
+    ]
+
 
 # Hypothesis settings
 hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
@@ -99,8 +125,16 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    """Changes pytest marker configuration."""
+    """Changes pytest configuration."""
     config.addinivalue_line("markers", "slow: mark test as slow to run")
+
+    try:
+        from pandas.errors import Pandas4Warning
+    except ImportError:
+        pass
+    else:
+        category = f"{Pandas4Warning.__module__}.{Pandas4Warning.__name__}"
+        config.addinivalue_line("filterwarnings", f"ignore::{category}")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -129,14 +163,14 @@ def fixture_n_iterations(request):
 
 
 @pytest.fixture(
-    params=[pytest.param(1, marks=pytest.mark.slow), 3],
+    params=[pytest.param(1, marks=pytest.mark.slow), 2],
     name="batch_size",
-    ids=["b1", "b3"],
+    ids=["b1", "b2"],
 )
 def fixture_batch_size(request):
     """Number of recommendations requested per iteration.
 
-    Testing 1 as edge case and 3 as a case for >1.
+    Testing 1 as edge case and 2 as a case for >1.
     """
     return request.param
 
@@ -686,11 +720,28 @@ def fixture_campaign_non_sequential(
     )
 
 
+@pytest.fixture(scope="session", name="ongoing_campaign_cache")
+def fixture_ongoing_campaign_cache() -> dict[tuple[str, int, int], Campaign]:
+    """Iterated campaigns, keyed by their initial configuration and loop settings."""
+    return {}
+
+
 @pytest.fixture(name="ongoing_campaign")
-def fixture_ongoing_campaign(campaign, n_iterations, batch_size):
-    """Returns a campaign that already ran for several iterations."""
-    run_iterations(campaign, n_iterations, batch_size)
-    return campaign
+def fixture_ongoing_campaign(
+    campaign, n_iterations, batch_size, ongoing_campaign_cache
+):
+    """Returns a campaign that already ran for several iterations.
+
+    Iterating a campaign is expensive, but many parametrized test cases request
+    identically configured campaigns. Hence, each configuration (identified via the
+    serialized initial campaign) is iterated only once per session and every test
+    receives an independent deep copy that can be freely mutated.
+    """
+    key = (campaign.to_json(), n_iterations, batch_size)
+    if key not in ongoing_campaign_cache:
+        run_iterations(campaign, n_iterations, batch_size)
+        ongoing_campaign_cache[key] = campaign
+    return deepcopy(ongoing_campaign_cache[key])
 
 
 @pytest.fixture(name="searchspace")
@@ -765,7 +816,9 @@ def fixture_recommender(initial_recommender, surrogate_model, acqf):
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
         recommender=BotorchRecommender(
-            surrogate_model=surrogate_model, acquisition_function=acqf
+            surrogate_model=surrogate_model,
+            acquisition_function=acqf,
+            **FAST_OPTIMIZATION_SETTINGS,
         ),
     )
 
@@ -779,6 +832,7 @@ def fixture_non_sequential_recommender(initial_recommender, surrogate_model, acq
             surrogate_model=surrogate_model,
             acquisition_function=acqf,
             sequential_continuous=False,
+            **FAST_OPTIMIZATION_SETTINGS,
         ),
     )
 

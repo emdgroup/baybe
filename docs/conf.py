@@ -46,6 +46,7 @@ autodoc_type_aliases = {
     "GPyTorchLikelihood": "GPyTorchLikelihood",
     "GPyTorchMean": "GPyTorchMean",
     "Smiles": "Smiles",
+    "TensorCallable": "TensorCallable",
 }
 
 # >>>>>>>>>> NOTE END <<<<<<<<<<
@@ -128,7 +129,7 @@ nitpick_ignore_regex = [
     (r"py:class", r"^(dtype=np\.int64|if metric == 'precomputed')$"),
     ##### Type aliases in TYPE_CHECKING blocks #####
     # These exist only at type-checking time and cannot be resolved by Sphinx.
-    (r"py:class", r"^(GPComponent|TensorCallable|ConvertibleToFloat)$"),
+    (r"py:class", r"^(GPComponent|KernelOverride|TensorCallable|ConvertibleToFloat)$"),
     (r"py:class", r"^(GPyTorchKernel|GPyTorchLikelihood|GPyTorchMean|GPyTorchModel)$"),
     (r"py:class", r"^(pd\.DataFrame|pl\.Expr)$"),
     (r"py:class", r"^(TypeAliasForwardRef|P)$"),
@@ -179,18 +180,6 @@ nitpick_ignore_regex = [
     (r"py:class", r"baybe\..*\._.*"),
     # Deprecation
     ("py:.*", "baybe.targets._deprecated.*"),
-]
-
-# Ignore the following links when checking links for viability
-linkcheck_ignore = [
-    r"https://github.com/b-shields/edbo/blob*",
-    r"https://doi.org/10.26434/chemrxiv.10001986/v2",
-    r"https://doi.org/10.1039/D5DD00050E",
-    # FIXME[gpytorch-domain]: The `gpytorch.ai` domain lapsed in September 2026 and is
-    # parked by the registrar, so all GPyTorch URLs fail the TLS handshake. The docs
-    # did not move: ReadTheDocs still declares `docs.gpytorch.ai` as canonical and
-    # redirects there, so no working replacement URL exists. Remove once restored.
-    r"https://(docs\.)?gpytorch\.ai/.*",
 ]
 
 
@@ -306,11 +295,7 @@ modindex_common_prefix = ["baybe."]
 # Mappings to all external packages that we want to have clickable links to
 intersphinx_mapping = {
     "botorch": ("https://botorch.readthedocs.io/en/latest", None),
-    # FIXME[gpytorch-domain]: Disabled while the domain is parked (see
-    # `linkcheck_ignore`). The inventory is unreachable, and the resulting
-    # "failed to reach any of the inventories" warning carries no subtype, so it
-    # cannot be silenced via `suppress_warnings` and fails the `-W` build.
-    # "gpytorch": ("https://docs.gpytorch.ai/en/stable/", None),
+    "gpytorch": ("https://docs.gpytorch.ai/en/stable/", None),
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "polars": ("https://docs.pola.rs/api/python/stable/", None),

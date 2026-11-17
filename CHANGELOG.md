@@ -14,12 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `df_apply_permutation_augmentation` has a different interface and now expects
   permutation groups instead of column groups
 - `ParameterSelectorProtocol.__call__` now declares its input as positional-only
+- `SequentialMetaRecommender.recommenders` is now a `tuple` instead of a `list`, making
+  the attribute immutable. Serialization is unaffected
 
 ### Fixed
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
   values of invariant points are degenerate
 - Multi-output surrogate compatibility check in `Surrogate.fit` now correctly uses the
   number of required models instead of the number of transform outputs
+- `SigmoidTransformation` no longer produces NaN gradients for inputs far from its
+  center, which caused `OptimizationGradientError` during recommendation
+- `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
+  constraint filtering
 
 ### Added
 - `TFPRObjective` for fast ranking-based multi-target optimization in discrete
@@ -48,6 +54,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteLinearConstraint` for (optionally weighted) sum constraints on discrete
   parameters, supporting `coefficients` and mirroring `ContinuousLinearConstraint`'s
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
+- Parameter-specific kernel overrides for conveniently composing Gaussian process
+  kernels on individual parameter dimensions
+- `LLMRecommender` for LLM-based experimental design via LiteLLM,
+  available through the optional `llm` dependency group
+- `TwoPhaseMetaRecommender.with_llm_initial_recommender` and
+  `SequentialMetaRecommender.with_alternating_llm_recommender` convenience constructors
+  built on top of `LLMRecommender`: the former warm-starts a campaign with the LLM and
+  then switches to another recommender, the latter alternates between the two
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
@@ -81,6 +95,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteSumConstraint` in favor of `DiscreteLinearConstraint`
 - `DiscreteProductConstraint(condition=ThresholdCondition(...))` in favor of
   `DiscreteProductConstraint(operator=..., rhs=...)`
+
+## [0.15.2] - 2026-11-13
+### Fixed
+- `BotorchRecommender` recommendation for discrete and hybrid search spaces no longer
+  fails with `KeyError` when candidate dataframes have a named index
+- With `allow_recommending_pending_experiments=False`, campaign-based recommendation no
+  longer returns pending experiments or drops valid candidates in discrete search spaces
+  when the search space was created from a dataframe with a custom index or when the
+  same pending experiment was provided more than once
+
+## [0.15.1] - 2026-11-11
+### Added
+- Support for Python 3.15
+
+### Fixed
+- Analytic desirability posterior means for minimized targets with affine or identity
+  transformations now include the minimization offset, matching sampled objectives
+- `SHAPInsight` now uses marginal posteriors, avoiding unnecessary covariance
+  computation and supporting independent surrogates with multiple rows
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes

@@ -45,7 +45,7 @@ def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.nd
         given tolerances.
 
     """
-    return np.logical_not(_is_close(x, y, rtol=rtol, atol=atol))
+    return ~_is_close(x, y, rtol=rtol, atol=atol)
 
 
 def _is_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:

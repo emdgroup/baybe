@@ -267,6 +267,8 @@ Three tiers:
 
 Pre-commit hooks: pydoclint, ruff (lint+format), uv-lock, pyupgrade, zizmor.
 Tox environments: `fulltest`, `coretest`, `lint`, `typecheck`, `audit`, `docs`.
+Tox runs tests in parallel via `pytest-xdist`; for larger local selections use
+`pytest -n auto`.
 Coverage: 70% overall, 45% per-file minimum.
 CI runs on push/PR to `main`/`dev/**`: changelog check, lint, typecheck, audit,
 coretest, fulltest. Docs and benchmarks on releases.

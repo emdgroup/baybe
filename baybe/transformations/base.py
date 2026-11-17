@@ -1,13 +1,14 @@
-"""Base classes for target transformations."""
+"""Base classes for transformations."""
 
 from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define
-from typing_extensions import override
+from typing_extensions import TypeAliasType, override
 
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.basic import is_all_instance
@@ -15,13 +16,13 @@ from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import ConvertibleToInterval, Interval
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
 
-    TensorCallable = Callable[[Tensor], Tensor]
-    """Type alias for a torch-based function mapping from reals to reals."""
+# NOTE: Defined as runtime alias so that type hints referencing it can be resolved
+#   (e.g. by `cattrs`) without importing `torch`
+TensorCallable = TypeAliasType("TensorCallable", Callable[["Tensor"], "Tensor"])
+"""Type alias for a torch-based function mapping from reals to reals."""
 
 
 _TTransformation = TypeVar("_TTransformation", bound="Transformation")
@@ -35,7 +36,10 @@ def _image_equals_codomain(cls: type[_TTransformation], /) -> type[_TTransformat
 
 @define(frozen=True)
 class Transformation(SerialMixin, ABC):
-    """Abstract base class for all transformations."""
+    """Abstract base class for one-dimensional maps from reals to reals.
+
+    Transforms an input :math:`x` into an output :math:`f(x)`.
+    """
 
     @abstractmethod
     def __call__(self, x: Tensor, /) -> Tensor:
@@ -226,7 +230,10 @@ class Transformation(SerialMixin, ABC):
 @_image_equals_codomain
 @define(frozen=True)
 class MonotonicTransformation(Transformation, ABC):
-    """Abstract base class for monotonic transformations."""
+    """Abstract base class for monotonic transformations.
+
+    Outputs are nondecreasing or nonincreasing over the valid input domain.
+    """
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:

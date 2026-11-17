@@ -558,12 +558,10 @@ class Campaign(SerialMixin):
                 not self.allow_recommending_pending_experiments
                 and pending_experiments is not None
             ):
-                mask_todrop |= pd.merge(
-                    self.searchspace.discrete.exp_rep,
-                    pending_experiments,
-                    indicator=True,
-                    how="left",
-                )["_merge"].eq("both")
+                parameter_names = list(self.searchspace.discrete.parameter_names)
+                mask_todrop |= pd.MultiIndex.from_frame(
+                    self.searchspace.discrete.exp_rep[parameter_names]
+                ).isin(pd.MultiIndex.from_frame(pending_experiments[parameter_names]))
             searchspace = evolve(
                 self.searchspace,
                 discrete=FilteredSubspaceDiscrete.from_subspace(
@@ -635,9 +633,11 @@ class Campaign(SerialMixin):
         ):
             self._cache_recommendation(rec)
 
-        # Update metadata
-        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            self._searchspace_metadata.loc[rec.index, _RECOMMENDED] = True
+        if self.searchspace.type in (
+            SearchSpaceType.DISCRETE,
+            SearchSpaceType.HYBRID,
+        ):
+            self._searchspace_metadata.loc[rec.index.dropna(), _RECOMMENDED] = True
 
         return rec
 

@@ -5,7 +5,7 @@ from contextlib import nullcontext
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_index_equal
 from pytest import param
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
@@ -56,63 +56,95 @@ def test_degenerate_rows_invalid_input():
 
 
 @pytest.mark.parametrize(
-    ("parameter_names", "noise", "duplicated"),
+    ("parameter_names", "noise", "duplicated", "n_unmatched"),
     [
         param(
             ["Categorical_1", "Num_disc_1", "Some_Setting"],
             False,
             True,
+            0,
             id="discrete_num_noiseless_duplicated",
         ),
         param(
             ["Categorical_1", "Num_disc_1", "Some_Setting"],
             False,
             False,
+            0,
             id="discrete_num_noiseless_unique",
         ),
         param(
             ["Categorical_1", "Num_disc_1", "Some_Setting"],
             True,
             False,
+            0,
             id="discrete_num_noisy_unique",
         ),
         param(
             ["Categorical_1", "Switch_1", "Some_Setting"],
             False,
             False,
+            0,
             id="discrete_cat",
         ),
         param(
             ["Categorical_1", "Switch_1", "Conti_finite1"],
             False,
             False,
+            0,
             id="hybrid_cat",
         ),
         param(
             ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             False,
             False,
+            0,
             id="hybrid_num_noiseless_unique",
         ),
         param(
             ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             True,
             False,
+            0,
             id="hybrid_num_noisy_unique",
         ),
         param(
             ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             False,
             True,
+            0,
             id="hybrid_num_noiseless_duplicated",
+        ),
+        param(
+            ["Categorical_1", "Switch_1", "Some_Setting"],
+            False,
+            False,
+            1,
+            id="partially_unmatched",
+        ),
+        param(
+            ["Categorical_1", "Switch_1", "Some_Setting"],
+            False,
+            False,
+            4,
+            id="fully_unmatched",
         ),
     ],
 )
-def test_fuzzy_row_match(searchspace, noise, duplicated):
+@pytest.mark.parametrize("keep_unmatched", [False, True], ids=["drop", "keep"])
+def test_fuzzy_row_match(searchspace, noise, duplicated, n_unmatched, keep_unmatched):
     """Fuzzy row matching returns expected indices."""
     left_df = searchspace.discrete.exp_rep.copy()
     selected = np.random.choice(left_df.index, 4, replace=False)
     right_df = left_df.loc[selected].reset_index(drop=True)
+    left_df = left_df.drop(index=selected[:n_unmatched])
+    expected = (
+        pd.Index(
+            [np.nan if i < n_unmatched else idx for i, idx in enumerate(selected)],
+            dtype=object,
+        )
+        if keep_unmatched and n_unmatched
+        else pd.Index(selected[n_unmatched:])
+    )
 
     context = nullcontext()
     if duplicated:
@@ -131,7 +163,9 @@ def test_fuzzy_row_match(searchspace, noise, duplicated):
         )
 
     with context as c:
-        matched = fuzzy_row_match(left_df, right_df, searchspace.parameters)
+        matched = fuzzy_row_match(
+            left_df, right_df, searchspace.parameters, keep_unmatched=keep_unmatched
+        )
 
     if duplicated:
         # Assert correct identification of problematic df parts
@@ -139,10 +173,10 @@ def test_fuzzy_row_match(searchspace, noise, duplicated):
         assert_frame_equal(right_df.loc[[0]], w.data)
 
         # Ignore problematic indices for subsequent equality check
-        selected = selected[1:]
+        expected = expected[1:]
         matched = matched[1:]
 
-    assert set(selected) == set(matched), (selected, matched)
+    assert_index_equal(matched, expected, exact=True)
 
 
 @pytest.mark.parametrize(

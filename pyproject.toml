@@ -6,7 +6,7 @@ authors = [
 ]
 readme = "README.md"
 license = { text = "Apache-2.0" }
-requires-python =">=3.10,<3.15"
+requires-python =">=3.10,<3.16"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -18,6 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Operating System :: OS Independent",
     "Typing :: Typed",
 ]
@@ -62,6 +63,7 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 extras = [
     "baybe[chem]",
     "baybe[insights]",
+    "baybe[llm]",
     "baybe[onnx]",
     "baybe[polars]",
     "baybe[simulation]",
@@ -100,7 +102,13 @@ dev = [
 ]
 
 insights = [
-    "shap[others]>=0.47.0",
+    "lime>=0.2.0.1",
+    "shap>=0.47.0",
+]
+
+llm = [
+    "jinja2>=3.1.0",
+    "litellm>=1.97.0",
 ]
 
 docs = [
@@ -148,7 +156,7 @@ mypy = [
 
 typecheck = [
     "baybe[mypy]",
-    "pyrefly>=1.3.1,<2",
+    "pyrefly>=1.4.0,<2",
 ]
 
 polars = [
@@ -175,6 +183,7 @@ test = [
     "tenacity>=8.5.0",
     "pytest>=7.2.0",
     "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.5.0",
 ]
 
 [build-system]

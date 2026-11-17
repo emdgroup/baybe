@@ -6,14 +6,19 @@ from inspect import signature
 
 import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 from pytest import param
 
-from baybe.constraints.conditions import ThresholdCondition
+from baybe._optional.info import POLARS_INSTALLED
+from baybe.constraints.conditions import ThresholdCondition, _threshold_operators
 from baybe.constraints.discrete import (
     DiscreteLinearConstraint,
     DiscreteProductConstraint,
     DiscreteSelectionConstraint,
 )
+from baybe.parameters import NumericalDiscreteParameter
+from baybe.searchspace import SearchSpace
+from baybe.settings import Settings
 
 
 @pytest.mark.parametrize(
@@ -400,3 +405,113 @@ def test_filtering_xor_partial_does_not_drop_valid_rows():
     invalid = constraint.get_invalid(full_df, allow_missing=True)
     # Rows 1 (both > 0) and 2 (neither > 0) violate XOR; row 0 is kept.
     assert list(invalid) == [1, 2]
+
+
+_DF = pd.DataFrame(
+    {
+        "a": [1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 4.0, 4.0, 4.0],
+        "b": [1.0, 2.0, 4.0, 1.0, 2.0, 4.0, 1.0, 2.0, 4.0],
+    }
+)
+"""The unconstrained parameter product used for the threshold operator tests."""
+
+_PARAMETERS = [
+    NumericalDiscreteParameter(name, values=_DF[name].unique()) for name in _DF
+]
+"""The parameters spanning the unconstrained product."""
+
+_LINEAR_ROWS = {
+    "<": [0, 1, 3],
+    "<=": [0, 1, 3, 4],
+    "=": [4],
+    "==": [4],
+    "!=": [0, 1, 2, 3, 5, 6, 7, 8],
+    ">": [2, 5, 6, 7, 8],
+    ">=": [2, 4, 5, 6, 7, 8],
+}
+"""The rows of ``_DF`` whose column sum satisfies the operator against 4.0."""
+
+_PRODUCT_ROWS = {
+    "<": [0, 1, 3],
+    "<=": [0, 1, 2, 3, 4, 6],
+    "=": [2, 4, 6],
+    "==": [2, 4, 6],
+    "!=": [0, 1, 3, 5, 7, 8],
+    ">": [5, 7, 8],
+    ">=": [2, 4, 5, 6, 7, 8],
+}
+"""The rows of ``_DF`` whose column product satisfies the operator against 4.0."""
+
+_SELECTION_ROWS = {
+    "<": [0, 1, 2],
+    "<=": [0, 1, 2, 3, 4, 5],
+    "=": [3, 4, 5],
+    "==": [3, 4, 5],
+    "!=": [0, 1, 2, 6, 7, 8],
+    ">": [6, 7, 8],
+    ">=": [3, 4, 5, 6, 7, 8],
+}
+"""The rows of ``_DF`` whose column ``a`` satisfies the operator against 2.0."""
+
+_THRESHOLD_CASES = (
+    [
+        param(
+            DiscreteLinearConstraint(parameters=["a", "b"], operator=operator, rhs=4.0),
+            rows,
+            id=f"linear-{operator}",
+        )
+        for operator, rows in _LINEAR_ROWS.items()
+    ]
+    + [
+        param(
+            DiscreteProductConstraint(
+                parameters=["a", "b"], operator=operator, rhs=4.0
+            ),
+            rows,
+            id=f"product-{operator}",
+        )
+        for operator, rows in _PRODUCT_ROWS.items()
+    ]
+    + [
+        param(
+            DiscreteSelectionConstraint(
+                parameters=["a"], conditions=[ThresholdCondition(2.0, operator)]
+            ),
+            rows,
+            id=f"selection-{operator}",
+        )
+        for operator, rows in _SELECTION_ROWS.items()
+    ]
+)
+"""Threshold constraints paired with the rows of ``_DF`` they are expected to keep."""
+
+
+def test_threshold_rows_completeness():
+    """The expected filtering results cover all available threshold operators."""
+    tables = (_LINEAR_ROWS, _PRODUCT_ROWS, _SELECTION_ROWS)
+    assert all(set(table) == set(_threshold_operators) for table in tables)
+
+
+@pytest.mark.parametrize(
+    "use_polars",
+    [
+        param(False, id="pandas"),
+        param(
+            True,
+            marks=pytest.mark.skipif(
+                not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+            ),
+            id="polars",
+        ),
+    ],
+)
+@pytest.mark.parametrize(("constraint", "expected_rows"), _THRESHOLD_CASES)
+def test_threshold_operators(constraint, expected_rows, use_polars):
+    """Threshold constraints filter correctly for all operators and backends."""
+    with Settings(use_polars_for_constraints=use_polars):
+        searchspace = SearchSpace.from_product(_PARAMETERS, [constraint])
+
+    assert_frame_equal(
+        searchspace.discrete.exp_rep.sort_values(["a", "b"]).reset_index(drop=True),
+        _DF.loc[expected_rows].reset_index(drop=True),
+    )

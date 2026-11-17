@@ -24,7 +24,7 @@ from tests.conftest import run_iterations
         for enc in SubstanceEncoding
     ],
 )
-@pytest.mark.parametrize("batch_size", [1], ids=["b3"])
+@pytest.mark.parametrize("batch_size", [1], ids=["b1"])
 def test_run_iterations(campaign, batch_size, n_iterations):
     """Test running some iterations with fake results and a substance parameter."""
     run_iterations(campaign, n_iterations, batch_size)

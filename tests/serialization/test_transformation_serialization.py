@@ -6,6 +6,7 @@ from hypothesis import given
 from pytest import param
 
 from baybe.transformations import (
+    CustomTransformation,
     Transformation,
 )
 
@@ -50,3 +51,11 @@ def test_single_transformation_roundtrip(transformation_strategy, data):
     string = transformation.to_json()
     transformation2 = Transformation.from_json(string)
     assert transformation == transformation2, (transformation, transformation2)
+
+
+def test_custom_transformation_serialization_blocked():
+    """Custom transformations can neither be serialized nor deserialized."""
+    with pytest.raises(NotImplementedError, match="Serializing"):
+        CustomTransformation(abs).to_dict()
+    with pytest.raises(NotImplementedError, match="Deserialization"):
+        Transformation.from_dict({"type": "CustomTransformation", "function": "abs"})

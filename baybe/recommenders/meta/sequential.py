@@ -12,13 +12,14 @@ import cattrs
 import pandas as pd
 from attrs import Factory, define, field, fields
 from attrs.validators import deep_iterable, ge, in_, instance_of
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.recommenders.pure.llm.llm import LLMRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import (
@@ -26,6 +27,7 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
+from baybe.utils.basic import to_tuple
 from baybe.utils.conversion import to_string
 
 _T = TypeVar("_T")
@@ -65,6 +67,44 @@ class TwoPhaseMetaRecommender(MetaRecommender):
 
     _has_switched: bool = field(init=False, default=False, alias="_has_switched")
     """Indicates if the switch has already occurred."""
+
+    @classmethod
+    def with_llm_initial_recommender(
+        cls,
+        model: str,
+        experiment_description: str,
+        *,
+        litellm_args: dict[str, Any] | None = None,
+        recommender: RecommenderProtocol | None = None,
+        switch_after: int = 1,
+    ) -> Self:
+        """Create a meta recommender that starts with an LLM recommender.
+
+        The language model proposes the first experiments, and the meta recommender
+        switches to ``recommender`` once ``switch_after`` measurements are available.
+
+        Args:
+            model: See :attr:`~baybe.recommenders.pure.llm.llm.LLMRecommender.model`.
+            experiment_description: See
+                :attr:`~baybe.recommenders.pure.llm.llm.LLMRecommender.experiment_description`.
+            litellm_args: See
+                :attr:`~baybe.recommenders.pure.llm.llm.LLMRecommender.litellm_args`.
+            recommender: The recommender used after the switch. Defaults to a
+                :class:`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender`.
+            switch_after: See :attr:`switch_after`.
+
+        Returns:
+            The meta recommender.
+        """
+        return cls(
+            initial_recommender=LLMRecommender(
+                model=model,
+                experiment_description=experiment_description,
+                litellm_args=litellm_args or {},
+            ),
+            recommender=BotorchRecommender() if recommender is None else recommender,
+            switch_after=switch_after,
+        )
 
     @override
     @property
@@ -185,7 +225,7 @@ class SequentialMetaRecommender(BaseSequentialMetaRecommender):
 
     Note:
         The provided sequence of recommenders will be internally pre-collected into a
-        list. If this is not acceptable, consider using
+        tuple. If this is not acceptable, consider using
         :class:`baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender`
         instead.
 
@@ -196,8 +236,9 @@ class SequentialMetaRecommender(BaseSequentialMetaRecommender):
             recommenders available and ``mode="raise"``.
     """
 
-    recommenders: list[RecommenderProtocol] = field(
-        converter=list, validator=deep_iterable(instance_of(RecommenderProtocol))
+    recommenders: tuple[RecommenderProtocol, ...] = field(
+        converter=to_tuple,  # https://github.com/python/mypy/issues/8417
+        validator=deep_iterable(instance_of(RecommenderProtocol)),
     )
     """A finite-length sequence of recommenders to be used. For infinite-length
     iterables, see
@@ -212,8 +253,47 @@ class SequentialMetaRecommender(BaseSequentialMetaRecommender):
 
     * ``"raise"``: An error is raised.
     * ``"reuse_last"``: The last recommender in the sequence is used indefinitely.
-    * ``"cycle"``: The selection restarts from the beginning of the sequence.
+    * ``"cyclic"``: The selection restarts from the beginning of the sequence.
     """
+
+    @classmethod
+    def with_alternating_llm_recommender(
+        cls,
+        model: str,
+        experiment_description: str,
+        *,
+        litellm_args: dict[str, Any] | None = None,
+        recommender: RecommenderProtocol | None = None,
+    ) -> Self:
+        """Create a meta recommender alternating between an LLM and another recommender.
+
+        The meta recommender starts with the LLM recommender and switches to the other
+        recommender whenever new measurements become available.
+
+        Args:
+            model: See :attr:`~baybe.recommenders.pure.llm.llm.LLMRecommender.model`.
+            experiment_description: See
+                :attr:`~baybe.recommenders.pure.llm.llm.LLMRecommender.experiment_description`.
+            litellm_args: See
+                :attr:`~baybe.recommenders.pure.llm.llm.LLMRecommender.litellm_args`.
+            recommender: The recommender alternating with the LLM recommender.
+                Defaults to a
+                :class:`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender`.
+
+        Returns:
+            The meta recommender.
+        """
+        return cls(
+            recommenders=(
+                LLMRecommender(
+                    model=model,
+                    experiment_description=experiment_description,
+                    litellm_args=litellm_args or {},
+                ),
+                BotorchRecommender() if recommender is None else recommender,
+            ),
+            mode="cyclic",
+        )
 
     @override
     def _get_recommender_at_current_step(self) -> RecommenderProtocol:

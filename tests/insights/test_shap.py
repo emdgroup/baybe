@@ -17,6 +17,14 @@ from baybe.objectives import (
     ParetoObjective,
     SingleTargetObjective,
 )
+from baybe.parameters import CategoricalParameter, NumericalContinuousParameter
+from baybe.searchspace import SearchSpace
+from baybe.surrogates import (
+    BayesianLinearSurrogate,
+    GaussianProcessSurrogate,
+    MeanPredictionSurrogate,
+)
+from baybe.surrogates.base import Surrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import is_all_instance
 
@@ -79,7 +87,7 @@ def _has_required_init_parameters(cls: type[shap.Explainer]) -> bool:
     return parameters[:3] == REQUIRED_PARAMETERS
 
 
-@pytest.mark.parametrize("explainer_name", NON_SHAP_EXPLAINERS)
+@pytest.mark.parametrize("explainer_name", sorted(NON_SHAP_EXPLAINERS))
 def test_non_shap_signature(explainer_name):
     """Non-SHAP explainers must have the required signature."""
     assert _has_required_init_parameters(_get_explainer_cls(explainer_name))
@@ -149,17 +157,14 @@ _desirabilty_targets = [
         ),
     ],
 )
-@mark.parametrize("explainer_cls", SHAP_EXPLAINERS)
+@mark.parametrize("explainer_cls", sorted(SHAP_EXPLAINERS))
 @mark.parametrize("use_comp_rep", [False, True], ids=["exp", "comp"])
 def test_shap_explainers(ongoing_campaign, explainer_cls, use_comp_rep):
     """Test the explain functionalities with measurements."""
     _test_shap_insight(ongoing_campaign, explainer_cls, use_comp_rep, is_shap=True)
 
 
-@mark.parametrize(
-    "explainer_cls",
-    [cls for cls in sorted(NON_SHAP_EXPLAINERS)],
-)
+@mark.parametrize("explainer_cls", sorted(NON_SHAP_EXPLAINERS))
 def test_non_shap_explainers(ongoing_campaign, explainer_cls):
     """Test the non-SHAP explainers in computational representation."""
     _test_shap_insight(
@@ -184,7 +189,7 @@ def test_invalid_explained_data(ongoing_campaign, explainer_cls, use_comp_rep):
 
 @mark.slow
 @mark.parametrize("use_comp_rep", [False, True], ids=["exp", "comp"])
-@mark.parametrize("plot_type", SHAP_PLOTS)
+@mark.parametrize("plot_type", sorted(SHAP_PLOTS))
 def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
     """Test the default SHAP plots."""
     shap_insight = SHAPInsight.from_campaign(
@@ -262,3 +267,49 @@ def test_column_permutation():
     ex2 = insight.explain(df[["z", "x", "y"]])
 
     assert np.array_equal(ex1[0].values, ex2[0][:, [1, 2, 0]].values)
+
+
+@mark.parametrize(
+    "surrogate_cls",
+    [MeanPredictionSurrogate, BayesianLinearSurrogate, GaussianProcessSurrogate],
+    ids=["mean", "linear", "gp"],
+)
+@mark.parametrize("use_comp_rep", [False, True], ids=["exp", "comp"])
+@mark.parametrize("n_rows", [1, 2], ids=["single", "multiple"])
+def test_marginal_posterior_predictions(
+    surrogate_cls: type[Surrogate], use_comp_rep: bool, n_rows: int
+) -> None:
+    """SHAP values are computed from marginal posteriors (no covariances involved)."""
+    searchspace = SearchSpace.from_product(
+        [
+            CategoricalParameter("category", ["a", "b"]),
+            NumericalContinuousParameter("x", bounds=(0, 1)),
+        ]
+    )
+    measurements = pd.DataFrame(
+        {
+            "category": ["a", "b", "a", "b"],
+            "x": [0.0, 0.25, 0.75, 1.0],
+            "y": [1.0, 3.0, 5.0, 7.0],
+        }
+    )
+    surrogate = surrogate_cls()
+    surrogate.fit(searchspace, NumericalTarget("y").to_objective(), measurements)
+    candidates = measurements[["category", "x"]].iloc[:n_rows]
+    posterior_stats = surrogate.posterior_stats(candidates, stats=["mean"])
+    expected = posterior_stats["y_mean"].to_numpy()
+    data = searchspace.transform(candidates) if use_comp_rep else candidates
+    insight = SHAPInsight.from_surrogate(surrogate, data, use_comp_rep=use_comp_rep)
+
+    with mock.patch.object(
+        surrogate_cls, "_posterior_comp", wraps=surrogate._posterior_comp
+    ) as posterior:
+        predictions = insight.explainers[0].model.f(data.to_numpy())
+    posterior.assert_called_once()
+    assert posterior.call_args.args[0].shape == (
+        n_rows,
+        1,
+        len(searchspace.comp_rep_columns),
+    )
+    assert predictions.shape == (n_rows,)
+    np.testing.assert_allclose(predictions, expected)
