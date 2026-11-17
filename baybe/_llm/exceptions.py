@@ -36,13 +36,17 @@ class LLMResponseError(LLMError):
 class LLMMalformedResponseError(LLMResponseError):
     """A language model response could not be parsed into the expected structure."""
 
+    def __init__(self, message: str, *, problems: Collection[str] = ()) -> None:
+        super().__init__(message)
+        self.problems = tuple(problems)
+
     @property
     @override
     def recovery_instruction(self) -> str:
         return (
             "Your previous response did not contain valid JSON in the required "
             "format. Return JSON that follows the required response format, and "
-            "nothing else."
+            "nothing else." + "".join(f"\n- {p}" for p in self.problems)
         )
 
 

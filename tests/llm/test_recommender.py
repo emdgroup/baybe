@@ -1,6 +1,5 @@
 """Tests for the LLM recommender integration."""
 
-import json
 import warnings
 from unittest.mock import patch
 
@@ -45,6 +44,7 @@ from tests.llm._mock import (
     make_objective,
     make_valid_json,
     mock_response,
+    to_response_json,
 )
 
 if not LLM_INSTALLED:
@@ -359,7 +359,7 @@ def test_llm_recommendations_preserved_and_tracked():
     )
     # "D" is not the first candidate, so looking up stored rows via the response
     # index would return "A" instead
-    response = '[{"explanation": "x", "parameters": {"c": "D"}}]'
+    response = to_response_json([{"explanation": "x", "parameters": {"c": "D"}}])
     exp_rep = campaign.searchspace.discrete.exp_rep
     expected_llm_index = exp_rep.index[exp_rep["c"] == "D"]
 
@@ -410,7 +410,7 @@ def test_llm_recommendation_tracking(second_discrete, matched):
     )
     expected_metadata = campaign._searchspace_metadata.copy()
     expected_metadata.loc[stored_index, _RECOMMENDED] = True
-    response = json.dumps(
+    response = to_response_json(
         [{"explanation": "x", "parameters": row} for row in expected.to_dict("records")]
     )
 

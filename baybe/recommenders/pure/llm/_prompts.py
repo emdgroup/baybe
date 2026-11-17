@@ -99,7 +99,7 @@ For each recommendation, provide:
 1. A brief explanation of why you chose these values
 2. The values for each parameter
 
-Format your response as a JSON array of objects with the following structure \
+Format your response as a single JSON object with the following structure \
 (no backticks):
 {{ response_format }}
 """

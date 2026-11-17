@@ -1,7 +1,5 @@
 """Tests for LLM response parsing and validation."""
 
-import json
-
 import pytest
 
 from baybe._llm.exceptions import (
@@ -12,6 +10,7 @@ from baybe._llm.exceptions import (
     LLMMalformedResponseError,
     LLMUnknownParameterError,
 )
+from baybe._llm.extraction import extract_payload
 from baybe.constraints.continuous import ContinuousLinearConstraint
 from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import LLMResponseWarning
@@ -21,15 +20,12 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
 )
 from baybe.recommenders.pure.llm._parsing import parse_llm_response
-from baybe.recommenders.pure.llm._schema import (
-    _EXPLANATION_FIELD,
-    _PARAMETERS_FIELD,
-    _response_format,
-)
+from baybe.recommenders.pure.llm._schema import Response, _response_format
 from baybe.searchspace import SearchSpace
 from tests.llm._mock import (
     make_discrete_searchspace,
     make_response_json,
+    to_response_json,
 )
 
 
@@ -41,46 +37,40 @@ def fixture_discrete_searchspace():
 
 @pytest.mark.parametrize("batch_size", [1, 3], ids=["single", "batch"])
 def test_response_format(batch_size):
-    """The response format example contains exactly ``batch_size`` entries."""
-    response_format = _response_format(batch_size)
-    assert response_format.count(f'"{_EXPLANATION_FIELD}":') == batch_size
-    assert response_format.count(f'"{_PARAMETERS_FIELD}":') == batch_size
+    """The response format example is a valid response with ``batch_size`` entries."""
+    example = _response_format(batch_size).replace("<value>", "1")
+    response = extract_payload(example, Response)
+    assert len(response.recommendations) == batch_size
 
 
 @pytest.mark.parametrize(
-    ("response", "match"),
+    ("recommendation", "problem"),
     [
         pytest.param(
-            "Just some text without JSON.",
-            "could not be parsed as a JSON array",
-            id="no_json",
-        ),
-        pytest.param(
-            "[]",
-            "could not be parsed as a JSON array",
-            id="empty_array",
-        ),
-        pytest.param(
-            '[{"explanation": "x"}]',
-            "does not match the expected format",
+            {"explanation": "x"},
+            "required field missing @ $.recommendations[0].parameters",
             id="no_parameters",
         ),
         pytest.param(
-            '[{"parameters": {"any": 1}}]',
-            "does not match the expected format",
+            {"parameters": {"any": 1}},
+            "required field missing @ $.recommendations[0].explanation",
             id="no_explanation",
         ),
         pytest.param(
-            '[{"explanation": "x", "parameters": [1, 2]}]',
-            "does not match the expected format",
+            {"explanation": "x", "parameters": [1, 2]},
+            "@ $.recommendations[0].parameters",
             id="params_not_dict",
         ),
     ],
 )
-def test_parse_llm_response_format_errors(discrete_searchspace, response, match):
-    """Malformed responses raise ``LLMMalformedResponseError``."""
-    with pytest.raises(LLMMalformedResponseError, match=match):
+def test_parse_llm_response_format_errors(
+    discrete_searchspace, recommendation, problem
+):
+    """Recommendations not matching the schema are reported with their location."""
+    response = to_response_json([recommendation])
+    with pytest.raises(LLMMalformedResponseError, match="expected format") as exc_info:
         parse_llm_response(response, discrete_searchspace, batch_size=1)
+    assert problem in exc_info.value.recovery_instruction
 
 
 def test_parse_llm_response_unknown_parameter():
@@ -128,7 +118,7 @@ def test_parse_llm_response_ineligible(parameters, configurations, match):
     The individual rejection reasons are tested with the search space validation.
     """
     searchspace = SearchSpace.from_product(parameters)
-    response = json.dumps(
+    response = to_response_json(
         [{"explanation": "x", "parameters": c} for c in configurations]
     )
     with pytest.raises(LLMIneligiblePointsError, match=match):
@@ -138,7 +128,7 @@ def test_parse_llm_response_ineligible(parameters, configurations, match):
 def test_parse_llm_response_ineligible_recovery_instruction():
     """The recovery instruction forwards the rejection reasons to the model."""
     searchspace = SearchSpace.from_product([CategoricalParameter("Cat", ("A", "B"))])
-    response = json.dumps([{"explanation": "x", "parameters": {"Cat": "Z"}}])
+    response = to_response_json([{"explanation": "x", "parameters": {"Cat": "Z"}}])
     with pytest.raises(LLMIneligiblePointsError, match="Cat=Z") as exc_info:
         parse_llm_response(response, searchspace, batch_size=1)
     instruction = exc_info.value.recovery_instruction
@@ -162,7 +152,7 @@ def test_parse_llm_response_batch_constraint_violation():
         {"explanation": "first", "parameters": {"Cat": "A", "Num": 1.0}},
         {"explanation": "second", "parameters": {"Cat": "B", "Num": 2.0}},
     ]
-    response = json.dumps(recommendations)
+    response = to_response_json(recommendations)
     with pytest.raises(
         LLMBatchConstraintValidationError, match="DiscreteBatchConstraint"
     ):
@@ -185,7 +175,9 @@ def test_parse_llm_response_continuous_constraint_warning():
             )
         ],
     )
-    response = json.dumps([{"explanation": "test", "parameters": {"x": 3.0, "y": 4.0}}])
+    response = to_response_json(
+        [{"explanation": "test", "parameters": {"x": 3.0, "y": 4.0}}]
+    )
     with pytest.warns(LLMResponseWarning, match="cannot be validated"):
         parse_llm_response(response, searchspace, batch_size=1)
 
@@ -202,7 +194,9 @@ def test_parse_llm_response_happy_path():
         {"explanation": "first", "parameters": {"Cat": "A", "Num": 1.0}},
         {"explanation": "second", "parameters": {"Cat": "B", "Num": 2.0}},
     ]
-    result = parse_llm_response(json.dumps(recommendations), searchspace, batch_size=2)
+    result = parse_llm_response(
+        to_response_json(recommendations), searchspace, batch_size=2
+    )
     assert set(result.columns) == {"Cat", "Num"}
     assert list(result["Cat"]) == ["A", "B"]
     assert list(result["Num"]) == [1.0, 2.0]
@@ -218,7 +212,9 @@ def test_parse_llm_response_column_order():
         {"explanation": "second", "parameters": {"Num": 2.0, "Cat": "B", "Cont": 0.7}},
     ]
 
-    result = parse_llm_response(json.dumps(recommendations), searchspace, batch_size=2)
+    result = parse_llm_response(
+        to_response_json(recommendations), searchspace, batch_size=2
+    )
 
     assert list(result.columns) == [p.name for p in searchspace.parameters]
     assert list(result["Cat"]) == ["A", "B"]
@@ -260,7 +256,9 @@ def test_parse_llm_response_hybrid_output():
         {"explanation": "first", "parameters": {"Cat": "A", "Cont": 0.3}},
         {"explanation": "second", "parameters": {"Cat": "A", "Cont": 0.7}},
     ]
-    result = parse_llm_response(json.dumps(recommendations), searchspace, batch_size=2)
+    result = parse_llm_response(
+        to_response_json(recommendations), searchspace, batch_size=2
+    )
     assert set(result.columns) == {"Cat", "Cont"}
     assert list(result["Cat"]) == ["A", "A"]
     assert list(result["Cont"]) == [0.3, 0.7]
@@ -278,7 +276,9 @@ def test_parse_llm_response_continuous_only_happy_path():
         {"explanation": "first", "parameters": {"x": 3.0, "y": 2.0}},
         {"explanation": "second", "parameters": {"x": 7.0, "y": 4.0}},
     ]
-    result = parse_llm_response(json.dumps(recommendations), searchspace, batch_size=2)
+    result = parse_llm_response(
+        to_response_json(recommendations), searchspace, batch_size=2
+    )
     assert len(result) == 2
     assert set(result.columns) == {"x", "y"}
     assert list(result["x"]) == [3.0, 7.0]
@@ -323,7 +323,7 @@ def test_parse_llm_response_wrong_batch_size(batch_size, constraints, configurat
         LLMBatchSizeError, match=f"returned {received} recommendation"
     ) as exc_info:
         parse_llm_response(
-            json.dumps(recommendations), searchspace, batch_size=batch_size
+            to_response_json(recommendations), searchspace, batch_size=batch_size
         )
     error = exc_info.value
     assert error.requested == batch_size
@@ -348,4 +348,4 @@ def test_parse_llm_response_duplicates(parameter, values):
     searchspace = SearchSpace.from_product([parameter])
     recommendations = [{"explanation": "x", "parameters": {"p": v}} for v in values]
     with pytest.raises(LLMDuplicateRecommendationsError, match="1 recommendation"):
-        parse_llm_response(json.dumps(recommendations), searchspace, batch_size=2)
+        parse_llm_response(to_response_json(recommendations), searchspace, batch_size=2)

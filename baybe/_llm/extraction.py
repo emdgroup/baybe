@@ -1,12 +1,10 @@
-"""JSON extraction from language model responses."""
+"""Extraction of structured payloads from language model responses."""
 
 from __future__ import annotations
 
 import json
 import re
-from collections.abc import Callable
-from json import JSONDecodeError
-from typing import Any, TypeVar
+from typing import TypeVar
 
 import cattrs
 
@@ -14,90 +12,42 @@ from baybe._llm.exceptions import LLMMalformedResponseError
 
 _T = TypeVar("_T")
 
-_BRACKET_PATTERN = re.compile(r"[\[{]")
-"""Pattern matching the start of a JSON array or object."""
+_CONVERTER = cattrs.Converter(forbid_extra_keys=True)
 
 
-def extract_json(
-    response: str,
-    /,
-    accept: Callable[[Any], bool],
-) -> Any:
-    """Extract the last JSON array or object accepted by ``accept``.
-
-    Decoded values are skipped as a whole, so brackets inside strings are ignored;
-    rejected containers are searched through their decoded children.
+def extract_payload(response: str, schema: type[_T], /) -> _T:
+    """Structure the last JSON object in a response into the given schema.
 
     Args:
         response: The raw response text.
-        accept: Predicate selecting the intended payload.
+        schema: The type describing the expected payload.
 
     Returns:
-        The last accepted value.
+        The structured payload.
 
     Raises:
-        ValueError: If no accepted value is found.
+        LLMMalformedResponseError: If the response contains no JSON object or the
+            last one does not match the schema.
     """
     decoder = json.JSONDecoder()
-    last_accepted: Any = None
-    skip_until = 0
-    for match in _BRACKET_PATTERN.finditer(response):
-        start = match.start()
-        if start < skip_until:
+    payload, end = None, 0
+    for match in re.finditer(r"\{", response):
+        if match.start() < end:
             continue
         try:
-            value, end = decoder.raw_decode(response, start)
-        except JSONDecodeError:
-            continue  # not valid JSON here; try the next candidate
+            payload, end = decoder.raw_decode(response, match.start())
+        except json.JSONDecodeError:
+            continue
 
-        skip_until = end  # never scan the decoded value's raw text again
-        candidates = [value]
-        while candidates:
-            candidate = candidates.pop()
-            if accept(candidate):
-                last_accepted = candidate
-                continue  # accepted values are atomic
-            children = candidate.values() if isinstance(candidate, dict) else candidate
-            candidates.extend(
-                child
-                for child in reversed(list(children))
-                if isinstance(child, (dict, list))
-            )
-    # Candidates are always containers, so ``None`` can only mean "nothing accepted."
-    if last_accepted is None:
-        raise ValueError("No accepted JSON value found in the response.")
-    return last_accepted
-
-
-def structure_json(
-    value: Any,
-    cl: type[_T],
-    /,
-    *,
-    forbid_extra_keys: bool = False,
-) -> _T:
-    """Structure a decoded JSON value into the given type.
-
-    Args:
-        value: The decoded JSON value.
-        cl: The type to structure the value into.
-        forbid_extra_keys: Whether to reject keys not defined by the target type.
-            By default, unknown keys are ignored.
-
-    Returns:
-        The structured value.
-
-    Raises:
-        LLMMalformedResponseError: If the value does not match the expected structure.
-    """
-    structure = (
-        cattrs.Converter(forbid_extra_keys=True).structure
-        if forbid_extra_keys
-        else cattrs.structure
-    )
+    if payload is None:
+        raise LLMMalformedResponseError("The response contains no JSON object.")
     try:
-        return structure(value, cl)
-    except Exception as exc:
+        return _CONVERTER.structure(payload, schema)
+    except cattrs.BaseValidationError as ex:
+        # NOTE: cattrs raises a nested exception group with an uninformative message.
+        #   Flattening it yields located problems that tell the model what to fix.
+        problems = cattrs.transform_error(ex)
         raise LLMMalformedResponseError(
-            f"The language model response does not match the expected format. {exc}"
-        ) from exc
+            f"The response does not match the expected format: {'; '.join(problems)}",
+            problems=problems,
+        ) from ex

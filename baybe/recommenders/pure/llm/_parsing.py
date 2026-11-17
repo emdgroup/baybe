@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, cast
+from typing import cast
 
 import pandas as pd
 
@@ -12,24 +12,14 @@ from baybe._llm.exceptions import (
     LLMBatchSizeError,
     LLMDuplicateRecommendationsError,
     LLMIneligiblePointsError,
-    LLMMalformedResponseError,
     LLMUnknownParameterError,
 )
-from baybe._llm.extraction import extract_json, structure_json
+from baybe._llm.extraction import extract_payload
 from baybe.exceptions import LLMResponseWarning
-from baybe.recommenders.pure.llm._schema import ResponseItem
+from baybe.recommenders.pure.llm._schema import Response
 from baybe.searchspace import SearchSpace
 from baybe.utils.dataframe import normalize_input_dtypes
 from baybe.utils.numerical import closest_element
-
-
-def _is_object_array(value: Any) -> bool:
-    """Return whether a decoded JSON value is a non-empty array of objects."""
-    return (
-        isinstance(value, list)
-        and bool(value)
-        and all(isinstance(entry, dict) for entry in value)
-    )
 
 
 def parse_llm_response(
@@ -37,9 +27,10 @@ def parse_llm_response(
 ) -> pd.DataFrame:
     """Parse a language model response into a dataframe of recommendations.
 
-    The response must contain exactly ``batch_size`` recommendations. A mismatch is
-    rejected before any individual recommendation is validated. The columns of the
-    returned dataframe correspond to the parameters of the search space.
+    The response must match the :class:`Response` schema and contain exactly
+    ``batch_size`` recommendations. A mismatch is rejected before any recommendation is
+    validated against the search space. The columns of the returned dataframe
+    correspond to the parameters of the search space.
 
     Numerical discrete values accepted by their parameter's range check are snapped
     to the nearest grid value before configuration validation.
@@ -72,13 +63,7 @@ def parse_llm_response(
             Continuous constraints cannot be validated after the fact, so compliance
             of the LLM recommendations with such constraints is not guaranteed.
     """
-    try:
-        recommendations = extract_json(response, _is_object_array)
-    except ValueError as e:
-        raise LLMMalformedResponseError(
-            "The language model response could not be parsed as a JSON array "
-            "of recommendations."
-        ) from e
+    recommendations = extract_payload(response, Response).recommendations
 
     # Check the number of recommendations before validating any of them
     if len(recommendations) != batch_size:
@@ -89,10 +74,7 @@ def parse_llm_response(
             received=len(recommendations),
         )
 
-    # Structure the raw JSON into typed recommendation objects
-    entries = structure_json(recommendations, list[ResponseItem])
-
-    df = pd.DataFrame([entry.parameters for entry in entries])
+    df = pd.DataFrame([rec.parameters for rec in recommendations])
     param_names = {p.name for p in searchspace.parameters}
 
     # Check for unknown parameter names

@@ -30,6 +30,11 @@ def mock_response(content):
     )
 
 
+def to_response_json(recommendations):
+    """Wrap recommendation dicts into the JSON response object expected from the LLM."""
+    return json.dumps({"recommendations": list(recommendations)})
+
+
 def make_valid_json(searchspace, batch_size):
     """Sample eligible candidates and return them as the expected JSON string."""
     params = searchspace.parameters
@@ -62,9 +67,7 @@ def make_valid_json(searchspace, batch_size):
                 }
             )
 
-    return json.dumps(
-        recommendations,
-    )
+    return to_response_json(recommendations)
 
 
 def make_recommendation(searchspace, **overrides):
@@ -90,9 +93,7 @@ def make_response_json(searchspace, **overrides):
 
     Overrides are forwarded to :func:`make_recommendation`.
     """
-    return json.dumps(
-        [make_recommendation(searchspace, **overrides)],
-    )
+    return to_response_json([make_recommendation(searchspace, **overrides)])
 
 
 def make_discrete_searchspace():
