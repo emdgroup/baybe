@@ -20,6 +20,7 @@ from baybe.settings import active_settings
 from baybe.utils.basic import classproperty, get_baseclasses, match_attributes, to_tuple
 
 if TYPE_CHECKING:
+    from baybe.kernels.composite import AdditiveKernel, ProductKernel
     from baybe.searchspace.core import SearchSpace
     from baybe.surrogates.gaussian_process.components.kernel import PlainKernelFactory
 
@@ -31,18 +32,13 @@ class Kernel(ABC, SerialMixin):
     def __add__(self, other: Any) -> Kernel:
         """Create a sum kernel from two kernels.
 
-        Flattens nested sums so that ``(a + b) + c`` yields
-        ``AdditiveKernel([a, b, c])`` instead of
-        ``AdditiveKernel([AdditiveKernel([a, b]), c])``.
+        Nested additive kernels are flattened, so ``(a + b) + c`` yields
+        ``AdditiveKernel([a, b, c])``. Vanishing kernels are dropped.
         """
         if isinstance(other, Kernel):
             from baybe.kernels.composite import AdditiveKernel
 
-            left = self.base_kernels if isinstance(self, AdditiveKernel) else (self,)
-            right = (
-                other.base_kernels if isinstance(other, AdditiveKernel) else (other,)
-            )
-            return AdditiveKernel([*left, *right])
+            return _compose(AdditiveKernel, self, other)
         return NotImplemented
 
     def __radd__(self, other: Any) -> Kernel:
@@ -55,19 +51,17 @@ class Kernel(ABC, SerialMixin):
         return NotImplemented
 
     def __mul__(self, other: Any) -> Kernel:
-        """Create a product kernel or scale kernel.
+        """Create a product kernel from two kernels or scale a kernel.
 
-        When multiplied with another kernel, a product kernel is created. Nested
-        products are flattened so that ``(a * b) * c`` yields
-        ``ProductKernel([a, b, c])``. When multiplied with a numeric constant, a scale
-        kernel with a fixed (non-trainable) output scale is created.
+        Nested product kernels are flattened, so ``(a * b) * c`` yields
+        ``ProductKernel([a, b, c])``. Vanishing kernels are dropped. Multiplication by
+        a numeric constant creates a scale kernel with a fixed (non-trainable) output
+        scale.
         """
         if isinstance(other, Kernel):
             from baybe.kernels.composite import ProductKernel
 
-            left = self.base_kernels if isinstance(self, ProductKernel) else (self,)
-            right = other.base_kernels if isinstance(other, ProductKernel) else (other,)
-            return ProductKernel([*left, *right])
+            return _compose(ProductKernel, self, other)
         if isinstance(other, (int, float)):
             if other == 1:
                 return self
@@ -304,6 +298,45 @@ class CompositeKernel(Kernel, ABC):
         self, searchspace: SearchSpace
     ) -> tuple[tuple[int, ...] | None, int | None]:
         return None, None
+
+
+def _compose(
+    composite_cls: type[AdditiveKernel | ProductKernel], left: Kernel, right: Kernel, /
+) -> Kernel:
+    """Combine two kernels into a flattened composite, dropping vanishing kernels.
+
+    Args:
+        composite_cls: The composite kernel class representing the operation.
+        left: The left operand.
+        right: The right operand.
+
+    Returns:
+        The composite kernel, the sole remaining kernel, or a vanishing kernel if all
+        kernels vanish.
+    """
+    from baybe.kernels.basic import VanishingKernel
+
+    kernels = [
+        k
+        for operand in (left, right)
+        for k in (
+            operand.base_kernels if isinstance(operand, composite_cls) else (operand,)
+        )
+    ]
+    members = [k for k in kernels if not isinstance(k, VanishingKernel)]
+    if not members:
+        # Merge the scopes of the vanishing operands, where None means all parameters
+        scopes = [k.parameter_names for k in kernels if isinstance(k, VanishingKernel)]
+        if any(s is None for s in scopes):
+            return VanishingKernel()
+        return VanishingKernel(
+            parameter_names=tuple(
+                dict.fromkeys(n for s in scopes if s is not None for n in s)
+            )
+        )
+    if len(members) == 1:
+        return members[0]
+    return composite_cls(members)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
