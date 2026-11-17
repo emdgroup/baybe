@@ -693,8 +693,11 @@ class GaussianProcessSurrogate(Surrogate):
         ):
             from baybe.surrogates.gaussian_process._rgpe import RGPEModel
 
-            self._model = RGPEModel.from_context(
-                context, train_x, train_y, partial(fit_gp, copy_components=True)
+            self._model = RGPEModel.from_searchspace(
+                context.searchspace,
+                train_x,
+                train_y,
+                partial(fit_gp, copy_components=True),
             )
         else:
             self._model = fit_gp(train_x, train_y)

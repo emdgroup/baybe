@@ -370,7 +370,7 @@ def test_model_contract(members):
         param({"A": 3, "B": 3, "T": 3}, id="ranked"),
     ],
 )
-def test_from_context(n_rows):
+def test_from_searchspace(n_rows):
     """One member is made per task with data, the target last, and weighted."""
     measurements = _make_measurements(**n_rows)
     searchspace = _make_searchspace()
@@ -384,7 +384,7 @@ def test_from_context(n_rows):
         received.append(y)
         return _make_gp(x, y, input_transform)
 
-    model = RGPEModel.from_context(context, train_x, train_y, make_gp)
+    model = RGPEModel.from_searchspace(searchspace, train_x, train_y, make_gp)
 
     # Sources in task order, then the target
     tasks = [t for t in (*_TASKS[1:], "T") if t in n_rows]
