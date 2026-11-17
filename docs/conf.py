@@ -145,8 +145,10 @@ nitpick_ignore_regex = [
     (r"py:class", r"^(PosteriorStatistic)$"),
     # Narwhals typing aliases used under `TYPE_CHECKING` (unqualified forward refs
     # cannot be resolved outside the module they are imported into).
-    (r"py:class", r"^(IntoDataFrame|IntoDataFrameT|IntoSeries|IntoSeriesT)$"),
+    (r"py:class", r"^(IntoDataFrame|IntoDataFrameT|IntoFrame|IntoSeries|IntoSeriesT)$"),
     (r"py:class", r"^(Backend|IntoBackend|nw\.IntoSeries)$"),
+    # BayBE and Narwhals type aliases that are not rendered as documented objects.
+    (r"py:class", r"^(Filter|_NarwhalsFrame)$"),
     ##### BayBE-specific suppressions #####
     # Inherited classes we cannot control
     (r"py:.*", r".*DTypeFloatONNX.*"),
