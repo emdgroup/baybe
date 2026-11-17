@@ -28,10 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constraint filtering
 
 ### Added
-- `TFPRObjective` for fast ranking-based multi-target optimization in discrete
-  search spaces via Top-Fraction Pareto Ranking, with configurable optimism, target
-  weights, tie tolerances, and dominance threshold
-- Streamlit dashboard for exploring the settings of the `TFPRObjective`
+- `TFPRRecommender` for fast ranking-based optimization of `ParetoObjective`s in
+  discrete search spaces via Top-Fraction Pareto Ranking, with configurable optimism,
+  top fraction, and dominance threshold
+- `SurrogateRecommender` as common base class of all recommenders relying on a
+  surrogate model, including `BayesianRecommender` and `TFPRRecommender`
+- Streamlit dashboard for exploring the settings of the `TFPRRecommender`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
 - `Symmetry` concept for expressing symmetries of the optimization problem, including
