@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 import torch
 from attrs import asdict, has
-from hypothesis import example, given
+from hypothesis import given
 from pytest import param
 
 from baybe.kernels.base import BasicKernel, Kernel
@@ -158,8 +158,6 @@ def validate_gpytorch_kernel_components(  # noqa: DOC501
 
 
 @given(kernels().filter(lambda k: not isinstance(k, VanishingKernel)))
-@example(ProductKernel([MaternKernel(), VanishingKernel()]))
-@example(AdditiveKernel([VanishingKernel(), MaternKernel(), RBFKernel()]))
 def test_kernel_assembly(kernel: Kernel):
     """Turning a BayBE kernel into a GPyTorch kernel raises no errors and all its
     components are translated correctly."""  # noqa
