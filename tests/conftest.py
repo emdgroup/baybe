@@ -69,6 +69,7 @@ from baybe.recommenders.pure.bayesian.botorch import (
 )
 from baybe.recommenders.pure.llm.llm import LLMRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.recommenders.pure.tfpr import TFPRRecommender
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
@@ -87,8 +88,8 @@ FAST_OPTIMIZATION_SETTINGS = {"n_restarts": 2, "n_raw_samples": 16}
 """Reduced acquisition optimization effort for tests not concerned with its quality."""
 
 # Recommenders excluded from automatic subclass enumeration because they cannot be
-# default-constructed
-RECOMMENDERS_EXCLUDED_FROM_AUTOTEST: set[type] = {LLMRecommender}
+# default-constructed or require a specific objective type
+RECOMMENDERS_EXCLUDED_FROM_AUTOTEST: set[type] = {LLMRecommender, TFPRRecommender}
 
 
 def autotestable_recommenders(base: type) -> list[type]:

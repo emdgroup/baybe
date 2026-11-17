@@ -13,6 +13,7 @@ from baybe.recommenders.pure.nonpredictive import (
     PAMClusteringRecommender,
     RandomRecommender,
 )
+from baybe.recommenders.pure.tfpr import TFPRRecommender
 
 __all__ = [
     "BotorchRecommender",
@@ -22,4 +23,5 @@ __all__ = [
     "LLMRecommender",
     "PAMClusteringRecommender",
     "RandomRecommender",
+    "TFPRRecommender",
 ]

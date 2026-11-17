@@ -17,6 +17,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
 )
+from baybe.recommenders.pure.tfpr import TFPRRecommender
 
 __all__ = [
     "BotorchRecommender",
@@ -27,6 +28,7 @@ __all__ = [
     "PAMClusteringRecommender",
     "NaiveHybridSpaceRecommender",
     "RandomRecommender",
+    "TFPRRecommender",
     "TwoPhaseMetaRecommender",
     "SequentialMetaRecommender",
     "StreamingSequentialMetaRecommender",
