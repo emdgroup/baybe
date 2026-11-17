@@ -66,8 +66,7 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
     sampled jointly at all ``n`` training points, including the one it left out.
 
     The samples are drawn from the latent function, i.e. without observation noise, and
-    in the model's standardized output space. This suffices for the ranking loss, which
-    only depends on the order of the predictions.
+    on the original output scale.
 
     Args:
         model: The fitted Gaussian process model.
@@ -99,8 +98,13 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
 
     with torch.no_grad():
         # Calling the model directly skips the input transform, so both the folds
-        # and `train_x` must already be transformed, as set by `eval()` above
-        posterior = GPyTorchPosterior(loo_model(train_x))
+        # and `train_x` must already be transformed, as set by `eval()` above.
+        # The outcome transform is skipped as well, so it is undone explicitly.
+        outcome_transform = loo_model.outcome_transform
+        assert isinstance(outcome_transform, Standardize)  # ensured by the GP fit
+        posterior = outcome_transform.untransform_posterior(
+            GPyTorchPosterior(loo_model(train_x))
+        )
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
         return sampler(posterior).squeeze(-1)
 
