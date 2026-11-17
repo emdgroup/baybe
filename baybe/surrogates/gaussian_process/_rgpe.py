@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from gpytorch.likelihoods import GaussianLikelihood
     from linear_operator.operators import LinearOperator
 
-    from baybe.surrogates.gaussian_process.core import _ModelContext
+    from baybe.searchspace import SearchSpace
 
 _N_MC_SAMPLES = 256
 """The number of posterior samples used to estimate the rank weights."""
@@ -223,9 +223,9 @@ class RGPEModel(Model):
         )
 
     @classmethod
-    def from_context(
+    def from_searchspace(
         cls,
-        context: _ModelContext,
+        searchspace: SearchSpace,
         train_x: Tensor,
         train_y: Tensor,
         fit_gp: Callable[[Tensor, Tensor], SingleTaskGP],
@@ -234,8 +234,8 @@ class RGPEModel(Model):
         """Fit one GP per task and combine them into a rank-weighted ensemble.
 
         Args:
-            context: The model context providing the search space with the task
-                parameter identifying the target and source tasks.
+            searchspace: The search space whose task parameter identifies the target
+                and source tasks.
             train_x: The training inputs of all tasks (comp-rep, ``n x d``).
             train_y: The training targets of all tasks (``n x 1``).
             fit_gp: A callable fitting a Gaussian process to a subset of the data.
@@ -244,7 +244,7 @@ class RGPEModel(Model):
             The fitted ensemble, weighted by how well each member ranks the target
             data. Falls back to uniform weights with fewer than two target points.
         """
-        target_mask, source_masks = _split_by_task(context, train_x)
+        target_mask, source_masks = _split_by_task(searchspace, train_x)
 
         # Sources are fitted before the target, as the weights depend on the RNG state
         source_models = tuple(fit_gp(train_x[m], train_y[m]) for m in source_masks)
@@ -371,16 +371,16 @@ def _compute_outcome_noise(model: SingleTaskGP, /) -> Tensor:
 
 
 def _split_by_task(
-    context: _ModelContext, train_x: Tensor, /
+    searchspace: SearchSpace, train_x: Tensor, /
 ) -> tuple[Tensor, tuple[Tensor, ...]]:
     """Split the training rows into a target mask and masks for sources with data."""
-    task_param = context.searchspace._task_parameter
+    task_param = searchspace._task_parameter
     assert task_param is not None
     assert len(task_param.active_values) == 1
     (target_value,) = task_param.active_values
 
     codes = task_param.comp_df.iloc[:, 0]
-    task_column = train_x[:, context.task_idx]
+    task_column = train_x[:, searchspace.task_idx]
     target_mask = task_column == float(codes[target_value])
     source_masks = tuple(
         mask
