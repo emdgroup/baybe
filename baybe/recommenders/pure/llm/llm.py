@@ -12,8 +12,11 @@ from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
 from baybe._llm.exceptions import LLMResponseError
-from baybe._llm.query import query_model, validate_litellm_args
-from baybe._llm.recovery import query_with_recovery
+from baybe._llm.query import (
+    query_model,
+    query_model_with_recovery,
+    validate_litellm_args,
+)
 from baybe._optional.info import LLM_INSTALLED
 from baybe.exceptions import (
     IncompatibilityError,
@@ -215,7 +218,7 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 f"from the provided recommendations context."
             ) from ex
 
-        return query_with_recovery(
+        return query_model_with_recovery(
             prompt,
             query=self._query_model,
             parse=lambda content: parse_llm_response(content, searchspace, batch_size),
