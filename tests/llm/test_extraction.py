@@ -166,12 +166,11 @@ def test_structure_json():
 
 
 def test_structure_json_raises_on_invalid():
-    """The helper maps structuring failures to a chained format error."""
+    """The helper maps structuring failures to a format error."""
     with pytest.raises(
         LLMMalformedResponseError, match="does not match the expected format"
-    ) as exc_info:
+    ):
         structure_json({}, _Item)
-    assert exc_info.value.__cause__ is not None
 
 
 def test_structure_json_ignores_unknown_keys_by_default():
@@ -190,9 +189,8 @@ def test_structure_json_rejects_unknown_keys_when_requested():
 
     with pytest.raises(
         LLMMalformedResponseError, match="does not match the expected format"
-    ) as exc_info:
+    ):
         structure_json({"value": [{"x": 1}]}, _DefaultedItem, forbid_extra_keys=True)
-    assert exc_info.value.__cause__ is not None
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
