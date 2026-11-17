@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from collections.abc import Collection
 
 from typing_extensions import override
@@ -22,12 +23,21 @@ class LLMAuthenticationError(LLMCallError):
     """Authentication with the language model provider failed."""
 
 
-class LLMResponseError(LLMError):
+class LLMResponseError(LLMError, ABC):
     """An error occurred while processing a language model response."""
 
     @property
+    @abstractmethod
     def recovery_instruction(self) -> str:
         """Guidance for the language model on how to correct its response."""
+
+
+class LLMRecoveryFailedError(LLMResponseError):
+    """No usable response was produced, even after the recovery attempt."""
+
+    @property
+    @override
+    def recovery_instruction(self) -> str:
         return (
             "Your previous response could not be used. Provide a new response that "
             "follows all instructions in the prompt."

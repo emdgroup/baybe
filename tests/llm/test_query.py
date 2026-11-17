@@ -11,7 +11,7 @@ from baybe._llm.exceptions import (
     LLMAuthenticationError,
     LLMCallError,
     LLMMalformedResponseError,
-    LLMResponseError,
+    LLMRecoveryFailedError,
 )
 from baybe._llm.query import query_model, query_model_with_recovery
 from baybe._optional.info import LLM_INSTALLED
@@ -88,7 +88,7 @@ def _parse(content: str) -> str:
     """Accept the usable marker and reject everything else."""
     if content == _USABLE:
         return "parsed"
-    raise LLMResponseError(f"Unusable content: {content!r}.")
+    raise LLMMalformedResponseError(f"Unusable content: {content!r}.")
 
 
 def _make_loop(outcomes):
@@ -116,7 +116,12 @@ def test_usable_response_is_returned():
 @pytest.mark.parametrize(
     ("outcomes", "recovery_error_type", "previous_content"),
     [
-        param((_UNUSABLE, _USABLE), LLMResponseError, _UNUSABLE, id="parse_error"),
+        param(
+            (_UNUSABLE, _USABLE),
+            LLMMalformedResponseError,
+            _UNUSABLE,
+            id="parse_error",
+        ),
         param(
             (LLMMalformedResponseError("No content."), _USABLE),
             LLMMalformedResponseError,
@@ -139,12 +144,12 @@ def test_unusable_response_twice_is_wrapped():
     """Two unusable responses raise a wrapped error caused by the second one."""
     run, query, make_recovery_prompt = _make_loop([_UNUSABLE, _UNUSABLE])
     with pytest.raises(
-        LLMResponseError, match="even after a recovery attempt"
+        LLMRecoveryFailedError, match="even after a recovery attempt"
     ) as exc_info:
         run()
     assert query.call_count == 2
     assert make_recovery_prompt.call_args.args[1] == _UNUSABLE
-    assert isinstance(exc_info.value.__cause__, LLMResponseError)
+    assert isinstance(exc_info.value.__cause__, LLMMalformedResponseError)
     assert "Initial problem" in str(exc_info.value)
     assert "Remaining problem after recovery" in str(exc_info.value)
 

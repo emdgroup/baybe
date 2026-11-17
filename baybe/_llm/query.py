@@ -9,6 +9,7 @@ from baybe._llm.exceptions import (
     LLMAuthenticationError,
     LLMCallError,
     LLMMalformedResponseError,
+    LLMRecoveryFailedError,
     LLMResponseError,
 )
 
@@ -141,7 +142,8 @@ def query_model_with_recovery(
         The parsed result of the first usable response.
 
     Raises:
-        LLMResponseError: If both the initial and the recovery response are unusable.
+        LLMRecoveryFailedError: If both the initial and the recovery response are
+            unusable.
     """
     content: str | None = None
     try:
@@ -153,7 +155,7 @@ def query_model_with_recovery(
             recovery_content = query(recovery_prompt)
             return parse(recovery_content)
         except LLMResponseError as recovery_error:
-            raise LLMResponseError(
+            raise LLMRecoveryFailedError(
                 f"The language model failed to produce a usable response, even "
                 f"after a recovery attempt. Initial problem: {initial_error} "
                 f"Remaining problem after recovery: {recovery_error}"

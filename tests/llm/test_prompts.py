@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe._llm.exceptions import LLMResponseError
+from baybe._llm.exceptions import LLMRecoveryFailedError
 from baybe._optional.info import JINJA2_INSTALLED, LLM_INSTALLED
 from baybe.constraints import (
     ContinuousLinearConstraint,
@@ -45,7 +45,7 @@ _T2 = NumericalTarget("cost", minimize=True)
 @pytest.mark.parametrize("batch_size", [1, 2], ids=["single", "batch"])
 @pytest.mark.parametrize(
     "recovery",
-    [None, (LLMResponseError("test error"), "bad response")],
+    [None, (LLMRecoveryFailedError("test error"), "bad response")],
     ids=["initial", "recovery"],
 )
 def test_make_prompt_batch_requirements(batch_size, recovery):
@@ -193,12 +193,12 @@ _ALL_OPTIONAL_SECTIONS = {
             id="with_pending",
         ),
         param(
-            {"recovery": (LLMResponseError("test error"), "bad response")},
+            {"recovery": (LLMRecoveryFailedError("test error"), "bad response")},
             {"WHAT WENT WRONG", "ORIGINAL RESPONSE"},
             id="with_recovery",
         ),
         param(
-            {"recovery": (LLMResponseError("test error"), None)},
+            {"recovery": (LLMRecoveryFailedError("test error"), None)},
             {"WHAT WENT WRONG"},
             id="with_recovery_without_response",
         ),
@@ -310,7 +310,7 @@ def test_sample_example_configurations(searchspace, n_expected):
             id="without_recovery",
         ),
         param(
-            {"recovery": (LLMResponseError("test error"), "bad response")},
+            {"recovery": (LLMRecoveryFailedError("test error"), "bad response")},
             [
                 "WHAT WENT WRONG",
                 "ORIGINAL RESPONSE",

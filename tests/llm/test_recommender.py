@@ -13,7 +13,7 @@ from baybe import Campaign
 from baybe._llm.exceptions import (
     LLMBatchSizeError,
     LLMMalformedResponseError,
-    LLMResponseError,
+    LLMRecoveryFailedError,
 )
 from baybe._optional.info import LLM_INSTALLED
 from baybe.campaign import _MEASURED, _RECOMMENDED
@@ -206,7 +206,7 @@ def test_batch_size_recovery(n_first, n_recovery):
             assert len(result) == batch_size
         else:
             with pytest.raises(
-                LLMResponseError, match="even after a recovery attempt"
+                LLMRecoveryFailedError, match="even after a recovery attempt"
             ) as exc_info:
                 _RECOMMENDER.recommend(batch_size, _SEARCHSPACE, _OBJECTIVE)
             cause = exc_info.value.__cause__
