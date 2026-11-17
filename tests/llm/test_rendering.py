@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe._llm.rendering import _drop_empty, render_template, to_prompt_dict
+from baybe._llm.rendering import _strip_empty, render_template, to_prompt_dict
 from baybe._optional.info import CHEM_INSTALLED, LLM_INSTALLED
 from baybe.parameters import (
     CategoricalParameter,
@@ -78,18 +78,23 @@ def test_to_prompt_dict_substance():
     assert "active_values" not in serialized
 
 
-def test_drop_empty():
-    """None values and (resulting) empty dictionaries are dropped recursively."""
+def test_strip_empty():
+    """None values and (resulting) empty dictionaries are dropped recursively.
+
+    List items are cleaned but never removed, and empty lists are kept.
+    """
     serialized = {
         "none": None,
         "empty": {},
         "emptied": {"none": None},
         "nested": [{"none": None, "kept": 1}],
+        "in_list": [None, {"x": None}],
         "falsy": 0,
         "empty_list": [],
     }
-    assert _drop_empty(serialized) == {
+    assert _strip_empty(serialized) == {
         "nested": [{"kept": 1}],
+        "in_list": [None, {}],
         "falsy": 0,
         "empty_list": [],
     }

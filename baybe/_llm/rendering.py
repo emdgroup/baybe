@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import fields
 
@@ -19,44 +19,32 @@ if TYPE_CHECKING:
     from baybe.parameters.base import Parameter
 
 
-def _drop_empty(serialized: dict[str, Any], /) -> dict[str, Any]:
-    """Remove empty fields from a serialized object, recursively.
-
-    Empty means ``None`` values and empty dictionaries: ``None`` is how an unset
-    optional attribute is serialized, and an empty dictionary is what a nested object
-    reduces to once all of its fields are dropped, i.e. serialization residue rather
-    than payload. Lists are traversed but never removed, not even when empty: since
-    cleaning preserves list lengths, an empty list was explicitly empty in the input,
-    so dropping it would discard declared, structurally expected data instead of
-    residue.
-
-    Args:
-        serialized: The serialized object to clean up.
-
-    Returns:
-        The cleaned-up serialized object.
-    """
-    return {
-        key: cleaned
-        for key, value in serialized.items()
-        if (cleaned := _clean_value(value)) is not None and cleaned != {}
-    }
+_T = TypeVar("_T", dict[str, Any], list[Any], object)
+"""Serialized data, constrained so that dictionaries and lists keep their type."""
 
 
-def _clean_value(value: Any, /) -> Any:
-    """Recursively clean a value inside a serialized object.
+def _strip_empty(value: _T, /) -> _T:
+    """Recursively remove ``None`` values and empty dictionaries from serialized data.
+
+    Both are serialization residue, i.e. unset optional attributes and nested objects
+    without remaining fields. Lists are kept even when empty, since they are content.
 
     Args:
-        value: The value to clean up.
+        value: The serialized data to clean up.
 
     Returns:
-        The cleaned-up value.
+        The cleaned-up data.
     """
-    if isinstance(value, dict):
-        return _drop_empty(value)
-    if isinstance(value, list):
-        return [_clean_value(item) for item in value]
-    return value
+    match value:
+        case dict():
+            cleaned = {k: _strip_empty(v) for k, v in value.items()}
+            # pyrefly: ignore[bad-return]  # No per-constraint check
+            return {k: v for k, v in cleaned.items() if v not in (None, {})}
+        case list():
+            # pyrefly: ignore[bad-return]  # No per-constraint check
+            return [_strip_empty(item) for item in value]
+        case _:
+            return value
 
 
 def to_prompt_dict(obj: Parameter | Constraint | Objective, /) -> dict[str, Any]:
@@ -85,7 +73,7 @@ def to_prompt_dict(obj: Parameter | Constraint | Objective, /) -> dict[str, Any]
             del serialized[fields(CustomDiscreteParameter).data.alias]
     # ``None`` values and empty dictionaries are dropped since they carry no
     # information for the language model.
-    return _drop_empty(serialized)
+    return _strip_empty(serialized)
 
 
 def to_json_lines(serialized_objects: Iterable[dict[str, Any]], /) -> str:
