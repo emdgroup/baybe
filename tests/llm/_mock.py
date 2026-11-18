@@ -46,7 +46,7 @@ def make_valid_json(searchspace, batch_size):
 
     recommendations = []
     if discrete_params:
-        candidates = searchspace.discrete.get_candidates()[0]
+        candidates = searchspace.discrete.get_candidates()
         for i, (_, row) in enumerate(candidates.head(batch_size).iterrows()):
             entry = {p.name: row[p.name] for p in discrete_params}
             entry.update(continuous_entry(i))
@@ -77,7 +77,7 @@ def make_recommendation(searchspace, **overrides):
     discrete_params = [p for p in searchspace.parameters if p.is_discrete]
     continuous_params = [p for p in searchspace.parameters if not p.is_discrete]
     if discrete_params:
-        row = searchspace.discrete.get_candidates()[0].iloc[0]
+        row = searchspace.discrete.get_candidates().iloc[0]
         params.update({p.name: row[p.name] for p in discrete_params})
     for cp in continuous_params:
         params[cp.name] = sum(cp.bounds.to_tuple()) / 2
