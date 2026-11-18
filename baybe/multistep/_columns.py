@@ -5,6 +5,9 @@ from __future__ import annotations
 NODE = "node"
 """Column identifying the node whose parameters a recommendation covers."""
 
+EXPERIMENT_ID = "experiment_id"
+"""Column identifying the experiment a recommendation or measurement belongs to."""
+
 STOCK_CAMPAIGN_COLUMNS = ("BatchNr", "FitNr")
 """Bookkeeping columns written by :class:`~baybe.campaign.Campaign`.
 

@@ -7,6 +7,7 @@ samples through the DAG, while a :class:`MultiStepCampaign` records node
 measurements and recommends the next node action.
 """
 
+from .acquisition import PartialKnowledgeGradientFN
 from .campaign import MultiStepCampaign
 from .dag import MultiStepDAG
 from .data import MultiStepData, NodeMeasurement
@@ -20,5 +21,6 @@ __all__ = [
     "MultiStepModel",
     "MultiStepNode",
     "NodeMeasurement",
+    "PartialKnowledgeGradientFN",
     "validate_network_measurements",
 ]

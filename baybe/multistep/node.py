@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+from collections import Counter
 from functools import cached_property
 
 from attrs import define, field
@@ -66,8 +67,8 @@ class MultiStepNode:
     @inputs.validator
     def _validate_inputs(self, _attribute, value):  # noqa: DOC101, DOC103
         """Validate that input names are unique and differ from the output name."""
-        names = [parameter.name for parameter in value]
-        duplicates = sorted({name for name in names if names.count(name) > 1})
+        names = Counter(parameter.name for parameter in value)
+        duplicates = sorted(name for name, count in names.items() if count > 1)
         if duplicates:
             raise IncompatibilityError(
                 f"Node '{self.name}' lists duplicate input parameters: {duplicates}."
@@ -86,14 +87,25 @@ class MultiStepNode:
                 f"Node '{self.name}' parents must be {MultiStepNode.__name__} "
                 f"instances."
             )
-        names = [parent.name for parent in value]
-        duplicates = sorted({name for name in names if names.count(name) > 1})
+        names = Counter(parent.name for parent in value)
+        duplicates = sorted(name for name, count in names.items() if count > 1)
         if duplicates:
             raise IncompatibilityError(
                 f"Node '{self.name}' lists duplicate parents: {duplicates}."
             )
         if self.name in names:
             raise IncompatibilityError(f"Node '{self.name}' cannot be its own parent.")
+
+    @property
+    def _own_comp_rep_columns(self) -> tuple[str, ...]:
+        """The computational-representation columns of the node's own inputs.
+
+        Parent-only nodes have no own search-space dimensions, in which case the
+        empty tuple is returned without constructing an empty search space.
+        """
+        if not self.inputs:
+            return ()
+        return self.searchspace.comp_rep_columns
 
     @property
     def parent_output_names(self) -> tuple[str, ...]:

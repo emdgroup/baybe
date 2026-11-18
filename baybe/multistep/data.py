@@ -2,13 +2,16 @@
 
 A :class:`NodeMeasurement` is one observation of one node. Its inputs are the
 full input of the node model: the values of the node's own parameters together
-with the observed outputs of its parents. Node training data is derived from the
-stored measurements; nothing is stored twice.
+with the observed outputs of its parents. An optional ``experiment_id`` groups
+measurements that belong to the same DAG evaluation; once every node of an
+experiment has been measured, the campaign assembles a complete DAG row from it.
+Node training data is derived from the stored measurements; nothing is stored
+twice.
 
 Complete DAG rows are stored separately because the stock acquisition-function
 machinery needs joint parameter configurations for its reference computations.
-The campaign assembles such a row from the node measurements once a plan is
-complete; rows of finished plans can also be imported directly.
+The campaign assembles such a row from the node measurements once an experiment
+is complete; rows of finished experiments can also be imported directly.
 """
 
 from __future__ import annotations
@@ -20,25 +23,15 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import define, evolve, field
+from attrs.converters import pipe
 from attrs.validators import instance_of, min_len
 
 from baybe.exceptions import IncompatibilityError
+from baybe.utils.basic import to_tuple
 
 from .dag import MultiStepDAG
 from .node import MultiStepNode
-
-
-def _to_frozen_mapping(value: Mapping[str, Any]) -> Mapping[str, Any]:
-    """Copy a mapping into an immutable proxy."""
-    return MappingProxyType(dict(value))
-
-
-def _to_measurement_tuple(
-    value: Iterable[NodeMeasurement],
-) -> tuple[NodeMeasurement, ...]:
-    """Copy node measurements into a tuple."""
-    return tuple(value)
 
 
 def _copy_frame(value: pd.DataFrame) -> pd.DataFrame:
@@ -46,34 +39,23 @@ def _copy_frame(value: pd.DataFrame) -> pd.DataFrame:
     return value.copy()
 
 
-def _python_scalar(value: Any) -> Any:
-    """Convert numpy scalars to plain Python values."""
-    if isinstance(value, np.generic):
-        return value.item()
-    return value
-
-
 @define(frozen=True)
 class NodeMeasurement:
-    """One observation of one node.
-
-    Args:
-        node: The name of the observed node.
-        inputs: The full node-model input, that is, the values of the node's own
-            parameters and the observed outputs of its parents.
-        output: The observed node output.
-    """
+    """One observation of one node."""
 
     node: str = field(validator=min_len(1))
     """The observed node."""
 
     inputs: Mapping[str, Any] = field(
-        converter=_to_frozen_mapping, validator=instance_of(Mapping)
+        converter=pipe(dict, MappingProxyType), validator=instance_of(Mapping)
     )
-    """The full node-model input."""
+    """The node's own parameter values and observed parent outputs."""
 
     output: float = field()
     """The observed node output."""
+
+    experiment_id: str | None = field(default=None, eq=False)
+    """The optional experiment this measurement belongs to."""
 
     @output.validator
     def _validate_output(self, _: Any, value: float) -> None:  # noqa: DOC101, DOC103
@@ -96,26 +78,19 @@ class NodeMeasurement:
 
 @define(frozen=True, eq=False)
 class MultiStepData:
-    """Immutable store of node measurements and complete DAG rows.
-
-    Args:
-        measurements: The individual node measurements, in insertion order.
-        complete_measurements: Complete DAG rows in experimental
-            representation. The frame contains one column per DAG parameter and
-            one column per node output.
-    """
+    """Immutable store of node measurements and complete DAG rows."""
 
     measurements: tuple[NodeMeasurement, ...] = field(
         factory=tuple,
-        converter=_to_measurement_tuple,
+        converter=to_tuple,
         validator=instance_of(tuple),
     )
-    """The individual node measurements."""
+    """The individual node measurements, in insertion order."""
 
     complete_measurements: pd.DataFrame = field(
         factory=pd.DataFrame, converter=_copy_frame, validator=instance_of(pd.DataFrame)
     )
-    """Complete DAG rows used by the acquisition-function machinery."""
+    """Complete DAG rows with one column per parameter and node output."""
 
     @classmethod
     def empty(cls) -> MultiStepData:
@@ -135,9 +110,7 @@ class MultiStepData:
         Returns:
             The updated immutable store.
         """
-        return MultiStepData(
-            self.measurements + tuple(measurements), self.complete_measurements
-        )
+        return evolve(self, measurements=self.measurements + measurements)
 
     def add_complete(self, measurements: pd.DataFrame) -> MultiStepData:
         """Return a new store with the given complete rows appended.
@@ -149,7 +122,57 @@ class MultiStepData:
             The updated immutable store.
         """
         frame = pd.concat([self.complete_measurements, measurements], ignore_index=True)
-        return MultiStepData(self.measurements, frame)
+        return evolve(self, complete_measurements=frame)
+
+    def is_experiment_complete(self, dag: MultiStepDAG, experiment_id: str) -> bool:
+        """Check whether every DAG node has a measurement for the given experiment.
+
+        Args:
+            dag: The DAG topology.
+            experiment_id: The experiment identifier.
+
+        Returns:
+            ``True`` if every node has at least one measurement with the given
+            experiment identifier.
+        """
+        measured_nodes = {
+            measurement.node
+            for measurement in self.measurements
+            if measurement.experiment_id == experiment_id
+        }
+        return measured_nodes == {node.name for node in dag.nodes}
+
+    def assemble_complete_row(
+        self, dag: MultiStepDAG, experiment_id: str
+    ) -> pd.DataFrame:
+        """Assemble a complete DAG row from the measurements of an experiment.
+
+        The first measurement of each node is used. The experiment must be
+        complete before this method is called.
+
+        Args:
+            dag: The DAG topology.
+            experiment_id: The experiment identifier.
+
+        Returns:
+            A single-row dataframe with one column per DAG parameter and one per
+            node output.
+        """
+        row: dict[str, Any] = {}
+        for node in dag.nodes:
+            measurement = next(
+                m
+                for m in self.measurements
+                if m.node == node.name and m.experiment_id == experiment_id
+            )
+            for name in dag.owned_parameter_names(node.name):
+                row[name] = measurement.inputs[name]
+            row[node.output] = measurement.output
+        columns = [
+            *dag.parameter_by_name,
+            *(node.output for node in dag.nodes),
+        ]
+        return pd.DataFrame([row], columns=columns)
 
     def validate(self, dag: MultiStepDAG) -> None:
         """Validate the stored measurements against the DAG.

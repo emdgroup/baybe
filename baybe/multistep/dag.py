@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import gc
-from collections import deque
+from collections import Counter
 from functools import cached_property
+from graphlib import CycleError, TopologicalSorter
+from math import prod
 from typing import TYPE_CHECKING
 
 from attrs import define, field
@@ -25,7 +27,7 @@ if TYPE_CHECKING:
     from .model import MultiStepModel
 
 
-@define(frozen=True)
+@define(frozen=True, slots=False)
 class MultiStepDAG:
     """A directed acyclic graph of node definitions.
 
@@ -58,20 +60,27 @@ class MultiStepDAG:
                         f"which is not part of the DAG."
                     )
 
+        for node in self.nodes:
+            if not node.inputs and not node.parents:
+                raise IncompatibilityError(
+                    f"Node '{node.name}' has neither own inputs nor parents. A root "
+                    f"node must define at least one input parameter."
+                )
+
         outputs = [node.output for node in self.nodes]
-        duplicates = sorted({name for name in outputs if outputs.count(name) > 1})
+        duplicates = sorted(
+            name for name, count in Counter(outputs).items() if count > 1
+        )
         if duplicates:
             raise IncompatibilityError(
                 f"Node output names must be unique, but found duplicates: {duplicates}."
             )
 
         parameter_names = [
-            parameter.name
-            for node in self.nodes
-            for parameter in node.searchspace.parameters
+            parameter.name for node in self.nodes for parameter in node.inputs
         ]
         duplicates = sorted(
-            {name for name in parameter_names if parameter_names.count(name) > 1}
+            name for name, count in Counter(parameter_names).items() if count > 1
         )
         if duplicates:
             raise IncompatibilityError(
@@ -80,9 +89,7 @@ class MultiStepDAG:
             )
 
         comp_rep_columns = [
-            column
-            for node in self.nodes
-            for column in node.searchspace.comp_rep_columns
+            column for node in self.nodes for column in node._own_comp_rep_columns
         ]
 
         collisions = sorted(
@@ -114,7 +121,7 @@ class MultiStepDAG:
 
         target_names = [target.name for target in value.targets]
         duplicates = sorted(
-            {name for name in target_names if target_names.count(name) > 1}
+            name for name, count in Counter(target_names).items() if count > 1
         )
         if duplicates:
             raise IncompatibilityError(
@@ -143,6 +150,8 @@ class MultiStepDAG:
     @staticmethod
     def _validate_node_searchspace(node: MultiStepNode) -> None:
         """Verify that a node's search space can be rebuilt from its parameters."""
+        if not node.inputs:
+            return
         searchspace = node.searchspace
         if searchspace.is_constrained:
             raise IncompatibilityError(
@@ -151,9 +160,7 @@ class MultiStepDAG:
             )
         if searchspace.discrete.is_empty:
             return
-        n_expected = 1
-        for parameter in searchspace.discrete.parameters:
-            n_expected *= len(parameter.values)
+        n_expected = prod(len(p.values) for p in searchspace.discrete.parameters)
         if len(searchspace.discrete.exp_rep) != n_expected:
             raise IncompatibilityError(
                 f"Node '{node.name}' has a restricted discrete candidate set, "
@@ -187,7 +194,7 @@ class MultiStepDAG:
         return {
             parameter.name: parameter
             for node in self.nodes
-            for parameter in node.searchspace.parameters
+            for parameter in node.inputs
         }
 
     @cached_property
@@ -219,45 +226,40 @@ class MultiStepDAG:
 
     @cached_property
     def topological_order(self) -> tuple[str, ...]:
-        """All node names in topological order."""
-        names = [node.name for node in self.nodes]
-        if len(set(names)) != len(names):
+        """All node names in topological order.
+
+        Returns:
+            The node names, with every node listed after its parents.
+
+        Raises:
+            IncompatibilityError: If node names are duplicated, a parent is
+                unknown, or the graph contains a cycle.
+        """
+        nodes_by_name = self.node_by_name
+        if len(nodes_by_name) != len(self.nodes):
             raise IncompatibilityError("The DAG contains duplicate node names.")
 
-        in_degree = {node.name: len(node.parents) for node in self.nodes}
-        children: dict[str, list[str]] = {name: [] for name in names}
+        # Register all nodes first to preserve the declared order among roots.
+        sorter = TopologicalSorter(dict.fromkeys(nodes_by_name, ()))
         for node in self.nodes:
             for parent in node.parents:
-                if parent.name not in children:
+                if parent.name not in nodes_by_name:
                     raise IncompatibilityError(
                         f"Node '{node.name}' references unknown parent '{parent.name}'."
                     )
-                children[parent.name].append(node.name)
+            sorter.add(node.name, *(parent.name for parent in node.parents))
 
-        queue = deque(name for name in names if in_degree[name] == 0)
-        order: list[str] = []
-        while queue:
-            name = queue.popleft()
-            order.append(name)
-            for child in children[name]:
-                in_degree[child] -= 1
-                if in_degree[child] == 0:
-                    queue.append(child)
-
-        if len(order) != len(self.nodes):
-            raise IncompatibilityError(
-                f"The DAG contains a cycle: only {len(order)} of {len(self.nodes)} "
-                f"nodes could be sorted topologically."
-            )
-        return tuple(order)
+        try:
+            return tuple(sorter.static_order())
+        except CycleError as ex:
+            raise IncompatibilityError("The DAG contains a cycle.") from ex
 
     @cached_property
     def full_searchspace(self) -> SearchSpace:
         """Combined search space across all node-owned parameters."""
-        parameters: list[Parameter] = []
-        for node in self.nodes:
-            parameters.extend(node.searchspace.parameters)
-        return SearchSpace.from_product(parameters)
+        return SearchSpace.from_product(
+            [parameter for node in self.nodes for parameter in node.inputs]
+        )
 
     def make_model(self) -> MultiStepModel:
         """Build an unfitted multi-step model for this DAG.
@@ -284,7 +286,7 @@ class MultiStepDAG:
         node_object = self.node_by_name.get(node)
         if node_object is None:
             raise IncompatibilityError(f"Unknown node '{node}'.")
-        return tuple(parameter.name for parameter in node_object.searchspace.parameters)
+        return tuple(parameter.name for parameter in node_object.inputs)
 
     def parents_of(self, node: str) -> tuple[str, ...]:
         """Return the parent node names of the given node."""
@@ -298,30 +300,22 @@ class MultiStepDAG:
         """All ancestors of a node in topological order, excluding itself."""
         if node not in self.node_by_name:
             raise IncompatibilityError(f"Unknown node '{node}'.")
-        result: set[str] = set()
-
-        def visit(current: str) -> None:
-            for parent in self.parents_of(current):
-                if parent not in result:
-                    result.add(parent)
-                    visit(parent)
-
-        visit(node)
+        result = {node}
+        for name in reversed(self.topological_order):
+            if name in result:
+                result.update(self.parents_of(name))
+        result.remove(node)
         return tuple(name for name in self.topological_order if name in result)
 
     def descendants_of(self, node: str) -> tuple[str, ...]:
         """All descendants of a node in topological order, excluding itself."""
         if node not in self.node_by_name:
             raise IncompatibilityError(f"Unknown node '{node}'.")
-        result: set[str] = set()
-
-        def visit(current: str) -> None:
-            for child in self.children_of(current):
-                if child not in result:
-                    result.add(child)
-                    visit(child)
-
-        visit(node)
+        result = {node}
+        for name in self.topological_order:
+            if name in result:
+                result.update(self.children_of(name))
+        result.remove(node)
         return tuple(name for name in self.topological_order if name in result)
 
 

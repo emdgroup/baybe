@@ -23,11 +23,11 @@ collection must not recursively convert the model into a dictionary.
 from __future__ import annotations
 
 import gc
-import math
 from collections.abc import Mapping
 from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, Any
+from inspect import signature
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
@@ -43,7 +43,7 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError, ModelNotTrainedError
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.base import SurrogateProtocol
+from baybe.surrogates.base import Surrogate, SurrogateProtocol
 from baybe.targets.numerical import NumericalTarget
 
 from .dag import MultiStepDAG
@@ -114,14 +114,9 @@ def validate_network_measurements(
         )
 
     values = measurements[list(output_names)].to_numpy(dtype=float)
-    if not np.isfinite(values).all():
-        bad = [
-            name
-            for name, column in zip(
-                output_names, measurements[list(output_names)].to_numpy(dtype=float).T
-            )
-            if not np.isfinite(column).all()
-        ]
+    invalid_outputs = ~np.isfinite(values).all(axis=0)
+    if invalid_outputs.any():
+        bad = np.asarray(output_names)[invalid_outputs].tolist()
         raise IncompatibilityError(
             f"Node output columns must be finite, but columns {bad} contain "
             f"NaN or infinite values."
@@ -170,7 +165,7 @@ def _make_node_fit_searchspace(
             upper = lower + 1.0
         covariates.append(NumericalContinuousParameter(name, bounds=(lower, upper)))
 
-    return SearchSpace.from_product([*node.searchspace.parameters, *covariates])
+    return SearchSpace.from_product([*node.inputs, *covariates])
 
 
 @define(eq=False, repr=False, slots=False, on_setattr=setters.NO_OP)
@@ -188,20 +183,13 @@ class MultiStepModel(Model, SurrogateProtocol):
     The model implements
     :class:`~baybe.surrogates.base.SurrogateProtocol`, so the stock recommenders
     consume it like any other surrogate.
-
-    Args:
-        dag: The DAG topology.
-        num_network_samples: Number of network paths stored in the ensemble
-            posterior. The same paths provide the posterior moments and the
-            samples used by the acquisition function.
-        sampling_seed: Base seed for the deterministic network draws.
     """
 
     dag: MultiStepDAG = field(validator=instance_of(MultiStepDAG))
     """The DAG topology."""
 
     num_network_samples: int = field(default=512, validator=ge(1))
-    """Number of network paths stored in the ensemble posterior."""
+    """Number of paths used for posterior moments and acquisition samples."""
 
     sampling_seed: int = field(default=0, validator=ge(0))
     """Base seed for the deterministic network draws."""
@@ -364,18 +352,6 @@ class MultiStepModel(Model, SurrogateProtocol):
         """The nodes without a fitted node model, in topological order."""
         return tuple(name for name in self._node_names if name not in self._node_models)
 
-    def _node_input_columns(self, node_name: str) -> tuple[str, ...]:
-        """Return the experimental training columns of a node.
-
-        Args:
-            node_name: The DAG node.
-
-        Returns:
-            The node's own parameters and parent output columns, in fitted
-            order.
-        """
-        return self.dag.node_by_name[node_name].model_input_names
-
     @cached_property
     def _full_comp_rep_index(self) -> dict[str, int]:
         """The indices of the DAG-wide comp-rep columns inside the candidate tensor.
@@ -392,18 +368,27 @@ class MultiStepModel(Model, SurrogateProtocol):
     def _node_model_columns(self) -> dict[str, tuple[str, ...]]:
         """The model input columns of each node, in fitted order.
 
-        The node's own tunable inputs form the computational representation. The
-        parent outputs are fixed features appended after them; they are not
-        search-space dimensions.
+        The fit search space sorts its discrete parameters and its continuous
+        parameters alphabetically and concatenates the two representations. The
+        parent outputs enter that space as continuous covariates, so they are
+        sorted together with any continuous own parameters. Reproducing that
+        order here keeps the network features aligned with the fitted GP input.
 
         Returns:
             Mapping from node name to the computational-representation columns
             consumed by that node's model.
         """
-        return {
-            node.name: (*node.searchspace.comp_rep_columns, *node.parent_output_names)
-            for node in self.dag.nodes
-        }
+        result: dict[str, tuple[str, ...]] = {}
+        for node in self.dag.nodes:
+            if node.inputs:
+                discrete = node.searchspace.discrete.comp_rep_columns
+                continuous = node.searchspace.continuous.comp_rep_columns
+            else:
+                discrete = ()
+                continuous = ()
+            covariates = tuple(sorted((*continuous, *node.parent_output_names)))
+            result[node.name] = (*discrete, *covariates)
+        return result
 
     def _validate_fitted(self) -> None:
         """Validate that every node has a fitted model.
@@ -477,15 +462,13 @@ class MultiStepModel(Model, SurrogateProtocol):
 
         validate_network_measurements(self.dag, searchspace, objective, measurements)
 
-        node_frames: dict[str, pd.DataFrame] = {}
-        for node in self.dag.nodes:
-            input_columns = self._node_input_columns(node.name)
-            df_node = measurements[list(input_columns)].copy()
-            df_node[node.output] = measurements[node.output].to_numpy()
-            node_frames[node.name] = df_node
-
         self._fit_node_frames(
-            node_frames, allow_partial=False, fed_from_node_data=False
+            {
+                node.name: measurements[[*node.model_input_names, node.output]]
+                for node in self.dag.nodes
+            },
+            allow_partial=False,
+            fed_from_node_data=False,
         )
 
     def _fit_node_frames(
@@ -521,7 +504,7 @@ class MultiStepModel(Model, SurrogateProtocol):
 
         for node_name in self._node_names:
             node = self.dag.node_by_name[node_name]
-            input_columns = self._node_input_columns(node_name)
+            input_columns = node.model_input_names
 
             if node_name not in node_frames:
                 if allow_partial:
@@ -650,15 +633,14 @@ class MultiStepModel(Model, SurrogateProtocol):
             NotImplementedError: For unsupported posterior arguments.
             IncompatibilityError: If the input shape does not match the DAG.
         """
-        self._validate_fitted()
-        self._validate_posterior_arguments(X, output_indices, observation_noise, kwargs)
-
-        posterior: Posterior = EnsemblePosterior(
-            self.draw_network_samples(X, self.num_network_samples).movedim(0, -3)
+        return self.posterior_conditioned(
+            X,
+            fixed_outputs={},
+            output_indices=output_indices,
+            observation_noise=observation_noise,
+            posterior_transform=posterior_transform,
+            **kwargs,
         )
-        if posterior_transform is not None:
-            posterior = posterior_transform(posterior)
-        return posterior
 
     def posterior_conditioned(
         self,
@@ -676,6 +658,10 @@ class MultiStepModel(Model, SurrogateProtocol):
         node outputs and resamples the rest; it is neither Bayesian
         conditioning nor a refit of the node models.
 
+        Unfitted models, unsupported posterior arguments, and inputs that do
+        not match the DAG are rejected by the validation performed before
+        sampling.
+
         Args:
             X: Candidate configurations with shape ``(batch..., q, d)``.
             fixed_outputs: Observed node outputs, keyed by node name. Values
@@ -689,20 +675,9 @@ class MultiStepModel(Model, SurrogateProtocol):
             The conditioned network posterior, represented as an
             :class:`~botorch.posteriors.ensemble.EnsemblePosterior` over the
             network paths.
-
-        Raises:
-            ModelNotTrainedError: If the model is not fitted for all nodes.
-            NotImplementedError: For unsupported posterior arguments.
-            IncompatibilityError: If a fixed output refers to an unknown node
-                or the input shape does not match the DAG.
         """
         self._validate_fitted()
         self._validate_posterior_arguments(X, output_indices, observation_noise, kwargs)
-        unknown = set(fixed_outputs) - set(self._node_names)
-        if unknown:
-            raise IncompatibilityError(
-                f"Fixed outputs provided for unknown nodes: {sorted(unknown)}."
-            )
 
         posterior: Posterior = EnsemblePosterior(
             self.draw_network_samples(
@@ -718,6 +693,9 @@ class MultiStepModel(Model, SurrogateProtocol):
         X: Tensor,
         n_paths: int,
         fixed_outputs: Mapping[str, Tensor] | None = None,
+        *,
+        sampling_seed: int | None = None,
+        common_random_numbers: bool = False,
     ) -> Tensor:
         """Forward-sample the DAG with deterministic base samples.
 
@@ -729,135 +707,349 @@ class MultiStepModel(Model, SurrogateProtocol):
             fixed_outputs: Optional observed node outputs replacing sampled
                 values. The leading dimension must match ``n_paths`` or be
                 broadcastable.
+            sampling_seed: Optional seed overriding the model's default seed.
+            common_random_numbers: Reuse the same base samples across the candidate
+                batch dimensions.
 
         Returns:
             Samples with shape ``(n_paths, batch..., q, num_outputs)``.
 
         Raises:
             ValueError: If ``n_paths`` is not positive.
+            ValueError: If ``sampling_seed`` is not a nonnegative integer.
+            TypeError: If ``common_random_numbers`` is not a Boolean.
             ModelNotTrainedError: If the DAG is not fully fitted.
             IncompatibilityError: If the input width or a fixed output is
                 incompatible.
         """
+        from botorch.models.ensemble import EnsembleModel
+        from botorch.sampling.index_sampler import IndexSampler
+        from botorch.sampling.normal import IIDNormalSampler
+
+        from baybe.surrogates.random_forest import RandomForestSurrogate
+
         if n_paths < 1:
             raise ValueError(f"'n_paths' must be positive, got {n_paths}.")
+        seed = self.sampling_seed if sampling_seed is None else sampling_seed
+        if not isinstance(seed, int) or isinstance(seed, bool) or seed < 0:
+            raise ValueError(
+                f"'sampling_seed' must be a nonnegative integer, got {seed!r}."
+            )
+        if not isinstance(common_random_numbers, bool):
+            raise TypeError(
+                f"'common_random_numbers' must be a Boolean, got "
+                f"{common_random_numbers!r}."
+            )
         self._validate_fitted()
         self._validate_posterior_arguments(X, None, False, {})
 
-        unfixed = self.unfixed_nodes(fixed_outputs)
-        generator = torch.Generator(device=X.device)
-        generator.manual_seed(self.sampling_seed)
-        base_samples = torch.randn(
-            (n_paths, *X.shape[:-2], X.shape[-2], len(unfixed)),
-            generator=generator,
-            device=X.device,
-            dtype=X.dtype,
-        )
-        return self._draw_network_samples(X, base_samples, fixed_outputs)
-
-    def _draw_network_samples(
-        self,
-        X: Tensor,
-        base_samples: Tensor,
-        fixed_outputs: Mapping[str, Tensor] | None = None,
-    ) -> Tensor:
-        """Forward-sample the DAG using the provided per-node base samples.
-
-        Args:
-            X: Candidate configurations with shape ``(batch..., q, d)``.
-            base_samples: Standard-normal base samples with shape
-                ``(n_paths, batch..., q, n_unfixed_nodes)``. The last dimension
-                is indexed in topological order of the unfixed nodes.
-            fixed_outputs: Optional observed node outputs replacing sampled
-                values.
-
-        Returns:
-            Samples with shape ``(n_paths, batch..., q, num_outputs)``.
-
-        Raises:
-            IncompatibilityError: If the base-sample shape, input width, or a
-                fixed output is incompatible.
-        """
         batch_shape = X.shape[:-2]
         q = X.shape[-2]
-        n_paths = base_samples.shape[0]
-        fixed_outputs = {} if fixed_outputs is None else fixed_outputs
-        unfixed = self.unfixed_nodes(fixed_outputs)
-        expected_shape = torch.Size([n_paths, *batch_shape, q, len(unfixed)])
-        if base_samples.shape != expected_shape:
-            raise IncompatibilityError(
-                f"Expected network base samples of shape "
-                f"{tuple(expected_shape)}, but received "
-                f"{tuple(base_samples.shape)}."
-            )
-        positions = {name: i for i, name in enumerate(unfixed)}
-        batch_size = torch.Size(batch_shape).numel()
+        fixed = self._prepare_fixed_outputs(X, fixed_outputs, n_paths)
+
         samples: dict[str, Tensor] = {}
         full_index = self._full_comp_rep_index
+        nodes_by_name = self.dag.node_by_name
 
-        for name in self._node_names:
-            node = self.dag.node_by_name[name]
-
-            if name in fixed_outputs:
-                target_shape = torch.Size([n_paths, *batch_shape, q, 1])
-                value = fixed_outputs[name].to(X)
-                # Accept values with any prefix of leading singleton axes, e.g.
-                # ``(1, 1, q, 1)`` for an action fantasy that is broadcast over
-                # all network paths.
-                while value.dim() < len(target_shape):
-                    value = value.unsqueeze(0)
-                try:
-                    samples[name] = value.expand(target_shape)
-                except RuntimeError as ex:
-                    raise IncompatibilityError(
-                        f"Fixed output for node '{name}' with shape "
-                        f"{tuple(fixed_outputs[name].shape)} cannot be broadcast to "
-                        f"{tuple(target_shape)}."
-                    ) from ex
+        for node_index, node_name in enumerate(self._node_names):
+            if node_name in fixed:
+                samples[node_name] = fixed[node_name]
                 continue
+
+            node = nodes_by_name[node_name]
 
             # Assemble the node-model features in the order used during fitting:
             # own inputs from the candidates, parent outputs from the sampled
             # network paths.
             features: dict[str, Tensor] = {}
-            for column in node.searchspace.comp_rep_columns:
+            for column in node._own_comp_rep_columns:
                 index = full_index.get(column)
                 if index is None:
                     raise IncompatibilityError(
                         f"The computational-representation column '{column}' of node "
-                        f"'{name}' is missing from the DAG-wide search space."
+                        f"'{node_name}' is missing from the DAG-wide search space."
                     )
                 value = X[..., index]
                 features[column] = value.expand(n_paths, *value.shape).unsqueeze(-1)
             for parent in node.parents:
                 features[parent.output] = samples[parent.name].to(X)
 
-            columns = self._node_model_columns[name]
+            columns = self._node_model_columns[node_name]
             missing = [column for column in columns if column not in features]
             if missing:
                 raise IncompatibilityError(
-                    f"The node-model features of node '{name}' are incomplete: "
+                    f"The node-model features of node '{node_name}' are incomplete: "
                     f"{missing}."
                 )
             node_x = torch.cat([features[column] for column in columns], dim=-1)
 
-            # Flatten the network-path and t-batch dimensions so that every
-            # node model sees a plain ``(t, q, d)`` input. This keeps node
-            # models usable that do not support multiple t-batch dimensions,
-            # such as ensemble models.
-            node_x_flat = node_x.reshape(n_paths * batch_size, q, node_x.shape[-1])
-            node_base = base_samples[..., positions[name]].reshape(
-                n_paths * batch_size, q
-            )
+            node_model = self._node_models[node_name]
+            node_seed = seed + 2 * node_index
+            node_surrogate = self._node_surrogates.get(node_name)
+            if isinstance(node_model, EnsembleModel) or isinstance(
+                node_surrogate, RandomForestSurrogate
+            ):
+                # Ensemble models do not support multiple t-batch dimensions.
+                # Flatten paths and candidate batches, then use the native index
+                # sampler on one representative posterior to choose members.
+                batch_size = batch_shape.numel()
+                node_x_flat = node_x.reshape(n_paths * batch_size, q, node_x.shape[-1])
+                node_posterior = node_model.posterior(
+                    node_x_flat, observation_noise=False
+                )
+                if not isinstance(node_posterior, EnsemblePosterior):
+                    raise IncompatibilityError(
+                        f"Ensemble node '{node_name}' returned an unsupported "
+                        f"posterior type: {type(node_posterior).__name__}."
+                    )
+                values = node_posterior.values
+                ensemble_size = values.shape[-3]
+                weights = node_posterior.weights
+                supports_weights = (
+                    "weights" in signature(EnsemblePosterior.__init__).parameters
+                )
+                uniform_weights = torch.full_like(weights, 1.0 / ensemble_size)
+                if not supports_weights and not torch.allclose(
+                    weights, uniform_weights, rtol=0.0, atol=0.0
+                ):
+                    raise IncompatibilityError(
+                        f"Node '{node_name}' has nonuniform ensemble weights that "
+                        f"the installed BoTorch IndexSampler cannot preserve."
+                    )
+                if supports_weights:
+                    representative = EnsemblePosterior(values[0], weights=weights)
+                else:
+                    representative = EnsemblePosterior(values[0])
+                n_indices = n_paths if common_random_numbers else n_paths * batch_size
+                index_sampler = IndexSampler(
+                    sample_shape=torch.Size([n_indices]), seed=node_seed
+                )
+                index_sampler(representative)
+                member_indices = index_sampler.base_samples
+                if not isinstance(member_indices, Tensor):
+                    raise IncompatibilityError(
+                        f"The native index sampler produced no member indices for "
+                        f"node '{node_name}'."
+                    )
+                # Share member choices across candidates only, never across paths.
+                indices = member_indices.reshape(n_paths, -1)
+                indices = indices.expand(n_paths, batch_size).reshape(-1, 1, 1, 1)
+                indices = indices.expand(-1, 1, q, values.shape[-1])
+                samples[node_name] = values.gather(-3, indices).reshape(
+                    n_paths, *batch_shape, q, values.shape[-1]
+                )
+                continue
 
-            model = self._node_models[name]
-            node_posterior = model.posterior(node_x_flat)
-            node_samples = self._sample_node_posterior(
-                name, node_posterior, node_base, X
+            node_posterior = node_model.posterior(node_x, observation_noise=False)
+            if isinstance(node_posterior, EnsemblePosterior):
+                raise IncompatibilityError(
+                    f"Ensemble node '{node_name}' cannot be sampled with the native "
+                    f"Gaussian sampler."
+                )
+            normal_sampler = IIDNormalSampler(
+                sample_shape=torch.Size([1]), seed=node_seed
             )
-            samples[name] = node_samples.reshape(n_paths, *batch_shape, q, 1)
+            setattr(
+                normal_sampler,
+                "batch_range_override",
+                (1, 1 + len(batch_shape)) if common_random_numbers else (0, 0),
+            )
+            try:
+                node_samples = normal_sampler(node_posterior).squeeze(0)
+            except NotImplementedError as ex:
+                raise IncompatibilityError(
+                    f"Node '{node_name}' has an unsupported posterior for native "
+                    f"Gaussian network sampling: {type(node_posterior).__name__}."
+                ) from ex
+            if node_samples.shape != (n_paths, *batch_shape, q, node_model.num_outputs):
+                raise IncompatibilityError(
+                    f"Native sampling of node '{node_name}' produced shape "
+                    f"{tuple(node_samples.shape)}, expected "
+                    f"{(n_paths, *batch_shape, q, node_model.num_outputs)}."
+                )
+            samples[node_name] = node_samples
 
         return torch.cat([samples[name] for name in self.dag.final_nodes], dim=-1)
+
+    def _prepare_fixed_outputs(
+        self,
+        X: Tensor,
+        fixed_outputs: Mapping[str, Tensor] | None,
+        n_paths: int,
+    ) -> dict[str, Tensor]:
+        """Validate and broadcast observed node outputs to network paths.
+
+        Args:
+            X: Candidate configurations with shape ``(batch..., q, d)``.
+            fixed_outputs: Optional observed node outputs keyed by node name.
+                Values with a prefix of leading singleton axes are accepted.
+            n_paths: Number of joint network sample paths.
+
+        Returns:
+            The fixed outputs expanded to ``(n_paths, batch..., q, 1)``.
+
+        Raises:
+            IncompatibilityError: If a fixed output refers to an unknown node
+                or cannot be broadcast to the network-path shape.
+        """
+        fixed = {} if fixed_outputs is None else fixed_outputs
+        unknown = set(fixed) - set(self._node_names)
+        if unknown:
+            raise IncompatibilityError(
+                f"Fixed outputs provided for unknown nodes: {sorted(unknown)}."
+            )
+
+        target_shape = torch.Size([n_paths, *X.shape[:-2], X.shape[-2], 1])
+        prepared: dict[str, Tensor] = {}
+        for name, value in fixed.items():
+            try:
+                prepared[name] = value.to(X).expand(target_shape)
+            except RuntimeError as ex:
+                raise IncompatibilityError(
+                    f"Fixed output for node '{name}' with shape "
+                    f"{tuple(value.shape)} cannot be broadcast to "
+                    f"{tuple(target_shape)}."
+                ) from ex
+        return prepared
+
+    def get_node_model(self, node_name: str) -> Model:
+        """Retrieve the fitted model for one node.
+
+        Args:
+            node_name: The DAG node whose model is requested.
+
+        Returns:
+            The already fitted BoTorch node model.
+
+        Raises:
+            KeyError: If the node is not part of the DAG.
+            ModelNotTrainedError: If the node has no fitted model.
+        """
+        if node_name not in self.dag.node_by_name:
+            raise KeyError(node_name)
+        try:
+            return self._node_models[node_name]
+        except KeyError as ex:
+            raise ModelNotTrainedError(
+                f"Node '{node_name}' has no fitted model."
+            ) from ex
+
+    def get_node_model_columns(self, node_name: str) -> tuple[str, ...]:  # noqa: DOC502
+        """Retrieve the computational input columns of a node model.
+
+        Args:
+            node_name: The DAG node whose input order is requested.
+
+        Returns:
+            The computational input columns in model order.
+
+        Raises:
+            KeyError: If the node is not part of the DAG.
+        """
+        return self._node_model_columns[node_name]
+
+    def make_node_fantasies(
+        self,
+        node: MultiStepNode,
+        inputs: Tensor,
+        num_fantasies: int,
+        sampling_seed: int,
+    ) -> MultiStepModel:
+        """Create one network model with a batched fantasy node.
+
+        BoTorch's ``fantasize`` API samples the selected node's predictive
+        observation distribution and conditions a temporary local GP for each
+        fantasy sample. The campaign model and all real training data remain
+        untouched, and no fitting is performed. Each sample uses a deterministic
+        BoTorch sampler seed shared across candidate actions.
+
+        Args:
+            node: The node whose action is fantasized.
+            inputs: The complete local node input in fitted computational
+                representation, with shape ``(batch..., 1, d_node)``.
+            num_fantasies: Number of temporary fantasy observations to draw.
+            sampling_seed: Base seed for the deterministic fantasy samplers.
+
+        Returns:
+            A temporary network model whose selected node is batched over the
+            fantasy and input batch dimensions.
+
+        Raises:
+            IncompatibilityError: If the node model cannot fantasize or the local
+                inputs do not match its computational input shape.
+        """
+        from botorch.models.model import FantasizeMixin
+        from botorch.sampling.normal import SobolQMCNormalSampler
+        from gpytorch.settings import fast_pred_var
+
+        node_model = self.get_node_model(node.name)
+        if not isinstance(node_model, FantasizeMixin):
+            raise IncompatibilityError(
+                f"The fitted model of node '{node.name}' does not support fantasizing."
+            )
+
+        model_columns = self._node_model_columns[node.name]
+        if inputs.shape[-2] != 1 or inputs.shape[-1] != len(model_columns):
+            raise IncompatibilityError(
+                f"The fantasy input of node '{node.name}' must have shape "
+                f"(batch..., 1, {len(model_columns)}), but received "
+                f"{tuple(inputs.shape)}."
+            )
+
+        sampler = SobolQMCNormalSampler(
+            sample_shape=torch.Size([num_fantasies]), seed=sampling_seed
+        )
+        with fast_pred_var(False):
+            conditioned = node_model.fantasize(
+                X=inputs, sampler=sampler, observation_noise=None, propagate_grads=True
+            )
+        node_models = dict(self._node_models)
+        node_models[node.name] = cast(Model, conditioned)
+        return self.__class__.from_node_models(
+            self.dag,
+            node_models,
+            num_network_samples=self.num_network_samples,
+            sampling_seed=self.sampling_seed,
+        )
+
+    def transform_node_inputs(self, node_name: str, inputs: pd.DataFrame) -> Tensor:
+        """Transform experimental local inputs into fitted model inputs.
+
+        Args:
+            node_name: The DAG node whose inputs are transformed.
+            inputs: The node's own parameters and observed parent outputs in
+                experimental representation.
+
+        Returns:
+            A computational input tensor in the fitted column order and with the
+            node model's device and dtype.
+
+        Raises:
+            IncompatibilityError: If the retained fit search space is unavailable
+                or produces columns inconsistent with the node model.
+        """
+        node_model = self.get_node_model(node_name)
+        surrogate = self._node_surrogates.get(node_name)
+        if not isinstance(surrogate, Surrogate) or surrogate._searchspace is None:
+            raise IncompatibilityError(
+                f"The fitted surrogate for node '{node_name}' has no fit search "
+                f"space for local input transformation."
+            )
+
+        comp_rep = surrogate._searchspace.transform(inputs)
+        model_columns = self.get_node_model_columns(node_name)
+        if tuple(comp_rep.columns) != model_columns:
+            raise IncompatibilityError(
+                f"The fitted search space of node '{node_name}' produces input "
+                f"columns {list(comp_rep.columns)}, but the model uses "
+                f"{list(model_columns)}."
+            )
+        reference = next(node_model.parameters())
+        return torch.as_tensor(
+            comp_rep.to_numpy(dtype=float).copy(),
+            device=reference.device,
+            dtype=reference.dtype,
+        )
 
     def _validate_posterior_arguments(
         self,
@@ -904,136 +1096,6 @@ class MultiStepModel(Model, SurrogateProtocol):
                 f"Expected candidate configurations with {n_input} comp-rep "
                 f"dimensions, but received {X.shape[-1]}."
             )
-
-    def _sample_node_posterior(
-        self,
-        node_name: str,
-        posterior: Posterior,
-        base_samples: Tensor,
-        reference: Tensor,
-    ) -> Tensor:
-        """Draw one deterministic sample path from a node posterior.
-
-        Posteriors that expose base samples consume the standard-normal base
-        samples directly. Ensemble posteriors, which do not expose latent base
-        samples, instead map the base samples to deterministic member indices,
-        preserving reproducibility while remaining compatible with
-        non-Gaussian node models.
-
-        Args:
-            node_name: The node whose posterior is sampled.
-            posterior: The node posterior.
-            base_samples: Standard-normal base samples with shape ``(n_rows, q)``.
-            reference: A tensor providing device and dtype.
-
-        Returns:
-            Samples with shape ``(n_rows, q, 1)``.
-
-        Raises:
-            IncompatibilityError: If the posterior supports neither base
-                samples nor ensemble index sampling, or the base-sample shape
-                is incompatible.
-        """
-        if isinstance(posterior, EnsemblePosterior):
-            return self._sample_ensemble_posterior(
-                node_name, posterior, base_samples[:, 0], reference
-            )
-
-        try:
-            expected = posterior.base_sample_shape
-        except NotImplementedError as ex:
-            raise IncompatibilityError(
-                f"The posterior of node '{node_name}' of type "
-                f"'{type(posterior).__name__}' does not support deterministic "
-                f"sampling. Expected either base-sample support or an "
-                f"'{EnsemblePosterior.__name__}'."
-            ) from ex
-
-        if expected.numel() == 0:
-            node_base = torch.empty(0, device=reference.device, dtype=reference.dtype)
-        elif expected != base_samples.shape:
-            if expected.numel() != base_samples.numel():
-                raise IncompatibilityError(
-                    f"The posterior of node '{node_name}' expects base samples of "
-                    f"shape {tuple(expected)}, but {tuple(base_samples.shape)} were "
-                    f"provided."
-                )
-            node_base = base_samples.reshape(expected)
-        else:
-            node_base = base_samples
-
-        try:
-            samples = posterior.rsample_from_base_samples(torch.Size(), node_base)
-        except NotImplementedError as ex:
-            raise IncompatibilityError(
-                f"The posterior of node '{node_name}' of type "
-                f"'{type(posterior).__name__}' advertises base-sample support but "
-                f"does not implement 'rsample_from_base_samples'."
-            ) from ex
-
-        expected = torch.Size([base_samples.shape[0], base_samples.shape[-1], 1])
-        if samples.shape != expected:
-            if samples.numel() != expected.numel():
-                raise IncompatibilityError(
-                    f"The posterior of node '{node_name}' produced samples of "
-                    f"shape {tuple(samples.shape)}, but {tuple(expected)} was "
-                    f"expected."
-                )
-            samples = samples.reshape(expected)
-        return samples
-
-    def _sample_ensemble_posterior(
-        self,
-        node_name: str,
-        posterior: EnsemblePosterior,
-        base_samples: Tensor,
-        reference: Tensor,
-    ) -> Tensor:
-        """Select deterministic ensemble members for a node posterior.
-
-        Each network path selects exactly one ensemble member from its base
-        sample. That member applies to all ``q`` candidates of the path, so the
-        joint q-batch keeps a single member per path.
-
-        Args:
-            node_name: The node whose posterior is sampled.
-            posterior: The ensemble posterior.
-            base_samples: Standard-normal base samples with shape ``(n_rows,)``.
-            reference: A tensor providing device and dtype.
-
-        Returns:
-            Samples with shape ``(n_rows, q, 1)``.
-
-        Raises:
-            IncompatibilityError: If the posterior batch shape or ensemble
-                weights do not match the expected t-batch layout.
-        """
-        n_rows = base_samples.shape[0]
-        expected_batch_shape = torch.Size([n_rows])
-        values = posterior.values
-        if values.shape[:-3] != expected_batch_shape:
-            raise IncompatibilityError(
-                f"The ensemble posterior of node '{node_name}' has batch shape "
-                f"{tuple(values.shape[:-3])}, but "
-                f"{tuple(expected_batch_shape)} was expected for {n_rows} "
-                f"network path(s)."
-            )
-
-        weights = posterior.weights
-        if weights.ndim != 1 or weights.numel() != posterior.ensemble_size:
-            raise IncompatibilityError(
-                f"The ensemble posterior of node '{node_name}' has weights of "
-                f"shape {tuple(weights.shape)}, but a one-dimensional weight "
-                f"vector with {posterior.ensemble_size} entries was expected."
-            )
-
-        cumulative = weights.to(reference).cumsum(dim=-1)
-        uniform = 0.5 * (1.0 + torch.erf(base_samples.to(reference) / math.sqrt(2.0)))
-        indices = torch.searchsorted(cumulative, uniform).clamp(
-            max=posterior.ensemble_size - 1
-        )
-        rows = torch.arange(n_rows, device=reference.device)
-        return values[rows, indices]
 
 
 # Collect leftover original slotted classes processed by ``attrs.define``.
