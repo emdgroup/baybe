@@ -5,19 +5,22 @@ from __future__ import annotations
 import gc
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, NoReturn
 
 import narwhals.stable.v2 as nw
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from typing_extensions import Self, assert_never, override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
-from baybe.exceptions import _UnsupportedSearchSpaceAttributeError
+from baybe.exceptions import (
+    DeprecationError,
+    _UnsupportedSearchSpaceAttributeError,
+)
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
-from baybe.searchspace.candidates import TableCandidates
+from baybe.searchspace.candidates import ProductCandidates, TableCandidates
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -89,9 +92,7 @@ class SearchSpace(SerialMixin):
         return to_string(self.__class__.__name__, *fields)
 
     def __attrs_post_init__(self):
-        """Perform validation."""
         validate_parameters(self.parameters)
-        validate_constraints(self.constraints, self.parameters)
 
     def _get_invalid_configurations(self, df: IntoDataFrame, /) -> IntoDataFrame:
         """Return the configurations that do not belong to the search space."""
@@ -207,11 +208,21 @@ class SearchSpace(SerialMixin):
         return (*self.discrete.parameters, *self.continuous.parameters)
 
     @property
-    def constraints(self) -> tuple[Constraint, ...]:
-        """Return the constraints of the search space."""
-        return (
-            *self.discrete.batch_constraints,
-            *self.continuous.constraints,
+    def constraints(self) -> NoReturn:
+        """Deprecated!"""
+        filters_field = fields(ProductCandidates).filters.name
+        constraints_field = fields(SubspaceContinuous).constraints.name
+        batch_field = fields(SubspaceDiscrete).batch_constraints.name
+        raise DeprecationError(
+            f"'{type(self).__name__}.constraints' is no longer available. "
+            f"For discrete spaces, the concept of space-filtering constraints is only "
+            f"meaningful when working with filtered candidate set representations. "
+            f"In this specific case, they can still be accessed via "
+            f"'{ProductCandidates.__name__}.{filters_field}'. "
+            f"Discrete batch constraints can be retrieved via "
+            f"'{SubspaceDiscrete.__name__}.{batch_field}'. "
+            f"For continuous constraints, use "
+            f"'{SubspaceContinuous.__name__}.{constraints_field}'."
         )
 
     @property

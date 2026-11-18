@@ -6,7 +6,7 @@ import gc
 import warnings
 from collections.abc import Collection, Iterator, Sequence
 from math import prod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NoReturn
 
 import narwhals.stable.v2 as nw
 import numpy as np
@@ -719,6 +719,21 @@ class SubspaceDiscrete(SerialMixin):
         )
 
     # >>>>>>>>>> Deprecation
+    @property
+    def constraints(self) -> NoReturn:
+        """Deprecated!"""
+        filters_field = fields(ProductCandidates).filters.name
+        batch_field = fields(SubspaceDiscrete).batch_constraints.name
+        raise DeprecationError(
+            f"'{type(self).__name__}.constraints' is no longer available. "
+            f"For discrete spaces, the concept of space-filtering constraints is only "
+            f"meaningful when working with filtered candidate set representations. "
+            f"In this specific case, they can still be accessed via "
+            f"'{ProductCandidates.__name__}.{filters_field}'. "
+            f"Discrete batch constraints can be retrieved via "
+            f"'{type(self).__name__}.{batch_field}'."
+        )
+
     @property
     def constraints_batch(self) -> tuple[DiscreteBatchConstraint, ...]:
         """Deprecated! Use :attr:`batch_constraints` instead."""
