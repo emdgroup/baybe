@@ -449,7 +449,7 @@ def add_noise_to_perturb_degenerate_rows(
 def _fuzzy_anti_join(
     left: IntoFrame, right: IntoDataFrame, tolerances: dict[str, float], /
 ) -> nw.LazyFrame:
-    """Return the rows of that do not fuzzily match any row of the second dataframe.
+    """Return the rows of the first dataframe that have no fuzzy match in the second.
 
     Columns for which a tolerance is specified are considered a match if the absolute
     deviation is within that tolerance. All other columns require an exact match.
@@ -654,8 +654,6 @@ def _apply_filter(lf: nw.LazyFrame, filter_: Filter, /) -> nw.LazyFrame:
         TypeError: If the filter criterion cannot be interpreted as a filter or if a
             filter expression does not evaluate to a single Boolean column.
     """
-    from baybe.constraints.base import DiscreteFilteringConstraint
-
     match filter_:
         case nw.Expr():
             # Narwhals does not enforce that the expression evaluates to a single

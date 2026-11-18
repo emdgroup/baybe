@@ -6,7 +6,7 @@ import gc
 import warnings
 from collections.abc import Collection, Iterator, Sequence
 from math import prod
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, NoReturn
 
 import narwhals.stable.v2 as nw
 import numpy as np
@@ -32,6 +32,7 @@ from baybe.searchspace.candidates import (
     EmptyCandidates,
     ProductCandidates,
     TableCandidates,
+    _get_invalid_configurations,
 )
 from baybe.searchspace.utils import (
     build_constrained_product,
@@ -43,6 +44,7 @@ from baybe.serialization.core import _CONSTRUCTOR_FIELD
 from baybe.settings import active_settings
 from baybe.utils.basic import (
     UNSPECIFIED,
+    IterationMode,
     UnspecifiedType,
     iter_indices,
     to_tuple,
@@ -718,6 +720,21 @@ class SubspaceDiscrete(SerialMixin):
 
     # >>>>>>>>>> Deprecation
     @property
+    def constraints(self) -> NoReturn:
+        """Deprecated!"""
+        filters_field = fields(ProductCandidates).filters.name
+        batch_field = fields(SubspaceDiscrete).batch_constraints.name
+        raise DeprecationError(
+            f"'{type(self).__name__}.constraints' is no longer available. "
+            f"For discrete spaces, the concept of space-filtering constraints is only "
+            f"meaningful when working with filtered candidate set representations. "
+            f"In this specific case, they can still be accessed via "
+            f"'{ProductCandidates.__name__}.{filters_field}'. "
+            f"Discrete batch constraints can be retrieved via "
+            f"'{type(self).__name__}.{batch_field}'."
+        )
+
+    @property
     def constraints_batch(self) -> tuple[DiscreteBatchConstraint, ...]:
         """Deprecated! Use :attr:`batch_constraints` instead."""
         replacement = fields(type(self)).batch_constraints.name
@@ -766,7 +783,7 @@ class SubspaceDiscrete(SerialMixin):
     def iter_subsets(
         self,
         *,
-        mode: Literal["ordered", "shuffled", "with_replacement"] = "ordered",
+        mode: IterationMode = "ordered",
     ) -> Iterator[Self]:
         """Yield a subspace for each candidate subset.
 
@@ -816,6 +833,12 @@ class SubspaceDiscrete(SerialMixin):
         return evolve(
             self, candidates=self.candidates.filter(*filters, complement=complement)
         )
+
+    def _get_invalid_configurations(self, df: IntoDataFrameT, /) -> IntoDataFrameT:
+        """Return the configurations that do not belong to the subspace."""
+        df_nw = nw.from_native(df, eager_only=True)
+        invalid = _get_invalid_configurations(df_nw, self.candidates)
+        return invalid.collect().to_native()
 
     def transform(
         self,

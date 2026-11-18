@@ -7,6 +7,7 @@ import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 import pytest
+from attrs import evolve
 from exceptiongroup import ExceptionGroup
 from pandas.testing import assert_frame_equal
 
@@ -15,6 +16,9 @@ from baybe.constraints import (
     ContinuousLinearConstraint,
     DiscreteBatchConstraint,
     DiscreteLinearConstraint,
+    DiscretePermutationInvarianceConstraint,
+    DiscreteSelectionConstraint,
+    ThresholdCondition,
 )
 from baybe.exceptions import (
     EmptySearchSpaceError,
@@ -543,3 +547,163 @@ def test_sample_from_polytope_mixed_constraints_with_interpoint():
         # Verify interpoint constraint is satisfied across the batch
         interpoint_constraint_result = samples["Conti_finite1"].sum()
         assert np.isclose(interpoint_constraint_result, 0.6, atol=1e-6)
+
+
+_CAT_NUM_PARAMETERS = [
+    CategoricalParameter("Cat", ("A", "B")),
+    NumericalDiscreteParameter("Num", (1.0, 2.0, 3.0)),
+]
+_PRODUCT_SEARCHSPACE = SearchSpace.from_product(_CAT_NUM_PARAMETERS)
+_CONTINUOUS_PARAMETER = NumericalContinuousParameter("x", (0.0, 1.0))
+
+
+@pytest.mark.parametrize(
+    ("searchspace", "configurations"),
+    [
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": 1.0}, {"Cat": "B", "Num": 3.0}],
+            id="candidates",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": 1.0, "Extra": "ignored"}],
+            id="extra_column",
+        ),
+        pytest.param(
+            # Of the equivalent configurations (1, 2) and (2, 1), only the first is
+            # represented in the candidate set to represent the equivalence class, but
+            # the second is also part of the equivalence class and thus valid
+            SearchSpace.from_product(
+                [
+                    NumericalDiscreteParameter("p1", (1.0, 2.0)),
+                    NumericalDiscreteParameter("p2", (1.0, 2.0)),
+                ],
+                [DiscretePermutationInvarianceConstraint(["p1", "p2"])],
+            ),
+            [{"p1": 2.0, "p2": 1.0}],
+            id="equivalence_class",
+        ),
+        pytest.param(
+            SearchSpace.from_product([_CONTINUOUS_PARAMETER]),
+            [{"x": 0.5}],
+            id="continuous_only",
+        ),
+        pytest.param(
+            SearchSpace.from_product(
+                [CategoricalParameter("Cat", ("A", "B")), _CONTINUOUS_PARAMETER]
+            ),
+            [{"Cat": "A", "x": 0.5}],
+            id="hybrid",
+        ),
+    ],
+)
+def test_get_invalid_configurations_passes(searchspace, configurations):
+    """Configurations belonging to the search space are not reported as invalid."""
+    assert searchspace._get_invalid_configurations(pd.DataFrame(configurations)).empty
+
+
+@pytest.mark.parametrize(
+    ("searchspace", "configurations", "n_invalid"),
+    [
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": "abc"}],
+            1,
+            id="non_numeric",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": 999}],
+            1,
+            id="out_of_tolerance",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "Z", "Num": 1.0}],
+            1,
+            id="invalid_category",
+        ),
+        pytest.param(
+            SearchSpace.from_product(
+                [CategoricalParameter("Cat", ("A", "B"), active_values=("A",))]
+            ),
+            [{"Cat": "B"}],
+            1,
+            id="inactive_value",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": 1.0}, {"Cat": "B"}],
+            1,
+            id="missing_value",
+        ),
+        pytest.param(
+            SearchSpace.from_product(
+                _CAT_NUM_PARAMETERS,
+                [
+                    DiscreteSelectionConstraint(
+                        parameters=["Num"],
+                        conditions=[ThresholdCondition(threshold=1.5, operator=">=")],
+                    )
+                ],
+            ),
+            [{"Cat": "A", "Num": 1.0}],
+            1,
+            id="constraint_violation",
+        ),
+        pytest.param(
+            evolve(
+                _PRODUCT_SEARCHSPACE,
+                discrete=_PRODUCT_SEARCHSPACE.discrete.filter(nw.col("Cat") != "B"),
+            ),
+            [{"Cat": "B", "Num": 1.0}],
+            1,
+            id="filtered",
+        ),
+        pytest.param(
+            SearchSpace.from_product(
+                [CategoricalParameter("Cat", ("A", "B")), _CONTINUOUS_PARAMETER]
+            ),
+            [{"Cat": "A", "x": 1.7}],
+            1,
+            id="continuous_out_of_bounds",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [{"Cat": "A", "Num": "abc"}, {"Cat": "A", "Num": 1.0}],
+            1,
+            id="mixed_types",
+        ),
+        pytest.param(
+            _PRODUCT_SEARCHSPACE,
+            [
+                {"Cat": "Z", "Num": 1.0},
+                {"Cat": "A", "Num": 1.0},
+                {"Cat": "Y", "Num": 1.0},
+            ],
+            2,
+            id="multiple_invalid",
+        ),
+        pytest.param(
+            # Both equivalent configurations satisfy the filters individually, but
+            # only one of them survives the deduplicating constraint as a batch
+            SearchSpace.from_product(
+                [
+                    NumericalDiscreteParameter("p1", (1.0, 2.0)),
+                    NumericalDiscreteParameter("p2", (1.0, 2.0)),
+                ],
+                [DiscretePermutationInvarianceConstraint(["p1", "p2"])],
+            ),
+            [{"p1": 1.0, "p2": 2.0}, {"p1": 2.0, "p2": 1.0}],
+            1,
+            id="duplicate_permutation",
+        ),
+    ],
+)
+def test_get_invalid_configurations_flags_invalid(
+    searchspace, configurations, n_invalid
+):
+    """Configurations outside the search space are reported as invalid."""
+    invalid = searchspace._get_invalid_configurations(pd.DataFrame(configurations))
+    assert len(invalid) == n_invalid

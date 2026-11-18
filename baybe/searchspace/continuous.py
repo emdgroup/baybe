@@ -492,6 +492,22 @@ class SubspaceContinuous(SerialMixin):
             ],
         )
 
+    def _get_invalid_configurations(self, df: IntoDataFrameT, /) -> IntoDataFrameT:
+        """Return the configurations that do not belong to the subspace."""
+        df_nw = nw.from_native(df, eager_only=True)
+        if self.is_empty:
+            return df_nw.head(0).to_native()
+
+        # TODO: Replace with a parameter-provided expression once Parameter exposes one.
+        in_bounds = nw.all_horizontal(
+            *(
+                nw.col(p.name).is_between(p.bounds.lower, p.bounds.upper)
+                for p in self.parameters
+            ),
+            ignore_nulls=False,
+        )
+        return df_nw.filter(~in_bounds).to_native()
+
     def transform(
         self,
         df: IntoDataFrameT,

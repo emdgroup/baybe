@@ -1479,3 +1479,17 @@ def test_deprecated_toggle_discrete_candidates_too_many_booleans():
         campaign.toggle_discrete_candidates(
             pd.DataFrame({"a": [0]}), True, True, False, True
         )
+
+
+def test_deprecated_subspace_constraints_property():
+    """Accessing ``constraints`` on ``SubspaceDiscrete`` raises a deprecation error."""
+    subspace = CategoricalParameter("p", ["a", "b"]).to_subspace()
+    with pytest.raises(DeprecationError, match="no longer available"):
+        subspace.constraints
+
+
+def test_deprecated_searchspace_constraints_property():
+    """Accessing ``constraints`` on ``SearchSpace`` raises a deprecation error."""
+    searchspace = SearchSpace.from_product([CategoricalParameter("p", ["a", "b"])])
+    with pytest.raises(DeprecationError, match="no longer available"):
+        searchspace.constraints

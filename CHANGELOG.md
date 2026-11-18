@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `df_apply_permutation_augmentation` has a different interface and now expects
   permutation groups instead of column groups
 - `ParameterSelectorProtocol.__call__` now declares its input as positional-only
+- `SequentialMetaRecommender.recommenders` is now a `tuple` instead of a `list`
 - Condition objects are now immutable
 - `SubSelectionCondition` rejects selection entries of different types as well as
   NaN entries
@@ -111,6 +112,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   provided via positional filter arguments
 - Parameter-specific kernel overrides for conveniently composing Gaussian process
   kernels on individual parameter dimensions
+- `LLMRecommender` for LLM-based experimental design via LiteLLM,
+  available through the optional `llm` dependency group
+- `TwoPhaseMetaRecommender.with_llm_initial_recommender` and
+  `SequentialMetaRecommender.with_alternating_llm_recommender` convenience constructors
+  built on top of `LLMRecommender`: the former warm-starts a campaign with the LLM and
+  then switches to another recommender, the latter alternates between the two
 
 ### Changed
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
@@ -180,9 +187,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SubspaceDiscrete(candidates=TableCandidates(parameters, exp_rep))` instead)
 - `SubspaceDiscrete` ignores any `empty_encoding` when provided
 - `SubspaceDiscrete` no longer accepts a `comp_rep` argument
-- `SubspaceDiscrete.constraints` attribute (use `batch_constraints` to provide and
-  access batch-level constraints; filtering constraints are only needed during subspace
-  construction and are thus no longer stored).
+- `SearchSpace.constraints` and `SubspaceDiscrete.constraints`.
+  For discrete spaces, the concept of space-filtering constraints is only meaningful
+  when working with filtered candidate set representations. In this specific case, they
+  can still be accessed via `ProductCandidates.filters`. Discrete batch constraints can
+  be retrieved via `SubspaceDiscrete.batch_constraints`. For continuous constraints,
+  use `SubspaceContinuous.constraints`.
 - `SubspaceDiscrete.constraints_batch` property (use `batch_constraints` instead)
 - `SubspaceDiscrete.exp_rep` attribute (use `get_candidates()` instead)
 - `SubspaceDiscrete.comp_rep` attribute (use `transform(get_candidates())` instead)
@@ -202,6 +212,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `deserialize_dataframe` dictionary input specifying a pandas-only constructor
   (e.g. `from_records`) in favor of `narwhals.DataFrame`'s constructors
   (e.g. `from_dict`, `from_dicts`)
+
+## [0.15.2] - 2026-11-13
+### Fixed
+- `BotorchRecommender` recommendation for discrete and hybrid search spaces no longer
+  fails with `KeyError` when candidate dataframes have a named index
+- With `allow_recommending_pending_experiments=False`, campaign-based recommendation no
+  longer returns pending experiments or drops valid candidates in discrete search spaces
+  when the search space was created from a dataframe with a custom index or when the
+  same pending experiment was provided more than once
+
+## [0.15.1] - 2026-11-11
+### Added
+- Support for Python 3.15
+
+### Fixed
+- Analytic desirability posterior means for minimized targets with affine or identity
+  transformations now include the minimization offset, matching sampled objectives
+- `SHAPInsight` now uses marginal posteriors, avoiding unnecessary covariance
+  computation and supporting independent surrogates with multiple rows
 
 ## [0.15.0] - 2026-06-11
 ### Breaking Changes

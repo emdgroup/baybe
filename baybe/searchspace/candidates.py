@@ -246,5 +246,55 @@ class TableCandidates(CandidatesProtocol):
         return self._dataframe.lazy()
 
 
+def _get_invalid_configurations(
+    configurations: nw.DataFrame, candidates: CandidatesProtocol, /
+) -> nw.LazyFrame:
+    """Return the configurations not contained in a candidate set.
+
+    Args:
+        configurations: The parameter configurations to validate.
+        candidates: The candidate set to validate against.
+
+    Returns:
+        The lazy subset of configurations not contained in the candidates.
+    """
+    # IMPROVE: For now, we use a generic join-based approach on the lazy dataframe
+    #   representation, which works for all candidate types. If needed, we may
+    #   specialize the implementation per candidate type and potentially extend the
+    #   CandidatesProtocol itself.
+
+    names = [p.name for p in candidates.parameters]
+    if not names:
+        return configurations.lazy().head(0)
+
+    lf = configurations.lazy()
+    if not isinstance(candidates, ProductCandidates):
+        return lf.join(candidates._to_lazy(), on=names, how="anti")
+
+    # >>>>> Workaround for equivalence class constraints
+    # Candidate generation stores only one representative per equivalence class, so a
+    # pure membership test rejects equivalent configurations (e.g. permutations).
+    # Re-applying the filters avoids those false positives and does not require
+    # materializing the product.
+
+    # TODO: This part needs to be reworked, but we wait until the corresponding
+    #   constraints are refactored since the "store-one-arbitrary-representative"
+    #   approach may be replaced altogether. Potentially, this will allow us to
+    #   go back to a pure membership test in the future, provided the candidate
+    #   representation can answer it.
+    in_grid = lf.filter(
+        nw.all_horizontal(
+            *(
+                nw.col(p.name).is_in(list(p.active_values))
+                for p in candidates.parameters
+            ),
+            ignore_nulls=False,
+        )
+    )
+    valid = _filter_dataframe(in_grid, *candidates.filters)
+    return lf.join(valid, on=names, how="anti")
+    # <<<<<
+
+
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

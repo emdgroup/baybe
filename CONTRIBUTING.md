@@ -54,8 +54,8 @@ we recommend the following workflow:
    tox -e fulltest-py314
    ```
 
-   Other tox tests that are useful to verify your work locally are `tox -e lint-py314`,
-   `tox -e typecheck-py314` and `tox -e coretest-py314`.
+   Other tox tests that are useful to verify your work locally are `tox -e lint-py315`,
+   `tox -e typecheck-py315` and `tox -e coretest-py315`.
 
    If you want to challenge your machine, you can run all checks in all Python versions
    in parallel via:
