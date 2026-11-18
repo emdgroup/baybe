@@ -18,7 +18,6 @@ from baybe.exceptions import (
     LLMCallError,
     LLMMalformedResponseError,
     LLMResponseError,
-    NotEnoughPointsLeftError,
     OptionalImportError,
 )
 from baybe.objectives.base import Objective
@@ -29,7 +28,6 @@ from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.serialization import SerialMixin, converter
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import fuzzy_row_match
 from baybe.utils.metadata import Metadata
 
 # Keys that are controlled by the recommender itself and must not be overridden: the
@@ -235,7 +233,6 @@ class LLMRecommender(PureRecommender, SerialMixin):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         try:
@@ -277,38 +274,6 @@ class LLMRecommender(PureRecommender, SerialMixin):
                     f"even after a recovery attempt. Initial problem: {initial_error} "
                     f"Remaining problem after recovery: {recovery_error}"
                 ) from recovery_error
-
-    @override
-    def _recommend_with_discrete_parts(
-        self,
-        searchspace: SearchSpace,
-        batch_size: int,
-        pending_experiments: pd.DataFrame | None,
-    ) -> pd.DataFrame:
-        # The inherited discrete dispatch extracts candidate indices and reconstructs
-        # stored rows. LLM responses instead contain generated values, so that path
-        # would change the recommendations or fail for symmetry-equivalent variants.
-        # Override it locally to preserve output without changing the parent class.
-        candidates_exp, _ = searchspace.discrete.get_candidates()
-        # This recommender supports subset-generating constraints. Only the base
-        # dispatcher's candidate-count check must be repeated, before any model call.
-        if (
-            searchspace.type is SearchSpaceType.DISCRETE
-            and len(candidates_exp) < batch_size
-        ):
-            raise NotEnoughPointsLeftError(
-                f"Using the current settings, there are fewer than {batch_size} "
-                f"possible data points left to recommend."
-            )
-        # TODO: Remove this override when discrete hooks return dataframes (#837).
-        rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
-        rec.index = fuzzy_row_match(
-            searchspace.discrete.exp_rep,
-            rec,
-            searchspace.discrete.parameters,
-            keep_unmatched=True,
-        )
-        return rec
 
     @override
     def __str__(self) -> str:
