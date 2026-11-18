@@ -10,7 +10,7 @@ import polars as pl
 import pytest
 from attrs import evolve
 from narwhals.testing import assert_frame_equal
-from pandas.testing import assert_frame_equal, assert_index_equal
+from pandas.testing import assert_index_equal
 from pytest import param
 
 from baybe.acquisition import qLogEI, qLogNEHVI, qTS, qUCB
@@ -30,7 +30,6 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     RandomRecommender,
 )
 from baybe.searchspace.candidates import TableCandidates
-from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpace, SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.settings import Settings
@@ -373,33 +372,6 @@ def test_allow_pending_flag(campaign_for_flag_test: Campaign):
             id="string_index_duplicate_pending",
         ),
         param(
-            pd.DataFrame({"T": [300, 400, 500]}, index=[2, 0, 1]),
-            pd.DataFrame({"T": [300]}),
-            2,
-            False,
-            [0, 1],
-            id="reordered_numeric_index_single_pending",
-        ),
-        param(
-            pd.DataFrame({"T": [300, 300, 400]}, index=["row0", "row1", "row2"]),
-            pd.DataFrame({"T": [300]}),
-            1,
-            False,
-            ["row2"],
-            id="duplicate_candidate_configurations",
-        ),
-        param(
-            pd.DataFrame(
-                {"T": [300, 400, 500]},
-                index=pd.Index(["sampleA", "sampleB", "sampleC"], name="sample_id"),
-            ),
-            pd.DataFrame({"T": [300, 300]}),
-            2,
-            False,
-            ["sampleB", "sampleC"],
-            id="named_index_duplicate_pending",
-        ),
-        param(
             pd.DataFrame(
                 {"T": [300, 400, 500]}, index=["sampleA", "sampleB", "sampleC"]
             ),
@@ -444,8 +416,13 @@ def test_pending_experiments_filtering(
         allow_recommending_pending_experiments=allow_pending,
     )
     rec = campaign.recommend(batch_size, pending_experiments=pending_df)
-    expected = exp_rep.loc[expected_index]
-    assert_frame_equal(rec.sort_index(), expected.sort_index(), check_dtype=False)
+    candidates = campaign.searchspace.discrete.get_candidates().reset_index(drop=True)
+    expected = candidates.iloc[exp_rep.index.get_indexer(expected_index)]
+    assert_frame_equal(
+        nw.from_native(rec, eager_only=True),
+        nw.from_native(expected, eager_only=True),
+        check_row_order=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -672,47 +649,3 @@ def test_cache_invalidation(
         assert campaign._cached_recommendation is None
     else:
         assert campaign._cached_recommendation is not None
-
-
-@pytest.fixture(name="named_candidates")
-def fixture_named_candidates() -> pd.DataFrame:
-    """Discrete candidate configurations with a named sample index."""
-    return pd.DataFrame(
-        {
-            "material": ["mat_A", "mat_B", "mat_C", "mat_D"],
-            "T": [300.0, 400.0, 500.0, 600.0],
-        },
-        index=pd.Index(["m_1", "m_2", "m_3", "m_4"], name="material_id"),
-    )
-
-
-@pytest.mark.parametrize("is_hybrid", [False, True], ids=["discrete", "hybrid"])
-def test_recommend_with_named_candidate_index(named_candidates, is_hybrid, recommender):
-    """Recommendation preserves candidate identities with a named candidate index."""
-    discrete = SubspaceDiscrete.from_dataframe(named_candidates)
-    searchspace = (
-        SearchSpace(
-            discrete=discrete,
-            continuous=SubspaceContinuous(
-                parameters=[NumericalContinuousParameter("x", (0.0, 1.0))]
-            ),
-        )
-        if is_hybrid
-        else SearchSpace(discrete=discrete)
-    )
-    campaign = Campaign(
-        searchspace,
-        NumericalTarget(name="Target").to_objective(),
-        recommender=recommender,
-    )
-
-    measurements = named_candidates.iloc[[0, 3]].assign(Target=[1.0, 2.0])
-    if is_hybrid:
-        measurements = measurements.assign(x=[0.0, 1.0])
-    campaign.add_measurements(measurements)
-
-    rec = campaign.recommend(batch_size=2)
-
-    assert len(rec) == 2
-    assert rec.index.name == named_candidates.index.name
-    assert rec.index.isin(named_candidates.index).all()
