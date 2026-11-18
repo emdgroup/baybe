@@ -182,7 +182,7 @@ def parse_llm_response(
     # TODO: Batch constraints and duplicates concern the batch as a whole and are
     #   therefore still validated here instead of by the search space. Move them once
     #   the search space offers a batch-level validation.
-    for constraint in searchspace.discrete.constraints_batch:
+    for constraint in searchspace.discrete.batch_constraints:
         param_name = constraint.parameters[0]
         unique_values = df[param_name].unique()
         if len(unique_values) > 1:
