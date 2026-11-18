@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import pytest
 from attrs import evolve
-from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from exceptiongroup import ExceptionGroup
 from pandas.testing import assert_frame_equal
 
@@ -558,16 +557,6 @@ _PRODUCT_SEARCHSPACE = SearchSpace.from_product(_CAT_NUM_PARAMETERS)
 _CONTINUOUS_PARAMETER = NumericalContinuousParameter("x", (0.0, 1.0))
 
 
-def _make_searchspace_without_cat_b() -> SearchSpace:
-    """Create a search space whose configurations with ``Cat=B`` are filtered."""
-    discrete = _PRODUCT_SEARCHSPACE.discrete
-    is_selectable = (discrete.exp_rep["Cat"] != "B").to_numpy()
-    return evolve(
-        _PRODUCT_SEARCHSPACE,
-        discrete=FilteredSubspaceDiscrete.from_subspace(discrete, is_selectable),
-    )
-
-
 @pytest.mark.parametrize(
     ("searchspace", "configurations"),
     [
@@ -678,7 +667,10 @@ def test_validate_configurations_passes(searchspace, configurations):
             id="constraint_violation",
         ),
         pytest.param(
-            _make_searchspace_without_cat_b(),
+            evolve(
+                _PRODUCT_SEARCHSPACE,
+                discrete=_PRODUCT_SEARCHSPACE.discrete.filter(nw.col("Cat") != "B"),
+            ),
             [{"Cat": "B", "Num": 1.0}],
             r"- Cat=B, Num=1.0: currently not selectable",
             id="filtered",
