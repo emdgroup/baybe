@@ -42,7 +42,7 @@ _THRESHOLD_OPERATORS: dict[ThresholdOperator, Callable] = {
     ">=": ops.ge,
 }
 _TOLERANCE_OPERATORS = ["=", "==", "!="]
-_LOGIC_COMBINERS = {
+_LOGIC_OPERATORS = {
     "AND": ops.and_,
     "OR": ops.or_,
     "XOR": ops.ne,
@@ -52,7 +52,7 @@ _LOGIC_COMBINERS = {
 #   implementation.
 _threshold_operators = _THRESHOLD_OPERATORS
 _valid_tolerance_operators = _TOLERANCE_OPERATORS
-_valid_logic_combiners = _LOGIC_COMBINERS
+_valid_logic_combiners = _LOGIC_OPERATORS
 
 
 def _selection_dtypes(value: Any) -> tuple[type, ...]:
