@@ -93,28 +93,14 @@ class SearchSpace(SerialMixin):
         validate_parameters(self.parameters)
         validate_constraints(self.constraints, self.parameters)
 
-    def _validate_configurations(self, df: pd.DataFrame, /) -> None:
-        """Validate that all configurations in ``df`` belong to the search space.
-
-        A configuration belongs to the search space if its discrete part belongs to the
-        discrete subspace and its continuous part belongs to the continuous subspace.
-        For the respective checks and the raised errors, see
-        ``SubspaceDiscrete._validate_configurations`` and
-        ``SubspaceContinuous._validate_configurations``.
-
-        Note that this is not a membership check in the strict sense: It only validates
-        the configurations and raises an error if any configuration is invalid.
-
-        Args:
-            df: The configurations to validate. Additional columns are ignored.
-        """
-        # TODO: This could maybe be changed into a full _contains method, but since this
-        # currently only validates and e.g. does not return a (potential series of)
-        # boolean, it has not been named accordingly.
-        # TODO: The continuous part is only validated if the discrete part passes, so
-        #   failures of both parts are not reported together.
-        self.discrete._validate_configurations(df)
-        self.continuous._validate_configurations(df)
+    def _get_invalid_configurations(self, df: IntoDataFrame, /) -> IntoDataFrame:
+        """Return the configurations that do not belong to the search space."""
+        df_nw = nw.from_native(df, eager_only=True)
+        invalid = [
+            nw.from_native(subspace._get_invalid_configurations(df_nw), eager_only=True)
+            for subspace in (self.discrete, self.continuous)
+        ]
+        return nw.concat([df_nw.head(0), *invalid], how="vertical").unique().to_native()
 
     @classmethod
     def from_parameter(cls, parameter: Parameter) -> SearchSpace:

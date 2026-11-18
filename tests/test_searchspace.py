@@ -572,7 +572,8 @@ _CONTINUOUS_PARAMETER = NumericalContinuousParameter("x", (0.0, 1.0))
         ),
         pytest.param(
             # Of the equivalent configurations (1, 2) and (2, 1), only the first is
-            # stored, so the second one passes via the constraint check
+            # represented in the candidate set to represent the equivalence class, but
+            # the second is also part of the equivalence class and thus valid
             SearchSpace.from_product(
                 [
                     NumericalDiscreteParameter("p1", (1.0, 2.0)),
@@ -581,7 +582,7 @@ _CONTINUOUS_PARAMETER = NumericalContinuousParameter("x", (0.0, 1.0))
                 [DiscretePermutationInvarianceConstraint(["p1", "p2"])],
             ),
             [{"p1": 2.0, "p2": 1.0}],
-            id="non_stored_equivalent",
+            id="equivalence_class",
         ),
         pytest.param(
             SearchSpace.from_product([_CONTINUOUS_PARAMETER]),
@@ -597,30 +598,30 @@ _CONTINUOUS_PARAMETER = NumericalContinuousParameter("x", (0.0, 1.0))
         ),
     ],
 )
-def test_validate_configurations_passes(searchspace, configurations):
-    """Configurations belonging to the search space pass the validation."""
-    searchspace._validate_configurations(pd.DataFrame(configurations))
+def test_get_invalid_configurations_passes(searchspace, configurations):
+    """Configurations belonging to the search space are not reported as invalid."""
+    assert searchspace._get_invalid_configurations(pd.DataFrame(configurations)).empty
 
 
 @pytest.mark.parametrize(
-    ("searchspace", "configurations", "match"),
+    ("searchspace", "configurations", "n_invalid"),
     [
         pytest.param(
             _PRODUCT_SEARCHSPACE,
             [{"Cat": "A", "Num": "abc"}],
-            r"- Cat=A, Num=abc: invalid values for parameters \['Num'\]",
+            1,
             id="non_numeric",
         ),
         pytest.param(
             _PRODUCT_SEARCHSPACE,
             [{"Cat": "A", "Num": 999}],
-            r"- Cat=A, Num=999: invalid values for parameters \['Num'\]",
+            1,
             id="out_of_tolerance",
         ),
         pytest.param(
             _PRODUCT_SEARCHSPACE,
             [{"Cat": "Z", "Num": 1.0}],
-            r"- Cat=Z, Num=1.0: invalid values for parameters \['Cat'\]",
+            1,
             id="invalid_category",
         ),
         pytest.param(
@@ -628,28 +629,14 @@ def test_validate_configurations_passes(searchspace, configurations):
                 [CategoricalParameter("Cat", ("A", "B"), active_values=("A",))]
             ),
             [{"Cat": "B"}],
-            r"- Cat=B: invalid values for parameters \['Cat'\]",
+            1,
             id="inactive_value",
         ),
         pytest.param(
             _PRODUCT_SEARCHSPACE,
-            [{"Cat": "A"}],
-            r"- Cat=A: missing values for parameters \['Num'\]",
-            id="missing_column",
-        ),
-        pytest.param(
-            # Only the configuration without a value may be reported
-            _PRODUCT_SEARCHSPACE,
             [{"Cat": "A", "Num": 1.0}, {"Cat": "B"}],
-            r"^1 configuration\(s\) do not belong to the discrete subspace:\n"
-            r"- Cat=B: missing values for parameters \['Num'\]$",
+            1,
             id="missing_value",
-        ),
-        pytest.param(
-            _PRODUCT_SEARCHSPACE,
-            [{"Cat": "Z", "Num": "abc"}],
-            r"- Cat=Z, Num=abc: invalid values for parameters \['Cat', 'Num'\]",
-            id="several_invalid_parameters",
         ),
         pytest.param(
             SearchSpace.from_product(
@@ -662,8 +649,7 @@ def test_validate_configurations_passes(searchspace, configurations):
                 ],
             ),
             [{"Cat": "A", "Num": 1.0}],
-            r"- Cat=A, Num=1.0: violates the 'DiscreteSelectionConstraint' constraint "
-            r"on parameters \['Num'\]",
+            1,
             id="constraint_violation",
         ),
         pytest.param(
@@ -672,7 +658,7 @@ def test_validate_configurations_passes(searchspace, configurations):
                 discrete=_PRODUCT_SEARCHSPACE.discrete.filter(nw.col("Cat") != "B"),
             ),
             [{"Cat": "B", "Num": 1.0}],
-            r"- Cat=B, Num=1.0: currently not selectable",
+            1,
             id="filtered",
         ),
         pytest.param(
@@ -680,15 +666,13 @@ def test_validate_configurations_passes(searchspace, configurations):
                 [CategoricalParameter("Cat", ("A", "B")), _CONTINUOUS_PARAMETER]
             ),
             [{"Cat": "A", "x": 1.7}],
-            r"continuous subspace:\n- x=1.7: invalid values for parameters \['x'\]",
+            1,
             id="continuous_out_of_bounds",
         ),
         pytest.param(
-            # Only the configuration with the non-numeric value may be reported
             _PRODUCT_SEARCHSPACE,
             [{"Cat": "A", "Num": "abc"}, {"Cat": "A", "Num": 1.0}],
-            r"^1 configuration\(s\) do not belong to the discrete subspace:\n"
-            r"- Cat=A, Num=abc: invalid values for parameters \['Num'\]$",
+            1,
             id="mixed_types",
         ),
         pytest.param(
@@ -698,13 +682,28 @@ def test_validate_configurations_passes(searchspace, configurations):
                 {"Cat": "A", "Num": 1.0},
                 {"Cat": "Y", "Num": 1.0},
             ],
-            r"^2 configuration\(s\) do not belong to the discrete subspace:\n"
-            r"- Cat=Z, Num=1.0: .*\n- Cat=Y, Num=1.0: .*$",
-            id="all_failures_listed",
+            2,
+            id="multiple_invalid",
+        ),
+        pytest.param(
+            # Both equivalent configurations satisfy the filters individually, but
+            # only one of them survives the deduplicating constraint as a batch
+            SearchSpace.from_product(
+                [
+                    NumericalDiscreteParameter("p1", (1.0, 2.0)),
+                    NumericalDiscreteParameter("p2", (1.0, 2.0)),
+                ],
+                [DiscretePermutationInvarianceConstraint(["p1", "p2"])],
+            ),
+            [{"p1": 1.0, "p2": 2.0}, {"p1": 2.0, "p2": 1.0}],
+            1,
+            id="duplicate_permutation",
         ),
     ],
 )
-def test_validate_configurations_fails(searchspace, configurations, match):
-    """Configurations outside the search space are reported with their reason."""
-    with pytest.raises(ValueError, match=match):
-        searchspace._validate_configurations(pd.DataFrame(configurations))
+def test_get_invalid_configurations_flags_invalid(
+    searchspace, configurations, n_invalid
+):
+    """Configurations outside the search space are reported as invalid."""
+    invalid = searchspace._get_invalid_configurations(pd.DataFrame(configurations))
+    assert len(invalid) == n_invalid

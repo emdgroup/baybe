@@ -163,28 +163,25 @@ _CAT_NUM_PARAMETERS = [
         pytest.param(
             [CategoricalParameter("Cat", ("A", "B"))],
             [{"Cat": "A"}, {"Cat": "Z"}],
-            r"^1 configuration\(s\) do not belong to the discrete subspace:\n- Cat=Z:",
+            "do not belong to the search space",
             id="valid_then_invalid",
         ),
         pytest.param(
             _CAT_NUM_PARAMETERS,
             [{"Cat": "A", "Num": 1.0}, {"Num": 2.0}],
-            r"- Num=2.0: missing values for parameters \['Cat'\]",
+            "do not belong to the search space",
             id="partially_missing",
         ),
         pytest.param(
             _CAT_NUM_PARAMETERS,
             [{"Num": 1.0}],
-            r"- Num=1.0: missing values for parameters \['Cat'\]",
+            "missing parameter columns",
             id="fully_missing",
         ),
     ],
 )
 def test_parse_llm_response_ineligible(parameters, configurations, match):
-    """Configurations rejected by the search space raise ``LLMIneligiblePointsError``.
-
-    The individual rejection reasons are tested with the search space validation.
-    """
+    """Configurations outside the search space raise ``LLMIneligiblePointsError``."""
     searchspace = SearchSpace.from_product(parameters)
     response = json.dumps(
         [{"explanation": "x", "parameters": c} for c in configurations]
@@ -194,13 +191,14 @@ def test_parse_llm_response_ineligible(parameters, configurations, match):
 
 
 def test_parse_llm_response_ineligible_recovery_instruction():
-    """The recovery instruction forwards the rejection reasons to the model."""
+    """The recovery instruction asks the model for different configurations."""
     searchspace = SearchSpace.from_product([CategoricalParameter("Cat", ("A", "B"))])
     response = json.dumps([{"explanation": "x", "parameters": {"Cat": "Z"}}])
-    with pytest.raises(LLMIneligiblePointsError, match="Cat=Z") as exc_info:
+    with pytest.raises(
+        LLMIneligiblePointsError, match="do not belong to the search space"
+    ) as exc_info:
         parse_llm_response(response, searchspace, batch_size=1)
     instruction = exc_info.value.recovery_instruction
-    assert "- Cat=Z: invalid values for parameters ['Cat']" in instruction
     assert instruction.endswith(
         "Propose different configurations that belong to the search space instead."
     )
@@ -301,7 +299,7 @@ def test_parse_llm_response_rejects_out_of_tolerance():
     )
     response = make_response_json(searchspace, Num=1.2)
     with pytest.raises(
-        LLMIneligiblePointsError, match=r"invalid values for parameters \['Num'\]"
+        LLMIneligiblePointsError, match="do not belong to the search space"
     ):
         parse_llm_response(response, searchspace, batch_size=1)
 

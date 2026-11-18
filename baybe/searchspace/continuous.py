@@ -33,10 +33,7 @@ from baybe.parameters.utils import (
     sort_parameters,
 )
 from baybe.searchspace.utils import select_via_flat_index
-from baybe.searchspace.validation import (
-    _get_value_failure_reason,
-    validate_parameters,
-)
+from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.serialization.core import _CONSTRUCTOR_FIELD
 from baybe.settings import active_settings
@@ -495,41 +492,21 @@ class SubspaceContinuous(SerialMixin):
             ],
         )
 
-    def _validate_configurations(self, df: pd.DataFrame, /) -> None:
-        """Validate that all configurations belong to the subspace.
-
-        A configuration passes if all its parameter values lie within the parameter
-        bounds. Continuous constraints are not checked.
-
-        Args:
-            df: The configurations to validate. Additional columns are ignored, and
-                missing parameter columns are treated as missing values.
-
-        Raises:
-            ValueError: If any configuration does not belong to the subspace. The
-                message lists each failing configuration together with the reason.
-        """
-        # NOTE: This could maybe be changed into a full _contains method
-        # TODO: No check for continuous constraints beyond bounds
+    def _get_invalid_configurations(self, df: IntoDataFrameT, /) -> IntoDataFrameT:
+        """Return the configurations that do not belong to the subspace."""
+        df_nw = nw.from_native(df, eager_only=True)
         if self.is_empty:
-            return
-        configurations = df.reindex(columns=list(self.parameter_names))
+            return df_nw.head(0).to_native()
 
-        failures: list[str] = []
-        for i in range(len(df)):
-            # A column can contain values of different types across rows, so the types
-            # are inferred for the single configuration
-            configuration = configurations.iloc[[i]].infer_objects()
-            if reason := _get_value_failure_reason(configuration, self.parameters):
-                values = ", ".join(
-                    f"{k}={v}" for k, v in configurations.iloc[i].dropna().items()
-                )
-                failures.append(f"- {values}: {reason}")
-        if failures:
-            raise ValueError(
-                f"{len(failures)} configuration(s) do not belong to the continuous "
-                f"subspace:\n" + "\n".join(failures)
-            )
+        # TODO: Replace with a parameter-provided expression once Parameter exposes one.
+        in_bounds = nw.all_horizontal(
+            *(
+                nw.col(p.name).is_between(p.bounds.lower, p.bounds.upper)
+                for p in self.parameters
+            ),
+            ignore_nulls=False,
+        )
+        return df_nw.filter(~in_bounds).to_native()
 
     def transform(
         self,
