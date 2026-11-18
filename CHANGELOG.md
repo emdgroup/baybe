@@ -178,9 +178,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SubspaceDiscrete(candidates=TableCandidates(parameters, exp_rep))` instead)
 - `SubspaceDiscrete` ignores any `empty_encoding` when provided
 - `SubspaceDiscrete` no longer accepts a `comp_rep` argument
-- `SubspaceDiscrete.constraints` attribute (use `batch_constraints` to provide and
-  access batch-level constraints; filtering constraints are only needed during subspace
-  construction and are thus no longer stored).
+- `SearchSpace.constraints` and `SubspaceDiscrete.constraints`.
+  For discrete spaces, the concept of space-filtering constraints is only meaningful
+  when working with filtered candidate set representations. In this specific case, they
+  can still be accessed via `ProductCandidates.filters`. Discrete batch constraints can
+  be retrieved via `SubspaceDiscrete.batch_constraints`. For continuous constraints,
+  use `SubspaceContinuous.constraints`.
 - `SubspaceDiscrete.constraints_batch` property (use `batch_constraints` instead)
 - `SubspaceDiscrete.exp_rep` attribute (use `get_candidates()` instead)
 - `SubspaceDiscrete.comp_rep` attribute (use `transform(get_candidates())` instead)

@@ -6,9 +6,10 @@ import gc
 import warnings
 from typing import Any, ClassVar
 
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import define, field, fields
 from attrs.validators import deep_mapping, instance_of, min_len
+from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
 from typing_extensions import override
 
 from baybe._optional.info import LLM_INSTALLED
@@ -18,7 +19,6 @@ from baybe.exceptions import (
     LLMCallError,
     LLMMalformedResponseError,
     LLMResponseError,
-    NotEnoughPointsLeftError,
     OptionalImportError,
 )
 from baybe.objectives.base import Objective
@@ -28,8 +28,9 @@ from baybe.recommenders.pure.llm._prompts import make_prompt
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.serialization import SerialMixin, converter
+from baybe.settings import active_settings
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import fuzzy_row_match
+from baybe.utils.dataframe import _df_with_backend
 from baybe.utils.metadata import Metadata
 
 # Keys that are controlled by the recommender itself and must not be overridden: the
@@ -93,9 +94,9 @@ class LLMRecommender(PureRecommender, SerialMixin):
     # Stashed context necessary for prompt building
     _objective: Objective | None = field(default=None, init=False, eq=False)
 
-    _measurements: pd.DataFrame | None = field(default=None, init=False, eq=False)
+    _measurements: nw.DataFrame | None = field(default=None, init=False, eq=False)
 
-    _pending_experiments: pd.DataFrame | None = field(
+    _pending_experiments: nw.DataFrame | None = field(
         default=None, init=False, eq=False
     )
 
@@ -176,9 +177,9 @@ class LLMRecommender(PureRecommender, SerialMixin):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         """Generate recommendations using the language model.
 
         Args:
@@ -220,8 +221,16 @@ class LLMRecommender(PureRecommender, SerialMixin):
 
         # Stash context for `_recommend_hybrid`, then delegate to the base `recommend`
         self._objective = objective
-        self._measurements = measurements
-        self._pending_experiments = pending_experiments
+        self._measurements = (
+            None
+            if measurements is None
+            else nw.from_native(measurements, eager_only=True)
+        )
+        self._pending_experiments = (
+            None
+            if pending_experiments is None
+            else nw.from_native(pending_experiments, eager_only=True)
+        )
 
         return super().recommend(
             batch_size=batch_size,
@@ -235,9 +244,8 @@ class LLMRecommender(PureRecommender, SerialMixin):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         try:
             prompt = make_prompt(
                 batch_size,
@@ -256,7 +264,11 @@ class LLMRecommender(PureRecommender, SerialMixin):
         content: str | None = None
         try:
             content = self._query_model(prompt)
-            return parse_llm_response(content, searchspace, batch_size)
+            rec = parse_llm_response(content, searchspace, batch_size)
+            return _df_with_backend(
+                nw.from_native(rec, eager_only=True),
+                active_settings.default_dataframe_backend,
+            ).to_native()
         except LLMResponseError as initial_error:
             # The recommendation had an issue. Make a recovery attempt.
             recovery_prompt = make_prompt(
@@ -270,45 +282,17 @@ class LLMRecommender(PureRecommender, SerialMixin):
             )
             try:
                 recovery_content = self._query_model(recovery_prompt)
-                return parse_llm_response(recovery_content, searchspace, batch_size)
+                rec = parse_llm_response(recovery_content, searchspace, batch_size)
+                return _df_with_backend(
+                    nw.from_native(rec, eager_only=True),
+                    active_settings.default_dataframe_backend,
+                ).to_native()
             except LLMResponseError as recovery_error:
                 raise LLMResponseError(
                     f"The language model failed to produce a valid recommendation, "
                     f"even after a recovery attempt. Initial problem: {initial_error} "
                     f"Remaining problem after recovery: {recovery_error}"
                 ) from recovery_error
-
-    @override
-    def _recommend_with_discrete_parts(
-        self,
-        searchspace: SearchSpace,
-        batch_size: int,
-        pending_experiments: pd.DataFrame | None,
-    ) -> pd.DataFrame:
-        # The inherited discrete dispatch extracts candidate indices and reconstructs
-        # stored rows. LLM responses instead contain generated values, so that path
-        # would change the recommendations or fail for symmetry-equivalent variants.
-        # Override it locally to preserve output without changing the parent class.
-        candidates_exp, _ = searchspace.discrete.get_candidates()
-        # This recommender supports subset-generating constraints. Only the base
-        # dispatcher's candidate-count check must be repeated, before any model call.
-        if (
-            searchspace.type is SearchSpaceType.DISCRETE
-            and len(candidates_exp) < batch_size
-        ):
-            raise NotEnoughPointsLeftError(
-                f"Using the current settings, there are fewer than {batch_size} "
-                f"possible data points left to recommend."
-            )
-        # TODO: Remove this override when discrete hooks return dataframes (#837).
-        rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
-        rec.index = fuzzy_row_match(
-            searchspace.discrete.exp_rep,
-            rec,
-            searchspace.discrete.parameters,
-            keep_unmatched=True,
-        )
-        return rec
 
     @override
     def __str__(self) -> str:

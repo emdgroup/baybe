@@ -5,19 +5,22 @@ from __future__ import annotations
 import gc
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, NoReturn
 
 import narwhals.stable.v2 as nw
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from typing_extensions import Self, assert_never, override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
-from baybe.exceptions import _UnsupportedSearchSpaceAttributeError
+from baybe.exceptions import (
+    DeprecationError,
+    _UnsupportedSearchSpaceAttributeError,
+)
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
-from baybe.searchspace.candidates import TableCandidates
+from baybe.searchspace.candidates import ProductCandidates, TableCandidates
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -89,32 +92,16 @@ class SearchSpace(SerialMixin):
         return to_string(self.__class__.__name__, *fields)
 
     def __attrs_post_init__(self):
-        """Perform validation."""
         validate_parameters(self.parameters)
-        validate_constraints(self.constraints, self.parameters)
 
-    def _validate_configurations(self, df: pd.DataFrame, /) -> None:
-        """Validate that all configurations in ``df`` belong to the search space.
-
-        A configuration belongs to the search space if its discrete part belongs to the
-        discrete subspace and its continuous part belongs to the continuous subspace.
-        For the respective checks and the raised errors, see
-        ``SubspaceDiscrete._validate_configurations`` and
-        ``SubspaceContinuous._validate_configurations``.
-
-        Note that this is not a membership check in the strict sense: It only validates
-        the configurations and raises an error if any configuration is invalid.
-
-        Args:
-            df: The configurations to validate. Additional columns are ignored.
-        """
-        # TODO: This could maybe be changed into a full _contains method, but since this
-        # currently only validates and e.g. does not return a (potential series of)
-        # boolean, it has not been named accordingly.
-        # TODO: The continuous part is only validated if the discrete part passes, so
-        #   failures of both parts are not reported together.
-        self.discrete._validate_configurations(df)
-        self.continuous._validate_configurations(df)
+    def _get_invalid_configurations(self, df: IntoDataFrame, /) -> IntoDataFrame:
+        """Return the configurations that do not belong to the search space."""
+        df_nw = nw.from_native(df, eager_only=True)
+        invalid = [
+            nw.from_native(subspace._get_invalid_configurations(df_nw), eager_only=True)
+            for subspace in (self.discrete, self.continuous)
+        ]
+        return nw.concat([df_nw.head(0), *invalid], how="vertical").unique().to_native()
 
     @classmethod
     def from_parameter(cls, parameter: Parameter) -> SearchSpace:
@@ -221,11 +208,21 @@ class SearchSpace(SerialMixin):
         return (*self.discrete.parameters, *self.continuous.parameters)
 
     @property
-    def constraints(self) -> tuple[Constraint, ...]:
-        """Return the constraints of the search space."""
-        return (
-            *self.discrete.batch_constraints,
-            *self.continuous.constraints,
+    def constraints(self) -> NoReturn:
+        """Deprecated!"""
+        filters_field = fields(ProductCandidates).filters.name
+        constraints_field = fields(SubspaceContinuous).constraints.name
+        batch_field = fields(SubspaceDiscrete).batch_constraints.name
+        raise DeprecationError(
+            f"'{type(self).__name__}.constraints' is no longer available. "
+            f"For discrete spaces, the concept of space-filtering constraints is only "
+            f"meaningful when working with filtered candidate set representations. "
+            f"In this specific case, they can still be accessed via "
+            f"'{ProductCandidates.__name__}.{filters_field}'. "
+            f"Discrete batch constraints can be retrieved via "
+            f"'{SubspaceDiscrete.__name__}.{batch_field}'. "
+            f"For continuous constraints, use "
+            f"'{SubspaceContinuous.__name__}.{constraints_field}'."
         )
 
     @property

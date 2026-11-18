@@ -17,7 +17,7 @@ _PARAMETERS_FIELD = "parameters"
 """JSON field holding a recommendation's parameter assignments."""
 
 
-@define
+@define(frozen=True)
 class ResponseItem:
     """A single entry in the language model response JSON array."""
 
@@ -52,4 +52,5 @@ def _response_format(batch_size: int = 1) -> str:
     return f"[\n{entries}\n]"
 
 
+# Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

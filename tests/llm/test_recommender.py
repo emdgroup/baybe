@@ -1,22 +1,17 @@
 """Tests for the LLM recommender integration."""
 
-import json
 import warnings
 from types import SimpleNamespace
 from unittest.mock import patch
 
-import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe import Campaign
 from baybe._optional.info import LLM_INSTALLED
-from baybe.campaign import _MEASURED, _RECOMMENDED
 from baybe.constraints import (
     DiscreteCustomConstraint,
-    DiscretePermutationInvarianceConstraint,
 )
 from baybe.exceptions import (
     IncompatibilityError,
@@ -27,8 +22,6 @@ from baybe.exceptions import (
     LLMResponseError,
 )
 from baybe.objectives import SingleTargetObjective
-from baybe.parameters import CategoricalParameter, NumericalContinuousParameter
-from baybe.recommenders import RandomRecommender, SequentialMetaRecommender
 from baybe.recommenders.pure.llm._prompts import make_prompt
 from baybe.recommenders.pure.llm.llm import LLMRecommender
 from baybe.searchspace import SearchSpace
@@ -39,7 +32,6 @@ from baybe.transformations import (
     ChainedTransformation,
     CustomTransformation,
 )
-from baybe.utils.dataframe import add_fake_measurements
 from tests.llm._mock import (
     PATCH_TARGET,
     make_continuous_searchspace,
@@ -430,86 +422,3 @@ def test_recommend_with_campaign():
     with patch(PATCH_TARGET) as mock:
         mock.return_value = mock_response(make_valid_json(searchspace, 1))
         campaign.recommend(batch_size=1)
-
-
-def test_llm_recommendations_preserved_and_tracked():
-    """LLM recommendations retain their values and are tracked across meta turns."""
-    recommender = SequentialMetaRecommender(
-        (LLMRecommender("test/model", "Test."), RandomRecommender()), mode="cyclic"
-    )
-    campaign = Campaign(
-        SearchSpace.from_product([CategoricalParameter("c", ("A", "B", "C", "D"))]),
-        recommender=recommender,
-        # Lets the LLM propose "D" again, even if the random turn recommended it
-        allow_recommending_already_recommended=True,
-    )
-    # "D" is not the first candidate, so looking up stored rows via the response
-    # index would return "A" instead
-    response = '[{"explanation": "x", "parameters": {"c": "D"}}]'
-    exp_rep = campaign.searchspace.discrete.exp_rep
-    expected_llm_index = exp_rep.index[exp_rep["c"] == "D"]
-
-    with patch(PATCH_TARGET, return_value=mock_response(response)):
-        for is_llm in (True, False, True):
-            expected = campaign._searchspace_metadata.copy()
-            rec = campaign.recommend(1)
-            if is_llm:
-                assert rec["c"].tolist() == ["D"]
-                assert rec.index.tolist() == expected_llm_index.tolist()
-            expected.loc[rec.index, _RECOMMENDED] = True
-            assert_frame_equal(campaign._searchspace_metadata, expected)
-            campaign.add_measurements(rec)
-
-
-@pytest.mark.parametrize(
-    ("second_discrete", "matched"),
-    [
-        param(("B", "A"), False, id="unmatched_equivalent"),
-        param(("A", "B"), True, id="shared_discrete_index"),
-    ],
-)
-def test_llm_recommendation_tracking(second_discrete, matched):
-    """Preserve hybrid experiments and track only their matched discrete rows."""
-    searchspace = SearchSpace.from_product(
-        [
-            CategoricalParameter("p1", ("A", "B")),
-            CategoricalParameter("p2", ("A", "B")),
-            NumericalContinuousParameter("x", (0.0, 1.0)),
-        ],
-        [DiscretePermutationInvarianceConstraint(["p1", "p2"])],
-    )
-    campaign = Campaign(
-        searchspace,
-        objective=_OBJECTIVE,
-        recommender=LLMRecommender("test/model", "Test."),
-    )
-    expected = pd.DataFrame(
-        [("A", "B", 0.2), (*second_discrete, 0.8)], columns=["p1", "p2", "x"]
-    )
-    exp_rep = searchspace.discrete.exp_rep
-    matches = (exp_rep["p1"] == "A") & (exp_rep["p2"] == "B")
-    stored_index = exp_rep.index[matches][0]
-    expected.index = (
-        pd.Index([stored_index, stored_index])
-        if matched
-        else pd.Index([stored_index, np.nan], dtype=object)
-    )
-    expected_metadata = campaign._searchspace_metadata.copy()
-    expected_metadata.loc[stored_index, _RECOMMENDED] = True
-    response = json.dumps(
-        [{"explanation": "x", "parameters": row} for row in expected.to_dict("records")]
-    )
-
-    with patch(PATCH_TARGET, return_value=mock_response(response)):
-        rec = campaign.recommend(2)
-
-    assert_frame_equal(rec, expected)
-    assert_frame_equal(campaign._searchspace_metadata, expected_metadata)
-
-    add_fake_measurements(rec, campaign.targets)
-    expected_measurements = rec.reset_index(drop=True)
-    campaign.add_measurements(rec)
-
-    assert_frame_equal(campaign.measurements[rec.columns], expected_measurements)
-    expected_metadata.loc[stored_index, _MEASURED] = True
-    assert_frame_equal(campaign._searchspace_metadata, expected_metadata)
