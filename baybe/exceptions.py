@@ -1,7 +1,9 @@
 """Custom exceptions and warnings."""
 
 from collections.abc import Collection
-from typing import Any, override
+from typing import Any
+
+from typing_extensions import override
 
 ##### Warnings #####
 
