@@ -11,7 +11,7 @@ import pandas as pd
 from attrs import fields
 
 from baybe.exceptions import LLMResponseError
-from baybe.parameters.base import _DiscreteLabelLikeParameter
+from baybe.parameters.base import _EncodedDiscreteParameter
 from baybe.parameters.categorical import CategoricalParameter
 from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.substance import SubstanceParameter
@@ -157,9 +157,9 @@ def _to_prompt_dict(obj: Parameter | Constraint | Objective, /) -> dict[str, Any
         The serialized object.
     """
     serialized = obj.to_dict()
-    if isinstance(obj, _DiscreteLabelLikeParameter):
+    if isinstance(obj, _EncodedDiscreteParameter):
         active = list(obj.active_values)
-        serialized.pop(fields(_DiscreteLabelLikeParameter)._active_values.alias)
+        serialized.pop(fields(_EncodedDiscreteParameter)._active_values.alias)
         # For label-like parameters, ``values`` holds the active labels only.
         serialized[fields(CategoricalParameter)._values.alias] = active
         if isinstance(obj, SubstanceParameter):
