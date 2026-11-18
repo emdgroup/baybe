@@ -32,7 +32,13 @@ if TYPE_CHECKING:
 ThresholdOperator: TypeAlias = Literal["<", "<=", "=", "==", "!=", ">", ">="]
 """An operator for comparing numerical values against a threshold."""
 
-_THRESHOLD_OPERATORS: dict[ThresholdOperator, Callable] = {
+LogicOperator: TypeAlias = Literal["AND", "OR", "XOR"]
+"""An operator for combining conditions."""
+
+BinaryOperator: TypeAlias = Callable[[Any, Any], Any]
+"""A binary operator applied to two operands."""
+
+_THRESHOLD_OPERATORS: dict[ThresholdOperator, BinaryOperator] = {
     "<": ops.lt,
     "<=": ops.le,
     "=": ops.eq,
@@ -41,8 +47,12 @@ _THRESHOLD_OPERATORS: dict[ThresholdOperator, Callable] = {
     ">": ops.gt,
     ">=": ops.ge,
 }
-_TOLERANCE_OPERATORS = ["=", "==", "!="]
-_LOGIC_OPERATORS = {
+_TOLERANCE_OPERATORS: tuple[ThresholdOperator, ...] = (
+    "=",
+    "==",
+    "!=",
+)
+_LOGIC_OPERATORS: dict[LogicOperator, BinaryOperator] = {
     "AND": ops.and_,
     "OR": ops.or_,
     "XOR": ops.ne,

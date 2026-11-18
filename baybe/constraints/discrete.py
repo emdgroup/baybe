@@ -26,6 +26,7 @@ from baybe.constraints.base import (
 )
 from baybe.constraints.conditions import (
     Condition,
+    LogicOperator,
     SubSelectionCondition,  # noqa: F401 (used in doctests)
     ThresholdCondition,
     ThresholdOperator,
@@ -53,7 +54,7 @@ if TYPE_CHECKING:
 def DiscreteExcludeConstraint(  # noqa: N802
     parameters: list[str],
     conditions: list[Condition],
-    combiner: str = "AND",
+    combiner: LogicOperator = "AND",
 ) -> DiscreteSelectionConstraint:
     """A :class:`DiscreteSelectionConstraint` alias for backward compatibility."""  # noqa: D401
     import warnings
@@ -107,8 +108,10 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     conditions: list[Condition] = field(validator=min_len(1))
     """List of individual conditions."""
 
-    combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
-    """Operator encoding how to combine the individual conditions."""
+    combiner: LogicOperator = field(
+        default="AND", validator=in_(_valid_logic_combiners)
+    )
+    """Logic operator encoding how to combine the individual conditions."""
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
