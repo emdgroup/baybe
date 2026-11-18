@@ -71,6 +71,7 @@ from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.botorch import (
     BotorchRecommender,
 )
+from baybe.recommenders.pure.llm.llm import LLMRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
@@ -78,7 +79,7 @@ from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
 from baybe.targets.binary import BinaryTarget
-from baybe.utils.basic import hilberts_factory
+from baybe.utils.basic import get_subclasses, hilberts_factory
 from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import (
     add_fake_measurements,
@@ -88,6 +89,28 @@ from baybe.utils.dataframe import (
 
 FAST_OPTIMIZATION_SETTINGS = {"n_restarts": 2, "n_raw_samples": 16}
 """Reduced acquisition optimization effort for tests not concerned with its quality."""
+
+# Recommenders excluded from automatic subclass enumeration because they cannot be
+# default-constructed
+RECOMMENDERS_EXCLUDED_FROM_AUTOTEST: set[type] = {LLMRecommender}
+
+
+def autotestable_recommenders(base: type) -> list[type]:
+    """Return subclasses of ``base`` eligible for automatic testing.
+
+    Args:
+        base: The recommender base class whose subclasses are enumerated.
+
+    Returns:
+        The subclasses of ``base`` excluding those in
+        :data:`RECOMMENDERS_EXCLUDED_FROM_AUTOTEST`.
+    """
+    return [
+        cls
+        for cls in get_subclasses(base)
+        if cls not in RECOMMENDERS_EXCLUDED_FROM_AUTOTEST
+    ]
+
 
 # Hypothesis settings
 hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
@@ -106,8 +129,16 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    """Changes pytest marker configuration."""
+    """Changes pytest configuration."""
     config.addinivalue_line("markers", "slow: mark test as slow to run")
+
+    try:
+        from pandas.errors import Pandas4Warning
+    except ImportError:
+        pass
+    else:
+        category = f"{Pandas4Warning.__module__}.{Pandas4Warning.__name__}"
+        config.addinivalue_line("filterwarnings", f"ignore::{category}")
 
 
 def pytest_collection_modifyitems(config, items):
