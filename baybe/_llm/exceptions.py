@@ -32,16 +32,8 @@ class LLMResponseError(LLMError, ABC):
         """Guidance for the language model on how to correct its response."""
 
 
-class LLMRecoveryFailedError(LLMResponseError):
+class LLMRecoveryFailedError(LLMError):
     """No usable response was produced, even after the recovery attempt."""
-
-    @property
-    @override
-    def recovery_instruction(self) -> str:
-        return (
-            "Your previous response could not be used. Provide a new response that "
-            "follows all instructions in the prompt."
-        )
 
 
 class LLMMalformedResponseError(LLMResponseError):
