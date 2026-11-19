@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast, get_type_hints, overload
 
 import cattrs
 import narwhals.stable.v2 as nw
-from attrs import define, field, fields
+from attrs import Converter, define, field, fields
 from attrs.converters import optional as optional_c
 from attrs.validators import (
     deep_iterable,
@@ -50,11 +50,26 @@ from baybe.serialization import (
 from baybe.serialization.core import _TYPE_FIELD, make_base_structure_hook
 from baybe.utils.basic import to_tuple, validate_all_instance
 from baybe.utils.boolean import is_abstract
+from baybe.utils.conversion import nonstring_to_tuple
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
+    from attrs import Attribute
+
     from baybe.symmetries.dependency import DependencySymmetry
     from baybe.symmetries.permutation import PermutationSymmetry
+
+
+def _to_nested_tuple(
+    groups: Sequence[Sequence[str]], instance: Any, attribute: Attribute
+) -> tuple[tuple[str, ...], ...]:
+    """Convert groups to tuples, rejecting strings at either level."""
+    groups = nonstring_to_tuple(groups, instance, attribute)
+    if any(isinstance(group, str) for group in groups):
+        raise ValueError(
+            f"Each group in '{attribute.alias}' must be a sequence, not a string."
+        )
+    return tuple(tuple(group) for group in groups)
 
 
 # >>>>>>>>>> Deprecation
@@ -676,16 +691,42 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         1    off   200
     """
 
-    conditions: tuple[Condition, ...] = field()
-    """The list of individual conditions."""
+    conditions: tuple[Condition, ...] = field(
+        converter=to_tuple,
+        validator=[min_len(1), deep_iterable(member_validator=instance_of(Condition))],
+    )
+    """The individual conditions."""
 
-    affected_parameters: tuple[tuple[str, ...], ...] = field()
+    affected_parameters: tuple[tuple[str, ...], ...] = field(
+        converter=Converter(  # type: ignore[misc]
+            _to_nested_tuple, takes_self=True, takes_field=True
+        ),
+        validator=deep_iterable(
+            member_validator=deep_iterable(member_validator=instance_of(str))
+        ),
+    )
     """The parameters affected by the individual conditions."""
 
     # for internal use only
     permutation_invariant: bool = field(default=False, init=False)
     """Flag that indicates whether the affected parameters are permutation invariant.
     This should not be changed by the user but by other constraints using the class."""
+
+    @conditions.validator
+    def _validate_conditions(  # noqa: DOC101, DOC103
+        self, _: Any, value: tuple[Condition, ...]
+    ) -> None:
+        """Validate that each parameter has a corresponding condition.
+
+        Raises:
+            ValueError: If the number of conditions differs from the parameter count.
+        """
+        if len(value) != len(self.parameters):
+            raise ValueError(
+                f"'{fields(type(self)).conditions.alias}' must contain exactly one "
+                f"condition per parameter, but got {len(value)} conditions for "
+                f"{len(self.parameters)} parameters."
+            )
 
     @affected_parameters.validator
     def _validate_affected_parameters(  # noqa: DOC101, DOC103
@@ -696,12 +737,19 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         Raises:
             ValueError: If one set of affected parameters does not have exactly one
                 condition.
+            ValueError: If a parameter depends on itself.
         """
         if len(self.conditions) != len(value):
             raise ValueError(
                 f"Each group of affected parameters needs exactly one condition, "
                 f"but got {len(value)} groups and {len(self.conditions)} conditions."
             )
+        for parameter, affected in zip(self.parameters, value, strict=True):
+            if parameter in affected:
+                raise ValueError(
+                    f"The parameter '{parameter}' cannot also be one of its own "
+                    f"affected parameters."
+                )
 
     @property
     @override
@@ -802,7 +850,9 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
         2  z  x
     """
 
-    dependencies: DiscreteDependenciesConstraint | None = field(default=None)
+    dependencies: DiscreteDependenciesConstraint | None = field(
+        default=None, validator=optional_v(instance_of(DiscreteDependenciesConstraint))
+    )
     """Dependencies connected with the invariant parameters."""
 
     @dependencies.validator
