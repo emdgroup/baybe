@@ -61,6 +61,29 @@ def is_all_instance(
     return all(isinstance(y, t) for y in x)
 
 
+def validate_all_instance(
+    values: Collection[Any],
+    allowed: type | tuple[type, ...],
+    /,
+) -> None:
+    """Validate that all given values are instances of the allowed type(s).
+
+    Args:
+        values: The values to validate.
+        allowed: The allowed type or tuple of types.
+
+    Raises:
+        TypeError: If any value is not an instance of the allowed type(s).
+    """
+    if invalid := {value for value in values if not isinstance(value, allowed)}:
+        allowed_types = allowed if isinstance(allowed, tuple) else (allowed,)
+        allowed_names = "{" + ", ".join(t.__name__ for t in allowed_types) + "}"
+        raise TypeError(
+            f"Expected all values to be instances of {allowed_names}, but got "
+            f"{invalid}."
+        )
+
+
 def get_subclasses(
     cls: type[_T], recursive: bool = True, abstract: bool = False
 ) -> list[type[_T]]:
