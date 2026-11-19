@@ -1,12 +1,8 @@
 """Custom exceptions and warnings."""
 
-import gc
 from collections.abc import Collection
 from typing import Any
 
-import pandas as pd
-from attr.validators import instance_of
-from attrs import define, field
 from typing_extensions import override
 
 ##### Warnings #####
@@ -25,24 +21,6 @@ class UnusedObjectWarning(UserWarning):
     A method or function was called with undesired arguments which indicates an
     unintended user fault.
     """
-
-
-@define
-class SearchSpaceMatchWarning(UserWarning):
-    """
-    When trying to match data to entries in the search space, something unexpected
-    happened.
-    """
-
-    message: str = field(validator=instance_of(str))
-    data: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
-
-    def __attrs_pre_init(self):
-        super().__init__(self.message)
-
-    @override
-    def __str__(self):
-        return self.message
 
 
 class MinimumCardinalityViolatedWarning(UserWarning):
@@ -192,6 +170,10 @@ class UnsupportedEarlyFilteringError(Exception):
     """A constraint does not support early filtering with the given parameters."""
 
 
+class InfiniteSpaceError(Exception):
+    """An operation requires a finite search space but the space is infinite."""
+
+
 #### LLM exclusive exceptions ####
 
 
@@ -328,7 +310,3 @@ class LLMBatchSizeError(LLMResponseError):
             f"but exactly {self.requested} are required. Provide {self.requested} "
             f"distinct, valid recommendations."
         )
-
-
-# Collect leftover original slotted classes processed by `attrs.define`
-gc.collect()

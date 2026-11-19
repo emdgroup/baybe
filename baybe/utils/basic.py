@@ -6,13 +6,22 @@ import enum
 import functools
 import inspect
 import itertools
-from collections.abc import Callable, Collection, Iterable, Sequence
-from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar, get_origin
+import random
+from collections.abc import Callable, Collection, Iterable, Iterator, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    TypeAlias,
+    TypeGuard,
+    TypeVar,
+    get_origin,
+)
 
 import cattrs
 from attrs import asdict, has
 from joblib import Memory
-from typing_extensions import override
+from typing_extensions import assert_never, override
 
 from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
 
@@ -21,6 +30,9 @@ if TYPE_CHECKING:
 
 _T = TypeVar("_T")
 _U = TypeVar("_U")
+
+IterationMode: TypeAlias = Literal["ordered", "shuffled", "with_replacement"]
+"""Strategy for traversing a collection of indexed items."""
 
 
 class UnspecifiedType(enum.Enum):
@@ -47,6 +59,29 @@ def is_all_instance(
     # IMPROVE: Ideally, the collection type should itself be abstracted away using a
     #   generic container type, but unclear how to achieve this with the typing system.
     return all(isinstance(y, t) for y in x)
+
+
+def validate_all_instance(
+    values: Collection[Any],
+    allowed: type | tuple[type, ...],
+    /,
+) -> None:
+    """Validate that all given values are instances of the allowed type(s).
+
+    Args:
+        values: The values to validate.
+        allowed: The allowed type or tuple of types.
+
+    Raises:
+        TypeError: If any value is not an instance of the allowed type(s).
+    """
+    if invalid := {value for value in values if not isinstance(value, allowed)}:
+        allowed_types = allowed if isinstance(allowed, tuple) else (allowed,)
+        allowed_names = "{" + ", ".join(t.__name__ for t in allowed_types) + "}"
+        raise TypeError(
+            f"Expected all values to be instances of {allowed_names}, but got "
+            f"{invalid}."
+        )
 
 
 def get_subclasses(
@@ -116,6 +151,62 @@ def hilberts_factory(factory: Callable[..., _T]) -> Iterable[_T]:
     """Provide an infinite stream of the factory's products."""
     while True:
         yield factory()
+
+
+def iter_indices(
+    n: int,
+    /,
+    *,
+    mode: IterationMode = "ordered",
+) -> Iterator[int]:
+    """Iterate over the indices of an ``n``-element collection.
+
+    Args:
+        n: The number of indices/elements. Must be non-negative, and positive when
+            using ``"with_replacement"`` mode.
+        mode: The iteration strategy.
+
+            * ``"ordered"``: Iterates the indices in ascending order.
+            * ``"shuffled"``: Iterates all indices exactly once in random order using
+              a sparse Fisher-Yates shuffle.
+            * ``"with_replacement"``: Samples indices with replacement, producing an
+              infinite iterator where each draw is independent.
+
+    Raises:
+        ValueError: If ``n`` is negative, or if ``mode="with_replacement"`` and ``n``
+            is zero.
+
+    Yields:
+        The traversed indices.
+    """
+    if n < 0:
+        raise ValueError(f"{n=} must be non-negative.")
+    if mode == "with_replacement" and n == 0:
+        raise ValueError(
+            f"Cannot sample with replacement from an empty collection ({n=})."
+        )
+
+    match mode:
+        case "ordered":
+            yield from range(n)
+
+        case "shuffled":
+            # Sparse Fisher-Yates shuffle: only store displaced indices, so memory
+            # grows with the number of consumed indices instead of upfront
+            swapped: dict[int, int] = {}
+            for i in range(n):
+                j = random.randrange(i, n)
+                value = swapped.pop(i, i)
+                if j != i:
+                    swapped[j], value = value, swapped.get(j, j)
+                yield value
+
+        case "with_replacement":
+            while n:
+                yield random.randrange(n)
+
+        case _:
+            assert_never(mode)
 
 
 def group_duplicate_values(dictionary: dict[_T, _U]) -> dict[_U, list[_T]]:

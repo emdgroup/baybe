@@ -4,24 +4,28 @@ from __future__ import annotations
 
 import inspect
 import json
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 from typing import TYPE_CHECKING, Any, TypedDict
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 from attrs import fields
 
+from baybe.constraints.base import Constraint, DiscreteConstraint
 from baybe.exceptions import LLMResponseError
-from baybe.parameters.base import _DiscreteLabelLikeParameter
+from baybe.parameters.base import _EncodedDiscreteParameter
 from baybe.parameters.categorical import CategoricalParameter
 from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.substance import SubstanceParameter
 from baybe.recommenders.pure.llm._schema import _response_format
 from baybe.searchspace import SearchSpace
+from baybe.searchspace.candidates import EmptyCandidates, ProductCandidates
 from baybe.transformations.base import Transformation
-from baybe.utils.basic import get_subclasses
+from baybe.utils.basic import get_subclasses, is_all_instance
 
 if TYPE_CHECKING:
-    from baybe.constraints.base import Constraint
+    from narwhals.stable.v2.typing import IntoDataFrameT
+
     from baybe.objectives.base import Objective
     from baybe.parameters.base import Parameter
 
@@ -157,9 +161,9 @@ def _to_prompt_dict(obj: Parameter | Constraint | Objective, /) -> dict[str, Any
         The serialized object.
     """
     serialized = obj.to_dict()
-    if isinstance(obj, _DiscreteLabelLikeParameter):
+    if isinstance(obj, _EncodedDiscreteParameter):
         active = list(obj.active_values)
-        serialized.pop(fields(_DiscreteLabelLikeParameter)._active_values.alias)
+        serialized.pop(fields(_EncodedDiscreteParameter)._active_values.alias)
         # For label-like parameters, ``values`` holds the active labels only.
         serialized[fields(CategoricalParameter)._values.alias] = active
         if isinstance(obj, SubstanceParameter):
@@ -241,7 +245,7 @@ def _sample_example_configurations(searchspace: SearchSpace, /) -> pd.DataFrame:
     if searchspace.discrete.is_empty:
         return searchspace.continuous.sample_uniform(n)
 
-    candidates, _ = searchspace.discrete.get_candidates()
+    candidates = searchspace.discrete._get_candidates().collect().to_pandas()
     discrete = candidates.sample(min(n, len(candidates))).reset_index(drop=True)
     continuous = searchspace.continuous.sample_uniform(len(discrete))
     return pd.concat([discrete, continuous], axis=1)
@@ -251,8 +255,8 @@ def make_prompt(
     batch_size: int,
     searchspace: SearchSpace,
     objective: Objective | None = None,
-    measurements: pd.DataFrame | None = None,
-    pending_experiments: pd.DataFrame | None = None,
+    measurements: IntoDataFrameT | None = None,
+    pending_experiments: IntoDataFrameT | None = None,
     *,
     experiment_description: str,
     recovery: tuple[LLMResponseError, str | None] | None = None,
@@ -293,14 +297,54 @@ def make_prompt(
 
     Returns:
         The constructed prompt.
+
+    Raises:
+        NotImplementedError: If the prompt cannot be constructed due to unsupported
+            candidate set type.
     """
     error, original_response = recovery if recovery is not None else (None, None)
+
+    measurements_pd = (
+        None
+        if measurements is None
+        else nw.from_native(measurements, eager_only=True).to_pandas()
+    )
+    pending_experiments_pd = (
+        None
+        if pending_experiments is None
+        else nw.from_native(pending_experiments, eager_only=True).to_pandas()
+    )
 
     from baybe._optional.llm import StrictUndefined, Template
 
     parameter_names = [p.name for p in searchspace.parameters]
     target_names = [t.name for t in objective.targets] if objective is not None else []
-    constraints = searchspace.constraints
+
+    # Extract constraints
+    candidates = searchspace.discrete.candidates
+    filtering_constraints: Collection[Constraint]
+    if isinstance(candidates, EmptyCandidates):
+        filtering_constraints = ()
+    elif isinstance(candidates, ProductCandidates):
+        filters = candidates.filters
+        if not is_all_instance(filters, DiscreteConstraint):
+            raise NotImplementedError(
+                f"Prompt construction requires that all candidate filters "
+                f"are of type '{DiscreteConstraint.__name__}'."
+            )
+        filtering_constraints = filters
+    else:
+        raise NotImplementedError(
+            f"No prompt can be constructed for the given candidate set of type "
+            f"'{type(candidates).__name__}'. Only '{EmptyCandidates.__name__}' "
+            f"and '{ProductCandidates.__name__}' are supported."
+        )
+    constraints = (
+        *filtering_constraints,
+        *searchspace.discrete.batch_constraints,
+        *searchspace.continuous.constraints,
+    )
+
     objective_json = (
         _to_json_lines([_to_prompt_dict(objective)]) if objective is not None else None
     )
@@ -330,13 +374,13 @@ def make_prompt(
         #   them is only caught by the search space validation of the response, which
         #   reports them to the model for the recovery attempt.
         "measurements": (
-            _table_text(measurements[parameter_names + target_names])
-            if measurements is not None and not measurements.empty
+            _table_text(measurements_pd[parameter_names + target_names])
+            if measurements_pd is not None and not measurements_pd.empty
             else None
         ),
         "pending_experiments": (
-            _table_text(pending_experiments[parameter_names])
-            if pending_experiments is not None and not pending_experiments.empty
+            _table_text(pending_experiments_pd[parameter_names])
+            if pending_experiments_pd is not None and not pending_experiments_pd.empty
             else None
         ),
         "batch_size": batch_size,

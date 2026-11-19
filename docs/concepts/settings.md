@@ -13,9 +13,10 @@ The following settings are available:
 |--------:|-------------|
 | {attr}`~baybe.settings.Settings.cache_campaign_recommendations` | Controls if {class}`~baybe.campaign.Campaign` objects cache their latest set of recommendations. |
 | {attr}`~baybe.settings.Settings.cache_directory` | The directory used for persistent caching on disk. Set to ``""`` or ``None`` to disable caching. |
+| {attr}`~baybe.settings.Settings.default_dataframe_backend` | Controls which backend is used when creating dataframes from scratch. |
 | {attr}`~baybe.settings.Settings.parallelize_simulation_runs` | Controls if simulation runs with [`xyzpy`](https://xyzpy.readthedocs.io/) are executed in parallel. |
 | {attr}`~baybe.settings.Settings.preprocess_dataframes` | Controls if incoming user dataframes are preprocessed (i.e., dtype-converted and validated) before use. |
-| {attr}`~baybe.settings.Settings.random_seed` | The used random seed. |
+| {attr}`~baybe.settings.Settings.random_seed` | Controls the random seed. |
 | {class}`use_fpsample <baybe.settings.Settings>` | Controls if [`fpsample`](https://github.com/leonardodalinky/fpsample) acceleration is to be used, if available. |
 | {class}`use_polars_for_constraints <baybe.settings.Settings>` | Controls if [`polars`](https://pola.rs/) acceleration is to be used for discrete constraints, if available. |
 | {attr}`~baybe.settings.Settings.use_single_precision_numpy` | Controls the floating point precision used for [`numpy`](https://numpy.org/) arrays. |

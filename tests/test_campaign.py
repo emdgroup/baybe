@@ -4,14 +4,17 @@ from contextlib import nullcontext
 from typing import Any
 from unittest.mock import Mock
 
+import narwhals.stable.v2 as nw
 import pandas as pd
+import polars as pl
 import pytest
 from attrs import evolve
-from pandas.testing import assert_frame_equal, assert_index_equal
+from narwhals.testing import assert_frame_equal
+from pandas.testing import assert_index_equal
 from pytest import param
 
 from baybe.acquisition import qLogEI, qLogNEHVI, qTS, qUCB
-from baybe.campaign import _EXCLUDED, Campaign
+from baybe.campaign import Campaign
 from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.discrete import DiscreteSelectionConstraint
 from baybe.exceptions import IncompatibilityError, NotEnoughPointsLeftError
@@ -26,9 +29,10 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
 )
-from baybe.searchspace.continuous import SubspaceContinuous
+from baybe.searchspace.candidates import TableCandidates
 from baybe.searchspace.core import SearchSpace, SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.settings import Settings
 from baybe.surrogates import (
     BetaBernoulliMultiArmedBanditSurrogate,
     GaussianProcessSurrogate,
@@ -84,19 +88,21 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
 @pytest.mark.parametrize("complement", [False, True], ids=["regular", "complement"])
 @pytest.mark.parametrize("exclude", [True, False], ids=["exclude", "include"])
 @pytest.mark.parametrize(
-    "constraints",
+    "filter_factory",
     [
-        pd.DataFrame({"a": [0]}),
-        [
-            DiscreteSelectionConstraint(
+        param(lambda df: pd.DataFrame({"a": [0]}), id="dataframe"),
+        param(
+            lambda df: DiscreteSelectionConstraint(
                 ["a"], [SubSelectionCondition([1])], exclude=True
-            )
-        ],
+            ),
+            id="constraint",
+        ),
+        param(lambda df: nw.col("a") == 0, id="expression"),
     ],
-    ids=["dataframe", "constraints"],
 )
-def test_candidate_toggling(constraints, exclude, complement):
-    """Toggling discrete candidates updates the campaign metadata accordingly."""
+@Settings(default_dataframe_backend="pandas")
+def test_candidate_toggling(filter_factory, exclude, complement):
+    """Toggling discrete candidates updates the exclusion state accordingly."""
     subspace = SubspaceDiscrete.from_product(
         [
             NumericalDiscreteParameter("a", [0, 1]),
@@ -104,22 +110,110 @@ def test_candidate_toggling(constraints, exclude, complement):
         ]
     )
     campaign = Campaign(subspace)
+    all_candidates = campaign.searchspace.discrete.get_candidates()
 
-    # Set metadata to opposite of targeted value so that we can verify the effect later
-    campaign._searchspace_metadata[_EXCLUDED] = not exclude
+    # Set initial state to the opposite of the targeted value
+    if not exclude:
+        # Pre-exclude all candidates so that we can test re-inclusion
+        campaign.toggle_discrete_candidates(all_candidates, exclude=True)
 
     # Toggle the candidates
-    campaign.toggle_discrete_candidates(constraints, exclude, complement=complement)
+    filter_ = filter_factory(all_candidates)
+    campaign.toggle_discrete_candidates(filter_, exclude=exclude, complement=complement)
 
-    # Extract row indices of candidates whose metadata should have been toggled
-    matches = campaign.searchspace.discrete.exp_rep["a"] == 0
-    idx = matches.index[~matches if complement else matches]
+    # Determine which candidates should be affected by the toggle
+    matches = all_candidates["a"] == 0
+    toggled_idx = matches.index[~matches if complement else matches]
+    toggled_rows = all_candidates.loc[toggled_idx]
 
-    # Assert that metadata is set correctly
-    target = campaign._searchspace_metadata.loc[idx, _EXCLUDED]
-    other = campaign._searchspace_metadata[_EXCLUDED].drop(index=idx)
-    assert all(target == exclude)  # must contain the updated values
-    assert all(other != exclude)  # must contain the original values
+    if exclude:
+        # The toggled rows should be excluded, the rest should not
+        assert len(campaign._excluded_experiments) == len(toggled_rows)
+        merged = pd.merge(
+            campaign._excluded_experiments.to_native(), toggled_rows, how="inner"
+        )
+        assert len(merged) == len(toggled_rows)
+    else:
+        # The toggled rows should be re-included, the rest should remain excluded
+        expected_remaining = len(all_candidates) - len(toggled_rows)
+        assert len(campaign._excluded_experiments) == expected_remaining
+
+    # Assert that recommendation with toggled candidates still works
+    campaign.recommend(1)
+
+
+@Settings(default_dataframe_backend="pandas")
+def test_candidate_toggling_multiple_filters():
+    """Multiple filters passed at once are combined conjunctively."""
+    subspace = SubspaceDiscrete.from_product(
+        [
+            NumericalDiscreteParameter("a", [0, 1]),
+            NumericalDiscreteParameter("b", [3, 4, 5]),
+        ]
+    )
+    campaign = Campaign(subspace)
+    all_candidates = campaign.searchspace.discrete.get_candidates()
+
+    constraint = DiscreteSelectionConstraint(
+        ["a"], [SubSelectionCondition([1])], exclude=True
+    )
+    expr = nw.col("b") != 3
+
+    campaign.toggle_discrete_candidates(constraint, expr, exclude=True)
+
+    # Only the row matching both filters (a == 0 and b != 3) should be excluded
+    expected = all_candidates[(all_candidates["a"] == 0) & (all_candidates["b"] != 3)]
+    assert len(campaign._excluded_experiments) == len(expected)
+    merged = pd.merge(campaign._excluded_experiments.to_native(), expected, how="inner")
+    assert len(merged) == len(expected)
+
+
+@pytest.mark.parametrize("n_batches", [1, 2], ids=["single_batch", "multi_batch"])
+@pytest.mark.parametrize(
+    ("export", "get_state"),
+    [
+        param(
+            lambda c: c.measurements,
+            lambda c: list(c._measurements),
+            id="measurements",
+        ),
+        param(
+            lambda c: c.replace_batch(
+                pl.DataFrame({"a": [1.0], "y": [2.0]}), dry_run=True
+            ),
+            lambda c: list(c._measurements),
+            id="replace_batch",
+        ),
+        param(
+            lambda c: c.drop_batch(dry_run=True),
+            lambda c: list(c._measurements),
+            id="drop_batch",
+        ),
+        param(
+            lambda c: c.toggle_discrete_candidates(nw.col("a") == 0.0, exclude=True),
+            lambda c: [c._excluded_experiments],
+            id="toggle_discrete_candidates",
+        ),
+    ],
+)
+def test_exported_frames_do_not_alias_campaign_state(export, get_state, n_batches):
+    """Mutating an exported frame leaves the campaign state untouched."""
+    candidates = TableCandidates(
+        [NumericalDiscreteParameter("a", [0.0, 1.0])],
+        pl.DataFrame({"a": [0.0, 1.0]}),
+    )
+    campaign = Campaign(SubspaceDiscrete(candidates), objective=NumericalTarget("y"))
+    for _ in range(n_batches):
+        campaign.add_measurements(pl.DataFrame({"a": [0.0], "y": [1.0]}))
+
+    exported = export(campaign)
+    assert isinstance(exported, pl.DataFrame)
+    before = [frame.clone() for frame in get_state(campaign)]
+
+    exported[0, exported.columns[0]] = 99.0
+
+    for expected, actual in zip(before, get_state(campaign), strict=True):
+        assert_frame_equal(expected, actual)
 
 
 @pytest.mark.parametrize(
@@ -170,6 +264,7 @@ def test_setting_allow_flags(flag, searchspace, value, discrete_value):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_measured_flag(campaign_for_flag_test: Campaign):
     """The flag controls the candidate set and properly interacts with the cache."""
     campaign = campaign_for_flag_test
@@ -201,6 +296,7 @@ def test_allow_measured_flag(campaign_for_flag_test: Campaign):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     """The flag controls the candidate set and properly interacts with the cache."""
     campaign = campaign_for_flag_test
@@ -211,7 +307,7 @@ def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     assert campaign._cached_recommendation is None
     rec = campaign.recommend(1)
     mock_recommend.reset_mock()
-    assert campaign._cached_recommendation.equals(rec)
+    assert campaign._cached_recommendation.to_native().equals(rec)
 
     for i in range(2):
         with (
@@ -228,6 +324,7 @@ def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
     ids=["True", "False"],
     indirect=True,
 )
+@Settings(default_dataframe_backend="pandas")
 def test_allow_pending_flag(campaign_for_flag_test: Campaign):
     campaign = campaign_for_flag_test
     flag = campaign.allow_recommending_pending_experiments
@@ -241,7 +338,7 @@ def test_allow_pending_flag(campaign_for_flag_test: Campaign):
     assert campaign._cached_recommendation is None
     rec = campaign.recommend(1)
     mock_recommend.reset_mock()
-    assert campaign._cached_recommendation.equals(rec)
+    assert campaign._cached_recommendation.to_native().equals(rec)
 
     # Recommending without pending experiments uses the cache
     campaign.recommend(1)
@@ -273,33 +370,6 @@ def test_allow_pending_flag(campaign_for_flag_test: Campaign):
             False,
             ["sampleB", "sampleC"],
             id="string_index_duplicate_pending",
-        ),
-        param(
-            pd.DataFrame({"T": [300, 400, 500]}, index=[2, 0, 1]),
-            pd.DataFrame({"T": [300]}),
-            2,
-            False,
-            [0, 1],
-            id="reordered_numeric_index_single_pending",
-        ),
-        param(
-            pd.DataFrame({"T": [300, 300, 400]}, index=["row0", "row1", "row2"]),
-            pd.DataFrame({"T": [300]}),
-            1,
-            False,
-            ["row2"],
-            id="duplicate_candidate_configurations",
-        ),
-        param(
-            pd.DataFrame(
-                {"T": [300, 400, 500]},
-                index=pd.Index(["sampleA", "sampleB", "sampleC"], name="sample_id"),
-            ),
-            pd.DataFrame({"T": [300, 300]}),
-            2,
-            False,
-            ["sampleB", "sampleC"],
-            id="named_index_duplicate_pending",
         ),
         param(
             pd.DataFrame(
@@ -346,31 +416,69 @@ def test_pending_experiments_filtering(
         allow_recommending_pending_experiments=allow_pending,
     )
     rec = campaign.recommend(batch_size, pending_experiments=pending_df)
-    expected = exp_rep.loc[expected_index]
-    assert_frame_equal(rec.sort_index(), expected.sort_index(), check_dtype=False)
+    candidates = campaign.searchspace.discrete.get_candidates().reset_index(drop=True)
+    expected = candidates.iloc[exp_rep.index.get_indexer(expected_index)]
+    assert_frame_equal(
+        nw.from_native(rec, eager_only=True),
+        nw.from_native(expected, eager_only=True),
+        check_row_order=False,
+    )
 
 
 @pytest.mark.parametrize(
     "parameter_names", [["Categorical_1", "Categorical_2", "Num_disc_1"]]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-def test_update_measurements(ongoing_campaign):
-    """Updating measurements makes the expected changes."""
-    p_name, t_name = "Num_disc_1", ongoing_campaign.targets[0].name
-    updated = ongoing_campaign.measurements.iloc[[0], :]
+@pytest.mark.parametrize("batch_index", [0, 1, -1])
+def test_replace_batch(ongoing_campaign, batch_index, parameter_names):
+    """Replacing a batch makes the expected changes."""
+    p_name = parameter_names[-1]
+    t_name = ongoing_campaign.targets[0].name
 
-    # Perform the update
-    updated.iloc[0, updated.columns.get_loc(p_name)] = 1337
-    updated.iloc[0, updated.columns.get_loc(t_name)] = 1337
-    ongoing_campaign.update_measurements(
-        updated, numerical_measurements_must_be_within_tolerance=False
+    # Dry-run returns the current batch without modifying
+    old_batch = ongoing_campaign._measurements[batch_index]
+    dry_result = ongoing_campaign.replace_batch(
+        old_batch.to_native(), batch_index=batch_index, dry_run=True
+    )
+    assert_frame_equal(nw.from_native(dry_result, eager_only=True), old_batch)
+
+    # Modify values and perform the actual replacement
+    new_batch = old_batch.with_columns(
+        nw.lit(1337).alias(p_name),
+        nw.lit(1337).alias(t_name),
     )
 
-    # Make sure values are updated and resets have been made
-    meas = ongoing_campaign.measurements
-    assert meas.iloc[0, updated.columns.get_loc(p_name)] == 1337
-    assert meas.iloc[0, updated.columns.get_loc(t_name)] == 1337
-    assert meas.iloc[[0], updated.columns.get_loc("FitNr")].isna().all()
+    replaced = ongoing_campaign.replace_batch(
+        new_batch.to_native(),
+        batch_index=batch_index,
+        numerical_measurements_must_be_within_tolerance=False,
+    )
+
+    # Returned batch equals the pre-update batch
+    assert_frame_equal(nw.from_native(replaced, eager_only=True), old_batch)
+
+    # Verify values are updated and cache has been cleared
+    updated_batch = ongoing_campaign._measurements[batch_index]
+    assert updated_batch[p_name][0] == 1337
+    assert updated_batch[t_name][0] == 1337
+    assert ongoing_campaign._cached_recommendation is None
+
+
+@pytest.mark.parametrize("batch_index", [0, 1, -1])
+def test_drop_batch(ongoing_campaign, batch_index):
+    """Dropping a batch removes it from the campaign."""
+    n_batches = len(ongoing_campaign._measurements)
+    old_batch = ongoing_campaign._measurements[batch_index]
+
+    # Dry-run returns the batch without dropping
+    dry_result = ongoing_campaign.drop_batch(batch_index, dry_run=True)
+    assert_frame_equal(nw.from_native(dry_result, eager_only=True), old_batch)
+    assert len(ongoing_campaign._measurements) == n_batches
+
+    # Drop the batch
+    dropped = ongoing_campaign.drop_batch(batch_index)
+    assert_frame_equal(nw.from_native(dropped, eager_only=True), old_batch)
+    assert len(ongoing_campaign._measurements) == n_batches - 1
     assert ongoing_campaign._cached_recommendation is None
 
 
@@ -421,6 +529,7 @@ def test_update_measurements(ongoing_campaign):
     ],
 )
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+@Settings(default_dataframe_backend="pandas")
 def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     """Posterior statistics have expected shape, index and columns."""
     objective = ongoing_campaign.objective
@@ -494,7 +603,7 @@ def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
 @pytest.mark.parametrize("batch_size", [2], ids=["b2"])
 def test_acquisition_value_computation(ongoing_campaign: Campaign):
     """Acquisition values have the expected shape."""
-    df = ongoing_campaign.searchspace.discrete.exp_rep
+    df = ongoing_campaign.searchspace.discrete.get_candidates()
     assert not df.empty
 
     # Using campaign acquisition function
@@ -532,7 +641,7 @@ def test_cache_invalidation(
         new_value = FPSRecommender() if change else RandomRecommender()
 
     setattr(campaign, attribute, value)
-    campaign._cache_recommendation(pd.DataFrame())
+    campaign._cache_recommendation(nw.from_native(pd.DataFrame(), eager_only=True))
     assert campaign._cached_recommendation is not None
     setattr(campaign, attribute, new_value)
     assert getattr(campaign, attribute) is new_value
@@ -540,47 +649,3 @@ def test_cache_invalidation(
         assert campaign._cached_recommendation is None
     else:
         assert campaign._cached_recommendation is not None
-
-
-@pytest.fixture(name="named_candidates")
-def fixture_named_candidates() -> pd.DataFrame:
-    """Discrete candidate configurations with a named sample index."""
-    return pd.DataFrame(
-        {
-            "material": ["mat_A", "mat_B", "mat_C", "mat_D"],
-            "T": [300.0, 400.0, 500.0, 600.0],
-        },
-        index=pd.Index(["m_1", "m_2", "m_3", "m_4"], name="material_id"),
-    )
-
-
-@pytest.mark.parametrize("is_hybrid", [False, True], ids=["discrete", "hybrid"])
-def test_recommend_with_named_candidate_index(named_candidates, is_hybrid, recommender):
-    """Recommendation preserves candidate identities with a named candidate index."""
-    discrete = SubspaceDiscrete.from_dataframe(named_candidates)
-    searchspace = (
-        SearchSpace(
-            discrete=discrete,
-            continuous=SubspaceContinuous(
-                parameters=[NumericalContinuousParameter("x", (0.0, 1.0))]
-            ),
-        )
-        if is_hybrid
-        else SearchSpace(discrete=discrete)
-    )
-    campaign = Campaign(
-        searchspace,
-        NumericalTarget(name="Target").to_objective(),
-        recommender=recommender,
-    )
-
-    measurements = named_candidates.iloc[[0, 3]].assign(Target=[1.0, 2.0])
-    if is_hybrid:
-        measurements = measurements.assign(x=[0.0, 1.0])
-    campaign.add_measurements(measurements)
-
-    rec = campaign.recommend(batch_size=2)
-
-    assert len(rec) == 2
-    assert rec.index.name == named_candidates.index.name
-    assert rec.index.isin(named_candidates.index).all()

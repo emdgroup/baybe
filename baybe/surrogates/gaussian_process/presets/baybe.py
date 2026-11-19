@@ -7,7 +7,6 @@ import math
 from itertools import chain
 from typing import TYPE_CHECKING, ClassVar, TypeVar
 
-import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
@@ -46,6 +45,7 @@ if TYPE_CHECKING:
     from gpytorch.kernels import Kernel as GPyTorchKernel
     from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
     from gpytorch.means import Mean as GPyTorchMean
+    from narwhals.stable.v2.typing import IntoDataFrame
 
 _T = TypeVar("_T", bound=GPComponentFactoryProtocol)
 
@@ -73,7 +73,10 @@ class _CustomScaledNumericalKernelFactory(_PureKernelFactory):
 
     @override
     def _make(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> Kernel | GPyTorchKernel:
         from gpytorch.constraints import GreaterThan
         from gpytorch.kernels import MaternKernel
@@ -124,7 +127,10 @@ class _CustomScaledLikelihoodFactory(LikelihoodFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> GPyTorchLikelihood:
         from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
         from gpytorch.constraints import GreaterThan
@@ -181,7 +187,10 @@ class _BayBENumericalKernelFactory(_PureKernelFactory):
 
     @override
     def _make(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> Kernel | GPyTorchKernel:
         from baybe.surrogates.gaussian_process.presets.chen import (
             _ChenNumericalKernelFactory,
@@ -221,7 +230,10 @@ class _BayBETaskKernelFactory(_PureKernelFactory):
 
     @override
     def _make(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> Kernel:
         return PositiveIndexKernel(
             num_tasks=searchspace.n_tasks,
@@ -236,7 +248,10 @@ class BayBEMeanFactory(MeanFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> GPyTorchMean:
         from baybe.surrogates.gaussian_process.presets.chen import ChenMeanFactory
 
@@ -254,7 +269,10 @@ class BayBELikelihoodFactory(LikelihoodFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> GPyTorchLikelihood:
         from baybe.surrogates.gaussian_process.presets.chen import ChenLikelihoodFactory
 
@@ -272,7 +290,10 @@ class BayBEFitCriterionFactory(FitCriterionFactoryProtocol):
 
     @override
     def __call__(
-        self, searchspace: SearchSpace, objective: Objective, measurements: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: IntoDataFrame,
     ) -> FitCriterion:
         return (
             FitCriterion.MARGINAL_LOG_LIKELIHOOD

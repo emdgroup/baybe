@@ -8,6 +8,7 @@ from json import JSONDecodeError
 from typing import cast
 
 import cattrs
+import narwhals.stable.v2 as nw
 import pandas as pd
 
 from baybe.exceptions import (
@@ -145,11 +146,31 @@ def parse_llm_response(
             valid_names=param_names,
         )
 
+    # The search space requires a column for every parameter to validate the
+    # configurations
+    if missing := param_names - set(df.columns):
+        raise LLMIneligiblePointsError(
+            f"The response is missing parameter columns: {sorted(missing)}."
+        )
+
+    # Numerical parameters must have numeric values
+    # TODO: Check the expected column dtypes for all parameter types once parameters
+    #   expose their expected representation
+    if non_numeric := [
+        p.name
+        for p in searchspace.parameters
+        if p.is_numerical
+        and p.name in df
+        and not pd.api.types.is_numeric_dtype(df[p.name])
+    ]:
+        raise LLMIneligiblePointsError(
+            f"The response contains non-numeric values for parameters "
+            f"{sorted(non_numeric)}."
+        )
+
     # Snap eligible numerical discrete values before candidate and constraint checks
     for p in searchspace.discrete.parameters:
-        # Since validation report missing or non-numeric columns, only attempt snapping
-        # for numeric columns that exist without already verifying
-        if p.is_numerical and p.name in df.select_dtypes(include="number"):
+        if p.is_numerical:
             df[p.name] = df[p.name].map(
                 lambda x: (
                     closest_element(p.values, cast(float, x)) if p.is_in_range(x) else x
@@ -157,10 +178,13 @@ def parse_llm_response(
             )
 
     # The search space is responsible for validating the individual configurations
-    try:
-        searchspace._validate_configurations(df)
-    except ValueError as e:
-        raise LLMIneligiblePointsError(str(e)) from e
+    invalid = nw.from_native(
+        searchspace._get_invalid_configurations(df), eager_only=True
+    )
+    if not invalid.is_empty():
+        raise LLMIneligiblePointsError(
+            f"{len(invalid)} configuration(s) do not belong to the search space."
+        )
     df = normalize_input_dtypes(df, searchspace.parameters)
 
     continuous_constraints = (
@@ -182,7 +206,7 @@ def parse_llm_response(
     # TODO: Batch constraints and duplicates concern the batch as a whole and are
     #   therefore still validated here instead of by the search space. Move them once
     #   the search space offers a batch-level validation.
-    for constraint in searchspace.discrete.constraints_batch:
+    for constraint in searchspace.discrete.batch_constraints:
         param_name = constraint.parameters[0]
         unique_values = df[param_name].unique()
         if len(unique_values) > 1:

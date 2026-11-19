@@ -6,19 +6,21 @@ import gc
 import json
 import warnings
 from collections.abc import Collection, Sequence
-from functools import reduce
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, cast, overload
 
 import cattrs
-import numpy as np
+import narwhals.stable.v2 as nw
 import pandas as pd
-from attrs import Attribute, define, evolve, field, fields, setters
+from attrs import Attribute, cmp_using, define, evolve, field, fields, setters
 from attrs.converters import optional
 from attrs.validators import instance_of
+from narwhals.stable.v2.dependencies import is_into_dataframe
+from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoSeries
 from typing_extensions import override
 
 from baybe.constraints.base import DiscreteFilteringConstraint
 from baybe.exceptions import (
+    DeprecationError,
     IncompatibilityError,
     NoMeasurementsError,
     NotEnoughPointsLeftError,
@@ -26,12 +28,13 @@ from baybe.exceptions import (
 )
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
+from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
-from baybe.searchspace._filtered import FilteredSubspaceDiscrete
+from baybe.searchspace.candidates import TableCandidates
 from baybe.searchspace.core import (
     SearchSpace,
     SearchSpaceType,
@@ -43,9 +46,14 @@ from baybe.settings import Settings, active_settings
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.targets.base import Target
 from baybe.utils.basic import is_all_instance
-from baybe.utils.boolean import AutoBool, eq_dataframe
+from baybe.utils.boolean import AutoBool
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import filter_df, fuzzy_row_match
+from baybe.utils.dataframe import (
+    _df_equals,
+    _df_with_backend,
+    _fuzzy_anti_join,
+    _infer_backend,
+)
 from baybe.utils.validation import (
     preprocess_dataframe,
     validate_object_names,
@@ -53,18 +61,14 @@ from baybe.utils.validation import (
 )
 
 if TYPE_CHECKING:
+    import polars as pl
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from botorch.posteriors import Posterior
 
     from baybe.acquisition.base import AcquisitionFunction
+    from baybe.utils.dataframe import Filter
 
     _T = TypeVar("_T")
-
-# Metadata columns
-_RECOMMENDED = "recommended"
-_MEASURED = "measured"
-_EXCLUDED = "excluded"
-_METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
 
 
 def _set_with_cache_cleared(instance: Campaign, attribute: Attribute, value: _T) -> _T:
@@ -171,75 +175,79 @@ class Campaign(SerialMixin):
     )
     """Allow recommending pending experiments."""
 
-    # Metadata
-    _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
-    """Metadata tracking the experimentation status of the search space."""
-
-    n_batches_done: int = field(default=0, init=False)
-    """The number of already processed batches."""
-
-    n_fits_done: int = field(default=0, init=False)
-    """The number of fits already done."""
-
     # Private
-    _measurements_exp: pd.DataFrame = field(
-        factory=pd.DataFrame, eq=eq_dataframe, init=False
-    )
-    """The experimental representation of the conducted experiments."""
+    _excluded_experiments: nw.DataFrame = field(eq=cmp_using(_df_equals), init=False)
+    """The parameter configurations that have been excluded from recommendations."""
 
-    _cached_recommendation: pd.DataFrame | None = field(
+    _measurements: list[nw.DataFrame] = field(
+        factory=list,
+        eq=cmp_using(lambda a, b: len(a) == len(b) and all(map(_df_equals, a, b))),
+        init=False,
+    )
+    """The measurements added to the campaign, one frame per batch."""
+
+    _recommended_experiments: nw.DataFrame = field(eq=cmp_using(_df_equals), init=False)
+    """The (deduplicated) parameter configurations that have been recommended."""
+
+    _cached_recommendation: nw.DataFrame | None = field(
         default=None, init=False, eq=False
     )
     """The cached recommendations."""
 
-    @_searchspace_metadata.default
-    def _default_searchspace_metadata(self) -> pd.DataFrame:
-        """Create a fresh metadata object."""
-        df = pd.DataFrame(
-            False,
-            index=self.searchspace.discrete.exp_rep.index,
-            columns=_METADATA_COLUMNS,
+    @_excluded_experiments.default
+    def _default_excluded_experiments(self) -> nw.DataFrame:
+        """Create an empty excluded experiments DataFrame with correct schema."""
+        cols = [p.name for p in self.searchspace.parameters]
+        return nw.from_dict(
+            {c: [] for c in cols},
+            backend=active_settings.default_dataframe_backend,
         )
 
-        return df
+    @_recommended_experiments.default
+    def _default_recommended_experiments(self) -> nw.DataFrame:
+        """Create an empty recommended experiments DataFrame with correct schema."""
+        cols = [p.name for p in self.searchspace.parameters]
+        return nw.from_dict(
+            {c: [] for c in cols},
+            backend=active_settings.default_dataframe_backend,
+        )
 
     @override
     def __str__(self) -> str:
-        recommended_count = sum(self._searchspace_metadata[_RECOMMENDED])
-        measured_count = sum(self._searchspace_metadata[_MEASURED])
-        excluded_count = sum(self._searchspace_metadata[_EXCLUDED])
-        n_elements = len(self._searchspace_metadata)
-        searchspace_fields = [
-            to_string(
-                "Recommended:",
-                f"{recommended_count}/{n_elements}",
-                single_line=True,
-            ),
-            to_string(
-                "Measured:",
-                f"{measured_count}/{n_elements}",
-                single_line=True,
-            ),
-            to_string(
-                "Excluded:",
-                f"{excluded_count}/{n_elements}",
-                single_line=True,
-            ),
-        ]
-        metadata_fields = [
-            to_string("Batches done", self.n_batches_done, single_line=True),
-            to_string("Fits done", self.n_fits_done, single_line=True),
-            to_string("Discrete Subspace Meta Data", *searchspace_fields),
-        ]
-        metadata = to_string("Meta Data", *metadata_fields)
-        fields = [metadata, self.searchspace, self.objective, self.recommender]
-
+        fields = [self.searchspace, self.objective, self.recommender]
         return to_string(self.__class__.__name__, *fields)
 
     @property
-    def measurements(self) -> pd.DataFrame:
+    def n_batches(self) -> int:
+        """The number of recorded measurement batches."""
+        return len(self._measurements)
+
+    @property
+    def measurements(self) -> IntoDataFrame:
         """The experimental data added to the Campaign."""
-        return self._measurements_exp
+        if not self._measurements:
+            cols = [p.name for p in self.searchspace.parameters] + [
+                t.name for t in (self.objective.targets if self.objective else ())
+            ]
+            return nw.from_dict(
+                {c: [] for c in cols},
+                backend=active_settings.default_dataframe_backend,
+            ).to_native()
+
+        combined = nw.maybe_reset_index(nw.concat(self._measurements, how="vertical"))
+        # Clone to prevent aliasing: the returned native frame would otherwise share
+        # storage with the stored measurement batches
+        return combined.clone().to_native()
+
+    @property
+    def n_batches_done(self) -> NoReturn:
+        """Deprecated!"""
+        raise DeprecationError("'n_batches_done' is no longer available.")
+
+    @property
+    def n_fits_done(self) -> NoReturn:
+        """Deprecated!"""
+        raise DeprecationError("'n_fits_done' is no longer available.")
 
     @property
     def parameters(self) -> tuple[Parameter, ...]:
@@ -313,9 +321,11 @@ class Campaign(SerialMixin):
         config = json.loads(config_json)
         _validation_converter.structure(config, Campaign)
 
-    def _cache_recommendation(self, df: pd.DataFrame, /) -> None:
+    def _cache_recommendation(self, df: nw.DataFrame, /) -> None:
         """Cache the given recommendation."""
-        self._cached_recommendation = df.copy()
+        # Clone to prevent aliasing: the caller still holds a reference to ``df``
+        # whose native storage would otherwise be shared with the cache
+        self._cached_recommendation = df.clone()
 
     def clear_cache(self) -> None:
         """Clear the internal recommendation cache."""
@@ -323,7 +333,7 @@ class Campaign(SerialMixin):
 
     def add_measurements(
         self,
-        data: pd.DataFrame,
+        data: IntoDataFrame,
         numerical_measurements_must_be_within_tolerance: bool = True,
     ) -> None:
         """Add results from a dataframe to the internal database.
@@ -342,114 +352,140 @@ class Campaign(SerialMixin):
                 numerical parameters need to be within their tolerances.
         """
         # Preprocess incoming data
-        data = preprocess_dataframe(
-            data,
-            self.searchspace,
-            self.objective,
-            numerical_measurements_must_be_within_tolerance,
+        data_nw = nw.from_native(
+            preprocess_dataframe(
+                data,
+                self.searchspace,
+                self.objective,
+                numerical_measurements_must_be_within_tolerance,
+            ),
+            eager_only=True,
         )
+
+        # Drop potential non-default pandas index
+        data_nw = nw.maybe_reset_index(data_nw)
 
         # With new measurements, the recommendations must always be recomputed
         self.clear_cache()
 
-        # Read in measurements and add them to the database
-        self.n_batches_done += 1
-        to_insert = data.copy()
-        to_insert["BatchNr"] = self.n_batches_done
-        to_insert["FitNr"] = np.nan
+        # Append the new batch
+        self._measurements.append(data_nw)
 
-        self._measurements_exp = pd.concat(
-            [self._measurements_exp, to_insert], axis=0, ignore_index=True
+    # >>>>>>>>>> Deprecation
+    def update_measurements(self, *args: Any, **kwargs: Any) -> NoReturn:
+        """Deprecated! Use :meth:`replace_batch` instead."""  # noqa: D401
+        raise DeprecationError(
+            f"'{self.update_measurements.__name__}' is deprecated. "
+            f"Use '{self.replace_batch.__name__}' instead."
         )
 
-        # Update metadata
-        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            idxs_matched = fuzzy_row_match(
-                self.searchspace.discrete.exp_rep, data, self.parameters
-            )
-            self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
+    # <<<<<<<<<< Deprecation
 
-    def update_measurements(
+    def replace_batch(
         self,
-        data: pd.DataFrame,
+        df: IntoDataFrameT,
+        /,
+        batch_index: int = -1,
+        *,
         numerical_measurements_must_be_within_tolerance: bool = True,
-    ) -> None:
-        """Update previously added measurements.
+        dry_run: bool = False,
+    ) -> IntoDataFrameT:
+        """Replace an entire batch of previously added measurements.
 
-        This can be useful to correct mistakes or update target measurements. The
-        match to existing data entries is made based on the index. This will reset
-        the `FitNr` of the corresponding measurement and reset cached recommendations.
+        Replaces the batch at the given index with the provided measurement data. The
+        dry-run option allows inspection of the batch before replacement and helps
+        identify the correct index.
 
         Args:
-            data: The measurement data to be updated (with filled values for targets).
+            df: The updated batch of measurements.
+            batch_index: The index of the batch to update.
             numerical_measurements_must_be_within_tolerance: Flag indicating if
                 numerical parameters need to be within their tolerances.
+            dry_run: If ``True``, the current batch is returned without performing
+                the update. Useful for inspecting the batch before actually
+                replacing it.
 
-        Raises:
-            ValueError: If the given data contains duplicated indices.
-            ValueError: If the given data contains indices not present in existing
-                measurements.
+        Returns:
+            The batch previously stored at the index.
         """
+        if dry_run:
+            # Clone to prevent aliasing: the returned frame would otherwise share
+            # storage with the stored batch
+            return self._measurements[batch_index].clone().to_native()
+
         # Preprocess incoming data
-        data = preprocess_dataframe(
-            data,
-            self.searchspace,
-            self.objective,
-            numerical_measurements_must_be_within_tolerance,
+        data_nw = nw.from_native(
+            preprocess_dataframe(
+                df,
+                self.searchspace,
+                self.objective,
+                numerical_measurements_must_be_within_tolerance,
+            ),
+            eager_only=True,
         )
 
-        # With changed measurements, the recommendations must always be recomputed
+        # Drop potential non-default pandas index
+        data_nw = nw.maybe_reset_index(data_nw)
+
+        # With changed measurements, the recommendations must be recomputed
         self.clear_cache()
 
-        # Block duplicate input indices
-        if data.index.has_duplicates:
-            raise ValueError(
-                "The input dataframe containing the measurement updates has duplicated "
-                "indices. Please ensure that all updates for a given measurement are "
-                "made in a single combined entry."
-            )
+        # Replace the batch, returning the old one
+        old_batch = self._measurements[batch_index]
+        self._measurements[batch_index] = data_nw
+        return old_batch.to_native()
 
-        # Allow only existing indices
-        if nonmatching_idxs := set(data.index).difference(self._measurements_exp.index):
-            raise ValueError(
-                f"Updating measurements requires indices matching the "
-                f"existing measurements. The following indices were in the input, but "
-                f"are not found in the existing entries: {nonmatching_idxs}"
-            )
+    def drop_batch(
+        self, batch_index: int = -1, *, dry_run: bool = False
+    ) -> IntoDataFrame:
+        """Drop an entire batch of previously added measurements.
 
-        # Perform the update
-        cols = [p.name for p in self.parameters] + [t.name for t in self.targets]
-        self._measurements_exp.loc[data.index, cols] = data[cols]
+        Args:
+            batch_index: The index of the batch to drop.
+            dry_run: If ``True``, the current batch is returned without performing
+                the drop. Useful for inspecting the batch before actually
+                dropping it.
 
-        # Reset fit number
-        self._measurements_exp.loc[data.index, "FitNr"] = np.nan
+        Returns:
+            The dropped batch data.
+        """
+        if dry_run:
+            # Clone to prevent aliasing: the returned frame would otherwise share
+            # storage with the stored batch
+            return self._measurements[batch_index].clone().to_native()
+
+        self.clear_cache()
+        return self._measurements.pop(batch_index).to_native()
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
-        constraints: Collection[DiscreteFilteringConstraint] | pd.DataFrame,
-        exclude: bool,
+        *filters: Filter,
+        exclude: bool | None = None,  # `None` is for deprecation-purposes only
         complement: bool = False,
         dry_run: bool = False,
-    ) -> pd.DataFrame:
+        constraints: Collection[DiscreteFilteringConstraint]
+        | IntoDataFrame
+        | None = None,
+    ) -> IntoDataFrame:
         """In-/exclude certain discrete points in/from the candidate set.
 
         Args:
-            constraints: A filtering mechanism determining the candidates subset to be
-                in-/excluded. Can be either a collection of
-                :class:`~baybe.constraints.base.DiscreteFilteringConstraint` or a
-                dataframe. For the latter, see :func:`~baybe.utils.dataframe.filter_df`
-                for details.
+            *filters: One or more filter criteria determining the candidates subset
+                to be in-/excluded. Multiple filters are combined conjunctively
+                (logical AND).
             exclude: If ``True``, the specified candidates are excluded.
                 If ``False``, the candidates are considered for recommendation.
             complement: If ``True``, the filtering mechanism is inverted so that
-                the complement of the candidate subset specified by the filter is
-                toggled. For details, see :func:`~baybe.utils.dataframe.filter_df`.
+                the complement of the candidate subset specified by the filter(s) is
+                toggled.
             dry_run: If ``True``, the target subset is only extracted but not
                 affected. If ``False``, the candidate set is updated correspondingly.
                 Useful for setting up the correct filtering mechanism.
+            constraints: Deprecated! Provide the filter criteria via ``*filters``
+                instead.
 
         Returns:
-            A new dataframe containing the  discrete candidate set passing through the
+            A new dataframe containing the discrete candidate set passing through the
             specified filter.
         """
         # IMPROVE: The cache invalidation could be made more fine-grained:
@@ -459,44 +495,146 @@ class Campaign(SerialMixin):
         #  * When excluding points, the cache only needs to be cleared if the excluded
         #    points were part of the cached recommendations.
         #  * Additional shortcuts might be possible.
+
+        # >>>>>>>>>> Deprecation
+        filters, exclude, complement, dry_run = self._resolve_legacy_toggle_args(
+            filters, exclude, complement, dry_run, constraints
+        )
+        # <<<<<<<<<< Deprecation
+
         self.clear_cache()
 
-        df = self.searchspace.discrete.exp_rep
-
-        if isinstance(constraints, pd.DataFrame):
-            # Determine the candidate subset to be toggled
-            points = filter_df(df, constraints, complement)
-
-        elif isinstance(constraints, Collection) and is_all_instance(
-            constraints, DiscreteFilteringConstraint
-        ):
-            # TODO: Should be taken over by upcoming `SubspaceDiscrete.filter` method,
-            #   automatically choosing the appropriate backend (polars/pandas/...)
-
-            # Filter the search space dataframe according to the given constraint
-            idx = reduce(
-                lambda x, y: x.intersection(y), (c.get_valid(df) for c in constraints)
-            )
-
-            # Determine the candidate subset to be toggled
-            points = df.drop(index=idx) if complement else df.loc[idx].copy()
-
-        else:
-            raise TypeError(
-                f"Candidate toggling requires a dataframe or a collection of "
-                f"'{DiscreteFilteringConstraint.__name__}' instances."
-            )
+        filtered = self.searchspace.discrete.filter(*filters, complement=complement)
+        points_nw = nw.maybe_reset_index(filtered._get_candidates().collect())
 
         if not dry_run:
-            self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
+            if exclude and not points_nw.is_empty():
+                # Clone to prevent aliasing: the returned native frame would otherwise
+                # share storage with the exclusion record
+                to_store = points_nw.clone()
+                if self._excluded_experiments.is_empty():
+                    self._excluded_experiments = to_store
+                else:
+                    concatenated = nw.concat(
+                        [self._excluded_experiments, to_store], how="vertical"
+                    )
+                    self._excluded_experiments = nw.maybe_reset_index(
+                        concatenated.unique()
+                    )
+            elif not exclude and not self._excluded_experiments.is_empty():
+                self._excluded_experiments = nw.maybe_reset_index(
+                    self._excluded_experiments.join(
+                        points_nw, on=points_nw.columns, how="anti"
+                    )
+                )
 
-        return points
+        return points_nw.to_native()
+
+    # >>>>>>>>>> Deprecation
+    def _resolve_legacy_toggle_args(
+        self,
+        filters: tuple[Filter, ...],
+        exclude: bool | None,
+        complement: bool,
+        dry_run: bool,
+        constraints: Collection[DiscreteFilteringConstraint] | IntoDataFrame | None,
+    ) -> tuple[tuple[Filter, ...], bool, bool, bool]:
+        """Normalize legacy ``toggle_discrete_candidates`` call styles."""
+        # Legacy call style: the filter criterion passed via the old `constraints`
+        # keyword argument instead of via `*filters`
+        if constraints is not None:
+            if filters:
+                raise TypeError(
+                    f"'{self.toggle_discrete_candidates.__name__}' received both "
+                    f"positional filter arguments and the legacy 'constraints' "
+                    f"keyword argument. Provide the filter criteria only once, "
+                    f"preferably via the new-style positional '*filters' arguments."
+                )
+            if is_into_dataframe(constraints):
+                filters = (cast("Filter", constraints),)
+            else:
+                filters = tuple(cast("Collection[Filter]", constraints))
+            warnings.warn(
+                f"Passing filter criteria via the 'constraints' argument of "
+                f"'{self.toggle_discrete_candidates.__name__}' is deprecated and "
+                f"will be rejected in a future version. Pass them as positional "
+                f"arguments instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+
+        # Legacy call style: `exclude`/`complement`/`dry_run` passed positionally,
+        # as a trailing run of plain `bool` arguments, in that order (unambiguous,
+        # since a bare `bool` is never a valid `Filter`)
+        n_trailing_bools = 0
+        for f in reversed(filters):
+            if isinstance(f, bool):
+                n_trailing_bools += 1
+            else:
+                break
+        if n_trailing_bools > 3:
+            raise TypeError(
+                f"'{self.toggle_discrete_candidates.__name__}' received too many "
+                f"positional Boolean arguments."
+            )
+        if n_trailing_bools:
+            legacy_values = filters[-n_trailing_bools:]
+            filters = filters[:-n_trailing_bools]
+            for name, value in zip(
+                ("exclude", "complement", "dry_run"), legacy_values, strict=False
+            ):
+                if name == "exclude":
+                    exclude = cast(bool, value)
+                elif name == "complement":
+                    complement = cast(bool, value)
+                else:
+                    dry_run = cast(bool, value)
+            warnings.warn(
+                f"Passing 'exclude' (and 'complement'/'dry_run') positionally to "
+                f"'{self.toggle_discrete_candidates.__name__}' is deprecated and "
+                f"will be rejected in a future version. Pass 'exclude' as a keyword "
+                f"argument instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+
+        # Legacy call style: a collection of constraints passed as a single combined
+        # argument instead of as individual filter arguments
+        if (
+            len(filters) == 1
+            and isinstance(filters[0], Collection)
+            and not is_into_dataframe(filters[0])
+            and is_all_instance(filters[0], DiscreteFilteringConstraint)
+        ):
+            filters = tuple(filters[0])
+            warnings.warn(
+                f"Passing a combined collection of "
+                f"'{DiscreteFilteringConstraint.__name__}' objects to "
+                f"'{self.toggle_discrete_candidates.__name__}' is deprecated and "
+                f"will be rejected in a future version. Pass the constraints as "
+                f"separate positional arguments instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+
+        # `exclude` only has a default value (`None`) to accommodate the legacy
+        # call styles above that can supply it after the fact. Once those are
+        # removed, `exclude` becomes a genuinely required keyword-only argument
+        # (no default) and Python's own argument binding takes over this check.
+        if exclude is None:
+            raise TypeError(
+                f"'{self.toggle_discrete_candidates.__name__}' is missing the "
+                f"required keyword argument 'exclude'."
+            )
+        return filters, exclude, complement, dry_run
+
+    # <<<<<<<<<< Deprecation
 
     def recommend(
         self,
         batch_size: int,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         """Provide the recommendations for the next batch of experiments.
 
         Args:
@@ -516,19 +654,22 @@ class Campaign(SerialMixin):
                 f"{batch_size=}."
             )
 
-        # IMPROVE: Currently, we simply invalidate the cache whenever pending
-        #     experiments are provided, because in order to use it, we need to check if
-        #     the previous call was done with the same pending experiments.
-        if pending_experiments is not None:
-            self.clear_cache()
+        backend = _infer_backend(pending_experiments)
 
-        # Preprocess pending experiments
+        # Preprocess pending experiments before cache invalidation.
         if pending_experiments is not None:
             pending_experiments = preprocess_dataframe(
                 pending_experiments,
                 self.searchspace,
                 numerical_measurements_must_be_within_tolerance=False,
+                allow_extra=False,
             )
+
+        # IMPROVE: Currently, we simply invalidate the cache whenever pending
+        #     experiments are provided, because in order to use it, we need to check if
+        #     the previous call was done with the same pending experiments.
+        if pending_experiments is not None:
+            self.clear_cache()
 
         # TODO: Proper fix for the allow_* flags required
         if (
@@ -538,36 +679,54 @@ class Campaign(SerialMixin):
             and self.allow_recommending_already_recommended
             and len(cache) == batch_size
         ):
-            return cache
-
-        # Update recommendation meta data
-        if len(self._measurements_exp) > 0:
-            self.n_fits_done += 1
-            self._measurements_exp.fillna({"FitNr": self.n_fits_done}, inplace=True)
+            # TODO: Potentially the cast becomes obsolete once Campaign is generic
+            # Clone to prevent aliasing: the returned native frame would
+            # otherwise share storage with the cache
+            return cast(
+                IntoDataFrameT,
+                _df_with_backend(cache.clone(), backend).to_native(),
+            )
 
         # Prepare the search space according to the current campaign state
         if self.searchspace.type is SearchSpaceType.DISCRETE:
-            # TODO: This implementation should at some point be hidden behind an
-            #   appropriate public interface, like `SubspaceDiscrete.filter()`
-            mask_todrop = self._searchspace_metadata[_EXCLUDED].astype(bool)
-            if not self.allow_recommending_already_recommended:
-                mask_todrop |= self._searchspace_metadata[_RECOMMENDED]
-            if not self.allow_recommending_already_measured:
-                mask_todrop |= self._searchspace_metadata[_MEASURED]
+            discrete = self.searchspace.discrete
+
+            # Drop excluded experiments
+            if not self._excluded_experiments.is_empty():
+                discrete = discrete.filter(self._excluded_experiments, complement=True)
+
+            # Drop already recommended experiments
+            if (
+                not self.allow_recommending_already_recommended
+                and not self._recommended_experiments.is_empty()
+            ):
+                discrete = discrete.filter(
+                    self._recommended_experiments, complement=True
+                )
+
+            # Drop pending experiments
             if (
                 not self.allow_recommending_pending_experiments
                 and pending_experiments is not None
             ):
-                parameter_names = list(self.searchspace.discrete.parameter_names)
-                mask_todrop |= pd.MultiIndex.from_frame(
-                    self.searchspace.discrete.exp_rep[parameter_names]
-                ).isin(pd.MultiIndex.from_frame(pending_experiments[parameter_names]))
-            searchspace = evolve(
-                self.searchspace,
-                discrete=FilteredSubspaceDiscrete.from_subspace(
-                    self.searchspace.discrete, ~mask_todrop.to_numpy()
-                ),
-            )
+                discrete = discrete.filter(pending_experiments, complement=True)
+
+            # Drop already measured experiments
+            if not self.allow_recommending_already_measured and self._measurements:
+                tolerances = {
+                    p.name: p.tolerance
+                    for p in discrete.parameters
+                    if isinstance(p, NumericalDiscreteParameter)
+                }
+                filtered = _fuzzy_anti_join(
+                    discrete.get_candidates(), self.measurements, tolerances
+                )
+                discrete = evolve(
+                    discrete,
+                    candidates=TableCandidates(discrete.parameters, filtered),
+                )
+
+            searchspace = evolve(self.searchspace, discrete=discrete)
         else:
             searchspace = self.searchspace
 
@@ -580,7 +739,7 @@ class Campaign(SerialMixin):
                 batch_size,
                 searchspace,
                 self.objective,
-                self._measurements_exp,
+                self.measurements,
                 pending_experiments,
             )
         is_nonpredictive = isinstance(recommender, NonPredictiveRecommender)
@@ -594,7 +753,7 @@ class Campaign(SerialMixin):
                     batch_size,
                     searchspace,
                     self.objective,
-                    self._measurements_exp,
+                    self.measurements,
                     None if is_nonpredictive else pending_experiments,
                 )
         except NotEnoughPointsLeftError as ex:
@@ -627,22 +786,33 @@ class Campaign(SerialMixin):
                 f"{str(ex)} Consider setting {message}."
             ) from ex
 
+        rec_nw = nw.from_native(rec, eager_only=True)
+
         if (
             active_settings.cache_campaign_recommendations
             and pending_experiments is None  # see IMPROVE comment above
         ):
-            self._cache_recommendation(rec)
+            self._cache_recommendation(rec_nw)
 
-        if self.searchspace.type in (
-            SearchSpaceType.DISCRETE,
-            SearchSpaceType.HYBRID,
-        ):
-            self._searchspace_metadata.loc[rec.index.dropna(), _RECOMMENDED] = True
+        # Track recommended experiments (deduplicated)
+        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
+            param_cols = [p.name for p in self.parameters]
+            frames = [
+                frame
+                for frame in (self._recommended_experiments, rec_nw.select(param_cols))
+                if not frame.is_empty()
+            ]
+            self._recommended_experiments = nw.maybe_reset_index(
+                nw.concat(frames, how="vertical").unique()
+            )
 
-        return rec
+        return cast(
+            IntoDataFrameT,
+            _df_with_backend(rec_nw, backend).to_native(),
+        )
 
     def posterior(
-        self, candidates: pd.DataFrame | None = None, *, joint: bool = True
+        self, candidates: IntoDataFrame | None = None, *, joint: bool = True
     ) -> Posterior:
         """Get the posterior predictive distribution for the given candidates.
 
@@ -662,7 +832,9 @@ class Campaign(SerialMixin):
             For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
         if candidates is None:
-            candidates = self.measurements[[p.name for p in self.parameters]]
+            candidates = nw.from_native(self.measurements, eager_only=True).select(
+                [p.name for p in self.parameters]
+            )
 
         surrogate = self.get_surrogate()
         if not hasattr(surrogate, method_name := "posterior"):
@@ -676,9 +848,9 @@ class Campaign(SerialMixin):
 
     def posterior_stats(
         self,
-        candidates: pd.DataFrame | None = None,
+        candidates: IntoDataFrameT | None = None,
         stats: Sequence[PosteriorStatistic] = ("mean", "std"),
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrameT:
         """Return posterior statistics for each target.
 
         Args:
@@ -698,14 +870,16 @@ class Campaign(SerialMixin):
             A dataframe with posterior statistics for each target and candidate.
         """
         if candidates is None:
-            if self.measurements.empty:
+            if not self._measurements:
                 raise NoMeasurementsError(
                     f"No candidates were provided and the campaign has no measurements "
                     f"yet. '{self.posterior_stats.__name__}' has no candidates to "
                     f"compute statistics for in this case."
                 )
 
-            candidates = self.measurements[[p.name for p in self.parameters]]
+            candidates = nw.from_native(self.measurements, eager_only=True).select(  # type: ignore[assignment]
+                [p.name for p in self.parameters]
+            )
 
         surrogate = self.get_surrogate()
         if not hasattr(surrogate, method_name := "posterior_stats"):
@@ -720,7 +894,7 @@ class Campaign(SerialMixin):
     def get_surrogate(
         self,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> SurrogateProtocol:
         """Get the current surrogate model.
 
@@ -765,7 +939,7 @@ class Campaign(SerialMixin):
     def _get_non_meta_recommender(
         self,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> RecommenderProtocol:
         """Get the current recommender.
 
@@ -791,7 +965,7 @@ class Campaign(SerialMixin):
     def _get_bayesian_recommender(
         self,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> BayesianRecommender:
         """Get the current Bayesian recommender (if available).
 
@@ -811,7 +985,7 @@ class Campaign(SerialMixin):
     def get_acquisition_function(
         self,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrame | None = None,
     ) -> BoAcquisitionFunction:
         """Get the current BoTorch acquisition function.
 
@@ -842,12 +1016,12 @@ class Campaign(SerialMixin):
 
     def acquisition_values(
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         acquisition_function: AcquisitionFunction | None = None,
         *,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.Series:
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoSeries:
         """Compute the acquisition values for the given candidates.
 
         Args:
@@ -876,11 +1050,11 @@ class Campaign(SerialMixin):
 
     def joint_acquisition_value(  # noqa: DOC101, DOC103
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         acquisition_function: AcquisitionFunction | None = None,
         *,
         batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> float:
         """Compute the joint acquisition values for the given candidate batch.
 
@@ -900,13 +1074,40 @@ class Campaign(SerialMixin):
             acquisition_function,
         )
 
+    @overload
     def identify_non_dominated_configurations(
         self,
-        configurations: pd.DataFrame | None = None,
+        configurations: None = None,
         /,
         *,
         consider_campaign_measurements: bool = True,
-    ) -> pd.Series:
+    ) -> IntoSeries: ...
+
+    @overload
+    def identify_non_dominated_configurations(
+        self,
+        configurations: pd.DataFrame,
+        /,
+        *,
+        consider_campaign_measurements: bool = True,
+    ) -> pd.Series: ...
+
+    @overload
+    def identify_non_dominated_configurations(
+        self,
+        configurations: pl.DataFrame,
+        /,
+        *,
+        consider_campaign_measurements: bool = True,
+    ) -> pl.Series: ...
+
+    def identify_non_dominated_configurations(
+        self,
+        configurations: IntoDataFrameT | None = None,
+        /,
+        *,
+        consider_campaign_measurements: bool = True,
+    ) -> IntoSeries:
         """Create a Boolean mask indicating non-dominated configurations.
 
         Args:
@@ -930,7 +1131,7 @@ class Campaign(SerialMixin):
                 f"'{Objective.__name__}' is defined."
             )
 
-        if self.measurements.empty:
+        if not self._measurements:
             if configurations is None:
                 raise NothingToComputeError(
                     "The calculation of non-dominated points was requested, but "
@@ -947,20 +1148,27 @@ class Campaign(SerialMixin):
                     UserWarning,
                 )
 
+        measurements = nw.from_native(self.measurements, eager_only=True)
+
         if configurations is None:
-            configurations = self.measurements
+            configurations_nw = measurements
         else:
-            validate_target_input(configurations, self.objective.targets)
+            configurations_nw = nw.from_native(configurations, eager_only=True)
+            validate_target_input(configurations_nw.to_pandas(), self.objective.targets)
 
-        if consider_campaign_measurements and not self.measurements.empty:
-            configurations = pd.concat([configurations, self.measurements])
+        n_configs = len(configurations_nw)
 
-        non_dominated = self.objective.identify_non_dominated_configurations(
-            configurations
+        if consider_campaign_measurements and self._measurements:
+            configurations_nw = nw.concat(
+                [configurations_nw, measurements], how="vertical"
+            )
+
+        non_dominated = self.objective.identify_non_dominated_configurations(  # type: ignore[call-overload]
+            configurations_nw.to_native()
         )
 
-        if consider_campaign_measurements:
-            non_dominated = non_dominated.iloc[: -len(self.measurements)]
+        if consider_campaign_measurements and self._measurements:
+            non_dominated = non_dominated.iloc[:n_configs]
 
         return non_dominated
 
@@ -978,19 +1186,133 @@ def _drop_version(dict_: dict) -> dict:
     return dict_
 
 
-# Register (un-)structure hooks
+# >>>>>>>>>> Deprecation
+_EXCLUDED = "excluded"
+_MEASURED = "measured"
+_RECOMMENDED = "recommended"
+
+
+def _unpickle_dataframe(encoded: str, /) -> pd.DataFrame:
+    """Deserialize a legacy pickle/base64-encoded pandas DataFrame."""
+    import base64
+    import pickle
+
+    return pickle.loads(base64.b64decode(encoded.encode("utf-8")))
+
+
+def _migrate_legacy_campaign(dict_: dict, /) -> dict:
+    """Migrate a legacy Campaign dictionary to the current format.
+
+    Handles all structural changes made after the 0.15.0 release:
+    - ``n_fits_done`` / ``n_batches_done`` fields (discarded)
+    - ``measurements_exp`` key rename to ``measurements``
+    - ``FitNr`` / ``BatchNr`` columns in measurements (stripped)
+    - Single ``pd.DataFrame`` ``measurements`` (pickle/base64) converted to
+      ``list[nw.DataFrame]`` (parquet/base64)
+    - ``searchspace_metadata`` with ``_RECOMMENDED`` / ``_EXCLUDED`` columns
+      migrated to ``recommended_experiments`` / ``excluded_experiments``
+    - ``cached_recommendation`` (any format) discarded
+    """
+    dict_.pop("n_fits_done", None)
+    dict_.pop("n_batches_done", None)
+
+    # Rename legacy measurements key
+    if "measurements_exp" in dict_:
+        dict_["measurements"] = dict_.pop("measurements_exp")
+
+    # Convert single pd.DataFrame measurements (old pickle/base64 string) to
+    # list[nw.DataFrame] (parquet/base64 list), stripping legacy columns along the way
+    if "measurements" in dict_ and isinstance(dict_["measurements"], str):
+        meas = _unpickle_dataframe(dict_["measurements"])
+        meas = meas.drop(columns=[c for c in ("FitNr", "BatchNr") if c in meas.columns])
+        batches = [] if meas.empty else [nw.from_native(meas, eager_only=True)]
+        dict_["measurements"] = converter.unstructure(
+            batches,
+            unstructure_as=list[nw.DataFrame],
+        )
+
+    # Migrate legacy searchspace metadata to new fields
+    if "searchspace_metadata" in dict_:
+        metadata = _unpickle_dataframe(dict_.pop("searchspace_metadata"))
+        if _RECOMMENDED in metadata.columns and "recommended_experiments" not in dict_:
+            recommended_idxs = metadata.index[metadata[_RECOMMENDED]]
+            dict_["_legacy_recommended_idxs"] = recommended_idxs.tolist()
+        if _EXCLUDED in metadata.columns and "excluded_experiments" not in dict_:
+            excluded_idxs = metadata.index[metadata[_EXCLUDED]]
+            dict_["_legacy_excluded_idxs"] = excluded_idxs.tolist()
+
+    # Drop legacy ``comp_rep`` from the discrete subspace (was never meaningful
+    # outside of the old serialization)
+    try:
+        dict_["searchspace"]["discrete"] = dict_["searchspace"]["discrete"].copy()
+        dict_["searchspace"]["discrete"].pop("comp_rep", None)
+    except (KeyError, AttributeError):
+        pass
+
+    # Drop cache
+    dict_.pop("cached_recommendation", None)
+
+    return dict_
+
+
+# <<<<<<<<<< Deprecation
+
+
+def _prepare_for_structuring(dict_: dict, /) -> dict:
+    """Prepare a Campaign dictionary for structuring."""
+    dict_ = dict_.copy()
+    _drop_version(dict_)
+    _migrate_legacy_campaign(dict_)
+    return dict_
+
+
 unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
-    Campaign, converter, _cattrs_include_init_false=True
+    Campaign,
+    converter,
+    _cattrs_include_init_false=True,
+    _cached_recommendation=cattrs.gen.override(omit=True),
 )
 structure_hook = cattrs.gen.make_dict_structure_fn(
-    Campaign, converter, _cattrs_include_init_false=True
+    Campaign,
+    converter,
+    _cattrs_include_init_false=True,
+    _cached_recommendation=cattrs.gen.override(omit=True),
 )
 converter.register_unstructure_hook(
     Campaign, lambda x: _add_version(unstructure_hook(x))
 )
-converter.register_structure_hook(
-    Campaign, lambda d, cl: structure_hook(_drop_version(d), cl)
-)
+
+
+def _structure_campaign(d: dict, cl: type) -> Campaign:
+    """Structure a Campaign from a dictionary, handling legacy migrations."""
+    prepared = _prepare_for_structuring(d)
+    legacy_recommended_idxs = prepared.pop("_legacy_recommended_idxs", None)
+    legacy_excluded_idxs = prepared.pop("_legacy_excluded_idxs", None)
+    campaign = structure_hook(prepared, cl)
+
+    # >>>>>>>>>> Deprecation
+    # Post-structure reconstruction from legacy metadata indices
+    if legacy_recommended_idxs is not None or legacy_excluded_idxs is not None:
+        candidates = (
+            campaign.searchspace.discrete._get_candidates().collect().to_pandas()
+        )
+        if legacy_recommended_idxs is not None:
+            campaign._recommended_experiments = nw.from_native(
+                candidates.loc[legacy_recommended_idxs].reset_index(drop=True),
+                eager_only=True,
+            )
+        if legacy_excluded_idxs is not None:
+            campaign._excluded_experiments = nw.from_native(
+                candidates.loc[legacy_excluded_idxs].reset_index(drop=True),
+                eager_only=True,
+            )
+
+    # <<<<<<<<<< Deprecation
+
+    return campaign
+
+
+converter.register_structure_hook(Campaign, _structure_campaign)
 
 
 # Converter for config validation

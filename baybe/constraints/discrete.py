@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast, get_type_hints, overload
 
 import cattrs
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 from attrs import define, field, fields
 from attrs.converters import optional as optional_c
@@ -27,6 +26,7 @@ from baybe.constraints.base import (
 )
 from baybe.constraints.conditions import (
     Condition,
+    LogicOperator,
     SubSelectionCondition,  # noqa: F401 (used in doctests)
     ThresholdCondition,
     ThresholdOperator,
@@ -54,7 +54,7 @@ if TYPE_CHECKING:
 def DiscreteExcludeConstraint(  # noqa: N802
     parameters: list[str],
     conditions: list[Condition],
-    combiner: str = "AND",
+    combiner: LogicOperator = "AND",
 ) -> DiscreteSelectionConstraint:
     """A :class:`DiscreteSelectionConstraint` alias for backward compatibility."""  # noqa: D401
     import warnings
@@ -108,8 +108,10 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     conditions: list[Condition] = field(validator=min_len(1))
     """List of individual conditions."""
 
-    combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
-    """Operator encoding how to combine the individual conditions."""
+    combiner: LogicOperator = field(
+        default="AND", validator=in_(_valid_logic_combiners)
+    )
+    """Logic operator encoding how to combine the individual conditions."""
 
     @override
     def _can_evaluate(self, available: set[str], /) -> bool:
@@ -136,7 +138,7 @@ class DiscreteSelectionConstraint(DiscreteFilteringConstraint):
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         pairs = [(p, c) for p, c in zip(self.parameters, self.conditions) if p in df]
         satisfied = [cond.evaluate(df[p]) for p, cond in pairs]
-        res = reduce(_valid_logic_combiners[self.combiner], satisfied)
+        res = cast(pd.Series, reduce(_valid_logic_combiners[self.combiner], satisfied))
 
         return df.index[res]
 
@@ -286,7 +288,7 @@ class DiscreteLinearConstraint(DiscreteFilteringConstraint):
             index=df.index,
         )
         condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        mask_good = condition.evaluate(evaluate_df)
+        mask_good = cast(pd.Series, condition.evaluate(evaluate_df))
 
         return df.index[mask_good]
 
@@ -433,7 +435,7 @@ class DiscreteProductConstraint(DiscreteFilteringConstraint):
     def _get_matching_rows(self, df: pd.DataFrame, /) -> pd.Index:
         evaluate_df = df[self.parameters].prod(axis=1)
         condition = _make_condition(self.operator, self.rhs, self.tolerance)
-        mask_good = condition.evaluate(evaluate_df)
+        mask_good = cast(pd.Series, condition.evaluate(evaluate_df))
 
         return df.index[mask_good]
 
@@ -731,7 +733,8 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         # any intermediate sentinel in the typed columns.
         censored_df = df.copy()
         for k, param in enumerate(self.parameters):
-            invalid = ~self.conditions[k].evaluate(df[self.parameters[k]])
+            mask = self.conditions[k].evaluate(df[self.parameters[k]])
+            invalid = ~cast(pd.Series, mask)
             for affected_param in self.affected_parameters[k]:
                 censored_df[affected_param] = [
                     (None if inv else val, dep)
@@ -952,26 +955,6 @@ class DiscreteBatchConstraint(DiscreteConstraint):
                 f"'{self.__class__.__name__}' requires exactly one parameter, "
                 f"but {len(self.parameters)} were provided: {self.parameters}."
             )
-
-    def subset_masks(
-        self, candidates_exp: pd.DataFrame, /
-    ) -> list[npt.NDArray[np.bool_]]:
-        """Return Boolean masks defining the subsets for this constraint.
-
-        Each mask selects the rows in ``candidates_exp`` that belong to one
-        subset, i.e. share the same value for the constrained parameter.
-
-        Args:
-            candidates_exp: The experimental representation of candidate points.
-
-        Returns:
-            A list of Boolean masks, one per unique value of the constrained
-            parameter.
-        """
-        param = self.parameters[0]
-        return [
-            (candidates_exp[param] == v).values for v in candidates_exp[param].unique()
-        ]
 
 
 @define

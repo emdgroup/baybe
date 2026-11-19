@@ -8,16 +8,17 @@ import polars as pl
 from gpytorch.kernels import Kernel as GPyTorchKernel
 from gpytorch.likelihoods import Likelihood as GPyTorchLikelihood
 from gpytorch.means import Mean as GPyTorchMean
+from narwhals.stable.v2.typing import IntoDataFrame
 
 # >>>>>>>>>> NOTE ON THE FOLLOWING IMPORTS AND ALIASES <<<<<<<<<<
-# This is a hack to make the GPyTorch components available in the docs
-# Without those specific imports, the corresponding references cannot be resolved.
-# As a consequence, the __call__ functions that the factories use would not be part
-# of the documentation. Having those explicit imports here are the only solution
-# that two members of the core team were able to find, and it was agreed that even
-# though not pretty, it is the best solution to this problem.
-# If future implementations of the corresponding factories rely on different imports
-# not listed here, this will be flagged by the docs pipeline.
+# This is a hack to make the GPyTorch components (and `IntoDataFrame`) available in the
+# docs. Without those specific imports, the corresponding references cannot be resolved.
+# As a consequence, the __call__ functions that the factories use would not be part of
+# the documentation. Having those explicit imports here are the only solution that two
+# members of the core team were able to find, and it was agreed that even though not
+# pretty, it is the best solution to this problem. If future implementations of the
+# corresponding factories rely on different imports not listed here, this will be
+# flagged by the docs pipeline.
 from baybe.constraints import base as _constraint_base
 from baybe.constraints import discrete as _constraint_discrete
 from baybe.surrogates.gaussian_process.components import kernel as _kernel
@@ -30,6 +31,7 @@ from baybe.surrogates.gaussian_process.presets import edbo_smoothed as _edbo_smo
 _constraint_base.pl = pl
 _constraint_discrete.pl = pl
 _kernel.GPyTorchKernel = GPyTorchKernel
+_kernel.IntoDataFrame = IntoDataFrame
 _likelihood.GPyTorchLikelihood = GPyTorchLikelihood
 _mean.GPyTorchMean = GPyTorchMean
 _botorch.GPyTorchLikelihood = GPyTorchLikelihood
@@ -106,8 +108,14 @@ nitpick_ignore_regex = [
     # resolved via intersphinx (e.g. pandas.core.frame.DataFrame vs pandas.DataFrame).
     (
         r"py:.*",
-        r"(pandas|numpy|torch|botorch|gpytorch|scipy|sklearn|pathlib|polars|attr|joblib|matplotlib|skfp|rdkit|shap|xyzpy|typing)[\._].*",
+        r"(pandas|numpy|torch|botorch|gpytorch|scipy|sklearn|pathlib|polars|attr|joblib|matplotlib|skfp|rdkit|shap|xyzpy|typing|narwhals)[\._].*",
     ),  # noqa: E501
+    ##### Bare names in the generated ``Settings.__init__`` annotations #####
+    # Postponed annotations make attrs build the ``__init__`` signature from raw
+    # annotation strings such as ``"str | Path | None"``. Sphinx renders the bare name
+    # and cannot derive a qualified reference, although ``Path`` is documented as
+    # ``pathlib.Path`` and Narwhals documents ``PluginName`` under qualified names.
+    (r"py:class", r"^(Path|PluginName)$"),
     ##### Inherited torch.nn.Module docstring references #####
     # Unqualified names from inherited external docstrings (torch, botorch, sklearn)
     # that cannot be resolved outside their original documentation context.
@@ -134,6 +142,13 @@ nitpick_ignore_regex = [
     (r"py:class", r"^(pd\.DataFrame|pl\.Expr)$"),
     (r"py:class", r"^(TypeAliasForwardRef|P)$"),
     (r"py:class", r"^\"(pandas|polars)\"\}?$"),
+    (r"py:class", r"^(PosteriorStatistic)$"),
+    # Narwhals typing aliases used under `TYPE_CHECKING` (unqualified forward refs
+    # cannot be resolved outside the module they are imported into).
+    (r"py:class", r"^(IntoDataFrame|IntoDataFrameT|IntoFrame|IntoSeries|IntoSeriesT)$"),
+    (r"py:class", r"^(Backend|IntoBackend|nw\.IntoSeries)$"),
+    # BayBE and Narwhals type aliases that are not rendered as documented objects.
+    (r"py:class", r"^(Filter|_NarwhalsFrame)$"),
     ##### BayBE-specific suppressions #####
     # Inherited classes we cannot control
     (r"py:.*", r".*DTypeFloatONNX.*"),
@@ -176,6 +191,8 @@ nitpick_ignore_regex = [
     ("py:obj", "baybe.serialization.mixin.SupportsRead.read"),
     ("py:obj", "baybe.serialization.mixin.SupportsWrite.write"),
     ("py:class", "baybe.surrogates.gaussian_process.components.PlainKernelFactory"),
+    # Deprecation field alias shadowing cached_property of the same name
+    (r"py:obj", r"baybe\.searchspace\.discrete\.SubspaceDiscrete\.comp_rep"),
     # Private classes
     (r"py:class", r"baybe\..*\._.*"),
     # Deprecation
@@ -183,8 +200,15 @@ nitpick_ignore_regex = [
 ]
 
 
-# Ignore the warnings that are given by autosectionlabel
-suppress_warnings = ["autosectionlabel.*"]
+# Ignore warnings that are expected from documentation tooling.
+# Names that are only imported under ``TYPE_CHECKING`` cannot be bound while the docs
+# are built, so the type-hint extension cannot resolve the corresponding annotations
+# and reports them as unresolved forward references.
+suppress_warnings = [
+    "autosectionlabel.*",
+    "sphinx_autodoc_typehints.forward_reference",
+    "sphinx_autodoc_typehints.guarded_import",
+]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -296,15 +320,16 @@ modindex_common_prefix = ["baybe."]
 intersphinx_mapping = {
     "botorch": ("https://botorch.readthedocs.io/en/latest", None),
     "gpytorch": ("https://docs.gpytorch.ai/en/stable/", None),
-    "python": ("https://docs.python.org/3", None),
+    "narwhals": ("https://narwhals-dev.github.io/narwhals/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "polars": ("https://docs.pola.rs/api/python/stable/", None),
-    "skfp": ("https://scikit-fingerprints.readthedocs.io/latest/", None),
-    "sklearn": ("https://scikit-learn.org/stable/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "torch": ("https://pytorch.org/docs/main/", None),
+    "python": ("https://docs.python.org/3", None),
     "rdkit": ("https://rdkit.org/docs/", None),
     "shap": ("https://shap.readthedocs.io/en/stable/", None),
+    "skfp": ("https://scikit-fingerprints.readthedocs.io/latest/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+    "torch": ("https://pytorch.org/docs/main/", None),
     "xyzpy": ("https://xyzpy.readthedocs.io/en/latest/", None),
 }
 

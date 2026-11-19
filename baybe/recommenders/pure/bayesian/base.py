@@ -6,28 +6,25 @@ import gc
 from abc import ABC
 from typing import TYPE_CHECKING
 
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import deep_iterable, instance_of
+from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT, IntoSeries
 from typing_extensions import override
 
 from baybe.acquisition import qLogEI, qLogNEHVI
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
-from baybe.exceptions import (
-    IncompatibleAcquisitionFunctionError,
-)
+from baybe.exceptions import IncompatibleAcquisitionFunctionError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
-from baybe.surrogates.base import (
-    Surrogate,
-    SurrogateProtocol,
-)
+from baybe.surrogates.base import Surrogate, SurrogateProtocol
 from baybe.symmetries.base import Symmetry
+from baybe.utils.dataframe import _df_with_backend
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
@@ -87,7 +84,7 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
+        measurements: IntoDataFrame,
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
         # This fit applies internal caching and does not necessarily involve computation
@@ -98,8 +95,8 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
         self._objective = objective
@@ -112,8 +109,13 @@ class BayesianRecommender(PureRecommender, ABC):
             )
 
         # Perform data augmentation
+        backend = nw.get_native_namespace(measurements)
         for s in self.symmetries:
-            measurements = s.augment_measurements(measurements, searchspace)
+            measurements_pd = nw.from_native(measurements, eager_only=True).to_pandas()
+            augmented = nw.from_native(
+                s.augment_measurements(measurements_pd, searchspace), eager_only=True
+            )
+            measurements = _df_with_backend(augmented, backend).to_native()
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = acqf.to_botorch(
@@ -128,8 +130,8 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
     ) -> BoAcquisitionFunction:
         """Get the BoTorch acquisition function for the given recommendation context.
 
@@ -146,9 +148,9 @@ class BayesianRecommender(PureRecommender, ABC):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         if objective is None:
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' require "
@@ -157,8 +159,9 @@ class BayesianRecommender(PureRecommender, ABC):
 
         validate_object_names(searchspace.parameters + objective.targets)
 
-        # Experimental input validation
-        if (measurements is None) or measurements.empty:
+        if (measurements is None) or nw.from_native(
+            measurements, eager_only=True
+        ).is_empty():
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
                 f"empty training data."
@@ -213,13 +216,13 @@ class BayesianRecommender(PureRecommender, ABC):
 
     def acquisition_values(
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
         acquisition_function: AcquisitionFunction | None = None,
-    ) -> pd.Series:
+    ) -> IntoSeries:
         """Compute the acquisition values for the given candidates.
 
         Args:
@@ -253,11 +256,11 @@ class BayesianRecommender(PureRecommender, ABC):
 
     def joint_acquisition_value(  # noqa: DOC101, DOC103
         self,
-        candidates: pd.DataFrame,
+        candidates: IntoDataFrameT,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: pd.DataFrame,
-        pending_experiments: pd.DataFrame | None = None,
+        measurements: IntoDataFrameT,
+        pending_experiments: IntoDataFrameT | None = None,
         acquisition_function: AcquisitionFunction | None = None,
     ) -> float:
         """Compute the joint acquisition value for the given candidate batch.
