@@ -31,10 +31,28 @@ _PAYLOAD = '{"items": [{"name": "a", "count": 1}]}'
         pytest.param(f"Use {{braces}} as prose. Result: {_PAYLOAD} Done.", id="prose"),
         pytest.param(f'{{"items": []}} Actually: {_PAYLOAD}', id="last_object_wins"),
         pytest.param(f'{_PAYLOAD} {{"broken": ', id="trailing_invalid_json"),
+        pytest.param(
+            f'{_PAYLOAD} Confidence: {{"confidence": 0.8}}', id="trailing_metadata"
+        ),
+        pytest.param(
+            f'{_PAYLOAD} Note: I kept {{"name": "a"}} fixed.', id="quoted_parameter"
+        ),
+        pytest.param(
+            f'{_PAYLOAD} This respects {{"type": "C", "parameters": ["name"]}}.',
+            id="echoed_input",
+        ),
+        pytest.param(
+            f'```json\n{_PAYLOAD}\n```\n```json\n{{"summary": "x"}}\n```',
+            id="trailing_fenced_block",
+        ),
+        pytest.param(
+            f'```json\n{{"summary": "x"}}\n```\n```json\n{_PAYLOAD}\n```',
+            id="leading_incompatible_block",
+        ),
     ],
 )
 def test_extract_payload(response):
-    """The last JSON object is structured into the schema."""
+    """The last schema-compatible JSON object is structured into the schema."""
     assert extract_payload(response, _Payload) == _Payload([_Item("a", 1)])
 
 
@@ -56,6 +74,12 @@ def test_extract_payload(response):
                 "required field missing @ $.items[0].count",
             ),
             id="missing_keys",
+        ),
+        pytest.param(
+            '{"items": "x"} Note: {"items": [{"name": "a"}]}',
+            "expected format",
+            ("required field missing @ $.items[0].count",),
+            id="none_compatible",
         ),
     ],
 )
