@@ -87,8 +87,8 @@ def test_threshold_condition_operators(operator, expected, backend):
     [
         param(
             {"tolerance": 0.1},
-            [1.89, 1.9, None, 2.0, 2.1, 2.11],
-            [1.9, 2.0, 2.1],
+            [1.89, 1.9, 1.91, None, 2.0, 2.09, 2.1, 2.11],
+            [1.91, 2.0, 2.09],
             id="explicit",
         ),
         param({}, [2.0, 2.0 + 1e-9, 2.0 + 1e-7], [2.0, 2.0 + 1e-9], id="default"),
