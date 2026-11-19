@@ -712,24 +712,24 @@ class SubspaceDiscrete(SerialMixin):
             df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
-        # If the transformed values are not required, return an empty dataframe
-        if self.empty_encoding or len(df) < 1:
+        # Preserve the input index when no parameter encodings are needed.
+        if self.empty_encoding or not parameters:
             return pd.DataFrame(index=df.index)
 
-        # Transform the parameters
-        dfs = []
-        for param in parameters:
-            comp_df = param.transform(df[param.name])
-            dfs.append(comp_df)
-        comp_rep = pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
+        # Even zero-row inputs retain the encoded columns of the supplied parameters.
+        comp_rep = pd.concat([p.transform(df[p.name]) for p in parameters], axis=1)
 
         # If the computational representation has already been built (with potentially
         # removing some columns, e.g. due to decorrelation or dropping constant ones),
-        # any subsequent transformation should yield the same columns.
+        # keep its column order and reductions.
         try:
-            return comp_rep[self.comp_rep.columns]
+            columns = self.comp_rep.columns
         except AttributeError:
             return comp_rep
+
+        if allow_missing:
+            columns = columns.intersection(comp_rep.columns, sort=False)
+        return comp_rep[columns]
 
     def get_parameters_by_name(
         self, names: Sequence[str]

@@ -79,6 +79,26 @@ def test_empty_parameter_bounds():
     pd.testing.assert_frame_equal(searchspace_continuous.comp_rep_bounds, expected)
 
 
+@pytest.mark.parametrize("allow_missing", [False, True])
+def test_empty_transform_preserves_computational_columns(allow_missing):
+    """A zero-row input keeps the encoded columns of its supplied parameters."""
+    searchspace = SearchSpace.from_product(
+        [
+            CategoricalParameter("material", values=["A", "B"]),
+            NumericalDiscreteParameter("speed", values=[1.0, 2.0]),
+            NumericalContinuousParameter("temperature", bounds=(20.0, 100.0)),
+        ]
+    )
+    data = pd.DataFrame({"material": ["A"], "speed": [1.0], "temperature": [30.0]})
+    expected = searchspace.transform(data).iloc[:0]
+    if allow_missing:
+        data = data.drop(columns="speed")
+        expected = expected.drop(columns="speed")
+
+    result = searchspace.transform(data.iloc[:0], allow_missing=allow_missing)
+    assert_frame_equal(result, expected)
+
+
 def test_discrete_searchspace_creation_from_dataframe():
     """A purely discrete search space is created from an example dataframe."""
     num_specified = NumericalDiscreteParameter(name="num_specified", values=[1, 2, 3])

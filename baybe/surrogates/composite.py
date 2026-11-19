@@ -11,7 +11,7 @@ import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibleSurrogateError
+from baybe.exceptions import IncompatibleSurrogateError, IncompleteMeasurementsError
 from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization import converter
@@ -105,9 +105,24 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
-        # See base class.
+        """Fit a surrogate for each modeled quantity.
 
-        for name, data in objective.handle_missing_values(measurements).items():
+        Args:
+            searchspace: The search space in which experiments are conducted.
+            objective: The objective to be optimized.
+            measurements: The training data in experimental representation.
+
+        Raises:
+            IncompleteMeasurementsError: If any modeled quantity has no observations.
+        """
+        training_data = objective.handle_missing_values(measurements)
+        if missing := [name for name, data in training_data.items() if data.empty]:
+            raise IncompleteMeasurementsError(
+                "Each modeled quantity requires at least one complete measurement. "
+                f"No complete measurements are available for {missing}."
+            )
+
+        for name, data in training_data.items():
             pre_transformed = objective._pre_transform(
                 data[[t.name for t in objective.targets]]
             )

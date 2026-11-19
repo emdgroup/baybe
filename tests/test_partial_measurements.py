@@ -4,12 +4,16 @@ import re
 from contextlib import nullcontext
 
 import numpy as np
+import pandas as pd
 import pytest
 from pytest import param
 
+from baybe import Campaign
 from baybe.acquisition import qLogNEHVI
 from baybe.exceptions import IncompleteMeasurementsError
 from baybe.objectives import DesirabilityObjective, ParetoObjective
+from baybe.parameters import CategoricalParameter, NumericalContinuousParameter
+from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
 
@@ -75,6 +79,39 @@ def test_partial_measurements(ongoing_campaign):
 
     # Trigger refit
     ongoing_campaign.recommend(2)
+
+
+def test_recommendation_with_an_unmeasured_target():
+    """Recommendations need at least one observation per modeled target."""
+    searchspace = SearchSpace.from_product(
+        [
+            CategoricalParameter("material", values=["A", "B"]),
+            NumericalContinuousParameter("temperature", bounds=(20.0, 100.0)),
+        ]
+    )
+    objective = DesirabilityObjective(
+        [
+            NumericalTarget("measured_target").clamp(0.0, 1.0),
+            NumericalTarget("unmeasured_target").clamp(0.0, 1.0),
+        ]
+    )
+    campaign = Campaign(searchspace, objective)
+    campaign.add_measurements(
+        pd.DataFrame(
+            {
+                "material": ["A", "B", "A"],
+                "temperature": [30.0, 60.0, 90.0],
+                "measured_target": [1.0, 2.0, 3.0],
+                "unmeasured_target": np.nan,
+            }
+        )
+    )
+
+    with pytest.raises(
+        IncompleteMeasurementsError,
+        match=r"No complete measurements.*unmeasured_target",
+    ):
+        campaign.recommend(1)
 
 
 @pytest.mark.parametrize(
