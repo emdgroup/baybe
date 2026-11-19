@@ -52,11 +52,7 @@ class MinimumCardinalityViolatedWarning(UserWarning):
 
 
 class LLMError(Exception):
-    """A language model interaction failed.
-
-    The remaining LLM-specific subclasses live in ``baybe._llm.exceptions``. Code
-    outside the LLM layer should catch this public base class.
-    """
+    """A language model interaction failed."""
 
 
 class IncompatibilityError(Exception):
