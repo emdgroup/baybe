@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from functools import reduce
 from inspect import Parameter, Signature, signature
-from typing import TYPE_CHECKING, Any, ClassVar, get_type_hints, overload
+from typing import TYPE_CHECKING, Any, ClassVar, cast, get_type_hints, overload
 
 import cattrs
 import narwhals.stable.v2 as nw
@@ -712,6 +712,47 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
             params.update(group)
         return params
 
+    @override
+    def _to_matching_mask(self, df: nw.DataFrame, /) -> nw.Series:
+        return self._make_legacy_matching_mask(
+            df, permutation_invariant=self.permutation_invariant
+        )
+
+    def _make_legacy_matching_mask(
+        self, df: nw.DataFrame, /, *, permutation_invariant: bool = False
+    ) -> nw.Series:
+        """Temporarily adapt the previous pandas implementation to Narwhals masks."""
+        import pandas as pd
+
+        # The new filtering interface requires a positional mask, not index labels.
+        frame = df.to_pandas().reset_index(drop=True)
+        censored_df = frame.copy()
+        for k, param in enumerate(self.parameters):
+            invalid = ~cast(pd.Series, self.conditions[k].evaluate(frame[param]))
+            for affected_param in self.affected_parameters[k]:
+                censored_df[affected_param] = [
+                    (None if inv else val, dep)
+                    for val, dep, inv in zip(
+                        censored_df[affected_param], censored_df[param], invalid
+                    )
+                ]
+
+        all_affected_params = [col for cols in self.affected_parameters for col in cols]
+        other_params = (
+            frame.columns.drop(all_affected_params).drop(list(self.parameters)).tolist()
+        )
+        invariant_indicator = censored_df[all_affected_params].apply(
+            cast(Callable, frozenset)
+            if permutation_invariant
+            else cast(Callable, tuple),
+            axis=1,
+        )
+        parts = [censored_df[other_params]] if other_params else []
+        parts.append(invariant_indicator)
+        df_eval = pd.concat(parts, axis=1)
+        matching = ~df_eval.duplicated(keep="first")
+        return nw.new_series("matching", matching.tolist(), backend=df.implementation)
+
     def to_symmetries(self) -> tuple[DependencySymmetry, ...]:
         """Convert to :class:`~baybe.symmetries.dependency.DependencySymmetry` objects.
 
@@ -810,6 +851,33 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
         # cross-product, rows that are permutation-equivalent on the available
         # subset will produce identical expansions.
         return len(available & set(self.parameters)) >= 2
+
+    @override
+    def _to_matching_mask(self, df: nw.DataFrame, /) -> nw.Series:
+        import pandas as pd
+
+        # Temporarily adapt the previous pandas implementation to positional masks.
+        frame = df.to_pandas().reset_index(drop=True)
+        params = [p for p in self.parameters if p in frame.columns]
+        other_params = frame.columns.drop(params).tolist()
+        frozen = frame[params].apply(cast(Callable, frozenset), axis=1)
+        parts = [frame[other_params].copy(), frozen] if other_params else [frozen]
+        df_eval = pd.concat(parts, axis=1)
+        matching = ~df_eval.duplicated(keep="first")
+
+        if self.dependencies is not None:
+            mask = nw.new_series(
+                "matching", matching.tolist(), backend=df.implementation
+            )
+            dependency_mask = self.dependencies._make_legacy_matching_mask(
+                df.filter(mask), permutation_invariant=True
+            )
+            dependency_matches = iter(dependency_mask.to_list())
+            matching = pd.Series(
+                [next(dependency_matches) if match else False for match in matching]
+            )
+
+        return nw.new_series("matching", matching.tolist(), backend=df.implementation)
 
     def to_symmetry(self) -> PermutationSymmetry:
         """Convert to a :class:`~baybe.symmetries.permutation.PermutationSymmetry`.
