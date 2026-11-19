@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- Bayesian recommendations report modeled quantities with no complete measurements
+  before fitting. Zero-row search-space transformations retain their encoded columns.
+
 ## [0.15.2] - 2026-11-13
 ### Fixed
 - `BotorchRecommender` recommendation for discrete and hybrid search spaces no longer
