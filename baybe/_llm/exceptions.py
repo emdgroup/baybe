@@ -11,18 +11,6 @@ from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import LLMError
 
 
-class LLMCallError(LLMError):
-    """The call to the language model failed before producing a response.
-
-    Raised for failures such as network errors, rate limiting, timeouts, or an
-    unknown model identifier, where no response is returned to process.
-    """
-
-
-class LLMAuthenticationError(LLMCallError):
-    """Authentication with the language model provider failed."""
-
-
 class LLMResponseError(LLMError, ABC):
     """An error occurred while processing a language model response."""
 
@@ -30,10 +18,6 @@ class LLMResponseError(LLMError, ABC):
     @abstractmethod
     def recovery_instruction(self) -> str:
         """Guidance for the language model on how to correct its response."""
-
-
-class LLMRecoveryFailedError(LLMError):
-    """No usable response was produced, even after the recovery attempt."""
 
 
 class LLMMalformedResponseError(LLMResponseError):

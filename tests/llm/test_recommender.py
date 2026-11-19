@@ -10,18 +10,14 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe import Campaign
-from baybe._llm.exceptions import (
-    LLMBatchSizeError,
-    LLMMalformedResponseError,
-    LLMRecoveryFailedError,
-)
+from baybe._llm.exceptions import LLMBatchSizeError, LLMMalformedResponseError
 from baybe._optional.info import LLM_INSTALLED
 from baybe.campaign import _MEASURED, _RECOMMENDED
 from baybe.constraints import (
     DiscreteCustomConstraint,
     DiscretePermutationInvarianceConstraint,
 )
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, LLMRecoveryFailedError
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import CategoricalParameter, NumericalContinuousParameter
 from baybe.recommenders import RandomRecommender, SequentialMetaRecommender

@@ -5,12 +5,11 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
-from baybe._llm.exceptions import (
+from baybe._llm.exceptions import LLMMalformedResponseError, LLMResponseError
+from baybe.exceptions import (
     LLMAuthenticationError,
     LLMCallError,
-    LLMMalformedResponseError,
     LLMRecoveryFailedError,
-    LLMResponseError,
 )
 
 if TYPE_CHECKING:

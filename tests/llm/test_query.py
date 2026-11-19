@@ -7,14 +7,14 @@ from unittest.mock import Mock, call, patch
 import pytest
 from pytest import param
 
-from baybe._llm.exceptions import (
-    LLMAuthenticationError,
-    LLMCallError,
-    LLMMalformedResponseError,
-    LLMRecoveryFailedError,
-)
+from baybe._llm.exceptions import LLMMalformedResponseError
 from baybe._llm.query import query_model, query_model_with_recovery
 from baybe._optional.info import LLM_INSTALLED
+from baybe.exceptions import (
+    LLMAuthenticationError,
+    LLMCallError,
+    LLMRecoveryFailedError,
+)
 from tests.llm._mock import PATCH_TARGET
 
 if not LLM_INSTALLED:
