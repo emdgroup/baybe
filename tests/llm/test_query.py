@@ -114,7 +114,7 @@ def test_usable_response_is_returned():
 
 
 @pytest.mark.parametrize(
-    ("outcomes", "recovery_error_type", "previous_content"),
+    ("outcomes", "initial_error_type", "previous_content"),
     [
         param(
             (_UNUSABLE, _USABLE),
@@ -130,13 +130,13 @@ def test_usable_response_is_returned():
         ),
     ],
 )
-def test_unusable_response_is_retried(outcomes, recovery_error_type, previous_content):
+def test_unusable_response_is_retried(outcomes, initial_error_type, previous_content):
     """An unusable response triggers exactly one corrective query."""
     run, query, make_recovery_prompt = _make_loop(outcomes)
     assert run() == "parsed"
     assert query.call_args_list == [call("prompt"), call("recovery")]
     error, content = make_recovery_prompt.call_args.args
-    assert isinstance(error, recovery_error_type)
+    assert isinstance(error, initial_error_type)
     assert content == previous_content
 
 
