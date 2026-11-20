@@ -281,7 +281,11 @@ class Objective(ABC, SerialMixin):
         validate_target_input(configurations, self.targets)
 
         targets = self.transform(configurations, allow_extra=True)
-        non_dominated = is_non_dominated(Y=to_tensor(targets), deduplicate=False)
+
+        # TODO: https://github.com/meta-pytorch/botorch/issues/3565
+        target_tensor = to_tensor(targets)
+        non_dominated = is_non_dominated(Y=target_tensor, deduplicate=False)
+        non_dominated = non_dominated & ~target_tensor.isnan().any(dim=-1)
 
         return pd.Series(non_dominated.numpy(), name="is_non_dominated")
 
