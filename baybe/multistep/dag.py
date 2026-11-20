@@ -92,6 +92,44 @@ class MultiStepDAG:
             column for node in self.nodes for column in node._own_comp_rep_columns
         ]
 
+        auxiliary_columns: dict[str, str] = {}
+        for node in self.nodes:
+            condition_types: dict[str, bool] = {}
+            for condition in node.feasibility_conditions:
+                column = condition.column
+                if column == node.output:
+                    if condition.operator == "is_true":
+                        raise IncompatibilityError(
+                            f"Node '{node.name}' has a numeric output; Boolean "
+                            "feasibility conditions must use an auxiliary column."
+                        )
+                    continue
+                is_boolean = condition.operator == "is_true"
+                previous_type = condition_types.setdefault(column, is_boolean)
+                if previous_type != is_boolean:
+                    raise IncompatibilityError(
+                        f"Feasibility column '{column}' of node '{node.name}' cannot "
+                        "use both Boolean and numerical conditions."
+                    )
+                if column in outputs or column in parameter_names:
+                    raise IncompatibilityError(
+                        f"Auxiliary feasibility column '{column}' "
+                        f"of node '{node.name}' "
+                        "must not collide with another node output or parameter."
+                    )
+                if column in comp_rep_columns or column in RESERVED_COLUMNS:
+                    raise IncompatibilityError(
+                        f"Auxiliary feasibility column '{column}' "
+                        f"of node '{node.name}' "
+                        "must not collide with computational or reserved columns."
+                    )
+                owner = auxiliary_columns.setdefault(column, node.name)
+                if owner != node.name:
+                    raise IncompatibilityError(
+                        f"Auxiliary feasibility columns must be unique per node; "
+                        f"'{column}' is used by both '{owner}' and '{node.name}'."
+                    )
+
         collisions = sorted(
             set(outputs) & (set(parameter_names) | set(comp_rep_columns))
         )
@@ -166,6 +204,25 @@ class MultiStepDAG:
                 f"Node '{node.name}' has a restricted discrete candidate set, "
                 f"which is not supported by multi-step planning."
             )
+
+    @property
+    def _complete_measurement_columns(self) -> tuple[str, ...]:
+        """The parameter, output, and condition columns of a complete DAG row."""
+        auxiliary_columns = dict.fromkeys(
+            condition.column
+            for node in self.nodes
+            for condition in node.feasibility_conditions
+            if condition.column != node.output
+        )
+        return tuple(
+            dict.fromkeys(
+                (
+                    *self.parameter_by_name,
+                    *(node.output for node in self.nodes),
+                    *auxiliary_columns,
+                )
+            )
+        )
 
     @cached_property
     def final_nodes(self) -> tuple[str, ...]:

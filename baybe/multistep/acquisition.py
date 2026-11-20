@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, cast
 
 import pandas as pd
 from attrs import Attribute, define, field
-from attrs.validators import and_, ge, gt, instance_of, not_
+from attrs.validators import and_, ge, gt, instance_of, le, not_
 from typing_extensions import override
 
 from baybe.acquisition.base import AcquisitionFunction
@@ -75,6 +75,13 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
     The policy owns action generation, terminal utility evaluation, scoring, and
     optimization. The network model provides training, input transformation,
     sampling, and fantasy conditioning without implementing policy decisions.
+
+    Feasibility affects a measurement action through its current predicted success
+    probability: successful output fantasies are weighted by ``p`` and the
+    no-output failure branch by ``1 - p``. The policy therefore accounts for the
+    information gain about successful outputs through its output fantasies, but it
+    does not model the information gain about feasibility from a hypothetical
+    local observation. Only real measurements update the feasibility classifier.
     """
 
     abbreviation: ClassVar[str] = "pKGFN"
@@ -115,6 +122,15 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
     max_node_candidates: int = field(default=256, validator=[_integer_validator, gt(0)])
     """The maximum number of measurement actions that may be enumerated."""
 
+    feasibility_threshold: float = field(
+        default=0.5, validator=[instance_of(float), ge(0.0), le(1.0)], kw_only=True
+    )
+    """Minimum network success probability required for a new terminal decision.
+
+    The best actually observed successful terminal result remains an available
+    decision. Failure observations update feasibility but never the output model.
+    """
+
     def __attrs_post_init__(self) -> None:
         """Validate the relationship between optimizer sample counts.
 
@@ -129,7 +145,10 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
 
     @staticmethod
     def _compute_pkgfn_score(
-        fantasy_terminal_means: Tensor, baseline: Tensor, cost: float
+        fantasy_terminal_means: Tensor,
+        baseline: Tensor,
+        cost: float,
+        fantasy_weights: Tensor | None = None,
     ) -> Tensor:
         """Reduce fantasy terminal means to a cost-normalized p-KGFN score.
 
@@ -138,6 +157,8 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
                 ``(num_fantasies, num_terminal_candidates, batch...)``.
             baseline: The scalar baseline utility of the current network.
             cost: The positive cost of the selected node.
+            fantasy_weights: Optional outcome probabilities matching the fantasy
+                and candidate batch axes. Without weights, use a uniform average.
 
         Returns:
             One finite tensor score per candidate batch.
@@ -169,7 +190,13 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
                 "positive finite cost."
             )
 
-        score = (fantasy_terminal_means.amax(dim=1).mean(dim=0) - baseline) / cost
+        best = fantasy_terminal_means.amax(dim=1)
+        expected = (
+            best.mean(dim=0)
+            if fantasy_weights is None
+            else (best * fantasy_weights).sum(dim=0)
+        )
+        score = (expected - baseline) / cost
         if not torch.isfinite(score).all():
             raise IncompatibilityError("The p-KGFN score is not finite.")
         return score
@@ -209,6 +236,106 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             )
 
         return utilities.squeeze(-1).mean(dim=0)
+
+    def _compute_terminal_means(
+        self,
+        model: MultiStepModel,
+        points: Tensor,
+        incumbent: Tensor | None,
+    ) -> Tensor:
+        """Evaluate terminal decisions with learned network feasibility.
+
+        Args:
+            model: The current or hypothetical network model.
+            points: Terminal reference configurations.
+            incumbent: Best observed successful utility, if feasibility is modeled.
+
+        Returns:
+            Mean utility per decision, retaining the incumbent outside option.
+        """
+        import torch
+
+        samples, probabilities = model.draw_network_outcomes(
+            points,
+            self.num_network_samples,
+            sampling_seed=self.sampling_seed,
+        )
+        means = self._compute_terminal_means_from_network_samples(model.dag, samples)
+        if incumbent is None:
+            return means
+        feasible = probabilities.mean(dim=0).squeeze(-1) >= self.feasibility_threshold
+        return torch.where(feasible, means.clamp_min(incumbent), incumbent)
+
+    @staticmethod
+    def _combine_branch_means(
+        success_means: Tensor,
+        incumbent: Tensor,
+        probability: Tensor,
+        num_fantasies: int,
+    ) -> tuple[Tensor, Tensor]:
+        """Combine output fantasies with the no-output failure branch.
+
+        The success branch keeps one terminal mean per output fantasy and is
+        weighted by the node's predicted success probability. The failure branch
+        performs no output update: every terminal decision keeps the incumbent
+        value and receives the complementary probability. No feasibility
+        observation is invented, so the classifier is not conditioned on a
+        hypothetical outcome.
+
+        Args:
+            success_means: Terminal means from the fantasized output model with
+                shape ``(num_fantasies, num_terminal_candidates, batch...)``.
+            incumbent: The best observed successful utility as a scalar tensor.
+            probability: The node's predicted success probability with shape
+                ``(batch...,)``.
+            num_fantasies: The number of output fantasies.
+
+        Returns:
+            The concatenated branch means with shape
+            ``(num_fantasies + 1, num_terminal_candidates, batch...)`` and the
+            matching branch weights with shape ``(num_fantasies + 1, batch...,)``.
+
+        Raises:
+            IncompatibilityError: If the branch shapes are inconsistent or a
+                value is non-finite.
+        """
+        import torch
+
+        if success_means.dim() < 2:
+            raise IncompatibilityError(
+                "Success-branch means must have shape "
+                "(fantasies, terminal candidates, batch...), got "
+                f"{tuple(success_means.shape)}."
+            )
+        if success_means.shape[0] != num_fantasies:
+            raise IncompatibilityError(
+                f"The success branch contains {success_means.shape[0]} fantasies, "
+                f"but {num_fantasies} were requested."
+            )
+        expected_batch_shape = success_means.shape[2:]
+        if probability.shape != expected_batch_shape:
+            raise IncompatibilityError(
+                f"The success probability has shape {tuple(probability.shape)}, "
+                f"but the success branch expects {expected_batch_shape}."
+            )
+        if incumbent.dim() != 0 or not torch.isfinite(incumbent):
+            raise IncompatibilityError("The incumbent utility must be a finite scalar.")
+        if (
+            not torch.isfinite(success_means).all()
+            or not torch.isfinite(probability).all()
+        ):
+            raise IncompatibilityError(
+                "The success branch and probability must be finite."
+            )
+
+        failure_means = incumbent.expand(1, *success_means.shape[1:])
+        success_weights = (
+            probability.expand(num_fantasies, *probability.shape) / num_fantasies
+        )
+        failure_weights = (1.0 - probability).unsqueeze(0)
+        means = torch.cat((success_means, failure_means), dim=0)
+        weights = torch.cat((success_weights, failure_weights), dim=0)
+        return means, weights
 
     def _make_node_actions(  # noqa: DOC502
         self, dag: MultiStepDAG, data: MultiStepData
@@ -255,6 +382,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         node: MultiStepNode,
         reference_points: Tensor,
         baseline: Tensor,
+        incumbent: Tensor | None = None,
     ) -> BoAcquisitionFunction:
         """Create the BoTorch tensor-score adapter for one node.
 
@@ -263,6 +391,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             node: The node whose measurement is evaluated.
             reference_points: The global terminal reference configurations.
             baseline: The best current terminal utility.
+            incumbent: The best actually observed successful utility, if applicable.
 
         Returns:
             An acquisition function delegating scoring to this policy.
@@ -300,17 +429,29 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
                     fantasy_model = model.make_node_fantasies(
                         node, X, policy.num_fantasies, policy.sampling_seed
                     )
-                    samples = fantasy_model.draw_network_samples(
-                        fantasy_points,
-                        policy.num_network_samples,
-                        sampling_seed=policy.sampling_seed,
-                        common_random_numbers=True,
-                    )
-                    means = policy._compute_terminal_means_from_network_samples(
-                        model.dag, samples
-                    )
+                    means = policy._compute_terminal_means(
+                        fantasy_model, fantasy_points, incumbent
+                    ).movedim(1, 0)
+                    weights = None
+                    if node.feasibility_conditions:
+                        if incumbent is None:
+                            raise IncompatibilityError(
+                                f"Node '{node.name}' requires an incumbent utility "
+                                "for its failure branch."
+                            )
+                        probability = (
+                            model._feasibility_models[node.name]
+                            .posterior_probabilities(X)
+                            .reshape(X.shape[:-2])
+                        )
+                        means, weights = policy._combine_branch_means(
+                            means,
+                            incumbent,
+                            probability,
+                            policy.num_fantasies,
+                        )
                     return policy._compute_pkgfn_score(
-                        means.movedim(1, 0), baseline, node.cost
+                        means, baseline, node.cost, weights
                     )
 
         return _TensorScoreAcquisition(model=model)
@@ -367,6 +508,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         problems: tuple[_LocalProblem, ...],
         reference_points: Tensor,
         baseline: Tensor,
+        incumbent: Tensor | None = None,
     ) -> tuple[_OpenAction, Tensor]:
         """Delegate a node's discrete or mixed action search to BoTorch.
 
@@ -375,6 +517,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             problems: The executable local problems for one node.
             reference_points: The global terminal reference configurations.
             baseline: The best current terminal utility.
+            incumbent: Best observed successful utility, when feasibility is modeled.
 
         Returns:
             The optimized action and its tensor score.
@@ -408,6 +551,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             node=node,
             reference_points=reference_points,
             baseline=baseline,
+            incumbent=incumbent,
         )
 
         fixed_indices = [
@@ -528,21 +672,22 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
 
         reference = next(model.parameters())
         reference_points = self._make_terminal_reference_tensor(dag, reference)
+        incumbent = None
+        if any(node.feasibility_conditions for node in dag.nodes):
+            from baybe.utils.dataframe import to_tensor
+
+            terminal = data.node_training_data(dag, dag.final_nodes[0])
+            observed = to_tensor(terminal[list(dag.final_target_names)]).to(reference)
+            incumbent = dag.objective.to_botorch()(observed.unsqueeze(-2), None).max()
         with torch.no_grad():
-            baseline_samples = model.draw_network_samples(
-                reference_points,
-                self.num_network_samples,
-                sampling_seed=self.sampling_seed,
-                common_random_numbers=True,
-            )
-            baseline = self._compute_terminal_means_from_network_samples(
-                dag, baseline_samples
+            baseline = self._compute_terminal_means(
+                model, reference_points, incumbent
             ).max()
 
         return max(
             (
                 self._optimize_node_actions(
-                    model, tuple(node_problems), reference_points, baseline
+                    model, tuple(node_problems), reference_points, baseline, incumbent
                 )
                 for _, node_problems in groupby(problems, key=attrgetter("node"))
             ),

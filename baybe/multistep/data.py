@@ -11,7 +11,7 @@ twice.
 Complete DAG rows are stored separately because the stock acquisition-function
 machinery needs joint parameter configurations for its reference computations.
 The campaign assembles such a row from the node measurements once an experiment
-is complete; rows of finished experiments can also be imported directly.
+is complete; rows of fully successful experiments can also be imported directly.
 """
 
 from __future__ import annotations
@@ -19,19 +19,104 @@ from __future__ import annotations
 import gc
 from collections.abc import Iterable, Mapping
 from types import MappingProxyType
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field
-from attrs.converters import pipe
 from attrs.validators import instance_of, min_len
 
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import (
+    IncompatibilityError,
+    IncompleteMeasurementsError,
+    InvalidTargetValueError,
+)
 from baybe.utils.basic import to_tuple
 
+from ._columns import EXPERIMENT_ID, FEASIBILITY_LABEL
 from .dag import MultiStepDAG
 from .node import MultiStepNode
+
+
+def _condition_success(node: MultiStepNode, values: Mapping[str, Any]) -> bool:
+    """Evaluate all node conditions, allowing missing data only after a failure.
+
+    Args:
+        node: The node whose execution conditions are evaluated.
+        values: Observed output and auxiliary values keyed by measurement column.
+
+    Returns:
+        Whether all configured conditions pass.
+
+    Raises:
+        IncompleteMeasurementsError: If a condition value is missing and no other
+            observed condition establishes failure.
+        InvalidTargetValueError: If a measured value has an incompatible type or
+            is non-finite.
+    """
+    passed = True
+    missing: list[str] = []
+    for condition in node.feasibility_conditions:
+        value = values.get(condition.column)
+        if (
+            value is None
+            or value is pd.NA
+            or (isinstance(value, (float, np.floating)) and bool(np.isnan(value)))
+        ):
+            missing.append(condition.column)
+            continue
+        if condition.operator == "is_true":
+            if not isinstance(value, (bool, np.bool_)):
+                raise InvalidTargetValueError(
+                    f"Feasibility column '{condition.column}' of node '{node.name}' "
+                    "must contain Boolean values."
+                )
+            passed = passed and bool(value)
+            continue
+        if isinstance(value, (bool, np.bool_)) or not isinstance(
+            value, (int, float, np.integer, np.floating)
+        ):
+            raise InvalidTargetValueError(
+                f"Feasibility column '{condition.column}' of node '{node.name}' "
+                "must contain numeric values."
+            )
+        if not np.isfinite(value):
+            raise InvalidTargetValueError(
+                f"Feasibility column '{condition.column}' of node '{node.name}' "
+                "must contain finite values."
+            )
+        threshold = condition.threshold
+        assert threshold is not None
+        condition_passed = (
+            value <= threshold if condition.operator == "<=" else value >= threshold
+        )
+        passed = passed and bool(condition_passed)
+    if passed and missing:
+        raise IncompleteMeasurementsError(
+            f"Feasibility values for node '{node.name}' are missing from columns "
+            f"{sorted(set(missing))}."
+        )
+    return passed
+
+
+def _extract_feasibility_values(
+    node: MultiStepNode, measurements: pd.DataFrame
+) -> pd.Series:
+    """Derive joint Boolean success labels from a node's configured conditions.
+
+    Args:
+        node: The node whose conditions are evaluated.
+        measurements: Rows containing the node output and auxiliary measurements.
+
+    Returns:
+        A Boolean label for each row, preserving index and using the internal label
+        column name.
+    """
+    labels = [
+        _condition_success(node, cast(Mapping[str, Any], row))
+        for row in measurements.to_dict(orient="records")
+    ]
+    return pd.Series(labels, index=measurements.index, name=FEASIBILITY_LABEL)
 
 
 def _copy_frame(value: pd.DataFrame) -> pd.DataFrame:
@@ -47,19 +132,32 @@ class NodeMeasurement:
     """The observed node."""
 
     inputs: Mapping[str, Any] = field(
-        converter=pipe(dict, MappingProxyType), validator=instance_of(Mapping)
+        converter=lambda value: MappingProxyType(dict(value)),
+        validator=instance_of(Mapping),
     )
     """The node's own parameter values and observed parent outputs."""
 
-    output: float = field()
-    """The observed node output."""
+    output: float | None = field(default=None)
+    """The real observed output, absent only for explicitly failed observations."""
 
     experiment_id: str | None = field(default=None, eq=False)
     """The optional experiment this measurement belongs to."""
 
+    condition_values: Mapping[str, Any] = field(
+        factory=dict,
+        converter=lambda value: MappingProxyType(dict(value)),
+        validator=instance_of(Mapping),
+        kw_only=True,
+    )
+    """Observed auxiliary columns used by this node's feasibility conditions."""
+
     @output.validator
-    def _validate_output(self, _: Any, value: float) -> None:  # noqa: DOC101, DOC103
+    def _validate_output(  # noqa: DOC101, DOC103
+        self, _: Any, value: float | None
+    ) -> None:
         """Validate that the output is a finite number."""
+        if value is None:
+            return
         if isinstance(value, bool) or not isinstance(
             value, (int, float, np.integer, np.floating)
         ):
@@ -73,7 +171,8 @@ class NodeMeasurement:
 
     def __attrs_post_init__(self) -> None:
         """Store the output as a plain float."""
-        object.__setattr__(self, "output", float(self.output))
+        if self.output is not None:
+            object.__setattr__(self, "output", float(self.output))
 
 
 @define(frozen=True, eq=False)
@@ -90,7 +189,7 @@ class MultiStepData:
     complete_measurements: pd.DataFrame = field(
         factory=pd.DataFrame, converter=_copy_frame, validator=instance_of(pd.DataFrame)
     )
-    """Complete DAG rows with one column per parameter and node output."""
+    """Complete successful rows with parameters, outputs, and condition values."""
 
     @classmethod
     def empty(cls) -> MultiStepData:
@@ -132,15 +231,19 @@ class MultiStepData:
             experiment_id: The experiment identifier.
 
         Returns:
-            ``True`` if every node has at least one measurement with the given
-            experiment identifier.
+            ``True`` if every node has a successful measurement with the given
+            identifier and none of that experiment's observations failed.
         """
         measured_nodes = {
             measurement.node
             for measurement in self.measurements
             if measurement.experiment_id == experiment_id
         }
-        return measured_nodes == {node.name for node in dag.nodes}
+        return measured_nodes == {node.name for node in dag.nodes} and all(
+            _is_successful(dag.node_by_name[m.node], m)
+            for m in self.measurements
+            if m.experiment_id == experiment_id
+        )
 
     def assemble_complete_row(
         self, dag: MultiStepDAG, experiment_id: str
@@ -157,7 +260,14 @@ class MultiStepData:
         Returns:
             A single-row dataframe with one column per DAG parameter and one per
             node output.
+
+        Raises:
+            IncompatibilityError: If the experiment is incomplete or failed.
         """
+        if not self.is_experiment_complete(dag, experiment_id):
+            raise IncompatibilityError(
+                f"Experiment '{experiment_id}' is incomplete or failed."
+            )
         row: dict[str, Any] = {}
         for node in dag.nodes:
             measurement = next(
@@ -168,11 +278,8 @@ class MultiStepData:
             for name in dag.owned_parameter_names(node.name):
                 row[name] = measurement.inputs[name]
             row[node.output] = measurement.output
-        columns = [
-            *dag.parameter_by_name,
-            *(node.output for node in dag.nodes),
-        ]
-        return pd.DataFrame([row], columns=columns)
+            row.update(measurement.condition_values)
+        return pd.DataFrame([row], columns=dag._complete_measurement_columns)
 
     def validate(self, dag: MultiStepDAG) -> None:
         """Validate the stored measurements against the DAG.
@@ -184,9 +291,30 @@ class MultiStepData:
             IncompatibilityError: If a measurement does not match the node's
                 model input, contains invalid values, or the complete rows do
                 not cover the DAG columns.
+            IncompleteMeasurementsError: If configured condition values are missing.
+            InvalidTargetValueError: If condition values have invalid types or values.
         """
+        failed: set[tuple[str, str]] = set()
         for measurement in self.measurements:
             node = _get_node(dag, measurement.node)
+            condition_columns = {
+                condition.column
+                for condition in node.feasibility_conditions
+                if condition.column != node.output
+            }
+            unexpected = set(measurement.condition_values) - condition_columns
+            if unexpected:
+                raise IncompatibilityError(
+                    f"Node '{node.name}' received values for unconfigured feasibility "
+                    f"columns: {sorted(unexpected)}."
+                )
+            is_successful = _is_successful(node, measurement)
+            if is_successful and measurement.output is None:
+                raise IncompatibilityError(
+                    f"Successful observation of node '{node.name}' requires an output."
+                )
+            if not is_successful and measurement.experiment_id is not None:
+                failed.add((measurement.experiment_id, measurement.node))
             _validate_input_columns(node, measurement.inputs.keys())
             for name in node.model_input_names:
                 value = measurement.inputs[name]
@@ -194,6 +322,16 @@ class MultiStepData:
                     _validate_parameter_value(dag, name, value, node.name)
                 else:
                     _validate_finite_input(name, value, node.name)
+
+        for measurement in self.measurements:
+            if any(
+                (measurement.experiment_id, ancestor) in failed
+                for ancestor in dag.ancestors_of(measurement.node)
+            ):
+                raise IncompatibilityError(
+                    f"Node '{measurement.node}' has a failed ancestor in experiment "
+                    f"'{measurement.experiment_id}'."
+                )
 
         if self.complete_measurements.empty:
             return
@@ -206,12 +344,24 @@ class MultiStepData:
                 f"duplicates: {duplicates}."
             )
 
-        required = (*dag.parameter_by_name, *(node.output for node in dag.nodes))
-        missing = [column for column in required if column not in frame.columns]
+        missing = [
+            column
+            for column in dag._complete_measurement_columns
+            if column not in frame.columns
+        ]
         if missing:
             raise IncompatibilityError(
                 f"Complete measurements are missing required columns: {missing}."
             )
+
+        for node in dag.nodes:
+            if node.feasibility_conditions:
+                success = _extract_feasibility_values(node, frame)
+                if not success.all():
+                    raise IncompatibilityError(
+                        f"Complete measurements require all feasibility conditions "
+                        f"to pass for node '{node.name}'."
+                    )
 
         for _, row in frame.iterrows():
             for name in dag.parameter_by_name:
@@ -234,8 +384,9 @@ class MultiStepData:
     def node_training_data(self, dag: MultiStepDAG, node: str) -> pd.DataFrame:
         """Return supervised training rows for one node model.
 
-        The rows are collected from both the individual node measurements and
-        the complete DAG rows, without duplicating stored information.
+        Only successful observations enter this view, even when a failed observation
+        includes a real output. Genuine repetitions are retained; complete-row caches
+        backed by node observations are excluded using experiment provenance.
 
         Args:
             dag: The DAG topology.
@@ -245,24 +396,93 @@ class MultiStepData:
             One row per measurement with columns for the node's own parameters,
             its parent outputs, and the observed output.
         """
+        return self._node_training_data(dag, node, feasibility=False)
+
+    def node_feasibility_training_data(
+        self, dag: MultiStepDAG, node: str
+    ) -> pd.DataFrame:
+        """Return all raw feasibility observations with their full local inputs.
+
+        Genuine repetitions retain their multiplicity; only complete-row caches
+        backed by node observations are excluded using experiment provenance.
+
+        Args:
+            dag: The DAG topology.
+            node: The node name.
+
+        Returns:
+            A raw-label training frame, empty for unconfigured nodes.
+        """
+        return self._node_training_data(dag, node, feasibility=True)
+
+    def _node_training_data(
+        self, dag: MultiStepDAG, node: str, *, feasibility: bool
+    ) -> pd.DataFrame:
+        """Project observations and independent imports without erasing repeats."""
         node_object = _get_node(dag, node)
-        columns = [*node_object.model_input_names, node_object.output]
+        if feasibility and not node_object.feasibility_conditions:
+            return pd.DataFrame(
+                columns=[*node_object.model_input_names, FEASIBILITY_LABEL]
+            )
+        label = FEASIBILITY_LABEL if feasibility else node_object.output
+        columns = [*node_object.model_input_names, label]
 
         frames: list[pd.DataFrame] = []
         if not self.complete_measurements.empty:
-            frames.append(self.complete_measurements[columns].copy())
+            complete = self.complete_measurements
+            if EXPERIMENT_ID in complete:
+                backing_ids = {
+                    m.experiment_id
+                    for m in self.measurements
+                    if m.node == node and m.experiment_id is not None
+                }
+                complete = complete.loc[~complete[EXPERIMENT_ID].isin(backing_ids)]
+            if feasibility:
+                frame = complete[list(node_object.model_input_names)].copy()
+                frame[label] = _extract_feasibility_values(node_object, complete)
+                frames.append(frame[columns])
+            else:
+                frames.append(complete[columns].copy())
 
         rows = [
-            {**measurement.inputs, node_object.output: measurement.output}
+            {**measurement.inputs, label: _is_successful(node_object, measurement)}
+            if feasibility
+            else {**measurement.inputs, label: measurement.output}
             for measurement in self.measurements
             if measurement.node == node
+            and (feasibility or _is_successful(node_object, measurement))
         ]
         if rows:
             frames.append(pd.DataFrame(rows, columns=columns))
 
         if not frames:
             return pd.DataFrame(columns=columns)
-        return pd.concat(frames, ignore_index=True).drop_duplicates(ignore_index=True)
+        return pd.concat(frames, ignore_index=True)
+
+
+def _is_successful(node: MultiStepNode, measurement: NodeMeasurement) -> bool:
+    """Derive success from output and condition values without duplicating state."""
+    return _condition_success(
+        node, {node.output: measurement.output, **measurement.condition_values}
+    )
+
+
+def _validate_node_inputs(
+    dag: MultiStepDAG, node: MultiStepNode, frame: pd.DataFrame
+) -> None:
+    """Validate a local input frame using the existing observation contract."""
+    if not frame.columns.is_unique:
+        raise IncompatibilityError(
+            f"Input columns for node '{node.name}' must be unique."
+        )
+    _validate_input_columns(node, frame.columns)
+    for row in frame.to_dict("records"):
+        for name in node.model_input_names:
+            value = row[name]
+            if name in dag.parameter_by_name:
+                _validate_parameter_value(dag, name, value, node.name)
+            else:
+                _validate_finite_input(name, value, node.name)
 
 
 def _get_node(dag: MultiStepDAG, node: str) -> MultiStepNode:

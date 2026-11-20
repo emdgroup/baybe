@@ -5,9 +5,10 @@ from __future__ import annotations
 import gc
 from collections import Counter
 from functools import cached_property
+from typing import Literal
 
 from attrs import define, field
-from attrs.validators import deep_iterable, gt, instance_of, min_len
+from attrs.validators import deep_iterable, gt, in_, instance_of, min_len, optional
 
 from baybe.exceptions import IncompatibilityError
 from baybe.parameters.base import Parameter
@@ -16,6 +17,34 @@ from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import to_tuple
 from baybe.utils.validation import finite_float
+
+
+@define(frozen=True)
+class FeasibilityCondition:
+    """Require one measured value to pass a numerical or Boolean condition."""
+
+    column: str = field(validator=min_len(1))
+    """The output or auxiliary measurement column to check."""
+
+    operator: Literal["<=", ">=", "is_true"] = field(
+        validator=[instance_of(str), in_(("<=", ">=", "is_true"))]
+    )
+    """The comparison to apply, or ``is_true`` for a Boolean success flag."""
+
+    threshold: float | None = field(
+        default=None,
+        converter=lambda value: None if value is None else float(value),
+        validator=optional(finite_float),
+    )
+    """The numerical bound, required for ``<=`` and ``>=`` comparisons."""
+
+    @threshold.validator
+    def _validate_threshold(self, attribute, value) -> None:
+        if (self.operator == "is_true") != (value is None):
+            raise ValueError(
+                "A feasibility condition requires a threshold for '<=' or '>=', "
+                "and no threshold for 'is_true'."
+            )
 
 
 @define(frozen=True, slots=False)
@@ -62,6 +91,18 @@ class MultiStepNode:
     The campaign compares candidate actions by their acquisition utility per
     unit cost, so that an expensive node is only executed when its expected
     improvement justifies the expense.
+    """
+
+    feasibility_conditions: tuple[FeasibilityCondition, ...] = field(
+        factory=tuple,
+        converter=to_tuple,
+        validator=deep_iterable(instance_of(FeasibilityCondition)),
+        kw_only=True,
+    )
+    """Conditions that define successful execution at this node.
+
+    All conditions must pass. They may check the node's output or auxiliary measured
+    columns, and are modeled jointly as the probability of successful execution.
     """
 
     @inputs.validator

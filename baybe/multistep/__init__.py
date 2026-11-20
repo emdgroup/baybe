@@ -12,7 +12,7 @@ from .campaign import MultiStepCampaign
 from .dag import MultiStepDAG
 from .data import MultiStepData, NodeMeasurement
 from .model import MultiStepModel, validate_network_measurements
-from .node import MultiStepNode
+from .node import FeasibilityCondition, MultiStepNode
 
 __all__ = [
     "MultiStepCampaign",
@@ -20,6 +20,7 @@ __all__ = [
     "MultiStepData",
     "MultiStepModel",
     "MultiStepNode",
+    "FeasibilityCondition",
     "NodeMeasurement",
     "PartialKnowledgeGradientFN",
     "validate_network_measurements",

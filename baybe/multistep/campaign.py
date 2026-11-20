@@ -25,19 +25,24 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
-from attrs.validators import instance_of
+from attrs.validators import ge, instance_of, le
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, InfeasibilityError
 from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 
 from ._columns import EXPERIMENT_ID, NODE
 from .acquisition import PartialKnowledgeGradientFN
 from .dag import MultiStepDAG
-from .data import MultiStepData, NodeMeasurement
-from .model import MultiStepModel
+from .data import (
+    MultiStepData,
+    NodeMeasurement,
+    _extract_feasibility_values,
+    _validate_node_inputs,
+)
+from .model import MultiStepModel, _AcquisitionSurrogateAdapter
 
 
 @define(slots=False)
@@ -66,7 +71,19 @@ class MultiStepCampaign:
     acquisition_function: AcquisitionFunction | None = field(
         default=None, converter=optional(convert_acqf)
     )
-    """The p-KGFN policy or stock acquisition function; ``None`` selects the default."""
+    """The p-KGFN policy or stock acquisition function.
+
+    ``None`` selects the default Bayesian acquisition, also with feasibility conditions.
+    Random design is used only while the required initial observations are missing.
+    """
+
+    feasibility_threshold: float = field(
+        default=0.5, validator=[instance_of(float), ge(0.0), le(1.0)], kw_only=True
+    )
+    """Minimum network success probability for stock acquisition candidates.
+
+    p-KGFN uses the threshold configured on its acquisition policy instead.
+    """
 
     _cached_recommendation: tuple[int, pd.DataFrame] | None = field(
         default=None, init=False, eq=False
@@ -79,7 +96,7 @@ class MultiStepCampaign:
     _current_experiment: dict[str, NodeMeasurement] = field(
         factory=dict, init=False, eq=False
     )
-    """The measurements of the current experiment, keyed by node name."""
+    """Successful measurements of the current experiment, keyed by node name."""
 
     _experiment_counter: int = field(default=0, init=False, eq=False)
     """Monotonic counter for generating experiment identifiers."""
@@ -98,6 +115,7 @@ class MultiStepCampaign:
         *,
         acquisition_function: AcquisitionFunction | str | None = None,
         data: MultiStepData | None = None,
+        feasibility_threshold: float = 0.5,
     ) -> MultiStepCampaign:
         """Create a campaign for the given DAG.
 
@@ -105,6 +123,7 @@ class MultiStepCampaign:
             dag: The DAG topology, including the optimization objective.
             acquisition_function: Optional acquisition function or its name.
             data: Optional initial measurement store.
+            feasibility_threshold: Network success threshold for stock acquisitions.
 
         Returns:
             The configured campaign.
@@ -113,6 +132,7 @@ class MultiStepCampaign:
             dag=dag,
             data=MultiStepData.empty() if data is None else data,
             acquisition_function=acquisition_function,
+            feasibility_threshold=feasibility_threshold,
         )
 
     @cached_property
@@ -127,16 +147,19 @@ class MultiStepCampaign:
         x: pd.DataFrame | None = None,
         experiment_id: str | None = None,
     ) -> tuple[NodeMeasurement, ...]:
-        """Record observed node outputs.
+        """Record node outputs and auxiliary values used by feasibility conditions.
 
         Measurements are stored as individual node observations. When
         ``experiment_id`` matches the current experiment and the measurement
         completes it, a complete DAG row is assembled automatically.
+        An explicit failure closes the active experiment without creating a complete
+        row; upstream observations remain available for training.
 
         Args:
             node: The observed node.
-            y: The observed node outputs, with exactly one column named after
-                the node output.
+            y: The node-output column and any auxiliary columns referenced by
+                feasibility conditions. Missing values are allowed only when another
+                observed condition establishes failure.
             x: The full node-model inputs, with one column per own parameter and
                 per parent output, and the same number of rows as ``y``.
             experiment_id: An optional experiment identifier. When omitted, the
@@ -148,6 +171,8 @@ class MultiStepCampaign:
         Raises:
             IncompatibilityError: If the node, the columns, the values, or the
                 experiment identifier are invalid.
+            IncompleteMeasurementsError: If condition values are missing.
+            InvalidTargetValueError: If condition values have invalid types or values.
         """
         node_object = self.dag.node_by_name.get(node)
         if node_object is None:
@@ -156,10 +181,32 @@ class MultiStepCampaign:
                 f"{sorted(self.dag.node_by_name)}."
             )
 
-        if len(y.columns) != 1 or y.columns[0] != node_object.output:
+        if y.empty:
+            raise IncompatibilityError("Cannot add an empty measurement batch.")
+        if not y.columns.is_unique:
             raise IncompatibilityError(
-                f"Output data for node '{node}' must use the column name "
-                f"'{node_object.output}', got {list(y.columns)}."
+                f"Output columns for node '{node}' must be unique."
+            )
+        auxiliary_columns = {
+            condition.column
+            for condition in node_object.feasibility_conditions
+            if condition.column != node_object.output
+        }
+        allowed = {node_object.output, *auxiliary_columns}
+        if set(y.columns) - allowed:
+            raise IncompatibilityError(
+                f"Output data for node '{node}' must use columns {sorted(allowed)}, "
+                f"got {list(y.columns)}."
+            )
+        success = _extract_feasibility_values(node_object, y)
+        outputs = (
+            y[node_object.output]
+            if node_object.output in y
+            else pd.Series(None, index=y.index)
+        )
+        if (success & outputs.isna()).any():
+            raise IncompatibilityError(
+                f"Successful observations of node '{node}' require an output."
             )
 
         if x is None:
@@ -167,20 +214,7 @@ class MultiStepCampaign:
                 f"The model input 'x' is required for node '{node}'. "
                 f"Expected columns: {list(node_object.model_input_names)}."
             )
-        if not x.columns.is_unique:
-            raise IncompatibilityError(
-                f"Input columns for node '{node}' must be unique."
-            )
-
-        expected = node_object.model_input_names
-        missing = sorted(set(expected) - set(x.columns))
-        unexpected = sorted(set(x.columns) - set(expected))
-        if missing or unexpected:
-            raise IncompatibilityError(
-                f"Input data for node '{node}' must contain exactly the node's "
-                f"model input. Missing columns: {missing}, unexpected columns: "
-                f"{unexpected}. Expected columns: {list(expected)}."
-            )
+        _validate_node_inputs(self.dag, node_object, x)
 
         if len(x) != len(y):
             raise IncompatibilityError(
@@ -191,29 +225,47 @@ class MultiStepCampaign:
         if experiment_id is None:
             experiment_id = self._current_experiment_id
 
+        measurement_rows = y.to_dict("records")
         measurements = tuple(
             NodeMeasurement(
                 node=node,
                 inputs=cast(dict[str, Any], inputs),
-                output=output,
+                output=None if pd.isna(output) else output,
                 experiment_id=experiment_id,
+                condition_values={
+                    column: values[column]
+                    for column in auxiliary_columns
+                    if column in values
+                },
             )
-            for inputs, output in zip(
-                x.to_dict("records"), y[node_object.output].tolist(), strict=True
+            for inputs, output, values in zip(
+                x.to_dict("records"),
+                outputs.tolist(),
+                measurement_rows,
+                strict=True,
             )
         )
 
-        self.data = self.data.add(*measurements)
-        self._cached_recommendation = None
-
-        # Update the current experiment if the measurement belongs to it.
+        # Validate and assemble proposed state before publishing any campaign state.
+        data = self.data.add(*measurements)
+        data.validate(self.dag)
+        current = self._current_experiment.copy()
+        current_id = self._current_experiment_id
         if experiment_id is not None and experiment_id == self._current_experiment_id:
-            self._current_experiment[node] = measurements[-1]
-            if self.data.is_experiment_complete(self.dag, experiment_id):
-                row = self.data.assemble_complete_row(self.dag, experiment_id)
-                self.data = self.data.add_complete(row)
-                self._current_experiment_id = None
-                self._current_experiment = {}
+            current[node] = measurements[-1]
+            if not success.all():
+                current_id, current = None, {}
+            elif data.is_experiment_complete(self.dag, experiment_id):
+                row = data.assemble_complete_row(self.dag, experiment_id)
+                row[EXPERIMENT_ID] = experiment_id
+                data = data.add_complete(row)
+                data.validate(self.dag)
+                current_id, current = None, {}
+
+        self.data = data
+        self._current_experiment_id = current_id
+        self._current_experiment = current
+        self._cached_recommendation = None
 
         return measurements
 
@@ -226,22 +278,28 @@ class MultiStepCampaign:
 
         Args:
             measurements: Complete DAG rows in experimental representation with
-                one column per DAG parameter and one column per node output.
-                Additional columns are ignored.
+                one column per DAG parameter and node output plus all configured
+                auxiliary condition columns. Additional columns are ignored. All
+                configured conditions must pass.
 
         Raises:
             IncompatibilityError: If required columns or values are invalid.
+            IncompleteMeasurementsError: If condition values are missing.
+            InvalidTargetValueError: If condition values have invalid types or values.
         """
-        required = (
-            *self.dag.parameter_by_name,
-            *(node.output for node in self.dag.nodes),
-        )
+        required = self.dag._complete_measurement_columns
+        if measurements.empty:
+            raise IncompatibilityError("Cannot import an empty measurement batch.")
+        if not measurements.columns.is_unique:
+            raise IncompatibilityError("Complete measurement columns must be unique.")
         missing = [column for column in required if column not in measurements.columns]
         if missing:
             raise IncompatibilityError(
                 f"Complete measurements are missing required columns: {missing}."
             )
-        self.data = self.data.add_complete(measurements[list(required)])
+        data = self.data.add_complete(measurements[list(required)])
+        data.validate(self.dag)
+        self.data = data
         self._cached_recommendation = None
 
     def recommend(self, batch_size: int = 1) -> pd.DataFrame:
@@ -263,7 +321,9 @@ class MultiStepCampaign:
         ``experiment_id`` that can be passed back to
         :meth:`~add_measurements`.
 
-        A random initial design is used while node models cannot be fitted.
+        A random initial design is used only while the required output or feasibility
+        models cannot be fitted. Thereafter, the configured acquisition selects the
+        action; ``None`` selects the default Bayesian acquisition.
 
         Args:
             batch_size: The number of node actions to recommend.
@@ -298,12 +358,15 @@ class MultiStepCampaign:
             return cached[1].copy()
 
         self._fit_node_models()
-        if pkgfn_config is not None and not self.model.missing_nodes:
+        needs_initial_data = (
+            self.model.missing_nodes or self.model.missing_feasibility_nodes
+        )
+        if pkgfn_config is not None and not needs_initial_data:
             action = pkgfn_config.select_action(self.data, self.model)
             node = action.node
             result = pd.DataFrame([action.inputs])
         else:
-            if self.model.missing_nodes or self.data.complete_measurements.empty:
+            if needs_initial_data or self.data.complete_measurements.empty:
                 node = self._next_node()
                 node_object = self.dag.node_by_name[node]
                 if node_object.inputs:
@@ -368,6 +431,11 @@ class MultiStepCampaign:
                 for node in self.dag.nodes
             },
             allow_partial=True,
+            feasibility_frames={
+                node.name: self.data.node_feasibility_training_data(self.dag, node.name)
+                for node in self.dag.nodes
+                if node.feasibility_conditions
+            },
         )
 
     def _next_node(self) -> str:
@@ -411,6 +479,7 @@ class MultiStepCampaign:
             IncompatibilityError: If the DAG search space is not purely discrete
                 or fewer distinct actions than requested are available, or if an
                 acquisition value is not finite.
+            InfeasibilityError: If no candidate reaches the network success threshold.
         """
         searchspace = self.dag.full_searchspace
         if not searchspace.continuous.is_empty:
@@ -434,8 +503,26 @@ class MultiStepCampaign:
                 "No configuration matches the measurements of the current experiment."
             )
 
+        if any(node.feasibility_conditions for node in self.dag.nodes):
+            import torch
+
+            from baybe.utils.dataframe import to_tensor
+
+            points = to_tensor(searchspace.transform(candidates)).unsqueeze(-2)
+            with torch.no_grad():
+                _, probabilities = self.model.draw_network_outcomes(
+                    points, self.model.num_network_samples
+                )
+            feasible = probabilities.mean(dim=0).squeeze(-1).cpu().numpy()
+            candidates = candidates.loc[feasible >= self.feasibility_threshold]
+            if candidates.empty:
+                raise InfeasibilityError(
+                    "No candidate reaches the network feasibility threshold "
+                    f"{self.feasibility_threshold}."
+                )
+
         recommender = BotorchRecommender(
-            surrogate_model=self.model,
+            surrogate_model=_AcquisitionSurrogateAdapter(self.model),
             acquisition_function=self.acquisition_function,
         )
         values = recommender.acquisition_values(
