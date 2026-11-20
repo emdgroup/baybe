@@ -19,20 +19,22 @@ from __future__ import annotations
 import gc
 from collections.abc import Iterable, Mapping
 from types import MappingProxyType
-from typing import Any, cast
+from typing import Any, Literal, cast, overload
 
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field
-from attrs.validators import instance_of, min_len
+from attrs.validators import and_, deep_iterable, instance_of, min_len, optional
 
 from baybe.exceptions import (
     IncompatibilityError,
     IncompleteMeasurementsError,
     InvalidTargetValueError,
 )
+from baybe.parameters.base import Parameter
 from baybe.serialization import SerialMixin
 from baybe.utils.basic import to_tuple
+from baybe.utils.validation import validate_parameter_input
 
 from ._columns import (
     COMPLETE_SOURCE,
@@ -170,7 +172,7 @@ def _normalize_complete_frame(
 class NodeMeasurement(SerialMixin):
     """One observation of one node."""
 
-    node: str = field(validator=min_len(1))
+    node: str = field(validator=and_(instance_of(str), min_len(1)))
     """The observed node."""
 
     inputs: Mapping[str, Any] = field(
@@ -182,7 +184,9 @@ class NodeMeasurement(SerialMixin):
     output: float | None = field(default=None)
     """The real observed output, absent only for explicitly failed observations."""
 
-    experiment_id: str | None = field(default=None, eq=False)
+    experiment_id: str | None = field(
+        default=None, validator=optional(instance_of(str)), eq=False
+    )
     """The optional experiment this measurement belongs to."""
 
     condition_values: Mapping[str, Any] = field(
@@ -224,7 +228,7 @@ class MultiStepData(SerialMixin):
     measurements: tuple[NodeMeasurement, ...] = field(
         factory=tuple,
         converter=to_tuple,
-        validator=instance_of(tuple),
+        validator=deep_iterable(instance_of(NodeMeasurement)),
     )
     """The individual node measurements, in insertion order."""
 
@@ -461,7 +465,9 @@ class MultiStepData(SerialMixin):
         return self.make_complete_row(dag, bindings)
 
     def has_consistent_bindings(
-        self, dag: MultiStepDAG, bindings: Mapping[str, _EvaluationRef]
+        self,
+        dag: MultiStepDAG,
+        bindings: Mapping[str, _EvaluationRef],
     ) -> bool:
         """Check whether local observations form one complete global DAG row.
 
@@ -487,9 +493,27 @@ class MultiStepData(SerialMixin):
             for parent in node.parents
         )
 
+    @overload
     def make_complete_row(
         self, dag: MultiStepDAG, bindings: Mapping[str, _EvaluationRef]
-    ) -> pd.DataFrame:
+    ) -> pd.DataFrame: ...
+
+    @overload
+    def make_complete_row(
+        self,
+        dag: MultiStepDAG,
+        bindings: Mapping[str, _EvaluationRef],
+        *,
+        _skip_invalid: Literal[True],
+    ) -> pd.DataFrame | None: ...
+
+    def make_complete_row(
+        self,
+        dag: MultiStepDAG,
+        bindings: Mapping[str, _EvaluationRef],
+        *,
+        _skip_invalid: bool = False,
+    ) -> pd.DataFrame | None:
         """Assemble a complete DAG row from concrete evaluation bindings.
 
         The row is a reference view. It is not stored as a new measurement unless
@@ -498,16 +522,22 @@ class MultiStepData(SerialMixin):
         Args:
             dag: The DAG topology.
             bindings: Actual evaluations for all nodes, keyed by node name.
+            _skip_invalid: Return ``None`` instead of raising when a context is
+                incomplete, failed, or cannot describe one global DAG row.
 
         Returns:
             A single-row dataframe with one column per DAG parameter and one per
-            node output.
+            node output, or ``None`` when ``_skip_invalid`` is enabled and the
+            context cannot be projected.
 
         Raises:
             IncompatibilityError: If a node is unbound, an evaluation failed, or
                 the bound parent outputs disagree with a child's local input.
         """
-        missing = sorted({node.name for node in dag.nodes} - set(bindings))
+        expected_nodes = set(dag.topological_order)
+        if _skip_invalid and set(bindings) != expected_nodes:
+            return None
+        missing = sorted(expected_nodes - set(bindings))
         if missing:
             raise IncompatibilityError(
                 f"Cannot assemble a complete row because nodes are unbound: {missing}."
@@ -520,11 +550,15 @@ class MultiStepData(SerialMixin):
         for node in dag.nodes:
             measurement = resolved[node.name]
             if not _is_successful(node, measurement):
+                if _skip_invalid:
+                    return None
                 raise IncompatibilityError(
                     f"Cannot assemble a complete row because node '{node.name}' failed."
                 )
             for parent in node.parents:
                 if measurement.inputs[parent.output] != resolved[parent.name].output:
+                    if _skip_invalid:
+                        return None
                     raise IncompatibilityError(
                         f"The local input of node '{node.name}' does not match the "
                         f"bound output of parent '{parent.name}'."
@@ -555,6 +589,7 @@ class MultiStepData(SerialMixin):
             InvalidTargetValueError: If condition values have invalid types or values.
         """
         failed: set[tuple[str, str]] = set()
+        inputs_by_node: dict[str, list[dict[str, Any]]] = {}
         for measurement in self.measurements:
             node = _get_node(dag, measurement.node)
             condition_columns = {
@@ -575,19 +610,14 @@ class MultiStepData(SerialMixin):
                 )
             if not is_successful and measurement.experiment_id is not None:
                 failed.add((measurement.experiment_id, measurement.node))
-            _validate_input_columns(node, measurement.inputs.keys())
-            for name in node.model_input_names:
-                value = measurement.inputs[name]
-                if name in dag.parameter_by_name:
-                    _validate_parameter_value(
-                        dag,
-                        name,
-                        value,
-                        node.name,
-                        numerical_measurements_must_be_within_tolerance,
-                    )
-                else:
-                    _validate_finite_input(name, value, node.name)
+            inputs_by_node.setdefault(node.name, []).append(dict(measurement.inputs))
+
+        for node_name, rows in inputs_by_node.items():
+            _validate_node_inputs(
+                dag.node_by_name[node_name],
+                pd.DataFrame(rows),
+                numerical_measurements_must_be_within_tolerance,
+            )
 
         for measurement in self.measurements:
             if any(
@@ -629,15 +659,13 @@ class MultiStepData(SerialMixin):
                         f"to pass for node '{node.name}'."
                     )
 
+        _validate_parameter_frame(
+            tuple(dag.parameter_by_name.values()),
+            frame,
+            "complete measurements",
+            numerical_measurements_must_be_within_tolerance,
+        )
         for _, row in frame.iterrows():
-            for name in dag.parameter_by_name:
-                _validate_parameter_value(
-                    dag,
-                    name,
-                    row[name],
-                    name,
-                    numerical_measurements_must_be_within_tolerance,
-                )
             for node in dag.nodes:
                 value = row[node.output]
                 if isinstance(value, bool) or not isinstance(
@@ -736,7 +764,6 @@ def _is_successful(node: MultiStepNode, measurement: NodeMeasurement) -> bool:
 
 
 def _validate_node_inputs(
-    dag: MultiStepDAG,
     node: MultiStepNode,
     frame: pd.DataFrame,
     numerical_measurements_must_be_within_tolerance: bool = True,
@@ -744,7 +771,6 @@ def _validate_node_inputs(
     """Validate a local input frame using the existing observation contract.
 
     Args:
-        dag: The DAG defining the parameters.
         node: The node whose model input is validated.
         frame: The local input frame.
         numerical_measurements_must_be_within_tolerance: If ``True``, numerical
@@ -759,19 +785,52 @@ def _validate_node_inputs(
             f"Input columns for node '{node.name}' must be unique."
         )
     _validate_input_columns(node, frame.columns)
-    for row in frame.to_dict("records"):
-        for name in node.model_input_names:
-            value = row[name]
-            if name in dag.parameter_by_name:
-                _validate_parameter_value(
-                    dag,
-                    name,
-                    value,
-                    node.name,
-                    numerical_measurements_must_be_within_tolerance,
-                )
-            else:
-                _validate_finite_input(name, value, node.name)
+    if frame.empty:
+        return
+
+    _validate_parameter_frame(
+        node.inputs,
+        frame,
+        f"node '{node.name}'",
+        numerical_measurements_must_be_within_tolerance,
+    )
+
+    for name in node.parent_output_names:
+        for value in frame[name]:
+            _validate_finite_input(name, value, node.name)
+
+
+def _validate_parameter_frame(
+    parameters: Iterable[Parameter],
+    frame: pd.DataFrame,
+    context: str,
+    numerical_measurements_must_be_within_tolerance: bool,
+) -> None:
+    """Validate parameter columns through BayBE's shared validator."""
+    parameters = tuple(parameters)
+    if frame.empty:
+        return
+
+    try:
+        validate_parameter_input(
+            frame,
+            parameters,
+            numerical_measurements_must_be_within_tolerance,
+        )
+    except (TypeError, ValueError) as ex:
+        raise IncompatibilityError(
+            f"Invalid parameter inputs for {context}: {ex}"
+        ) from ex
+    if not numerical_measurements_must_be_within_tolerance:
+        for parameter in parameters:
+            if not parameter.is_numerical:
+                continue
+            for value in frame[parameter.name]:
+                if isinstance(value, (bool, np.bool_)) or not np.isfinite(value):
+                    raise IncompatibilityError(
+                        f"The numerical parameter '{parameter.name}' used by "
+                        f"{context} must be finite and non-Boolean, got {value!r}."
+                    )
 
 
 def _get_node(dag: MultiStepDAG, node: str) -> MultiStepNode:
@@ -796,54 +855,6 @@ def _validate_input_columns(node: MultiStepNode, columns: Iterable[str]) -> None
             f"The inputs of node '{node.name}' do not match its model input. "
             f"Missing columns: {missing}, unexpected columns: {unexpected}. "
             f"Expected columns: {list(node.model_input_names)}."
-        )
-
-
-def _validate_parameter_value(
-    dag: MultiStepDAG,
-    name: str,
-    value: Any,
-    node: str,
-    numerical_measurements_must_be_within_tolerance: bool = True,
-) -> None:
-    """Validate one parameter value using the parameter encoding.
-
-    Args:
-        dag: The DAG owning the parameter.
-        name: The parameter name.
-        value: The value to validate.
-        node: The node the value is used by.
-        numerical_measurements_must_be_within_tolerance: If ``True``, numerical
-            values must lie within the parameter range or tolerance. If ``False``,
-            numerical values bypass the range check but must still be finite numbers.
-
-    Raises:
-        IncompatibilityError: If the value violates the parameter contract.
-    """
-    parameter = dag.parameter_by_name[name]
-    if parameter.is_numerical and not numerical_measurements_must_be_within_tolerance:
-        if isinstance(value, bool) or not isinstance(
-            value, (int, float, np.integer, np.floating)
-        ):
-            raise IncompatibilityError(
-                f"The numerical parameter '{name}' used by node '{node}' must be "
-                f"numeric, got {value!r}."
-            )
-        if not np.isfinite(value):
-            raise IncompatibilityError(
-                f"The numerical parameter '{name}' used by node '{node}' must be "
-                f"finite, got {value!r}."
-            )
-        return
-    try:
-        in_range = parameter.is_in_range(value)
-    except Exception as ex:  # noqa: BLE001 - translated into a domain error
-        raise IncompatibilityError(
-            f"Invalid value {value!r} for parameter '{name}' used by node '{node}'."
-        ) from ex
-    if not in_range:
-        raise IncompatibilityError(
-            f"Invalid value {value!r} for parameter '{name}' used by node '{node}'."
         )
 
 

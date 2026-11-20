@@ -87,7 +87,22 @@ class _Experiment:
     )
     """Recommended local executions awaiting their result, keyed by node."""
 
-    def with_binding(
+    def _adopt_parent_bindings(
+        self, parent_refs: Mapping[str, _EvaluationRef]
+    ) -> dict[str, _EvaluationRef]:
+        """Return bindings extended with the action's consistent parent refs."""
+        bindings = dict(self.bindings)
+        for parent, ref in parent_refs.items():
+            existing = bindings.get(parent)
+            if existing is not None and existing != ref:
+                raise IncompatibilityError(
+                    f"Parent node '{parent}' is already bound to a different "
+                    f"evaluation in experiment '{self.experiment_id}'."
+                )
+            bindings[parent] = ref
+        return bindings
+
+    def with_binding(  # noqa: DOC502
         self,
         node: str,
         ref: _EvaluationRef,
@@ -111,15 +126,7 @@ class _Experiment:
             IncompatibilityError: If a parent is already bound to a different
                 evaluation.
         """
-        bindings = dict(self.bindings)
-        for parent, parent_ref in parent_refs.items():
-            existing = bindings.get(parent)
-            if existing is not None and existing != parent_ref:
-                raise IncompatibilityError(
-                    f"Parent node '{parent}' is already bound to a different "
-                    f"evaluation in experiment '{self.experiment_id}'."
-                )
-            bindings[parent] = parent_ref
+        bindings = self._adopt_parent_bindings(parent_refs)
         bindings[node] = ref
         parent_bindings = {**self.parent_bindings, node: dict(parent_refs)}
         return evolve(self, bindings=bindings, parent_bindings=parent_bindings)
@@ -160,15 +167,7 @@ class _Experiment:
                 f"'{self.experiment_id}'."
             )
 
-        bindings = dict(self.bindings)
-        for parent, ref in action.parent_refs.items():
-            existing = bindings.get(parent)
-            if existing is not None and existing != ref:
-                raise IncompatibilityError(
-                    f"Parent node '{parent}' is already bound to a different "
-                    f"evaluation in experiment '{self.experiment_id}'."
-                )
-            bindings[parent] = ref
+        bindings = self._adopt_parent_bindings(action.parent_refs)
         return evolve(
             self,
             bindings=bindings,
@@ -414,7 +413,7 @@ def register_action(
         )
     import pandas as pd
 
-    _validate_node_inputs(dag, node_object, pd.DataFrame([inputs]))
+    _validate_node_inputs(node_object, pd.DataFrame([inputs]))
 
     action = _PendingAction(node=node, inputs=inputs, parent_refs=parent_refs)
     context = choose_action_context(

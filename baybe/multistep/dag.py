@@ -425,27 +425,6 @@ def _check_nested_node_definitions(
                 )
 
 
-def _canonical_node_order(adjacency: Mapping[str, tuple[str, ...]]) -> tuple[str, ...]:
-    """Return a topological order for a serialized parent adjacency.
-
-    Args:
-        adjacency: Parent names keyed by node name.
-
-    Returns:
-        The node names in topological order.
-
-    Raises:
-        IncompatibilityError: If the adjacency contains a cycle.
-    """
-    sorter = TopologicalSorter(dict.fromkeys(adjacency, ()))
-    for name, parents in adjacency.items():
-        sorter.add(name, *parents)
-    try:
-        return tuple(sorter.static_order())
-    except CycleError as ex:
-        raise IncompatibilityError("The DAG contains a cycle.") from ex
-
-
 def _structure_multistep_dag(
     specs: Mapping[str, Any], cls: type[MultiStepDAG]
 ) -> MultiStepDAG:
@@ -523,7 +502,13 @@ def _structure_multistep_dag(
 
     _check_nested_node_definitions(prototypes)
 
-    order = _canonical_node_order(adjacency)
+    sorter = TopologicalSorter(dict.fromkeys(adjacency, ()))
+    for name, parents in adjacency.items():
+        sorter.add(name, *parents)
+    try:
+        order = tuple(sorter.static_order())
+    except CycleError as ex:
+        raise IncompatibilityError("The DAG contains a cycle.") from ex
     base_nodes = {
         name: converter.structure(
             {key: value for key, value in raw.items() if key != "parents"},

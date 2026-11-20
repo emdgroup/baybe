@@ -61,7 +61,6 @@ from ._experiments import (
 from .acquisition import (
     PartialKnowledgeGradientFN,
     _condition_on_pending,
-    _OpenAction,
 )
 from .dag import MultiStepDAG
 from .data import MultiStepData, NodeMeasurement, _is_successful, _validate_node_inputs
@@ -293,6 +292,11 @@ class MultiStepCampaign(SerialMixin):
         if not data.columns.is_unique:
             raise IncompatibilityError("Measurement columns must be unique.")
 
+        # Validate the existing store once; dataframe-backed views remain mutable.
+        self.data.validate(
+            self.dag, numerical_measurements_must_be_within_tolerance=False
+        )
+
         missing_context = [
             column for column in (NODE, EXPERIMENT_ID) if column not in data
         ]
@@ -366,48 +370,23 @@ class MultiStepCampaign(SerialMixin):
             ).without_pending(node.name)
             affected.add(experiment_id)
 
-        # The new rows were range-checked above with the call's tolerance setting, so
-        # the store check only has to guarantee the remaining data contract.
-        store.validate(self.dag, numerical_measurements_must_be_within_tolerance=False)
-
+        # Per-row checks use this call's tolerance, while the existing store was
+        # validated before the batch. Derived rows are assembled from those values.
         for experiment_id in affected:
             experiment = experiments[experiment_id]
-            if not self._experiment_is_complete(experiment, store):
-                continue
-            if not store.has_consistent_bindings(self.dag, experiment.bindings):
-                continue
             if self._has_derived_complete_row(store, experiment_id):
                 continue
-            row = store.make_complete_row(self.dag, experiment.bindings)
+            row = store.make_complete_row(
+                self.dag, experiment.bindings, _skip_invalid=True
+            )
+            if row is None:
+                continue
             row[EXPERIMENT_ID] = experiment_id
             store = store.add_complete(row, derived=True)
-
-        store.validate(self.dag, numerical_measurements_must_be_within_tolerance=False)
 
         # Publish only after the complete batch has been validated.
         self.data = store
         self._experiments = experiments
-
-    def _experiment_is_complete(
-        self, experiment: _Experiment, data: MultiStepData
-    ) -> bool:
-        """Return whether all nodes are bound successfully in a context.
-
-        Args:
-            experiment: The context to inspect.
-            data: The store resolving evaluation references.
-
-        Returns:
-            ``True`` if every DAG node has a successful binding.
-        """
-        if set(experiment.bindings) != {node.name for node in self.dag.nodes}:
-            return False
-        return all(
-            _is_successful(
-                self.dag.node_by_name[node], data.get_evaluation(self.dag, ref)
-            )
-            for node, ref in experiment.bindings.items()
-        )
 
     def _has_derived_complete_row(
         self, data: MultiStepData, experiment_id: str
@@ -516,7 +495,6 @@ class MultiStepCampaign(SerialMixin):
                 )
 
         _validate_node_inputs(
-            self.dag,
             node,
             pd.DataFrame([inputs]),
             numerical_measurements_must_be_within_tolerance,
@@ -715,7 +693,7 @@ class MultiStepCampaign(SerialMixin):
         plan: _ExecutablePlan,
         batch_size: int,
         pending: tuple[_PendingAction, ...],
-    ) -> list[_OpenAction] | None:
+    ) -> list[_PendingAction] | None:
         """Draw distinct random actions for one executable plan.
 
         Args:
@@ -737,7 +715,7 @@ class MultiStepCampaign(SerialMixin):
             if contains_action(pending, node=node.name, inputs=inputs):
                 return None
             return [
-                _OpenAction(
+                _PendingAction(
                     node=node.name,
                     inputs=inputs,
                     parent_refs=plan.parent_refs,
@@ -789,7 +767,7 @@ class MultiStepCampaign(SerialMixin):
             for raw_row in selected.to_dict("records")
         ]
         return [
-            _OpenAction(
+            _PendingAction(
                 node=node.name,
                 inputs={**row, **parent_outputs},
                 parent_refs=plan.parent_refs,
@@ -799,7 +777,7 @@ class MultiStepCampaign(SerialMixin):
 
     def _recommend_random(
         self, batch_size: int, pending: tuple[_PendingAction, ...]
-    ) -> list[_OpenAction]:
+    ) -> list[_PendingAction]:
         """Select pending-free random actions for initial data collection.
 
         Args:
@@ -857,7 +835,7 @@ class MultiStepCampaign(SerialMixin):
 
     def _recommend_optimum(
         self, batch_size: int, pending: tuple[_PendingAction, ...]
-    ) -> list[_OpenAction]:
+    ) -> list[_PendingAction]:
         """Project globally scored configurations onto executable node actions.
 
         The configured stock acquisition is evaluated on the final DAG posterior
@@ -927,7 +905,7 @@ class MultiStepCampaign(SerialMixin):
                 "No executable node remains in any open experiment."
             )
 
-        options: list[tuple[float, int, int, _OpenAction]] = []
+        options: list[tuple[float, int, int, _PendingAction]] = []
         for plan_index, plan in enumerate(plans):
             compatible = self._compatible_candidates(candidates, plan)
             for candidate_index in np.flatnonzero(compatible):
@@ -942,7 +920,7 @@ class MultiStepCampaign(SerialMixin):
                 )
 
         options.sort(key=lambda item: (-item[0], item[1], item[2]))
-        selected: list[_OpenAction] = []
+        selected: list[_PendingAction] = []
         seen: set[tuple[str, tuple[tuple[str, Any], ...]]] = set()
         for _, _, _, action in options:
             key = (action.node, tuple(sorted(action.inputs.items())))
@@ -990,18 +968,22 @@ class MultiStepCampaign(SerialMixin):
             node = self.dag.node_by_name[node_name]
             for parameter in node.inputs:
                 expected = evaluation.inputs[parameter.name]
-                compatible &= np.array(
-                    [
-                        _values_match(parameter, value, expected)
-                        for value in candidates[parameter.name]
-                    ],
-                    dtype=bool,
-                )
+                values = candidates[parameter.name]
+                if parameter.is_numerical:
+                    numeric = values.to_numpy(dtype=float, na_value=np.nan)
+                    compatible &= np.isfinite(numeric) & np.isclose(
+                        numeric,
+                        float(expected),
+                        rtol=0.0,
+                        atol=float(getattr(parameter, "tolerance", 0.0)) + 1e-12,
+                    )
+                else:
+                    compatible &= values.eq(expected).fillna(False).to_numpy(dtype=bool)
         return compatible
 
     def _project_candidate(
         self, plan: _ExecutablePlan, candidate: pd.Series
-    ) -> _OpenAction:
+    ) -> _PendingAction:
         """Project one global configuration onto the plan's executable node.
 
         Args:
@@ -1017,7 +999,9 @@ class MultiStepCampaign(SerialMixin):
             parameter.name: candidate[parameter.name] for parameter in node.inputs
         }
         inputs.update(self._parent_outputs(plan.parent_refs))
-        return _OpenAction(node=node.name, inputs=inputs, parent_refs=plan.parent_refs)
+        return _PendingAction(
+            node=node.name, inputs=inputs, parent_refs=plan.parent_refs
+        )
 
     def _stock_acquisition_values(
         self, candidates: pd.DataFrame, pending: tuple[_PendingAction, ...]

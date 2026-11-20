@@ -47,22 +47,6 @@ def _freeze_mapping(value: Mapping[str, Any]) -> Mapping[str, Any]:
 
 
 @define(frozen=True)
-class _OpenAction:
-    """A selected node measurement with its complete local input."""
-
-    node: str = field()
-    """The node to execute."""
-
-    inputs: Mapping[str, Any] = field(converter=_freeze_mapping)
-    """The node's own parameter values and observed parent outputs."""
-
-    parent_refs: Mapping[str, _EvaluationRef] = field(
-        factory=dict, converter=_freeze_mapping
-    )
-    """The concrete parent evaluations supplying the local input."""
-
-
-@define(frozen=True)
 class _LocalProblem:
     """A node and its fixed discrete and observed-parent inputs."""
 
@@ -721,7 +705,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         baseline: Tensor,
         pending: tuple[_PendingAction, ...] = (),
         incumbent: Tensor | None = None,
-    ) -> tuple[_OpenAction, Tensor]:
+    ) -> tuple[_PendingAction, Tensor]:
         """Delegate a node's discrete or mixed action search to BoTorch.
 
         Args:
@@ -827,7 +811,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             }
         )
         return (
-            _OpenAction(
+            _PendingAction(
                 node=node.name,
                 inputs=selected_inputs,
                 parent_refs=selected_problem.parent_refs,
@@ -867,7 +851,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         data: MultiStepData,
         model: MultiStepModel,
         pending: tuple[_PendingAction, ...] = (),
-    ) -> _OpenAction:
+    ) -> _PendingAction:
         """Select the best currently executable p-KGFN measurement action.
 
         No training is performed and neither campaign state nor real models are

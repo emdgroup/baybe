@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from functools import wraps
+from math import prod
 from typing import TYPE_CHECKING, TypeVar
 
 from baybe.exceptions import IncompatibleSurrogateError
@@ -98,23 +99,19 @@ def batchify_mean_var_prediction(
         if candidates.ndim == 2:
             return posterior(model, candidates)
 
-        # Parameter batching is not (yet) supported
-        if candidates.ndim > 3:
-            raise ValueError("Multiple t-batch dimensions are not supported.")
-
-        # Keep track of batch dimensions
-        t_shape = candidates.shape[-3]
+        # Keep track of the batch dimensions and the q-batch
+        batch_shape = candidates.shape[:-2]
         q_shape = candidates.shape[-2]
 
-        # Flatten the t-batch dimension into the q-batch dimension
+        # Flatten all batch dimensions into the q-batch dimension
         flattened = candidates.flatten(end_dim=-2)
 
         # Call the model on the entire input
         mean, var = posterior(model, flattened)
 
         # Restore the batch dimensions
-        mean = mean.reshape((t_shape, q_shape))
-        var = var.reshape((t_shape, q_shape))
+        mean = mean.reshape((*batch_shape, q_shape))
+        var = var.reshape((*batch_shape, q_shape))
 
         return mean, var
 
@@ -139,15 +136,10 @@ def batchify_ensemble_predictor(
         if candidates.ndim == 2:
             return base_predictor(candidates)
 
-        # Ensemble models do not (yet) support model parameter batching
-        if candidates.ndim > 3:
-            raise ValueError("Multiple t-batch dimensions are not supported.")
-
-        # Keep track of batch dimensions
-        t_shape = candidates.shape[-3]
+        batch_shape = candidates.shape[:-2]
         q_shape = candidates.shape[-2]
 
-        # Flatten the t-batch dimension into the q-batch dimension
+        # Flatten all batch dimensions into the q-batch dimension
         flattened = candidates.flatten(end_dim=-2)
 
         # Call the model on the entire input
@@ -158,20 +150,22 @@ def batchify_ensemble_predictor(
         try:
             assert predictions.ndim == 2
             n_estimators = predictions.shape[0]
-            assert predictions.shape[1] == t_shape * q_shape
+            assert predictions.shape[1] == prod(batch_shape) * q_shape
         except AssertionError:
             raise IncompatibleSurrogateError(
                 f"For the given input of shape {tuple(candidates.shape)}, "
                 f"the ensemble model is supposed to create predictions of shape "
-                f"(n_estimators, t_shape * q_shape) = "
-                f"(n_estimators, {t_shape * q_shape}) "
+                f"(n_estimators, prod(batch_shape) * q_shape) = "
+                f"(n_estimators, {prod(batch_shape) * q_shape}) "
                 f"but returned an array of incompatible shape "
                 f"{tuple(predictions.shape)}."
             )
 
         # Restore the batch dimensions
-        predictions = predictions.reshape((n_estimators, t_shape, q_shape))
-        predictions = predictions.permute((1, 0, 2))
+        predictions = predictions.reshape((n_estimators, *batch_shape, q_shape))
+        predictions = predictions.permute(
+            (*range(1, len(batch_shape) + 1), 0, len(batch_shape) + 1)
+        )
 
         return predictions
 

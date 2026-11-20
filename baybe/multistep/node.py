@@ -8,7 +8,15 @@ from functools import cached_property
 from typing import Literal
 
 from attrs import define, field
-from attrs.validators import deep_iterable, gt, in_, instance_of, min_len, optional
+from attrs.validators import (
+    and_,
+    deep_iterable,
+    gt,
+    in_,
+    instance_of,
+    min_len,
+    optional,
+)
 
 from baybe.exceptions import IncompatibilityError
 from baybe.parameters.base import Parameter
@@ -23,7 +31,7 @@ from baybe.utils.validation import finite_float
 class FeasibilityCondition:
     """Require one measured value to pass a numerical or Boolean condition."""
 
-    column: str = field(validator=min_len(1))
+    column: str = field(validator=and_(instance_of(str), min_len(1)))
     """The output or auxiliary measurement column to check."""
 
     operator: Literal["<=", ">=", "is_true"] = field(
@@ -58,10 +66,10 @@ class MultiStepNode:
     state, fitted models, or status.
     """
 
-    name: str = field(validator=min_len(1))
+    name: str = field(validator=and_(instance_of(str), min_len(1)))
     """The unique name of this node within the DAG."""
 
-    output: str = field(validator=min_len(1))
+    output: str = field(validator=and_(instance_of(str), min_len(1)))
     """The name of the single output column this node produces."""
 
     inputs: tuple[Parameter, ...] = field(
