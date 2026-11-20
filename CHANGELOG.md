@@ -6,9 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Fixed
+- Transformations now preserve NaN inputs
 - `Objective.identify_non_dominated_configurations` now marks configurations with any
   missing target values as dominated
-  
+
 ## [0.15.2] - 2026-11-13
 ### Fixed
 - `BotorchRecommender` recommendation for discrete and hybrid search spaces no longer

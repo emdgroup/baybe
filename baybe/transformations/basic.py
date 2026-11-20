@@ -45,7 +45,10 @@ class CustomTransformation(Transformation):
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
-        return self.function(x)
+        import torch
+
+        transformed = self.function(x)
+        return torch.where(x.isnan(), x, transformed)
 
 
 @define(frozen=True)
@@ -177,9 +180,11 @@ class AffineTransformation(MonotonicTransformation):
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
-        # Handle problematic case where input contains infinity (to avoid 0 * inf)
+        # Avoid 0 * inf while preserving NaN inputs.
         if self.factor == 0.0:
-            return x.new_full(x.shape, fill_value=self.shift)
+            import torch
+
+            return torch.where(x.isnan(), x, x.new_full(x.shape, fill_value=self.shift))
 
         return x * self.factor + self.shift
 
@@ -222,11 +227,12 @@ class TwoSidedAffineTransformation(Transformation):
         # Note: the if conditions handle the problematic cases where input contains
         #  infinity (to avoid 0 * inf)
         mid = self.midpoint
-        return torch.where(
+        transformed = torch.where(
             x < mid,
             (x - mid) * sl if (sl := self.slope_left) else x.new_zeros(x.shape),
             (x - mid) * sr if (sr := self.slope_right) else x.new_zeros(x.shape),
         )
+        return torch.where(x.isnan(), x, transformed)
 
 
 @_image_equals_codomain
@@ -440,7 +446,12 @@ class PowerTransformation(Transformation):
                 "For non-integer exponents, the provided input tensor must contain "
                 "non-negative elements only."
             )
-        return x.pow(self.exponent)
+        transformed = x.pow(self.exponent)
+        if self.exponent == 0:
+            import torch
+
+            return torch.where(x.isnan(), x, transformed)
+        return transformed
 
 
 @define(frozen=True)

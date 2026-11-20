@@ -19,6 +19,7 @@ from baybe.transformations import (
     IdentityTransformation,
     LogarithmicTransformation,
     PowerTransformation,
+    SigmoidTransformation,
     TriangularTransformation,
     TwoSidedAffineTransformation,
 )
@@ -340,6 +341,108 @@ def test_degenerate_transformations(transformation):
     """Degenerate transformations produce proper (non-nan) outputs."""
     assert transformation.get_image() == Interval(0, 0)
     assert transformation.get_image((20, None)) == Interval(0, 0)
+
+
+@pytest.mark.parametrize(
+    ("transformation", "values", "expected"),
+    [
+        param(
+            IdentityTransformation(),
+            [float("nan"), float("-inf"), 1.0, float("inf")],
+            [float("nan"), float("-inf"), 1.0, float("inf")],
+            id="identity",
+        ),
+        param(
+            ClampingTransformation(min=0, max=1),
+            [float("nan"), float("-inf"), 0.5, float("inf")],
+            [float("nan"), 0.0, 0.5, 1.0],
+            id="clamping",
+        ),
+        param(
+            AffineTransformation(factor=0, shift=3),
+            [float("nan"), float("-inf"), 1.0, float("inf")],
+            [float("nan"), 3.0, 3.0, 3.0],
+            id="zero-factor-affine",
+        ),
+        param(
+            AffineTransformation(factor=2, shift=1),
+            [float("nan"), float("-inf"), 1.0, float("inf")],
+            [float("nan"), float("-inf"), 3.0, float("inf")],
+            id="affine",
+        ),
+        param(
+            TwoSidedAffineTransformation(slope_left=0, slope_right=0),
+            [float("nan"), float("-inf"), 1.0, float("inf")],
+            [float("nan"), 0.0, 0.0, 0.0],
+            id="zero-slope-two-sided-affine",
+        ),
+        param(
+            TwoSidedAffineTransformation(slope_left=-1, slope_right=2),
+            [float("nan"), float("-inf"), -1.0, 1.0, float("inf")],
+            [float("nan"), float("inf"), 1.0, 2.0, float("inf")],
+            id="two-sided-affine",
+        ),
+        param(
+            BellTransformation(),
+            [float("nan"), float("-inf"), 0.0, float("inf")],
+            [float("nan"), 0.0, 1.0, 0.0],
+            id="bell",
+        ),
+        param(
+            AbsoluteTransformation(),
+            [float("nan"), float("-inf"), -1.0, 1.0, float("inf")],
+            [float("nan"), float("inf"), 1.0, 1.0, float("inf")],
+            id="absolute",
+        ),
+        param(
+            TriangularTransformation(cutoffs=Interval(-1, 1)),
+            [float("nan"), float("-inf"), -1.0, 0.0, 1.0, float("inf")],
+            [float("nan"), 0.0, 0.0, 1.0, 0.0, 0.0],
+            id="triangular",
+        ),
+        param(
+            LogarithmicTransformation(),
+            [float("nan"), -1.0, 0.0, 1.0, float("inf")],
+            [float("nan"), float("nan"), float("-inf"), 0.0, float("inf")],
+            id="logarithmic",
+        ),
+        param(
+            ExponentialTransformation(),
+            [float("nan"), float("-inf"), 0.0, float("inf")],
+            [float("nan"), 0.0, 1.0, float("inf")],
+            id="exponential",
+        ),
+        param(
+            PowerTransformation(exponent=0),
+            [float("nan"), float("-inf"), 0.0, float("inf")],
+            [float("nan"), 1.0, 1.0, 1.0],
+            id="zero-exponent-power",
+        ),
+        param(
+            PowerTransformation(exponent=2),
+            [float("nan"), float("-inf"), -2.0, 0.0, 2.0, float("inf")],
+            [float("nan"), float("inf"), 4.0, 0.0, 4.0, float("inf")],
+            id="power",
+        ),
+        param(
+            SigmoidTransformation(),
+            [float("nan"), float("-inf"), 0.0, float("inf")],
+            [float("nan"), 1.0, 0.5, 0.0],
+            id="sigmoid",
+        ),
+        param(
+            CustomTransformation(torch.nan_to_num),
+            [float("nan"), 1.0],
+            [float("nan"), 1.0],
+            id="custom",
+        ),
+    ],
+)
+def test_transformation_edge_cases(transformation, values, expected):
+    """Cover NaN, infinity, and degenerate inputs for transformations."""
+    inputs = torch.tensor(values)
+    outputs = transformation(inputs)
+    torch.testing.assert_close(outputs, torch.tensor(expected), equal_nan=True)
 
 
 def test_additive_transformation(tensor):
