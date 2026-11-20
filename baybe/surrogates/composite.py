@@ -11,13 +11,17 @@ import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibleSurrogateError, IncompleteMeasurementsError
+from baybe.exceptions import IncompatibleSurrogateError
 from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization import converter
 from baybe.serialization.core import _TYPE_FIELD, add_type
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
+from baybe.surrogates.base import (
+    PosteriorStatistic,
+    SurrogateProtocol,
+    _validate_training_data,
+)
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import is_all_instance
 
@@ -106,11 +110,8 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         measurements: pd.DataFrame,
     ) -> None:
         training_data = objective.handle_missing_values(measurements)
-        if missing := [name for name, data in training_data.items() if data.empty]:
-            raise IncompleteMeasurementsError(
-                "Each modeled quantity requires at least one complete measurement. "
-                f"No complete measurements are available for {missing}."
-            )
+        for name, data in training_data.items():
+            _validate_training_data(data, name)
 
         for name, data in training_data.items():
             pre_transformed = objective._pre_transform(
