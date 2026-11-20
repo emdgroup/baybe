@@ -23,7 +23,7 @@ class LLMResponseError(LLMError, ABC):
 class LLMMalformedResponseError(LLMResponseError):
     """A language model response could not be parsed into the expected structure."""
 
-    def __init__(self, message: str, *, problems: Collection[str] = ()) -> None:
+    def __init__(self, message: str, /, *, problems: Collection[str] = ()) -> None:
         super().__init__(message)
         self.problems = tuple(problems)
 
@@ -43,6 +43,7 @@ class LLMUnknownParameterError(LLMResponseError):
     def __init__(
         self,
         message: str,
+        /,
         *,
         unknown_names: Collection[str],
         valid_names: Collection[str],
@@ -64,7 +65,7 @@ class LLMUnknownParameterError(LLMResponseError):
 class LLMBatchConstraintValidationError(LLMResponseError):
     """A language model response violated a batch constraint of the search space."""
 
-    def __init__(self, message: str, *, parameters: Collection[str]) -> None:
+    def __init__(self, message: str, /, *, parameters: Collection[str]) -> None:
         super().__init__(message)
         self.parameters = parameters
 
@@ -94,7 +95,7 @@ class LLMIneligiblePointsError(LLMResponseError):
 class LLMDuplicateRecommendationsError(LLMResponseError):
     """A language model response contained identical recommendations."""
 
-    def __init__(self, message: str, *, n_duplicates: int) -> None:
+    def __init__(self, message: str, /, *, n_duplicates: int) -> None:
         super().__init__(message)
         self.n_duplicates = n_duplicates
 
@@ -111,7 +112,7 @@ class LLMDuplicateRecommendationsError(LLMResponseError):
 class LLMBatchSizeError(LLMResponseError):
     """A language model response contained the wrong number of recommendations."""
 
-    def __init__(self, message: str, *, requested: int, received: int) -> None:
+    def __init__(self, message: str, /, *, requested: int, received: int) -> None:
         super().__init__(message)
         self.requested = requested
         self.received = received
