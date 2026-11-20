@@ -46,7 +46,7 @@ def validate_litellm_args(  # noqa: DOC101, DOC103
     _: Any, attribute: Attribute, value: Any
 ) -> None:
     """Validate that LiteLLM arguments do not contain reserved keys."""
-    _check_reserved_keys(value, attribute.name)
+    _check_reserved_keys(value, attribute.alias or attribute.name)
 
 
 def query_model(
