@@ -45,10 +45,7 @@ class CustomTransformation(Transformation):
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
-        import torch
-
-        transformed = self.function(x)
-        return torch.where(x.isnan(), x, transformed)
+        return self.function(x)
 
 
 @define(frozen=True)
