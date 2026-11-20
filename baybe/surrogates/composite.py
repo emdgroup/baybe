@@ -17,7 +17,11 @@ from baybe.searchspace.core import SearchSpace
 from baybe.serialization import converter
 from baybe.serialization.core import _TYPE_FIELD, add_type
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
+from baybe.surrogates.base import (
+    PosteriorStatistic,
+    SurrogateProtocol,
+    _validate_training_data,
+)
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import is_all_instance
 
@@ -105,9 +109,11 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
-        # See base class.
+        training_data = objective.handle_missing_values(measurements)
+        for name, data in training_data.items():
+            _validate_training_data(data, name)
 
-        for name, data in objective.handle_missing_values(measurements).items():
+        for name, data in training_data.items():
             pre_transformed = objective._pre_transform(
                 data[[t.name for t in objective.targets]]
             )

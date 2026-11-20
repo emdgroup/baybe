@@ -8,7 +8,10 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe.exceptions import IncompatibleSurrogateError
+from baybe.exceptions import (
+    IncompatibleSurrogateError,
+    IncompleteMeasurementsError,
+)
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.pareto import ParetoObjective
@@ -105,6 +108,87 @@ def test_composite_surrogates(surrogate):
     BotorchRecommender(surrogate_model=surrogate).recommend(
         2, searchspace, objective, measurements
     )
+
+
+@pytest.mark.parametrize(
+    "objective",
+    [
+        param(
+            SingleTargetObjective(NumericalTarget("unmeasured_target")),
+            id="single",
+        ),
+        param(
+            DesirabilityObjective(
+                [
+                    NumericalTarget("measured_target"),
+                    NumericalTarget("unmeasured_target"),
+                ],
+                scalarizer="MEAN",
+                require_normalization=False,
+            ),
+            id="desirability",
+        ),
+        param(
+            DesirabilityObjective(
+                [
+                    NumericalTarget("measured_target"),
+                    NumericalTarget("unmeasured_target"),
+                ],
+                scalarizer="MEAN",
+                require_normalization=False,
+                as_pre_transformation=True,
+            ),
+            id="desirability-pre",
+        ),
+        param(
+            ParetoObjective(
+                [
+                    NumericalTarget("measured_target"),
+                    NumericalTarget("unmeasured_target"),
+                ]
+            ),
+            id="pareto",
+        ),
+    ],
+)
+def test_surrogate_requires_observations_for_each_modeled_quantity(
+    objective: Objective,
+):
+    """Each modeled quantity must have at least one complete measurement."""
+    searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
+    measurements = pd.DataFrame({"p": [0, 1, 0]})
+    measurements["measured_target"] = [1.0, 2.0, 3.0]
+    measurements["unmeasured_target"] = float("nan")
+
+    surrogate = GaussianProcessSurrogate()
+    replicate = objective._n_models > 1
+    model = surrogate.replicate() if replicate else surrogate
+    if not replicate:
+        measurements = measurements.iloc[:0]
+    with patch.object(GaussianProcessSurrogate, "_fit") as fit:
+        with pytest.raises(
+            IncompleteMeasurementsError, match="No complete measurements"
+        ):
+            model.fit(searchspace, objective, measurements)
+        fit.assert_not_called()
+
+
+def test_surrogate_rejects_objectives_with_multiple_modeled_quantities():
+    """A single-output surrogate cannot model multiple quantities on its own."""
+    objective = DesirabilityObjective(
+        [NumericalTarget("t1"), NumericalTarget("t2")],
+        scalarizer="MEAN",
+        require_normalization=False,
+    )
+    assert objective.is_multi_output is False
+    assert objective._is_multi_model is True
+
+    searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
+    measurements = pd.DataFrame({"p": [0, 1], "t1": [0.1, 0.2], "t2": [0.2, 0.3]})
+    with patch.object(GaussianProcessSurrogate, "_fit") as fit:
+        with pytest.raises(IncompatibleSurrogateError, match="single-output"):
+            GaussianProcessSurrogate().fit(searchspace, objective, measurements)
+        fit.assert_not_called()
 
 
 @pytest.mark.parametrize(

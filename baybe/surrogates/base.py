@@ -13,14 +13,18 @@ from attrs import define, field
 from joblib.hashing import hash
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibleSurrogateError, ModelNotTrainedError
+from baybe.exceptions import (
+    IncompatibleSurrogateError,
+    IncompleteMeasurementsError,
+    ModelNotTrainedError,
+)
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.basic import classproperty
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import handle_missing_values, to_tensor
+from baybe.utils.dataframe import to_tensor
 from baybe.utils.scaling import ColumnTransformer
 
 if TYPE_CHECKING:
@@ -34,6 +38,23 @@ if TYPE_CHECKING:
 
 PosteriorStatistic: TypeAlias = float | Literal["mean", "std", "var", "mode"]
 """Type alias for requestable statistics (a float yields the corresponding quantile)."""
+
+
+def _validate_training_data(df: pd.DataFrame, name: str, /) -> None:
+    """Ensure a modeled quantity has a non-empty set of training data.
+
+    Args:
+        df: The training data for the modeled quantity.
+        name: The name of the modeled quantity.
+
+    Raises:
+        IncompleteMeasurementsError: If the modeled quantity has no training data.
+    """
+    if df.empty:
+        raise IncompleteMeasurementsError(
+            "Each modeled quantity requires at least one complete measurement. "
+            f"No complete measurements are available for '{name}'."
+        )
 
 
 class _NoTransform(Enum):
@@ -403,23 +424,20 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             NotImplementedError: When using a continuous search space and a non-GP
                 model.
         """
-        # TODO: consider adding a validation step for `measurements`
-
-        # Validate multi-target compatibility
-        if objective.is_multi_output and not self.supports_multi_output:
+        if objective._is_multi_model:
             raise IncompatibleSurrogateError(
-                f"You attempted to train a single-output surrogate in a "
-                f"{len(objective.targets)}-target multi-output context. Either use "
-                f"a proper multi-output surrogate or consider explicitly "
-                f"replicating the current surrogate model using its "
-                f"'.{self.replicate.__name__}' method."
+                f"You attempted to train a single-output surrogate for an objective "
+                f"requiring {objective._n_models} modeled quantities. Either use a "
+                f"CompositeSurrogate or explicitly replicate the current surrogate "
+                f"model using its '.{self.replicate.__name__}' method."
             )
 
         # When the context is unchanged, no retraining is necessary
+        measurements_hash = hash(measurements)
         if (
             searchspace == self._searchspace
             and objective == self._objective
-            and hash(measurements) == self._measurements_hash
+            and measurements_hash == self._measurements_hash
         ):
             return
 
@@ -431,14 +449,16 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 f"support transfer learning."
             )
 
-        # Block partial measurements
-        handle_missing_values(measurements, [t.name for t in objective.targets])
+        # Block incomplete measurements
+        quantity_name = objective._modeled_quantity_names[0]
+        training_data = objective.handle_missing_values(measurements)[quantity_name]
+        _validate_training_data(training_data, quantity_name)
 
         # Remember the training context
         self._searchspace = searchspace
         self._objective = objective
         self._measurements = measurements
-        self._measurements_hash = hash(measurements)
+        self._measurements_hash = measurements_hash
 
         # Create context-specific transformations
         self._input_scaler = self._make_input_scaler(searchspace)
@@ -451,9 +471,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         #    values, enabling predictions with input from the pre-transformed domain
         #   (this allows us to control precisely on which level the model is placed)
         #  * The main transformation is part of the computational backpropagation graph
-        pre_transformed = objective._pre_transform(measurements, allow_extra=True)
+        pre_transformed = objective._pre_transform(training_data, allow_extra=True)
         train_x_comp_rep, train_y_tensor = to_tensor(
-            searchspace.transform(measurements, allow_extra=True), pre_transformed
+            searchspace.transform(training_data, allow_extra=True), pre_transformed
         )
         train_x = self._input_scaler.transform(train_x_comp_rep)
         train_y = (
