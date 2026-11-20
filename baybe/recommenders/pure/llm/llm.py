@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import warnings
+from functools import partial
 from typing import Any, ClassVar
 
 import pandas as pd
@@ -135,10 +136,6 @@ class LLMRecommender(PureRecommender, SerialMixin):
             recovery=recovery,
         )
 
-    def _query_model(self, prompt: str, /) -> str:
-        """Query the language model through the shared LLM query utility."""
-        return query_model(prompt, model=self.model, litellm_args=self.litellm_args)
-
     @override
     def recommend(
         self,
@@ -223,7 +220,9 @@ class LLMRecommender(PureRecommender, SerialMixin):
 
         return query_model_with_recovery(
             prompt,
-            query=self._query_model,
+            query=partial(
+                query_model, model=self.model, litellm_args=self.litellm_args
+            ),
             parse=lambda content: parse_llm_response(content, searchspace, batch_size),
             make_recovery_prompt=lambda error, content: self._make_prompt(
                 searchspace, batch_size, recovery=(error, content)
