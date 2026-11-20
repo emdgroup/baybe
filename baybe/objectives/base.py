@@ -291,7 +291,9 @@ class Objective(ABC, SerialMixin):
                 Y=target_tensor, deduplicate=False
             ).numpy()
 
-        return pd.Series(non_dominated, name="is_non_dominated")
+        return pd.Series(
+            non_dominated, name="is_non_dominated", index=configurations.index
+        )
 
 
 def to_objective(x: Target | Objective, /) -> Objective:
