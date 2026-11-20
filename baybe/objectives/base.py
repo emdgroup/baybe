@@ -7,6 +7,7 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
+import numpy as np
 import pandas as pd
 from attrs import define, field
 
@@ -279,11 +280,20 @@ class Objective(ABC, SerialMixin):
         from botorch.utils.multi_objective.pareto import is_non_dominated
 
         validate_target_input(configurations, self.targets)
-
         targets = self.transform(configurations, allow_extra=True)
-        non_dominated = is_non_dominated(Y=to_tensor(targets), deduplicate=False)
 
-        return pd.Series(non_dominated.numpy(), name="is_non_dominated")
+        # TODO: https://github.com/meta-pytorch/botorch/issues/3565
+        valid_transformed = targets.notna().all(axis=1).to_numpy()
+        non_dominated = np.zeros(len(configurations), dtype=bool)
+        if valid_transformed.any():
+            target_tensor = to_tensor(targets.iloc[valid_transformed])
+            non_dominated[valid_transformed] = is_non_dominated(
+                Y=target_tensor, deduplicate=False
+            ).numpy()
+
+        return pd.Series(
+            non_dominated, name="is_non_dominated", index=configurations.index
+        )
 
 
 def to_objective(x: Target | Objective, /) -> Objective:

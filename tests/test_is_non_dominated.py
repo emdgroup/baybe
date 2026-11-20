@@ -161,3 +161,26 @@ def test_identify_non_dominated_configurations_logic(objective, idx_non_dominate
 
     non_dominated = objective.identify_non_dominated_configurations(df)
     assert set(np.where(non_dominated)[0]) == set(idx_non_dominated)
+
+
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
+        pytest.param(
+            {"a": [10.0, np.nan, 0.0], "b": [10.0, 0.0, np.nan]},
+            [True, False, False],
+            id="missing-targets-after-complete-point",
+        ),
+        pytest.param(
+            {"a": [np.nan, 10.0, 0.0], "b": [0.0, 10.0, np.nan]},
+            [False, True, False],
+            id="missing-targets-before-complete-point",
+        ),
+    ],
+)
+def test_identify_non_dominated_configurations_with_missing_targets(values, expected):
+    """Treat configurations with any missing target as dominated."""
+    objective = ParetoObjective([NumericalTarget("a"), NumericalTarget("b")])
+    configurations = pd.DataFrame(values)
+    non_dominated = objective.identify_non_dominated_configurations(configurations)
+    assert non_dominated.tolist() == expected
