@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import fields
 
@@ -19,8 +19,7 @@ if TYPE_CHECKING:
     from baybe.parameters.base import Parameter
 
 
-_T = TypeVar("_T", dict[str, Any], list[Any], object)
-"""Serialized data, constrained so that dictionaries and lists keep their type."""
+_T = TypeVar("_T")
 
 
 def _strip_empty(value: _T, /) -> _T:
@@ -38,11 +37,9 @@ def _strip_empty(value: _T, /) -> _T:
     match value:
         case dict():
             cleaned = {k: _strip_empty(v) for k, v in value.items()}
-            # pyrefly: ignore[bad-return]  # No per-constraint check
-            return {k: v for k, v in cleaned.items() if v not in (None, {})}
+            return cast(_T, {k: v for k, v in cleaned.items() if v not in (None, {})})
         case list():
-            # pyrefly: ignore[bad-return]  # No per-constraint check
-            return [_strip_empty(item) for item in value]
+            return cast(_T, [_strip_empty(item) for item in value])
         case _:
             return value
 
