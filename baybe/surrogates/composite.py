@@ -105,16 +105,6 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
-        """Fit a surrogate for each modeled quantity.
-
-        Args:
-            searchspace: The search space in which experiments are conducted.
-            objective: The objective to be optimized.
-            measurements: The training data in experimental representation.
-
-        Raises:
-            IncompleteMeasurementsError: If any modeled quantity has no observations.
-        """
         training_data = objective.handle_missing_values(measurements)
         if missing := [name for name, data in training_data.items() if data.empty]:
             raise IncompleteMeasurementsError(
