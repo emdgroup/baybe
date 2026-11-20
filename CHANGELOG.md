@@ -8,8 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Multi-output surrogate compatibility check in `Surrogate.fit` now correctly uses the
   number of required models instead of the number of transform outputs
-- Bayesian recommendations report modeled quantities with no complete measurements
-  before fitting. Zero-row search-space transformations retain their encoded columns.
+- Surrogates now report modeled quantities with no complete measurements instead of
+  attempting a fit
+- `SearchSpace.transform` now correctly retains encoded columns for zero-row dataframes
 
 ## [0.15.2] - 2026-11-13
 ### Fixed
