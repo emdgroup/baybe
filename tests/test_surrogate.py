@@ -151,7 +151,7 @@ def test_composite_surrogates(surrogate):
         ),
     ],
 )
-def test_composite_surrogate_requires_observations_for_each_modeled_quantity(
+def test_surrogate_requires_observations_for_each_modeled_quantity(
     objective: Objective,
 ):
     """Each modeled quantity must have at least one complete measurement."""
@@ -160,9 +160,17 @@ def test_composite_surrogate_requires_observations_for_each_modeled_quantity(
     measurements["measured_target"] = [1.0, 2.0, 3.0]
     measurements["unmeasured_target"] = float("nan")
 
-    surrogate = GaussianProcessSurrogate().replicate()
-    with pytest.raises(IncompleteMeasurementsError, match="No complete measurements"):
-        surrogate.fit(searchspace, objective, measurements)
+    surrogate = GaussianProcessSurrogate()
+    replicate = objective._n_models > 1
+    model = surrogate.replicate() if replicate else surrogate
+    if not replicate:
+        measurements = measurements.iloc[:0]
+    with patch.object(GaussianProcessSurrogate, "_fit") as fit:
+        with pytest.raises(
+            IncompleteMeasurementsError, match="No complete measurements"
+        ):
+            model.fit(searchspace, objective, measurements)
+        fit.assert_not_called()
 
 
 @pytest.mark.parametrize(
