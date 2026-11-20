@@ -173,6 +173,24 @@ def test_surrogate_requires_observations_for_each_modeled_quantity(
         fit.assert_not_called()
 
 
+def test_surrogate_rejects_objectives_with_multiple_modeled_quantities():
+    """A single-output surrogate cannot model multiple quantities on its own."""
+    objective = DesirabilityObjective(
+        [NumericalTarget("t1"), NumericalTarget("t2")],
+        scalarizer="MEAN",
+        require_normalization=False,
+    )
+    assert objective.is_multi_output is False
+    assert objective._is_multi_model is True
+
+    searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
+    measurements = pd.DataFrame({"p": [0, 1], "t1": [0.1, 0.2], "t2": [0.2, 0.3]})
+    with patch.object(GaussianProcessSurrogate, "_fit") as fit:
+        with pytest.raises(IncompatibleSurrogateError, match="single-output"):
+            GaussianProcessSurrogate().fit(searchspace, objective, measurements)
+        fit.assert_not_called()
+
+
 @pytest.mark.parametrize(
     "model_cls, params",
     [
