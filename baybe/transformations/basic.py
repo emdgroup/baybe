@@ -179,9 +179,8 @@ class AffineTransformation(MonotonicTransformation):
     def __call__(self, x: Tensor, /) -> Tensor:
         # Avoid 0 * inf while preserving NaN inputs.
         if self.factor == 0.0:
-            import torch
-
-            return torch.where(x.isnan(), x, x.new_full(x.shape, fill_value=self.shift))
+            transformed = x.new_full(x.shape, fill_value=self.shift)
+            return transformed.where(~x.isnan(), x)
 
         return x * self.factor + self.shift
 
@@ -229,7 +228,7 @@ class TwoSidedAffineTransformation(Transformation):
             (x - mid) * sl if (sl := self.slope_left) else x.new_zeros(x.shape),
             (x - mid) * sr if (sr := self.slope_right) else x.new_zeros(x.shape),
         )
-        return torch.where(x.isnan(), x, transformed)
+        return transformed.where(~x.isnan(), x)
 
 
 @_image_equals_codomain
@@ -445,9 +444,7 @@ class PowerTransformation(Transformation):
             )
         transformed = x.pow(self.exponent)
         if self.exponent == 0:
-            import torch
-
-            return torch.where(x.isnan(), x, transformed)
+            return transformed.where(~x.isnan(), x)
         return transformed
 
 
