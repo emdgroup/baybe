@@ -2,21 +2,24 @@
 
 from __future__ import annotations
 
+import copy
 import gc
 from collections import Counter
+from collections.abc import Mapping
 from functools import cached_property
 from graphlib import CycleError, TopologicalSorter
 from math import prod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from attrs import define, field
+from attrs import define, evolve, field
 from attrs.validators import and_, deep_iterable, instance_of, min_len
 
 from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
+from baybe.serialization import SerialMixin, converter
 from baybe.targets.base import Target
-from baybe.utils.basic import to_tuple
+from baybe.utils.basic import refers_to, to_tuple
 
 from ._columns import RESERVED_COLUMNS
 from .node import MultiStepNode
@@ -28,7 +31,7 @@ if TYPE_CHECKING:
 
 
 @define(frozen=True, slots=False)
-class MultiStepDAG:
+class MultiStepDAG(SerialMixin):
     """A directed acyclic graph of node definitions.
 
     The DAG is the single source of truth for the topology, the per-node model
@@ -374,6 +377,180 @@ class MultiStepDAG:
                 result.update(self.children_of(name))
         result.remove(node)
         return tuple(name for name in self.topological_order if name in result)
+
+
+def _node_name(spec: Mapping[str, Any], *, context: str) -> str:
+    """Extract and validate the name of a serialized node definition."""
+    name = spec.get("name")
+    if not isinstance(name, str) or not name:
+        raise IncompatibilityError(
+            f"Every {context} must provide a nonempty string 'name'."
+        )
+    return name
+
+
+def _check_nested_node_definitions(
+    prototypes: Mapping[str, Mapping[str, Any]],
+) -> None:
+    """Validate that nested parent definitions agree with their top-level peers.
+
+    Serialized DAGs repeat the complete definition of a parent inside every child.
+    The structure hook only uses the top-level entries to construct canonical
+    instances, but it rejects contradictory duplicates instead of silently picking
+    one of them.
+
+    Args:
+        prototypes: The top-level node specifications, keyed by node name.
+
+    Raises:
+        IncompatibilityError: If a nested parent has no top-level definition or
+            differs from it.
+    """
+    for child_name, spec in prototypes.items():
+        for parent_spec in spec.get("parents", ()):
+            if not isinstance(parent_spec, Mapping):
+                raise IncompatibilityError(
+                    f"Parents of node '{child_name}' must be node definitions."
+                )
+            parent_name = _node_name(parent_spec, context="parent definition")
+            if parent_name not in prototypes:
+                raise IncompatibilityError(
+                    f"Node '{child_name}' references parent '{parent_name}' which "
+                    f"is not part of the DAG."
+                )
+            if parent_spec != prototypes[parent_name]:
+                raise IncompatibilityError(
+                    f"The nested definition of node '{parent_name}' referenced by "
+                    f"'{child_name}' contradicts its top-level definition."
+                )
+
+
+def _canonical_node_order(adjacency: Mapping[str, tuple[str, ...]]) -> tuple[str, ...]:
+    """Return a topological order for a serialized parent adjacency.
+
+    Args:
+        adjacency: Parent names keyed by node name.
+
+    Returns:
+        The node names in topological order.
+
+    Raises:
+        IncompatibilityError: If the adjacency contains a cycle.
+    """
+    sorter = TopologicalSorter(dict.fromkeys(adjacency, ()))
+    for name, parents in adjacency.items():
+        sorter.add(name, *parents)
+    try:
+        return tuple(sorter.static_order())
+    except CycleError as ex:
+        raise IncompatibilityError("The DAG contains a cycle.") from ex
+
+
+def _structure_multistep_dag(
+    specs: Mapping[str, Any], cls: type[MultiStepDAG]
+) -> MultiStepDAG:
+    """Restore a DAG while resolving parent references to canonical instances.
+
+    Args:
+        specs: The dictionary representation of the DAG.
+        cls: The DAG class to instantiate.
+
+    Returns:
+        The restored DAG.
+
+    Raises:
+        TypeError: If the serialized type marker names a different class.
+        IncompatibilityError: If node names are duplicated, a parent is missing,
+            nested definitions contradict their top-level peers, or the graph
+            contains a cycle.
+    """
+    if not isinstance(specs, Mapping):
+        raise TypeError(f"Expected a mapping to restore '{cls.__name__}'.")
+
+    # The input is caller-owned and must remain untouched.
+    raw_specs: dict[str, Any] = copy.deepcopy(dict(specs))
+
+    type_ = raw_specs.pop("type", None)
+    if type_ is not None and not refers_to(cls, type_):
+        raise TypeError(
+            f"The type field '{type_}' does not match the target class "
+            f"'{cls.__name__}'."
+        )
+
+    raw_nodes = raw_specs.pop("nodes", None)
+    if not isinstance(raw_nodes, (list, tuple)):
+        raise IncompatibilityError(
+            "A serialized DAG must provide a sequence of node definitions."
+        )
+
+    prototypes: dict[str, Mapping[str, Any]] = {}
+    for raw in raw_nodes:
+        if not isinstance(raw, Mapping):
+            raise IncompatibilityError("Node definitions must be mappings.")
+        name = _node_name(raw, context="node definition")
+        if name in prototypes:
+            raise IncompatibilityError(
+                f"The DAG contains duplicate node names: {name!r}."
+            )
+        prototypes[name] = raw
+
+    if not prototypes:
+        raise IncompatibilityError("A serialized DAG must contain at least one node.")
+
+    # Separate unknown-parent validation from the nested-definition agreement check
+    # so that canonical resolution always sees a closed parent graph.
+    adjacency: dict[str, tuple[str, ...]] = {}
+    for name, raw in prototypes.items():
+        parents = raw.get("parents", ())
+        if not isinstance(parents, (list, tuple)):
+            raise IncompatibilityError(
+                f"Parents of node '{name}' must be a sequence of node definitions."
+            )
+        parent_names: list[str] = []
+        for parent in parents:
+            if not isinstance(parent, Mapping):
+                raise IncompatibilityError(
+                    f"Parents of node '{name}' must be node definitions."
+                )
+            parent_name = _node_name(parent, context="parent definition")
+            if parent_name not in prototypes:
+                raise IncompatibilityError(
+                    f"Node '{name}' references parent '{parent_name}' which is not "
+                    f"part of the DAG."
+                )
+            parent_names.append(parent_name)
+        adjacency[name] = tuple(parent_names)
+
+    _check_nested_node_definitions(prototypes)
+
+    order = _canonical_node_order(adjacency)
+    base_nodes = {
+        name: converter.structure(
+            {key: value for key, value in raw.items() if key != "parents"},
+            MultiStepNode,
+        )
+        for name, raw in prototypes.items()
+    }
+    canonical: dict[str, MultiStepNode] = {}
+    for name in order:
+        canonical[name] = evolve(
+            base_nodes[name],
+            parents=tuple(canonical[parent] for parent in adjacency[name]),
+        )
+
+    objective = raw_specs.pop("objective", None)
+    if objective is None:
+        raise IncompatibilityError("A serialized DAG must provide an objective.")
+
+    nodes = tuple(canonical[name] for name in prototypes)
+    return cls(
+        nodes=nodes,
+        objective=converter.structure(objective, Objective),
+        **raw_specs,
+    )
+
+
+converter.register_structure_hook(MultiStepDAG, _structure_multistep_dag)
 
 
 # Collect leftover original slotted classes processed by ``attrs.define``.

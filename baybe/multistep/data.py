@@ -31,9 +31,17 @@ from baybe.exceptions import (
     IncompleteMeasurementsError,
     InvalidTargetValueError,
 )
+from baybe.serialization import SerialMixin
 from baybe.utils.basic import to_tuple
 
-from ._columns import EXPERIMENT_ID, FEASIBILITY_LABEL
+from ._columns import (
+    COMPLETE_SOURCE,
+    COMPLETE_SOURCE_DERIVED,
+    COMPLETE_SOURCE_IMPORTED,
+    EXPERIMENT_ID,
+    FEASIBILITY_LABEL,
+)
+from ._experiments import _EvaluationRef
 from .dag import MultiStepDAG
 from .node import MultiStepNode
 
@@ -119,13 +127,47 @@ def _extract_feasibility_values(
     return pd.Series(labels, index=measurements.index, name=FEASIBILITY_LABEL)
 
 
-def _copy_frame(value: pd.DataFrame) -> pd.DataFrame:
-    """Copy a dataframe so that the stored state cannot be mutated from outside."""
-    return value.copy()
+def _normalize_complete_frame(
+    value: pd.DataFrame,
+    *,
+    default_source: str = COMPLETE_SOURCE_IMPORTED,
+) -> pd.DataFrame:
+    """Copy complete rows and establish their observation provenance.
+
+    Args:
+        value: Complete DAG rows, optionally carrying a provenance marker.
+        default_source: Provenance assigned to rows without a marker.
+
+    Returns:
+        A defensive copy with a valid provenance column.
+
+    Raises:
+        IncompatibilityError: If the provenance column contains unknown values.
+    """
+    frame = value.copy().reset_index(drop=True)
+    if COMPLETE_SOURCE not in frame.columns:
+        frame[COMPLETE_SOURCE] = default_source
+        return frame
+
+    source = frame[COMPLETE_SOURCE]
+    invalid = sorted(
+        {
+            value
+            for value in source.dropna().unique()
+            if value not in (COMPLETE_SOURCE_IMPORTED, COMPLETE_SOURCE_DERIVED)
+        }
+    )
+    if invalid:
+        raise IncompatibilityError(
+            f"Unknown complete-measurement provenance values: {invalid}. "
+            f"Expected '{COMPLETE_SOURCE_IMPORTED}' or '{COMPLETE_SOURCE_DERIVED}'."
+        )
+    frame[COMPLETE_SOURCE] = source.fillna(default_source)
+    return frame
 
 
 @define(frozen=True)
-class NodeMeasurement:
+class NodeMeasurement(SerialMixin):
     """One observation of one node."""
 
     node: str = field(validator=min_len(1))
@@ -176,7 +218,7 @@ class NodeMeasurement:
 
 
 @define(frozen=True, eq=False)
-class MultiStepData:
+class MultiStepData(SerialMixin):
     """Immutable store of node measurements and complete DAG rows."""
 
     measurements: tuple[NodeMeasurement, ...] = field(
@@ -187,9 +229,16 @@ class MultiStepData:
     """The individual node measurements, in insertion order."""
 
     complete_measurements: pd.DataFrame = field(
-        factory=pd.DataFrame, converter=_copy_frame, validator=instance_of(pd.DataFrame)
+        factory=pd.DataFrame,
+        converter=_normalize_complete_frame,
+        validator=instance_of(pd.DataFrame),
     )
-    """Complete successful rows with parameters, outputs, and condition values."""
+    """Complete successful rows with parameters, outputs, and condition values.
+
+    Rows assembled from node measurements are marked as derived reference views.
+    Imported rows are marked as independent observations. Derived rows never
+    enter training views; their bound node measurements already do.
+    """
 
     @classmethod
     def empty(cls) -> MultiStepData:
@@ -211,17 +260,142 @@ class MultiStepData:
         """
         return evolve(self, measurements=self.measurements + measurements)
 
-    def add_complete(self, measurements: pd.DataFrame) -> MultiStepData:
+    def add_complete(
+        self, measurements: pd.DataFrame, *, derived: bool = False
+    ) -> MultiStepData:
         """Return a new store with the given complete rows appended.
 
         Args:
             measurements: Complete DAG rows in experimental representation.
+            derived: Whether the rows are reference views assembled from stored
+                node measurements. Imported rows are independent observations.
 
         Returns:
             The updated immutable store.
+
+        Raises:
+            IncompatibilityError: If a derived row carries an incompatible
+                provenance marker.
         """
-        frame = pd.concat([self.complete_measurements, measurements], ignore_index=True)
-        return evolve(self, complete_measurements=frame)
+        source = COMPLETE_SOURCE_DERIVED if derived else COMPLETE_SOURCE_IMPORTED
+        frame = _normalize_complete_frame(measurements, default_source=source)
+        if derived and (frame[COMPLETE_SOURCE] != COMPLETE_SOURCE_DERIVED).any():
+            raise IncompatibilityError(
+                "Rows added as derived complete measurements must not claim "
+                "independent provenance."
+            )
+        if not derived and (frame[COMPLETE_SOURCE] == COMPLETE_SOURCE_DERIVED).any():
+            raise IncompatibilityError(
+                "Rows added as imported complete measurements must not claim "
+                "derived provenance."
+            )
+        combined = pd.concat([self.complete_measurements, frame], ignore_index=True)
+        return evolve(self, complete_measurements=combined)
+
+    def get_evaluation(self, dag: MultiStepDAG, ref: _EvaluationRef) -> NodeMeasurement:
+        """Resolve a stable internal evaluation reference.
+
+        Args:
+            dag: The DAG topology.
+            ref: The evaluation reference.
+
+        Returns:
+            The referenced node observation.
+
+        Raises:
+            IncompatibilityError: If the reference is out of range, refers to an
+                unknown node, or does not match the stored node.
+        """
+        if ref.source == "measurement":
+            try:
+                measurement = self.measurements[ref.index]
+            except IndexError as ex:
+                raise IncompatibilityError(
+                    f"Measurement reference {ref.index} is out of range."
+                ) from ex
+            if measurement.node != ref.node:
+                raise IncompatibilityError(
+                    f"Measurement reference {ref.index} belongs to node "
+                    f"'{measurement.node}', not '{ref.node}'."
+                )
+            return measurement
+
+        if ref.source == "complete":
+            node = dag.node_by_name.get(ref.node)
+            if node is None:
+                raise IncompatibilityError(f"Node '{ref.node}' is not part of the DAG.")
+            if ref.index < 0 or ref.index >= len(self.complete_measurements):
+                raise IncompatibilityError(
+                    f"Complete-measurement reference {ref.index} is out of range."
+                )
+            row = self.complete_measurements.iloc[ref.index]
+            missing = [
+                name
+                for name in node.model_input_names
+                if name not in self.complete_measurements.columns
+            ]
+            if missing:
+                raise IncompatibilityError(
+                    f"The complete measurement for node '{node.name}' is missing "
+                    f"required columns: {missing}."
+                )
+            experiment_id = (
+                str(row[EXPERIMENT_ID])
+                if EXPERIMENT_ID in self.complete_measurements
+                and not pd.isna(row[EXPERIMENT_ID])
+                else None
+            )
+            return NodeMeasurement(
+                node=node.name,
+                inputs={name: row[name] for name in node.model_input_names},
+                output=row[node.output],
+                experiment_id=experiment_id,
+                condition_values={
+                    condition.column: row[condition.column]
+                    for condition in node.feasibility_conditions
+                    if condition.column != node.output
+                    and condition.column in self.complete_measurements
+                },
+            )
+
+        raise IncompatibilityError(f"Unsupported evaluation source '{ref.source}'.")
+
+    def evaluation_refs(  # noqa: DOC502
+        self, dag: MultiStepDAG, node: str, *, successful_only: bool = True
+    ) -> tuple[_EvaluationRef, ...]:
+        """Collect references to actual evaluations of one node.
+
+        Derived complete rows are reference views of stored measurements and are
+        deliberately excluded. Imported complete rows are genuine independent
+        observations and remain available.
+
+        Args:
+            dag: The DAG topology.
+            node: The node whose evaluations are requested.
+            successful_only: Whether failed observations should be omitted.
+
+        Returns:
+            The references in measurement-then-import order.
+
+        Raises:
+            IncompatibilityError: If the node is not part of the DAG.
+        """
+        node_object = _get_node(dag, node)
+        refs = [
+            _EvaluationRef(source="measurement", index=index, node=node)
+            for index, measurement in enumerate(self.measurements)
+            if measurement.node == node
+            and (not successful_only or _is_successful(node_object, measurement))
+        ]
+        if COMPLETE_SOURCE in self.complete_measurements:
+            imported = (
+                self.complete_measurements[COMPLETE_SOURCE] == COMPLETE_SOURCE_IMPORTED
+            )
+            refs.extend(
+                _EvaluationRef(source="complete", index=int(index), node=node)
+                for index in self.complete_measurements.index[imported]
+            )
+        return tuple(refs)
 
     def is_experiment_complete(self, dag: MultiStepDAG, experiment_id: str) -> bool:
         """Check whether every DAG node has a measurement for the given experiment.
@@ -234,6 +408,17 @@ class MultiStepData:
             ``True`` if every node has a successful measurement with the given
             identifier and none of that experiment's observations failed.
         """
+        if EXPERIMENT_ID in self.complete_measurements:
+            derived = self.complete_measurements[
+                (self.complete_measurements[EXPERIMENT_ID] == experiment_id)
+                & (
+                    self.complete_measurements[COMPLETE_SOURCE]
+                    == COMPLETE_SOURCE_DERIVED
+                )
+            ]
+            if not derived.empty:
+                return True
+
         measured_nodes = {
             measurement.node
             for measurement in self.measurements
@@ -250,8 +435,8 @@ class MultiStepData:
     ) -> pd.DataFrame:
         """Assemble a complete DAG row from the measurements of an experiment.
 
-        The first measurement of each node is used. The experiment must be
-        complete before this method is called.
+        This legacy helper only considers measurements carrying the experiment
+        identifier. The campaign completes contexts from their explicit bindings.
 
         Args:
             dag: The DAG topology.
@@ -268,24 +453,99 @@ class MultiStepData:
             raise IncompatibilityError(
                 f"Experiment '{experiment_id}' is incomplete or failed."
             )
+        bindings = {
+            m.node: _EvaluationRef(source="measurement", index=index, node=m.node)
+            for index, m in enumerate(self.measurements)
+            if m.experiment_id == experiment_id
+        }
+        return self.make_complete_row(dag, bindings)
+
+    def has_consistent_bindings(
+        self, dag: MultiStepDAG, bindings: Mapping[str, _EvaluationRef]
+    ) -> bool:
+        """Check whether local observations form one complete global DAG row.
+
+        Independent reused branches can disagree on shared ancestor outputs.
+        Their local measurements remain valid, but have no global row projection.
+        Invalid references still raise rather than being hidden as inconsistency.
+
+        Args:
+            dag: The DAG topology.
+            bindings: The concrete observations bound to the context.
+
+        Returns:
+            Whether every node is bound and all parent outputs agree locally.
+        """
+        if set(bindings) != set(dag.topological_order):
+            return False
+        resolved = {
+            name: self.get_evaluation(dag, ref) for name, ref in bindings.items()
+        }
+        return all(
+            resolved[node.name].inputs[parent.output] == resolved[parent.name].output
+            for node in dag.nodes
+            for parent in node.parents
+        )
+
+    def make_complete_row(
+        self, dag: MultiStepDAG, bindings: Mapping[str, _EvaluationRef]
+    ) -> pd.DataFrame:
+        """Assemble a complete DAG row from concrete evaluation bindings.
+
+        The row is a reference view. It is not stored as a new measurement unless
+        the campaign explicitly appends it with derived provenance.
+
+        Args:
+            dag: The DAG topology.
+            bindings: Actual evaluations for all nodes, keyed by node name.
+
+        Returns:
+            A single-row dataframe with one column per DAG parameter and one per
+            node output.
+
+        Raises:
+            IncompatibilityError: If a node is unbound, an evaluation failed, or
+                the bound parent outputs disagree with a child's local input.
+        """
+        missing = sorted({node.name for node in dag.nodes} - set(bindings))
+        if missing:
+            raise IncompatibilityError(
+                f"Cannot assemble a complete row because nodes are unbound: {missing}."
+            )
+
+        resolved = {
+            name: self.get_evaluation(dag, ref) for name, ref in bindings.items()
+        }
         row: dict[str, Any] = {}
         for node in dag.nodes:
-            measurement = next(
-                m
-                for m in self.measurements
-                if m.node == node.name and m.experiment_id == experiment_id
-            )
+            measurement = resolved[node.name]
+            if not _is_successful(node, measurement):
+                raise IncompatibilityError(
+                    f"Cannot assemble a complete row because node '{node.name}' failed."
+                )
+            for parent in node.parents:
+                if measurement.inputs[parent.output] != resolved[parent.name].output:
+                    raise IncompatibilityError(
+                        f"The local input of node '{node.name}' does not match the "
+                        f"bound output of parent '{parent.name}'."
+                    )
             for name in dag.owned_parameter_names(node.name):
                 row[name] = measurement.inputs[name]
             row[node.output] = measurement.output
             row.update(measurement.condition_values)
         return pd.DataFrame([row], columns=dag._complete_measurement_columns)
 
-    def validate(self, dag: MultiStepDAG) -> None:
+    def validate(
+        self,
+        dag: MultiStepDAG,
+        numerical_measurements_must_be_within_tolerance: bool = True,
+    ) -> None:
         """Validate the stored measurements against the DAG.
 
         Args:
             dag: The DAG defining the expected data contract.
+            numerical_measurements_must_be_within_tolerance: If ``True``, numerical
+                parameter values must lie within the parameter range or tolerance.
 
         Raises:
             IncompatibilityError: If a measurement does not match the node's
@@ -319,7 +579,13 @@ class MultiStepData:
             for name in node.model_input_names:
                 value = measurement.inputs[name]
                 if name in dag.parameter_by_name:
-                    _validate_parameter_value(dag, name, value, node.name)
+                    _validate_parameter_value(
+                        dag,
+                        name,
+                        value,
+                        node.name,
+                        numerical_measurements_must_be_within_tolerance,
+                    )
                 else:
                     _validate_finite_input(name, value, node.name)
 
@@ -365,7 +631,13 @@ class MultiStepData:
 
         for _, row in frame.iterrows():
             for name in dag.parameter_by_name:
-                _validate_parameter_value(dag, name, row[name], name)
+                _validate_parameter_value(
+                    dag,
+                    name,
+                    row[name],
+                    name,
+                    numerical_measurements_must_be_within_tolerance,
+                )
             for node in dag.nodes:
                 value = row[node.output]
                 if isinstance(value, bool) or not isinstance(
@@ -429,20 +701,16 @@ class MultiStepData:
 
         frames: list[pd.DataFrame] = []
         if not self.complete_measurements.empty:
-            complete = self.complete_measurements
-            if EXPERIMENT_ID in complete:
-                backing_ids = {
-                    m.experiment_id
-                    for m in self.measurements
-                    if m.node == node and m.experiment_id is not None
-                }
-                complete = complete.loc[~complete[EXPERIMENT_ID].isin(backing_ids)]
-            if feasibility:
-                frame = complete[list(node_object.model_input_names)].copy()
-                frame[label] = _extract_feasibility_values(node_object, complete)
-                frames.append(frame[columns])
-            else:
-                frames.append(complete[columns].copy())
+            complete = self.complete_measurements.loc[
+                self.complete_measurements[COMPLETE_SOURCE] == COMPLETE_SOURCE_IMPORTED
+            ]
+            if not complete.empty:
+                if feasibility:
+                    frame = complete[list(node_object.model_input_names)].copy()
+                    frame[label] = _extract_feasibility_values(node_object, complete)
+                    frames.append(frame[columns])
+                else:
+                    frames.append(complete[columns].copy())
 
         rows = [
             {**measurement.inputs, label: _is_successful(node_object, measurement)}
@@ -468,9 +736,24 @@ def _is_successful(node: MultiStepNode, measurement: NodeMeasurement) -> bool:
 
 
 def _validate_node_inputs(
-    dag: MultiStepDAG, node: MultiStepNode, frame: pd.DataFrame
+    dag: MultiStepDAG,
+    node: MultiStepNode,
+    frame: pd.DataFrame,
+    numerical_measurements_must_be_within_tolerance: bool = True,
 ) -> None:
-    """Validate a local input frame using the existing observation contract."""
+    """Validate a local input frame using the existing observation contract.
+
+    Args:
+        dag: The DAG defining the parameters.
+        node: The node whose model input is validated.
+        frame: The local input frame.
+        numerical_measurements_must_be_within_tolerance: If ``True``, numerical
+            parameter values must lie within the parameter range or tolerance.
+
+    Raises:
+        IncompatibilityError: If the columns or values violate the observation
+            contract.
+    """
     if not frame.columns.is_unique:
         raise IncompatibilityError(
             f"Input columns for node '{node.name}' must be unique."
@@ -480,7 +763,13 @@ def _validate_node_inputs(
         for name in node.model_input_names:
             value = row[name]
             if name in dag.parameter_by_name:
-                _validate_parameter_value(dag, name, value, node.name)
+                _validate_parameter_value(
+                    dag,
+                    name,
+                    value,
+                    node.name,
+                    numerical_measurements_must_be_within_tolerance,
+                )
             else:
                 _validate_finite_input(name, value, node.name)
 
@@ -511,10 +800,41 @@ def _validate_input_columns(node: MultiStepNode, columns: Iterable[str]) -> None
 
 
 def _validate_parameter_value(
-    dag: MultiStepDAG, name: str, value: Any, node: str
+    dag: MultiStepDAG,
+    name: str,
+    value: Any,
+    node: str,
+    numerical_measurements_must_be_within_tolerance: bool = True,
 ) -> None:
-    """Validate one parameter value using the parameter encoding."""
+    """Validate one parameter value using the parameter encoding.
+
+    Args:
+        dag: The DAG owning the parameter.
+        name: The parameter name.
+        value: The value to validate.
+        node: The node the value is used by.
+        numerical_measurements_must_be_within_tolerance: If ``True``, numerical
+            values must lie within the parameter range or tolerance. If ``False``,
+            numerical values bypass the range check but must still be finite numbers.
+
+    Raises:
+        IncompatibilityError: If the value violates the parameter contract.
+    """
     parameter = dag.parameter_by_name[name]
+    if parameter.is_numerical and not numerical_measurements_must_be_within_tolerance:
+        if isinstance(value, bool) or not isinstance(
+            value, (int, float, np.integer, np.floating)
+        ):
+            raise IncompatibilityError(
+                f"The numerical parameter '{name}' used by node '{node}' must be "
+                f"numeric, got {value!r}."
+            )
+        if not np.isfinite(value):
+            raise IncompatibilityError(
+                f"The numerical parameter '{name}' used by node '{node}' must be "
+                f"finite, got {value!r}."
+            )
+        return
     try:
         in_range = parameter.is_in_range(value)
     except Exception as ex:  # noqa: BLE001 - translated into a domain error

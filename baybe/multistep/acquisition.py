@@ -5,9 +5,10 @@ from __future__ import annotations
 import gc
 import math
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from itertools import groupby
 from operator import attrgetter
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, cast
 
 import pandas as pd
@@ -26,6 +27,8 @@ from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.targets.numerical import NumericalTarget
 
+from ._experiments import _EvaluationRef, _PendingAction, contains_action
+
 if TYPE_CHECKING:
     from botorch.acquisition.acquisition import (
         AcquisitionFunction as BoAcquisitionFunction,
@@ -38,6 +41,11 @@ if TYPE_CHECKING:
     from .node import MultiStepNode
 
 
+def _freeze_mapping(value: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Return a read-only copy of a mapping."""
+    return MappingProxyType(dict(value))
+
+
 @define(frozen=True)
 class _OpenAction:
     """A selected node measurement with its complete local input."""
@@ -45,8 +53,13 @@ class _OpenAction:
     node: str = field()
     """The node to execute."""
 
-    inputs: dict[str, Any] = field()
+    inputs: Mapping[str, Any] = field(converter=_freeze_mapping)
     """The node's own parameter values and observed parent outputs."""
+
+    parent_refs: Mapping[str, _EvaluationRef] = field(
+        factory=dict, converter=_freeze_mapping
+    )
+    """The concrete parent evaluations supplying the local input."""
 
 
 @define(frozen=True)
@@ -56,8 +69,83 @@ class _LocalProblem:
     node: str = field()
     """The node to evaluate."""
 
-    fixed_inputs: dict[str, Any] = field()
+    fixed_inputs: Mapping[str, Any] = field(converter=_freeze_mapping)
     """The discrete own inputs and observed parent outputs kept fixed."""
+
+    parent_refs: Mapping[str, _EvaluationRef] = field(
+        factory=dict, converter=_freeze_mapping
+    )
+    """The concrete parent evaluations supplying the parent outputs."""
+
+
+def _condition_on_pending(
+    model: MultiStepModel,
+    pending: tuple[_PendingAction, ...],
+    *,
+    num_fantasies: int,
+    sampling_seed: int,
+) -> tuple[MultiStepModel, ...]:
+    """Create one conditioned network model per joint pending fantasy.
+
+    Pending executions of a node are sampled jointly so that their GP
+    correlations and observation noise are retained. Nodes are independent
+    given their local data, so joint network fantasies combine node samples by
+    index instead of enumerating their Cartesian product.
+
+    Args:
+        model: The fitted real network model.
+        pending: The reserved local executions.
+        num_fantasies: Number of joint pending outcome paths.
+        sampling_seed: Base seed for the deterministic predictive draws.
+
+    Returns:
+        One conditioned model per pending fantasy. Without pending actions,
+        the original model is returned as the only element.
+
+    Raises:
+        IncompatibilityError: If a pending node is unknown or a local input
+            cannot be transformed.
+    """
+    if not pending:
+        return (model,)
+
+    grouped: dict[str, list[_PendingAction]] = {}
+    for action in pending:
+        grouped.setdefault(action.node, []).append(action)
+
+    node_inputs: dict[str, Tensor] = {}
+    node_samples: dict[str, Tensor] = {}
+    for index, (node_name, actions) in enumerate(grouped.items()):
+        node = model.dag.node_by_name.get(node_name)
+        if node is None:
+            raise IncompatibilityError(
+                f"Pending action references unknown node '{node_name}'."
+            )
+        frame = pd.DataFrame(
+            [dict(action.inputs) for action in actions],
+            columns=list(node.model_input_names),
+        )
+        inputs = model.transform_node_inputs(node_name, frame).unsqueeze(-2)
+        node_inputs[node_name] = inputs
+        node_samples[node_name] = model.sample_node_observations(
+            node_name,
+            inputs,
+            num_fantasies,
+            sampling_seed + 2 * index,
+        )
+
+    return tuple(
+        model.condition_on_node_observations(
+            {
+                node_name: (
+                    node_inputs[node_name],
+                    node_samples[node_name][fantasy_index],
+                )
+                for node_name in grouped
+            }
+        )
+        for fantasy_index in range(num_fantasies)
+    )
 
 
 @define(frozen=True)
@@ -76,12 +164,11 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
     optimization. The network model provides training, input transformation,
     sampling, and fantasy conditioning without implementing policy decisions.
 
-    Feasibility affects a measurement action through its current predicted success
-    probability: successful output fantasies are weighted by ``p`` and the
-    no-output failure branch by ``1 - p``. The policy therefore accounts for the
-    information gain about successful outputs through its output fantasies, but it
-    does not model the information gain about feasibility from a hypothetical
-    local observation. Only real measurements update the feasibility classifier.
+    Nodes with feasibility conditions are supported through independently learned
+    success-probability models. A terminal decision whose predicted joint success
+    probability falls below :attr:`feasibility_threshold` is treated as failed and
+    yields no improvement over the best observed successful utility, which acts as
+    the outside option of the policy.
     """
 
     abbreviation: ClassVar[str] = "pKGFN"
@@ -125,10 +212,12 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
     feasibility_threshold: float = field(
         default=0.5, validator=[instance_of(float), ge(0.0), le(1.0)], kw_only=True
     )
-    """Minimum network success probability required for a new terminal decision.
+    """Minimum joint success probability of a terminal decision.
 
-    The best actually observed successful terminal result remains an available
-    decision. Failure observations update feasibility but never the output model.
+    If the learned network success probability of a terminal decision falls below
+    this value, the decision is treated as failed and its utility falls back to the
+    best observed successful utility. The threshold only applies when at least one
+    node configures feasibility conditions.
     """
 
     def __attrs_post_init__(self) -> None:
@@ -155,7 +244,9 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         Args:
             fantasy_terminal_means: Network-averaged utilities with shape
                 ``(num_fantasies, num_terminal_candidates, batch...)``.
-            baseline: The scalar baseline utility of the current network.
+            baseline: The baseline utility of the current data. A scalar applies
+                to every fantasy; a tensor provides one baseline per fantasy and
+                must broadcast to the best-terminal means.
             cost: The positive cost of the selected node.
             fantasy_weights: Optional outcome probabilities matching the fantasy
                 and candidate batch axes. Without weights, use a uniform average.
@@ -180,23 +271,52 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             )
         if (
             not torch.isfinite(fantasy_terminal_means).all()
-            or baseline.dim() != 0
-            or not torch.isfinite(baseline)
+            or not torch.isfinite(baseline).all()
             or not math.isfinite(cost)
             or cost <= 0
         ):
             raise IncompatibilityError(
-                "p-KGFN requires finite means, a finite scalar baseline, and a "
+                "p-KGFN requires finite means, finite fantasy baselines, and a "
                 "positive finite cost."
             )
 
         best = fantasy_terminal_means.amax(dim=1)
-        expected = (
-            best.mean(dim=0)
-            if fantasy_weights is None
-            else (best * fantasy_weights).sum(dim=0)
-        )
-        score = (expected - baseline) / cost
+        try:
+            if torch.broadcast_shapes(best.shape, baseline.shape) != best.shape:
+                raise IncompatibilityError(
+                    f"The fantasy baseline with shape {tuple(baseline.shape)} does "
+                    f"not broadcast to the best-terminal means with shape "
+                    f"{tuple(best.shape)}."
+                )
+        except RuntimeError as ex:
+            raise IncompatibilityError(
+                f"The fantasy baseline with shape {tuple(baseline.shape)} does not "
+                f"broadcast to the best-terminal means with shape {tuple(best.shape)}."
+            ) from ex
+
+        gains = best - baseline
+        if fantasy_weights is None:
+            expected = gains.mean(dim=0)
+        else:
+            if (
+                fantasy_weights.shape[0] != gains.shape[0]
+                or not torch.isfinite(fantasy_weights).all()
+            ):
+                raise IncompatibilityError(
+                    "The fantasy weights must be finite and match the fantasy axis."
+                )
+            expanded = fantasy_weights.reshape(
+                fantasy_weights.shape[0],
+                *([1] * (gains.dim() - fantasy_weights.dim())),
+                *fantasy_weights.shape[1:],
+            )
+            try:
+                expected = (gains * expanded).sum(dim=0)
+            except RuntimeError as ex:
+                raise IncompatibilityError(
+                    "The fantasy weights do not broadcast to the gain shape."
+                ) from ex
+        score = expected / cost
         if not torch.isfinite(score).all():
             raise IncompatibilityError("The p-KGFN score is not finite.")
         return score
@@ -266,88 +386,24 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         feasible = probabilities.mean(dim=0).squeeze(-1) >= self.feasibility_threshold
         return torch.where(feasible, means.clamp_min(incumbent), incumbent)
 
-    @staticmethod
-    def _combine_branch_means(
-        success_means: Tensor,
-        incumbent: Tensor,
-        probability: Tensor,
-        num_fantasies: int,
-    ) -> tuple[Tensor, Tensor]:
-        """Combine output fantasies with the no-output failure branch.
-
-        The success branch keeps one terminal mean per output fantasy and is
-        weighted by the node's predicted success probability. The failure branch
-        performs no output update: every terminal decision keeps the incumbent
-        value and receives the complementary probability. No feasibility
-        observation is invented, so the classifier is not conditioned on a
-        hypothetical outcome.
-
-        Args:
-            success_means: Terminal means from the fantasized output model with
-                shape ``(num_fantasies, num_terminal_candidates, batch...)``.
-            incumbent: The best observed successful utility as a scalar tensor.
-            probability: The node's predicted success probability with shape
-                ``(batch...,)``.
-            num_fantasies: The number of output fantasies.
-
-        Returns:
-            The concatenated branch means with shape
-            ``(num_fantasies + 1, num_terminal_candidates, batch...)`` and the
-            matching branch weights with shape ``(num_fantasies + 1, batch...,)``.
-
-        Raises:
-            IncompatibilityError: If the branch shapes are inconsistent or a
-                value is non-finite.
-        """
-        import torch
-
-        if success_means.dim() < 2:
-            raise IncompatibilityError(
-                "Success-branch means must have shape "
-                "(fantasies, terminal candidates, batch...), got "
-                f"{tuple(success_means.shape)}."
-            )
-        if success_means.shape[0] != num_fantasies:
-            raise IncompatibilityError(
-                f"The success branch contains {success_means.shape[0]} fantasies, "
-                f"but {num_fantasies} were requested."
-            )
-        expected_batch_shape = success_means.shape[2:]
-        if probability.shape != expected_batch_shape:
-            raise IncompatibilityError(
-                f"The success probability has shape {tuple(probability.shape)}, "
-                f"but the success branch expects {expected_batch_shape}."
-            )
-        if incumbent.dim() != 0 or not torch.isfinite(incumbent):
-            raise IncompatibilityError("The incumbent utility must be a finite scalar.")
-        if (
-            not torch.isfinite(success_means).all()
-            or not torch.isfinite(probability).all()
-        ):
-            raise IncompatibilityError(
-                "The success branch and probability must be finite."
-            )
-
-        failure_means = incumbent.expand(1, *success_means.shape[1:])
-        success_weights = (
-            probability.expand(num_fantasies, *probability.shape) / num_fantasies
-        )
-        failure_weights = (1.0 - probability).unsqueeze(0)
-        means = torch.cat((success_means, failure_means), dim=0)
-        weights = torch.cat((success_weights, failure_weights), dim=0)
-        return means, weights
-
-    def _make_node_actions(  # noqa: DOC502
-        self, dag: MultiStepDAG, data: MultiStepData
+    def _make_node_actions(
+        self,
+        dag: MultiStepDAG,
+        data: MultiStepData,
+        pending: tuple[_PendingAction, ...] = (),
     ) -> tuple[_LocalProblem, ...]:
         """Enumerate fixed local input problems currently executable.
 
         Continuous own inputs stay free for optimization. Discrete own inputs and
-        observed parent outputs are fixed.
+        observed parent outputs are fixed. Parent outputs are drawn from real,
+        successful evaluations and may be combined across independent
+        experiments. Numerically equal parent outputs are collapsed for action
+        generation only; the underlying observations remain distinct.
 
         Args:
             dag: The DAG topology.
             data: The measurement store.
+            pending: Already reserved actions that must not be offered again.
 
         Returns:
             The local problems, in topological and input order.
@@ -355,25 +411,113 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         problems: list[_LocalProblem] = []
         for name in dag.topological_order:
             node = dag.node_by_name[name]
-            inputs = (
+            own_inputs = (
                 node.searchspace.discrete.exp_rep
                 if node.inputs and not node.searchspace.discrete.is_empty
                 else pd.DataFrame(index=[0])
             )
+            own_rows: list[dict[str, Any]] = (
+                [
+                    {str(key): value for key, value in row.items()}
+                    for row in own_inputs.to_dict("records")
+                ]
+                if len(own_inputs.columns)
+                else [{} for _ in range(len(own_inputs))]
+            )
+            parent_choices: list[list[tuple[Any, _EvaluationRef]]] = []
             for parent in node.parents:
-                frame = data.node_training_data(dag, parent.name)
-                if frame.empty:
+                refs = data.evaluation_refs(dag, parent.name)
+                choices: list[tuple[Any, _EvaluationRef]] = []
+                seen: set[Any] = set()
+                for ref in refs:
+                    evaluation = data.get_evaluation(dag, ref)
+                    value = evaluation.output
+                    if value in seen:
+                        continue
+                    seen.add(value)
+                    choices.append((value, ref))
+                if not choices:
                     break
-                inputs = inputs.merge(
-                    frame[[parent.output]].drop_duplicates(), how="cross"
-                )
-            else:
-                rows = inputs.to_dict("records") if len(inputs.columns) else [{}]
-                problems.extend(
-                    _LocalProblem(node=name, fixed_inputs=cast(dict[str, Any], row))
-                    for row in rows
+                parent_choices.append(choices)
+
+            if len(parent_choices) != len(node.parents):
+                continue
+
+            combinations: list[tuple[dict[str, Any], dict[str, _EvaluationRef]]] = [
+                (dict(inputs), {}) for inputs in own_rows
+            ]
+            for parent, choices in zip(node.parents, parent_choices):
+                combinations = [
+                    (
+                        {**inputs, parent.output: value},
+                        {**refs, parent.name: ref},
+                    )
+                    for inputs, refs in combinations
+                    for value, ref in choices
+                ]
+
+            for fixed_inputs, parent_refs in combinations:
+                if contains_action(pending, node=name, inputs=fixed_inputs):
+                    continue
+                problems.append(
+                    _LocalProblem(
+                        node=name,
+                        fixed_inputs=fixed_inputs,
+                        parent_refs=parent_refs,
+                    )
                 )
         return tuple(problems)
+
+    def _pending_branches(  # noqa: DOC502
+        self,
+        model: MultiStepModel,
+        pending: tuple[_PendingAction, ...],
+        reference_points: Tensor,
+        incumbent: Tensor | None,
+        baseline: Tensor,
+    ) -> tuple[tuple[MultiStepModel, Tensor], ...]:
+        """Create one conditioned network model per joint pending fantasy.
+
+        All pending executions of a node are sampled jointly so that their GP
+        correlations and observation noise are retained. Nodes are independent
+        given their local data, so the joint network fantasy combines the node
+        samples by index rather than by a Cartesian product.
+
+        Args:
+            model: The fitted real network model.
+            pending: The reserved local executions.
+            reference_points: The global terminal reference configurations.
+            incumbent: Best observed successful utility, if applicable.
+            baseline: The baseline utility without pending conditioning.
+
+        Returns:
+            One ``(conditioned_model, baseline_value)`` pair per pending fantasy.
+            Without pending actions, the original model and baseline are
+            returned unchanged.
+
+        Raises:
+            IncompatibilityError: If a pending node is unknown or a local input
+                cannot be transformed.
+        """
+        import torch
+
+        if not pending:
+            return ((model, baseline),)
+
+        conditioned_models = _condition_on_pending(
+            model,
+            pending,
+            num_fantasies=self.num_fantasies,
+            sampling_seed=self.sampling_seed,
+        )
+        branches: list[tuple[MultiStepModel, Tensor]] = []
+        for conditioned in conditioned_models:
+            with torch.no_grad():
+                value = self._compute_terminal_means(
+                    conditioned, reference_points, incumbent
+                ).max()
+            branches.append((conditioned, value))
+        return tuple(branches)
 
     def _make_tensor_score_acquisition(
         self,
@@ -382,6 +526,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         node: MultiStepNode,
         reference_points: Tensor,
         baseline: Tensor,
+        pending: tuple[_PendingAction, ...] = (),
         incumbent: Tensor | None = None,
     ) -> BoAcquisitionFunction:
         """Create the BoTorch tensor-score adapter for one node.
@@ -390,8 +535,9 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             model: The fitted network model.
             node: The node whose measurement is evaluated.
             reference_points: The global terminal reference configurations.
-            baseline: The best current terminal utility.
-            incumbent: The best actually observed successful utility, if applicable.
+            baseline: The best current terminal utility without pending data.
+            pending: Reserved local executions whose outcomes are fantasized.
+            incumbent: Best observed successful utility, if applicable.
 
         Returns:
             An acquisition function delegating scoring to this policy.
@@ -401,10 +547,17 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             AcquisitionFunction as BoAcquisitionFunction,
         )
         from botorch.settings import propagate_grads
-        from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
+        from botorch.utils.transforms import t_batch_mode_transform
         from gpytorch.settings import fast_pred_var
 
         policy = self
+        pending_branches = self._pending_branches(
+            model,
+            pending,
+            reference_points,
+            incumbent,
+            baseline,
+        )
 
         @define(eq=False, repr=False, slots=False, init=False, on_setattr=setters.NO_OP)
         class _TensorScoreAcquisition(BoAcquisitionFunction):
@@ -416,43 +569,55 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
                 t_batch_mode_transform(expected_q=1),
             )
             def forward(self, X: Tensor) -> Tensor:
-                fantasy_inputs = X.expand(policy.num_fantasies, *X.shape)
-                fantasy_points = match_batch_shape(
-                    reference_points.reshape(
+                import torch
+
+                candidate_batch = tuple(X.shape[:-2])
+                fantasy_means: list[Tensor] = []
+                fantasy_baselines: list[Tensor] = []
+                for conditioned_model, branch_baseline in pending_branches:
+                    with propagate_grads(True), fast_pred_var(False):
+                        fantasy_model = conditioned_model.make_node_fantasies(
+                            node, X, policy.num_fantasies, policy.sampling_seed
+                        )
+                    fantasy_batch = tuple(
+                        fantasy_model.get_node_model(node.name).batch_shape
+                    )
+                    expected_batch = (policy.num_fantasies, *candidate_batch)
+                    if fantasy_batch == expected_batch:
+                        output_batch = fantasy_batch
+                    elif fantasy_batch == (*expected_batch, 1):
+                        output_batch = expected_batch
+                    else:
+                        raise IncompatibilityError(
+                            f"Fantasizing node '{node.name}' produced batch shape "
+                            f"{fantasy_batch}, expected {expected_batch} optionally "
+                            "followed by a singleton output axis."
+                        )
+                    points = reference_points.reshape(
                         len(reference_points),
-                        *(1 for _ in fantasy_inputs.shape[:-2]),
+                        *([1] * len(fantasy_batch)),
                         *reference_points.shape[-2:],
-                    ),
-                    fantasy_inputs,
+                    ).expand(
+                        len(reference_points),
+                        *fantasy_batch,
+                        *reference_points.shape[-2:],
+                    )
+                    with propagate_grads(True), fast_pred_var(False):
+                        means = policy._compute_terminal_means(
+                            fantasy_model, points, incumbent
+                        )
+                    if output_batch != fantasy_batch:
+                        means = means.squeeze(-1)
+                    fantasy_means.append(means.movedim(1, 0))
+                    fantasy_baselines.append(
+                        branch_baseline.expand(policy.num_fantasies, *candidate_batch)
+                    )
+
+                return policy._compute_pkgfn_score(
+                    torch.cat(fantasy_means, dim=0),
+                    torch.cat(fantasy_baselines, dim=0),
+                    node.cost,
                 )
-                with propagate_grads(True), fast_pred_var(False):
-                    fantasy_model = model.make_node_fantasies(
-                        node, X, policy.num_fantasies, policy.sampling_seed
-                    )
-                    means = policy._compute_terminal_means(
-                        fantasy_model, fantasy_points, incumbent
-                    ).movedim(1, 0)
-                    weights = None
-                    if node.feasibility_conditions:
-                        if incumbent is None:
-                            raise IncompatibilityError(
-                                f"Node '{node.name}' requires an incumbent utility "
-                                "for its failure branch."
-                            )
-                        probability = (
-                            model._feasibility_models[node.name]
-                            .posterior_probabilities(X)
-                            .reshape(X.shape[:-2])
-                        )
-                        means, weights = policy._combine_branch_means(
-                            means,
-                            incumbent,
-                            probability,
-                            policy.num_fantasies,
-                        )
-                    return policy._compute_pkgfn_score(
-                        means, baseline, node.cost, weights
-                    )
 
         return _TensorScoreAcquisition(model=model)
 
@@ -502,12 +667,59 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             .unsqueeze(-2)
         )
 
+    @staticmethod
+    def _observed_incumbent(
+        data: MultiStepData, model: MultiStepModel
+    ) -> Tensor | None:
+        """Return the best observed successful terminal utility.
+
+        Only fully successful complete rows are candidates: derived rows are
+        assembled exclusively from successful node measurements, and imported rows
+        pass every configured feasibility condition by validation.
+
+        Args:
+            data: The measurement store.
+            model: The fitted network model.
+
+        Returns:
+            The best observed terminal utility, or ``None`` when no node configures
+            feasibility conditions or no successful complete row exists yet.
+
+        Raises:
+            IncompatibilityError: If the objective does not produce one finite
+                utility per complete row.
+        """
+        import torch
+
+        from baybe.utils.dataframe import to_tensor
+
+        dag = model.dag
+        if not any(node.feasibility_conditions for node in dag.nodes):
+            return None
+        complete = data.complete_measurements
+        if complete.empty:
+            return None
+
+        reference = next(model.parameters())
+        samples = (
+            to_tensor(complete[list(dag.final_target_names)])
+            .to(reference)
+            .unsqueeze(-2)
+        )
+        utilities = dag.objective.to_botorch()(samples, None)
+        if utilities.shape[-1] != 1 or not torch.isfinite(utilities).all():
+            raise IncompatibilityError(
+                "The objective must produce one finite utility per complete row."
+            )
+        return utilities.reshape(-1).max()
+
     def _optimize_node_actions(
         self,
         model: MultiStepModel,
         problems: tuple[_LocalProblem, ...],
         reference_points: Tensor,
         baseline: Tensor,
+        pending: tuple[_PendingAction, ...] = (),
         incumbent: Tensor | None = None,
     ) -> tuple[_OpenAction, Tensor]:
         """Delegate a node's discrete or mixed action search to BoTorch.
@@ -516,7 +728,8 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             model: The fitted network model.
             problems: The executable local problems for one node.
             reference_points: The global terminal reference configurations.
-            baseline: The best current terminal utility.
+            baseline: The best current terminal utility without pending data.
+            pending: Reserved local executions whose outcomes are fantasized.
             incumbent: Best observed successful utility, when feasibility is modeled.
 
         Returns:
@@ -551,6 +764,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             node=node,
             reference_points=reference_points,
             baseline=baseline,
+            pending=pending,
             incumbent=incumbent,
         )
 
@@ -604,14 +818,22 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             raise IncompatibilityError(
                 f"The optimizer changed fixed inputs of node '{node.name}'."
             )
-        selected_inputs = dict(problems[int(matches.nonzero()[0].item())].fixed_inputs)
+        selected_problem = problems[int(matches.nonzero()[0].item())]
+        selected_inputs = dict(selected_problem.fixed_inputs)
         selected_inputs.update(
             {
                 name: candidate[0, model_columns.index(name)].item()
                 for name in free_parameters
             }
         )
-        return _OpenAction(node=node.name, inputs=selected_inputs), score
+        return (
+            _OpenAction(
+                node=node.name,
+                inputs=selected_inputs,
+                parent_refs=selected_problem.parent_refs,
+            ),
+            score,
+        )
 
     def _validate_fitted_models(self, model: MultiStepModel) -> None:
         """Validate the fitted GP and likelihood contract required by p-KGFN.
@@ -640,7 +862,12 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
                     f"but found '{type(gp).__name__}'."
                 )
 
-    def select_action(self, data: MultiStepData, model: MultiStepModel) -> _OpenAction:
+    def select_action(
+        self,
+        data: MultiStepData,
+        model: MultiStepModel,
+        pending: tuple[_PendingAction, ...] = (),
+    ) -> _OpenAction:
         """Select the best currently executable p-KGFN measurement action.
 
         No training is performed and neither campaign state nor real models are
@@ -650,6 +877,8 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         Args:
             data: The measurement store determining executable actions.
             model: The fitted network model, including the DAG and objective.
+            pending: Already reserved actions. Their outcomes are fantasized, and
+                an identical action is not offered again.
 
         Returns:
             The highest-scoring node and its complete local input.
@@ -663,7 +892,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         dag = model.dag
         self.validate_context(dag, data, batch_size=1)
         self._validate_fitted_models(model)
-        problems = self._make_node_actions(dag, data)
+        problems = self._make_node_actions(dag, data, pending)
         if not problems:
             raise IncompatibilityError(
                 "The p-KGFN policy found no executable local problem. Every node "
@@ -672,27 +901,33 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
 
         reference = next(model.parameters())
         reference_points = self._make_terminal_reference_tensor(dag, reference)
-        incumbent = None
-        if any(node.feasibility_conditions for node in dag.nodes):
-            from baybe.utils.dataframe import to_tensor
-
-            terminal = data.node_training_data(dag, dag.final_nodes[0])
-            observed = to_tensor(terminal[list(dag.final_target_names)]).to(reference)
-            incumbent = dag.objective.to_botorch()(observed.unsqueeze(-2), None).max()
+        incumbent = self._observed_incumbent(data, model)
         with torch.no_grad():
             baseline = self._compute_terminal_means(
                 model, reference_points, incumbent
             ).max()
 
-        return max(
+        selected = max(
             (
                 self._optimize_node_actions(
-                    model, tuple(node_problems), reference_points, baseline, incumbent
+                    model,
+                    tuple(node_problems),
+                    reference_points,
+                    baseline,
+                    pending=pending,
+                    incumbent=incumbent,
                 )
                 for _, node_problems in groupby(problems, key=attrgetter("node"))
             ),
             key=lambda result: result[1].item(),
         )[0]
+        if contains_action(pending, node=selected.node, inputs=selected.inputs):
+            raise IncompatibilityError(
+                f"The selected continuous action of node '{selected.node}' is "
+                "identical to an already pending action. Provide a different "
+                "search context or report the pending result first."
+            )
+        return selected
 
     @override
     def to_botorch(
