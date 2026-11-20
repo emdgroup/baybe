@@ -42,6 +42,10 @@ _PAYLOAD = '{"items": [{"name": "a", "count": 1}]}'
             id="echoed_input",
         ),
         pytest.param(
+            '{"items": []} {"items": [{"name": "a", "count": 1}], "confidence": 0.9}',
+            id="later_compatible_block_with_extra_key",
+        ),
+        pytest.param(
             f'```json\n{_PAYLOAD}\n```\n```json\n{{"summary": "x"}}\n```',
             id="trailing_fenced_block",
         ),
@@ -57,15 +61,23 @@ def test_extract_payload(response):
 
 
 @pytest.mark.parametrize(
+    "response",
+    [
+        pytest.param(
+            '{"items": [{"name": "a", "count": 1}], "note": "x"}', id="envelope"
+        ),
+        pytest.param('{"items": [{"name": "a", "count": 1, "note": "x"}]}', id="item"),
+    ],
+)
+def test_extract_payload_ignores_extra_keys(response):
+    """Extra keys beyond the schema are ignored."""
+    assert extract_payload(response, _Payload) == _Payload([_Item("a", 1)])
+
+
+@pytest.mark.parametrize(
     ("response", "match", "problems"),
     [
         pytest.param("No JSON here.", "contains no JSON object", (), id="no_json"),
-        pytest.param(
-            '{"items": [], "note": "x"}',
-            "expected format",
-            ("extra fields found (note) @ $",),
-            id="extra_key",
-        ),
         pytest.param(
             '{"items": [{}]}',
             "expected format",
@@ -74,6 +86,12 @@ def test_extract_payload(response):
                 "required field missing @ $.items[0].count",
             ),
             id="missing_keys",
+        ),
+        pytest.param(
+            '{"items": [{"name": "a", "counts": 1}]}',
+            "expected format",
+            ("required field missing @ $.items[0].count",),
+            id="misspelled_key",
         ),
         pytest.param(
             '{"items": "x"} Note: {"items": [{"name": "a"}]}',

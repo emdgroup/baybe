@@ -12,11 +12,15 @@ from baybe._llm.exceptions import LLMMalformedResponseError
 
 _T = TypeVar("_T")
 
-_CONVERTER = cattrs.Converter(forbid_extra_keys=True)
+_CONVERTER = cattrs.Converter()
+"""Convert with required fields enforced but additional keys ignored."""
 
 
 def extract_payload(response: str, schema: type[_T], /) -> _T:
     """Structure the last schema-compatible JSON object in a response.
+
+    Keys that are not part of ``schema`` are ignored, so additional metadata does not
+    invalidate an otherwise usable payload.
 
     Args:
         response: The raw response text.
