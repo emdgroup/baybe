@@ -20,13 +20,19 @@ PATCH_TARGET = "baybe._optional.llm.completion"
 """Patch target for mocking the LiteLLM ``completion`` function."""
 
 
-def mock_response(content):
+def mock_response(content, finish_reason="stop"):
     """Build a fake LiteLLM response object from raw text content.
 
     Needs to use a SimpleNamespace to mimic the structure of a real LiteLLM response.
+    ``finish_reason`` defaults to ``"stop"``; pass ``"length"`` to mimic truncation.
     """
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=content))]
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(content=content),
+                finish_reason=finish_reason,
+            )
+        ]
     )
 
 

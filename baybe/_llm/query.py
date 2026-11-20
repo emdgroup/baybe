@@ -5,7 +5,11 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
-from baybe._llm.exceptions import LLMMalformedResponseError, LLMResponseError
+from baybe._llm.exceptions import (
+    LLMMalformedResponseError,
+    LLMResponseError,
+    LLMTruncatedResponseError,
+)
 from baybe.exceptions import (
     LLMAuthenticationError,
     LLMCallError,
@@ -72,6 +76,8 @@ def query_model(
             limiting, timeout, unknown model) before a response is produced.
         LLMMalformedResponseError: If a response is returned but has an unexpected
             structure or no content.
+        LLMTruncatedResponseError: If the response was cut off by the output token
+            limit.
     """
     _check_reserved_keys(litellm_args or {}, "litellm_args")
 
@@ -109,6 +115,15 @@ def query_model(
     if content is None:
         raise LLMMalformedResponseError(
             "The language model returned empty content (None)."
+        )
+
+    # NOTE: A truncated response can still contain complete JSON fragments, so it must
+    #   not be parsed: it would either fail with a misleading format error or, worse,
+    #   yield an earlier complete block as if it were the answer.
+    if choices[0].finish_reason == "length":
+        raise LLMTruncatedResponseError(
+            "The language model response was truncated because it exceeded the "
+            "output token limit."
         )
 
     return content

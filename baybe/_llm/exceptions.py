@@ -37,6 +37,18 @@ class LLMMalformedResponseError(LLMResponseError):
         )
 
 
+class LLMTruncatedResponseError(LLMResponseError):
+    """A language model response was cut off by the output token limit."""
+
+    @property
+    @override
+    def recovery_instruction(self) -> str:
+        return (
+            "Your previous response was cut off because it exceeded the output "
+            "limit. Return a shorter response that contains only the required JSON."
+        )
+
+
 class LLMUnknownParameterError(LLMResponseError):
     """A language model response referenced parameters outside the search space."""
 

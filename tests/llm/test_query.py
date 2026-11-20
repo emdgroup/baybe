@@ -7,7 +7,7 @@ from unittest.mock import Mock, call, patch
 import pytest
 from pytest import param
 
-from baybe._llm.exceptions import LLMMalformedResponseError
+from baybe._llm.exceptions import LLMMalformedResponseError, LLMTruncatedResponseError
 from baybe._llm.query import query_model, query_model_with_recovery
 from baybe._optional.info import LLM_INSTALLED
 from baybe.exceptions import (
@@ -15,7 +15,7 @@ from baybe.exceptions import (
     LLMCallError,
     LLMRecoveryFailedError,
 )
-from tests.llm._mock import PATCH_TARGET
+from tests.llm._mock import PATCH_TARGET, mock_response
 
 if not LLM_INSTALLED:
     pytest.skip("LLM dependencies not installed.", allow_module_level=True)
@@ -69,6 +69,44 @@ def test_malformed_response_structure(response, cause_type):
         ) as exc_info:
             query_model("Prompt.", model="test/model")
     assert isinstance(exc_info.value.__cause__, cause_type)
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        param('{"recommendations": [{"explanation": "cut"', id="incomplete"),
+        param('{"recommendations": []}\n{"recommendations": [{"expl', id="after_draft"),
+    ],
+)
+def test_truncated_response_is_reported(content):
+    """A response cut off by the output limit raises a dedicated error."""
+    with patch(PATCH_TARGET, return_value=mock_response(content, "length")):
+        with pytest.raises(LLMTruncatedResponseError, match="truncated") as exc_info:
+            query_model("Prompt.", model="test/model")
+    assert "shorter response" in exc_info.value.recovery_instruction
+
+
+def test_truncated_response_is_recovered_once():
+    """Truncation is retried with an instruction to return a shorter response."""
+    with patch(
+        PATCH_TARGET,
+        side_effect=[
+            mock_response(_UNUSABLE, "length"),
+            mock_response(_USABLE, "stop"),
+        ],
+    ):
+        make_recovery_prompt = Mock(return_value="recovery")
+        result = query_model_with_recovery(
+            "prompt",
+            query=partial(query_model, model="test/model"),
+            parse=_parse,
+            make_recovery_prompt=make_recovery_prompt,
+        )
+    assert result == "parsed"
+    error, content = make_recovery_prompt.call_args.args
+    assert isinstance(error, LLMTruncatedResponseError)
+    assert content is None
+    assert "shorter response" in error.recovery_instruction
 
 
 @pytest.mark.parametrize("reserved_key", ["model", "messages", "stream"])
