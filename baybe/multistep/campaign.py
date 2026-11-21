@@ -58,6 +58,12 @@ from ._experiments import (
     pending_actions,
     register_action,
 )
+from ._scoring import (
+    ScoreScale,
+    _reduce_score_branches,
+    _resolve_score_scale,
+    _score_actions,
+)
 from .acquisition import (
     PartialKnowledgeGradientFN,
     _condition_on_pending,
@@ -522,17 +528,20 @@ class MultiStepCampaign(SerialMixin):
         """Recommend and reserve the next node actions.
 
         With :class:`~baybe.multistep.acquisition.PartialKnowledgeGradientFN`,
-        select one local measurement action by its expected terminal utility
-        gain per node cost. The policy supports discrete, continuous, and hybrid
-        node-owned inputs, and returns the complete local input including real
-        observed parent outputs. It does not require a complete DAG row.
+        select one local measurement action by weighting the expected terminal
+        utility gain with local success probability and node cost. The policy
+        supports discrete, continuous, and hybrid node-owned inputs, and returns
+        the complete local input including real observed parent outputs. It does
+        not require a complete DAG row.
         Pending real actions are fantasized when a new action is scored.
 
-        With other acquisition functions, score configurations in the complete
-        DAG search space and project the best globally consistent configuration
-        onto an executable node. This legacy route requires a purely discrete
-        DAG search space. Pending local actions are conditioned on hypothetical
-        node models, and the stock acquisition is averaged over their outcomes.
+        With supported stock acquisition functions, score configurations in the
+        complete DAG search space, project them onto executable local actions,
+        and rank those actions after applying their local success probability
+        and node cost. This route requires a purely discrete DAG search space.
+        Pending local actions are conditioned on hypothetical node models, and
+        the stock acquisition is averaged over their outcomes in linear or log
+        gain space as appropriate.
 
         A random initial design is used only while the required output or
         feasibility models cannot be fitted. Thereafter, the configured
@@ -570,22 +579,26 @@ class MultiStepCampaign(SerialMixin):
             if isinstance(self.acquisition_function, PartialKnowledgeGradientFN)
             else None
         )
+        resolved_acquisition: AcquisitionFunction | None = None
+        score_scale: ScoreScale | None = None
+        if pkgfn_config is None:
+            acquisition_resolver = BotorchRecommender(
+                acquisition_function=self.acquisition_function
+            )
+            resolved_acquisition = acquisition_resolver._get_acquisition_function(
+                self.dag.objective
+            )
+            # Validate the gain contract before fitting models or running an
+            # optimizer. Unknown signed utilities cannot be made into gains by
+            # multiplying them with risk and cost factors.
+            score_scale = _resolve_score_scale(resolved_acquisition)
+
         if pkgfn_config is not None:
             pkgfn_config.validate_context(self.dag, self.data, batch_size)
 
         pending = pending_actions(self._experiments)
         if pkgfn_config is None:
             self._validate_stock_pending(pending)
-        if (
-            pkgfn_config is None
-            and pending
-            and any(node.feasibility_conditions for node in self.dag.nodes)
-        ):
-            raise IncompatibilityError(
-                "Stock acquisitions do not support pending local actions together "
-                "with feasibility conditions. Report the pending measurements "
-                "before requesting the next recommendation."
-            )
         self._fit_node_models()
         needs_initial_data = bool(
             self.model.missing_nodes or self.model.missing_feasibility_nodes
@@ -596,7 +609,14 @@ class MultiStepCampaign(SerialMixin):
         elif needs_initial_data or self.data.complete_measurements.empty:
             actions = self._recommend_random(batch_size, pending)
         else:
-            actions = self._recommend_optimum(batch_size, pending)
+            assert resolved_acquisition is not None
+            assert score_scale is not None
+            actions = self._recommend_optimum(
+                batch_size,
+                pending,
+                acquisition_function=resolved_acquisition,
+                score_scale=score_scale,
+            )
 
         experiments = dict(self._experiments)
         counter = self._experiment_counter
@@ -834,7 +854,12 @@ class MultiStepCampaign(SerialMixin):
         )
 
     def _recommend_optimum(
-        self, batch_size: int, pending: tuple[_PendingAction, ...]
+        self,
+        batch_size: int,
+        pending: tuple[_PendingAction, ...],
+        *,
+        acquisition_function: AcquisitionFunction,
+        score_scale: ScoreScale,
     ) -> list[_PendingAction]:
         """Project globally scored configurations onto executable node actions.
 
@@ -842,26 +867,30 @@ class MultiStepCampaign(SerialMixin):
         over the complete discrete search space. Pending local actions are not
         treated as complete terminal measurements; instead, one hypothetical
         network model is conditioned per joint pending outcome and the
-        acquisition values are averaged. The resulting scores rank global
-        configurations, which are then projected onto the next executable node
-        of the open experiments and the possible fresh root contexts.
+        acquisition values are averaged in their declared linear or logarithmic
+        gain representation. Each global configuration is projected onto each
+        compatible executable plan; that concrete local action is then weighted
+        by its own-node success probability and cost before ranking.
 
         This projection is an orchestration rule, not an unchanged local
-        information-value acquisition. Only the own parameters of the selected
-        node and the real parent outputs of its concrete plan form the returned
-        local action.
+        information-value acquisition. The local risk factor uses only the
+        selected node's own parameters and the real parent outputs of its
+        concrete plan.
 
         Args:
             batch_size: The number of node actions to recommend.
             pending: The currently reserved local actions, whose outcomes are
                 fantasized when scoring.
+            acquisition_function: The resolved stock acquisition function,
+                including its actual default for this objective.
+            score_scale: The acquisition function's declared gain representation.
 
         Returns:
             The selected executable actions in descending score order.
 
         Raises:
             IncompatibilityError: If the DAG search space is not purely discrete,
-                an acquisition value is not finite, pending actions cannot be
+                an acquisition score is invalid, pending actions cannot be
                 expressed by the adapter, or fewer distinct executable actions
                 than requested are available.
             InfeasibilityError: If no candidate reaches the network success threshold.
@@ -898,7 +927,12 @@ class MultiStepCampaign(SerialMixin):
                     f"{self.feasibility_threshold}."
                 )
 
-        values = self._stock_acquisition_values(candidates, pending)
+        values = self._stock_acquisition_values(
+            candidates, pending, acquisition_function, score_scale
+        )
+        import torch
+
+        values_tensor = torch.as_tensor(values)
         plans = self._executable_plans()
         if not plans:
             raise IncompatibilityError(
@@ -907,12 +941,36 @@ class MultiStepCampaign(SerialMixin):
 
         options: list[tuple[float, int, int, _PendingAction]] = []
         for plan_index, plan in enumerate(plans):
-            compatible = self._compatible_candidates(candidates, plan)
-            for candidate_index in np.flatnonzero(compatible):
-                action = self._project_candidate(plan, candidates.iloc[candidate_index])
+            candidate_indices = np.flatnonzero(
+                self._compatible_candidates(candidates, plan)
+            )
+            actions = [
+                self._project_candidate(plan, candidates.iloc[candidate_index])
+                for candidate_index in candidate_indices
+            ]
+            if not actions:
+                continue
+            action_probabilities = self._action_success_probabilities(actions)
+            candidate_index_tensor = torch.as_tensor(candidate_indices)
+            action_values = values_tensor.index_select(0, candidate_index_tensor)
+            probability_tensor = action_values.new_tensor(action_probabilities)
+            costs = action_values.new_full(
+                action_values.shape, self.dag.node_by_name[plan.node].cost
+            )
+            weighted_scores = _score_actions(
+                action_values,
+                probability_tensor,
+                costs,
+                scale=score_scale,
+            )
+            for index, (candidate_index, action) in enumerate(
+                zip(candidate_indices, actions)
+            ):
+                if action_probabilities[index] == 0.0:
+                    continue
                 options.append(
                     (
-                        float(values[candidate_index]),
+                        float(weighted_scores[index].item()),
                         plan_index,
                         int(candidate_index),
                         action,
@@ -1003,21 +1061,47 @@ class MultiStepCampaign(SerialMixin):
             node=node.name, inputs=inputs, parent_refs=plan.parent_refs
         )
 
+    def _action_success_probabilities(
+        self, actions: list[_PendingAction]
+    ) -> np.ndarray:
+        """Return local success probabilities for concrete next actions.
+
+        Args:
+            actions: Actions of one node, each carrying own inputs and real parents.
+
+        Returns:
+            One probability per action; unconfigured nodes receive probability one.
+        """
+        node = self.dag.node_by_name[actions[0].node]
+        if not node.feasibility_conditions:
+            return np.ones(len(actions), dtype=float)
+        predictions = self.model.predict_feasibility(
+            node.name, pd.DataFrame([dict(action.inputs) for action in actions])
+        )
+        return predictions.to_numpy(dtype=float)
+
     def _stock_acquisition_values(
-        self, candidates: pd.DataFrame, pending: tuple[_PendingAction, ...]
+        self,
+        candidates: pd.DataFrame,
+        pending: tuple[_PendingAction, ...],
+        acquisition_function: AcquisitionFunction,
+        score_scale: ScoreScale,
     ) -> np.ndarray:
         """Average the stock acquisition over hypothetical pending outcomes.
 
         Args:
             candidates: The global DAG configurations to score.
             pending: The currently reserved local actions.
+            acquisition_function: The resolved stock acquisition function.
+            score_scale: The acquisition function's declared gain representation.
 
         Returns:
             One averaged acquisition value per candidate.
 
         Raises:
             IncompatibilityError: If a pending context is unsupported or an
-                acquisition value is not finite.
+                acquisition value is invalid outside the valid ``-inf`` log-gain
+                case.
         """
         self._validate_stock_pending(pending)
         models = _condition_on_pending(
@@ -1026,11 +1110,17 @@ class MultiStepCampaign(SerialMixin):
             num_fantasies=_PENDING_FANTASIES,
             sampling_seed=_PENDING_FANTASY_SEED,
         )
-        total = np.zeros(len(candidates), dtype=float)
+        if not models:
+            raise IncompatibilityError(
+                "Pending conditioning returned no stock acquisition branches."
+            )
+        import torch
+
+        branches: list[Any] = []
         for model in models:
             recommender = BotorchRecommender(
                 surrogate_model=_AcquisitionSurrogateAdapter(model),
-                acquisition_function=self.acquisition_function,
+                acquisition_function=acquisition_function,
             )
             branch = recommender.acquisition_values(
                 candidates,
@@ -1038,10 +1128,9 @@ class MultiStepCampaign(SerialMixin):
                 self.dag.objective,
                 self.data.complete_measurements,
             ).to_numpy(dtype=float)
-            if not np.isfinite(branch).all():
-                raise IncompatibilityError("The acquisition values must be finite.")
-            total += branch
-        return total / len(models)
+            branches.append(torch.as_tensor(branch))
+        reduced = _reduce_score_branches(torch.stack(branches), scale=score_scale)
+        return reduced.detach().cpu().numpy()
 
     def _validate_stock_pending(self, pending: tuple[_PendingAction, ...]) -> None:
         """Reject terminal pending that the stock reference adapter cannot express.

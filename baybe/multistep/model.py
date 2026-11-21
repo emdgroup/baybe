@@ -4,14 +4,13 @@ The model owns one independently fitted model per DAG node and derives all node
 input bookkeeping from the DAG itself. Network posteriors are formed by
 Monte-Carlo propagation: every sample is one full network path, parent outputs
 are drawn once and reused at forks, and the final outputs are returned jointly
-over the q-axis. The result is exposed as a BoTorch
-:class:`~botorch.posteriors.ensemble.EnsemblePosterior`, so the stock samplers
-and acquisition functions consume it without a custom posterior class. Already
-observed node outputs can replace the sampled path.
+over the q-axis. A lazy network posterior propagates the base samples supplied
+by BoTorch directly through the DAG, without resampling a precomputed ensemble.
+Already observed node outputs can replace the sampled path.
 
-Node posteriors backed by base samples remain differentiable with respect to the
-candidates; ensemble posteriors select precomputed member predictions and are
-therefore not differentiable.
+Gaussian node draws remain differentiable with respect to the candidates.
+Ensemble member selection is discrete; gradients through member predictions
+depend on the local model (random forests, for example, detach their inputs).
 
 The classes are ``attrs`` classes at the boundary to BoTorch. Two adjustments
 are required because :class:`torch.nn.Module` owns the instance state and its
@@ -23,6 +22,7 @@ collection must not recursively convert the model into a dictionary.
 from __future__ import annotations
 
 import gc
+import math
 from collections.abc import Mapping
 from copy import deepcopy
 from functools import cached_property
@@ -34,7 +34,6 @@ import torch
 from attrs import define, field, setters
 from attrs.validators import ge, instance_of
 from botorch.models.model import Model
-from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.posteriors.posterior import Posterior
 from pandas.api.types import is_numeric_dtype
 from torch import Tensor
@@ -180,7 +179,10 @@ class MultiStepModel(Model, SurrogateProtocol):
     """The DAG topology."""
 
     num_network_samples: int = field(default=512, validator=ge(1))
-    """Number of paths used for posterior moments and acquisition samples."""
+    """Number of paths used to estimate posterior moments.
+
+    Acquisition samplers control their own number of complete network draws.
+    """
 
     sampling_seed: int = field(default=0, validator=ge(0))
     """Base seed for the deterministic network draws."""
@@ -247,8 +249,7 @@ class MultiStepModel(Model, SurrogateProtocol):
         Args:
             dag: The DAG topology.
             node_models: Mapping covering every DAG node.
-            num_network_samples: Number of network paths stored in the ensemble
-                posterior.
+            num_network_samples: Number of network paths used for posterior moments.
             sampling_seed: Base seed for the deterministic network draws.
 
         Returns:
@@ -416,7 +417,7 @@ class MultiStepModel(Model, SurrogateProtocol):
 
         Args:
             fixed_outputs: Optional observed node outputs. These nodes consume
-                no base samples.
+                no random draws, but their base-sample coordinates remain reserved.
 
         Returns:
             The node names that are not covered by ``fixed_outputs``.
@@ -432,10 +433,8 @@ class MultiStepModel(Model, SurrogateProtocol):
             )
         return tuple(name for name in self._node_names if name not in fixed)
 
-    # The documented exceptions are raised by validate_network_measurements and
-    # _fit_node_frames.
     @override
-    def fit(  # noqa: DOC502
+    def fit(
         self,
         searchspace: SearchSpace | None,
         objective: Objective,
@@ -779,6 +778,89 @@ class MultiStepModel(Model, SurrogateProtocol):
             probabilities = model.posterior_probabilities(tensor).detach().cpu().numpy()
         return pd.Series(probabilities, index=inputs.index, name="success_probability")
 
+    def _predict_feasibility_tensor(
+        self, node_name: str, inputs_comp: Tensor
+    ) -> Tensor:
+        """Predict local action success while retaining candidate gradients.
+
+        ``inputs_comp`` uses the output model's computational representation.
+        The candidate columns are reordered by name into the independently
+        retained feasibility fit space, whose input transform and bounds remain
+        authoritative for this prediction.
+
+        Args:
+            node_name: The configured DAG node.
+            inputs_comp: Computational inputs with shape ``(batch..., 1, d)``.
+
+        Returns:
+            One success probability per batch item, without the singleton q-axis.
+
+        Raises:
+            IncompatibilityError: If the node, input shape, fitted layout, or
+                predicted probabilities are invalid.
+            ModelNotTrainedError: If the configured feasibility model is absent.
+        """
+        if node_name not in self.dag.node_by_name:
+            raise IncompatibilityError(f"Unknown DAG node '{node_name}'.")
+        node = self.dag.node_by_name[node_name]
+        if inputs_comp.ndim < 2 or inputs_comp.shape[-2] != 1:
+            raise IncompatibilityError(
+                "Feasibility scoring requires local action inputs with a singleton "
+                f"q-axis, got shape {tuple(inputs_comp.shape)}."
+            )
+        if not node.feasibility_conditions:
+            return inputs_comp.new_ones(inputs_comp.shape[:-2])
+        try:
+            feasibility_model = self._feasibility_models[node_name]
+        except KeyError as ex:
+            raise ModelNotTrainedError(
+                f"Node '{node_name}' has no fitted feasibility model."
+            ) from ex
+
+        surrogate = cast(Surrogate, feasibility_model)
+        searchspace = surrogate._searchspace
+        if searchspace is None:
+            raise IncompatibilityError(
+                f"The feasibility fit space for node '{node_name}' is unavailable."
+            )
+        source_columns = self.get_node_model_columns(node_name)
+        target_columns = searchspace.comp_rep_columns
+        source_indices = {column: index for index, column in enumerate(source_columns)}
+        missing = sorted(set(target_columns) - set(source_indices))
+        if missing or len(source_columns) != inputs_comp.shape[-1]:
+            raise IncompatibilityError(
+                f"The fitted input layouts for node '{node_name}' are incompatible; "
+                f"missing feasibility columns: {missing}."
+            )
+
+        indices = torch.tensor(
+            [source_indices[column] for column in target_columns],
+            dtype=torch.long,
+            device=inputs_comp.device,
+        )
+        candidates = inputs_comp.index_select(-1, indices).squeeze(-2)
+        reference = next(surrogate.to_botorch().parameters())
+        candidates = candidates.to(reference)
+        probabilities = feasibility_model.posterior_probabilities(candidates)
+        expected_shape = inputs_comp.shape[:-1]
+        if probabilities.numel() != math.prod(expected_shape):
+            raise IncompatibilityError(
+                f"The feasibility model for node '{node_name}' returned "
+                f"{probabilities.numel()} probabilities for input shape "
+                f"{tuple(inputs_comp.shape)}."
+            )
+        probabilities = probabilities.reshape(expected_shape).squeeze(-1)
+        if (
+            not torch.isfinite(probabilities).all()
+            or (probabilities < 0).any()
+            or (probabilities > 1).any()
+        ):
+            raise IncompatibilityError(
+                f"The feasibility model for node '{node_name}' returned values "
+                "outside the probability interval [0, 1]."
+            )
+        return probabilities
+
     @override
     def to_botorch(self) -> MultiStepModel:
         """Return the BoTorch representation, which is the model itself.
@@ -809,9 +891,8 @@ class MultiStepModel(Model, SurrogateProtocol):
             **kwargs: Additional arguments are rejected.
 
         Returns:
-            The network posterior over the final node outputs, represented as an
-            :class:`~botorch.posteriors.ensemble.EnsemblePosterior` over the
-            network paths.
+            A lazy posterior drawing complete network paths from the acquisition
+            sampler's base samples.
 
         Raises:
             ModelNotTrainedError: If the model is not fitted for all nodes.
@@ -827,7 +908,8 @@ class MultiStepModel(Model, SurrogateProtocol):
             **kwargs,
         )
 
-    def posterior_conditioned(
+    # The validation helpers and posterior constructor raise these exceptions.
+    def posterior_conditioned(  # noqa: DOC502
         self,
         X: Tensor,
         fixed_outputs: Mapping[str, Tensor],
@@ -850,27 +932,32 @@ class MultiStepModel(Model, SurrogateProtocol):
         Args:
             X: Candidate configurations with shape ``(batch..., q, d)``.
             fixed_outputs: Observed node outputs, keyed by node name. Values
-                must broadcast against ``(n_paths, batch..., q, 1)``.
+                must broadcast against ``(batch..., q, 1)``, with an optional
+                leading singleton. Sample-indexed bindings are only supported
+                by :meth:`draw_network_samples`, not by this posterior interface.
             output_indices: Not supported.
             observation_noise: Not supported.
             posterior_transform: Optional transform applied to the posterior.
             **kwargs: Additional arguments are rejected.
 
         Returns:
-            The conditioned network posterior, represented as an
-            :class:`~botorch.posteriors.ensemble.EnsemblePosterior` over the
-            network paths.
+            A lazy network posterior with the specified node outputs fixed.
+
+        Raises:
+            IncompatibilityError: If inputs or fixed outputs are incompatible,
+                non-finite, or depend on a sampler's path count.
+            ModelNotTrainedError: If a node model is unavailable.
+            NotImplementedError: If unsupported posterior arguments are supplied.
         """
-        posterior: Posterior = EnsemblePosterior(
-            self._draw_network_samples(
-                X,
-                self.num_network_samples,
-                fixed_outputs=fixed_outputs,
-                output_indices=output_indices,
-                observation_noise=observation_noise,
-                posterior_kwargs=kwargs,
-            )[0].movedim(0, -3)
+        from ._posterior import _NetworkPosterior
+
+        self._validate_posterior_arguments(X, output_indices, observation_noise, kwargs)
+        # Observed outputs must apply to any sampler's path count, including the
+        # separate draw count used to estimate posterior moments.
+        prepared = _sampling._prepare_fixed_outputs(
+            X, fixed_outputs, 1, tuple(X.shape[:-2])
         )
+        posterior: Posterior = _NetworkPosterior(self, X, prepared)
         if posterior_transform is not None:
             posterior = posterior_transform(posterior)
         return posterior
@@ -1084,7 +1171,7 @@ class MultiStepModel(Model, SurrogateProtocol):
             sampler = get_sampler(
                 posterior,
                 torch.Size([num_fantasies]),
-                seed=sampling_seed,
+                seed=_sampling._derive_seed(sampling_seed, node.name, "action-fantasy"),
             )
             observations = sampler(posterior)
             conditioned = node_model.condition_on_observations(X=inputs, Y=observations)
@@ -1154,7 +1241,11 @@ class MultiStepModel(Model, SurrogateProtocol):
                 node_model.posterior(inputs.squeeze(-2), observation_noise=True),
             )
             sampler = get_sampler(
-                posterior, torch.Size([num_samples]), seed=sampling_seed
+                posterior,
+                torch.Size([num_samples]),
+                seed=_sampling._derive_seed(
+                    sampling_seed, node_name, "pending-observation"
+                ),
             )
             samples = sampler(posterior)
         if samples.shape != (num_samples, inputs.shape[0], node_model.num_outputs):

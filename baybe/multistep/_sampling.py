@@ -1,15 +1,10 @@
-"""Native sampling helpers for multi-step function networks.
-
-The helpers configure BoTorch samplers, align their base samples across
-comparison batches, and propagate the draws through the DAG. They contain no
-fitting, policy, or posterior mathematics.
-"""
+"""Propagate sampler-provided base samples through multi-step function networks."""
 
 from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from baybe.exceptions import IncompatibilityError
 
@@ -21,15 +16,15 @@ if TYPE_CHECKING:
 
 
 def _derive_seed(base_seed: int, node_name: str, purpose: str) -> int:
-    """Derive a stable node- and purpose-specific seed.
+    """Separate local observations from complete network-path randomness.
 
     Args:
-        base_seed: The model- or policy-level base seed.
-        node_name: The name of the node whose random draw is seeded.
-        purpose: The domain of the random draw.
+        base_seed: The model- or policy-level seed.
+        node_name: The node whose observations are sampled.
+        purpose: The observation sampling domain.
 
     Returns:
-        An unsigned 32-bit integer seed.
+        A stable unsigned 32-bit seed.
     """
     payload = f"{base_seed}:{node_name}:{purpose}".encode()
     return int.from_bytes(hashlib.sha256(payload).digest()[:4], "big")
@@ -68,13 +63,15 @@ def _prepare_fixed_outputs(
     return prepared
 
 
-def _sample_node_posterior(model: Model, inputs: Tensor, seed: int) -> Tensor:
-    """Draw one posterior sample per network path with native BoTorch samplers.
+def _sample_node_posterior(
+    model: Model, inputs: Tensor, base_samples: Tensor
+) -> Tensor:
+    """Draw one local output per path using the supplied normal coordinates.
 
     Args:
         model: The fitted single-output node model.
         inputs: Node inputs with shape ``(n_paths, *batch_shape, q, d)``.
-        seed: Seed for the native sampler.
+        base_samples: Normal coordinates with shape ``(n_paths, batch..., q)``.
 
     Returns:
         Node samples with shape ``(n_paths, *batch_shape, q, num_outputs)``.
@@ -85,58 +82,67 @@ def _sample_node_posterior(model: Model, inputs: Tensor, seed: int) -> Tensor:
     """
     import torch
     from botorch.posteriors.ensemble import EnsemblePosterior
-    from botorch.posteriors.torch import TorchPosterior
-    from botorch.sampling import get_sampler
+    from botorch.posteriors.gpytorch import GPyTorchPosterior
+    from botorch.posteriors.transformed import TransformedPosterior
 
     n_paths = inputs.shape[0]
     batch_shape = tuple(inputs.shape[1:-2])
     q = inputs.shape[-2]
     posterior = model.posterior(inputs, observation_noise=False)
-    # Concrete posteriors expose this; the base posterior protocol does not.
-    posterior_batch = tuple(posterior.batch_shape)  # type: ignore[attr-defined]
+    original = posterior
+    while isinstance(original, TransformedPosterior):
+        original = original._posterior
+    if not isinstance(original, (GPyTorchPosterior, EnsemblePosterior)):
+        raise IncompatibilityError(
+            f"Network node model '{type(model).__name__}' must provide a Gaussian "
+            f"or ensemble posterior, got '{type(original).__name__}'."
+        )
+    posterior_batch = tuple(original.batch_shape)
     if posterior_batch != (n_paths, *batch_shape):
         raise IncompatibilityError(
             f"The posterior of node model '{type(model).__name__}' has batch shape "
             f"{posterior_batch}, expected {(n_paths, *batch_shape)}."
         )
 
-    sample_shape = torch.Size([1])
-    if isinstance(posterior, EnsemblePosterior):
-        # The native index sampler ignores batch-range overrides. Draw one
-        # member per path on a path-only anchor, then broadcast that choice
-        # over the comparison batches.
-        n_comparison_batches = posterior.values.ndim - 4
-        values = posterior.values[(slice(None),) + (0,) * n_comparison_batches]
-        weights = posterior.weights
-        if weights.ndim > 1:
-            weights = weights[(slice(None),) + (0,) * n_comparison_batches]
-        anchor = EnsemblePosterior(values, weights=weights)
-        sampler = get_sampler(
-            cast(TorchPosterior, anchor), torch.Size([n_paths]), seed=seed
+    if isinstance(original, EnsemblePosterior):
+        # Select one member jointly for all q-points. Only the member index,
+        # not the member prediction, is shared across comparison batches.
+        weights = original._weights
+        weights = original.weights if weights is None else weights
+        mass = weights.sum(dim=-1, keepdim=True)
+        if (
+            not torch.isfinite(weights).all()
+            or (weights < 0).any()
+            or not torch.isfinite(mass).all()
+            or (mass <= 0).any()
+        ):
+            raise IncompatibilityError(
+                "Ensemble weights must be finite, nonnegative, and have positive mass."
+            )
+        probabilities = torch.special.ndtr(base_samples[..., 0]).unsqueeze(-1)
+        upper = torch.nextafter(
+            torch.ones_like(probabilities), torch.zeros_like(probabilities)
         )
-        path_samples = sampler(anchor)
-        samples = path_samples.reshape(
-            1, n_paths, *([1] * len(batch_shape)), *path_samples.shape[1:]
-        ).expand(1, n_paths, *batch_shape, *path_samples.shape[1:])
+        probabilities = torch.minimum(probabilities, upper)
+        cumulative = weights.cumsum(dim=-1)
+        cumulative = cumulative / cumulative[..., -1:]
+        coordinates = (probabilities >= cumulative).sum(dim=-1)
     else:
-        sampler = get_sampler(cast(TorchPosterior, posterior), sample_shape, seed=seed)
-        try:
-            _, batch_end = posterior.batch_range
-        except (AttributeError, NotImplementedError):
-            pass
-        else:
-            # Keep the path axis independent and collapse all comparison
-            # batch axes, including for model-provided custom samplers.
-            setattr(sampler, "batch_range_override", (1, batch_end))
-        samples = sampler(posterior)
+        if original.base_sample_shape != inputs.shape[:-1]:
+            raise IncompatibilityError(
+                f"The Gaussian posterior of node model '{type(model).__name__}' "
+                "must use one normal coordinate per q-point."
+            )
+        coordinates = base_samples
+    samples = posterior.rsample_from_base_samples(torch.Size(), coordinates)
 
-    expected_shape = (1, *posterior_batch, q, model.num_outputs)
+    expected_shape = (*posterior_batch, q, model.num_outputs)
     if tuple(samples.shape) != expected_shape:
         raise IncompatibilityError(
             f"Sampling the fitted model of type '{type(model).__name__}' produced "
             f"shape {tuple(samples.shape)}, expected {expected_shape}."
         )
-    return samples.squeeze(0)
+    return samples
 
 
 def _draw_network_samples(
@@ -148,7 +154,7 @@ def _draw_network_samples(
     sampling_seed: int,
     include_feasibility: bool,
 ) -> tuple[Tensor, Tensor]:
-    """Forward-sample the DAG with native local samplers.
+    """Forward-sample the DAG with one native sampler over complete network paths.
 
     Args:
         model: The fitted network model.
@@ -180,8 +186,43 @@ def _draw_network_samples(
         raise ValueError(
             f"'sampling_seed' must be a nonnegative integer, got {sampling_seed!r}."
         )
-    model._validate_fitted()
+    from ._posterior import _NetworkPosterior
 
+    posterior = _NetworkPosterior(model, X, fixed_outputs or {})
+    return posterior.draw_outcomes(
+        torch.Size([n_paths]),
+        sampling_seed=sampling_seed,
+        include_feasibility=include_feasibility,
+    )
+
+
+def _propagate_network_samples(
+    model: MultiStepModel,
+    X: Tensor,
+    base_samples: Tensor,
+    fixed_outputs: Mapping[str, Tensor] | None,
+    *,
+    include_feasibility: bool,
+) -> tuple[Tensor, Tensor]:
+    """Forward-propagate one complete DAG path per supplied base sample.
+
+    Args:
+        model: The fitted network context.
+        X: Global candidate configurations in computational representation.
+        base_samples: Normal coordinates with shape ``(n_paths, batch..., q, n_nodes)``.
+        fixed_outputs: Observed outputs replacing the respective local draws.
+        include_feasibility: Whether to accumulate conditional success probabilities.
+
+    Returns:
+        Final-output draws and success weights with aligned path/batch/q axes.
+
+    Raises:
+        IncompatibilityError: If fixed outputs, local features, or node posteriors
+            are incompatible with the requested network paths.
+    """
+    import torch
+
+    n_paths = base_samples.shape[0]
     batch_shape = tuple(X.shape[:-2])
     q = X.shape[-2]
     samples: dict[str, Tensor] = _prepare_fixed_outputs(
@@ -190,7 +231,9 @@ def _draw_network_samples(
     success_weights = X.new_ones((n_paths, *batch_shape, q))
     full_index = model._full_comp_rep_index
 
-    for node_name in model.unfixed_nodes(fixed_outputs):
+    for node_index, node_name in enumerate(model._node_names):
+        if node_name in samples:
+            continue
         node = model.dag.node_by_name[node_name]
         features: dict[str, Tensor] = {}
         for column in node._own_comp_rep_columns:
@@ -225,7 +268,7 @@ def _draw_network_samples(
         samples[node_name] = _sample_node_posterior(
             model._node_models[node_name],
             node_x,
-            _derive_seed(sampling_seed, node_name, "network-output"),
+            base_samples[..., node_index],
         )
 
     return (

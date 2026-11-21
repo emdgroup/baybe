@@ -96,9 +96,9 @@ class MultiStepNode:
     cost: float = field(default=1.0, converter=float, validator=[finite_float, gt(0.0)])
     """The cost of executing this node once.
 
-    The campaign compares candidate actions by their acquisition utility per
-    unit cost, so that an expensive node is only executed when its expected
-    improvement justifies the expense.
+    The campaign weights a compatible nonnegative acquisition gain by the local
+    probability of measurement success and divides by this cost. A failed
+    measurement still incurs the cost.
     """
 
     feasibility_conditions: tuple[FeasibilityCondition, ...] = field(

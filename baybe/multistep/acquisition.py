@@ -9,7 +9,7 @@ from collections.abc import Callable, Mapping
 from itertools import groupby
 from operator import attrgetter
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, cast
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn
 
 import pandas as pd
 from attrs import Attribute, define, field
@@ -17,7 +17,7 @@ from attrs.validators import and_, ge, gt, instance_of, le, not_
 from typing_extensions import override
 
 from baybe.acquisition.base import AcquisitionFunction
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, ModelNotTrainedError
 from baybe.objectives.base import Objective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.base import DiscreteParameter
@@ -28,6 +28,7 @@ from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.targets.numerical import NumericalTarget
 
 from ._experiments import _EvaluationRef, _PendingAction, contains_action
+from ._scoring import _make_tensor_score_acquisition as _make_action_score_acquisition
 
 if TYPE_CHECKING:
     from botorch.acquisition.acquisition import (
@@ -136,9 +137,10 @@ def _condition_on_pending(
 class PartialKnowledgeGradientFN(AcquisitionFunction):
     """Partial-knowledge-gradient policy for function networks.
 
-    The policy selects one node and its complete local input. It scores the
-    expected gain of the best terminal decision per cost of that single
-    measurement, instead of maximizing a local node output. Continuous node-owned
+    The policy selects one node and its complete local input. It weights the
+    expected gain of the best terminal decision by the local measurement's
+    success probability and divides once by that measurement's cost, instead of
+    maximizing a local node output. Continuous node-owned
     inputs are optimized against a finite terminal reference set. The
     configuration is only valid for
     :class:`~baybe.multistep.campaign.MultiStepCampaign`; it is not a stock
@@ -217,13 +219,12 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             )
 
     @staticmethod
-    def _compute_pkgfn_score(
+    def _compute_pkgfn_gain(
         fantasy_terminal_means: Tensor,
         baseline: Tensor,
-        cost: float,
         fantasy_weights: Tensor | None = None,
     ) -> Tensor:
-        """Reduce fantasy terminal means to a cost-normalized p-KGFN score.
+        """Reduce fantasy terminal means to an unweighted p-KGFN gain estimate.
 
         Args:
             fantasy_terminal_means: Network-averaged utilities with shape
@@ -231,16 +232,15 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             baseline: The baseline utility of the current data. A scalar applies
                 to every fantasy; a tensor provides one baseline per fantasy and
                 must broadcast to the best-terminal means.
-            cost: The positive cost of the selected node.
             fantasy_weights: Optional outcome probabilities matching the fantasy
                 and candidate batch axes. Without weights, use a uniform average.
 
         Returns:
-            One finite tensor score per candidate batch.
+            One finite, potentially signed gain estimate per candidate batch.
 
         Raises:
-            IncompatibilityError: If the input shape, baseline, cost, or score is
-                invalid or non-finite.
+            IncompatibilityError: If the input shape, baseline, weights, or gain
+                is invalid or non-finite.
         """
         import torch
 
@@ -256,12 +256,9 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         if (
             not torch.isfinite(fantasy_terminal_means).all()
             or not torch.isfinite(baseline).all()
-            or not math.isfinite(cost)
-            or cost <= 0
         ):
             raise IncompatibilityError(
-                "p-KGFN requires finite means, finite fantasy baselines, and a "
-                "positive finite cost."
+                "p-KGFN requires finite means and finite fantasy baselines."
             )
 
         best = fantasy_terminal_means.amax(dim=1)
@@ -300,10 +297,9 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
                 raise IncompatibilityError(
                     "The fantasy weights do not broadcast to the gain shape."
                 ) from ex
-        score = expected / cost
-        if not torch.isfinite(score).all():
-            raise IncompatibilityError("The p-KGFN score is not finite.")
-        return score
+        if not torch.isfinite(expected).all():
+            raise IncompatibilityError("The p-KGFN gain estimate is not finite.")
+        return expected
 
     @staticmethod
     def _compute_terminal_means_from_network_samples(
@@ -526,12 +522,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         Returns:
             An acquisition function delegating scoring to this policy.
         """
-        from attrs import setters
-        from botorch.acquisition.acquisition import (
-            AcquisitionFunction as BoAcquisitionFunction,
-        )
         from botorch.settings import propagate_grads
-        from botorch.utils.transforms import t_batch_mode_transform
         from gpytorch.settings import fast_pred_var
 
         policy = self
@@ -543,67 +534,67 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             baseline,
         )
 
-        @define(eq=False, repr=False, slots=False, init=False, on_setattr=setters.NO_OP)
-        class _TensorScoreAcquisition(BoAcquisitionFunction):
-            """Adapt the policy's tensor score to the BoTorch optimizer."""
+        def raw_score(X: Tensor) -> Tensor:
+            """Compute p-KGFN's raw utility gain before action weighting."""
+            import torch
 
-            @override
-            @cast(
-                "Callable[[Callable[..., Tensor]], Callable[..., Tensor]]",
-                t_batch_mode_transform(expected_q=1),
-            )
-            def forward(self, X: Tensor) -> Tensor:
-                import torch
-
-                candidate_batch = tuple(X.shape[:-2])
-                fantasy_means: list[Tensor] = []
-                fantasy_baselines: list[Tensor] = []
-                for conditioned_model, branch_baseline in pending_branches:
-                    with propagate_grads(True), fast_pred_var(False):
-                        fantasy_model = conditioned_model.make_node_fantasies(
-                            node, X, policy.num_fantasies, policy.sampling_seed
-                        )
-                    fantasy_batch = tuple(
-                        fantasy_model.get_node_model(node.name).batch_shape
+            candidate_batch = tuple(X.shape[:-2])
+            fantasy_means: list[Tensor] = []
+            fantasy_baselines: list[Tensor] = []
+            for conditioned_model, branch_baseline in pending_branches:
+                with propagate_grads(True), fast_pred_var(False):
+                    fantasy_model = conditioned_model.make_node_fantasies(
+                        node, X, policy.num_fantasies, policy.sampling_seed
                     )
-                    expected_batch = (policy.num_fantasies, *candidate_batch)
-                    if fantasy_batch == expected_batch:
-                        output_batch = fantasy_batch
-                    elif fantasy_batch == (*expected_batch, 1):
-                        output_batch = expected_batch
-                    else:
-                        raise IncompatibilityError(
-                            f"Fantasizing node '{node.name}' produced batch shape "
-                            f"{fantasy_batch}, expected {expected_batch} optionally "
-                            "followed by a singleton output axis."
-                        )
-                    points = reference_points.reshape(
-                        len(reference_points),
-                        *([1] * len(fantasy_batch)),
-                        *reference_points.shape[-2:],
-                    ).expand(
-                        len(reference_points),
-                        *fantasy_batch,
-                        *reference_points.shape[-2:],
+                fantasy_batch = tuple(
+                    fantasy_model.get_node_model(node.name).batch_shape
+                )
+                expected_batch = (policy.num_fantasies, *candidate_batch)
+                if fantasy_batch == expected_batch:
+                    output_batch = fantasy_batch
+                elif fantasy_batch == (*expected_batch, 1):
+                    output_batch = expected_batch
+                else:
+                    raise IncompatibilityError(
+                        f"Fantasizing node '{node.name}' produced batch shape "
+                        f"{fantasy_batch}, expected {expected_batch} optionally "
+                        "followed by a singleton output axis."
                     )
-                    with propagate_grads(True), fast_pred_var(False):
-                        means = policy._compute_terminal_means(
-                            fantasy_model, points, incumbent
-                        )
-                    if output_batch != fantasy_batch:
-                        means = means.squeeze(-1)
-                    fantasy_means.append(means.movedim(1, 0))
-                    fantasy_baselines.append(
-                        branch_baseline.expand(policy.num_fantasies, *candidate_batch)
+                points = reference_points.reshape(
+                    len(reference_points),
+                    *([1] * len(fantasy_batch)),
+                    *reference_points.shape[-2:],
+                ).expand(
+                    len(reference_points),
+                    *fantasy_batch,
+                    *reference_points.shape[-2:],
+                )
+                with propagate_grads(True), fast_pred_var(False):
+                    means = policy._compute_terminal_means(
+                        fantasy_model, points, incumbent
                     )
-
-                return policy._compute_pkgfn_score(
-                    torch.cat(fantasy_means, dim=0),
-                    torch.cat(fantasy_baselines, dim=0),
-                    node.cost,
+                if output_batch != fantasy_batch:
+                    means = means.squeeze(-1)
+                fantasy_means.append(means.movedim(1, 0))
+                fantasy_baselines.append(
+                    branch_baseline.expand(policy.num_fantasies, *candidate_batch)
                 )
 
-        return _TensorScoreAcquisition(model=model)
+            return policy._compute_pkgfn_gain(
+                torch.cat(fantasy_means, dim=0),
+                torch.cat(fantasy_baselines, dim=0),
+            )
+
+        return _make_action_score_acquisition(
+            model=model,
+            raw_score=raw_score,
+            success_probability=lambda inputs: model._predict_feasibility_tensor(
+                node.name, inputs
+            ),
+            cost=node.cost,
+            scale="linear",
+            allow_negative_gains=True,
+        )
 
     def _make_terminal_reference_tensor(
         self, dag: MultiStepDAG, reference: Tensor
@@ -828,10 +819,17 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         Raises:
             IncompatibilityError: If a node model is batched, is not a
                 ``SingleTaskGP``, or does not use a plain ``GaussianLikelihood``.
+            ModelNotTrainedError: If a configured feasibility model is missing.
         """
         import torch
         from botorch.models import SingleTaskGP
         from gpytorch.likelihoods import GaussianLikelihood
+
+        if model.missing_feasibility_nodes:
+            raise ModelNotTrainedError(
+                "p-KGFN requires fitted local feasibility models for configured "
+                f"nodes {list(model.missing_feasibility_nodes)}."
+            )
 
         for name in model.dag.topological_order:
             gp = model.get_node_model(name)
