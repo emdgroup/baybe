@@ -124,6 +124,7 @@ def direct_arylation_tl_temperature(
     searchspace = make_searchspace(
         data=data,
         use_task_parameter=True,
+        transfer_learning_mode=TransferLearningMode.RGPE,
     )
     searchspace_naive = make_searchspace(
         data=data,
@@ -152,7 +153,7 @@ def direct_arylation_tl_temperature(
         results.append(
             simulate_scenarios(
                 {
-                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_rgpe": tl_campaign,
                     f"{int(100 * p)}_naive": naive_campaign,
                 },
                 lookup,
@@ -165,7 +166,7 @@ def direct_arylation_tl_temperature(
         )
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": naive_campaign},
+            {"0_naive": naive_campaign},
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

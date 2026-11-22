@@ -137,7 +137,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     searchspace_naive = make_searchspace(
         transfer_learning_mode=TransferLearningMode.NAIVE
     )
-    searchspace_tl = make_searchspace()
+    searchspace_tl = make_searchspace(transfer_learning_mode=TransferLearningMode.RGPE)
 
     objective = make_objective()
     campaign_tl = Campaign(
@@ -163,7 +163,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     for p in n_points:
         results.append(
             simulate_scenarios(
-                {f"{p}": campaign_tl, f"{p}_naive": campaign_naive},
+                {f"{p}_rgpe": campaign_tl, f"{p}_naive": campaign_naive},
                 lambda x: wrap_function(
                     functions["Target_Function"], "Target_Function", x
                 ),
@@ -176,7 +176,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         )
     results.append(
         simulate_scenarios(
-            {"0": campaign_tl, "0_naive": campaign_naive},
+            {"0_naive": campaign_naive},
             lambda x: wrap_function(functions["Target_Function"], "Target_Function", x),
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,
