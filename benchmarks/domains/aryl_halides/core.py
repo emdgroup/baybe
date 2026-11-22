@@ -115,6 +115,7 @@ def aryl_halide_tl_substance_benchmark(
         data=data,
         source_tasks=source_tasks,
         target_tasks=target_tasks,
+        transfer_learning_mode=TransferLearningMode.RGPE,
     )
     searchspace_naive = make_searchspace(
         data=data,
@@ -145,7 +146,7 @@ def aryl_halide_tl_substance_benchmark(
         results.append(
             simulate_scenarios(
                 {
-                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_rgpe": tl_campaign,
                     f"{int(100 * p)}_naive": naive_campaign,
                 },
                 lookup,
@@ -158,7 +159,7 @@ def aryl_halide_tl_substance_benchmark(
         )
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": naive_campaign},
+            {"0_naive": naive_campaign},
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,
