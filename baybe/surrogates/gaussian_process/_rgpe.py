@@ -32,6 +32,10 @@ if TYPE_CHECKING:
 _N_MC_SAMPLES = 256
 """The number of posterior samples used to estimate the rank weights."""
 
+_DILUTION_QUANTILE = 0.95
+"""The quantile of the target model's ranking loss above which a source model's median
+ranking loss leads to its removal from the ensemble (prevents weight dilution)."""
+
 
 def _compute_ranking_loss(samples: Tensor, targets: Tensor, /) -> Tensor:
     """Compute the ranking loss, i.e. the number of misranked pairs, per sample.
@@ -129,6 +133,10 @@ def _compute_rank_weights(
     was trained on these points, is instead evaluated via its leave-one-out models, so
     that its ranking loss measures generalization rather than in-sample fit.
 
+    To prevent weight dilution by many poor source models, a source model gets zero
+    weight if its median ranking loss exceeds the ``_DILUTION_QUANTILE`` quantile of the
+    target model's ranking loss.
+
     Args:
         train_x: The inputs of the ``n`` target points (comp-rep, ``n x d``).
         targets: The ``n`` observed target values.
@@ -159,6 +167,13 @@ def _compute_rank_weights(
         ranking_losses.append(_compute_ranking_loss(samples, targets))
 
     ranking_loss_tensor = torch.stack(ranking_losses)
+
+    # Drop sources whose median loss exceeds the target's loss quantile, by giving
+    # them a loss above the maximum possible ``n * (n - 1)`` so they never win a vote
+    threshold = ranking_loss_tensor[-1].float().quantile(_DILUTION_QUANTILE)
+    is_dropped = ranking_loss_tensor[:-1].float().median(dim=1).values > threshold
+    ranking_loss_tensor[:-1][is_dropped] = n * n
+
     # In each sample, the models with the lowest loss share one vote evenly
     is_best = ranking_loss_tensor == ranking_loss_tensor.min(dim=0, keepdim=True).values
     rank_weights = (is_best / is_best.sum(dim=0, keepdim=True)).mean(dim=1)
