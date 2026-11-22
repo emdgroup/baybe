@@ -433,6 +433,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             return
 
         # Check if transfer learning capabilities are needed
+        # TODO: Surrogates without transfer learning support could handle NAIVE mode
+        #   by dropping the task column in `fit` and `_posterior_comp`
         if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
             raise ValueError(
                 f"The search space contains task parameters but the selected "
