@@ -123,7 +123,7 @@ class TaskParameter(CategoricalParameter):
         from baybe.kernels.basic import (
             IndexKernel,
             PositiveIndexKernel,
-            VanishingKernel,
+            _VanishingKernel,
         )
 
         n_tasks, names = len(self.values), (self.name,)
@@ -133,7 +133,7 @@ class TaskParameter(CategoricalParameter):
             case TransferLearningMode.NAIVE | TransferLearningMode.RGPE:
                 # Neither mode models the task with a kernel: NAIVE pools all tasks
                 # into one GP, RGPE fits one GP per task
-                return VanishingKernel(parameter_names=names)
+                return _VanishingKernel(parameter_names=names)
             case TransferLearningMode.POSITIVE_INDEX_KERNEL:
                 return PositiveIndexKernel(
                     num_tasks=n_tasks, rank=n_tasks, parameter_names=names

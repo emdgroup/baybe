@@ -26,7 +26,7 @@ from baybe.exceptions import (
     _UnsupportedSearchSpaceAttributeError,
 )
 from baybe.kernels.base import Kernel
-from baybe.kernels.basic import VanishingKernel
+from baybe.kernels.basic import _VanishingKernel
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import TaskParameter
@@ -479,11 +479,6 @@ class GaussianProcessSurrogate(Surrogate):
         factory = self.kernel_factory or BayBEKernelFactory()
         if not excluded_names:
             kernel = factory(searchspace, context.objective, context.measurements)
-            if isinstance(kernel, VanishingKernel):
-                raise IncompatibleOverrideError(
-                    f"A '{VanishingKernel.__name__}' requires at least one "
-                    f"non-vanishing kernel override."
-                )
             return (
                 kernel.to_gpytorch(searchspace)
                 if isinstance(kernel, Kernel)
@@ -576,7 +571,7 @@ class GaussianProcessSurrogate(Surrogate):
 
         Resolves ``None`` fields to BayBE defaults and calls the factories with
         the given context. This handles the standard resolution path. If the task
-        parameter has a :class:`~baybe.kernels.basic.VanishingKernel`, the non-kernel
+        parameter's transfer learning mode models no task kernel, the non-kernel
         components are built for the reduced search space without it.
 
         Args:
@@ -599,7 +594,7 @@ class GaussianProcessSurrogate(Surrogate):
         searchspace = context.searchspace
         task_param = searchspace._task_parameter
         if task_param is not None and isinstance(
-            task_param.override_kernel, VanishingKernel
+            task_param.override_kernel, _VanishingKernel
         ):
             searchspace = searchspace._drop_parameters({task_param.name})
 
