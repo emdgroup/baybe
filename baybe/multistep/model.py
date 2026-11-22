@@ -498,10 +498,18 @@ class _MultiStepModelBase(_ModelBase):
         searchspace = _validate_network_fit_context(self.dag, searchspace, objective)
         validate_network_measurements(self.dag, searchspace, objective, measurements)
 
-        node_frames = {
-            node.name: measurements[[*node.model_input_names, node.output]].copy()
-            for node in self.dag.nodes
-        }
+        def local_frame(node: MultiStepNode) -> pd.DataFrame:
+            """Project a consistent complete row onto the configured history."""
+            frame = measurements[[parameter.name for parameter in node.inputs]].copy()
+            for feature in self.dag.context._features(node):
+                frame[feature.name] = measurements[feature.source]
+            return frame
+
+        node_frames = {}
+        for node in self.dag.nodes:
+            frame = local_frame(node)
+            frame[node.output] = measurements[node.output]
+            node_frames[node.name] = frame
         feasibility_frames: dict[str, pd.DataFrame] = {}
         for node in self.dag.nodes:
             if not node.feasibility_conditions:
@@ -513,11 +521,12 @@ class _MultiStepModelBase(_ModelBase):
                     if condition.column != node.output
                 )
             )
-            raw = measurements[
-                [*node.model_input_names, node.output, *auxiliary]
-            ].copy()
+            raw = local_frame(node)
+            raw[node.output] = measurements[node.output]
+            for column in auxiliary:
+                raw[column] = measurements[column]
             labels = _extract_feasibility_values(node, raw)
-            frame = raw[list(node.model_input_names)].copy()
+            frame = raw[list(self.dag.context.input_names(node))].copy()
             frame[FEASIBILITY_LABEL] = labels
             feasibility_frames[node.name] = frame
 
@@ -538,12 +547,10 @@ class _MultiStepModelBase(_ModelBase):
     ) -> SurrogateProtocol | _FeasibilityModelProtocol:
         """Fit a copy of a local model on the node's training frame.
 
-        The node's own parameters and its measured parent outputs jointly form a
-        local synthetic fit search space. The parent outputs are continuous
-        dimensions of that local space only; they never become part of the
-        DAG-wide search space or a recommendation candidate. Fitting always
-        operates on a deep copy, leaving retained contexts and node templates
-        untouched.
+        The node's own parameters and configured history jointly form a local
+        synthetic fit search space. Historical outputs are continuous dimensions
+        of that local space only. Fitting always operates on a deep copy, leaving
+        retained contexts and node templates untouched.
 
         Args:
             node: The node whose local model is fitted.
@@ -556,8 +563,8 @@ class _MultiStepModelBase(_ModelBase):
             The independently fitted model copy.
 
         """
-        measurements = frame[[*node.model_input_names, label]].copy()
-        fit_searchspace = _make_local_searchspace(node, measurements)
+        measurements = frame[[*self.dag.context.input_names(node), label]].copy()
+        fit_searchspace = _make_local_searchspace(self.dag.context, node, measurements)
         model = deepcopy(template)
         model.fit(fit_searchspace, target.to_objective(), measurements)
         return model
@@ -626,7 +633,8 @@ class _MultiStepModelBase(_ModelBase):
                 raise IncompatibilityError(
                     f"Training columns for node '{node_name}' must be unique."
                 )
-            missing_inputs = set(node.model_input_names) - set(frame.columns)
+            input_names = self.dag.context.input_names(node)
+            missing_inputs = set(input_names) - set(frame.columns)
             if missing_inputs:
                 raise IncompatibilityError(
                     f"Training data for node '{node_name}' is missing columns: "
@@ -636,8 +644,9 @@ class _MultiStepModelBase(_ModelBase):
             # the batch's tolerance setting, so a refit must not enforce them again.
             _validate_node_inputs(
                 node,
-                frame[list(node.model_input_names)],
+                frame[list(input_names)],
                 numerical_measurements_must_be_within_tolerance=not fed_from_node_data,
+                context=self.dag.context,
             )
         for node_name, frame in node_frames.items():
             node = self.dag.node_by_name[node_name]
@@ -721,7 +730,7 @@ class _MultiStepModelBase(_ModelBase):
 
         This is the direct data path used by the multi-step layer, which
         decides how failed or partial evaluations enter the training data.
-        Each frame must contain the node's own parameters, parent output
+        Each frame must contain the node's own parameters, configured history
         columns, and the node output column. The
         provided data is treated as authoritative, so subsequent :meth:`fit` calls
         do not discard partial node observations.
@@ -765,7 +774,7 @@ class _MultiStepModelBase(_ModelBase):
 
         Args:
             node_name: The configured DAG node.
-            inputs: Full experimental local inputs, including real parent outputs.
+            inputs: Full experimental local inputs, including configured real history.
 
         Returns:
             One probability per row with the original index and target name.
@@ -780,7 +789,7 @@ class _MultiStepModelBase(_ModelBase):
             raise IncompatibilityError(
                 f"Node '{node_name}' has no feasibility conditions."
             )
-        _validate_node_inputs(node, inputs)
+        _validate_node_inputs(node, inputs, context=self.dag.context)
         if node_name not in self._feasibility_models:
             raise ModelNotTrainedError(
                 f"Node '{node_name}' has no fitted feasibility model."
@@ -1070,13 +1079,14 @@ class _MultiStepModelBase(_ModelBase):
         # Models supplied through ``from_node_models`` have no retained BayBE fit
         # search space. Preserve their historical input-order contract only for
         # that advanced entry point.
-        if node.inputs:
-            discrete = node.searchspace.discrete.comp_rep_columns
-            continuous = node.searchspace.continuous.comp_rep_columns
-        else:
-            discrete = ()
-            continuous = ()
-        return (*discrete, *sorted((*continuous, *node.parent_output_names)))
+        outputs = {
+            feature.name: 0.0
+            for feature in self.dag.context._features(node)
+            if feature.parameter is None
+        }
+        return _make_local_searchspace(
+            self.dag.context, node, pd.DataFrame([outputs])
+        ).comp_rep_columns
 
     def make_node_fantasies(
         self,
@@ -1353,7 +1363,7 @@ class _MultiStepModelBase(_ModelBase):
                 )
             frame = pd.DataFrame(
                 [dict(action.inputs) for action in actions],
-                columns=list(node.model_input_names),
+                columns=list(self.dag.context.input_names(node)),
             )
             inputs = self.transform_node_inputs(node_name, frame).unsqueeze(-2)
             node_inputs[node_name] = inputs
@@ -1388,7 +1398,7 @@ class _MultiStepModelBase(_ModelBase):
         """Transform experimental local inputs into fitted model inputs.
 
         Args:
-            inputs: The node's own parameters and observed parent outputs in
+            inputs: The node's own parameters and configured historical features in
                 experimental representation.
             surrogate: The fitted surrogate owning the local fit search space.
             model: The fitted BoTorch model supplying device and dtype.
@@ -1418,7 +1428,7 @@ class _MultiStepModelBase(_ModelBase):
 
         Args:
             node_name: The DAG node whose inputs are transformed.
-            inputs: The node's own parameters and observed parent outputs in
+            inputs: The node's own parameters and configured historical features in
                 experimental representation.
 
         Returns:
@@ -1961,6 +1971,27 @@ def _propagate_network_samples(
     import torch
 
     full_index = model._full_comp_rep_index
+    layouts: dict[str, tuple[dict[str, str], dict[str, str], tuple[str, ...]]] = {}
+    for node_name in model._node_names:
+        node = model.dag.node_by_name[node_name]
+        parameter_columns = {column: column for column in node._own_comp_rep_columns}
+        output_columns: dict[str, str] = {}
+        for feature in model.dag.context._features(node):
+            if feature.parameter is None:
+                output_columns[feature.name] = feature.path[-1]
+            else:
+                local_parameter = feature.make_parameter()
+                parameter_columns.update(
+                    zip(
+                        local_parameter.comp_rep_columns,
+                        feature.parameter.comp_rep_columns,
+                    )
+                )
+        layouts[node_name] = (
+            parameter_columns,
+            output_columns,
+            model.get_node_model_columns(node_name),
+        )
     paths: list[Tensor] = []
     weights: list[Tensor] = []
     for path_seeds in base_samples:
@@ -1969,18 +2000,17 @@ def _propagate_network_samples(
         for node_index, node_name in enumerate(model._node_names):
             node = model.dag.node_by_name[node_name]
             features: dict[str, Tensor] = {}
-            for column in node._own_comp_rep_columns:
+            parameter_columns, output_columns, columns = layouts[node_name]
+            for column, source in parameter_columns.items():
                 try:
-                    features[column] = X[..., full_index[column]].unsqueeze(-1)
+                    features[column] = X[..., full_index[source]].unsqueeze(-1)
                 except KeyError as ex:
                     raise IncompatibilityError(
-                        f"The computational-representation column '{column}' of node "
+                        f"The computational-representation column '{source}' of node "
                         f"'{node_name}' is missing from the DAG-wide search space."
                     ) from ex
-            for parent in node.parents:
-                features[parent.output] = samples[parent.name].to(X)
-
-            columns = model.get_node_model_columns(node_name)
+            for column, source in output_columns.items():
+                features[column] = samples[source].to(X)
             missing = [column for column in columns if column not in features]
             if missing:
                 raise IncompatibilityError(

@@ -200,7 +200,10 @@ class MultiStepNode:
 
     @property
     def model_input_names(self) -> tuple[str, ...]:
-        """The experimental-representation columns used to fit the node model."""
+        """Local inputs under the default direct-parent-output context.
+
+        For a configured DAG, use ``dag.context.input_names(node)`` instead.
+        """
         return (
             *(parameter.name for parameter in self.inputs),
             *self.parent_output_names,

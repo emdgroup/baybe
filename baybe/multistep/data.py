@@ -2,7 +2,7 @@
 
 A :class:`NodeMeasurement` is one real observation of one node. Its inputs are the
 full input of the node model: the values of the node's own parameters together
-with the observed outputs of its parents. Node training views are derived from
+with the configured historical features. Node training views are derived from
 the stored measurements on demand. Complete DAG rows are never stored as a second
 data source; they are temporary views assembled from concrete observations.
 """
@@ -35,6 +35,7 @@ from baybe.utils.basic import to_tuple
 from baybe.utils.validation import validate_parameter_input
 
 from ._columns import FEASIBILITY_LABEL
+from .context import MultiStepContext
 from .dag import MultiStepDAG
 from .node import MultiStepNode
 
@@ -338,7 +339,7 @@ class NodeMeasurement(SerialMixin):
         converter=lambda value: MappingProxyType(dict(value)),
         validator=instance_of(Mapping),
     )
-    """The node's own parameter values and observed parent outputs."""
+    """The node's own parameter values and configured historical features."""
 
     output: float | None = field(default=None)
     """The real observed output, absent only for explicitly failed observations."""
@@ -870,12 +871,24 @@ class MultiStepData(SerialMixin):
                             f"The parent input of node '{node.name}' does not match "
                             f"a successful observation of '{parent_name}'."
                         )
+                expected = _history_inputs(
+                    dag, self, node.name, measurement.parent_refs
+                )
+                if any(
+                    measurement.inputs.get(name) != value
+                    for name, value in expected.items()
+                ):
+                    raise IncompatibilityError(
+                        f"The history of node '{node.name}' does not match its "
+                        "referenced observations."
+                    )
 
         for node_name, rows in inputs_by_node.items():
             _validate_node_inputs(
                 dag.node_by_name[node_name],
                 pd.DataFrame(rows),
                 numerical_measurements_must_be_within_tolerance,
+                context=dag.context,
             )
 
         for measurement in self.measurements:
@@ -925,7 +938,9 @@ class MultiStepData(SerialMixin):
                         f"Experiment '{experiment_id}' has an invalid pending action "
                         f"for node '{node_name}'."
                     )
-                _validate_node_inputs(node, pd.DataFrame([dict(action.inputs)]))
+                _validate_node_inputs(
+                    node, pd.DataFrame([dict(action.inputs)]), context=dag.context
+                )
                 for parent_name, ref in action.parent_refs.items():
                     if experiment.bindings.get(parent_name) != ref:
                         raise IncompatibilityError(
@@ -941,6 +956,14 @@ class MultiStepData(SerialMixin):
                             f"The pending action for node '{node_name}' in experiment "
                             f"'{experiment_id}' has an invalid parent input."
                         )
+                expected = _history_inputs(dag, self, node_name, action.parent_refs)
+                if any(
+                    action.inputs.get(name) != value for name, value in expected.items()
+                ):
+                    raise IncompatibilityError(
+                        f"The pending action for node '{node_name}' has "
+                        "invalid history."
+                    )
                 if contains_action(
                     seen_pending, node=node_name, inputs=action.inputs, dag=dag
                 ):
@@ -963,14 +986,14 @@ class MultiStepData(SerialMixin):
 
         Returns:
             One row per accepted training observation with columns for the node's
-            own parameters, its parent outputs, and the observed or imputed output.
+            own parameters, configured history, and the observed or imputed output.
 
         Raises:
             IncompatibilityError: If ``DUMMY`` lacks a value or ``PREDICTED_MEAN``
                 cannot be computed from the successful observations.
         """
         node_object = _get_node(dag, node)
-        columns = [*node_object.model_input_names, node_object.output]
+        columns = [*dag.context.input_names(node_object), node_object.output]
         records: list[tuple[dict[str, Any], bool, float | None]] = [
             (
                 dict(measurement.inputs),
@@ -1024,6 +1047,7 @@ class MultiStepData(SerialMixin):
             if failures:
                 rows.extend(
                     _predicted_mean_rows(
+                        dag.context,
                         node_object,
                         successes,
                         [inputs for inputs, _ in failures],
@@ -1045,7 +1069,7 @@ class MultiStepData(SerialMixin):
             A raw-label training frame, empty for unconfigured nodes.
         """
         node_object = _get_node(dag, node)
-        columns = [*node_object.model_input_names, FEASIBILITY_LABEL]
+        columns = [*dag.context.input_names(node_object), FEASIBILITY_LABEL]
         if not node_object.feasibility_conditions:
             return pd.DataFrame(columns=columns)
         rows = [
@@ -1295,7 +1319,7 @@ def make_executable_plans(
     if mode == "process":
         for experiment in experiments.values():
             for node, parent_refs in executable_nodes(experiment, dag, data):
-                inputs = _parent_outputs(dag, data, parent_refs)
+                inputs = _history_inputs(dag, data, node, parent_refs)
                 add(
                     node,
                     inputs,
@@ -1334,10 +1358,7 @@ def make_executable_plans(
                 parent.name: ref
                 for parent, (_, ref) in zip(node_object.parents, combination)
             }
-            inputs = {
-                parent.output: value
-                for parent, (value, _) in zip(node_object.parents, combination)
-            }
+            inputs = _history_inputs(dag, data, node_name, parent_refs)
             add(
                 node_name,
                 inputs,
@@ -1354,16 +1375,38 @@ def make_executable_plans(
     )
 
 
-def _parent_outputs(
+def _history_inputs(
     dag: MultiStepDAG,
     data: MultiStepData,
+    node_name: str,
     parent_refs: Mapping[str, _EvaluationRef],
 ) -> dict[str, Any]:
-    """Resolve the real parent outputs supplying a local action input."""
-    return {
-        dag.node_by_name[parent].output: data.get_evaluation(dag, ref).output
-        for parent, ref in parent_refs.items()
-    }
+    """Resolve each configured history feature through its real lineage."""
+    result: dict[str, Any] = {}
+    for feature in dag.context._features(dag.node_by_name[node_name]):
+        if not feature.path:
+            raise IncompatibilityError(
+                "A history feature must have a predecessor path."
+            )
+        references = parent_refs
+        measurement: NodeMeasurement | None = None
+        for ancestor in feature.path:
+            try:
+                ref = references[ancestor]
+            except KeyError as ex:
+                raise IncompatibilityError(
+                    f"Cannot resolve history for node '{node_name}': the real "
+                    f"reference to predecessor '{ancestor}' is missing."
+                ) from ex
+            measurement = data.get_evaluation(dag, ref)
+            references = measurement.parent_refs
+        assert measurement is not None
+        result[feature.name] = (
+            measurement.output
+            if feature.parameter is None
+            else measurement.inputs[feature.source]
+        )
+    return result
 
 
 def remaining_cost(
@@ -1490,15 +1533,18 @@ def register_action(
                 f"{expected!r}."
             )
 
-    if set(inputs) != set(node_object.model_input_names):
+    expected_history = _history_inputs(dag, data, node, parent_refs)
+    if any(inputs.get(name) != value for name, value in expected_history.items()):
+        raise IncompatibilityError(f"The action for node '{node}' has invalid history.")
+    if set(inputs) != set(dag.context.input_names(node_object)):
         raise IncompatibilityError(
             f"The action for node '{node}' must provide exactly the local input "
-            f"columns {list(node_object.model_input_names)}, but provides "
+            f"columns {list(dag.context.input_names(node_object))}, but provides "
             f"{sorted(inputs)}."
         )
     import pandas as pd
 
-    _validate_node_inputs(node_object, pd.DataFrame([inputs]))
+    _validate_node_inputs(node_object, pd.DataFrame([inputs]), context=dag.context)
 
     if contains_action(pending_actions(experiments), node=node, inputs=inputs, dag=dag):
         raise IncompatibilityError(
@@ -1555,7 +1601,7 @@ def _inputs_match(
 ) -> bool:
     """Compare two complete local inputs using the repeat contract.
 
-    Numeric own parameters use their configured tolerance. Parent outputs and
+    Numeric own parameters use their configured tolerance. History features and
     non-numerical inputs must match exactly.
 
     Args:
@@ -1611,7 +1657,7 @@ def _parent_inputs_match(
     stored: Mapping[str, Any],
     candidate: Mapping[str, Any],
 ) -> bool:
-    """Compare incoming parent outputs exactly.
+    """Compare incoming historical features exactly.
 
     Args:
         node: The node owning the inputs.
@@ -1619,9 +1665,10 @@ def _parent_inputs_match(
         candidate: The candidate local input.
 
     Returns:
-        Whether all parent outputs match exactly.
+        Whether all history features match exactly.
     """
-    for name in node.parent_output_names:
+    own = {parameter.name for parameter in node.inputs}
+    for name in set(stored) - own:
         try:
             if not bool(stored[name] == candidate[name]):
                 return False
@@ -1630,21 +1677,26 @@ def _parent_inputs_match(
     return True
 
 
-def _make_local_searchspace(node: MultiStepNode, frame: pd.DataFrame) -> SearchSpace:
-    """Build the synthetic local fit search space of a node.
+def _make_local_searchspace(
+    context: MultiStepContext, node: MultiStepNode, frame: pd.DataFrame
+) -> SearchSpace:
+    """Create the synthetic local fit search space of a node.
 
     Args:
+        context: The configured history policy.
         node: The node whose model is fitted.
-        frame: Local training data containing the parent outputs.
+        frame: Local training data containing the configured history.
 
     Returns:
-        The local search space covering own parameters and observed parent outputs.
+        The local search space covering own parameters and historical features.
     """
     from baybe.parameters.numerical import NumericalContinuousParameter
     from baybe.searchspace.core import SearchSpace
 
     parent_parameters: list[NumericalContinuousParameter] = []
-    for name in node.parent_output_names:
+    for name in (
+        feature.name for feature in context._features(node) if feature.parameter is None
+    ):
         values = frame[name].to_numpy(dtype=float)
         lower = float(np.min(values))
         upper = float(np.max(values))
@@ -1655,10 +1707,11 @@ def _make_local_searchspace(node: MultiStepNode, frame: pd.DataFrame) -> SearchS
         parent_parameters.append(
             NumericalContinuousParameter(name, bounds=(lower, upper))
         )
-    return SearchSpace.from_product([*node.inputs, *parent_parameters])
+    return SearchSpace.from_product([*context._parameters(node), *parent_parameters])
 
 
 def _predicted_mean_rows(
+    context: MultiStepContext,
     node: MultiStepNode,
     successes: list[tuple[dict[str, Any], float]],
     failure_inputs: list[dict[str, Any]],
@@ -1666,6 +1719,7 @@ def _predicted_mean_rows(
     """Impute failure outputs with means predicted from successful observations.
 
     Args:
+        context: The configured history policy.
         node: The node whose training view is assembled.
         successes: Successful local inputs and real outputs.
         failure_inputs: Local inputs of failed observations.
@@ -1689,15 +1743,15 @@ def _predicted_mean_rows(
 
     success_frame = pd.DataFrame(
         [{**inputs, node.output: output} for inputs, output in successes],
-        columns=[*node.model_input_names, node.output],
+        columns=[*context.input_names(node), node.output],
     )
     try:
-        searchspace = _make_local_searchspace(node, success_frame)
+        searchspace = _make_local_searchspace(context, node, success_frame)
         surrogate = deepcopy(node.surrogate_model)
         target = NumericalTarget(node.output)
         surrogate.fit(searchspace, target.to_objective(), success_frame)
         failure_frame = pd.DataFrame(
-            failure_inputs, columns=list(node.model_input_names)
+            failure_inputs, columns=list(context.input_names(node))
         )
         with torch.no_grad():
             predictions = (
@@ -1735,6 +1789,8 @@ def _validate_node_inputs(
     node: MultiStepNode,
     frame: pd.DataFrame,
     numerical_measurements_must_be_within_tolerance: bool = True,
+    *,
+    context: MultiStepContext | None = None,
 ) -> None:
     """Validate a local input frame using the existing observation contract.
 
@@ -1743,6 +1799,7 @@ def _validate_node_inputs(
         frame: The local input frame.
         numerical_measurements_must_be_within_tolerance: If ``True``, numerical
             parameter values must lie within the parameter range or tolerance.
+        context: The history policy, defaulting to direct parent outputs.
 
     Raises:
         IncompatibilityError: If the columns or values violate the observation
@@ -1752,18 +1809,21 @@ def _validate_node_inputs(
         raise IncompatibilityError(
             f"Input columns for node '{node.name}' must be unique."
         )
-    _validate_input_columns(node, frame.columns)
+    context = MultiStepContext() if context is None else context
+    _validate_input_columns(context, node, frame.columns)
     if frame.empty:
         return
 
     _validate_parameter_frame(
-        node.inputs,
+        context._parameters(node),
         frame,
         f"node '{node.name}'",
         numerical_measurements_must_be_within_tolerance,
     )
 
-    for name in node.parent_output_names:
+    for name in (
+        feature.name for feature in context._features(node) if feature.parameter is None
+    ):
         for value in frame[name]:
             _validate_finite_input(name, value, node.name)
 
@@ -1812,9 +1872,11 @@ def _get_node(dag: MultiStepDAG, node: str) -> MultiStepNode:
     return node_object
 
 
-def _validate_input_columns(node: MultiStepNode, columns: Iterable[str]) -> None:
+def _validate_input_columns(
+    context: MultiStepContext, node: MultiStepNode, columns: Iterable[str]
+) -> None:
     """Validate that the input columns match the node's model input."""
-    expected = set(node.model_input_names)
+    expected = set(context.input_names(node))
     actual = set(columns)
     missing = sorted(expected - actual)
     unexpected = sorted(actual - expected)
@@ -1822,7 +1884,7 @@ def _validate_input_columns(node: MultiStepNode, columns: Iterable[str]) -> None
         raise IncompatibilityError(
             f"The inputs of node '{node.name}' do not match its model input. "
             f"Missing columns: {missing}, unexpected columns: {unexpected}. "
-            f"Expected columns: {list(node.model_input_names)}."
+            f"Expected columns: {list(context.input_names(node))}."
         )
 
 

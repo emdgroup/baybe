@@ -1484,12 +1484,26 @@ def _stock_action_probability(
         name: index
         for index, name in enumerate(model.dag.full_searchspace.comp_rep_columns)
     }
+    history_comp: dict[str, float] = {}
+    for feature in model.dag.context._features(node):
+        value = plan.inputs[feature.name]
+        if feature.parameter is None:
+            history_comp[feature.name] = float(value)
+        else:
+            parameter = feature.make_parameter()
+            if isinstance(parameter, DiscreteParameter):
+                encoded = parameter.transform(pd.Series([value], name=parameter.name))
+                history_comp.update(
+                    {str(k): float(v) for k, v in encoded.iloc[0].items()}
+                )
+            else:
+                history_comp[parameter.name] = float(value)
     local_columns: list[Tensor] = []
     for column in columns:
-        if column in plan.inputs:
+        if column in history_comp:
             local_columns.append(
                 global_inputs.new_full(
-                    (*global_inputs.shape[:-1], 1), plan.inputs[column]
+                    (*global_inputs.shape[:-1], 1), history_comp[column]
                 )
             )
         else:

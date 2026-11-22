@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any
 
 from .acquisition import PartialKnowledgeGradientFN
 from .campaign import MultiStepCampaign
+from .context import ContextMode, MultiStepContext
 from .dag import MultiStepDAG
 from .data import MultiStepData, NodeMeasurement
 from .node import FeasibilityCondition, MultiStepNode
@@ -38,6 +39,8 @@ def __getattr__(name: str) -> Any:
 
 __all__ = [
     "MultiStepCampaign",
+    "MultiStepContext",
+    "ContextMode",
     "MultiStepDAG",
     "MultiStepData",
     "MultiStepModel",

@@ -22,6 +22,7 @@ from baybe.targets.base import Target
 from baybe.utils.basic import refers_to, to_tuple
 
 from ._columns import RESERVED_COLUMNS
+from .context import MultiStepContext
 from .node import MultiStepNode
 
 if TYPE_CHECKING:
@@ -47,6 +48,55 @@ class MultiStepDAG(SerialMixin):
 
     objective: Objective = field(validator=instance_of(Objective))
     """The optimization objective, whose targets cover all graph outputs."""
+
+    context: MultiStepContext = field(factory=MultiStepContext, kw_only=True)
+    """The historical features supplied to every node model."""
+
+    @context.validator
+    def _validate_context(self, _attribute, value):  # noqa: DOC101, DOC103
+        """Validate the DAG-wide feature policy and generated names."""
+        if not isinstance(value, MultiStepContext):
+            raise TypeError("The DAG context must be a MultiStepContext.")
+        reserved = set(RESERVED_COLUMNS) | {node.output for node in self.nodes}
+        reserved.update(
+            condition.column
+            for node in self.nodes
+            for condition in node.feasibility_conditions
+        )
+        for node in self.nodes:
+            names = value.input_names(node)
+            generated = {
+                feature.name
+                for feature in value._features(node)
+                if feature.name != feature.source
+            }
+            collisions = generated & (reserved | set(self.parameter_by_name))
+            if collisions:
+                raise IncompatibilityError(
+                    f"Generated history columns for node '{node.name}' collide with "
+                    f"existing DAG columns: {sorted(collisions)}."
+                )
+            if node.output in names:
+                raise IncompatibilityError(
+                    f"Node '{node.name}' cannot use its own output as input."
+                )
+            columns = [
+                column
+                for parameter in value._parameters(node)
+                for column in parameter.comp_rep_columns
+            ] + [
+                feature.name
+                for feature in value._features(node)
+                if feature.parameter is None
+            ]
+            duplicates = sorted(
+                name for name, count in Counter(columns).items() if count > 1
+            )
+            if duplicates:
+                raise IncompatibilityError(
+                    f"Computational input columns for node '{node.name}' collide: "
+                    f"{duplicates}."
+                )
 
     @nodes.validator
     def _validate_nodes(self, _attribute, _value):  # noqa: DOC101, DOC103
@@ -560,6 +610,10 @@ def _structure_multistep_dag(
         raise IncompatibilityError("A serialized DAG must provide an objective.")
 
     nodes = tuple(canonical[name] for name in prototypes)
+    if "context" in raw_specs:
+        raw_specs["context"] = converter.structure(
+            raw_specs["context"], MultiStepContext
+        )
     return cls(
         nodes=nodes,
         objective=converter.structure(objective, Objective),

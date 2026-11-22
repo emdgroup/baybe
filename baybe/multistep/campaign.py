@@ -301,17 +301,17 @@ class MultiStepCampaign(SerialMixin):
         outstanding actions.
 
         Measurements are matched by ``(experiment_id, node)``. Own parameter values
-        must agree with the recommendation that reserved the action. Parent outputs
-        are resolved from the concrete stored evaluations bound to that experiment;
-        repeated parent-output columns in the dataframe are optional but must agree.
+        must agree with the recommendation that reserved the action. Historical
+        features are resolved from the concrete referenced observations; repeated
+        history columns in the dataframe are optional but must agree.
         Successful measurements and explicit failures are stored once per identity.
         A repeated local execution in another experiment is stored only when
         repeats are enabled.
 
         Args:
             data: One row per node measurement, holding ``experiment_id``, ``node``,
-                the node's own parameters, optionally the outputs of its parents, the
-                node-output column, and any auxiliary columns referenced by
+                the node's own parameters, optional history columns, the node-output
+                column, and any auxiliary columns referenced by
                 feasibility conditions. Missing result values are allowed only when
                 another observed condition establishes failure.
             numerical_measurements_must_be_within_tolerance: Flag indicating if
@@ -531,7 +531,7 @@ class MultiStepCampaign(SerialMixin):
         allowed = {
             NODE,
             EXPERIMENT_ID,
-            *node.model_input_names,
+            *self.dag.context.input_names(node),
             node.output,
             *auxiliary_columns,
         }
@@ -567,14 +567,14 @@ class MultiStepCampaign(SerialMixin):
                 )
             inputs[parameter.name] = measured
 
-        for parent in node.parents:
-            if parent.output not in values or _is_missing(values[parent.output]):
+        for name in self.dag.context.input_names(node):
+            if name in own_names or name not in values or _is_missing(values[name]):
                 continue
-            if values[parent.output] != expected_inputs[parent.output]:
+            if values[name] != expected_inputs[name]:
                 raise IncompatibilityError(
-                    f"The parent output '{parent.output}' in the measurements for node "
-                    f"'{node.name}' does not match the value of parent "
-                    f"'{parent.name}' bound to the recommended action in experiment "
+                    f"The history feature '{name}' in the measurements for node "
+                    f"'{node.name}' does not match the value bound to the "
+                    f"recommended action in experiment "
                     f"'{experiment_id}'."
                 )
 
@@ -582,6 +582,7 @@ class MultiStepCampaign(SerialMixin):
             node,
             pd.DataFrame([inputs]),
             numerical_measurements_must_be_within_tolerance,
+            context=self.dag.context,
         )
 
         output = values.get(node.output)
@@ -635,8 +636,8 @@ class MultiStepCampaign(SerialMixin):
 
         Returns:
             A dataframe holding ``experiment_id``, ``node``, and the complete
-            local input of each recommended node (its own parameters and parent
-            outputs).
+            local input of each recommended node (its own parameters and the
+            configured historical features).
 
         Raises:
             ValueError: If ``batch_size`` is smaller than 1.
@@ -769,7 +770,9 @@ class MultiStepCampaign(SerialMixin):
                     **dict(action.inputs),
                 }
             )
-            for name in self.dag.node_by_name[action.node].model_input_names:
+            for name in self.dag.context.input_names(
+                self.dag.node_by_name[action.node]
+            ):
                 if name not in columns:
                     columns.append(name)
 
