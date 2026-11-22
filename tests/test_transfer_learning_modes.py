@@ -363,16 +363,20 @@ def test_model_contract(members):
 
 
 @pytest.mark.parametrize(
-    "n_rows",
+    ("n_rows", "constant_target"),
     [
-        param({"A": 3, "B": 3}, id="cold_start"),
-        param({"A": 3, "T": 1}, id="one_target"),
-        param({"A": 3, "B": 3, "T": 3}, id="ranked"),
+        param({"A": 3, "B": 3}, False, id="cold_start"),
+        param({"A": 3, "T": 1}, False, id="one_target"),
+        param({"A": 3, "T": 3}, True, id="constant_target"),
+        param({"A": 3, "T": 2}, False, id="two_targets"),
+        param({"A": 3, "B": 3, "T": 3}, False, id="ranked"),
     ],
 )
-def test_from_searchspace(n_rows):
-    """One member is made per task with data, the target last, and weighted."""
+def test_from_searchspace(n_rows, constant_target):
+    """One member is made per source and for a non-constant target, then weighted."""
     measurements = _make_measurements(**n_rows)
+    if constant_target:
+        measurements.loc[measurements["task"] == "T", "y"] = 1.0
     searchspace = _make_searchspace()
     context = _ModelContext(searchspace, _OBJECTIVE, measurements)
     train_x = to_tensor(searchspace.transform(measurements, allow_extra=True))
@@ -386,18 +390,20 @@ def test_from_searchspace(n_rows):
 
     model = RGPEModel.from_searchspace(searchspace, train_x, train_y, make_gp)
 
-    # Sources in task order, then the target
-    tasks = [t for t in (*_TASKS[1:], "T") if t in n_rows]
+    # Sources in task order, then the target if it has a scale
+    n_target = n_rows.get("T", 0)
+    has_target = n_target >= 2 and not constant_target
+    tasks = [t for t in (*_TASKS[1:], "T") if t in n_rows and (t != "T" or has_target)]
     for y, task in zip(received, tasks, strict=True):
         expected = to_tensor(measurements.loc[measurements["task"] == task, ["y"]])
         assert torch.equal(y, expected)
 
     assert model.weights.dtype == train_x.dtype
     assert torch.isclose(model.weights.sum(), torch.tensor(1.0, dtype=torch.float64))
-    if n_rows.get("T", 0) < 2:
+    if n_target < 3 or constant_target:
         assert len(model._members) == len(tasks)
         assert torch.allclose(model.weights, model.weights[0])
-    if "T" in n_rows:
+    if has_target:
         assert model.target_index == len(model._members) - 1
         assert model.outcome_transform is model._members[-1].outcome_transform
     else:
