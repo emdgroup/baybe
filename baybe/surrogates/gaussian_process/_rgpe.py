@@ -257,34 +257,37 @@ class RGPEModel(Model):
 
         Returns:
             The fitted ensemble, weighted by how well each member ranks the target
-            data. Falls back to uniform weights with fewer than two target points.
+            data. Without two distinct target values, only the source members are
+            combined, with uniform weights. With fewer than three target points, all
+            members are weighted uniformly.
         """
         target_mask, source_masks = _split_by_task(searchspace, train_x)
 
         # Sources are fitted before the target, as the weights depend on the RNG state
         source_models = tuple(fit_gp(train_x[m], train_y[m]) for m in source_masks)
-        n_target = int(target_mask.sum())
-        if n_target == 0:
+        target_y = train_y[target_mask]
+        if target_y.unique().numel() < 2:
+            # Without two distinct target values, the target has no scale to define
+            # the ensemble's output units, so the sources are combined on their own
             weights = train_x.new_full((len(source_models),), 1 / len(source_models))
             return cls.from_ranked_models(source_models, weights)
 
-        target_model = fit_gp(train_x[target_mask], train_y[target_mask])
+        target_model = fit_gp(train_x[target_mask], target_y)
         models = (*source_models, target_model)
-        if n_target < 2:
-            # Ranking needs at least two target points
+        if len(target_y) < 3:
+            # Ranking starts at three target points, as the target's leave-one-out
+            # models need at least two points each
             weights = train_x.new_full((len(models),), 1 / len(models))
         else:
             weights = _compute_rank_weights(
                 train_x[target_mask],
-                train_y[target_mask].squeeze(-1),
+                target_y.squeeze(-1),
                 source_models,
                 target_model,
                 n_samples=_N_MC_SAMPLES,
             )
 
-        # The target's standardization defines the ensemble's output units. For a
-        # single or constant target point, BoTorch falls back to unit scale around
-        # the mean.
+        # The target's standardization defines the ensemble's output units
         return cls.from_ranked_models(models, weights, target_index=len(models) - 1)
 
     @classmethod
