@@ -222,12 +222,11 @@ class RQKernel(BasicKernel):
 
 
 @define(frozen=True)
-class VanishingKernel(BasicKernel):
-    """A kernel that vanishes in kernel sums and products.
+class _VanishingKernel(BasicKernel):
+    """A marker kernel for parameters that contribute no factor to the GP kernel.
 
-    Kernel arithmetic drops it immediately. Explicitly constructed additive or product
-    kernels keep it as a member but drop it when converted to GPyTorch. It has no
-    GPyTorch representation of its own.
+    Used internally by transfer learning modes that do not model the task with a
+    kernel. Kernel resolution skips it, and it has no GPyTorch representation.
     """
 
     @override

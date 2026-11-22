@@ -18,7 +18,7 @@ from gpytorch.priors import GammaPrior as GPyTorchGammaPrior
 from pytest import param
 
 from baybe.exceptions import IncompatibleOverrideError
-from baybe.kernels import MaternKernel, RBFKernel, VanishingKernel
+from baybe.kernels import MaternKernel, RBFKernel
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import IndexKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
@@ -262,7 +262,6 @@ _TASK_KERNEL = IndexKernel(num_tasks=3, rank=3, parameter_names=("task",))
 _EXCLUDE_ERROR = "can exclude these parameters"
 _ARD_ERROR = "specifies 2 ARD dimensions, but the parameter has 3"
 _EMPTY_ERROR = "no parameter contributing a kernel"
-_VANISHING_ERROR = "requires at least one non-vanishing kernel override"
 
 
 @pytest.mark.parametrize(
@@ -404,18 +403,11 @@ _VANISHING_ERROR = "requires at least one non-vanishing kernel override"
             {("x1",): [gk.MaternKernel]},
             id="task-naive",
         ),
-        # Vanishing kernels contribute no factor
         param(
-            [_x("x1"), _x("x2", VanishingKernel())],
+            [_x("x1"), _x("x2", RBFKernel()), _task(_NAIVE)],
             None,
-            {("x1",): [gk.MaternKernel]},
-            id="vanishing-override",
-        ),
-        param(
-            _X2_RBF,
-            VanishingKernel(),
-            {("x2",): [gk.RBFKernel]},
-            id="vanishing-surrogate-kernel",
+            {("x1",): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
+            id="task-naive+parameter-override",
         ),
         param(
             [_x("x1"), _task(_INDEX)],
@@ -515,12 +507,6 @@ _VANISHING_ERROR = "requires at least one non-vanishing kernel override"
             _TASK_KERNEL,
             (IncompatibleOverrideError, _EMPTY_ERROR),
             id="task-naive+task-only-kernel",
-        ),
-        param(
-            [_x("x1"), _x("x2")],
-            VanishingKernel(),
-            (IncompatibleOverrideError, _VANISHING_ERROR),
-            id="vanishing-surrogate-kernel-without-overrides",
         ),
     ],
 )
