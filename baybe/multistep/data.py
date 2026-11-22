@@ -1,30 +1,25 @@
 """Measurement store for multi-step campaigns.
 
-A :class:`NodeMeasurement` is one observation of one node. Its inputs are the
+A :class:`NodeMeasurement` is one real observation of one node. Its inputs are the
 full input of the node model: the values of the node's own parameters together
-with the observed outputs of its parents. An optional ``experiment_id`` groups
-measurements that belong to the same DAG evaluation; once every node of an
-experiment has been measured, the campaign assembles a complete DAG row from it.
-Node training data is derived from the stored measurements; nothing is stored
-twice.
-
-Complete DAG rows are stored separately because the stock acquisition-function
-machinery needs joint parameter configurations for its reference computations.
-The campaign assembles such a row from the node measurements once an experiment
-is complete; rows of fully successful experiments can also be imported directly.
+with the observed outputs of its parents. Node training views are derived from
+the stored measurements on demand. Complete DAG rows are never stored as a second
+data source; they are temporary views assembled from concrete observations.
 """
 
 from __future__ import annotations
 
 import gc
 from collections.abc import Iterable, Mapping
+from copy import deepcopy
+from itertools import product
 from types import MappingProxyType
-from typing import Any, Literal, cast, overload
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field
-from attrs.validators import and_, deep_iterable, instance_of, min_len, optional
+from attrs.validators import and_, deep_iterable, ge, instance_of, min_len, optional
 
 from baybe.exceptions import (
     IncompatibilityError,
@@ -32,20 +27,30 @@ from baybe.exceptions import (
     InvalidTargetValueError,
 )
 from baybe.parameters.base import Parameter
-from baybe.serialization import SerialMixin
+from baybe.recommenders.pure.experimental_feasibility import (
+    InfeasibleMeasurementMode,
+)
+from baybe.serialization import SerialMixin, converter
 from baybe.utils.basic import to_tuple
 from baybe.utils.validation import validate_parameter_input
 
-from ._columns import (
-    COMPLETE_SOURCE,
-    COMPLETE_SOURCE_DERIVED,
-    COMPLETE_SOURCE_IMPORTED,
-    EXPERIMENT_ID,
-    FEASIBILITY_LABEL,
-)
-from ._experiments import _EvaluationRef
+from ._columns import FEASIBILITY_LABEL
 from .dag import MultiStepDAG
 from .node import MultiStepNode
+
+if TYPE_CHECKING:
+    from baybe.searchspace.core import SearchSpace
+
+ExecutionMode = Literal["process", "functional"]
+"""How executable actions are derived from recorded experiments."""
+
+
+class DuplicateMeasurementWarning(UserWarning):
+    """An identical observation was reported again for the same identity."""
+
+
+class RepeatedMeasurementWarning(UserWarning):
+    """A repeated execution was discarded because repeats are disabled."""
 
 
 def _condition_success(node: MultiStepNode, values: Mapping[str, Any]) -> bool:
@@ -129,43 +134,197 @@ def _extract_feasibility_values(
     return pd.Series(labels, index=measurements.index, name=FEASIBILITY_LABEL)
 
 
-def _normalize_complete_frame(
-    value: pd.DataFrame,
-    *,
-    default_source: str = COMPLETE_SOURCE_IMPORTED,
-) -> pd.DataFrame:
-    """Copy complete rows and establish their observation provenance.
+def _freeze_mapping(value: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Return a read-only copy of a mapping."""
+    return MappingProxyType(dict(value))
 
-    Args:
-        value: Complete DAG rows, optionally carrying a provenance marker.
-        default_source: Provenance assigned to rows without a marker.
 
-    Returns:
-        A defensive copy with a valid provenance column.
+@define(frozen=True)
+class _EvaluationRef:
+    """Stable internal reference to one actual evaluation of one node."""
 
-    Raises:
-        IncompatibilityError: If the provenance column contains unknown values.
-    """
-    frame = value.copy().reset_index(drop=True)
-    if COMPLETE_SOURCE not in frame.columns:
-        frame[COMPLETE_SOURCE] = default_source
-        return frame
+    index: int = field(validator=ge(0))
+    """The position inside the append-only table."""
 
-    source = frame[COMPLETE_SOURCE]
-    invalid = sorted(
-        {
-            value
-            for value in source.dropna().unique()
-            if value not in (COMPLETE_SOURCE_IMPORTED, COMPLETE_SOURCE_DERIVED)
-        }
-    )
-    if invalid:
-        raise IncompatibilityError(
-            f"Unknown complete-measurement provenance values: {invalid}. "
-            f"Expected '{COMPLETE_SOURCE_IMPORTED}' or '{COMPLETE_SOURCE_DERIVED}'."
+    node: str = field()
+    """The node whose evaluation is referenced."""
+
+
+def _structure_evaluation_ref(
+    specs: dict[str, Any], _: type[_EvaluationRef]
+) -> _EvaluationRef:
+    """Reject obsolete reference formats rather than silently migrating them."""
+    if set(specs) != {"index", "node"}:
+        raise ValueError(
+            "An evaluation reference must contain only 'index' and 'node'."
         )
-    frame[COMPLETE_SOURCE] = source.fillna(default_source)
-    return frame
+    return _EvaluationRef(
+        index=converter.structure(specs["index"], int),
+        node=converter.structure(specs["node"], str),
+    )
+
+
+converter.register_structure_hook(_EvaluationRef, _structure_evaluation_ref)
+
+
+@define(frozen=True)
+class _PendingAction:
+    """A recommended but not yet reported local node execution."""
+
+    node: str = field()
+    """The recommended node."""
+
+    inputs: Mapping[str, Any] = field(converter=_freeze_mapping)
+    """The complete local input, including real parent outputs."""
+
+    experiment_id: str = field()
+    """The experiment the action was evaluated for, retained until registration."""
+
+    parent_refs: Mapping[str, _EvaluationRef] = field(
+        factory=dict, converter=_freeze_mapping
+    )
+    """The concrete parent evaluations supplying the local input."""
+
+
+@define(frozen=True)
+class _ActionContext:
+    """Concrete process and lineage context for graph-aware gain evaluation."""
+
+    experiment_id: str = field()
+    """The experiment being continued or created."""
+
+    parent_refs: Mapping[str, _EvaluationRef] = field(
+        factory=dict, converter=_freeze_mapping
+    )
+    """The real parent evaluations supplying this action."""
+
+
+@define(frozen=True)
+class _ExecutablePlan:
+    """One executable next node with its concrete experiment context."""
+
+    experiment_id: str = field()
+    """The experiment to continue or the prepared identifier of a fresh one."""
+
+    node: str = field()
+    """The node that the plan makes executable."""
+
+    parent_refs: Mapping[str, _EvaluationRef] = field(
+        factory=dict, converter=_freeze_mapping
+    )
+    """The concrete real parent evaluations supplying the local inputs."""
+
+    inputs: Mapping[str, Any] = field(factory=dict, converter=_freeze_mapping)
+    """The fixed parent outputs of the local input, keyed by column name."""
+
+    remaining_cost: float = field(default=1.0)
+    """The total cost still required to complete the objective from this plan."""
+
+    is_new: bool = field(default=False)
+    """Whether the plan prepares a new experiment instead of continuing one."""
+
+
+@define(frozen=True)
+class _Experiment:
+    """Immutable snapshot of one evaluation context."""
+
+    experiment_id: str = field()
+    """The automatically generated context identifier."""
+
+    bindings: Mapping[str, _EvaluationRef] = field(
+        factory=dict, converter=_freeze_mapping
+    )
+    """Actual evaluations bound to the context, keyed by node."""
+
+    pending: Mapping[str, _PendingAction] = field(
+        factory=dict, converter=_freeze_mapping
+    )
+    """Recommended local executions awaiting their result, keyed by node."""
+
+    closed: bool = field(default=False)
+    """Whether the experiment was closed without a stored failed observation."""
+
+    def _adopt_parent_bindings(
+        self, parent_refs: Mapping[str, _EvaluationRef]
+    ) -> dict[str, _EvaluationRef]:
+        """Return bindings extended with the action's consistent parent refs."""
+        bindings = dict(self.bindings)
+        for parent, ref in parent_refs.items():
+            existing = bindings.get(parent)
+            if existing is not None and existing != ref:
+                raise IncompatibilityError(
+                    f"Parent node '{parent}' is already bound to a different "
+                    f"evaluation in experiment '{self.experiment_id}'."
+                )
+            bindings[parent] = ref
+        return bindings
+
+    def with_binding(  # noqa: DOC502
+        self,
+        node: str,
+        ref: _EvaluationRef,
+        parent_refs: Mapping[str, _EvaluationRef],
+    ) -> _Experiment:
+        """Return a snapshot with one additional evaluation binding.
+
+        Args:
+            node: The node whose evaluation becomes available.
+            ref: The actual evaluation.
+            parent_refs: The concrete parent evaluations used by the action.
+
+        Returns:
+            The updated snapshot.
+        """
+        bindings = self._adopt_parent_bindings(parent_refs)
+        bindings[node] = ref
+        return evolve(self, bindings=bindings)
+
+    def without_pending(self, node: str) -> _Experiment:
+        """Return a snapshot with one pending action removed.
+
+        Args:
+            node: The node whose pending action is removed.
+
+        Returns:
+            The updated snapshot.
+        """
+        return evolve(
+            self, pending={k: v for k, v in self.pending.items() if k != node}
+        )
+
+    def with_pending(self, action: _PendingAction) -> _Experiment:
+        """Return a snapshot with an additional pending action.
+
+        Args:
+            action: The action to reserve.
+
+        Returns:
+            A snapshot reserving the action and referencing its parents.
+
+        Raises:
+            IncompatibilityError: If the node already has a pending action, or a
+                parent is already bound to a different evaluation.
+        """
+        if action.node in self.pending:
+            raise IncompatibilityError(
+                f"Node '{action.node}' already has a pending action in experiment "
+                f"'{self.experiment_id}'."
+            )
+
+        bindings = self._adopt_parent_bindings(action.parent_refs)
+        return evolve(
+            self,
+            bindings=bindings,
+            pending={**self.pending, action.node: action},
+        )
+
+    def closed_copy(self) -> _Experiment:
+        """Return a snapshot that is closed for further automatic continuation.
+
+        Returns:
+            The closed snapshot.
+        """
+        return evolve(self, closed=True)
 
 
 @define(frozen=True)
@@ -197,6 +356,15 @@ class NodeMeasurement(SerialMixin):
     )
     """Observed auxiliary columns used by this node's feasibility conditions."""
 
+    parent_refs: Mapping[str, _EvaluationRef] = field(
+        factory=dict,
+        converter=_freeze_mapping,
+        validator=instance_of(Mapping),
+        kw_only=True,
+        eq=False,
+    )
+    """Concrete parent evaluations used to produce this observation."""
+
     @output.validator
     def _validate_output(  # noqa: DOC101, DOC103
         self, _: Any, value: float | None
@@ -223,7 +391,11 @@ class NodeMeasurement(SerialMixin):
 
 @define(frozen=True, eq=False)
 class MultiStepData(SerialMixin):
-    """Immutable store of node measurements and complete DAG rows."""
+    """Immutable store of real node measurements.
+
+    Snapshots containing the obsolete source-tagged evaluation references are
+    incompatible and must not be loaded as the current format.
+    """
 
     measurements: tuple[NodeMeasurement, ...] = field(
         factory=tuple,
@@ -232,17 +404,16 @@ class MultiStepData(SerialMixin):
     )
     """The individual node measurements, in insertion order."""
 
-    complete_measurements: pd.DataFrame = field(
-        factory=pd.DataFrame,
-        converter=_normalize_complete_frame,
-        validator=instance_of(pd.DataFrame),
+    _contexts: Mapping[str, _Experiment] = field(
+        factory=dict,
+        converter=_freeze_mapping,
+        validator=instance_of(Mapping),
+        eq=False,
     )
-    """Complete successful rows with parameters, outputs, and condition values.
+    """The canonical process contexts and their pending actions."""
 
-    Rows assembled from node measurements are marked as derived reference views.
-    Imported rows are marked as independent observations. Derived rows never
-    enter training views; their bound node measurements already do.
-    """
+    _experiment_counter: int = field(default=0, validator=ge(0), eq=False)
+    """The last allocated numeric experiment identifier suffix."""
 
     @classmethod
     def empty(cls) -> MultiStepData:
@@ -264,37 +435,15 @@ class MultiStepData(SerialMixin):
         """
         return evolve(self, measurements=self.measurements + measurements)
 
-    def add_complete(
-        self, measurements: pd.DataFrame, *, derived: bool = False
+    def with_process_state(
+        self, contexts: Mapping[str, _Experiment], experiment_counter: int
     ) -> MultiStepData:
-        """Return a new store with the given complete rows appended.
-
-        Args:
-            measurements: Complete DAG rows in experimental representation.
-            derived: Whether the rows are reference views assembled from stored
-                node measurements. Imported rows are independent observations.
-
-        Returns:
-            The updated immutable store.
-
-        Raises:
-            IncompatibilityError: If a derived row carries an incompatible
-                provenance marker.
-        """
-        source = COMPLETE_SOURCE_DERIVED if derived else COMPLETE_SOURCE_IMPORTED
-        frame = _normalize_complete_frame(measurements, default_source=source)
-        if derived and (frame[COMPLETE_SOURCE] != COMPLETE_SOURCE_DERIVED).any():
-            raise IncompatibilityError(
-                "Rows added as derived complete measurements must not claim "
-                "independent provenance."
-            )
-        if not derived and (frame[COMPLETE_SOURCE] == COMPLETE_SOURCE_DERIVED).any():
-            raise IncompatibilityError(
-                "Rows added as imported complete measurements must not claim "
-                "derived provenance."
-            )
-        combined = pd.concat([self.complete_measurements, frame], ignore_index=True)
-        return evolve(self, complete_measurements=combined)
+        """Return this data store with an atomically replaced process state."""
+        return evolve(
+            self,
+            contexts=contexts,
+            experiment_counter=experiment_counter,
+        )
 
     def get_evaluation(self, dag: MultiStepDAG, ref: _EvaluationRef) -> NodeMeasurement:
         """Resolve a stable internal evaluation reference.
@@ -310,68 +459,23 @@ class MultiStepData(SerialMixin):
             IncompatibilityError: If the reference is out of range, refers to an
                 unknown node, or does not match the stored node.
         """
-        if ref.source == "measurement":
-            try:
-                measurement = self.measurements[ref.index]
-            except IndexError as ex:
-                raise IncompatibilityError(
-                    f"Measurement reference {ref.index} is out of range."
-                ) from ex
-            if measurement.node != ref.node:
-                raise IncompatibilityError(
-                    f"Measurement reference {ref.index} belongs to node "
-                    f"'{measurement.node}', not '{ref.node}'."
-                )
-            return measurement
-
-        if ref.source == "complete":
-            node = dag.node_by_name.get(ref.node)
-            if node is None:
-                raise IncompatibilityError(f"Node '{ref.node}' is not part of the DAG.")
-            if ref.index < 0 or ref.index >= len(self.complete_measurements):
-                raise IncompatibilityError(
-                    f"Complete-measurement reference {ref.index} is out of range."
-                )
-            row = self.complete_measurements.iloc[ref.index]
-            missing = [
-                name
-                for name in node.model_input_names
-                if name not in self.complete_measurements.columns
-            ]
-            if missing:
-                raise IncompatibilityError(
-                    f"The complete measurement for node '{node.name}' is missing "
-                    f"required columns: {missing}."
-                )
-            experiment_id = (
-                str(row[EXPERIMENT_ID])
-                if EXPERIMENT_ID in self.complete_measurements
-                and not pd.isna(row[EXPERIMENT_ID])
-                else None
+        try:
+            measurement = self.measurements[ref.index]
+        except IndexError as ex:
+            raise IncompatibilityError(
+                f"Measurement reference {ref.index} is out of range."
+            ) from ex
+        if measurement.node != ref.node:
+            raise IncompatibilityError(
+                f"Measurement reference {ref.index} belongs to node "
+                f"'{measurement.node}', not '{ref.node}'."
             )
-            return NodeMeasurement(
-                node=node.name,
-                inputs={name: row[name] for name in node.model_input_names},
-                output=row[node.output],
-                experiment_id=experiment_id,
-                condition_values={
-                    condition.column: row[condition.column]
-                    for condition in node.feasibility_conditions
-                    if condition.column != node.output
-                    and condition.column in self.complete_measurements
-                },
-            )
-
-        raise IncompatibilityError(f"Unsupported evaluation source '{ref.source}'.")
+        return measurement
 
     def evaluation_refs(  # noqa: DOC502
         self, dag: MultiStepDAG, node: str, *, successful_only: bool = True
     ) -> tuple[_EvaluationRef, ...]:
         """Collect references to actual evaluations of one node.
-
-        Derived complete rows are reference views of stored measurements and are
-        deliberately excluded. Imported complete rows are genuine independent
-        observations and remain available.
 
         Args:
             dag: The DAG topology.
@@ -379,30 +483,179 @@ class MultiStepData(SerialMixin):
             successful_only: Whether failed observations should be omitted.
 
         Returns:
-            The references in measurement-then-import order.
+            The references in insertion order.
 
         Raises:
             IncompatibilityError: If the node is not part of the DAG.
         """
         node_object = _get_node(dag, node)
-        refs = [
-            _EvaluationRef(source="measurement", index=index, node=node)
+        return tuple(
+            _EvaluationRef(index=index, node=node)
             for index, measurement in enumerate(self.measurements)
             if measurement.node == node
             and (not successful_only or _is_successful(node_object, measurement))
-        ]
-        if COMPLETE_SOURCE in self.complete_measurements:
-            imported = (
-                self.complete_measurements[COMPLETE_SOURCE] == COMPLETE_SOURCE_IMPORTED
+        )
+
+    def measurements_of_experiment(
+        self, experiment_id: str
+    ) -> tuple[NodeMeasurement, ...]:
+        """Return all measurements belonging to one experiment.
+
+        Args:
+            experiment_id: The experiment identifier.
+
+        Returns:
+            The measurements in insertion order.
+        """
+        return tuple(
+            measurement
+            for measurement in self.measurements
+            if measurement.experiment_id == experiment_id
+        )
+
+    def experiment_bindings(self, experiment_id: str) -> dict[str, _EvaluationRef]:
+        """Return the stored observations of one experiment as references.
+
+        Args:
+            experiment_id: The experiment identifier.
+
+        Returns:
+            One measurement reference per observed node.
+
+        Raises:
+            IncompatibilityError: If a node was observed more than once in the
+                experiment.
+        """
+        bindings: dict[str, _EvaluationRef] = {}
+        for index, measurement in enumerate(self.measurements):
+            if measurement.experiment_id != experiment_id:
+                continue
+            if measurement.node in bindings:
+                raise IncompatibilityError(
+                    f"Experiment '{experiment_id}' contains more than one observation "
+                    f"of node '{measurement.node}'."
+                )
+            bindings[measurement.node] = _EvaluationRef(
+                index=index, node=measurement.node
             )
-            refs.extend(
-                _EvaluationRef(source="complete", index=int(index), node=node)
-                for index in self.complete_measurements.index[imported]
+        return bindings
+
+    def complete_measurement_frame(
+        self,
+        dag: MultiStepDAG,
+        *,
+        execution_mode: Literal["process", "functional"] = "process",
+    ) -> pd.DataFrame:
+        """Assemble complete, consistent real-reference rows as a temporary view.
+
+        The returned frame is derived on demand. It is never stored and never
+        becomes a second observation source. Process mode requires all rows to
+        belong to one experiment context, including any real observations explicitly
+        bound to it. Functional mode composes observations by their real references.
+
+        Args:
+            dag: The DAG topology.
+            execution_mode: Whether parent relationships must be from one process
+                experiment or may be composed from real references across experiments.
+
+        Returns:
+            One row per complete coherent set of successful real references,
+            including an ``experiment_id`` column. Functional-mode identifiers
+            encode the concrete measurement references used for each row. The
+            frame is empty when no complete consistent reference exists.
+
+        Raises:
+            IncompatibilityError: If the execution mode is unknown or a reference
+                cannot be resolved.
+        """
+        from ._columns import EXPERIMENT_ID
+
+        rows: list[pd.DataFrame] = []
+        if execution_mode == "functional":
+            references = {
+                node.name: self.evaluation_refs(dag, node.name, successful_only=True)
+                for node in dag.nodes
+            }
+            bindings: dict[str, _EvaluationRef] = {}
+
+            def append_composable_rows(index: int) -> None:
+                """Enumerate real successful measurements with matching parents."""
+                if index == len(dag.topological_order):
+                    row = self.make_complete_row(dag, bindings, _skip_invalid=True)
+                    if row is None:
+                        return
+                    reference_id = "functional:" + ",".join(
+                        f"{name}={bindings[name].index}"
+                        for name in dag.topological_order
+                    )
+                    row[EXPERIMENT_ID] = reference_id
+                    rows.append(row)
+                    return
+
+                node_name = dag.topological_order[index]
+                node = dag.node_by_name[node_name]
+                for ref in references[node_name]:
+                    measurement = self.get_evaluation(dag, ref)
+                    if any(
+                        measurement.parent_refs.get(parent.name)
+                        != bindings[parent.name]
+                        for parent in node.parents
+                    ):
+                        continue
+                    bindings[node_name] = ref
+                    append_composable_rows(index + 1)
+                    del bindings[node_name]
+
+            append_composable_rows(0)
+        elif execution_mode == "process":
+            experiment_ids = dict.fromkeys(
+                measurement.experiment_id
+                for measurement in self.measurements
+                if measurement.experiment_id is not None
             )
-        return tuple(refs)
+            experiment_ids.update(dict.fromkeys(self._contexts))
+            seen: set[tuple[_EvaluationRef, ...]] = set()
+            for experiment_id in experiment_ids:
+                context = self._contexts.get(experiment_id)
+                context_bindings = (
+                    context.bindings
+                    if context is not None
+                    else self.experiment_bindings(experiment_id)
+                )
+                row = self.make_complete_row(dag, context_bindings, _skip_invalid=True)
+                if row is None:
+                    continue
+                row_refs = tuple(
+                    context_bindings[name] for name in dag.topological_order
+                )
+                if row_refs in seen:
+                    continue
+                seen.add(row_refs)
+                row[EXPERIMENT_ID] = experiment_id
+                rows.append(row)
+        else:
+            raise IncompatibilityError(f"Unknown execution mode: {execution_mode!r}.")
+        if not rows:
+            return pd.DataFrame(columns=dag._complete_measurement_columns)
+        return pd.concat(rows, ignore_index=True)
+
+    def matching_evaluation(
+        self, dag: MultiStepDAG, node: str, inputs: Mapping[str, Any]
+    ) -> tuple[_EvaluationRef, NodeMeasurement] | None:
+        """Find a matching observation together with its concrete reference."""
+        node_object = _get_node(dag, node)
+        for index, measurement in enumerate(self.measurements):
+            if measurement.node == node and _inputs_match(
+                node_object, measurement.inputs, inputs
+            ):
+                return (
+                    _EvaluationRef(index=index, node=node),
+                    measurement,
+                )
+        return None
 
     def is_experiment_complete(self, dag: MultiStepDAG, experiment_id: str) -> bool:
-        """Check whether every DAG node has a measurement for the given experiment.
+        """Check whether every DAG node has a successful measurement.
 
         Args:
             dag: The DAG topology.
@@ -412,35 +665,20 @@ class MultiStepData(SerialMixin):
             ``True`` if every node has a successful measurement with the given
             identifier and none of that experiment's observations failed.
         """
-        if EXPERIMENT_ID in self.complete_measurements:
-            derived = self.complete_measurements[
-                (self.complete_measurements[EXPERIMENT_ID] == experiment_id)
-                & (
-                    self.complete_measurements[COMPLETE_SOURCE]
-                    == COMPLETE_SOURCE_DERIVED
-                )
-            ]
-            if not derived.empty:
-                return True
-
-        measured_nodes = {
-            measurement.node
-            for measurement in self.measurements
-            if measurement.experiment_id == experiment_id
-        }
-        return measured_nodes == {node.name for node in dag.nodes} and all(
-            _is_successful(dag.node_by_name[m.node], m)
-            for m in self.measurements
-            if m.experiment_id == experiment_id
+        measured = self.measurements_of_experiment(experiment_id)
+        return {measurement.node for measurement in measured} == {
+            node.name for node in dag.nodes
+        } and all(
+            _is_successful(dag.node_by_name[measurement.node], measurement)
+            for measurement in measured
         )
 
     def assemble_complete_row(
         self, dag: MultiStepDAG, experiment_id: str
     ) -> pd.DataFrame:
-        """Assemble a complete DAG row from the measurements of an experiment.
+        """Assemble a complete DAG view from one experiment's measurements.
 
-        This legacy helper only considers measurements carrying the experiment
-        identifier. The campaign completes contexts from their explicit bindings.
+        This is a derived view only; it does not add or store observations.
 
         Args:
             dag: The DAG topology.
@@ -458,11 +696,16 @@ class MultiStepData(SerialMixin):
                 f"Experiment '{experiment_id}' is incomplete or failed."
             )
         bindings = {
-            m.node: _EvaluationRef(source="measurement", index=index, node=m.node)
-            for index, m in enumerate(self.measurements)
-            if m.experiment_id == experiment_id
+            measurement.node: _EvaluationRef(index=index, node=measurement.node)
+            for index, measurement in enumerate(self.measurements)
+            if measurement.experiment_id == experiment_id
         }
-        return self.make_complete_row(dag, bindings)
+        row = self.make_complete_row(dag, bindings)
+        if row is None:
+            raise IncompatibilityError(
+                f"Experiment '{experiment_id}' does not describe one global DAG row."
+            )
+        return row
 
     def has_consistent_bindings(
         self,
@@ -488,24 +731,12 @@ class MultiStepData(SerialMixin):
             name: self.get_evaluation(dag, ref) for name, ref in bindings.items()
         }
         return all(
-            resolved[node.name].inputs[parent.output] == resolved[parent.name].output
+            resolved[node.name].parent_refs.get(parent.name) == bindings[parent.name]
+            and resolved[node.name].inputs[parent.output]
+            == resolved[parent.name].output
             for node in dag.nodes
             for parent in node.parents
         )
-
-    @overload
-    def make_complete_row(
-        self, dag: MultiStepDAG, bindings: Mapping[str, _EvaluationRef]
-    ) -> pd.DataFrame: ...
-
-    @overload
-    def make_complete_row(
-        self,
-        dag: MultiStepDAG,
-        bindings: Mapping[str, _EvaluationRef],
-        *,
-        _skip_invalid: Literal[True],
-    ) -> pd.DataFrame | None: ...
 
     def make_complete_row(
         self,
@@ -514,10 +745,9 @@ class MultiStepData(SerialMixin):
         *,
         _skip_invalid: bool = False,
     ) -> pd.DataFrame | None:
-        """Assemble a complete DAG row from concrete evaluation bindings.
+        """Assemble a temporary complete DAG row from concrete evaluation bindings.
 
-        The row is a reference view. It is not stored as a new measurement unless
-        the campaign explicitly appends it with derived provenance.
+        The row is a reference view. It is never stored as a second measurement.
 
         Args:
             dag: The DAG topology.
@@ -556,7 +786,10 @@ class MultiStepData(SerialMixin):
                     f"Cannot assemble a complete row because node '{node.name}' failed."
                 )
             for parent in node.parents:
-                if measurement.inputs[parent.output] != resolved[parent.name].output:
+                if (
+                    measurement.parent_refs.get(parent.name) != bindings[parent.name]
+                    or measurement.inputs[parent.output] != resolved[parent.name].output
+                ):
                     if _skip_invalid:
                         return None
                     raise IncompatibilityError(
@@ -583,15 +816,24 @@ class MultiStepData(SerialMixin):
 
         Raises:
             IncompatibilityError: If a measurement does not match the node's
-                model input, contains invalid values, or the complete rows do
-                not cover the DAG columns.
+                model input, contains invalid values, or declares an ambiguous
+                failure.
             IncompleteMeasurementsError: If configured condition values are missing.
             InvalidTargetValueError: If condition values have invalid types or values.
         """
         failed: set[tuple[str, str]] = set()
+        identities: set[tuple[str, str]] = set()
         inputs_by_node: dict[str, list[dict[str, Any]]] = {}
-        for measurement in self.measurements:
+        for index, measurement in enumerate(self.measurements):
             node = _get_node(dag, measurement.node)
+            if measurement.experiment_id is not None:
+                identity = (measurement.experiment_id, measurement.node)
+                if identity in identities:
+                    raise IncompatibilityError(
+                        f"Experiment '{measurement.experiment_id}' contains more than "
+                        f"one observation of node '{measurement.node}'."
+                    )
+                identities.add(identity)
             condition_columns = {
                 condition.column
                 for condition in node.feasibility_conditions
@@ -604,13 +846,30 @@ class MultiStepData(SerialMixin):
                     f"columns: {sorted(unexpected)}."
                 )
             is_successful = _is_successful(node, measurement)
-            if is_successful and measurement.output is None:
-                raise IncompatibilityError(
-                    f"Successful observation of node '{node.name}' requires an output."
-                )
             if not is_successful and measurement.experiment_id is not None:
                 failed.add((measurement.experiment_id, measurement.node))
             inputs_by_node.setdefault(node.name, []).append(dict(measurement.inputs))
+
+            if measurement.parent_refs:
+                if set(measurement.parent_refs) != set(dag.parents_of(node.name)):
+                    raise IncompatibilityError(
+                        f"The parent references of node '{node.name}' are incomplete."
+                    )
+                for parent_name, ref in measurement.parent_refs.items():
+                    parent = dag.node_by_name[parent_name]
+                    if ref.node != parent_name or ref.index >= index:
+                        raise IncompatibilityError(
+                            f"The parent reference for node '{node.name}' is invalid."
+                        )
+                    parent_measurement = self.get_evaluation(dag, ref)
+                    if not _is_successful(parent, parent_measurement) or (
+                        measurement.inputs.get(parent.output)
+                        != parent_measurement.output
+                    ):
+                        raise IncompatibilityError(
+                            f"The parent input of node '{node.name}' does not match "
+                            f"a successful observation of '{parent_name}'."
+                        )
 
         for node_name, rows in inputs_by_node.items():
             _validate_node_inputs(
@@ -629,82 +888,154 @@ class MultiStepData(SerialMixin):
                     f"'{measurement.experiment_id}'."
                 )
 
-        if self.complete_measurements.empty:
-            return
+        self._validate_process_state(dag)
 
-        frame = self.complete_measurements
-        if frame.columns.duplicated().any():
-            duplicates = sorted(set(frame.columns[frame.columns.duplicated()]))
-            raise IncompatibilityError(
-                f"Complete measurement columns must be unique, but found "
-                f"duplicates: {duplicates}."
-            )
-
-        missing = [
-            column
-            for column in dag._complete_measurement_columns
-            if column not in frame.columns
-        ]
-        if missing:
-            raise IncompatibilityError(
-                f"Complete measurements are missing required columns: {missing}."
-            )
-
-        for node in dag.nodes:
-            if node.feasibility_conditions:
-                success = _extract_feasibility_values(node, frame)
-                if not success.all():
+    def _validate_process_state(self, dag: MultiStepDAG) -> None:
+        """Reject inconsistent references and pending actions in stored contexts."""
+        seen_pending: list[_PendingAction] = []
+        for experiment_id, experiment in self._contexts.items():
+            if not isinstance(experiment, _Experiment) or (
+                experiment.experiment_id != experiment_id
+            ):
+                raise IncompatibilityError(
+                    f"The stored context for experiment '{experiment_id}' is invalid."
+                )
+            if _identifier_number(experiment_id) > self._experiment_counter:
+                raise IncompatibilityError(
+                    f"Experiment '{experiment_id}' exceeds the stored identifier "
+                    "counter."
+                )
+            for node_name, ref in experiment.bindings.items():
+                if node_name not in dag.node_by_name or ref.node != node_name:
                     raise IncompatibilityError(
-                        f"Complete measurements require all feasibility conditions "
-                        f"to pass for node '{node.name}'."
+                        f"Experiment '{experiment_id}' has an invalid binding for "
+                        f"node '{node_name}'."
                     )
-
-        _validate_parameter_frame(
-            tuple(dag.parameter_by_name.values()),
-            frame,
-            "complete measurements",
-            numerical_measurements_must_be_within_tolerance,
-        )
-        for _, row in frame.iterrows():
-            for node in dag.nodes:
-                value = row[node.output]
-                if isinstance(value, bool) or not isinstance(
-                    value, (int, float, np.integer, np.floating)
+                self.get_evaluation(dag, ref)
+            for node_name, action in experiment.pending.items():
+                node = dag.node_by_name.get(node_name)
+                if (
+                    node is None
+                    or action.node != node_name
+                    or action.experiment_id != experiment_id
+                    or node_name in experiment.bindings
+                    or set(action.parent_refs) != set(dag.parents_of(node_name))
                 ):
                     raise IncompatibilityError(
-                        f"The complete-measurement output of node '{node.name}' "
-                        f"must be numeric, got {value!r}."
+                        f"Experiment '{experiment_id}' has an invalid pending action "
+                        f"for node '{node_name}'."
                     )
-                if not np.isfinite(value):
+                _validate_node_inputs(node, pd.DataFrame([dict(action.inputs)]))
+                for parent_name, ref in action.parent_refs.items():
+                    if experiment.bindings.get(parent_name) != ref:
+                        raise IncompatibilityError(
+                            f"The pending action for node '{node_name}' in experiment "
+                            f"'{experiment_id}' has an inconsistent parent binding."
+                        )
+                    parent = dag.node_by_name[parent_name]
+                    measurement = self.get_evaluation(dag, ref)
+                    if not _is_successful(parent, measurement) or (
+                        action.inputs[parent.output] != measurement.output
+                    ):
+                        raise IncompatibilityError(
+                            f"The pending action for node '{node_name}' in experiment "
+                            f"'{experiment_id}' has an invalid parent input."
+                        )
+                if contains_action(
+                    seen_pending, node=node_name, inputs=action.inputs, dag=dag
+                ):
                     raise IncompatibilityError(
-                        f"The complete-measurement output of node '{node.name}' "
-                        f"must be finite, got {value!r}."
+                        f"The pending action for node '{node_name}' in experiment "
+                        f"'{experiment_id}' duplicates another pending action."
                     )
+                seen_pending.append(action)
 
     def node_training_data(self, dag: MultiStepDAG, node: str) -> pd.DataFrame:
-        """Return supervised training rows for one node model.
+        """Return the output-regression training view for one node.
 
-        Only successful observations enter this view, even when a failed observation
-        includes a real output. Genuine repetitions are retained; complete-row caches
-        backed by node observations are excluded using experiment provenance.
+        The stored observations are never modified. Failed observations enter the
+        view according to the node's configured
+        :class:`~baybe.recommenders.pure.experimental_feasibility.InfeasibleMeasurementMode`.
 
         Args:
             dag: The DAG topology.
             node: The node name.
 
         Returns:
-            One row per measurement with columns for the node's own parameters,
-            its parent outputs, and the observed output.
+            One row per accepted training observation with columns for the node's
+            own parameters, its parent outputs, and the observed or imputed output.
+
+        Raises:
+            IncompatibilityError: If ``DUMMY`` lacks a value or ``PREDICTED_MEAN``
+                cannot be computed from the successful observations.
         """
-        return self._node_training_data(dag, node, feasibility=False)
+        node_object = _get_node(dag, node)
+        columns = [*node_object.model_input_names, node_object.output]
+        records: list[tuple[dict[str, Any], bool, float | None]] = [
+            (
+                dict(measurement.inputs),
+                _is_successful(node_object, measurement),
+                measurement.output,
+            )
+            for measurement in self.measurements
+            if measurement.node == node
+        ]
+        if not records:
+            return pd.DataFrame(columns=columns)
+
+        mode = node_object.infeasible_measurement_mode
+        successes = [
+            (inputs, output)
+            for inputs, successful, output in records
+            if successful and output is not None
+        ]
+        failures = [
+            (inputs, output) for inputs, successful, output in records if not successful
+        ]
+
+        if mode is InfeasibleMeasurementMode.OBSERVED:
+            rows = [
+                {**inputs, node_object.output: output} for inputs, output in successes
+            ] + [
+                {**inputs, node_object.output: output}
+                for inputs, output in failures
+                if output is not None
+            ]
+        elif mode is InfeasibleMeasurementMode.EXCLUDE:
+            rows = [
+                {**inputs, node_object.output: output} for inputs, output in successes
+            ]
+        elif mode is InfeasibleMeasurementMode.DUMMY:
+            dummy = node_object.infeasible_dummy_value
+            if dummy is None:
+                raise IncompatibilityError(
+                    f"Node '{node_object.name}' uses "
+                    f"'{InfeasibleMeasurementMode.DUMMY.name}' but has no dummy "
+                    "value."
+                )
+            rows = [
+                {**inputs, node_object.output: output} for inputs, output in successes
+            ] + [{**inputs, node_object.output: dummy} for inputs, _ in failures]
+        else:
+            assert mode is InfeasibleMeasurementMode.PREDICTED_MEAN
+            rows = [
+                {**inputs, node_object.output: output} for inputs, output in successes
+            ]
+            if failures:
+                rows.extend(
+                    _predicted_mean_rows(
+                        node_object,
+                        successes,
+                        [inputs for inputs, _ in failures],
+                    )
+                )
+
+        return pd.DataFrame(rows, columns=columns)
 
     def node_feasibility_training_data(
         self, dag: MultiStepDAG, node: str
     ) -> pd.DataFrame:
         """Return all raw feasibility observations with their full local inputs.
-
-        Genuine repetitions retain their multiplicity; only complete-row caches
-        backed by node observations are excluded using experiment provenance.
 
         Args:
             dag: The DAG topology.
@@ -713,54 +1044,691 @@ class MultiStepData(SerialMixin):
         Returns:
             A raw-label training frame, empty for unconfigured nodes.
         """
-        return self._node_training_data(dag, node, feasibility=True)
-
-    def _node_training_data(
-        self, dag: MultiStepDAG, node: str, *, feasibility: bool
-    ) -> pd.DataFrame:
-        """Project observations and independent imports without erasing repeats."""
         node_object = _get_node(dag, node)
-        if feasibility and not node_object.feasibility_conditions:
-            return pd.DataFrame(
-                columns=[*node_object.model_input_names, FEASIBILITY_LABEL]
-            )
-        label = FEASIBILITY_LABEL if feasibility else node_object.output
-        columns = [*node_object.model_input_names, label]
-
-        frames: list[pd.DataFrame] = []
-        if not self.complete_measurements.empty:
-            complete = self.complete_measurements.loc[
-                self.complete_measurements[COMPLETE_SOURCE] == COMPLETE_SOURCE_IMPORTED
-            ]
-            if not complete.empty:
-                if feasibility:
-                    frame = complete[list(node_object.model_input_names)].copy()
-                    frame[label] = _extract_feasibility_values(node_object, complete)
-                    frames.append(frame[columns])
-                else:
-                    frames.append(complete[columns].copy())
-
+        columns = [*node_object.model_input_names, FEASIBILITY_LABEL]
+        if not node_object.feasibility_conditions:
+            return pd.DataFrame(columns=columns)
         rows = [
-            {**measurement.inputs, label: _is_successful(node_object, measurement)}
-            if feasibility
-            else {**measurement.inputs, label: measurement.output}
+            {
+                **measurement.inputs,
+                FEASIBILITY_LABEL: _is_successful(node_object, measurement),
+            }
             for measurement in self.measurements
             if measurement.node == node
-            and (feasibility or _is_successful(node_object, measurement))
         ]
-        if rows:
-            frames.append(pd.DataFrame(rows, columns=columns))
+        return pd.DataFrame(rows, columns=columns)
 
-        if not frames:
-            return pd.DataFrame(columns=columns)
-        return pd.concat(frames, ignore_index=True)
+
+def experiment_actions(experiment: _Experiment) -> tuple[_PendingAction, ...]:
+    """Return the pending actions of a context in stable order.
+
+    Args:
+        experiment: The context to inspect.
+
+    Returns:
+        The pending actions ordered by node name.
+    """
+    return tuple(experiment.pending[node] for node in sorted(experiment.pending))
+
+
+def pending_actions(
+    experiments: Mapping[str, _Experiment],
+) -> tuple[_PendingAction, ...]:
+    """Collect the pending actions of all contexts.
+
+    Args:
+        experiments: All known contexts in creation order.
+
+    Returns:
+        The pending actions in context and node order.
+    """
+    return tuple(
+        action
+        for experiment in experiments.values()
+        for action in experiment_actions(experiment)
+    )
+
+
+def contains_action(
+    actions: Iterable[_PendingAction],
+    *,
+    node: str,
+    inputs: Mapping[str, Any],
+    dag: MultiStepDAG | None = None,
+) -> bool:
+    """Return whether an identical local action is already pending.
+
+    When the DAG is supplied, numerical own parameter values are compared within
+    their configured tolerance and parent outputs are compared exactly. Without
+    it, inputs are compared exactly.
+
+    Args:
+        actions: The pending actions to search.
+        node: The node of the candidate action.
+        inputs: The complete local input of the candidate action.
+        dag: Optional DAG supplying the repeat comparison contract.
+
+    Returns:
+        ``True`` if an identical node-and-input action is pending.
+    """
+    if dag is None:
+        return any(
+            action.node == node and dict(action.inputs) == dict(inputs)
+            for action in actions
+        )
+
+    node_object = dag.node_by_name.get(node)
+    if node_object is None:
+        return False
+    return any(
+        action.node == node and _inputs_match(node_object, action.inputs, inputs)
+        for action in actions
+    )
+
+
+def failed_nodes(
+    experiment: _Experiment, dag: MultiStepDAG, data: MultiStepData
+) -> frozenset[str]:
+    """Return the nodes with a failed evaluation in a context.
+
+    Args:
+        experiment: The snapshot to inspect.
+        dag: The DAG topology.
+        data: The store resolving evaluation references.
+
+    Returns:
+        The failed node names.
+    """
+    return frozenset(
+        node
+        for node, ref in experiment.bindings.items()
+        if not _is_successful(
+            dag.node_by_name[node],
+            data.get_evaluation(dag, ref),
+        )
+    )
+
+
+def experiment_is_closed(
+    experiment: _Experiment, dag: MultiStepDAG, data: MultiStepData
+) -> bool:
+    """Return whether a context is closed for further automatic continuation.
+
+    A failed node or a discarded repeated execution closes its own context.
+    Independent contexts remain unaffected.
+
+    Args:
+        experiment: The snapshot to inspect.
+        dag: The DAG topology.
+        data: The store resolving evaluation references.
+
+    Returns:
+        ``True`` if the context is explicitly closed or contains a failed evaluation.
+    """
+    return experiment.closed or bool(failed_nodes(experiment, dag, data))
+
+
+def executable_nodes(
+    experiment: _Experiment, dag: MultiStepDAG, data: MultiStepData
+) -> tuple[tuple[str, dict[str, _EvaluationRef]], ...]:
+    """Return all currently executable nodes of one context.
+
+    A node is executable when it is neither measured nor pending in the context
+    and all of its parents have successful real evaluations bound to the context.
+    Independent fork branches are therefore returned together.
+
+    Args:
+        experiment: The context to continue.
+        dag: The DAG topology.
+        data: The store resolving evaluation references.
+
+    Returns:
+        The executable node names and their concrete parent bindings, in
+        topological order.
+    """
+    if experiment_is_closed(experiment, dag, data):
+        return ()
+
+    result: list[tuple[str, dict[str, _EvaluationRef]]] = []
+    for name in dag.topological_order:
+        if name in experiment.bindings or name in experiment.pending:
+            continue
+        parents = dag.parents_of(name)
+        if not all(
+            parent in experiment.bindings
+            and _is_successful(
+                dag.node_by_name[parent],
+                data.get_evaluation(dag, experiment.bindings[parent]),
+            )
+            for parent in parents
+        ):
+            continue
+        result.append(
+            (
+                name,
+                {parent: experiment.bindings[parent] for parent in parents},
+            )
+        )
+    return tuple(result)
+
+
+def make_executable_plans(
+    dag: MultiStepDAG,
+    data: MultiStepData,
+    experiments: Mapping[str, _Experiment],
+    *,
+    mode: ExecutionMode,
+    first_new_id: int = 1,
+) -> tuple[_ExecutablePlan, ...]:
+    """Collect every concretely executable action from the current state.
+
+    Process mode continues each open experiment with all currently executable
+    fork branches and additionally offers fresh root executions. Functional mode
+    combines successful real parent outputs across experiments and prepares a
+    fresh experiment for every resulting action.
+
+    Args:
+        dag: The DAG topology.
+        data: The measurement store.
+        experiments: All known experiment snapshots.
+        mode: The configured execution mode.
+        first_new_id: The first numeric suffix available for a new experiment.
+
+    Returns:
+        The executable plans in stable order, without actions that are already
+        pending or duplicated inside the returned set.
+
+    Raises:
+        IncompatibilityError: If the execution mode is unknown.
+    """
+    if mode not in ("process", "functional"):
+        raise IncompatibilityError(f"Unknown execution mode: {mode!r}.")
+
+    pending = pending_actions(experiments)
+    plans: list[_ExecutablePlan] = []
+    next_identifier = first_new_id
+
+    def add(
+        node: str,
+        inputs: Mapping[str, Any],
+        *,
+        experiment_id: str | None,
+        parent_refs: Mapping[str, _EvaluationRef] | None = None,
+        is_new: bool,
+    ) -> None:
+        """Add a non-duplicate plan and allocate a fresh identifier if needed."""
+        nonlocal next_identifier
+        references = {} if parent_refs is None else parent_refs
+        duplicate = any(
+            existing.node == node
+            and dict(existing.inputs) == dict(inputs)
+            and (
+                (
+                    not is_new
+                    and not existing.is_new
+                    and existing.experiment_id == experiment_id
+                )
+                or (
+                    is_new
+                    and existing.is_new
+                    and dict(existing.parent_refs) == dict(references)
+                )
+            )
+            for existing in plans
+        )
+        if duplicate or contains_action(pending, node=node, inputs=inputs, dag=dag):
+            return
+        plans.append(
+            _ExecutablePlan(
+                experiment_id=(
+                    f"exp-{next_identifier}" if experiment_id is None else experiment_id
+                ),
+                node=node,
+                parent_refs=references,
+                inputs=inputs,
+                is_new=is_new,
+            )
+        )
+        if is_new:
+            next_identifier += 1
+
+    if mode == "process":
+        for experiment in experiments.values():
+            for node, parent_refs in executable_nodes(experiment, dag, data):
+                inputs = _parent_outputs(dag, data, parent_refs)
+                add(
+                    node,
+                    inputs,
+                    experiment_id=experiment.experiment_id,
+                    parent_refs=parent_refs,
+                    is_new=False,
+                )
+        for node in dag.topological_order:
+            if dag.parents_of(node):
+                continue
+            add(node, {}, experiment_id=None, is_new=True)
+        return tuple(
+            evolve(
+                plan,
+                remaining_cost=remaining_cost(dag, experiments, plan, mode=mode),
+            )
+            for plan in plans
+        )
+
+    for node_name in dag.topological_order:
+        node_object = dag.node_by_name[node_name]
+        parent_choices: list[list[tuple[Any, _EvaluationRef]]] = []
+        for parent in node_object.parents:
+            choices: list[tuple[Any, _EvaluationRef]] = []
+            for ref in data.evaluation_refs(dag, parent.name, successful_only=True):
+                value = data.get_evaluation(dag, ref).output
+                choices.append((value, ref))
+            if not choices:
+                break
+            parent_choices.append(choices)
+        if len(parent_choices) != len(node_object.parents):
+            continue
+
+        for combination in product(*parent_choices):
+            parent_refs = {
+                parent.name: ref
+                for parent, (_, ref) in zip(node_object.parents, combination)
+            }
+            inputs = {
+                parent.output: value
+                for parent, (value, _) in zip(node_object.parents, combination)
+            }
+            add(
+                node_name,
+                inputs,
+                experiment_id=None,
+                parent_refs=parent_refs,
+                is_new=True,
+            )
+    return tuple(
+        evolve(
+            plan,
+            remaining_cost=remaining_cost(dag, experiments, plan, mode=mode),
+        )
+        for plan in plans
+    )
+
+
+def _parent_outputs(
+    dag: MultiStepDAG,
+    data: MultiStepData,
+    parent_refs: Mapping[str, _EvaluationRef],
+) -> dict[str, Any]:
+    """Resolve the real parent outputs supplying a local action input."""
+    return {
+        dag.node_by_name[parent].output: data.get_evaluation(dag, ref).output
+        for parent, ref in parent_refs.items()
+    }
+
+
+def remaining_cost(
+    dag: MultiStepDAG,
+    experiments: Mapping[str, _Experiment],
+    plan: _ExecutablePlan,
+    *,
+    mode: ExecutionMode,
+) -> float:
+    """Compute the node costs still required to complete the objective.
+
+    Already observed nodes and already pending actions of the plan's experiment
+    are not charged again. A fresh functional plan only excludes its known
+    ancestors, because every other graph output still needs an execution.
+
+    Args:
+        dag: The DAG topology.
+        experiments: All known experiment snapshots.
+        plan: The action whose remaining costs are requested.
+        mode: The configured execution mode.
+
+    Returns:
+        The sum of the remaining node costs.
+    """
+    if plan.is_new:
+        if mode == "functional":
+            omitted = set(dag.ancestors_of(plan.node))
+        else:
+            omitted = set()
+    else:
+        experiment = experiments[plan.experiment_id]
+        omitted = set(experiment.bindings) | set(experiment.pending)
+    return sum(
+        dag.node_by_name[name].cost
+        for name in dag.topological_order
+        if name not in omitted
+    )
+
+
+def register_action(
+    experiments: Mapping[str, _Experiment],
+    counter: int,
+    *,
+    experiment_id: str,
+    node: str,
+    inputs: Mapping[str, Any],
+    parent_refs: Mapping[str, _EvaluationRef],
+    data: MultiStepData,
+    dag: MultiStepDAG,
+) -> tuple[dict[str, _Experiment], int]:
+    """Reserve one actual action in its explicitly assigned context.
+
+    Args:
+        experiments: All contexts in creation order.
+        counter: The last allocated numeric experiment counter.
+        experiment_id: The concrete context identifier. Must name an existing open
+            context or a newly reserved unused identifier.
+        node: The selected node.
+        inputs: The complete local input of the action.
+        parent_refs: The concrete parent evaluations of the action.
+        data: The store resolving evaluation references.
+        dag: The DAG topology.
+
+    Returns:
+        The updated contexts and the updated counter.
+
+    Raises:
+        IncompatibilityError: If the context is missing, closed, already measured
+            the node, duplicates a pending action, names an unknown node, omits or
+            contradicts a parent evaluation, or carries an invalid local input.
+    """
+    if experiment_id is None:
+        raise IncompatibilityError(
+            "Every evaluated action must carry its concrete experiment identifier."
+        )
+    node_object = dag.node_by_name.get(node)
+    if node_object is None:
+        raise IncompatibilityError(
+            f"Node '{node}' is not part of the DAG. Known nodes: "
+            f"{sorted(dag.node_by_name)}."
+        )
+    expected_parents = set(dag.parents_of(node))
+    if set(parent_refs) != expected_parents:
+        raise IncompatibilityError(
+            f"The action for node '{node}' must reference exactly its parent "
+            f"evaluations {sorted(expected_parents)}, but references "
+            f"{sorted(parent_refs)}."
+        )
+
+    context = experiments.get(experiment_id)
+    if context is not None:
+        if experiment_is_closed(context, dag, data):
+            raise IncompatibilityError(
+                f"Experiment '{experiment_id}' is closed and cannot start another "
+                f"action."
+            )
+        if node in context.bindings:
+            raise IncompatibilityError(
+                f"Node '{node}' has already been measured in experiment "
+                f"'{experiment_id}'."
+            )
+        if node in context.pending:
+            raise IncompatibilityError(
+                f"Node '{node}' already has a pending action in experiment "
+                f"'{experiment_id}'."
+            )
+
+    for parent, ref in parent_refs.items():
+        if ref.node != parent:
+            raise IncompatibilityError(
+                f"The parent reference for '{parent}' points to node '{ref.node}'."
+            )
+        evaluation = data.get_evaluation(dag, ref)
+        if not _is_successful(dag.node_by_name[parent], evaluation):
+            raise IncompatibilityError(
+                f"The parent evaluation referenced for '{parent}' is not successful."
+            )
+        expected = evaluation.output
+        actual = inputs.get(dag.node_by_name[parent].output)
+        if actual != expected:
+            raise IncompatibilityError(
+                f"The local input of node '{node}' uses parent output {actual!r} "
+                f"for '{parent}', but the referenced evaluation observed "
+                f"{expected!r}."
+            )
+
+    if set(inputs) != set(node_object.model_input_names):
+        raise IncompatibilityError(
+            f"The action for node '{node}' must provide exactly the local input "
+            f"columns {list(node_object.model_input_names)}, but provides "
+            f"{sorted(inputs)}."
+        )
+    import pandas as pd
+
+    _validate_node_inputs(node_object, pd.DataFrame([inputs]))
+
+    if contains_action(pending_actions(experiments), node=node, inputs=inputs, dag=dag):
+        raise IncompatibilityError(
+            f"An identical action for node '{node}' is already pending. The same "
+            "node and local input cannot be reserved twice, even across experiments."
+        )
+
+    action = _PendingAction(
+        node=node,
+        inputs=inputs,
+        parent_refs=parent_refs,
+        experiment_id=experiment_id,
+    )
+    updated = dict(experiments)
+    if context is None:
+        known = _known_experiment_ids(data, experiments)
+        if experiment_id in known:
+            raise IncompatibilityError(
+                f"Experiment identifier '{experiment_id}' is already in use."
+            )
+        context = _Experiment(experiment_id=experiment_id)
+        counter = max(counter, _identifier_number(experiment_id))
+    else:
+        counter = max(counter, _identifier_number(experiment_id))
+    updated[experiment_id] = context.with_pending(action)
+    return updated, counter
+
+
+def _identifier_number(experiment_id: str) -> int:
+    """Extract the numeric suffix of an automatically generated identifier."""
+    prefix, separator, suffix = experiment_id.partition("-")
+    if separator and prefix == "exp" and suffix.isdigit():
+        return int(suffix)
+    return 0
+
+
+def _known_experiment_ids(
+    data: MultiStepData, experiments: Mapping[str, _Experiment]
+) -> set[str]:
+    """Collect all identifiers that a new context must not reuse."""
+    known = set(experiments)
+    known.update(
+        measurement.experiment_id
+        for measurement in data.measurements
+        if measurement.experiment_id is not None
+    )
+    return known
+
+
+def _inputs_match(
+    node: MultiStepNode,
+    stored: Mapping[str, Any],
+    candidate: Mapping[str, Any],
+) -> bool:
+    """Compare two complete local inputs using the repeat contract.
+
+    Numeric own parameters use their configured tolerance. Parent outputs and
+    non-numerical inputs must match exactly.
+
+    Args:
+        node: The node owning the inputs.
+        stored: The already stored local input.
+        candidate: The candidate local input.
+
+    Returns:
+        Whether both inputs describe the same local execution.
+    """
+    if set(stored) != set(candidate):
+        return False
+    return _own_inputs_match(node, stored, candidate) and _parent_inputs_match(
+        node, stored, candidate
+    )
+
+
+def _own_inputs_match(
+    node: MultiStepNode,
+    stored: Mapping[str, Any],
+    candidate: Mapping[str, Any],
+) -> bool:
+    """Compare the node's own parameter values using the repeat contract.
+
+    Args:
+        node: The node owning the inputs.
+        stored: The already stored local input.
+        candidate: The candidate local input.
+
+    Returns:
+        Whether all own parameter values describe the same execution.
+    """
+    for parameter in node.inputs:
+        name = parameter.name
+        if getattr(parameter, "is_numerical", False):
+            try:
+                if not np.isclose(
+                    float(stored[name]),
+                    float(candidate[name]),
+                    rtol=0.0,
+                    atol=float(getattr(parameter, "tolerance", 0.0)) + 1e-12,
+                ):
+                    return False
+            except (TypeError, ValueError):
+                return False
+        elif stored[name] != candidate[name]:
+            return False
+    return True
+
+
+def _parent_inputs_match(
+    node: MultiStepNode,
+    stored: Mapping[str, Any],
+    candidate: Mapping[str, Any],
+) -> bool:
+    """Compare incoming parent outputs exactly.
+
+    Args:
+        node: The node owning the inputs.
+        stored: The already stored local input.
+        candidate: The candidate local input.
+
+    Returns:
+        Whether all parent outputs match exactly.
+    """
+    for name in node.parent_output_names:
+        try:
+            if not bool(stored[name] == candidate[name]):
+                return False
+        except (TypeError, ValueError):
+            return False
+    return True
+
+
+def _make_local_searchspace(node: MultiStepNode, frame: pd.DataFrame) -> SearchSpace:
+    """Build the synthetic local fit search space of a node.
+
+    Args:
+        node: The node whose model is fitted.
+        frame: Local training data containing the parent outputs.
+
+    Returns:
+        The local search space covering own parameters and observed parent outputs.
+    """
+    from baybe.parameters.numerical import NumericalContinuousParameter
+    from baybe.searchspace.core import SearchSpace
+
+    parent_parameters: list[NumericalContinuousParameter] = []
+    for name in node.parent_output_names:
+        values = frame[name].to_numpy(dtype=float)
+        lower = float(np.min(values))
+        upper = float(np.max(values))
+        if lower == upper:
+            delta = max(abs(lower) * 0.5, 1.0)
+            lower -= delta
+            upper += delta
+        parent_parameters.append(
+            NumericalContinuousParameter(name, bounds=(lower, upper))
+        )
+    return SearchSpace.from_product([*node.inputs, *parent_parameters])
+
+
+def _predicted_mean_rows(
+    node: MultiStepNode,
+    successes: list[tuple[dict[str, Any], float]],
+    failure_inputs: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Impute failure outputs with means predicted from successful observations.
+
+    Args:
+        node: The node whose training view is assembled.
+        successes: Successful local inputs and real outputs.
+        failure_inputs: Local inputs of failed observations.
+
+    Returns:
+        One row per failed observation with the predicted output.
+
+    Raises:
+        IncompatibilityError: If there are too few successful observations or the
+            temporary successful-only model cannot be fitted or evaluated.
+    """
+    if len(successes) < 2:
+        raise IncompatibilityError(
+            f"Node '{node.name}' uses "
+            f"'{InfeasibleMeasurementMode.PREDICTED_MEAN.name}' but provides fewer "
+            f"than two successful observations ({len(successes)})."
+        )
+    import torch
+
+    from baybe.targets.numerical import NumericalTarget
+
+    success_frame = pd.DataFrame(
+        [{**inputs, node.output: output} for inputs, output in successes],
+        columns=[*node.model_input_names, node.output],
+    )
+    try:
+        searchspace = _make_local_searchspace(node, success_frame)
+        surrogate = deepcopy(node.surrogate_model)
+        target = NumericalTarget(node.output)
+        surrogate.fit(searchspace, target.to_objective(), success_frame)
+        failure_frame = pd.DataFrame(
+            failure_inputs, columns=list(node.model_input_names)
+        )
+        with torch.no_grad():
+            predictions = (
+                cast(Any, surrogate).posterior(failure_frame).mean.squeeze(-1).cpu()
+            )
+        values = predictions.reshape(-1).tolist()
+    except IncompatibilityError:
+        raise
+    except Exception as ex:
+        raise IncompatibilityError(
+            f"Node '{node.name}' cannot compute "
+            f"'{InfeasibleMeasurementMode.PREDICTED_MEAN.name}' training values: {ex}"
+        ) from ex
+
+    return [
+        {**inputs, node.output: float(value)}
+        for inputs, value in zip(failure_inputs, values)
+    ]
 
 
 def _is_successful(node: MultiStepNode, measurement: NodeMeasurement) -> bool:
     """Derive success from output and condition values without duplicating state."""
-    return _condition_success(
+    successful = _condition_success(
         node, {node.output: measurement.output, **measurement.condition_values}
     )
+    if successful and measurement.output is None:
+        raise IncompatibilityError(
+            f"An observation of node '{node.name}' without an output requires "
+            "a failed feasibility condition."
+        )
+    return successful
 
 
 def _validate_node_inputs(
@@ -875,8 +1843,10 @@ def _validate_finite_input(name: str, value: Any, node: str) -> None:
 
 
 __all__ = [
+    "DuplicateMeasurementWarning",
     "MultiStepData",
     "NodeMeasurement",
+    "RepeatedMeasurementWarning",
 ]
 
 

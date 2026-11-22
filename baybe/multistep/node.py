@@ -20,6 +20,9 @@ from attrs.validators import (
 
 from baybe.exceptions import IncompatibilityError
 from baybe.parameters.base import Parameter
+from baybe.recommenders.pure.experimental_feasibility import (
+    InfeasibleMeasurementMode,
+)
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
@@ -96,9 +99,8 @@ class MultiStepNode:
     cost: float = field(default=1.0, converter=float, validator=[finite_float, gt(0.0)])
     """The cost of executing this node once.
 
-    The campaign weights a compatible nonnegative acquisition gain by the local
-    probability of measurement success and divides by this cost. A failed
-    measurement still incurs the cost.
+    The campaign accounts for this cost when computing the total remaining cost
+    of an action's continuation. A failed measurement still incurs the cost.
     """
 
     feasibility_conditions: tuple[FeasibilityCondition, ...] = field(
@@ -112,6 +114,41 @@ class MultiStepNode:
     All conditions must pass. They may check the node's output or auxiliary measured
     columns, and are modeled jointly as the probability of successful execution.
     """
+
+    infeasible_measurement_mode: InfeasibleMeasurementMode = field(
+        default=InfeasibleMeasurementMode.OBSERVED,
+        converter=InfeasibleMeasurementMode,
+        kw_only=True,
+    )
+    """How failed observations enter the output-regression training view.
+
+    The stored real observations and the independent feasibility labels are never
+    changed by this setting. ``OBSERVED`` keeps a real failure output when one was
+    reported, ``EXCLUDE`` removes failures, ``DUMMY`` replaces every failure output
+    with :attr:`infeasible_dummy_value`, and ``PREDICTED_MEAN`` replaces failures
+    with predictions of a model trained on successful observations only.
+    """
+
+    infeasible_dummy_value: float | None = field(
+        default=None,
+        converter=lambda value: None if value is None else float(value),
+        validator=optional(finite_float),
+        kw_only=True,
+    )
+    """The replacement output for failed observations in ``DUMMY`` mode."""
+
+    @infeasible_dummy_value.validator
+    def _validate_infeasible_dummy_value(self, _attribute, value):  # noqa: DOC101, DOC103
+        """Require a finite dummy value whenever ``DUMMY`` mode is selected."""
+        if (
+            self.infeasible_measurement_mode is InfeasibleMeasurementMode.DUMMY
+            and value is None
+        ):
+            raise IncompatibilityError(
+                f"Node '{self.name}' uses "
+                f"'{InfeasibleMeasurementMode.DUMMY.name}' but does not provide "
+                f"a finite 'infeasible_dummy_value'."
+            )
 
     @inputs.validator
     def _validate_inputs(self, _attribute, value):  # noqa: DOC101, DOC103

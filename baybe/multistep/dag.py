@@ -46,7 +46,7 @@ class MultiStepDAG(SerialMixin):
     """All nodes in the DAG. Their order is irrelevant."""
 
     objective: Objective = field(validator=instance_of(Objective))
-    """The optimization objective, whose targets name the final nodes."""
+    """The optimization objective, whose targets cover all graph outputs."""
 
     @nodes.validator
     def _validate_nodes(self, _attribute, _value):  # noqa: DOC101, DOC103
@@ -157,9 +157,7 @@ class MultiStepDAG(SerialMixin):
 
     @objective.validator
     def _validate_objective(self, _attribute, value):  # noqa: DOC101, DOC103
-        """Validate the objective against the node outputs and targets."""
-        by_output = {node.output: node for node in self.nodes}
-
+        """Validate the objective against the graph outputs and target names."""
         target_names = [target.name for target in value.targets]
         duplicates = sorted(
             name for name, count in Counter(target_names).items() if count > 1
@@ -170,22 +168,21 @@ class MultiStepDAG(SerialMixin):
                 f"{duplicates}."
             )
 
-        unknown = sorted(set(target_names) - set(by_output))
+        leaf_outputs = set(self.graph_output_names)
+        unknown = sorted(set(target_names) - leaf_outputs)
         if unknown:
             raise IncompatibilityError(
-                f"Objective targets {unknown} do not match any node output. Known "
-                f"outputs: {sorted(by_output)}."
+                f"Objective targets {unknown} do not match any graph output. Only "
+                f"the outputs of topological leaf nodes can be optimized, but found "
+                f"targets that are not graph outputs. Graph outputs: "
+                f"{sorted(leaf_outputs)}."
             )
 
-        final_names = {by_output[target.name].name for target in value.targets}
-        relevant = set(final_names)
-        for name in final_names:
-            relevant.update(self.ancestors_of(name))
-        irrelevant = sorted({node.name for node in self.nodes} - relevant)
-        if irrelevant:
+        missing = sorted(leaf_outputs - set(target_names))
+        if missing:
             raise IncompatibilityError(
-                f"Nodes {irrelevant} are not final nodes or ancestors of final "
-                f"nodes and would not influence the objective."
+                f"The objective must include every graph output, but targets for "
+                f"{missing} are missing."
             )
 
     @staticmethod
@@ -227,21 +224,56 @@ class MultiStepDAG(SerialMixin):
             )
         )
 
-    @cached_property
+    @property
     def final_nodes(self) -> tuple[str, ...]:
-        """The nodes referenced by the objective targets, in objective order."""
-        by_output = {node.output: node.name for node in self.nodes}
-        return tuple(by_output[target.name] for target in self.objective.targets)
+        """The topological leaf node names, in topological order.
+
+        The set is defined by the graph topology alone and is independent of the
+        order in which the objective lists its targets.
+        """
+        return self.leaf_nodes
 
     @property
     def final_output_dim(self) -> int:
-        """Total number of outputs produced by all final nodes."""
-        return len(self.final_nodes)
+        """Total number of outputs produced by all graph leaves."""
+        return len(self.graph_output_names)
 
     @property
     def final_target_names(self) -> tuple[str, ...]:
-        """Target names of all final nodes, in objective order."""
+        """Target names of the objective, in objective order."""
         return tuple(target.name for target in self.objective.targets)
+
+    @property
+    def graph_output_names(self) -> tuple[str, ...]:
+        """The graph output names in network-output order.
+
+        The order is the topological leaf order. It is independent of the objective
+        target order; use :attr:`objective_output_indices` to align the two.
+        """
+        return tuple(self.node_by_name[name].output for name in self.graph_output_nodes)
+
+    @property
+    def graph_output_nodes(self) -> tuple[str, ...]:
+        """The topological leaf node names, in topological order."""
+        return self.leaf_nodes
+
+    @property
+    def leaf_nodes(self) -> tuple[str, ...]:
+        """The node names without children, in topological order."""
+        return tuple(
+            name for name in self.topological_order if not self.children_of(name)
+        )
+
+    @property
+    def objective_output_indices(self) -> tuple[int, ...]:
+        """Indices selecting objective targets from the graph output vector.
+
+        The network posterior returns graph outputs in :attr:`graph_output_names`
+        order. Applying an objective whose targets are declared in a different order
+        therefore requires this index mapping.
+        """
+        positions = {name: index for index, name in enumerate(self.graph_output_names)}
+        return tuple(positions[target.name] for target in self.objective.targets)
 
     @property
     def node_by_name(self) -> dict[str, MultiStepNode]:
