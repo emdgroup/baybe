@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from copy import deepcopy
 from functools import reduce
 from operator import add
 from typing import TYPE_CHECKING, Any, NoReturn, cast
@@ -29,93 +28,71 @@ if TYPE_CHECKING:
 
     from baybe.searchspace import SearchSpace
 
-_N_MC_SAMPLES = 256
-"""The number of posterior samples used to estimate the rank weights."""
-
-_DILUTION_QUANTILE = 0.95
-"""The quantile of the target model's ranking loss above which a source model's median
-ranking loss leads to its removal from the ensemble (prevents weight dilution)."""
+_N_BOOTSTRAP_SAMPLES = 1000
+"""The number of bootstrap resamples of the target data used to estimate the rank
+weights."""
 
 
-def _compute_ranking_loss(samples: Tensor, targets: Tensor, /) -> Tensor:
-    """Compute the ranking loss, i.e. the number of misranked pairs, per sample.
+def _compute_loocv_means(model: SingleTaskGP, /) -> Tensor:
+    """Compute the leave-one-out predictive means of a fitted GP at its training points.
 
-    Row ``j`` of ``samples`` holds the predictions of the model used to rank the target
-    point ``j``. A pair ``(j, k)`` is misranked if the order of ``samples[s, j, j]`` and
-    ``samples[s, j, k]`` disagrees with the order of ``targets[j]`` and ``targets[k]``.
-
-    For a source model, every row holds the same predictions. For the target model, row
-    ``j`` holds the predictions of its leave-one-out model without point ``j``.
-
-    Args:
-        samples: A ``n_samples x n x n`` tensor of predictions at the ``n`` target
-            points, whose entry ``[s, j, k]`` is the ``s``-th posterior sample of the
-            model for row ``j``, evaluated at point ``k``.
-        targets: A tensor of the ``n`` observed target values.
-
-    Returns:
-        An ``n_samples`` tensor with the number of misranked pairs per sample.
-    """
-    predictions = samples.diagonal(dim1=-2, dim2=-1)
-    predictions_less = predictions.unsqueeze(-1) < samples
-    targets_less = targets.unsqueeze(-1) < targets.unsqueeze(-2)
-    return (predictions_less ^ targets_less).sum(dim=(-2, -1))
-
-
-def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
-    """Draw posterior samples from the leave-one-out versions of a fitted GP.
-
-    The ``j``-th leave-one-out GP is the given GP conditioned on all its training points
-    except the ``j``-th one, keeping the fitted hyperparameters. Each of these GPs is
-    sampled jointly at all ``n`` training points, including the one it left out.
-
-    The samples are drawn from the latent function, i.e. without observation noise, and
-    on the original output scale.
+    The ``j``-th mean is the prediction at training point ``j`` of the GP conditioned on
+    all other training points, keeping the fitted hyperparameters. All means follow in
+    closed form from a single Cholesky decomposition (Rasmussen & Williams, Eq. 5.12).
 
     Args:
         model: The fitted Gaussian process model.
-        n_samples: The number of posterior samples to draw.
 
     Returns:
-        A tensor of shape ``n_samples x n x n``, whose entry ``[s, j, k]`` is the
-        ``s``-th posterior sample of the GP without training point ``j``, evaluated at
-        training point ``k``.
+        A tensor with the ``n`` leave-one-out means, in the model's standardized
+        output space.
     """
-    from botorch.sampling.normal import SobolQMCNormalSampler
+    from linear_operator.utils.cholesky import psd_safe_cholesky
 
-    loo_model = deepcopy(model)
-    loo_model.eval()
-    train_x = loo_model.train_inputs[0]
-    train_y = loo_model.train_targets
-
-    # Fold j contains all training points except point j
-    folds = ~torch.eye(len(train_x), dtype=torch.bool)
-
-    # Store the folds as batched training data, which `set_train_data` keeps as is
-    # Note: `set_train_data` comes from GPyTorch, which mypy can't see, so mypy
-    # falls back to `nn.Module.__getattr__` and types it as a tensor
-    loo_model.set_train_data(  # type: ignore[operator]
-        torch.stack([train_x[m] for m in folds]),
-        torch.stack([train_y[m] for m in folds]),
-        strict=False,
-    )
-
+    # After `eval()`, the training inputs are input-transformed and the training
+    # targets are standardized
+    model.eval()
+    train_x = model.train_inputs[0]
+    train_y = model.train_targets
     with torch.no_grad():
-        # Calling the model directly skips the input transform, so both the folds
-        # and `train_x` must already be transformed, as set by `eval()` above.
-        # The outcome transform is skipped as well, so it is undone explicitly.
-        outcome_transform = loo_model.outcome_transform
-        assert isinstance(outcome_transform, Standardize)  # ensured by the GP fit
-        posterior = outcome_transform.untransform_posterior(
-            GPyTorchPosterior(loo_model(train_x))
+        prior = model.forward(train_x)
+        noisy_prior = model.likelihood(prior)
+        assert isinstance(noisy_prior, MultivariateNormal)  # Gaussian likelihood
+        precision = torch.cholesky_inverse(
+            psd_safe_cholesky(noisy_prior.covariance_matrix)
         )
-        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
-        return sampler(posterior).squeeze(-1)
+        residuals = precision @ (train_y - prior.mean)
+        return train_y - residuals / precision.diagonal()
+
+
+def _make_misranking_matrix(
+    predictions: Tensor, references: Tensor, targets: Tensor, /
+) -> Tensor:
+    """Make the matrix of misranked pairs of target points.
+
+    Entry ``[k, l]`` is ``True`` if the order of ``predictions[k]`` and
+    ``references[l]`` disagrees with the order of ``targets[k]`` and ``targets[l]``.
+    Self-pairs ``k = l`` are never misranked.
+
+    Args:
+        predictions: The ``n`` predictions at the target points.
+        references: The ``n`` values the predictions are compared against.
+        targets: The ``n`` observed target values.
+
+    Returns:
+        A Boolean ``n x n`` tensor.
+    """
+    # NOTE: The paper's Eq. 4 counts the target's self-pairs, which adds about n/2 to
+    #   its loss only, as a source's self-pairs are never misranked. Excluding them
+    #   keeps the comparison fair and also treats bootstrap duplicates as ties.
+    predictions_less = predictions.unsqueeze(-1) < references.unsqueeze(-2)
+    targets_less = targets.unsqueeze(-1) < targets.unsqueeze(-2)
+    is_self_pair = torch.eye(len(targets), dtype=torch.bool, device=targets.device)
+    return (predictions_less ^ targets_less) & ~is_self_pair
 
 
 def _compute_rank_weights(
     train_x: Tensor,
-    targets: Tensor,
     source_models: tuple[SingleTaskGP, ...],
     target_model: SingleTaskGP,
     /,
@@ -126,56 +103,62 @@ def _compute_rank_weights(
 
     Each model is weighted by the probability that it has the lowest ranking loss on
     the target points, i.e. that it orders them best. The probability is estimated from
-    ``n_samples`` joint posterior samples per model: in each sample, the models with the
-    lowest ranking loss share one vote evenly, and a model's weight is its average vote.
+    ``n_samples`` bootstrap resamples of the target data, shared by all models: in each
+    resample, the models with the lowest ranking loss share one vote evenly, and a
+    model's weight is its average vote.
 
-    Source models are evaluated at the target points directly. The target model, which
-    was trained on these points, is instead evaluated via its leave-one-out models, so
-    that its ranking loss measures generalization rather than in-sample fit.
+    The ranking losses are computed on predictive means. Source models predict the
+    target points directly (Eq. 3). The target model, which was trained on these points,
+    is instead evaluated via its leave-one-out means against the observed values
+    (Eq. 4), so that its ranking loss measures generalization rather than in-sample fit.
 
-    To prevent weight dilution by many poor source models, a source model gets zero
-    weight if its median ranking loss exceeds the ``_DILUTION_QUANTILE`` quantile of the
-    target model's ranking loss.
+    To prevent weight dilution by many poor source models, each source model is kept
+    only with the probability that it has a lower ranking loss than the target model on
+    a resample (Eq. 9 with an infinite horizon), and dropped otherwise.
 
     Args:
         train_x: The inputs of the ``n`` target points (comp-rep, ``n x d``).
-        targets: The ``n`` observed target values.
         source_models: The fitted source Gaussian process models.
         target_model: The fitted target Gaussian process model, trained on
-            ``train_x`` and ``targets``.
-        n_samples: The number of posterior samples used to estimate the weights.
+            ``train_x``.
+        n_samples: The number of bootstrap resamples used to estimate the weights.
 
     Returns:
         A tensor of length ``len(source_models) + 1`` with the model weights, ordered as
         ``(sources..., target)``.
     """
-    from botorch.sampling.normal import SobolQMCNormalSampler
-
+    # Rankings are invariant under the affine outcome transforms, so source means in
+    # original units can be compared with standardized target values
+    targets = target_model.train_targets
     n = len(targets)
-    ranking_losses = []
     with torch.no_grad():
+        matrices = []
         for model in source_models:
-            # Each source gets its own sampler, so their samples are independent
-            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
-            f = sampler(model.posterior(train_x)).squeeze(-1)
-            # A source model ranks every point itself, so all rows are the same
-            samples = f.unsqueeze(-2).expand(-1, n, -1)
-            ranking_losses.append(_compute_ranking_loss(samples, targets))
+            mean = model.posterior(train_x).mean.squeeze(-1)
+            matrices.append(_make_misranking_matrix(mean, mean, targets))
+        loo_means = _compute_loocv_means(target_model)
+        matrices.append(_make_misranking_matrix(loo_means, targets, targets))
 
-        # The target model ranks point j with its leave-one-out model without point j
-        samples = _sample_loocv_predictions(target_model, n_samples)
-        ranking_losses.append(_compute_ranking_loss(samples, targets))
+        # A resample is given by how often it contains each target point, and its
+        # ranking loss counts the misranked pairs over all drawn copies of the points
+        counts = (
+            torch.distributions.Multinomial(n, targets.new_ones(n))
+            .sample(torch.Size([n_samples]))
+            .to(targets)
+        )
+        losses = torch.einsum(
+            "sk,mkl,sl->ms", counts, torch.stack(matrices).to(targets), counts
+        )
 
-    ranking_loss_tensor = torch.stack(ranking_losses)
+        # Keep each source with the probability that it beats the target on a resample
+        # NOTE: The comparison is strict as in the paper, so ties count against the
+        #   source. Without a known optimization horizon, the prior factor is omitted.
+        p_keep = (losses[:-1] < losses[-1]).to(targets).mean(dim=-1)
+        is_dropped = torch.rand_like(p_keep) >= p_keep
+        losses[:-1][is_dropped] = torch.inf
 
-    # Drop sources whose median loss exceeds the target's loss quantile, by giving
-    # them a loss above the maximum possible ``n * (n - 1)`` so they never win a vote
-    threshold = ranking_loss_tensor[-1].float().quantile(_DILUTION_QUANTILE)
-    is_dropped = ranking_loss_tensor[:-1].float().median(dim=1).values > threshold
-    ranking_loss_tensor[:-1][is_dropped] = n * n
-
-    # In each sample, the models with the lowest loss share one vote evenly
-    is_best = ranking_loss_tensor == ranking_loss_tensor.min(dim=0, keepdim=True).values
+    # In each resample, the models with the lowest loss share one vote evenly
+    is_best = losses == losses.min(dim=0, keepdim=True).values
     rank_weights = (is_best / is_best.sum(dim=0, keepdim=True)).mean(dim=1)
     return rank_weights.type_as(train_x)
 
@@ -281,10 +264,9 @@ class RGPEModel(Model):
         else:
             weights = _compute_rank_weights(
                 train_x[target_mask],
-                target_y.squeeze(-1),
                 source_models,
                 target_model,
-                n_samples=_N_MC_SAMPLES,
+                n_samples=_N_BOOTSTRAP_SAMPLES,
             )
 
         # The target's standardization defines the ensemble's output units
