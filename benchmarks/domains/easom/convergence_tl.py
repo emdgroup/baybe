@@ -91,6 +91,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
         name="Function",
         values=["Target_Function", "Source_Function"],
         active_values=["Target_Function"],
+        override_transfer_learning_mode=TransferLearningMode.RGPE,
     )
     task_param_naive = evolve(
         task_param, override_transfer_learning_mode=TransferLearningMode.NAIVE
@@ -141,7 +142,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
         results.append(
             simulate_scenarios(
                 {
-                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_rgpe": tl_campaign,
                     f"{int(100 * p)}_naive": naive_campaign,
                 },
                 lookup,
@@ -154,7 +155,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
         )
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": naive_campaign},
+            {"0_naive": naive_campaign},
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,
