@@ -193,4 +193,7 @@ on the optimization:
 :class: only-dark
 ```
 
+A comparison of transfer learning modes on historic campaigns of unknown relevance can
+be found [here](../../examples/Transfer_Learning/rgpe_transfer_learning).
+
 [`TaskParameter`]: baybe.parameters.categorical.TaskParameter
