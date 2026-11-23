@@ -5,7 +5,7 @@ These examples demonstrate various ways to configure
 ```{toctree}
 :maxdepth: 1
 
-Discrete Space<discrete_space>
 Continuous Space<continuous_space>
+Discrete Space<discrete_space>
 Hybrid Space<hybrid_space>
 ```

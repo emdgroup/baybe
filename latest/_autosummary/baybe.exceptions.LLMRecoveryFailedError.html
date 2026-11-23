@@ -3,12 +3,12 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="baybe.exceptions.LLMResponseWarning" href="baybe.exceptions.LLMResponseWarning.html"><link rel="prev" title="baybe.exceptions.LLMMalformedResponseError" href="baybe.exceptions.LLMMalformedResponseError.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="baybe.exceptions.LLMResponseWarning" href="baybe.exceptions.LLMResponseWarning.html"><link rel="prev" title="baybe.exceptions.LLMError" href="baybe.exceptions.LLMError.html">
         <link rel="prefetch" href="../_static/logo1.svg" as="image">
         <link rel="prefetch" href="../_static/logo1.svg" as="image">
 
     <link rel="shortcut icon" href="../_static/favicon.ico"><!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
-        <title>baybe.exceptions.LLMResponseError - BayBE documentation</title>
+        <title>baybe.exceptions.LLMRecoveryFailedError - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -301,27 +301,27 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Searchspaces/Searchspaces.html">Searchspaces</a><input aria-label="Toggle navigation of Searchspaces" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Searchspaces/discrete_space.html">Discrete Space</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Searchspaces/continuous_space.html">Continuous Space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Searchspaces/discrete_space.html">Discrete Space</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Searchspaces/hybrid_space.html">Hybrid Space</a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Constraints_Discrete/Constraints_Discrete.html">Constraints Discrete</a><input aria-label="Toggle navigation of Constraints Discrete" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/custom_constraints.html">Custom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/selection_constraints.html">Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/dependency_constraints.html">Dependency</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/prodsum_constraints.html">Product/Sum</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/selection_constraints.html">Selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Discrete/custom_constraints.html">Custom</a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Constraints_Continuous/Constraints_Continuous.html">Constraints Continuous</a><input aria-label="Toggle navigation of Constraints Continuous" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/linear_constraints.html">Linear</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/interpoint.html">Interpoint</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/hybrid_space.html">Hybrid Space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Constraints_Continuous/linear_constraints.html">Linear</a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Multi_Target/Multi_Target.html">Multi Target</a><input aria-label="Toggle navigation of Multi Target" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Multi_Target/desirability.html">Desirability</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Multi_Target/pareto.html">Pareto</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Multi_Target/desirability.html">Desirability</a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Serialization/Serialization.html">Serialization</a><input aria-label="Toggle navigation of Serialization" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -336,37 +336,37 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Backtesting/Backtesting.html">Backtesting</a><input aria-label="Toggle navigation of Backtesting" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/full_initial_data.html">Full Initial Data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/full_lookup.html">Full Lookup</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/custom_blackbox.html">Custom Blackbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/full_initial_data.html">Full Initial Data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/impute_mode.html">Impute Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/custom_blackbox.html">Custom Blackbox</a></li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Transformations/Transformations.html">Transformations</a><input aria-label="Toggle navigation of Transformations" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Transformations/laser_tuning.html">Laser Tuning</a></li>
-</ul>
-</li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Custom_Hooks/Custom_Hooks.html">Custom Hooks</a><input aria-label="Toggle navigation of Custom Hooks" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Custom_Hooks/basics.html">Basics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Custom_Hooks/campaign_stopping.html">Campaign Stopping</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Custom_Hooks/probability_of_improvement.html">Probability Of Improvement</a></li>
-</ul>
-</li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Symmetries/Symmetries.html">Symmetries</a><input aria-label="Toggle navigation of Symmetries" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Symmetries/permutation.html">Permutation</a></li>
-</ul>
-</li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html">Multi Armed Bandit</a><input aria-label="Toggle navigation of Multi Armed Bandit" class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Multi_Armed_Bandit/bernoulli_multi_armed_bandit.html">Bernoulli Multi Armed Bandit</a></li>
-</ul>
-</li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Mixtures/Mixtures.html">Mixtures</a><input aria-label="Toggle navigation of Mixtures" class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Mixtures/Mixtures.html">Mixtures</a><input aria-label="Toggle navigation of Mixtures" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Mixtures/slot_based.html">Slot Based</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Mixtures/traditional.html">Traditional</a></li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Transfer_Learning/Transfer_Learning.html">Transfer Learning</a><input aria-label="Toggle navigation of Transfer Learning" class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Transformations/Transformations.html">Transformations</a><input aria-label="Toggle navigation of Transformations" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Transformations/laser_tuning.html">Laser Tuning</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Custom_Hooks/Custom_Hooks.html">Custom Hooks</a><input aria-label="Toggle navigation of Custom Hooks" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Custom_Hooks/campaign_stopping.html">Campaign Stopping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Custom_Hooks/basics.html">Basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Custom_Hooks/probability_of_improvement.html">Probability Of Improvement</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Symmetries/Symmetries.html">Symmetries</a><input aria-label="Toggle navigation of Symmetries" class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Symmetries/permutation.html">Permutation</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Transfer_Learning/Transfer_Learning.html">Transfer Learning</a><input aria-label="Toggle navigation of Transfer Learning" class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Transfer_Learning/basic_transfer_learning.html">Basic Transfer Learning</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html">Multi Armed Bandit</a><input aria-label="Toggle navigation of Multi Armed Bandit" class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Multi_Armed_Bandit/bernoulli_multi_armed_bandit.html">Bernoulli Multi Armed Bandit</a></li>
 </ul>
 </li>
 </ul>
@@ -484,16 +484,10 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.LLMAuthenticationError.html">baybe.exceptions.LLMAuthenticationError</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.LLMBatchConstraintValidationError.html">baybe.exceptions.LLMBatchConstraintValidationError</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.LLMBatchSizeError.html">baybe.exceptions.LLMBatchSizeError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.LLMCallError.html">baybe.exceptions.LLMCallError</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.LLMDuplicateRecommendationsError.html">baybe.exceptions.LLMDuplicateRecommendationsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.LLMError.html">baybe.exceptions.LLMError</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.LLMIneligiblePointsError.html">baybe.exceptions.LLMIneligiblePointsError</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.LLMMalformedResponseError.html">baybe.exceptions.LLMMalformedResponseError</a></li>
-<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">baybe.exceptions.LLMResponseError</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">baybe.exceptions.LLMRecoveryFailedError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.LLMResponseWarning.html">baybe.exceptions.LLMResponseWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.LLMUnknownParameterError.html">baybe.exceptions.LLMUnknownParameterError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoMCAcquisitionFunctionError.html">baybe.exceptions.NoMCAcquisitionFunctionError</a></li>
@@ -1227,7 +1221,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../_sources/_autosummary/baybe.exceptions.LLMResponseError.rst.txt" title="View this page">
+  <a class="muted-link" href="../_sources/_autosummary/baybe.exceptions.LLMRecoveryFailedError.rst.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -1245,20 +1239,20 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="baybe-exceptions-llmresponseerror">
-<h1>baybe.exceptions.LLMResponseError<a class="headerlink" href="#baybe-exceptions-llmresponseerror" title="Link to this heading">¶</a></h1>
+          <section id="baybe-exceptions-llmrecoveryfailederror">
+<h1>baybe.exceptions.LLMRecoveryFailedError<a class="headerlink" href="#baybe-exceptions-llmrecoveryfailederror" title="Link to this heading">¶</a></h1>
 <dl class="py exception">
-<dt class="sig sig-object py" id="baybe.exceptions.LLMResponseError">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baybe.exceptions.</span></span><span class="sig-name descname"><span class="pre">LLMResponseError</span></span><a class="reference internal" href="../_modules/baybe/exceptions.html#LLMResponseError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.exceptions.LLMResponseError" title="Link to this definition">¶</a></dt>
-<dd><p>An error occurred while processing a language model response.</p>
+<dt class="sig sig-object py" id="baybe.exceptions.LLMRecoveryFailedError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baybe.exceptions.</span></span><span class="sig-name descname"><span class="pre">LLMRecoveryFailedError</span></span><a class="reference internal" href="../_modules/baybe/exceptions.html#LLMRecoveryFailedError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.exceptions.LLMRecoveryFailedError" title="Link to this definition">¶</a></dt>
+<dd><p>No usable response was produced, even after the recovery attempt.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="baybe.exceptions.LLMResponseError.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.exceptions.LLMResponseError.__init__" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="baybe.exceptions.LLMRecoveryFailedError.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.exceptions.LLMRecoveryFailedError.__init__" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="baybe.exceptions.LLMResponseError.__new__">
-<span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.exceptions.LLMResponseError.__new__" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="baybe.exceptions.LLMRecoveryFailedError.__new__">
+<span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.exceptions.LLMRecoveryFailedError.__new__" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1279,14 +1273,14 @@
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="baybe.exceptions.LLMMalformedResponseError.html">
+          <a class="prev-page" href="baybe.exceptions.LLMError.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">baybe.exceptions.LLMMalformedResponseError</div>
+                <div class="title">baybe.exceptions.LLMError</div>
                 
               </div>
             </a>
@@ -1320,10 +1314,10 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">baybe.exceptions.LLMResponseError</a><ul>
-<li><a class="reference internal" href="#baybe.exceptions.LLMResponseError"><code class="docutils literal notranslate"><span class="pre">LLMResponseError</span></code></a><ul>
-<li><a class="reference internal" href="#baybe.exceptions.LLMResponseError.__init__"><code class="docutils literal notranslate"><span class="pre">LLMResponseError.__init__()</span></code></a></li>
-<li><a class="reference internal" href="#baybe.exceptions.LLMResponseError.__new__"><code class="docutils literal notranslate"><span class="pre">LLMResponseError.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#">baybe.exceptions.LLMRecoveryFailedError</a><ul>
+<li><a class="reference internal" href="#baybe.exceptions.LLMRecoveryFailedError"><code class="docutils literal notranslate"><span class="pre">LLMRecoveryFailedError</span></code></a><ul>
+<li><a class="reference internal" href="#baybe.exceptions.LLMRecoveryFailedError.__init__"><code class="docutils literal notranslate"><span class="pre">LLMRecoveryFailedError.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.exceptions.LLMRecoveryFailedError.__new__"><code class="docutils literal notranslate"><span class="pre">LLMRecoveryFailedError.__new__()</span></code></a></li>
 </ul>
 </li>
 </ul>

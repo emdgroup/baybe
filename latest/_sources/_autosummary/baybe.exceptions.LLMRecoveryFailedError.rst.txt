@@ -1,0 +1,6 @@
+baybe.exceptions.LLMRecoveryFailedError
+=======================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: LLMRecoveryFailedError

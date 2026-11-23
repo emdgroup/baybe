@@ -1,6 +1,0 @@
-baybe.exceptions.LLMBatchConstraintValidationError
-==================================================
-
-.. currentmodule:: baybe.exceptions
-
-.. autoexception:: LLMBatchConstraintValidationError

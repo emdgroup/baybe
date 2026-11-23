@@ -1,6 +1,0 @@
-baybe.exceptions.LLMUnknownParameterError
-=========================================
-
-.. currentmodule:: baybe.exceptions
-
-.. autoexception:: LLMUnknownParameterError
