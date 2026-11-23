@@ -388,6 +388,8 @@ class SubspaceDiscrete(SerialMixin):
         already during the creation of parameter combinations, resulting in a
         significantly faster construction.
 
+        The construction is restricted to the parameters' active values.
+
         Args:
             max_sum: The maximum (weighted) sum of the parameter values defining the
                 simplex size.
@@ -489,8 +491,8 @@ class SubspaceDiscrete(SerialMixin):
         # For a positive coefficient c the minimum contribution is c*min_raw; for a
         # negative coefficient the ordering flips and it becomes c*max_raw. Taking
         # min of both products handles any real coefficient correctly.
-        min_raw = [min(p.values) for p in simplex_parameters]
-        max_raw = [max(p.values) for p in simplex_parameters]
+        min_raw = [min(p.active_values) for p in simplex_parameters]
+        max_raw = [max(p.active_values) for p in simplex_parameters]
         coeffs = np.asarray(simplex_coefficients, dtype=active_settings.DTypeFloatNumpy)
         if not np.isfinite(coeffs).all():
             raise ValueError(
@@ -530,7 +532,12 @@ class SubspaceDiscrete(SerialMixin):
         # broadcasting to compute the validity mask in 2D (n_old, n_new) and only
         # materialize the surviving combinations. This avoids allocating large
         # intermediate arrays that are mostly discarded.
-        arr = np.empty((1, 0), dtype=active_settings.DTypeFloatNumpy)
+        # Preserve the exact scalar type of the active values in the output so that the
+        # constructed configurations match what downstream validation compares against.
+        value_dtype = np.result_type(
+            *(np.asarray(p.active_values).dtype for p in simplex_parameters)
+        )
+        arr = np.empty((1, 0), dtype=value_dtype)
         partial_sums = np.zeros(1, dtype=active_settings.DTypeFloatNumpy)
         nz_counts = np.zeros(1, dtype=np.intp)
 
@@ -541,7 +548,7 @@ class SubspaceDiscrete(SerialMixin):
             np.append(min_nonzero_upcoming, 0),
             np.append(max_nonzero_upcoming, 0),
         ):
-            values = np.asarray(param.values, dtype=active_settings.DTypeFloatNumpy)
+            values = np.asarray(param.active_values)
             threshold = (max_sum - min_sum_to_go) + tolerance
             effective_min = min_nonzero - max_nonzero_to_go
             effective_max = max_nonzero - min_nonzero_to_go

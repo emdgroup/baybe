@@ -217,6 +217,44 @@ def test_from_simplex_with_degenerate_parameter_count(simplex_parameters, expect
         assert all(candidates[simplex_cols].sum(axis=1) <= 1.0)
 
 
+@pytest.mark.parametrize(
+    "backend",
+    [nw.Implementation.PANDAS, nw.Implementation.POLARS],
+    ids=["pandas", "polars"],
+)
+@pytest.mark.parametrize("single_precision", [False, True], ids=["float64", "float32"])
+def test_from_simplex_uses_only_active_values(backend, single_precision):
+    """Simplex construction is restricted to the exact active parameter values."""
+    simplex_parameters = [
+        NumericalDiscreteParameter("x", values=(0.1, 0.2, 0.3)),
+        NumericalDiscreteParameter("y", values=(0.1, 0.2, 0.3)),
+    ]
+    product_parameters = [
+        CategoricalParameter("C", values=("a", "b", "c"), active_values=("a", "b")),
+        NumericalDiscreteParameter("z", values=(0.1, 0.25)),
+    ]
+
+    with Settings(
+        default_dataframe_backend=backend,
+        use_single_precision_numpy=single_precision,
+    ):
+        subspace = SubspaceDiscrete.from_simplex(
+            max_sum=0.4,
+            simplex_parameters=simplex_parameters,
+            product_parameters=product_parameters,
+        )
+        candidates = nw.from_native(subspace.get_candidates(), eager_only=False)
+        if isinstance(candidates, nw.LazyFrame):
+            candidates = candidates.collect()
+
+        for parameter in [*simplex_parameters, *product_parameters]:
+            column = candidates[parameter.name]
+            assert set(column.to_list()) <= set(parameter.active_values)
+            if parameter.is_numerical:
+                expected = np.asarray(parameter.active_values).dtype
+                assert column.to_numpy().dtype == expected
+
+
 def test_continuous_searchspace_creation_from_bounds():
     """A purely continuous search space is created from example bounds."""
     parameters = (
