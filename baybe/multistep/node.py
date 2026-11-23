@@ -4,9 +4,14 @@ from __future__ import annotations
 
 import gc
 from collections import Counter
+from collections.abc import Mapping
 from functools import cached_property
-from typing import Literal
+from math import isfinite
+from numbers import Real
+from types import MappingProxyType
+from typing import Any, Literal
 
+import cattrs
 from attrs import define, field
 from attrs.validators import (
     and_,
@@ -24,10 +29,62 @@ from baybe.recommenders.pure.experimental_feasibility import (
     InfeasibleMeasurementMode,
 )
 from baybe.searchspace.core import SearchSpace
+from baybe.serialization import converter
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import to_tuple
 from baybe.utils.validation import finite_float
+
+
+def _normalize_output(
+    value: str | tuple[str, ...] | list[str],
+) -> str | tuple[str, ...]:
+    """Normalize an output declaration while preserving the legacy string form."""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (tuple, list)):
+        return tuple(value)
+    raise TypeError("A node output must be a string or a sequence of strings.")
+
+
+def _validate_output(
+    _instance: Any, _attribute: Any, value: str | tuple[str, ...]
+) -> None:
+    """Validate output names and reject ambiguous or duplicate declarations."""
+    names = (value,) if isinstance(value, str) else value
+    if not names:
+        raise ValueError("A node must declare at least one output name.")
+    if any(not isinstance(name, str) or not name for name in names):
+        raise ValueError("Node output names must be nonempty strings.")
+    duplicates = sorted(name for name, count in Counter(names).items() if count > 1)
+    if duplicates:
+        raise IncompatibilityError(f"Node output names must be unique: {duplicates}.")
+
+
+def _normalize_dummy(
+    value: float | Mapping[str, float] | None,
+) -> float | Mapping[str, float] | None:
+    """Copy and normalize dummy values without accepting non-finite numbers."""
+    if value is None:
+        return None
+    if isinstance(value, Mapping):
+        result: dict[str, float] = {}
+        for name, number in value.items():
+            if not isinstance(name, str) or not name:
+                raise ValueError("Dummy output names must be nonempty strings.")
+            result[name] = _finite_dummy(number)
+        return MappingProxyType(result)
+    return _finite_dummy(value)
+
+
+def _finite_dummy(value: Any) -> float:
+    """Return a finite real number, rejecting Booleans and nonnumeric values."""
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise TypeError("Dummy output values must be finite real numbers.")
+    number = float(value)
+    if not isfinite(number):
+        raise ValueError("Dummy output values must be finite real numbers.")
+    return number
 
 
 @define(frozen=True)
@@ -62,18 +119,20 @@ class FeasibilityCondition:
 class MultiStepNode:
     """A single step in a multi-step experiment DAG.
 
-    A node owns its input parameters, the name of its output, its surrogate
+    A node owns its input parameters, one or more named outputs, its surrogate
     configuration, its execution cost, and references to parent nodes whose
-    outputs it consumes. The output itself is an observed quantity produced by
-    executing the node, not a search-space dimension. It does not own experiment
-    state, fitted models, or status.
+    outputs it consumes. Its outputs are observed together as one execution, not
+    search-space dimensions. It does not own experiment state, fitted models, or
+    status.
     """
 
     name: str = field(validator=and_(instance_of(str), min_len(1)))
     """The unique name of this node within the DAG."""
 
-    output: str = field(validator=and_(instance_of(str), min_len(1)))
-    """The name of the single output column this node produces."""
+    output: str | tuple[str, ...] = field(
+        converter=_normalize_output, validator=_validate_output
+    )
+    """The name of the output column, or a tuple of jointly produced columns."""
 
     inputs: tuple[Parameter, ...] = field(
         factory=tuple,
@@ -111,8 +170,8 @@ class MultiStepNode:
     )
     """Conditions that define successful execution at this node.
 
-    All conditions must pass. They may check the node's output or auxiliary measured
-    columns, and are modeled jointly as the probability of successful execution.
+    All conditions must pass. They may check any node output or auxiliary measured
+    column, and are modeled jointly as the probability of successful execution.
     """
 
     infeasible_measurement_mode: InfeasibleMeasurementMode = field(
@@ -129,20 +188,20 @@ class MultiStepNode:
     with predictions of a model trained on successful observations only.
     """
 
-    infeasible_dummy_value: float | None = field(
+    infeasible_dummy_value: float | Mapping[str, float] | None = field(
         default=None,
-        converter=lambda value: None if value is None else float(value),
-        validator=optional(finite_float),
+        converter=_normalize_dummy,
         kw_only=True,
     )
-    """The replacement output for failed observations in ``DUMMY`` mode."""
+    """The replacement output value(s) for failed observations in ``DUMMY`` mode."""
 
     @infeasible_dummy_value.validator
     def _validate_infeasible_dummy_value(self, _attribute, value):  # noqa: DOC101, DOC103
         """Require a finite dummy value whenever ``DUMMY`` mode is selected."""
-        if (
-            self.infeasible_measurement_mode is InfeasibleMeasurementMode.DUMMY
-            and value is None
+        if self.infeasible_measurement_mode is InfeasibleMeasurementMode.DUMMY and (
+            value is None
+            or (isinstance(value, Mapping) and set(value) != set(self.output_names))
+            or (len(self.output_names) > 1 and not isinstance(value, Mapping))
         ):
             raise IncompatibilityError(
                 f"Node '{self.name}' uses "
@@ -159,11 +218,21 @@ class MultiStepNode:
             raise IncompatibilityError(
                 f"Node '{self.name}' lists duplicate input parameters: {duplicates}."
             )
-        if self.output in names:
+        collisions = set(self.output_names) & set(names)
+        if collisions:
+            output_name = sorted(collisions)[0]
             raise IncompatibilityError(
-                f"Node '{self.name}' uses output name '{self.output}' also as "
+                f"Node '{self.name}' uses output name '{output_name}' also as "
                 f"an input parameter."
             )
+
+        if isinstance(self.infeasible_dummy_value, Mapping):
+            unknown = set(self.infeasible_dummy_value) - set(self.output_names)
+            if unknown:
+                raise IncompatibilityError(
+                    f"Node '{self.name}' has dummy values for unknown outputs: "
+                    f"{sorted(unknown)}."
+                )
 
     @parents.validator
     def _validate_parents(self, _attribute, value):  # noqa: DOC101, DOC103
@@ -196,7 +265,12 @@ class MultiStepNode:
     @property
     def parent_output_names(self) -> tuple[str, ...]:
         """The output names of the node's parent nodes, in parent order."""
-        return tuple(parent.output for parent in self.parents)
+        return tuple(name for parent in self.parents for name in parent.output_names)
+
+    @property
+    def output_names(self) -> tuple[str, ...]:
+        """Return this node's output names in their canonical order."""
+        return (self.output,) if isinstance(self.output, str) else self.output
 
     @property
     def model_input_names(self) -> tuple[str, ...]:
@@ -213,6 +287,47 @@ class MultiStepNode:
     def searchspace(self) -> SearchSpace:
         """The search space of the node's own tunable input parameters."""
         return SearchSpace.from_product(self.inputs)
+
+
+def _structure_output(value: Any, _: Any) -> str | tuple[str, ...]:
+    """Structure legacy strings and new output-name sequences."""
+    return _normalize_output(value)
+
+
+def _structure_dummy(value: Any, _: Any) -> Any:
+    """Pass copied dummy values through the node field converter."""
+    return value
+
+
+_node_unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
+    MultiStepNode,
+    converter,
+    infeasible_dummy_value=cattrs.gen.override(
+        unstruct_hook=lambda value: dict(value) if isinstance(value, Mapping) else value
+    ),
+)
+_node_structure_hook = cattrs.gen.make_dict_structure_fn(
+    MultiStepNode,
+    converter,
+    output=cattrs.gen.override(struct_hook=_structure_output),
+    infeasible_dummy_value=cattrs.gen.override(struct_hook=_structure_dummy),
+)
+
+
+def _structure_multistep_node(specs: Mapping[str, Any], cls: type[MultiStepNode]):
+    """Restore a node while preserving field-level output normalization."""
+    values = dict(specs)
+    type_ = values.pop("type", None)
+    if type_ is not None and type_ != cls.__name__:
+        raise TypeError(
+            f"The type field '{type_}' does not match the target class "
+            f"'{cls.__name__}'."
+        )
+    return _node_structure_hook(values, cls)
+
+
+converter.register_unstructure_hook(MultiStepNode, _node_unstructure_hook)
+converter.register_structure_hook(MultiStepNode, _structure_multistep_node)
 
 
 # Collect leftover original slotted classes processed by ``attrs.define``.

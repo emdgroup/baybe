@@ -57,7 +57,9 @@ class MultiStepDAG(SerialMixin):
         """Validate the DAG-wide feature policy and generated names."""
         if not isinstance(value, MultiStepContext):
             raise TypeError("The DAG context must be a MultiStepContext.")
-        reserved = set(RESERVED_COLUMNS) | {node.output for node in self.nodes}
+        reserved = set(RESERVED_COLUMNS) | {
+            output for node in self.nodes for output in node.output_names
+        }
         reserved.update(
             condition.column
             for node in self.nodes
@@ -76,9 +78,11 @@ class MultiStepDAG(SerialMixin):
                     f"Generated history columns for node '{node.name}' collide with "
                     f"existing DAG columns: {sorted(collisions)}."
                 )
-            if node.output in names:
+            own_output_collisions = set(node.output_names) & set(names)
+            if own_output_collisions:
                 raise IncompatibilityError(
-                    f"Node '{node.name}' cannot use its own output as input."
+                    f"Node '{node.name}' cannot use its own output(s) as input: "
+                    f"{sorted(own_output_collisions)}."
                 )
             columns = [
                 column
@@ -120,7 +124,7 @@ class MultiStepDAG(SerialMixin):
                     f"node must define at least one input parameter."
                 )
 
-        outputs = [node.output for node in self.nodes]
+        outputs = [output for node in self.nodes for output in node.output_names]
         duplicates = sorted(
             name for name, count in Counter(outputs).items() if count > 1
         )
@@ -150,7 +154,7 @@ class MultiStepDAG(SerialMixin):
             condition_types: dict[str, bool] = {}
             for condition in node.feasibility_conditions:
                 column = condition.column
-                if column == node.output:
+                if column in node.output_names:
                     if condition.operator == "is_true":
                         raise IncompatibilityError(
                             f"Node '{node.name}' has a numeric output; Boolean "
@@ -262,13 +266,13 @@ class MultiStepDAG(SerialMixin):
             condition.column
             for node in self.nodes
             for condition in node.feasibility_conditions
-            if condition.column != node.output
+            if condition.column not in node.output_names
         )
         return tuple(
             dict.fromkeys(
                 (
                     *self.parameter_by_name,
-                    *(node.output for node in self.nodes),
+                    *(output for node in self.nodes for output in node.output_names),
                     *auxiliary_columns,
                 )
             )
@@ -300,7 +304,11 @@ class MultiStepDAG(SerialMixin):
         The order is the topological leaf order. It is independent of the objective
         target order; use :attr:`objective_output_indices` to align the two.
         """
-        return tuple(self.node_by_name[name].output for name in self.graph_output_nodes)
+        return tuple(
+            output
+            for name in self.graph_output_nodes
+            for output in self.node_by_name[name].output_names
+        )
 
     @property
     def graph_output_nodes(self) -> tuple[str, ...]:

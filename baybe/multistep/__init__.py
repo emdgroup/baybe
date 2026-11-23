@@ -1,11 +1,12 @@
 """Multi-step Bayesian optimization over a DAG of experimental steps.
 
-Each node owns its search space and produces a single output consumed by its
-children. The outputs of leaf nodes form the graph outputs; an objective evaluates
-all of them. A single
-:class:`MultiStepModel` fits one model per node and propagates Monte-Carlo
-samples through the DAG, while a :class:`MultiStepCampaign` records node
-measurements and recommends the next node action.
+Each node owns its search space and produces one or more named outputs, which its
+children consume together. The outputs of leaf nodes form the graph outputs; the
+objective evaluates them in its declared target order. A :class:`MultiStepModel`
+fits one node model per DAG node, independently fitting multiple outputs within a
+node, and propagates complete Monte-Carlo sample paths through the DAG. A
+:class:`MultiStepCampaign` records each node execution and its output bundle as one
+measurement, then recommends the next node action.
 """
 
 from importlib import import_module

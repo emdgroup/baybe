@@ -1,10 +1,11 @@
 """Measurement store for multi-step campaigns.
 
-A :class:`NodeMeasurement` is one real observation of one node. Its inputs are the
-full input of the node model: the values of the node's own parameters together
-with the configured historical features. Node training views are derived from
-the stored measurements on demand. Complete DAG rows are never stored as a second
-data source; they are temporary views assembled from concrete observations.
+A :class:`NodeMeasurement` is one real observation of one node, including all
+outputs produced by that execution. Its inputs are the full input of the node
+model: the values of the node's own parameters together with the configured
+historical features. Node training views are derived from the stored measurements
+on demand. Complete DAG rows are never stored as a second data source; they are
+temporary views assembled from concrete observations.
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from itertools import product
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Literal, cast
 
+import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field
@@ -138,6 +140,74 @@ def _extract_feasibility_values(
 def _freeze_mapping(value: Mapping[str, Any]) -> Mapping[str, Any]:
     """Return a read-only copy of a mapping."""
     return MappingProxyType(dict(value))
+
+
+def _finite_output(value: Any, *, node: str) -> float:
+    """Validate and convert one real output value."""
+    if isinstance(value, (bool, np.bool_)) or not isinstance(
+        value, (int, float, np.integer, np.floating)
+    ):
+        raise IncompatibilityError(
+            f"The output of node '{node}' must be numeric, got {value!r}."
+        )
+    if not np.isfinite(value):
+        raise IncompatibilityError(
+            f"The output of node '{node}' must be finite, got {value!r}."
+        )
+    return float(value)
+
+
+def _normalize_measurement_output(
+    value: float | Mapping[str, float | None] | None,
+) -> float | Mapping[str, float | None] | None:
+    """Copy and validate a scalar or named output bundle."""
+    if value is None:
+        return None
+    if isinstance(value, Mapping):
+        result: dict[str, float | None] = {}
+        for name, measured in value.items():
+            if not isinstance(name, str) or not name:
+                raise IncompatibilityError(
+                    "Measurement output names must be nonempty strings."
+                )
+            result[name] = (
+                None
+                if measured is None
+                else _finite_output(measured, node="measurement")
+            )
+        return MappingProxyType(result)
+    return _finite_output(value, node="measurement")
+
+
+def _get_output_values(
+    node: MultiStepNode, measurement: NodeMeasurement
+) -> dict[str, float | None]:
+    """Return a measurement's outputs mapped to the node's declared names."""
+    if isinstance(measurement.output, Mapping):
+        unexpected = set(measurement.output) - set(node.output_names)
+        if unexpected:
+            raise IncompatibilityError(
+                f"Measurement of node '{node.name}' contains undeclared output keys: "
+                f"{sorted(unexpected)}."
+            )
+        return {name: measurement.output.get(name) for name in node.output_names}
+    if len(node.output_names) != 1:
+        raise IncompatibilityError(
+            f"A scalar measurement for multi-output node '{node.name}' is ambiguous."
+        )
+    return {node.output_names[0]: measurement.output}
+
+
+def _output_values_match_inputs(
+    node: MultiStepNode,
+    measurement: NodeMeasurement,
+    inputs: Mapping[str, Any],
+) -> bool:
+    """Check every output of one successful evaluation against local inputs."""
+    return all(
+        value is not None and inputs.get(name) == value
+        for name, value in _get_output_values(node, measurement).items()
+    )
 
 
 @define(frozen=True)
@@ -330,7 +400,7 @@ class _Experiment:
 
 @define(frozen=True)
 class NodeMeasurement(SerialMixin):
-    """One observation of one node."""
+    """Record one node execution and all of its observed outputs."""
 
     node: str = field(validator=and_(instance_of(str), min_len(1)))
     """The observed node."""
@@ -341,8 +411,10 @@ class NodeMeasurement(SerialMixin):
     )
     """The node's own parameter values and configured historical features."""
 
-    output: float | None = field(default=None)
-    """The real observed output, absent only for explicitly failed observations."""
+    output: float | Mapping[str, float | None] | None = field(
+        default=None, converter=_normalize_measurement_output
+    )
+    """The real scalar output or immutable mapping of jointly observed values."""
 
     experiment_id: str | None = field(
         default=None, validator=optional(instance_of(str)), eq=False
@@ -368,26 +440,54 @@ class NodeMeasurement(SerialMixin):
 
     @output.validator
     def _validate_output(  # noqa: DOC101, DOC103
-        self, _: Any, value: float | None
+        self, _: Any, value: float | Mapping[str, float | None] | None
     ) -> None:
-        """Validate that the output is a finite number."""
+        """Validate that every present output value is finite and numeric."""
         if value is None:
             return
-        if isinstance(value, bool) or not isinstance(
-            value, (int, float, np.integer, np.floating)
-        ):
-            raise IncompatibilityError(
-                f"The output of node '{self.node}' must be numeric, got {value!r}."
-            )
-        if not np.isfinite(value):
-            raise IncompatibilityError(
-                f"The output of node '{self.node}' must be finite, got {value!r}."
-            )
+        if isinstance(value, Mapping):
+            for item in value.values():
+                if item is not None:
+                    _finite_output(item, node=self.node)
+        else:
+            _finite_output(value, node=self.node)
 
-    def __attrs_post_init__(self) -> None:
-        """Store the output as a plain float."""
-        if self.output is not None:
-            object.__setattr__(self, "output", float(self.output))
+
+def _structure_measurement_output(value: Any, _: Any) -> Any:
+    """Pass output values to the defensive converter on ``NodeMeasurement``."""
+    return value
+
+
+_measurement_unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
+    NodeMeasurement,
+    converter,
+    output=cattrs.gen.override(
+        unstruct_hook=lambda value: dict(value) if isinstance(value, Mapping) else value
+    ),
+)
+_measurement_structure_hook = cattrs.gen.make_dict_structure_fn(
+    NodeMeasurement,
+    converter,
+    output=cattrs.gen.override(struct_hook=_structure_measurement_output),
+)
+
+
+def _structure_node_measurement(
+    specs: Mapping[str, Any], cls: type[NodeMeasurement]
+) -> NodeMeasurement:
+    """Restore a measurement while preserving scalar and bundle output forms."""
+    values = dict(specs)
+    type_ = values.pop("type", None)
+    if type_ is not None and type_ != cls.__name__:
+        raise TypeError(
+            f"The type field '{type_}' does not match the target class "
+            f"'{cls.__name__}'."
+        )
+    return _measurement_structure_hook(values, cls)
+
+
+converter.register_unstructure_hook(NodeMeasurement, _measurement_unstructure_hook)
+converter.register_structure_hook(NodeMeasurement, _structure_node_measurement)
 
 
 @define(frozen=True, eq=False)
@@ -687,7 +787,7 @@ class MultiStepData(SerialMixin):
 
         Returns:
             A single-row dataframe with one column per DAG parameter and one per
-            node output.
+            declared output from each node.
 
         Raises:
             IncompatibilityError: If the experiment is incomplete or failed.
@@ -733,8 +833,9 @@ class MultiStepData(SerialMixin):
         }
         return all(
             resolved[node.name].parent_refs.get(parent.name) == bindings[parent.name]
-            and resolved[node.name].inputs[parent.output]
-            == resolved[parent.name].output
+            and _output_values_match_inputs(
+                parent, resolved[parent.name], resolved[node.name].inputs
+            )
             for node in dag.nodes
             for parent in node.parents
         )
@@ -758,8 +859,8 @@ class MultiStepData(SerialMixin):
 
         Returns:
             A single-row dataframe with one column per DAG parameter and one per
-            node output, or ``None`` when ``_skip_invalid`` is enabled and the
-            context cannot be projected.
+            declared output from each node, or ``None`` when ``_skip_invalid`` is
+            enabled and the context cannot be projected.
 
         Raises:
             IncompatibilityError: If a node is unbound, an evaluation failed, or
@@ -787,9 +888,10 @@ class MultiStepData(SerialMixin):
                     f"Cannot assemble a complete row because node '{node.name}' failed."
                 )
             for parent in node.parents:
-                if (
-                    measurement.parent_refs.get(parent.name) != bindings[parent.name]
-                    or measurement.inputs[parent.output] != resolved[parent.name].output
+                if measurement.parent_refs.get(parent.name) != bindings[
+                    parent.name
+                ] or not _output_values_match_inputs(
+                    parent, resolved[parent.name], measurement.inputs
                 ):
                     if _skip_invalid:
                         return None
@@ -799,7 +901,7 @@ class MultiStepData(SerialMixin):
                     )
             for name in dag.owned_parameter_names(node.name):
                 row[name] = measurement.inputs[name]
-            row[node.output] = measurement.output
+            row.update(_get_output_values(node, measurement))
             row.update(measurement.condition_values)
         return pd.DataFrame([row], columns=dag._complete_measurement_columns)
 
@@ -838,7 +940,7 @@ class MultiStepData(SerialMixin):
             condition_columns = {
                 condition.column
                 for condition in node.feasibility_conditions
-                if condition.column != node.output
+                if condition.column not in node.output_names
             }
             unexpected = set(measurement.condition_values) - condition_columns
             if unexpected:
@@ -863,9 +965,10 @@ class MultiStepData(SerialMixin):
                             f"The parent reference for node '{node.name}' is invalid."
                         )
                     parent_measurement = self.get_evaluation(dag, ref)
-                    if not _is_successful(parent, parent_measurement) or (
-                        measurement.inputs.get(parent.output)
-                        != parent_measurement.output
+                    if not _is_successful(parent, parent_measurement) or not (
+                        _output_values_match_inputs(
+                            parent, parent_measurement, measurement.inputs
+                        )
                     ):
                         raise IncompatibilityError(
                             f"The parent input of node '{node.name}' does not match "
@@ -949,8 +1052,8 @@ class MultiStepData(SerialMixin):
                         )
                     parent = dag.node_by_name[parent_name]
                     measurement = self.get_evaluation(dag, ref)
-                    if not _is_successful(parent, measurement) or (
-                        action.inputs[parent.output] != measurement.output
+                    if not _is_successful(parent, measurement) or not (
+                        _output_values_match_inputs(parent, measurement, action.inputs)
                     ):
                         raise IncompatibilityError(
                             f"The pending action for node '{node_name}' in experiment "
@@ -993,12 +1096,12 @@ class MultiStepData(SerialMixin):
                 cannot be computed from the successful observations.
         """
         node_object = _get_node(dag, node)
-        columns = [*dag.context.input_names(node_object), node_object.output]
-        records: list[tuple[dict[str, Any], bool, float | None]] = [
+        columns = [*dag.context.input_names(node_object), *node_object.output_names]
+        records: list[tuple[dict[str, Any], bool, dict[str, float | None]]] = [
             (
                 dict(measurement.inputs),
                 _is_successful(node_object, measurement),
-                measurement.output,
+                _get_output_values(node_object, measurement),
             )
             for measurement in self.measurements
             if measurement.node == node
@@ -1008,26 +1111,20 @@ class MultiStepData(SerialMixin):
 
         mode = node_object.infeasible_measurement_mode
         successes = [
-            (inputs, output)
-            for inputs, successful, output in records
-            if successful and output is not None
+            (inputs, outputs) for inputs, successful, outputs in records if successful
         ]
         failures = [
-            (inputs, output) for inputs, successful, output in records if not successful
+            (inputs, outputs)
+            for inputs, successful, outputs in records
+            if not successful
         ]
 
         if mode is InfeasibleMeasurementMode.OBSERVED:
-            rows = [
-                {**inputs, node_object.output: output} for inputs, output in successes
-            ] + [
-                {**inputs, node_object.output: output}
-                for inputs, output in failures
-                if output is not None
+            rows = [{**inputs, **outputs} for inputs, outputs in successes] + [
+                {**inputs, **outputs} for inputs, outputs in failures
             ]
         elif mode is InfeasibleMeasurementMode.EXCLUDE:
-            rows = [
-                {**inputs, node_object.output: output} for inputs, output in successes
-            ]
+            rows = [{**inputs, **outputs} for inputs, outputs in successes]
         elif mode is InfeasibleMeasurementMode.DUMMY:
             dummy = node_object.infeasible_dummy_value
             if dummy is None:
@@ -1036,14 +1133,17 @@ class MultiStepData(SerialMixin):
                     f"'{InfeasibleMeasurementMode.DUMMY.name}' but has no dummy "
                     "value."
                 )
-            rows = [
-                {**inputs, node_object.output: output} for inputs, output in successes
-            ] + [{**inputs, node_object.output: dummy} for inputs, _ in failures]
+            dummy_values = (
+                dict(dummy)
+                if isinstance(dummy, Mapping)
+                else {node_object.output_names[0]: dummy}
+            )
+            rows = [{**inputs, **outputs} for inputs, outputs in successes] + [
+                {**inputs, **dummy_values} for inputs, _ in failures
+            ]
         else:
             assert mode is InfeasibleMeasurementMode.PREDICTED_MEAN
-            rows = [
-                {**inputs, node_object.output: output} for inputs, output in successes
-            ]
+            rows = [{**inputs, **outputs} for inputs, outputs in successes]
             if failures:
                 rows.extend(
                     _predicted_mean_rows(
@@ -1402,7 +1502,9 @@ def _history_inputs(
             references = measurement.parent_refs
         assert measurement is not None
         result[feature.name] = (
-            measurement.output
+            _get_output_values(dag.node_by_name[feature.path[-1]], measurement)[
+                feature.source
+            ]
             if feature.parameter is None
             else measurement.inputs[feature.source]
         )
@@ -1524,11 +1626,12 @@ def register_action(
             raise IncompatibilityError(
                 f"The parent evaluation referenced for '{parent}' is not successful."
             )
-        expected = evaluation.output
-        actual = inputs.get(dag.node_by_name[parent].output)
-        if actual != expected:
+        parent_node = dag.node_by_name[parent]
+        if not _output_values_match_inputs(parent_node, evaluation, inputs):
+            expected = _get_output_values(parent_node, evaluation)
+            actual = {name: inputs.get(name) for name in parent_node.output_names}
             raise IncompatibilityError(
-                f"The local input of node '{node}' uses parent output {actual!r} "
+                f"The local input of node '{node}' uses parent outputs {actual!r} "
                 f"for '{parent}', but the referenced evaluation observed "
                 f"{expected!r}."
             )
@@ -1713,7 +1816,7 @@ def _make_local_searchspace(
 def _predicted_mean_rows(
     context: MultiStepContext,
     node: MultiStepNode,
-    successes: list[tuple[dict[str, Any], float]],
+    successes: list[tuple[dict[str, Any], dict[str, float | None]]],
     failure_inputs: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """Impute failure outputs with means predicted from successful observations.
@@ -1721,65 +1824,83 @@ def _predicted_mean_rows(
     Args:
         context: The configured history policy.
         node: The node whose training view is assembled.
-        successes: Successful local inputs and real outputs.
+        successes: Successful local inputs and real output bundles.
         failure_inputs: Local inputs of failed observations.
 
     Returns:
-        One row per failed observation with the predicted output.
+        One row per failed observation with a predicted value for every output.
 
     Raises:
         IncompatibilityError: If there are too few successful observations or the
             temporary successful-only model cannot be fitted or evaluated.
     """
-    if len(successes) < 2:
-        raise IncompatibilityError(
-            f"Node '{node.name}' uses "
-            f"'{InfeasibleMeasurementMode.PREDICTED_MEAN.name}' but provides fewer "
-            f"than two successful observations ({len(successes)})."
-        )
     import torch
 
     from baybe.targets.numerical import NumericalTarget
 
-    success_frame = pd.DataFrame(
-        [{**inputs, node.output: output} for inputs, output in successes],
-        columns=[*context.input_names(node), node.output],
+    predictions_by_output: dict[str, list[float]] = {}
+    failure_frame = pd.DataFrame(
+        failure_inputs, columns=list(context.input_names(node))
     )
-    try:
-        searchspace = _make_local_searchspace(context, node, success_frame)
-        surrogate = deepcopy(node.surrogate_model)
-        target = NumericalTarget(node.output)
-        surrogate.fit(searchspace, target.to_objective(), success_frame)
-        failure_frame = pd.DataFrame(
-            failure_inputs, columns=list(context.input_names(node))
-        )
-        with torch.no_grad():
-            predictions = (
-                cast(Any, surrogate).posterior(failure_frame).mean.squeeze(-1).cpu()
+    for output_name in node.output_names:
+        output_successes = [
+            (inputs, values[output_name])
+            for inputs, values in successes
+            if values[output_name] is not None
+        ]
+        if len(output_successes) < 2:
+            raise IncompatibilityError(
+                f"Node '{node.name}' uses "
+                f"'{InfeasibleMeasurementMode.PREDICTED_MEAN.name}' but provides "
+                f"fewer than two successful observations for output "
+                f"'{output_name}' ({len(output_successes)})."
             )
-        values = predictions.reshape(-1).tolist()
-    except IncompatibilityError:
-        raise
-    except Exception as ex:
-        raise IncompatibilityError(
-            f"Node '{node.name}' cannot compute "
-            f"'{InfeasibleMeasurementMode.PREDICTED_MEAN.name}' training values: {ex}"
-        ) from ex
+        success_frame = pd.DataFrame(
+            [{**inputs, output_name: output} for inputs, output in output_successes],
+            columns=[*context.input_names(node), output_name],
+        )
+        try:
+            searchspace = _make_local_searchspace(context, node, success_frame)
+            surrogate = deepcopy(node.surrogate_model)
+            target = NumericalTarget(output_name)
+            surrogate.fit(searchspace, target.to_objective(), success_frame)
+            with torch.no_grad():
+                predictions = (
+                    cast(Any, surrogate).posterior(failure_frame).mean.squeeze(-1).cpu()
+                )
+            predictions_by_output[output_name] = [
+                float(value) for value in predictions.reshape(-1).tolist()
+            ]
+        except IncompatibilityError:
+            raise
+        except Exception as ex:
+            raise IncompatibilityError(
+                f"Node '{node.name}' cannot compute "
+                f"'{InfeasibleMeasurementMode.PREDICTED_MEAN.name}' training values "
+                f"for output '{output_name}': {ex}"
+            ) from ex
 
     return [
-        {**inputs, node.output: float(value)}
-        for inputs, value in zip(failure_inputs, values)
+        {
+            **inputs,
+            **{
+                output_name: predictions_by_output[output_name][index]
+                for output_name in node.output_names
+            },
+        }
+        for index, inputs in enumerate(failure_inputs)
     ]
 
 
 def _is_successful(node: MultiStepNode, measurement: NodeMeasurement) -> bool:
     """Derive success from output and condition values without duplicating state."""
+    output_values = _get_output_values(node, measurement)
     successful = _condition_success(
-        node, {node.output: measurement.output, **measurement.condition_values}
+        node, {**output_values, **measurement.condition_values}
     )
-    if successful and measurement.output is None:
+    if successful and any(value is None for value in output_values.values()):
         raise IncompatibilityError(
-            f"An observation of node '{node.name}' without an output requires "
+            f"An observation of node '{node.name}' without all outputs requires "
             "a failed feasibility condition."
         )
     return successful

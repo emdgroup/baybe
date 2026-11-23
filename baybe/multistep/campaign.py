@@ -1,7 +1,9 @@
 """Multi-step campaign facade for DAG-structured experiments.
 
 The facade owns the real node measurements and fits a single
-:class:`~baybe.multistep.model.MultiStepModel` composed of one model per DAG node.
+:class:`~baybe.multistep.model.MultiStepModel` composed of one node model per DAG
+node. A node model may expose multiple independently fitted output models, while
+the campaign records their measurements and feasibility as one execution.
 Executable node actions are derived from the stored process state, independently
 of the configured acquisition function. Graph-aware acquisitions score those
 actions directly; stock acquisition functions score global configurations that
@@ -58,9 +60,9 @@ from .data import (
     MultiStepData,
     NodeMeasurement,
     RepeatedMeasurementWarning,
-    _condition_success,
     _EvaluationRef,
     _ExecutablePlan,
+    _get_output_values,
     _identifier_number,
     _inputs_match,
     _is_successful,
@@ -310,8 +312,8 @@ class MultiStepCampaign(SerialMixin):
 
         Args:
             data: One row per node measurement, holding ``experiment_id``, ``node``,
-                the node's own parameters, optional history columns, the node-output
-                column, and any auxiliary columns referenced by
+                the node's own parameters, optional history columns, every declared
+                node-output column, and any auxiliary columns referenced by
                 feasibility conditions. Missing result values are allowed only when
                 another observed condition establishes failure.
             numerical_measurements_must_be_within_tolerance: Flag indicating if
@@ -485,7 +487,7 @@ class MultiStepCampaign(SerialMixin):
         return (
             stored.node == candidate.node
             and _inputs_match(node, stored.inputs, candidate.inputs)
-            and stored.output == candidate.output
+            and _get_output_values(node, stored) == _get_output_values(node, candidate)
             and dict(stored.condition_values) == dict(candidate.condition_values)
             and dict(stored.parent_refs) == dict(candidate.parent_refs)
         )
@@ -526,13 +528,13 @@ class MultiStepCampaign(SerialMixin):
         auxiliary_columns = {
             condition.column
             for condition in node.feasibility_conditions
-            if condition.column != node.output
+            if condition.column not in node.output_names
         }
         allowed = {
             NODE,
             EXPERIMENT_ID,
             *self.dag.context.input_names(node),
-            node.output,
+            *node.output_names,
             *auxiliary_columns,
         }
         foreign = {
@@ -585,11 +587,18 @@ class MultiStepCampaign(SerialMixin):
             context=self.dag.context,
         )
 
-        output = values.get(node.output)
+        output_values = {
+            name: None if _is_missing(values.get(name)) else values.get(name)
+            for name in node.output_names
+        }
         measurement = NodeMeasurement(
             node=node.name,
             inputs=inputs,
-            output=None if _is_missing(output) else output,
+            output=(
+                output_values[node.output_names[0]]
+                if len(node.output_names) == 1
+                else output_values
+            ),
             experiment_id=experiment_id,
             condition_values={
                 column: values[column]
@@ -598,15 +607,7 @@ class MultiStepCampaign(SerialMixin):
             },
             parent_refs={} if parent_refs is None else parent_refs,
         )
-        successful = _condition_success(
-            node,
-            {node.output: measurement.output, **measurement.condition_values},
-        )
-        if measurement.output is None and successful:
-            raise IncompatibilityError(
-                f"An observation of node '{node.name}' without an output requires "
-                "a failed feasibility condition."
-            )
+        _is_successful(node, measurement)
         return measurement
 
     def recommend(self, batch_size: int = 1) -> pd.DataFrame:

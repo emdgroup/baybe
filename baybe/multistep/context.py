@@ -129,7 +129,7 @@ class MultiStepContext(SerialMixin):
                 items.extend(
                     (parameter.name, parameter) for parameter in predecessor.inputs
                 )
-            items.append((predecessor.output, None))
+            items.extend((source, None) for source in predecessor.output_names)
             for source, parameter in items:
                 direct_output = len(path) == 1 and parameter is None
                 if counts[predecessor.name] > 1 and not direct_output:
