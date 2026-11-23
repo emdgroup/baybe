@@ -18,7 +18,6 @@ The following settings are available:
 | {attr}`~baybe.settings.Settings.preprocess_dataframes` | Controls if incoming user dataframes are preprocessed (i.e., dtype-converted and validated) before use. |
 | {attr}`~baybe.settings.Settings.random_seed` | Controls the random seed. |
 | {class}`use_fpsample <baybe.settings.Settings>` | Controls if [`fpsample`](https://github.com/leonardodalinky/fpsample) acceleration is to be used, if available. |
-| {class}`use_polars_for_constraints <baybe.settings.Settings>` | Controls if [`polars`](https://pola.rs/) acceleration is to be used for discrete constraints, if available. |
 | {attr}`~baybe.settings.Settings.use_single_precision_numpy` | Controls the floating point precision used for [`numpy`](https://numpy.org/) arrays. |
 | {attr}`~baybe.settings.Settings.use_single_precision_torch` | Controls the floating point precision used for [`torch`](https://pytorch.org/) tensors. |
 
@@ -68,12 +67,10 @@ call its {meth}`~baybe.settings.Settings.activate` method:
 from baybe import Settings, active_settings
 
 assert active_settings.parallelize_simulation_runs is True
-assert active_settings.use_polars_for_constraints is True
 
-Settings(parallelize_simulation_runs=False, use_polars_for_constraints=False).activate()
+Settings(parallelize_simulation_runs=False).activate()
 
 assert active_settings.parallelize_simulation_runs is False
-assert active_settings.use_polars_for_constraints is False
 ```
 
 ### Delayed Activation

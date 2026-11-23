@@ -219,6 +219,7 @@ def test_fps_utility_expected_errors(points, n_requested, initialization, match)
         farthest_point_sampling(points, n_requested, initialization=initialization)
 
 
+@Settings(default_dataframe_backend="pandas")
 def test_fps_recommender_utility_initialization_indices(searchspace):
     """FPS utilities return expected indices when initialization indices are used."""
     candidates = searchspace.discrete.get_candidates()
@@ -232,6 +233,7 @@ def test_fps_recommender_utility_initialization_indices(searchspace):
     assert inds2[1] == 2
 
 
+@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize(
     "use_fpsample",
     [
@@ -257,17 +259,16 @@ def test_fps_recommender_utility_call(use_fpsample):
             return_value=[2, 0],
         )
 
-    with (
-        context as mock_,
-        Settings(use_fpsample=use_fpsample, default_dataframe_backend="pandas"),
-    ):
+    with context as mock_, Settings(use_fpsample=use_fpsample):
         result = FPSRecommender().recommend(batch_size=2, searchspace=ss)
 
     mock_.assert_called_once()
-    expected = ss.discrete.get_candidates().iloc[[2, 0]].reset_index(drop=True)
+    candidates = ss.discrete.get_candidates()
+    expected = candidates.iloc[[2, 0]].reset_index(drop=True)
     assert result.equals(expected)
 
 
+@Settings(default_dataframe_backend="pandas")
 @pytest.mark.skipif(
     not FPSAMPLE_INSTALLED,
     reason="Optional 'fpsample' package not installed.",

@@ -23,7 +23,7 @@ from baybe.searchspace.candidates import (
     ProductCandidates,
     TableCandidates,
 )
-from baybe.settings import active_settings
+from baybe.settings import Settings, active_settings
 from baybe.utils.dataframe import create_fake_input
 
 p_disc = NumericalDiscreteParameter("disc", (1, 2))
@@ -93,6 +93,42 @@ def test_table_candidates_duplicate_rows():
     duplicate_data = pd.concat([data, data.iloc[[0]]], ignore_index=True)
     with pytest.raises(ValueError, match="duplicate parameter configurations"):
         TableCandidates(parameters, duplicate_data)
+
+
+@pytest.mark.parametrize(
+    ("parameter", "values", "match"),
+    [
+        pytest.param(
+            CategoricalParameter("cat", ("a", "b", "c")),
+            ["a", "d"],
+            "exactly match a valid choice",
+            id="out_of_values",
+        ),
+        pytest.param(
+            CategoricalParameter("cat", ("a", "b"), active_values=("a",)),
+            ["a", "b"],
+            "not among its active values",
+            id="out_of_active",
+        ),
+        pytest.param(
+            NumericalDiscreteParameter("disc", (0.0, 1.0), tolerance=0.1),
+            [0.5, 1.5],
+            "not among its active values",
+            id="out_of_tolerance",
+        ),
+        pytest.param(
+            NumericalDiscreteParameter("disc", (0.0, 1.0), tolerance=0.1),
+            [0.05, 0.95],
+            "not among its active values",
+            id="within",
+        ),
+    ],
+)
+def test_table_candidates_reject_inactive_values(parameter, values, match):
+    """Dataframe values must exactly match the active parameter values."""
+    data = pd.DataFrame({parameter.name: values})
+    with pytest.raises(ValueError, match=match):
+        TableCandidates([parameter], data)
 
 
 @pytest.mark.parametrize(
@@ -240,6 +276,18 @@ def fixture_candidates(request):
             id="expr",
         ),
         pytest.param(
+            [
+                nw.when(nw.col("disc") == 1)
+                .then(True)
+                .otherwise(nw.lit(None, dtype=nw.Boolean))
+            ],
+            {
+                False: {"disc": [1.0, 1.0], "disc2": [0.0, 10.0]},
+                True: {"disc": [2.0, 2.0], "disc2": [0.0, 10.0]},
+            },
+            id="nullable-expr",
+        ),
+        pytest.param(
             [c_sum],
             {
                 False: {"disc": [1.0, 2.0], "disc2": [0.0, 0.0]},
@@ -263,9 +311,13 @@ def test_candidates_filter(candidates, filters, complement, expected):
     _assert_candidate_rows(filtered, expected[complement])
 
 
+@Settings(default_dataframe_backend="pandas")
 def test_candidates_filter_dataframe(candidates):
     """Dataframe filtering yields the same rows for all representations."""
-    filter_df = pd.DataFrame({"disc": [1, 2], "disc2": [0, 10]})
+    filter_df = nw.from_dict(
+        {"disc": [1.0, 2.0], "disc2": [0.0, 10.0]},
+        backend=active_settings.default_dataframe_backend,
+    )
     filtered = candidates.filter(filter_df)
     _assert_candidate_rows(filtered, {"disc": [1.0, 2.0], "disc2": [0.0, 10.0]})
 

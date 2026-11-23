@@ -58,12 +58,6 @@ _LOGIC_OPERATORS: dict[LogicOperator, BinaryOperator] = {
     "XOR": ops.ne,
 }
 
-# TODO[bridge]: Temporary aliases used by the not-yet-narwhalified constraint
-#   implementation.
-_threshold_operators = _THRESHOLD_OPERATORS
-_valid_tolerance_operators = _TOLERANCE_OPERATORS
-_valid_logic_combiners = _LOGIC_OPERATORS
-
 
 def _selection_dtypes(value: Any) -> tuple[type, ...]:
     """Return the Narwhals dtypes that a sub-selection entry can be matched against."""
