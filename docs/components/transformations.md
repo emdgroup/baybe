@@ -127,19 +127,21 @@ to the range $[0, 1]$ using a sigmoid function.
 **Transformation rule**
 
 ```{math}
-f(x) = \frac{1}{1 + e^{-a(x - c)}}
+f(x) = \frac{1}{1 + e^{-4a(x - c)}}
 ```
-where $c$ is the center point where the curve crosses the value 0.5 and $a$ is a
-parameter controlling the steepness. Note that the transformation can also be specified
-using anchors points instead, as demonstrated below.
+where $c$ is the center point where the curve crosses the value 0.5 and $a$ is the
+actual slope of the curve at that point, i.e. $f'(c) = a$. Note that the
+transformation can also be specified using anchor points instead, as demonstrated
+below.
 
 **Example**
 
 ```python
 from baybe.transformations import SigmoidTransformation
 
-t = SigmoidTransformation(center=0.0, steepness=1.0)  # vanilla sigmoid function
-t = SigmoidTransformation(center=1.0, steepness=2.0)  # shifted and steeper
+t = SigmoidTransformation()  # standard logistic function
+t = SigmoidTransformation(center=1.0, slope=2.0)  # shifted and steeper
+t = SigmoidTransformation(center=1.0, slope=-0.5)  # shifted and decreasing
 t = SigmoidTransformation.from_anchors(
     anchors=[(1, 0.1), (2, 0.9)]  # passes through anchors
 )

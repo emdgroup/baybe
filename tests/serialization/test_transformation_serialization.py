@@ -20,6 +20,7 @@ from ..hypothesis_strategies.transformations import (
     identity_transformations,
     logarithmic_transformations,
     power_transformations,
+    sigmoid_transformations,
     triangular_transformations,
     two_sided_affine_transformations,
 )
@@ -41,6 +42,7 @@ from ..hypothesis_strategies.transformations import (
         param(bell_transformations(), id="BellTransformation"),
         param(triangular_transformations(), id="TriangularTransformation"),
         param(power_transformations(), id="PowerTransformation"),
+        param(sigmoid_transformations(), id="SigmoidTransformation"),
         param(chained_transformations(), id="ChainedTransformation"),
     ],
 )
