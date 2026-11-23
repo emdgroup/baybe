@@ -285,6 +285,37 @@ enlarged data corpus.
 For details, refer to [transfer learning](../concepts/transfer_learning.md).
 ```
 
+(parameter_metadata)=
+## Metadata
+
+Parameters accept an optional ``metadata`` attribute, either a
+{class}`~baybe.utils.metadata.MeasurableMetadata` object with the
+{attr}`~baybe.utils.metadata.MeasurableMetadata.description`,
+{attr}`~baybe.utils.metadata.MeasurableMetadata.unit` and
+{attr}`~baybe.utils.metadata.MeasurableMetadata.misc` fields, or a dictionary whose
+``description`` and ``unit`` keys populate the dedicated fields and whose remaining
+keys are collected in ``misc``:
+
+```python
+from baybe.parameters import NumericalContinuousParameter
+
+temperature = NumericalContinuousParameter(
+    name="Temperature",
+    bounds=(20, 120),
+    metadata={
+        "description": "Reaction temperature",
+        "unit": "°C",
+        "measured_at": "Reactor outlet",
+    },
+)
+
+print(temperature.metadata)
+```
+
+~~~
+MeasurableMetadata(description='Reaction temperature', misc={'measured_at': 'Reactor outlet'}, unit='°C')
+~~~
+
 (parameter_kernel_overrides)=
 ## Parameter-Specific Kernel Overrides
 
