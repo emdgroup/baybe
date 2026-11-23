@@ -65,8 +65,8 @@ def to_prompt_dict(obj: Parameter | Constraint | Objective, /) -> dict[str, Any]
                 label: smiles for label, smiles in obj.data.items() if label in active
             }
         elif isinstance(obj, CustomDiscreteParameter):
-            # The descriptor table of custom parameters is omitted since it is only
-            # relevant for the surrogate model.
+            # The descriptor table of custom parameters is omitted because its size is
+            # unbounded and including it could bloat the prompt.
             del serialized[fields(CustomDiscreteParameter).data.alias]
     # ``None`` values and empty dictionaries are dropped since they carry no
     # information for the language model.
