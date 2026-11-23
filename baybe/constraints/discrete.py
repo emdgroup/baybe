@@ -1142,19 +1142,6 @@ class DiscreteCardinalityConstraint(  # pyrefly: ignore[invalid-inheritance]
         return matching
 
 
-# Filtering constraints are approximately ordered according to increasing computational
-# effort to minimize total time in their sequential application
-DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
-    DiscreteSelectionConstraint,
-    DiscreteRepetitionLimitConstraint,
-    DiscreteLinearConstraint,
-    DiscreteProductConstraint,
-    DiscreteCardinalityConstraint,
-    DiscreteCustomConstraint,
-    DiscretePermutationInvarianceConstraint,
-    DiscreteDependenciesConstraint,
-)
-
 # Prevent (de-)serialization of custom constraints
 converter.register_unstructure_hook(DiscreteCustomConstraint, block_serialization_hook)
 converter.register_structure_hook(DiscreteCustomConstraint, block_deserialization_hook)

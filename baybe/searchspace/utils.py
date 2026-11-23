@@ -10,10 +10,16 @@ import numpy as np
 
 from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
 from baybe.parameters.base import DiscreteParameter
-from baybe.utils.dataframe import Filter, _filter_dataframe, _infer_backend
+from baybe.utils.dataframe import (
+    Filter,
+    _apply_filter,
+    _filter_dataframe,
+    _infer_backend,
+    _is_commutative_filter,
+)
 
 if TYPE_CHECKING:
-    from narwhals.stable.v2.typing import IntoFrame
+    from narwhals.stable.v2.typing import IntoDataFrame, IntoFrame
 
 _T = TypeVar("_T")
 
@@ -110,39 +116,63 @@ def optimize_parameter_order(
     return ordered
 
 
-def _apply_evaluable_constraints(
+def _can_apply_filter(frame: nw.LazyFrame, filter_: nw.Expr | IntoDataFrame, /) -> bool:
+    """Indicate whether a non-constraint filter can be applied to the frame."""
+    if isinstance(filter_, nw.Expr):
+        try:
+            frame.select(filter_).collect_schema()
+        except nw.exceptions.ColumnNotFoundError:
+            return False
+        return True
+
+    available = set(frame.collect_schema().names())
+    return set(nw.from_native(filter_, eager_only=True).columns) <= available
+
+
+def _apply_evaluable_filters(
     frame: nw.LazyFrame,
-    constraints: Sequence[DiscreteFilteringConstraint],
-) -> tuple[nw.LazyFrame, list[DiscreteFilteringConstraint]]:
-    """Apply all evaluable constraints and return those still pending.
+    filters: Sequence[Filter],
+    *,
+    sequential: bool = False,
+) -> tuple[nw.LazyFrame, list[Filter]]:
+    """Apply evaluable filters and return those still pending.
 
     Args:
         frame: The frame to filter.
-        constraints: The constraints to consider.
+        filters: The filters to consider.
+        sequential: If ``True``, stop at the first filter that cannot yet be fully
+            applied so that the given order is preserved. Otherwise, all evaluable
+            filters are applied.
 
     Returns:
-        The filtered frame and the constraints whose required parameters are not yet
-        all available.
+        The filtered frame and the filters that are not yet fully applied.
 
     Raises:
         RuntimeError: If a constraint cannot be evaluated despite all required columns
             being available.
     """
     available = set(frame.collect_schema().names())
-    pending: list[DiscreteFilteringConstraint] = []
-    for constraint in constraints:
-        missing = constraint._required_parameters - available
-        evaluable = constraint._can_evaluate(available)
-        if evaluable:
-            frame = constraint._filter(frame)
+    pending: list[Filter] = []
+    for index, filter_ in enumerate(filters):
+        if isinstance(filter_, DiscreteFilteringConstraint):
+            missing = filter_._required_parameters - available
+            evaluable = filter_._can_evaluate(available)
+            if not evaluable and not missing:
+                raise RuntimeError(
+                    f"{filter_.__class__.__name__} cannot be evaluated even though "
+                    "all required columns are available."
+                )
+        else:
+            missing = set()
+            evaluable = _can_apply_filter(frame, filter_)
 
-        if missing:
-            pending.append(constraint)
-        elif not evaluable:
-            raise RuntimeError(
-                f"{constraint.__class__.__name__} cannot be evaluated even though "
-                "all required columns are available."
-            )
+        if evaluable:
+            frame = _apply_filter(frame, filter_)
+
+        if missing or not evaluable:
+            if sequential:
+                return frame, list(filters[index:])
+            pending.append(filter_)
     return frame, pending
 
 
@@ -154,6 +184,9 @@ def _make_filtered_cartesian_product(
     incremental: bool = True,
 ) -> nw.LazyFrame:
     """Create a filtered Cartesian product.
+
+    Commutative filters are applied before non-commutative filters, preserving the
+    provided order within each group.
 
     Args:
         parameters: The discrete parameters to combine.
@@ -168,9 +201,8 @@ def _make_filtered_cartesian_product(
     """
     backend = _infer_backend(initial_df)
     constraints = [f for f in filters if isinstance(f, DiscreteFilteringConstraint)]
-    other_filters = [
-        f for f in filters if not isinstance(f, DiscreteFilteringConstraint)
-    ]
+    commutative_filters = [f for f in filters if _is_commutative_filter(f)]
+    non_commutative_filters = [f for f in filters if not _is_commutative_filter(f)]
     ordered_parameters = (
         optimize_parameter_order(parameters, constraints) if incremental else parameters
     )
@@ -191,13 +223,31 @@ def _make_filtered_cartesian_product(
             product = product.join(frame, how="cross")
         return _filter_dataframe(product, *filters)
 
-    product, pending = _apply_evaluable_constraints(product, constraints)
-    for frame in frames[1:]:
-        product = product.join(frame, how="cross")
-        product, pending = _apply_evaluable_constraints(product, pending)
+    pending_commutative = list(commutative_filters)
+    pending_non_commutative = list(non_commutative_filters)
+    for next_frame in [None, *frames[1:]]:
+        if next_frame is not None:
+            product = product.join(next_frame, how="cross")
 
-    # All constraints must have been fully applied after the last join
-    assert not pending
+        if pending_commutative:
+            product, pending_commutative = _apply_evaluable_filters(
+                product, pending_commutative
+            )
+        if not pending_commutative and pending_non_commutative:
+            product, pending_non_commutative = _apply_evaluable_filters(
+                product, pending_non_commutative, sequential=True
+            )
+
+    # Any filter still pending here cannot become applicable later. Force it to run
+    # so the backend reports the actual problem instead of silently dropping it.
+    if pending_commutative:
+        product = _filter_dataframe(product, *pending_commutative)
+
+    if pending_non_commutative:
+        product, pending_non_commutative = _apply_evaluable_filters(
+            product, pending_non_commutative, sequential=True
+        )
+    assert not pending_non_commutative
 
     # Restore the original column order (incremental construction may reorder them)
     if parameters:
@@ -207,4 +257,4 @@ def _make_filtered_cartesian_product(
         columns = [*initial_columns, *(parameter.name for parameter in parameters)]
         product = product.select(columns)
 
-    return _filter_dataframe(product, *other_filters)
+    return product

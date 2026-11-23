@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   intended for internal use
 
 ### Breaking Changes
+- `SubspaceDiscrete.from_product` no longer accepts `constraints=None`; omit the
+  argument or pass an empty sequence instead
 - For pandas users: series/dataframe indices are no longer used as information carriers
   anywhere. In particular, recommendation dataframes no longer reflect discrete subspace
   locations via their index. Similarly, `_recommend_discrete` and kin now return a
@@ -133,6 +135,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   then switches to another recommender, the latter alternates between the two
 
 ### Changed
+- Discrete filters are now applied by commutativity instead of being reorder by type:
+  commutative (row-wise) filters are applied first and non-commutative filters second,
+  each in their provided order
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
   attribute of type `CandidatesProtocol` instead of raw `parameters` and `exp_rep`
   attributes, and `parameters` is now a read-only property delegating to it. The

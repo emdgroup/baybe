@@ -102,6 +102,22 @@ def _is_filter(x: Any, /) -> bool:
     return isinstance(x, nw.Expr | DiscreteFilteringConstraint) or is_into_dataframe(x)
 
 
+def _is_commutative_filter(filter_: Filter, /) -> bool:
+    """Indicate whether a filter commutes with other row-wise filters."""
+    if isinstance(filter_, DiscreteFilteringConstraint):
+        return filter_._has_expression_implementation
+    return True
+
+
+def _order_filters(filters: Sequence[Filter], /) -> list[Filter]:
+    """Order filters by commutativity, preserving their given order."""
+    commutative = [filter_ for filter_ in filters if _is_commutative_filter(filter_)]
+    non_commutative = [
+        filter_ for filter_ in filters if not _is_commutative_filter(filter_)
+    ]
+    return [*commutative, *non_commutative]
+
+
 def _validate_filter_types(*filters: Filter) -> None:
     """Raise if any of the given objects cannot be used as a filter criterion.
 
@@ -696,7 +712,8 @@ def _filter_dataframe(
     """Filter a lazyframe based on one or more filter criteria.
 
     Multiple filters are combined conjunctively (logical AND), mirroring
-    :meth:`narwhals.stable.v2.LazyFrame.filter`.
+    :meth:`narwhals.stable.v2.LazyFrame.filter`. Commutative filters are applied
+    before non-commutative filters, preserving the provided order within each group.
 
     Args:
         lf: The lazyframe to be filtered.
@@ -707,7 +724,7 @@ def _filter_dataframe(
     Returns:
         The filtered lazyframe.
     """
-    matched = functools.reduce(_apply_filter, filters, lf)
+    matched = functools.reduce(_apply_filter, _order_filters(filters), lf)
     if not complement:
         return matched
     return lf.join(matched, on=lf.columns, how="anti")

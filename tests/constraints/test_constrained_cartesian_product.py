@@ -24,7 +24,7 @@ from baybe.constraints.base import DiscreteConstraint
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace.utils import (
-    _apply_evaluable_constraints,
+    _apply_evaluable_filters,
     _make_filtered_cartesian_product,
 )
 from baybe.settings import Settings
@@ -211,18 +211,16 @@ def _permutation_invariance_with_dependencies_scenario() -> tuple[
 
 def test_incremental_filter_rejects_unevaluable_complete_constraint(monkeypatch):
     """Raise if a constraint cannot evaluate despite all its columns being present."""
-    constraint = DiscretePermutationInvarianceConstraint(parameters=["a", "b"])
+    constraint = DiscreteLinearConstraint(["a", "b"], operator="<=", rhs=100)
     monkeypatch.setattr(
-        DiscretePermutationInvarianceConstraint,
+        DiscreteLinearConstraint,
         "_can_evaluate",
         lambda self, available: False,
     )
-    frame = nw.from_dicts(
-        [{"a": "x", "b": "y"}], backend=nw.Implementation.POLARS
-    ).lazy()
+    frame = nw.from_dicts([{"a": 1, "b": 2}], backend=nw.Implementation.POLARS).lazy()
 
     with pytest.raises(RuntimeError, match="all required columns are available"):
-        _apply_evaluable_constraints(frame, [constraint])
+        _apply_evaluable_filters(frame, [constraint])
 
 
 def _mixed_scenario() -> tuple[

@@ -16,7 +16,7 @@ from attrs.validators import deep_iterable, instance_of
 from cattrs import IterableValidationError
 from typing_extensions import Self, override
 
-from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
+from baybe.constraints import validate_constraints
 from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
 from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import DeprecationError
@@ -258,14 +258,11 @@ class SubspaceDiscrete(SerialMixin):
     def from_product(
         cls,
         parameters: Sequence[DiscreteParameter],
-        constraints: Sequence[DiscreteConstraint] | None = None,
+        constraints: Sequence[DiscreteConstraint] = (),
         empty_encoding: bool | None = None,
     ) -> Self:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         validate_parameters(parameters, allow_empty=True)
-
-        if constraints is None:
-            constraints = []
 
         batch_constraints = [
             c for c in constraints if isinstance(c, DiscreteBatchConstraint)
@@ -273,22 +270,23 @@ class SubspaceDiscrete(SerialMixin):
         filtering_constraints = [
             c for c in constraints if not isinstance(c, DiscreteBatchConstraint)
         ]
-        if filtering_constraints:
-            filtering_constraints = sorted(
-                filtering_constraints,
-                key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+
+        if parameters:
+            candidates: CandidatesProtocol = ProductCandidates(
+                parameters, filtering_constraints
             )
+        else:
+            # Without parameters, the logic would bypass constraint validation, hence
+            # we validate here using the existing utility to reject non-empty constraint
+            # sets with the usual error message
             validate_constraints(filtering_constraints, parameters)
+            candidates = EmptyCandidates()
 
         extra: dict[str, Any] = (
             {"empty_encoding": empty_encoding} if empty_encoding is not None else {}
         )
         return cls(
-            candidates=(
-                EmptyCandidates()
-                if not parameters
-                else ProductCandidates(parameters, filtering_constraints)
-            ),
+            candidates=candidates,
             batch_constraints=batch_constraints,
             **extra,
         )
