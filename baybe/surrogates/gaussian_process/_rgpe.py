@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING, Any, NoReturn, cast
 import torch
 from botorch.models.model import Model
 from botorch.models.transforms.outcome import Standardize
+from botorch.models.utils import gpt_posterior_settings
 from botorch.posteriors import GPyTorchPosterior
-from gpytorch import settings as gpytorch_settings
 from gpytorch.distributions import MultivariateNormal
 from torch import Tensor
 from torch.nn import ModuleList
@@ -337,9 +337,11 @@ class RGPEModel(Model):
         else:
             # Standardized member distributions: Calling a member directly skips its
             # transforms, so the inputs are transformed manually and the outputs stay
-            # standardized. At the training inputs, GPyTorch would wrongly warn about a
-            # missing `model.train()` call, so its debug checks are disabled.
-            with gpytorch_settings.debug(False):
+            # standardized. BoTorch's posterior settings are applied as in
+            # `Model.posterior`, which enables fast predictive variances and disables
+            # GPyTorch's debug checks (which would wrongly warn about a missing
+            # `model.train()` call at the training inputs).
+            with gpt_posterior_settings():
                 distributions = [m(m.transform_inputs(X)) for m in self._members]
         mean = reduce(add, (w * d.mean for w, d in zip(self.weights, distributions)))
         covariance = reduce(
