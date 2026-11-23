@@ -28,6 +28,9 @@ from baybe.searchspace.utils import (
     _make_filtered_cartesian_product,
 )
 from baybe.settings import Settings
+from tests.constraints.utils import requires_fulltest
+
+pytestmark = requires_fulltest
 
 
 def _no_constraints_scenario() -> tuple[

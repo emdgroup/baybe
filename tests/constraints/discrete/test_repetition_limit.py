@@ -49,7 +49,7 @@ _REPETITION_DATA = [
 
 
 _REPETITION_PARTIAL_DATA = (
-    nw.from_dicts(_REPETITION_DATA, backend=nw.Implementation.POLARS)
+    nw.from_dicts(_REPETITION_DATA, backend=nw.Implementation.PANDAS)
     .select("a", "b", "group")
     .rows(named=True)
 )

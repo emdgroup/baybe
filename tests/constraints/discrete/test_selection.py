@@ -77,7 +77,7 @@ _SELECTION_DATA = [
 
 
 _SELECTION_PARTIAL_DATA = (
-    nw.from_dicts(_SELECTION_DATA, backend=nw.Implementation.POLARS)
+    nw.from_dicts(_SELECTION_DATA, backend=nw.Implementation.PANDAS)
     .select("temperature", "solvent")
     .rows(named=True)
 )

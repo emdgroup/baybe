@@ -51,7 +51,7 @@ _CARDINALITY_DATA = [
 
 
 _CARDINALITY_PARTIAL_DATA = (
-    nw.from_dicts(_CARDINALITY_DATA, backend=nw.Implementation.POLARS)
+    nw.from_dicts(_CARDINALITY_DATA, backend=nw.Implementation.PANDAS)
     .select("amount_1", "amount_2", "group")
     .rows(named=True)
 )
