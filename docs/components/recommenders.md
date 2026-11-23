@@ -92,87 +92,55 @@ BayBE provides two recommenders that recommend by sampling form the search space
 ### LLM Recommender
 
 The {class}`~baybe.recommenders.pure.llm.llm.LLMRecommender` asks a large language
-model (LLM) for recommendations. It brings in domain knowledge that is not encoded in
-a surrogate model, which is useful when little or no data is available.
-Note that it is not Bayesian: there is no surrogate model and no uncertainty estimate.
+model (LLM) for recommendations, adding knowledge a surrogate model cannot encode.
+It is not Bayesian: no surrogate model, no uncertainty estimate.
 
-#### Installation and Model Access
-
-The recommender is available the ``llm`` extra and sends requests through
-[LiteLLM](https://docs.litellm.ai). The ``model`` argument is a provider-prefixed
-LiteLLM identifier; see the
-[list of supported providers](https://docs.litellm.ai/docs/providers). Credentials are
-taken exclusively from the environment variables LiteLLM expects for the provider
-(e.g. ``OPENAI_API_KEY`` or ``ANTHROPIC_API_KEY``). BayBE deliberately offers no
-credential argument so that keys cannot end up in serialized campaigns.
-
-Additional LiteLLM arguments such as ``temperature`` or ``max_tokens`` are passed via
-``litellm_args``. Their values are neither shown in the representation nor serialized,
-so they must be provided again after deserialization (a warning is raised when they are
-dropped). The keys ``model``, ``messages`` and ``stream`` are controlled by BayBE and
-rejected.
+The recommender is available via the ``llm`` extra and sends requests through
+[LiteLLM](https://docs.litellm.ai); ``model`` is a provider-prefixed identifier (see
+the [provider list](https://docs.litellm.ai/docs/providers)). Credentials are best
+provided via the environment variables LiteLLM expects (e.g. ``OPENAI_API_KEY``).
+Additional arguments such as ``temperature`` go into ``litellm_args``, which are
+never serialized; the keys ``model``, ``messages`` and ``stream`` are rejected.
 
 ```python
 from baybe.recommenders import LLMRecommender
 
 recommender = LLMRecommender(
     model="openai/gpt-4o-mini",
-    experiment_description=(
-        "Suzuki coupling of an aryl bromide with a boronic acid in a batch "
-        "reactor. The catalyst loading is fixed."
-    ),
+    experiment_description="Suzuki coupling of an aryl bromide in a batch reactor.",
     litellm_args={"temperature": 0.2},
 )
 ```
 
-The recommender is then used like any other recommender, e.g. inside a
+The recommender is used like any other, e.g. inside a
 {class}`~baybe.campaign.Campaign`. Constructing it does not contact the model; only
-requesting recommendations does.
+requesting recommendations does. Recommendations without a matching stored discrete
+configuration remain untracked by the campaign.
 
-#### Information Passed to the Model
-
-The prompt contains the requested batch size, the ``experiment_description``, the
-serialized objective (including target metadata and descriptions of the used
-transformations), the serialized parameters and constraints (including their metadata),
-three example configurations sampled from the search space, the previous measurements,
-and the pending experiments. For label-like parameters only the active values are sent;
-for {class}`~baybe.parameters.substance.SubstanceParameter` these come with the SMILES
-of the active labels, while the descriptor table of a
-{class}`~baybe.parameters.custom.CustomDiscreteParameter` is omitted.
-
-The two levers for better recommendations are a precise ``experiment_description`` and
-the ``metadata`` of parameters, targets and the objective (see the
-{ref}`parameter metadata <parameter_metadata>` section). If the objective has no
-description, a ``UserWarning`` is raised.
+The prompt contains the ``experiment_description``, the serialized objective,
+parameters and constraints, the metadata of parameters, targets and the objective,
+example configurations, the measurements and the pending experiments. Without
+objective metadata, a ``UserWarning`` is raised.
 
 ```{admonition} Data Privacy
 :class: warning
-Everything listed above, including measurements, molecular structures and free-text
-descriptions, is sent to the provider configured via ``model``. Check that this
-complies with your data-handling policies before use.
+This information, including measurements and free-text descriptions, is sent to the
+configured provider. Check that it complies with your data-handling policies.
 ```
 
-#### Response Handling
-
-The model must return exactly the requested number of distinct recommendations inside
-the search space. Numerical discrete values are snapped to the nearest allowed value.
-If a response is unusable, exactly one recovery attempt is made with the full context
-and a description of the problem; if that fails too,
-{class}`~baybe.exceptions.LLMRecoveryFailedError` is raised. Failures of the call
-itself are not retried: {class}`~baybe.exceptions.LLMAuthenticationError` is raised if
-the provider rejects authentication, and {class}`~baybe.exceptions.LLMCallError` for
-everything else (network, rate limit, unknown model, missing credentials).
+A response must contain exactly the requested number of distinct recommendations
+inside the search space. An unusable response triggers one recovery attempt; if that
+fails too, {class}`~baybe.exceptions.LLMRecoveryFailedError` is raised. Call errors
+are not retried: {class}`~baybe.exceptions.LLMAuthenticationError` if the provider
+rejects authentication, {class}`~baybe.exceptions.LLMCallError` otherwise.
 
 ```{admonition} Limitations
 :class: warning
-Components whose behavior is defined by arbitrary Python callables cannot be described
-to the model, which raises an {class}`~baybe.exceptions.IncompatibilityError`; examples
-are {class}`~baybe.transformations.basic.CustomTransformation` and
-{class}`~baybe.constraints.discrete.DiscreteCustomConstraint`.
-
-Constraints of the continuous subspace cannot be validated. A
-{class}`~baybe.exceptions.LLMResponseWarning` is raised and compliance is not
-guaranteed.
+Components defined by arbitrary Python callables cannot be described to the model,
+which raises an {class}`~baybe.exceptions.IncompatibilityError` (e.g.
+{class}`~baybe.transformations.basic.CustomTransformation` or
+{class}`~baybe.constraints.discrete.DiscreteCustomConstraint`). Continuous constraints
+cannot be validated; an {class}`~baybe.exceptions.LLMResponseWarning` is raised.
 ```
 
 ## Meta Recommenders
