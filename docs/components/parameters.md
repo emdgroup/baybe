@@ -316,6 +316,9 @@ print(temperature.metadata)
 MeasurableMetadata(description='Reaction temperature', misc={'measured_at': 'Reactor outlet'}, unit='°C')
 ~~~
 
+Metadata is also passed to the language model when using the
+{ref}`LLM recommender <llm_recommender>`.
+
 (parameter_kernel_overrides)=
 ## Parameter-Specific Kernel Overrides
 
