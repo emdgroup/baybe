@@ -15,8 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteBatchConstraint.subset_masks`
 - `SearchSpace.subsets` and `SearchSpace.sample_subsets` (combined subset iteration
   is temporarily private pending a public API that yields search spaces)
+- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars`
+  (product construction is now narwhals-based)
+- `DiscreteFilteringConstraint.get_valid`, `get_invalid`, and `get_invalid_polars`
+  (use the constraint as a dataframe filter instead)
+- `DiscreteFilteringConstraint.has_polars_implementation`
+- `Condition.to_polars` (conditions now evaluate through the backend-agnostic interface)
+- `build_constrained_product` and `parameter_cartesian_prod_pandas_constrained`
+- `DiscreteDependenciesConstraint.permutation_invariant` attribute, which was only
+  intended for internal use
 
 ### Breaking Changes
+- `SubspaceDiscrete.from_product` no longer accepts `constraints=None`; omit the
+  argument or pass an empty sequence instead
 - For pandas users: series/dataframe indices are no longer used as information carriers
   anywhere. In particular, recommendation dataframes no longer reflect discrete subspace
   locations via their index. Similarly, `_recommend_discrete` and kin now return a
@@ -42,6 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   NaN entries
 
 ### Fixed
+- Dependency and permutation constraints now reject null or NaN values
+- `DiscreteDependenciesConstraint` now rejects overlapping and chained dependencies,
+  which previously produced order-dependent filtering results: each affected parameter
+  may appear in only one group and must differ from the causing `parameters`
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
   values of invariant points are degenerate
 - Multi-output surrogate compatibility check in `Surrogate.fit` now correctly uses the
@@ -120,6 +135,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   then switches to another recommender, the latter alternates between the two
 
 ### Changed
+- Discrete filters are now applied by commutativity instead of being reorder by type:
+  commutative (row-wise) filters are applied first and non-commutative filters second,
+  each in their provided order
 - `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
   attribute of type `CandidatesProtocol` instead of raw `parameters` and `exp_rep`
   attributes, and `parameters` is now a read-only property delegating to it. The

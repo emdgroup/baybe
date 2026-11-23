@@ -6,7 +6,7 @@ import gc
 import warnings
 from collections.abc import Collection, Iterator, Sequence
 from math import prod
-from typing import TYPE_CHECKING, Any, NoReturn
+from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 import narwhals.stable.v2 as nw
 import numpy as np
@@ -16,8 +16,8 @@ from attrs.validators import deep_iterable, instance_of
 from cattrs import IterableValidationError
 from typing_extensions import Self, override
 
-from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
-from baybe.constraints.base import DiscreteConstraint
+from baybe.constraints import validate_constraints
+from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
 from baybe.constraints.discrete import DiscreteBatchConstraint
 from baybe.exceptions import DeprecationError
 from baybe.parameters import (
@@ -35,7 +35,7 @@ from baybe.searchspace.candidates import (
     _get_invalid_configurations,
 )
 from baybe.searchspace.utils import (
-    build_constrained_product,
+    _make_filtered_cartesian_product,
     select_via_flat_index,
 )
 from baybe.searchspace.validation import validate_parameters
@@ -258,14 +258,11 @@ class SubspaceDiscrete(SerialMixin):
     def from_product(
         cls,
         parameters: Sequence[DiscreteParameter],
-        constraints: Sequence[DiscreteConstraint] | None = None,
+        constraints: Sequence[DiscreteConstraint] = (),
         empty_encoding: bool | None = None,
     ) -> Self:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         validate_parameters(parameters, allow_empty=True)
-
-        if constraints is None:
-            constraints = []
 
         batch_constraints = [
             c for c in constraints if isinstance(c, DiscreteBatchConstraint)
@@ -273,22 +270,23 @@ class SubspaceDiscrete(SerialMixin):
         filtering_constraints = [
             c for c in constraints if not isinstance(c, DiscreteBatchConstraint)
         ]
-        if filtering_constraints:
-            filtering_constraints = sorted(
-                filtering_constraints,
-                key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+
+        if parameters:
+            candidates: CandidatesProtocol = ProductCandidates(
+                parameters, filtering_constraints
             )
+        else:
+            # Without parameters, the logic would bypass constraint validation, hence
+            # we validate here using the existing utility to reject non-empty constraint
+            # sets with the usual error message
             validate_constraints(filtering_constraints, parameters)
+            candidates = EmptyCandidates()
 
         extra: dict[str, Any] = (
             {"empty_encoding": empty_encoding} if empty_encoding is not None else {}
         )
         return cls(
-            candidates=(
-                EmptyCandidates()
-                if not parameters
-                else ProductCandidates(parameters, filtering_constraints)
-            ),
+            candidates=candidates,
             batch_constraints=batch_constraints,
             **extra,
         )
@@ -389,6 +387,8 @@ class SubspaceDiscrete(SerialMixin):
         By contrast, this method uses a shortcut that removes invalid candidates
         already during the creation of parameter combinations, resulting in a
         significantly faster construction.
+
+        The construction is restricted to the parameters' active values.
 
         Args:
             max_sum: The maximum (weighted) sum of the parameter values defining the
@@ -491,8 +491,8 @@ class SubspaceDiscrete(SerialMixin):
         # For a positive coefficient c the minimum contribution is c*min_raw; for a
         # negative coefficient the ordering flips and it becomes c*max_raw. Taking
         # min of both products handles any real coefficient correctly.
-        min_raw = [min(p.values) for p in simplex_parameters]
-        max_raw = [max(p.values) for p in simplex_parameters]
+        min_raw = [min(p.active_values) for p in simplex_parameters]
+        max_raw = [max(p.active_values) for p in simplex_parameters]
         coeffs = np.asarray(simplex_coefficients, dtype=active_settings.DTypeFloatNumpy)
         if not np.isfinite(coeffs).all():
             raise ValueError(
@@ -532,7 +532,12 @@ class SubspaceDiscrete(SerialMixin):
         # broadcasting to compute the validity mask in 2D (n_old, n_new) and only
         # materialize the surviving combinations. This avoids allocating large
         # intermediate arrays that are mostly discarded.
-        arr = np.empty((1, 0), dtype=active_settings.DTypeFloatNumpy)
+        # Preserve the exact scalar type of the active values in the output so that the
+        # constructed configurations match what downstream validation compares against.
+        value_dtype = np.result_type(
+            *(np.asarray(p.active_values).dtype for p in simplex_parameters)
+        )
+        arr = np.empty((1, 0), dtype=value_dtype)
         partial_sums = np.zeros(1, dtype=active_settings.DTypeFloatNumpy)
         nz_counts = np.zeros(1, dtype=np.intp)
 
@@ -543,7 +548,7 @@ class SubspaceDiscrete(SerialMixin):
             np.append(min_nonzero_upcoming, 0),
             np.append(max_nonzero_upcoming, 0),
         ):
-            values = np.asarray(param.values, dtype=active_settings.DTypeFloatNumpy)
+            values = np.asarray(param.active_values)
             threshold = (max_sum - min_sum_to_go) + tolerance
             effective_min = min_nonzero - max_nonzero_to_go
             effective_max = max_nonzero - min_nonzero_to_go
@@ -575,27 +580,38 @@ class SubspaceDiscrete(SerialMixin):
             arr = arr[mask]
 
         # Wrap in DataFrame
-        exp_rep = pd.DataFrame(arr, columns=[p.name for p in simplex_parameters])
+        # NOTE: `np.column_stack` widens the inferred array type to an arbitrary rank,
+        #   although the construction above guarantees a two-dimensional result.
+        arr_2d = cast("np.ndarray[tuple[int, int], np.dtype[np.floating[Any]]]", arr)
+        simplex = nw.from_numpy(
+            arr_2d,
+            schema=[p.name for p in simplex_parameters],
+            backend=active_settings.default_dataframe_backend,
+        ).to_native()
 
         batch_constraints_list = [
             c for c in constraints if isinstance(c, DiscreteBatchConstraint)
         ]
-        filtering_constraints = [
-            c for c in constraints if not isinstance(c, DiscreteBatchConstraint)
+        filtering_constraints: list[Filter] = [
+            c for c in constraints if isinstance(c, DiscreteFilteringConstraint)
         ]
 
-        # Merge product parameters and apply filtering constraints incrementally
-        exp_rep = build_constrained_product(
-            product_parameters, filtering_constraints, initial_df=exp_rep
+        # Merge product parameters and apply the filtering constraints
+        exp_rep = _make_filtered_cartesian_product(
+            product_parameters, filtering_constraints, initial_df=simplex
         )
 
+        # TODO: Investigate how off-the-shelf query optimization using
+        #   `ProductCandidates` performs against our custom from_simplex construction
+        # TODO: The `collect` call should be avoided but is required to make the
+        #   space serializable. We should either use `ProductCandidates` (depending on
+        #   whether we can skip manual construction altogether, see above) or introduce
+        #   a dedicated `SimplexCandidates` class to preserve laziness.
+        exp_rep = exp_rep.collect().to_native()
         all_parameters = [*simplex_parameters, *product_parameters]
-        return cls(
-            # TODO: Investigate how off-the-shelf query optimization performs against
-            #   our custom TableCandidates construction
-            candidates=TableCandidates(all_parameters, exp_rep),
-            batch_constraints=batch_constraints_list,
-        )
+        candidates = TableCandidates(all_parameters, exp_rep)
+
+        return cls(candidates, batch_constraints=batch_constraints_list)
 
     @property
     def metadata(self) -> pd.DataFrame:

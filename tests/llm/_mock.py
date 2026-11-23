@@ -11,6 +11,7 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
 )
 from baybe.searchspace import SearchSpace
+from baybe.settings import Settings
 from baybe.targets import NumericalTarget
 
 if CHEM_INSTALLED:
@@ -30,6 +31,7 @@ def mock_response(content):
     )
 
 
+@Settings(default_dataframe_backend="pandas")
 def make_valid_json(searchspace, batch_size):
     """Sample eligible candidates and return them as the expected JSON string."""
     params = searchspace.parameters
@@ -67,6 +69,7 @@ def make_valid_json(searchspace, batch_size):
     )
 
 
+@Settings(default_dataframe_backend="pandas")
 def make_recommendation(searchspace, **overrides):
     """Build a valid recommendation dict with optional parameter overrides.
 
