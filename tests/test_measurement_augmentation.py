@@ -111,7 +111,7 @@ def test_measurement_augmentation(
             n_mirror = (
                 2 if (mirror_aug and row["Num_disc_2"] != s_mirror.mirror_point) else 1
             )
-            k = row[c_dep.parameters].eq(0).sum()
+            k = row[list(c_dep.parameters)].eq(0).sum()
             n_expected += n_perm * np.pow(n_dep, k) * n_mirror
 
         # Check expectation
