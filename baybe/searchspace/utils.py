@@ -124,14 +124,26 @@ def _apply_evaluable_constraints(
     Returns:
         The filtered frame and the constraints whose required parameters are not yet
         all available.
+
+    Raises:
+        RuntimeError: If a constraint cannot be evaluated despite all required columns
+            being available.
     """
     available = set(frame.collect_schema().names())
     pending: list[DiscreteFilteringConstraint] = []
     for constraint in constraints:
-        if constraint._can_evaluate(available):
+        missing = constraint._required_parameters - available
+        evaluable = constraint._can_evaluate(available)
+        if evaluable:
             frame = constraint._filter(frame)
-        if constraint._required_parameters - available:
+
+        if missing:
             pending.append(constraint)
+        elif not evaluable:
+            raise RuntimeError(
+                f"{constraint.__class__.__name__} cannot be evaluated even though "
+                "all required columns are available."
+            )
     return frame, pending
 
 

@@ -24,6 +24,7 @@ from baybe.constraints.base import DiscreteConstraint
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace.utils import (
+    _apply_evaluable_constraints,
     _make_filtered_cartesian_product,
     _make_filtered_cartesian_product_incremental,
 )
@@ -207,6 +208,22 @@ def _permutation_invariance_with_dependencies_scenario() -> tuple[
         DiscreteRepetitionLimitConstraint(parameters=label_names, n_max_repetitions=1),
     ]
     return params, constraints
+
+
+def test_incremental_filter_rejects_unevaluable_complete_constraint(monkeypatch):
+    """Raise if a constraint cannot evaluate despite all its columns being present."""
+    constraint = DiscretePermutationInvarianceConstraint(parameters=["a", "b"])
+    monkeypatch.setattr(
+        DiscretePermutationInvarianceConstraint,
+        "_can_evaluate",
+        lambda self, available: False,
+    )
+    frame = nw.from_dicts(
+        [{"a": "x", "b": "y"}], backend=nw.Implementation.POLARS
+    ).lazy()
+
+    with pytest.raises(RuntimeError, match="all required columns are available"):
+        _apply_evaluable_constraints(frame, [constraint])
 
 
 def _mixed_scenario() -> tuple[
