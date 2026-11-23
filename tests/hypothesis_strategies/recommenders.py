@@ -2,11 +2,10 @@
 
 import hypothesis.strategies as st
 
-from baybe.recommenders.pure.llm.llm import _RESERVED_LITELLM_KEYS, LLMRecommender
+from baybe._llm.query import RESERVED_LITELLM_KEYS
+from baybe.recommenders.pure.llm.llm import LLMRecommender
 
-_litellm_arg_keys = st.text(min_size=1).filter(
-    lambda k: k not in _RESERVED_LITELLM_KEYS
-)
+_litellm_arg_keys = st.text(min_size=1).filter(lambda k: k not in RESERVED_LITELLM_KEYS)
 
 _litellm_arg_values = st.one_of(
     st.integers(),

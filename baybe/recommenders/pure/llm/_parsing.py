@@ -2,65 +2,24 @@
 
 from __future__ import annotations
 
-import json
 import warnings
-from json import JSONDecodeError
 from typing import cast
 
-import cattrs
 import pandas as pd
 
-from baybe.exceptions import (
+from baybe._llm.exceptions import (
     LLMBatchConstraintValidationError,
     LLMBatchSizeError,
     LLMDuplicateRecommendationsError,
     LLMIneligiblePointsError,
-    LLMMalformedResponseError,
-    LLMResponseWarning,
     LLMUnknownParameterError,
 )
-from baybe.recommenders.pure.llm._schema import ResponseItem
+from baybe._llm.extraction import extract_payload
+from baybe.exceptions import LLMResponseWarning
+from baybe.recommenders.pure.llm._schema import Response
 from baybe.searchspace import SearchSpace
 from baybe.utils.dataframe import normalize_input_dtypes
 from baybe.utils.numerical import closest_element
-
-
-def _extract_json_array(response: str, /) -> str:
-    """Extract the JSON array payload from a raw language model response.
-
-    Models often wrap the array in Markdown fences or prose, or emit several blocks
-    (e.g. after reconsidering). Return the *last* array that is a list of objects (the
-    intended answer), ignoring prose and stray brackets like ``x[0]``.
-
-    Args:
-        response: The raw response text.
-
-    Returns:
-        The substring spanning the extracted JSON array.
-
-    Raises:
-        ValueError: If no JSON array of objects is found in the response.
-    """
-    decoder = json.JSONDecoder()
-    last_object_array: str | None = None
-    search_start = 0
-    while (start := response.find("[", search_start)) != -1:
-        try:
-            value, end = decoder.raw_decode(response, start)
-        except JSONDecodeError:
-            search_start = start + 1  # not a valid array here; try the next "["
-            continue
-        is_object_list = (
-            isinstance(value, list)
-            and bool(value)
-            and all(isinstance(x, dict) for x in value)
-        )
-        if is_object_list:
-            last_object_array = response[start:end]
-        search_start = end  # keep scanning; a later block wins
-    if last_object_array is None:
-        raise ValueError("No JSON array of objects found in the response.")
-    return last_object_array
 
 
 def parse_llm_response(
@@ -68,9 +27,10 @@ def parse_llm_response(
 ) -> pd.DataFrame:
     """Parse a language model response into a dataframe of recommendations.
 
-    The response must contain exactly ``batch_size`` recommendations. A mismatch is
-    rejected before any individual recommendation is validated. The columns of the
-    returned dataframe correspond to the parameters of the search space.
+    The response must match the :class:`Response` schema and contain exactly
+    ``batch_size`` recommendations. A mismatch is rejected before any recommendation is
+    validated against the search space. The columns of the returned dataframe
+    correspond to the parameters of the search space.
 
     Numerical discrete values accepted by their parameter's range check are snapped
     to the nearest grid value before configuration validation.
@@ -103,17 +63,7 @@ def parse_llm_response(
             Continuous constraints cannot be validated after the fact, so compliance
             of the LLM recommendations with such constraints is not guaranteed.
     """
-    try:
-        payload = _extract_json_array(response)
-    except ValueError as e:
-        raise LLMMalformedResponseError(
-            "The language model response could not be parsed as a JSON array "
-            "of recommendations."
-        ) from e
-    try:
-        recommendations = json.loads(payload)
-    except JSONDecodeError as e:
-        raise LLMMalformedResponseError(f"Error parsing JSON output: {e}.") from e
+    recommendations = extract_payload(response, Response).recommendations
 
     # Check the number of recommendations before validating any of them
     if len(recommendations) != batch_size:
@@ -124,17 +74,7 @@ def parse_llm_response(
             received=len(recommendations),
         )
 
-    # Structure the raw JSON into typed recommendation objects
-    try:
-        entries: list[ResponseItem] = cattrs.structure(
-            recommendations, list[ResponseItem]
-        )
-    except Exception as exc:
-        raise LLMMalformedResponseError(
-            f"The language model response does not match the expected format. {exc}"
-        ) from exc
-
-    df = pd.DataFrame([entry.parameters for entry in entries])
+    df = pd.DataFrame([rec.parameters for rec in recommendations])
     param_names = {p.name for p in searchspace.parameters}
 
     # Check for unknown parameter names
@@ -191,7 +131,6 @@ def parse_llm_response(
                 f"constraint on parameter '{param_name}': all recommendations in a "
                 f"batch must share the same value, but received "
                 f"{list(unique_values)}.",
-                constraint_name=type(constraint).__name__,
                 parameters=constraint.parameters,
             )
 
