@@ -1,5 +1,6 @@
 """Tests for the discrete dependencies constraint."""
 
+import narwhals.stable.v2 as nw
 import pytest
 from pytest import param
 
@@ -129,6 +130,35 @@ def test_dependencies_filter(exclude, backend):
     )
     expected = [data[3]] if exclude else [data[i] for i in (0, 1, 2, 4, 5)]
     assert_filter(constraint, data, expected, backend)
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        param(
+            [
+                {"switch": 1.0, "value": float("nan")},
+                {"switch": 1.0, "value": float("nan")},
+            ],
+            id="nan-in-affected-parameter",
+        ),
+        param(
+            [
+                {"switch": 1.0, "value": 1.0, "other": None},
+                {"switch": 1.0, "value": 1.0, "other": None},
+            ],
+            id="null-in-unrelated-column",
+        ),
+    ],
+)
+def test_dependencies_reject_missing_values(data, backend):
+    """Reject NaN or null in causing, affected, and unrelated columns."""
+    constraint = DiscreteDependenciesConstraint(
+        ["switch"], [ThresholdCondition(0.0, ">")], [["value"]]
+    )
+    frame = nw.from_dicts(data, backend=backend)
+    with pytest.raises(ValueError, match="Null and NaN values are not supported"):
+        constraint(frame.to_native())
 
 
 @pytest.mark.parametrize(

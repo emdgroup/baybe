@@ -1,5 +1,6 @@
 """Tests for the discrete permutation invariance constraint."""
 
+import narwhals.stable.v2 as nw
 import pytest
 from pytest import param
 
@@ -68,6 +69,33 @@ def test_permutation_invariance(exclude, backend):
     constraint = DiscretePermutationInvarianceConstraint(["a", "b"], exclude=exclude)
     expected = [data[1], data[5]] if exclude else [data[i] for i in (0, 2, 3, 4)]
     assert_filter(constraint, data, expected, backend)
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        param(
+            [
+                {"a": float("nan"), "b": "x"},
+                {"a": float("nan"), "b": "x"},
+            ],
+            id="nan-in-permutation-parameter",
+        ),
+        param(
+            [
+                {"a": "x", "b": "x", "other": None},
+                {"a": "x", "b": "x", "other": None},
+            ],
+            id="null-in-unrelated-column",
+        ),
+    ],
+)
+def test_permutation_invariance_rejects_missing_values(data, backend):
+    """Reject NaN or null in permutation and unrelated columns."""
+    constraint = DiscretePermutationInvarianceConstraint(["a", "b"])
+    frame = nw.from_dicts(data, backend=backend)
+    with pytest.raises(ValueError, match="Null and NaN values are not supported"):
+        constraint(frame.to_native())
 
 
 @pytest.mark.parametrize(

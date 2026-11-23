@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteBatchConstraint.subset_masks`
 - `SearchSpace.subsets` and `SearchSpace.sample_subsets` (combined subset iteration
   is temporarily private pending a public API that yields search spaces)
+- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars`
+  (product construction is now narwhals-based)
+- `DiscreteFilteringConstraint.get_valid`, `get_invalid`, and `get_invalid_polars`
+  (use the constraint as a dataframe filter instead)
+- `DiscreteFilteringConstraint.has_polars_implementation`
+- `Condition.to_polars` (conditions now evaluate through the backend-agnostic interface)
+- `build_constrained_product` and `parameter_cartesian_prod_pandas_constrained`
+- `DiscreteDependenciesConstraint.permutation_invariant` attribute, which was only
+  intended for internal use
 
 ### Breaking Changes
 - For pandas users: series/dataframe indices are no longer used as information carriers
@@ -42,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   NaN entries
 
 ### Fixed
+- Dependency and permutation constraints now reject null or NaN values
 - `DiscreteDependenciesConstraint` now rejects overlapping and chained dependencies,
   which previously produced order-dependent filtering results: each affected parameter
   may appear in only one group and must differ from the causing `parameters`

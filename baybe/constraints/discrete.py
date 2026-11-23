@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Hashable, Iterable, Iterator, Mapping, Sequence
 from copy import deepcopy
 from functools import reduce
 from inspect import Parameter, Signature, signature
-from typing import TYPE_CHECKING, Any, ClassVar, cast, get_type_hints, overload
+from typing import TYPE_CHECKING, Any, ClassVar, get_type_hints, overload
 
 import cattrs
 import narwhals.stable.v2 as nw
@@ -70,6 +70,68 @@ def _to_nested_tuple(
             f"Each group in '{attribute.alias}' must be a sequence, not a string."
         )
     return tuple(tuple(group) for group in groups)
+
+
+def _validate_no_missing(df: nw.DataFrame, /) -> None:
+    """Reject null and NaN values in columns used to identify duplicate rows.
+
+    These constraints use row values as equality keys, and NaN is not equal to itself.
+    Missing values therefore cannot be compared consistently across dataframe backends.
+
+    Args:
+        df: The dataframe to validate.
+
+    Raises:
+        ValueError: If the dataframe contains null or NaN values.
+    """
+    checks = []
+    for name, dtype in df.schema.items():
+        missing = nw.col(name).is_null()
+        if dtype.is_numeric() and not dtype.is_decimal():
+            missing = missing | nw.col(name).is_nan()
+        checks.append(missing.any().alias(name))
+
+    if not checks:
+        return
+
+    checked = df.select(checks)
+    missing_by_column = zip(checked.columns, checked.row(0), strict=True)
+    if columns := sorted(
+        name for name, has_missing in missing_by_column if has_missing
+    ):
+        raise ValueError(
+            "Null and NaN values are not supported when applying this constraint; "
+            f"found missing values in columns {columns}."
+        )
+
+
+def _make_first_occurrence_mask(
+    df: nw.DataFrame, keys: Iterable[Hashable], /
+) -> nw.Series:
+    """Create a backend-native mask identifying the first occurrence of each key."""
+    seen: set[Hashable] = set()
+    mask = []
+    for key in keys:
+        mask.append(key not in seen)
+        seen.add(key)
+    return nw.new_series("matching", mask, dtype=nw.Boolean, backend=df.implementation)
+
+
+def _make_expression_first_occurrence_mask(
+    df: nw.DataFrame, expressions: Sequence[nw.Expr], /
+) -> nw.Series:
+    """Create a backend-native mask identifying each key combination's first row."""
+    if not expressions:
+        expressions = [nw.lit(True)]
+    keys = df.select(
+        expression.alias(str(i)) for i, expression in enumerate(expressions)
+    )
+    indexed = keys.with_row_index("_row")
+    first = indexed.unique(subset=keys.columns, keep="first", maintain_order=True)
+    unique_rows = first.get_column("_row")
+    return indexed.select(
+        nw.col("_row").is_in(unique_rows).alias("matching")
+    ).get_column("matching")
 
 
 # >>>>>>>>>> Deprecation
@@ -707,11 +769,6 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
     )
     """The parameters affected by the individual conditions."""
 
-    # for internal use only
-    permutation_invariant: bool = field(default=False, init=False)
-    """Flag that indicates whether the affected parameters are permutation invariant.
-    This should not be changed by the user but by other constraints using the class."""
-
     @conditions.validator
     def _validate_conditions(  # noqa: DOC101, DOC103
         self, _: Any, value: tuple[Condition, ...]
@@ -762,51 +819,66 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
     @override
     def _required_parameters(self) -> set[str]:
         """See base class."""
-        params = set(self.parameters)
-        for group in self.affected_parameters:
-            params.update(group)
-        return params
+        return set(self.parameters) | {
+            name for group in self.affected_parameters for name in group
+        }
+
+    def _affected_dependencies(self) -> dict[str, tuple[str, Condition]]:
+        """Map each affected parameter to its causing parameter and condition."""
+        return {
+            name: (parameter, condition)
+            for parameter, condition, group in zip(
+                self.parameters, self.conditions, self.affected_parameters, strict=True
+            )
+            for name in group
+        }
+
+    def _make_permutation_matching_mask(self, df: nw.DataFrame, /) -> nw.Series:
+        """Identify canonical rows, treating affected groups order-insensitively."""
+        schema = df.schema
+        columns = df.columns
+        other = [
+            i for i, name in enumerate(columns) if name not in self._required_parameters
+        ]
+        # Column positions of each affected and causing parameter plus the position of
+        # its activation flag in the condition frame
+        pairs = [
+            (columns.index(name), columns.index(parameter), position)
+            for position, (name, (parameter, _)) in enumerate(
+                self._affected_dependencies().items()
+            )
+        ]
+        conditions = df.select(
+            condition._to_expr(nw.col(parameter), schema[parameter])
+            for parameter, condition in zip(
+                self.parameters, self.conditions, strict=True
+            )
+        )
+
+        def keys() -> Iterator[Hashable]:
+            """Build order-insensitive indicators without mutating the input."""
+            for row, flags in zip(df.iter_rows(), conditions.iter_rows(), strict=True):
+                indicators = (
+                    (row[affected] if flags[position] else None, row[causing])
+                    for affected, causing, position in pairs
+                )
+                yield (*(row[i] for i in other), frozenset(indicators))
+
+        return _make_first_occurrence_mask(df, keys())
 
     @override
     def _to_matching_mask(self, df: nw.DataFrame, /) -> nw.Series:
-        return self._make_legacy_matching_mask(
-            df, permutation_invariant=self.permutation_invariant
-        )
+        _validate_no_missing(df)
+        schema = df.schema
+        dependencies = self._affected_dependencies()
+        other = [name for name in df.columns if name not in self._required_parameters]
+        expressions = [nw.col(name) for name in other]
+        for name, (parameter, condition) in dependencies.items():
+            active = condition._to_expr(nw.col(parameter), schema[parameter])
+            expressions.append(nw.when(active).then(nw.col(name)).otherwise(None))
+            expressions.append(nw.col(parameter))
 
-    def _make_legacy_matching_mask(
-        self, df: nw.DataFrame, /, *, permutation_invariant: bool = False
-    ) -> nw.Series:
-        """Temporarily adapt the previous pandas implementation to Narwhals masks."""
-        import pandas as pd
-
-        # The new filtering interface requires a positional mask, not index labels.
-        frame = df.to_pandas().reset_index(drop=True)
-        censored_df = frame.copy()
-        for k, param in enumerate(self.parameters):
-            invalid = ~cast(pd.Series, self.conditions[k].evaluate(frame[param]))
-            for affected_param in self.affected_parameters[k]:
-                censored_df[affected_param] = [
-                    (None if inv else val, dep)
-                    for val, dep, inv in zip(
-                        censored_df[affected_param], censored_df[param], invalid
-                    )
-                ]
-
-        all_affected_params = [col for cols in self.affected_parameters for col in cols]
-        other_params = (
-            frame.columns.drop(all_affected_params).drop(list(self.parameters)).tolist()
-        )
-        invariant_indicator = censored_df[all_affected_params].apply(
-            cast(Callable, frozenset)
-            if permutation_invariant
-            else cast(Callable, tuple),
-            axis=1,
-        )
-        parts = [censored_df[other_params]] if other_params else []
-        parts.append(invariant_indicator)
-        df_eval = pd.concat(parts, axis=1)
-        matching = ~df_eval.duplicated(keep="first")
-        return nw.new_series("matching", matching.tolist(), backend=df.implementation)
+        return _make_expression_first_occurrence_mask(df, expressions)
 
     def to_symmetries(self) -> tuple[DependencySymmetry, ...]:
         """Convert to :class:`~baybe.symmetries.dependency.DependencySymmetry` objects.
@@ -911,30 +983,40 @@ class DiscretePermutationInvarianceConstraint(DiscreteFilteringConstraint):
 
     @override
     def _to_matching_mask(self, df: nw.DataFrame, /) -> nw.Series:
-        import pandas as pd
+        _validate_no_missing(df)
+        columns = df.columns
+        params = [name for name in self.parameters if name in columns]
+        params_idx = [columns.index(name) for name in params]
+        other_idx = [i for i, name in enumerate(columns) if name not in params]
 
-        # Temporarily adapt the previous pandas implementation to positional masks.
-        frame = df.to_pandas().reset_index(drop=True)
-        params = [p for p in self.parameters if p in frame.columns]
-        other_params = frame.columns.drop(params).tolist()
-        frozen = frame[params].apply(cast(Callable, frozenset), axis=1)
-        parts = [frame[other_params].copy(), frozen] if other_params else [frozen]
-        df_eval = pd.concat(parts, axis=1)
-        matching = ~df_eval.duplicated(keep="first")
+        # Sorted-list expressions are another option, but pandas cannot deduplicate
+        # list-valued keys, benchmarks showed they are slower on Polars, and they can
+        # coerce mixed parameter types. Python frozensets work consistently.
+        def keys() -> Iterator[Hashable]:
+            """Build order-insensitive keys without mutating the input."""
+            for row in df.iter_rows():
+                yield (
+                    *(row[i] for i in other_idx),
+                    frozenset(row[i] for i in params_idx),
+                )
 
-        if self.dependencies is not None:
-            mask = nw.new_series(
-                "matching", matching.tolist(), backend=df.implementation
-            )
-            dependency_mask = self.dependencies._make_legacy_matching_mask(
-                df.filter(mask), permutation_invariant=True
-            )
-            dependency_matches = iter(dependency_mask.to_list())
-            matching = pd.Series(
-                [next(dependency_matches) if match else False for match in matching]
-            )
+        matching = _make_first_occurrence_mask(df, keys())
+        if self.dependencies is None:
+            return matching
 
-        return nw.new_series("matching", matching.tolist(), backend=df.implementation)
+        dependency_mask = self.dependencies._make_permutation_matching_mask(
+            df.filter(matching)
+        )
+        dependency_matches = iter(dependency_mask.to_list())
+        return nw.new_series(
+            "matching",
+            [
+                next(dependency_matches) if match else False
+                for match in matching.to_list()
+            ],
+            dtype=nw.Boolean,
+            backend=df.implementation,
+        )
 
     def to_symmetry(self) -> PermutationSymmetry:
         """Convert to a :class:`~baybe.symmetries.permutation.PermutationSymmetry`.
