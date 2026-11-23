@@ -840,13 +840,21 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         other = [
             i for i, name in enumerate(columns) if name not in self._required_parameters
         ]
-        # Column positions of each affected and causing parameter plus the position of
-        # its activation flag in the condition frame
+        # For each affected parameter: the column positions of the parameter and of its
+        # causing parameter, plus the position of the causing parameter's condition in
+        # the frame of evaluated conditions. That frame has exactly one column per
+        # causing parameter, no matter how many affected parameters share it.
         pairs = [
-            (columns.index(name), columns.index(parameter), position)
-            for position, (name, (parameter, _)) in enumerate(
-                self._affected_dependencies().items()
+            (columns.index(affected), columns.index(causing), condition_position)
+            for condition_position, (causing, _, group) in enumerate(
+                zip(
+                    self.parameters,
+                    self.conditions,
+                    self.affected_parameters,
+                    strict=True,
+                )
             )
+            for affected in group
         ]
         conditions = df.select(
             condition._to_expr(nw.col(parameter), schema[parameter])
@@ -857,10 +865,15 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
 
         def keys() -> Iterator[Hashable]:
             """Build order-insensitive indicators without mutating the input."""
-            for row, flags in zip(df.iter_rows(), conditions.iter_rows(), strict=True):
+            for row, evaluated in zip(
+                df.iter_rows(), conditions.iter_rows(), strict=True
+            ):
                 indicators = (
-                    (row[affected] if flags[position] else None, row[causing])
-                    for affected, causing, position in pairs
+                    (
+                        row[affected] if evaluated[condition_position] else None,
+                        row[causing],
+                    )
+                    for affected, causing, condition_position in pairs
                 )
                 yield (*(row[i] for i in other), frozenset(indicators))
 

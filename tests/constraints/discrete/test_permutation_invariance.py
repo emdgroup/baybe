@@ -4,7 +4,7 @@ import narwhals.stable.v2 as nw
 import pytest
 from pytest import param
 
-from baybe.constraints.conditions import ThresholdCondition
+from baybe.constraints.conditions import SubSelectionCondition, ThresholdCondition
 from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
     DiscretePermutationInvarianceConstraint,
@@ -159,6 +159,56 @@ def test_permutation_with_dependencies(exclude, backend):
     expected = [data[1], data[3]] if exclude else [data[0], data[2]]
     assert_filter(constraint, data, expected, backend)
     assert dependencies.to_dict() == before
+
+
+@pytest.mark.parametrize("exclude", [False, True], ids=["keep", "exclude"])
+def test_permutation_with_multi_member_dependency_group(exclude, backend):
+    """All members of a dependency group share the same causing condition."""
+    # Both `a` and `b` are caused by `switch`, so either both are taken into account
+    # (switch on) or both are ignored (switch off).
+    data = [
+        {"switch": "on", "a": "x", "b": "y"},
+        {"switch": "on", "a": "y", "b": "x"},
+        {"switch": "off", "a": "x", "b": "y"},
+        {"switch": "off", "a": "y", "b": "x"},
+    ]
+    dependencies = DiscreteDependenciesConstraint(
+        ["switch"], [SubSelectionCondition(["on"])], [["a", "b"]]
+    )
+    constraint = DiscretePermutationInvarianceConstraint(
+        ["a", "b"], dependencies, exclude=exclude
+    )
+    expected = [data[1], data[3]] if exclude else [data[0], data[2]]
+    assert_filter(constraint, data, expected, backend)
+
+
+@pytest.mark.parametrize(
+    ("second_switch", "expected"),
+    [("on", [True, True]), ("off", [True, False])],
+    ids=["condition-met", "condition-unmet"],
+)
+def test_affected_parameter_follows_its_own_causing_condition(
+    second_switch, expected, backend
+):
+    """An affected parameter only matters while its own causing condition is met."""
+    # `amount` is caused by `second_switch`, not by `first_switch`. Hence, only
+    # `second_switch` decides whether the `amount` values distinguish the two rows:
+    # with the condition met, both rows are distinct; otherwise they collapse into
+    # the same equivalence class and only the first is kept.
+    data = [
+        {"first_switch": "off", "second_switch": second_switch, "amount": 1.0},
+        {"first_switch": "off", "second_switch": second_switch, "amount": 2.0},
+    ]
+    dependencies = DiscreteDependenciesConstraint(
+        ["first_switch", "second_switch"],
+        [SubSelectionCondition(["on"]), SubSelectionCondition(["on"])],
+        [[], ["amount"]],
+    )
+    mask = dependencies._make_permutation_matching_mask(
+        nw.from_dicts(data, backend=backend)
+    )
+
+    assert mask.to_list() == expected
 
 
 @pytest.mark.parametrize("exclude", [False, True], ids=["keep", "exclude"])
