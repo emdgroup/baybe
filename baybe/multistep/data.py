@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import gc
 from collections.abc import Iterable, Mapping
-from copy import deepcopy
 from itertools import product
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Literal, cast
@@ -39,7 +38,7 @@ from baybe.utils.validation import validate_parameter_input
 from ._columns import FEASIBILITY_LABEL
 from .context import MultiStepContext
 from .dag import MultiStepDAG
-from .node import MultiStepNode
+from .node import FeasibilityCondition, MultiStepNode
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
@@ -56,15 +55,20 @@ class RepeatedMeasurementWarning(UserWarning):
     """A repeated execution was discarded because repeats are disabled."""
 
 
-def _condition_success(node: MultiStepNode, values: Mapping[str, Any]) -> bool:
-    """Evaluate all node conditions, allowing missing data only after a failure.
+def _condition_success(
+    node: MultiStepNode,
+    values: Mapping[str, Any],
+    conditions: tuple[FeasibilityCondition, ...] | None = None,
+) -> bool:
+    """Evaluate selected node conditions, allowing missing data only after failure.
 
     Args:
         node: The node whose execution conditions are evaluated.
         values: Observed output and auxiliary values keyed by measurement column.
+        conditions: Conditions to evaluate, defaulting to all node conditions.
 
     Returns:
-        Whether all configured conditions pass.
+        Whether all selected conditions pass.
 
     Raises:
         IncompleteMeasurementsError: If a condition value is missing and no other
@@ -74,7 +78,7 @@ def _condition_success(node: MultiStepNode, values: Mapping[str, Any]) -> bool:
     """
     passed = True
     missing: list[str] = []
-    for condition in node.feasibility_conditions:
+    for condition in node.feasibility_conditions if conditions is None else conditions:
         value = values.get(condition.column)
         if (
             value is None
@@ -118,22 +122,28 @@ def _condition_success(node: MultiStepNode, values: Mapping[str, Any]) -> bool:
 
 
 def _extract_feasibility_values(
-    node: MultiStepNode, measurements: pd.DataFrame
+    node: MultiStepNode,
+    measurements: pd.DataFrame,
+    conditions: tuple[FeasibilityCondition, ...] | None = None,
 ) -> pd.Series:
-    """Derive joint Boolean success labels from a node's configured conditions.
+    """Derive Boolean labels from selected conditions on each measurement row.
 
     Args:
         node: The node whose conditions are evaluated.
         measurements: Rows containing the node output and auxiliary measurements.
+        conditions: Conditions to evaluate, defaulting to all node conditions.
 
     Returns:
         A Boolean label for each row, preserving index and using the internal label
         column name.
     """
-    labels = [
-        _condition_success(node, cast(Mapping[str, Any], row))
-        for row in measurements.to_dict(orient="records")
-    ]
+    labels: list[Any] = []
+    for row in measurements.to_dict(orient="records"):
+        try:
+            label = _condition_success(node, cast(Mapping[str, Any], row), conditions)
+        except IncompleteMeasurementsError:
+            label = pd.NA
+        labels.append(label)
     return pd.Series(labels, index=measurements.index, name=FEASIBILITY_LABEL)
 
 
@@ -1147,7 +1157,7 @@ class MultiStepData(SerialMixin):
             if failures:
                 rows.extend(
                     _predicted_mean_rows(
-                        dag.context,
+                        dag,
                         node_object,
                         successes,
                         [inputs for inputs, _ in failures],
@@ -1159,27 +1169,48 @@ class MultiStepData(SerialMixin):
     def node_feasibility_training_data(
         self, dag: MultiStepDAG, node: str
     ) -> pd.DataFrame:
-        """Return all raw feasibility observations with their full local inputs.
+        """Return raw outputs and auxiliary-condition labels for a node.
 
         Args:
             dag: The DAG topology.
             node: The node name.
 
         Returns:
-            A raw-label training frame, empty for unconfigured nodes.
+            A frame with raw outputs for GP conditions and binary labels for auxiliary
+            conditions, empty for unconfigured nodes.
         """
         node_object = _get_node(dag, node)
-        columns = [*dag.context.input_names(node_object), FEASIBILITY_LABEL]
+        columns = [
+            *dag.context.input_names(node_object),
+            *node_object.output_names,
+            FEASIBILITY_LABEL,
+        ]
         if not node_object.feasibility_conditions:
             return pd.DataFrame(columns=columns)
-        rows = [
-            {
-                **measurement.inputs,
-                FEASIBILITY_LABEL: _is_successful(node_object, measurement),
+        auxiliary_conditions = tuple(
+            condition
+            for condition in node_object.feasibility_conditions
+            if condition.column not in node_object.output_names
+        )
+        rows = []
+        for measurement in self.measurements:
+            if measurement.node != node:
+                continue
+            values = {
+                **_get_output_values(node_object, measurement),
+                **measurement.condition_values,
             }
-            for measurement in self.measurements
-            if measurement.node == node
-        ]
+            try:
+                label = _condition_success(node_object, values, auxiliary_conditions)
+            except IncompleteMeasurementsError:
+                label = pd.NA
+            rows.append(
+                {
+                    **measurement.inputs,
+                    **_get_output_values(node_object, measurement),
+                    FEASIBILITY_LABEL: label,
+                }
+            )
         return pd.DataFrame(rows, columns=columns)
 
 
@@ -1800,9 +1831,14 @@ def _make_local_searchspace(
     for name in (
         feature.name for feature in context._features(node) if feature.parameter is None
     ):
-        values = frame[name].to_numpy(dtype=float)
-        lower = float(np.min(values))
-        upper = float(np.max(values))
+        if frame.empty:
+            # This interval defines only the local input transform. Parent outputs
+            # remain on their raw posterior scale and are not clipped to these bounds.
+            lower, upper = 0.0, 1.0
+        else:
+            values = frame[name].to_numpy(dtype=float)
+            lower = float(np.min(values))
+            upper = float(np.max(values))
         if lower == upper:
             delta = max(abs(lower) * 0.5, 1.0)
             lower -= delta
@@ -1814,7 +1850,7 @@ def _make_local_searchspace(
 
 
 def _predicted_mean_rows(
-    context: MultiStepContext,
+    dag: MultiStepDAG,
     node: MultiStepNode,
     successes: list[tuple[dict[str, Any], dict[str, float | None]]],
     failure_inputs: list[dict[str, Any]],
@@ -1822,7 +1858,7 @@ def _predicted_mean_rows(
     """Impute failure outputs with means predicted from successful observations.
 
     Args:
-        context: The configured history policy.
+        dag: The DAG defining the configured history and target transformations.
         node: The node whose training view is assembled.
         successes: Successful local inputs and real output bundles.
         failure_inputs: Local inputs of failed observations.
@@ -1836,8 +1872,10 @@ def _predicted_mean_rows(
     """
     import torch
 
+    from baybe.multistep.model import _make_local_surrogate
     from baybe.targets.numerical import NumericalTarget
 
+    context = dag.context
     predictions_by_output: dict[str, list[float]] = {}
     failure_frame = pd.DataFrame(
         failure_inputs, columns=list(context.input_names(node))
@@ -1848,22 +1886,16 @@ def _predicted_mean_rows(
             for inputs, values in successes
             if values[output_name] is not None
         ]
-        if len(output_successes) < 2:
-            raise IncompatibilityError(
-                f"Node '{node.name}' uses "
-                f"'{InfeasibleMeasurementMode.PREDICTED_MEAN.name}' but provides "
-                f"fewer than two successful observations for output "
-                f"'{output_name}' ({len(output_successes)})."
-            )
         success_frame = pd.DataFrame(
             [{**inputs, output_name: output} for inputs, output in output_successes],
             columns=[*context.input_names(node), output_name],
         )
         try:
             searchspace = _make_local_searchspace(context, node, success_frame)
-            surrogate = deepcopy(node.surrogate_model)
-            target = NumericalTarget(output_name)
-            surrogate.fit(searchspace, target.to_objective(), success_frame)
+            target = dag.target_by_output.get(output_name, NumericalTarget(output_name))
+            surrogate = _make_local_surrogate(
+                node, searchspace, target, success_frame, output_name
+            )
             with torch.no_grad():
                 predictions = (
                     cast(Any, surrogate).posterior(failure_frame).mean.squeeze(-1).cpu()

@@ -43,6 +43,10 @@ from baybe.recommenders.pure.experimental_feasibility import (
 )
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate, SurrogateProtocol
+from baybe.surrogates.gaussian_process.core import (
+    GaussianProcessSurrogate,
+    _ModelContext,
+)
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
@@ -57,7 +61,7 @@ from .data import (
     _validate_finite_input,
     _validate_node_inputs,
 )
-from .node import MultiStepNode
+from .node import FeasibilityCondition, MultiStepNode
 
 if TYPE_CHECKING:
     import torch
@@ -247,7 +251,7 @@ def _make_node_model(models: tuple[Model, ...]) -> Model:
     from botorch.models.model_list_gp_regression import ModelListGP
 
     if all(isinstance(model, GPyTorchModel) for model in models):
-        return ModelListGP(*models)
+        return ModelListGP(*(cast(GPyTorchModel, model) for model in models))
     return ModelList(*models)
 
 
@@ -283,12 +287,113 @@ def _condition_node_model(model: Model, inputs: Tensor, outputs: Tensor) -> Mode
         )
 
     conditioned_models = tuple(
-        component.condition_on_observations(
+        cast(Any, component).condition_on_observations(
             X=inputs, Y=outputs[..., output_index : output_index + 1]
         )
         for output_index, component in enumerate(model.models)
     )
     return _make_node_model(conditioned_models)
+
+
+def _make_local_surrogate(
+    node: MultiStepNode,
+    searchspace: SearchSpace,
+    target: Target,
+    measurements: pd.DataFrame,
+    label: str,
+    template: SurrogateProtocol | None = None,
+) -> SurrogateProtocol:
+    """Build a local prior, a conditioned prior, or a regular fitted surrogate.
+
+    Args:
+        node: The node owning the output model.
+        searchspace: The local input space for the surrogate.
+        target: The output target and its pre-transformations.
+        measurements: The usable local observations for this output.
+        label: The output name used in contextual errors.
+        template: The configured or previously retained surrogate.
+
+    Returns:
+        The independent local surrogate for the current data state.
+
+    Raises:
+        IncompatibilityError: If fewer than two observations are available for a
+            surrogate without GP-prior support, or if the configured GP prior cannot
+            be represented.
+    """
+    objective = target.to_objective()
+    surrogate = deepcopy(node.surrogate_model if template is None else template)
+    if len(measurements) >= 2:
+        surrogate.fit(searchspace, objective, measurements)
+        return surrogate
+
+    if not isinstance(surrogate, GaussianProcessSurrogate):
+        raise IncompatibilityError(
+            f"Node '{node.name}' uses surrogate '{type(surrogate).__name__}', which "
+            f"does not support the required GP prior for output '{label}' with "
+            f"{len(measurements)} usable measurement(s)."
+        )
+
+    try:
+        import botorch
+        import torch
+        from joblib.hashing import hash as hash_measurements
+
+        from baybe.utils.dataframe import to_tensor
+
+        prior_measurements = measurements.iloc[:0].copy()
+        context = _ModelContext(searchspace, objective, prior_measurements)
+        kernel, mean, likelihood, _ = surrogate._resolve_components(context)
+        train_x, train_y = to_tensor(
+            searchspace.transform(prior_measurements, allow_extra=True),
+            objective._pre_transform(prior_measurements, allow_extra=True),
+        )
+        if train_y.ndim == 1:
+            train_y = train_y.unsqueeze(-1)
+        input_transform = (
+            surrogate._make_input_transform(context)
+            if searchspace.comp_rep_columns
+            else None
+        )
+        surrogate._model = botorch.models.SingleTaskGP(
+            train_x,
+            train_y,
+            input_transform=input_transform,
+            outcome_transform=None,
+            mean_module=mean,
+            covar_module=kernel,
+            likelihood=likelihood,
+        )
+        surrogate._searchspace = searchspace
+        surrogate._objective = objective
+        surrogate._measurements = prior_measurements
+        surrogate._measurements_hash = hash_measurements(prior_measurements)
+        surrogate._input_scaler = surrogate._make_input_scaler(searchspace)
+        surrogate._output_scaler = surrogate._make_output_scaler(
+            objective, prior_measurements
+        )
+        if len(measurements) == 1:
+            train_x, train_y = to_tensor(
+                searchspace.transform(measurements, allow_extra=True),
+                objective._pre_transform(measurements, allow_extra=True),
+            )
+            if train_y.ndim == 1:
+                train_y = train_y.unsqueeze(-1)
+            # Initialize BoTorch's prediction caches before conditioning, matching
+            # the native GP fantasy path without adding a synthetic observation.
+            with torch.no_grad():
+                surrogate._model.posterior(train_x)
+            surrogate._model = surrogate._model.condition_on_observations(
+                X=train_x, Y=train_y
+            )
+            surrogate._measurements = measurements
+            surrogate._measurements_hash = hash_measurements(measurements)
+    except Exception as ex:
+        raise IncompatibilityError(
+            f"Could not create the configured GP prior for output '{label}' of node "
+            f"'{node.name}' using surrogate '{type(surrogate).__name__}': {ex}"
+        ) from ex
+    return surrogate
 
 
 @define(eq=False, repr=False, slots=False, on_setattr=setters.NO_OP)
@@ -348,7 +453,7 @@ class _MultiStepModelBase(_ModelBase):
     _feasibility_models: dict[str, _FeasibilityModelProtocol] = field(
         init=False, factory=dict, eq=False
     )
-    """Independent feasibility models retaining their own local fit search spaces."""
+    """Auxiliary-condition classifiers with independent local fit search spaces."""
 
     _node_names: tuple[str, ...] = field(init=False)
     """The node names in topological order."""
@@ -427,7 +532,7 @@ class _MultiStepModelBase(_ModelBase):
             node_surrogates: The fitted surrogates the node models were derived
                 from. Node models fitted outside the multi-step layer have no
                 corresponding surrogate.
-            feasibility_models: Independent feasibility models to publish.
+            feasibility_models: Auxiliary-condition classifiers to publish.
 
         Raises:
             IncompatibilityError: If a model or surrogate belongs to an unknown
@@ -520,22 +625,52 @@ class _MultiStepModelBase(_ModelBase):
 
     @property
     def fitted_nodes(self) -> tuple[str, ...]:
-        """The nodes with a fitted node model, in topological order."""
-        return tuple(name for name in self._node_names if name in self._node_models)
+        """The nodes whose every output has at least two real training values."""
+        result = []
+        for name in self._node_names:
+            surrogates = self._node_surrogates.get(name)
+            if name not in self._node_models:
+                continue
+            if not surrogates:
+                # Models supplied through ``from_node_models`` are externally fitted.
+                result.append(name)
+                continue
+            if all(
+                (measurements := getattr(surrogate, "_measurements", None)) is not None
+                and len(measurements) >= 2
+                for surrogate in surrogates.values()
+            ):
+                result.append(name)
+        return tuple(result)
 
     @property
     def missing_nodes(self) -> tuple[str, ...]:
-        """The nodes without a fitted node model, in topological order."""
+        """The nodes without any model object required for network prediction."""
         return tuple(name for name in self._node_names if name not in self._node_models)
 
     @property
     def missing_feasibility_nodes(self) -> tuple[str, ...]:
-        """Configured nodes without a fitted feasibility model."""
+        """Configured nodes without the models needed for feasibility prediction."""
         return tuple(
             name
             for name in self._node_names
             if self.dag.node_by_name[name].feasibility_conditions
-            and name not in self._feasibility_models
+            and not self._has_feasibility_prediction(name)
+        )
+
+    def _has_feasibility_prediction(self, node_name: str) -> bool:
+        """Check whether every condition has a fitted probability source."""
+        node = self.dag.node_by_name[node_name]
+        has_output_conditions = any(
+            condition.column in node.output_names
+            for condition in node.feasibility_conditions
+        )
+        has_auxiliary_conditions = any(
+            condition.column not in node.output_names
+            for condition in node.feasibility_conditions
+        )
+        return (not has_output_conditions or node_name in self._node_models) and (
+            not has_auxiliary_conditions or node_name in self._feasibility_models
         )
 
     @cached_property
@@ -551,7 +686,7 @@ class _MultiStepModelBase(_ModelBase):
         }
 
     def _validate_fitted(self) -> None:
-        """Validate that every node has a fitted model.
+        """Validate that every node has a model available for network prediction.
 
         Raises:
             ModelNotTrainedError: If at least one node has no fitted model.
@@ -613,12 +748,21 @@ class _MultiStepModelBase(_ModelBase):
                     if condition.column not in node.output_names
                 )
             )
+            auxiliary_conditions = tuple(
+                condition
+                for condition in node.feasibility_conditions
+                if condition.column not in node.output_names
+            )
             raw = local_frame(node)
             raw[list(node.output_names)] = measurements[list(node.output_names)]
             for column in auxiliary:
                 raw[column] = measurements[column]
-            labels = _extract_feasibility_values(node, raw)
-            frame = raw[list(self.dag.context.input_names(node))].copy()
+            labels = _extract_feasibility_values(
+                node, raw, conditions=auxiliary_conditions
+            )
+            frame = raw[
+                [*self.dag.context.input_names(node), *node.output_names]
+            ].copy()
             frame[FEASIBILITY_LABEL] = labels
             feasibility_frames[node.name] = frame
 
@@ -664,9 +808,18 @@ class _MultiStepModelBase(_ModelBase):
             fit_searchspace = _make_local_searchspace(
                 self.dag.context, node, measurements
             )
-        model = deepcopy(template)
-        model.fit(fit_searchspace, target.to_objective(), measurements)
-        return model
+        if label == FEASIBILITY_LABEL:
+            model = cast(Any, deepcopy(template))
+            model.fit(fit_searchspace, target.to_objective(), measurements)
+            return cast(_FeasibilityModelProtocol, model)
+        return _make_local_surrogate(
+            node,
+            fit_searchspace,
+            target,
+            measurements,
+            label,
+            cast(SurrogateProtocol, template),
+        )
 
     def _fit_node_frames(
         self,
@@ -674,6 +827,7 @@ class _MultiStepModelBase(_ModelBase):
         *,
         allow_partial: bool,
         fed_from_node_data: bool,
+        initialize_priors: bool = False,
         feasibility_frames: Mapping[str, pd.DataFrame] | None = None,
     ) -> None:
         """Fit the node models and publish the resulting context atomically.
@@ -685,6 +839,9 @@ class _MultiStepModelBase(_ModelBase):
                 left unfitted instead of raising an error.
             fed_from_node_data: Whether the frames are authoritative node data
                 rather than a complete-row projection.
+            initialize_priors: Whether zero/one-row GP outputs should receive an
+                unfit prior or a conditioned prior, and whether campaign auxiliary
+                classifiers may train from one real label.
             feasibility_frames: Explicit raw-label frames for configured nodes.
 
         Raises:
@@ -724,10 +881,24 @@ class _MultiStepModelBase(_ModelBase):
 
         if not allow_partial:
             for node_name, frame in feasibility_frames.items():
-                if len(frame) < 2:
+                node = self.dag.node_by_name[node_name]
+                has_auxiliary_conditions = any(
+                    condition.column not in node.output_names
+                    for condition in node.feasibility_conditions
+                )
+                n_real_labels = (
+                    int(frame[FEASIBILITY_LABEL].notna().sum())
+                    if FEASIBILITY_LABEL in frame
+                    else 0
+                )
+                if (
+                    has_auxiliary_conditions
+                    and FEASIBILITY_LABEL in frame
+                    and n_real_labels < 2
+                ):
                     raise ModelNotTrainedError(
                         f"Node '{node_name}' requires at least two training rows for "
-                        "its feasibility model."
+                        "its auxiliary-condition classifier."
                     )
 
         # Validate both independent views before any expensive fitting.
@@ -784,13 +955,14 @@ class _MultiStepModelBase(_ModelBase):
                     f"Node '{node_name}' requires at least two training rows for "
                     f"output '{output_name}', got {count}."
                 )
+            if too_few_outputs and not initialize_priors:
+                continue
             output_frames[node_name] = per_output_frames
-            if not too_few_outputs:
-                fit_searchspaces[node_name] = _make_local_searchspace(
-                    self.dag.context,
-                    node,
-                    frame[list(self.dag.context.input_names(node))],
-                )
+            fit_searchspaces[node_name] = _make_local_searchspace(
+                self.dag.context,
+                node,
+                frame[list(self.dag.context.input_names(node))],
+            )
         for node_name, frame in feasibility_frames.items():
             if FEASIBILITY_LABEL not in frame:
                 raise IncompatibilityError(
@@ -798,6 +970,8 @@ class _MultiStepModelBase(_ModelBase):
                     f"the derived label '{FEASIBILITY_LABEL}'."
                 )
             for value in frame[FEASIBILITY_LABEL]:
+                if pd.isna(value):
+                    continue
                 if not isinstance(value, (bool, np.bool_)):
                     raise IncompatibilityError(
                         f"Feasibility labels for node '{node_name}' must be Boolean."
@@ -838,7 +1012,14 @@ class _MultiStepModelBase(_ModelBase):
 
         for node_name, frame in feasibility_frames.items():
             node = self.dag.node_by_name[node_name]
-            if len(frame) < 2:
+            if not any(
+                condition.column not in node.output_names
+                for condition in node.feasibility_conditions
+            ):
+                continue
+            classifier_frame = frame.loc[frame[FEASIBILITY_LABEL].notna()]
+            min_feasibility_rows = 1 if initialize_priors else 2
+            if len(classifier_frame) < min_feasibility_rows:
                 continue
             target = BinaryTarget(
                 FEASIBILITY_LABEL, success_value=True, failure_value=False
@@ -848,7 +1029,13 @@ class _MultiStepModelBase(_ModelBase):
             )
             new_feasibility[node_name] = cast(
                 _FeasibilityModelProtocol,
-                self._fit_local_model(node, frame, target, template, FEASIBILITY_LABEL),
+                self._fit_local_model(
+                    node,
+                    classifier_frame,
+                    target,
+                    template,
+                    FEASIBILITY_LABEL,
+                ),
             )
 
         # Publish atomically: the previous fit stays intact on any error.
@@ -856,6 +1043,27 @@ class _MultiStepModelBase(_ModelBase):
             new_models,
             new_surrogates,
             feasibility_models=new_feasibility,
+        )
+
+    def _fit_node_data_with_priors(
+        self,
+        node_frames: Mapping[str, pd.DataFrame],
+        feasibility_frames: Mapping[str, pd.DataFrame],
+    ) -> None:
+        """Fit available outputs and initialize missing output and classifier models.
+
+        Args:
+            node_frames: Authoritative local output-training views for every node.
+            feasibility_frames: Raw-label frames for exactly the configured nodes.
+                A campaign classifier for auxiliary conditions is fitted from its
+                first real label; numeric output conditions use the output GP.
+        """
+        self._fit_node_frames(
+            node_frames,
+            allow_partial=True,
+            fed_from_node_data=True,
+            initialize_priors=True,
+            feasibility_frames=feasibility_frames,
         )
 
     def fit_node_data(  # noqa: DOC502
@@ -875,9 +1083,9 @@ class _MultiStepModelBase(_ModelBase):
         The provided data is treated as authoritative, so subsequent :meth:`fit`
         calls do not discard partial node observations.
 
-        Feasibility uses independent raw-label frames and requires at least two
-        observations, even if all failed and no output model is available. It is
-        independent of the successful-output model.
+        Conditions on numeric outputs use those outputs' posterior models. Conditions
+        on auxiliary measurements use independent raw-label frames and require at
+        least two rows when ``allow_partial`` is ``False``.
 
         Each call publishes a complete fitted context: nodes that are skipped
         because of missing or too little data are left unfitted, and their
@@ -893,7 +1101,8 @@ class _MultiStepModelBase(_ModelBase):
             feasibility_frames: Raw target labels and full local inputs for every
                 configured node, including explicitly empty frames. Unconfigured
                 callers need not provide this argument. Partial mode permits either
-                output or feasibility models to remain unavailable until two rows exist.
+                output or auxiliary-classifier models to remain unavailable until
+                enough rows exist.
 
         Raises:
             IncompatibilityError: If a frame is missing columns.
@@ -911,7 +1120,7 @@ class _MultiStepModelBase(_ModelBase):
         )
 
     def predict_feasibility(self, node_name: str, inputs: pd.DataFrame) -> pd.Series:
-        """Predict local feasibility without requiring an output or network model.
+        """Predict local feasibility from output posteriors and auxiliary models.
 
         Args:
             node_name: The configured DAG node.
@@ -923,7 +1132,8 @@ class _MultiStepModelBase(_ModelBase):
         Raises:
             IncompatibilityError: If the node is unknown, unconfigured, or inputs
                 violate its local observation contract.
-            ModelNotTrainedError: If no feasibility model has been fitted.
+            ModelNotTrainedError: If a required output or auxiliary model is
+                unavailable.
         """
         node = _get_node(self.dag, node_name)
         if not node.feasibility_conditions:
@@ -931,45 +1141,71 @@ class _MultiStepModelBase(_ModelBase):
                 f"Node '{node_name}' has no feasibility conditions."
             )
         _validate_node_inputs(node, inputs, context=self.dag.context)
-        if node_name not in self._feasibility_models:
+        if not self._has_feasibility_prediction(node_name):
             raise ModelNotTrainedError(
-                f"Node '{node_name}' has no fitted feasibility model."
+                f"Node '{node_name}' lacks a model required for feasibility prediction."
             )
-        model = self._feasibility_models[node_name]
-        surrogate = cast(Surrogate, model)
+        output_condition = any(
+            condition.column in node.output_names
+            for condition in node.feasibility_conditions
+        )
+        if output_condition:
+            reference_model = self.get_node_model(node_name)
+            searchspace = self._get_node_surrogate_searchspace(node_name)
+            if searchspace is None:
+                searchspace = _make_local_searchspace(self.dag.context, node, inputs)
+        else:
+            model = cast(Surrogate, self._feasibility_models[node_name])
+            reference_model = model.to_botorch()
+            searchspace = model._searchspace
         tensor = self._transform_local_inputs(
             inputs,
-            surrogate._searchspace,
-            surrogate.to_botorch(),
+            searchspace,
+            reference_model,
             node_name=node_name,
         )
+        tensor = tensor.unsqueeze(-2)
         import torch
 
         with torch.no_grad():
-            probabilities = model.posterior_probabilities(tensor).detach().cpu().numpy()
+            probabilities = (
+                self._predict_feasibility_tensor(node_name, tensor)
+                .detach()
+                .cpu()
+                .numpy()
+            )
         return pd.Series(probabilities, index=inputs.index, name="success_probability")
 
     def _predict_feasibility_tensor(
-        self, node_name: str, inputs_comp: Tensor
+        self,
+        node_name: str,
+        inputs_comp: Tensor,
+        *,
+        neutralize_uninformed: bool = False,
     ) -> Tensor:
-        """Predict local action success while retaining candidate gradients.
+        """Get a local feasibility scoring factor while retaining gradients.
 
-        ``inputs_comp`` uses the output model's computational representation.
-        The candidate columns are reordered by name into the independently
-        retained feasibility fit space, whose input transform and bounds remain
-        authoritative for this prediction.
+        Numerical conditions on node outputs use the corresponding output posterior
+        and its Gaussian probability mass inside the configured bounds. Auxiliary
+        conditions use a separately fitted classifier. Probabilities from distinct
+        outputs and the auxiliary classifier are multiplied, assuming conditional
+        independence between these separately modeled sources. If the classifier is
+        not available yet, the method returns a neutral factor for those conditions
+        only. Acquisition scoring can also neutralize a numeric factor when its
+        output model has no observations.
 
         Args:
             node_name: The configured DAG node.
             inputs_comp: Computational inputs with shape ``(batch..., 1, d)``.
+            neutralize_uninformed: Whether to use a neutral factor for output models
+                without observations.
 
         Returns:
-            One success probability per batch item, without the singleton q-axis.
+            One scoring factor per batch item, without the singleton q-axis.
 
         Raises:
             IncompatibilityError: If the node, input shape, fitted layout, or
                 predicted probabilities are invalid.
-            ModelNotTrainedError: If the configured feasibility model is absent.
         """
         if node_name not in self.dag.node_by_name:
             raise IncompatibilityError(f"Unknown DAG node '{node_name}'.")
@@ -981,46 +1217,138 @@ class _MultiStepModelBase(_ModelBase):
             )
         if not node.feasibility_conditions:
             return inputs_comp.new_ones(inputs_comp.shape[:-2])
-        try:
-            feasibility_model = self._feasibility_models[node_name]
-        except KeyError as ex:
-            raise ModelNotTrainedError(
-                f"Node '{node_name}' has no fitted feasibility model."
-            ) from ex
+        output_conditions: dict[str, list[FeasibilityCondition]] = {}
+        auxiliary_conditions: list[FeasibilityCondition] = []
+        for condition in node.feasibility_conditions:
+            if condition.column in node.output_names:
+                output_conditions.setdefault(condition.column, []).append(condition)
+            else:
+                auxiliary_conditions.append(condition)
 
-        surrogate = cast(Surrogate, feasibility_model)
-        searchspace = surrogate._searchspace
-        if searchspace is None:
-            raise IncompatibilityError(
-                f"The feasibility fit space for node '{node_name}' is unavailable."
-            )
         source_columns = self.get_node_model_columns(node_name)
-        target_columns = searchspace.comp_rep_columns
         source_indices = {column: index for index, column in enumerate(source_columns)}
-        missing = sorted(set(target_columns) - set(source_indices))
-        if missing or len(source_columns) != inputs_comp.shape[-1]:
+        if len(source_columns) != inputs_comp.shape[-1]:
             raise IncompatibilityError(
-                f"The fitted input layouts for node '{node_name}' are incompatible; "
-                f"missing feasibility columns: {missing}."
+                f"The fitted input layout for node '{node_name}' is incompatible with "
+                f"candidate shape {tuple(inputs_comp.shape)}."
             )
 
         import torch
 
-        indices = torch.tensor(
-            [source_indices[column] for column in target_columns],
-            dtype=torch.long,
-            device=inputs_comp.device,
-        )
-        # Each action needs a marginal probability; retain the singleton q-axis
-        # so candidate batches do not become a joint covariance calculation.
-        candidates = inputs_comp.index_select(-1, indices)
-        reference = next(surrogate.to_botorch().parameters())
-        candidates = candidates.to(reference)
-        probabilities = feasibility_model.posterior_probabilities(candidates)
+        probabilities = inputs_comp.new_ones(inputs_comp.shape[:-1])
+        if output_conditions:
+            posterior = cast(Any, self.get_node_model(node_name).posterior(inputs_comp))
+            for output_name, conditions in output_conditions.items():
+                output_index = node.output_names.index(output_name)
+                mean = posterior.mean[..., output_index : output_index + 1]
+                standard_deviation = (
+                    posterior.variance[..., output_index : output_index + 1]
+                    .clamp_min(0.0)
+                    .sqrt()
+                )
+                deterministic = standard_deviation == 0.0
+                standard_deviation = standard_deviation.clamp_min(
+                    torch.finfo(standard_deviation.dtype).eps
+                )
+                lower_bounds = [
+                    cast(float, condition.threshold)
+                    for condition in conditions
+                    if condition.operator == ">=" and condition.threshold is not None
+                ]
+                upper_bounds = [
+                    cast(float, condition.threshold)
+                    for condition in conditions
+                    if condition.operator == "<=" and condition.threshold is not None
+                ]
+                lower = max(lower_bounds) if lower_bounds else None
+                upper = min(upper_bounds) if upper_bounds else None
+                impossible_interval = (
+                    lower is not None and upper is not None and lower > upper
+                )
+                if impossible_interval:
+                    event_probability = mean.new_zeros(mean.shape)
+                else:
+                    upper_probability = mean.new_ones(mean.shape)
+                    if upper is not None:
+                        upper_probability = torch.special.ndtr(
+                            (mean.new_tensor(upper) - mean) / standard_deviation
+                        )
+                    lower_probability = mean.new_zeros(mean.shape)
+                    if lower is not None:
+                        lower_probability = torch.special.ndtr(
+                            (mean.new_tensor(lower) - mean) / standard_deviation
+                        )
+                    event_probability = (upper_probability - lower_probability).clamp(
+                        0.0, 1.0
+                    )
+                    deterministic_passes = torch.ones_like(mean, dtype=torch.bool)
+                    if lower is not None:
+                        deterministic_passes &= mean >= lower
+                    if upper is not None:
+                        deterministic_passes &= mean <= upper
+                    event_probability = torch.where(
+                        deterministic,
+                        deterministic_passes.to(mean.dtype),
+                        event_probability,
+                    )
+                if neutralize_uninformed and not impossible_interval:
+                    surrogate = self._node_surrogates.get(node_name, {}).get(
+                        output_name
+                    )
+                    node_model = self.get_node_model(node_name)
+                    output_model = (
+                        node_model
+                        if len(node.output_names) == 1
+                        else cast(Any, node_model).models[output_index]
+                    )
+                    # A conditioned fantasy has observations even when the retained
+                    # surrogate has no real measurements.
+                    if (
+                        isinstance(surrogate, Surrogate)
+                        and surrogate._measurements is not None
+                        and surrogate._measurements.empty
+                        and output_model is surrogate.to_botorch()
+                    ):
+                        event_probability = torch.ones_like(event_probability)
+                probabilities = probabilities * event_probability.squeeze(-1)
+
+        feasibility_model = self._feasibility_models.get(node_name)
+        if auxiliary_conditions and feasibility_model is not None:
+            searchspace = cast(Surrogate, feasibility_model)._searchspace
+            if searchspace is None:
+                raise IncompatibilityError(
+                    f"The feasibility fit space for node '{node_name}' is unavailable."
+                )
+            target_columns = searchspace.comp_rep_columns
+            missing = sorted(set(target_columns) - set(source_indices))
+            if missing:
+                raise IncompatibilityError(
+                    f"The fitted input layouts for node '{node_name}' are "
+                    "incompatible; "
+                    f"missing feasibility columns: {missing}."
+                )
+            indices = torch.tensor(
+                [source_indices[column] for column in target_columns],
+                dtype=torch.long,
+                device=inputs_comp.device,
+            )
+            candidates = inputs_comp.index_select(-1, indices)
+            reference = next(
+                cast(Surrogate, feasibility_model).to_botorch().parameters()
+            )
+            candidates = candidates.to(reference)
+            auxiliary_probability = feasibility_model.posterior_probabilities(
+                candidates
+            )
+            auxiliary_probability = auxiliary_probability.reshape(
+                inputs_comp.shape[:-1]
+            )
+            probabilities = probabilities * auxiliary_probability
+
         expected_shape = inputs_comp.shape[:-1]
         if probabilities.numel() != math.prod(expected_shape):
             raise IncompatibilityError(
-                f"The feasibility model for node '{node_name}' returned "
+                f"The feasibility sources for node '{node_name}' returned "
                 f"{probabilities.numel()} probabilities for input shape "
                 f"{tuple(inputs_comp.shape)}."
             )
@@ -1031,7 +1359,7 @@ class _MultiStepModelBase(_ModelBase):
             or (probabilities > 1).any()
         ):
             raise IncompatibilityError(
-                f"The feasibility model for node '{node_name}' returned values "
+                f"The feasibility sources for node '{node_name}' returned values "
                 "outside the probability interval [0, 1]."
             )
         return probabilities
@@ -1123,12 +1451,12 @@ class _MultiStepModelBase(_ModelBase):
         *,
         sampling_seed: int | None = None,
     ) -> tuple[Tensor, Tensor]:
-        """Sample successful outputs and their conditional network success weights.
+        """Sample outputs and their conditional network success weights.
 
         Each node's feasibility probability uses the parent outputs from the same
         sampled path. Shared ancestors are counted once, not once per downstream
-        branch. Only real measurements enter the feasibility models; hypothetical
-        outcomes are not conditioned on.
+        branch. Auxiliary classifiers use only real labels; output probabilities
+        come from their corresponding node posteriors.
 
         Args:
             X: Global candidate configurations in computational representation.
@@ -1140,7 +1468,8 @@ class _MultiStepModelBase(_ModelBase):
             axes and without an output axis on the weights.
 
         Raises:
-            ModelNotTrainedError: If a configured feasibility model is unavailable.
+            ModelNotTrainedError: If a required auxiliary-condition classifier is
+                unavailable.
         """
         if self.missing_feasibility_nodes:
             raise ModelNotTrainedError(
@@ -1154,6 +1483,31 @@ class _MultiStepModelBase(_ModelBase):
             include_feasibility=True,
         )
 
+    def _draw_network_outcomes_for_acquisition(
+        self,
+        X: Tensor,
+        n_paths: int,
+        *,
+        sampling_seed: int | None = None,
+    ) -> tuple[Tensor, Tensor]:
+        """Draw network outcomes with neutral weights for uninformed sources.
+
+        Args:
+            X: Global candidate configurations in computational representation.
+            n_paths: Number of network sample paths.
+            sampling_seed: Optional seed overriding the model's default seed.
+
+        Returns:
+            Raw network output samples and their success scoring weights.
+        """
+        return self._draw_network_samples(
+            X,
+            n_paths,
+            sampling_seed=sampling_seed,
+            include_feasibility=True,
+            neutralize_uninformed=True,
+        )
+
     def _draw_network_samples(
         self,
         X: Tensor,
@@ -1164,6 +1518,7 @@ class _MultiStepModelBase(_ModelBase):
         output_indices: list[int] | None = None,
         observation_noise: bool | Tensor = False,
         posterior_kwargs: Mapping[str, Any] | None = None,
+        neutralize_uninformed: bool = False,
     ) -> tuple[Tensor, Tensor]:
         """Forward-sample outputs and optionally accumulate feasibility weights."""
         self._validate_posterior_arguments(
@@ -1176,6 +1531,7 @@ class _MultiStepModelBase(_ModelBase):
             n_paths,
             sampling_seed=seed,
             include_feasibility=include_feasibility,
+            neutralize_uninformed=neutralize_uninformed,
         )
 
     def get_node_model(self, node_name: str) -> Model:
@@ -1820,6 +2176,7 @@ class _NetworkPosteriorBase(_PosteriorBase):
         base_samples: Tensor,
         *,
         include_feasibility: bool = False,
+        neutralize_uninformed: bool = False,
     ) -> tuple[Tensor, Tensor]:
         """Propagate local samples and optionally compute success weights.
 
@@ -1827,6 +2184,8 @@ class _NetworkPosteriorBase(_PosteriorBase):
             sample_shape: The independent network-sample axes.
             base_samples: Integer node-sampler seeds for each network path.
             include_feasibility: Whether to accumulate local success probabilities.
+            neutralize_uninformed: Whether to neutralize numeric output models without
+                observations.
 
         Returns:
             Complete network outputs and the corresponding success weights.
@@ -1856,6 +2215,7 @@ class _NetworkPosteriorBase(_PosteriorBase):
             self.X,
             base_samples.reshape(n_paths, self.model.num_nodes),
             include_feasibility=include_feasibility,
+            neutralize_uninformed=neutralize_uninformed,
         )
         full_shape = (
             sample_shape + self.X.shape[:-1] + torch.Size([self.model.num_outputs])
@@ -1886,6 +2246,7 @@ class _NetworkPosteriorBase(_PosteriorBase):
         *,
         sampling_seed: int | None = None,
         include_feasibility: bool = False,
+        neutralize_uninformed: bool = False,
     ) -> tuple[Tensor, Tensor]:
         """Draw complete network paths and optional conditional success weights.
 
@@ -1893,6 +2254,8 @@ class _NetworkPosteriorBase(_PosteriorBase):
             sample_shape: Shape of the independent network draws.
             sampling_seed: Optional seed for the network sampler.
             include_feasibility: Whether to accumulate local success probabilities.
+            neutralize_uninformed: Whether to neutralize numeric output models without
+                observations.
 
         Returns:
             Final-output draws and success weights with matching sample/batch/q axes.
@@ -1902,6 +2265,7 @@ class _NetworkPosteriorBase(_PosteriorBase):
             sample_shape,
             _make_network_base_samples(self, sample_shape, sampler.seed),
             include_feasibility=include_feasibility,
+            neutralize_uninformed=neutralize_uninformed,
         )
 
     @override
@@ -2095,6 +2459,7 @@ def _draw_network_paths(
     *,
     sampling_seed: int,
     include_feasibility: bool,
+    neutralize_uninformed: bool = False,
 ) -> tuple[Tensor, Tensor]:
     """Forward-sample the DAG with one native sampler over complete network paths.
 
@@ -2104,6 +2469,8 @@ def _draw_network_paths(
         n_paths: The number of network paths.
         sampling_seed: The base seed for all node draws.
         include_feasibility: Whether to accumulate network success weights.
+        neutralize_uninformed: Whether to neutralize numeric output models without
+            observations.
 
     Returns:
         Output samples with shape ``(n_paths, *batch_shape, q, num_outputs)`` and
@@ -2132,6 +2499,7 @@ def _draw_network_paths(
         torch.Size([n_paths]),
         sampling_seed=sampling_seed,
         include_feasibility=include_feasibility,
+        neutralize_uninformed=neutralize_uninformed,
     )
 
 
@@ -2141,6 +2509,7 @@ def _propagate_network_samples(
     base_samples: Tensor,
     *,
     include_feasibility: bool,
+    neutralize_uninformed: bool = False,
 ) -> tuple[Tensor, Tensor]:
     """Forward-propagate one complete DAG path per supplied base sample.
 
@@ -2149,6 +2518,8 @@ def _propagate_network_samples(
         X: Global candidate configurations in computational representation.
         base_samples: Local sampler seeds with shape ``(n_paths, n_nodes)``.
         include_feasibility: Whether to accumulate conditional success probabilities.
+        neutralize_uninformed: Whether to neutralize numeric output models without
+            observations.
 
     Returns:
         Final-output draws and success weights with aligned path/batch/q axes.
@@ -2224,7 +2595,9 @@ def _propagate_network_samples(
 
             if include_feasibility and node.feasibility_conditions:
                 probabilities = model._predict_feasibility_tensor(
-                    node_name, node_x.reshape(-1, 1, node_x.shape[-1])
+                    node_name,
+                    node_x.reshape(-1, 1, node_x.shape[-1]),
+                    neutralize_uninformed=neutralize_uninformed,
                 )
                 success_weights = success_weights * probabilities.reshape(
                     success_weights.shape

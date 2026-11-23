@@ -31,23 +31,22 @@ from typing import TYPE_CHECKING, Any, cast
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, evolve, field, setters
+from attrs import define, field, setters
 from attrs.validators import ge, in_, instance_of, le
-from attrs.validators import optional as optional_validator
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
 from baybe.exceptions import (
     IncompatibilityError,
     IncompatibleAcquisitionFunctionError,
-    ModelNotTrainedError,
 )
-from baybe.recommenders.base import RecommenderProtocol
 from baybe.serialization import SerialMixin, converter
+from baybe.utils.validation import finite_float
 
 from ._columns import EXPERIMENT_ID, NODE
 from .acquisition import (
     GraphAwareAcquisitionProtocol,
+    PartialKnowledgeGradientFN,
     ScoreScale,
     _resolve_score_scale,
     recommend_graph_aware,
@@ -66,9 +65,7 @@ from .data import (
     _identifier_number,
     _inputs_match,
     _is_successful,
-    _PendingAction,
     _validate_node_inputs,
-    contains_action,
     experiment_actions,
     make_executable_plans,
     pending_actions,
@@ -154,6 +151,12 @@ class MultiStepCampaign(SerialMixin):
     parent outputs. In functional mode, successful real parent outputs can be
     combined across experiments. Every recommendation is registered as a pending
     local execution in an explicitly assigned experiment.
+
+    The default acquisition uses partial knowledge gradient over configured GP
+    priors, so a compatible campaign can recommend an executable root action before
+    any measurements exist. Auxiliary conditions without a trained classifier and
+    numeric conditions without observations contribute a neutral internal scoring
+    factor, not a learned probability.
     """
 
     dag: MultiStepDAG = field(validator=instance_of(MultiStepDAG))
@@ -170,21 +173,12 @@ class MultiStepCampaign(SerialMixin):
     )
     """The graph-aware policy or stock acquisition function.
 
-    ``None`` selects the default Bayesian acquisition, also with feasibility
-    conditions. Graph-aware policies that do not derive from BayBE's
+    ``None`` selects :class:`~baybe.multistep.PartialKnowledgeGradientFN`.
+    This default requires ``batch_size=1``, a scalar numerical objective, and node
+    surrogates that support GP priors and fantasy conditioning.
+    Graph-aware policies that do not derive from BayBE's
     :class:`~baybe.acquisition.base.AcquisitionFunction` can be used at runtime,
     but cannot currently be serialized as part of a campaign.
-    """
-
-    initial_recommender: RecommenderProtocol | None = field(
-        default=None,
-        validator=optional_validator(instance_of(RecommenderProtocol)),
-        kw_only=True,
-    )
-    """Explicit recommender for initial node measurements, if required.
-
-    It receives the executable node's own search space, without an objective or
-    measurements. It must support recommendations in that context.
     """
 
     execution_mode: ExecutionMode = field(
@@ -201,15 +195,28 @@ class MultiStepCampaign(SerialMixin):
         parent references match.
     """
 
+    feasibility_epsilon: float = field(
+        default=0.0,
+        validator=[instance_of(float), finite_float, ge(0.0), le(1.0)],
+        kw_only=True,
+    )
+    """Minimum feasibility scoring factor used for predicted success.
+
+    A predicted probability ``p`` is weighted as ``epsilon + (1 - epsilon) * p``.
+    This is a scoring policy, not a change to the predicted probability. With the
+    default of zero, the original probability is used unchanged.
+    """
+
     feasibility_threshold: float = field(
         default=1e-6,
         validator=[instance_of(float), ge(0.0), le(1.0)],
         kw_only=True,
     )
-    """Minimum local success probability required for an executable action.
+    """Minimum local feasibility scoring factor required for an executable action.
 
-    The threshold is applied before expensive candidate fantasies. A probability
-    of exactly zero is never admissible, even when the threshold is zero.
+    The threshold is applied after :attr:`feasibility_epsilon` and before expensive
+    candidate fantasies. A factor of exactly zero is never admissible, even when the
+    threshold is zero.
     """
 
     @data.validator
@@ -227,10 +234,10 @@ class MultiStepCampaign(SerialMixin):
         acquisition_function: (
             AcquisitionFunction | GraphAwareAcquisitionProtocol | str | None
         ) = None,
-        initial_recommender: RecommenderProtocol | None = None,
         data: MultiStepData | None = None,
         execution_mode: ExecutionMode = "process",
         allow_repeats: bool = True,
+        feasibility_epsilon: float = 0.0,
         feasibility_threshold: float = 1e-6,
     ) -> MultiStepCampaign:
         """Create a campaign for the given DAG.
@@ -238,13 +245,13 @@ class MultiStepCampaign(SerialMixin):
         Args:
             dag: The DAG topology, including the optimization objective.
             acquisition_function: Optional acquisition function or its name.
-            initial_recommender: Optional BayBE recommender for initial measurements.
             data: Optional initial measurement store.
             execution_mode: Whether actions continue concrete experiments
                 (``"process"``) or combine known parent outputs across experiments
                 (``"functional"``).
             allow_repeats: Whether repeated real executions are stored and trained.
-            feasibility_threshold: Minimum local success probability for an
+            feasibility_epsilon: Minimum feasibility scoring factor.
+            feasibility_threshold: Minimum local feasibility scoring factor for an
                 executable action.
 
         Returns:
@@ -254,9 +261,9 @@ class MultiStepCampaign(SerialMixin):
             dag=dag,
             data=MultiStepData.empty() if data is None else data,
             acquisition_function=acquisition_function,
-            initial_recommender=initial_recommender,
             execution_mode=execution_mode,
             allow_repeats=allow_repeats,
+            feasibility_epsilon=feasibility_epsilon,
             feasibility_threshold=feasibility_threshold,
         )
 
@@ -623,10 +630,9 @@ class MultiStepCampaign(SerialMixin):
         Pending real actions are treated as hypothetical model states when
         scoring. They are not counted as observed real measurements.
 
-        While required output or feasibility models cannot be fitted, an explicitly
-        configured initial recommender selects the node inputs. Otherwise, the
-        configured acquisition selects the action; ``None`` selects the default
-        Bayesian acquisition.
+        The default p-KGFN uses the configured GP priors before the first measurement
+        and combines them with the local feasibility models as those become available.
+        Explicitly selected graph-aware and stock acquisitions remain in effect.
 
         Every returned action is registered as pending with its explicit experiment
         identifier. New identifiers are published only after every computation and
@@ -648,8 +654,6 @@ class MultiStepCampaign(SerialMixin):
                 is available.
             InfeasibilityError: If no executable action reaches the local success
                 threshold.
-            ModelNotTrainedError: If initial data is required and no initial
-                recommender was configured.
         """
         if batch_size < 1:
             raise ValueError(
@@ -661,7 +665,7 @@ class MultiStepCampaign(SerialMixin):
             self.dag, numerical_measurements_must_be_within_tolerance=False
         )
 
-        graph_aware = isinstance(
+        graph_aware = self.acquisition_function is None or isinstance(
             self.acquisition_function, GraphAwareAcquisitionProtocol
         )
         policy: GraphAwareAcquisitionProtocol | None = None
@@ -669,7 +673,12 @@ class MultiStepCampaign(SerialMixin):
         score_scale: ScoreScale | None = None
 
         if graph_aware:
-            policy = cast(GraphAwareAcquisitionProtocol, self.acquisition_function)
+            selected_policy = (
+                cast(GraphAwareAcquisitionProtocol, PartialKnowledgeGradientFN())
+                if self.acquisition_function is None
+                else cast(GraphAwareAcquisitionProtocol, self.acquisition_function)
+            )
+            policy = selected_policy
             policy.validate_context(self.dag, self.data, batch_size)
         else:
             from baybe.recommenders.pure.bayesian.botorch.core import (
@@ -705,13 +714,10 @@ class MultiStepCampaign(SerialMixin):
             score_scale = _resolve_score_scale(resolved_acquisition)
 
         self._fit_node_models()
-        needs_initial_data = bool(
-            self.model.missing_nodes or self.model.missing_feasibility_nodes
-        )
         pending = pending_actions(self.data._contexts)
         plans = self._executable_plans()
 
-        if graph_aware and not needs_initial_data:
+        if graph_aware:
             assert policy is not None
             policy.validate_model(self.model)
             actions = recommend_graph_aware(
@@ -720,18 +726,9 @@ class MultiStepCampaign(SerialMixin):
                 pending,
                 acquisition=policy,
                 batch_size=batch_size,
+                feasibility_epsilon=self.feasibility_epsilon,
                 feasibility_threshold=self.feasibility_threshold,
             )
-        elif needs_initial_data:
-            if self.initial_recommender is None:
-                raise ModelNotTrainedError(
-                    "The network requires additional node measurements. Configure "
-                    "an initial recommender or provide sufficient node data. "
-                    f"Missing output models: {list(self.model.missing_nodes)}; "
-                    "missing feasibility models: "
-                    f"{list(self.model.missing_feasibility_nodes)}."
-                )
-            actions = self._recommend_initial(plans, pending, batch_size)
         else:
             assert resolved_acquisition is not None
             assert score_scale is not None
@@ -744,6 +741,7 @@ class MultiStepCampaign(SerialMixin):
                 acquisition_function=resolved_acquisition,
                 score_scale=score_scale,
                 batch_size=batch_size,
+                feasibility_epsilon=self.feasibility_epsilon,
                 feasibility_threshold=self.feasibility_threshold,
                 first_new_id=self._first_new_identifier(),
                 execution_mode=self.execution_mode,
@@ -782,137 +780,6 @@ class MultiStepCampaign(SerialMixin):
         self.data = self.data.with_process_state(experiments, counter)
         return result
 
-    def _recommend_initial(
-        self,
-        plans: tuple[_ExecutablePlan, ...],
-        pending: tuple[_PendingAction, ...],
-        batch_size: int,
-    ) -> list[_PendingAction]:
-        """Use the configured initial recommender on executable local spaces.
-
-        Args:
-            plans: The executable node contexts.
-            pending: Actions already awaiting measurements.
-            batch_size: The requested number of actions.
-
-        Returns:
-            The selected pending-free local actions.
-
-        Raises:
-            IncompatibilityError: If the recommender cannot provide enough
-                admissible distinct actions, or returns invalid probabilities.
-        """
-        from baybe.searchspace._filtered import FilteredSubspaceDiscrete
-
-        assert self.initial_recommender is not None
-        missing = set(self.model.missing_nodes) | set(
-            self.model.missing_feasibility_nodes
-        )
-        order = {name: index for index, name in enumerate(self.dag.topological_order)}
-        ordered = sorted(
-            plans, key=lambda p: (p.node not in missing, p.is_new, order[p.node])
-        )
-        next_id = max(
-            [self._first_new_identifier()]
-            + [_identifier_number(p.experiment_id) + 1 for p in plans if p.is_new]
-        )
-        selected: list[_PendingAction] = []
-        for plan in ordered:
-            node = self.dag.node_by_name[plan.node]
-            count = batch_size - len(selected) if plan.is_new else 1
-            if node.inputs:
-                searchspace = node.searchspace
-                if searchspace.continuous.is_empty:
-                    candidates = cast(
-                        "list[dict[str, Any]]",
-                        searchspace.discrete.exp_rep.to_dict("records"),
-                    )
-                    mask = np.array(
-                        [
-                            not contains_action(
-                                (*pending, *selected),
-                                node=node.name,
-                                inputs={**row, **plan.inputs},
-                                dag=self.dag,
-                            )
-                            for row in candidates
-                        ],
-                        dtype=bool,
-                    )
-                    if not mask.any():
-                        continue
-                    count = min(count, int(mask.sum()))
-                    searchspace = evolve(
-                        searchspace,
-                        discrete=FilteredSubspaceDiscrete.from_subspace(
-                            searchspace.discrete, mask
-                        ),
-                    )
-                recommendations = self.initial_recommender.recommend(
-                    batch_size=count, searchspace=searchspace
-                )
-                if (
-                    len(recommendations) != count
-                    or not recommendations.columns.is_unique
-                    or set(recommendations.columns) != {p.name for p in node.inputs}
-                ):
-                    raise IncompatibilityError(
-                        "The initial recommender must return the requested number "
-                        "of configurations with exactly the inputs of node "
-                        f"'{node.name}'."
-                    )
-                searchspace._validate_configurations(recommendations)
-                rows = cast("list[dict[str, Any]]", recommendations.to_dict("records"))
-            else:
-                rows = [{}]
-
-            assigned = False
-            for row in rows:
-                inputs = {**row, **plan.inputs}
-                if contains_action(
-                    (*pending, *selected), node=node.name, inputs=inputs, dag=self.dag
-                ):
-                    continue
-                if (
-                    node.feasibility_conditions
-                    and node.name not in self.model.missing_feasibility_nodes
-                ):
-                    probability = float(
-                        self.model.predict_feasibility(
-                            node.name, pd.DataFrame([inputs])
-                        ).iloc[0]
-                    )
-                    if not np.isfinite(probability) or not 0.0 <= probability <= 1.0:
-                        raise IncompatibilityError(
-                            "Local success probabilities must be finite values in "
-                            "[0, 1]."
-                        )
-                    if probability == 0.0 or probability < self.feasibility_threshold:
-                        continue
-                experiment_id = plan.experiment_id
-                if plan.is_new and assigned:
-                    experiment_id = f"exp-{next_id}"
-                    next_id += 1
-                selected.append(
-                    _PendingAction(
-                        node=node.name,
-                        inputs=inputs,
-                        experiment_id=experiment_id,
-                        parent_refs=plan.parent_refs,
-                    )
-                )
-                assigned = True
-                if len(selected) == batch_size:
-                    return selected
-                if not plan.is_new:
-                    break
-
-        raise IncompatibilityError(
-            f"The initial recommender could not provide {batch_size} distinct "
-            "admissible executable actions. Report pending measurements, choose "
-            "another initial recommender, or reduce the batch size."
-        )
-
     def _first_new_identifier(self) -> int:
         """Return the first numeric experiment suffix not known to be in use.
 
@@ -950,17 +817,14 @@ class MultiStepCampaign(SerialMixin):
     def _fit_node_models(self) -> None:
         """Fit the node models from the current measurements.
 
-        The fit is partial-safe, so upstream-only measurements already train
-        their node models before complete DAG rows exist.
+        Missing outputs receive GP priors, and upstream-only measurements update
+        only the nodes for which real data exists.
         """
-        if not self.data.measurements:
-            return
-        self.model.fit_node_data(
+        self.model._fit_node_data_with_priors(
             {
                 node.name: self.data.node_training_data(self.dag, node.name)
                 for node in self.dag.nodes
             },
-            allow_partial=True,
             feasibility_frames={
                 node.name: self.data.node_feasibility_training_data(self.dag, node.name)
                 for node in self.dag.nodes
