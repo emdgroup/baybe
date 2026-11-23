@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, TypeVar
 import narwhals.stable.v2 as nw
 import numpy as np
 
-from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
 from baybe.constraints.base import DiscreteConstraint, DiscreteFilteringConstraint
 from baybe.parameters.base import DiscreteParameter
 from baybe.utils.dataframe import Filter, _filter_dataframe, _infer_backend
@@ -147,106 +146,34 @@ def _apply_evaluable_constraints(
     return frame, pending
 
 
-def _sort_filters(filters: Sequence[Filter]) -> list[Filter]:
-    """Order filtering constraints canonically, moving all other filters last."""
-    constraints = sorted(
-        (f for f in filters if isinstance(f, DiscreteFilteringConstraint)),
-        key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
-    )
-    others = [f for f in filters if not isinstance(f, DiscreteFilteringConstraint)]
-    return [*constraints, *others]
-
-
 def _make_filtered_cartesian_product(
     parameters: Sequence[DiscreteParameter],
     filters: Sequence[Filter],
     initial_df: IntoFrame | None = None,
     *,
-    sort_filters: bool = False,
+    incremental: bool = True,
 ) -> nw.LazyFrame:
-    """Create the Cartesian parameter product and apply the given filters.
+    """Create a filtered Cartesian product.
 
     Args:
         parameters: The discrete parameters to combine.
-        filters: The filters to apply to the product, in the given order.
+        filters: The filters to apply to the product.
         initial_df: An optional starting frame, whose columns are cross-joined with the
             parameter values.
-        sort_filters: If ``True``, apply filters in their canonical order
-            (see :data:`DISCRETE_CONSTRAINTS_FILTERING_ORDER`) instead of the
-            order in which they are passed.
+        incremental: If ``True``, apply constraints as soon as they can be evaluated.
+            Set to ``False`` to build the full Cartesian product before filtering.
 
     Returns:
         The filtered Narwhals lazy frame.
     """
-    if sort_filters:
-        filters = _sort_filters(filters)
-
     backend = _infer_backend(initial_df)
-
-    frames = [
-        nw.new_series(parameter.name, parameter.active_values, backend=backend)
-        .to_frame()
-        .lazy()
-        for parameter in parameters
-    ]
-    if initial_df is not None:
-        frames.insert(0, nw.from_native(initial_df).lazy())
-    if not frames:
-        return nw.from_dict({}, backend=backend).lazy()
-
-    product = frames[0]
-    for frame in frames[1:]:
-        product = product.join(frame, how="cross")
-
-    return _filter_dataframe(product, *filters)
-
-
-def _make_filtered_cartesian_product_incremental(
-    parameters: Sequence[DiscreteParameter],
-    filters: Sequence[Filter],
-    initial_df: IntoFrame | None = None,
-    *,
-    sort_filters: bool = False,
-    sort_parameters: bool = False,
-) -> nw.LazyFrame:
-    """Create a Cartesian parameter product, applying filters as early as possible.
-
-    Unlike :func:`_make_filtered_cartesian_product`, which builds the full product
-    before filtering, this variant cross-joins parameters one at a time and applies
-    each filtering constraint as soon as it can be (partially) evaluated. Constraints
-    are re-evaluated after every join until all of their required parameters are
-    available.
-
-    Args:
-        parameters: The discrete parameters to combine.
-        filters: The filters to apply to the product. Filtering constraints are
-            applied incrementally; all other filters are applied at the end.
-        initial_df: An optional starting frame, whose columns are cross-joined with
-            the parameter values.
-        sort_filters: If ``True``, apply filters in their canonical order
-            (see :data:`DISCRETE_CONSTRAINTS_FILTERING_ORDER`) instead of the
-            order in which they are passed.
-        sort_parameters: If ``True``, join parameters in the order given by
-            :func:`optimize_parameter_order`. Otherwise, keep the given order.
-
-    Returns:
-        The filtered Narwhals lazy frame.
-    """
-    if sort_filters:
-        filters = _sort_filters(filters)
-
-    backend = _infer_backend(initial_df)
-
     constraints = [f for f in filters if isinstance(f, DiscreteFilteringConstraint)]
     other_filters = [
         f for f in filters if not isinstance(f, DiscreteFilteringConstraint)
     ]
     ordered_parameters = (
-        optimize_parameter_order(parameters, constraints)
-        if sort_parameters
-        else list(parameters)
+        optimize_parameter_order(parameters, constraints) if incremental else parameters
     )
-
     frames = [
         nw.new_series(parameter.name, parameter.active_values, backend=backend)
         .to_frame()
@@ -255,15 +182,18 @@ def _make_filtered_cartesian_product_incremental(
     ]
     if initial_df is not None:
         frames.insert(0, nw.from_native(initial_df).lazy())
-
     if not frames:
         return nw.from_dict({}, backend=backend).lazy()
 
     product = frames[0]
-    product, pending = _apply_evaluable_constraints(product, constraints)
+    if not incremental:
+        for frame in frames[1:]:
+            product = product.join(frame, how="cross")
+        return _filter_dataframe(product, *filters)
 
-    for column in frames[1:]:
-        product = product.join(column, how="cross")
+    product, pending = _apply_evaluable_constraints(product, constraints)
+    for frame in frames[1:]:
+        product = product.join(frame, how="cross")
         product, pending = _apply_evaluable_constraints(product, pending)
 
     # All constraints must have been fully applied after the last join

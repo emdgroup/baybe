@@ -26,7 +26,6 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace.utils import (
     _apply_evaluable_constraints,
     _make_filtered_cartesian_product,
-    _make_filtered_cartesian_product_incremental,
 )
 from baybe.settings import Settings
 
@@ -294,46 +293,18 @@ def _mixed_scenario() -> tuple[
         ),
     ],
 )
-@pytest.mark.parametrize(
-    ("builder", "flags"),
-    [
-        pytest.param(
-            _make_filtered_cartesian_product,
-            {"sort_filters": True},
-            id="full_sorted",
-        ),
-        pytest.param(
-            _make_filtered_cartesian_product_incremental,
-            {},
-            id="incremental",
-        ),
-        pytest.param(
-            _make_filtered_cartesian_product_incremental,
-            {"sort_filters": True},
-            id="incremental_sorted",
-        ),
-        pytest.param(
-            _make_filtered_cartesian_product_incremental,
-            {"sort_parameters": True},
-            id="incremental_sorted_params",
-        ),
-        pytest.param(
-            _make_filtered_cartesian_product_incremental,
-            {"sort_filters": True, "sort_parameters": True},
-            id="incremental_sorted_constraints_params",
-        ),
-    ],
-)
 @pytest.mark.parametrize("backend", ["pandas", "polars"])
-def test_constrained_cartesian_product(scenario, builder, flags, backend):
-    """Verify that every optimization matches the unoptimized construction."""
+def test_constrained_cartesian_product(scenario, backend):
+    """Compare incremental construction against the full-product reference."""
     parameters, constraints = scenario()
 
     with Settings(default_dataframe_backend=backend):
         df_reference = nw.from_native(
-            _make_filtered_cartesian_product(parameters, constraints)
+            _make_filtered_cartesian_product(parameters, constraints, incremental=False)
         )
-        df_result = nw.from_native(builder(parameters, constraints, **flags))
+        df_result = nw.from_native(
+            _make_filtered_cartesian_product(parameters, constraints, incremental=True)
+        )
         assert (
             df_reference.implementation
             == df_result.implementation
