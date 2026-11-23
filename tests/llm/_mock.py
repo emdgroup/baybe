@@ -21,14 +21,25 @@ PATCH_TARGET = "baybe._optional.llm.completion"
 """Patch target for mocking the LiteLLM ``completion`` function."""
 
 
-def mock_response(content):
+def mock_response(content, finish_reason="stop"):
     """Build a fake LiteLLM response object from raw text content.
 
     Needs to use a SimpleNamespace to mimic the structure of a real LiteLLM response.
+    ``finish_reason`` defaults to ``"stop"``; pass ``"length"`` to mimic truncation.
     """
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=content))]
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(content=content),
+                finish_reason=finish_reason,
+            )
+        ]
     )
+
+
+def to_response_json(recommendations):
+    """Wrap recommendation dicts into the JSON response object expected from the LLM."""
+    return json.dumps({"recommendations": list(recommendations)})
 
 
 @Settings(default_dataframe_backend="pandas")
@@ -64,9 +75,7 @@ def make_valid_json(searchspace, batch_size):
                 }
             )
 
-    return json.dumps(
-        recommendations,
-    )
+    return to_response_json(recommendations)
 
 
 @Settings(default_dataframe_backend="pandas")
@@ -93,9 +102,7 @@ def make_response_json(searchspace, **overrides):
 
     Overrides are forwarded to :func:`make_recommendation`.
     """
-    return json.dumps(
-        [make_recommendation(searchspace, **overrides)],
-    )
+    return to_response_json([make_recommendation(searchspace, **overrides)])
 
 
 def make_discrete_searchspace():
