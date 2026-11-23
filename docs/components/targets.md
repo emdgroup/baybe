@@ -393,6 +393,22 @@ t6 = t5.clamp(max=10)  # upper-bound to 10 (lower bound is 0 due to abs() call a
 t7 = t6.normalize()  # normalize to [0, 1]
 ```
 
+## Metadata
+
+Targets accept the same ``metadata`` attribute as parameters, a
+{class}`~baybe.utils.metadata.MeasurableMetadata` with ``description``, ``unit`` and
+``misc``. See the {ref}`parameter metadata <parameter_metadata>` section for the
+dictionary shortcut.
+
+```python
+from baybe.targets import NumericalTarget
+
+target = NumericalTarget(
+    name="Yield",
+    metadata={"description": "Isolated product yield", "unit": "%"},
+)
+```
+
 ## Limitations
 ```{important}
 {class}`~baybe.targets.numerical.NumericalTarget` enables many use cases due to the

@@ -236,3 +236,19 @@ mask = objective.identify_non_dominated_configurations(configurations)
 assert mask.equals(pd.Series([False, True, False, True]))
 ```
 
+## Metadata
+
+Objectives accept a ``metadata`` attribute of type
+{class}`~baybe.utils.metadata.Metadata` with ``description`` and ``misc``.
+Its description is the natural place to state the optimization goal in words. See the
+{ref}`parameter metadata <parameter_metadata>` section for the dictionary shortcut.
+
+```python
+from baybe.objectives import SingleTargetObjective
+from baybe.targets import NumericalTarget
+
+objective = SingleTargetObjective(
+    target=NumericalTarget(name="Yield"),
+    metadata={"description": "Maximize the yield of the coupling reaction."},
+)
+```
