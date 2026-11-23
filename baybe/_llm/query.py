@@ -112,11 +112,6 @@ def query_model(
             f"The language model returned an unexpected response structure: {e}."
         ) from e
 
-    if content is None:
-        raise LLMMalformedResponseError(
-            "The language model returned empty content (None)."
-        )
-
     # NOTE: A truncated response can still contain complete JSON fragments, so it must
     #   not be parsed: it would either fail with a misleading format error or, worse,
     #   yield an earlier complete block as if it were the answer.
@@ -124,6 +119,11 @@ def query_model(
         raise LLMTruncatedResponseError(
             "The language model response was truncated because it exceeded the "
             "output token limit."
+        )
+
+    if content is None:
+        raise LLMMalformedResponseError(
+            "The language model returned empty content (None)."
         )
 
     return content
