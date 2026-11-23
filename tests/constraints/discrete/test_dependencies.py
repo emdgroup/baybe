@@ -1,7 +1,5 @@
 """Tests for the discrete dependencies constraint."""
 
-from contextlib import nullcontext
-
 import pytest
 from pytest import param
 
@@ -134,47 +132,36 @@ def test_dependencies_filter(exclude, backend):
 
 
 @pytest.mark.parametrize(
-    ("parameters", "expected_indices"),
-    # TODO: Overlaps should be rejected because the semantics have not yet been
-    #  fully defined. However, the current implementation simply ignores this and
-    #  instead produces an order-dependent result. Adjust test docstring one fixed.
+    ("parameters", "affected", "match"),
     [
-        param(["first", "second"], (0, 2, 3, 4), id="first-then-second"),
-        param(["second", "first"], (0, 2, 3, 5), id="second-then-first"),
         param(
             ["first", "second"],
-            None,
-            id="overlap-rejected",
-            marks=pytest.mark.xfail(
-                raises=pytest.fail.Exception,
-                reason="Overlapping dependencies are not yet rejected.",
-                strict=True,
-            ),
+            [["value"], ["value"]],
+            "may appear in only one group",
+            id="overlap",
+        ),
+        param(
+            ["first"],
+            [["value", "value"]],
+            "may appear in only one group",
+            id="duplicate-within-group",
+        ),
+        param(
+            ["first", "second"],
+            [["second"], ["value"]],
+            "cannot also be a causing",
+            id="chain",
         ),
     ],
 )
-def test_overlapping_dependencies(parameters, expected_indices, backend):
-    """Capture the current behavior for a parameter with multiple dependencies."""
-    data = [
-        {"first": "off", "second": "on", "value": 1},
-        {"first": "off", "second": "on", "value": 2},
-        {"first": "on", "second": "on", "value": 1},
-        {"first": "on", "second": "on", "value": 2},
-        {"first": "off", "second": "off", "value": 1},
-        {"first": "on", "second": "off", "value": 2},
-    ]
-    with (
-        pytest.raises(ValueError, match="overlap")
-        if expected_indices is None
-        else nullcontext()
-    ):
-        constraint = DiscreteDependenciesConstraint(
+def test_dependencies_invalid_nesting(parameters, affected, match):
+    """Affected groups must be unique and must not contain causing parameters."""
+    with pytest.raises(ValueError, match=match):
+        DiscreteDependenciesConstraint(
             parameters,
-            [SubSelectionCondition(["on"]), SubSelectionCondition(["on"])],
-            [["value"], ["value"]],
+            [SubSelectionCondition(["on"])] * len(parameters),
+            affected,
         )
-    if expected_indices is not None:
-        assert_filter(constraint, data, [data[i] for i in expected_indices], backend)
 
 
 @pytest.mark.parametrize("exclude", [False, True], ids=["keep", "exclude"])

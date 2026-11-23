@@ -371,6 +371,10 @@ You can specify such a dependency with the
    only if the corresponding entry in `parameters` is active as specified by the 
    entry in `conditions`.
 
+Each affected parameter may appear in only one of the lists, and the affected
+parameters must be disjoint from the `parameters` themselves. Consequently, both
+overlapping and chained dependencies are rejected.
+
 Internally, BayBE drops elements from the `SearchSpace` where affected parameters are
 irrelevant. Since in our example `"off"` is still a valid value for the switch, the
 `SearchSpace` will still retain **one** configuration for that setting, showing arbitrary

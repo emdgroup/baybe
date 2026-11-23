@@ -42,6 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   NaN entries
 
 ### Fixed
+- `DiscreteDependenciesConstraint` now rejects overlapping and chained dependencies,
+  which previously produced order-dependent filtering results: each affected parameter
+  may appear in only one group and must differ from the causing `parameters`
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
   values of invariant points are degenerate
 - Multi-output surrogate compatibility check in `Surrogate.fit` now correctly uses the

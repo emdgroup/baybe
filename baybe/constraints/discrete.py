@@ -737,19 +737,26 @@ class DiscreteDependenciesConstraint(DiscreteFilteringConstraint):
         Raises:
             ValueError: If one set of affected parameters does not have exactly one
                 condition.
-            ValueError: If a parameter depends on itself.
+            ValueError: If an affected parameter appears in multiple groups.
+            ValueError: If an affected parameter is also a causing parameter.
         """
         if len(self.conditions) != len(value):
             raise ValueError(
                 f"Each group of affected parameters needs exactly one condition, "
                 f"but got {len(value)} groups and {len(self.conditions)} conditions."
             )
-        for parameter, affected in zip(self.parameters, value, strict=True):
-            if parameter in affected:
-                raise ValueError(
-                    f"The parameter '{parameter}' cannot also be one of its own "
-                    f"affected parameters."
-                )
+
+        affected = [name for group in value for name in group]
+        if duplicates := {name for name in affected if affected.count(name) > 1}:
+            raise ValueError(
+                f"Each affected parameter may appear in only one group, but "
+                f"{sorted(duplicates)} appear in multiple groups."
+            )
+        if chained := set(affected) & set(self.parameters):
+            raise ValueError(
+                f"An affected parameter cannot also be a causing parameter, but "
+                f"{sorted(chained)} appear on both sides."
+            )
 
     @property
     @override

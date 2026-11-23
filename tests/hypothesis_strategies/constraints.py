@@ -76,11 +76,16 @@ def discrete_dependencies_constraints(
     exclude: bool | None = None,
 ):
     if parameters is None:
-        # Draw random unique parameter names
+        # Draw random unique parameter names, disjoint from the affected ones
         # If affected parameters are given the list length must be respected
+        affected = (
+            {name for group in affected_parameter_names for name in group}
+            if affected_parameter_names is not None
+            else set()
+        )
         parameter_names = draw(
             st.lists(
-                st.text(),
+                st.text().filter(lambda x: x not in affected),
                 unique=True,
                 min_size=1
                 if affected_parameter_names is None
@@ -90,14 +95,6 @@ def discrete_dependencies_constraints(
                 else len(affected_parameter_names),
             )
         )
-        if affected_parameter_names is not None:
-            # Avoid generating parameters that depend on themselves
-            assume(
-                all(
-                    p not in affected_parameter_names[k]
-                    for k, p in enumerate(parameter_names)
-                )
-            )
 
         conditions = draw(
             st.lists(
@@ -118,18 +115,19 @@ def discrete_dependencies_constraints(
         ]
 
     if affected_parameter_names is None:
-        # Draw random lists of dependent parameters, avoiding duplicates with the main
-        # parameters
+        # Draw a pool of distinct affected parameter names disjoint from the causing
+        # parameters and split it evenly, so that no name appears in multiple groups
         affected_parameter_names = draw(
             st.lists(
-                st.lists(
-                    st.text().filter(lambda x: x not in parameter_names),
-                    min_size=1,
-                ),
+                st.text().filter(lambda x: x not in parameter_names),
+                unique=True,
                 min_size=len(parameter_names),
-                max_size=len(parameter_names),
             )
         )
+        affected_parameter_names = [
+            affected_parameter_names[i :: len(parameter_names)]
+            for i in range(len(parameter_names))
+        ]
     else:
         # Affected and dependent parameters cannot overlap
         assert all(
