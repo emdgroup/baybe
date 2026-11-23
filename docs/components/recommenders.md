@@ -200,12 +200,42 @@ recommender = TwoPhaseMetaRecommender(
 )
 ```
 
+  For a cold start with the LLM, use
+  {meth}`~baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.with_llm_initial_recommender`:
+  the LLM proposes the first experiments, and the meta recommender switches to
+  ``recommender`` (default:
+  {class}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender`) once
+  ``switch_after`` measurements are available.
+
+```python
+from baybe.recommenders import TwoPhaseMetaRecommender
+
+recommender = TwoPhaseMetaRecommender.with_llm_initial_recommender(
+    model="openai/gpt-4o-mini",
+    experiment_description="Suzuki coupling of an aryl bromide in a batch reactor.",
+    switch_after=10,
+)
+```
+
 * The **[`SequentialMetaRecommender`](baybe.recommenders.meta.sequential.SequentialMetaRecommender)**
   introduces a simple yet versatile approach by utilizing a predefined list of
   recommenders. By specifying the desired behavior using the `mode` attribute, it is
   possible to flexibly determine the meta recommender's response when it exhausts the 
   available recommenders. The possible choices are to either raise an error, re-use the
   last recommender or re-start at the beginning of the sequence.
+
+  To alternate between the LLM and another recommender whenever new measurements
+  arrive, use
+  {meth}`~baybe.recommenders.meta.sequential.SequentialMetaRecommender.with_alternating_llm_recommender`:
+
+```python
+from baybe.recommenders import SequentialMetaRecommender
+
+recommender = SequentialMetaRecommender.with_alternating_llm_recommender(
+    model="openai/gpt-4o-mini",
+    experiment_description="Suzuki coupling of an aryl bromide in a batch reactor.",
+)
+```
 
 * Similar to the `SequentialMetaRecommender`, the
   **[`StreamingSequentialMetaRecommender`](baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender)**
