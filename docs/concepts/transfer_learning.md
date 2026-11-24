@@ -194,6 +194,6 @@ on the optimization:
 ```
 
 A comparison of transfer learning modes on historic campaigns of unknown relevance can
-be found [here](../../examples/Transfer_Learning/rgpe_transfer_learning).
+be found [here](../../examples/Transfer_Learning/transfer_learning_modes).
 
 [`TaskParameter`]: baybe.parameters.categorical.TaskParameter

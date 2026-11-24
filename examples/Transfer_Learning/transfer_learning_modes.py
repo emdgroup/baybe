@@ -1,4 +1,4 @@
-# # Transfer Learning from Historic Campaigns of Unknown Relevance with RGPE
+# # Comparing Transfer Learning Modes on Historic Campaigns of Unknown Relevance
 
 # In this example, we demonstrate how the
 # {attr}`~baybe.parameters.enum.TransferLearningMode.RGPE` transfer learning mode
@@ -154,7 +154,7 @@ sns.lineplot(
     hue="Scenario",
     ax=ax,
 )
-create_example_plots(ax=ax, base_name="rgpe_transfer_learning")
+create_example_plots(ax=ax, base_name="transfer_learning_modes")
 
 # * Without historic data, the optimization often settles in the broad local optimum
 #   at low temperatures and rarely discovers the narrow global optimum.
