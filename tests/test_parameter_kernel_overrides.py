@@ -20,7 +20,7 @@ from pytest import param
 from baybe.exceptions import IncompatibleOverrideError
 from baybe.kernels import MaternKernel, RBFKernel
 from baybe.kernels.base import Kernel
-from baybe.kernels.basic import IndexKernel
+from baybe.kernels.basic import IndexKernel, _VanishingKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from baybe.parameters import (
     CategoricalParameter,
@@ -262,6 +262,7 @@ _TASK_KERNEL = IndexKernel(num_tasks=3, rank=3, parameter_names=("task",))
 _EXCLUDE_ERROR = "can exclude these parameters"
 _ARD_ERROR = "specifies 2 ARD dimensions, but the parameter has 3"
 _EMPTY_ERROR = "no parameter contributing a kernel"
+_VANISHING_ERROR = "requires at least one non-vanishing kernel override"
 
 
 @pytest.mark.parametrize(
@@ -403,11 +404,18 @@ _EMPTY_ERROR = "no parameter contributing a kernel"
             {("x1",): [gk.MaternKernel]},
             id="task-naive",
         ),
+        # Vanishing kernels contribute no factor
         param(
-            [_x("x1"), _x("x2", RBFKernel()), _task(_NAIVE)],
+            [_x("x1"), _x("x2", _VanishingKernel())],
             None,
-            {("x1",): [gk.MaternKernel], ("x2",): [gk.RBFKernel]},
-            id="task-naive+parameter-override",
+            {("x1",): [gk.MaternKernel]},
+            id="vanishing-override",
+        ),
+        param(
+            _X2_RBF,
+            _VanishingKernel(),
+            {("x2",): [gk.RBFKernel]},
+            id="vanishing-surrogate-kernel",
         ),
         param(
             [_x("x1"), _task(_INDEX)],
@@ -507,6 +515,12 @@ _EMPTY_ERROR = "no parameter contributing a kernel"
             _TASK_KERNEL,
             (IncompatibleOverrideError, _EMPTY_ERROR),
             id="task-naive+task-only-kernel",
+        ),
+        param(
+            [_x("x1"), _x("x2")],
+            _VanishingKernel(),
+            (IncompatibleOverrideError, _VANISHING_ERROR),
+            id="vanishing-surrogate-kernel-without-overrides",
         ),
     ],
 )

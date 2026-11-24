@@ -5,15 +5,16 @@ from __future__ import annotations
 import gc
 from functools import reduce
 from operator import add, mul
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from attrs import define, evolve, field
+from attrs import Attribute, define, evolve, field
 from attrs.converters import optional as optional_c
-from attrs.validators import deep_iterable, gt, instance_of, min_len
+from attrs.validators import and_, deep_iterable, gt, instance_of, min_len
 from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.kernels.base import CompositeKernel, Kernel
+from baybe.kernels.basic import _VanishingKernel
 from baybe.priors.base import Prior
 from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
@@ -23,10 +24,27 @@ if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
 
 
+def _validate_not_all_vanishing(  # noqa: DOC101, DOC103
+    instance: Any, attribute: Attribute, value: Any
+) -> None:
+    """Require at least one non-vanishing kernel in a composite.
+
+    Raises:
+        ValueError: If all kernels vanish under kernel arithmetic.
+    """
+    if all(isinstance(k, _VanishingKernel) for k in value):
+        raise ValueError(
+            f"'{type(instance).__name__}' must contain at least one kernel that does "
+            f"not vanish under kernel arithmetic."
+        )
+
+
 def _reduce_base_kernels(
     kernel: AdditiveKernel | ProductKernel, name: str, searchspace: SearchSpace, /
 ) -> Kernel | None:
     """Remove a parameter from all base kernels of an additive or product kernel.
+
+    Vanishing base kernels are dropped along the way.
 
     Args:
         kernel: The additive or product kernel whose base kernels are to be reduced.
@@ -41,6 +59,7 @@ def _reduce_base_kernels(
         reduced
         for k in kernel.base_kernels
         if (reduced := k._without_parameter(name, searchspace)) is not None
+        and not isinstance(reduced, _VanishingKernel)
     )
     if not remaining:
         return None
@@ -73,6 +92,19 @@ class ScaleKernel(CompositeKernel):
 
     If ``False``, the output scale is frozen at its initial value and excluded from
     optimization."""
+
+    @base_kernel.validator
+    def _validate_base_kernel(self, _, value: Kernel) -> None:  # noqa: DOC101, DOC103
+        """Reject a vanishing base kernel.
+
+        Raises:
+            ValueError: If the base kernel is a vanishing kernel.
+        """
+        if isinstance(value, _VanishingKernel):
+            raise ValueError(
+                f"'{self.__class__.__name__}' cannot wrap a vanishing kernel, hence "
+                f"a vanishing kernel also cannot be scaled by a constant."
+            )
 
     @override
     def _without_parameter(
@@ -107,7 +139,7 @@ class AdditiveKernel(CompositeKernel):
         converter=to_tuple,
         validator=deep_iterable(
             member_validator=instance_of(Kernel),
-            iterable_validator=min_len(2),
+            iterable_validator=and_(min_len(2), _validate_not_all_vanishing),
         ),
     )
     """The individual kernels to be summed."""
@@ -127,7 +159,14 @@ class AdditiveKernel(CompositeKernel):
 
     @override
     def to_gpytorch(self, *args, **kwargs):
-        return reduce(add, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
+        return reduce(
+            add,
+            [
+                k.to_gpytorch(*args, **kwargs)
+                for k in self.base_kernels
+                if not isinstance(k, _VanishingKernel)
+            ],
+        )
 
 
 @define(frozen=True)
@@ -138,7 +177,7 @@ class ProductKernel(CompositeKernel):
         converter=to_tuple,
         validator=deep_iterable(
             member_validator=instance_of(Kernel),
-            iterable_validator=min_len(2),
+            iterable_validator=and_(min_len(2), _validate_not_all_vanishing),
         ),
     )
     """The individual kernels to be multiplied."""
@@ -158,7 +197,14 @@ class ProductKernel(CompositeKernel):
 
     @override
     def to_gpytorch(self, *args, **kwargs):
-        return reduce(mul, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
+        return reduce(
+            mul,
+            [
+                k.to_gpytorch(*args, **kwargs)
+                for k in self.base_kernels
+                if not isinstance(k, _VanishingKernel)
+            ],
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

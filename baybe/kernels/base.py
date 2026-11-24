@@ -33,7 +33,7 @@ class Kernel(ABC, SerialMixin):
         """Create a sum kernel from two kernels.
 
         Nested additive kernels are flattened, so ``(a + b) + c`` yields
-        ``AdditiveKernel([a, b, c])``.
+        ``AdditiveKernel([a, b, c])``. Vanishing kernels are dropped.
         """
         if isinstance(other, Kernel):
             from baybe.kernels.composite import AdditiveKernel
@@ -54,8 +54,9 @@ class Kernel(ABC, SerialMixin):
         """Create a product kernel from two kernels or scale a kernel.
 
         Nested product kernels are flattened, so ``(a * b) * c`` yields
-        ``ProductKernel([a, b, c])``. Multiplication by a numeric constant creates a
-        scale kernel with a fixed (non-trainable) output scale.
+        ``ProductKernel([a, b, c])``. Vanishing kernels are dropped. Multiplication by
+        a numeric constant creates a scale kernel with a fixed (non-trainable) output
+        scale.
         """
         if isinstance(other, Kernel):
             from baybe.kernels.composite import ProductKernel
@@ -301,8 +302,8 @@ class CompositeKernel(Kernel, ABC):
 
 def _compose(
     composite_cls: type[AdditiveKernel | ProductKernel], left: Kernel, right: Kernel, /
-) -> AdditiveKernel | ProductKernel:
-    """Combine two kernels into a flattened composite.
+) -> Kernel:
+    """Combine two kernels into a flattened composite, dropping vanishing kernels.
 
     Args:
         composite_cls: The composite kernel class representing the operation.
@@ -310,19 +311,32 @@ def _compose(
         right: The right operand.
 
     Returns:
-        The composite kernel.
+        The composite kernel, the sole remaining kernel, or a vanishing kernel if all
+        kernels vanish.
     """
-    return composite_cls(
-        [
-            k
-            for operand in (left, right)
-            for k in (
-                operand.base_kernels
-                if isinstance(operand, composite_cls)
-                else (operand,)
+    from baybe.kernels.basic import _VanishingKernel
+
+    kernels = [
+        k
+        for operand in (left, right)
+        for k in (
+            operand.base_kernels if isinstance(operand, composite_cls) else (operand,)
+        )
+    ]
+    members = [k for k in kernels if not isinstance(k, _VanishingKernel)]
+    if not members:
+        # Merge the scopes of the vanishing operands, where None means all parameters
+        scopes = [k.parameter_names for k in kernels if isinstance(k, _VanishingKernel)]
+        if any(s is None for s in scopes):
+            return _VanishingKernel()
+        return _VanishingKernel(
+            parameter_names=tuple(
+                dict.fromkeys(n for s in scopes if s is not None for n in s)
             )
-        ]
-    )
+        )
+    if len(members) == 1:
+        return members[0]
+    return composite_cls(members)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

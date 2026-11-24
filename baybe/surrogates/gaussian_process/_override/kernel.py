@@ -134,7 +134,7 @@ def reduce_kernel_spec(
         factory: The originating factory (for error messages).
 
     Returns:
-        The reduced kernel, or ``None`` if nothing remains.
+        The reduced kernel, or ``None`` if nothing or only a vanishing kernel remains.
     """
     if not isinstance(component, Kernel):
         raise_incompatible_override(excluded_names, factory)
@@ -148,7 +148,7 @@ def reduce_kernel_spec(
         except TypeError as ex:
             raise_incompatible_override(excluded_names, factory, ex)
 
-    return spec
+    return None if isinstance(spec, _VanishingKernel) else spec
 
 
 def raise_incompatible_override(
