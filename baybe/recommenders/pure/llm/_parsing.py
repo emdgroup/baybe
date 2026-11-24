@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import narwhals.stable.v2 as nw
 import pandas as pd
@@ -19,13 +19,17 @@ from baybe._llm.extraction import extract_payload
 from baybe.exceptions import LLMResponseWarning
 from baybe.recommenders.pure.llm._schema import Response
 from baybe.searchspace import SearchSpace
-from baybe.utils.dataframe import normalize_input_dtypes
+from baybe.settings import active_settings
+from baybe.utils.dataframe import _df_with_backend, normalize_input_dtypes
 from baybe.utils.numerical import closest_element
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
 
 
 def parse_llm_response(
     response: str, /, searchspace: SearchSpace, batch_size: int
-) -> pd.DataFrame:
+) -> IntoDataFrame:
     """Parse a language model response into a dataframe of recommendations.
 
     The response must match the :class:`Response` schema and contain exactly
@@ -42,8 +46,9 @@ def parse_llm_response(
         batch_size: The number of recommendations to return.
 
     Returns:
-        A dataframe containing exactly ``batch_size`` distinct recommendations that
-        belong to the search space and satisfy its batch constraints.
+        A dataframe in the default dataframe backend containing exactly ``batch_size``
+        distinct recommendations that belong to the search space and satisfy its batch
+        constraints.
 
     Raises:
         LLMMalformedResponseError: If the response cannot be parsed into the expected
@@ -164,4 +169,9 @@ def parse_llm_response(
             f"the batch.",
             n_duplicates=n_duplicates,
         )
-    return df.loc[:, [p.name for p in searchspace.parameters]]
+    return _df_with_backend(
+        nw.from_native(
+            df.loc[:, [p.name for p in searchspace.parameters]], eager_only=True
+        ),
+        active_settings.default_dataframe_backend,
+    ).to_native()
