@@ -122,6 +122,9 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
         alpha = (train_y.double() - f - noise) @ inverse
         full = f + alpha @ kernel
 
+        # IMPROVE: The n_samples x n x n tensor needs memory quadratic in n. For a few
+        # hundred target points this is fine, but for larger sets the samples could be
+        # processed in chunks, computing the ranking loss per chunk.
         # Leaving out point j moves the sample at point k by
         # (kernel @ inverse)[k, j] * alpha[j] / inverse[j, j]
         shift = (alpha / inverse.diagonal()).unsqueeze(-1) * (kernel @ inverse).T
