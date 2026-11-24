@@ -225,8 +225,7 @@ class RQKernel(BasicKernel):
 class _VanishingKernel(BasicKernel):
     """A marker kernel for parameters that contribute no factor to the GP kernel.
 
-    Used internally by transfer learning modes that do not model the task with a
-    kernel. Kernel resolution skips it, and it has no GPyTorch representation.
+    Kernel resolution skips it, and it has no GPyTorch representation.
     """
 
     @override
