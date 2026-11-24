@@ -170,8 +170,9 @@ class MultiStepNode:
     )
     """Conditions that define successful execution at this node.
 
-    All conditions must pass. Numeric output conditions use the output GPs; auxiliary
-    conditions use a classifier trained jointly on their Boolean success labels.
+    All conditions must pass. Every configured node uses one shared classifier for
+    this joint success event; numeric-output posterior probabilities are features of
+    that classifier, while auxiliary values contribute to its training labels.
     """
 
     infeasible_measurement_mode: InfeasibleMeasurementMode = field(
@@ -181,7 +182,7 @@ class MultiStepNode:
     )
     """How failed observations enter the output-regression training view.
 
-    The stored real observations and auxiliary-condition labels are never changed by
+    The stored real observations and raw joint feasibility labels are never changed by
     this setting. ``OBSERVED`` keeps a real failure output when one was
     reported, ``EXCLUDE`` removes failures, ``DUMMY`` replaces every failure output
     with :attr:`infeasible_dummy_value`, and ``PREDICTED_MEAN`` replaces failures

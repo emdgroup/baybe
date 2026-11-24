@@ -35,7 +35,12 @@ from baybe.serialization import SerialMixin, converter
 from baybe.utils.basic import to_tuple
 from baybe.utils.validation import validate_parameter_input
 
-from ._columns import FEASIBILITY_LABEL
+from ._columns import (
+    EXPERIMENT_GROUP,
+    EXPERIMENT_ID,
+    FEASIBILITY_LABEL,
+    MEASUREMENT_ID,
+)
 from .context import MultiStepContext
 from .dag import MultiStepDAG
 from .node import FeasibilityCondition, MultiStepNode
@@ -604,7 +609,10 @@ class MultiStepData(SerialMixin):
             _EvaluationRef(index=index, node=node)
             for index, measurement in enumerate(self.measurements)
             if measurement.node == node
-            and (not successful_only or _is_successful(node_object, measurement))
+            and (
+                not successful_only
+                or _get_feasibility_label(node_object, measurement) is True
+            )
         )
 
     def measurements_of_experiment(
@@ -679,8 +687,6 @@ class MultiStepData(SerialMixin):
             IncompatibilityError: If the execution mode is unknown or a reference
                 cannot be resolved.
         """
-        from ._columns import EXPERIMENT_ID
-
         rows: list[pd.DataFrame] = []
         if execution_mode == "functional":
             references = {
@@ -780,7 +786,8 @@ class MultiStepData(SerialMixin):
         return {measurement.node for measurement in measured} == {
             node.name for node in dag.nodes
         } and all(
-            _is_successful(dag.node_by_name[measurement.node], measurement)
+            _get_feasibility_label(dag.node_by_name[measurement.node], measurement)
+            is True
             for measurement in measured
         )
 
@@ -958,8 +965,8 @@ class MultiStepData(SerialMixin):
                     f"Node '{node.name}' received values for unconfigured feasibility "
                     f"columns: {sorted(unexpected)}."
                 )
-            is_successful = _is_successful(node, measurement)
-            if not is_successful and measurement.experiment_id is not None:
+            is_successful = _get_feasibility_label(node, measurement)
+            if is_successful is False and measurement.experiment_id is not None:
                 failed.add((measurement.experiment_id, measurement.node))
             inputs_by_node.setdefault(node.name, []).append(dict(measurement.inputs))
 
@@ -1107,34 +1114,54 @@ class MultiStepData(SerialMixin):
         """
         node_object = _get_node(dag, node)
         columns = [*dag.context.input_names(node_object), *node_object.output_names]
-        records: list[tuple[dict[str, Any], bool, dict[str, float | None]]] = [
-            (
-                dict(measurement.inputs),
-                _is_successful(node_object, measurement),
-                _get_output_values(node_object, measurement),
+        records: list[tuple[dict[str, Any], bool | Any, dict[str, float | None]]] = []
+        for measurement in self.measurements:
+            if measurement.node != node:
+                continue
+            values = {
+                **_get_output_values(node_object, measurement),
+                **measurement.condition_values,
+            }
+            try:
+                successful: bool | Any = _condition_success(node_object, values)
+            except IncompleteMeasurementsError:
+                successful = pd.NA
+            records.append(
+                (
+                    dict(measurement.inputs),
+                    successful,
+                    _get_output_values(node_object, measurement),
+                )
             )
-            for measurement in self.measurements
-            if measurement.node == node
-        ]
         if not records:
             return pd.DataFrame(columns=columns)
 
         mode = node_object.infeasible_measurement_mode
         successes = [
-            (inputs, outputs) for inputs, successful, outputs in records if successful
+            (inputs, outputs)
+            for inputs, successful, outputs in records
+            if successful is True
         ]
         failures = [
             (inputs, outputs)
             for inputs, successful, outputs in records
-            if not successful
+            if successful is False
+        ]
+        unknowns = [
+            (inputs, outputs)
+            for inputs, successful, outputs in records
+            if pd.isna(successful)
         ]
 
         if mode is InfeasibleMeasurementMode.OBSERVED:
-            rows = [{**inputs, **outputs} for inputs, outputs in successes] + [
-                {**inputs, **outputs} for inputs, outputs in failures
+            rows = [
+                {**inputs, **outputs}
+                for inputs, outputs in (*successes, *unknowns, *failures)
             ]
         elif mode is InfeasibleMeasurementMode.EXCLUDE:
-            rows = [{**inputs, **outputs} for inputs, outputs in successes]
+            rows = [
+                {**inputs, **outputs} for inputs, outputs in (*successes, *unknowns)
+            ]
         elif mode is InfeasibleMeasurementMode.DUMMY:
             dummy = node_object.infeasible_dummy_value
             if dummy is None:
@@ -1148,12 +1175,14 @@ class MultiStepData(SerialMixin):
                 if isinstance(dummy, Mapping)
                 else {node_object.output_names[0]: dummy}
             )
-            rows = [{**inputs, **outputs} for inputs, outputs in successes] + [
-                {**inputs, **dummy_values} for inputs, _ in failures
-            ]
+            rows = [
+                {**inputs, **outputs} for inputs, outputs in (*successes, *unknowns)
+            ] + [{**inputs, **dummy_values} for inputs, _ in failures]
         else:
             assert mode is InfeasibleMeasurementMode.PREDICTED_MEAN
-            rows = [{**inputs, **outputs} for inputs, outputs in successes]
+            rows = [
+                {**inputs, **outputs} for inputs, outputs in (*successes, *unknowns)
+            ]
             if failures:
                 rows.extend(
                     _predicted_mean_rows(
@@ -1169,31 +1198,35 @@ class MultiStepData(SerialMixin):
     def node_feasibility_training_data(
         self, dag: MultiStepDAG, node: str
     ) -> pd.DataFrame:
-        """Return raw outputs and auxiliary-condition labels for a node.
+        """Return raw local data, identities, and joint labels for a node.
 
         Args:
             dag: The DAG topology.
             node: The node name.
 
         Returns:
-            A frame with raw outputs for GP conditions and binary labels for auxiliary
-            conditions, empty for unconfigured nodes.
+            A frame with unmodified local inputs, outputs and condition values, a
+            nullable label derived from every condition, and stable measurement and
+            experiment-group identities. The frame is empty for unconfigured nodes.
         """
         node_object = _get_node(dag, node)
         columns = [
             *dag.context.input_names(node_object),
             *node_object.output_names,
+            *dict.fromkeys(
+                condition.column
+                for condition in node_object.feasibility_conditions
+                if condition.column not in node_object.output_names
+            ),
             FEASIBILITY_LABEL,
+            MEASUREMENT_ID,
+            EXPERIMENT_ID,
+            EXPERIMENT_GROUP,
         ]
         if not node_object.feasibility_conditions:
             return pd.DataFrame(columns=columns)
-        auxiliary_conditions = tuple(
-            condition
-            for condition in node_object.feasibility_conditions
-            if condition.column not in node_object.output_names
-        )
         rows = []
-        for measurement in self.measurements:
+        for measurement_id, measurement in enumerate(self.measurements):
             if measurement.node != node:
                 continue
             values = {
@@ -1201,14 +1234,23 @@ class MultiStepData(SerialMixin):
                 **measurement.condition_values,
             }
             try:
-                label = _condition_success(node_object, values, auxiliary_conditions)
+                label = _condition_success(node_object, values)
             except IncompleteMeasurementsError:
                 label = pd.NA
+            experiment_group = (
+                ("experiment", measurement.experiment_id)
+                if measurement.experiment_id is not None
+                else ("measurement", measurement_id)
+            )
             rows.append(
                 {
                     **measurement.inputs,
                     **_get_output_values(node_object, measurement),
+                    **measurement.condition_values,
                     FEASIBILITY_LABEL: label,
+                    MEASUREMENT_ID: measurement_id,
+                    EXPERIMENT_ID: measurement.experiment_id,
+                    EXPERIMENT_GROUP: experiment_group,
                 }
             )
         return pd.DataFrame(rows, columns=columns)
@@ -1297,10 +1339,11 @@ def failed_nodes(
     return frozenset(
         node
         for node, ref in experiment.bindings.items()
-        if not _is_successful(
+        if _get_feasibility_label(
             dag.node_by_name[node],
             data.get_evaluation(dag, ref),
         )
+        is False
     )
 
 
@@ -1351,9 +1394,12 @@ def executable_nodes(
         parents = dag.parents_of(name)
         if not all(
             parent in experiment.bindings
-            and _is_successful(
-                dag.node_by_name[parent],
-                data.get_evaluation(dag, experiment.bindings[parent]),
+            and (
+                _get_feasibility_label(
+                    dag.node_by_name[parent],
+                    data.get_evaluation(dag, experiment.bindings[parent]),
+                )
+                is True
             )
             for parent in parents
         ):
@@ -1886,6 +1932,12 @@ def _predicted_mean_rows(
             for inputs, values in successes
             if values[output_name] is not None
         ]
+        if not output_successes:
+            raise IncompatibilityError(
+                f"Node '{node.name}' cannot compute "
+                f"'{InfeasibleMeasurementMode.PREDICTED_MEAN.name}' training values "
+                f"for output '{output_name}' without a successful observed value."
+            )
         success_frame = pd.DataFrame(
             [{**inputs, output_name: output} for inputs, output in output_successes],
             columns=[*context.input_names(node), output_name],
@@ -1926,14 +1978,31 @@ def _predicted_mean_rows(
 
 def _is_successful(node: MultiStepNode, measurement: NodeMeasurement) -> bool:
     """Derive success from output and condition values without duplicating state."""
+    label = _get_feasibility_label(node, measurement)
+    if label is None:
+        raise IncompleteMeasurementsError(
+            f"Feasibility values for node '{node.name}' are incomplete."
+        )
+    return label
+
+
+def _get_feasibility_label(
+    node: MultiStepNode, measurement: NodeMeasurement
+) -> bool | None:
+    """Derive the nullable joint label from one raw node measurement."""
     output_values = _get_output_values(node, measurement)
-    successful = _condition_success(
-        node, {**output_values, **measurement.condition_values}
-    )
-    if successful and any(value is None for value in output_values.values()):
+    try:
+        successful = _condition_success(
+            node, {**output_values, **measurement.condition_values}
+        )
+    except IncompleteMeasurementsError:
+        return None
+    if successful is not False and any(
+        value is None for value in output_values.values()
+    ):
         raise IncompatibilityError(
             f"An observation of node '{node.name}' without all outputs requires "
-            "a failed feasibility condition."
+            "a known failed feasibility condition."
         )
     return successful
 

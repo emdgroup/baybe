@@ -124,13 +124,13 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
     weighting, remaining-cost accounting, optimization, and final selection are
     performed by the shared multi-step orchestration layer.
 
-    Numeric output conditions use their output GP posterior, with a neutral factor
-    when the output model has no observations.
-    Auxiliary conditions use independently learned success-probability models once
-    labels exist; an unavailable classifier contributes a neutral factor internally.
-    These neutral factors are not public probability predictions. Local success risk
-    is applied once by the shared recommendation layer. Optionally, terminal decisions
-    also account for network success and an explicitly configured failure utility.
+    Each node with feasibility conditions uses a joint-success classifier. Without a
+    known success label, its unconditioned zero-mean GP predicts 0.5; numeric output GP
+    probabilities are classifier inputs. A node without
+    feasibility conditions contributes a neutral factor of 1 because no condition is
+    configured. Local success risk is applied once by the shared recommendation layer
+    for the node being executed. Other nodes' success probabilities do not weight the
+    acquisition, although the network remains relevant to the terminal objective.
     """
 
     abbreviation: ClassVar[str] = "pKGFN"
@@ -174,13 +174,23 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         validator=optional_validator(finite_float),
         kw_only=True,
     )
-    """Utility assigned to failed terminal decisions, or ``None`` to disable it.
+    """Legacy compatibility setting that must be ``None``.
 
-    When set, each sampled terminal utility is weighted by the corresponding
-    product of node success probabilities. The remaining probability is assigned
-    this failure utility. This models conditional node successes as independent
-    given the sampled network path; it does not update classifiers in fantasies.
+    Network-wide failure weighting is no longer supported: only the next executable
+    node's success probability is used for acquisition scoring.
     """
+
+    @terminal_failure_utility.validator
+    def _validate_terminal_failure_utility(  # noqa: DOC101, DOC103
+        self, _attribute: Attribute, value: float | None
+    ) -> None:
+        """Reject the removed network-wide feasibility weighting."""
+        if value is not None:
+            raise IncompatibilityError(
+                "'terminal_failure_utility' is no longer supported: acquisition "
+                "scoring uses only the next executable node's feasibility. Remove "
+                "the setting or set it to None to accept this behavior."
+            )
 
     @staticmethod
     def _compute_pkgfn_gain(
@@ -246,9 +256,6 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
     def _compute_terminal_means_from_network_samples(
         dag: MultiStepDAG,
         samples: Tensor,
-        *,
-        success_probabilities: Tensor | None = None,
-        failure_utility: float | None = None,
     ) -> Tensor:
         """Compute terminal utility means from raw network samples.
 
@@ -256,10 +263,6 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             dag: The DAG defining the terminal objective.
             samples: Raw samples with shape
                 ``(n_paths, batch..., q, num_outputs)``.
-            success_probabilities: Optional network success probabilities for each
-                sample, with shape ``(n_paths, batch..., q)``.
-            failure_utility: Utility of a failed terminal decision, required when
-                success probabilities are provided.
 
         Returns:
             Mean transformed utility for each candidate configuration.
@@ -302,29 +305,6 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
                 "The objective must produce one finite utility per terminal sample."
             )
 
-        if (success_probabilities is None) != (failure_utility is None):
-            raise IncompatibilityError(
-                "Terminal success probabilities and failure utility must be "
-                "provided together."
-            )
-        if success_probabilities is not None:
-            assert failure_utility is not None
-            if (
-                success_probabilities.shape != utilities.shape
-                or not torch.isfinite(success_probabilities).all()
-                or (success_probabilities < 0).any()
-                or (success_probabilities > 1).any()
-                or not math.isfinite(failure_utility)
-            ):
-                raise IncompatibilityError(
-                    "Terminal success probabilities must match the utility shape "
-                    "and lie in [0, 1], and failure utility must be finite."
-                )
-            probabilities = success_probabilities.to(utilities)
-            utilities = (
-                probabilities * utilities + (1 - probabilities) * failure_utility
-            )
-
         return utilities.squeeze(-1).mean(dim=0)
 
     def _compute_terminal_means(
@@ -341,25 +321,12 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         Returns:
             Mean utility per decision.
         """
-        probabilities = None
-        if self.terminal_failure_utility is None:
-            samples = model.draw_network_samples(
-                points,
-                self.num_network_samples,
-                sampling_seed=self.sampling_seed,
-            )
-        else:
-            samples, probabilities = model._draw_network_outcomes_for_acquisition(
-                points,
-                self.num_network_samples,
-                sampling_seed=self.sampling_seed,
-            )
-        return self._compute_terminal_means_from_network_samples(
-            model.dag,
-            samples,
-            success_probabilities=probabilities,
-            failure_utility=self.terminal_failure_utility,
+        samples = model.draw_network_samples(
+            points,
+            self.num_network_samples,
+            sampling_seed=self.sampling_seed,
         )
+        return self._compute_terminal_means_from_network_samples(model.dag, samples)
 
     def _pending_branches(  # noqa: DOC502
         self,
@@ -1054,49 +1021,18 @@ def _make_feasibility_scoring_factor(
     model: MultiStepModel,
     node: MultiStepNode,
     inputs: Tensor,
-    epsilon: float,
 ) -> Tensor:
-    """Convert predicted feasibility into a bounded local scoring factor.
-
-    Contradictory numerical conditions remain impossible regardless of the scoring
-    policy. The factor is distinct from the model's predicted probability.
+    """Return the model's joint node-success probability for local actions.
 
     Args:
         model: The fitted network model.
         node: The node whose local action is scored.
         inputs: Local inputs in computational representation.
-        epsilon: Minimum factor for modeled feasibility, between zero and one.
 
     Returns:
-        One feasibility scoring factor per local input.
-
-    Raises:
-        IncompatibilityError: If epsilon is not finite or is outside ``[0, 1]``.
+        One success probability per local input.
     """
-    if not math.isfinite(epsilon) or not 0.0 <= epsilon <= 1.0:
-        raise IncompatibilityError("The feasibility epsilon must be in [0, 1].")
-
-    probabilities = model._predict_feasibility_tensor(
-        node.name, inputs, neutralize_uninformed=True
-    )
-    if epsilon == 0.0:
-        return probabilities
-
-    lower_bounds = (
-        condition
-        for condition in node.feasibility_conditions
-        if condition.operator == ">="
-    )
-    if any(
-        lower.column == upper.column
-        and cast(float, lower.threshold) > cast(float, upper.threshold)
-        for lower in lower_bounds
-        for upper in node.feasibility_conditions
-        if upper.operator == "<="
-    ):
-        return probabilities.new_zeros(probabilities.shape)
-
-    return epsilon + (1.0 - epsilon) * probabilities
+    return model._predict_feasibility_tensor(node.name, inputs)
 
 
 def _optimize_node_actions(
@@ -1106,7 +1042,6 @@ def _optimize_node_actions(
     gain_function: Callable[[_ActionContext, MultiStepNode, Tensor], Tensor],
     gain_scale: ScoreScale,
     supports_signed_gains: bool,
-    feasibility_epsilon: float,
     feasibility_threshold: float,
     pending: tuple[_PendingAction, ...],
 ) -> tuple[_PendingAction, Tensor] | None:
@@ -1122,7 +1057,6 @@ def _optimize_node_actions(
         gain_scale: Representation of the raw gain.
         supports_signed_gains: Whether the acquisition may return finite negative
             linear gains.
-        feasibility_epsilon: Minimum modeled feasibility scoring factor.
         feasibility_threshold: Minimum local feasibility scoring factor for an
             admissible candidate.
         pending: Already reserved actions that cannot be recommended again.
@@ -1161,7 +1095,7 @@ def _optimize_node_actions(
             model,
             node,
             inputs,
-            _make_feasibility_scoring_factor(model, node, inputs, feasibility_epsilon),
+            _make_feasibility_scoring_factor(model, node, inputs),
             pending,
         ),
         cost=problems[0].remaining_cost,
@@ -1327,7 +1261,6 @@ def recommend_graph_aware(
     *,
     acquisition: GraphAwareAcquisitionProtocol,
     batch_size: int,
-    feasibility_epsilon: float = 0.0,
     feasibility_threshold: float = 1e-6,
 ) -> list[_PendingAction]:
     """Score and select executable actions with a graph-aware acquisition.
@@ -1343,7 +1276,6 @@ def recommend_graph_aware(
             identical action is not offered again.
         acquisition: The graph-aware gain contract implementation.
         batch_size: The number of actions requested.
-        feasibility_epsilon: Minimum modeled feasibility scoring factor.
         feasibility_threshold: Minimum local feasibility scoring factor for an
             admissible candidate.
 
@@ -1385,7 +1317,6 @@ def recommend_graph_aware(
             gain_function=gain_function,
             gain_scale=acquisition.gain_scale,
             supports_signed_gains=acquisition.supports_signed_gains,
-            feasibility_epsilon=feasibility_epsilon,
             feasibility_threshold=feasibility_threshold,
             pending=pending,
         )
@@ -1521,7 +1452,6 @@ def _stock_action_probability(
     plan: _ExecutablePlan,
     global_inputs: Tensor,
     pending: tuple[_PendingAction, ...],
-    feasibility_epsilon: float,
 ) -> Tensor:
     """Score and gate local risk using one optimized global configuration."""
     import torch
@@ -1559,9 +1489,7 @@ def _stock_action_probability(
                 global_inputs[..., global_indices[column]].unsqueeze(-1)
             )
     local_inputs = torch.cat(local_columns, dim=-1)
-    probabilities = _make_feasibility_scoring_factor(
-        model, node, local_inputs, feasibility_epsilon
-    )
+    probabilities = _make_feasibility_scoring_factor(model, node, local_inputs)
 
     return _exclude_pending_local_actions(
         model, node, local_inputs, probabilities, pending
@@ -1577,7 +1505,6 @@ def _optimize_stock_context(
     branches: tuple[BoAcquisitionFunction, ...],
     score_scale: ScoreScale,
     pending: tuple[_PendingAction, ...],
-    feasibility_epsilon: float,
     feasibility_threshold: float,
 ) -> tuple[pd.Series, Tensor] | None:
     """Optimize the shared risk/cost score over one executable global context."""
@@ -1587,7 +1514,9 @@ def _optimize_stock_context(
 
     searchspace = model.dag.full_searchspace
     reference = next(model.parameters())
-    bounds = torch.as_tensor(searchspace.comp_rep_bounds.to_numpy()).T.to(reference)
+    bounds = torch.as_tensor(searchspace.comp_rep_bounds.to_numpy(copy=True)).to(
+        reference
+    )
     column_index = {
         name: index for index, name in enumerate(searchspace.comp_rep_columns)
     }
@@ -1619,7 +1548,7 @@ def _optimize_stock_context(
         model=branches[0].model,
         raw_score=raw_score,
         success_probability=lambda inputs: _stock_action_probability(
-            model, plan, inputs, pending, feasibility_epsilon
+            model, plan, inputs, pending
         ),
         cost=plan.remaining_cost,
         scale=score_scale,
@@ -1702,7 +1631,6 @@ def recommend_stock(
     acquisition_function: AcquisitionFunction,
     score_scale: ScoreScale,
     batch_size: int,
-    feasibility_epsilon: float = 0.0,
     feasibility_threshold: float = 1e-6,
     first_new_id: int = 1,
     execution_mode: Literal["process", "functional"] = "process",
@@ -1729,7 +1657,6 @@ def recommend_stock(
             including its actual default for this objective.
         score_scale: The acquisition function's declared gain representation.
         batch_size: The number of node actions to recommend.
-        feasibility_epsilon: Minimum modeled feasibility scoring factor.
         feasibility_threshold: Minimum local feasibility scoring factor for an
             admissible candidate.
         first_new_id: The first identifier available for a new experiment.
@@ -1779,7 +1706,6 @@ def recommend_stock(
                 branches=branches,
                 score_scale=score_scale,
                 pending=pending,
-                feasibility_epsilon=feasibility_epsilon,
                 feasibility_threshold=feasibility_threshold,
             )
             if optimized is None:

@@ -40,14 +40,17 @@ from baybe.exceptions import (
     IncompatibilityError,
     IncompatibleAcquisitionFunctionError,
 )
+from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
+from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
+from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.serialization import SerialMixin, converter
-from baybe.utils.validation import finite_float
 
 from ._columns import EXPERIMENT_ID, NODE
 from .acquisition import (
     GraphAwareAcquisitionProtocol,
     PartialKnowledgeGradientFN,
     ScoreScale,
+    _make_node_actions,
     _resolve_score_scale,
     recommend_graph_aware,
     recommend_stock,
@@ -61,11 +64,13 @@ from .data import (
     RepeatedMeasurementWarning,
     _EvaluationRef,
     _ExecutablePlan,
+    _get_feasibility_label,
     _get_output_values,
     _identifier_number,
     _inputs_match,
-    _is_successful,
+    _PendingAction,
     _validate_node_inputs,
+    contains_action,
     experiment_actions,
     make_executable_plans,
     pending_actions,
@@ -152,11 +157,9 @@ class MultiStepCampaign(SerialMixin):
     combined across experiments. Every recommendation is registered as a pending
     local execution in an explicitly assigned experiment.
 
-    The default acquisition uses partial knowledge gradient over configured GP
-    priors, so a compatible campaign can recommend an executable root action before
-    any measurements exist. Auxiliary conditions without a trained classifier and
-    numeric conditions without observations contribute a neutral internal scoring
-    factor, not a learned probability.
+    The default two-phase recommender starts with random executable actions and
+    switches to the acquisition after one real node measurement. Unobserved nodes
+    use unconditioned output and feasibility GP priors after the switch.
     """
 
     dag: MultiStepDAG = field(validator=instance_of(MultiStepDAG))
@@ -181,6 +184,20 @@ class MultiStepCampaign(SerialMixin):
     but cannot currently be serialized as part of a campaign.
     """
 
+    recommender: TwoPhaseMetaRecommender = field(
+        factory=TwoPhaseMetaRecommender,
+        validator=instance_of(TwoPhaseMetaRecommender),
+        kw_only=True,
+    )
+    """Two-phase selector; its random stage is adapted to executable node actions.
+
+    Only ``RandomRecommender`` and ``BotorchRecommender`` stages are supported.
+    The latter selects this campaign's acquisition, or its own explicitly configured
+    acquisition if the campaign has none. Other BoTorch settings are rejected.
+    ``switch_after`` counts recorded node measurements, including failures and unknown
+    feasibility labels, but excludes pending actions.
+    """
+
     execution_mode: ExecutionMode = field(
         default="process",
         validator=in_(("process", "functional")),
@@ -195,18 +212,6 @@ class MultiStepCampaign(SerialMixin):
         parent references match.
     """
 
-    feasibility_epsilon: float = field(
-        default=0.0,
-        validator=[instance_of(float), finite_float, ge(0.0), le(1.0)],
-        kw_only=True,
-    )
-    """Minimum feasibility scoring factor used for predicted success.
-
-    A predicted probability ``p`` is weighted as ``epsilon + (1 - epsilon) * p``.
-    This is a scoring policy, not a change to the predicted probability. With the
-    default of zero, the original probability is used unchanged.
-    """
-
     feasibility_threshold: float = field(
         default=1e-6,
         validator=[instance_of(float), ge(0.0), le(1.0)],
@@ -214,9 +219,9 @@ class MultiStepCampaign(SerialMixin):
     )
     """Minimum local feasibility scoring factor required for an executable action.
 
-    The threshold is applied after :attr:`feasibility_epsilon` and before expensive
-    candidate fantasies. A factor of exactly zero is never admissible, even when the
-    threshold is zero.
+    The threshold is applied to the shared joint-success classifier before expensive
+    candidate fantasies. A probability of exactly zero is never admissible, even when
+    the threshold is zero.
     """
 
     @data.validator
@@ -237,8 +242,8 @@ class MultiStepCampaign(SerialMixin):
         data: MultiStepData | None = None,
         execution_mode: ExecutionMode = "process",
         allow_repeats: bool = True,
-        feasibility_epsilon: float = 0.0,
         feasibility_threshold: float = 1e-6,
+        recommender: TwoPhaseMetaRecommender | None = None,
     ) -> MultiStepCampaign:
         """Create a campaign for the given DAG.
 
@@ -250,9 +255,10 @@ class MultiStepCampaign(SerialMixin):
                 (``"process"``) or combine known parent outputs across experiments
                 (``"functional"``).
             allow_repeats: Whether repeated real executions are stored and trained.
-            feasibility_epsilon: Minimum feasibility scoring factor.
             feasibility_threshold: Minimum local feasibility scoring factor for an
                 executable action.
+            recommender: Optional two-phase selector for the random and acquisition
+                stages. Defaults to switching after one recorded node measurement.
 
         Returns:
             The configured campaign.
@@ -263,8 +269,10 @@ class MultiStepCampaign(SerialMixin):
             acquisition_function=acquisition_function,
             execution_mode=execution_mode,
             allow_repeats=allow_repeats,
-            feasibility_epsilon=feasibility_epsilon,
             feasibility_threshold=feasibility_threshold,
+            recommender=TwoPhaseMetaRecommender()
+            if recommender is None
+            else recommender,
         )
 
     @cached_property
@@ -321,8 +329,9 @@ class MultiStepCampaign(SerialMixin):
             data: One row per node measurement, holding ``experiment_id``, ``node``,
                 the node's own parameters, optional history columns, every declared
                 node-output column, and any auxiliary columns referenced by
-                feasibility conditions. Missing result values are allowed only when
-                another observed condition establishes failure.
+                feasibility conditions. Missing condition values produce an unknown
+                joint label unless another observed condition establishes failure;
+                missing outputs remain allowed only after a known failure.
             numerical_measurements_must_be_within_tolerance: Flag indicating if
                 numerical parameters need to be within their tolerances.
 
@@ -330,7 +339,6 @@ class MultiStepCampaign(SerialMixin):
             IncompatibilityError: If the context or node is unknown, a node has no
                 pending action, a duplicate or conflicting row is supplied, or the
                 values violate the measurement contract.
-            IncompleteMeasurementsError: If condition values are missing.
             InvalidTargetValueError: If condition values have invalid types or values.
         """
         if data.empty:
@@ -454,7 +462,7 @@ class MultiStepCampaign(SerialMixin):
                     stacklevel=2,
                 )
                 updated = experiment.without_pending(node.name)
-                if _is_successful(node, measurement) and dict(
+                if _get_feasibility_label(node, measurement) is True and dict(
                     known_measurement.parent_refs
                 ) == dict(action.parent_refs):
                     updated = updated.with_binding(
@@ -529,7 +537,6 @@ class MultiStepCampaign(SerialMixin):
         Raises:
             IncompatibilityError: If the columns, the own parameter values, or the
                 repeated parent outputs are invalid or disagree with the action.
-            IncompleteMeasurementsError: If condition values are missing.
             InvalidTargetValueError: If condition values have invalid types or values.
         """
         auxiliary_columns = {
@@ -610,11 +617,11 @@ class MultiStepCampaign(SerialMixin):
             condition_values={
                 column: values[column]
                 for column in auxiliary_columns
-                if column in values
+                if column in values and not _is_missing(values[column])
             },
             parent_refs={} if parent_refs is None else parent_refs,
         )
-        _is_successful(node, measurement)
+        _get_feasibility_label(node, measurement)
         return measurement
 
     def recommend(self, batch_size: int = 1) -> pd.DataFrame:
@@ -630,9 +637,8 @@ class MultiStepCampaign(SerialMixin):
         Pending real actions are treated as hypothetical model states when
         scoring. They are not counted as observed real measurements.
 
-        The default p-KGFN uses the configured GP priors before the first measurement
-        and combines them with the local feasibility models as those become available.
-        Explicitly selected graph-aware and stock acquisitions remain in effect.
+        The initial random stage bypasses model fitting and acquisition scoring. The
+        acquisition stage combines node models with local feasibility predictions.
 
         Every returned action is registered as pending with its explicit experiment
         identifier. New identifiers are published only after every computation and
@@ -665,8 +671,45 @@ class MultiStepCampaign(SerialMixin):
             self.dag, numerical_measurements_must_be_within_tolerance=False
         )
 
-        graph_aware = self.acquisition_function is None or isinstance(
-            self.acquisition_function, GraphAwareAcquisitionProtocol
+        if (
+            type(self.recommender.initial_recommender) is not RandomRecommender
+            or type(self.recommender.recommender) is not BotorchRecommender
+        ):
+            raise IncompatibilityError(
+                "Multi-step two-phase selection requires a RandomRecommender initial "
+                "stage and a BotorchRecommender acquisition stage."
+            )
+        bayesian = cast(BotorchRecommender, self.recommender.recommender)
+        if bayesian != BotorchRecommender(
+            acquisition_function=bayesian.acquisition_function
+        ):
+            raise IncompatibilityError(
+                "Multi-step campaigns support only the acquisition_function setting "
+                "of the BotorchRecommender; configure node surrogates on the DAG."
+            )
+        if (
+            self.acquisition_function is not None
+            and bayesian.acquisition_function is not None
+        ):
+            raise IncompatibilityError(
+                "Configure the acquisition either on the campaign or on its "
+                "BotorchRecommender, not both."
+            )
+        selected = self.recommender.select_recommender(
+            batch_size=batch_size,
+            measurements=pd.DataFrame(index=range(len(self.data.measurements))),
+        )
+        if isinstance(selected, RandomRecommender):
+            return self._recommend_random(batch_size, selected)
+
+        acquisition_function = (
+            self.acquisition_function
+            if self.acquisition_function is not None
+            else bayesian.acquisition_function
+        )
+
+        graph_aware = acquisition_function is None or isinstance(
+            acquisition_function, GraphAwareAcquisitionProtocol
         )
         policy: GraphAwareAcquisitionProtocol | None = None
         resolved_acquisition: AcquisitionFunction | None = None
@@ -675,22 +718,16 @@ class MultiStepCampaign(SerialMixin):
         if graph_aware:
             selected_policy = (
                 cast(GraphAwareAcquisitionProtocol, PartialKnowledgeGradientFN())
-                if self.acquisition_function is None
-                else cast(GraphAwareAcquisitionProtocol, self.acquisition_function)
+                if acquisition_function is None
+                else cast(GraphAwareAcquisitionProtocol, acquisition_function)
             )
             policy = selected_policy
             policy.validate_context(self.dag, self.data, batch_size)
         else:
-            from baybe.recommenders.pure.bayesian.botorch.core import (
-                BotorchRecommender,
+            assert acquisition_function is None or isinstance(
+                acquisition_function, AcquisitionFunction
             )
-
-            assert self.acquisition_function is None or isinstance(
-                self.acquisition_function, AcquisitionFunction
-            )
-            resolver = BotorchRecommender(
-                acquisition_function=self.acquisition_function
-            )
+            resolver = BotorchRecommender(acquisition_function=acquisition_function)
             resolved_acquisition = resolver._get_acquisition_function(
                 self.dag.objective
             )
@@ -726,7 +763,6 @@ class MultiStepCampaign(SerialMixin):
                 pending,
                 acquisition=policy,
                 batch_size=batch_size,
-                feasibility_epsilon=self.feasibility_epsilon,
                 feasibility_threshold=self.feasibility_threshold,
             )
         else:
@@ -741,7 +777,6 @@ class MultiStepCampaign(SerialMixin):
                 acquisition_function=resolved_acquisition,
                 score_scale=score_scale,
                 batch_size=batch_size,
-                feasibility_epsilon=self.feasibility_epsilon,
                 feasibility_threshold=self.feasibility_threshold,
                 first_new_id=self._first_new_identifier(),
                 execution_mode=self.execution_mode,
@@ -776,6 +811,88 @@ class MultiStepCampaign(SerialMixin):
                     columns.append(name)
 
         # Publish experiment state only after the complete batch has been built.
+        result = pd.DataFrame(rows).reindex(columns=columns)
+        self.data = self.data.with_process_state(experiments, counter)
+        return result
+
+    def _recommend_random(
+        self, batch_size: int, recommender: RandomRecommender
+    ) -> pd.DataFrame:
+        """Sample executable node actions without fitting or scoring models."""
+        experiments = dict(self.data._contexts)
+        counter = self.data._experiment_counter
+        first_new_id = self._first_new_identifier()
+        actions: list[_PendingAction] = []
+        for _ in range(batch_size):
+            pending = pending_actions(experiments)
+            plans = make_executable_plans(
+                self.dag,
+                self.data,
+                experiments,
+                mode=self.execution_mode,
+                first_new_id=max(first_new_id, counter + 1),
+            )
+            problems = _make_node_actions(self.dag, plans, pending)
+            if not problems:
+                raise IncompatibilityError(
+                    "The random stage found no distinct executable local action."
+                )
+            names = sorted({problem.node for problem in problems})
+            name = str(np.random.choice(names))
+            candidates = [problem for problem in problems if problem.node == name]
+            plan = candidates[int(np.random.randint(len(candidates)))]
+            node = self.dag.node_by_name[name]
+            inputs = dict(plan.inputs)
+            if node.inputs and not node.searchspace.continuous.is_empty:
+                # Discrete coordinates were selected above from the remaining actions.
+                discrete = pd.DataFrame(
+                    [
+                        {
+                            key: inputs[key]
+                            for key in node.searchspace.discrete.parameter_names
+                        }
+                    ]
+                )
+                for _attempt in range(100):
+                    values = recommender._recommend_hybrid(
+                        node.searchspace, discrete, 1
+                    ).iloc[0]
+                    inputs.update(values.to_dict())
+                    if not contains_action(
+                        pending, node=name, inputs=inputs, dag=self.dag
+                    ):
+                        break
+                else:
+                    raise IncompatibilityError(
+                        f"Could not sample a distinct pending action for node '{name}'."
+                    )
+            action = _PendingAction(name, inputs, plan.experiment_id, plan.parent_refs)
+            experiments, counter = register_action(
+                experiments,
+                counter,
+                experiment_id=action.experiment_id,
+                node=action.node,
+                inputs=action.inputs,
+                parent_refs=action.parent_refs,
+                data=self.data,
+                dag=self.dag,
+            )
+            actions.append(action)
+        columns = [EXPERIMENT_ID, NODE]
+        rows = []
+        for action in actions:
+            rows.append(
+                {
+                    EXPERIMENT_ID: action.experiment_id,
+                    NODE: action.node,
+                    **action.inputs,
+                }
+            )
+            for name in self.dag.context.input_names(
+                self.dag.node_by_name[action.node]
+            ):
+                if name not in columns:
+                    columns.append(name)
         result = pd.DataFrame(rows).reindex(columns=columns)
         self.data = self.data.with_process_state(experiments, counter)
         return result
@@ -889,6 +1006,15 @@ def _structure_multistep_campaign(
         raise TypeError(
             f"The type field '{type_}' does not match the target class "
             f"'{cls.__name__}'."
+        )
+    legacy_epsilon = specs.pop("feasibility_epsilon", 0.0)
+    if legacy_epsilon != 0.0:
+        raise IncompatibilityError(
+            "This campaign snapshot uses the removed 'feasibility_epsilon' scoring "
+            f"transformation ({legacy_epsilon!r}). Loading it would silently change "
+            "recommendation semantics. Migrate the snapshot explicitly by setting "
+            "'feasibility_epsilon' to 0.0 only if you accept direct joint-success "
+            "probability scoring, then load it again."
         )
     return _campaign_structure_hook(specs, cls)
 
