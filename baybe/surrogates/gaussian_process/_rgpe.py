@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from functools import reduce
 from operator import add
-from typing import TYPE_CHECKING, Any, NoReturn, cast
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, cast
 
 import torch
 from botorch.models.model import Model
@@ -27,13 +27,6 @@ if TYPE_CHECKING:
     from linear_operator.operators import LinearOperator
 
     from baybe.searchspace import SearchSpace
-
-_N_MC_SAMPLES = 256
-"""The number of posterior samples used to estimate the rank weights."""
-
-_DILUTION_QUANTILE = 0.95
-"""The quantile of the target model's ranking loss above which a source model's median
-ranking loss leads to its removal from the ensemble (prevents weight dilution)."""
 
 
 def _compute_ranking_loss(samples: Tensor, targets: Tensor, /) -> Tensor:
@@ -142,6 +135,7 @@ def _compute_rank_weights(
     /,
     *,
     n_samples: int,
+    dilution_quantile: float,
 ) -> Tensor:
     """Compute the rank weights for the source and target models.
 
@@ -155,7 +149,7 @@ def _compute_rank_weights(
     that its ranking loss measures generalization rather than in-sample fit.
 
     To prevent weight dilution by many poor source models, a source model gets zero
-    weight if its median ranking loss exceeds the ``_DILUTION_QUANTILE`` quantile of the
+    weight if its median ranking loss exceeds the ``dilution_quantile`` quantile of the
     target model's ranking loss.
 
     Args:
@@ -165,6 +159,8 @@ def _compute_rank_weights(
         target_model: The fitted target Gaussian process model, trained on
             ``train_x`` and ``targets``.
         n_samples: The number of posterior samples used to estimate the weights.
+        dilution_quantile: The quantile of the target model's ranking loss above which
+            a source model's median ranking loss leads to its removal.
 
     Returns:
         A tensor of length ``len(source_models) + 1`` with the model weights, ordered as
@@ -191,7 +187,7 @@ def _compute_rank_weights(
 
     # Drop sources whose median loss exceeds the target's loss quantile, by giving
     # them a loss above the maximum possible ``n * (n - 1)`` so they never win a vote
-    threshold = ranking_loss_tensor[-1].float().quantile(_DILUTION_QUANTILE)
+    threshold = ranking_loss_tensor[-1].float().quantile(dilution_quantile)
     is_dropped = ranking_loss_tensor[:-1].float().median(dim=1).values > threshold
     ranking_loss_tensor[:-1][is_dropped] = n * n
 
@@ -213,6 +209,14 @@ class RGPEModel(Model):
         acquisition functions that fantasize observations, such as
         :class:`~baybe.acquisition.acqfs.qKnowledgeGradient`.
     """
+
+    dilution_quantile: ClassVar[float] = 0.95
+    """The quantile of the target model's ranking loss above which a source model's
+    median ranking loss leads to its removal from the ensemble (prevents weight
+    dilution)."""
+
+    n_mc_samples: ClassVar[int] = 256
+    """The number of posterior samples used to estimate the rank weights."""
 
     def __init__(
         self,
@@ -305,7 +309,8 @@ class RGPEModel(Model):
                 target_y.squeeze(-1),
                 source_models,
                 target_model,
-                n_samples=_N_MC_SAMPLES,
+                n_samples=cls.n_mc_samples,
+                dilution_quantile=cls.dilution_quantile,
             )
 
         # The target's standardization defines the ensemble's output units
