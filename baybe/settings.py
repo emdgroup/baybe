@@ -195,7 +195,7 @@ def _get_default_dataframe_backend() -> nw.Implementation:
     eager_impls = [
         a for a in typing.get_args(EagerAllowed) if isinstance(a, nw.Implementation)
     ]
-    preferred = [nw.Implementation.POLARS, nw.Implementation.PANDAS]
+    preferred = [nw.Implementation.PANDAS, nw.Implementation.POLARS]
     ranking = preferred + [b for b in eager_impls if b not in preferred]
     for backend in ranking:
         try:
