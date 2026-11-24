@@ -14,6 +14,7 @@ from botorch.models import ModelList, SingleTaskGP
 from botorch.models.model import Model
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
+from botorch.posteriors import GPyTorchPosterior
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
@@ -25,7 +26,10 @@ from baybe.exceptions import IncompatibleOverrideError, NoMeasurementsError
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
-from baybe.surrogates.gaussian_process._rgpe import RGPEModel
+from baybe.surrogates.gaussian_process._rgpe import (
+    RGPEModel,
+    _sample_loocv_predictions,
+)
 from baybe.surrogates.gaussian_process.core import _ModelContext
 from baybe.surrogates.gaussian_process.presets.edbo import EDBOKernelFactory
 from baybe.surrogates.gaussian_process.presets.hvarfner import (
@@ -408,6 +412,27 @@ def test_from_searchspace(n_rows, constant_target):
         assert model.outcome_transform is model._members[-1].outcome_transform
     else:
         assert model.target_index is None
+
+
+def test_loocv_samples_match_loocv_gps(members):
+    """Each leave-one-out fold matches the GP conditioned on all other points."""
+    target = members[-1]
+    train_x, train_y = target.train_inputs[0], target.train_targets
+    torch.manual_seed(0)
+    samples = _sample_loocv_predictions(target, 50_000)
+
+    for j in range(len(train_y)):
+        loo = deepcopy(target)
+        keep = torch.arange(len(train_y)) != j
+        loo.set_train_data(train_x[keep], train_y[keep], strict=False)
+        expected = loo.outcome_transform.untransform_posterior(
+            GPyTorchPosterior(loo(train_x))
+        )
+        fold = samples[:, j]
+        assert_close(fold.mean(0), expected.mean.squeeze(-1), rtol=0, atol=0.02)
+        assert_close(
+            fold.T.cov(), expected.distribution.covariance_matrix, rtol=0, atol=0.02
+        )
 
 
 def test_missing_source_data_raises():

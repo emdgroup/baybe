@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from copy import deepcopy
 from functools import reduce
 from operator import add
 from typing import TYPE_CHECKING, Any, NoReturn, cast
@@ -72,6 +71,10 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
     The samples are drawn from the latent function, i.e. without observation noise, and
     on the original output scale.
 
+    The leave-one-out GPs are never built. Instead, posterior samples of the full GP
+    are drawn via Matheron's rule, and each point is then left out by a closed-form
+    rank-one correction.
+
     Args:
         model: The fitted Gaussian process model.
         n_samples: The number of posterior samples to draw.
@@ -81,36 +84,51 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
         ``s``-th posterior sample of the GP without training point ``j``, evaluated at
         training point ``k``.
     """
-    from botorch.sampling.normal import SobolQMCNormalSampler
+    from linear_operator.utils.cholesky import psd_safe_cholesky
 
-    loo_model = deepcopy(model)
-    loo_model.eval()
-    train_x = loo_model.train_inputs[0]
-    train_y = loo_model.train_targets
-
-    # Fold j contains all training points except point j
-    folds = ~torch.eye(len(train_x), dtype=torch.bool)
-
-    # Store the folds as batched training data, which `set_train_data` keeps as is
-    # Note: `set_train_data` comes from GPyTorch, which mypy can't see, so mypy
-    # falls back to `nn.Module.__getattr__` and types it as a tensor
-    loo_model.set_train_data(  # type: ignore[operator]
-        torch.stack([train_x[m] for m in folds]),
-        torch.stack([train_y[m] for m in folds]),
-        strict=False,
-    )
+    # The modules below are called directly, which skips the input transform. In eval
+    # mode, the stored training inputs are already transformed.
+    model.eval()
+    train_x = model.train_inputs[0]
+    train_y = model.train_targets
+    outcome_transform = model.outcome_transform
+    assert isinstance(outcome_transform, Standardize)  # ensured by the GP fit
 
     with torch.no_grad():
-        # Calling the model directly skips the input transform, so both the folds
-        # and `train_x` must already be transformed, as set by `eval()` above.
-        # The outcome transform is skipped as well, so it is undone explicitly.
-        outcome_transform = loo_model.outcome_transform
-        assert isinstance(outcome_transform, Standardize)  # ensured by the GP fit
-        posterior = outcome_transform.untransform_posterior(
-            GPyTorchPosterior(loo_model(train_x))
+        # Double precision is used throughout, since the rank-one correction is prone
+        # to cancellation errors
+        prior = model.forward(train_x)
+        noisy_prior = cast("MultivariateNormal", model.likelihood(prior, [train_x]))
+        mean = prior.mean.double()
+        kernel = (
+            cast("LinearOperator", prior.lazy_covariance_matrix).to_dense().double()
         )
-        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
-        return sampler(posterior).squeeze(-1)
+        noisy_kernel = (
+            cast("LinearOperator", noisy_prior.lazy_covariance_matrix)
+            .to_dense()
+            .double()
+        )
+        inverse = torch.cholesky_inverse(torch.linalg.cholesky(noisy_kernel))
+
+        # Prior draws of the latent function and the observation noise
+        z = torch.randn(
+            n_samples, 2, len(train_y), dtype=torch.float64, device=kernel.device
+        )
+        f = mean + z[:, 0] @ psd_safe_cholesky(kernel).T
+        noise = z[:, 1] @ torch.linalg.cholesky(noisy_kernel - kernel).T
+
+        # Correcting the prior draws by their mismatch with the observed targets turns
+        # them into posterior draws given all points
+        alpha = (train_y.double() - f - noise) @ inverse
+        full = f + alpha @ kernel
+
+        # Leaving out point j moves the sample at point k by
+        # (kernel @ inverse)[k, j] * alpha[j] / inverse[j, j]
+        shift = (alpha / inverse.diagonal()).unsqueeze(-1) * (kernel @ inverse).T
+        samples = (full.unsqueeze(-2) - shift).to(train_y)
+
+        # The outcome transform was skipped as well, so it is undone here
+        return outcome_transform.untransform(samples.unsqueeze(-1))[0].squeeze(-1)
 
 
 def _compute_rank_weights(
