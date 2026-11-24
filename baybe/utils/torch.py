@@ -25,7 +25,7 @@ def index_in_tensor(needle: torch.Tensor, haystack: torch.Tensor) -> list[int]:
     Returns:
         The row indices into ``haystack`` for each row of ``needle``.
     """
-    match_mask = (haystack.unsqueeze(0) == needle.unsqueeze(1)).all(dim=-1)
+    match_mask = torch.cdist(needle, haystack, p=0).eq(0)
     if not match_mask.any(dim=1).all():
         raise ValueError(
             "Could not find all rows of the search tensor in the target tensor."
