@@ -77,6 +77,7 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
         ``s``-th posterior sample of the GP without training point ``j``, evaluated at
         training point ``k``.
     """
+    from botorch.utils.sampling import draw_sobol_normal_samples
     from linear_operator.utils.cholesky import psd_safe_cholesky
 
     # The modules below are called directly, which skips the input transform. In eval
@@ -104,9 +105,10 @@ def _sample_loocv_predictions(model: SingleTaskGP, n_samples: int, /) -> Tensor:
         inverse = torch.cholesky_inverse(torch.linalg.cholesky(noisy_kernel))
 
         # Prior draws of the latent function and the observation noise
-        z = torch.randn(
-            n_samples, 2, len(train_y), dtype=torch.float64, device=kernel.device
-        )
+        n = len(train_y)
+        z = draw_sobol_normal_samples(
+            2 * n, n_samples, device=kernel.device, dtype=torch.float64
+        ).reshape(n_samples, 2, n)
         f = mean + z[:, 0] @ psd_safe_cholesky(kernel).T
         noise = z[:, 1] @ torch.linalg.cholesky(noisy_kernel - kernel).T
 
