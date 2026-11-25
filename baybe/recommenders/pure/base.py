@@ -15,6 +15,7 @@ from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
 from typing_extensions import override
 
 from baybe.exceptions import (
+    DataFrameBackendError,
     DeprecationError,
     IncompatibilityError,
     NotEnoughPointsLeftError,
@@ -145,10 +146,11 @@ class PureRecommender(ABC, RecommenderProtocol):
         # static type checking but is implicitly controlled by the runtime settings
         actual = nw.Implementation.from_backend(nw.get_native_namespace(rec))
         expected = nw.Implementation.from_backend(backend)
-        assert actual == expected, (
-            f"The generated recommendations dataframe uses backend '{actual}' "
-            f"but backend '{expected}' was expected."
-        )
+        if actual != expected:
+            raise DataFrameBackendError(
+                f"The generated recommendations dataframe uses backend '{actual}' "
+                f"but backend '{expected}' was expected."
+            )
 
         # For pandas-backed results, assert that the dataframe has a default index
         if actual is nw.Implementation.PANDAS:

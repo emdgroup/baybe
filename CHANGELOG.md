@@ -133,6 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SequentialMetaRecommender.with_alternating_llm_recommender` convenience constructors
   built on top of `LLMRecommender`: the former warm-starts a campaign with the LLM and
   then switches to another recommender, the latter alternates between the two
+- `DataFrameBackendError` exception class
 
 ### Changed
 - Discrete filters are now applied by commutativity instead of being reorder by type:

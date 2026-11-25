@@ -51,6 +51,10 @@ class IncompatibilityError(Exception):
     """Incompatible components are used together."""
 
 
+class DataFrameBackendError(TypeError):
+    """A dataframe uses a backend different from the expected one."""
+
+
 class IncompatibleSearchSpaceError(IncompatibilityError):
     """
     A recommender is used with a search space that contains incompatible parts,
