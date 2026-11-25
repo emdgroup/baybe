@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
-from attrs import define, field, setters
+from attrs import define, evolve, field, setters
 from attrs.validators import ge, instance_of
 from pandas.api.types import is_numeric_dtype
 from typing_extensions import override
@@ -1335,8 +1335,11 @@ class _MultiStepModelBase(_ModelBase):
         target = BinaryTarget(
             FEASIBILITY_LABEL, success_value=True, failure_value=False
         )
+        # Rebuild the stored classifier from its configuration instead of deep-copying
+        # it: ``evolve`` avoids copying non-leaf GPyTorch tensors, and ``fit`` rebuilds
+        # every piece of state from the new data anyway.
         template = self._feasibility_models.get(node.name, _MultiStepGPClassifier())
-        classifier = deepcopy(template)
+        classifier = evolve(template)
         classifier.fit(feature_searchspace, target.to_objective(), classifier_frame)
         return classifier, feature_names
 
