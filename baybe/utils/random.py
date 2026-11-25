@@ -78,6 +78,11 @@ def temporary_seed(seed: int):  # noqa: DOC402
         torch.set_rng_state(state_torch)
 
 
+def _make_random_seed() -> int:
+    """Generate a random seed supported by all dataframe backends."""
+    return random.randrange(2**32)
+
+
 def _lazy_torch_equal(a: Tensor, b: Tensor, /) -> bool:
     """Equality check for tensors with lazy torch import."""
     import torch

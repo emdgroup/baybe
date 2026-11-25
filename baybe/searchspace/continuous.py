@@ -40,6 +40,7 @@ from baybe.settings import active_settings
 from baybe.utils.basic import flatten, is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
+from baybe.utils.random import _make_random_seed
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
@@ -735,7 +736,9 @@ class SubspaceContinuous(SerialMixin):
                 f"{len(full_factorial)} points."
             )
 
-        return full_factorial.sample(n=batch_size).reset_index(drop=True)
+        return full_factorial.sample(
+            n=batch_size, random_state=_make_random_seed()
+        ).reset_index(drop=True)
 
     @property
     def full_factorial(self) -> pd.DataFrame:

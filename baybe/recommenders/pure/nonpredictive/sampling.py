@@ -16,6 +16,7 @@ from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.settings import Settings, active_settings
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import _df_with_backend
+from baybe.utils.random import _make_random_seed
 from baybe.utils.sampling_algorithms import FPSInitialization, farthest_point_sampling
 
 if TYPE_CHECKING:
@@ -77,6 +78,7 @@ class RandomRecommender(NonPredictiveRecommender):
                 candidates_exp.sample(
                     n=batch_size,
                     with_replacement=is_hybrid or len(candidates_exp) < batch_size,
+                    seed=_make_random_seed(),
                 ),
                 backend,
             )

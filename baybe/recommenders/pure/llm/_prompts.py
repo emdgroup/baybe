@@ -17,6 +17,7 @@ from baybe.searchspace import SearchSpace
 from baybe.searchspace.candidates import EmptyCandidates, ProductCandidates
 from baybe.transformations.base import Transformation
 from baybe.utils.basic import get_subclasses, is_all_instance
+from baybe.utils.random import _make_random_seed
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrameT
@@ -168,7 +169,9 @@ def _sample_example_configurations(searchspace: SearchSpace, /) -> pd.DataFrame:
         return searchspace.continuous.sample_uniform(n)
 
     candidates = searchspace.discrete._get_candidates().collect().to_pandas()
-    discrete = candidates.sample(min(n, len(candidates))).reset_index(drop=True)
+    discrete = candidates.sample(
+        min(n, len(candidates)), random_state=_make_random_seed()
+    ).reset_index(drop=True)
     continuous = searchspace.continuous.sample_uniform(len(discrete))
     return pd.concat([discrete, continuous], axis=1)
 

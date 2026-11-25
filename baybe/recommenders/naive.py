@@ -17,6 +17,7 @@ from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.settings import Settings
 from baybe.utils.dataframe import _infer_backend, to_tensor
+from baybe.utils.random import _make_random_seed
 
 if TYPE_CHECKING:
     from narwhals.stable.v2.typing import IntoDataFrameT
@@ -126,7 +127,9 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
             # Get one random discrete point that will be attached when evaluating the
             # acquisition function in the discrete space.
-            disc_part = searchspace.discrete.transform(disc_rec).sample(1)
+            disc_part = searchspace.discrete.transform(disc_rec).sample(
+                1, seed=_make_random_seed()
+            )
             disc_part_tensor = to_tensor(disc_part).unsqueeze(-2)
 
             # Setup a fresh acquisition function for the continuous recommender
