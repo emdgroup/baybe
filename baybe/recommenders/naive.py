@@ -127,9 +127,9 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
             # Get one random discrete point that will be attached when evaluating the
             # acquisition function in the discrete space.
-            disc_part = searchspace.discrete.transform(disc_rec).sample(
-                1, seed=_make_random_seed()
-            )
+            disc_part = nw.from_native(
+                searchspace.discrete.transform(disc_rec), eager_only=True
+            ).sample(1, seed=_make_random_seed())
             disc_part_tensor = to_tensor(disc_part).unsqueeze(-2)
 
             # Setup a fresh acquisition function for the continuous recommender
