@@ -80,8 +80,10 @@ def _filter_candidates(
 def _to_narwhals_frame(dataframe: IntoFrame | _NarwhalsFrame, /) -> _NarwhalsFrame:
     """Convert a native frame to a Narwhals frame (with narwhals frame passthrough)."""
     if isinstance(dataframe, (nw.DataFrame, nw.LazyFrame)):
-        return dataframe
-    return nw.maybe_reset_index(nw.from_native(dataframe))
+        frame = dataframe
+    else:
+        frame = nw.from_native(dataframe)
+    return nw.maybe_reset_index(frame)
 
 
 @define(frozen=True)
