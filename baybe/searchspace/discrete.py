@@ -1010,8 +1010,11 @@ def _structure_subspace_discrete(specs: dict, cls: type) -> SubspaceDiscrete:
             specs.pop("parameters"), list[DiscreteParameter]
         )
         exp_rep_df = converter.structure(specs.pop("exp_rep"), pd.DataFrame)
+        candidates = (
+            TableCandidates(parameters, exp_rep_df) if parameters else EmptyCandidates()
+        )
         specs["candidates"] = converter.unstructure(
-            TableCandidates(parameters, exp_rep_df),
+            candidates,
             unstructure_as=CandidatesProtocol,
         )
 
