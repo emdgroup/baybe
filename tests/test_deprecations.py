@@ -875,6 +875,17 @@ def _legacy_serialize(obj: object) -> str:
     return base64.b64encode(pickle.dumps(obj)).decode()
 
 
+def _use_legacy_exp_rep(data: dict, campaign: Campaign, exp_rep: pd.DataFrame) -> None:
+    """Replace a serialized discrete candidate set with its legacy exp_rep format."""
+    discrete = data["searchspace"]["discrete"]
+    discrete.pop("candidates")
+    discrete["parameters"] = [
+        converter.unstructure(parameter, unstructure_as=DiscreteParameter)
+        for parameter in campaign.searchspace.discrete.parameters
+    ]
+    discrete["exp_rep"] = _legacy_serialize(exp_rep)
+
+
 @pytest.mark.parametrize("batch_size", [3], ids=["b3"])
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
 def test_legacy_campaign_counter_deserialization(ongoing_campaign):
@@ -918,16 +929,25 @@ def test_legacy_recommended_metadata_deserialization(ongoing_campaign):
     # Construct legacy searchspace_metadata with a "recommended" column and encode
     # it as a pickle/base64 string as the old serialization format produced
     exp_rep = ongoing_campaign.searchspace.discrete.get_candidates()
+    # Structuring this legacy exp_rep as TableCandidates resets its index. Permuted
+    # labels ensure metadata must be resolved against this original frame, or it will
+    # select different candidates.
+    exp_rep.index = pd.Index(np.roll(np.arange(len(exp_rep)), 1))
     rec_pd = nw.from_native(rec, eager_only=True).to_pandas()
 
     # Find exp_rep rows that match the recommended candidates by value
-    idxs = exp_rep.merge(rec_pd, on=rec_pd.columns.tolist(), how="inner").index
+    index_col = "_legacy_index"
+    idxs = exp_rep.assign(**{index_col: exp_rep.index}).merge(
+        rec_pd, on=rec_pd.columns.tolist(), how="inner"
+    )[index_col]
     metadata = pd.DataFrame(False, index=exp_rep.index, columns=[_RECOMMENDED])
     metadata.loc[idxs, _RECOMMENDED] = True
     data["searchspace_metadata"] = _legacy_serialize(metadata)
+    _use_legacy_exp_rep(data, ongoing_campaign, exp_rep)
 
     # Deserialization must reconstruct _recommended_experiments with correct content
-    restored = Campaign.from_dict(data)
+    with pytest.warns(DeprecationWarning, match="exp_rep"):
+        restored = Campaign.from_dict(data)
     expected = exp_rep.loc[idxs]
     # Compare as sets of rows (order may differ)
     cols = expected.columns.tolist()
@@ -990,14 +1010,20 @@ def test_legacy_excluded_metadata_deserialization():
     data = campaign.to_dict()
     del data["excluded_experiments"]
     exp_rep = campaign.searchspace.discrete.get_candidates()
+    # Structuring this legacy exp_rep as TableCandidates resets its index. Permuted
+    # labels ensure metadata must be resolved against this original frame, or it will
+    # select different candidates.
+    exp_rep.index = pd.Index(np.roll(np.arange(len(exp_rep)), 1))
     metadata = pd.DataFrame(
         {_EXCLUDED: [True, False, True]},
         index=exp_rep.index,
     )
     data["searchspace_metadata"] = _legacy_serialize(metadata)
+    _use_legacy_exp_rep(data, campaign, exp_rep)
 
     # Deserialization must reconstruct _excluded_experiments
-    restored = Campaign.from_dict(data)
+    with pytest.warns(DeprecationWarning, match="exp_rep"):
+        restored = Campaign.from_dict(data)
     excluded_idxs = metadata.index[metadata[_EXCLUDED]]
     expected = exp_rep.loc[excluded_idxs].reset_index(drop=True)
     pd.testing.assert_frame_equal(

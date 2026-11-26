@@ -1234,12 +1234,29 @@ def _migrate_legacy_campaign(dict_: dict, /) -> dict:
     # Migrate legacy searchspace metadata to new fields
     if "searchspace_metadata" in dict_:
         metadata = _unpickle_dataframe(dict_.pop("searchspace_metadata"))
-        if _RECOMMENDED in metadata.columns and "recommended_experiments" not in dict_:
-            recommended_idxs = metadata.index[metadata[_RECOMMENDED]]
-            dict_["_legacy_recommended_idxs"] = recommended_idxs.tolist()
-        if _EXCLUDED in metadata.columns and "excluded_experiments" not in dict_:
-            excluded_idxs = metadata.index[metadata[_EXCLUDED]]
-            dict_["_legacy_excluded_idxs"] = excluded_idxs.tolist()
+        migrate_recommended = (
+            _RECOMMENDED in metadata.columns and "recommended_experiments" not in dict_
+        )
+        migrate_excluded = (
+            _EXCLUDED in metadata.columns and "excluded_experiments" not in dict_
+        )
+        if migrate_recommended or migrate_excluded:
+            # Resolve the metadata labels against the serialized legacy exp_rep before
+            # structuring it. TableCandidates resets non-default dataframe indices, so
+            # applying these labels to the newly structured candidates is unsafe.
+            legacy_exp_rep_data = dict_["searchspace"]["discrete"]["exp_rep"]
+            legacy_exp_rep = converter.structure(legacy_exp_rep_data, pd.DataFrame)
+
+            if migrate_recommended:
+                recommended_idxs = metadata.index[metadata[_RECOMMENDED]]
+                dict_["_legacy_recommended_experiments"] = legacy_exp_rep.loc[
+                    recommended_idxs
+                ].reset_index(drop=True)
+            if migrate_excluded:
+                excluded_idxs = metadata.index[metadata[_EXCLUDED]]
+                dict_["_legacy_excluded_experiments"] = legacy_exp_rep.loc[
+                    excluded_idxs
+                ].reset_index(drop=True)
 
     # Drop legacy ``comp_rep`` from the discrete subspace (was never meaningful
     # outside of the old serialization)
@@ -1286,26 +1303,22 @@ converter.register_unstructure_hook(
 def _structure_campaign(d: dict, cl: type) -> Campaign:
     """Structure a Campaign from a dictionary, handling legacy migrations."""
     prepared = _prepare_for_structuring(d)
-    legacy_recommended_idxs = prepared.pop("_legacy_recommended_idxs", None)
-    legacy_excluded_idxs = prepared.pop("_legacy_excluded_idxs", None)
+    legacy_recommended_experiments = prepared.pop(
+        "_legacy_recommended_experiments", None
+    )
+    legacy_excluded_experiments = prepared.pop("_legacy_excluded_experiments", None)
     campaign = structure_hook(prepared, cl)
 
     # >>>>>>>>>> Deprecation
-    # Post-structure reconstruction from legacy metadata indices
-    if legacy_recommended_idxs is not None or legacy_excluded_idxs is not None:
-        candidates = (
-            campaign.searchspace.discrete._get_candidates().collect().to_pandas()
+    # Post-structure reconstruction from configurations selected in legacy exp_rep
+    if legacy_recommended_experiments is not None:
+        campaign._recommended_experiments = nw.from_native(
+            legacy_recommended_experiments, eager_only=True
         )
-        if legacy_recommended_idxs is not None:
-            campaign._recommended_experiments = nw.from_native(
-                candidates.loc[legacy_recommended_idxs].reset_index(drop=True),
-                eager_only=True,
-            )
-        if legacy_excluded_idxs is not None:
-            campaign._excluded_experiments = nw.from_native(
-                candidates.loc[legacy_excluded_idxs].reset_index(drop=True),
-                eager_only=True,
-            )
+    if legacy_excluded_experiments is not None:
+        campaign._excluded_experiments = nw.from_native(
+            legacy_excluded_experiments, eager_only=True
+        )
 
     # <<<<<<<<<< Deprecation
 
