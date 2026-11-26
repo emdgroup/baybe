@@ -506,7 +506,7 @@ class SubspaceContinuous(SerialMixin):
                 for p in self.parameters
             ),
             ignore_nulls=False,
-        )
+        ).fill_null(False)
         return df_nw.filter(~in_bounds).to_native()
 
     def transform(
