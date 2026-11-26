@@ -4,9 +4,9 @@ required for the basic measure-recommend loop. Dependencies needed for insights 
 optional and available by installing `baybe` with the respective dependency group, e.g. 
 via `pip install baybe[insights]`.
 
-```{admonition} Examples On This Page
+```{admonition} Examples In The SHAP Section
 :class: note
-In what follows, we show results for the campaign studied in the 
+In what follows, we show SHAP results for the campaign studied in the 
 [full lookup example](./../../examples/Backtesting/full_lookup), which aims at 
 maximizing the yield of a chemical reaction and involves three substance parameters and  
 two discrete numerical parameters. We randomly sample 100 measurements from the 
@@ -160,3 +160,54 @@ should be displayed:
 ~~~python
 insight.plot("bar", target_index=2)  # plots the bar plot for the third target
 ~~~
+
+## Robustness via Risk Measures
+The [`RobustnessInsight`](baybe.insights.robustness.RobustnessInsight) quantifies 
+how robust the predictions of a trained surrogate are against noise in the inputs, for 
+instance caused by imprecise process settings. For this purpose, it evaluates 
+[BoTorch risk measures](https://botorch.readthedocs.io/en/latest/acquisition.html#module-botorch.acquisition.risk_measures) 
+(`Expectation`, `VaR`, `CVaR`, `WorstCase`) under zero-mean Gaussian input noise. The 
+noise is given either as standard deviations per parameter (independent noise) or as a 
+covariance matrix in form of a dataframe indexed by parameter names:
+~~~python
+from baybe.insights import RobustnessInsight
+
+insight = RobustnessInsight.from_campaign(
+    campaign,
+    input_noise={"x": 0.05, "y": 0.1},  # or a covariance dataframe
+    risk_measure="CVaR",
+    alpha=0.8,  # risk level, only used by VaR and CVaR
+)
+
+insight.evaluate(candidates)  # risk measure values for given configurations
+~~~
+
+Continuous, discrete and hybrid search spaces are supported. Since only numerical 
+parameters can be perturbed, input noise can only be specified for numerical 
+parameters. Parameters that are not subject to noise, such as categorical ones, are 
+kept fixed at the values of the evaluated configuration. The evaluated configurations 
+must lie within the bounds of the search space, otherwise a `ValueError` is raised.
+
+Risk measures are computed for the objective values, i.e., larger values are always 
+better and the measures describe the lower tail of their distribution, also for 
+minimized targets. Perturbed inputs are clipped to the box bounds of the computational 
+representation of the search space. Perturbed values of discrete parameters are not 
+snapped back to the grid, and perturbed continuous values may violate constraints. The 
+values are quasi-Monte Carlo estimates (Sobol sequences, as in BoTorch), which can be 
+made reproducible via the [random seed setting](../concepts/settings.md#random-seed-control).
+
+```{admonition} Memory Consumption
+:class: warning
+All configurations passed to `evaluate` are processed in a single pass, so memory 
+consumption grows linearly with their number, as well as with `n_perturbations` and 
+`n_posterior_samples`. With the default settings, 10,000 configurations required about 
+2.5 GB in our tests. Split larger sets of configurations manually.
+```
+
+```{admonition} Current Limitations
+:class: note
+Currently, only single-output
+[Gaussian process surrogates](baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate)
+are supported, and the input noise must be Gaussian. Everything else, such as custom 
+noise distributions, raises a `NotImplementedError`.
+```

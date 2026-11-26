@@ -58,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SequentialMetaRecommender.with_alternating_llm_recommender` convenience constructors
   built on top of `LLMRecommender`: the former warm-starts a campaign with the LLM and
   then switches to another recommender, the latter alternates between the two
+- `RobustnessInsight` for evaluating BoTorch risk measures (`Expectation`, `VaR`,
+  `CVaR`, `WorstCase`) of trained single-output Gaussian process surrogates under
+  Gaussian input noise on continuous, discrete and hybrid search spaces (requires the
+  `insights` dependency group)
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
