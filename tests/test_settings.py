@@ -559,14 +559,14 @@ def test_default_dataframe_backend_auto_resolution(monkeypatch):
     """Auto-resolution selects the highest-priority available dataframe backend."""
     assert (
         Settings(default_dataframe_backend=None).default_dataframe_backend
-        is nw.Implementation.POLARS
+        is nw.Implementation.PANDAS
     )
 
-    monkeypatch.setattr("importlib.import_module", _import_but_not("polars"))
+    monkeypatch.setattr("importlib.import_module", _import_but_not("pandas"))
 
     assert (
         Settings(default_dataframe_backend=None).default_dataframe_backend
-        is nw.Implementation.PANDAS
+        is nw.Implementation.POLARS
     )
 
 

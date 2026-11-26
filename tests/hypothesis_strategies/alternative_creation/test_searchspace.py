@@ -110,11 +110,9 @@ def test_searchspace_creation_from_dataframe(df, parameters, expected):
 
 def test_discrete_searchspace_creation_from_degenerate_dataframe():
     """A degenerate dataframe with index but no columns yields an empty space."""
-    import narwhals.stable.v2 as nw
-
     df = pd.DataFrame(index=[0])
     subspace = SubspaceDiscrete.from_dataframe(df)
-    assert nw.from_native(subspace.get_candidates()).collect().is_empty()
+    assert subspace._get_candidates().collect().is_empty()
 
 
 @Settings(default_dataframe_backend="pandas")

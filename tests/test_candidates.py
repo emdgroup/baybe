@@ -190,10 +190,13 @@ def test_product_candidates_generation(filters, expected):
     assert candidates.is_finite
     assert isinstance(candidates_ldf, nw.LazyFrame)
     assert set(candidates_df.columns) == {p.name for p in parameters}
-    assert_frame_equal(
-        candidates_df.to_pandas(),
-        pd.DataFrame(expected, columns=[p.name for p in parameters]),
-        check_dtype=False,
+    assert_nw_frame_equal(
+        candidates_df,
+        nw.from_dict(
+            dict(zip((parameter.name for parameter in parameters), zip(*expected))),
+            backend=active_settings.default_dataframe_backend,
+        ),
+        check_dtypes=False,
     )
 
 
