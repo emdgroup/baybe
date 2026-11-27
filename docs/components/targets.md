@@ -393,6 +393,34 @@ t6 = t5.clamp(max=10)  # upper-bound to 10 (lower bound is 0 due to abs() call a
 t7 = t6.normalize()  # normalize to [0, 1]
 ```
 
+## Metadata
+
+Targets accept an optional ``metadata`` attribute. It does not influence the
+optimization itself, but it is serialized with the target and passed to the
+{ref}`LLM recommender <llm_recommender>` as additional context.
+
+The metadata is either a {class}`~baybe.utils.metadata.MeasurableMetadata` object
+with the {attr}`~baybe.utils.metadata.MeasurableMetadata.description`,
+{attr}`~baybe.utils.metadata.MeasurableMetadata.unit` and
+{attr}`~baybe.utils.metadata.MeasurableMetadata.misc` fields, or a dictionary whose
+``description`` and ``unit`` keys populate the dedicated fields and whose remaining
+keys are collected in ``misc``:
+
+```python
+from baybe.targets import NumericalTarget
+
+target = NumericalTarget(
+    name="Yield",
+    metadata={
+        "description": (
+            "Isolated yield after recrystallization; values below 5% are within "
+            "the detection limit."
+        ),
+        "unit": "%",
+    },
+)
+```
+
 ## Limitations
 ```{important}
 {class}`~baybe.targets.numerical.NumericalTarget` enables many use cases due to the

@@ -88,6 +88,59 @@ BayBE provides two recommenders that recommend by sampling form the search space
   this recommender can be found
   [here](./../../examples/Custom_Surrogates/surrogate_params).
 
+(llm_recommender)=
+### LLM Recommender
+
+The {class}`~baybe.recommenders.pure.llm.llm.LLMRecommender` asks a large language
+model (LLM) for recommendations, adding knowledge a surrogate model cannot encode.
+It is not Bayesian: no surrogate model, no uncertainty estimate.
+
+The recommender is available via the ``llm`` extra and sends requests through
+[LiteLLM](https://docs.litellm.ai). The
+{attr}`~baybe.recommenders.pure.llm.llm.LLMRecommender.model` is a provider-prefixed
+identifier (see the [provider list](https://docs.litellm.ai/docs/providers)).
+Credentials are best provided via the environment variables LiteLLM expects (e.g.
+``OPENAI_API_KEY``). Additional arguments such as ``temperature`` go into the
+{attr}`~baybe.recommenders.pure.llm.llm.LLMRecommender.litellm_args`, which may
+contain credentials and are therefore never serialized: provide them again after
+loading a serialized recommender. The keys ``model``, ``messages`` and ``stream`` are
+rejected.
+
+```python
+from baybe.recommenders import LLMRecommender
+
+recommender = LLMRecommender(
+    model="openai/gpt-4o-mini",
+    experiment_description="Suzuki coupling of an aryl bromide in a batch reactor.",
+    litellm_args={"temperature": 0.2},
+)
+```
+
+Use the {attr}`~baybe.recommenders.pure.llm.llm.LLMRecommender.experiment_description`
+and the {ref}`metadata <parameter_metadata>` of parameters, targets and the objective
+to guide the model.
+
+```{admonition} Data Privacy
+:class: warning
+Recommendation requests send the experiment description, the optimization problem
+and the available measurements to the configured provider. Check that this complies
+with your data-handling policies.
+```
+
+If a response cannot be turned into valid recommendations, one recovery attempt is
+made with a corrective prompt; if that fails too,
+{class}`~baybe.exceptions.LLMRecoveryFailedError` is raised. Call errors are not
+retried: {class}`~baybe.exceptions.LLMAuthenticationError` if the provider rejects
+authentication, {class}`~baybe.exceptions.LLMCallError` otherwise.
+
+```{admonition} Limitations
+:class: warning
+Components whose behavior is defined by arbitrary Python callables cannot be
+described to the model, which raises an
+{class}`~baybe.exceptions.IncompatibilityError`. Constraints on continuous
+parameters cannot be validated.
+```
+
 ## Meta Recommenders
 
 In analogy to meta studies, meta recommenders are wrappers that operate on a sequence
@@ -113,12 +166,43 @@ recommender = TwoPhaseMetaRecommender(
 )
 ```
 
+  For a cold start with the LLM, use
+  {meth}`~baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.with_llm_initial_recommender`:
+  the LLM proposes the first experiments, and the meta recommender switches to
+  ``recommender`` (default:
+  {class}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender`) once
+  {attr}`~baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.switch_after`
+  measurements are available.
+
+```python
+from baybe.recommenders import TwoPhaseMetaRecommender
+
+recommender = TwoPhaseMetaRecommender.with_llm_initial_recommender(
+    model="openai/gpt-4o-mini",
+    experiment_description="Suzuki coupling of an aryl bromide in a batch reactor.",
+    switch_after=10,
+)
+```
+
 * The **[`SequentialMetaRecommender`](baybe.recommenders.meta.sequential.SequentialMetaRecommender)**
   introduces a simple yet versatile approach by utilizing a predefined list of
   recommenders. By specifying the desired behavior using the `mode` attribute, it is
   possible to flexibly determine the meta recommender's response when it exhausts the 
   available recommenders. The possible choices are to either raise an error, re-use the
   last recommender or re-start at the beginning of the sequence.
+
+  To alternate between the LLM and another recommender whenever new measurements
+  arrive, use
+  {meth}`~baybe.recommenders.meta.sequential.SequentialMetaRecommender.with_alternating_llm_recommender`:
+
+```python
+from baybe.recommenders import SequentialMetaRecommender
+
+recommender = SequentialMetaRecommender.with_alternating_llm_recommender(
+    model="openai/gpt-4o-mini",
+    experiment_description="Suzuki coupling of an aryl bromide in a batch reactor.",
+)
+```
 
 * Similar to the `SequentialMetaRecommender`, the
   **[`StreamingSequentialMetaRecommender`](baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender)**

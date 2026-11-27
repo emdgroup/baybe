@@ -236,3 +236,31 @@ mask = objective.identify_non_dominated_configurations(configurations)
 assert mask.equals(pd.Series([False, True, False, True]))
 ```
 
+## Metadata
+
+Objectives accept an optional ``metadata`` attribute. It does not influence the
+optimization itself, but it is serialized with the objective and passed to the
+{ref}`LLM recommender <llm_recommender>` as additional context.
+
+The metadata is either a {class}`~baybe.utils.metadata.Metadata` object with the
+{attr}`~baybe.utils.metadata.Metadata.description` and
+{attr}`~baybe.utils.metadata.Metadata.misc` fields, or a dictionary whose
+``description`` key populates the dedicated field and whose remaining keys are
+collected in ``misc``:
+
+```python
+from baybe.objectives import SingleTargetObjective
+from baybe.targets import NumericalTarget
+
+objective = SingleTargetObjective(
+    target=NumericalTarget(name="Yield"),
+    metadata={
+        "description": (
+            "A yield of about 85% is enough for scale-up. Among conditions "
+            "reaching it, prefer lower catalyst loading and avoid DMF and NMP, "
+            "because catalyst cost and solvent toxicity are not measured as "
+            "targets."
+        )
+    },
+)
+```

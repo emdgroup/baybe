@@ -114,3 +114,35 @@ add_parameter_noise(measurements, campaign.parameters)
 
 # Now continue the loop, e.g. by adding the measurements...
 ```
+
+## LLM Utilities
+
+BayBE's LLM functionality is built on reusable building blocks in the private
+``baybe._llm`` package, which developers can combine for their own workflows. For
+user-facing behavior, see the {ref}`LLM recommender <llm_recommender>` section.
+
+```{admonition} Internal API
+:class: caution
+These utilities are internal building blocks of BayBE. They may change without a
+deprecation period.
+```
+
+* ``baybe._llm.query.query_model``: sends a single prompt via LiteLLM and returns
+  the raw text; call failures raise the public {class}`~baybe.exceptions.LLMError`
+  subclasses, and truncated or empty responses raise an ``LLMResponseError``.
+* ``baybe._llm.query.query_model_with_recovery``: runs a query/parse cycle and
+  retries exactly once if either step raises an ``LLMResponseError``; call errors are
+  not retried, and a second failure raises
+  {class}`~baybe.exceptions.LLMRecoveryFailedError`.
+* ``baybe._llm.query.validate_litellm_args``: ``attrs`` validator rejecting the
+  reserved keys ``model``, ``messages`` and ``stream``.
+* ``baybe._llm.extraction.extract_payload``: extracts the last JSON object matching
+  an ``attrs`` schema from free-form model output.
+* ``baybe._llm.rendering.to_prompt_dict``: serializes a parameter, constraint or
+  objective into a compact prompt representation.
+* ``baybe._llm.rendering.to_json_lines``: renders such dictionaries as one JSON object
+  per line.
+* ``baybe._llm.rendering.render_template``: renders Jinja templates and fails on
+  undefined variables.
+* ``baybe._llm.exceptions.LLMResponseError``: abstract base for unusable responses;
+  subclasses define a ``recovery_instruction`` for the corrective prompt.
