@@ -15,6 +15,7 @@ from baybe.parameters.categorical import CategoricalParameter
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
+    _FixedNumericalContinuousParameter,
 )
 from baybe.targets.numerical import NumericalTarget
 
@@ -149,3 +150,31 @@ def test_network_posterior_avoids_global_product(monkeypatch):
     torch.testing.assert_close(posterior.mean, reference_posterior.mean)
     torch.testing.assert_close(posterior.variance, reference_posterior.variance)
     torch.testing.assert_close(gradient, reference_gradient)
+
+
+def test_network_posterior_supports_fixed_numerical_continuous_parameter():
+    """Preserve generic posterior bounds for an existing fixed continuous input."""
+    import torch
+    from botorch.models import SingleTaskGP
+
+    parameter = _FixedNumericalContinuousParameter(name="x", value=0.5)
+    node = MultiStepNode(name="root", output="utility", inputs=(parameter,))
+    dag = MultiStepDAG(
+        nodes=(node,), objective=NumericalTarget("utility").to_objective()
+    )
+    with pytest.raises(IncompatibilityError, match="unsupported"):
+        dag._configuration_space.validate_numerical_parameters()
+
+    node_model = SingleTaskGP(
+        train_X=torch.tensor([[0.5], [0.5]], dtype=torch.double),
+        train_Y=torch.tensor(
+            [[-0.7071067811865476], [0.7071067811865476]], dtype=torch.double
+        ),
+        outcome_transform=None,
+    )
+
+    model = MultiStepModel.from_node_models(dag, {"root": node_model})
+    posterior = model.posterior(torch.tensor([[[0.5]]], dtype=torch.double))
+
+    assert tuple(posterior.mean.shape) == (1, 1, 1)
+    assert torch.isfinite(posterior.mean).all()

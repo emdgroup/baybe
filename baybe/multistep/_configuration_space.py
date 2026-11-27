@@ -79,14 +79,14 @@ class _ConfigurationSpace:
                 )
             column_position += len(parameter.comp_rep_columns)
         for parameter in continuous:
-            if isinstance(parameter, NumericalContinuousParameter):
-                lo, hi = parameter.bounds.to_tuple()
-                lower.append(float(lo))
-                upper.append(float(hi))
-            else:
+            bounds = getattr(parameter, "bounds", None)
+            if bounds is None:
                 raise IncompatibilityError(
                     f"Continuous parameter '{parameter.name}' has no numerical bounds."
                 )
+            lo, hi = bounds.to_tuple()
+            lower.append(float(lo))
+            upper.append(float(hi))
 
         object.__setattr__(self, "discrete_dims", MappingProxyType(dims))
         object.__setattr__(
