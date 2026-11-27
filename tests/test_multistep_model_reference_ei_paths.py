@@ -16,7 +16,7 @@ from baybe.multistep import (
     MultiStepModel,
     MultiStepNode,
 )
-from baybe.multistep._model_reference_ei import _make_network_thompson_draw
+from baybe.multistep.mrei.acquisition import _make_network_thompson_draw
 from baybe.parameters.categorical import CategoricalParameter
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
@@ -553,7 +553,7 @@ def test_snapshot_thompson_paths_match_explicit_values_and_gradients(
 def test_normal_torch_seed_reproduces_recommendation_draw_sequences(single_node_model):
     import torch
 
-    from baybe.multistep._model_reference_ei import _draw_model_reference_seed
+    from baybe.multistep.mrei.acquisition import _draw_model_reference_seed
 
     inputs = torch.tensor([[[0.2]], [[0.5]], [[0.8]]], dtype=torch.double)
     acquisition = MREI(n_path_features=64, sampling_seed=173)
@@ -587,7 +587,7 @@ def test_actual_discrete_optimizer_maximizes_ts_value_seven_not_mean_three(
     from botorch.models import SingleTaskGP
     from botorch.optim import optimize_acqf_discrete
 
-    from baybe.multistep._model_reference_ei import (
+    from baybe.multistep.mrei.acquisition import (
         _compute_model_reference,
         _make_reference_acquisition,
     )
@@ -620,7 +620,7 @@ def test_actual_discrete_optimizer_maximizes_ts_value_seven_not_mean_three(
         return evaluate
 
     monkeypatch.setattr(
-        "baybe.multistep._model_reference_ei._make_network_thompson_draw",
+        "baybe.multistep.mrei.acquisition._make_network_thompson_draw",
         fixed_thompson_path,
     )
     acquisition = MREI(reference="thompson_max", n_network_samples=2)
@@ -655,8 +655,8 @@ def test_real_mean_and_ei_network_draws_use_separate_fresh_streams(
 ):
     import torch
 
-    from baybe.multistep._model_reference_ei import _derive_acquisition_seed
     from baybe.multistep.model import _derive_seed
+    from baybe.multistep.mrei.acquisition import _derive_acquisition_seed
 
     model = single_node_model
     acquisition = MREI(
@@ -736,7 +736,7 @@ def test_reference_branch_uses_global_final_utility_reference(
 def test_uniform_mean_reference_samples_declared_discrete_categories_equally():
     import torch
 
-    from baybe.multistep._model_reference_ei import _uniform_global_configurations
+    from baybe.multistep.mrei.acquisition import _uniform_global_configurations
 
     stage = NumericalDiscreteParameter("stage", (0.0, 1.0, 9.0))
     color = CategoricalParameter("color", ("red", "green", "blue"))
@@ -774,7 +774,7 @@ def test_pending_ei_branches_keep_their_own_models_and_random_streams(
 ):
     import torch
 
-    from baybe.multistep import _model_reference_ei as model_reference_ei
+    from baybe.multistep.mrei import acquisition as model_reference_ei
 
     model = single_node_model
     dag = model.dag
@@ -817,7 +817,7 @@ def test_pending_ei_branches_keep_their_own_models_and_random_streams(
 def test_mean_reference_does_not_require_thompson_path_support(
     monkeypatch, single_node_model
 ):
-    from baybe.multistep import _model_reference_ei as model_reference_ei
+    from baybe.multistep.mrei import acquisition as model_reference_ei
 
     model = single_node_model
     monkeypatch.setattr(
@@ -840,7 +840,7 @@ def test_mean_reference_does_not_require_thompson_path_support(
 def test_thompson_reference_maximizes_the_sampled_path_value(monkeypatch):
     import torch
 
-    from baybe.multistep import _model_reference_ei as model_reference_ei
+    from baybe.multistep.mrei import acquisition as model_reference_ei
 
     def fake_path(_acquisition, _model, *, call_seed):
         assert call_seed == 5
@@ -866,7 +866,7 @@ def test_thompson_reference_branch_uses_independent_ei_samples(
 ):
     import torch
 
-    from baybe.multistep import _model_reference_ei as model_reference_ei
+    from baybe.multistep.mrei import acquisition as model_reference_ei
 
     model = single_node_model
     monkeypatch.setattr(
@@ -984,7 +984,7 @@ def test_started_mrei_attempt_consumes_one_global_seed_before_fit_fails(
 ):
     import torch
 
-    from baybe.multistep._model_reference_ei import _draw_model_reference_seed
+    from baybe.multistep.mrei.acquisition import _draw_model_reference_seed
 
     campaign = make_single_node_campaign(MREI())
     monkeypatch.setattr(
@@ -1520,9 +1520,9 @@ def test_stock_path_builds_one_shared_reference_branch_set(
     import pandas as pd
     import torch
 
-    from baybe.multistep import _model_reference_ei as model_reference_ei
     from baybe.multistep import acquisition as multistep_acquisition
     from baybe.multistep.data import _ExecutablePlan
+    from baybe.multistep.mrei import acquisition as model_reference_ei
 
     model = SimpleNamespace(dag=single_node_dag)
     data = SimpleNamespace(

@@ -10,7 +10,7 @@ from hypothesis import given
 
 from baybe.exceptions import IncompatibilityError
 from baybe.multistep import MREI, ModelReferenceExpectedImprovement
-from baybe.multistep._model_reference_ei import (
+from baybe.multistep.mrei.acquisition import (
     _compute_sample_expected_improvement,
     _transform_final_samples,
 )

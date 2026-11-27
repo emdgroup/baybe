@@ -28,9 +28,9 @@ if TYPE_CHECKING:
     )
     from torch import Tensor
 
-    from .dag import MultiStepDAG
-    from .data import _PendingAction
-    from .model import MultiStepModel
+    from ..dag import MultiStepDAG
+    from ..data import _PendingAction
+    from ..model import MultiStepModel
 
 
 _Reference = Literal["max_mean", "mean", "thompson_max"]
@@ -291,8 +291,8 @@ class ModelReferenceExpectedImprovement(AcquisitionFunction):
             _validate_path_models(model)
 
         reference_value = _compute_model_reference(self, model, call_seed=call_seed)
-        from .acquisition import _PENDING_FANTASIES
-        from .model import _derive_seed
+        from ..acquisition import _PENDING_FANTASIES
+        from ..model import _derive_seed
 
         pending_models = model.condition_on_pending(
             pending,
@@ -445,7 +445,7 @@ def _derive_acquisition_seed(
     node_name: str = "model-reference-ei",
 ) -> int:
     """Derive a stable, isolated random stream for one acquisition purpose."""
-    from .model import _derive_seed
+    from ..model import _derive_seed
 
     return _derive_seed(acquisition.sampling_seed + call_seed, node_name, purpose)
 
@@ -542,7 +542,7 @@ def _maximize_global_reference(
     import torch
     from botorch.optim import optimize_acqf_discrete, optimize_acqf_mixed
 
-    from .acquisition import _N_RAW_SAMPLES, _N_RESTARTS, _OPTIMIZER_SEED
+    from ..acquisition import _N_RAW_SAMPLES, _N_RESTARTS, _OPTIMIZER_SEED
 
     searchspace = model.dag.full_searchspace
     reference = next(model.parameters())
@@ -672,7 +672,7 @@ def _make_network_thompson_draw(
         TensorTransform,
     )
 
-    from .model import _snapshot_model
+    from ..model import _snapshot_model
 
     class RandomPhaseTransform(TensorTransform):
         """Map arbitrary Fourier features to unbiased random-phase RFFs."""

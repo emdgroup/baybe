@@ -47,10 +47,6 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.serialization import SerialMixin, converter
 
 from ._columns import EXPERIMENT_ID, NODE
-from ._model_reference_ei import (
-    ModelReferenceExpectedImprovement,
-    _draw_model_reference_seed,
-)
 from .acquisition import (
     CostMode,
     GraphAwareAcquisitionProtocol,
@@ -91,6 +87,8 @@ from .kgfn.direct import (
     recommend_direct,
 )
 from .kgfn.references import _derive_seed
+from .mrei import ModelReferenceExpectedImprovement
+from .mrei.acquisition import _draw_model_reference_seed
 from .node import MultiStepNode
 
 if TYPE_CHECKING:

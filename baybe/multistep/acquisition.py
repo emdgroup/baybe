@@ -496,7 +496,7 @@ def _resolve_score_scale(acquisition: object) -> ScoreScale:
         qNEI,
     )
 
-    from ._model_reference_ei import ModelReferenceExpectedImprovement
+    from .mrei import ModelReferenceExpectedImprovement
 
     if isinstance(acquisition, ModelReferenceExpectedImprovement) or isinstance(
         acquisition,
@@ -1513,7 +1513,7 @@ def recommend_stock(
             invalid, or fewer distinct executable actions than requested exist.
         InfeasibilityError: If no candidate reaches the local success threshold.
     """
-    from ._model_reference_ei import ModelReferenceExpectedImprovement
+    from .mrei import ModelReferenceExpectedImprovement
 
     is_model_reference = isinstance(
         acquisition_function, ModelReferenceExpectedImprovement
@@ -1529,7 +1529,7 @@ def recommend_stock(
 
     if is_model_reference:
         if call_seed is None:
-            from ._model_reference_ei import _draw_model_reference_seed
+            from .mrei.acquisition import _draw_model_reference_seed
 
             call_seed = _draw_model_reference_seed()
         branches = acquisition_function.make_botorch_branches(

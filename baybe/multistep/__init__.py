@@ -12,7 +12,6 @@ measurement, then recommends the next node action.
 from importlib import import_module
 from typing import TYPE_CHECKING, Any
 
-from ._model_reference_ei import MREI, ModelReferenceExpectedImprovement
 from .acquisition import PartialKnowledgeGradientFN
 from .campaign import MultiStepCampaign
 from .context import ContextMode, MultiStepContext
@@ -20,6 +19,7 @@ from .dag import MultiStepDAG
 from .data import MultiStepData, NodeMeasurement
 from .execution import evaluate_configuration
 from .kgfn.direct import DirectPartialKnowledgeGradientFN, TerminalSearchProfile
+from .mrei import MREI, ModelReferenceExpectedImprovement
 from .node import FeasibilityCondition, MultiStepNode
 
 if TYPE_CHECKING:
