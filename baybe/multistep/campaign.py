@@ -42,6 +42,7 @@ from baybe.exceptions import (
 )
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.botorch.core import BotorchRecommender
+from baybe.recommenders.pure.experimental_feasibility import InfeasibleMeasurementMode
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.serialization import SerialMixin, converter
 
@@ -69,14 +70,18 @@ from .data import (
     RepeatedMeasurementWarning,
     _EvaluationRef,
     _ExecutablePlan,
+    _Experiment,
     _get_feasibility_label,
     _get_output_values,
+    _history_inputs,
     _identifier_number,
     _inputs_match,
     _PendingAction,
     _validate_node_inputs,
     contains_action,
+    executable_nodes,
     experiment_actions,
+    failed_nodes,
     make_executable_plans,
     pending_actions,
     register_action,
@@ -642,6 +647,237 @@ class MultiStepCampaign(SerialMixin):
         _get_feasibility_label(node, measurement)
         return measurement
 
+    def _validate_configuration_prerequisites(self) -> None:
+        """Validate the shared requirements of the fixed-configuration API."""
+        if self.execution_mode != "process":
+            raise IncompatibilityError(
+                "Full-configuration attempts require process execution mode."
+            )
+        if not self.allow_repeats:
+            raise IncompatibilityError(
+                "Full-configuration attempts require allow_repeats=True."
+            )
+        unsupported_modes = [
+            node.name
+            for node in self.dag.nodes
+            if node.infeasible_measurement_mode
+            not in (
+                InfeasibleMeasurementMode.OBSERVED,
+                InfeasibleMeasurementMode.EXCLUDE,
+            )
+        ]
+        if unsupported_modes:
+            raise IncompatibilityError(
+                "Full-configuration attempts support only OBSERVED and EXCLUDE "
+                f"failure training modes; unsupported nodes: {unsupported_modes}."
+            )
+        self.dag._configuration_space.validate_numerical_parameters()
+
+    def _has_open_process_context(self) -> bool:
+        """Return whether any known process context is incomplete and active."""
+        identifiers = set(self.data._contexts)
+        identifiers.update(
+            measurement.experiment_id
+            for measurement in self.data.measurements
+            if measurement.experiment_id is not None
+        )
+        for experiment_id in identifiers:
+            context = self.data._contexts.get(experiment_id)
+            if context is None:
+                bindings = self.data.experiment_bindings(experiment_id)
+                failed = any(
+                    _get_feasibility_label(
+                        self.dag.node_by_name[name],
+                        self.data.get_evaluation(self.dag, ref),
+                    )
+                    is False
+                    for name, ref in bindings.items()
+                )
+                if not failed and not self.data.is_experiment_complete(
+                    self.dag, experiment_id
+                ):
+                    return bool(bindings)
+                continue
+
+            if context.closed or failed_nodes(context, self.dag, self.data):
+                continue
+            if self.data.is_experiment_complete(self.dag, experiment_id):
+                continue
+            if context.configuration is not None:
+                return True
+            if context.bindings or context.pending:
+                return True
+        return False
+
+    def _has_open_configuration(self) -> bool:
+        """Return whether a reserved complete configuration is still active."""
+        return any(
+            context.configuration is not None
+            and not context.closed
+            and not failed_nodes(context, self.dag, self.data)
+            and not self.data.is_experiment_complete(self.dag, experiment_id)
+            for experiment_id, context in self.data._contexts.items()
+        )
+
+    def register_configuration(self, configuration: Mapping[str, Any]) -> pd.DataFrame:
+        """Reserve one complete parameter configuration without a local action.
+
+        Args:
+            configuration: Exactly the DAG's own parameter names and values.
+
+        Returns:
+            A one-row frame containing the new ``experiment_id`` and all own
+            parameters in DAG declaration order.
+
+        Raises:
+            IncompatibilityError: If prerequisites, the configuration, or current
+                process state are invalid.
+            TypeError: If the input is not a mapping.
+        """
+        self._validate_configuration_prerequisites()
+        if self._has_open_process_context():
+            raise IncompatibilityError(
+                "A new full configuration cannot start while another process "
+                "context is open."
+            )
+        if not isinstance(configuration, Mapping):
+            raise TypeError("A configuration must be a mapping of parameter values.")
+        configuration_copy = dict(configuration)
+        self.dag._configuration_space.validate(configuration_copy)
+
+        identifier_number = self._first_new_identifier()
+        experiment_id = f"exp-{identifier_number}"
+        context = _Experiment(
+            experiment_id=experiment_id,
+            configuration=configuration_copy,
+        )
+        contexts = dict(self.data._contexts)
+        contexts[experiment_id] = context
+        updated = self.data.with_process_state(contexts, identifier_number)
+        self.data = updated
+        return pd.DataFrame(
+            [{EXPERIMENT_ID: experiment_id, **configuration_copy}],
+            columns=[EXPERIMENT_ID, *self.dag._configuration_space.parameter_names],
+        )
+
+    def sample_configuration(self, *, sampling_seed: int) -> pd.DataFrame:
+        """Uniformly sample and reserve one complete numeric configuration.
+
+        Args:
+            sampling_seed: Non-negative integer seed for the local sampler.
+
+        Returns:
+            A one-row frame containing the new ``experiment_id`` and all own
+            parameters in DAG declaration order.
+
+        Raises:
+            IncompatibilityError: If the configuration prerequisites or process state
+                are invalid.
+            TypeError: If ``sampling_seed`` is not an integer.
+            ValueError: If ``sampling_seed`` is negative.
+        """
+        self._validate_configuration_prerequisites()
+        if self._has_open_process_context():
+            raise IncompatibilityError(
+                "A new full configuration cannot start while another process "
+                "context is open."
+            )
+        configuration = self.dag._configuration_space.sample(
+            sampling_seed=sampling_seed
+        )
+        return self.register_configuration(configuration.iloc[0].to_dict())
+
+    def get_next_configuration_action(self, experiment_id: str) -> pd.DataFrame:
+        """Reserve or return the first executable action for a fixed configuration.
+
+        Args:
+            experiment_id: The identifier returned when the configuration was
+                registered.
+
+        Returns:
+            A one-row local action, or an empty frame for a completed or failed
+            process.
+
+        Raises:
+            IncompatibilityError: If the identifier is unknown, the attempt is not a
+                configuration, feasibility is unknown, or stored state is inconsistent.
+        """
+        self.data.validate(
+            self.dag, numerical_measurements_must_be_within_tolerance=False
+        )
+        context = self.data._contexts.get(experiment_id)
+        if context is None:
+            raise IncompatibilityError(
+                f"Unknown configuration experiment identifier '{experiment_id}'."
+            )
+        if context.configuration is None:
+            raise IncompatibilityError(
+                f"Experiment '{experiment_id}' is not a full-configuration attempt."
+            )
+
+        for node_name, ref in context.bindings.items():
+            node = self.dag.node_by_name[node_name]
+            label = _get_feasibility_label(
+                node, self.data.get_evaluation(self.dag, ref)
+            )
+            if label is None:
+                raise IncompatibilityError(
+                    f"Feasibility of node '{node_name}' in configuration "
+                    f"'{experiment_id}' is unknown; execution is blocked."
+                )
+            if label is False:
+                return pd.DataFrame()
+
+        actions = experiment_actions(context)
+        if actions:
+            if len(actions) != 1:
+                raise IncompatibilityError(
+                    f"Configuration '{experiment_id}' has multiple pending actions."
+                )
+            return self._configuration_action_frame(actions[0])
+        if self.data.is_experiment_complete(self.dag, experiment_id):
+            return pd.DataFrame()
+        if context.closed:
+            raise IncompatibilityError(
+                f"Configuration '{experiment_id}' is closed without a known failure."
+            )
+
+        executable = executable_nodes(context, self.dag, self.data)
+        if not executable:
+            raise IncompatibilityError(
+                f"Configuration '{experiment_id}' has no executable node but is not "
+                "complete or failed."
+            )
+        node_name, parent_refs = executable[0]
+        node = self.dag.node_by_name[node_name]
+        inputs = {
+            parameter.name: context.configuration[parameter.name]
+            for parameter in node.inputs
+        }
+        inputs.update(_history_inputs(self.dag, self.data, node_name, parent_refs))
+        contexts, counter = register_action(
+            self.data._contexts,
+            self.data._experiment_counter,
+            experiment_id=experiment_id,
+            node=node_name,
+            inputs=inputs,
+            parent_refs=parent_refs,
+            data=self.data,
+            dag=self.dag,
+        )
+        self.data = self.data.with_process_state(contexts, counter)
+        return self._configuration_action_frame(
+            contexts[experiment_id].pending[node_name]
+        )
+
+    def _configuration_action_frame(self, action: _PendingAction) -> pd.DataFrame:
+        """Format one pending local action without exposing context internals."""
+        node = self.dag.node_by_name[action.node]
+        columns = [EXPERIMENT_ID, NODE, *self.dag.context.input_names(node)]
+        row = {EXPERIMENT_ID: action.experiment_id, NODE: action.node}
+        row.update(action.inputs)
+        return pd.DataFrame([row], columns=columns)
+
     def recommend(self, batch_size: int = 1) -> pd.DataFrame:
         """Recommend and reserve the next node actions.
 
@@ -683,6 +919,12 @@ class MultiStepCampaign(SerialMixin):
             raise ValueError(
                 f"You must at least request one recommendation per batch, but "
                 f"provided {batch_size=}."
+            )
+
+        if self._has_open_configuration():
+            raise IncompatibilityError(
+                "Local node recommendations are unavailable while a full "
+                "configuration attempt is open."
             )
 
         self.data.validate(

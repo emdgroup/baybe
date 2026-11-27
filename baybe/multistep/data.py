@@ -157,6 +157,13 @@ def _freeze_mapping(value: Mapping[str, Any]) -> Mapping[str, Any]:
     return MappingProxyType(dict(value))
 
 
+def _optional_freeze_mapping(
+    value: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Copy an optional mapping into a read-only proxy."""
+    return None if value is None else _freeze_mapping(value)
+
+
 def _finite_output(value: Any, *, node: str) -> float:
     """Validate and convert one real output value."""
     if isinstance(value, (bool, np.bool_)) or not isinstance(
@@ -326,6 +333,11 @@ class _Experiment:
         factory=dict, converter=_freeze_mapping
     )
     """Recommended local executions awaiting their result, keyed by node."""
+
+    configuration: Mapping[str, Any] | None = field(
+        default=None, converter=_optional_freeze_mapping
+    )
+    """The reserved complete configuration, or ``None`` for local attempts."""
 
     closed: bool = field(default=False)
     """Whether the experiment was closed without a stored failed observation."""
@@ -1038,13 +1050,28 @@ class MultiStepData(SerialMixin):
                     f"Experiment '{experiment_id}' exceeds the stored identifier "
                     "counter."
                 )
+            if experiment.configuration is not None:
+                dag._configuration_space.validate(experiment.configuration)
             for node_name, ref in experiment.bindings.items():
                 if node_name not in dag.node_by_name or ref.node != node_name:
                     raise IncompatibilityError(
                         f"Experiment '{experiment_id}' has an invalid binding for "
                         f"node '{node_name}'."
                     )
-                self.get_evaluation(dag, ref)
+                measurement = self.get_evaluation(dag, ref)
+                if experiment.configuration is not None and (
+                    measurement.experiment_id != experiment_id
+                    or not _own_inputs_match(
+                        dag.node_by_name[node_name],
+                        measurement.inputs,
+                        experiment.configuration,
+                    )
+                ):
+                    raise IncompatibilityError(
+                        f"The measurement of node '{node_name}' in configured "
+                        f"experiment '{experiment_id}' does not match its reserved "
+                        "configuration."
+                    )
             for node_name, action in experiment.pending.items():
                 node = dag.node_by_name.get(node_name)
                 if (
@@ -1057,6 +1084,14 @@ class MultiStepData(SerialMixin):
                     raise IncompatibilityError(
                         f"Experiment '{experiment_id}' has an invalid pending action "
                         f"for node '{node_name}'."
+                    )
+                if experiment.configuration is not None and (
+                    not _own_inputs_match(node, action.inputs, experiment.configuration)
+                ):
+                    raise IncompatibilityError(
+                        f"The pending action for node '{node_name}' in configured "
+                        f"experiment '{experiment_id}' does not match its reserved "
+                        "configuration."
                     )
                 _validate_node_inputs(
                     node, pd.DataFrame([dict(action.inputs)]), context=dag.context
