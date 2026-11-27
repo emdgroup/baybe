@@ -781,6 +781,7 @@ class MultiStepCampaign(SerialMixin):
                 "A new full configuration cannot start while another process "
                 "context is open."
             )
+        self.dag._configuration_space.validate_numerical_parameters()
         configuration = self.dag._configuration_space.sample(
             sampling_seed=sampling_seed
         )

@@ -167,8 +167,9 @@ class _ConfigurationSpace:
         ]
         if unsupported:
             raise IncompatibilityError(
-                "Full-configuration numerical optimization supports only numerical "
-                f"continuous and discrete parameters; unsupported: {unsupported}."
+                "Full-configuration optimization and random sampling support only "
+                "numerical continuous and discrete parameters; "
+                f"unsupported: {unsupported}."
             )
 
     def transform(self, frame: pd.DataFrame) -> pd.DataFrame:

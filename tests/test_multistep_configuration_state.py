@@ -396,8 +396,8 @@ def test_discrete_configuration_rejects_nonmember_without_reserving():
     assert not campaign.data._contexts
 
 
-def test_categorical_fixed_configuration_can_register_and_sample():
-    """Keep generic discrete state APIs broader than numeric EI optimization."""
+def test_categorical_registration_remains_supported_but_sampling_is_numeric_only():
+    """Keep categorical registration while restricting random sampling to numeric."""
     node = MultiStepNode(
         name="only",
         output="utility",
@@ -413,11 +413,13 @@ def test_categorical_fixed_configuration_can_register_and_sample():
     )
     sampled_campaign = MultiStepCampaign.from_dag(dag)
 
-    sampled = sampled_campaign.sample_configuration(sampling_seed=79)
+    with pytest.raises(IncompatibilityError, match="only numerical"):
+        sampled_campaign.sample_configuration(sampling_seed=79)
 
     assert registration.loc[0, "kind"] == "a"
     assert action.loc[0, "kind"] == "a"
-    assert sampled.loc[0, "kind"] in ("a", "b")
+    assert sampled_campaign.data._experiment_counter == 0
+    assert not sampled_campaign.data._contexts
 
 
 def test_unknown_feasibility_blocks_configuration_rollout():
