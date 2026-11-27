@@ -1072,6 +1072,16 @@ class MultiStepData(SerialMixin):
                         f"experiment '{experiment_id}' does not match its reserved "
                         "configuration."
                     )
+                if experiment.configuration is not None and any(
+                    measurement.parent_refs.get(parent_name)
+                    != experiment.bindings.get(parent_name)
+                    for parent_name in dag.parents_of(node_name)
+                ):
+                    raise IncompatibilityError(
+                        f"The measurement of node '{node_name}' in configured "
+                        f"experiment '{experiment_id}' has a parent reference that "
+                        "does not match its context binding."
+                    )
             for node_name, action in experiment.pending.items():
                 node = dag.node_by_name.get(node_name)
                 if (

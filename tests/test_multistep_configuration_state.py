@@ -42,14 +42,16 @@ def fixture_campaign():
     return MultiStepCampaign.from_dag(dag)
 
 
-def _root_measurement(experiment_id: str, value: float) -> pd.DataFrame:
+def _root_measurement(
+    experiment_id: str, value: float, x: float = 0.25
+) -> pd.DataFrame:
     """Create one real root-node result."""
     return pd.DataFrame(
         [
             {
                 "experiment_id": experiment_id,
                 "node": "root",
-                "x": 0.25,
+                "x": x,
                 "root_output": value,
             }
         ]
@@ -95,6 +97,34 @@ def test_configuration_survives_roundtrip_before_and_between_nodes(campaign):
         "z": 0.75,
     }
     assert "root" in between._contexts[experiment_id].bindings
+
+
+def test_configured_context_rejects_foreign_parent_binding_after_json_restore(campaign):
+    """Reject a completed child linked to another context's equal-valued parent."""
+    experiment_ids = []
+    for configuration in (
+        {"x": 0.25, "z": 0.75},
+        {"x": 0.5, "z": 0.25},
+    ):
+        experiment_id = campaign.register_configuration(configuration).iloc[0][
+            "experiment_id"
+        ]
+        experiment_ids.append(experiment_id)
+        campaign.get_next_configuration_action(experiment_id)
+        campaign.add_measurements(
+            _root_measurement(experiment_id, 3.0, x=configuration["x"])
+        )
+        child_action = campaign.get_next_configuration_action(experiment_id)
+        campaign.add_measurements(child_action.assign(utility=4.0))
+
+    serialized = json.loads(campaign.data.to_json())
+    serialized["measurements"][3]["parent_refs"]["root"]["index"] = 0
+    campaign.data = MultiStepData.from_json(json.dumps(serialized))
+
+    with pytest.raises(
+        IncompatibilityError, match="parent reference.*context binding"
+    ):
+        campaign.get_next_configuration_action(experiment_ids[1])
 
 
 def test_configuration_failure_preserves_outputs_and_stops(campaign):
