@@ -1,10 +1,8 @@
 # # Comparing Transfer Learning Modes on Historic Campaigns of Unknown Relevance
 
-# In this example, we demonstrate how the
-# {attr}`~baybe.parameters.enum.TransferLearningMode.RGPE` transfer learning mode
-# makes use of historic campaigns whose relevance for the current campaign is unknown.
-# We compare it against other
-# {doc}`transfer learning modes </concepts/transfer_learning>` and show that:
+# In this example, we compare different
+# {doc}`transfer learning modes </concepts/transfer_learning>` on historic campaigns
+# whose relevance for the current campaign is unknown. We show that:
 # * optimizing without historic data easily gets stuck in a local optimum,
 # * pooling all data into a single model is misled by an unrelated campaign,
 # * assuming positively correlated campaigns requires several measurements of the
@@ -169,5 +167,4 @@ create_example_plots(ax=ax, base_name="transfer_learning_modes")
 # * {attr}`~baybe.parameters.enum.TransferLearningMode.RGPE` fits one Gaussian process
 #   per campaign and weights them by how well they rank the measurements of the current
 #   substrate. This ranking quickly reveals that the similar campaign is a useful proxy
-#   while the decoy is not, so RGPE finds the global optimum within the first few
-#   experiments.
+#   while the decoy is not, so RGPE finds the global optimum early in this scenario.
