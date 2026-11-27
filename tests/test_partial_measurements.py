@@ -10,6 +10,7 @@ from pytest import param
 from baybe.acquisition import qLogNEHVI
 from baybe.exceptions import IncompleteMeasurementsError
 from baybe.objectives import DesirabilityObjective, ParetoObjective
+from baybe.settings import Settings
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
 
@@ -44,6 +45,7 @@ def test_invalid_partial_measurements(campaign):
         campaign.add_measurements(measurements)
 
 
+@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize(
     "objective",
     [
@@ -71,7 +73,7 @@ def test_partial_measurements(ongoing_campaign):
     # Mark some measurements as unmeasured / failed
     m.iloc[0, m.columns.get_loc(ts[0].name)] = np.nan
     m.iloc[-1, m.columns.get_loc(ts[-1].name)] = np.nan
-    ongoing_campaign.update_measurements(m)
+    ongoing_campaign.replace_batch(m)
 
     # Trigger refit
     ongoing_campaign.recommend(2)

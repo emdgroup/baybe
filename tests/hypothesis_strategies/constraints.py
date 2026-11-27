@@ -6,14 +6,16 @@ import hypothesis.strategies as st
 from hypothesis import assume
 
 from baybe.constraints.conditions import (
-    _threshold_operators,
-    _valid_logic_combiners,
-    _valid_tolerance_operators,
+    _LOGIC_OPERATORS,
+    _THRESHOLD_OPERATORS,
+    _TOLERANCE_OPERATORS,
 )
 from baybe.constraints.continuous import (
     ContinuousLinearConstraint,
 )
 from baybe.constraints.discrete import (
+    DiscreteBatchConstraint,
+    DiscreteCardinalityConstraint,
     DiscreteDependenciesConstraint,
     DiscreteLinearConstraint,
     DiscretePermutationInvarianceConstraint,
@@ -59,7 +61,7 @@ def discrete_selection_constraints(
             for p in parameters
         ]
 
-    combiner = draw(st.sampled_from(list(_valid_logic_combiners)))
+    combiner = draw(st.sampled_from(list(_LOGIC_OPERATORS)))
     exclude = draw(st.booleans())
     return DiscreteSelectionConstraint(
         parameter_names, conditions, combiner, exclude=exclude
@@ -74,11 +76,16 @@ def discrete_dependencies_constraints(
     exclude: bool | None = None,
 ):
     if parameters is None:
-        # Draw random unique parameter names
+        # Draw random unique parameter names, disjoint from the affected ones
         # If affected parameters are given the list length must be respected
+        affected = (
+            {name for group in affected_parameter_names for name in group}
+            if affected_parameter_names is not None
+            else set()
+        )
         parameter_names = draw(
             st.lists(
-                st.text(),
+                st.text().filter(lambda x: x not in affected),
                 unique=True,
                 min_size=1
                 if affected_parameter_names is None
@@ -88,14 +95,6 @@ def discrete_dependencies_constraints(
                 else len(affected_parameter_names),
             )
         )
-        if affected_parameter_names is not None:
-            # Avoid generating parameters that depend on themselves
-            assume(
-                all(
-                    p not in affected_parameter_names[k]
-                    for k, p in enumerate(parameter_names)
-                )
-            )
 
         conditions = draw(
             st.lists(
@@ -116,18 +115,19 @@ def discrete_dependencies_constraints(
         ]
 
     if affected_parameter_names is None:
-        # Draw random lists of dependent parameters, avoiding duplicates with the main
-        # parameters
+        # Draw a pool of distinct affected parameter names disjoint from the causing
+        # parameters and split it evenly, so that no name appears in multiple groups
         affected_parameter_names = draw(
             st.lists(
-                st.lists(
-                    st.text().filter(lambda x: x not in parameter_names),
-                    min_size=1,
-                ),
+                st.text().filter(lambda x: x not in parameter_names),
+                unique=True,
                 min_size=len(parameter_names),
-                max_size=len(parameter_names),
             )
         )
+        affected_parameter_names = [
+            affected_parameter_names[i :: len(parameter_names)]
+            for i in range(len(parameter_names))
+        ]
     else:
         # Affected and dependent parameters cannot overlap
         assert all(
@@ -186,13 +186,13 @@ def discrete_linear_constraints(
         assert len(parameter_names) == len(set(parameter_names))
         params = parameter_names
 
-    operator = draw(st.sampled_from(list(_threshold_operators.keys())))
+    operator = draw(st.sampled_from(list(_THRESHOLD_OPERATORS.keys())))
     rhs = draw(finite_floats())
     exclude = draw(st.booleans())
 
     # Optionally add tolerance for tolerance-enabled operators
     tolerance = None
-    if operator in _valid_tolerance_operators:
+    if operator in _TOLERANCE_OPERATORS:
         tolerance = draw(st.one_of(st.none(), positive_finite_floats()))
 
     # Optionally add coefficients
@@ -224,13 +224,13 @@ def discrete_product_constraints(
         assert len(parameter_names) == len(set(parameter_names))
         params = parameter_names
 
-    operator = draw(st.sampled_from(list(_threshold_operators.keys())))
+    operator = draw(st.sampled_from(list(_THRESHOLD_OPERATORS.keys())))
     rhs = draw(finite_floats())
     exclude = draw(st.booleans())
 
     # Optionally add tolerance for tolerance-enabled operators
     tolerance = None
-    if operator in _valid_tolerance_operators:
+    if operator in _TOLERANCE_OPERATORS:
         tolerance = draw(st.one_of(st.none(), positive_finite_floats()))
 
     return DiscreteProductConstraint(
@@ -254,6 +254,43 @@ def discrete_repetition_limit_constraints(
     return DiscreteRepetitionLimitConstraint(
         params, n_max_repetitions=n_max, exclude=exclude
     )
+
+
+@st.composite
+def discrete_cardinality_constraints(
+    draw: st.DrawFn, parameter_names: list[str] | None = None
+):
+    """Generate a :class:`~baybe.constraints.DiscreteCardinalityConstraint`."""
+    if parameter_names is None:
+        params = draw(st.lists(st.text(), unique=True, min_size=2))
+    else:
+        assert len(parameter_names) >= 2
+        params = parameter_names
+
+    n = len(params)
+    min_cardinality = draw(st.integers(min_value=0, max_value=n))
+    max_cardinality = draw(st.integers(min_value=min_cardinality, max_value=n))
+    assume(not (min_cardinality == 0 and max_cardinality == n))
+    exclude = draw(st.booleans())
+    return DiscreteCardinalityConstraint(
+        params,
+        min_cardinality=min_cardinality,
+        max_cardinality=max_cardinality,
+        exclude=exclude,
+    )
+
+
+@st.composite
+def discrete_batch_constraints(
+    draw: st.DrawFn, parameter_names: list[str] | None = None
+):
+    """Generate a :class:`~baybe.constraints.DiscreteBatchConstraint`."""
+    if parameter_names is None:
+        params = draw(st.lists(st.text(), unique=True, min_size=1, max_size=1))
+    else:
+        assert len(parameter_names) >= 1
+        params = [draw(st.sampled_from(parameter_names))]
+    return DiscreteBatchConstraint(params)
 
 
 @st.composite

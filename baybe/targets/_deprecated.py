@@ -162,7 +162,7 @@ class LegacyTarget(Target, SerialMixin):
         return (self.bounds.is_bounded) and (self.transformation is not None)
 
     @override
-    def transform(
+    def transform(  # type: ignore[override]
         self, series: pd.Series | None = None, /, *, data: pd.DataFrame | None = None
     ) -> pd.Series:
         # >>>>>>>>>> Deprecation

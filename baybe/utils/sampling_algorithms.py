@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from baybe.utils.basic import is_all_instance
+from baybe.utils.random import _make_random_seed
 
 
 class FPSInitialization(Enum):
@@ -149,7 +150,7 @@ def farthest_point_sampling(
             map(int, np.unravel_index(idx_1d, dist_matrix.shape))
         )
         if n_samples == 1:
-            return [sort_idx[selected_point_indices[0]]]
+            return [int(sort_idx[selected_point_indices[0]])]
     else:  # initialization is Collection[int]
         inv_sort_idx = np.argsort(sort_idx)
         selected_point_indices = [inv_sort_idx[x] for x in initialization]
@@ -233,7 +234,11 @@ def sample_numerical_df(
         if method is DiscreteSamplingMethod.FPS:
             ilocs += farthest_point_sampling(df.values, n_sampled)
         elif method is DiscreteSamplingMethod.Random:
-            ilocs += df.reset_index(drop=True).sample(n_sampled).index.tolist()
+            ilocs += (
+                df.reset_index(drop=True)
+                .sample(n_sampled, random_state=_make_random_seed())
+                .index.tolist()
+            )
         else:
             raise ValueError(f"Unrecognized sampling method: '{method}'.")
 

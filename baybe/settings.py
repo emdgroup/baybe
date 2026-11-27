@@ -3,23 +3,28 @@
 from __future__ import annotations
 
 import gc
+import importlib
 import os
 import tempfile
+import typing
 import warnings
 from copy import deepcopy
 from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, TypeVar, cast
 
+import narwhals.stable.v2 as nw
 import numpy as np
 from attrs import Attribute, Converter, Factory, define, field, fields
+from attrs.converters import optional as optional_c
 from attrs.setters import validate
-from attrs.validators import instance_of
+from attrs.validators import in_, instance_of
 from attrs.validators import optional as optional_v
+from narwhals.typing import EagerAllowed  # not available in narwhals.stable.v2.typing
 from typing_extensions import override
 
-from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
-from baybe.exceptions import NotAllowedError, OptionalImportError
+from baybe._optional.info import FPSAMPLE_INSTALLED
+from baybe.exceptions import DeprecationError, NotAllowedError, OptionalImportError
 from baybe.utils.basic import classproperty
 from baybe.utils.boolean import AutoBool, strtobool, to_bool
 from baybe.utils.random import _RandomState
@@ -143,6 +148,25 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
     return results
 
 
+def _use_polars_for_constraints_deprecation_msg() -> str:
+    """Create the deprecation message for the polars constraint setting."""
+    name = fields(Settings)._use_polars_for_constraints.alias
+    backend = fields(Settings)._default_dataframe_backend.alias
+    return (
+        f"The setting '{name}' is no longer supported. Discrete constraints are now "
+        f"always evaluated on the active dataframe backend. Use '{backend}' to choose "
+        f"the backend."
+    )
+
+
+def _convert_use_polars_for_constraints(value: Any, /) -> AutoBool:
+    """Convert the removed polars constraint setting, rejecting explicit use."""
+    converted = AutoBool.from_unstructured(value)
+    if converted is not AutoBool.AUTO:
+        raise DeprecationError(_use_polars_for_constraints_deprecation_msg())
+    return converted
+
+
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
     """Activate the random seed when changing the attribute of the active settings."""
     if id(instance) == Settings._active_settings_id and value is not None:
@@ -164,6 +188,25 @@ def _convert_cache_directory(
             f"Cannot set '{field.alias}' to '{value}'. "
             f"Expected 'None' or a path-like object."
         ) from ex
+
+
+def _get_default_dataframe_backend() -> nw.Implementation:
+    """Get the default dataframe backend."""
+    eager_impls = [
+        a for a in typing.get_args(EagerAllowed) if isinstance(a, nw.Implementation)
+    ]
+    preferred = [nw.Implementation.PANDAS, nw.Implementation.POLARS]
+    ranking = preferred + [b for b in eager_impls if b not in preferred]
+    for backend in ranking:
+        try:
+            importlib.import_module(backend.value)
+            return backend
+        except ImportError:
+            continue
+    raise ModuleNotFoundError(
+        "None of the supported dataframe backends is installed. Please install any "
+        "backend supported by narwhals: https://narwhals-dev.github.io/narwhals/"
+    )
 
 
 @define(kw_only=True, field_transformer=adjust_defaults)
@@ -202,6 +245,14 @@ class Settings(_SlottedContextDecorator):
     )
     """The directory used for persistent caching on disk. Set to ``""`` or ``None`` to disable caching."""  # noqa: E501
 
+    _default_dataframe_backend: nw.Implementation | None = field(
+        alias="default_dataframe_backend",
+        default=None,
+        converter=optional_c(nw.Implementation.from_backend),  # type: ignore[misc]
+        validator=optional_v(in_(typing.get_args(EagerAllowed))),
+    )
+    """Controls which backend is used when constructing dataframes from scratch. Set to ``None`` to apply automatic selection."""  # noqa: E501
+
     parallelize_simulation_runs: bool = field(default=True, validator=instance_of(bool))
     """Controls if simulation runs with `xyzpy <https://xyzpy.readthedocs.io/>`_ are executed in parallel."""  # noqa: E501
 
@@ -225,9 +276,14 @@ class Settings(_SlottedContextDecorator):
     _use_polars_for_constraints: AutoBool = field(
         alias="use_polars_for_constraints",
         default=AutoBool.AUTO,
-        converter=AutoBool.from_unstructured,  # type: ignore[misc]
+        converter=_convert_use_polars_for_constraints,
     )
-    """Controls if `polars <https://pola.rs/>`_ acceleration is to be used for constraints, if available."""  # noqa: E501
+    """Removed! Discrete constraints are evaluated on the active backend."""
+
+    use_single_precision_dataframes: bool = field(
+        default=False, validator=instance_of(bool)
+    )
+    """Controls the floating point precision used for dataframe columns."""
 
     use_single_precision_numpy: bool = field(default=False, validator=instance_of(bool))
     """Controls the floating point precision used for `numpy <https://numpy.org/>`_ arrays."""  # noqa: E501
@@ -284,12 +340,18 @@ class Settings(_SlottedContextDecorator):
     def __exit__(self, *args) -> None:
         self.restore_previous()
 
-    @_use_polars_for_constraints.validator
-    def _validate_use_polars_for_constraints(self, _, value: AutoBool) -> None:
-        if value is AutoBool.TRUE and not POLARS_INSTALLED:
+    @_default_dataframe_backend.validator
+    def _validate_default_dataframe_backend(self, _: Attribute, value: Any) -> None:
+        if value is None:
+            return
+        module_name = value if isinstance(value, str) else value.value
+        try:
+            importlib.import_module(module_name)
+        except ImportError as ex:
             raise OptionalImportError(
-                _MISSING_PACKAGE_ERROR_MESSAGE.format(package_name="polars")
-            )
+                f"The '{fields(Settings)._default_dataframe_backend.alias}' cannot "
+                f"be set to '{module_name}' because the latter is not installed."
+            ) from ex
 
     @_use_fpsample.validator
     def _validate_use_fpsample(self, _, value: AutoBool) -> None:
@@ -299,9 +361,20 @@ class Settings(_SlottedContextDecorator):
             )
 
     @property
-    def use_polars_for_constraints(self) -> bool:
-        """Indicates if ``polars`` is enabled (i.e., installed and set to be used)."""
-        return self._use_polars_for_constraints.evaluate(lambda: POLARS_INSTALLED)
+    def default_dataframe_backend(self) -> EagerAllowed:
+        """The dataframe backend used for constructing dataframes from scratch."""
+        if self._default_dataframe_backend is None:
+            self._default_dataframe_backend = _get_default_dataframe_backend()
+        return cast(EagerAllowed, self._default_dataframe_backend)
+
+    @default_dataframe_backend.setter
+    def default_dataframe_backend(self, value: nw.Implementation | None, /) -> None:
+        self._default_dataframe_backend = value
+
+    @property
+    def use_polars_for_constraints(self) -> NoReturn:
+        """Removed! Discrete constraints are evaluated on the active backend."""
+        raise DeprecationError(_use_polars_for_constraints_deprecation_msg())
 
     @use_polars_for_constraints.setter
     def use_polars_for_constraints(self, value: AutoBool | bool, /) -> None:
@@ -322,6 +395,11 @@ class Settings(_SlottedContextDecorator):
     def DTypeFloatNumpy(self) -> type[np.floating]:
         """The floating point precision used for ``numpy`` arrays."""
         return np.float32 if self.use_single_precision_numpy else np.float64
+
+    @property
+    def DTypeFloatDataFrame(self) -> type[nw.dtypes.NumericType]:
+        """The floating point dtype used for dataframe columns."""
+        return nw.Float32 if self.use_single_precision_dataframes else nw.Float64
 
     @property
     def DTypeFloatTorch(self) -> torch.dtype:

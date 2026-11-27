@@ -296,7 +296,7 @@ def test_sample_example_configurations(searchspace, n_expected):
     """The examples are configurations of the search space."""
     examples = _sample_example_configurations(searchspace)
     assert len(examples) == n_expected
-    searchspace._validate_configurations(examples)
+    assert searchspace._get_invalid_configurations(examples).empty
 
 
 @pytest.mark.skipif(not LLM_INSTALLED, reason="LLM dependencies not installed.")

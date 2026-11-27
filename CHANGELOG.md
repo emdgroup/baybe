@@ -7,17 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Removed
 - `eval_during_creation` / `eval_during_modeling` constraint class variables
+- `filter_df` utility (replaced with new `Filter` concept)
+- `fuzzy_row_match` utility
+- `SearchSpaceMatchWarning` exception class
+- `SubspaceDiscrete.subset_masks` and `SubspaceDiscrete.sample_subset_masks`
+  (use `SubspaceDiscrete.iter_subsets` instead)
+- `DiscreteBatchConstraint.subset_masks`
+- `SearchSpace.subsets` and `SearchSpace.sample_subsets` (combined subset iteration
+  is temporarily private pending a public API that yields search spaces)
+- `parameter_cartesian_prod_pandas` and `parameter_cartesian_prod_polars`
+  (product construction is now narwhals-based)
+- `DiscreteFilteringConstraint.get_valid`, `get_invalid`, and `get_invalid_polars`
+  (use the constraint as a dataframe filter instead)
+- `DiscreteFilteringConstraint.has_polars_implementation`
+- `Condition.to_polars` (conditions now evaluate through the backend-agnostic interface)
+- `build_constrained_product` and `parameter_cartesian_prod_pandas_constrained`
+- `DiscreteDependenciesConstraint.permutation_invariant` attribute, which was only
+  intended for internal use
 
 ### Breaking Changes
+- `SubspaceDiscrete.from_product` no longer accepts `constraints=None`; omit the
+  argument or pass an empty sequence instead
+- For pandas users: series/dataframe indices are no longer used as information carriers
+  anywhere. In particular, recommendation dataframes no longer reflect discrete subspace
+  locations via their index. Similarly, `_recommend_discrete` and kin now return a
+  dataframe-based subselection instead of a `pd.Index`.
+- `Objective.handle_missing_values` is now private (`_handle_missing_values`)
 - All optional arguments of `SubspaceDiscrete.from_simplex` after `simplex_parameters` 
   are now keyword-only
+- `Campaign.measurements` no longer contains `FitNr` or `BatchNr` metadata columns
+- `validate_parameter_names`, `validate_cardinality_constraints_are_nonoverlapping`
+  and `validate_cardinality_constraint_parameter_bounds` are no longer available
+  as public utilities
+- `is_constrained` property removed from `SubspaceDiscrete`, `SubspaceContinuous`,
+  and `SearchSpace`
+- `SubspaceDiscrete.get_candidates` now returns only the experimental representation
+  instead of a tuple of experimental and computational representations
+- Optional/secondary fields of discrete parameter classes are now keyword-only
 - `df_apply_permutation_augmentation` has a different interface and now expects
   permutation groups instead of column groups
 - `ParameterSelectorProtocol.__call__` now declares its input as positional-only
-- `SequentialMetaRecommender.recommenders` is now a `tuple` instead of a `list`, making
-  the attribute immutable. Serialization is unaffected
+- `SequentialMetaRecommender.recommenders` is now a `tuple` instead of a `list`
+- Condition objects are now immutable
+- `SubSelectionCondition` rejects selection entries of different types as well as
+  NaN entries
 
 ### Fixed
+- Dependency and permutation constraints now reject null or NaN values
+- `DiscreteDependenciesConstraint` now rejects overlapping and chained dependencies,
+  which previously produced order-dependent filtering results: each affected parameter
+  may appear in only one group and must differ from the causing `parameters`
 - `DiscretePermutationInvarianceConstraint` no longer erroneously removes points where
   values of invariant points are degenerate
 - Multi-output surrogate compatibility check in `Surrogate.fit` now correctly uses the
@@ -26,10 +65,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   center, which caused `OptimizationGradientError` during recommendation
 - `ThresholdCondition` with the `!=` operator no longer fails when Polars is used for
   constraint filtering
+- Conditions now treat null and NaN values as non-matching on all backends; NaN cannot
+  be included in a `SubSelectionCondition` selection
+- `ThresholdCondition` now rejects Boolean data instead of treating it as numerical
+- `SubSelectionCondition` now supports Boolean selection entries for both pandas and
+  Polars backends; previously, they were coerced to floats, which broke Polars filtering
+- `SubSelectionCondition` now raises a descriptive error when applied to data of an
+  incompatible dtype, instead of behaving differently depending on the dataframe backend
+- Pending experiments containing extra columns or duplicate column names are now
+  rejected before recommendation
+- Subset sampling without replacement no longer relies on a duplicate-rejection mechanism
+  that could raise `InfeasibilityError` for larger numbers of requested configurations
 
 ### Added
+- `Settings.use_single_precision_dataframes` to control float precision of dataframes
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
+- `narwhals` as a hard dependency
+- `CandidatesProtocol` as an interface for candidates generation
+- `EmptyCandidates`, `TableCandidates` and `ProductCandidates` classes implementing
+  `CandidatesProtocol`
+- `DiscreteParameter.is_finite` property
+- `SubspaceDiscrete.batch_constraints` field for storing batch-level constraints
+- `SubspaceDiscrete.iter_subsets` for lazy iteration over filtered candidate subspaces
+  in ordered, shuffled, or with-replacement mode
+- `SubspaceDiscrete.count_candidates` method
+- `iter_indices` utility for ordered, shuffled, and with-replacement index iteration
+- `SubspaceDiscrete.from_dataframe` now accepts `batch_constraints`
+- `validate_parameter_input` now accepts an `allow_empty` flag to permit zero-row input
+- `Settings.default_dataframe_backend` attribute for convenient dataframe backend choice
+- `DiscreteParameter.transform` narwhalified: now accepts `narwhals`-compatible series,
+  arbitrary iterables, or `None`
 - `Symmetry` concept for expressing symmetries of the optimization problem, including
   `PermutationSymmetry`, `MirrorSymmetry`, `DependencySymmetry` classes, which trigger
   automatic data augmentation when assigned to the `symmetries` attribute of a
@@ -50,6 +116,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteLinearConstraint` for (optionally weighted) sum constraints on discrete
   parameters, supporting `coefficients` and mirroring `ContinuousLinearConstraint`'s
   `operator`/`rhs`/`coefficients` interface (replaces `DiscreteSumConstraint`)
+- `replace_batch`/`drop_batch` methods to `Campaign` for replacing/dropping an entire
+  batch of measurements
+- `Campaign.n_batches` property indicating the number of recorded measurement batches
+- `Filter` type (including constraints, Narwhals expressions, and dataframe semi-joins)
+  for specifying filtering criteria in discrete candidate contexts
+- `filter` method to `SubspaceDiscrete` and `CandidatesProtocol`
+- Discrete Cartesian product spaces can now be filtered using arbitrary `Filter`
+  objects in addition to constraint-based filtering
+- `Campaign.toggle_discrete_candidates` now supports the new `Filter` mechanism,
+  provided via positional filter arguments
 - Parameter-specific kernel overrides for conveniently composing Gaussian process
   kernels on individual parameter dimensions
 - `LLMRecommender` for LLM-based experimental design via LiteLLM,
@@ -58,8 +134,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SequentialMetaRecommender.with_alternating_llm_recommender` convenience constructors
   built on top of `LLMRecommender`: the former warm-starts a campaign with the LLM and
   then switches to another recommender, the latter alternates between the two
+- `DataFrameBackendError` exception class
 
 ### Changed
+- Discrete filters are now applied by commutativity instead of being reorder by type:
+  commutative (row-wise) filters are applied first and non-commutative filters second,
+  each in their provided order
+- `SubspaceDiscrete` has been refactored from the ground up: it now holds a `candidates`
+  attribute of type `CandidatesProtocol` instead of raw `parameters` and `exp_rep`
+  attributes, and `parameters` is now a read-only property delegating to it. The
+  associated constructor calls and all related legacy attributes have been deprecated. 
+- Internal `Campaign` state model simplified: recommended and excluded experiments
+  are now stored as dataframes instead of being tracked as metadata flags
+- `SubspaceContinuous` now offers a simpler interface for passing constraints,
+  no longer requiring users to manually group constraints according to their type
+- Parameter and constraint validation has been streamlined, using `validate_parameters`
+  and `validate_constraints` as the only remaining public entry points
+- `SubspaceDiscrete.from_product` and `SubspaceDiscrete.from_simplex` now split
+  their `constraints` argument into filtering constraints (applied during construction)
+  and batch constraints (stored in `batch_constraints`)
+- Internal search space and recommender logic simplified by reducing indirection and
+  argument passing between methods
+- The `encoding` attribute has been removed from `DiscreteParameter` base class and
+  now only exists on concrete subclasses that actually use it
+- Passing a series to `DiscreteParameter.transform` whose name does not match the
+  parameter name now raises a `ValueError`
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
   kernel in multi-task scenarios, matching BoTorch's `MultiTaskGP` defaults introduced
   in version `0.18.0`
@@ -70,6 +169,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.from_simplex` no longer requires non-negative parameter values
 - Bumped polars to `>=0.20.8`
 - Bumped cattrs to `>=26.1.0`
+- `BotorchAcquisitionFunctionBuilder` now imports `IntoDataFrameT` from narwhals
+  directly instead of via a `TYPE_CHECKING`-guarded shadow `TypeVar`
 - The factory fields of `GaussianProcessSurrogate` (`kernel_factory`,
   `mean_factory`, `likelihood_factory`, `fit_criterion_factory`) now default to
   `None`, meaning "auto-select based on context at fit time". Accessing a field
@@ -79,8 +180,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `exclusion_constraints` example to `selection_constraints`
 - `DiscreteProductConstraint` now uses `operator`/`rhs`/`tolerance` instead of
   `condition`
+- `deserialize_dataframe` now routes dictionary-based input via
+  `narwhals.DataFrame` constructors (e.g. `from_dict`, `from_dicts`) and dispatches
+  to the active dataframe backend instead of always returning pandas dataframes
+- Discrete numerical recommendations are now matched against all search space candidates
+  within the specified tolerance instead of just the nearest candidate
+- Discrete subsets are now represented as filtered `SubspaceDiscrete` objects instead of
+  Boolean masks over a materialized candidate dataframe, enabling more efficient and
+  flexible subset handling
+
+### Fixed
+- Deserialization with constructor selection now correctly respects converter settings
+- Missing validators and converters were added to several parameter fields
+- `validate_parameter_input` no longer uses row-by-row iteration, fixing a significant
+  performance problem for large candidate sets
 
 ### Deprecations
+- `Campaign.toggle_discrete_candidates` calls passing filter criteria via the
+  `constraints` argument (use positional `Filter` arguments instead)
+- `DiscreteParameter.comp_df` property (use `transform()` instead)
+- `CustomEncoding` enum class
+- `Campaign.n_fits_done` and `Campaign.n_batches_done` attributes
+- `Campaign.update_measurements` (use `Campaign.replace_batch` instead)
+- `SubspaceDiscrete(parameters, exp_rep)` constructor call style
+  (use `SubspaceDiscrete.from_dataframe(parameters, exp_rep)` or
+  `SubspaceDiscrete(candidates=TableCandidates(parameters, exp_rep))` instead)
+- `SubspaceDiscrete` ignores any `empty_encoding` when provided
+- `SubspaceDiscrete` no longer accepts a `comp_rep` argument
+- `SearchSpace.constraints` and `SubspaceDiscrete.constraints`.
+  For discrete spaces, the concept of space-filtering constraints is only meaningful
+  when working with filtered candidate set representations. In this specific case, they
+  can still be accessed via `ProductCandidates.filters`. Discrete batch constraints can
+  be retrieved via `SubspaceDiscrete.batch_constraints`. For continuous constraints,
+  use `SubspaceContinuous.constraints`.
+- `SubspaceDiscrete.constraints_batch` property (use `batch_constraints` instead)
+- `SubspaceDiscrete.exp_rep` attribute (use `get_candidates()` instead)
+- `SubspaceDiscrete.comp_rep` attribute (use `transform(get_candidates())` instead)
 - `DiscreteExcludeConstraint` in favor of
   `DiscreteSelectionConstraint(..., exclude=True)`
 - `DiscreteNoLabelDuplicatesConstraint` in favor of
@@ -91,6 +226,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteSumConstraint` in favor of `DiscreteLinearConstraint`
 - `DiscreteProductConstraint(condition=ThresholdCondition(...))` in favor of
   `DiscreteProductConstraint(operator=..., rhs=...)`
+- (De)serialization of dataframes hardcoded against the pandas backend. New
+  serialization calls internally route via narwhals/parquet and produce
+  different serialization strings.
+- `deserialize_dataframe` dictionary input specifying a pandas-only constructor
+  (e.g. `from_records`) in favor of `narwhals.DataFrame`'s constructors
+  (e.g. `from_dict`, `from_dicts`)
 
 ## [0.15.2] - 2026-11-13
 ### Fixed
@@ -176,12 +317,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Broken cache validation for certain `Campaign.recommend` cases
 - `ContinuousCardinalityConstraint` now works in hybrid search spaces
+- Typo in `_FixedNumericalContinuousParameter` where `is_numeric` was used
+  instead of `is_numerical`
 - `SHAPInsight` breaking with `numpy>=2.4` due to no longer accepted implicit array to 
   scalar conversion
 - Using `np.isclose` for assessing equality of `Interval` bounds instead of hard
   equality check
-- Typo in `_FixedNumericalContinuousParameter` where `is_numeric` was used
-  instead of `is_numerical`
 
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization

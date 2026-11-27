@@ -8,46 +8,40 @@ import pandas as pd
 from exceptiongroup import ExceptionGroup
 
 from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
-from baybe.parameters import TaskParameter
-from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
+from baybe.parameters.base import Parameter, _EncodedDiscreteParameter
+from baybe.parameters.categorical import TaskParameter
 from baybe.utils.dataframe import get_transform_objects
-from baybe.utils.validation import validate_parameter_input
 
 _T = TypeVar("_T", bound=Parameter)
 
 
-def validate_parameter_names(  # noqa: DOC101, DOC103
-    parameters: Collection[Parameter],
-) -> None:
-    """Validate the parameter names.
+def validate_parameters(
+    parameters: Collection[Parameter], *, allow_empty: bool = False
+) -> None:  # noqa: DOC101, DOC103
+    """Validate the parameters.
+
+    Args:
+        parameters: The parameters to validate.
+        allow_empty: Whether to allow an empty parameter collection.
 
     Raises:
         ValueError: If the given list contains parameters with the same name.
-    """
-    param_names = [p.name for p in parameters]
-    if len(set(param_names)) != len(param_names):
-        raise ValueError("All parameters must have unique names.")
-
-
-def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC101, DOC103
-    """Validate the parameters.
-
-    Raises:
-        EmptySearchSpaceError: If the parameter list is empty.
+        EmptySearchSpaceError: If no parameter is provided and empty
+            collections are explicitly disallowed.
         NotImplementedError: If more than one
             :class:`baybe.parameters.categorical.TaskParameter` is requested.
     """
-    if not parameters:
+    if not allow_empty and not parameters:
         raise EmptySearchSpaceError("At least one parameter must be provided.")
 
-    # TODO [16932]: Remove once more task parameters are supported
     if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
         raise NotImplementedError(
             "Currently, at most one task parameter can be considered."
         )
 
-    # Assert: unique names
-    validate_parameter_names(parameters)
+    param_names = [p.name for p in parameters]
+    if len(set(param_names)) != len(param_names):
+        raise ValueError("All parameters must have unique names.")
 
 
 def validate_dataframe_active_values(
@@ -67,7 +61,7 @@ def validate_dataframe_active_values(
     exceptions: list[IncompatibilityError] = []
 
     for param in parameters:
-        if isinstance(param, _DiscreteLabelLikeParameter):
+        if isinstance(param, _EncodedDiscreteParameter):
             df_values = set(df[param.name])
             active_values = set(param.active_values)
             if invalid_values := df_values - active_values:
@@ -81,41 +75,6 @@ def validate_dataframe_active_values(
                 )
     if exceptions:
         raise ExceptionGroup("Dataframe validation errors", exceptions)
-
-
-def _get_value_failure_reason(
-    configuration: pd.DataFrame, /, parameters: Sequence[Parameter]
-) -> str | None:
-    """Get the reason why a configuration has missing or invalid parameter values.
-
-    A value is invalid if it fails
-    :func:`~baybe.utils.validation.validate_parameter_input`, with numerical values
-    required to be within tolerance, or :func:`validate_dataframe_active_values`.
-
-    Args:
-        configuration: A dataframe containing a single configuration, with a column
-            for each parameter. Additional columns are ignored.
-        parameters: The parameters to check against.
-
-    Returns:
-        The reason naming the affected parameters, or ``None`` if all values are valid.
-    """
-    if missing := [p.name for p in parameters if configuration[p.name].isna().any()]:
-        return f"missing values for parameters {missing}"
-
-    def is_valid(p: Parameter) -> bool:
-        try:
-            validate_parameter_input(
-                configuration, [p], numerical_measurements_must_be_within_tolerance=True
-            )
-            validate_dataframe_active_values(configuration, [p])
-        except (TypeError, ValueError, ExceptionGroup):
-            return False
-        return True
-
-    if invalid := [p.name for p in parameters if not is_valid(p)]:
-        return f"invalid values for parameters {invalid}"
-    return None
 
 
 def get_transform_parameters(

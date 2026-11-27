@@ -1,16 +1,16 @@
-"""Tests comparing naive vs incremental constrained Cartesian product construction."""
+"""Tests comparing optimized vs unoptimized constrained product construction."""
 
 from __future__ import annotations
 
 from collections.abc import Sequence
 from functools import partial
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pytest
-from pandas.testing import assert_frame_equal
+from narwhals.testing import assert_frame_equal as assert_nw_frame_equal
 
 from baybe.constraints import (
-    DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteCardinalityConstraint,
     DiscreteDependenciesConstraint,
     DiscreteLinearConstraint,
@@ -24,10 +24,13 @@ from baybe.constraints.base import DiscreteConstraint
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace.utils import (
-    _apply_constraint_filter_pandas,
-    parameter_cartesian_prod_pandas,
-    parameter_cartesian_prod_pandas_constrained,
+    _apply_evaluable_filters,
+    _make_filtered_cartesian_product,
 )
+from baybe.settings import Settings
+from tests.constraints.utils import requires_fulltest
+
+pytestmark = requires_fulltest
 
 
 def _no_constraints_scenario() -> tuple[
@@ -209,6 +212,20 @@ def _permutation_invariance_with_dependencies_scenario() -> tuple[
     return params, constraints
 
 
+def test_incremental_filter_rejects_unevaluable_complete_constraint(monkeypatch):
+    """Raise if a constraint cannot evaluate despite all its columns being present."""
+    constraint = DiscreteLinearConstraint(["a", "b"], operator="<=", rhs=100)
+    monkeypatch.setattr(
+        DiscreteLinearConstraint,
+        "_can_evaluate",
+        lambda self, available: False,
+    )
+    frame = nw.from_dicts([{"a": 1, "b": 2}], backend=nw.Implementation.POLARS).lazy()
+
+    with pytest.raises(RuntimeError, match="all required columns are available"):
+        _apply_evaluable_filters(frame, [constraint])
+
+
 def _mixed_scenario() -> tuple[
     Sequence[DiscreteParameter], Sequence[DiscreteConstraint]
 ]:
@@ -277,35 +294,22 @@ def _mixed_scenario() -> tuple[
         ),
     ],
 )
-def test_constrained_cartesian_product(scenario):
-    """Verify incremental and naive product construction produce identical results."""
+@pytest.mark.parametrize("backend", ["pandas", "polars"])
+def test_constrained_cartesian_product(scenario, backend):
+    """Compare incremental construction against the full-product reference."""
     parameters, constraints = scenario()
 
-    # Sort constraints in the same order used by the production code. This is
-    # necessary because some constraints (e.g., PermutationInvariance with
-    # dependencies) use ``duplicated(keep="first")``, making their outcome
-    # sensitive to which rows have already been removed by earlier constraints.
-    # A fixed ordering ensures both paths operate on the same intermediate state.
-    constraints = sorted(
-        constraints,
-        key=lambda c: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(c.__class__),
-    )
+    with Settings(default_dataframe_backend=backend):
+        df_reference = nw.from_native(
+            _make_filtered_cartesian_product(parameters, constraints, incremental=False)
+        )
+        df_result = nw.from_native(
+            _make_filtered_cartesian_product(parameters, constraints, incremental=True)
+        )
+        assert (
+            df_reference.implementation
+            == df_result.implementation
+            == nw.Implementation(backend)
+        )
 
-    # Naive approach: full product then filter
-    df_naive = parameter_cartesian_prod_pandas(parameters)
-    _apply_constraint_filter_pandas(df_naive, constraints)
-
-    # Incremental approach
-    df_incremental = parameter_cartesian_prod_pandas_constrained(
-        parameters, constraints
-    )
-
-    # Column order must be identical
-    assert list(df_incremental.columns) == list(df_naive.columns)
-
-    # Content must be identical (row order may differ)
-    cols = df_naive.columns.tolist()
-    assert_frame_equal(
-        df_incremental.sort_values(cols).reset_index(drop=True),
-        df_naive.sort_values(cols).reset_index(drop=True),
-    )
+    assert_nw_frame_equal(df_result, df_reference, check_row_order=False)

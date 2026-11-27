@@ -79,7 +79,10 @@ def _validate_target_data(
         param(2, 2, id="cartesian"),
     ],
 )
-@Settings(parallelize_simulation_runs=False)
+@Settings(
+    parallelize_simulation_runs=False,
+    default_dataframe_backend="pandas",
+)
 def test_simulate_scenarios_structure(
     campaign, batch_size, n_mc_iterations, n_initial_data
 ):

@@ -12,14 +12,15 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import Mock
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pytest
 import torch
-from attrs import Attribute
+from attrs import Attribute, fields
 
 from baybe import Settings, active_settings
 from baybe.campaign import Campaign
-from baybe.exceptions import NotAllowedError
+from baybe.exceptions import NotAllowedError, OptionalImportError
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace.core import SearchSpace
 from baybe.settings import _RANDOM_SEED_ATTRIBUTE_NAME
@@ -34,27 +35,48 @@ pytestmark = pytest.mark.skipif(
 INVALID_VALUES: dict[str, tuple[Any, type[Exception], str]] = {
     "cache_campaign_recommendations": (0, TypeError, "must be <class 'bool'>"),
     "cache_directory": (0, TypeError, "Expected 'None' or a path-like"),
+    "default_dataframe_backend": ("x", ValueError, "must be in"),
     "parallelize_simulation_runs": (0, TypeError, "must be <class 'bool'>"),
     "preprocess_dataframes": (0, TypeError, "must be <class 'bool'>"),
     "random_seed": (0.0, TypeError, "must be <class 'int'>"),
     "use_fpsample": (0, ValueError, "Cannot convert '0' to 'AutoBool'"),
     "use_polars_for_constraints": (0, ValueError, "Cannot convert '0' to 'AutoBool'"),
     "use_single_precision_numpy": (0, TypeError, "must be <class 'bool'>"),
+    "use_single_precision_dataframes": (0, TypeError, "must be <class 'bool'>"),
     "use_single_precision_torch": (0, TypeError, "must be <class 'bool'>"),
 }
 
 
-def toggle(value: Any, /) -> Any:
+# Settings excluded from generic value-toggling tests because they are deprecated.
+_DEPRECATED_SETTINGS = {fields(Settings)._use_polars_for_constraints.name}
+_SETTINGS_ATTRIBUTES = tuple(
+    fld for fld in Settings._settings_attributes if fld.name not in _DEPRECATED_SETTINGS
+)
+
+
+def _import_but_not(excluded: str, /):
+    """Return a patched ``importlib.import_module`` that raises for the given module."""
+    import importlib as _importlib  # noqa: PLC0415
+
+    _original = _importlib.import_module
+
+    def _import(name: str, *args, **kwargs):
+        if name == excluded:
+            raise ImportError(f"Mocked: '{excluded}' is not available.")
+        return _original(name, *args, **kwargs)
+
+    return _import
+
+
+def toggle(value: Any, attribute: Attribute) -> Any:  # noqa: PLR0911
     """Toggle a given settings value."""
     match value:
+        case None:
+            if attribute.alias == "default_dataframe_backend":
+                return nw.Implementation.PANDAS
+            return 0
         case bool():
             return not value
-
-        # TODO: The approach for these two cases is a bit hacky because it only works
-        #       for the currently available settings. If needed, can be fixed by
-        #       additionally passing the attribute context.
-        case None:
-            return 0
         case int() as v:
             return v / 2
 
@@ -64,7 +86,10 @@ def toggle(value: Any, /) -> Any:
                 value + suffix if not value.endswith(suffix) else value[: -len(suffix)]
             )
         case Path():
-            return Path(toggle(str(value)))
+            return Path(toggle(str(value), attribute))
+        case nw.Implementation():
+            assert value is not nw.Implementation.PANDAS
+            return nw.Implementation.PANDAS
         case Enum() as e:
             members = list(type(e))
             return members[(members.index(e) + 1) % len(members)]
@@ -93,8 +118,7 @@ def draw_random_numbers() -> tuple[float, ...]:
 def original_values():
     """The original settings values."""
     return {
-        fld.name: getattr(active_settings, fld.name)
-        for fld in Settings._settings_attributes
+        fld.name: getattr(active_settings, fld.name) for fld in _SETTINGS_ATTRIBUTES
     }
 
 
@@ -102,15 +126,15 @@ def original_values():
 def toggled_values():
     """Toggled settings values (i.e. differing from the original values)."""
     return {
-        fld.alias: toggle(getattr(active_settings, fld.name))
-        for fld in Settings._settings_attributes
+        fld.alias: toggle(getattr(active_settings, fld.name), fld)
+        for fld in _SETTINGS_ATTRIBUTES
     }
 
 
 @pytest.fixture()
-def reset_settings_imports():
-    """Remove the setting module from the cache."""
-    sys.modules.pop("baybe.settings", None)
+def reset_settings_imports(monkeypatch):
+    """Temporarily remove the setting module from the cache."""
+    monkeypatch.delitem(sys.modules, "baybe.settings", raising=False)
 
 
 def test_setting_unknown_attribute():
@@ -121,9 +145,7 @@ def test_setting_unknown_attribute():
         Settings(unknown_setting=True)
 
 
-@pytest.mark.parametrize(
-    "attribute", Settings._settings_attributes, ids=lambda a: a.name
-)
+@pytest.mark.parametrize("attribute", _SETTINGS_ATTRIBUTES, ids=lambda a: a.name)
 def test_invalid_setting(attribute: Attribute):
     """Attempting to activate an invalid settings value raises an error."""
     invalid, error, match = INVALID_VALUES[attribute.alias]
@@ -133,13 +155,11 @@ def test_invalid_setting(attribute: Attribute):
         Settings(**{attribute.alias: invalid})
 
 
-@pytest.mark.parametrize(
-    "attribute", Settings._settings_attributes, ids=lambda a: a.name
-)
+@pytest.mark.parametrize("attribute", _SETTINGS_ATTRIBUTES, ids=lambda a: a.name)
 def test_direct_setting(attribute: Attribute):
     """Attributes of the active settings object can be directly modified."""
     original_value = getattr(active_settings, attribute.name)
-    new_value = toggle(original_value)
+    new_value = toggle(original_value, attribute)
     assert original_value != new_value
     setattr(active_settings, attribute.alias, new_value)
     assert getattr(active_settings, attribute.name) == new_value
@@ -171,13 +191,13 @@ def test_sequential_setting_via_activation(original_values):
     # We iterate over the random seed last because changing it does not propagate to
     # the subsequent settings objects
     attrs = sorted(
-        Settings._settings_attributes,
+        _SETTINGS_ATTRIBUTES,
         key=lambda a: a.name == _RANDOM_SEED_ATTRIBUTE_NAME,
     )
 
     for attr in attrs:
         # Modify one attribute at a time
-        new_value = toggle(original_values[attr.name])
+        new_value = toggle(original_values[attr.name], attr)
         change = {attr.alias: new_value}
         modified.update({attr.name: new_value})
         s = Settings(**change).activate()
@@ -482,7 +502,7 @@ def test_seed_to_state_conversion():
 
 def test_settings_are_sorted_alphabetically():
     """The available settings are sorted alphabetically by their name."""
-    names = [fld.alias for fld in Settings._settings_attributes]
+    names = [fld.alias for fld in _SETTINGS_ATTRIBUTES]
     assert names == sorted(names)
 
 
@@ -534,3 +554,25 @@ def test_invalid_operations(operation):
     """Invalid operations on the active settings object are rejected."""
     with pytest.raises(NotAllowedError, match="active settings object"):
         getattr(active_settings, operation)()
+
+
+def test_default_dataframe_backend_auto_resolution(monkeypatch):
+    """Auto-resolution selects the highest-priority available dataframe backend."""
+    assert (
+        Settings(default_dataframe_backend=None).default_dataframe_backend
+        is nw.Implementation.PANDAS
+    )
+
+    monkeypatch.setattr("importlib.import_module", _import_but_not("pandas"))
+
+    assert (
+        Settings(default_dataframe_backend=None).default_dataframe_backend
+        is nw.Implementation.POLARS
+    )
+
+
+def test_default_dataframe_backend_not_installed(monkeypatch):
+    """Requesting a dataframe backend that is not installed raises an error."""
+    monkeypatch.setattr("importlib.import_module", _import_but_not("modin"))
+    with pytest.raises(OptionalImportError, match="cannot be set to 'modin'"):
+        Settings(restore_defaults=True, default_dataframe_backend="modin")

@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import warnings
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 
 from baybe._llm.exceptions import (
@@ -18,13 +19,17 @@ from baybe._llm.extraction import extract_payload
 from baybe.exceptions import LLMResponseWarning
 from baybe.recommenders.pure.llm._schema import Response
 from baybe.searchspace import SearchSpace
-from baybe.utils.dataframe import normalize_input_dtypes
+from baybe.settings import active_settings
+from baybe.utils.dataframe import _df_with_backend, normalize_input_dtypes
 from baybe.utils.numerical import closest_element
+
+if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrame
 
 
 def parse_llm_response(
     response: str, /, searchspace: SearchSpace, batch_size: int
-) -> pd.DataFrame:
+) -> IntoDataFrame:
     """Parse a language model response into a dataframe of recommendations.
 
     The response must match the :class:`Response` schema and contain exactly
@@ -41,8 +46,9 @@ def parse_llm_response(
         batch_size: The number of recommendations to return.
 
     Returns:
-        A dataframe containing exactly ``batch_size`` distinct recommendations that
-        belong to the search space and satisfy its batch constraints.
+        A dataframe in the default dataframe backend containing exactly ``batch_size``
+        distinct recommendations that belong to the search space and satisfy its batch
+        constraints.
 
     Raises:
         LLMMalformedResponseError: If the response cannot be parsed into the expected
@@ -85,11 +91,31 @@ def parse_llm_response(
             valid_names=param_names,
         )
 
+    # The search space requires a column for every parameter to validate the
+    # configurations
+    if missing := param_names - set(df.columns):
+        raise LLMIneligiblePointsError(
+            f"The response is missing parameter columns: {sorted(missing)}."
+        )
+
+    # Numerical parameters must have numeric values
+    # TODO: Check the expected column dtypes for all parameter types once parameters
+    #   expose their expected representation
+    if non_numeric := [
+        p.name
+        for p in searchspace.parameters
+        if p.is_numerical
+        and p.name in df
+        and not pd.api.types.is_numeric_dtype(df[p.name])
+    ]:
+        raise LLMIneligiblePointsError(
+            f"The response contains non-numeric values for parameters "
+            f"{sorted(non_numeric)}."
+        )
+
     # Snap eligible numerical discrete values before candidate and constraint checks
     for p in searchspace.discrete.parameters:
-        # Since validation report missing or non-numeric columns, only attempt snapping
-        # for numeric columns that exist without already verifying
-        if p.is_numerical and p.name in df.select_dtypes(include="number"):
+        if p.is_numerical:
             df[p.name] = df[p.name].map(
                 lambda x: (
                     closest_element(p.values, cast(float, x)) if p.is_in_range(x) else x
@@ -97,10 +123,13 @@ def parse_llm_response(
             )
 
     # The search space is responsible for validating the individual configurations
-    try:
-        searchspace._validate_configurations(df)
-    except ValueError as e:
-        raise LLMIneligiblePointsError(str(e)) from e
+    invalid = nw.from_native(
+        searchspace._get_invalid_configurations(df), eager_only=True
+    )
+    if not invalid.is_empty():
+        raise LLMIneligiblePointsError(
+            f"{len(invalid)} configuration(s) do not belong to the search space."
+        )
     df = normalize_input_dtypes(df, searchspace.parameters)
 
     continuous_constraints = (
@@ -122,7 +151,7 @@ def parse_llm_response(
     # TODO: Batch constraints and duplicates concern the batch as a whole and are
     #   therefore still validated here instead of by the search space. Move them once
     #   the search space offers a batch-level validation.
-    for constraint in searchspace.discrete.constraints_batch:
+    for constraint in searchspace.discrete.batch_constraints:
         param_name = constraint.parameters[0]
         unique_values = df[param_name].unique()
         if len(unique_values) > 1:
@@ -140,4 +169,9 @@ def parse_llm_response(
             f"the batch.",
             n_duplicates=n_duplicates,
         )
-    return df.loc[:, [p.name for p in searchspace.parameters]]
+    return _df_with_backend(
+        nw.from_native(
+            df.loc[:, [p.name for p in searchspace.parameters]], eager_only=True
+        ),
+        active_settings.default_dataframe_backend,
+    ).to_native()

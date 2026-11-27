@@ -211,20 +211,6 @@ Discrete constraints operate on discrete parameters.
 For instance, a search space created via [`from_product`](baybe.searchspace.core.SearchSpace.from_product) 
 might include invalid combinations, which can be removed again by applying constraints.
 
-```{admonition} Efficient Constraint Implementation via Polars
-:class: tip
-In the default implementation, BayBE first creates the full discrete searchspace and
-then applies filters to it to remove candidates not complying with discrete constraints.
-This requires that the entire unfiltered searchspace fits into memory, which is
-inefficient, given that the filtering might reduce the amount of relevant candidates by
-orders of magnitude. For many discrete constraints, BayBE offers a more efficient
-implementation via [polars] that needs much less memory. This is automatically activated
-if [polars] is present in the Python environment, for instance if BayBE was installed
-with the optional dependency group via `pip install baybe[polars]`. In many cases, this
-is required to enable working with large discrete searchspaces, however, [polars] is not
-currently a main dependency of BayBE.
-```
-
 Discrete constraints have in common that they operate on one or more parameters,
 identified by the `parameters` member, which expects a list of parameter names as
 strings.
@@ -325,11 +311,11 @@ DiscreteRepetitionLimitConstraint(
 )
 ```
 
-|   | Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteRepetitionLimitConstraint |
-|---|-----------|-----------|-----------|----------------------------------------|
-| 1 | Water     | Water     | THF       | removed (Water appears twice)          |
-| 2 | THF       | Water     | Octanol   | kept                                   |
-| 3 | Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times)      |
+| Solvent_1 | Solvent_2 | Solvent_3 | With DiscreteRepetitionLimitConstraint |
+|-----------|-----------|-----------|----------------------------------------|
+| Water     | Water     | THF       | removed (Water appears twice)          |
+| THF       | Water     | Octanol   | kept                                   |
+| Octanol   | Octanol   | Octanol   | removed (Octanol appears 3 times)      |
 
 The constraint can also enforce that **all values are identical** by excluding rows
 where a value appears at most one fewer times than there are parameters. This is
@@ -358,11 +344,11 @@ DiscreteRepetitionLimitConstraint(
 )
 ```
 
-|   | Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionLimitConstraint |
-|---|-------------------|---------------------|-----------------------------------|
-| 1 | Water             | Water               | kept                              |
-| 2 | THF               | Water               | removed                           |
-| 3 | Octanol           | Octanol             | kept                              |
+| Solvent_RDKIT_enc | Solvent_MORDRED_enc | With DiscreteRepetitionLimitConstraint |
+|-------------------|---------------------|----------------------------------------|
+| Water             | Water               | kept                                   |
+| THF               | Water               | removed                                |
+| Octanol           | Octanol             | kept                                   |
 
 The usage of `DiscreteRepetitionLimitConstraint` is part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
@@ -384,6 +370,10 @@ You can specify such a dependency with the
 3) A list of lists, each containing the `affected_parameters`, which become relevant
    only if the corresponding entry in `parameters` is active as specified by the 
    entry in `conditions`.
+
+Each affected parameter may appear in only one of the lists, and the affected
+parameters must be disjoint from the `parameters` themselves. Consequently, both
+overlapping and chained dependencies are rejected.
 
 Internally, BayBE drops elements from the `SearchSpace` where affected parameters are
 irrelevant. Since in our example `"off"` is still a valid value for the switch, the
@@ -435,14 +425,14 @@ Suppose we create a mixture containing up to three solvents, i.e. parameters
 In this situation, all combinations from the following table would be equivalent,
 hence the `SearchSpace` should effectively only contain one of them.
 
-|   | Solvent_1    | Solvent_2    | Solvent_3    |
-|---|--------------|--------------|--------------|
-| 1 | Substance_43 | Substance_3  | Substance_12 |
-| 2 | Substance_43 | Substance_12 | Substance_3  |
-| 3 | Substance_3  | Substance_12 | Substance_43 |
-| 4 | Substance_3  | Substance_43 | Substance_12 |
-| 5 | Substance_12 | Substance_43 | Substance_3  |
-| 6 | Substance_12 | Substance_3  | Substance_43 |
+| Solvent_1    | Solvent_2    | Solvent_3    |
+|--------------|--------------|--------------|
+| Substance_43 | Substance_3  | Substance_12 |
+| Substance_43 | Substance_12 | Substance_3  |
+| Substance_3  | Substance_12 | Substance_43 |
+| Substance_3  | Substance_43 | Substance_12 |
+| Substance_12 | Substance_43 | Substance_3  |
+| Substance_12 | Substance_3  | Substance_43 |
 
 ```{admonition} Influence on Surrogate Models
 :class: note
@@ -523,15 +513,17 @@ DiscreteCardinalityConstraint(
 
 #### DiscreteCustomConstraint
 With a [`DiscreteCustomConstraint`](baybe.constraints.discrete.DiscreteCustomConstraint) 
-constraint, you can specify a completely custom filter:
+constraint, you can specify a completely custom filter. The validator receives the
+selected parameters as a native dataframe of the active backend (e.g. pandas or Polars)
+and must return a native Boolean series.
 
 ```python
-import pandas as pd
 import numpy as np
+import pandas as pd
 from baybe.constraints import DiscreteCustomConstraint
 
 
-def custom_filter(df: pd.DataFrame) -> pd.Series:  # this signature is required
+def custom_filter(df: pd.DataFrame) -> pd.Series:
     """
     In this example, we exclude entries where the square root of the
     temperature times the cubed pressure are larger than 5.6.

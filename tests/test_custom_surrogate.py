@@ -6,6 +6,7 @@ import pytest
 
 from baybe import Campaign
 from baybe._optional.info import ONNX_INSTALLED
+from baybe.settings import Settings
 from baybe.surrogates import CustomONNXSurrogate
 from tests.conftest import run_iterations
 
@@ -28,6 +29,7 @@ def test_invalid_onnx_creation(onnx_str):
         CustomONNXSurrogate(onnx_input_name="input")
 
 
+@Settings(default_dataframe_backend="pandas")
 @pytest.mark.skipif(
     not ONNX_INSTALLED, reason="Optional onnx dependency not installed."
 )

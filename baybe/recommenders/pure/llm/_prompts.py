@@ -3,18 +3,25 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Collection
 from typing import TYPE_CHECKING, TypedDict
 
+import narwhals.stable.v2 as nw
 import pandas as pd
 
 from baybe._llm.exceptions import LLMResponseError
 from baybe._llm.rendering import render_template, to_json_lines, to_prompt_dict
+from baybe.constraints.base import Constraint, DiscreteConstraint
 from baybe.recommenders.pure.llm._schema import _response_format
 from baybe.searchspace import SearchSpace
+from baybe.searchspace.candidates import EmptyCandidates, ProductCandidates
 from baybe.transformations.base import Transformation
-from baybe.utils.basic import get_subclasses
+from baybe.utils.basic import get_subclasses, is_all_instance
+from baybe.utils.random import _make_random_seed
 
 if TYPE_CHECKING:
+    from narwhals.stable.v2.typing import IntoDataFrameT
+
     from baybe.objectives.base import Objective
 
 # The number of configurations sampled from the search space as examples
@@ -161,8 +168,10 @@ def _sample_example_configurations(searchspace: SearchSpace, /) -> pd.DataFrame:
     if searchspace.discrete.is_empty:
         return searchspace.continuous.sample_uniform(n)
 
-    candidates, _ = searchspace.discrete.get_candidates()
-    discrete = candidates.sample(min(n, len(candidates))).reset_index(drop=True)
+    candidates = searchspace.discrete._get_candidates().collect().to_pandas()
+    discrete = candidates.sample(
+        min(n, len(candidates)), random_state=_make_random_seed()
+    ).reset_index(drop=True)
     continuous = searchspace.continuous.sample_uniform(len(discrete))
     return pd.concat([discrete, continuous], axis=1)
 
@@ -171,8 +180,8 @@ def make_prompt(
     batch_size: int,
     searchspace: SearchSpace,
     objective: Objective | None = None,
-    measurements: pd.DataFrame | None = None,
-    pending_experiments: pd.DataFrame | None = None,
+    measurements: IntoDataFrameT | None = None,
+    pending_experiments: IntoDataFrameT | None = None,
     *,
     experiment_description: str,
     recovery: tuple[LLMResponseError, str | None] | None = None,
@@ -213,12 +222,52 @@ def make_prompt(
 
     Returns:
         The constructed prompt.
+
+    Raises:
+        NotImplementedError: If the prompt cannot be constructed due to unsupported
+            candidate set type.
     """
     error, original_response = recovery if recovery is not None else (None, None)
 
+    measurements_pd = (
+        None
+        if measurements is None
+        else nw.from_native(measurements, eager_only=True).to_pandas()
+    )
+    pending_experiments_pd = (
+        None
+        if pending_experiments is None
+        else nw.from_native(pending_experiments, eager_only=True).to_pandas()
+    )
+
     parameter_names = [p.name for p in searchspace.parameters]
     target_names = [t.name for t in objective.targets] if objective is not None else []
-    constraints = searchspace.constraints
+
+    # Extract constraints
+    candidates = searchspace.discrete.candidates
+    filtering_constraints: Collection[Constraint]
+    if isinstance(candidates, EmptyCandidates):
+        filtering_constraints = ()
+    elif isinstance(candidates, ProductCandidates):
+        filters = candidates.filters
+        if not is_all_instance(filters, DiscreteConstraint):
+            raise NotImplementedError(
+                f"Prompt construction requires that all candidate filters "
+                f"are of type '{DiscreteConstraint.__name__}'."
+            )
+        filtering_constraints = filters
+    else:
+        raise NotImplementedError(
+            f"No prompt can be constructed for the given candidate set of type "
+            f"'{type(candidates).__name__}'. Only '{EmptyCandidates.__name__}' "
+            f"and '{ProductCandidates.__name__}' are supported."
+        )
+    constraints = (
+        *filtering_constraints,
+        *searchspace.discrete.batch_constraints,
+        *searchspace.continuous.constraints,
+    )
+
     objective_json = (
         to_json_lines([to_prompt_dict(objective)]) if objective is not None else None
     )
@@ -246,13 +295,13 @@ def make_prompt(
         #   them is only caught by the search space validation of the response, which
         #   reports them to the model for the recovery attempt.
         "measurements": (
-            measurements[parameter_names + target_names].to_string(index=False)
-            if measurements is not None and not measurements.empty
+            measurements_pd[parameter_names + target_names].to_string(index=False)
+            if measurements_pd is not None and not measurements_pd.empty
             else None
         ),
         "pending_experiments": (
-            pending_experiments[parameter_names].to_string(index=False)
-            if pending_experiments is not None and not pending_experiments.empty
+            pending_experiments_pd[parameter_names].to_string(index=False)
+            if pending_experiments_pd is not None and not pending_experiments_pd.empty
             else None
         ),
         "batch_size": batch_size,

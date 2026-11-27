@@ -7,9 +7,10 @@ import warnings
 from functools import partial
 from typing import Any, ClassVar
 
-import pandas as pd
+import narwhals.stable.v2 as nw
 from attrs import define, field, fields
 from attrs.validators import deep_mapping, instance_of, min_len
+from narwhals.stable.v2.typing import IntoDataFrame, IntoDataFrameT
 from typing_extensions import override
 
 from baybe._llm.exceptions import LLMResponseError
@@ -19,11 +20,7 @@ from baybe._llm.query import (
     validate_litellm_args,
 )
 from baybe._optional.info import LLM_INSTALLED
-from baybe.exceptions import (
-    IncompatibilityError,
-    NotEnoughPointsLeftError,
-    OptionalImportError,
-)
+from baybe.exceptions import IncompatibilityError, OptionalImportError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.llm._parsing import parse_llm_response
@@ -32,7 +29,6 @@ from baybe.searchspace import SearchSpace
 from baybe.searchspace.core import SearchSpaceType
 from baybe.serialization import SerialMixin, converter
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import fuzzy_row_match
 from baybe.utils.metadata import Metadata
 
 
@@ -95,9 +91,9 @@ class LLMRecommender(PureRecommender, SerialMixin):
     # Stashed context necessary for prompt building
     _objective: Objective | None = field(default=None, init=False, eq=False)
 
-    _measurements: pd.DataFrame | None = field(default=None, init=False, eq=False)
+    _measurements: nw.DataFrame | None = field(default=None, init=False, eq=False)
 
-    _pending_experiments: pd.DataFrame | None = field(
+    _pending_experiments: nw.DataFrame | None = field(
         default=None, init=False, eq=False
     )
 
@@ -142,9 +138,9 @@ class LLMRecommender(PureRecommender, SerialMixin):
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        measurements: IntoDataFrameT | None = None,
+        pending_experiments: IntoDataFrameT | None = None,
+    ) -> IntoDataFrameT:
         """Generate recommendations using the language model.
 
         Args:
@@ -192,8 +188,16 @@ class LLMRecommender(PureRecommender, SerialMixin):
 
         # Stash context for `_recommend_hybrid`, then delegate to the base `recommend`
         self._objective = objective
-        self._measurements = measurements
-        self._pending_experiments = pending_experiments
+        self._measurements = (
+            None
+            if measurements is None
+            else nw.from_native(measurements, eager_only=True)
+        )
+        self._pending_experiments = (
+            None
+            if pending_experiments is None
+            else nw.from_native(pending_experiments, eager_only=True)
+        )
 
         return super().recommend(
             batch_size=batch_size,
@@ -207,9 +211,8 @@ class LLMRecommender(PureRecommender, SerialMixin):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> IntoDataFrame:
         try:
             prompt = self._make_prompt(searchspace, batch_size)
         except NotImplementedError as ex:
@@ -228,38 +231,6 @@ class LLMRecommender(PureRecommender, SerialMixin):
                 searchspace, batch_size, recovery=(error, content)
             ),
         )
-
-    @override
-    def _recommend_with_discrete_parts(
-        self,
-        searchspace: SearchSpace,
-        batch_size: int,
-        pending_experiments: pd.DataFrame | None,
-    ) -> pd.DataFrame:
-        # The inherited discrete dispatch extracts candidate indices and reconstructs
-        # stored rows. LLM responses instead contain generated values, so that path
-        # would change the recommendations or fail for symmetry-equivalent variants.
-        # Override it locally to preserve output without changing the parent class.
-        candidates_exp, _ = searchspace.discrete.get_candidates()
-        # This recommender supports subset-generating constraints. Only the base
-        # dispatcher's candidate-count check must be repeated, before any model call.
-        if (
-            searchspace.type is SearchSpaceType.DISCRETE
-            and len(candidates_exp) < batch_size
-        ):
-            raise NotEnoughPointsLeftError(
-                f"Using the current settings, there are fewer than {batch_size} "
-                f"possible data points left to recommend."
-            )
-        # TODO: Remove this override when discrete hooks return dataframes (#837).
-        rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
-        rec.index = fuzzy_row_match(
-            searchspace.discrete.exp_rep,
-            rec,
-            searchspace.discrete.parameters,
-            keep_unmatched=True,
-        )
-        return rec
 
     @override
     def __str__(self) -> str:

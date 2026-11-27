@@ -24,10 +24,13 @@
 import numpy as np
 import pandas as pd
 
+from baybe import active_settings
 from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters import NumericalContinuousParameter
 from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
+
+active_settings.default_dataframe_backend = "pandas"
 
 ### Parameter Setup
 

@@ -81,9 +81,7 @@ Instead of creating a product space first and then filtering it down
 according to constraints, they offer a more direct and thus efficient path to the 
 desired result, typically requiring substantially less memory. 
 For example, {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_simplex` 
-includes the mixture constraint already *during* the product creation. 
-In addition, BayBE can also be installed with its optional `polars` dependency 
-(`pip install baybe[polars]`) that activates efficient machinery for constraint handling.
+includes the mixture constraint already *during* the product creation.
 ```
 
 ## Reproducibility

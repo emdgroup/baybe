@@ -9,6 +9,7 @@ from baybe.exceptions import OptionalImportError
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace.core import SearchSpace
+from baybe.settings import Settings
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
 
@@ -30,6 +31,7 @@ def fixture_searchspace():
 
 
 @pytest.mark.parametrize("recommender", nonpredictive_recommenders)
+@Settings(default_dataframe_backend="pandas")
 def test_nonbayesian_recommender_with_measurements(recommender, searchspace):
     """Calling a non-Bayesian recommender with training data raises a warning."""
     with pytest.warns(
@@ -47,6 +49,7 @@ def test_nonbayesian_recommender_with_measurements(recommender, searchspace):
 
 
 @pytest.mark.parametrize("recommender", nonpredictive_recommenders)
+@Settings(default_dataframe_backend="pandas")
 def test_nonbayesian_recommender_with_objective(recommender, searchspace):
     """Calling a non-Bayesian recommender with an objective raises a warning."""
     with pytest.warns(

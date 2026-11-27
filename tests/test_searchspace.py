@@ -1,16 +1,18 @@
 """Tests for the searchspace module."""
 
+from collections.abc import Iterable
+from itertools import islice, product
+
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 import pytest
 from attrs import evolve
 from exceptiongroup import ExceptionGroup
-from pandas.testing import assert_frame_equal
 
-from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import (
-    ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
+    DiscreteBatchConstraint,
     DiscreteLinearConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteSelectionConstraint,
@@ -33,11 +35,7 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
-from baybe.searchspace._filtered import FilteredSubspaceDiscrete
-from baybe.searchspace.utils import (
-    parameter_cartesian_prod_pandas,
-    parameter_cartesian_prod_polars,
-)
+from baybe.settings import Settings
 from baybe.utils.basic import is_all_instance
 
 
@@ -61,22 +59,71 @@ def test_bounds_order():
     searchspace = SearchSpace.from_product(parameters=parameters)
     expected = np.array([[1.0, 7.0, 4.0, 10.0], [3.0, 9.0, 6.0, 12.0]])
     assert np.array_equal(
-        searchspace.comp_rep_bounds.values,
+        searchspace.comp_rep_bounds.to_numpy(),
         expected,
     )
 
 
 def test_empty_parameter_bounds():
-    """Asserts that the correct bounds are produced for empty search spaces.
+    """Asserts that bounds can be evaluated for empty search spaces."""
+    searchspace_discrete = SubspaceDiscrete.empty()
+    searchspace_continuous = SubspaceContinuous.empty()
+    for bounds in [
+        searchspace_discrete.comp_rep_bounds,
+        searchspace_continuous.comp_rep_bounds,
+    ]:
+        assert nw.from_native(bounds, eager_only=True).is_empty()
 
-    Also checks for the correct shapes.
-    """
-    parameters = []
-    searchspace_discrete = SubspaceDiscrete.from_product(parameters=parameters)
-    searchspace_continuous = SubspaceContinuous(parameters=parameters)
-    expected = pd.DataFrame(np.empty((2, 0)), index=["min", "max"])
-    pd.testing.assert_frame_equal(searchspace_discrete.comp_rep_bounds, expected)
-    pd.testing.assert_frame_equal(searchspace_continuous.comp_rep_bounds, expected)
+
+@pytest.fixture(name="subset_subspace")
+def fixture_subset_subspace():
+    """A discrete subspace with subsets."""
+    parameters = [
+        NumericalDiscreteParameter("d0", values=(0.0, 0.5, 1.0)),
+        NumericalDiscreteParameter("d1", values=(10.0, 20.0)),
+        NumericalDiscreteParameter("d2", values=(100.0, 200.0)),
+    ]
+    constraints = [
+        DiscreteBatchConstraint(parameters=["d0"]),
+        DiscreteBatchConstraint(parameters=["d1"]),
+    ]
+    return SubspaceDiscrete.from_product(parameters, constraints)
+
+
+def _subset_signatures(subsets: Iterable[SubspaceDiscrete]) -> list[tuple[float, ...]]:
+    """Extract the constrained parameter values identifying each subset."""
+    signatures = []
+    for subspace in subsets:
+        rows = subspace._get_candidates().select("d0", "d1").unique().collect().rows()
+        assert len(rows) == 1
+        signatures.append(tuple(float(value) for value in rows[0]))
+    return signatures
+
+
+def test_iter_subsets_ordered(subset_subspace):
+    """Ordered iteration yields all subsets in deterministic order."""
+    signatures = _subset_signatures(subset_subspace.iter_subsets(mode="ordered"))
+
+    assert signatures == list(product((0.0, 0.5, 1.0), (10.0, 20.0)))
+
+
+def test_iter_subsets_shuffled(subset_subspace):
+    """Shuffled iteration yields each subset exactly once."""
+    ordered = _subset_signatures(subset_subspace.iter_subsets(mode="ordered"))
+    shuffled = _subset_signatures(subset_subspace.iter_subsets(mode="shuffled"))
+
+    assert len(shuffled) == len(ordered)
+    assert set(shuffled) == set(ordered)
+
+
+def test_iter_subsets_with_replacement(subset_subspace):
+    """With-replacement iteration produces valid draws indefinitely."""
+    signatures = _subset_signatures(
+        islice(subset_subspace.iter_subsets(mode="with_replacement"), 10)
+    )
+
+    assert len(signatures) == 10
+    assert set(signatures) <= set(product((0.0, 0.5, 1.0), (10.0, 20.0)))
 
 
 def test_discrete_searchspace_creation_from_dataframe():
@@ -99,7 +146,7 @@ def test_discrete_searchspace_creation_from_dataframe():
 
     assert searchspace.type == SearchSpaceType.DISCRETE
     assert searchspace.parameters == all_params
-    assert df.equals(searchspace.discrete.exp_rep)
+    assert df.equals(searchspace.discrete.get_candidates())
 
 
 def test_discrete_from_dataframe_dtype_consistency():
@@ -118,7 +165,7 @@ def test_discrete_from_dataframe_dtype_consistency():
         next(p for p in subspace.parameters if p.name == "C"),
         NumericalDiscreteParameter,
     )
-    assert pd.api.types.is_float_dtype(subspace.exp_rep["C"])
+    assert pd.api.types.is_float_dtype(subspace.get_candidates()["C"])
 
 
 def test_invalid_simplex_creating_with_overlapping_parameters():
@@ -139,6 +186,7 @@ def test_invalid_simplex_creating_with_overlapping_parameters():
         )
 
 
+@Settings(default_dataframe_backend="pandas")
 @pytest.mark.parametrize(
     ("simplex_parameters", "expected_len"),
     [
@@ -161,11 +209,51 @@ def test_from_simplex_with_degenerate_parameter_count(simplex_parameters, expect
             product_parameters=product_parameters,
         )
 
-    assert len(subspace.exp_rep) == expected_len
+    candidates = subspace.get_candidates()
+    assert len(candidates) == expected_len
 
     if simplex_parameters:
         simplex_cols = [p.name for p in simplex_parameters]
-        assert all(subspace.exp_rep[simplex_cols].sum(axis=1) <= 1.0)
+        assert all(candidates[simplex_cols].sum(axis=1) <= 1.0)
+
+
+@pytest.mark.parametrize(
+    "backend",
+    [nw.Implementation.PANDAS, nw.Implementation.POLARS],
+    ids=["pandas", "polars"],
+)
+@pytest.mark.parametrize("single_precision", [False, True], ids=["float64", "float32"])
+def test_from_simplex_uses_only_active_values(backend, single_precision):
+    """Simplex construction is restricted to the exact active parameter values."""
+    simplex_parameters = [
+        NumericalDiscreteParameter("x", values=(0.1, 0.2, 0.3)),
+        NumericalDiscreteParameter("y", values=(0.1, 0.2, 0.3)),
+    ]
+    product_parameters = [
+        CategoricalParameter("C", values=("a", "b", "c"), active_values=("a", "b")),
+        NumericalDiscreteParameter("z", values=(0.1, 0.25)),
+    ]
+
+    with Settings(
+        default_dataframe_backend=backend,
+        use_single_precision_numpy=single_precision,
+        use_single_precision_dataframes=single_precision,
+    ):
+        subspace = SubspaceDiscrete.from_simplex(
+            max_sum=0.4,
+            simplex_parameters=simplex_parameters,
+            product_parameters=product_parameters,
+        )
+        candidates = nw.from_native(subspace.get_candidates(), eager_only=False)
+        if isinstance(candidates, nw.LazyFrame):
+            candidates = candidates.collect()
+
+        for parameter in [*simplex_parameters, *product_parameters]:
+            column = candidates[parameter.name]
+            assert set(column.to_list()) <= set(parameter.active_values)
+            if parameter.is_numerical:
+                expected = np.asarray(parameter.active_values).dtype
+                assert column.to_numpy().dtype == expected
 
 
 def test_continuous_searchspace_creation_from_bounds():
@@ -304,16 +392,17 @@ def test_invalid_constraint_parameter_combos():
     ],
     ids=["simple", "with_active_values"],
 )
+@Settings(default_dataframe_backend="pandas")
 def test_searchspace_memory_estimate(searchspace: SearchSpace):
     """The memory estimate doesn't differ by more than 5% from the actual memory."""
     estimate = searchspace.estimate_product_space_size(searchspace.parameters)
     estimate_exp = estimate.exp_rep_bytes
     estimate_comp = estimate.comp_rep_bytes
 
-    actual_exp = searchspace.discrete.exp_rep.memory_usage(deep=True, index=False).sum()
-    actual_comp = searchspace.discrete.comp_rep.memory_usage(
-        deep=True, index=False
-    ).sum()
+    candidates = searchspace.discrete.get_candidates()
+    candidates_comp = searchspace.discrete.transform(candidates)
+    actual_exp = candidates.memory_usage(deep=True, index=False).sum()
+    actual_comp = candidates_comp.memory_usage(deep=True, index=False).sum()
 
     assert 0.95 <= estimate_exp / actual_exp <= 1.05, (
         "Exp: ",
@@ -325,86 +414,6 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
         estimate_comp,
         actual_comp,
     )
-
-
-def test_cardinality_constraints_with_overlapping_parameters():
-    """Creating cardinality constraints with overlapping parameters raises an error."""
-    parameters = (
-        NumericalContinuousParameter("c1", (0, 1)),
-        NumericalContinuousParameter("c2", (0, 1)),
-        NumericalContinuousParameter("c3", (0, 1)),
-    )
-    with pytest.raises(ValueError, match="cannot share the same parameters"):
-        SubspaceContinuous(
-            parameters=parameters,
-            constraints_nonlin=(
-                ContinuousCardinalityConstraint(
-                    parameters=["c1", "c2"],
-                    max_cardinality=1,
-                ),
-                ContinuousCardinalityConstraint(
-                    parameters=["c2", "c3"],
-                    max_cardinality=1,
-                ),
-            ),
-        )
-
-
-def test_cardinality_constraint_with_invalid_parameter_bounds():
-    """Imposing a cardinality constraint on a parameter whose range does not include
-    zero raises an error."""  # noqa
-    parameters = (
-        NumericalContinuousParameter("c1", (0, 1)),
-        NumericalContinuousParameter("c2", (1, 2)),
-    )
-    with pytest.raises(ValueError, match="must include zero"):
-        SubspaceContinuous(
-            parameters=parameters,
-            constraints_nonlin=(
-                ContinuousCardinalityConstraint(
-                    parameters=["c1", "c2"],
-                    max_cardinality=1,
-                ),
-            ),
-        )
-
-
-@pytest.mark.skipif(
-    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
-)
-@pytest.mark.parametrize(
-    "parameter_names",
-    [
-        [
-            "Categorical_1",
-            "Categorical_2",
-            "Custom_1",
-            "Solvent_1",
-            "Solvent_2",
-            "Fraction_1",
-        ],
-        [
-            "Categorical_1_subset",
-            "Categorical_2",
-            "Custom_1_subset",
-            "Solvent_1_subset",
-            "Solvent_2",
-            "Fraction_1",
-        ],
-    ],
-    ids=["simple", "with_active_values"],
-)
-def test_polars_pandas_equivalence(parameters):
-    """Search spaces created with Polars and Pandas are identical."""
-    # Do Polars product
-    ldf = parameter_cartesian_prod_polars(parameters)
-    df_pl = ldf.collect()
-
-    # Do Pandas product
-    df_pd = parameter_cartesian_prod_pandas(parameters)
-
-    # Assert equality
-    assert_frame_equal(df_pl.to_pandas(), df_pd)
 
 
 def test_task_parameter_active_values_validation():
@@ -452,8 +461,9 @@ def test_task_parameter_active_values_validation():
     searchspace = SearchSpace.from_dataframe(
         target_df, parameters=[num_param, task_param, cat_param]
     )
-    assert len(searchspace.discrete.exp_rep) == 1
-    assert all(searchspace.discrete.exp_rep["task"] == "target")
+    candidates = searchspace.discrete.get_candidates()
+    assert len(candidates) == 1
+    assert all(candidates["task"] == "target")
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -487,7 +497,7 @@ def test_sample_from_polytope_with_interpoint_constraints(
 
     # Test batch_size=1 and batch_size>1 as those the first one is a special case
     for batch_size in [1, 42]:
-        bounds = subspace.comp_rep_bounds.values
+        bounds = subspace.comp_rep_bounds.to_numpy()
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
         constraint_result = calculation(samples)
@@ -519,15 +529,14 @@ def test_sample_from_polytope_mixed_constraints_with_interpoint():
 
     subspace = SubspaceContinuous(
         parameters=parameters,
-        constraints_lin_ineq=[regular_constraint],
-        constraints_lin_eq=[interpoint_constraint],
+        constraints=[regular_constraint, interpoint_constraint],
     )
 
     assert subspace.has_interpoint_constraints
 
     # Test batch size of 1 as well as one small and one large batch size
     for batch_size in [1, 2, 42]:
-        bounds = subspace.comp_rep_bounds.values
+        bounds = nw.from_native(subspace.comp_rep_bounds, eager_only=True).to_numpy()
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
         # Verify regular constraint is satisfied for each row
@@ -546,16 +555,6 @@ _PRODUCT_SEARCHSPACE = SearchSpace.from_product(_CAT_NUM_PARAMETERS)
 _CONTINUOUS_PARAMETER = NumericalContinuousParameter("x", (0.0, 1.0))
 
 
-def _make_searchspace_without_cat_b() -> SearchSpace:
-    """Create a search space whose configurations with ``Cat=B`` are filtered."""
-    discrete = _PRODUCT_SEARCHSPACE.discrete
-    is_selectable = (discrete.exp_rep["Cat"] != "B").to_numpy()
-    return evolve(
-        _PRODUCT_SEARCHSPACE,
-        discrete=FilteredSubspaceDiscrete.from_subspace(discrete, is_selectable),
-    )
-
-
 @pytest.mark.parametrize(
     ("searchspace", "configurations"),
     [
@@ -571,7 +570,8 @@ def _make_searchspace_without_cat_b() -> SearchSpace:
         ),
         pytest.param(
             # Of the equivalent configurations (1, 2) and (2, 1), only the first is
-            # stored, so the second one passes via the constraint check
+            # represented in the candidate set to represent the equivalence class, but
+            # the second is also part of the equivalence class and thus valid
             SearchSpace.from_product(
                 [
                     NumericalDiscreteParameter("p1", (1.0, 2.0)),
@@ -580,7 +580,7 @@ def _make_searchspace_without_cat_b() -> SearchSpace:
                 [DiscretePermutationInvarianceConstraint(["p1", "p2"])],
             ),
             [{"p1": 2.0, "p2": 1.0}],
-            id="non_stored_equivalent",
+            id="equivalence_class",
         ),
         pytest.param(
             SearchSpace.from_product([_CONTINUOUS_PARAMETER]),
@@ -596,30 +596,30 @@ def _make_searchspace_without_cat_b() -> SearchSpace:
         ),
     ],
 )
-def test_validate_configurations_passes(searchspace, configurations):
-    """Configurations belonging to the search space pass the validation."""
-    searchspace._validate_configurations(pd.DataFrame(configurations))
+def test_get_invalid_configurations_passes(searchspace, configurations):
+    """Configurations belonging to the search space are not reported as invalid."""
+    assert searchspace._get_invalid_configurations(pd.DataFrame(configurations)).empty
 
 
 @pytest.mark.parametrize(
-    ("searchspace", "configurations", "match"),
+    ("searchspace", "configurations", "n_invalid"),
     [
         pytest.param(
             _PRODUCT_SEARCHSPACE,
             [{"Cat": "A", "Num": "abc"}],
-            r"- Cat=A, Num=abc: invalid values for parameters \['Num'\]",
+            1,
             id="non_numeric",
         ),
         pytest.param(
             _PRODUCT_SEARCHSPACE,
             [{"Cat": "A", "Num": 999}],
-            r"- Cat=A, Num=999: invalid values for parameters \['Num'\]",
+            1,
             id="out_of_tolerance",
         ),
         pytest.param(
             _PRODUCT_SEARCHSPACE,
             [{"Cat": "Z", "Num": 1.0}],
-            r"- Cat=Z, Num=1.0: invalid values for parameters \['Cat'\]",
+            1,
             id="invalid_category",
         ),
         pytest.param(
@@ -627,28 +627,14 @@ def test_validate_configurations_passes(searchspace, configurations):
                 [CategoricalParameter("Cat", ("A", "B"), active_values=("A",))]
             ),
             [{"Cat": "B"}],
-            r"- Cat=B: invalid values for parameters \['Cat'\]",
+            1,
             id="inactive_value",
         ),
         pytest.param(
             _PRODUCT_SEARCHSPACE,
-            [{"Cat": "A"}],
-            r"- Cat=A: missing values for parameters \['Num'\]",
-            id="missing_column",
-        ),
-        pytest.param(
-            # Only the configuration without a value may be reported
-            _PRODUCT_SEARCHSPACE,
             [{"Cat": "A", "Num": 1.0}, {"Cat": "B"}],
-            r"^1 configuration\(s\) do not belong to the discrete subspace:\n"
-            r"- Cat=B: missing values for parameters \['Num'\]$",
+            1,
             id="missing_value",
-        ),
-        pytest.param(
-            _PRODUCT_SEARCHSPACE,
-            [{"Cat": "Z", "Num": "abc"}],
-            r"- Cat=Z, Num=abc: invalid values for parameters \['Cat', 'Num'\]",
-            id="several_invalid_parameters",
         ),
         pytest.param(
             SearchSpace.from_product(
@@ -661,14 +647,16 @@ def test_validate_configurations_passes(searchspace, configurations):
                 ],
             ),
             [{"Cat": "A", "Num": 1.0}],
-            r"- Cat=A, Num=1.0: violates the 'DiscreteSelectionConstraint' constraint "
-            r"on parameters \['Num'\]",
+            1,
             id="constraint_violation",
         ),
         pytest.param(
-            _make_searchspace_without_cat_b(),
+            evolve(
+                _PRODUCT_SEARCHSPACE,
+                discrete=_PRODUCT_SEARCHSPACE.discrete.filter(nw.col("Cat") != "B"),
+            ),
             [{"Cat": "B", "Num": 1.0}],
-            r"- Cat=B, Num=1.0: currently not selectable",
+            1,
             id="filtered",
         ),
         pytest.param(
@@ -676,15 +664,13 @@ def test_validate_configurations_passes(searchspace, configurations):
                 [CategoricalParameter("Cat", ("A", "B")), _CONTINUOUS_PARAMETER]
             ),
             [{"Cat": "A", "x": 1.7}],
-            r"continuous subspace:\n- x=1.7: invalid values for parameters \['x'\]",
+            1,
             id="continuous_out_of_bounds",
         ),
         pytest.param(
-            # Only the configuration with the non-numeric value may be reported
             _PRODUCT_SEARCHSPACE,
             [{"Cat": "A", "Num": "abc"}, {"Cat": "A", "Num": 1.0}],
-            r"^1 configuration\(s\) do not belong to the discrete subspace:\n"
-            r"- Cat=A, Num=abc: invalid values for parameters \['Num'\]$",
+            1,
             id="mixed_types",
         ),
         pytest.param(
@@ -694,13 +680,28 @@ def test_validate_configurations_passes(searchspace, configurations):
                 {"Cat": "A", "Num": 1.0},
                 {"Cat": "Y", "Num": 1.0},
             ],
-            r"^2 configuration\(s\) do not belong to the discrete subspace:\n"
-            r"- Cat=Z, Num=1.0: .*\n- Cat=Y, Num=1.0: .*$",
-            id="all_failures_listed",
+            2,
+            id="multiple_invalid",
+        ),
+        pytest.param(
+            # Both equivalent configurations satisfy the filters individually, but
+            # only one of them survives the deduplicating constraint as a batch
+            SearchSpace.from_product(
+                [
+                    NumericalDiscreteParameter("p1", (1.0, 2.0)),
+                    NumericalDiscreteParameter("p2", (1.0, 2.0)),
+                ],
+                [DiscretePermutationInvarianceConstraint(["p1", "p2"])],
+            ),
+            [{"p1": 1.0, "p2": 2.0}, {"p1": 2.0, "p2": 1.0}],
+            1,
+            id="duplicate_permutation",
         ),
     ],
 )
-def test_validate_configurations_fails(searchspace, configurations, match):
-    """Configurations outside the search space are reported with their reason."""
-    with pytest.raises(ValueError, match=match):
-        searchspace._validate_configurations(pd.DataFrame(configurations))
+def test_get_invalid_configurations_flags_invalid(
+    searchspace, configurations, n_invalid
+):
+    """Configurations outside the search space are reported as invalid."""
+    invalid = searchspace._get_invalid_configurations(pd.DataFrame(configurations))
+    assert len(invalid) == n_invalid

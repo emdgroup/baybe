@@ -29,7 +29,10 @@ def _convert_example(file: Path, sub_directory: Path) -> None:
     notebook_path = file.with_suffix(".ipynb")
 
     # Execute the notebook, then convert it to markdown
-    env = os.environ | {"PYTHONPATH": os.getcwd()}
+    env = os.environ | {
+        "PYTHONPATH": os.getcwd(),
+        "BAYBE_DEFAULT_DATAFRAME_BACKEND": "pandas",
+    }
     convert_execute = [
         "jupyter",
         "nbconvert",

@@ -6,7 +6,6 @@ from baybe.constraints.continuous import (
     ContinuousLinearConstraint,
 )
 from baybe.constraints.discrete import (
-    DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteBatchConstraint,
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
@@ -46,5 +45,4 @@ __all__ = [
     "DiscreteSumConstraint",
     # --- Other --- #
     "validate_constraints",
-    "DISCRETE_CONSTRAINTS_FILTERING_ORDER",
 ]
