@@ -15,6 +15,7 @@ from baybe.parameters.base import (
     _EncodedDiscreteParameter,
 )
 from baybe.parameters.enum import CategoricalEncoding, TransferLearningMode
+from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple, sort_tuple
 from baybe.utils.validation import validate_unique_values
 
@@ -86,25 +87,27 @@ class CategoricalParameter(_EncodedDiscreteParameter):
             )
 
         if self.encoding is CategoricalEncoding.OHE:
-            # TODO[narwhalify]: avoid hard-coded float type
             return (
                 values.rename(_JOIN_KEY)
                 .to_frame()
                 .with_columns(
-                    (nw.col(_JOIN_KEY) == v).cast(nw.Float64).alias(ohe_col)
+                    (nw.col(_JOIN_KEY) == v)
+                    .cast(active_settings.DTypeFloatDataFrame)
+                    .alias(ohe_col)
                     for v, ohe_col in zip(self.values, self.comp_rep_columns)
                 )
             )
 
         if self.encoding is CategoricalEncoding.INT:
-            # TODO[narwhalify]: avoid hard-coded float type
             mapping = {v: float(i) for i, v in enumerate(self.values)}
             return (
                 values.rename(_JOIN_KEY)
                 .to_frame()
                 .with_columns(
                     nw.col(_JOIN_KEY)
-                    .replace_strict(mapping, return_dtype=nw.Float64)
+                    .replace_strict(
+                        mapping, return_dtype=active_settings.DTypeFloatDataFrame
+                    )
                     .alias(self.name)
                 )
             )

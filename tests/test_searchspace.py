@@ -237,6 +237,7 @@ def test_from_simplex_uses_only_active_values(backend, single_precision):
     with Settings(
         default_dataframe_backend=backend,
         use_single_precision_numpy=single_precision,
+        use_single_precision_dataframes=single_precision,
     ):
         subspace = SubspaceDiscrete.from_simplex(
             max_sum=0.4,

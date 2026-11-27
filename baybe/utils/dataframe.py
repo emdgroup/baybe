@@ -857,12 +857,7 @@ def normalize_input_dtypes(
             InputDataTypeWarning,
         )
 
-    # TODO: `DTypeFloatNumpy` is a numpy-specific setting but is used here to control
-    #   the float precision of a potentially non-pandas/non-numpy-backed dataframe.
-    #   Revisit once a backend-agnostic float precision setting exists.
-    float_dtype = (
-        nw.Float32 if active_settings.DTypeFloatNumpy is np.float32 else nw.Float64
-    )
+    float_dtype = active_settings.DTypeFloatDataFrame
     return df_nw.cast({col: float_dtype for col in cols_to_convert}).to_native()
 
 

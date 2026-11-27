@@ -280,6 +280,11 @@ class Settings(_SlottedContextDecorator):
     )
     """Removed! Discrete constraints are evaluated on the active backend."""
 
+    use_single_precision_dataframes: bool = field(
+        default=False, validator=instance_of(bool)
+    )
+    """Controls the floating point precision used for dataframe columns."""
+
     use_single_precision_numpy: bool = field(default=False, validator=instance_of(bool))
     """Controls the floating point precision used for `numpy <https://numpy.org/>`_ arrays."""  # noqa: E501
 
@@ -390,6 +395,11 @@ class Settings(_SlottedContextDecorator):
     def DTypeFloatNumpy(self) -> type[np.floating]:
         """The floating point precision used for ``numpy`` arrays."""
         return np.float32 if self.use_single_precision_numpy else np.float64
+
+    @property
+    def DTypeFloatDataFrame(self) -> type[nw.dtypes.NumericType]:
+        """The floating point dtype used for dataframe columns."""
+        return nw.Float32 if self.use_single_precision_dataframes else nw.Float64
 
     @property
     def DTypeFloatTorch(self) -> torch.dtype:

@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that could raise `InfeasibilityError` for larger numbers of requested configurations
 
 ### Added
+- `Settings.use_single_precision_dataframes` to control float precision of dataframes
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
 - `narwhals` as a hard dependency

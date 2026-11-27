@@ -101,11 +101,14 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
     @override
     def _encoding_table(self, values: nw.Series, /) -> nw.DataFrame:
-        # TODO[narwhalify]: avoid hard-coded float type
         return (
             values.rename(_JOIN_KEY)
             .to_frame()
-            .with_columns(nw.col(_JOIN_KEY).cast(nw.Float64).alias(self.name))
+            .with_columns(
+                nw.col(_JOIN_KEY)
+                .cast(active_settings.DTypeFloatDataFrame)
+                .alias(self.name)
+            )
         )
 
     @override

@@ -42,6 +42,7 @@ INVALID_VALUES: dict[str, tuple[Any, type[Exception], str]] = {
     "use_fpsample": (0, ValueError, "Cannot convert '0' to 'AutoBool'"),
     "use_polars_for_constraints": (0, ValueError, "Cannot convert '0' to 'AutoBool'"),
     "use_single_precision_numpy": (0, TypeError, "must be <class 'bool'>"),
+    "use_single_precision_dataframes": (0, TypeError, "must be <class 'bool'>"),
     "use_single_precision_torch": (0, TypeError, "must be <class 'bool'>"),
 }
 

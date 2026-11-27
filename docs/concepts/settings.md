@@ -18,6 +18,7 @@ The following settings are available:
 | {attr}`~baybe.settings.Settings.preprocess_dataframes` | Controls if incoming user dataframes are preprocessed (i.e., dtype-converted and validated) before use. |
 | {attr}`~baybe.settings.Settings.random_seed` | Controls the random seed. |
 | {class}`use_fpsample <baybe.settings.Settings>` | Controls if [`fpsample`](https://github.com/leonardodalinky/fpsample) acceleration is to be used, if available. |
+| {attr}`~baybe.settings.Settings.use_single_precision_dataframes` | Controls the floating point precision used for dataframe columns. |
 | {attr}`~baybe.settings.Settings.use_single_precision_numpy` | Controls the floating point precision used for [`numpy`](https://numpy.org/) arrays. |
 | {attr}`~baybe.settings.Settings.use_single_precision_torch` | Controls the floating point precision used for [`torch`](https://pytorch.org/) tensors. |
 
