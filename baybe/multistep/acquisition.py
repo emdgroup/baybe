@@ -711,7 +711,9 @@ def _resolve_score_scale(acquisition: object) -> ScoreScale:
         qNEI,
     )
 
-    if isinstance(
+    from ._model_reference_ei import ModelReferenceExpectedImprovement
+
+    if isinstance(acquisition, ModelReferenceExpectedImprovement) or isinstance(
         acquisition,
         (
             qExpectedImprovement,
@@ -1684,6 +1686,7 @@ def recommend_stock(
     first_new_id: int = 1,
     execution_mode: Literal["process", "functional"] = "process",
     cost_mode: CostMode = "remaining",
+    call_seed: int | None = None,
 ) -> list[_PendingAction]:
     """Optimize stock acquisitions over executable actions using shared scoring.
 
@@ -1713,6 +1716,8 @@ def recommend_stock(
         execution_mode: Whether global reference rows must be process-complete or
             may be composed from successful real references across experiments.
         cost_mode: The cost basis used for scoring each executable action.
+        call_seed: Local model-reference seed from the caller. If omitted, the stock
+            helper draws one from Torch's current random generator.
 
     Returns:
         The selected executable actions in descending score order.
@@ -1723,6 +1728,12 @@ def recommend_stock(
             invalid, or fewer distinct executable actions than requested exist.
         InfeasibilityError: If no candidate reaches the local success threshold.
     """
+    from ._model_reference_ei import ModelReferenceExpectedImprovement
+
+    is_model_reference = isinstance(
+        acquisition_function, ModelReferenceExpectedImprovement
+    )
+
     searchspace = model.dag.full_searchspace
     if searchspace.is_constrained:
         raise IncompatibilityError(
@@ -1731,18 +1742,27 @@ def recommend_stock(
     if not plans:
         raise IncompatibilityError("No executable node remains in any open experiment.")
 
-    measurements = data.complete_measurement_frame(
-        model.dag, execution_mode=execution_mode
-    )
-    if measurements.empty:
-        raise IncompatibilityError(
-            "The selected stock acquisition requires at least one complete, "
-            "reference-consistent set of real DAG measurements."
-        )
+    if is_model_reference:
+        if call_seed is None:
+            from ._model_reference_ei import _draw_model_reference_seed
 
-    branches = _make_stock_acquisition_branches(
-        model, pending, acquisition_function, measurements
-    )
+            call_seed = _draw_model_reference_seed()
+        branches = acquisition_function.make_botorch_branches(
+            model, pending, call_seed=call_seed
+        )
+    else:
+        measurements = data.complete_measurement_frame(
+            model.dag, execution_mode=execution_mode
+        )
+        if measurements.empty:
+            raise IncompatibilityError(
+                "The selected stock acquisition requires at least one complete, "
+                "reference-consistent set of real DAG measurements."
+            )
+
+        branches = _make_stock_acquisition_branches(
+            model, pending, acquisition_function, measurements
+        )
     next_identifier = _next_extra_identifier(first_new_id, plans)
     scored: list[tuple[_PendingAction, Tensor]] = []
     for plan in plans:

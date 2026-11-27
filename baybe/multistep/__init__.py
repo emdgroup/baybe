@@ -12,6 +12,7 @@ measurement, then recommends the next node action.
 from importlib import import_module
 from typing import TYPE_CHECKING, Any
 
+from ._model_reference_ei import MREI, ModelReferenceExpectedImprovement
 from .acquisition import PartialKnowledgeGradientFN
 from .campaign import MultiStepCampaign
 from .context import ContextMode, MultiStepContext
@@ -49,5 +50,7 @@ __all__ = [
     "FeasibilityCondition",
     "NodeMeasurement",
     "PartialKnowledgeGradientFN",
+    "ModelReferenceExpectedImprovement",
+    "MREI",
     "validate_network_measurements",
 ]

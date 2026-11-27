@@ -46,6 +46,10 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.serialization import SerialMixin, converter
 
 from ._columns import EXPERIMENT_ID, NODE
+from ._model_reference_ei import (
+    ModelReferenceExpectedImprovement,
+    _draw_model_reference_seed,
+)
 from .acquisition import (
     CostMode,
     GraphAwareAcquisitionProtocol,
@@ -763,7 +767,12 @@ class MultiStepCampaign(SerialMixin):
                     "q-batched, Monte-Carlo acquisition function instead."
                 )
             score_scale = _resolve_score_scale(resolved_acquisition)
+            if isinstance(resolved_acquisition, ModelReferenceExpectedImprovement):
+                resolved_acquisition.validate_context(self.dag, self.data, batch_size)
 
+        call_seed = None
+        if isinstance(resolved_acquisition, ModelReferenceExpectedImprovement):
+            call_seed = _draw_model_reference_seed()
         self._fit_node_models()
         pending = pending_actions(self.data._contexts)
         plans = self._executable_plans()
@@ -796,6 +805,7 @@ class MultiStepCampaign(SerialMixin):
                 first_new_id=self._first_new_identifier(),
                 execution_mode=self.execution_mode,
                 cost_mode=self.cost_mode,
+                call_seed=call_seed,
             )
 
         experiments = dict(self.data._contexts)
