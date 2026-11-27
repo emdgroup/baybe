@@ -50,6 +50,7 @@ else:
 
 # Sentinel column name used internally during joins to avoid name conflicts
 _JOIN_KEY = "__join_key__"
+_ORDER_KEY = "__order_key__"
 
 
 def _iter_basic_kernels(kernel: Kernel) -> Iterator[BasicKernel]:
@@ -406,12 +407,15 @@ class DiscreteParameter(Parameter, ABC):
 
         from baybe.utils.dataframe import _copy_index
 
+        # TODO: https://github.com/narwhals-dev/narwhals/issues/4048
         table = self._encoding_table(series.unique())
         out = (
             series.rename(_JOIN_KEY)
             .to_frame()
+            .with_row_index(_ORDER_KEY)
             .join(table, on=_JOIN_KEY, how="left")
-            .drop(_JOIN_KEY)
+            .sort(_ORDER_KEY)
+            .drop(_JOIN_KEY, _ORDER_KEY)
         )
         return out.to_native() if all_values else _copy_index(out, series).to_native()
 

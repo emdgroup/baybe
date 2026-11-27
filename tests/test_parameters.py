@@ -9,6 +9,7 @@ import polars as pl
 import pytest
 from narwhals.stable.v2.dependencies import is_into_series
 from narwhals.stable.v2.typing import IntoFrame
+from narwhals.testing import assert_series_equal
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.categorical import CategoricalParameter
@@ -166,6 +167,36 @@ def test_transform(param, expected, index_select, series_factory):
                 param.transform(series_factory("wrong name", labels))
 
         assert_frame_equal(result, nw.from_native(expected)[positions])
+
+
+@pytest.mark.parametrize(
+    "series_factory",
+    [
+        pytest.param(_pd_series, id="pandas"),
+        pytest.param(_pl_series, id="polars"),
+    ],
+)
+def test_transform_preserves_input_order(series_factory):
+    """Discrete parameter transformation preserves the input row order."""
+    parameter = CategoricalParameter(
+        name="color", values=["red", "green", "blue"], encoding="INT"
+    )
+    encoding = {value: float(index) for index, value in enumerate(parameter.values)}
+    indices = [0, 1, 2, 0, 1, 2]
+    permuted_indices = [2, 0, 1, 2, 1, 0]
+
+    for input_indices in (indices, permuted_indices):
+        series = series_factory(
+            "color", [parameter.values[index] for index in input_indices]
+        )
+        result = nw.from_native(parameter.transform(series), eager_only=True)["color"]
+        expected = nw.from_native(
+            series_factory(
+                "color", [encoding[parameter.values[index]] for index in input_indices]
+            ),
+            series_only=True,
+        )
+        assert_series_equal(result, expected, check_dtypes=False)
 
 
 @pytest.mark.parametrize(
