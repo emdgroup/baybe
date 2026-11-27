@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constraint filtering
 
 ### Added
+- Select the multi-step acquisition scoring cost with `MultiStepCampaign.cost_mode`
+  (`"node"` or `"remaining"`); the default remains `"remaining"`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
 - `Symmetry` concept for expressing symmetries of the optimization problem, including
