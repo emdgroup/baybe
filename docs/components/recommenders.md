@@ -118,8 +118,7 @@ recommender = LLMRecommender(
 
 Use the {attr}`~baybe.recommenders.pure.llm.llm.LLMRecommender.experiment_description`
 and the {ref}`metadata <parameter_metadata>` of parameters, targets and the objective
-to guide the model. For how to request recommendations, see
-[Getting Recommendations](/concepts/getting_recommendations).
+to guide the model.
 
 ```{admonition} Data Privacy
 :class: warning
