@@ -8,7 +8,7 @@ Executable node actions are derived from the stored process state, independently
 of the configured acquisition function. Graph-aware acquisitions score those
 actions directly; stock acquisition functions score global configurations that
 are projected onto the same executable actions. A shared scoring layer then
-applies local success risk and remaining costs before the final action is
+applies local success risk and the selected scoring costs before the final action is
 selected.
 
 Every recommendation reserves its concrete local action as pending and carries
@@ -47,6 +47,7 @@ from baybe.serialization import SerialMixin, converter
 
 from ._columns import EXPERIMENT_ID, NODE
 from .acquisition import (
+    CostMode,
     GraphAwareAcquisitionProtocol,
     PartialKnowledgeGradientFN,
     ScoreScale,
@@ -149,7 +150,7 @@ class MultiStepCampaign(SerialMixin):
     Executable actions are derived from the DAG, the real measurements, and the
     configured execution mode. They are the same for graph-aware and stock
     acquisition functions. The acquisition scores are weighted once by local
-    success risk and remaining costs before the final action is selected.
+    success risk and the selected scoring costs before the final action is selected.
 
     In process mode, actions continue their concrete experiments; independent
     fork branches are offered together, and a join waits for all required real
@@ -204,6 +205,15 @@ class MultiStepCampaign(SerialMixin):
     )
     """How executable actions are derived from the recorded process state."""
 
+    cost_mode: CostMode = field(
+        default="remaining", validator=in_(("node", "remaining")), kw_only=True
+    )
+    """Which existing cost value weights each acquisition gain.
+
+    ``"node"`` uses the cost of the next node execution. ``"remaining"`` uses
+    the precomputed cost remaining for the executable process and is the default.
+    """
+
     allow_repeats: bool = field(default=True, validator=instance_of(bool))
     """Whether a repeated real execution is stored and trained as a new observation.
 
@@ -243,6 +253,7 @@ class MultiStepCampaign(SerialMixin):
         execution_mode: ExecutionMode = "process",
         allow_repeats: bool = True,
         feasibility_threshold: float = 1e-6,
+        cost_mode: CostMode = "remaining",
         recommender: TwoPhaseMetaRecommender | None = None,
     ) -> MultiStepCampaign:
         """Create a campaign for the given DAG.
@@ -257,6 +268,8 @@ class MultiStepCampaign(SerialMixin):
             allow_repeats: Whether repeated real executions are stored and trained.
             feasibility_threshold: Minimum local feasibility scoring factor for an
                 executable action.
+            cost_mode: Whether to score with the next node's cost or the remaining
+                process cost. Defaults to ``"remaining"``.
             recommender: Optional two-phase selector for the random and acquisition
                 stages. Defaults to switching after one recorded node measurement.
 
@@ -270,6 +283,7 @@ class MultiStepCampaign(SerialMixin):
             execution_mode=execution_mode,
             allow_repeats=allow_repeats,
             feasibility_threshold=feasibility_threshold,
+            cost_mode=cost_mode,
             recommender=TwoPhaseMetaRecommender()
             if recommender is None
             else recommender,
@@ -632,7 +646,7 @@ class MultiStepCampaign(SerialMixin):
         graph-aware acquisition scores those actions directly. A stock acquisition
         scores the global DAG configurations and the values are projected onto the
         same executable actions. The shared scoring layer applies the local success
-        probability and the remaining costs before the final selection.
+        probability and the selected cost basis before the final selection.
 
         Pending real actions are treated as hypothetical model states when
         scoring. They are not counted as observed real measurements.
@@ -764,6 +778,7 @@ class MultiStepCampaign(SerialMixin):
                 acquisition=policy,
                 batch_size=batch_size,
                 feasibility_threshold=self.feasibility_threshold,
+                cost_mode=self.cost_mode,
             )
         else:
             assert resolved_acquisition is not None
@@ -780,6 +795,7 @@ class MultiStepCampaign(SerialMixin):
                 feasibility_threshold=self.feasibility_threshold,
                 first_new_id=self._first_new_identifier(),
                 execution_mode=self.execution_mode,
+                cost_mode=self.cost_mode,
             )
 
         experiments = dict(self.data._contexts)
